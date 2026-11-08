@@ -1374,7 +1374,13 @@
         "equals": "lock"
        }
       ],
-      "fields": []
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "@action",
+        "field": "@action"
+       }
+      ]
      },
      {
       "name": "unlock",
@@ -1384,7 +1390,13 @@
         "equals": "unlock"
        }
       ],
-      "fields": []
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "@action",
+        "field": "@action"
+       }
+      ]
      },
      {
       "name": "other",
@@ -1409,7 +1421,7 @@
    "notes": [
     "'@time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
-    "One rule per value of '@action' (lock, unlock), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
+    "One rule per value of '@action' (lock, unlock): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
    "unmapped_fields": [],
    "time_zones": {

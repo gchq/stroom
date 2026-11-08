@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.cfg.JsonNodeFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,6 +79,10 @@ public final class ToolOutputs {
             .enable(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN)
             .disable(JsonNodeFeature.STRIP_TRAILING_BIGDECIMAL_ZEROES)
             .build();
+
+    /// What the model is given in place of a table Stroom AI's chat shows the user itself.
+    static final String SHOWN_TABLE = "(shown to the user in the chat, as it is: don't repeat, restyle or describe "
+                                      + "it)";
 
     private ToolOutputs() {
         // Static only.
@@ -311,6 +316,29 @@ public final class ToolOutputs {
     }
 
     // The output read as a JSON object or array, or null if it is something else.
+    /// A result as the model is given it in Stroom AI's chat: the `table` of a `needs_showing` result, which the
+    /// chat shows the user itself, replaced by [#SHOWN_TABLE]. Seen in chats 168 and 169: the agent retyped the
+    /// table the chat had just shown, and said it showed "all 33 kinds" when it showed ten. Any other result as it is.
+    ///
+    /// @param output A tool's output, as stored.
+    /// @return It for the model.
+    static String forModel(final String output) {
+        if (output == null || !output.contains("\"needs_showing\"")) {
+            return output;
+        }
+        final JsonNode json = readJson(output);
+        if (json == null || !json.isObject() || !"needs_showing".equals(json.path(STATUS_FIELD).asText())
+            || !json.path("table").isTextual()) {
+            return output;
+        }
+        ((ObjectNode) json).put("table", SHOWN_TABLE);
+        try {
+            return MAPPER.writeValueAsString(json);
+        } catch (final JsonProcessingException e) {
+            return output;
+        }
+    }
+
     private static JsonNode readJson(final String output) {
         final String trimmed = output.strip();
         if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {

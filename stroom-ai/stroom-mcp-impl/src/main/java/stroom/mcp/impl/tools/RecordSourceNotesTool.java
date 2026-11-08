@@ -30,6 +30,7 @@ import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.draft.SourceNotes;
+import stroom.ai.impl.tools.generation.XPathRegex;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.shared.AiToolCategory;
@@ -51,6 +52,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 /// `record_source_notes` - keeps the user's vendor or event reference documentation in Stroom, and the notes condensed
 /// from it, as Documentation docs in the build: each document verbatim (`<source> reference - <title>`), and `<source>
@@ -73,9 +75,13 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     private static final List<String> FIELD_KEYS = List.of("field", "meaning", "type", "example",
             "event_logging_path", "values", "basis", "confidence");
     private static final List<String> FIELD_REQUIRED = List.of("field", "meaning");
+    /// A pattern event's listed kind (a catch-all, `variant=syslog`) whose records its pattern tells apart.
+    static final String WITHIN = "within";
     private static final List<String> EVENT_KEYS = List.of("event", "description", "event_detail", "type_id", "field",
-            "value", "action", "success", "actor", "affected", "affected_as", "basis", "confidence");
+            "value", "action", "success", "actor", "affected", "affected_as", "basis", "confidence",
+            SourceNotes.MATCHES, SourceNotes.NAMES, WITHIN);
     private static final List<String> EVENT_REQUIRED = List.of("event", "description");
+    private static final Pattern GROUP_NAME = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
     private static final int MAX_NAME = 200;
     // Where a note came from: the user's documentation (the default), or the agent's own knowledge of the source.
     private static final String DOCUMENTATION = "documentation";
@@ -94,8 +100,10 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     static final String REJECTED = "rejected";
     // The notes block's kinds the user said to leave untranslated in classify_kinds: settled, left out of its rounds.
     static final String DROPPED = "dropped";
+    /// The set of proposals last shown the user (classify_kinds): when, then its kinds.
+    static final String SHOWN = "shown";
     private static final List<String> CLASSIFY_KEYS = List.of(RECORD_FIELDS, PROPOSED, ClassifyKindsTool.SAMPLES,
-            REJECTED, DROPPED);
+            REJECTED, DROPPED, SHOWN);
     private static final List<String> CONFIDENCES = List.of("high", "medium", "low");
 
     private final WriteGuard guard;
@@ -252,7 +260,8 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                         JsonValues.strings(earlier.get(PENDING)), earlier.containsKey(PENDING),
                         carried(earlier, Map.of())));
         final long usable = events.stream()
-                .filter(event -> JsonValues.truthy(event.get("field")) && JsonValues.truthy(event.get("value")))
+                .filter(event -> JsonValues.truthy(event.get("field"))
+                                 && (JsonValues.truthy(event.get("value")) || SourceNotes.isPattern(event)))
                 .count();
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("type", DocumentationDoc.TYPE);
@@ -425,8 +434,15 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
             basisChecked(event, name + "[" + i + "]");
             events.add(event);
         }
-        final List<String> problems = new ArrayList<>(SourceNotes.catalogueProblems(events,
-                detailCheck(context, build)));
+        final List<String> problems = new ArrayList<>();
+        for (int i = 0; i < events.size(); i++) {
+            patternChecked(events.get(i), name + "[" + i + "]").ifPresent(problems::add);
+        }
+        if (!problems.isEmpty()) {
+            throw new ToolRefusal("Nothing recorded: " + String.join("; ", problems) + ". Correct them and call "
+                                  + "again.");
+        }
+        problems.addAll(SourceNotes.catalogueProblems(events, detailCheck(context, build)));
         if (problems.isEmpty()) {
             final EventSchema schema = schemaOrNull(context, build);
             events.forEach(event -> affectedChecked(schema, event).ifPresent(problems::add));
@@ -440,6 +456,43 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                                   + "again.");
         }
         return events;
+    }
+
+    // A pattern event checked: its field, its pattern instead of a value, the pattern one the generated XSLT runs, and
+    // a name for each capture group; what is wrong, if anything.
+    private static Optional<String> patternChecked(final Map<String, Object> event, final String where) {
+        if (!SourceNotes.isPattern(event)) {
+            return event.containsKey(SourceNotes.NAMES)
+                    ? Optional.of(where + ": names are for a pattern's capture groups (with matches)")
+                    : Optional.empty();
+        }
+        if (text(event.get("field")).isBlank()) {
+            return Optional.of(where + ": a pattern is matched against a field: give field (e.g. message)");
+        }
+        if (!text(event.get("value")).isBlank()) {
+            return Optional.of(where + ": give value or matches, not both");
+        }
+        final String regex = text(event.get(SourceNotes.MATCHES));
+        final Optional<String> problem = XPathRegex.problem(regex);
+        if (problem.isPresent()) {
+            return Optional.of(where + ": matches " + regex + ": " + problem.get());
+        }
+        final List<String> names = JsonValues.strings(event.get(SourceNotes.NAMES));
+        final int groups;
+        try {
+            groups = XPathRegex.groups(regex);
+        } catch (final XPathRegex.XPathRegexException e) {
+            return Optional.of(where + ": matches " + regex + " does not compile: " + e.getMessage());
+        }
+        if (groups != names.size()) {
+            return Optional.of(where + ": matches has " + groups + " capture group(s) and names " + names.size()
+                               + ": name each group (the field it reads, e.g. user), and make any other group "
+                               + "(?:...)");
+        }
+        return names.stream()
+                .filter(group -> !GROUP_NAME.matcher(group).matches())
+                .findFirst()
+                .map(group -> where + ": the name '" + group + "' is letters, digits and _");
     }
 
     /// @param context The call's context.
@@ -613,9 +666,9 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
             lines.add("");
         }
         if (!events.isEmpty()) {
-            lines.addAll(List.of("## Event catalogue", "", "| Event | Description | EventDetail | TypeId | Basis |",
-                    "| --- | --- | --- | --- | --- |"));
-            events.forEach(event -> lines.add("| " + text(event.get("event")) + " | "
+            lines.addAll(List.of("## Event catalogue", "", "| Event | Told by | Description | EventDetail | TypeId | "
+                                                       + "Basis |", "| --- | --- | --- | --- | --- | --- |"));
+            events.forEach(event -> lines.add("| " + text(event.get("event")) + " | " + toldBy(event) + " | "
                                               + text(event.get("description")) + " | "
                                               + text(event.get("event_detail")) + " | "
                                               + text(event.get("type_id")) + " | " + basisText(event) + " |"));
@@ -689,6 +742,16 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
             notes.add(note);
         }
         return notes;
+    }
+
+    // What tells an event's records: its field's value, or the pattern its field matches.
+    private static String toldBy(final Map<String, Object> event) {
+        if (text(event.get("field")).isBlank()) {
+            return "";
+        }
+        return "`" + (SourceNotes.isPattern(event)
+                ? text(event.get("field")) + " matches " + text(event.get(SourceNotes.MATCHES))
+                : text(event.get("field")) + "=" + text(event.get("value"))).replace("|", "\\|") + "`";
     }
 
     // A note's basis and confidence: documentation unless said, a confidence only (and always) for the agent's own
@@ -791,6 +854,10 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                     codes.forEach((code, meaning) -> strings.put(String.valueOf(code), text(meaning)));
                     out.put(key, strings);
                 }
+            } else if (SourceNotes.NAMES.equals(key)) {
+                if (value instanceof final List<?> names && !names.isEmpty()) {
+                    out.put(key, names.stream().map(RecordSourceNotesTool::text).toList());
+                }
             } else if ("success".equals(key)) {
                 if (value instanceof final Boolean bool) {
                     out.put(key, bool);
@@ -857,6 +924,12 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                                             + "value, the draft makes a rule for it and build_translation_xslt "
                                             + "checks the mapping against it.")
                 .addStringProperty("value", "That field's value for this event, e.g. '4625'.")
+                .addStringProperty(SourceNotes.MATCHES, "In place of value, for an event said in free text: a regex "
+                                                        + "(XPath's: no lookaround) the field's value matches, e.g. "
+                                                        + "'^Failed password for (?:invalid user )?(\\S+) from "
+                                                        + "(\\S+)'.")
+                .addProperty(SourceNotes.NAMES, stringArraySchema("With matches: a name for each capture group, the "
+                                                                  + "field it reads, e.g. ['user', 'src_ip']."))
                 .addStringProperty("action", "The action element's Action, when it has one, e.g. Logon or Logoff.")
                 .addStringProperty("actor", "The field naming the user or account who acted (EventSource/User for "
                                             + "this event); left out when the records name none.")

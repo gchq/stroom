@@ -379,7 +379,10 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             b.sent = null;
             throw e;
         } finally {
-            if (b.sent != null) {
+            // Only a mapping that parses: seen in testing, changes that left an entry with no source were refused,
+            // yet kept as the mapping later changes merged into, so the agent's next changes (written against the
+            // mapping before them) were refused as removing what "the mapping does not have".
+            if (b.sent != null && b.mapping != null) {
                 SentMappings.remember(context, request.target(), b.sent);
             }
         }
@@ -540,8 +543,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             return result;
         }
         // The whole shape, where the mapping's shape is what's wrong (a key missing or misplaced), not a value.
-        throw new ToolRefusal("mapping is not a translation mapping: " + String.join("; ", problems) + ". Fix these "
-                              + "in the mapping you have; to start again, draft_translation_mapping "
+        throw new ToolRefusal("mapping is not a translation mapping: " + String.join("; ", problems) + ". Nothing "
+                              + "from this call is kept: changes still apply to the mapping as it was before it. "
+                              + "Fix these in the mapping you have; to start again, draft_translation_mapping "
                               + "(stream_ids=the sample streams) gives one." + (MappingProblems.structural(e)
                 ? " A whole mapping looks like: " + ToolJson.dumps(MappingProblems.MAPPING_EXAMPLE)
                 : ""));
@@ -707,11 +711,11 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         if (samples == null) {
             return;
         }
-        final List<Map<String, Object>> events = request.build() == null
-                ? List.of()
-                : JsonValues.maps(builds.notesInBuild(request.build()).get("events"));
+        final Map<String, Object> notes = request.build() == null
+                ? Map.of()
+                : builds.notesInBuild(request.build());
         final Map<String, Object> check = MappingSampleCheck.check(b.mapping, samples, splitter, b.schema, inferred,
-                clock, events);
+                clock, JsonValues.maps(notes.get("events")), JsonValues.strings(notes.get(SourceNotes.DROPPED)));
         b.lost = (List<ConfirmedKinds.Lost>) check.remove(MappingSampleCheck.CONFIRMED_LOST);
         b.lost.forEach(one -> warnings.add(lostWarning(one)));
         b.qualified = (List<LocalCheck.QualifiedIds>) check.remove(MappingSampleCheck.DOMAIN_QUALIFIED);

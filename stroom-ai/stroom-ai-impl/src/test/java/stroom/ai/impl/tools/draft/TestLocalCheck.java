@@ -77,6 +77,29 @@ class TestLocalCheck extends DraftFixtures {
     }
 
     @Test
+    void aMapNoneOfWhoseKeysTheSampleHoldsIsWarnedOf() {
+        // Seen in testing: iptables' PROTO=TCP mapped by protocol number, so every dropped packet was Other.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines", "common": [],
+                 "events": [{"name": "drop", "fields": [{"path": "EventDetail/TypeId", "value": "drop"},
+                   {"path": "EventDetail/Network/Deny/Source/TransportProtocol", "field": "proto",
+                    "map": {"6": "TCP", "17": "UDP", "1": "ICMP"}, "default": "Other"}]}]}"""));
+        final List<Object> byName = records(mapping, """
+                {"proto": "TCP"}
+                {"proto": "UDP"}""", null);
+        final List<Object> byNumber = records(mapping, """
+                {"proto": "6"}
+                {"proto": "TCP"}""", null);
+
+        assertThat(LocalCheck.mapKeysNotHeld(mapping, byName)).singleElement().asString()
+                .startsWith("[rule 'drop'] 'EventDetail/Network/Deny/Source/TransportProtocol' maps field 'proto' by "
+                            + "the keys 6, 17, 1, but none of the values the 2 sample records give it is one of them "
+                            + "(they are TCP, UDP): every record gets the default 'Other'.");
+        assertThat(LocalCheck.mapKeysNotHeld(mapping, byNumber)).isEmpty();
+        assertThat(LocalCheck.mapKeysNotHeld(mapping, records(mapping, "{\"other\": \"x\"}", null))).isEmpty();
+    }
+
+    @Test
     void rulesNoSampleRecordReachesAreNamed() {
         // Seen in testing: a sample of mostly one kind of event checked clean, and the rules it never reached
         // failed only in processing.

@@ -119,6 +119,30 @@ public final class RecordSplitter {
         return splitLines(lines, info, maxRecords, truncated);
     }
 
+    /// Splits text from further into a part as the part's start was split: lines of mixed formats a record a line,
+    /// whichever formats a stretch of them happens to hold (a run of one format would otherwise read as that format,
+    /// not as the part's), and other formats as [#split(String, int, boolean)] does.
+    ///
+    /// @param format     The format the part's start was read as.
+    /// @param text       Text from further in, after any header line the part's records follow.
+    /// @param maxRecords The most records to return.
+    /// @param truncated  True if the text stops short of its last record's end: a cut-off last record is dropped.
+    /// @return Its records.
+    public static Chunk splitAs(final String format,
+                                final String text,
+                                final int maxRecords,
+                                final boolean truncated) {
+        if (!SampleProfiler.MIXED_LINES.equals(format)) {
+            return split(text, maxRecords, truncated);
+        }
+        List<String> lines = ToolText.nonBlankLines(ToolText.lstrip(text, "﻿\r\n "));
+        if (truncated && !lines.isEmpty() && !text.endsWith("\n") && !text.endsWith("\r")) {
+            lines = lines.subList(0, lines.size() - 1);
+        }
+        final List<String> records = new ArrayList<>(lines.subList(0, Math.min(maxRecords, lines.size())));
+        return new Chunk(format, records, nulls(records.size()), null, null, List.of());
+    }
+
     private static Chunk splitLines(final List<String> lines,
                                     final Map<String, Object> info,
                                     final int maxRecords,

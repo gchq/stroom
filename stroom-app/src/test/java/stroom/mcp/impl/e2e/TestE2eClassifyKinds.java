@@ -280,7 +280,7 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("No catch-all listed: " + listed));
         assertThat(catchAll).containsEntry("value", "syslog");
-        assertThat(String.valueOf(listed.get("hint"))).contains("refine the splitter (build_data_splitter)");
+        assertThat(String.valueOf(listed.get("hint"))).contains("read it into a field (build_data_splitter)");
 
         assertThat(refusal("classify_kinds", args("build", build, "proposals", List.of(Map.of("field", "variant",
                 "value", "syslog", "description", "Web host lines", "event_detail", "Unknown", "confidence",
@@ -385,8 +385,9 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         while (step.containsKey("table")) {
             final String table = String.valueOf(step.get("table"));
             headings.add(table.lines().findFirst().orElse(""));
-            // Each set numbered from 1.
-            assertThat(table).containsAnyOf("| 1 | ", "### 1. ");
+            // Each set numbered from where its heading's range starts (11-13 goes on from 1-10).
+            final String first = table.substring(table.indexOf('(') + 1).split("[- )]")[0];
+            assertThat(table).containsAnyOf("| " + first + " | ", "### " + first + ". ");
             step = json("classify_kinds", args("build", build, "confirm", true));
         }
         client.answeringWith(McpTestClient::agree);

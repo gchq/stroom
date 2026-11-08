@@ -937,6 +937,35 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void changesThatLeaveAMappingThatDoesntParseAreNotKeptAsTheNextBase() {
+        // Seen in testing: changes leaving an entry with no source were refused, yet kept as the mapping later
+        // changes merged into, so the next changes, written against the mapping before them, were refused too.
+        final Map<String, Object> broken = TranslationWorld.mapping();
+        final List<Object> events = new ArrayList<>(list(broken.get("events")));
+        final Map<String, Object> logon = new LinkedHashMap<>((Map<String, Object>) events.getFirst());
+        final List<Object> fields = new ArrayList<>(list(logon.get("fields")));
+        fields.add(Map.of("path", "EventDetail/Nope", "value", "x"));
+        logon.put("fields", fields);
+        events.set(0, logon);
+        broken.put("events", events);
+        assertThat(world.call(tool, Map.of("mapping", broken, "build", "acme-v1", "name", "ACME-Events"))
+                .get("ok")).isEqualTo(false);
+
+        final Map<String, Object> refused = world.call(tool, Map.of("changes", Map.of("events", List.of(Map.of(
+                        "name", "logon", "fields", List.of(Map.of("path", "EventDetail/Description"))))),
+                "build", "acme-v1", "name", "ACME-Events"));
+        assertThat(refused.get("error")).asString().contains("not a translation mapping",
+                "Nothing from this call is kept");
+
+        final Map<String, Object> fixed = world.call(tool, Map.of("changes", Map.of("events", List.of(Map.of(
+                        "name", "logon", "fields", List.of(Map.of("path", "EventDetail/Nope", "remove", true))))),
+                "build", "acme-v1", "name", "ACME-Events", "include_xslt", false));
+        assertThat(fixed.get("problems")).isEqualTo(List.of());
+        assertThat(fixed.get("ok")).isEqualTo(true);
+    }
+
+    @Test
     void changesToASavedXsltStartFromTheMappingKeptWithIt() {
         // Another node, or a new session: nothing remembered, so the mapping saved with the XSLT is changed.
         final String uuid = keptXslt("acme-v1", "ACME-Events", TranslationWorld.mapping(), null);

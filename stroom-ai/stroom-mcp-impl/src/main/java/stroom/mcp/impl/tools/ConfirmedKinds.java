@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.draft.LocalCheck;
+import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.EventRule;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.MappingFacts;
@@ -60,7 +61,8 @@ final class ConfirmedKinds {
                            final List<Map<String, Object>> events) {
         final List<Map<String, Object>> confirmed = events.stream()
                 .filter(event -> RecordSourceNotesTool.USER_CONFIRMED.equals(event.get("basis")))
-                .filter(event -> NullSafe.isNonBlankString(text(event.get("field"))) && event.get("value") != null)
+                .filter(event -> NullSafe.isNonBlankString(text(event.get("field")))
+                                 && (event.get("value") != null || SourceNotes.isPattern(event)))
                 .toList();
         // Each record's rule is worked out only when there is something to check it against.
         if (confirmed.isEmpty() || records.isEmpty() || NullSafe.isNonBlankString(mapping.forEach())) {
@@ -78,11 +80,18 @@ final class ConfirmedKinds {
         final List<Lost> lost = new ArrayList<>();
         for (final Map<String, Object> event : confirmed) {
             final String field = text(event.get("field"));
-            final String value = text(event.get("value"));
+            final boolean pattern = SourceNotes.isPattern(event);
+            final String value = pattern
+                    ? "~" + text(event.get(SourceNotes.MATCHES))
+                    : text(event.get("value"));
             // The rule each of the kind's records goes to, counted.
             final Map<String, Integer> byRule = new LinkedHashMap<>();
             for (int n = 0; n < records.size(); n++) {
-                if (value.equals(valueOf(records.get(n), extracted.get(n), field)) && rules.get(n) != null) {
+                final String held = valueOf(records.get(n), extracted.get(n), field);
+                final boolean ofKind = pattern
+                        ? SourceNotes.matches(event, held)
+                        : value.equals(held);
+                if (ofKind && rules.get(n) != null) {
                     byRule.merge(rules.get(n), 1, Integer::sum);
                 }
             }
@@ -90,6 +99,53 @@ final class ConfirmedKinds {
                     lost.add(new Lost(kindName(event), field, value, wanted(event), rule, writes, count))));
         }
         return lost;
+    }
+
+    /// The kinds the user said to leave untranslated whose sample records a rule still translates (the mapping has no
+    /// drop rule for them, or a rule before it takes them).
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
+    /// @param dropped The dropped kinds' keys ([SourceNotes#DROPPED]).
+    /// @return A warning each, naming the kind, how many records and the rule; none when every one is dropped.
+    static List<String> undropped(final TranslationMapping mapping,
+                                  final List<Object> records,
+                                  final List<String> dropped) {
+        if (dropped.isEmpty() || records.isEmpty() || NullSafe.isNonBlankString(mapping.forEach())) {
+            return List.of();
+        }
+        final List<String> warnings = new ArrayList<>();
+        for (final String key : dropped) {
+            final List<Map<String, Object>> when = SourceNotes.dropConditions(key);
+            if (when.isEmpty()) {
+                continue;
+            }
+            final Map<String, Integer> byRule = new LinkedHashMap<>();
+            for (final Object record : records) {
+                final Map<String, String> values = mapping.extract().isEmpty()
+                        ? Map.of()
+                        : NullSafe.map(LocalCheck.extractedValues(mapping, record));
+                final boolean ofKind = when.stream().allMatch(condition -> {
+                    final String held = valueOf(record, values, text(condition.get("field")));
+                    return condition.get(SourceNotes.MATCHES) != null
+                            ? SourceNotes.matches(condition, held)
+                            : held != null && held.equals(text(condition.get("equals")));
+                });
+                final String rule = ofKind
+                        ? LocalCheck.ruleOf(mapping, record, values)
+                        : null;
+                if (rule != null && !rule.startsWith(DROP)) {
+                    byRule.merge(rule.isEmpty()
+                            ? "(no rule)"
+                            : rule, 1, Integer::sum);
+                }
+            }
+            byRule.forEach((rule, count) -> warnings.add("dropped kind " + key + ": " + count + " sample records are "
+                                                         + "translated by rule '" + rule + "', though the user said "
+                                                         + "to leave them untranslated: give them a drop rule "
+                                                         + "(drop_when) before it"));
+        }
+        return warnings;
     }
 
     /// @param lost The confirmed kinds translated otherwise.

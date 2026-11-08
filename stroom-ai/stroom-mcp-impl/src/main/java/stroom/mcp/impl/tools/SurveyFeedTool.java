@@ -110,9 +110,11 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     private static final int MORE_EXAMPLE_CHARS = 300;
     // Formats of one record a line, read from a window as from the head; not XML, a JSON document, or records of
     // several lines, whose records a window can't be started in.
+    // Lines of mixed formats too (seen in testing: a NetScaler stream read to its 10,000th record was never offered
+    // deeper, and kinds only further in were found at processing).
     private static final Set<String> WINDOWED = Set.of(RecordSplitter.DELIMITED, RecordSplitter.JSON_LINES,
             SampleProfiler.KEY_VALUE_FORMAT, SampleProfiler.CEF_FORMAT, SampleProfiler.CRI,
-            RecordSplitter.UNKNOWN_TEXT);
+            RecordSplitter.UNKNOWN_TEXT, SampleProfiler.MIXED_LINES);
     static final String MAX_PARTS_ARG = "max_parts_per_stream";
     /// The most parts of a stream read.
     static final int MAX_PARTS = 20;
@@ -476,7 +478,18 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             result.put("new_shapes", 0);
             result.put("locations", List.of());
             result.put("time_range", span);
-            result.put("hint", "Every stream in the feed has been read: the survey is complete.");
+            final List<Long> inPart = unsettled(state);
+            if (inPart.isEmpty()) {
+                result.put("hint", "Every stream in the feed has been read: the survey is complete.");
+            } else {
+                // Seen in testing: a stream read to its 10,000th record of many more, then a call with no streams
+                // left to pick said the survey was complete, and kinds only further in were found at processing.
+                result.put("saturated", false);
+                result.put("coverage", "NOT COVERED: stream(s) " + inPart + " read only in part");
+                result.put("hint", "Every stream in the feed has been read, but " + inPart + " only in part: call "
+                                   + NAME + " with stream_ids " + inPart + " to read them further (the user is "
+                                   + "asked how far).");
+            }
             noteGone(result, gone, dropped);
             return keep(context, kept, result, Map.of());
         }
@@ -513,6 +526,20 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         noteDepth(result, reading, depth);
         noteGone(result, gone, dropped);
         return keep(context, kept, result, shapes.shapes());
+    }
+
+    // The streams the survey state says were read only in part, less those whose parts the user settled (read to
+    // their end, or chose to stop).
+    private static List<Long> unsettled(final Map<String, Object> state) {
+        if (state == null) {
+            return List.of();
+        }
+        final Map<Long, Boolean> settled = new LinkedHashMap<>();
+        depthOf(state).values().forEach(part -> settled.merge(part.stream(), part.settled(), Boolean::logicalAnd));
+        return JsonValues.listOrEmpty(state.get(SurveyDoc.STREAMS_IN_PART)).stream()
+                .map(id -> ((Number) id).longValue())
+                .filter(id -> !settled.getOrDefault(id, false))
+                .toList();
     }
 
     // Each part's depth as the survey state keeps it, by stream:part.
@@ -734,8 +761,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             if (holdsLineBreaks(chunk)) {
                 reading.quotedNewlinesIn.add(meta.getId());
             }
-            final boolean windowed = head.truncated() && WINDOWED.contains(chunk.format())
-                                     && !holdsLineBreaks(chunk);
+            final boolean windowed = head.truncated() && windowable(chunk);
             final List<Long> picks;
             if (limits.whole()) {
                 // In order from the part's start, so reading it deeper goes on from there; the windows (a quarter of
@@ -774,7 +800,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                       && picks.size() == chunk.records().size();
             if (!partWhole) {
                 inPart = true;
-                if (limits.whole() && WINDOWED.contains(chunk.format()) && !holdsLineBreaks(chunk)) {
+                if (limits.whole() && windowable(chunk)) {
                     reading.partial.add(new SurveyDepth.Part(meta.getId(), part, picks.size(), ranges,
                             chunk.header(), chunk.format(), partSize(meta.getId(), part),
                             estimate(head, meta.getId(), part, picks.size()), false, null));
@@ -854,7 +880,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             final boolean tail = w == windows.size() - 1;
             final RecordSplitter.Chunk more;
             try {
-                more = RecordSplitter.split(chunk.header() == null
+                more = RecordSplitter.splitAs(chunk.format(), chunk.header() == null
                         ? window.text()
                         : chunk.header() + "\n" + window.text(), tail
                         ? take * SPLIT_MORE
@@ -882,6 +908,17 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             ranges.add(List.of(firstRecord + from, (long) (to - from)));
         }
         return new WindowsRead(read, records, newShapes, ranges);
+    }
+
+    // Whether a part can be read further in than its head, from a window as from its start: a record a line. Not
+    // when a record spans lines (a delimited quoted value, or mixed lines with the lines that continue an entry),
+    // whose records a window can't be started in.
+    private static boolean windowable(final RecordSplitter.Chunk chunk) {
+        if (!WINDOWED.contains(chunk.format()) || holdsLineBreaks(chunk)) {
+            return false;
+        }
+        return !SampleProfiler.MIXED_LINES.equals(chunk.format())
+               || chunk.records().stream().noneMatch(record -> record.indexOf('\n') >= 0);
     }
 
     // Whether delimited records hold a quoted value over several lines, which the record splitter reads whole.
@@ -931,6 +968,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         result.put("format", reading.format);
         result.put("time_range", outcome.span());
         result.put("streams_read", readIds);
+        if (!partly.isEmpty()) {
+            result.put(SurveyDoc.STREAMS_IN_PART, partly);
+        }
         result.put("records_read", reading.recordsRead);
         if (RecordSplitter.XML.equals(reading.format) && NullSafe.isNonEmptyString(reading.firstChunk.root())) {
             // An XML document's root, with its namespace, which its records (the examples) inherit.

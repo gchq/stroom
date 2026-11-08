@@ -31,7 +31,9 @@ import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.draft.LocalCheck;
+import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.generation.XPathRegex;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.shared.AiToolCategory;
 import stroom.security.shared.DocumentPermission;
@@ -46,6 +48,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -85,6 +88,11 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     // A proposal's keys, as given and as kept in the notes (a catalogue event's, as record_source_notes takes them).
     private static final String FIELD = "field";
     private static final String VALUE = "value";
+    private static final String MATCHES = SourceNotes.MATCHES;
+    private static final String NAMES = SourceNotes.NAMES;
+    private static final String WITHIN = RecordSourceNotesTool.WITHIN;
+    // A pattern's within when no kinds are told apart: every record.
+    private static final String EVERY_RECORD = "*";
     private static final String EVENT = "event";
     private static final String TITLE = "title";
     private static final String PRODUCT = "product";
@@ -124,11 +132,24 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private static final String MEDIUM = "medium";
     private static final String LOW = "low";
     private static final List<String> CONFIDENCES = List.of(HIGH, MEDIUM, LOW);
+    // How events are told apart, said wherever the agent is sent to the splitter (asked for by the user after chat
+    // 166: a Data Splitter part made for each wording of sshd's messages, sshd_invalid_user, sshd_failed_password...).
+    private static final String ONE_PART_A_FORMAT = "A Data Splitter part is a line format, not an event: where a "
+                                                    + "word of each record names its event (NetScaler's 'SSLVPN "
+                                                    + "LOGIN'), read it into a field of the format's part; never make "
+                                                    + "a part for each wording of a message. Events said in free text "
+                                                    + "(sshd's 'Failed password for', 'Invalid user') are told apart "
+                                                    + "by patterns: propose one kind each, with field (the message), "
+                                                    + "matches (a regex, its capture groups named in names: the user, "
+                                                    + "an address) and within (the listed kind they split); the user "
+                                                    + "confirms them, and what they leave stays to classify.";
 
     // A result's keys.
     private static final String STATUS = "status";
     // A result's status when its table is for the user, as it is.
     private static final String NEEDS_SHOWING = "needs_showing";
+    // How long a shown set stays in view for its form: past it, the set is shown again before the form.
+    private static final long SHOWN_FRESH_MS = 90_000;
     private static final String HINT = "hint";
     private static final String TABLE = "table";
     private static final String RECORDED = "recorded";
@@ -260,6 +281,18 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         return ObjectSchema.builder()
                 .addStringProperty(FIELD, "The field the kind is told by, as listed.")
                 .addStringProperty(VALUE, "Its value for this kind, as listed.")
+                .addStringProperty(MATCHES, "In place of value, to tell apart events said in free text inside a "
+                                            + "listed kind (a catch_all): a regex (XPath's: no lookaround) its "
+                                            + "field matches, e.g. field 'message', matches '^Failed password for "
+                                            + "(?:invalid user )?(\\S+) from (\\S+)'. One proposal for each event "
+                                            + "of the kind, each with within.")
+                .addStringProperty(WITHIN, "The listed kind (field=value, e.g. 'variant=syslog') whose records this "
+                                           + "proposal tells apart: with matches, by a pattern; with value, by "
+                                           + "another field's value (field 'event_id', value 'LOGIN', within "
+                                           + "'category=SSLVPN'), not a pattern such as '^LOGIN$'.")
+                .addProperty(NAMES, stringArraySchema("With matches: a name for each capture group, the field it "
+                                                      + "reads (e.g. ['user', 'src_ip']), which actor and affected "
+                                                      + "may name. Each name once in the build."))
                 .addStringProperty(EVENT, "The kind's name or id (the value when left out).")
                 .addStringProperty(TITLE, "A short name for the kind, the heading the user reads, e.g. 'SQL "
                                             + "injection signature'.")
@@ -281,7 +314,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 .addBooleanProperty(DROP, "With from_user, true for a kind the user said to leave untranslated: "
                                           + "kept as settled (not classified) and left out of later rounds; give "
                                           + "it a drop rule in the mapping (drop_when).")
-                .required(FIELD, VALUE, DESCRIPTION)
+                .required(FIELD, DESCRIPTION)
                 .build();
     }
 
@@ -306,7 +339,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 NullSafe.nonBlankStringElse(ToolText.str(notesNow.getOrDefault("source", "")), build));
         final List<Map<?, ?>> proposals = RecordSourceNotesTool.objects(call, PROPOSALS_ARG);
         final Map<String, Object> result = !proposals.isEmpty()
-                ? proposed(context, build, source, notesNow, proposals)
+                ? proposed(call, context, build, source, notesNow, proposals)
                 : confirming(call)
                         ? confirmed(call, context, build, source, notesNow)
                         : listed(call, context, build, source, notesNow);
@@ -324,35 +357,25 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                        final String build,
                                        final String source,
                                        final Map<String, Object> notesNow) {
-        List<Long> streams = StartOnboardingTool.streamIds(call, STREAM_IDS_ARG);
-        if (streams.isEmpty()) {
-            streams = plan.rawSampleStreams(build, MAX_SAMPLE_STREAMS);
-        }
-        if (streams.isEmpty()) {
-            throw new ToolRefusal("No sample streams: upload the samples first, or give stream_ids");
-        }
-        final Map<String, String> samples = sampleStreamTexts.read(streams).texts();
-        SplitterSpec splitter = BuildTranslationXsltTool.Request.splitter(rawArg(call, SPLITTER_ARG));
-        String readWith = null;
-        if (splitter == null) {
-            // The build's saved Data Splitter, where it has one (seen in chat 163: called without splitter six times,
-            // the records read with a spec inferred afresh, two giant catch-alls each time, then called again with
-            // the spec).
-            final Optional<Map.Entry<String, String>> saved = builds.dataSplitter(build, null);
-            if (saved.isPresent()) {
-                splitter = SplitterSpec.ofConverter(saved.get().getValue());
-                readWith = saved.get().getKey();
-            }
-        }
-        final Map<String, Object> draft = DraftMapping.draft(List.copyOf(samples.values()), source, null, null, null,
-                null, splitter);
-        @SuppressWarnings("unchecked") final Map<String, Object> mapping = (Map<String, Object>) draft.get(MAPPING);
-        final List<Map<String, Object>> records = unpacked(DraftMapping.records(samples, splitter).records(),
-                mapping);
-        final List<Kind> kinds = kinds(draft, records);
-        final String variantField = variantField(draft, records);
+        final Sampled read = sampled(call, build, source);
+        final Map<String, String> samples = read.samples();
+        final String readWith = read.readWith();
+        final List<Map<String, Object>> records = read.records();
+        final String variantField = read.variantField();
         final List<String> recordFields = recordFields(records);
-        final Set<String> settled = settled(notesNow);
+        final Set<String> settled = new LinkedHashSet<>(settled(notesNow));
+        // Kinds the confirmed patterns within them split: what the patterns leave; settled once they leave none.
+        final List<Kind> kinds = new ArrayList<>();
+        for (final Kind kind : read.kinds()) {
+            final List<Map<String, Object>> patterns = patternsWithin(notesNow, kind.key());
+            final Kind left = patterns.isEmpty()
+                    ? kind
+                    : kind.rest(unmatched(kind.members(), patterns));
+            if (!patterns.isEmpty() && left.records() == 0) {
+                settled.add(kind.key());
+            }
+            kinds.add(left);
+        }
         // Not those the user rejected: the agent asks what they are, and they stay out of later rounds.
         final List<String> rejected = JsonValues.strings(notesNow.get(RecordSourceNotesTool.REJECTED));
         // Nor those the user said to leave untranslated (seen in chat 163: a kind the user said to drop put to them
@@ -369,10 +392,29 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         }
         result.put("kinds_found", kinds.size());
         result.put("already_settled", kinds.stream().map(Kind::key).filter(settled::contains).toList());
+        // Counted against every kind's records, those confirmed splits cover too (seen in chat 169: "1753 of the 2000
+        // records are in no kind listed" once the splits had covered them).
+        final String unlisted = unlisted(read.kinds(), records);
+        if (!unlisted.isEmpty()) {
+            result.put("unlisted_records", unlisted);
+        }
         final Optional<String> freeText = kinds.size() <= 1
                 ? freeTextField(records, variantField)
                 : Optional.empty();
-        if (freeText.isPresent()) {
+        final List<Map<String, Object>> everyRecord = patternsWithin(notesNow, EVERY_RECORD);
+        if (freeText.isPresent() && !everyRecord.isEmpty()) {
+            // Told apart by the user's confirmed patterns: done once they match every record; else what they leave.
+            final List<Map<String, Object>> left = unmatched(records, everyRecord);
+            if (!left.isEmpty()) {
+                result.put(TO_CLASSIFY, List.of());
+                result.put("patterns_leave", Map.of(EVERY_RECORD, Map.of(RECORDS, left.size(), "examples",
+                        examples(left))));
+                result.put(HINT, left.size() + " of the " + records.size() + " records match none of the confirmed "
+                                 + "patterns: propose patterns for their kinds too (within '*'), or call with "
+                                 + "one_kind=true if the rest are one kind of event.");
+                return result;
+            }
+        } else if (freeText.isPresent()) {
             // None told apart, yet the records say what happened in free text: likely several kinds, which the user
             // confirms once a field names them (seen in chat 162: a splitter reading timestamp, host and message, so
             // "nothing to classify", the step done, and some 25 rules written by hand, none put to the user).
@@ -388,9 +430,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                     Map.of(RecordSourceNotesTool.RECORD_FIELDS, recordFields, RecordSourceNotesTool.PROPOSED,
                             List.of())));
             result.put(TO_CLASSIFY, List.of());
-            result.put(HINT, kinds.size() <= 1
+            result.put(HINT, (kinds.size() <= 1
                     ? "One kind of event (or none told apart): nothing to classify. Go on to the draft."
-                    : "Every kind is settled by the documentation or the user: go on to the draft.");
+                    : "Every kind is settled by the documentation or the user: go on to the draft.") + unlisted);
             return result;
         }
         // Each kind's first record, shown with its proposal.
@@ -419,16 +461,106 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                            + "marked catch_all is a whole format's records, not one event: at most medium."
                            + (batch.stream().anyMatch(Kind::catchAll)
                 ? " A catch_all kind may hold several kinds of event (seen: a syslog format's records, the "
-                  + "product's event names left inside the message): if its records name their event, refine the "
-                  + "splitter (build_data_splitter) so a field holds the name, save it, and list again, so the "
-                  + "user confirms each kind; else propose it as one."
-                : ""));
+                  + "product's event names left inside the message): if a word of its records names their event, "
+                  + "read it into a field (build_data_splitter), save it, and list again, so the user confirms each "
+                  + "kind; else propose a pattern for each of its events (matches, within), or it as one. "
+                  + ONE_PART_A_FORMAT
+                : "") + unlisted);
         return result;
+    }
+
+    // The records no kind listed takes (a rule without conditions has them, which no one is asked about), said for the
+    // agent; empty when every record is in a kind. Seen in chat 165: three kinds listed of some 4,000 records, the
+    // rest in the draft's catch-all, and "every kind is classified" said.
+    private static String unlisted(final List<Kind> kinds, final List<Map<String, Object>> records) {
+        final int listed = kinds.stream().mapToInt(Kind::records).sum();
+        final int left = records.size() - listed;
+        if (left <= 0) {
+            return "";
+        }
+        return " " + left + " of the " + records.size() + " records are in no kind listed (the draft's rule for the "
+               + "rest takes them, and no one is asked about it): if a word of theirs names their event, read it "
+               + "into a field (build_data_splitter), save it and list again; never take this listing as covering "
+               + "them. " + ONE_PART_A_FORMAT;
+    }
+
+    // The sample's records as the draft reads them, the kinds it tells apart in them, and how they were read.
+    private Sampled sampled(final ToolCall call, final String build, final String source) {
+        List<Long> streams = StartOnboardingTool.streamIds(call, STREAM_IDS_ARG);
+        if (streams.isEmpty()) {
+            streams = plan.rawSampleStreams(build, MAX_SAMPLE_STREAMS);
+        }
+        if (streams.isEmpty()) {
+            throw new ToolRefusal("No sample streams: upload the samples first, or give stream_ids");
+        }
+        final Map<String, String> samples = sampleStreamTexts.read(streams).texts();
+        SplitterSpec splitter = BuildTranslationXsltTool.Request.splitter(rawArg(call, SPLITTER_ARG));
+        String readWith = null;
+        if (splitter == null) {
+            // The build's saved Data Splitter, where it has one (seen in chat 163: called without splitter six times,
+            // the records read with a spec inferred afresh, two giant catch-alls each time, then called again with
+            // the spec).
+            final Optional<Map.Entry<String, String>> saved = builds.dataSplitter(build, null);
+            if (saved.isPresent()) {
+                splitter = SplitterSpec.ofConverter(saved.get().getValue());
+                readWith = saved.get().getKey();
+            }
+        }
+        final Map<String, Object> draft = DraftMapping.draft(List.copyOf(samples.values()), source, null, null, null,
+                null, splitter);
+        @SuppressWarnings("unchecked") final Map<String, Object> mapping = (Map<String, Object>) draft.get(MAPPING);
+        final List<Map<String, Object>> records = unpacked(DraftMapping.records(samples, splitter).records(),
+                mapping);
+        return new Sampled(samples, readWith, records, kinds(draft, records), variantField(draft, records));
+    }
+
+    // A pattern proposal's key: the kind it is within, its field and its pattern.
+    private static String patternKey(final Map<?, ?> item) {
+        return ToolText.str(item.get(WITHIN)) + ": " + told(item);
+    }
+
+    // What tells a split's records: its field's value, or the pattern it matches.
+    private static String told(final Map<?, ?> item) {
+        return SourceNotes.isPattern(item)
+                ? ToolText.str(item.get(FIELD)) + " matches " + ToolText.str(item.get(MATCHES))
+                : ToolText.str(item.get(FIELD)) + " = " + ToolText.str(item.get(VALUE));
+    }
+
+    // The fields a proposal's actor and affected may name: the records', and a pattern's capture groups'.
+    private static List<String> fieldsFor(final Map<?, ?> item,
+                                          final List<String> recordFields,
+                                          final Patterned patterned) {
+        final List<String> fields = new ArrayList<>(recordFields);
+        if (item.get(NAMES) instanceof final List<?> names) {
+            names.forEach(name -> fields.add(ToolText.str(name)));
+        }
+        if (patterned != null) {
+            fields.addAll(patterned.confirmedNames);
+        }
+        return fields;
+    }
+
+    // The confirmed events within a listed kind: patterns, or values of another field, that split it.
+    private static List<Map<String, Object>> patternsWithin(final Map<String, Object> notesNow, final String kind) {
+        return JsonValues.maps(notesNow.get("events")).stream()
+                .filter(SourceNotes::isSplit)
+                .filter(event -> kind.equals(ToolText.str(event.get(WITHIN))))
+                .toList();
+    }
+
+    // The records none of the splits holds (no pattern matches, no value is).
+    private static List<Map<String, Object>> unmatched(final List<Map<String, Object>> records,
+                                                       final List<? extends Map<?, ?>> patterns) {
+        return records.stream()
+                .filter(record -> patterns.stream().noneMatch(pattern -> SourceNotes.holds(pattern,
+                        valueText(record.get(ToolText.str(pattern.get(FIELD)))))))
+                .toList();
     }
 
     // The proposals: the user's own recorded as they said them; the agent's kept for the chat (the table, which a
     // form can't show: the chat renders Markdown, a form's fields plain text) and the short form that follows.
-    private Map<String, Object> proposed(final ToolCallContext context,
+    private Map<String, Object> proposed(final ToolCall call,
+                                         final ToolCallContext context,
                                          final String build,
                                          final String source,
                                          final Map<String, Object> notesNow,
@@ -440,10 +572,28 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final List<String> rated = new ArrayList<>();
         final List<String> unknownFields = new ArrayList<>();
         final List<String> drops = new ArrayList<>();
+        // Patterns within a listed kind are matched against its records, read again (asked for by the user after chat
+        // 166: events said in free text told apart by patterns the agent proposes and the user confirms).
+        final Patterned patterned = given.stream().anyMatch(item -> SourceNotes.isPattern(item)
+                                                                    || SourceNotes.isSplit(item))
+                ? new Patterned(sampled(call, build, source), notesNow)
+                : null;
         for (int i = 0; i < given.size(); i++) {
             final Map<?, ?> item = given.get(i);
-            final String key = ToolText.str(item.get(FIELD)) + "=" + ToolText.str(item.get(VALUE));
+            // A split of a listed kind: by a pattern, or by another field's value (event_id=LOGIN within
+            // category=SSLVPN, not a pattern '^LOGIN$', as seen in chat 168).
+            final boolean pattern = SourceNotes.isPattern(item) || SourceNotes.isSplit(item);
+            final String key = pattern
+                    ? patternKey(item)
+                    : ToolText.str(item.get(FIELD)) + "=" + ToolText.str(item.get(VALUE));
             final boolean fromUser = isTrue(item.get(FROM_USER));
+            if (pattern) {
+                final Optional<String> problem = patterned.add(i, item, key, pending, fromUser);
+                if (problem.isPresent()) {
+                    problems.add(problem.get());
+                    continue;
+                }
+            }
             if (isTrue(item.get(DROP))) {
                 if (fromUser) {
                     drops.add(key);
@@ -464,7 +614,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             if (lowered) {
                 rated.add(key);
             }
-            if (!fromUser && !pending.contains(key)) {
+            if (!fromUser && !pattern && !pending.contains(key)) {
                 problems.add("proposals[" + i + "]: " + key + " isn't a kind still to classify (" + String.join(
                         ", ", pending) + ")");
             } else if (!fromUser && !CONFIDENCES.contains(confidence)) {
@@ -476,10 +626,12 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 // Seen in chat 160: the agent proposed a catch-all as Unknown, leaving the events in it (a
                 // gateway's logons, a host's sudo commands) for the mapping, never put to the user.
                 problems.add("proposals[" + i + "]: " + key + " is a catch_all kind (a format's records, the "
-                             + "events in it not told apart), so not Unknown: if its records name their event, "
-                             + "refine the splitter (build_data_splitter) so a field holds the name, save it, and "
-                             + "list again; else classify it as the one kind of event it is");
-            } else if (unknownField(item, ACTOR, recordFields) || unknownField(item, AFFECTED, recordFields)) {
+                             + "events in it not told apart), so not Unknown: if a word of its records names their "
+                             + "event, read it into a field (build_data_splitter), save it, and list again; else "
+                             + "propose a pattern for each of its events (matches, within), or classify it as the one "
+                             + "kind of event it is. " + ONE_PART_A_FORMAT);
+            } else if (unknownField(item, ACTOR, fieldsFor(item, recordFields, patterned))
+                       || unknownField(item, AFFECTED, fieldsFor(item, recordFields, patterned))) {
                 // Seen in the agent eval: a label from the text ('By User') given for a field, the event's user
                 // then drafted empty.
                 unknownFields.add("proposals[" + i + "]");
@@ -491,6 +643,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             // The fields listed once, not for each proposal (seen in chat 161: some 80 fields, three times over).
             problems.add(String.join(", ", unknownFields) + ": actor and affected name fields of the records, as "
                          + "listed (" + String.join(", ", recordFields) + "), or are left out");
+        }
+        if (patterned != null) {
+            problems.addAll(patterned.overlaps());
         }
         if (!problems.isEmpty()) {
             throw new ToolRefusal("Nothing recorded: " + String.join("; ", problems));
@@ -514,6 +669,11 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                     }
                 }
                 final String key = proposals.get(i).key();
+                if (patterned != null && patterned.matched.containsKey(key)) {
+                    // A pattern's own records: how many of its kind's, and the first as logged.
+                    entry.put(RECORDS, patterned.matched.get(key).size());
+                    entry.put(SAMPLE, patterned.sampleOf(key));
+                }
                 JsonValues.maps(notesNow.get(SAMPLES)).stream()
                         .filter(sample -> key.equals(sample.get(KEY)))
                         .findFirst()
@@ -527,12 +687,28 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 toConfirm.add(entry);
             }
         }
+        final Set<String> recorded = new LinkedHashSet<>();
+        proposals.stream().filter(Proposal::fromUser).forEach(proposal -> recorded.add(proposal.key()));
+        final List<String> left = pending.stream()
+                .filter(key -> !recorded.contains(key) && !drops.contains(key))
+                .toList();
+        // Added to those still to confirm, a kind proposed again replacing its earlier proposal (seen in chat 168:
+        // one more proposal sent before the form replaced the 18 shown, and the user confirmed only it).
+        final Set<String> proposedNow = new LinkedHashSet<>();
+        toConfirm.forEach(entry -> proposedNow.add(String.valueOf(entry.get(KEY))));
+        final List<Map<String, Object>> kept = new ArrayList<>(JsonValues.maps(notesNow.get(
+                RecordSourceNotesTool.PROPOSED)).stream()
+                .filter(entry -> !recorded.contains(String.valueOf(entry.get(KEY)))
+                                 && !drops.contains(String.valueOf(entry.get(KEY)))
+                                 && !proposedNow.contains(String.valueOf(entry.get(KEY))))
+                .map(LinkedHashMap::new)
+                .toList());
+        kept.addAll(toConfirm);
         // High confidence first, then medium, then low: the order the sets are put to the user; each with its place
         // among those of its confidence, for the heading's range (asked for by the user: "1-10 of 21").
-        toConfirm.sort(Comparator.comparingInt(entry -> CONFIDENCES
-                .indexOf(String.valueOf(entry.get(CONFIDENCE)))));
+        kept.sort(Comparator.comparingInt(entry -> CONFIDENCES.indexOf(String.valueOf(entry.get(CONFIDENCE)))));
         for (final String confidence : CONFIDENCES) {
-            final List<Map<String, Object>> ofConfidence = toConfirm.stream()
+            final List<Map<String, Object>> ofConfidence = kept.stream()
                     .filter(entry -> confidence.equals(entry.get(CONFIDENCE)))
                     .toList();
             for (int i = 0; i < ofConfidence.size(); i++) {
@@ -540,23 +716,14 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 ofConfidence.get(i).put(OF, ofConfidence.size());
             }
         }
-        final Set<String> recorded = new LinkedHashSet<>();
-        fromUser.forEach(entry -> recorded.add(entry.get(FIELD) + "=" + entry.get(VALUE)));
-        final List<String> left = pending.stream()
-                .filter(key -> !recorded.contains(key) && !drops.contains(key))
-                .toList();
-        // Only the user's (a correction between the rounds, say): the proposals still to confirm stay.
-        final List<Map<String, Object>> kept = toConfirm.isEmpty()
-                ? JsonValues.maps(notesNow.get(RecordSourceNotesTool.PROPOSED)).stream()
-                        .filter(entry -> !recorded.contains(String.valueOf(entry.get(KEY)))
-                                         && !drops.contains(String.valueOf(entry.get(KEY))))
-                        .toList()
-                : toConfirm;
         final Set<String> allDropped = new LinkedHashSet<>(JsonValues.strings(notesNow.get(
                 RecordSourceNotesTool.DROPPED)));
         allDropped.addAll(drops);
-        final Map<String, Object> doc = notes.recordClassified(context, build, source, fromUser, left,
-                Map.of(RecordSourceNotesTool.PROPOSED, kept, RecordSourceNotesTool.DROPPED, List.copyOf(allDropped)));
+        final Map<String, Object> keptKeys = new LinkedHashMap<>();
+        keptKeys.put(RecordSourceNotesTool.PROPOSED, kept);
+        keptKeys.put(RecordSourceNotesTool.DROPPED, List.copyOf(allDropped));
+        keptKeys.put(RecordSourceNotesTool.SHOWN, shownMark(kept));
+        final Map<String, Object> doc = notes.recordClassified(context, build, source, fromUser, left, keptKeys);
         final Map<String, Object> result = new LinkedHashMap<>();
         if (!recorded.isEmpty()) {
             result.put(RECORDED, List.copyOf(recorded));
@@ -567,6 +734,10 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                        + "each a drop rule in the mapping (drop_when, with the user's reason).");
         }
         result.put(SOURCE_NOTES, doc);
+        if (patterned != null && !patterned.left().isEmpty()) {
+            // What the patterns leave of each kind they split: put to the agent, so none of it is taken as covered.
+            result.put("patterns_leave", patterned.left());
+        }
         if (!rated.isEmpty()) {
             result.put("rated_medium", rated);
             result.put("rated_medium_why", "Catch-all kinds (a format's records, its events not told apart): "
@@ -584,7 +755,11 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             result.put(HINT, hint(left));
             return result;
         }
-        presented(result, build, firstSet(toConfirm), context.session().isChat());
+        if (kept.size() > toConfirm.size()) {
+            result.put("added_to", (kept.size() - toConfirm.size()) + " proposals sent earlier, still to confirm: "
+                                   + "these join them, the set shown is the first of all of them");
+        }
+        presented(result, build, firstSet(kept), context.session().isChat());
         return result;
     }
 
@@ -602,6 +777,17 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                   + "back in the chat");
         }
         final List<Map<String, Object>> set = firstSet(proposed);
+        if (!freshlyShown(notesNow, set)) {
+            // Shown long ago, or another set: shown again, right before the form (seen in chat 169: the medium set
+            // shown, the agent drafting for some forty calls, then the form asking about a table far up the chat).
+            final Map<String, Object> again = new LinkedHashMap<>();
+            again.put(SOURCE_NOTES, notes.recordClassified(context, build, source, List.of(), pending(notesNow),
+                    Map.of(RecordSourceNotesTool.SHOWN, shownMark(proposed))));
+            again.put("shown_again", "The set to confirm was shown a while ago: shown again, so the user sees it "
+                                     + "above the form.");
+            presented(again, build, set, context.session().isChat());
+            return again;
+        }
         final String confidence = confidenceOf(set);
         final String accept = set.size() == 1
                 ? "Accept it"
@@ -635,6 +821,32 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                          + "reject and ask what it is; one they say to drop, send with drop: true); the next set "
                          + "then follows.");
         return result;
+    }
+
+    // What marks the set of proposals shown now: when, then its kinds (for freshlyShown).
+    private static List<String> shownMark(final List<Map<String, Object>> proposed) {
+        final List<String> mark = new ArrayList<>(List.of(String.valueOf(System.currentTimeMillis())));
+        firstSet(proposed).forEach(entry -> mark.add(String.valueOf(entry.get(KEY))));
+        return proposed.isEmpty()
+                ? List.of()
+                : mark;
+    }
+
+    // Whether the set was the last shown the user, and lately (within SHOWN_FRESH_MS), so the form follows it.
+    private static boolean freshlyShown(final Map<String, Object> notesNow, final List<Map<String, Object>> set) {
+        final List<String> mark = JsonValues.strings(notesNow.get(RecordSourceNotesTool.SHOWN));
+        if (mark.isEmpty()) {
+            return false;
+        }
+        final long at;
+        try {
+            at = Long.parseLong(mark.getFirst());
+        } catch (final NumberFormatException e) {
+            return false;
+        }
+        return System.currentTimeMillis() - at <= SHOWN_FRESH_MS
+               && mark.subList(1, mark.size()).equals(set.stream().map(entry -> String.valueOf(entry.get(KEY)))
+                .toList());
     }
 
     // Whether the answer accepts: the button's, or the user's own words saying the same.
@@ -671,7 +883,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 .filter(key -> !accepted.contains(key))
                 .toList();
         final Map<String, Object> doc = notes.recordClassified(context, build, source, confirmedEntries, left,
-                Map.of(RecordSourceNotesTool.PROPOSED, remaining));
+                Map.of(RecordSourceNotesTool.PROPOSED, remaining, RecordSourceNotesTool.SHOWN, shownMark(remaining)));
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put(RECORDED, List.copyOf(accepted));
         result.put(SOURCE_NOTES, doc);
@@ -722,8 +934,13 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             if (!ofConfidence.isEmpty()) {
                 final List<Map<String, Object>> set = new ArrayList<>();
                 for (int i = 0; i < ofConfidence.size(); i++) {
+                    // Its place among those of its confidence, as the heading's range says: a set after the first
+                    // goes on from where the one before ended (asked for by the user after chat 169: a set headed
+                    // "11-14 of 14" numbered 1 to 4).
                     final Map<String, Object> numbered = new LinkedHashMap<>(ofConfidence.get(i));
-                    numbered.put(NUMBER, i + 1);
+                    numbered.put(NUMBER, ofConfidence.get(i).get(POSITION) instanceof final Number place
+                            ? place.intValue()
+                            : i + 1);
                     set.add(numbered);
                 }
                 return set;
@@ -855,7 +1072,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             final Kind kind = new Kind(String.valueOf(told.get(FIELD)), String.valueOf(told.get(EQUALS)),
                     String.valueOf(rule.get("name")), ofKind.size(), examples(ofKind), catchAll, ofKind.isEmpty()
                     ? null
-                    : ofKind.getFirst());
+                    : ofKind.getFirst(), ofKind);
             // One kind in several rules (a rule a variant): listed once, its records counted together.
             final Kind earlier = kinds.stream().filter(k -> k.key().equals(kind.key())).findFirst().orElse(null);
             if (earlier == null) {
@@ -863,9 +1080,11 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             } else {
                 final List<Map<String, Object>> both = new ArrayList<>(earlier.examples());
                 kind.examples().stream().filter(e -> !both.contains(e) && both.size() < EXAMPLES).forEach(both::add);
+                final List<Map<String, Object>> members = new ArrayList<>(earlier.members());
+                members.addAll(kind.members());
                 kinds.set(kinds.indexOf(earlier), new Kind(earlier.field(), earlier.value(), earlier.rule(),
                         earlier.records() + kind.records(), both, earlier.catchAll() && kind.catchAll(),
-                        earlier.first()));
+                        earlier.first(), members));
             }
         }
         return kinds;
@@ -944,10 +1163,11 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         result.put(TO_CLASSIFY, List.of());
         if (!isTrue(argsMap(call).get(ONE_KIND_ARG))) {
             result.put(HINT, "No kinds told apart, yet the records say what happened in free text ('" + field + "'), "
-                             + "so they likely hold several kinds of event: refine the splitter (build_data_splitter) "
-                             + "so a field names each record's event (the survey's shapes show them), save it, and "
-                             + "call classify_kinds again with it. If they truly are one kind of event, call it with "
-                             + "one_kind=true: the user confirms it.");
+                             + "so they likely hold several kinds of event: if a word of each names its event, read "
+                             + "it into a field (build_data_splitter), save it, and call classify_kinds again; else "
+                             + "propose a pattern for each kind (field '" + field + "', matches, within '*'). If they "
+                             + "truly are one kind of event, call it with one_kind=true: the user confirms it. "
+                             + ONE_PART_A_FORMAT);
             return Optional.of(result);
         }
         final Optional<String> answer = consent.answer(call, context, NAME,
@@ -958,8 +1178,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             return Optional.empty();
         }
         result.put("user_says", answer.get());
-        result.put(HINT, "The user says the records hold these kinds: refine the splitter (build_data_splitter) so a "
-                         + "field names each, save it, and call classify_kinds again with it.");
+        result.put(HINT, "The user says the records hold these kinds: where a word of each names it, read it into a "
+                         + "field (build_data_splitter), save it, and call classify_kinds again; else propose a "
+                         + "pattern for each (matches, within). " + ONE_PART_A_FORMAT);
         return Optional.of(result);
     }
 
@@ -982,12 +1203,39 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                         ? null
                         : read.variantField();
             } catch (final IllegalArgumentException e) {
-                return records.stream().anyMatch(record -> record.containsKey(SplitterSpec.VARIANT))
-                        ? SplitterSpec.VARIANT
-                        : null;
+                // The build's saved converter: the draft has its formats' field (the agent's own name, say
+                // 'srcfmt'), as its rules test it.
+                return variantFieldOfRules(draft, records);
             }
         }
         return null;
+    }
+
+    // The field the draft's rules test first and every record holds, with a value of two or more: the formats' field
+    // of a saved converter (whose spec the draft doesn't send back); else the default variant field, where records
+    // have it.
+    @SuppressWarnings("unchecked")
+    private static String variantFieldOfRules(final Map<String, Object> draft,
+                                              final List<Map<String, Object>> records) {
+        final Map<String, Object> mapping = (Map<String, Object>) draft.get(MAPPING);
+        final Map<String, Set<String>> firstTested = new LinkedHashMap<>();
+        for (final Map<String, Object> rule : JsonValues.maps(mapping == null
+                ? null
+                : mapping.get(EVENTS))) {
+            final List<Map<String, Object>> when = JsonValues.maps(rule.get("when"));
+            if (!when.isEmpty() && when.getFirst().get(FIELD) != null && when.getFirst().get(EQUALS) != null) {
+                firstTested.computeIfAbsent(String.valueOf(when.getFirst().get(FIELD)), field -> new LinkedHashSet<>())
+                        .add(String.valueOf(when.getFirst().get(EQUALS)));
+            }
+        }
+        return firstTested.entrySet().stream()
+                .filter(entry -> entry.getValue().size() >= 2)
+                .filter(entry -> records.stream().allMatch(record -> record.containsKey(entry.getKey())))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(records.stream().anyMatch(record -> record.containsKey(SplitterSpec.VARIANT))
+                        ? SplitterSpec.VARIANT
+                        : null);
     }
 
     // Up to three of the kind's records whose values differ, each cut short.
@@ -1065,6 +1313,19 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                         ? " (" + StreamReader.thousands(count.longValue()) + " records)"
                         : ""));
             }
+            if (e.get(WITHIN) != null) {
+                // A split's kind: which records it tells apart, and how many (asked for by the user after chat 166).
+                item(lines, "Within", e.get(WITHIN));
+                item(lines, e.get(MATCHES) != null
+                        ? "Matches"
+                        : "Told by", toldText(e)
+                                       + (e.get(RECORDS) instanceof final Number count
+                        ? " (" + StreamReader.thousands(count.longValue()) + " records)"
+                        : ""));
+                item(lines, "Reads", e.get(NAMES) instanceof final List<?> names && !names.isEmpty()
+                        ? String.join(", ", names.stream().map(ToolText::str).toList())
+                        : null);
+            }
             item(lines, "Schema action", e.get(EVENT_DETAIL));
             item(lines, "Action", e.get(ACTION));
             item(lines, "Outcome", outcome(e));
@@ -1086,7 +1347,10 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final List<String> lines = new ArrayList<>(List.of(heading(HIGH, entries), "",
                 "| # | Rule | Kind | Mapping |", "| --- | --- | --- | --- |"));
         for (final Map<String, Object> e : entries) {
-            lines.add("| " + e.get(NUMBER) + " | " + cell(text(e.get(PRODUCT))) + " | " + cell(title(e)) + " | "
+            lines.add("| " + e.get(NUMBER) + " | " + cell(text(e.get(PRODUCT))) + " | " + cell(title(e)
+                      + (e.get(WITHIN) == null
+                    ? ""
+                    : " (" + toldText(e) + ")")) + " | "
                       + cell(mapping(e)) + " |");
         }
         return String.join("\n", lines);
@@ -1139,6 +1403,13 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         return ToolText.isBlank(text(e.get(TITLE)))
                 ? cut(text(e.get(DESCRIPTION)), 70)
                 : text(e.get(TITLE));
+    }
+
+    // A split's field and its value or pattern, as code.
+    private static String toldText(final Map<String, Object> e) {
+        return e.get(MATCHES) != null
+                ? "`" + text(e.get(FIELD)) + "` matching `" + text(e.get(MATCHES)) + "`"
+                : "`" + text(e.get(FIELD)) + " = " + text(e.get(VALUE)) + "`";
     }
 
     // One of what a proposal says, a row of its table, only where it has a value.
@@ -1215,13 +1486,23 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
 
 
     // A kind of event the draft tells apart: its field and value, its rule, how many records, and some of them.
+    // A kind of event: its field and value, the draft's rule, its records (counted, a few as examples, the first,
+    // and all of them, which a pattern proposed within it is matched against).
     private record Kind(String field,
                         String value,
                         String rule,
                         int records,
                         List<Map<String, Object>> examples,
                         boolean catchAll,
-                        Map<String, Object> first) {
+                        Map<String, Object> first,
+                        List<Map<String, Object>> members) {
+
+        // The kind as the records no confirmed pattern within it matches leave it.
+        Kind rest(final List<Map<String, Object>> left) {
+            return new Kind(field, value, rule, left.size(), ClassifyKindsTool.examples(left), catchAll, left.isEmpty()
+                    ? null
+                    : left.getFirst(), left);
+        }
 
         String key() {
             return field + "=" + value;
@@ -1241,13 +1522,158 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         }
     }
 
+    // The pattern proposals of a call, checked against the records of the kinds they are within: each matches some,
+    // none overlaps another, each capture group's name is its own; what they match and leave of each kind.
+    private static final class Patterned {
+
+        private final Sampled read;
+        private final Map<String, Kind> kinds = new LinkedHashMap<>();
+        private final Set<String> confirmedNames = new LinkedHashSet<>();
+        private final Set<String> namesTaken = new LinkedHashSet<>();
+        private final Map<String, List<Map<String, Object>>> matched = new LinkedHashMap<>();
+        private final Map<String, String> withinOf = new LinkedHashMap<>();
+        private final Map<String, String> titleOf = new LinkedHashMap<>();
+
+        private Patterned(final Sampled read, final Map<String, Object> notesNow) {
+            this.read = read;
+            // Every record, for patterns where no kinds are told apart.
+            final List<Map<String, Object>> all = unmatched(read.records(), patternsWithin(notesNow, EVERY_RECORD));
+            kinds.put(EVERY_RECORD, new Kind(EVERY_RECORD, EVERY_RECORD, "", all.size(), examples(all), true,
+                    all.isEmpty()
+                            ? null
+                            : all.getFirst(), all));
+            for (final Kind kind : read.kinds()) {
+                final List<Map<String, Object>> confirmed = patternsWithin(notesNow, kind.key());
+                kinds.put(kind.key(), confirmed.isEmpty()
+                        ? kind
+                        : kind.rest(unmatched(kind.members(), confirmed)));
+            }
+            JsonValues.maps(notesNow.get("events")).stream()
+                    .filter(SourceNotes::isPattern)
+                    .forEach(event -> confirmedNames.addAll(JsonValues.strings(event.get(NAMES))));
+            namesTaken.addAll(confirmedNames);
+        }
+
+        // The proposal checked and its records kept; why it can't be, if not.
+        private Optional<String> add(final int i,
+                                     final Map<?, ?> item,
+                                     final String key,
+                                     final List<String> pending,
+                                     final boolean fromUser) {
+            final String where = "proposals[" + i + "]";
+            final String within = ToolText.str(item.get(WITHIN));
+            if (within.isBlank() || !kinds.containsKey(within)) {
+                return Optional.of(where + ": a pattern is proposed within a listed kind: give within, its "
+                                   + "field=value (" + String.join(", ", kinds.keySet()) + ")");
+            }
+            if (!fromUser && !EVERY_RECORD.equals(within) && !pending.contains(within)) {
+                return Optional.of(where + ": " + within + " isn't a kind still to classify (" + String.join(", ",
+                        pending) + ")");
+            }
+            if (ToolText.isBlank(ToolText.str(item.get(TITLE))) && ToolText.isBlank(ToolText.str(item.get(EVENT)))) {
+                return Optional.of(where + ": give a title (or event) for the kind the pattern tells apart");
+            }
+            final Optional<String> regex = SourceNotes.isPattern(item)
+                    ? XPathRegex.problem(ToolText.str(item.get(MATCHES)))
+                    : Optional.empty();
+            if (regex.isPresent()) {
+                return Optional.of(where + ": matches " + ToolText.str(item.get(MATCHES)) + ": " + regex.get());
+            }
+            final Kind kind = kinds.get(within);
+            final List<Map<String, Object>> ofPattern = kind.members().stream()
+                    .filter(record -> SourceNotes.holds(item, valueText(record.get(ToolText.str(item.get(FIELD))))))
+                    .toList();
+            if (ofPattern.isEmpty()) {
+                return Optional.of(where + ": " + told(item) + " holds for none of the "
+                                   + kind.records() + " " + within + " records left to classify, e.g. "
+                                   + cut(valueText(kind.first() == null
+                        ? null
+                        : kind.first().get(ToolText.str(item.get(FIELD)))), EXAMPLE_VALUE));
+            }
+            if (item.get(NAMES) instanceof final List<?> names) {
+                for (final Object name : names) {
+                    if (!namesTaken.add(ToolText.str(name))) {
+                        return Optional.of(where + ": the name '" + name + "' is another pattern's already: give "
+                                           + "each kind's capture groups names of their own (e.g. '" + name + "_"
+                                           + ToolText.str(item.get(TITLE)).toLowerCase(Locale.ROOT)
+                                                   .replaceAll("[^a-z0-9]+", "_") + "')");
+                    }
+                }
+            }
+            matched.put(key, ofPattern);
+            withinOf.put(key, within);
+            titleOf.put(key, NullSafe.nonBlankStringElse(ToolText.str(item.get(TITLE)), ToolText.str(item.get(
+                    EVENT))));
+            return Optional.empty();
+        }
+
+        // Records two proposed patterns both match: the XSLT takes the first, so each record is one kind's.
+        private List<String> overlaps() {
+            final List<String> problems = new ArrayList<>();
+            final List<String> keys = new ArrayList<>(matched.keySet());
+            for (int a = 0; a < keys.size(); a++) {
+                for (int b = a + 1; b < keys.size(); b++) {
+                    final List<Map<String, Object>> both = new ArrayList<>(matched.get(keys.get(a)));
+                    both.retainAll(matched.get(keys.get(b)));
+                    if (!both.isEmpty()) {
+                        problems.add("'" + titleOf.get(keys.get(a)) + "' and '" + titleOf.get(keys.get(b)) + "' both "
+                                     + "match " + both.size() + " record(s): make each pattern match only its own "
+                                     + "kind's records");
+                    }
+                }
+            }
+            return problems;
+        }
+
+        // Each kind patterns were proposed within: the records none of them (nor a confirmed one) matches.
+        private Map<String, Object> left() {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            for (final String within : new LinkedHashSet<>(withinOf.values())) {
+                final List<Map<String, Object>> rest = new ArrayList<>(kinds.get(within).members());
+                withinOf.forEach((key, of) -> {
+                    if (of.equals(within)) {
+                        rest.removeAll(matched.get(key));
+                    }
+                });
+                if (!rest.isEmpty()) {
+                    out.put(within, Map.of(RECORDS, rest.size(), "examples", examples(rest),
+                            HINT, "Records of " + within + " no pattern matches: propose patterns for their kinds "
+                                  + "too, or propose " + within + " itself for what is left (it stays to classify "
+                                  + "until then)"));
+                }
+            }
+            return out;
+        }
+
+        // The first record a pattern matched, as logged.
+        private String sampleOf(final String key) {
+            final Kind of = kinds.get(withinOf.get(key));
+            final List<Map<String, Object>> records = matched.get(key);
+            // Found by its values alone: the line needn't hold the kind's value (a format's name, '*').
+            return recordText(new Kind(of.field(), of.value(), of.rule(), records.size(), List.of(), true,
+                    records.getFirst(), records), read.samples(), read.variantField());
+        }
+    }
+
+    // The sample read: its texts by name, the build's converter it was read with (or null), its records, the kinds
+    // the draft tells apart in them, and the field naming each record's format (or null).
+    private record Sampled(Map<String, String> samples,
+                           String readWith,
+                           List<Map<String, Object>> records,
+                           List<Kind> kinds,
+                           String variantField) {
+
+    }
+
     // A proposal as given: its kind, the entry, the agent's confidence, and whether the user said it.
     private record Proposal(String key, Map<?, ?> given, String confidence, boolean fromUser) {
 
         Map<?, ?> entry() {
             final Map<String, Object> out = new LinkedHashMap<>();
             given.forEach((k, v) -> out.put(String.valueOf(k), v));
-            out.putIfAbsent(EVENT, given.get(VALUE));
+            out.putIfAbsent(EVENT, given.get(VALUE) != null
+                    ? given.get(VALUE)
+                    : given.get(TITLE));
             out.remove(FROM_USER);
             out.remove(CONFIDENCE);
             return out;

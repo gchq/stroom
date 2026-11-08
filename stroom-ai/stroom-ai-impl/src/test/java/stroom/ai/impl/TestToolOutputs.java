@@ -272,4 +272,20 @@ class TestToolOutputs {
         }
         return JsonUtil.writeValueAsString(fields, false);
     }
+
+    @Test
+    void aTableTheChatShowsIsntGivenToTheModelToRepeat() {
+        // Seen in chats 168 and 169: the agent retyped the table the chat had just shown the user.
+        final String shown = "{\"status\": \"needs_showing\", \"table\": \"| # | Kind |\\n| 1 | Logon |\", "
+                             + "\"hint\": \"Call confirm=true\"}";
+
+        final String forModel = ToolOutputs.forModel(shown);
+
+        assertThat(forModel).doesNotContain("| 1 | Logon |").contains(ToolOutputs.SHOWN_TABLE)
+                .contains("Call confirm=true");
+        // Anything else as it is, a review's records too (the agent shows those).
+        final String review = "{\"status\": \"needs_review\", \"show_user\": \"records\", \"table\": \"t\"}";
+        assertThat(ToolOutputs.forModel(review)).isEqualTo(review);
+        assertThat(ToolOutputs.forModel("plain text")).isEqualTo("plain text");
+    }
 }

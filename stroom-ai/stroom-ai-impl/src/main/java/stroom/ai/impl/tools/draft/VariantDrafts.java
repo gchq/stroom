@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.regex.Pattern;
 
 /// The draft of records read by an `alternatives` splitter: each variant's records drafted on their own, as a
@@ -63,18 +63,40 @@ final class VariantDrafts {
     }
 
     /// @param read    The records, read by an alternatives spec.
-    /// @param drafter Drafts one variant's records as [DraftMapping#draft] would.
+    /// @param drafter Drafts one variant's records as [DraftMapping#draft] would, given the variant (null for the
+    ///                records no part read) and its records.
     /// @return What [DraftMapping#draft] returns, for every variant together.
-    @SuppressWarnings("unchecked")
-    static Map<String, Object> draft(final Records read, final Function<Records, Map<String, Object>> drafter) {
+    static Map<String, Object> draft(final Records read,
+                                     final BiFunction<String, Records, Map<String, Object>> drafter) {
         final SplitterSpec spec = read.spec();
-        final String field = spec.variantField();
-        final Map<String, List<Map<String, Object>>> byVariant = new LinkedHashMap<>();
         final Map<String, SplitterSpec> parts = new LinkedHashMap<>();
-        spec.parts().forEach(part -> {
-            byVariant.put(part.variant(), new ArrayList<>());
-            parts.put(part.variant(), part);
-        });
+        spec.parts().forEach(part -> parts.put(part.variant(), part));
+        return draft(read, spec.variantField(), parts, drafter);
+    }
+
+    /// As [#draft(Records, Function)], for records a saved converter read: each variant's records drafted with the
+    /// converter's spec.
+    ///
+    /// @param read     The records, read by a saved converter.
+    /// @param variants The formats it reads.
+    /// @param drafter  Drafts one variant's records as [DraftMapping#draft] would, given the variant and its
+    ///                 records.
+    /// @return What [DraftMapping#draft] returns, for every variant together.
+    static Map<String, Object> draft(final Records read,
+                                     final SplitterSpec.ConverterVariants variants,
+                                     final BiFunction<String, Records, Map<String, Object>> drafter) {
+        final Map<String, SplitterSpec> parts = new LinkedHashMap<>();
+        variants.variants().forEach(variant -> parts.put(variant, read.spec()));
+        return draft(read, variants.field(), parts, drafter);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> draft(final Records read,
+                                             final String field,
+                                             final Map<String, SplitterSpec> parts,
+                                             final BiFunction<String, Records, Map<String, Object>> drafter) {
+        final Map<String, List<Map<String, Object>>> byVariant = new LinkedHashMap<>();
+        parts.keySet().forEach(variant -> byVariant.put(variant, new ArrayList<>()));
         final List<Map<String, Object>> unread = new ArrayList<>();
         for (final Map<String, Object> record : read.records()) {
             final Object variant = record.get(field);
@@ -98,12 +120,13 @@ final class VariantDrafts {
         final List<Drafted> drafts = new ArrayList<>();
         byVariant.forEach((variant, records) -> {
             if (!records.isEmpty()) {
-                drafts.add(new Drafted(variant, drafter.apply(new Records(read.info(), records, parts.get(variant))),
+                drafts.add(new Drafted(variant, drafter.apply(variant, new Records(read.info(), records,
+                        parts.get(variant))),
                         records));
             }
         });
         if (!unread.isEmpty()) {
-            drafts.add(new Drafted(null, drafter.apply(new Records(read.info(), unread, null)), unread));
+            drafts.add(new Drafted(null, drafter.apply(null, new Records(read.info(), unread, null)), unread));
         }
         final Map<String, Object> result = merged(read, field, drafts, headerDates);
         if (!headerDates.isEmpty()) {
@@ -165,7 +188,7 @@ final class VariantDrafts {
                     events.add(forVariant(rule, prefix, condition, own));
                 }
             }
-            for (final Object entry : JsonValues.maps(drafted.mapping().get("extract"))) {
+            for (final Map<String, Object> entry : JsonValues.maps(drafted.mapping().get("extract"))) {
                 if (!extract.contains(entry)) {
                     extract.add(entry);
                 }
@@ -257,17 +280,18 @@ final class VariantDrafts {
                                      final Drafted drafted,
                                      final List<Drafted> drafts) {
         final List<Map<String, Object>> told = JsonValues.maps(rule.get(WHEN)).stream()
-                .filter(condition -> condition.get("field") != null && condition.get("equals") != null)
+                .filter(condition -> condition.get("field") != null
+                                     && (condition.get("equals") != null || condition.get(SourceNotes.MATCHES) != null))
                 .toList();
         if (told.isEmpty()) {
             return true;
         }
-        final String field = String.valueOf(told.getLast().get("field"));
-        final String value = String.valueOf(told.getLast().get("equals"));
-        if (holds(drafted.records(), field, value)) {
+        final Map<String, Object> last = told.getLast();
+        final String field = String.valueOf(last.get("field"));
+        if (holds(drafted.records(), last)) {
             return true;
         }
-        if (drafts.stream().anyMatch(other -> holds(other.records(), field, value))) {
+        if (drafts.stream().anyMatch(other -> holds(other.records(), last))) {
             return false;
         }
         return drafts.stream()
@@ -277,7 +301,14 @@ final class VariantDrafts {
                 .orElse(true);
     }
 
-    private static boolean holds(final List<Map<String, Object>> records, final String field, final String value) {
+    // Whether any of the records meets the condition: its field equal to the value, or matching the pattern.
+    private static boolean holds(final List<Map<String, Object>> records, final Map<String, Object> condition) {
+        final String field = String.valueOf(condition.get("field"));
+        if (condition.get(SourceNotes.MATCHES) != null) {
+            return records.stream().anyMatch(record -> record.get(field) instanceof final String value
+                                                       && SourceNotes.matches(condition, value));
+        }
+        final String value = String.valueOf(condition.get("equals"));
         return records.stream().anyMatch(record -> value.equals(String.valueOf(record.get(field))));
     }
 

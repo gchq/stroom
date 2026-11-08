@@ -105,6 +105,30 @@ final class MappingSampleCheck {
                                      final boolean inferred,
                                      final Clock clock,
                                      final List<Map<String, Object>> events) {
+        return check(mapping, samples, splitter, schema, inferred, clock, events, List.of());
+    }
+
+    /// As the others, with the kinds the user said to leave untranslated checked too: any a rule still translates
+    /// is warned of.
+    ///
+    /// @param mapping  The mapping.
+    /// @param samples  The sample's texts.
+    /// @param splitter The Data Splitter spec that reads text, or null.
+    /// @param schema   The event-logging schema.
+    /// @param inferred True if the spec was inferred from the sample rather than given.
+    /// @param clock    The clock the check's time is read against.
+    /// @param events   The catalogue events of the build's source notes.
+    /// @param dropped  The dropped kinds' keys ([stroom.ai.impl.tools.draft.SourceNotes#DROPPED]).
+    /// @return As the others.
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    static Map<String, Object> check(final TranslationMapping mapping,
+                                     final List<String> samples,
+                                     final SplitterSpec splitter,
+                                     final EventSchema schema,
+                                     final boolean inferred,
+                                     final Clock clock,
+                                     final List<Map<String, Object>> events,
+                                     final List<String> dropped) {
         final Instant deadline = clock.instant().plus(CHECK_TIME);
         final LocalCheck.SampleRecords found = LocalCheck.sampleRecords(mapping, samples, splitter);
         final Map<String, Object> check = new LinkedHashMap<>(LocalCheck.checkMapping(mapping, found.records()));
@@ -119,6 +143,7 @@ final class MappingSampleCheck {
         warnings.addAll(PlaceholderChoices.warnings(placeholders));
         // Data a rule's own records never hold.
         warnings.addAll(LocalCheck.dataNotHeld(mapping, found.records()));
+        warnings.addAll(LocalCheck.mapKeysNotHeld(mapping, found.records()));
         // Rules the sample never reached: this check says nothing of them.
         final List<String> unreached = LocalCheck.rulesUnreached(mapping, found.records());
         if (!unreached.isEmpty()) {
@@ -147,6 +172,8 @@ final class MappingSampleCheck {
             missing.forEach(p -> warnings.add(p + " (the sample was read with an inferred Data Splitter: give "
                                               + "splitter if the build's converter names its fields otherwise)"));
         }
+        // Kinds the user said to drop that a rule still translates.
+        warnings.addAll(ConfirmedKinds.undropped(mapping, found.records(), dropped));
         check.put("problems", problems);
         check.put("warnings", warnings);
         check.put(DOMAIN_QUALIFIED, qualified);

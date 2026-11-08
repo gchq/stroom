@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.draft;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemasWorld;
@@ -293,6 +294,103 @@ class TestSourceNotes {
 
         assertThat(list(mapping.get("events"))).extracting(rule -> rule.get("name"))
                 .containsExactly("log_on", "log_on_");
+    }
+
+    @Test
+    void anEventSaidInFreeTextIsARuleMatchingItsPatternItsGroupsReadAsFields() {
+        // Asked for by the user after chat 166: sshd's events told apart by patterns, not by splitter parts.
+        final List<String> names = List.of("time", "host", "app", "message");
+        final Map<String, List<String>> values = Map.of(
+                "time", List.of("2026-11-06T09:00:00Z"), "host", List.of("jump01"), "app", List.of("sshd"),
+                "message", List.of("Failed password for alice from 10.0.0.1 port 22 ssh2",
+                        "Accepted publickey for bob from 10.0.0.2 port 22 ssh2",
+                        "Server listening on 0.0.0.0 port 22."));
+        final Map<String, Object> notes = new LinkedHashMap<>();
+        notes.put("events", List.of(
+                entry("event", "sshd", "description", "Any other sshd line", "event_detail", "Unknown", "field",
+                        "app", "value", "sshd"),
+                entry("event", "Failed password", "description", "A password was refused", "event_detail",
+                        "Authenticate", "action", "Logon", "success", false, "field", "message", "matches",
+                        "^Failed password for (?:invalid user )?(\\S+) from (\\S+)", "names",
+                        List.of("ssh_user", "ssh_src"), "actor", "ssh_user", "within", "app=sshd"),
+                entry("event", "Accepted publickey", "description", "A key was accepted", "event_detail",
+                        "Authenticate", "action", "Logon", "success", true, "field", "message", "matches",
+                        "^Accepted publickey for (\\S+) from (\\S+)", "names", List.of("key_user", "key_src"),
+                        "actor", "key_user")));
+        final Map<String, Object> mapping = mapping(new ArrayList<>(), new ArrayList<>(List.of(other())));
+
+        final Map<String, Object> applied = SourceNotes.applyToDraft(mapping, names, values, notes, CHECK);
+
+        final List<Map<String, Object>> rules = list(mapping.get("events"));
+        // The patterns first: the rule for the rest of sshd's lines would otherwise take theirs.
+        // Within the kind it splits: only sshd's lines, as the user confirmed it.
+        assertThat(rules).extracting(rule -> String.valueOf(rule.get("when"))).startsWith(
+                "[{field=app, equals=sshd}, {field=message, matches=^Failed password for (?:invalid user )?(\\S+) "
+                + "from (\\S+)}]",
+                "[{field=message, matches=^Accepted publickey for (\\S+) from (\\S+)}]",
+                "[{field=app, equals=sshd}]");
+        final Map<String, Object> failed = rules.getFirst();
+        assertThat(list(failed.get("fields"))).contains(
+                entry("path", "EventDetail/TypeId", "value", "Failed password"),
+                entry("path", "EventSource/User/Id", "field", "ssh_user"),
+                entry("path", "EventDetail/Authenticate/Outcome/Success", "value", "false"));
+        // Each pattern's groups read by an extract entry of its own.
+        assertThat(list(mapping.get("extract"))).containsExactly(
+                entry("field", "message", "regex", "^Failed password for (?:invalid user )?(\\S+) from (\\S+)",
+                        "names", List.of("ssh_user", "ssh_src")),
+                entry("field", "message", "regex", "^Accepted publickey for (\\S+) from (\\S+)", "names",
+                        List.of("key_user", "key_src")));
+        assertThat(String.valueOf(applied.get("unread_fields"))).doesNotContain("ssh_user");
+        // A message is no value to list as missing from the catalogue.
+        assertThat((List<?>) applied.get("not_in_catalogue")).noneMatch(item -> String.valueOf(item)
+                .startsWith("message="));
+
+        // The mapping checked against the patterns: a rule for each, or said.
+        assertThat(SourceNotes.checkMapping(mapping, notes)).isEmpty();
+        final Map<String, Object> without = new LinkedHashMap<>(mapping);
+        without.put("events", rules.subList(1, rules.size()));
+        assertThat(SourceNotes.checkMapping(without, notes)).singleElement().asString()
+                .startsWith("Failed password (message matching ^Failed password for").endsWith("no rule takes it");
+    }
+
+    @Test
+    void aKindSplitByAnotherFieldsValueIsItsOwnRuleBeforeTheKinds() {
+        // Seen in chat 168: SSLVPN's events split by event_id within category=SSLVPN, proposed as '^LOGIN$' patterns
+        // for want of a way to give the value.
+        final List<String> names = List.of("category", "event_id", "body");
+        final Map<String, List<String>> values = Map.of("category", List.of("SSLVPN", "SSLVPN", "AAA"),
+                "event_id", List.of("LOGIN", "LOGOUT", "LOGIN"), "body", List.of("a b c", "d e f", "g h i"));
+        final Map<String, Object> notes = new LinkedHashMap<>();
+        notes.put("events", List.of(
+                entry("event", "SSLVPN", "description", "Other VPN events", "event_detail", "Alert", "field",
+                        "category", "value", "SSLVPN"),
+                entry("event", "VPN login", "description", "A VPN login", "event_detail", "Authenticate", "action",
+                        "Logon", "field", "event_id", "value", "LOGIN", "within", "category=SSLVPN"),
+                entry("event", "AAA login", "description", "An AAA login", "event_detail", "Authenticate", "action",
+                        "Logon", "field", "event_id", "value", "LOGIN", "within", "category=AAA")));
+        final Map<String, Object> mapping = mapping(new ArrayList<>(), new ArrayList<>(List.of(other())));
+
+        SourceNotes.applyToDraft(mapping, names, values, notes, CHECK);
+
+        // The same value in two kinds isn't a twin: each is within its own.
+        assertThat(SourceNotes.catalogueProblems(JsonValues.maps(notes.get("events")), null)).isEmpty();
+        assertThat(list(mapping.get("events"))).extracting(rule -> String.valueOf(rule.get("when"))).startsWith(
+                "[{field=category, equals=SSLVPN}, {field=event_id, equals=LOGIN}]",
+                "[{field=category, equals=AAA}, {field=event_id, equals=LOGIN}]",
+                "[{field=category, equals=SSLVPN}]");
+        assertThat(SourceNotes.checkMapping(mapping, notes)).isEmpty();
+    }
+
+    @Test
+    void aDroppedKindsKeyIsTheConditionsOfItsDropRule() {
+        assertThat(SourceNotes.dropConditions("action=purge")).containsExactly(entry("field", "action", "equals",
+                "purge"));
+        assertThat(SourceNotes.dropConditions("variant=linux: message matches ^usb \\S+: new")).containsExactly(
+                entry("field", "variant", "equals", "linux"),
+                entry("field", "message", "matches", "^usb \\S+: new"));
+        assertThat(SourceNotes.dropConditions("category=SSLVPN: event_id = Message")).containsExactly(
+                entry("field", "category", "equals", "SSLVPN"), entry("field", "event_id", "equals", "Message"));
+        assertThat(SourceNotes.dropConditions("nonsense")).isEmpty();
     }
 
     private static Map<String, Object> mapping(final List<Map<String, Object>> common,
