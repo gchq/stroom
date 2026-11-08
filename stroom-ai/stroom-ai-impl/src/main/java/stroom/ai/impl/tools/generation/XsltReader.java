@@ -60,6 +60,8 @@ public final class XsltReader {
     // purpose.
     private static final Pattern RULE_HEADER = Pattern.compile("^\\s*Rule '((?:[^']|'')*)'",
             Pattern.DOTALL | Pattern.UNICODE_CHARACTER_CLASS);
+    // The name the template logging a record's kind had in XSLTs saved before it was named mcp_log_kind.
+    private static final String EARLIER_LOG_KIND_TEMPLATE = "mcp_kept_unknown";
     private static final Pattern DROPPED = Pattern.compile("^\\s*(.+?): left untranslated on purpose\\s*$",
             Pattern.DOTALL | Pattern.UNICODE_CHARACTER_CLASS);
     private static final Pattern UNKNOWN = Pattern.compile(
@@ -452,7 +454,7 @@ public final class XsltReader {
             leaf.setExpr(resolve(Objects.requireNonNullElse(child.get("select"), ""), scope, parser));
             rule.leaves().add(leaf);
         } else if (unreadCheck(child)) {
-            // The generator's check of fields no rule reads, or its log of a kept-Unknown record: writes nothing.
+            // The generator's check of fields no rule reads, or its log of a record's kind: writes nothing.
             return;
         } else if (child.is(XSL, "apply-templates") || child.is(XSL, "call-template")) {
             readCall(child, path, scope, templates, rule, parser);
@@ -527,10 +529,13 @@ public final class XsltReader {
 
 
     // The generator's calls that write nothing of the Event: its check of fields no rule reads
-    // (XsltGenerator.UNREAD_TEMPLATE) and its log of a kept-Unknown record (XsltGenerator.KEPT_UNKNOWN_TEMPLATE).
+    // (XsltGenerator.UNREAD_TEMPLATE) and its log of a record's kind (XsltGenerator.LOG_KIND_TEMPLATE, or as an
+    // XSLT saved before it was named so wrote it).
     private static boolean unreadCheck(final XmlElement child) {
-        return child.is(XSL, "call-template") && (XsltGenerator.UNREAD_TEMPLATE.equals(child.get("name"))
-                                                  || XsltGenerator.KEPT_UNKNOWN_TEMPLATE.equals(child.get("name")));
+        final String name = child.get("name");
+        return child.is(XSL, "call-template") && (XsltGenerator.UNREAD_TEMPLATE.equals(name)
+                                                  || XsltGenerator.LOG_KIND_TEMPLATE.equals(name)
+                                                  || EARLIER_LOG_KIND_TEMPLATE.equals(name));
     }
 
     private static void readCall(final XmlElement child,

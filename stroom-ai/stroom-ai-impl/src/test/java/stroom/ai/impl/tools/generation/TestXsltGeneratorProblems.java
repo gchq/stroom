@@ -349,7 +349,9 @@ class TestXsltGeneratorProblems extends XsltRuns {
 
     @Test
     void theRecordsNumberIsNotReadWhenNothingIsLogged() {
-        assertThat(generate(mapping()).xslt()).doesNotContain("record-no");
+        // One rule for every record: no catch-all to log the kinds of, nothing unmatched.
+        assertThat(generate(mapping(with("events", List.of(rule("logon", List.of(), LOGON))))).xslt())
+                .doesNotContain("record-no");
     }
 
     @Test

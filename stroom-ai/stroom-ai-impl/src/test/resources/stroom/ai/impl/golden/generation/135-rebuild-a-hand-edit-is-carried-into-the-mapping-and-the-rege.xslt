@@ -9,14 +9,21 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
     <xsl:call-template name="mcp_unread_fields"/>
+    <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
     <xsl:choose>
-      <xsl:when test="data[@name='action']/@value = 'login'">
+      <xsl:when test="$action = 'login'">
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:apply-templates select="." mode="event_type_other"/>
+        <xsl:call-template name="mcp_log_kind">
+          <xsl:with-param name="group" select="concat('other|', string-join((string(($action)[1])), '|'))"/>
+          <xsl:with-param name="line" select="concat('Caught by rule ''other'': record ', $record-no, ' (', string-join((concat('action=', string(($action)[1]))), ' | '), ')')"/>
+        </xsl:call-template>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -31,6 +38,16 @@
           <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @name, ' (map it, or list it in ignored_fields to leave it out)'))"/>
         </xsl:if>
       </xsl:for-each>
+    </xsl:if>
+  </xsl:template>
+  <!-- mcp_log_kind: a record a rule keeps as Unknown on purpose, or a catch-all rule takes, logged once a stream for
+       each kind (the rule and the values the rules test) -->
+  <xsl:template name="mcp_log_kind">
+    <xsl:param name="group"/>
+    <xsl:param name="line"/>
+    <xsl:if test="not(string(stroom:get(concat('mcp-kind:', $group))))">
+      <xsl:value-of select="stroom:put(concat('mcp-kind:', $group), 'y')"/>
+      <xsl:sequence select="stroom:log('INFO', $line)"/>
     </xsl:if>
   </xsl:template>
   <!-- Rule 'logon': records where action = login. Writes an Authenticate event (TypeId Logon) from user, result, sid,

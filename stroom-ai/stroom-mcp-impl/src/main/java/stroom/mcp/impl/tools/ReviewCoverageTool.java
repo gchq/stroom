@@ -280,7 +280,7 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
             raws.putIfAbsent(entry.raw(), entry.created());
             final List<List<String>> pairs = new ArrayList<>();
             new TreeMap<>(entry.values()).forEach((name, value) -> pairs.add(List.of(name, value)));
-            final List<Object> key = List.of(Objects.toString(entry.rule(), "\u0000"), pairs);
+            final List<Object> key = List.of(Objects.toString(entry.rule(), "\u0000"), entry.caught(), pairs);
             final Map<String, Object> group = byKey.computeIfAbsent(key, k -> newGroup(entry));
             @SuppressWarnings("unchecked") final List<Long> rawStreams = (List<Long>) group.get("raw_streams");
             if (entry.rule() == null) {
@@ -424,12 +424,19 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         final int total = groups.stream()
                 .mapToInt(g -> counted(g, "records") + counted(g, "events"))
                 .sum();
-        // A kept-Unknown kind is logged once a stream, so its records aren't counted: said apart.
-        final long kept = groups.stream().filter(g -> g.containsKey("streams")).count();
+        // A kept-Unknown or caught kind is logged once a stream, so its records aren't counted: said apart.
+        final long caught = groups.stream()
+                .filter(g -> String.valueOf(g.get("found_as")).startsWith("caught by"))
+                .count();
+        final long kept = groups.stream().filter(g -> g.containsKey("streams")).count() - caught;
         result.put("tell_user", "Found untranslated events" + soFar + ": " + total + " record(s) of "
-                                + (groups.size() - kept) + " kind(s) the sample didn't have" + (kept == 0
+                                + (groups.size() - kept - caught) + " kind(s) the sample didn't have" + (kept == 0
                 ? ""
                 : ", and " + kept + " kind(s) kept as Unknown (logged once a stream, so not counted)")
+                                + (caught == 0
+                ? ""
+                : ", and " + caught + " kind(s) a catch-all rule took (check each against the kinds classified: "
+                  + "one no one classified is the user's to classify, with classify_kinds)")
                                 + ", in " + affectedIds.size() + " raw stream(s). The mapping needs a rule for "
                                 + "each; then only those streams need processing again, once the user approves.");
         final boolean inBuild = tags(pipeline).contains(WriteGuard.MANAGED);
@@ -735,16 +742,18 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
 
     private static Map<String, Object> newGroup(final CoverageReads.Logged entry) {
         final Map<String, Object> group = new LinkedHashMap<>();
-        group.put("found_as", entry.rule() != null
-                ? "kept as Unknown by rule '" + entry.rule() + "'"
-                : "no rule matched");
+        group.put("found_as", entry.rule() == null
+                ? "no rule matched"
+                : entry.caught()
+                        ? "caught by catch-all rule '" + entry.rule() + "'"
+                        : "kept as Unknown by rule '" + entry.rule() + "'");
         group.put("kind", entry.values().isEmpty()
                 ? Map.of("values", "not logged (an XSLT saved before they were): see the examples")
                 : new LinkedHashMap<>(entry.values()));
         if (entry.rule() == null) {
             group.put("records", 0);
         } else {
-            // Logged once a stream for each kind (the XSLT's mcp_kept_unknown): its records aren't counted.
+            // Logged once a stream for each kind (the XSLT's mcp_log_kind): its records aren't counted.
             group.put("streams", 0);
             group.put("records", "not counted: logged once a stream");
         }

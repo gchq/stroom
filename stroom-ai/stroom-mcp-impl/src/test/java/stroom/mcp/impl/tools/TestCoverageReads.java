@@ -159,6 +159,15 @@ class TestCoverageReads {
         assertThat(kept.record()).isEqualTo(12);
         assertThat(kept.rule()).isEqualTo("other");
         assertThat(kept.values()).containsExactly(Map.entry("action", "view"), Map.entry("user", "a=b"));
+        assertThat(kept.caught()).isFalse();
+        // A catch-all rule's record: a kind no rule names.
+        final CoverageReads.Logged caught = CoverageReads.parseLogged(
+                "Caught by rule 'cef_other': record 19642 (variant=cef | cef_name=APPFW_CSRF)");
+        assertThat(caught.record()).isEqualTo(19_642);
+        assertThat(caught.rule()).isEqualTo("cef_other");
+        assertThat(caught.caught()).isTrue();
+        assertThat(caught.values()).containsEntry("cef_name", "APPFW_CSRF");
+        assertThat(CoverageReads.parseLogged("No event mapping matched record 3 (action=x)").rule()).isNull();
         assertThat(CoverageReads.parseLogged("Some other warning")).isNull();
         assertThat(CoverageReads.parseLogged(null)).isNull();
     }

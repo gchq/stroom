@@ -93,9 +93,12 @@ public final class XsltGenerator {
     /// The named template that logs a record's fields no rule reads, called by the rules that translate their records:
     /// not a rule's own template, nor a shared one, for those reading an XSLT back.
     public static final String UNREAD_TEMPLATE = "mcp_unread_fields";
-    /// The named template that logs a kept-Unknown rule's records, once a stream for each kind (the rule and the
-    /// values the rules test), called by the rules kept as Unknown.
-    public static final String KEPT_UNKNOWN_TEMPLATE = "mcp_kept_unknown";
+    /// The named template that logs a record of a kind, once a stream for each (the rule and the values the rules
+    /// test): called by the rules kept as Unknown, and by the catch-all rules (those taking what rules before them
+    /// leave), so a whole feed's Unknown records and its kinds no rule names are found from its Error streams.
+    public static final String LOG_KIND_TEMPLATE = "mcp_log_kind";
+    /// Logged (INFO), once a stream for each kind, for a record a catch-all rule takes; `{rule}` is the rule's name.
+    public static final String CAUGHT = "Caught by rule '{rule}': record ";
     /// The XSLT's variable that turns the logging of fields no rule reads on (true(), the default) or off.
     public static final String LOG_UNMAPPED = "log_unmapped_fields";
     // The field names a template's xpaths read, Data Splitter's and JSON's: data[@name='x'], *[@key='x'].
@@ -174,8 +177,8 @@ public final class XsltGenerator {
     private final boolean itemMode;
     // Whether a rule that translates its records calls the check of fields no rule reads (see warnOfUnreadFields).
     private boolean unreadCalled;
-    // Whether a rule kept as Unknown calls the template that logs its records (KEPT_UNKNOWN_TEMPLATE).
-    private boolean keptUnknownCalled;
+    // Whether a rule calls the template that logs its records' kinds (LOG_KIND_TEMPLATE).
+    private boolean logKindCalled;
     private boolean usesRecord;
     // whether log lines give the record's number
     private boolean logsRecordNo;
@@ -1733,7 +1736,7 @@ public final class XsltGenerator {
             }
         }
         warnOfUnreadFields(sheet, eventTemplate, all);
-        logKeptUnknown(sheet);
+        logKinds(sheet);
         if (logsRecordNo) {
             readRecordNo(eventTemplate, apply, body);
         }
@@ -1914,22 +1917,36 @@ public final class XsltGenerator {
         return after;
     }
 
-    // The template that logs a kept-Unknown rule's record, once a stream for each kind (its group: the rule and the
-    // values the rules test), as fields no rule reads are logged.
-    private void logKeptUnknown(final XmlElement sheet) {
-        if (!keptUnknownCalled) {
+    // The call logging a record of the rule's kind: once a stream for each kind (its group: the rule and the values the
+    // rules test), the first record's line as it was, not the records run together on one line, so no line is longer
+    // than a record's.
+    private void logKind(final XmlElement holder, final EventRule rule, final String text, final List<String> tested) {
+        final XmlElement call = holder.addElement(XSL, "call-template", "name", LOG_KIND_TEMPLATE);
+        call.addElement(XSL, "with-param", "name", "group", "select", "concat(" + XPathText.literal(rule.name()
+                                                                                                + "|") + ", "
+                                                                          + testedValues(tested) + ")");
+        call.addElement(XSL, "with-param", "name", "line", "select", logged(text.replace("{rule}", rule.name()),
+                tested));
+        logKindCalled = true;
+    }
+
+    // The template that logs a record of a kind, once a stream for each kind (its group), as fields no rule reads are
+    // logged.
+    private void logKinds(final XmlElement sheet) {
+        if (!logKindCalled) {
             return;
         }
-        final XmlElement template = XmlElement.create(XSL, "template", "name", KEPT_UNKNOWN_TEMPLATE);
+        final XmlElement template = XmlElement.create(XSL, "template", "name", LOG_KIND_TEMPLATE);
         template.addElement(XSL, "param", "name", "group");
         template.addElement(XSL, "param", "name", "line");
-        template.addElement(XSL, "variable", "name", "mcp_kept", "select", "concat('mcp-unknown:', $group)");
-        final XmlElement first = template.addElement(XSL, "if", "test", "not(string(stroom:get($mcp_kept)))");
-        first.addElement(XSL, "value-of", "select", "stroom:put($mcp_kept, 'y')");
+        final XmlElement first = template.addElement(XSL, "if", "test",
+                "not(string(stroom:get(concat('mcp-kind:', $group))))");
+        first.addElement(XSL, "value-of", "select", "stroom:put(concat('mcp-kind:', $group), 'y')");
         first.addElement(XSL, "sequence", "select", "stroom:log('INFO', $line)");
-        sheet.append(new XmlComment(XsltComments.comment(KEPT_UNKNOWN_TEMPLATE + ": a record a rule keeps as "
-                                                         + "Unknown on purpose, logged once a stream for each kind "
-                                                         + "(the rule and the values the rules test)")));
+        sheet.append(new XmlComment(XsltComments.comment(LOG_KIND_TEMPLATE + ": a record a rule keeps as Unknown on "
+                                                         + "purpose, or a catch-all rule takes, logged once a "
+                                                         + "stream for each kind (the rule and the values the rules "
+                                                         + "test)")));
         sheet.append(template);
     }
 
@@ -1991,6 +2008,10 @@ public final class XsltGenerator {
                     : body;
             tests.add(test);
             drops.add(rule.drop());
+            final List<List<Condition>> earlier = rules.subList(0, rules.indexOf(rule)).stream()
+                    .filter(before -> !before.drop())
+                    .map(EventRule::when)
+                    .toList();
             if (!rule.drop() && checksUnreadFields() && !itemMode) {
                 unreadCalled = true;
                 if (!isConditional) {
@@ -2008,7 +2029,8 @@ public final class XsltGenerator {
                 entry.put("dropped", true);
                 summary.add(entry);
             } else {
-                writeRule(rule, rooted.root(), holder, isConditional, logged);
+                writeRule(rule, rooted.root(), holder, isConditional, logged, isConditional
+                                                                              && catchAll(rule, earlier));
                 final Set<String> fields = new TreeSet<>();
                 final List<FieldMapping> entries = new ArrayList<>(m.common());
                 entries.addAll(rule.fields());
@@ -2032,6 +2054,18 @@ public final class XsltGenerator {
         if (isConditional && unreadCalled && checksUnreadFields() && !itemMode) {
             unreadCheckBefore(recordTemplate, body, tests, drops);
         }
+    }
+
+    // Whether a rule is a catch-all: it takes what the rules before it leave, being the one with no conditions after
+    // rules with them, or one whose conditions are fewer than an earlier rule's, all of them that rule's (variant=cef,
+    // after variant=cef and cef_name=APPFW_SQL).
+    private static boolean catchAll(final EventRule rule, final List<List<Condition>> earlier) {
+        if (earlier.isEmpty()) {
+            return false;
+        }
+        return rule.when().isEmpty()
+               || earlier.stream().anyMatch(before -> before.size() > rule.when().size()
+                                                      && before.containsAll(rule.when()));
     }
 
     // The check of fields no rule reads, called once before the rules (asked for by the user: a call in each rule's
@@ -2076,7 +2110,8 @@ public final class XsltGenerator {
                            final EventNode tree,
                            final XmlElement holder,
                            final boolean isConditional,
-                           final List<String> tested) {
+                           final List<String> tested,
+                           final boolean catchAll) {
         final String name = ruleNames.get(rule.name());
         final XmlElement home;
         if (name != null) {
@@ -2094,13 +2129,12 @@ public final class XsltGenerator {
             // Error streams, not by sampling its Events: once a stream for each kind, the rule and the values the
             // rules test (asked for by the user: a line a record filled the Error stream), the first record's line
             // as it was, not the records run together on one line, so no line is longer than a record's.
-            final XmlElement call = holder.addElement(XSL, "call-template", "name", KEPT_UNKNOWN_TEMPLATE);
-            call.addElement(XSL, "with-param", "name", "group", "select", "concat(" + XPathText.literal(rule.name()
-                                                                                                    + "|") + ", "
-                                                                              + testedValues(tested) + ")");
-            call.addElement(XSL, "with-param", "name", "line", "select",
-                    logged(KEPT_UNKNOWN.replace("{rule}", rule.name()), tested));
-            keptUnknownCalled = true;
+            logKind(holder, rule, KEPT_UNKNOWN, tested);
+        } else if (catchAll) {
+            // A catch-all rule's records logged as a kept-Unknown rule's are (asked for by the user: seen in chat 163,
+            // two kinds of event no one had seen went through a catch-all into Alerts, and nothing said so), so
+            // review_coverage finds the kinds it takes for the user to classify.
+            logKind(holder, rule, CAUGHT, tested);
         }
         final XmlElement event = home.addElement(ns, "Event");
         if (markRules) {
