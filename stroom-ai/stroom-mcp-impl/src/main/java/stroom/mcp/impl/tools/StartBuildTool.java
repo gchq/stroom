@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.AgentInstructions;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
@@ -48,24 +49,31 @@ class StartBuildTool extends AbstractBuiltInTool {
     static final String FEEDS_ARG = "feeds";
     static final String FOLDERS_ARG = "folders";
     static final String KIND_ARG = "kind";
+    static final String CARRY_ON_ARG = "carry_on";
+    // The answers suggested when the build already has work done.
+    static final String CARRY_ON = "Carry on from it";
+    static final String START_AFRESH = "Start afresh";
 
     private final WriteGuard guard;
     private final BuildRecords buildRecords;
     private final FeedNames feedNames;
     private final AgentInstructions agentInstructions;
     private final BuildPlan plan;
+    private final Consent consent;
 
     @Inject
     StartBuildTool(final WriteGuard guard,
                    final BuildRecords buildRecords,
                    final FeedNames feedNames,
                    final AgentInstructions agentInstructions,
-                   final BuildPlan plan) {
+                   final BuildPlan plan,
+                   final Consent consent) {
         this.guard = guard;
         this.buildRecords = buildRecords;
         this.feedNames = feedNames;
         this.agentInstructions = agentInstructions;
         this.plan = plan;
+        this.consent = consent;
     }
 
     @Override
@@ -115,6 +123,9 @@ class StartBuildTool extends AbstractBuiltInTool {
                                                                              + "(a table to look values up in); the "
                                                                              + "plan's steps follow it. Given again, "
                                                                              + "it changes the build's.")
+                        .addBooleanProperty(CARRY_ON_ARG, "Only when the user has said, in the chat, to carry on "
+                                                          + "from a build that already has work done (a client "
+                                                          + "without forms is told to ask them).")
                         .required(BUILD_ARG)
                         .build())
                 .build();
@@ -132,11 +143,65 @@ class StartBuildTool extends AbstractBuiltInTool {
                 return JsonResults.refused("kind is one of " + ToolText.list(BuildRecords.BUILD_KINDS) + ", not '"
                                            + kind + "'");
             }
+            final Optional<Map<String, Object>> afresh = carryOn(call, context, build);
+            if (afresh.isPresent()) {
+                return JsonResults.of(afresh.get());
+            }
             return JsonResults.of(start(context, build, stringListArg(call, FEEDS_ARG),
                     stringListArg(call, FOLDERS_ARG), kind));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         }
+    }
+
+    // A build that already has work done, started by name in a session not yet working on it, is put to the user:
+    // carry on from it, or start afresh (seen in chat 164: the user meant to onboard the feed anew, an earlier chat's
+    // build was left in place, and the agent went straight on to indexing from its steps). Nothing is deleted:
+    // starting afresh is a new build name, or the user deleting the folder. Without forms, the agent is told to ask.
+    private Optional<Map<String, Object>> carryOn(final ToolCall call,
+                                                  final ToolCallContext context,
+                                                  final String build) {
+        if (plan.currentBuild(context).filter(build::equals).isPresent()
+            || ToolArgs.flag(call, CARRY_ON_ARG)
+            || guard.buildFolder(build, false).isEmpty()) {
+            return Optional.empty();
+        }
+        final List<String> done = plan.doneSteps(build);
+        if (done.isEmpty()) {
+            return Optional.empty();
+        }
+        final String said = "Build '" + build + "' already exists, with these steps done: " + String.join(", ", done)
+                            + ".";
+        final Optional<String> answer = consent.answer(call, context, NAME, said,
+                "Carry on from it, or start afresh", List.of(CARRY_ON, START_AFRESH));
+        if (answer.isEmpty()) {
+            final Map<String, Object> result = new LinkedHashMap<>();
+            result.put("status", "needs_user");
+            result.put("build", build);
+            result.put("done_steps", done);
+            result.put("hint", said + " Ask the user whether to carry on from it or start afresh; nothing was "
+                               + "changed. Carrying on: call start_build again with carry_on=true. Starting afresh: "
+                               + "a new build name the user agrees to, or they delete the build's folder in Stroom "
+                               + "first.");
+            return Optional.of(result);
+        }
+        if (answer.get().equalsIgnoreCase(CARRY_ON)) {
+            return Optional.empty();
+        }
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("status", "start_afresh");
+        result.put("build", build);
+        result.put("done_steps", done);
+        if (!answer.get().equalsIgnoreCase(START_AFRESH)) {
+            result.put("user_says", answer.get());
+        }
+        result.put("hint", "The user doesn't want to carry on from build '" + build + "'; nothing was changed. "
+                           + (result.containsKey("user_says")
+                ? "Do what they say (user_says). "
+                : "")
+                           + "Start afresh under a new build name the user agrees to, or ask them to delete the "
+                           + "build's folder in Stroom and call start_build again.");
+        return Optional.of(result);
     }
 
     private Map<String, Object> start(final ToolCallContext context,
