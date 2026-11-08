@@ -73,6 +73,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     static final String CONFIRM_ARG = "confirm";
     /// The notes block's key for each kind's sample record (from the listing), shown with its proposal.
     static final String SAMPLES = "samples";
+    private static final String CATCH_ALL = "catch_all";
 
     // The kinds a round takes (asked for by the user: a source of a hundred kinds in rounds a person can read):
     // the second form's items, one a kind, and its corrections field stay within the twenty fields a form holds.
@@ -278,7 +279,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         // Each kind's first record, shown with its proposal.
         final List<Map<String, Object>> kindSamples = batch.stream()
                 .filter(kind -> !kind.examples().isEmpty())
-                .map(kind -> Map.<String, Object>of(KEY, kind.key(), "sample", sampleText(kind.examples().getFirst())))
+                .map(kind -> Map.<String, Object>of(KEY, kind.key(), "sample", sampleText(kind.examples().getFirst()),
+                        CATCH_ALL, kind.catchAll()))
                 .toList();
         result.put("source_notes", notes.recordClassified(context, build, source, List.of(),
                 todo.stream().map(Kind::key).toList(), Map.of(RecordSourceNotesTool.RECORD_FIELDS, recordFields,
@@ -296,7 +298,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         result.put("hint", "Propose a classification for each of these " + batch.size() + " kinds (proposals=, one "
                            + "each, with its field and value as listed, a short title and the product it comes "
                            + "from), from its records and what you know of the source, saying how sure you are; the "
-                           + "user confirms the high-confidence ones together, then the others one by one.");
+                           + "user confirms the high-confidence ones together, then the others one by one. A kind "
+                           + "marked catch_all is a whole format's records, not one event: at most medium.");
         return result;
     }
 
@@ -311,12 +314,23 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final List<String> recordFields = JsonValues.strings(notesNow.get(RecordSourceNotesTool.RECORD_FIELDS));
         final List<Proposal> proposals = new ArrayList<>();
         final List<String> problems = new ArrayList<>();
+        final List<String> rated = new ArrayList<>();
         for (int i = 0; i < given.size(); i++) {
             final Map<?, ?> item = given.get(i);
             final String key = ToolText.str(item.get("field")) + "=" + ToolText.str(item.get("value"));
             final boolean fromUser = Boolean.TRUE.equals(item.get(FROM_USER))
                                      || "true".equals(String.valueOf(item.get(FROM_USER)));
-            final String confidence = ToolText.str(Objects.requireNonNullElse(item.get("confidence"), ""));
+            final String stated = ToolText.str(Objects.requireNonNullElse(item.get("confidence"), ""));
+            // A catch-all kind (a format's records, the events in it not told apart) is shown to the user on its
+            // own: one classification for many events is a guess, however sure the agent is (asked for by the
+            // user, after the agent rated catch-alls high in testing).
+            final boolean lowered = !fromUser && "high".equals(stated) && catchAll(notesNow, key);
+            final String confidence = lowered
+                    ? "medium"
+                    : stated;
+            if (lowered) {
+                rated.add(key);
+            }
             if (!fromUser && !pending.contains(key)) {
                 problems.add("proposals[" + i + "]: " + key + " isn't a kind still to classify (" + String.join(
                         ", ", pending) + ")");
@@ -385,6 +399,11 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             result.put("recorded", List.copyOf(recorded));
         }
         result.put("source_notes", doc);
+        if (!rated.isEmpty()) {
+            result.put("rated_medium", rated);
+            result.put("rated_medium_why", "Catch-all kinds (a format's records, its events not told apart): "
+                                           + "the user confirms each on its own.");
+        }
         if (toConfirm.isEmpty()) {
             if (!kept.isEmpty()) {
                 result.put("still_to_confirm", kept.stream().map(entry -> entry.get(KEY)).toList());
@@ -513,6 +532,12 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 : "confirm or correct each."));
     }
 
+    // Whether the kind was listed as a catch-all: a format's records, the events in it not told apart.
+    private static boolean catchAll(final Map<String, Object> notesNow, final String key) {
+        return JsonValues.maps(notesNow.get(SAMPLES)).stream()
+                .anyMatch(sample -> key.equals(sample.get(KEY)) && Boolean.TRUE.equals(sample.get(CATCH_ALL)));
+    }
+
     private static boolean isHigh(final Map<String, Object> entry) {
         return "high".equals(entry.get("confidence"));
     }
@@ -597,6 +622,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 null, splitter);
         final List<Kind> kinds = new ArrayList<>();
         @SuppressWarnings("unchecked") final Map<String, Object> mapping = (Map<String, Object>) draft.get("mapping");
+        final String variantField = variantField(draft);
+        final List<List<Map<String, Object>>> earlierRules = new ArrayList<>();
         for (final Map<String, Object> rule : JsonValues.maps(mapping.get("events"))) {
             final List<Map<String, Object>> when = JsonValues.maps(rule.get("when"));
             final List<Map<String, Object>> equals = when.stream()
@@ -607,12 +634,20 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             }
             // The kind is told by its last condition (a variant's own condition comes first).
             final Map<String, Object> told = equals.getLast();
+            // Told by its format alone: a catch-all, the format's events not told apart.
+            final boolean catchAll = equals.size() == 1 && told.get("field").equals(variantField);
+            // A catch-all after its format's own rules (its 'other') has the records they leave; none left, it is
+            // the rule for events the sample doesn't have, as a single format's is, and not listed.
             final List<Map<String, Object>> ofKind = records.stream()
-                    .filter(record -> equals.stream().allMatch(c -> String.valueOf(c.get("equals"))
-                            .equals(String.valueOf(record.get(String.valueOf(c.get("field")))))))
+                    .filter(record -> matches(record, equals))
+                    .filter(record -> !catchAll || earlierRules.stream().noneMatch(rule1 -> matches(record, rule1)))
                     .toList();
+            earlierRules.add(equals);
+            if (catchAll && ofKind.isEmpty()) {
+                continue;
+            }
             final Kind kind = new Kind(String.valueOf(told.get("field")), String.valueOf(told.get("equals")),
-                    String.valueOf(rule.get("name")), ofKind.size(), examples(ofKind));
+                    String.valueOf(rule.get("name")), ofKind.size(), examples(ofKind), catchAll);
             // One kind in several rules (a rule a variant): listed once, its records counted together.
             final Kind earlier = kinds.stream().filter(k -> k.key().equals(kind.key())).findFirst().orElse(null);
             if (earlier == null) {
@@ -621,10 +656,28 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 final List<Map<String, Object>> both = new ArrayList<>(earlier.examples());
                 kind.examples().stream().filter(e -> !both.contains(e) && both.size() < EXAMPLES).forEach(both::add);
                 kinds.set(kinds.indexOf(earlier), new Kind(earlier.field(), earlier.value(), earlier.rule(),
-                        earlier.records() + kind.records(), both));
+                        earlier.records() + kind.records(), both, earlier.catchAll() && kind.catchAll()));
             }
         }
         return kinds;
+    }
+
+    // Whether the record meets each of the conditions.
+    private static boolean matches(final Map<String, Object> record, final List<Map<String, Object>> conditions) {
+        return conditions.stream().allMatch(c -> String.valueOf(c.get("equals"))
+                .equals(String.valueOf(record.get(String.valueOf(c.get("field"))))));
+    }
+
+    // The field a record's format (its variant) is written in, when the records are in several; else none.
+    @SuppressWarnings("unchecked")
+    private static String variantField(final Map<String, Object> draft) {
+        if (draft.get("splitter") instanceof final Map<?, ?> spec) {
+            final SplitterSpec read = SplitterSpec.fromMap((Map<String, ?>) spec);
+            return NullSafe.isEmptyCollection(read.parts())
+                    ? null
+                    : read.variantField();
+        }
+        return null;
     }
 
     // Up to three of the kind's records whose values differ, each cut short.
@@ -776,7 +829,12 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
 
 
     // A kind of event the draft tells apart: its field and value, its rule, how many records, and some of them.
-    private record Kind(String field, String value, String rule, int records, List<Map<String, Object>> examples) {
+    private record Kind(String field,
+                        String value,
+                        String rule,
+                        int records,
+                        List<Map<String, Object>> examples,
+                        boolean catchAll) {
 
         String key() {
             return field + "=" + value;
@@ -789,6 +847,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             out.put("rule", rule);
             out.put("records", records);
             out.put("examples", examples);
+            if (catchAll) {
+                out.put(CATCH_ALL, true);
+            }
             return out;
         }
     }
