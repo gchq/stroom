@@ -42,6 +42,16 @@ public class EventChecks {
     private static final Pattern ISO_TIME = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$");
     // EventDetail children that describe the event rather than being its action.
     private static final Set<String> DETAIL_META = Set.of("TypeId", "Description", "Classification", "Purpose");
+    // Elements that hold an identifier: punctuation at either end of one is the extraction's, not the value's.
+    private static final Set<String> IDENTIFIERS = Set.of("Id", "HostName", "IPAddress", "MACAddress", "Domain",
+            "EmailAddress", "Port");
+    // Punctuation an identifier doesn't end (or start) with: a sentence's full stop, a list's comma, a quote (not a
+    // colon, which an IPv6 address may start or end with).
+    private static final Pattern STRAY_ENDS = Pattern.compile("^[\"'.,;]|[\"'.,;]$");
+    // A value that runs on into the next field: a closing quote, then a spaced dash and a key (as in
+    // `"IdleTimeout" - Group(s) "Staff"`), or a spaced dash and a key, then a quoted value.
+    private static final Pattern RUNS_ON = Pattern.compile("\"\\s+-\\s+[A-Za-z][\\w()]*"
+                                                           + "|\\s-\\s+[A-Za-z][\\w()]*\\s+\"");
 
     private final HeldSchemas heldSchemas;
 
@@ -131,8 +141,9 @@ public class EventChecks {
     }
 
     /// Quality checks beyond the schema, per event: TimeCreated is a full UTC timestamp, System Name,
-    /// Environment, Generator, Device and TypeId are present, EventDetail has exactly one action, and no element
-    /// is empty.
+    /// Environment, Generator, Device and TypeId are present, EventDetail has exactly one action, no element
+    /// is empty, no identifier has punctuation at an end (`stray_punctuation`), and no value runs on into the next
+    /// field (`over_captured`).
     ///
     /// @param eventsXml An `<Events>` document (or one `<Event>`).
     /// @return `events_checked`, `ok`, `rules` (each rule failed, with `events_failing` and up to three
@@ -227,8 +238,32 @@ public class EventChecks {
             if (XmlTrees.isLeaf(node) && XmlTrees.text(node).isEmpty() && XmlTrees.attributes(node).isEmpty()) {
                 found.add(new Finding("empty_element", path(node, event.getParentNode()) + " is empty"));
             }
+            extractionFindings(node, event, found);
         }
         return found;
+    }
+
+    // Values the extraction took too little or too much of (from the chat 163 review: every user of a kind had a
+    // trailing full stop, "frank.", and a logout method took the next field with it, `"IdleTimeout" - Group(s)
+    // "Staff"`): an identifier with punctuation at an end, and any value (an element's, or a Data Value) that runs
+    // on into the next field.
+    private static void extractionFindings(final Element node, final Element event, final List<Finding> found) {
+        final boolean leaf = XmlTrees.isLeaf(node);
+        final String text = leaf
+                ? XmlTrees.text(node)
+                : "";
+        if (leaf && IDENTIFIERS.contains(node.getLocalName()) && STRAY_ENDS.matcher(text).find()) {
+            found.add(new Finding("stray_punctuation", path(node, event.getParentNode()) + " is "
+                                                       + ToolText.repr(text) + ": punctuation at an end of an "
+                                                       + "identifier is likely the extraction's, not the value's"));
+        }
+        final String value = "Data".equals(node.getLocalName())
+                ? node.getAttribute("Value")
+                : text;
+        if (RUNS_ON.matcher(value).find()) {
+            found.add(new Finding("over_captured", path(node, event.getParentNode()) + " is " + ToolText.repr(value)
+                                                   + ": it looks to run on into the next field"));
+        }
     }
 
     // The system id to validate against.

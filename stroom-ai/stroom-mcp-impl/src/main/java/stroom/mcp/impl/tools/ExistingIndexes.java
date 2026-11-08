@@ -100,7 +100,7 @@ class ExistingIndexes {
         if (presence.state() == State.UNKNOWN) {
             return Optional.of("whether '" + index + "' already exists on cluster " + destination.get("cluster")
                                + " couldn't be checked (" + presence.message() + "); if it does and holds "
-                               + "documents, verify_index's counts will include them");
+                               + "documents, the document counts checked after indexing will include them");
         }
         if (presence.state() == State.ABSENT) {
             return Optional.empty();
@@ -108,7 +108,7 @@ class ExistingIndexes {
         if (presence.documents() == null) {
             return Optional.of("'" + index + "' already exists on cluster " + destination.get("cluster") + " ("
                                + presence.kind() + ") but its documents couldn't be counted (" + presence.message()
-                               + "); if it holds any, verify_index's counts will include them");
+                               + "); if it holds any, the document counts checked after indexing will include them");
         }
         return Optional.of("'" + index + "' already exists on cluster " + destination.get("cluster") + " ("
                            + presence.kind() + "), holding no documents: indexing goes into it, with the mapping "

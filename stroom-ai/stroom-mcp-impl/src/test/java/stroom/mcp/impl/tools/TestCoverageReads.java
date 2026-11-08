@@ -35,6 +35,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.LongStream;
@@ -104,6 +105,31 @@ class TestCoverageReads {
                 new CoverageReads.ErrorStream(12, null, null, Map.of())));
 
         assertThat(found.records()).extracting(CoverageReads.Logged::raw).containsExactly(2L);
+    }
+
+    @Test
+    void anErrorStreamThatReachedStroomsLimitOfLogLinesIsSaidToBeCapped() throws Exception {
+        // From the chat 163 review: 1,000 "Kept as Unknown" lines for 2,003 records, the rest never written.
+        final List<ErrorTriage.Marker> full = new ArrayList<>();
+        for (int n = 0; n < CoverageReads.MAX_WRITTEN_MARKERS; n++) {
+            full.add(new ErrorTriage.Marker("INFO", "x", "Kept as Unknown by rule 'other': record " + n + " (a=b)",
+                    null, null, null));
+        }
+        Mockito.when(streamSummaries.errorMarkers(Mockito.eq(10L), anyInt())).thenReturn(full);
+        // As many lines of another severity, none of them logged records: not this check's.
+        final List<ErrorTriage.Marker> warnings = new ArrayList<>(Collections.nCopies(
+                CoverageReads.MAX_WRITTEN_MARKERS, new ErrorTriage.Marker("WARNING", "x", "Some warning", null, null,
+                        null)));
+        warnings.add(new ErrorTriage.Marker("INFO", "x", "No event mapping matched record 7 (a=b)", null, null,
+                null));
+        Mockito.when(streamSummaries.errorMarkers(Mockito.eq(11L), anyInt())).thenReturn(warnings);
+
+        final CoverageReads.LoggedRecords found = reads.logged(progress, List.of(
+                new CoverageReads.ErrorStream(10, 1L, null, Map.of()),
+                new CoverageReads.ErrorStream(11, 2L, null, Map.of())));
+
+        assertThat(found.capped()).containsExactly(1L);
+        assertThat(found.records()).hasSize(CoverageReads.MAX_WRITTEN_MARKERS + 1);
     }
 
     @Test

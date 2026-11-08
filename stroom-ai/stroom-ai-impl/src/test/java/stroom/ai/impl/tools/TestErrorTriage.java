@@ -98,6 +98,16 @@ class TestErrorTriage {
     }
 
     @Test
+    void aKindACatchAllRuleTookIsTheTranslationsOwnBenignLine() {
+        // Seen in the e2e suite: triaged as "info from an inherited element" though its own element wrote it.
+        final String message = "Log - " + XsltGenerator.CAUGHT.replace("{rule}", "logon") + "1 (result=ok)";
+        final ErrorTriage.Classified classified = RULES.classify("INFO", "translationFilter", true, message);
+
+        assertThat(classified.classification()).isEqualTo(ErrorTriage.BENIGN);
+        assertThat(classified.reason()).startsWith("A kind of record a catch-all rule took").contains("classify_kinds");
+    }
+
+    @Test
     void severalValuesForAnEntryWithoutRepeatAreForReviewWithTheFix() {
         // The generated XSLT's warning (XsltGenerator.SEVERAL_VALUES) where an xpath entry without repeat reads
         // several values: seen in testing, a split group list written as one.

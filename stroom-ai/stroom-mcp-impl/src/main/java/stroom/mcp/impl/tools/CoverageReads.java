@@ -48,6 +48,7 @@ import stroom.util.shared.ResultPage;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +68,9 @@ class CoverageReads {
     static final int PAGE = 200;
     /// The most markers read of one Error stream.
     static final int MAX_MARKERS = 5_000;
+    /// The most markers of one severity Stroom writes to an Error stream (RecordErrorReceiver): past it, the rest
+    /// are counted but not written.
+    static final int MAX_WRITTEN_MARKERS = 1_000;
     private static final Pattern LOGGED = Pattern.compile(
             "(?:No event mapping matched record |Kept as Unknown by rule '(.*)': record "
             + "|Caught by rule '(.*)': record )(\\d+)(?: \\((.*)\\))?\\s*$");
@@ -157,6 +161,7 @@ class CoverageReads {
     /// @throws stroom.ai.impl.workspace.ToolTimeoutException if the call is cancelled.
     LoggedRecords logged(final CallProgress progress, final List<ErrorStream> errors) {
         final List<Logged> found = new ArrayList<>();
+        final List<Long> capped = new ArrayList<>();
         int read = 0;
         for (final ErrorStream meta : errors) {
             if (PipelineStepping.timeIsUp()) {
@@ -185,24 +190,35 @@ class CoverageReads {
                 LOGGER.debug(() -> LogUtil.message("Unable to read Error stream {}", meta.id()), e);
                 continue;
             }
+            final Map<String, Integer> bySeverity = new LinkedHashMap<>();
+            final Set<String> loggedAt = new HashSet<>();
             for (final ErrorTriage.Marker marker : markers) {
+                bySeverity.merge(NullSafe.string(marker.severity()), 1, Integer::sum);
                 final Logged parsed = parseLogged(marker.message());
                 if (parsed != null) {
+                    loggedAt.add(NullSafe.string(marker.severity()));
                     found.add(new Logged(meta.parentId(), meta.createMs(), parsed.record(), parsed.rule(),
                             parsed.values(), parsed.caught()));
                 }
             }
+            // Seen in the chat 163 review: an Error stream held exactly 1,000 "Kept as Unknown" lines for 2,003
+            // records, Stroom having written no more of that severity.
+            if (loggedAt.stream().anyMatch(severity -> bySeverity.get(severity) >= MAX_WRITTEN_MARKERS)) {
+                capped.add(meta.parentId());
+            }
         }
-        return new LoggedRecords(found, read);
+        return new LoggedRecords(found, read, capped);
     }
 
     /// One raw record, as the mapping reads it, for an example.
     ///
-    /// @param mapping The pipeline's mapping.
-    /// @param raw     A raw stream.
-    /// @param record  The record in it, from 0, as step_records takes it.
+    /// @param mapping   The pipeline's mapping.
+    /// @param converter The pipeline's Data Splitter (XML), read by Stroom's own parser as processing reads the
+    ///                  stream, or null to infer a spec from the text.
+    /// @param raw       A raw stream.
+    /// @param record    The record in it, from 0, as step_records takes it.
     /// @return The record shown, or null if it can't be read.
-    String example(final TranslationMapping mapping, final long raw, final int record) {
+    String example(final TranslationMapping mapping, final String converter, final long raw, final int record) {
         final String text;
         try {
             text = sampleStreamTexts.read(List.of(raw)).texts().values().stream().findFirst().orElse("");
@@ -211,9 +227,13 @@ class CoverageReads {
         }
         final List<Object> records;
         try {
-            final SplitterSpec splitter = "data_splitter".equals(mapping.input())
-                    ? SplitterDryRun.inferSpec(text).spec()
-                    : null;
+            // The pipeline's own converter where it has one: seen in the chat 163 review, examples read with an
+            // inferred spec split records otherwise than processing did.
+            final SplitterSpec splitter = !"data_splitter".equals(mapping.input())
+                    ? null
+                    : converter != null
+                            ? SplitterSpec.ofConverter(converter)
+                            : SplitterDryRun.inferSpec(text).spec();
             records = LocalCheck.sampleRecords(mapping, text, splitter).records();
         } catch (final RuntimeException e) {
             // Only an example: a record this can't read leaves its kind without one.
@@ -473,7 +493,17 @@ class CoverageReads {
     ///
     /// @param records The records.
     /// @param read    How many of the Error streams were gone through.
-    record LoggedRecords(List<Logged> records, int read) {
+    /// @param capped  The raw streams whose Error stream held as many log lines of a severity as Stroom writes
+    ///                ([#MAX_WRITTEN_MARKERS]): their counts are short.
+    record LoggedRecords(List<Logged> records, int read, List<Long> capped) {
+
+        /// Records logged, none of their Error streams capped.
+        ///
+        /// @param records The records logged.
+        /// @param read    How many of the Error streams were gone through.
+        LoggedRecords(final List<Logged> records, final int read) {
+            this(records, read, List.of());
+        }
 
     }
 

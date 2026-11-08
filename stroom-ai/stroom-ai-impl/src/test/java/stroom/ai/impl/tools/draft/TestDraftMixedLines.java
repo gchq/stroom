@@ -112,6 +112,43 @@ class TestDraftMixedLines {
 
     // What an agent decides beyond the draft for the formats that have none of their own: a time and a host.
     @SuppressWarnings("unchecked")
+    @Test
+    void aConfirmedKindIsTheRuleOfTheFormatWhoseRecordsHoldItNotOfEveryFormat() {
+        // Seen in chat 163: confirmed kinds applied to every format with an 'event' field gave a rule for each kind
+        // in each format (linux_icastart, netscaler_history), failing the schema checks.
+        final StringBuilder text = new StringBuilder();
+        for (int i = 0; i < 6; i++) {
+            text.append("2026-11-06T09:00:0%d gw01 GW %s alice%d\n".formatted(i, i % 2 == 0
+                    ? "LOGIN"
+                    : "LOGOUT", i));
+            text.append("2026-11-06T09:01:0%d web01 LINUX %s bob%d\n".formatted(i, i % 2 == 0
+                    ? "SUDO"
+                    : "CRON", i));
+        }
+        final SplitterSpec splitter = SplitterSpec.fromMap(Map.of("kind", "alternatives", "parts", List.of(
+                Map.of("kind", "regex", "variant", "gw", "pattern", "^(\\S+) (\\S+) GW (\\S+) (\\S+)$",
+                        "names", List.of("time", "host", "event", "user")),
+                Map.of("kind", "regex", "variant", "linux", "pattern", "^(\\S+) (\\S+) LINUX (\\S+) (\\S+)$",
+                        "names", List.of("time", "host", "event", "user")))));
+        final Map<String, Object> notes = Map.of("source", "Mixed", "fields", List.of(), "events", List.of(
+                Map.of("event", "LOGIN", "field", "event", "value", "LOGIN", "description", "A gateway logon",
+                        "event_detail", "Authenticate", "action", "Logon"),
+                Map.of("event", "SUDO", "field", "event", "value", "SUDO", "description", "A sudo command",
+                        "event_detail", "Process", "action", "Execute")));
+
+        final Map<String, Object> draft = DraftMapping.draft(List.of(text.toString()), "Mixed", "Mixed", "Test",
+                notes, null, splitter);
+
+        final List<String> rules = JsonValues.maps(mapping(draft).get("events")).stream()
+                .map(rule -> JsonValues.maps(rule.get("when")).stream()
+                        .map(condition -> condition.get("field") + "=" + condition.get("equals"))
+                        .toList()
+                        .toString())
+                .toList();
+        assertThat(rules).as("%s", rules).contains("[variant=gw, event=LOGIN]", "[variant=linux, event=SUDO]")
+                .doesNotContain("[variant=linux, event=LOGIN]", "[variant=gw, event=SUDO]");
+    }
+
     private static Map<String, Object> agentsDecisions(final Map<String, Object> mapping) {
         final List<Map<String, Object>> common = JsonValues.maps(mapping.get("common"));
         for (final Map<String, Object> rule : JsonValues.maps(mapping.get("events"))) {
