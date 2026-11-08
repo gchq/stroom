@@ -152,7 +152,9 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
             final String value = String.valueOf(kind.get("value"));
             final Map<String, Object> proposal = new LinkedHashMap<>(Map.of("field", kind.get("field"), "value",
                     value, "description", "Records app " + value, "event_detail", details.get(value), "actor",
-                    actor, "confidence", "high"));
+                    actor, "confidence", "export".equals(value)
+                            ? "medium"
+                            : "high"));
             if (!"export".equals(value)) {
                 proposal.put("action", "login".equals(value)
                         ? "Logon"
@@ -162,9 +164,17 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         });
         json("classify_kinds", args("build", build, "proposals", proposals));
         client.answeringWith(this::answer);
-        final Map<String, Object> accepted = json("classify_kinds", args("build", build, "confirm", true));
+        final Map<String, Object> high = json("classify_kinds", args("build", build, "confirm", true));
+        assertThat((List<String>) high.get("recorded")).hasSize(2);
+        // The medium one's record as the stream has it, whole: its own line, not its fields.
+        assertThat(String.valueOf(high.get("table"))).as(shape)
+                .contains("```\n" + ("xml-fragments".equals(shape)
+                        ? "<Record><Time>2026-11-06T09:"
+                        : "{\"ts\": \"2026-11-06T09:"))
+                .contains("export");
+        final Map<String, Object> medium = json("classify_kinds", args("build", build, "confirm", true));
         client.answeringWith(McpTestClient::agree);
-        assertThat((List<String>) accepted.get("recorded")).hasSize(3);
+        assertThat((List<String>) medium.get("recorded")).hasSize(1);
 
         final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", raw, "build", build,
                 "source_name", "Records app", "system_name", "Records", "environment", "Test"));
@@ -172,6 +182,168 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         final String rules = JsonUtil.writeValueAsString(map(draft, "mapping").get("events"), false);
         assertThat(rules).contains("Records app login", "Records app logout", "Records app export",
                 "EventDetail/Authenticate/Action", "{\"path\":\"EventSource/User/Id\",\"field\":\"" + actor + "\"}");
+    }
+
+    // ### Chat 156: a notes doc named for the build already, then classify_kinds given the source's name. Its
+    // proposals went to a second doc, named for the source, and the confirmation read the first: no form came.
+    @Test
+    void theBuildKeepsOneNotesDocWhateverTheSourceIsCalled() {
+        final String build = "e2e-classify-notes";
+        createFeed(build, "E2E-CLASSIFY-NOTES");
+        final List<Long> raw = List.of(upload("E2E-CLASSIFY-NOTES", sample()));
+        agreed("record_source_notes", args("build", build, "source", build, "summary", "A records app's audit log.",
+                "fields", List.of(), "events", List.of()));
+
+        json("classify_kinds", args("build", build, "source", "Records app", "stream_ids", raw));
+        final Map<String, Object> shown = json("classify_kinds", args("build", build, "source", "Records app",
+                "proposals", JsonUtil.readValue(PROPOSALS, List.class)));
+        final String notes = String.valueOf(map(shown, "source_notes").get("uuid"));
+        assertThat(map(shown, "source_notes").get("name")).isEqualTo(build + " source notes");
+        client.answeringWith(this::answer);
+        final int forms = client.forms().size();
+        final Map<String, Object> high = json("classify_kinds", args("build", build, "confirm", true));
+        client.answeringWith(McpTestClient::agree);
+        assertThat(client.forms()).hasSize(forms + 1);
+        assertThat(high.get("recorded")).isEqualTo(List.of("action=login", "action=logout"));
+        final String folder = folderOf(notes);
+        assertThat(documentsIn(folder, "Documentation", build + " source notes")).hasSize(1);
+        assertThat(documentsIn(folder, "Documentation", "Records app source notes")).isEmpty();
+    }
+
+    // ### An amended set: nothing recorded; the agent sends it again as the user said, leaving out the one they
+    // rejected (to ask what it is), which isn't put to them again and stays still to classify.
+    @Test
+    void anAmendedSetLeavesOutWhatTheUserRejected() {
+        final String build = "e2e-classify-amend";
+        createFeed(build, "E2E-CLASSIFY-AMEND");
+        final List<Long> raw = List.of(upload("E2E-CLASSIFY-AMEND", sample()));
+        json("classify_kinds", args("build", build, "source", "Records app", "stream_ids", raw));
+        json("classify_kinds", args("build", build, "proposals", JsonUtil.readValue(PROPOSALS, List.class)));
+        client.answeringWith(form -> new ElicitResult(ElicitResult.Action.ACCEPT,
+                Map.of("answer", "2 isn't a logoff: ask me what it is"), null));
+        final Map<String, Object> amended = json("classify_kinds", args("build", build, "confirm", true));
+        client.answeringWith(McpTestClient::agree);
+        assertThat(amended.get("recorded")).isEqualTo(List.of());
+        assertThat(amended.get("amendments")).isEqualTo("2 isn't a logoff: ask me what it is");
+
+        // The agent sends the first again as the user's, leaving out the second: the next set is shown.
+        final Map<String, Object> sent = json("classify_kinds", args("build", build, "proposals", List.of(
+                Map.of("field", "action", "value", "login", "description", "A user logged on", "event_detail",
+                        "Authenticate", "action", "Logon", "from_user", true))));
+        assertThat(sent.get("recorded")).isEqualTo(List.of("action=login"));
+        assertThat(String.valueOf(sent.get("table"))).startsWith("## Medium-confidence classifications (1 of 1)")
+                .doesNotContain("logged off");
+        client.answeringWith(TestE2eClassifyKinds::acceptingAll);
+        json("classify_kinds", args("build", build, "confirm", true));
+        json("classify_kinds", args("build", build, "confirm", true));
+        client.answeringWith(McpTestClient::agree);
+        // Only the one left out still to classify: listed again for the agent to ask about.
+        final Map<String, Object> again = json("classify_kinds", args("build", build, "stream_ids", raw));
+        assertThat(list(again, "to_classify")).extracting(kind -> kind.get("value")).containsExactly("logout");
+    }
+
+    // ### confirm=true sent with the proposals: no form until the user has seen the table.
+    @Test
+    void confirmWithTheProposalsWaitsForTheTable() {
+        final String build = "e2e-classify-early";
+        createFeed(build, "E2E-CLASSIFY-EARLY");
+        final List<Long> raw = List.of(upload("E2E-CLASSIFY-EARLY", sample()));
+        json("classify_kinds", args("build", build, "source", "Records app", "stream_ids", raw));
+        final int forms = client.forms().size();
+        final Map<String, Object> shown = json("classify_kinds", args("build", build, "confirm", true,
+                "proposals", JsonUtil.readValue(PROPOSALS, List.class)));
+        assertThat(String.valueOf(shown.get("hint"))).startsWith("No form yet: confirm=true is not taken with "
+                                                                 + "proposals.");
+        assertThat(String.valueOf(shown.get("table"))).startsWith("## High-confidence classifications");
+        assertThat(client.forms()).hasSize(forms);
+    }
+
+    // ### Chat 160: a catch-all format (records told apart by their format alone) proposed as Unknown, so the events
+    // in it were never put to the user. Refused; proposed as what it is, it shows its own line as logged.
+    @Test
+    void aCatchAllIsNotProposedAsUnknown() {
+        final String build = "e2e-classify-catchall";
+        createFeed(build, "E2E-CLASSIFY-CATCHALL");
+        final List<Long> raw = List.of(upload("E2E-CLASSIFY-CATCHALL", sample() + String.join("\n", List.of(
+                "Nov  6 09:30:00 web1 cache warmed after 12 seconds",
+                "Nov  6 09:30:05 web2 config reloaded from disk",
+                "Nov  6 09:30:09 web1 disk 80% full on the data volume",
+                "Nov  6 09:30:13 web3 worker restarted by the supervisor")) + "\n"));
+        final Map<String, Object> splitter = JsonUtil.readValue("""
+                {"kind": "alternatives", "parts": [{"kind": "syslog", "variant": "syslog"},
+                 {"kind": "key_value", "delimiter": " ", "variant": "key_value"}]}""", Map.class);
+        final Map<String, Object> listed = json("classify_kinds", args("build", build, "source", "Records app",
+                "stream_ids", raw, "splitter", splitter));
+        dump("classify_kinds listed catch-all", listed);
+        final Map<String, Object> catchAll = list(listed, "to_classify").stream()
+                .filter(kind -> Boolean.TRUE.equals(kind.get("catch_all")))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No catch-all listed: " + listed));
+        assertThat(catchAll).containsEntry("value", "syslog");
+        assertThat(String.valueOf(listed.get("hint"))).contains("refine the splitter (build_data_splitter)");
+
+        assertThat(refusal("classify_kinds", args("build", build, "proposals", List.of(Map.of("field", "variant",
+                "value", "syslog", "description", "Web host lines", "event_detail", "Unknown", "confidence",
+                "medium")))))
+                .contains("variant=syslog is a catch_all kind", "so not Unknown");
+        final Map<String, Object> shown = json("classify_kinds", args("build", build, "proposals", List.of(
+                Map.of("field", "variant", "value", "syslog", "description", "Web host status", "event_detail",
+                        "Alert", "confidence", "high"))));
+        // Rated medium (a catch-all), so shown in detail, its record as logged.
+        assertThat(shown.get("rated_medium")).isEqualTo(List.of("variant=syslog"));
+        assertThat(String.valueOf(shown.get("table"))).startsWith("## Medium-confidence classifications (1 of 1)")
+                .contains("```\nNov  6 09:30:00 web1 cache warmed after 12 seconds\n```", "#### Action element\n\n"
+                                                                                       + "Alert");
+    }
+
+    // ### Many kinds: rounds of 18, put to the user in sets of up to ten of one confidence, each numbered from 1
+    // under a heading naming its range.
+    @Test
+    void manyKindsArePutToTheUserInSetsOfTen() {
+        final String build = "e2e-classify-many";
+        createFeed(build, "E2E-CLASSIFY-MANY");
+        final List<String> lines = new ArrayList<>();
+        for (int i = 0; i < 75; i++) {
+            lines.add("time=2026-11-06T%02d:%02d:00Z event_type=kind%02d user=user%d".formatted(i / 60, i % 60,
+                    i % 25, i % 4));
+        }
+        final List<Long> raw = List.of(upload("E2E-CLASSIFY-MANY", String.join("\n", lines) + "\n"));
+        final Map<String, Object> listed = json("classify_kinds", args("build", build, "source", "Records app",
+                "stream_ids", raw));
+        final List<Map<String, Object>> kinds = list(listed, "to_classify");
+        assertThat(kinds).hasSize(18);
+        final List<Map<String, Object>> proposals = new ArrayList<>();
+        for (int k = 0; k < kinds.size(); k++) {
+            proposals.add(Map.of("field", kinds.get(k).get("field"), "value", kinds.get(k).get("value"), "title",
+                    "Kind " + kinds.get(k).get("value"), "description", "d", "event_detail", "Alert", "confidence",
+                    k < 5
+                            ? "high"
+                            : "medium"));
+        }
+        client.answeringWith(TestE2eClassifyKinds::acceptingAll);
+        final List<String> headings = new ArrayList<>();
+        Map<String, Object> step = json("classify_kinds", args("build", build, "proposals", proposals));
+        while (step.containsKey("table")) {
+            final String table = String.valueOf(step.get("table"));
+            headings.add(table.lines().findFirst().orElse(""));
+            // Each set numbered from 1.
+            assertThat(table).containsAnyOf("| 1 | ", "### 1. ");
+            step = json("classify_kinds", args("build", build, "confirm", true));
+        }
+        client.answeringWith(McpTestClient::agree);
+        assertThat(headings).containsExactly("## High-confidence classifications (1-5 of 5)",
+                "## Medium-confidence classifications (1-10 of 13)",
+                "## Medium-confidence classifications (11-13 of 13)");
+        assertThat(step.get("still_to_classify")).isEqualTo(7);
+    }
+
+    // Every set accepted with its button.
+    @SuppressWarnings("unchecked")
+    private static ElicitResult acceptingAll(final ElicitFormRequest form) {
+        final Map<String, Object> question = (Map<String, Object>) ((Map<String, Object>) form.requestedSchema()
+                .get("properties")).get("answer");
+        return new ElicitResult(ElicitResult.Action.ACCEPT, Map.of("answer",
+                ((List<?>) question.get("examples")).getFirst()), null);
     }
 
     // Twelve records, four of each kind, in the shape named.
