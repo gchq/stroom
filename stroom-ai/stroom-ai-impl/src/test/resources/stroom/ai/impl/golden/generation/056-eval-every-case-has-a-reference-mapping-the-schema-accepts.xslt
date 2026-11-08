@@ -10,22 +10,21 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:variable name="record-no" select="stroom:record-no()"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
     <xsl:variable name="message" select="data[@name='message']/@value[normalize-space(.)]"/>
     <xsl:variable name="user_failed_parts" select="analyze-string(string($message[1]), '^Login failed for user ''([^'']+)''')"/>
     <xsl:variable name="user_ok_parts" select="analyze-string(string($message[1]), '^User ''([^'']+)'' logged (in|out)')"/>
     <xsl:variable name="direction" select="$user_ok_parts/fn:match//fn:group[@nr=2][normalize-space(.)]"/>
-    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="$direction = 'in'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logged_in"/>
       </xsl:when>
       <xsl:when test="$user_failed_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_failed_login"/>
       </xsl:when>
       <xsl:when test="$direction = 'out'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logged_out"/>
       </xsl:when>
       <xsl:otherwise>

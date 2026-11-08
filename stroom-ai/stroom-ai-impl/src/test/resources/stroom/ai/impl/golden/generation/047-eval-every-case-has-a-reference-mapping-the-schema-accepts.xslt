@@ -20,27 +20,24 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:variable name="record-no" select="stroom:record-no()"/>
-    <xsl:variable name="outcome_success" select="(mcp:json-to-xml(*[@key='event'])/*/*[@key='event_type'])[normalize-space(.)]"/>
     <xsl:sequence select="$record-no[string(.) = '#']"/>
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
+    <xsl:variable name="outcome_success" select="(mcp:json-to-xml(*[@key='event'])/*/*[@key='event_type'])[normalize-space(.)]"/>
     <xsl:choose>
       <xsl:when test="$outcome_success = ('LOGIN_SUCCESS', 'LOGIN_FAILURE')">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
       <xsl:when test="$outcome_success = 'LOGOUT'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logoff"/>
       </xsl:when>
       <xsl:when test="$outcome_success = 'PASSWORD_CHANGE'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_password_change"/>
       </xsl:when>
       <xsl:when test="$outcome_success = 'DOCUMENT_VIEW'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_view"/>
       </xsl:when>
       <xsl:when test="$outcome_success = 'DOCUMENT_DELETE'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_delete"/>
       </xsl:when>
       <xsl:otherwise>

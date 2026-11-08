@@ -9,26 +9,23 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
     <xsl:variable name="evt" select="data[@name='evt']/@value[normalize-space(.)]"/>
     <xsl:choose>
       <xsl:when test="$evt = '4624'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_4624"/>
       </xsl:when>
       <xsl:when test="$evt = '4625'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_4625"/>
       </xsl:when>
       <xsl:when test="$evt = '4634'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_4634"/>
       </xsl:when>
       <xsl:when test="$evt = '4648'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_4648"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_other"/>
       </xsl:otherwise>
     </xsl:choose>

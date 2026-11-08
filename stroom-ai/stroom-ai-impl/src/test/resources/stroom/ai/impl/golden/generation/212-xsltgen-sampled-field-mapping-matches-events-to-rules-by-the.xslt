@@ -9,17 +9,16 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
     <xsl:choose>
       <xsl:when test="data[@name='action']/@value = 'login'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
       <xsl:when test="data[@name='action']/@value = 'logout'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logoff"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_other"/>
       </xsl:otherwise>
     </xsl:choose>

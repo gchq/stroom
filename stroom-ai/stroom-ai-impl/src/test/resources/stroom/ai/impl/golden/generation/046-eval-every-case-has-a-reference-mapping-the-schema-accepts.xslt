@@ -18,32 +18,28 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:variable name="record-no" select="stroom:record-no()"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
     <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
     <xsl:variable name="event_type" select="data[@name='event_type']/@value[normalize-space(.)]"/>
-    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="$event_type = 'TRAFFIC'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_connection"/>
       </xsl:when>
       <xsl:when test="$event_type = 'ADMIN' and $action = ('LOGIN_SUCCESS', 'LOGIN_FAILED')">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
       <xsl:when test="$event_type = 'ADMIN' and $action = 'LOGOUT'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logoff"/>
       </xsl:when>
       <xsl:when test="$event_type = 'ADMIN' and $action = 'CONFIG_CHANGE'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_config_change"/>
       </xsl:when>
       <xsl:when test="$event_type = 'ADMIN' and $action = 'CONFIG_BACKUP'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_config_backup"/>
       </xsl:when>
       <xsl:when test="$event_type = 'SYSTEM'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_system"/>
       </xsl:when>
       <xsl:otherwise>

@@ -15,35 +15,30 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
     <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
     <xsl:variable name="event_type" select="data[@name='event_type']/@value[normalize-space(.)]"/>
     <xsl:choose>
       <xsl:when test="$event_type = 'TRAFFIC' and $action = 'ALLOW'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_traffic_permitted"/>
       </xsl:when>
       <xsl:when test="$event_type = 'TRAFFIC' and $action = 'DENY'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_traffic_denied"/>
       </xsl:when>
       <xsl:when test="$action = 'LOGIN_SUCCESS'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_login_success"/>
       </xsl:when>
       <xsl:when test="$action = 'LOGIN_FAILED'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_login_failed"/>
       </xsl:when>
       <xsl:when test="$action = 'CONFIG_CHANGE'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_config_change"/>
       </xsl:when>
       <xsl:when test="$event_type = 'SYSTEM' and $action = 'VPN_TUNNEL_DOWN'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_system_alert"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_other"/>
       </xsl:otherwise>
     </xsl:choose>

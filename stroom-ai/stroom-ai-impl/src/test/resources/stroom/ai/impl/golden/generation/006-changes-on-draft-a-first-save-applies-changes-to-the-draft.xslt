@@ -9,17 +9,16 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
     <xsl:choose>
       <xsl:when test="mcp:quoted_value(*[@key='body'], 'type') = 'traffic' and mcp:quoted_value(*[@key='body'], 'action') = 'accept'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_traffic_permitted"/>
       </xsl:when>
       <xsl:when test="mcp:quoted_value(*[@key='body'], 'type') = 'event' and mcp:quoted_value(*[@key='body'], 'action') = 'accept'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_event_permitted"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_other"/>
       </xsl:otherwise>
     </xsl:choose>

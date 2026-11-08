@@ -1012,6 +1012,52 @@ class TestXsltGenerator extends XsltRuns {
     }
 
     @Test
+    void fieldsNoRuleReadsAreCheckedOnceBeforeTheRulesAndKeptUnknownRecordsLoggedOnceAKind() {
+        // Asked for by the user: the check of unread fields called in every rule's branch was unsightly, and a branch
+        // added by hand would miss it; and the kept-Unknown log, a line a record, filled the Error stream.
+        final TranslationMapping m = TranslationMapping.fromJson(json("""
+                {"input": "json", "common": [
+                  {"path": "EventTime/TimeCreated", "field": "time"},
+                  {"path": "EventSource/System/Name", "value": "Acme"},
+                  {"path": "EventSource/System/Environment", "value": "Prod"},
+                  {"path": "EventSource/Generator", "value": "Acme"},
+                  {"path": "EventSource/Device/HostName", "field": "host"},
+                  {"path": "EventDetail/TypeId", "field": "kind"}],
+                 "drop_when": [{"when": [{"field": "kind", "equals": "HEARTBEAT"}], "reason": "no security value"}],
+                 "events": [
+                  {"name": "logon", "when": [{"field": "kind", "equals": "LOGON"}], "fields": [
+                    {"path": "EventDetail/Authenticate/Action", "value": "Logon"},
+                    {"path": "EventDetail/Authenticate/User/Id", "field": "user"}]},
+                  {"name": "other", "allow_unknown": "no action element describes them",
+                   "fields": [{"path": "EventDetail/Unknown/Data", "data_name": "msg", "field": "msg"}]}]}"""));
+        final XsltGenerator.Generated result = XsltGenerator.generate(m, SCHEMA_352, "3.5.2");
+        assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
+        final String xslt = result.xslt();
+
+        // Called once, before the rules, for every record but those left untranslated on purpose.
+        final String call = "<xsl:call-template name=\"" + XsltGenerator.UNREAD_TEMPLATE + "\"/>";
+        assertThat(xslt.split(Pattern.quote(call), -1)).hasSize(2);
+        assertThat(xslt.indexOf(call)).isLessThan(xslt.indexOf("<xsl:choose>"));
+        final String guard = xslt.substring(xslt.lastIndexOf("<xsl:if test=\"not(", xslt.indexOf(call)),
+                xslt.indexOf(call));
+        assertThat(guard).as(xslt).contains("HEARTBEAT").doesNotContain("LOGON");
+
+        // The kept-Unknown rule calls the template that logs once a stream for each kind, the first record's line
+        // as it was (no records run together on one line).
+        assertThat(xslt).contains("<xsl:call-template name=\"" + XsltGenerator.KEPT_UNKNOWN_TEMPLATE + "\">",
+                "<xsl:with-param name=\"group\" select=\"concat('other|', ",
+                "Kept as Unknown by rule ''other'': record ",
+                "<xsl:template name=\"" + XsltGenerator.KEPT_UNKNOWN_TEMPLATE + "\">",
+                "stroom:put($mcp_kept, 'y')", "stroom:log('INFO', $line)");
+        assertThat(xslt).doesNotContain("<xsl:sequence select=\"stroom:log('INFO', concat('Kept as Unknown");
+
+        // Read back, the rules are as written: the generator's calls are no rule's own template.
+        final XsltReading reading = XsltReader.read(xslt);
+        assertThat(reading.rules()).extracting(RuleReading::name).doesNotContain(XsltGenerator.UNREAD_TEMPLATE,
+                XsltGenerator.KEPT_UNKNOWN_TEMPLATE);
+    }
+
+    @Test
     void theExampleMappingGenerates() {
         // The shape of a mapping, whole, shown in a reply that refuses one, generates.
         final TranslationMapping example = TranslationMapping.fromJson(json("""

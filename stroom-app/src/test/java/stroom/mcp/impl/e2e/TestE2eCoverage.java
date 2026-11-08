@@ -273,8 +273,9 @@ class TestE2eCoverage extends AbstractE2eTest {
                 .filter(group -> "no rule matched".equals(group.get("found_as")))
                 .toList();
         assertThat(calls).as("calls of two Error streams").isGreaterThanOrEqualTo(3);
-        assertThat(kept.stream().mapToInt(group -> ((Number) group.get("records")).intValue()).sum())
-                .as("pings kept as Unknown").isEqualTo(5);
+        // Logged once a stream for each kind: the streams with pings kept as Unknown are counted.
+        assertThat(kept.stream().mapToInt(group -> ((Number) group.get("streams")).intValue()).sum())
+                .as("streams with pings kept as Unknown").isEqualTo(5);
         assertThat(unmatched).as("unmatched kinds").isEmpty();
         final Set<Long> pinged = new TreeSet<>();
         kept.forEach(group -> pinged.addAll(ids(group, "raw_streams")));

@@ -10,14 +10,17 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:variable name="record-no" select="stroom:record-no()"/>
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields), but for records left untranslated on purpose -->
     <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
     <xsl:sequence select="$record-no[string(.) = '#']"/>
+    <xsl:if test="not(($action = 'keepalive'))">
+      <xsl:call-template name="mcp_unread_fields"/>
+    </xsl:if>
     <xsl:choose>
       <xsl:when test="$action = 'keepalive'">
         <!-- keepalive: left untranslated on purpose -->
       </xsl:when>
       <xsl:when test="$action = 'login'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
       <xsl:otherwise>

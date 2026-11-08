@@ -16,16 +16,16 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:variable name="record-no" select="stroom:record-no()"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
     <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
     <xsl:variable name="event_type" select="data[@name='event_type']/@value[normalize-space(.)]"/>
-    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="$event_type = 'TRAFFIC' and $action = 'ALLOW'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_traffic_permitted"/>
       </xsl:when>
       <xsl:when test="$event_type = 'TRAFFIC' and $action = 'DENY'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_traffic_denied"/>
       </xsl:when>
       <xsl:otherwise>

@@ -452,7 +452,7 @@ public final class XsltReader {
             leaf.setExpr(resolve(Objects.requireNonNullElse(child.get("select"), ""), scope, parser));
             rule.leaves().add(leaf);
         } else if (unreadCheck(child)) {
-            // The generator's check of fields no rule reads: writes nothing.
+            // The generator's check of fields no rule reads, or its log of a kept-Unknown record: writes nothing.
             return;
         } else if (child.is(XSL, "apply-templates") || child.is(XSL, "call-template")) {
             readCall(child, path, scope, templates, rule, parser);
@@ -526,9 +526,11 @@ public final class XsltReader {
     }
 
 
-    // The generator's call of its check of fields no rule reads (XsltGenerator.UNREAD_TEMPLATE).
+    // The generator's calls that write nothing of the Event: its check of fields no rule reads
+    // (XsltGenerator.UNREAD_TEMPLATE) and its log of a kept-Unknown record (XsltGenerator.KEPT_UNKNOWN_TEMPLATE).
     private static boolean unreadCheck(final XmlElement child) {
-        return child.is(XSL, "call-template") && XsltGenerator.UNREAD_TEMPLATE.equals(child.get("name"));
+        return child.is(XSL, "call-template") && (XsltGenerator.UNREAD_TEMPLATE.equals(child.get("name"))
+                                                  || XsltGenerator.KEPT_UNKNOWN_TEMPLATE.equals(child.get("name")));
     }
 
     private static void readCall(final XmlElement child,

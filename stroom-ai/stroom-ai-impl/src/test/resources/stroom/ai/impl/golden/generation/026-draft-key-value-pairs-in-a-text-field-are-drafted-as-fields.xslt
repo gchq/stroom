@@ -22,13 +22,30 @@
       </xsl:when>
       <xsl:when test="$event = 'Secret'">
         <xsl:apply-templates select="." mode="event_type_secret"/>
-        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''secret'': record ', $record-no, ' (', string-join((concat('event=', string(($event)[1])), concat('action=', string(($action)[1]))), ' | '), ')'))"/>
+        <xsl:call-template name="mcp_kept_unknown">
+          <xsl:with-param name="group" select="concat('secret|', string-join((string(($event)[1]), string(($action)[1])), '|'))"/>
+          <xsl:with-param name="line" select="concat('Kept as Unknown by rule ''secret'': record ', $record-no, ' (', string-join((concat('event=', string(($event)[1])), concat('action=', string(($action)[1]))), ' | '), ')')"/>
+        </xsl:call-template>
       </xsl:when>
       <xsl:otherwise>
         <xsl:apply-templates select="." mode="event_type_other"/>
-        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', $record-no, ' (', string-join((concat('event=', string(($event)[1])), concat('action=', string(($action)[1]))), ' | '), ')'))"/>
+        <xsl:call-template name="mcp_kept_unknown">
+          <xsl:with-param name="group" select="concat('other|', string-join((string(($event)[1]), string(($action)[1])), '|'))"/>
+          <xsl:with-param name="line" select="concat('Kept as Unknown by rule ''other'': record ', $record-no, ' (', string-join((concat('event=', string(($event)[1])), concat('action=', string(($action)[1]))), ' | '), ')')"/>
+        </xsl:call-template>
       </xsl:otherwise>
     </xsl:choose>
+  </xsl:template>
+  <!-- mcp_kept_unknown: a record a rule keeps as Unknown on purpose, logged once a stream for each kind (the rule and
+       the values the rules test) -->
+  <xsl:template name="mcp_kept_unknown">
+    <xsl:param name="group"/>
+    <xsl:param name="line"/>
+    <xsl:variable name="mcp_kept" select="concat('mcp-unknown:', $group)"/>
+    <xsl:if test="not(string(stroom:get($mcp_kept)))">
+      <xsl:value-of select="stroom:put($mcp_kept, 'y')"/>
+      <xsl:sequence select="stroom:log('INFO', $line)"/>
+    </xsl:if>
   </xsl:template>
   <!-- Rule 'user_logon': records where event = User and action in Login, Login Failed. Writes an Authenticate event
        (TypeId from event) from user, System/Provider/@Name, System/EventID, by_user, item_id, client, secret,

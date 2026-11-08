@@ -31,43 +31,36 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
     <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
     <xsl:variable name="event_type" select="data[@name='event_type']/@value[normalize-space(.)]"/>
     <xsl:choose>
       <xsl:when test="$event_type = 'TRAFFIC' and $action = 'ALLOW'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_traffic_permitted"/>
       </xsl:when>
       <xsl:when test="$event_type = 'TRAFFIC' and $action = 'DENY'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_traffic_denied"/>
       </xsl:when>
       <xsl:when test="$event_type = 'SYSTEM' and $action = 'CONFIG_SAVED'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_system_config_change"/>
       </xsl:when>
       <xsl:when test="$event_type = 'SYSTEM' and $action = 'START'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_system_service"/>
       </xsl:when>
       <xsl:when test="$event_type = 'SYSTEM' and $action = ('HIGH_CPU', 'VPN_TUNNEL_DOWN', 'VPN_TUNNEL_UP')">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_system_alert"/>
       </xsl:when>
       <xsl:when test="$event_type = 'ADMIN' and $action = ('LOGIN_SUCCESS', 'LOGIN_FAILED')">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_admin_logon"/>
       </xsl:when>
       <xsl:when test="$event_type = 'ADMIN' and $action = 'LOGOUT'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_admin_logoff"/>
       </xsl:when>
       <xsl:when test="$event_type = 'ADMIN' and $action = ('CONFIG_CHANGE', 'CONFIG_BACKUP')">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_admin_config_change"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_other"/>
       </xsl:otherwise>
     </xsl:choose>

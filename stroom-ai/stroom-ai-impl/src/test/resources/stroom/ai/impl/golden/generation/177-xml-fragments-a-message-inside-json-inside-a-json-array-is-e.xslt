@@ -19,14 +19,14 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
     <xsl:variable name="user_parts" select="analyze-string(string((mcp:json-to-xml(*[@key='payload'])/*/*[@key='msg'])[1]), '^user=(\S+) action=(\S+) src=(\S+) result=(\S+)$')"/>
     <xsl:choose>
       <xsl:when test="$user_parts/fn:match//fn:group[@nr=2] = 'LOGIN'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
       <xsl:when test="$user_parts/fn:match//fn:group[@nr=2] = 'LOGOUT'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logoff"/>
       </xsl:when>
     </xsl:choose>

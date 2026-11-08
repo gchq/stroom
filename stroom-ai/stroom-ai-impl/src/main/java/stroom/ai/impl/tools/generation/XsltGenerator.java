@@ -93,6 +93,9 @@ public final class XsltGenerator {
     /// The named template that logs a record's fields no rule reads, called by the rules that translate their records:
     /// not a rule's own template, nor a shared one, for those reading an XSLT back.
     public static final String UNREAD_TEMPLATE = "mcp_unread_fields";
+    /// The named template that logs a kept-Unknown rule's records, once a stream for each kind (the rule and the
+    /// values the rules test), called by the rules kept as Unknown.
+    public static final String KEPT_UNKNOWN_TEMPLATE = "mcp_kept_unknown";
     /// The XSLT's variable that turns the logging of fields no rule reads on (true(), the default) or off.
     public static final String LOG_UNMAPPED = "log_unmapped_fields";
     // The field names a template's xpaths read, Data Splitter's and JSON's: data[@name='x'], *[@key='x'].
@@ -171,6 +174,8 @@ public final class XsltGenerator {
     private final boolean itemMode;
     // Whether a rule that translates its records calls the check of fields no rule reads (see warnOfUnreadFields).
     private boolean unreadCalled;
+    // Whether a rule kept as Unknown calls the template that logs its records (KEPT_UNKNOWN_TEMPLATE).
+    private boolean keptUnknownCalled;
     private boolean usesRecord;
     // whether log lines give the record's number
     private boolean logsRecordNo;
@@ -1728,6 +1733,7 @@ public final class XsltGenerator {
             }
         }
         warnOfUnreadFields(sheet, eventTemplate, all);
+        logKeptUnknown(sheet);
         if (logsRecordNo) {
             readRecordNo(eventTemplate, apply, body);
         }
@@ -1908,6 +1914,36 @@ public final class XsltGenerator {
         return after;
     }
 
+    // The template that logs a kept-Unknown rule's record, once a stream for each kind (its group: the rule and the
+    // values the rules test), as fields no rule reads are logged.
+    private void logKeptUnknown(final XmlElement sheet) {
+        if (!keptUnknownCalled) {
+            return;
+        }
+        final XmlElement template = XmlElement.create(XSL, "template", "name", KEPT_UNKNOWN_TEMPLATE);
+        template.addElement(XSL, "param", "name", "group");
+        template.addElement(XSL, "param", "name", "line");
+        template.addElement(XSL, "variable", "name", "mcp_kept", "select", "concat('mcp-unknown:', $group)");
+        final XmlElement first = template.addElement(XSL, "if", "test", "not(string(stroom:get($mcp_kept)))");
+        first.addElement(XSL, "value-of", "select", "stroom:put($mcp_kept, 'y')");
+        first.addElement(XSL, "sequence", "select", "stroom:log('INFO', $line)");
+        sheet.append(new XmlComment(XsltComments.comment(KEPT_UNKNOWN_TEMPLATE + ": a record a rule keeps as "
+                                                         + "Unknown on purpose, logged once a stream for each kind "
+                                                         + "(the rule and the values the rules test)")));
+        sheet.append(template);
+    }
+
+    // The values the rules test, joined, for a kept-Unknown record's kind ('' when the rules test none).
+    private String testedValues(final List<String> tested) {
+        if (tested.isEmpty()) {
+            return "''";
+        }
+        final List<String> values = tested.stream()
+                .map(field -> "string((" + ref(field, null, "condition", null) + ")[1])")
+                .toList();
+        return "string-join((" + String.join(", ", values) + "), '|')";
+    }
+
     // The values the rules test, put in the log lines: a whole feed's missed records are then grouped from its Error
     // streams alone, however large the feed, without reading the raw records.
     private String logged(final String text, final List<String> tested) {
@@ -1940,6 +1976,10 @@ public final class XsltGenerator {
         final XmlElement body = isConditional
                 ? recordTemplate.addElement(XSL, "choose")
                 : recordTemplate;
+        // Each rule's test and whether it leaves its records untranslated, in order, for the check of fields no rule
+        // reads.
+        final List<String> tests = new ArrayList<>();
+        final List<Boolean> drops = new ArrayList<>();
         for (final Rooted rooted : trees) {
             final EventRule rule = rooted.rule();
             // Each condition is a comparison or a call, which bind tighter than and: no brackets needed.
@@ -1949,11 +1989,13 @@ public final class XsltGenerator {
                     ? body.addElement(XSL, "otherwise")
                     : body.addElement(XSL, "when", "test", test))
                     : body;
+            tests.add(test);
+            drops.add(rule.drop());
             if (!rule.drop() && checksUnreadFields() && !itemMode) {
-                // Called where a rule translates its records, not for those left untranslated on purpose (seen in
-                // the e2e suite: their fields reported as read by no rule).
-                holder.addElement(XSL, "call-template", "name", UNREAD_TEMPLATE);
                 unreadCalled = true;
+                if (!isConditional) {
+                    holder.addElement(XSL, "call-template", "name", UNREAD_TEMPLATE);
+                }
             }
             final Object when = rule.when().isEmpty()
                     ? "every record"
@@ -1987,6 +2029,47 @@ public final class XsltGenerator {
             final XmlElement otherwise = body.addElement(XSL, "otherwise");
             otherwise.addElement(XSL, "sequence", "select", "stroom:log('WARN', " + logged(UNMATCHED, logged) + ")");
         }
+        if (isConditional && unreadCalled && checksUnreadFields() && !itemMode) {
+            unreadCheckBefore(recordTemplate, body, tests, drops);
+        }
+    }
+
+    // The check of fields no rule reads, called once before the rules (asked for by the user: a call in each rule's
+    // branch was unsightly, and a branch added by hand would miss it), for every record but those a rule leaves
+    // untranslated on purpose (seen in the e2e suite: their fields reported as read by no rule). A drop rule takes a
+    // record when its test holds and no translating rule before it does.
+    private static void unreadCheckBefore(final XmlElement recordTemplate,
+                                          final XmlElement rules,
+                                          final List<String> tests,
+                                          final List<Boolean> drops) {
+        final List<String> dropped = new ArrayList<>();
+        final List<String> translatingBefore = new ArrayList<>();
+        for (int i = 0; i < tests.size(); i++) {
+            final String test = tests.get(i).isEmpty()
+                    ? "true()"
+                    : "(" + tests.get(i) + ")";
+            if (drops.get(i)) {
+                dropped.add(translatingBefore.isEmpty()
+                        ? test
+                        : "(" + test + " and not(" + String.join(" or ", translatingBefore) + "))");
+            } else {
+                translatingBefore.add(test);
+            }
+        }
+        final int at = recordTemplate.children().indexOf(rules);
+        final XmlElement call = XmlElement.create(XSL, "call-template", "name", UNREAD_TEMPLATE);
+        if (dropped.isEmpty()) {
+            recordTemplate.insert(at, call);
+        } else {
+            final XmlElement guard = XmlElement.create(XSL, "if", "test", "not(" + String.join(" or ", dropped) + ")");
+            guard.append(call);
+            recordTemplate.insert(at, guard);
+        }
+        recordTemplate.insert(at, new XmlComment(XsltComments.comment("Fields of the record no rule reads are "
+                                                                      + "logged (" + UNREAD_TEMPLATE + ")"
+                                                                      + (dropped.isEmpty()
+                ? ""
+                : ", but for records left untranslated on purpose"))));
     }
 
     private void writeRule(final EventRule rule,
@@ -2007,11 +2090,17 @@ public final class XsltGenerator {
         if (isSet(rule.allowUnknown())) {
             final String reason = rule.allowUnknown().replace("--", "-");
             home.append(new XmlComment(" " + rule.name() + ": EventDetail/Unknown on purpose: " + reason + " "));
-            // Logged (INFO, into the raw stream's Error stream) so a whole feed's Unknown records are found exactly,
-            // as unmatched ones are, not by sampling its Events.
-            holder.addElement(XSL, "sequence", "select", "stroom:log('INFO', "
-                                                         + logged(KEPT_UNKNOWN.replace("{rule}", rule.name()), tested)
-                                                         + ")");
+            // Logged (INFO, into the raw stream's Error stream) so a whole feed's Unknown records are found from its
+            // Error streams, not by sampling its Events: once a stream for each kind, the rule and the values the
+            // rules test (asked for by the user: a line a record filled the Error stream), the first record's line
+            // as it was, not the records run together on one line, so no line is longer than a record's.
+            final XmlElement call = holder.addElement(XSL, "call-template", "name", KEPT_UNKNOWN_TEMPLATE);
+            call.addElement(XSL, "with-param", "name", "group", "select", "concat(" + XPathText.literal(rule.name()
+                                                                                                    + "|") + ", "
+                                                                              + testedValues(tested) + ")");
+            call.addElement(XSL, "with-param", "name", "line", "select",
+                    logged(KEPT_UNKNOWN.replace("{rule}", rule.name()), tested));
+            keptUnknownCalled = true;
         }
         final XmlElement event = home.addElement(ns, "Event");
         if (markRules) {

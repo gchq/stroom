@@ -19,25 +19,22 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
     <xsl:choose>
       <xsl:when test="*[@key='event_type'] = 'login'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_login"/>
       </xsl:when>
       <xsl:when test="*[@key='event_type'] = 'logout'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logout"/>
       </xsl:when>
       <xsl:when test="mcp:json-to-xml((*[@key='message'])[1])/*/*[@key='event_type'] = 'user_authentication_check'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_user_authentication_check"/>
       </xsl:when>
       <xsl:when test="mcp:json-to-xml((*[@key='message'])[1])/*/*[@key='event_type'] = 'password_change'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_password_change"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_other"/>
       </xsl:otherwise>
     </xsl:choose>

@@ -10,31 +10,27 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:variable name="record-no" select="stroom:record-no()"/>
-    <xsl:variable name="message" select="data[@name='message']/@value[normalize-space(.)]"/>
     <xsl:sequence select="$record-no[string(.) = '#']"/>
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
+    <xsl:variable name="message" select="data[@name='message']/@value[normalize-space(.)]"/>
     <xsl:choose>
       <xsl:when test="exists($message[matches(., '^User \S+ logged in')])">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
       <xsl:when test="exists($message[matches(., '^User \S+ logged out')])">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logoff"/>
       </xsl:when>
       <xsl:when test="exists($message[matches(., '^Login failed')])">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logon_failed"/>
       </xsl:when>
       <xsl:when test="exists($message[matches(., '^Invoice \d+ created')])">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_invoice"/>
       </xsl:when>
       <xsl:when test="data[@name='level']/@value = 'ERROR'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_payment_error"/>
       </xsl:when>
       <xsl:when test="exists($message[matches(., '^Setting ')])">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_config"/>
       </xsl:when>
       <xsl:otherwise>
