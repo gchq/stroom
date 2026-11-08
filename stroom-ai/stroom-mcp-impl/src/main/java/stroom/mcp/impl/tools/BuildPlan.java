@@ -444,6 +444,27 @@ public class BuildPlan {
         }
     }
 
+    /// @param build A build.
+    /// @return The steps of its plan done so far, in the plan's order; none when it is unknown or unreadable.
+    public List<String> doneSteps(final String build) {
+        try {
+            final List<String> done = new ArrayList<>();
+            final Object all = status(build, null).get("steps");
+            for (final Object item : all instanceof final List<?> list
+                    ? list
+                    : List.of()) {
+                final Map<String, Object> step = JsonValues.map(item);
+                if ("done".equals(step.get("state"))) {
+                    done.add(String.valueOf(step.get("step")));
+                }
+            }
+            return done;
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No steps for build {}: {}", build, e.getMessage()), e);
+            return List.of();
+        }
+    }
+
     /// @param build The build, or null.
     /// @param made  A document the calling tool has just created, which counts whether or not the build's listing
     ///              shows it yet, or null.

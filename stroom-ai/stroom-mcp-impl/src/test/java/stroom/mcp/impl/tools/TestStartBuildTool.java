@@ -36,7 +36,7 @@ class TestStartBuildTool {
     private final FeedWorld feeds = new FeedWorld();
     private final AgentInstructions agentInstructions = Mockito.mock(AgentInstructions.class);
     private final StartBuildTool tool = new StartBuildTool(feeds.world.guard(), feeds.world.records(),
-            feeds.feedNames, agentInstructions, feeds.plan);
+            feeds.feedNames, agentInstructions, feeds.plan, feeds.consent);
 
     @Test
     void startBuildRecordsTheExistingFeedsItWorksFrom() {
@@ -108,10 +108,65 @@ class TestStartBuildTool {
     }
 
     @Test
+    void aBuildWithWorkDoneIsPutToTheUserBeforeCarryingOn() {
+        // Seen in chat 164: an earlier chat's build left in place, and the agent went straight on to indexing.
+        Mockito.when(agentInstructions.applicableInstructions(any(), anyString(), any()))
+                .thenReturn(Map.of("instructions", List.of()));
+        existingBuildWithAFeed();
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", StartBuildTool.CARRY_ON));
+
+        final Map<String, Object> started = json(tool.execute(BuildToolCalls.call(StartBuildTool.NAME,
+                "{\"build\": \"bb\"}"), user.context()));
+
+        assertThat(user.shown()).singleElement().asString().startsWith("Build 'bb' already exists, with these steps "
+                                                                      + "done: ").contains("feed");
+        assertThat(started).containsEntry("build", "bb").containsKeys("plan", "next");
+        // The session now works on it: not asked again.
+        tool.execute(BuildToolCalls.call(StartBuildTool.NAME, "{\"build\": \"bb\"}"), user.context());
+        assertThat(user.shown()).hasSize(1);
+    }
+
+    @Test
+    void startingAfreshChangesNothing() {
+        existingBuildWithAFeed();
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", StartBuildTool.START_AFRESH));
+
+        final Map<String, Object> result = json(tool.execute(BuildToolCalls.call(StartBuildTool.NAME,
+                "{\"build\": \"bb\", \"kind\": \"reference\"}"), user.context()));
+
+        assertThat(result).containsEntry("status", "start_afresh").doesNotContainKey("user_says");
+        assertThat((String) result.get("hint")).contains("nothing was changed").contains("new build name");
+        assertThat(feeds.world.records().kind("bb")).as("nothing recorded").isEmpty();
+        assertThat(feeds.plan.currentBuild(user.context())).isEmpty();
+    }
+
+    @Test
+    void withoutFormsTheAgentIsToldToAskAndCarriesOnOnlyWithTheUsersWord() {
+        Mockito.when(agentInstructions.applicableInstructions(any(), anyString(), any()))
+                .thenReturn(Map.of("instructions", List.of()));
+        existingBuildWithAFeed();
+
+        final Map<String, Object> asked = json(tool.execute(BuildToolCalls.call(StartBuildTool.NAME,
+                "{\"build\": \"bb\"}"), BuildToolCalls.context()));
+        final Map<String, Object> carried = json(tool.execute(BuildToolCalls.call(StartBuildTool.NAME,
+                "{\"build\": \"bb\", \"carry_on\": true}"), BuildToolCalls.context()));
+
+        assertThat(asked).containsEntry("status", "needs_user").doesNotContainKey("plan");
+        assertThat((String) asked.get("hint")).contains("Ask the user").contains("carry_on=true");
+        assertThat(carried).containsKeys("plan", "next").doesNotContainKey("status");
+    }
+
+    @Test
     void itMakesTheBuildsFolderWithoutAskingFirst() {
         assertThat(tool.isReadOnly()).isFalse();
         assertThat(tool.confirmsItself()).isFalse();
         assertThat(tool.definition().description()).startsWith("Onboarding start: ");
+    }
+
+    // Build 'bb', made by an earlier session, with its feed made.
+    private void existingBuildWithAFeed() {
+        feeds.world.guard().buildFolder("bb");
+        feeds.facts.docs = List.of(FakeBuildFacts.doc("Feed", "f", "ACME"));
     }
 
     private static Map<String, Object> json(final ToolResult result) {
