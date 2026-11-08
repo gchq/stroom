@@ -96,7 +96,8 @@ class TestXsltGenerator extends XsltRuns {
         // One rule: nothing repeats, so everything stays inline.
         final String single = generate(mapping(with("events", List.of(rule("logon", List.of(), LOGON)),
                 "style", Map.of("layout", "inline")))).xslt();
-        assertThat(single).doesNotContainPattern("call-template name=\"(?!" + XsltGenerator.UNREAD_TEMPLATE + ")");
+        assertThat(single).doesNotContainPattern("call-template name=\"(?!" + XsltGenerator.UNREAD_TEMPLATE + "|"
+                                       + XsltGenerator.LOG_KIND_TEMPLATE + ")");
     }
 
     @Test
@@ -151,11 +152,15 @@ class TestXsltGenerator extends XsltRuns {
                 {"path": "EventDetail/Authenticate/Data", "data_name": "account", "field": "user"}"""));
         final List<Object> rules = List.of(logonRule(logon), otherRule());
         final String xslt = generate(mapping(with("events", rules, "style", Map.of("layout", "inline")))).xslt();
-        assertThat(variableReads(xslt)).allSatisfy(read -> assertThat(read.getValue()).isGreaterThanOrEqualTo(3));
+        // The record's number aside: read once for every record, by design (XsltGenerator.READ_RECORD_NO).
+        assertThat(variableReads(xslt)).filteredOn(read -> !XsltGenerator.RECORD_NO.equals(read.getKey()))
+                .allSatisfy(read -> assertThat(read.getValue()).isGreaterThanOrEqualTo(3));
         final XmlElement record = having(sheet(xslt), XSL, "template", "mode", "event").getFirst();
         // action is read by the rules' tests and the other rule: the template's; user only by the logon rule,
         // declared just before its first use there (asked for by the user: not hoisted to the start).
-        assertThat(record.childElements(XSL, "variable")).extracting(v -> v.get("name")).containsExactly("action");
+        assertThat(record.childElements(XSL, "variable")).extracting(v -> v.get("name"))
+                .filteredOn(name -> !XsltGenerator.RECORD_NO.equals(name))
+                .containsExactly("action");
         final XmlElement when = record.childElements(XSL, "choose").getFirst().childElements(XSL, "when")
                 .getFirst();
         final List<XmlElement> users = when.iterElements(XSL, "variable");
@@ -666,7 +671,8 @@ class TestXsltGenerator extends XsltRuns {
                 "eventSource");
         assertThat(ownTemplates(sheet).stream().filter(t -> t.get("name") != null)).isEmpty();
         assertThat(result.xslt())
-                .doesNotContainPattern("call-template name=\"(?!" + XsltGenerator.UNREAD_TEMPLATE + ")");
+                .doesNotContainPattern("call-template name=\"(?!" + XsltGenerator.UNREAD_TEMPLATE + "|"
+                                       + XsltGenerator.LOG_KIND_TEMPLATE + ")");
         final XmlElement record = having(sheet, XSL, "template", "mode", "event").getFirst();
         final List<XmlElement> applied = record.iterElements(XSL, "apply-templates");
         assertThat(applied).extracting(a -> a.get("mode")).containsExactly("eventTypeLogon", "eventTypeOther");
@@ -688,7 +694,8 @@ class TestXsltGenerator extends XsltRuns {
                 .containsExactlyInAnyOrder("event_type_logon", "event_type_other", "event_time", "event_source");
         final XmlElement record = having(sheet, XSL, "template", "mode", "event").getFirst();
         assertThat(record.iterElements(XSL, "call-template")).extracting(c -> c.get("name"))
-                .filteredOn(name -> !XsltGenerator.UNREAD_TEMPLATE.equals(name))
+                .filteredOn(name -> !XsltGenerator.UNREAD_TEMPLATE.equals(name)
+                                    && !XsltGenerator.LOG_KIND_TEMPLATE.equals(name))
                 .containsExactly("event_type_logon", "event_type_other");
         assertThat(invalid(transform(result.xslt(), RECORDS), XSD)).isEmpty();
         assertThatThrownBy(() -> mapping(with("style", Map.of("layout", "one-big-template"))))
@@ -1044,17 +1051,46 @@ class TestXsltGenerator extends XsltRuns {
 
         // The kept-Unknown rule calls the template that logs once a stream for each kind, the first record's line
         // as it was (no records run together on one line).
-        assertThat(xslt).contains("<xsl:call-template name=\"" + XsltGenerator.KEPT_UNKNOWN_TEMPLATE + "\">",
+        assertThat(xslt).contains("<xsl:call-template name=\"" + XsltGenerator.LOG_KIND_TEMPLATE + "\">",
                 "<xsl:with-param name=\"group\" select=\"concat('other|', ",
                 "Kept as Unknown by rule ''other'': record ",
-                "<xsl:template name=\"" + XsltGenerator.KEPT_UNKNOWN_TEMPLATE + "\">",
-                "stroom:put($mcp_kept, 'y')", "stroom:log('INFO', $line)");
+                "<xsl:template name=\"" + XsltGenerator.LOG_KIND_TEMPLATE + "\">",
+                "stroom:put(concat('mcp-kind:', $group), 'y')", "stroom:log('INFO', $line)");
         assertThat(xslt).doesNotContain("<xsl:sequence select=\"stroom:log('INFO', concat('Kept as Unknown");
 
         // Read back, the rules are as written: the generator's calls are no rule's own template.
         final XsltReading reading = XsltReader.read(xslt);
         assertThat(reading.rules()).extracting(RuleReading::name).doesNotContain(XsltGenerator.UNREAD_TEMPLATE,
-                XsltGenerator.KEPT_UNKNOWN_TEMPLATE);
+                XsltGenerator.LOG_KIND_TEMPLATE);
+    }
+
+    @Test
+    void aCatchAllRulesRecordsAreLoggedOnceAKind() {
+        // Asked for by the user: seen in chat 163, two kinds of event no one had seen went through a catch-all rule
+        // into Alerts, and nothing said so. A rule taking what earlier rules leave logs each kind it takes.
+        final TranslationMapping m = TranslationMapping.fromJson(json("""
+                {"input": "json", "common": [
+                  {"path": "EventTime/TimeCreated", "field": "time"},
+                  {"path": "EventSource/System/Name", "value": "Acme"},
+                  {"path": "EventSource/System/Environment", "value": "Prod"},
+                  {"path": "EventSource/Generator", "value": "Acme"},
+                  {"path": "EventSource/Device/HostName", "field": "host"},
+                  {"path": "EventDetail/TypeId", "field": "name"}],
+                 "events": [
+                  {"name": "sql", "when": [{"field": "variant", "equals": "cef"}, {"field": "name", "equals": "SQL"}],
+                   "fields": [{"path": "EventDetail/Alert/Type", "value": "IDS"}]},
+                  {"name": "cef_other", "when": [{"field": "variant", "equals": "cef"}],
+                   "fields": [{"path": "EventDetail/Alert/Type", "value": "IDS"}]},
+                  {"name": "login", "when": [{"field": "variant", "equals": "text"}],
+                   "fields": [{"path": "EventDetail/Authenticate/Action", "value": "Logon"},
+                              {"path": "EventDetail/Authenticate/User/Id", "field": "user"}]}]}"""));
+        final XsltGenerator.Generated result = XsltGenerator.generate(m, SCHEMA_352, "3.5.2");
+        assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
+
+        // cef_other takes the CEF records sql leaves: logged; login (variant=text, no rule before it for those) not.
+        assertThat(result.xslt()).contains("Caught by rule ''cef_other'': record ",
+                "<xsl:template name=\"" + XsltGenerator.LOG_KIND_TEMPLATE + "\">")
+                .doesNotContain("Caught by rule ''sql''", "Caught by rule ''login''");
     }
 
     @Test
@@ -1098,7 +1134,8 @@ class TestXsltGenerator extends XsltRuns {
     // fields has.
     private static List<XmlElement> ownTemplates(final XmlElement sheet) {
         return sheet.childElements(XSL, "template").stream()
-                .filter(template -> !XsltGenerator.UNREAD_TEMPLATE.equals(template.get("name")))
+                .filter(template -> !XsltGenerator.UNREAD_TEMPLATE.equals(template.get("name"))
+                                    && !XsltGenerator.LOG_KIND_TEMPLATE.equals(template.get("name")))
                 .toList();
     }
 }

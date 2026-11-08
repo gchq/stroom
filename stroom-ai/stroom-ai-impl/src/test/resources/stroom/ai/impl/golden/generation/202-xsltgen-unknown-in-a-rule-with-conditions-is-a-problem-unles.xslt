@@ -17,13 +17,17 @@
     <xsl:choose>
       <xsl:when test="$action = 'status'">
         <xsl:apply-templates select="." mode="event_type_status"/>
-        <xsl:call-template name="mcp_kept_unknown">
+        <xsl:call-template name="mcp_log_kind">
           <xsl:with-param name="group" select="concat('status|', string-join((string(($action)[1])), '|'))"/>
           <xsl:with-param name="line" select="concat('Kept as Unknown by rule ''status'': record ', $record-no, ' (', string-join((concat('action=', string(($action)[1]))), ' | '), ')')"/>
         </xsl:call-template>
       </xsl:when>
       <xsl:otherwise>
         <xsl:apply-templates select="." mode="event_type_other"/>
+        <xsl:call-template name="mcp_log_kind">
+          <xsl:with-param name="group" select="concat('other|', string-join((string(($action)[1])), '|'))"/>
+          <xsl:with-param name="line" select="concat('Caught by rule ''other'': record ', $record-no, ' (', string-join((concat('action=', string(($action)[1]))), ' | '), ')')"/>
+        </xsl:call-template>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -40,14 +44,13 @@
       </xsl:for-each>
     </xsl:if>
   </xsl:template>
-  <!-- mcp_kept_unknown: a record a rule keeps as Unknown on purpose, logged once a stream for each kind (the rule and
-       the values the rules test) -->
-  <xsl:template name="mcp_kept_unknown">
+  <!-- mcp_log_kind: a record a rule keeps as Unknown on purpose, or a catch-all rule takes, logged once a stream for
+       each kind (the rule and the values the rules test) -->
+  <xsl:template name="mcp_log_kind">
     <xsl:param name="group"/>
     <xsl:param name="line"/>
-    <xsl:variable name="mcp_kept" select="concat('mcp-unknown:', $group)"/>
-    <xsl:if test="not(string(stroom:get($mcp_kept)))">
-      <xsl:value-of select="stroom:put($mcp_kept, 'y')"/>
+    <xsl:if test="not(string(stroom:get(concat('mcp-kind:', $group))))">
+      <xsl:value-of select="stroom:put(concat('mcp-kind:', $group), 'y')"/>
       <xsl:sequence select="stroom:log('INFO', $line)"/>
     </xsl:if>
   </xsl:template>
