@@ -2625,7 +2625,7 @@ environment was an event-logging:3 one).
 Processing · write with a `build` (keeps the survey doc), read-only without one · requires View Data; checks View on
 the feed; the survey doc is made or changed in the build's folder as the user · changes only its build · takes a run
 slot · chat group build · Classes: `SurveyFeedTool`, `FeedSampling`, `RecordSplitter`, `Shapes`, `SurveyDoc`,
-`SurveyDocuments`, `FewerStreams`, `StreamReader`, `Consent`
+`SurveyDocuments`, `SurveyDepth`, `FewerStreams`, `StreamReader`, `Consent`
 
 Samples an existing feed's streams spread over its lifetime and groups their records into shapes (kinds of event),
 saying plainly whether the feed is covered yet. Streams are picked in bisection order (newest, oldest, middle,
@@ -2645,6 +2645,21 @@ the result `NOT COVERED`, never "covered" (seen in Ask Stroom AI: 334 of a strea
 covered; in production a 750 KB sample read to its 108th record hid most of its kinds of event). When the cap was
 already the maximum (5,000,000), the advice is to step records further in and rely on `review_coverage` once
 processed, rather than survey again at the same size (seen: the advice looped).
+
+**Reading deeper.** The record budget is each part's own, not shared by a stream's parts (asked for by the user: a
+source can write different data to different parts). A part of a stream to be read whole (a given stream, or a
+feed's last) is read in order from its start, three quarters of its budget, its windows the rest as a first look
+further in. A part of a line format left only in part is put to the user in a short form (`SurveyDepth`; seen in
+chat 163: a 25,000-record stream surveyed to its 10,000th record, its two rarest kinds, near its end, never seen nor
+classified): how far each part was read and about how many records it holds (from its size, `StreamReader.partSize`),
+with Stop here, Read 10,000 more, Read to the end (offered while the parts have at most 500,000 records left), or
+the user's own words ("another 5,000", "up to 30,000"). Read deeper, a part goes on from where it stopped, in order
+(`StreamReader.rawRecords`), skipping the records its windows read, so none is counted twice. Each part's depth and
+the user's choice are kept in the survey doc (`depth`, by `stream:part`): a part they chose to stop isn't asked
+about again, and one a call's time cut short is read on by the next call, not from its start. The result's `depth`
+says each part's progress; the survey is covered once every such part is read whole (`covered: every part read to its
+end`) or the user chose to stop it (`covered as far as the user chose: ...`). Where the client shows no forms, the
+agent asks in the chat and passes the answer as `read_deeper`.
 
 **Fewer streams.** Fewer than 10 streams a call (a smaller `max_streams`, or fewer than 10 of an existing feed's
 streams by id) is confirmed by the user in a form, but only when the feed holds more streams than that (seen: a
@@ -2910,7 +2925,10 @@ runs; without it the index is taken to hold what they sent) · confirms itself �
 
 Creates a processor filter on a pipeline in a build (`ProcessorFilterWrites.managedPipeline`), through Stroom's
 `ProcessorFilterService` as the user, as the data browser's Process action makes one. Feeds and pipelines are named
-by reference (`IS_DOC_REF`), so Stroom keeps the dependency and a renamed feed is still the one selected. Two scopes:
+by reference (`IS_DOC_REF`), so Stroom keeps the dependency and a renamed feed is still the one selected. A build on
+an existing feed whose survey isn't covered yet is refused (`BuildPlan.uncovered`: the plan's `covered` step to do),
+saying to survey on, the user asked whether to read deeper or choosing to stop (asked for by the user: seen in chat
+163, a feed processed and called complete while its survey said NOT COVERED). Two scopes:
 
 * **Sample** (`stream_ids`): exactly those streams, up to `stroom.ai.builds.maxProcessingTasks` tasks at once (4 by
   default, `ProcessorFilterWrites.buildMaxTasks`). Streams the pipeline already processed (it

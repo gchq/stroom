@@ -242,6 +242,10 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
                                   + "verdict is clean, then process. A change to its XSLT or converter since the "
                                   + "last clean step needs stepping again.");
         }
+        final Optional<String> uncovered = plan.buildOf(ref).flatMap(plan::uncovered);
+        if (uncovered.isPresent()) {
+            throw new ToolRefusal(uncovered.get());
+        }
         final Optional<OutputFeeds.OutputFeed> output = sources.buildFeedsOnly(ref, streamIds, feed);
         final String createdAfter = stringArg(call, CREATED_AFTER_ARG);
         if (feed != null && createdAfter == null) {

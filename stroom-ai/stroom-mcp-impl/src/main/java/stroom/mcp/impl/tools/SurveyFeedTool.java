@@ -72,6 +72,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.LongStream;
 
 /// `survey_feed` - samples a feed's streams spread over its lifetime and groups their records into shapes (kinds of
 /// event), keeping the survey in a build's survey doc when given a build. It reads streams as the user, and writes only
@@ -118,6 +119,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     /// The parts of each of a feed's streams read by default when it is sampled across its life.
     static final int FEED_PARTS = 3;
     static final String MAX_RECORDS_ARG = "max_records_per_stream";
+    static final String READ_DEEPER_ARG = "read_deeper";
+    // The share of a part's budget its windows take when it is read in order from its start: a quarter.
+    private static final int WINDOW_SHARE = 4;
     static final String EXAMPLES_ARG = "examples_per_shape";
     static final String BUILD_ARG = "build";
 
@@ -249,8 +253,14 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                                            + "max_records_per_stream counts records. Default 3, "
                                                            + "or all (up to 20) for stream_ids and a feed's last "
                                                            + "streams.")
-                        .addIntegerProperty(MAX_RECORDS_ARG, "Default 1,000, or 10,000 for stream_ids and a feed's "
-                                                             + "last streams.")
+                        .addIntegerProperty(MAX_RECORDS_ARG, "Records read from each part of a stream: default 1,000, "
+                                                             + "or 10,000 for stream_ids and a feed's last streams "
+                                                             + "(read in order from the start, so the user can have "
+                                                             + "a part read deeper).")
+                        .addStringProperty(READ_DEEPER_ARG, "Only when the client shows no forms: what the user "
+                                                            + "said, in the chat, when asked whether to read the "
+                                                            + "parts read in part deeper ('stop', a number of "
+                                                            + "records more, or 'to the end').")
                         .addProperty(EXAMPLES_ARG, new IntegerSchema(null))
                         .addStringProperty(BUILD_ARG, "Keep the survey record in this build: a Documentation doc "
                                                       + "'<feed> - Survey' with the kinds of event, examples and "
@@ -271,7 +281,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             final List<Meta> chosen = metas(request.streamIds());
             final String feed = feed(call, context, request, chosen);
             confirmFewerStreams(call, context, feed, request, chosen);
-            return JsonResults.of(withinTimeLimit(context, () -> survey(context, request, feed, chosen)));
+            return JsonResults.of(withinTimeLimit(context, () -> survey(call, context, request, feed, chosen)));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         } catch (final ToolTimeoutException e) {
@@ -297,7 +307,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 bounded(call, MAX_PARTS_ARG, 1, MAX_PARTS),
                 maxRecords,
                 orDefault(bounded(call, EXAMPLES_ARG, 1, 10), 2),
-                stringArg(call, BUILD_ARG));
+                stringArg(call, BUILD_ARG),
+                stringArg(call, READ_DEEPER_ARG));
     }
 
     // The streams named, by id.
@@ -391,7 +402,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         }
     }
 
-    private Map<String, Object> survey(final ToolCallContext context,
+    private Map<String, Object> survey(final ToolCall call,
+                                       final ToolCallContext context,
                                        final Request request,
                                        final String feed,
                                        final List<Meta> chosen) {
@@ -452,7 +464,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 ? MAX_PARTS
                 : FEED_PARTS), orDefault(request.maxRecords(), whole
                 ? FeedSampling.SAMPLE_RECORDS
-                : FeedSampling.FEED_RECORDS));
+                : FeedSampling.FEED_RECORDS), whole);
         final SurveyRecords kept = new SurveyRecords(build, record, state, request.examples());
         if (streams.isEmpty() && !skip.isEmpty()) {
             final Map<String, Object> result = new LinkedHashMap<>();
@@ -472,17 +484,144 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             throw new ToolRefusal("No " + request.streamType() + " streams in feed '" + feed + "'");
         }
         final Shapes shapes = new Shapes(new ArrayList<>(known), request.examples());
-        final Reading reading = read(context, progress, feed, streams, shapes, limits);
-        if (reading.firstChunk() == null) {
+        // Parts the user had read deeper that a call's time cut short: read on from where they stopped, not read
+        // again from their start (which would count their records twice).
+        final Map<String, SurveyDepth.Part> earlier = depthOf(state);
+        final List<SurveyDepth.Part> pending = earlier.values().stream()
+                .filter(part -> !part.settled() && part.target() > part.readTo())
+                .filter(part -> streams.stream().anyMatch(meta -> meta.getId() == part.stream()))
+                .toList();
+        final Set<Long> continuing = new TreeSet<>();
+        pending.forEach(part -> continuing.add(part.stream()));
+        final Reading reading = read(context, progress, feed, streams.stream()
+                .filter(meta -> !continuing.contains(meta.getId()))
+                .toList(), shapes, limits);
+        if (reading.firstChunk() == null && pending.isEmpty()) {
             if (reading.stopped()) {
                 throw new ToolTimeoutException();
             }
             throw new ToolRefusal("Nothing readable in the sampled streams of '" + feed + "'");
         }
+        if (reading.format == null && state != null) {
+            reading.format = String.valueOf(state.get("format"));
+        }
+        final List<SurveyDepth.Part> depth = limits.whole()
+                ? deepen(call, context, request, feed, reading, shapes, pending, earlier)
+                : List.of();
         final Map<String, Object> result = result(new Outcome(feed, span, chosen, exhausted, !known.isEmpty(),
                 state, streams.size(), request.maxStreams(), limits), reading, shapes, context);
+        noteDepth(result, reading, depth);
         noteGone(result, gone, dropped);
         return keep(context, kept, result, shapes.shapes());
+    }
+
+    // Each part's depth as the survey state keeps it, by stream:part.
+    private static Map<String, SurveyDepth.Part> depthOf(final Map<String, Object> state) {
+        final Map<String, SurveyDepth.Part> out = new LinkedHashMap<>();
+        if (state != null) {
+            JsonValues.mapOrEmpty(state.get(SurveyDepth.DEPTH)).forEach((key, value) -> {
+                @SuppressWarnings("unchecked") final Map<String, Object> map = (Map<String, Object>) value;
+                out.put(String.valueOf(key), SurveyDepth.Part.fromMap(map));
+            });
+        }
+        return out;
+    }
+
+    // The parts read in part: put to the user (or their answer given as read_deeper, where the client shows no
+    // forms), read deeper as far as they say, and each kept with their choice. A part they chose to stop before isn't
+    // asked about again.
+    private List<SurveyDepth.Part> deepen(final ToolCall call,
+                                          final ToolCallContext context,
+                                          final Request request,
+                                          final String feed,
+                                          final Reading reading,
+                                          final Shapes shapes,
+                                          final List<SurveyDepth.Part> pending,
+                                          final Map<String, SurveyDepth.Part> earlier) {
+        final List<SurveyDepth.Part> parts = new ArrayList<>(pending);
+        final List<SurveyDepth.Part> fresh = new ArrayList<>();
+        for (final SurveyDepth.Part part : reading.partial) {
+            final SurveyDepth.Part before = earlier.get(part.key());
+            if (before != null && before.stopped()) {
+                parts.add(part.withChoice(SurveyDepth.STOP));
+            } else {
+                fresh.add(part);
+            }
+        }
+        if (!fresh.isEmpty()) {
+            final Optional<String> answer = NullSafe.isNonBlankString(request.readDeeper())
+                    ? Optional.of(request.readDeeper())
+                    : consent.answer(call, context, NAME, SurveyDepth.intro(feed, fresh), SurveyDepth.QUESTION,
+                            SurveyDepth.suggestions(fresh));
+            if (answer.isPresent()) {
+                final SurveyDepth.Decision decision = SurveyDepth.decide(answer.get());
+                fresh.forEach(part -> parts.add(part.withChoice(decision.choiceFor(part))));
+            } else {
+                // No forms: the agent asks the user in the chat (see noteDepth).
+                parts.addAll(fresh);
+            }
+        }
+        final List<SurveyDepth.Part> out = new ArrayList<>();
+        for (final SurveyDepth.Part part : parts) {
+            if (!part.settled() && part.target() > part.readTo() && !timeIsUp()) {
+                final SurveyDepth.Deeper deeper = SurveyDepth.readDeeper(streamReader, shapes, part,
+                        SurveyFeedTool::timeIsUp);
+                reading.recordsRead += deeper.records();
+                out.add(deeper.part());
+            } else {
+                out.add(part);
+            }
+        }
+        return out;
+    }
+
+    // What the parts read in part came to: their depth in the result (kept in the survey state), and the coverage
+    // and hint said for them. Covered once every such part is read whole or the user chose to stop it, and nothing
+    // else was read only in part.
+    private static void noteDepth(final Map<String, Object> result,
+                                  final Reading reading,
+                                  final List<SurveyDepth.Part> depth) {
+        if (depth.isEmpty()) {
+            return;
+        }
+        result.put(SurveyDepth.DEPTH, depth.stream().map(SurveyDepth.Part::toMap).toList());
+        result.put("records_read", reading.recordsRead);
+        final Set<Long> deep = new TreeSet<>();
+        depth.forEach(part -> deep.add(part.stream()));
+        final boolean otherwiseInPart = reading.perStream.stream()
+                .anyMatch(stream -> Boolean.TRUE.equals(stream.get("head_only"))
+                                    && !deep.contains(((Number) stream.get("stream")).longValue()));
+        final List<SurveyDepth.Part> open = depth.stream().filter(part -> !part.settled()).toList();
+        if (open.isEmpty() && !otherwiseInPart) {
+            final List<SurveyDepth.Part> stopped = depth.stream().filter(SurveyDepth.Part::stopped).toList();
+            result.put("saturated", true);
+            result.put("coverage", stopped.isEmpty()
+                    ? "covered: every part read to its end"
+                    : "covered as far as the user chose: " + stopped.stream()
+                            .map(part -> "stream " + part.stream() + " part " + (part.part() + 1) + " read to "
+                                         + StreamReader.thousands(part.readTo()) + " of about "
+                                         + StreamReader.thousands(part.estimate()) + " records")
+                            .toList() + "; they chose to stop there");
+            return;
+        }
+        if (open.isEmpty()) {
+            return;
+        }
+        result.put("saturated", false);
+        final boolean unasked = open.stream().anyMatch(part -> part.choice() == null);
+        result.put("coverage", "NOT COVERED: " + open.size() + " part(s) read only in part: " + open.stream()
+                .map(part -> "stream " + part.stream() + " part " + (part.part() + 1) + " to "
+                             + StreamReader.thousands(part.readTo()) + " of about "
+                             + StreamReader.thousands(part.estimate()))
+                .toList() + (unasked
+                ? ""
+                : "; the time for a call ran out before they were read as far as the user asked"));
+        result.put("hint", unasked
+                ? "This client shows no forms: ask the user in the chat whether to read these parts deeper and how "
+                  + "far (stop, a number of records more, or to the end), then call survey_feed again with the "
+                  + "same streams and read_deeper=<what they said>."
+                : "Call survey_feed again with the same streams: it reads on from where it stopped, as far as the "
+                  + "user asked.");
     }
 
     // The shapes the survey knew that pruning gone streams left with no example.
@@ -541,15 +680,17 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         return reading;
     }
 
-    // One stream's parts, up to the limits.
+    // One stream's parts, each up to its own budget of records (asked for by the user: a source can write different
+    // data to different parts, so a budget the parts shared could miss kinds of event in the later ones).
     private void readStream(final Reading reading, final Meta meta, final Shapes shapes, final Limits limits) {
         int newHere = 0;
-        int readHere = 0;
+        long readHere = 0;
         int windowsHere = 0;
         boolean cut = false;
+        boolean inPart = false;
         int parts = 1;
         int part = 0;
-        while (part < Math.min(parts, limits.maxParts()) && readHere < limits.maxRecords()) {
+        while (part < Math.min(parts, limits.maxParts())) {
             if (timeIsUp()) {
                 // Stopped part-way: what is read of it so far counts, as the start of the stream.
                 reading.stop();
@@ -568,11 +709,11 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             }
             parts = head.parts();
             cut = cut || head.truncated();
+            final int budget = limits.maxRecords();
             final RecordSplitter.Chunk chunk;
             try {
                 // More than are read, so those read can be spread over them (see below).
-                chunk = RecordSplitter.split(head.text(), (limits.maxRecords() - readHere) * SPLIT_MORE,
-                        head.truncated());
+                chunk = RecordSplitter.split(head.text(), budget * SPLIT_MORE, head.truncated());
             } catch (final RuntimeException e) {
                 // A part this detector cannot split.
                 reading.perStream.add(entry("stream", meta.getId(), "part", part, "error",
@@ -595,42 +736,85 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             }
             final boolean windowed = head.truncated() && WINDOWED.contains(chunk.format())
                                      && !holdsLineBreaks(chunk);
-            // A part bigger than its head: the head takes at most half the records left, the windows spread to its
-            // end the rest. A head holding more records than are left: a block at its start and the rest spread over
-            // it (RecordPicks). Seen in testing: a 20,000-record stream's head filled all 10,000, no window was read,
-            // and a kind of record only near its end was never seen.
-            final int left = limits.maxRecords() - readHere;
-            final List<Long> picks = windowed
-                    ? RecordPicks.headAndSpread(Math.min(chunk.records().size(), Math.max(1, left / 2)),
-                            Math.max(1, left / 2))
-                    : RecordPicks.headAndSpread(chunk.records().size(), left);
+            final List<Long> picks;
+            if (limits.whole()) {
+                // In order from the part's start, so reading it deeper goes on from there; the windows (a quarter of
+                // the budget) a first look further in.
+                final int inOrder = Math.min(chunk.records().size(), windowed
+                        ? budget - budget / WINDOW_SHARE
+                        : budget);
+                picks = LongStream.range(0, inOrder).boxed().toList();
+            } else {
+                // A part bigger than its head: the head takes at most half the records, the windows spread to its
+                // end the rest. A head holding more records than are read: a block at its start and the rest spread
+                // over it (RecordPicks). Seen in testing: a 20,000-record stream's head filled all 10,000, no window
+                // was read, and a kind of record only near its end was never seen.
+                picks = windowed
+                        ? RecordPicks.headAndSpread(Math.min(chunk.records().size(), Math.max(1, budget / 2)),
+                                Math.max(1, budget / 2))
+                        : RecordPicks.headAndSpread(chunk.records().size(), budget);
+            }
+            int partRead = 0;
             for (final long index : picks) {
                 if (shapes.add(chunk, (int) index, meta.getId(), part)) {
                     newHere++;
                 }
-                readHere++;
+                partRead++;
             }
-            if (windowed && readHere < limits.maxRecords() && !timeIsUp()) {
-                final WindowsRead read = readWindows(reading, meta, part, head, chunk, shapes,
-                        limits.maxRecords() - readHere);
+            List<List<Long>> ranges = List.of();
+            if (windowed && partRead < budget && !timeIsUp()) {
+                final WindowsRead read = readWindows(reading, meta, part, head, chunk, shapes, budget - partRead);
                 windowsHere += read.windows();
-                readHere += read.records();
+                partRead += read.records();
                 newHere += read.newShapes();
+                ranges = read.ranges();
             }
+            // Every record of the part read: its whole text was read, and split into fewer records than the most.
+            final boolean partWhole = !head.truncated() && chunk.records().size() < budget * SPLIT_MORE
+                                      && picks.size() == chunk.records().size();
+            if (!partWhole) {
+                inPart = true;
+                if (limits.whole() && WINDOWED.contains(chunk.format()) && !holdsLineBreaks(chunk)) {
+                    reading.partial.add(new SurveyDepth.Part(meta.getId(), part, picks.size(), ranges,
+                            chunk.header(), chunk.format(), partSize(meta.getId(), part),
+                            estimate(head, meta.getId(), part, picks.size()), false, null));
+                }
+            }
+            readHere += partRead;
             part++;
         }
         reading.recordsRead += readHere;
         final Map<String, Object> entry = entry("stream", meta.getId(), "created", meta.getCreateMs() != 0
                         ? FeedSampling.iso(meta.getCreateMs())
                         : null,
-                "records", readHere, "parts", parts, "head_only", cut || parts > limits.maxParts()
-                                                                   || readHere >= limits.maxRecords(),
+                "records", readHere, "parts", parts, "head_only", cut || parts > limits.maxParts() || inPart,
                 "new_shapes", newHere);
         if (windowsHere > 0) {
             entry.put("windows", windowsHere);
         }
         entry.putAll(FeedSampling.charsetEntry(streamReader.charsetReport(meta.getId())));
         reading.perStream.add(entry);
+    }
+
+    // A part's size in bytes; 0 when it can't be told.
+    private long partSize(final long streamId, final int part) {
+        try {
+            return streamReader.partSize(streamId, part);
+        } catch (final RuntimeException e) {
+            return 0;
+        }
+    }
+
+    // About how many records a part holds: its size over the bytes its head's lines take, a record a line (the
+    // formats read deeper are); never fewer than those read.
+    private long estimate(final RawHead head, final long streamId, final int part, final long read) {
+        final long size = partSize(streamId, part);
+        final byte[] bytes = head.text().getBytes(StandardCharsets.UTF_8);
+        final long lines = head.text().chars().filter(c -> c == '\n').count();
+        if (size == 0 || bytes.length == 0 || lines == 0) {
+            return read;
+        }
+        return Math.max(read, size * lines / bytes.length);
     }
 
     // Windows of a part further in than its head, to its end, their records added to the shapes where they are (a
@@ -649,23 +833,32 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         } catch (final StreamReadException e) {
             reading.perStream.add(entry("stream", meta.getId(), "part", part, "note",
                     "only its head was read: Stroom couldn't read further in: " + e.getMessage()));
-            return new WindowsRead(0, 0, 0);
+            return new WindowsRead(0, 0, 0, List.of());
         }
         int read = 0;
         int records = 0;
         int newShapes = 0;
+        final List<List<Long>> ranges = new ArrayList<>();
         // Each window an equal share of the records left, so the last (the part's end) is read too: seen in testing,
         // the first windows took them all and a kind of record near the end was never seen.
         final int share = Math.max(1, maxRecords / Math.max(1, windows.size()));
-        for (final StreamReader.Window window : windows) {
+        for (int w = 0; w < windows.size(); w++) {
+            final StreamReader.Window window = windows.get(w);
             if (records >= maxRecords || timeIsUp()) {
                 break;
             }
+            final int take = Math.min(share, maxRecords - records);
+            // The last window is the part's tail: its last records are read, so a kind of event only at the very end
+            // is seen however few records a window has (seen in the e2e suite: the tail's first records read, its
+            // last kind missed).
+            final boolean tail = w == windows.size() - 1;
             final RecordSplitter.Chunk more;
             try {
                 more = RecordSplitter.split(chunk.header() == null
                         ? window.text()
-                        : chunk.header() + "\n" + window.text(), Math.min(share, maxRecords - records), false);
+                        : chunk.header() + "\n" + window.text(), tail
+                        ? take * SPLIT_MORE
+                        : take, false);
             } catch (final RuntimeException e) {
                 continue;
             }
@@ -676,14 +869,19 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             final long firstRecord = window.firstLine() - (chunk.header() == null
                     ? 0
                     : 1);
-            for (int index = 0; index < more.records().size(); index++) {
+            final int from = tail
+                    ? Math.max(0, more.records().size() - take)
+                    : 0;
+            final int to = Math.min(more.records().size(), from + take);
+            for (int index = from; index < to; index++) {
                 if (shapes.add(more, index, meta.getId(), part, firstRecord)) {
                     newShapes++;
                 }
                 records++;
             }
+            ranges.add(List.of(firstRecord + from, (long) (to - from)));
         }
-        return new WindowsRead(read, records, newShapes);
+        return new WindowsRead(read, records, newShapes, ranges);
     }
 
     // Whether delimited records hold a quoted value over several lines, which the record splitter reads whole.
@@ -1056,7 +1254,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                            Integer maxParts,
                            Integer maxRecords,
                            int examples,
-                           String build) {
+                           String build,
+                           String readDeeper) {
 
     }
 
@@ -1064,8 +1263,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     ///
     /// @param maxChars   The most characters of a part.
     /// @param maxParts   The most parts of a stream.
-    /// @param maxRecords The most records of a stream.
-    private record Limits(int maxChars, int maxParts, int maxRecords) {
+    /// @param maxRecords The most records of each part.
+    /// @param whole      Whether the streams are to be read whole (a sample's, or a feed's last): each part in order
+    ///                   from its start, so the user can have it read deeper.
+    private record Limits(int maxChars, int maxParts, int maxRecords, boolean whole) {
 
     }
 
@@ -1112,6 +1313,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         private boolean stopped;
         // Streams whose delimited records hold a quoted value over several lines.
         private final Set<Long> quotedNewlinesIn = new LinkedHashSet<>();
+        // The parts of streams to be read whole that were read only in part, and can be read deeper.
+        private final List<SurveyDepth.Part> partial = new ArrayList<>();
 
         private void stop() {
             stopped = true;
@@ -1134,8 +1337,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         }
     }
 
-    // What a part's windows gave: how many were read, their records, and the shapes new among them.
-    private record WindowsRead(int windows, int records, int newShapes) {
+    // What a part's windows gave: how many were read, their records, the shapes new among them, and where their
+    // records are (each [first, count]).
+    private record WindowsRead(int windows, int records, int newShapes, List<List<Long>> ranges) {
 
     }
 }
