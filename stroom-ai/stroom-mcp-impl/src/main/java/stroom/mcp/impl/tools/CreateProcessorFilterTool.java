@@ -281,9 +281,10 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
         details.put("max tasks", scope.maxTasks() != 0
                 ? scope.maxTasks()
                 : "unlimited");
-        output.ifPresent(feedOut -> details.put("events go to", "test feed " + feedOut.name() + " in the build (for "
-                                                                + "another name, decline and have the agent "
-                                                                + "create_feed test_feed=true with it)"));
+        // Plain words for the user (seen in chat 163: the form told them to "have the agent create_feed
+        // test_feed=true"): what declining is for, not how the agent does it.
+        output.ifPresent(feedOut -> details.put("events go to", "test feed " + feedOut.name() + " in the build (to "
+                                                                + "use another name, decline and say which)"));
         if (pipelineOutputs.sendsToKafka(pipelineUuid)) {
             // Stepping sends nothing; processing does: the destination (ArcSight, say) receives these records.
             details.put("sends", "each processed Event as a Kafka record, through the pipeline's KafkaConfig: the "

@@ -934,6 +934,44 @@ class TestDraftMapping extends DraftFixtures {
     }
 
     @Test
+    void pairsASpacedDashPartsAreReadAsFieldsTheirQuotesOff() {
+        // Seen in chat 163: a gateway's bodies written "Key value - Key value", read by some 25 extract entries the
+        // agent wrote by hand, one over-capturing every logout's method.
+        final Map<String, List<String>> values = new LinkedHashMap<>();
+        values.put("body", List.of(
+                "Context grace@203.0.113.9 - SessionId: 2639 - User grace - Client_ip 203.0.113.33 - Nat_ip "
+                + "\"Mapped Ip\" - Vserver 192.0.2.10:443 - Browser_type \"Citrix Workspace App 2409\"",
+                "Context dave@203.0.113.12 - SessionId: 2640 - User dave - Client_ip 203.0.113.40 - Nat_ip "
+                + "\"Mapped Ip\" - Vserver 192.0.2.10:443 - Browser_type \"Citrix Workspace App 2409\"",
+                "Context erin@203.0.113.15 - SessionId: 2641 - User erin - Client_ip 203.0.113.51 - LogoutMethod "
+                + "\"IdleTimeout\" - Group(s) \"Staff\"",
+                "Context frank@203.0.113.16 - SessionId: 2642 - User frank - Client_ip 203.0.113.52 - LogoutMethod "
+                + "\"Explicit\" - Group(s) \"Staff - North\" - Duration 00:10:02"));
+        final Map<String, DraftMapping.PairExtracts> found = DraftMapping.pairExtracts(values, Set.of());
+        assertThat(found.keySet()).containsExactly("body");
+        final List<Map<String, Object>> extracts = found.get("body").extracts();
+        final List<Map<String, Object>> records = new ArrayList<>(List.of(
+                new LinkedHashMap<>(map("body", values.get("body").getFirst())),
+                new LinkedHashMap<>(map("body", values.get("body").get(2))),
+                new LinkedHashMap<>(map("body", values.get("body").getLast()))));
+        DraftMapping.withPairs(records, extracts);
+        assertThat(records.getFirst()).containsEntry("user", "grace").containsEntry("client_ip", "203.0.113.33")
+                .containsEntry("nat_ip", "Mapped Ip").containsEntry("vserver", "192.0.2.10:443")
+                .containsEntry("browser_type", "Citrix Workspace App 2409").containsEntry("sessionid", "2639");
+        // Each value to its own dash: not the rest of the text (seen: a logout's method read as
+        // '"IdleTimeout" - Group(s) "Staff"').
+        assertThat(records.get(1)).containsEntry("logoutmethod", "IdleTimeout")
+                .containsEntry("group_s", "Staff");
+        // A quoted value to its closing quote: a spaced dash inside it is the value's, not the next pair's.
+        assertThat(records.getLast()).containsEntry("group_s", "Staff - North").containsEntry("duration", "00:10:02")
+                .containsEntry("user", "frank");
+        // One spaced dash is as likely prose: not read for pairs.
+        assertThat(DraftMapping.pairExtracts(Map.of("msg", List.of("Backup done - all good", "Restore done - "
+                                                                                             + "partly", "x")),
+                Set.of())).isEmpty();
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void eachRulesDataIsWhatItsOwnRecordsHold() {
         // Seen: 23 SecretServer rules, each given the same 63 Data entries (a logon's checkout_id and old_role

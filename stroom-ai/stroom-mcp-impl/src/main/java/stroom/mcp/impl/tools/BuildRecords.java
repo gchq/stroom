@@ -96,6 +96,8 @@ public class BuildRecords {
     /// The record's key for the kind of work the build was started as, when it was named: `events`, `discovery` or
     /// `reference`.
     public static final String KIND = "kind";
+    // The EventSource/System/Name and Environment the user gave for the build's translation.
+    private static final String SYSTEM = "system";
     /// The kinds of work a build may be started as.
     public static final List<String> BUILD_KINDS = List.of("events", "discovery", "reference");
 
@@ -237,6 +239,37 @@ public class BuildRecords {
                 chosen.put("uuid", uuid);
             }
             state.put(EVENT_LOGGING_VERSION, chosen);
+        });
+    }
+
+    /// @param build A build's name.
+    /// @return The EventSource/System/Name and Environment the user gave for the build's translation (`system_name`,
+    /// as given: one name or a JSON object of each variant's; `environment`), or empty when none was recorded.
+    public Optional<Map<String, Object>> system(final String build) {
+        return load(build).get(SYSTEM) instanceof final Map<?, ?> given
+                ? Optional.of(asMap(given))
+                : Optional.empty();
+    }
+
+    /// Records the EventSource/System/Name and Environment the user gave for the build's translation, so a later
+    /// draft follows them, and one passed otherwise is caught (seen in chat 163: the user answered Test, and the
+    /// second draft was given Prod).
+    ///
+    /// @param build       A build's name.
+    /// @param systemName  The name, as given (one name, or a JSON object of each variant's), or null.
+    /// @param environment The environment, or null.
+    /// @return The record as saved.
+    public Map<String, Object> rememberSystem(final String build, final String systemName, final String environment) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> {
+            final Map<String, Object> given = new LinkedHashMap<>();
+            if (systemName != null) {
+                given.put("system_name", systemName);
+            }
+            if (environment != null) {
+                given.put("environment", environment);
+            }
+            state.put(SYSTEM, given);
         });
     }
 

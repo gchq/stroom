@@ -87,6 +87,10 @@ rules:
      reason: "A field of the source that no rule of the translation reads, so its value is in no event (logged once a stream; the sample the mapping was drafted from may have lacked it, or the source added it since). Ask the user: map it (build_translation_xslt changes=) and reprocess the streams that hold it, or list it in the mapping's ignored_fields to leave it out on purpose"}
   - {message: 'Kept as Unknown by rule', class: benign,
      reason: "A record a rule keeps as EventDetail/Unknown, as the user agreed (allow_unknown): logged so review_coverage finds every one in the whole feed"}
+  # The generated translation's own line for a kind a catch-all rule took (XsltGenerator.CAUGHT, once a stream a kind):
+  # seen in the e2e suite, triaged as "info from an inherited element", which it isn't.
+  - {message: 'Caught by rule ', class: benign,
+     reason: "A kind of record a catch-all rule took (a rule with no conditions, or fewer than one before it), logged once a stream a kind so review_coverage finds every kind in the whole feed: it is translated as that rule says. Check each against the kinds classified: one no one classified is the user's to classify (classify_kinds)"}
   - {own: true, severity: [WARNING], class: review, reason: "Warning in this pipeline's own element"}
   - {severity: [WARNING, INFO], class: benign, reason: 'Warning or info from an inherited element'}
   - {class: review, reason: 'No rule matched'}

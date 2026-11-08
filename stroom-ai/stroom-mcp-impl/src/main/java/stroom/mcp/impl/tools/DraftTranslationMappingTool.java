@@ -34,6 +34,7 @@ import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.workspace.PatternTimeoutException;
 import stroom.ai.shared.AiToolCategory;
@@ -45,11 +46,13 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -66,6 +69,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
     static final String SOURCE_NAME_ARG = "source_name";
     static final String SYSTEM_NAME_ARG = "system_name";
     static final String ENVIRONMENT_ARG = "environment";
+    static final String USER_CHANGED_ARG = "user_changed";
     static final String STREAM_IDS_ARG = "stream_ids";
     static final String SPLITTER_ARG = "splitter";
     static final String BUILD_ARG = "build";
@@ -90,6 +94,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
     private final CurrentTranslations currentTranslations;
     private final SiblingSharedCalls siblingSharedCalls;
     private final Consent consent;
+    private final Provider<BuildRecords> buildRecords;
 
     @Inject
     DraftTranslationMappingTool(final EventVersions eventVersions,
@@ -98,7 +103,8 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                 final SampleProfiling sampleProfiling,
                                 final CurrentTranslations currentTranslations,
                                 final SiblingSharedCalls siblingSharedCalls,
-                                final Consent consent) {
+                                final Consent consent,
+                                final Provider<BuildRecords> buildRecords) {
         this.eventVersions = eventVersions;
         this.sampleStreamTexts = sampleStreamTexts;
         this.builds = builds;
@@ -106,6 +112,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         this.currentTranslations = currentTranslations;
         this.siblingSharedCalls = siblingSharedCalls;
         this.consent = consent;
+        this.buildRecords = buildRecords;
     }
 
     @Override
@@ -157,6 +164,10 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                                             + "\"SecureGate\"}.")
                         .addStringProperty(ENVIRONMENT_ARG, "EventSource/System/Environment, if the user has said, "
                                                             + "e.g. Prod.")
+                        .addBooleanProperty(USER_CHANGED_ARG, "True when the user has changed the system_name or "
+                                                              + "environment they gave earlier for this build (the "
+                                                              + "draft keeps what they first gave, and refuses "
+                                                              + "others).")
                         .addProperty(STREAM_IDS_ARG, BuildTranslationXsltTool.streamIdsSchema(SAMPLE_STREAMS))
                         .addProperty(SPLITTER_ARG, TranslationArgs.object("The Data Splitter spec the text is read "
                                                                           + "with (build_data_splitter's spec), "
@@ -243,7 +254,8 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         final Map<String, Object> sourceNotes = build == null
                 ? null
                 : builds.notesInBuild(build);
-        final Map<String, Object> result = drafted(samples, call, sourceNotes,
+        final SystemGiven system = system(call, build);
+        final Map<String, Object> result = drafted(samples, call, system, sourceNotes,
                 detailCheck(context, build, sourceNotes, version));
         @SuppressWarnings("unchecked") final Map<String, Object> mapping = MappingCompaction.compactPairs(
                 MappingCompaction.compactRules((Map<String, Object>) result.get("mapping")));
@@ -270,8 +282,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         // Several formats, each its own rules: a System/Name each, unless one was given (seen: one name for five
         // products).
         final List<Object> systemNotes = new ArrayList<>(JsonValues.listOrEmpty(result.get("notes")));
-        SystemNames.apply(mapping, variantFieldOf(result.get("splitter")), ToolArgs.raw(call, SYSTEM_NAME_ARG),
-                systemNotes);
+        SystemNames.apply(mapping, variantFieldOf(result.get("splitter")), system.systemName(), systemNotes);
         result.put("notes", systemNotes);
         result.put("schema_check", schemaCheck(context, build, mapping, version));
         result.put("schema_version", version);
@@ -356,14 +367,76 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
 
     private Map<String, Object> drafted(final Map<String, String> samples,
                                         final ToolCall call,
+                                        final SystemGiven system,
                                         final Map<String, Object> sourceNotes,
                                         final Function<String, String> detailCheck) {
         final SplitterSpec splitter = BuildTranslationXsltTool.Request.splitter(ToolArgs.raw(call,
                 SPLITTER_ARG));
         return new LinkedHashMap<>(DraftMapping.draft(samples, NullSafe.string(rawArg(call, SOURCE_NAME_ARG)),
-                SystemNames.single(ToolArgs.raw(call, SYSTEM_NAME_ARG)), stringArg(call, ENVIRONMENT_ARG), sourceNotes,
-                detailCheck,
-                splitter));
+                SystemNames.single(system.systemName()), system.environment(), sourceNotes, detailCheck, splitter));
+    }
+
+    // The System/Name and Environment the draft writes: those the user gave, as the build's record keeps them (from
+    // the chat 163 review: the user answered Test, and the second draft was given Prod). Given first, they are
+    // recorded; left out later, the recorded ones are used; given otherwise, the call is refused, unless the user
+    // changed them (user_changed).
+    private SystemGiven system(final ToolCall call, final String build) {
+        final Object givenName = ToolArgs.raw(call, SYSTEM_NAME_ARG);
+        final String givenEnvironment = stringArg(call, ENVIRONMENT_ARG);
+        if (NullSafe.isBlankString(build)) {
+            return new SystemGiven(givenName, givenEnvironment);
+        }
+        final String nameText = givenName == null
+                ? null
+                : givenName instanceof final String text
+                        ? text
+                        : ToolJson.dumpsSortedKeys(givenName);
+        final Map<String, Object> recorded = recordedSystem(build);
+        final String recordedName = (String) recorded.get("system_name");
+        final String recordedEnvironment = (String) recorded.get("environment");
+        final boolean changed = ToolArgs.flag(call, USER_CHANGED_ARG);
+        final boolean otherName = nameText != null && recordedName != null && !nameText.equals(recordedName);
+        final boolean otherEnvironment = givenEnvironment != null && recordedEnvironment != null
+                                         && !givenEnvironment.equals(recordedEnvironment);
+        if ((otherName || otherEnvironment) && !changed) {
+            final List<String> differences = new ArrayList<>();
+            if (otherName) {
+                differences.add("system_name " + recordedName + " (not " + nameText + ")");
+            }
+            if (otherEnvironment) {
+                differences.add("environment " + recordedEnvironment + " (not " + givenEnvironment + ")");
+            }
+            throw new ToolRefusal("The user gave this build " + String.join(" and ", differences)
+                                  + ": leave them out to use the user's, or, if the user has changed them, call again "
+                                  + "with user_changed=true and the new ones.");
+        }
+        final String name = nameText != null
+                ? nameText
+                : recordedName;
+        final String environment = givenEnvironment != null
+                ? givenEnvironment
+                : recordedEnvironment;
+        if ((nameText != null || givenEnvironment != null)
+            && (!Objects.equals(name, recordedName) || !Objects.equals(environment, recordedEnvironment))) {
+            try {
+                buildRecords.get().rememberSystem(build, name, environment);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> LogUtil.message("Couldn't keep the system in build {}'s record: {}", build,
+                        e.getMessage()), e);
+            }
+        }
+        return new SystemGiven(name != null && name.startsWith("{")
+                ? ToolJson.loads(name)
+                : name, environment);
+    }
+
+    // The System/Name and Environment the build's record keeps; none when it keeps none or can't be read.
+    private Map<String, Object> recordedSystem(final String build) {
+        try {
+            return buildRecords.get().system(build).orElse(Map.of());
+        } catch (final RuntimeException e) {
+            return Map.of();
+        }
     }
 
     // Why a catalogued event can't be its action element; the notes are followed unchecked rather than not at all
@@ -462,5 +535,14 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         return (space < 0
                 ? start
                 : start.substring(0, space)) + " …";
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // The System/Name (one name, or a map of each variant's) and Environment the draft writes.
+    private record SystemGiven(Object systemName, String environment) {
+
     }
 }

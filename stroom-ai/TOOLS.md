@@ -3567,7 +3567,12 @@ Content · read-only (records Events that pass as validated in the build record)
 Checks event XML two ways: against the event-logging XSD held in this Stroom (`EventChecks.validateEvents`, each
 error with its line, element path and message), and against quality rules beyond the schema
 (`EventChecks.checkEventQuality`: `TimeCreated` a full UTC timestamp; `EventSource/System/Name`, `Environment`,
-`Generator`, `Device` and `EventDetail/TypeId` present; exactly one action under `EventDetail`; no empty elements).
+`Generator`, `Device` and `EventDetail/TypeId` present; exactly one action under `EventDetail`; no empty elements;
+no identifier (`Id`, `HostName`, `IPAddress`, `MACAddress`, `Domain`, `EmailAddress`, `Port`) with a quote, full
+stop, comma or semicolon at an end (`stray_punctuation`: seen in the chat 163 review, every New-session user read as
+`frank.`); no value, an element's or a Data `Value`, that runs on into the next field (`over_captured`: a closing
+quote then ` - Key`, or ` - Key` then a quoted value; seen, a logout method read as `"IdleTimeout" - Group(s)
+"Staff"`)).
 Given `stream_ids`, it reads the Events streams itself (`EventStreams`) rather than have the agent read them back:
 an agent once read 50 events back 23 at a time, 47 s a read, to check them. A stream holding more events than are
 checked (500 in all) is read at events spread over it, not its start (`spread` in `read`): seen in testing, the first
@@ -3907,7 +3912,9 @@ for the agent. This is done before drafting, not at the pipeline step, because t
 generated without them.
 
 * **Arguments**: `samples` (pasted text, by name or a list) or `stream_ids` (uploaded sample streams, read by the
-  tool); `source_name`, `system_name`, `environment`; `splitter` (a build_data_splitter spec, else inferred);
+  tool); `source_name`, `system_name`, `environment` (with `build`, kept in the build's record as the user's
+  answers: left out later, the kept ones are used; given otherwise, refused unless `user_changed=true`);
+  `splitter` (a build_data_splitter spec, else inferred);
   `build` (for source notes, the chosen version, the current translation); `schema_version` (a version, or where
   this Stroom holds the version in more than one XML schema document, the UUID of the one the user chose).
 * **Returns** (`schema_check.unfilled` says when rules' action elements need parts the draft couldn't fill):
@@ -3926,8 +3933,19 @@ generated without them.
   * `current_translation` lists what the current XSLT looks up (its `stroom:lookup()` maps, the imported functions
     and named templates it calls, the reference data the pipeline loads) with a note asking whether the next version
     keeps them: in testing a V1.3 drafted from the sample lost V1.2's IP lookups.
-  * It stays read-only although it records the chosen version in the build's record: that record is the tools' own
-    bookkeeping.
+  * It stays read-only although it records the chosen version, System Name and Environment in the build's record
+    (`BuildRecords.rememberSystem`): that record is the tools' own bookkeeping. The System Name and Environment are
+    kept there because, in the chat 163 review, the user answered Test and a later draft was sent Prod.
+  * With variants, a kind the user confirmed by field=value goes only into the rules of the variants whose records
+    hold that value (`VariantDrafts.belongsTo`; one no variant holds, to the first whose records have the field):
+    before, every variant got a rule for every confirmed kind (`linux_icastart`).
+  * Bodies of `Key value` parts separated by ` - ` (`DraftMapping.pairsIn`, Pairs style `dashed`, keys such as
+    `Group(s)` with their brackets escaped) are read as pairs where a text holds at least two spaced dashes and more
+    such keys than `Key: value` keys (Secret Server's colon pairs hold a dash in a value: `Secret: Firewall - Edge
+    Admin`); a key whose value is quoted is read to its closing quote (`dashed_quoted`), so a dash inside it is kept
+    (`Group(s) "Staff - North"`), the others to the next spaced dash. Covered by a golden draft case (`netscaler
+    sslvpn dashed pairs`) and through Stroom (`TestE2eDashedPairs`). A key after the header's ` : ` rather than a
+    dash (`Context`) isn't read.
 
 ### `build_translation_xslt`
 
@@ -3936,7 +3954,7 @@ content · write; read-only when neither `build` nor `uuid` is given (the code c
 in the build folder (Create) or changed (Edit) · changes only its build · takes a run slot · Classes:
 `BuildTranslationXsltTool`, `TranslationBuilds`, `TranslationDocs`, `MappingSampleCheck`, `MappingProblems`,
 `DomainSplits`, `PlaceholderChoices`, `UnsavedChoices`, `SentMappings`, `RequiredImports`, `CurrentTranslations`,
-`Consent`, `XsltGenerator`, `MappingChanges`
+`Consent`, `XsltGenerator`, `MappingChanges`, `ConfirmedKinds`
 
 Writes the event-logging translation XSLT from a field mapping, and with `build` and `name` (or `uuid`) saves it
 with the mapping kept in its description, returning the document rather than the code, so the XSLT need not pass
@@ -3964,7 +3982,10 @@ through the model. A call runs in this order:
    so it is asked once: before, a later form failing lost the earlier answer and the user was asked on every call.
    Warnings the user has answered are dropped, including those the second check brings back.
 6. **Checks against the build**: rules contradicting the source notes' event catalogue (`source_notes_check`);
-   a mapping that keeps none of the current translation's lookups (warning).
+   a mapping that keeps none of the current translation's lookups (warning); kinds the user confirmed
+   (classify_kinds, `user_confirmed`) that the mapping translates otherwise (`ConfirmedKinds`: the sample records
+   holding the kind's field=value taken by no rule, dropped, or by a rule writing another action element, Unknown
+   among them, or another Action), a warning each, and on saving put to the user (below).
 7. **The field-mapping preview** (`field_mapping=true` with `pipeline_uuid` and `stream_ids`): the pipeline is
    stepped with a marked copy of the XSLT (up to `max_records`) and the section rendered by `EventFieldDocs`.
    Without it `field_mapping` is null and `field_mapping_needs` says why: a table from the mapping alone showed how
@@ -3995,6 +4016,15 @@ through the model. A call runs in this order:
   `build` but no `name`; keeping a rule Unknown with no sample records to show (see below); and every save
   refusal of save_xslt.
 * **Notes**:
+  * **Confirmed kinds translated otherwise** (`agreeConfirmedChanged`, before the Unknown review; decided with the
+    user after the chat 163 review, where confirmed logoffs went to Unknown and a confirmed Action Other became
+    Logon, unsaid): `needs_review` with a table (kind, what the user confirmed, records, what it is now, rule), then
+    a form: "Keep the mapping's change" (kept with the XSLT, `TranslationBuilds.CONFIRMED_CHANGED`, so asked once,
+    its warnings dropped) or "Follow what I confirmed" (nothing saved: `ok: false`, `confirmed`, `hint`), or the
+    user's own words (`user_says`). Without forms the warnings are left for the agent. The Unknown review lists,
+    under a rule, the confirmed kinds among its records.
+  * **After a failed build**, `next_changes_apply_to` says what the next `changes=` start from: this call's mapping,
+    kept for its uuid or build and name, not the draft or the saved XSLT; or nothing, without either.
   * **Unknown agreed per rule** (`agreeUnknown`). A rule kept as Unknown (`allow_unknown`) is put to the user with
     the sample records it catches: first `needs_review` with `show_user` (markdown, per rule: how many records,
     what they hold, what their values suggest instead) and a `review_id`; the agent shows it and calls again with
@@ -4264,7 +4294,9 @@ Reference).
 * **Returns**: `type`, `uuid`, `name`, `version`, with the build's next step; for a Data Splitter, `sample_run`:
   the records Stroom's parser wrote from the sample streams, or why it wasn't run (no raw sample stream of the
   build's own, or one that can't be read).
-* **Refuses** (`TranslationDocs.checkConverter` and `checkDataSplitter`): blank code; an XML_FRAGMENT that isn't a
+* **Refuses** (`TranslationDocs.checkConverter` and `checkDataSplitter`): blank code; JSON ("code is JSON, not a
+  converter", pointing to build_data_splitter with the spec and `save_as`; it had read "Content is not allowed in
+  prolog"); an XML_FRAGMENT that isn't a
   wrapper (no `<!ENTITY fragment SYSTEM "fragment">` and `&fragment;`); a Data Splitter holding a JSON element ("a
   text converter cannot parse JSON": the template's JSONParser does, with no converter); one that isn't
   well-formed, or whose root isn't `<dataSplitter>`; one that adds `ignoreErrors="true"`, which hides the errors for
@@ -4529,8 +4561,12 @@ is reported with its error, not allowed to hide the others.
   `stopped_early`); `missed` (groups, most records first: `found_as`, `kind` (the logged values), `records`,
   `raw_streams`, `examples` with `raw_stream`, `record` and `holds`); `affected_raw_streams` (`count`, `first_id`,
   `last_id`, `from`, `to`) and `affected_raw_stream_ids` (at most 200); `tell_user`; `next` (show the kinds, add
-  rules with build_translation_xslt `changes=`, write_documentation with affected streams, how to reprocess);
-  `follow_on` and `follow_on_events`.
+  rules with build_translation_xslt `changes=`, write_documentation with affected streams, how to reprocess; when
+  every kind found was kept as Unknown, only to show them: kinds the user agreed to keep as Unknown need no rule);
+  `counts_capped` (`raw_streams`, `count`, `note`) when an Error stream held as many log lines of a severity as
+  Stroom writes (`CoverageReads.MAX_WRITTEN_MARKERS`, 1,000, from `RecordErrorReceiver`), so its counts are short;
+  `follow_on` and `follow_on_events`. Examples (`holds`) are read with the pipeline's own Data Splitter
+  (`KeptMappings.dataSplitter`), as processing read them, else a spec inferred from the stream.
 * **Refuses**: no `pipeline_uuid`; a pipeline that can't be read; one that has processed nothing (no Error and no
   Events streams, on a first call); `max_streams` out of range; a cancelled call; no Stepping permission where it
   steps.
