@@ -118,6 +118,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private static final List<String> CONFIDENCES = List.of(HIGH, MEDIUM, LOW);
 
     // A result's keys.
+    private static final String STATUS = "status";
+    // A result's status when its table is for the user, as it is.
+    private static final String NEEDS_SHOWING = "needs_showing";
     private static final String HINT = "hint";
     private static final String TABLE = "table";
     private static final String RECORDED = "recorded";
@@ -141,6 +144,10 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private static final int EXAMPLE_VALUE = 100;
     // The shortest value looked for in the sample's lines, to find a record's own line.
     private static final int MIN_MATCHED = 3;
+    // A field named for a time or date, whose values (Nov  6 09:02:00) are several words but not free text.
+    private static final Pattern TIME_LIKE = Pattern.compile("(?i)(time|date)");
+    // The fewest words a value of free text has.
+    private static final int FREE_TEXT_WORDS = 4;
     // A field holding a record's time, left out of a record shown by its fields.
     private static final Pattern TIME_FIELD = Pattern.compile("(?i)(time|timestamp|ts|date|datetime|@timestamp)");
     // A field's name that says it names a user or account (generic words, no product's).
@@ -381,6 +388,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final List<Proposal> proposals = new ArrayList<>();
         final List<String> problems = new ArrayList<>();
         final List<String> rated = new ArrayList<>();
+        final List<String> unknownFields = new ArrayList<>();
         for (int i = 0; i < given.size(); i++) {
             final Map<?, ?> item = given.get(i);
             final String key = ToolText.str(item.get(FIELD)) + "=" + ToolText.str(item.get(VALUE));
@@ -414,11 +422,15 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             } else if (unknownField(item, ACTOR, recordFields) || unknownField(item, AFFECTED, recordFields)) {
                 // Seen in the agent eval: a label from the text ('By User') given for a field, the event's user
                 // then drafted empty.
-                problems.add("proposals[" + i + "]: actor and affected name fields of the records, as listed ("
-                             + String.join(", ", recordFields) + "), or are left out");
+                unknownFields.add("proposals[" + i + "]");
             } else {
                 proposals.add(new Proposal(key, item, confidence, fromUser));
             }
+        }
+        if (!unknownFields.isEmpty()) {
+            // The fields listed once, not for each proposal (seen in chat 161: some 80 fields, three times over).
+            problems.add(String.join(", ", unknownFields) + ": actor and affected name fields of the records, as "
+                         + "listed (" + String.join(", ", recordFields) + "), or are left out");
         }
         if (!problems.isEmpty()) {
             throw new ToolRefusal("Nothing recorded: " + String.join("; ", problems));
@@ -486,7 +498,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         if (toConfirm.isEmpty()) {
             if (!kept.isEmpty()) {
                 result.put("still_to_confirm", kept.stream().map(entry -> entry.get(KEY)).toList());
-                presented(result, build, firstSet(kept));
+                presented(result, build, firstSet(kept), context.session().isChat());
                 return result;
             }
             if (!left.isEmpty()) {
@@ -495,7 +507,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             result.put(HINT, hint(left));
             return result;
         }
-        presented(result, build, firstSet(toConfirm));
+        presented(result, build, firstSet(toConfirm), context.session().isChat());
         return result;
     }
 
@@ -586,7 +598,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         result.put(RECORDED, List.copyOf(accepted));
         result.put(SOURCE_NOTES, doc);
         if (!remaining.isEmpty()) {
-            presented(result, build, firstSet(remaining));
+            presented(result, build, firstSet(remaining), context.session().isChat());
             return result;
         }
         if (!left.isEmpty()) {
@@ -596,19 +608,29 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         return result;
     }
 
-    // What the agent shows the user before the form: a set of proposals of one confidence, the high-confidence
-    // ones as one table, the others in detail, with what to call next.
+    // What the user is shown before the form: a set of proposals of one confidence, the high-confidence ones as one
+    // table, the others in detail, with what to call next. Stroom AI's chat shows the table itself; another client's
+    // agent shows it.
     private static void presented(final Map<String, Object> result,
                                   final String build,
-                                  final List<Map<String, Object>> set) {
+                                  final List<Map<String, Object>> set,
+                                  final boolean shownByChat) {
         final String confidence = confidenceOf(set);
+        // Shown to the user as it is (seen in testing: a set's table saved to the workspace, then retyped by the
+        // agent, shortened and restyled, or never shown at all): in Stroom AI's chat, by the chat itself; elsewhere,
+        // the result in full however long, for the agent to show.
+        result.put(STATUS, NEEDS_SHOWING);
         result.put(TABLE, HIGH.equals(confidence)
                 ? summary(set)
                 : details(set));
-        result.put(HINT, "Show the table to the user in your reply, as it is (Markdown the chat renders), then "
-                         + "call classify_kinds build=" + build + " confirm=true: a short form asks them to accept "
-                         + "all the " + confidence + "-confidence classifications or amend them. Show only this "
-                         + "table: any others are shown after the form, so don't describe them now.");
+        final String form = "call classify_kinds build=" + build + " confirm=true: a short form asks them to accept "
+                            + "all the " + confidence + "-confidence classifications or amend them.";
+        result.put(HINT, shownByChat
+                ? "The chat shows the user this table itself, as it is: don't repeat, restyle or describe it, nor "
+                  + "any others to come. Now " + form
+                : "Show the table to the user in your reply, as it is, whole (Markdown the chat renders: don't "
+                  + "shorten, restyle or summarise it), then " + form + " Show only this table: any others are "
+                  + "shown after the form, so don't describe them now.");
     }
 
     // The set put to the user next (asked for by the user): up to ten proposals of the first confidence they have
@@ -731,15 +753,22 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             }
             // The kind is told by its last condition (a variant's own condition comes first).
             final Map<String, Object> told = equals.getLast();
-            // Told by its format alone: a catch-all, the format's events not told apart.
-            final boolean catchAll = equals.size() == 1 && told.get(FIELD).equals(variantField);
-            // A catch-all after its format's own rules (its 'other') has the records they leave; none left, it is
-            // the rule for events the sample doesn't have, as a single format's is, and not listed.
+            // Told by its format alone. Its format's 'other' (after the format's own kinds) has the records they
+            // leave; none left, it is the rule for events the sample doesn't have, as a single format's is, and not
+            // listed.
+            final boolean byFormat = equals.size() == 1 && told.get(FIELD).equals(variantField);
+            final boolean leftovers = byFormat && earlierRules.stream()
+                    .anyMatch(earlierRule -> earlierRule.size() > 1 && sameCondition(earlierRule.getFirst(), told));
             final List<Map<String, Object>> ofKind = records.stream()
                     .filter(record -> matches(record, equals))
-                    .filter(record -> !catchAll || earlierRules.stream().noneMatch(rule1 -> matches(record, rule1)))
+                    .filter(record -> !byFormat || earlierRules.stream().noneMatch(rule1 -> matches(record, rule1)))
                     .toList();
             earlierRules.add(equals);
+            // A catch-all, its events not told apart: a format's leftovers, or a whole format whose records say what
+            // happened in free text. Not a format the splitter reads into fields of one event (seen in chat 161:
+            // the agent's sshd_failed_password and sshd_accepted variants, each one kind, rated medium as
+            // catch-alls).
+            final boolean catchAll = byFormat && (leftovers || freeText(ofKind, variantField));
             if (catchAll && ofKind.isEmpty()) {
                 continue;
             }
@@ -792,6 +821,31 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             }
         }
         return records;
+    }
+
+    private static boolean sameCondition(final Map<String, Object> one, final Map<String, Object> other) {
+        return String.valueOf(one.get(FIELD)).equals(String.valueOf(other.get(FIELD)))
+               && String.valueOf(one.get(EQUALS)).equals(String.valueOf(other.get(EQUALS)));
+    }
+
+    // Whether the records say what happened in free text: a field (not their format or time) whose values are mostly
+    // several words, and not all the same.
+    private static boolean freeText(final List<Map<String, Object>> records, final String variantField) {
+        final Set<String> fields = new LinkedHashSet<>();
+        records.forEach(record -> fields.addAll(record.keySet()));
+        return fields.stream()
+                .filter(field -> named(field) && !field.equals(variantField) && !TIME_LIKE.matcher(field).find())
+                .anyMatch(field -> {
+                    final List<String> values = records.stream()
+                            .map(record -> valueText(record.get(field)).strip())
+                            .filter(value -> !value.isEmpty())
+                            .toList();
+                    final long worded = values.stream()
+                            .filter(value -> value.split("\\s+").length >= FREE_TEXT_WORDS)
+                            .count();
+                    return !values.isEmpty() && worded * 2 >= values.size()
+                           && values.stream().distinct().count() > 1;
+                });
     }
 
     // Whether the record meets each of the conditions.

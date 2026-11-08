@@ -149,6 +149,17 @@ class TestToolOutputs {
     }
 
     @Test
+    void contentToShowIsGivenInFull() {
+        // Seen in testing: classify_kinds' table of ten proposals saved to the workspace, and the agent retyped it,
+        // shortened and restyled.
+        final String output = reply("needs_showing", "table", "## Medium-confidence classifications\n".repeat(300),
+                "hint", "Show the table to the user in your reply, as it is");
+
+        assertThat(ToolOutputs.mustShowInFull(output)).isTrue();
+        assertThat(ToolOutputs.isLarge(output)).isFalse();
+    }
+
+    @Test
     void anApprovalOrConfirmationIsGivenInFull() {
         final String approval = reply("needs_approval", "summary", "Promote the build",
                 "details", "x".repeat(5_000), "approval_id", "appr-abc.def");

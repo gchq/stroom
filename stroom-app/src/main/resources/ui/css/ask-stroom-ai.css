@@ -625,6 +625,20 @@
     color: var(--control__text-color--disabled);
 }
 
+/* Wrap and Copy, side by side. */
+.ai-code-actions {
+    display: flex;
+    gap: 6px;
+}
+
+/* A code block with its long lines wrapped (the Wrap button), rather than scrolled; specific enough to win over the
+   highlighter's own pre[class*=language-] and code[class*=language-] rules. */
+.ai-code-header + pre.ai-code--wrapped,
+.ai-code-header + pre.ai-code--wrapped code {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
 /* ---- Jump to the latest message ---- */
 
 /* Floats over the bottom of the conversation, taking no room of its own. */

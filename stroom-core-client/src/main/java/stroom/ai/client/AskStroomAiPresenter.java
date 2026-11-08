@@ -252,6 +252,8 @@ public class AskStroomAiPresenter
     private static final String USER_ACTION_UNDO_ATTRIBUTE = "data-user-action-undo";
     // A tool result's buttons are shown in a card of their own, outside the tool call's entry.
     private static final String USER_ACTIONS_ID_SUFFIX = "-actions";
+    // The id of the table a tool result gave for the user, shown after it.
+    private static final String SHOWN_TABLE_ID_SUFFIX = "-table";
     private static final SafeHtml PRE = SafeHtmlUtils.fromSafeConstant("pre");
     private static final String CHAT_ID_ATTRIBUTE = "data-chat-id";
     private static final String DELETE_CHAT_ATTRIBUTE = "data-delete-chat-id";
@@ -270,6 +272,10 @@ public class AskStroomAiPresenter
     private static final String EDIT_SEND_ATTRIBUTE = "data-edit-send";
     private static final String EDIT_CANCEL_ATTRIBUTE = "data-edit-cancel";
     private static final String COPY_TEXT_ATTRIBUTE = "data-copy-text";
+    // A code block's button that wraps its long lines, or unwraps them.
+    private static final String WRAP_CODE_ATTRIBUTE = "data-wrap-code";
+    // A code block whose long lines are wrapped.
+    private static final String WRAPPED_CODE_CLASS = "ai-code--wrapped";
     private static final String DAY_DIVIDER_CLASS = "ai-day-divider";
     private static final String PENDING_MESSAGE_ID = "pending";
     // How long a chat takes to load before it is shown to be loading.
@@ -703,6 +709,12 @@ public class AskStroomAiPresenter
                     final String messageIdStr = button.getAttribute("data-delete-message-id");
                     if (NullSafe.isNonBlankString(messageIdStr)) {
                         onDeleteMessage(Integer.parseInt(messageIdStr));
+                        return;
+                    }
+
+                    // Wrapping a code block's long lines, or unwrapping them.
+                    if (button.hasAttribute(WRAP_CODE_ATTRIBUTE)) {
+                        onWrapCode(button);
                         return;
                     }
 
@@ -2421,6 +2433,27 @@ public class AskStroomAiPresenter
      */
     // Shows the steps a tool result offers the user, or holds them while the agent is still working (see
     // heldUserActions). A card already shown is updated in place.
+    // The table a tool result gave for the user to see as it is (classify_kinds' proposals), shown by the chat itself
+    // after the call, not retyped by the agent (seen: shortened and restyled, or never shown).
+    private void appendShownTable(final Element markdownContainer, final AiChatMessage msg, final long nowMs) {
+        final String table = AiToolMessages.shownTable(msg.getMessage());
+        final String id = msg.getId() + SHOWN_TABLE_ID_SUFFIX;
+        if (table == null || findMessageElement(markdownContainer, id) != null) {
+            return;
+        }
+        final HtmlBuilder hb = new HtmlBuilder();
+        appendMessageHtml(hb, "ai-message ai-message--assistant", table, msg.getCreateTimeMs(), nowMs, true, 0,
+                false);
+        final Element element = parseHtml(hb).getFirstChildElement();
+        if (element == null) {
+            return;
+        }
+        element.setAttribute(MESSAGE_ID_ATTRIBUTE, id);
+        decorateCodeBlocks(element);
+        decorateStroomLinks(element);
+        markdownContainer.appendChild(element);
+    }
+
     private void showOrHoldUserActions(final Element markdownContainer, final AiChatMessage msg, final long nowMs) {
         final JSONArray actions = AiToolMessages.getArray(msg.getMessage(), "userActions");
         if (actions == null || actions.size() == 0) {
@@ -4743,6 +4776,7 @@ public class AskStroomAiPresenter
             && findMessageElement(markdownContainer, messageId) == null
             && AiConversationEntries.addResultToCall(markdownContainer, messageElement, msg.getMessage())) {
             // Shown in its call's entry.
+            appendShownTable(markdownContainer, msg, nowMs);
             showOrHoldUserActions(markdownContainer, msg, nowMs);
             keepProgressInPlace(markdownContainer);
             return;
@@ -4783,6 +4817,7 @@ public class AskStroomAiPresenter
             unwatchPrompt();
         }
         if (msg.getMessageType() == AiMessageType.TOOL_RESULT) {
+            appendShownTable(markdownContainer, msg, nowMs);
             showOrHoldUserActions(markdownContainer, msg, nowMs);
         } else if (msg.getMessageType() == AiMessageType.INTERIM_RESPONSE
                    && findInConversation(WORKING_MESSAGE_ID) != null) {
@@ -4870,15 +4905,53 @@ public class AskStroomAiPresenter
             final HtmlBuilder hb = new HtmlBuilder();
             hb.div(header -> {
                 header.span(label -> label.append(language), Attribute.className("ai-code-language"));
-                header.elem(button -> setCopyButtonContent(button, SvgImage.COPY, "Copy"),
-                        BUTTON,
-                        Attribute.className("ai-message-copy ai-code-copy"),
-                        Attribute.title("Copy the code"),
-                        new Attribute("data", pre.getInnerText()));
+                header.div(actions -> {
+                    // Long lines wrapped, or scrolled as written (asked for by the user: a record of a log line can
+                    // be wider than the chat).
+                    actions.elem(button -> setCopyButtonContent(button, SvgImage.TEXT_WRAP, "Wrap"),
+                            BUTTON,
+                            Attribute.className("ai-message-copy ai-code-wrap"),
+                            Attribute.title("Wrap long lines"),
+                            new Attribute(WRAP_CODE_ATTRIBUTE, "true"),
+                            new Attribute("aria-pressed", "false"));
+                    actions.elem(button -> setCopyButtonContent(button, SvgImage.COPY, "Copy"),
+                            BUTTON,
+                            Attribute.className("ai-message-copy ai-code-copy"),
+                            Attribute.title("Copy the code"),
+                            new Attribute("data", pre.getInnerText()));
+                }, Attribute.className("ai-code-actions"));
             }, Attribute.className("ai-code-header"));
             final Element holder = Document.get().createDivElement();
             holder.setInnerHTML(hb.toSafeHtml().asString());
             pre.getParentElement().insertBefore(holder.getFirstChildElement(), pre);
+        }
+    }
+
+    // Wraps the long lines of the code block under the button's header, or unwraps them, and says which it does next.
+    private static void onWrapCode(final Element button) {
+        final Element header = ElementUtil.findParent(button, element ->
+                element.hasClassName("ai-code-header"), 4);
+        final Element pre = header != null
+                ? header.getNextSiblingElement()
+                : null;
+        if (pre == null || !"pre".equalsIgnoreCase(pre.getTagName())) {
+            return;
+        }
+        final boolean wrapped = !pre.hasClassName(WRAPPED_CODE_CLASS);
+        if (wrapped) {
+            pre.addClassName(WRAPPED_CODE_CLASS);
+        } else {
+            pre.removeClassName(WRAPPED_CODE_CLASS);
+        }
+        button.setAttribute("aria-pressed", String.valueOf(wrapped));
+        button.setTitle(wrapped
+                ? "Show long lines as written"
+                : "Wrap long lines");
+        final Element label = ElementUtil.findChild(button, "ai-message-copy-label");
+        if (label != null) {
+            label.setInnerText(wrapped
+                    ? "Unwrap"
+                    : "Wrap");
         }
     }
 
