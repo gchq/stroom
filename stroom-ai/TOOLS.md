@@ -2695,14 +2695,19 @@ Processing · write · checks View and Edit on the build's survey doc · confirm
 `SetShapeHandlingTool`, `SurveyDoc`, `SurveyDocuments`, `Consent`, `BuildPlan`
 
 Records in the build's survey doc that some kinds of event are left untranslated on purpose (`drop`, with the user's
-reason) or no longer are (`translate`). The user confirms in a form listing each kind with its record count and share.
+reason) or no longer are (`translate`). Called first, it gives back the kinds as a table (`# | Kind of event |
+Records | Share`, status `needs_showing`: Stroom AI's chat shows it itself, another client's agent shows it); called
+again with `confirm: true`, the user confirms in a short plain form that refers to it (asked for by the user: the
+kinds had run together in the form's message, cut short).
 Afterwards `survey_feed` marks those kinds and gives their locations `expect: none`, and `step_records` counts such a
 record clean when it produces no Event (and flags it if it does). The mapping still needs a drop rule for them
 (`build_translation_xslt`), so they don't reach the "no mapping matched" warning.
 
 * **Arguments**: `build`, `feed`, `shapes` (signatures, or text found in exactly one signature, e.g.
-  `loggerName=org.jgroups`), `handling` (`drop` or `translate`), all required; `reason` (required for `drop`).
-* **Returns**: `feed`, `handling`, `shapes` (the signatures resolved), `left_untranslated` (every dropped kind with its
+  `loggerName=org.jgroups`), `handling` (`drop` or `translate`), all required; `reason` (required for `drop`);
+  `confirm` (true once the table is shown).
+* **Returns**: without `confirm`, `status`, `table` and `hint`; with it, `feed`, `handling`, `shapes` (the signatures
+  resolved), `left_untranslated` (every dropped kind with its
   reason), `locations` (the kinds' examples to step, with `expect: none` for drop), `hint`, and `next`.
 * **Refuses**: a missing argument; `handling` other than the two; no survey of the feed in the build (`run survey_feed
   with build first`); a shape that matches no signature or several (`SurveyDoc.resolve`); `drop` without a reason; the
@@ -2811,7 +2816,10 @@ text (a variant the splitter reads into one event's fields is a kind); a high
 proposal for one is rated medium (`rated_medium`), a proposal of one as Unknown is refused (seen: catch-alls
 proposed as Unknown, their events never put to the user), and the hint says to refine the splitter when its records
 name their event. The build keeps one notes doc: the one named for the source, else the
-one it has. One kind (or none told apart), or none left, records nothing pending: the plan's
+one it has. Records not told apart into kinds whose text says what happened (a field of varied free text) aren't "nothing to
+classify": the agent is told to refine the splitter so a field names each event, and nothing is recorded, so the
+plan's step stays to do; with `one_kind: true` the user confirms in a form that they are one kind of event (or
+says what kinds they hold). One kind (or none told apart), or none left, records nothing pending: the plan's
 `classify` step is done. Called with `proposals` (one catalogue entry a pending kind: `field`, `value`,
 `description`, `event_detail`, `action`, `success`, `type_id`, `actor`, `affected`, `affected_as`, `confidence`), each
 is checked as a catalogue event and kept in the notes block (`proposed`, with its `title` and `product` and the
@@ -2821,9 +2829,9 @@ form) comes with status `needs_showing`: Stroom AI's chat shows it itself, after
 to repeat it; another client's agent is told to show it as it is: high-confidence ones as one table `# | Rule | Kind | Mapping` (product,
 title, and action element, Action and outcome, e.g. `Authenticate: Logon (Failure)`); medium- and low-confidence ones
 in detail, each a numbered heading `[product] title`, its record as the sample has it, whole (the sample's line
-holding most of its values; else its fields but its format and time), preformatted, and what the proposal says, each
-under a subheading of its own (Action element, then Action, Outcome, Type id, Who acted, Acted on, where it has
-them). A listing takes 18 kinds a
+holding most of its values; else its fields but its format and time), preformatted, and what the proposal says, a table of
+Element and Value (Schema action, the action element, then Action, Outcome, Type id, Who acted, Acted on, a row
+only where it has one). A listing takes 18 kinds a
 round (`round` says how many are left); kinds rejected earlier (`rejected` in the notes) are left out of later
 rounds. The draft treats a kinds field (named for kinds) as one with up to 200 values. The proposals are put to the user a set at a time (asked for by the user): up to ten of one
 confidence, high first, then medium, then low, each set numbered from 1 under a heading saying which of that
@@ -2839,7 +2847,7 @@ plan's `classify` step (after the converter, before the translation) is done whe
 not recorded once the translation is written.
 
 * **Arguments**: `build` (required); `source` (the source's name; the notes' when the build has them); `stream_ids`
-  (the build's newest five raw sample streams when left out); `splitter`; `proposals`; `confirm`.
+  (the build's newest five raw sample streams when left out); `splitter`; `proposals`; `confirm`; `one_kind`.
 * **Returns**: listing: `kinds_found`, `already_settled`, `to_classify`, `record_fields` (kept in the notes:
   proposals' `actor` and `affected` must be among them), `user_fields` (fields named for a user or account whose
   values aren't addresses, else a note to leave `actor` out), `source_notes`, `hint`, `next`; proposals:
@@ -4467,9 +4475,11 @@ feeds the user may view) · takes a run slot · Classes: `ReviewCoverageTool`, `
 
 Whole-feed coverage of an events pipeline once its feed is processed: the kinds of event the sample missed. The
 generated translation logs, into the Error stream of the raw stream a record came from, each record no rule
-matched (`No event mapping matched record N (...)`, WARN, `XsltGenerator.UNMATCHED`) and each a rule keeps as
-Unknown (`Kept as Unknown by rule 'r': record N (...)`, INFO, benign in triage), with the values its rules test
-(up to 4, `LOGGED_FIELDS`). So the kinds are grouped from the Error streams alone, however large the feed, with a
+matched (`No event mapping matched record N (...)`, WARN, `XsltGenerator.UNMATCHED`) and, once a stream for each
+kind (the rule and the values the rules test; `mcp_kept_unknown`), the first record a rule keeps as Unknown (`Kept as
+Unknown by rule 'r': record N (...)`, INFO, benign in triage), with the values its rules test (up to 4,
+`LOGGED_FIELDS`). A kept-Unknown kind's streams are counted (`streams`), not its records, and told apart in
+`tell_user`. So the kinds are grouped from the Error streams alone, however large the feed, with a
 few raw records read only for examples (`CoverageReads.example`).
 
 A feed of hundreds of thousands of streams is read in bounded batches by Id (`max_streams` a call,

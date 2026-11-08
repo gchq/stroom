@@ -54,10 +54,25 @@ class TestSetShapeHandlingTool {
     @Test
     void droppingKindsIsConfirmedThenKeptInTheSurveyDoc() {
         final String uuid = survey();
-        final String arguments = "{\"build\": \"acme-v1\", \"feed\": \"ACME\", \"shapes\": [\"org.jgroups\"], "
-                                 + "\"handling\": \"drop\", \"reason\": \"cluster housekeeping, no security value\"}";
+        final String shown = "{\"build\": \"acme-v1\", \"feed\": \"ACME\", \"shapes\": [\"org.jgroups\"], "
+                             + "\"handling\": \"drop\", \"reason\": \"cluster housekeeping, no security value\"";
+
+        // First the kinds as a table for the chat (asked for by the user: seen, the kinds run together in the
+        // form's message and cut short); nothing written, no form.
+        final BuildToolCalls.FormUser viewer = BuildToolCalls.user(Map.of("value", true));
+        final Map<String, Object> table = json(call(shown + "}", viewer.chatContext()));
+        assertThat(table).containsEntry("status", "needs_showing");
+        assertThat(String.valueOf(table.get("table")))
+                .startsWith("## Leave untranslated (no Events): kinds of event in 'ACME'\n\n"
+                            + "| # | Kind of event | Records | Share |")
+                .contains("org.jgroups", "| 2 | 66.7% |");
+        assertThat(String.valueOf(table.get("hint"))).startsWith("The chat shows the user this table itself")
+                .contains("confirm=true");
+        assertThat(viewer.forms()).isEmpty();
+        assertThat(SurveyDoc.dropped(SurveyDoc.readState(world.body(uuid)))).isEmpty();
 
         // Nothing written until the user agrees, which they can't without a form.
+        final String arguments = shown + ", \"confirm\": true}";
         assertThat(call(arguments, BuildToolCalls.context()).text())
                 .startsWith("Not done: Leave untranslated (no Events): 1 kind(s) of event in feed 'ACME'.");
         assertThat(SurveyDoc.dropped(SurveyDoc.readState(world.body(uuid)))).isEmpty();
@@ -68,8 +83,9 @@ class TestSetShapeHandlingTool {
         assertThat(user.forms()).singleElement().satisfies(asked -> {
             assertThat(asked.get("summary")).isEqualTo("Leave untranslated (no Events): 1 kind(s) of event in feed "
                                                        + "'ACME'");
+            // Short and plain: the kinds are in the table shown.
             assertThat(String.valueOf(((Map<?, ?>) asked.get("details")).get("kinds")))
-                    .contains("(2 records seen, 66.7%)");
+                    .isEqualTo("1, in the table shown");
         });
 
         assertThat(done.get("handling")).isEqualTo("drop");
@@ -90,9 +106,9 @@ class TestSetShapeHandlingTool {
         survey();
         final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
         call("{\"build\": \"acme-v1\", \"feed\": \"ACME\", \"shapes\": \"org.jgroups\", \"handling\": \"drop\", "
-             + "\"reason\": \"noise\"}", user.context());
+             + "\"reason\": \"noise\", \"confirm\": true}", user.context());
         final String translate = "{\"build\": \"acme-v1\", \"feed\": \"ACME\", \"shapes\": \"org.jgroups\", "
-                                 + "\"handling\": \"translate\"}";
+                                 + "\"handling\": \"translate\", \"confirm\": true}";
 
         final Map<String, Object> done = json(call(translate, user.context()));
 
