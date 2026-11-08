@@ -204,6 +204,39 @@ class TestEventChecks {
 
     @Test
     @SuppressWarnings("unchecked")
+    void testAnIdentifierWithStrayPunctuationIsFlagged() {
+        // From the chat 163 review: every New-session user had a trailing full stop.
+        final String frank = EVENT.replace("<Authenticate><Action>Logon</Action></Authenticate>",
+                "<Authenticate><Action>Logon</Action><User><Id>frank.</Id></User></Authenticate>");
+        final Map<String, Object> rules = (Map<String, Object>) EventChecks.checkEventQuality(frank).get("rules");
+        assertThat(rules).containsOnlyKeys("stray_punctuation");
+        assertThat(rules.get("stray_punctuation").toString())
+                .contains("Event/EventDetail/Authenticate/User/Id is 'frank.'");
+        // A name, a description or an IPv6 address may well end so: not flagged.
+        assertThat(EventChecks.checkEventQuality(EVENT.replace("<HostName>ws01</HostName>",
+                "<HostName>ws01</HostName><IPAddress>fe80::</IPAddress>").replace("<TypeId>Logon</TypeId>",
+                "<TypeId>Logon</TypeId><Description>A user logged on.</Description>")).get("ok")).isEqualTo(true);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testAValueThatRunsOnIntoTheNextFieldIsFlagged() {
+        // From the chat 163 review: the logout method took the group with it, in all 1,191 logoffs.
+        final String runOn = EVENT.replace("<Authenticate><Action>Logon</Action></Authenticate>",
+                "<Authenticate><Action>Logoff</Action><Data Name=\"Method\" "
+                + "Value=\"&quot;IdleTimeout&quot; - Group(s) &quot;Staff&quot;\"/></Authenticate>");
+        final Map<String, Object> rules = (Map<String, Object>) EventChecks.checkEventQuality(runOn).get("rules");
+        assertThat(rules).containsOnlyKeys("over_captured");
+        assertThat(rules.get("over_captured").toString()).contains("Event/EventDetail/Authenticate/Data is")
+                .contains("run on into the next field");
+        // A value with a spaced dash of its own is not.
+        assertThat(EventChecks.checkEventQuality(runOn.replace("&quot;IdleTimeout&quot; - Group(s) &quot;Staff"
+                                                               + "&quot;", "Idle - timed out")).get("ok"))
+                .isEqualTo(true);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void testUnknownEventsAreNotedWithoutFailing() {
         assertThat(EventChecks.checkEventQuality(EVENT)).doesNotContainKey("notes");
         final String unknown = EVENT.replace("<Authenticate><Action>Logon</Action></Authenticate>",

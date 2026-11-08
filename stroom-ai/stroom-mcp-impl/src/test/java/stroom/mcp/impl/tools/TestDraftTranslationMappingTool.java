@@ -299,6 +299,41 @@ class TestDraftTranslationMappingTool {
     }
 
     @Test
+    void theSystemTheUserGaveIsKeptForTheBuildAndAnotherIsRefused() {
+        // From the chat 163 review: the user answered Test, and a later draft was given Prod.
+        world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes");
+        final Map<String, Object> first = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1", "system_name", "Acme Gateway", "environment", "Test"));
+        assertThat(ToolJson.dumps(first.get("mapping"))).contains("Acme Gateway").contains("Test");
+        assertThat(world.world.records().system("acme-v1")).hasValueSatisfying(system -> assertThat(system)
+                .containsEntry("system_name", "Acme Gateway")
+                .containsEntry("environment", "Test"));
+
+        final Map<String, Object> other = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1", "environment", "Prod"));
+        assertThat((String) other.get("error")).contains("environment Test (not Prod)").contains("user_changed");
+
+        final Map<String, Object> leftOut = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1"));
+        assertThat(ToolJson.dumps(leftOut.get("mapping"))).contains("Acme Gateway").contains("Test")
+                .doesNotContain("Prod");
+    }
+
+    @Test
+    void aSystemTheUserChangedReplacesTheOneKept() {
+        world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes");
+        world.call(tool, Map.of("samples", Map.of("acme.csv", CSV), "build", "acme-v1",
+                "system_name", "Acme Gateway", "environment", "Test"));
+
+        final Map<String, Object> changed = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1", "environment", "Prod", "user_changed", true));
+
+        assertThat(ToolJson.dumps(changed.get("mapping"))).contains("Acme Gateway").contains("Prod");
+        assertThat(world.world.records().system("acme-v1")).hasValueSatisfying(system -> assertThat(system)
+                .containsEntry("environment", "Prod"));
+    }
+
+    @Test
     void xmlFragmentsAreDraftedInTheNamespaceOfTheirWrapper() {
         // Read in the namespace of the wrapper the environment uses, which need not be records:2: with no wrapper
         // of the environment's own, the standard records:2 one.

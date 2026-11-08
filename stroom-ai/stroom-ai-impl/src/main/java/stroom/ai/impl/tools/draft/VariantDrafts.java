@@ -161,7 +161,9 @@ final class VariantDrafts {
                     ? Map.of("field", field, "present", false)
                     : Map.of("field", field, "equals", drafted.variant());
             for (final Map<String, Object> rule : JsonValues.maps(drafted.mapping().get(EVENTS))) {
-                events.add(forVariant(rule, prefix, condition, own));
+                if (belongsTo(rule, drafted, drafts)) {
+                    events.add(forVariant(rule, prefix, condition, own));
+                }
             }
             for (final Object entry : JsonValues.maps(drafted.mapping().get("extract"))) {
                 if (!extract.contains(entry)) {
@@ -244,6 +246,39 @@ final class VariantDrafts {
         }
         result.put("fields_seen", new ArrayList<>(seen));
         return result;
+    }
+
+    // Whether a variant keeps a rule its draft wrote: one telling a kind by a field's value is the variant's whose
+    // records hold that value; a kind no variant's records hold (one the documentation names, say) is the first
+    // variant's whose records have the field. Seen in chat 163: the confirmed kinds, applied to every variant with an
+    // 'event' field, gave a rule for each kind in each variant (linux_icastart, netscaler_history), failing the
+    // schema checks; the agent wrote the mapping by hand.
+    private static boolean belongsTo(final Map<String, Object> rule,
+                                     final Drafted drafted,
+                                     final List<Drafted> drafts) {
+        final List<Map<String, Object>> told = JsonValues.maps(rule.get(WHEN)).stream()
+                .filter(condition -> condition.get("field") != null && condition.get("equals") != null)
+                .toList();
+        if (told.isEmpty()) {
+            return true;
+        }
+        final String field = String.valueOf(told.getLast().get("field"));
+        final String value = String.valueOf(told.getLast().get("equals"));
+        if (holds(drafted.records(), field, value)) {
+            return true;
+        }
+        if (drafts.stream().anyMatch(other -> holds(other.records(), field, value))) {
+            return false;
+        }
+        return drafts.stream()
+                .filter(other -> other.records().stream().anyMatch(record -> record.get(field) != null))
+                .findFirst()
+                .map(first -> first == drafted)
+                .orElse(true);
+    }
+
+    private static boolean holds(final List<Map<String, Object>> records, final String field, final String value) {
+        return records.stream().anyMatch(record -> value.equals(String.valueOf(record.get(field))));
     }
 
     // The header lines left untranslated; the splitter writes their date on the records after them, read by each

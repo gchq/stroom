@@ -116,6 +116,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     static final String DISCARD_HAND_EDIT_ARG = "discard_hand_edit";
     static final String HAND_EDIT_CHOICES_ARG = "hand_edit_choices";
 
+    // The answers suggested when the mapping translates kinds the user confirmed otherwise.
+    private static final String KEEP_CHANGE = "Keep the mapping's change";
+    private static final String FOLLOW_CONFIRMED = "Follow what I confirmed";
     private static final int DEFAULT_RECORDS = 50;
     private static final int MAX_RECORDS = 1000;
 
@@ -704,8 +707,13 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         if (samples == null) {
             return;
         }
+        final List<Map<String, Object>> events = request.build() == null
+                ? List.of()
+                : JsonValues.maps(builds.notesInBuild(request.build()).get("events"));
         final Map<String, Object> check = MappingSampleCheck.check(b.mapping, samples, splitter, b.schema, inferred,
-                clock);
+                clock, events);
+        b.lost = (List<ConfirmedKinds.Lost>) check.remove(MappingSampleCheck.CONFIRMED_LOST);
+        b.lost.forEach(one -> warnings.add(lostWarning(one)));
         b.qualified = (List<LocalCheck.QualifiedIds>) check.remove(MappingSampleCheck.DOMAIN_QUALIFIED);
         b.placeholders = (List<Placeholders.Found>) check.remove(MappingSampleCheck.PLACEHOLDERS);
         b.result.put("sample_check", check);
@@ -838,6 +846,10 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         if (!ok(b) || (request.build() == null && request.uuid() == null)) {
             return Optional.empty();
         }
+        final Optional<Map<String, Object>> changed = agreeConfirmedChanged(call, context, b);
+        if (changed.isPresent()) {
+            return changed;
+        }
         final Map<String, String> agreedNow = new LinkedHashMap<>();
         final Optional<Map<String, Object>> asked = agreeUnknown(call, context, b, agreedNow);
         if (asked.isPresent()) {
@@ -870,6 +882,11 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             saved = new LinkedHashMap<>(saved);
             saved.put("version", builds.rememberUnknownAgreed(uuid, agreedNow));
         }
+        if (!b.confirmedChanges.isEmpty()) {
+            saved = new LinkedHashMap<>(saved);
+            saved.put("version", builds.rememberAgreed(TranslationBuilds.CONFIRMED_CHANGED, uuid,
+                    b.confirmedChanges));
+        }
         if (!b.domainChoices.isEmpty()) {
             saved = new LinkedHashMap<>(saved);
             saved.put("version", builds.rememberAgreed(TranslationBuilds.DOMAIN_CHOSEN, uuid, b.domainChoices));
@@ -899,6 +916,97 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
         b.saved = saved;
         return Optional.empty();
+    }
+
+    // The warning for a kind the user confirmed that the mapping translates otherwise.
+    private static String lostWarning(final ConfirmedKinds.Lost one) {
+        return "confirmed kind " + one.kind() + " (" + one.field() + "=" + one.value() + ", " + one.records()
+               + " sample records): the user confirmed " + one.wanted() + ", but " + (one.rule().isEmpty()
+                ? "no rule takes it"
+                : "rule '" + one.rule() + "' makes it " + one.writes()) + ". Follow what they confirmed, or, saving, "
+               + "the user is asked to agree to the change";
+    }
+
+    // A kind the user confirmed (classify_kinds) that the mapping translates otherwise is put to them before saving
+    // (decided with the user after the chat 163 review, where confirmed logoffs went to Unknown and a confirmed
+    // Action Other became Logon, unsaid): shown in the chat, then a short form, keep the change or follow what they
+    // confirmed. What they keep is kept with the XSLT, so it is asked once; without forms the warnings are left for
+    // the agent to put to them.
+    private Optional<Map<String, Object>> agreeConfirmedChanged(final ToolCall call,
+                                                                final ToolCallContext context,
+                                                                final Build b) {
+        final Request request = b.request;
+        if (b.lost.isEmpty()) {
+            return Optional.empty();
+        }
+        final Map<String, String> before = agreedSoFar(context, request, TranslationBuilds.CONFIRMED_CHANGED);
+        final List<ConfirmedKinds.Lost> asking = new ArrayList<>();
+        for (final ConfirmedKinds.Lost one : b.lost) {
+            if (one.writes().equals(before.get(one.key()))) {
+                b.confirmedChanges.put(one.key(), one.writes());
+            } else {
+                asking.add(one);
+            }
+        }
+        if (asking.isEmpty()) {
+            dropAgreedLost(b);
+            return Optional.empty();
+        }
+        final Object records = b.result.get("sample_check") instanceof final Map<?, ?> check
+                ? check.get("records")
+                : "?";
+        final String shown = ConfirmedKinds.markdown(asking, records);
+        if (!Consent.wasReviewed(request.reviewed(), shown)) {
+            final Map<String, Object> review = new LinkedHashMap<>();
+            review.put("status", "needs_review");
+            review.put("show_user", shown);
+            review.put("review_id", Consent.reviewId(shown));
+            review.put("hint", "Show the user show_user in the chat exactly as it is (markdown), then, in the same "
+                               + "turn, without waiting for a reply, call build_translation_xslt again with the same "
+                               + "arguments plus reviewed='" + Consent.reviewId(shown) + "' (its review_id): a short "
+                               + "form asks them to keep the mapping's change or follow what they confirmed."
+                               + Consent.reviewNote(request.reviewed()));
+            return Optional.of(review);
+        }
+        final Optional<String> answer = consent.answer(call, context, NAME,
+                "This mapping translates kinds you confirmed otherwise, as shown in the chat.",
+                "Keep the mapping's change, or follow what you confirmed", List.of(KEEP_CHANGE, FOLLOW_CONFIRMED));
+        if (answer.isEmpty()) {
+            return Optional.empty();
+        }
+        if (answer.get().equalsIgnoreCase(KEEP_CHANGE)) {
+            final Map<String, String> kept = ConfirmedKinds.keys(asking);
+            b.confirmedChanges.putAll(kept);
+            UnsavedChoices.remember(context, request.target(), TranslationBuilds.CONFIRMED_CHANGED,
+                    b.confirmedChanges);
+            dropAgreedLost(b);
+            return Optional.empty();
+        }
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("ok", false);
+        result.put("saved", null);
+        if (!answer.get().equalsIgnoreCase(FOLLOW_CONFIRMED)) {
+            result.put("user_says", answer.get());
+        }
+        result.put("confirmed", asking.stream()
+                .map(one -> one.kind() + " (" + one.field() + "=" + one.value() + "): confirmed as " + one.wanted()
+                            + "; now " + one.writes() + (one.rule().isEmpty()
+                        ? ""
+                        : " in rule '" + one.rule() + "'"))
+                .toList());
+        result.put("hint", "Nothing saved. " + (result.containsKey("user_says")
+                ? "Do what the user says (user_says) with these kinds"
+                : "The user wants what they confirmed followed: change the mapping so a rule takes each of these "
+                  + "kinds and writes what they confirmed") + ", then build and save again.");
+        return Optional.of(result);
+    }
+
+    // The warnings for the changes the user agreed to: answered, they are not the agent's to act on.
+    private static void dropAgreedLost(final Build b) {
+        final List<String> warnings = TranslationBuilds.warnings(b.result);
+        b.lost.stream()
+                .filter(one -> b.confirmedChanges.containsKey(one.key()))
+                .forEach(one -> warnings.remove(lostWarning(one)));
     }
 
     // Unknown says what happened is not known: the user agrees to that per rule, seeing what its records hold (a
@@ -957,7 +1065,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
         // Shown in the chat first, the form kept short (asked for by the user: "Keep rest as Unknown (what happened
         // is not known) in the saved XSLT: rest: ..." was cryptic, and the detail too much tiny text in a form).
-        final String shown = TranslationBuilds.unknownMarkdown(kept, sampled, check.get("records"));
+        final String shown = TranslationBuilds.unknownMarkdown(kept, sampled, check.get("records"), b.lost);
         if (!Consent.wasReviewed(request.reviewed(), shown)) {
             // Passed on only with this id, as promote_build's layout (seen there: reviewed=true from the start).
             final Map<String, Object> review = new LinkedHashMap<>();
@@ -1131,6 +1239,22 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         if (b.basedOn != null) {
             b.result.put("changes_applied_to", b.basedOn);
         }
+        if (!Boolean.TRUE.equals(b.result.get("ok"))) {
+            b.result.put("next_changes_apply_to", nextChangesBase(b.request));
+        }
+    }
+
+    // What the next changes= start from after a build that failed: this call's mapping, kept for its XSLT, not the
+    // draft or the saved XSLT (seen in the chat 163 review: the agent couldn't tell, and re-sent whole mappings).
+    private static String nextChangesBase(final Request request) {
+        if (request.target().isEmpty()) {
+            return "nothing: without uuid, or build and name, this call's mapping isn't kept. Give the whole mapping "
+                   + "again, or build and name.";
+        }
+        return "this call's mapping (with any changes it applied), kept for " + (request.uuid() != null
+                ? "XSLT " + request.uuid() + ": the next changes= with the same uuid"
+                : "'" + request.name() + "' in build " + request.build() + ": the next changes= with the same build "
+                  + "and name") + " start from it, not from the draft or the saved XSLT.";
     }
 
     private static void hint(final Build b) {
@@ -1311,6 +1435,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         private List<LocalCheck.QualifiedIds> qualified;
         private Map<String, Object> sent;
         private final Map<String, String> domainChoices = new LinkedHashMap<>();
+        private List<ConfirmedKinds.Lost> lost = List.of();
+        private final Map<String, String> confirmedChanges = new LinkedHashMap<>();
         private List<Placeholders.Found> placeholders;
         private final Map<String, String> placeholderChoices = new LinkedHashMap<>();
         private List<String> applied;

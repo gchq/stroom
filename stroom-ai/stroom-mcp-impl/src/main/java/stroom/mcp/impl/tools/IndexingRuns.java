@@ -78,7 +78,7 @@ class IndexingRuns {
     private static final int REFUSED_STREAMS = 10;
     private static final int MAX_SHARDS = 1_000;
     private static final String EVERY = "every document goes with it, so this processes all the Events streams the "
-                                        + "index should hold (reprocess_streams takes those this pipeline indexed "
+                                        + "index should hold (reprocessing takes those this pipeline indexed "
                                         + "before)";
 
     private final PipelineShapes pipelineShapes;

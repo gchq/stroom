@@ -265,6 +265,67 @@ class TestReviewCoverageTool {
     }
 
     @Test
+    void kindsKeptAsUnknownAsTheUserAgreedNeedNoRule() {
+        // From the chat 163 review: the agent was told agreed Unknown kinds needed rules.
+        Mockito.when(reads.errorBatch(any(), anyLong(), anyInt())).thenReturn(new CoverageReads.ErrorBatch(
+                List.of(new CoverageReads.ErrorStream(11, 4L, 1_790_000_100_000L, Map.of())), null));
+        Mockito.doReturn(new CoverageReads.LoggedRecords(List.of(
+                new CoverageReads.Logged(4, 1_790_000_100_000L, 5, "other", Map.of("action", "export"))), 1))
+                .when(reads).logged(any(), any());
+        loggingXslt();
+
+        final Map<String, Object> result = tool.review(new SteppingWorld().context(), new ReviewCoverageTool.Request(
+                "ev", null, 500, List.of(), false, null, List.of()));
+
+        assertThat((String) result.get("tell_user")).contains("1 kind(s) kept as Unknown")
+                .endsWith("The kinds kept as Unknown were agreed with the user: they need no rule.")
+                .doesNotContain("needs a rule");
+        assertThat((List<?>) result.get("next")).singleElement().asString()
+                .startsWith("Show the user the kinds kept as Unknown");
+        assertThat(result).doesNotContainKey("counts_capped");
+    }
+
+    @Test
+    void countsCutShortByStroomsLimitOfLogLinesAreSaid() {
+        Mockito.when(reads.errorBatch(any(), anyLong(), anyInt())).thenReturn(new CoverageReads.ErrorBatch(
+                List.of(new CoverageReads.ErrorStream(11, 4L, 1_790_000_100_000L, Map.of())), null));
+        Mockito.doReturn(new CoverageReads.LoggedRecords(List.of(
+                new CoverageReads.Logged(4, 1_790_000_100_000L, 5, null, Map.of("action", "export"))), 1,
+                List.of(4L))).when(reads).logged(any(), any());
+        loggingXslt();
+
+        final Map<String, Object> result = tool.review(new SteppingWorld().context(), new ReviewCoverageTool.Request(
+                "ev", null, 500, List.of(), false, null, List.of()));
+
+        assertThat((String) result.get("tell_user")).contains("The mapping needs a rule for each kind not kept as "
+                                                              + "Unknown;")
+                .endsWith("Counts are short for 1 raw stream(s): their Error streams reached Stroom's limit of "
+                          + "1000 log lines (see counts_capped).");
+        final Map<?, ?> capped = (Map<?, ?>) result.get("counts_capped");
+        assertThat(capped.get("raw_streams")).isEqualTo(List.of(4L));
+    }
+
+    @Test
+    void examplesAreReadWithThePipelinesOwnDataSplitter() {
+        // From the chat 163 review: examples read with an inferred spec came from a different split.
+        Mockito.when(reads.errorBatch(any(), anyLong(), anyInt())).thenReturn(new CoverageReads.ErrorBatch(
+                List.of(new CoverageReads.ErrorStream(11, 4L, 1_790_000_100_000L, Map.of())), null));
+        Mockito.doReturn(new CoverageReads.LoggedRecords(List.of(
+                new CoverageReads.Logged(4, 1_790_000_100_000L, 5, null, Map.of("action", "export"))), 1))
+                .when(reads).logged(any(), any());
+        Mockito.when(keptMappings.keptXslt("ev")).thenReturn(Optional.of(new KeptMappings.KeptXslt(
+                new KeptMapping.Kept(XsltSaves.TRANSLATION, Map.of("mapping", TranslationWorld.mapping())),
+                "translationFilter", XsltDoc.builder().uuid("x").name("X").data("Kept as Unknown by rule").build())));
+        Mockito.when(keptMappings.dataSplitter("ev")).thenReturn(Optional.of("<dataSplitter/>"));
+        Mockito.when(reads.example(any(), any(), anyLong(), anyInt())).thenReturn("action=export");
+
+        tool.review(new SteppingWorld().context(), new ReviewCoverageTool.Request("ev", null, 500, List.of(), false,
+                null, List.of()));
+
+        Mockito.verify(reads).example(any(), Mockito.eq("<dataSplitter/>"), Mockito.eq(4L), Mockito.eq(4));
+    }
+
+    @Test
     void aBatchCutShortCarriesOnFromTheLastErrorStreamRead() {
         Mockito.when(reads.errorBatch(any(), anyLong(), anyInt())).thenReturn(new CoverageReads.ErrorBatch(
                 List.of(new CoverageReads.ErrorStream(10, 3L, null, Map.of()),
@@ -289,6 +350,13 @@ class TestReviewCoverageTool {
                 new SteppingWorld().context()));
 
         assertThat(said).contains("max_streams must be a whole number from 1 to 5000");
+    }
+
+    // The pipeline's XSLT logs its Unknown records: none are sampled.
+    private void loggingXslt() {
+        Mockito.when(keptMappings.keptXslt("ev")).thenReturn(Optional.of(new KeptMappings.KeptXslt(
+                new KeptMapping.Kept("index", Map.of()), "translationFilter",
+                XsltDoc.builder().uuid("x").name("X").data("Kept as Unknown by rule").build())));
     }
 
     static Map<String, Object> indexPlan(final String index, final List<Map<String, Object>> fields) {

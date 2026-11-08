@@ -55,7 +55,9 @@ recommend first and marked as recommended, and the user's own answer allowed unl
 Without such a tool, ask in your answer: one numbered question per decision, each with what you recommend. Either
 way, where a result gives the options, their order or labels, or says to recommend none, keep to it. Ask only what
 you can't decide from the result, the standing instructions or what the user has said, and not what a form from this
-server will ask; then carry on with their answers. Ask each stage's decisions when that stage starts, not before: the indexing
+server will ask; then carry on with their answers. An answer stays answered: the tools keep it with the build (the
+draft its System Name and Environment, classify_kinds its classifications), so leave out what the user answered rather
+than restating it, never send otherwise, and don't search the conversation for it (seen: Prod sent after Test). Ask each stage's decisions when that stage starts, not before: the indexing
 backend, cluster, index template (or the index to follow) and field naming are stage 2's, asked by its own tools
 (get_field_conventions) once `next` reaches stage 2; during stage 1 ask only what the translation needs (seen: the
 backend asked alongside the Environment, before the translation was written). A request to paste something (an index template, a sample) is
@@ -77,9 +79,11 @@ profiles them; never read a file's text into the conversation to send it. Only p
 (start_onboarding samples=), about 10 records each: you write that text out token by token. start_onboarding profiles
 them itself: don't call profile_sample as well. It reports what differs between files. Each file is its own stream:
 step them all, and survey_feed with those stream_ids shows every kind of event the sample holds; map variants with
-any_of; to fix one, build_translation_xslt changes= only what changes, not the whole mapping again.
+any_of; to fix one, build_translation_xslt changes= only what changes, not the whole mapping again, from the first save
+on: changes= on the draft draft_translation_mapping made, never a mapping written by hand in its place.
 
-Whole feed: a sample can miss rare kinds of event. Once a feed has been processed (or indexed) whole, review_coverage
+Whole feed: a sample can miss rare kinds of event. Never claim more coverage than survey_feed's: where it read part of a
+stream, say how much (and that the user chose to stop there), not that every kind was found. Once a feed has been processed (or indexed) whole, review_coverage
 finds the records no rule matched and the events kept as Unknown, with exactly which raw streams hold them; tell the
 user, add rules, and only those streams need processing again. A change to an events pipeline reaches the pipelines
 that read its Events (indexing, CEF): review_coverage reviews them too, and they and their documentation are changed

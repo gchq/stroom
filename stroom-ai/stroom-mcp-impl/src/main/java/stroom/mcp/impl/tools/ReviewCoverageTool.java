@@ -307,11 +307,12 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         groups.sort(Comparator.comparingInt(g -> -size(g)));
         if (mapping != null) {
             // A few raw records for examples; the grouping itself needs none.
+            final String converter = keptMappings.dataSplitter(request.pipelineUuid()).orElse(null);
             for (final Map<String, Object> group : groups.subList(0, Math.min(10, groups.size()))) {
                 @SuppressWarnings("unchecked") final List<Map<String, Object>> examples =
                         (List<Map<String, Object>>) group.get("examples");
                 for (final Map<String, Object> example : examples.subList(0, Math.min(1, examples.size()))) {
-                    example.put("holds", reads.example(mapping, (long) example.get("raw_stream"),
+                    example.put("holds", reads.example(mapping, converter, (long) example.get("raw_stream"),
                             (int) example.get("record")));
                 }
             }
@@ -371,6 +372,7 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         }
         tellUser(result, groups, affected, affectedList, keptUnknown, more, continued,
                 errors.size(), pipeline);
+        cappedCounts(result, logged.capped());
         if (request.followOn()) {
             followOn(context, request, pipeline, kept, groups, affected, affectedList, anyEvents, more, result);
         }
@@ -396,6 +398,28 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
             groups.add(group);
         });
         return found.raws();
+    }
+
+    // Raw streams whose Error stream held as many log lines of a severity as Stroom writes: the records past them
+    // went unlogged, so their counts are short (an XSLT saved before kept-Unknown records were logged once a stream
+    // logged each one).
+    private static void cappedCounts(final Map<String, Object> result, final List<Long> capped) {
+        if (capped.isEmpty()) {
+            return;
+        }
+        final List<Long> streams = capped.stream().distinct().toList();
+        final Map<String, Object> said = new LinkedHashMap<>();
+        said.put("raw_streams", streams.subList(0, Math.min(EXACT_LIMIT, streams.size())));
+        said.put("count", streams.size());
+        said.put("note", "Stroom writes at most " + CoverageReads.MAX_WRITTEN_MARKERS + " log lines of a severity "
+                         + "to an Error stream; these raw streams' Error streams reached that, so the records past "
+                         + "it were not logged and the counts here are short. Saving the XSLT again from its mapping "
+                         + "logs each kind once a stream instead; processing these streams again gives exact "
+                         + "counts.");
+        result.put("counts_capped", said);
+        result.put("tell_user", result.get("tell_user") + " Counts are short for " + streams.size()
+                                + " raw stream(s): their Error streams reached Stroom's limit of "
+                                + CoverageReads.MAX_WRITTEN_MARKERS + " log lines (see counts_capped).");
     }
 
     private void tellUser(final Map<String, Object> result,
@@ -437,8 +461,16 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
                 ? ""
                 : ", and " + caught + " kind(s) a catch-all rule took (check each against the kinds classified: "
                   + "one no one classified is the user's to classify, with classify_kinds)")
-                                + ", in " + affectedIds.size() + " raw stream(s). The mapping needs a rule for "
-                                + "each; then only those streams need processing again, once the user approves.");
+                                + ", in " + affectedIds.size() + " raw stream(s). " + needed(groups.size() - kept,
+                kept));
+        if (groups.size() == kept) {
+            // Kept as Unknown as the user agreed, and nothing else: no rule to add, nothing to process again (seen
+            // in the chat 163 review: told agreed Unknown kinds needed rules).
+            result.put("next", List.of("Show the user the kinds kept as Unknown (missed), as they agreed; nothing "
+                                       + "needs changing unless they now want a kind translated (then a rule for it "
+                                       + "with build_translation_xslt changes)."));
+            return;
+        }
         final boolean inBuild = tags(pipeline).contains(WriteGuard.MANAGED);
         final boolean many = affectedIds.size() > EXACT_LIMIT || more != null;
         final String reprocess;
@@ -462,7 +494,8 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         }
         result.put("next", List.of(
                 "Show the user the kinds found (missed) and their examples; step_records on an example to see it.",
-                "Add a rule for each with build_translation_xslt changes={events: [...]} and uuid=<its XSLT>"
+                "Add a rule for each kind not kept as Unknown with build_translation_xslt changes={events: [...]} "
+                + "and uuid=<its XSLT>"
                 + (inBuild
                         ? ""
                         : " (the pipeline is in production: copy_pipeline working_copy=true into a build first, and "
@@ -471,6 +504,17 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
                 + "kinds are documented to the field; change = what was found and added (one version row when the "
                 + "build is promoted)",
                 reprocess));
+    }
+
+    // What the mapping needs: a rule for each kind not kept as Unknown; those kept, as the user agreed, need none.
+    private static String needed(final long needing, final long kept) {
+        if (needing == 0) {
+            return "The kinds kept as Unknown were agreed with the user: they need no rule.";
+        }
+        return "The mapping needs a rule for each kind not kept as Unknown" + (kept == 0
+                ? ""
+                : " (those kept as Unknown were agreed with the user, and need none)")
+               + "; then only those streams need processing again, once the user approves.";
     }
 
     // The pipelines that read its Events, each reviewed against the Events the changed pipeline writes.

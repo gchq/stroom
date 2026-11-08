@@ -186,7 +186,7 @@ final class TranslationWorld {
     /// @return draft_translation_mapping, wired on the world.
     DraftTranslationMappingTool draftTool() {
         return new DraftTranslationMappingTool(eventVersions, sampleStreamTexts, builds, sampleProfiling,
-                currentTranslations, siblingSharedCalls, consent);
+                currentTranslations, siblingSharedCalls, consent, world::records);
     }
 
     /// @return save_xslt, wired on the world, with no plans drafted.
@@ -240,7 +240,9 @@ final class TranslationWorld {
                                 .findFirst()
                                 .map(answer -> new ElicitResult(ElicitResult.Action.ACCEPT, isYesOrNo(form)
                                         ? Map.of("value", !"no".equals(answer.getValue()))
-                                        : Map.of("choice", answer.getValue(), "value", true)))
+                                        : isAnswer(form)
+                                                ? Map.of("answer", answer.getValue())
+                                                : Map.of("choice", answer.getValue(), "value", true)))
                                 .orElse(new ElicitResult(ElicitResult.Action.DECLINE, null));
                     }
                 })
@@ -363,6 +365,11 @@ final class TranslationWorld {
         return content.isEmpty()
                 ? new ElicitResult(ElicitResult.Action.DECLINE, null)
                 : new ElicitResult(ElicitResult.Action.ACCEPT, content);
+    }
+
+    // Whether a form asks for an answer, suggested ones or the user's own words (Consent.answer).
+    private static boolean isAnswer(final Map<String, Object> form) {
+        return form.get("properties") instanceof final Map<?, ?> properties && properties.containsKey("answer");
     }
 
     // Whether a form is a confirmation's or an approval's: a yes or no.

@@ -57,6 +57,9 @@ final class MappingSampleCheck {
     /// The key the stand-ins for none found are kept under ([Placeholders.Found]), for the tool to ask the user
     /// about; taken out before the check is returned.
     static final String PLACEHOLDERS = "placeholders";
+    /// The key the confirmed kinds the mapping translates otherwise go under (taken out by the caller: they are
+    /// [ConfirmedKinds.Lost], not JSON).
+    static final String CONFIRMED_LOST = "confirmed_lost";
 
     private MappingSampleCheck() {
         // Static only.
@@ -80,6 +83,28 @@ final class MappingSampleCheck {
                                      final EventSchema schema,
                                      final boolean inferred,
                                      final Clock clock) {
+        return check(mapping, samples, splitter, schema, inferred, clock, List.of());
+    }
+
+    /// As [#check(TranslationMapping, List, SplitterSpec, EventSchema, boolean, Clock)], with the kinds the user
+    /// confirmed checked too: those the mapping translates otherwise go under [#CONFIRMED_LOST].
+    ///
+    /// @param mapping  The mapping.
+    /// @param samples  The sample's texts.
+    /// @param splitter The Data Splitter spec that reads text, or null.
+    /// @param schema   The event-logging schema.
+    /// @param inferred True if the spec was inferred from the sample rather than given.
+    /// @param clock    The clock the check's time is read against.
+    /// @param events   The catalogue events of the build's source notes (only those the user confirmed are
+    ///                 checked).
+    /// @return As the other, with [#CONFIRMED_LOST].
+    static Map<String, Object> check(final TranslationMapping mapping,
+                                     final List<String> samples,
+                                     final SplitterSpec splitter,
+                                     final EventSchema schema,
+                                     final boolean inferred,
+                                     final Clock clock,
+                                     final List<Map<String, Object>> events) {
         final Instant deadline = clock.instant().plus(CHECK_TIME);
         final LocalCheck.SampleRecords found = LocalCheck.sampleRecords(mapping, samples, splitter);
         final Map<String, Object> check = new LinkedHashMap<>(LocalCheck.checkMapping(mapping, found.records()));
@@ -126,6 +151,7 @@ final class MappingSampleCheck {
         check.put("warnings", warnings);
         check.put(DOMAIN_QUALIFIED, qualified);
         check.put(PLACEHOLDERS, placeholders);
+        check.put(CONFIRMED_LOST, ConfirmedKinds.lost(mapping, found.records(), events));
         if (NullSafe.isNonEmptyString(found.note())) {
             check.put("note", found.note());
         }

@@ -79,6 +79,16 @@ class TestSaveTextConverterTool {
     }
 
     @Test
+    void jsonGivenAsTheCodeIsRefusedAsJsonNotAConverter() {
+        // From the chat 163 review: a spec given as code came back as "Content is not allowed in prolog".
+        final Map<String, Object> refused = world.call(tool, Map.of("build", "acme-v1", "name", "Acme splitter",
+                "code", "  {\"patterns\": [{\"name\": \"syslog\", \"regex\": \"^(.*)$\"}]}"));
+
+        assertThat((String) refused.get("error")).startsWith("code is JSON, not a converter")
+                .contains("build_data_splitter with the spec and save_as");
+    }
+
+    @Test
     void theWrapperIsChecked() {
         TranslationDocs.checkConverter("XML_FRAGMENT", SampleProfiler.EVENTS_FRAGMENT_WRAPPER.replace("{version}",
                 "4.1.0"));

@@ -45,11 +45,14 @@ public final class Pairs {
     /// Each style's regex, with `{key}` where the key goes. The value runs to the next separator: a dash only where
     /// a key or a `[` follows it ("Secret: Firewall - Edge Admin;").
     public static final Map<String, String> PAIR_REGEX = pairRegexes();
-    /// The styles, in order: `colon`, `bracketed`, `equals`, `quoted`.
+    /// The styles, in order: `colon`, `bracketed`, `equals`, `quoted`, `dashed`, `dashed_quoted`.
     public static final List<String> STYLES = List.copyOf(PAIR_REGEX.keySet());
 
     private static final Pattern NOT_ALPHANUMERIC = Pattern.compile("[^A-Za-z0-9]+");
-    private static final Pattern KEY = Pattern.compile("[A-Za-z_][A-Za-z0-9_. -]*");
+    private static final Pattern KEY = Pattern.compile("[A-Za-z_][A-Za-z0-9_. ()-]*");
+    // A regex's special characters, escaped in a key (Group(s)) so it is read as written.
+    private static final Pattern SPECIAL = Pattern.compile("([\\\\^$.|?*+()\\[\\]{}])");
+    private static final Pattern ESCAPED = Pattern.compile("\\\\([\\\\^$.|?*+()\\[\\]{}])");
 
     private Pairs() {
         // Static only.
@@ -61,6 +64,14 @@ public final class Pairs {
         regexes.put("bracketed", BOUND + "{key}: \\[([^\\]]*)\\]");
         regexes.put("equals", "(?:^|[\\s,;]){key}=([^\\s,;\"]*)");
         regexes.put("quoted", "(?:^|[\\s,;]){key}=\"([^\"]*)\"");
+        // A key (a colon after it or not) and its value after the text's start or a spaced dash, the value (its quotes
+        // off) to the next spaced dash: "Context grace@203.0.113.9 - User grace - Nat_ip \"Mapped Ip\"" (seen in
+        // chat 163: a gateway's bodies so written, read by some 25 extract entries the agent wrote by hand). No
+        // lookahead: the XSLT's regexes have none.
+        regexes.put("dashed", "(?:^|\\s-\\s+){key}:?\\s+\"?(.*?)\"?(?:\\s+-\\s|\\s*$)");
+        // The same, a key whose value is quoted: to its closing quote, so a spaced dash inside it is kept
+        // (`Group(s) "Staff - North"`).
+        regexes.put("dashed_quoted", "(?:^|\\s-\\s+){key}:?\\s+\"([^\"]*)\"");
         return Collections.unmodifiableMap(regexes);
     }
 
@@ -68,7 +79,7 @@ public final class Pairs {
     /// @param key   A key, as the text writes it.
     /// @return The regex reading the key's value, its first group the value.
     public static String pairRegex(final String style, final String key) {
-        return PAIR_REGEX.get(style).replace("{key}", key.replace(".", "\\."));
+        return PAIR_REGEX.get(style).replace("{key}", SPECIAL.matcher(key).replaceAll("\\\\$1"));
     }
 
     /// @param key A key, as the text writes it.
@@ -88,8 +99,8 @@ public final class Pairs {
             final String after = template.substring(at + "{key}".length());
             if (regex.startsWith(before) && regex.endsWith(after)
                 && regex.length() > before.length() + after.length()) {
-                final String key = regex.substring(before.length(), regex.length() - after.length())
-                        .replace("\\.", ".");
+                final String key = ESCAPED.matcher(regex.substring(before.length(), regex.length() - after.length()))
+                        .replaceAll("$1");
                 if (pairRegex(entry.getKey(), key).equals(regex) && KEY.matcher(key).matches()) {
                     return Optional.of(new StyleAndKey(entry.getKey(), key));
                 }

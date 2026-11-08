@@ -145,6 +145,7 @@ class SaveTextConverterTool extends AbstractBuiltInTool {
         if (NullSafe.isBlankString(code)) {
             throw new ToolRefusal("Give code: the complete converter definition.");
         }
+        notJson(code);
         final String uuid = stringArg(call, UUID_ARG);
         if (uuid != null) {
             final String converterType = translationDocs.converterTypeOf(uuid);
@@ -164,6 +165,18 @@ class SaveTextConverterTool extends AbstractBuiltInTool {
         final Optional<String> sampleRun = sampleRun(converterType, code, null, build);
         return withSampleRun(translationDocs.createTextConverter(context, build, name, converterType, code),
                 sampleRun);
+    }
+
+    // A converter is XML: JSON (a spec, or the sample itself) is refused saying so. Seen in the chat 163 review: a
+    // spec given as code came back as "Content is not allowed in prolog".
+    private static void notJson(final String code) {
+        final String start = code.stripLeading();
+        if (start.startsWith("{") || start.startsWith("[")) {
+            throw new ToolRefusal("code is JSON, not a converter: a text converter is XML (a <dataSplitter> or "
+                                  + "<xmlFragment> document). For a Data Splitter from a spec, call "
+                                  + BuildDataSplitterTool.NAME + " with the spec and save_as: it writes the "
+                                  + "converter's XML, checks it on the sample and saves it.");
+        }
     }
 
     // A Data Splitter is checked as the DSParser checks it, then run by Stroom's parser on the build's newest sample

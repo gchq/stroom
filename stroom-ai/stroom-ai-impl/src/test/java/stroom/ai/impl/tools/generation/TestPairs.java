@@ -18,6 +18,12 @@ package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.sample.ToolJson;
 
+import net.sf.saxon.s9api.Processor;
+import net.sf.saxon.s9api.QName;
+import net.sf.saxon.s9api.SaxonApiException;
+import net.sf.saxon.s9api.XPathCompiler;
+import net.sf.saxon.s9api.XPathSelector;
+import net.sf.saxon.s9api.XdmAtomicValue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -28,6 +34,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,7 +50,8 @@ class TestPairs extends GenerationFixtures {
     private static final Map<String, Object> DRAFTS = json(resource("drafts.json"));
 
     static Stream<Arguments> stylesAndKeys() {
-        return Pairs.STYLES.stream().flatMap(style -> Stream.of("srcip", "dst.port", "Source IP", "Item Id")
+        return Pairs.STYLES.stream().flatMap(style -> Stream.of("srcip", "dst.port", "Source IP", "Item Id",
+                        "Group(s)")
                 .map(key -> Arguments.of(style, key)));
     }
 
@@ -143,6 +152,35 @@ class TestPairs extends GenerationFixtures {
         assertThat(folded.get("extract")).isEqualTo(List.of(own, readsDerived, flagged));
         assertThat(folded.get("pairs")).isEqualTo(List.of(Map.of("field", "body", "style", "equals", "keys",
                 List.of("b"), "names", Map.of("b", "bee"))));
+    }
+
+    @Test
+    void dashedPairsAreReadByTheXsltAsTheDraftReadsThem() throws SaxonApiException {
+        // A gateway's "Key value - Key value" bodies (seen in chat 163): the XSLT's analyze-string, which has no
+        // lookahead, reads each key's value as the draft's Java regex does.
+        // A quoted value is read to its closing quote, a spaced dash inside it kept (dashed_quoted).
+        final String text = "Context grace@203.0.113.9 - SessionId: 2639 - User grace - Nat_ip \"Mapped Ip\" - "
+                            + "LogoutMethod \"IdleTimeout\" - Group(s) \"Staff - North\" - Duration 00:10:02";
+        final Map<String, String> expected = Map.of("Context", "grace@203.0.113.9", "SessionId", "2639", "User",
+                "grace", "Nat_ip", "Mapped Ip", "LogoutMethod", "IdleTimeout", "Group(s)", "Staff - North",
+                "Duration", "00:10:02");
+        final XPathCompiler xpath = new Processor(false).newXPathCompiler();
+        xpath.declareVariable(new QName("text"));
+        xpath.declareVariable(new QName("regex"));
+        for (final Map.Entry<String, String> key : expected.entrySet()) {
+            final String regex = Pairs.pairRegex(key.getValue().equals("Mapped Ip") || key.getValue().startsWith("Idle")
+                                                 || key.getValue().startsWith("Staff")
+                    ? "dashed_quoted"
+                    : "dashed", key.getKey());
+            final Matcher java = Pattern.compile(regex).matcher(text);
+            assertThat(java.find()).as(key.getKey()).isTrue();
+            assertThat(java.group(1)).as(key.getKey()).isEqualTo(key.getValue());
+            final XPathSelector selector = xpath.compile(
+                    "string((analyze-string($text, $regex)//*:group[@nr = 1])[1])").load();
+            selector.setVariable(new QName("text"), new XdmAtomicValue(text));
+            selector.setVariable(new QName("regex"), new XdmAtomicValue(regex));
+            assertThat(selector.evaluateSingle().getStringValue()).as(key.getKey()).isEqualTo(key.getValue());
+        }
     }
 
     @Test

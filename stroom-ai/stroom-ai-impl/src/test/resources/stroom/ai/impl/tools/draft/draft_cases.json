@@ -28522,5 +28522,279 @@
     "EventData/Data[@Name='IpAddress']"
    ]
   }
+ },
+ {
+  "name": "netscaler sslvpn dashed pairs",
+  "samples": [
+   "Oct 13 09:15:02 ns01 10/13/2026:09:15:02 GMT ns01 0-PPE-0 : default SSLVPN LOGIN 2639 0 : Context grace@203.0.113.9 - SessionId: 2639 - User grace - Client_ip 203.0.113.9 - Nat_ip \"Mapped Ip\" - Vserver 192.0.2.10:443 - Browser_type \"Citrix Workspace App 2409\" - SSLVPN_client_type ICA - Group(s) \"Staff\"\nOct 13 09:16:02 ns01 10/13/2026:09:16:02 GMT ns01 0-PPE-0 : default SSLVPN LOGIN 2640 0 : Context dave@203.0.113.12 - SessionId: 2640 - User dave - Client_ip 203.0.113.12 - Nat_ip \"Mapped Ip\" - Vserver 192.0.2.10:443 - Browser_type \"Citrix Workspace App 2409\" - SSLVPN_client_type ICA - Group(s) \"Staff - North\"\nOct 13 09:40:02 ns01 10/13/2026:09:40:02 GMT ns01 0-PPE-0 : default SSLVPN LOGOUT 2639 0 : Context grace@203.0.113.9 - SessionId: 2639 - User grace - Client_ip 203.0.113.9 - Nat_ip \"Mapped Ip\" - Vserver 192.0.2.10:443 - Start_time \"10/13/2026:09:15:02 GMT\" - End_time \"10/13/2026:09:40:02 GMT\" - Duration 00:25:00 - Total_bytes_send 1520 - Total_bytes_recv 8450 - LogoutMethod \"IdleTimeout\" - Group(s) \"Staff\"\nOct 13 09:41:02 ns01 10/13/2026:09:41:02 GMT ns01 0-PPE-0 : default SSLVPN LOGOUT 2640 0 : Context dave@203.0.113.12 - SessionId: 2640 - User dave - Client_ip 203.0.113.12 - Nat_ip \"Mapped Ip\" - Vserver 192.0.2.10:443 - Start_time \"10/13/2026:09:16:02 GMT\" - End_time \"10/13/2026:09:41:02 GMT\" - Duration 00:25:00 - Total_bytes_send 920 - Total_bytes_recv 4410 - LogoutMethod \"Explicit\" - Group(s) \"Staff - North\"\n"
+  ],
+  "source_name": "NetScaler",
+  "splitter": null,
+  "result": {
+   "mapping": {
+    "input": "data_splitter",
+    "extract": [
+     {
+      "field": "message",
+      "regex": "(?:^|\\s-\\s+)SessionId:?\\s+\"?(.*?)\"?(?:\\s+-\\s|\\s*$)",
+      "names": [
+       "sessionid"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|\\s-\\s+)User:?\\s+\"?(.*?)\"?(?:\\s+-\\s|\\s*$)",
+      "names": [
+       "user"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|\\s-\\s+)Client_ip:?\\s+\"?(.*?)\"?(?:\\s+-\\s|\\s*$)",
+      "names": [
+       "client_ip"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|\\s-\\s+)Nat_ip:?\\s+\"([^\"]*)\"",
+      "names": [
+       "nat_ip"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|\\s-\\s+)Vserver:?\\s+\"?(.*?)\"?(?:\\s+-\\s|\\s*$)",
+      "names": [
+       "vserver"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|\\s-\\s+)Browser_type:?\\s+\"([^\"]*)\"",
+      "names": [
+       "browser_type"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|\\s-\\s+)SSLVPN_client_type:?\\s+\"?(.*?)\"?(?:\\s+-\\s|\\s*$)",
+      "names": [
+       "sslvpn_client_type"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|\\s-\\s+)Group\\(s\\):?\\s+\"([^\"]*)\"",
+      "names": [
+       "group_s"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|\\s-\\s+)Start_time:?\\s+\"([^\"]*)\"",
+      "names": [
+       "start_time"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|\\s-\\s+)End_time:?\\s+\"([^\"]*)\"",
+      "names": [
+       "end_time"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|\\s-\\s+)Duration:?\\s+\"?(.*?)\"?(?:\\s+-\\s|\\s*$)",
+      "names": [
+       "duration"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|\\s-\\s+)Total_bytes_send:?\\s+\"?(.*?)\"?(?:\\s+-\\s|\\s*$)",
+      "names": [
+       "total_bytes_send"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|\\s-\\s+)Total_bytes_recv:?\\s+\"?(.*?)\"?(?:\\s+-\\s|\\s*$)",
+      "names": [
+       "total_bytes_recv"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|\\s-\\s+)LogoutMethod:?\\s+\"([^\"]*)\"",
+      "names": [
+       "logoutmethod"
+      ]
+     }
+    ],
+    "common": [
+     {
+      "path": "EventTime/TimeCreated",
+      "field": "time",
+      "time_format": "MMM dd HH:mm:ss"
+     },
+     {
+      "path": "EventSource/System/Name",
+      "value": "TODO system name"
+     },
+     {
+      "path": "EventSource/System/Environment",
+      "value": "TODO e.g. Prod"
+     },
+     {
+      "path": "EventSource/Device/HostName",
+      "field": "host"
+     },
+     {
+      "path": "EventSource/Client/IPAddress",
+      "field": "client_ip"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "user"
+     },
+     {
+      "path": "EventSource/SessionId",
+      "field": "sessionid"
+     },
+     {
+      "path": "EventSource/Generator",
+      "field": "app"
+     }
+    ],
+    "events": [
+     {
+      "name": "other",
+      "fields": [
+       {
+        "path": "EventDetail/TypeId",
+        "value": "Other"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "nat_ip",
+        "field": "nat_ip"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "vserver",
+        "field": "vserver"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "browser_type",
+        "field": "browser_type"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "sslvpn_client_type",
+        "field": "sslvpn_client_type"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "group_s",
+        "field": "group_s"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "start_time",
+        "field": "start_time"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "end_time",
+        "field": "end_time"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "duration",
+        "field": "duration"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "total_bytes_send",
+        "field": "total_bytes_send"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "total_bytes_recv",
+        "field": "total_bytes_recv"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "logoutmethod",
+        "field": "logoutmethod"
+       }
+      ]
+     }
+    ]
+   },
+   "source_notes": null,
+   "splitter": {
+    "kind": "syslog"
+   },
+   "format": "syslog rfc3164",
+   "records": 4,
+   "kinds": [],
+   "notes": [
+    "'message' holds key/value pairs: 14 keys are fields of their own through pairs ('sessionid', 'user', 'client_ip', 'nat_ip', 'vserver', 'browser_type' ...), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
+    "Timestamp fields: 'time' (event time, in 100% of records, MMM dd HH:mm:ss); 'app' (a time its name says nothing of, in 100% of records, MM/dd/yyyy); 'start_time' (may be the event's time or something else's (a creation, a period's start or end): check, in 50% of records, MM/dd/yyyy:HH:mm:ss z); 'end_time' (may be the event's time or something else's (a creation, a period's start or end): check, in 50% of records, MM/dd/yyyy:HH:mm:ss z). EventTime/TimeCreated reads 'time'.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
+   ],
+   "unmapped_fields": [
+    "nat_ip",
+    "vserver",
+    "browser_type",
+    "sslvpn_client_type",
+    "group_s",
+    "start_time",
+    "end_time",
+    "duration",
+    "total_bytes_send",
+    "total_bytes_recv",
+    "logoutmethod"
+   ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "Oct 13 09:15:02",
+      "Oct 13 09:16:02",
+      "Oct 13 09:40:02",
+      "Oct 13 09:41:02"
+     ]
+    },
+    "zone_names": []
+   },
+   "fields_seen": [
+    "pri",
+    "time",
+    "host",
+    "app",
+    "pid",
+    "message",
+    "sessionid",
+    "user",
+    "client_ip",
+    "nat_ip",
+    "vserver",
+    "browser_type",
+    "sslvpn_client_type",
+    "group_s",
+    "start_time",
+    "end_time",
+    "duration",
+    "total_bytes_send",
+    "total_bytes_recv",
+    "logoutmethod"
+   ]
+  }
  }
 ]

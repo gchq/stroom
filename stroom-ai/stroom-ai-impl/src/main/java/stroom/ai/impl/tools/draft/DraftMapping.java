@@ -151,6 +151,11 @@ public final class DraftMapping {
     // Seen in production: the agent writing 33 extractions by hand after the draft carried such a text whole.
     private static final Pattern COLON_KEY = ToolText.re(Pairs.BOUND + "(" + Pairs.WORDS + "): (\\[)?");
     private static final Pattern EQ_KEY = ToolText.re("(?:^|[\\s,;])([A-Za-z_][A-Za-z0-9_.-]*)=(\")?");
+    // A key a spaced dash parts from the pair before it, one word then a space and its value (Pairs, dashed).
+    // Not a colon key's first word ("Source IP: ..."): those are the colon style's.
+    private static final Pattern DASH_KEY = ToolText.re("(?:^|\\s-\\s+)(?!" + Pairs.WORDS
+                                                        + ": )([A-Za-z][A-Za-z0-9_()]*)\\s+(\")?(?=\\S)");
+    private static final String SPACED_DASH = " - ";
     private static final Pattern SOURCE_SIDE = ignoringCase("^(src|source|client|orig|origin)(_|$)");
     private static final Pattern DESTINATION_SIDE = ignoringCase(
             "^(dst|dest|destination|server|target|resp|responder)(_|$)");
@@ -398,6 +403,28 @@ public final class DraftMapping {
             found.put(equals.group(1), equals.group(2) != null
                     ? "quoted"
                     : "equals");
+        }
+        // Pairs a spaced dash parts, where the text has at least two such dashes (one is as likely prose) and more keys
+        // written so than colon keys (a colon-pairs text may hold a dash in a value: Secret Server's "Secret: Firewall
+        // - Edge Admin"); its colon keys then read to the next spaced dash too (seen in chat 163: "SessionId: 2639 -
+        // User grace - ..." read to the text's end).
+        if (text.indexOf(SPACED_DASH) != text.lastIndexOf(SPACED_DASH)) {
+            final Map<String, String> dashedKeys = new LinkedHashMap<>();
+            final Matcher dashed = DASH_KEY.matcher(text);
+            while (dashed.find()) {
+                if (!found.containsKey(dashed.group(1))) {
+                    dashedKeys.put(dashed.group(1), dashed.group(2) != null
+                            ? "dashed_quoted"
+                            : "dashed");
+                }
+            }
+            final long colonKeys = found.values().stream().filter("colon"::equals).count();
+            if (dashedKeys.size() >= 2 && dashedKeys.size() > colonKeys) {
+                found.replaceAll((key, style) -> "colon".equals(style)
+                        ? "dashed"
+                        : style);
+                dashedKeys.forEach(found::putIfAbsent);
+            }
         }
         return found;
     }

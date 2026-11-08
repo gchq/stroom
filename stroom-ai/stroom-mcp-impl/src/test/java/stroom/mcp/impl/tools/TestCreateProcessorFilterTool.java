@@ -110,6 +110,24 @@ class TestCreateProcessorFilterTool {
     }
 
     @Test
+    void theSampleRunsApprovalIsInPlainWords() {
+        // Seen in chat 163: the form told the user to "have the agent create_feed test_feed=true".
+        translationInBuild(true);
+        w.feeds.facts.sources = List.of("PROD-FEED");
+        w.feedAt("System/Feeds", "PROD-FEED", "pf", "Raw Events");
+        w.stream(6, "PROD-FEED", "Raw Events", null, null);
+
+        final Map<String, Object> details = details(gatedThrough(Map.of("stream_ids", List.of(6))).gates()
+                .getFirst());
+
+        assertThat(String.valueOf(details.get("events go to")))
+                .endsWith("in the build (to use another name, decline and say which)");
+        assertThat(details).allSatisfy((name, value) -> assertThat(String.valueOf(value))
+                .doesNotContain("the agent")
+                .doesNotContainPattern("[a-z]+_[a-z]+="));
+    }
+
+    @Test
     void sampleStreamsAreProcessedSideBySideUpToTheConfiguredLimit() {
         // Seen: two sample streams of 160 and 211 MB processed one after the other with a limit of 1.
         translationInBuild(true);
