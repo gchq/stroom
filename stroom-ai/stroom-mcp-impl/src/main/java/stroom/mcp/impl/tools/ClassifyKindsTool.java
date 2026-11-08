@@ -146,7 +146,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                              + "sure of together and the others one by one, or correct them. What is confirmed goes "
                              + "into the build's source notes, which draft_translation_mapping follows (a rule a "
                              + "kind). Send corrections the user gave (in the form or the chat) as proposals with "
-                             + "from_user: true; leave out a kind the user rejected and ask them what it is.")
+                             + "from_user: true; leave out a kind the user rejected and ask them what it is. "
+                             + "from_user is only for what the user said: never for your own proposals, which "
+                             + "the user confirms in the form.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(BUILD_ARG, CreateFeedTool.BUILD_DESCRIPTION)
                         .addStringProperty(SOURCE_ARG, "The source's name, as record_source_notes takes it; the "
@@ -165,7 +167,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                              + "naming the user who acted, and who or what it was done to; left "
                                              + "out otherwise), affected_as (what that is: User, File, "
                                              + "Document, Group...), and confidence (high, medium or low); or "
-                                             + "from_user: true for what the user said.")
+                                             + "from_user: true only for what the user said.")
                                 .items(proposal())
                                 .build())
                         .addBooleanProperty(CONFIRM_ARG, "True once the proposals' table is shown in the chat: the "
@@ -215,9 +217,10 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         if (build == null) {
             throw new ToolRefusal("Give build");
         }
-        final Map<String, Object> notesNow = notes.notesOf(context, build);
+        final String givenSource = stringArg(call, SOURCE_ARG);
+        final Map<String, Object> notesNow = notes.notesOf(context, build, givenSource);
         // The source notes' name, else the build's (the plan's call gives none).
-        final String source = NullSafe.nonBlankStringElse(stringArg(call, SOURCE_ARG),
+        final String source = NullSafe.nonBlankStringElse(givenSource,
                 NullSafe.nonBlankStringElse(ToolText.str(notesNow.getOrDefault("source", "")), build));
         final List<Map<?, ?>> proposals = RecordSourceNotesTool.objects(call, PROPOSALS_ARG);
         final Map<String, Object> result = !proposals.isEmpty()
@@ -225,6 +228,11 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 : confirming(call)
                         ? confirmed(call, context, build, source, notesNow)
                         : listed(call, context, build, source, notesNow);
+        if (!proposals.isEmpty() && confirming(call) && result.containsKey("table")) {
+            // Seen in testing: confirm=true sent with the proposals, the form expected; the user hasn't seen the
+            // table yet, so the form waits for the next call.
+            result.put("hint", "No form yet: confirm=true is not taken with proposals. " + result.get("hint"));
+        }
         return plan.withNext(context, build, result);
     }
 
@@ -364,14 +372,26 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final Set<String> recorded = new LinkedHashSet<>();
         fromUser.forEach(entry -> recorded.add(entry.get("field") + "=" + entry.get("value")));
         final List<String> left = pending.stream().filter(key -> !recorded.contains(key)).toList();
+        // Only the user's (a correction between the rounds, say): the proposals still to confirm stay.
+        final List<Map<String, Object>> kept = toConfirm.isEmpty()
+                ? JsonValues.maps(notesNow.get(RecordSourceNotesTool.PROPOSED)).stream()
+                        .filter(entry -> !recorded.contains(String.valueOf(entry.get(KEY))))
+                        .toList()
+                : toConfirm;
         final Map<String, Object> doc = notes.recordClassified(context, build, source, fromUser, left,
-                Map.of(RecordSourceNotesTool.PROPOSED, toConfirm));
+                Map.of(RecordSourceNotesTool.PROPOSED, kept));
         final Map<String, Object> result = new LinkedHashMap<>();
         if (!recorded.isEmpty()) {
             result.put("recorded", List.copyOf(recorded));
         }
         result.put("source_notes", doc);
         if (toConfirm.isEmpty()) {
+            if (!kept.isEmpty()) {
+                result.put("still_to_confirm", kept.stream().map(entry -> entry.get(KEY)).toList());
+                result.put("hint", "Call classify_kinds build=" + build + " confirm=true for the classifications "
+                                   + "still to confirm.");
+                return result;
+            }
             if (!left.isEmpty()) {
                 result.put("still_to_classify", left);
             }
