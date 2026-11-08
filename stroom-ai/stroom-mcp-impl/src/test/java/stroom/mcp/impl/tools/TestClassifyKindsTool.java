@@ -71,7 +71,8 @@ class TestClassifyKindsTool {
             world::guard, world::records, () -> Mockito.mock(EventsTargetInference.class));
     private final RecordSourceNotesTool notesTool = new RecordSourceNotesTool(world.guard(), world.documentAccess,
             new DocumentWrites(world.documentAccess), eventVersions, plan);
-    private final ClassifyKindsTool tool = new ClassifyKindsTool(notesTool, sampleStreamTexts, consent, plan);
+    private final ClassifyKindsTool tool = new ClassifyKindsTool(notesTool, sampleStreamTexts, consent, plan,
+            Mockito.mock(TranslationBuilds.class));
 
     @BeforeEach
     void setUp() {
@@ -541,6 +542,46 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    void aKindTheUserSaysToDropIsSettledAndNotListedAgain() {
+        // Seen in chat 163: the user said to drop a kind (kernel USB lines) in the form; it was listed and put to
+        // them again three times.
+        call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        final Map<String, Object> dropped = call("{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", "
+                                                 + "\"value\": \"purge\", \"description\": \"Records purged\", "
+                                                 + "\"from_user\": true, \"drop\": true}]}", BuildToolCalls.context());
+        assertThat(dropped.get("dropped")).isEqualTo(List.of("action=purge"));
+        assertThat(String.valueOf(dropped.get("dropped_note"))).contains("drop_when");
+        assertThat(pending()).containsExactly("action=login", "action=logout");
+        // Not listed again.
+        final Map<String, Object> again = call("{\"build\": \"acme\", \"stream_ids\": [7]}",
+                BuildToolCalls.context());
+        assertThat(list(again.get("to_classify"))).extracting(kind -> kind.get("value"))
+                .containsExactly("login", "logout");
+        // Only what the user said.
+        assertThat(text("{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", \"value\": \"login\", "
+                        + "\"description\": \"d\", \"drop\": true}]}"))
+                .contains("drop is only for a kind the user said to leave untranslated");
+    }
+
+    @Test
+    void anOutcomeOrActionTheActionElementHasNoPlaceForIsRefused() {
+        // Seen in chat 163: Alert given an outcome and an Action, confirmed by the user, and the draft then failed on
+        // them. Refused when proposed, so the user never confirms what the schema won't take.
+        call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        assertThat(text("{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", \"value\": \"purge\", "
+                        + "\"description\": \"d\", \"event_detail\": \"Alert\", \"action\": \"Blocked\", "
+                        + "\"success\": false, \"confidence\": \"high\"}]}"))
+                .startsWith("Nothing recorded:")
+                .contains("EventDetail/Alert has no Outcome, so leave success out",
+                        "EventDetail/Alert has no Action, so leave action out");
+        // Authenticate has both.
+        assertThat(call("{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", \"value\": \"login\", "
+                        + "\"description\": \"d\", \"event_detail\": \"Authenticate\", \"action\": \"Logon\", "
+                        + "\"success\": false, \"confidence\": \"high\"}]}", BuildToolCalls.context()))
+                .containsKey("table");
+    }
+
+    @Test
     void aCatchAllIsNotProposedAsUnknown() {
         // Seen in chat 160: two catch-all formats proposed as Unknown, the gateway's logons and the hosts' sudo
         // commands in them left for the mapping, never put to the user.
@@ -565,6 +606,9 @@ class TestClassifyKindsTool {
                 BuildToolCalls.context());
         assertThat(String.valueOf(shown.get("table"))).contains("```\nNov  6 09:02:00 web1 cache warmed after 12 "
                                                                + "seconds\n```");
+        // A catch-all says what it covers: every record of its format no other kind takes.
+        assertThat(String.valueOf(shown.get("table"))).contains("| Covers | Every 'syslog' record no other kind takes "
+                                                               + "(4 records) |");
     }
 
     @Test
