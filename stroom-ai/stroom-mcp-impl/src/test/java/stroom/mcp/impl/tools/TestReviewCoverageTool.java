@@ -252,8 +252,11 @@ class TestReviewCoverageTool {
         assertThat(affected.get("count")).isEqualTo(2);
         assertThat(affected.get("from")).isEqualTo("2026-09-21T14:13:20Z");
         assertThat(result.get("affected_raw_stream_ids")).isEqualTo(List.of(3L, 4L));
-        assertThat((String) result.get("tell_user")).startsWith("Found untranslated events: 3 record(s) of 2 "
-                                                                + "kind(s)");
+        // The kept-Unknown kind is logged once a stream: its streams counted, not its records.
+        assertThat(((Map<?, ?>) missed.get(1)).get("streams")).isEqualTo(1);
+        assertThat((String) result.get("tell_user")).startsWith("Found untranslated events: 2 record(s) of 1 "
+                                                                + "kind(s) the sample didn't have, and 1 kind(s) "
+                                                                + "kept as Unknown");
         // In production: a working copy first, and reprocessing is the user's.
         final List<?> next = (List<?>) result.get("next");
         assertThat((String) next.get(1)).contains("copy_pipeline working_copy=true");

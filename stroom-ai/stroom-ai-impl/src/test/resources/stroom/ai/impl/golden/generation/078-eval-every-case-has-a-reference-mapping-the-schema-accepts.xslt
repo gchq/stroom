@@ -10,29 +10,26 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:variable name="record-no" select="stroom:record-no()"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
     <xsl:variable name="message" select="data[@name='message']/@value[normalize-space(.)]"/>
     <xsl:variable name="verb_parts" select="analyze-string(string($message[1]), '^statement: (\w+)[\s\S]*$')"/>
     <xsl:variable name="verb_2" select="$verb_parts/fn:match//fn:group[@nr=1][normalize-space(.)]"/>
-    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="exists($message[matches(., '^connection authorized')])">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_connect"/>
       </xsl:when>
       <xsl:when test="exists($message[matches(., '^disconnection')])">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_disconnect"/>
       </xsl:when>
       <xsl:when test="$verb_2 = 'SELECT'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_query"/>
       </xsl:when>
       <xsl:when test="$verb_2 = 'UPDATE'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_update"/>
       </xsl:when>
       <xsl:when test="$verb_2 = 'DELETE'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_delete"/>
       </xsl:when>
       <xsl:otherwise>

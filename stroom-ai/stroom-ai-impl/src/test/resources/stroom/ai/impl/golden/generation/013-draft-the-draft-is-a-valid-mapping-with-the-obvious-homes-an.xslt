@@ -10,21 +10,24 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:variable name="record-no" select="stroom:record-no()"/>
-    <xsl:variable name="event_type" select="*[@key='event_type'][normalize-space(.)]"/>
     <xsl:sequence select="$record-no[string(.) = '#']"/>
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
+    <xsl:variable name="action" select="*[@key='action'][normalize-space(.)]"/>
+    <xsl:variable name="event_type" select="*[@key='event_type'][normalize-space(.)]"/>
     <xsl:choose>
-      <xsl:when test="$event_type = 'TRAFFIC' and *[@key='action'] = 'ALLOW'">
-        <xsl:call-template name="mcp_unread_fields"/>
+      <xsl:when test="$event_type = 'TRAFFIC' and $action = 'ALLOW'">
         <xsl:apply-templates select="." mode="event_type_traffic_permitted"/>
       </xsl:when>
       <xsl:when test="$event_type = 'LOGIN'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_login"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_other"/>
-        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', $record-no, ' (', string-join((concat('event_type=', string(($event_type)[1])), concat('action=', string((*[@key='action'][normalize-space(.)])[1]))), ' | '), ')'))"/>
+        <xsl:call-template name="mcp_kept_unknown">
+          <xsl:with-param name="group" select="concat('other|', string-join((string(($event_type)[1]), string(($action)[1])), '|'))"/>
+          <xsl:with-param name="line" select="concat('Kept as Unknown by rule ''other'': record ', $record-no, ' (', string-join((concat('event_type=', string(($event_type)[1])), concat('action=', string(($action)[1]))), ' | '), ')')"/>
+        </xsl:call-template>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -39,6 +42,17 @@
           <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @key, ' (map it, or list it in ignored_fields to leave it out)'))"/>
         </xsl:if>
       </xsl:for-each>
+    </xsl:if>
+  </xsl:template>
+  <!-- mcp_kept_unknown: a record a rule keeps as Unknown on purpose, logged once a stream for each kind (the rule and
+       the values the rules test) -->
+  <xsl:template name="mcp_kept_unknown">
+    <xsl:param name="group"/>
+    <xsl:param name="line"/>
+    <xsl:variable name="mcp_kept" select="concat('mcp-unknown:', $group)"/>
+    <xsl:if test="not(string(stroom:get($mcp_kept)))">
+      <xsl:value-of select="stroom:put($mcp_kept, 'y')"/>
+      <xsl:sequence select="stroom:log('INFO', $line)"/>
     </xsl:if>
   </xsl:template>
   <!-- Rule 'traffic_permitted': records where event_type = TRAFFIC and action = ALLOW. Writes a Network/Permit event

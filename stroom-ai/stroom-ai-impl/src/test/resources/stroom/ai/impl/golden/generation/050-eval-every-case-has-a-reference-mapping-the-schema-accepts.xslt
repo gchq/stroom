@@ -16,15 +16,15 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:variable name="record-no" select="stroom:record-no()"/>
-    <xsl:variable name="event" select="data[@name='event']/@value[normalize-space(.)]"/>
     <xsl:sequence select="$record-no[string(.) = '#']"/>
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
+    <xsl:variable name="event" select="data[@name='event']/@value[normalize-space(.)]"/>
     <xsl:choose>
       <xsl:when test="$event = 'CONNECT'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_connected"/>
       </xsl:when>
       <xsl:when test="$event = 'DISCONNECT'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_closed"/>
       </xsl:when>
       <xsl:otherwise>

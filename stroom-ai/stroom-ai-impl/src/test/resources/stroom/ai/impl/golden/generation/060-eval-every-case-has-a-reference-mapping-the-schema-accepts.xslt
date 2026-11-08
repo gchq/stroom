@@ -10,19 +10,18 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:variable name="record-no" select="stroom:record-no()"/>
-    <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
     <xsl:sequence select="$record-no[string(.) = '#']"/>
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
+    <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
     <xsl:choose>
       <xsl:when test="$action = 'tunnel-up'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_signed_in"/>
       </xsl:when>
       <xsl:when test="$action = 'ssl-login-fail'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_failed_sign_in"/>
       </xsl:when>
       <xsl:when test="$action = 'tunnel-down'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_signed_out"/>
       </xsl:when>
       <xsl:otherwise>

@@ -12,14 +12,18 @@
   <xsl:template match="*" mode="event">
     <xsl:variable name="record-no" select="stroom:record-no()"/>
     <xsl:sequence select="$record-no[string(.) = '#']"/>
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
+    <xsl:variable name="user" select="data[@name='user']/@value[normalize-space(.)]"/>
     <xsl:choose>
-      <xsl:when test="data[@name='user']/@value = $vip_users_list">
-        <xsl:call-template name="mcp_unread_fields"/>
+      <xsl:when test="$user = $vip_users_list">
         <xsl:apply-templates select="." mode="event_type_vip"/>
-        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''vip'': record ', $record-no, ' (', string-join((concat('user=', string((data[@name='user']/@value[normalize-space(.)])[1]))), ' | '), ')'))"/>
+        <xsl:call-template name="mcp_kept_unknown">
+          <xsl:with-param name="group" select="concat('vip|', string-join((string(($user)[1])), '|'))"/>
+          <xsl:with-param name="line" select="concat('Kept as Unknown by rule ''vip'': record ', $record-no, ' (', string-join((concat('user=', string(($user)[1]))), ' | '), ')')"/>
+        </xsl:call-template>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_other"/>
       </xsl:otherwise>
     </xsl:choose>
@@ -35,6 +39,17 @@
           <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @name, ' (map it, or list it in ignored_fields to leave it out)'))"/>
         </xsl:if>
       </xsl:for-each>
+    </xsl:if>
+  </xsl:template>
+  <!-- mcp_kept_unknown: a record a rule keeps as Unknown on purpose, logged once a stream for each kind (the rule and
+       the values the rules test) -->
+  <xsl:template name="mcp_kept_unknown">
+    <xsl:param name="group"/>
+    <xsl:param name="line"/>
+    <xsl:variable name="mcp_kept" select="concat('mcp-unknown:', $group)"/>
+    <xsl:if test="not(string(stroom:get($mcp_kept)))">
+      <xsl:value-of select="stroom:put($mcp_kept, 'y')"/>
+      <xsl:sequence select="stroom:log('INFO', $line)"/>
     </xsl:if>
   </xsl:template>
   <!-- Rule 'vip': records where user in the dictionary VIP users. Writes an Unknown event (TypeId vip) from user.

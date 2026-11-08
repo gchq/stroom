@@ -10,32 +10,28 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:variable name="record-no" select="stroom:record-no()"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
     <xsl:variable name="type" select="*[@key='type'][normalize-space(.)]"/>
     <xsl:variable name="event_type" select="*[@key='eventType'][normalize-space(.)]"/>
-    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="$event_type = 'user.session.start'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_new_session_start"/>
       </xsl:when>
       <xsl:when test="$event_type = 'user.session.end'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_new_session_end"/>
       </xsl:when>
       <xsl:when test="$event_type = 'user.account.lock'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_new_account_lock"/>
       </xsl:when>
       <xsl:when test="$type = 'login'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_legacy_login"/>
       </xsl:when>
       <xsl:when test="$type = 'logout'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_legacy_logout"/>
       </xsl:when>
       <xsl:when test="$type = 'password_change'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_legacy_password_change"/>
       </xsl:when>
       <xsl:otherwise>

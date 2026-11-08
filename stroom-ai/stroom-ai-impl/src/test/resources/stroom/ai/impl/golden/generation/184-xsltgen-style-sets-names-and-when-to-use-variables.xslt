@@ -15,10 +15,11 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
     <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
     <xsl:choose>
       <xsl:when test="$action = 'login'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <Event>
           <xsl:call-template name="eventTime"/>
           <xsl:call-template name="eventSource"/>
@@ -49,7 +50,6 @@
         </Event>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:call-template name="mcp_unread_fields"/>
         <Event>
           <xsl:call-template name="eventTime"/>
           <xsl:call-template name="eventSource"/>

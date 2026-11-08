@@ -20,26 +20,28 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:variable name="record-no" select="stroom:record-no()"/>
-    <xsl:variable name="json_action" select="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'][normalize-space(.)]"/>
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields), but for records left untranslated on purpose -->
+    <xsl:variable name="json_time" select="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time'][normalize-space(.)]"/>
     <xsl:sequence select="$record-no[string(.) = '#']"/>
+    <xsl:if test="not((not($json_time)))">
+      <xsl:call-template name="mcp_unread_fields"/>
+    </xsl:if>
+    <xsl:variable name="json_action" select="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'][normalize-space(.)]"/>
     <xsl:choose>
-      <xsl:when test="not(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time'][normalize-space(.)])">
+      <xsl:when test="not($json_time)">
         <!-- drop: damaged lines (not JSON): left untranslated on purpose -->
       </xsl:when>
       <xsl:when test="$json_action = 'login'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
       <xsl:when test="$json_action = 'logout'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logoff"/>
       </xsl:when>
       <xsl:when test="$json_action = 'password_change'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_password"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('json.time=', string((mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time'][normalize-space(.)])[1])), concat('json.action=', string(($json_action)[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('json.time=', string(($json_time)[1])), concat('json.action=', string(($json_action)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
