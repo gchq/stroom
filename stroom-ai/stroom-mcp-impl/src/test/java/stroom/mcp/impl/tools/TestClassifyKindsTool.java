@@ -313,6 +313,55 @@ class TestClassifyKindsTool {
                 .startsWith("Nothing recorded:");
     }
 
+    @Test
+    void theNotesDocNamedForTheBuildIsTheOneUsedWhenTheSourceIsNamedOtherwise() {
+        // Seen in testing: a notes doc named for the build (an earlier call gave no source), then classify_kinds
+        // called with the source's name, wrote its proposals to a second doc and read the first: confirm=true found
+        // nothing to confirm, and no form came.
+        notesTool.recordClassified(BuildToolCalls.context(), "acme", "acme", List.of(), List.of(), Map.of());
+        call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("i1", true, "text", ""));
+        call("{\"build\": \"acme\", \"source\": \"Acme app\", \"proposals\": " + PROPOSALS + "}",
+                user.context());
+        final Map<String, Object> confirmed = call("{\"build\": \"acme\", \"confirm\": true}", user.context());
+        assertThat(confirmed.get("recorded")).as("%s", confirmed).isEqualTo(List.of("action=login"));
+        assertThat(user.shown()).hasSize(1);
+        assertThat(world.guard().folderContents("acme"))
+                .filteredOn(doc -> doc.name().endsWith(" source notes"))
+                .extracting(WriteGuard.BuildDoc::name)
+                .containsExactly("acme source notes");
+    }
+
+    @Test
+    void confirmSentWithTheProposalsWaitsForTheTableToBeShown() {
+        // Seen in testing: confirm=true sent with the proposals, and the agent took the table for the end of it.
+        call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("i1", true, "text", ""));
+        final Map<String, Object> shown = call("{\"build\": \"acme\", \"confirm\": true, \"proposals\": "
+                                               + PROPOSALS + "}", user.context());
+        assertThat(String.valueOf(shown.get("hint"))).startsWith("No form yet: confirm=true is not taken with "
+                                                                 + "proposals.");
+        assertThat(user.shown()).isEmpty();
+        assertThat(call("{\"build\": \"acme\", \"confirm\": true}", user.context()).get("recorded"))
+                .isEqualTo(List.of("action=login"));
+    }
+
+    @Test
+    void aCorrectionFromTheUserBetweenTheRoundsKeepsTheOthersToConfirm() {
+        call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        call("{\"build\": \"acme\", \"proposals\": " + PROPOSALS + "}", BuildToolCalls.context());
+        final Map<String, Object> corrected = call("{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", "
+                                                   + "\"value\": \"purge\", \"description\": \"Audit records "
+                                                   + "deleted\", \"event_detail\": \"Delete\", \"from_user\": "
+                                                   + "true}]}", BuildToolCalls.context());
+        assertThat(corrected.get("recorded")).isEqualTo(List.of("action=purge"));
+        assertThat(corrected.get("still_to_confirm")).isEqualTo(List.of("action=login", "action=logout"));
+        assertThat(String.valueOf(corrected.get("hint"))).contains("confirm=true");
+        assertThat(JsonValues.maps(notes().get(RecordSourceNotesTool.PROPOSED)))
+                .extracting(entry -> entry.get("kind"))
+                .containsExactly("action=login", "action=logout");
+    }
+
     private void samples(final long stream, final String text) {
         Mockito.when(sampleStreamTexts.read(List.of(stream))).thenReturn(new SampleStreamTexts.Texts(
                 Map.of("stream " + stream, text), List.of()));
@@ -328,7 +377,7 @@ class TestClassifyKindsTool {
     }
 
     private Map<String, Object> notes() {
-        return notesTool.notesOf(BuildToolCalls.context(), "acme");
+        return notesTool.notesOf(BuildToolCalls.context(), "acme", null);
     }
 
     private List<String> pending() {
