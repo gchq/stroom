@@ -4000,7 +4000,13 @@ through the model. A call runs in this order:
    and is not returned or saved (seen: an XSLT saved `ok` whose every record failed with "Variable kv has not been
    declared"). Problems come back at once, before the sample is read, with the rules' `events` left out so the
    whole list fits one reply (seen: 20-70 KB results each round, fixed a part at a time).
-4. **The sample check** (`MappingSampleCheck.check`, below), over `sample` or the `stream_ids` streams' text.
+4. **The sample check** (`MappingSampleCheck.check`, below), over `sample` or the `stream_ids` streams' text. Where
+   a stream's part is read only to the most a sample is read to (`SampleStreamTexts.Cut`), the records the build's
+   survey found further into that part (its kinds' examples, by location) are checked too, after the part's header
+   line where its records follow one (`SurveyExamples`), and a warning says how many; only for records a line each,
+   not XML or a JSON array, whose records can't stand apart from their text. Seen in testing: a sample read to its
+   4,004th record of 25,000 refused the fields of the rare kinds near the end (a file upload's name and size), and
+   the agent read them through raw XPath to get past the check, which then checked none of them.
 5. **The user's choices** (only when saving): a user's Id whose values carry a domain (`DomainSplits`: split into
    Id and Domain, or keep whole; one question for all fields not answered before), and values that stand for none
    (`PlaceholderChoices`: leave each out, as `nil_values`, or keep as written; one form, at most 20 questions, 19

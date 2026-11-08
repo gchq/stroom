@@ -73,6 +73,7 @@ class SampleStreamTexts {
         }
         final Map<String, String> texts = new LinkedHashMap<>();
         final List<String> notes = new ArrayList<>();
+        final List<Cut> cut = new ArrayList<>();
         for (final long streamId : streamIds) {
             final int parts;
             try {
@@ -100,6 +101,7 @@ class SampleStreamTexts {
                 }
                 texts.put(name, text.text());
                 if (text.truncated()) {
+                    cut.add(new Cut(name, streamId, part));
                     notes.add(name + " is read up to its first "
                               + String.format(Locale.ROOT, "%,d", text.text().length())
                               + " characters (the most a sample is read to" + (read > 1
@@ -112,7 +114,7 @@ class SampleStreamTexts {
                 notes.add(StreamCharsets.note(streamId, report));
             }
         }
-        return new Texts(texts, notes);
+        return new Texts(texts, notes, cut);
     }
 
     /// @param streamId A sample stream.
@@ -140,7 +142,23 @@ class SampleStreamTexts {
     ///
     /// @param texts Each stream's text, by name (`stream <id>`).
     /// @param notes What was cut short, or read through its bytes.
-    record Texts(Map<String, String> texts, List<String> notes) {
+    /// @param cut   The parts read only to the most a sample is read to.
+    record Texts(Map<String, String> texts, List<String> notes, List<Cut> cut) {
+
+        /// @param texts Each stream's text, by name.
+        /// @param notes What was cut short, or read through its bytes.
+        Texts(final Map<String, String> texts, final List<String> notes) {
+            this(texts, notes, List.of());
+        }
+    }
+
+
+    /// A part read only to the most a sample is read to.
+    ///
+    /// @param name   Its text's name in [Texts#texts()].
+    /// @param stream The stream.
+    /// @param part   The part, from 0.
+    record Cut(String name, long stream, int part) {
 
     }
 }

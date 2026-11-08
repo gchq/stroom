@@ -29,6 +29,7 @@ import stroom.ai.impl.tools.generation.Extraction;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.impl.tools.sample.TimePatterns;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
@@ -450,6 +451,29 @@ class TranslationBuilds {
             found.clear();
         }
         return SourceNotes.merged(found);
+    }
+
+    /// @param build A build, or null.
+    /// @return The survey states of the build's survey documents (one a feed); none without a build, or where they
+    /// can't be read.
+    List<Map<String, Object>> surveyStatesInBuild(final String build) {
+        final List<Map<String, Object>> found = new ArrayList<>();
+        if (build == null) {
+            return found;
+        }
+        try {
+            for (final WriteGuard.BuildDoc doc : guard.folderContents(build)) {
+                if (DocumentationDoc.TYPE.equals(doc.type()) && doc.name().endsWith(SurveyDoc.docName(""))) {
+                    documentAccess.read(doc.docRef(), DocumentationDoc.class)
+                            .map(read -> SurveyDoc.readState(BuildRecords.bodyText(read)))
+                            .ifPresent(found::add);
+                }
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No survey read from build {}: {}", build, e.getMessage()));
+            found.clear();
+        }
+        return found;
     }
 
     /// @param mapping A mapping.
