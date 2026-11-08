@@ -140,8 +140,8 @@ class TestClassifyKindsTool {
         assertThat(high.get("recorded")).isEqualTo(List.of("action=login"));
         assertThat(user.shown().getLast()).isEqualTo("Review the high-confidence classifications shown in the chat.");
         final String medium = String.valueOf(high.get("table"));
-        // The record as logged, whole (not its fields cut short); then what the proposal says, each under a
-        // subheading, no table.
+        // The record as logged, whole (not its fields cut short); then what the proposal says, a table of Element
+        // and Value, a row only where it has one.
         assertThat(medium).isEqualTo("""
                 ## Medium-confidence classifications (1 of 1)
 
@@ -151,13 +151,10 @@ class TestClassifyKindsTool {
                 time=2026-11-06T09:00:05Z action=logout user=bob src=10.0.0.2
                 ```
 
-                #### Action element
-
-                Authenticate
-
-                #### Action
-
-                Logoff""");
+                | Element | Value |
+                | --- | --- |
+                | Schema action | Authenticate |
+                | Action | Logoff |""");
         assertThat(String.valueOf(high.get("hint"))).contains("medium-confidence");
 
         // The medium one accepted the same way; then the low one, numbered from 1 again.
@@ -504,6 +501,43 @@ class TestClassifyKindsTool {
                 .containsEntry("sshd_failed", false)
                 .containsEntry("sshd_accepted", false)
                 .containsEntry("kernel", true);
+    }
+
+    @Test
+    void recordsNotToldApartWhoseTextSaysWhatHappenedAreNotOneKindUnlessTheUserSays() {
+        // Seen in chat 162: a splitter reading timestamp, host and message, so no kinds told apart and "nothing to
+        // classify": the step done, and some 25 rules written by hand, none put to the user.
+        final String lines = String.join("\n", List.of(
+                "2026-11-06T09:00:01Z jump01 sshd[101]: Failed password for alice from 10.0.0.1 port 50001 ssh2",
+                "2026-11-06T09:00:02Z jump01 sudo: bob : TTY=pts/0 ; PWD=/home/bob ; USER=root ; COMMAND=/bin/ls",
+                "2026-11-06T09:00:03Z web01 kernel: Out of memory: Killed process 1039 (java)",
+                "2026-11-06T09:00:04Z ns-gw01 default SSLVPN LOGIN 30397 0 : Context grace@203.0.113.9 - User grace",
+                "2026-11-06T09:00:05Z db01 systemd-logind[88]: New session 42 of user carol.")) + "\n";
+        samples(14L, lines);
+        final String coarse = "{\"kind\": \"regex\", \"pattern\": \"^(\\\\S+) (\\\\S+) (.*)$\", "
+                              + "\"names\": [\"ts\", \"host\", \"message\"]}";
+        final String listing = "{\"build\": \"acme\", \"source\": \"Mixed\", \"stream_ids\": [14], \"splitter\": "
+                               + coarse;
+        final Map<String, Object> listed = call(listing + "}", BuildToolCalls.context());
+        assertThat(list(listed.get("to_classify"))).isEmpty();
+        assertThat(String.valueOf(listed.get("hint"))).as("%s", listed)
+                .startsWith("No kinds told apart, yet the records say what happened in free text ('message')")
+                .contains("refine the splitter (build_data_splitter)", "one_kind=true");
+        // Not recorded as classified: the plan's step is still to do.
+        assertThat(notes()).doesNotContainKey(RecordSourceNotesTool.PENDING);
+
+        // The user says what kinds they hold: back to the agent, still not classified.
+        final Map<String, Object> told = call(listing + ", \"one_kind\": true}",
+                BuildToolCalls.user(Map.of("answer", "ssh logons, sudo commands and gateway logons")).context());
+        assertThat(told.get("user_says")).isEqualTo("ssh logons, sudo commands and gateway logons");
+        assertThat(notes()).doesNotContainKey(RecordSourceNotesTool.PENDING);
+
+        // The user confirms they are one kind: nothing to classify.
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "One kind"));
+        final Map<String, Object> one = call(listing + ", \"one_kind\": true}", user.context());
+        assertThat(user.shown()).hasSize(1);
+        assertThat(String.valueOf(one.get("hint"))).startsWith("One kind of event");
+        assertThat(pending()).isEmpty();
     }
 
     @Test

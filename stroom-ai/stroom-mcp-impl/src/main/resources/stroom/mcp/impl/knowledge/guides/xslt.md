@@ -158,7 +158,7 @@ entry per line). Write XSLT by hand only for what none of this expresses.
 - **`drop_when`**: records (or items) to leave untranslated on purpose, each with a reason: heartbeats, test
   traffic, service accounts. They are tried before the event rules, write no Event and raise no "no mapping
   matched" warning; the reasons appear in the XSLT and the documentation. `survey_feed`'s `set_shape_handling`
-  records the user's decision for an existing feed; `drop_when` is how the mapping carries it out.
+  records the user's decision for an existing feed (a table of the kinds first, then `confirm: true` for the form); `drop_when` is how the mapping carries it out.
 
 The same filtering exists where other schemas are written: `build_reference_xslt` takes `drop_when` (records to
 keep out of the reference data), and `draft_index_mapping` takes `drop_when` as XPath tests on an Event

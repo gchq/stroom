@@ -77,6 +77,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private static final String SPLITTER_ARG = "splitter";
     private static final String PROPOSALS_ARG = "proposals";
     private static final String CONFIRM_ARG = "confirm";
+    private static final String ONE_KIND_ARG = "one_kind";
+    // The answer a form suggests for records that are one kind of event.
+    private static final String ONE_KIND = "One kind";
 
     // A proposal's keys, as given and as kept in the notes (a catalogue event's, as record_source_notes takes them).
     private static final String FIELD = "field";
@@ -235,6 +238,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                 .build())
                         .addBooleanProperty(CONFIRM_ARG, "True once the proposals' table is shown in the chat: the "
                                                          + "user confirms or corrects them in a short form.")
+                        .addBooleanProperty(ONE_KIND_ARG, "True when the records, not told apart into kinds, are one "
+                                                          + "kind of event: the user confirms it in a short form "
+                                                          + "(without forms, ask them in the chat first).")
                         .required(BUILD_ARG)
                         .build())
                 .build();
@@ -332,8 +338,21 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("kinds_found", kinds.size());
         result.put("already_settled", kinds.stream().map(Kind::key).filter(settled::contains).toList());
+        final Optional<String> freeText = kinds.size() <= 1
+                ? freeTextField(records, variantField)
+                : Optional.empty();
+        if (freeText.isPresent()) {
+            // None told apart, yet the records say what happened in free text: likely several kinds, which the user
+            // confirms once a field names them (seen in chat 162: a splitter reading timestamp, host and message, so
+            // "nothing to classify", the step done, and some 25 rules written by hand, none put to the user).
+            final Optional<Map<String, Object>> notTold = oneKind(call, context, result, freeText.get());
+            if (notTold.isPresent()) {
+                return notTold.get();
+            }
+        }
         if (kinds.size() <= 1 || todo.isEmpty()) {
-            // Nothing for the user to decide: one kind (the draft's own rule), or every kind settled already.
+            // Nothing for the user to decide: one kind (the draft's own rule, confirmed by the user when its records
+            // are free text), or every kind settled already.
             result.put(SOURCE_NOTES, notes.recordClassified(context, build, source, List.of(), List.of(),
                     Map.of(RecordSourceNotesTool.RECORD_FIELDS, recordFields, RecordSourceNotesTool.PROPOSED,
                             List.of())));
@@ -828,14 +847,19 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                && String.valueOf(one.get(EQUALS)).equals(String.valueOf(other.get(EQUALS)));
     }
 
-    // Whether the records say what happened in free text: a field (not their format or time) whose values are mostly
-    // several words, and not all the same.
+    // Whether the records say what happened in free text.
     private static boolean freeText(final List<Map<String, Object>> records, final String variantField) {
+        return freeTextField(records, variantField).isPresent();
+    }
+
+    // The field in which the records say what happened in free text, if any: a field (not their format or time)
+    // whose values are mostly several words, and not all the same.
+    private static Optional<String> freeTextField(final List<Map<String, Object>> records, final String variantField) {
         final Set<String> fields = new LinkedHashSet<>();
         records.forEach(record -> fields.addAll(record.keySet()));
         return fields.stream()
                 .filter(field -> named(field) && !field.equals(variantField) && !TIME_LIKE.matcher(field).find())
-                .anyMatch(field -> {
+                .filter(field -> {
                     final List<String> values = records.stream()
                             .map(record -> valueText(record.get(field)).strip())
                             .filter(value -> !value.isEmpty())
@@ -845,7 +869,37 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                             .count();
                     return !values.isEmpty() && worded * 2 >= values.size()
                            && values.stream().distinct().count() > 1;
-                });
+                })
+                .findFirst();
+    }
+
+    // Records not told apart into kinds whose text says what happened: put back to the agent, to refine the splitter
+    // so a field names each kind; or, with one_kind, put to the user, who confirms they are one kind of event (the
+    // listing then goes on, nothing to classify) or says what kinds they hold.
+    private Optional<Map<String, Object>> oneKind(final ToolCall call,
+                                                  final ToolCallContext context,
+                                                  final Map<String, Object> result,
+                                                  final String field) {
+        result.put(TO_CLASSIFY, List.of());
+        if (!isTrue(argsMap(call).get(ONE_KIND_ARG))) {
+            result.put(HINT, "No kinds told apart, yet the records say what happened in free text ('" + field + "'), "
+                             + "so they likely hold several kinds of event: refine the splitter (build_data_splitter) "
+                             + "so a field names each record's event (the survey's shapes show them), save it, and "
+                             + "call classify_kinds again with it. If they truly are one kind of event, call it with "
+                             + "one_kind=true: the user confirms it.");
+            return Optional.of(result);
+        }
+        final Optional<String> answer = consent.answer(call, context, NAME,
+                "The records aren't told apart into kinds of event; their text ('" + field + "') says what happened.",
+                "Treat them all as one kind of event, or type the kinds they hold", ONE_KIND);
+        if (answer.isEmpty() || accepting(answer.get(), ONE_KIND)) {
+            // One kind, as the user confirmed (or, without forms, as they said in the chat when asked).
+            return Optional.empty();
+        }
+        result.put("user_says", answer.get());
+        result.put(HINT, "The user says the records hold these kinds: refine the splitter (build_data_splitter) so a "
+                         + "field names each, save it, and call classify_kinds again with it.");
+        return Optional.of(result);
     }
 
     // Whether the record meets each of the conditions.
@@ -929,9 +983,11 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 lines.add("```");
                 lines.add("");
             }
-            // What it says, each under a subheading of its own (asked for by the user: no table; the headings name
-            // the kind and its confidence): the action element always, the others where the proposal has them.
-            item(lines, "Action element", e.get(EVENT_DETAIL));
+            // What it says, a row each in a table of Element and Value (asked for by the user; the headings name the
+            // kind and its confidence): the action element always, the others where the proposal has them.
+            lines.add("| Element | Value |");
+            lines.add("| --- | --- |");
+            item(lines, "Schema action", e.get(EVENT_DETAIL));
             item(lines, "Action", e.get(ACTION));
             item(lines, "Outcome", outcome(e));
             item(lines, "Type id", e.get(TYPE_ID));
@@ -941,6 +997,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                     : text(e.get(AFFECTED)) + (e.get(AFFECTED_AS) == null
                             ? ""
                             : " (" + text(e.get(AFFECTED_AS)) + ")"));
+            lines.add("");
         }
         return String.join("\n", lines).strip();
     }
@@ -1006,13 +1063,10 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 : text(e.get(TITLE));
     }
 
-    // One of what a proposal says, under a subheading, only where it has a value.
+    // One of what a proposal says, a row of its table, only where it has a value.
     private static void item(final List<String> lines, final String name, final Object value) {
         if (value != null && !ToolText.isBlank(ToolText.str(value))) {
-            lines.add("#### " + name);
-            lines.add("");
-            lines.add(ToolText.str(value).replace("\n", " "));
-            lines.add("");
+            lines.add("| " + name + " | " + cell(value) + " |");
         }
     }
 

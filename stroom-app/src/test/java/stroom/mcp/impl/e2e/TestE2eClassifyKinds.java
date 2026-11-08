@@ -78,7 +78,7 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         dump("classify_kinds high", high);
         assertThat(high.get("recorded")).isEqualTo(List.of("action=login", "action=logout"));
         assertThat(String.valueOf(high.get("table"))).startsWith("## Medium-confidence classifications")
-                .contains("### 1. A report exported", "```\ntime=2026-11-06T09:", "#### Action element\n\nExport")
+                .contains("### 1. A report exported", "```\ntime=2026-11-06T09:", "| Schema action | Export |")
                 .doesNotContain("Low-confidence");
 
         // ### The medium one accepted the same way; then the low one, numbered from 1 again.
@@ -292,8 +292,47 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         // Rated medium (a catch-all), so shown in detail, its record as logged.
         assertThat(shown.get("rated_medium")).isEqualTo(List.of("variant=syslog"));
         assertThat(String.valueOf(shown.get("table"))).startsWith("## Medium-confidence classifications (1 of 1)")
-                .contains("```\nNov  6 09:30:00 web1 cache warmed after 12 seconds\n```", "#### Action element\n\n"
-                                                                                       + "Alert");
+                .contains("```\nNov  6 09:30:00 web1 cache warmed after 12 seconds\n```", "| Element | Value |",
+                        "| Schema action | Alert |");
+    }
+
+    // ### Chat 162: a splitter reading only timestamp, host and message, so no kinds told apart: not "nothing to
+    // classify" (the step done, rules then written by hand, none put to the user), but back to the agent to refine
+    // the splitter; one kind only if the user confirms it.
+    @Test
+    void recordsNotToldApartAreNotSkipped() {
+        final String build = "e2e-classify-coarse";
+        createFeed(build, "E2E-CLASSIFY-COARSE");
+        final List<Long> raw = List.of(upload("E2E-CLASSIFY-COARSE", String.join("\n", List.of(
+                "2026-11-06T09:00:01Z jump01 sshd[101]: Failed password for alice from 10.0.0.1 port 50001 ssh2",
+                "2026-11-06T09:00:02Z jump01 sudo: bob : TTY=pts/0 ; PWD=/home/bob ; USER=root ; COMMAND=/bin/ls",
+                "2026-11-06T09:00:03Z web01 kernel: Out of memory: Killed process 1039 (java)",
+                "2026-11-06T09:00:04Z db01 systemd-logind[88]: New session 42 of user carol.")) + "\n"));
+        final Map<String, Object> coarse = Map.of("kind", "regex", "pattern", "^(\\S+) (\\S+) (.*)$", "names",
+                List.of("ts", "host", "message"));
+        final Map<String, Object> listed = json("classify_kinds", args("build", build, "source", "Mixed",
+                "stream_ids", raw, "splitter", coarse));
+        dump("classify_kinds coarse", listed);
+        assertThat(String.valueOf(listed.get("hint"))).startsWith("No kinds told apart");
+        assertThat(classifyState(build)).isEqualTo("to do");
+
+        client.answeringWith(TestE2eClassifyKinds::acceptingAll);
+        final int forms = client.forms().size();
+        final Map<String, Object> one = json("classify_kinds", args("build", build, "source", "Mixed",
+                "stream_ids", raw, "splitter", coarse, "one_kind", true));
+        client.answeringWith(McpTestClient::agree);
+        assertThat(client.forms()).hasSize(forms + 1);
+        assertThat(String.valueOf(one.get("hint"))).startsWith("One kind of event");
+        assertThat(classifyState(build)).isEqualTo("done");
+    }
+
+    // The state of the build's classify step, as build_status shows it.
+    private String classifyState(final String build) {
+        return list(json("build_status", args("build", build, "full", true)), "steps").stream()
+                .filter(step -> "classify".equals(step.get("step")))
+                .map(step -> String.valueOf(step.get("state")))
+                .findFirst()
+                .orElse("none");
     }
 
     // ### Many kinds: rounds of 18, put to the user in sets of up to ten of one confidence, each numbered from 1

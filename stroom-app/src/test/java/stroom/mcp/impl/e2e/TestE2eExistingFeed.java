@@ -178,9 +178,15 @@ class TestE2eExistingFeed extends AbstractE2eTest {
         assertThat(number(broad.get("records_stepped"))).isEqualTo(2L * ids.size());
 
         // 6b. The user leaves one kind of event untranslated.
-        final Map<String, Object> marked = json("set_shape_handling", args("build", BUILD, "feed", SOURCE,
+        // The kinds first as a table for the chat, then the short form.
+        final Map<String, Object> table = json("set_shape_handling", args("build", BUILD, "feed", SOURCE,
                 "shapes", List.of("action=file_read"), "handling", "drop",
                 "reason", "file reads are audited elsewhere"));
+        assertThat(String.valueOf(table.get("table"))).contains("| # | Kind of event | Records | Share |",
+                "action=file_read");
+        final Map<String, Object> marked = json("set_shape_handling", args("build", BUILD, "feed", SOURCE,
+                "shapes", List.of("action=file_read"), "handling", "drop",
+                "reason", "file reads are audited elsewhere", "confirm", true));
         final List<Map<String, Object>> dropLocations = list(marked, "locations");
         // Stepped clean and covered: processing is next.
         assertThat(nextTool(marked)).isEqualTo("create_processor_filter");
