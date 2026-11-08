@@ -229,7 +229,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         guard.folderContents(build).forEach(doc -> contents.putIfAbsent(doc.type() + "\n" + doc.name(), doc));
         final List<Map<String, Object>> keptDocs = keep(context.session(), contents, build, source, documents);
 
-        final String notesName = source + SourceNotes.NOTES_SUFFIX;
+        final String notesName = notesName(contents, source);
         final Map<String, Object> earlier = earlierNotes(contents, notesName);
         final String summary = NullSafe.isBlankString(givenSummary)
                 ? text(earlier.get("summary"))
@@ -368,7 +368,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                                          final Map<String, Object> kept) {
         final Map<String, WriteGuard.BuildDoc> contents = new LinkedHashMap<>();
         guard.folderContents(build).forEach(doc -> contents.putIfAbsent(doc.type() + "\n" + doc.name(), doc));
-        final String notesName = source + SourceNotes.NOTES_SUFFIX;
+        final String notesName = notesName(contents, source);
         final Map<String, Object> earlier = earlierNotes(contents, notesName);
         final List<Map<String, Object>> fields = merged(earlier.get("fields"), List.of(), FIELD_KEYS,
                 FIELD_REQUIRED);
@@ -440,16 +440,37 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
 
     /// @param context The call's context.
     /// @param build   The build.
-    /// @return The build's source notes (one doc's, the first), or empty without any.
-    Map<String, Object> notesOf(final ToolCallContext context, final String build) {
+    /// @param source  The source's name, if given: the notes doc named for it is read when the build has one.
+    /// @return The build's source notes (the doc [#notesName] picks), or empty without any.
+    Map<String, Object> notesOf(final ToolCallContext context, final String build, final String source) {
         final Map<String, WriteGuard.BuildDoc> contents = new LinkedHashMap<>();
         guard.folderContents(build).forEach(doc -> contents.putIfAbsent(doc.type() + "\n" + doc.name(), doc));
-        return contents.values().stream()
+        return earlierNotes(contents, notesName(contents, NullSafe.string(source)));
+    }
+
+    /// The name of the build's source notes doc: the one named for the source; else the one the build has
+    /// already (named for the build, say, by an earlier call with no source); else a new one's, for the source.
+    /// A build keeps one notes doc. Seen in testing: classify_kinds wrote its proposals to a second doc, named for
+    /// the source, and read the first, named for the build, so the confirmation found nothing to confirm.
+    ///
+    /// @param contents The build folder's docs, keyed by type and name.
+    /// @param source   The source's name (blank when not given).
+    /// @return The notes doc's name.
+    static String notesName(final Map<String, WriteGuard.BuildDoc> contents, final String source) {
+        final String named = source + SourceNotes.NOTES_SUFFIX;
+        final List<String> existing = contents.values().stream()
                 .filter(doc -> DocumentationDoc.TYPE.equals(doc.type())
                                && doc.name().endsWith(SourceNotes.NOTES_SUFFIX))
+                .map(WriteGuard.BuildDoc::name)
+                .toList();
+        if (existing.contains(named)) {
+            return named;
+        }
+        return existing.stream()
+                .filter(name -> name.equalsIgnoreCase(named))
                 .findFirst()
-                .map(doc -> earlierNotes(contents, doc.name()))
-                .orElse(Map.of());
+                .or(() -> existing.stream().findFirst())
+                .orElse(named);
     }
 
     // An event's affected_as checked against its action element, and written out to the leaf the affected field's
