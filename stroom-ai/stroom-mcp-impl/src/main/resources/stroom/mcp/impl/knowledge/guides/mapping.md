@@ -9,10 +9,12 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 - Before drafting, `classify_kinds` (the plan's `classify` step): it lists the kinds of event the user's
   documentation doesn't cover; propose each from its records and what you know of the source, with a short `title`
   and the `product` it comes from, saying how sure you are; show the table it gives back in your reply, then call it
-  with `confirm: true`: the user accepts the high-confidence ones together (or amends them), then you show the
-  others it gives back and confirm again, each on its own; a source of many kinds goes in rounds of 18. For each, who acted (`actor`) and what it was done to (`affected`, and
+  with `confirm: true`: the user accepts the set shown (up to ten of one confidence, high first) or amends it,
+  then you show the next set it gives back and confirm again; a source of many kinds goes in rounds of 18. For each, who acted (`actor`) and what it was done to (`affected`, and
   `affected_as`: User, File, Document, Group...). The draft then follows them, a rule a kind. Send the user's
-  corrections back as proposals with `from_user: true`; ask about any they reject.
+  amendments and corrections back as proposals with `from_user: true` (only ever what the user said, never your own
+  proposals unconfirmed); ask about any they reject. Show only the table each call gives back: the others come after
+  the form.
 - Never write a translation XSLT by hand, and never send the field inventory as the mapping: draft it, edit what the
   draft gets wrong, and give `build_translation_xslt` the edited mapping with the draft's `schema_version`, the sample
   (and the Data Splitter's spec as `splitter`), so fields no record has and times their format doesn't fit are caught

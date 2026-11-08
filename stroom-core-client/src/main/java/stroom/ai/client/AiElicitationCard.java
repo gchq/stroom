@@ -80,6 +80,17 @@ final class AiElicitationCard {
         // Static only.
     }
 
+    /// Whether a server's form is asked as questions, one at a time, each answered with a suggested answer (a
+    /// button) or in the user's own words: when every field suggests its answers. Seen: classify_kinds' "Accept
+    /// all 3, or type your amendments" shown as a bare text box, with no button to accept and no blank answer
+    /// allowed.
+    ///
+    /// @param fields The form's fields.
+    /// @return True when there are fields and each suggests answers.
+    static boolean asQuestions(final List<AiElicitationForm.Field> fields) {
+        return !fields.isEmpty() && fields.stream().allMatch(AiElicitationForm.Field::isCustom);
+    }
+
     /// @param fields A form's fields, from [AiElicitationForm#fields(String)].
     /// @return The form's one field if it is a single yes or no question, to answer with Yes and No buttons rather
     /// than a form, or null if the form has other fields.

@@ -22,6 +22,8 @@ import stroom.util.json.JsonUtil;
 import io.modelcontextprotocol.spec.McpSchema.ElicitFormRequest;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -70,27 +72,31 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         assertThat(String.valueOf(shown.get("table"))).startsWith("## High-confidence classifications")
                 .contains("| 1 |  | A user logged on | Authenticate: Logon |");
 
-        // ### Accepted together in a short form; then the others in detail, grouped by confidence.
+        // ### Accepted together in a short form; then the medium-confidence one in detail, numbered from 1.
         client.answeringWith(this::answer);
         final Map<String, Object> high = json("classify_kinds", args("build", BUILD, "confirm", true));
         dump("classify_kinds high", high);
         assertThat(high.get("recorded")).isEqualTo(List.of("action=login", "action=logout"));
-        assertThat(String.valueOf(high.get("table"))).contains("## Medium-confidence classifications",
-                "### 3. A report exported", "```\ntime = ", "## Low-confidence classifications",
-                "### 4. Records purged");
+        assertThat(String.valueOf(high.get("table"))).startsWith("## Medium-confidence classifications")
+                .contains("### 1. A report exported", "```\ntime = ").doesNotContain("Low-confidence");
 
-        // ### Each of the others on its own: the low one rejected, and corrected.
+        // ### The medium one accepted the same way; then the low one, numbered from 1 again.
+        final Map<String, Object> medium = json("classify_kinds", args("build", BUILD, "confirm", true));
+        dump("classify_kinds medium", medium);
+        assertThat(medium.get("recorded")).isEqualTo(List.of("action=export"));
+        assertThat(String.valueOf(medium.get("table"))).startsWith("## Low-confidence classifications")
+                .contains("### 1. Records purged");
+
+        // ### The low one amended: nothing recorded, the amendment back for the agent.
         final Map<String, Object> answered = json("classify_kinds", args("build", BUILD, "confirm", true));
         dump("classify_kinds answered", answered);
         client.answeringWith(McpTestClient::agree);
-        assertThat(answered.get("recorded")).isEqualTo(List.of("action=export"));
-        assertThat(answered.get("rejected")).isEqualTo(List.of("action=purge"));
-        assertThat(answered.get("corrections")).isEqualTo("purge deletes the audit records: Delete, not Alert");
+        assertThat(answered.get("recorded")).isEqualTo(List.of());
+        assertThat(answered.get("amendments")).isEqualTo("purge deletes the audit records: Delete, not Alert");
         final ElicitFormRequest form = client.forms().getLast();
         // Plain text only: the form's fields are shown as they are, so no table in it.
-        assertThat(JsonUtil.writeValueAsString(form.requestedSchema(), false)).contains("4. Records purged (Delete)")
-                .doesNotContain("|");
-        assertThat(form.message()).doesNotContain("|");
+        assertThat(form.message()).isEqualTo("Review the low-confidence classifications shown in the chat.");
+        assertThat(JsonUtil.writeValueAsString(form.requestedSchema(), false)).doesNotContain("|");
 
         // ### The correction sent as the user's: recorded without another form.
         final int forms = client.forms().size();
@@ -118,18 +124,88 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
                                                                              + "documentation"));
     }
 
-    // The block accepted, the low one rejected, and a correction written.
-    private ElicitResult answer(final ElicitFormRequest form) {
-        final Map<String, Object> content = new LinkedHashMap<>();
-        final Map<String, Object> fields = (Map<String, Object>) form.requestedSchema().get("properties");
-        fields.forEach((name, field) -> {
-            final Map<String, Object> schema = (Map<String, Object>) field;
-            if ("boolean".equals(schema.get("type"))) {
-                content.put(name, !String.valueOf(schema.get("title")).contains("purge"));
+    // ### Records a JSON or XML parser reads, and events inside an inner message: classified, accepted, followed.
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = {"json-nested", "xml-fragments", "json-kv-message", "json-xml-message"})
+    void kindsInJsonXmlAndInnerMessagesAreClassifiedAndFollowedByTheDraft(final String shape) {
+        final String build = "e2e-classify-" + shape;
+        final String feed = "E2E-CLASSIFY-" + shape.toUpperCase();
+        createFeed(build, feed);
+        final List<Long> raw = List.of(upload(feed, shaped(shape)));
+
+        final Map<String, Object> listed = json("classify_kinds", args("build", build, "source", "Records app",
+                "stream_ids", raw));
+        dump("classify_kinds listed " + shape, listed);
+        final List<Map<String, Object>> kinds = list(listed, "to_classify");
+        assertThat(kinds).extracting(kind -> kind.get("value"))
+                .containsExactlyInAnyOrder("login", "logout", "export");
+        assertThat(kinds).allSatisfy(kind -> assertThat(kind.get("records")).isEqualTo(4));
+        final List<String> users = (List<String>) listed.get("user_fields");
+        assertThat(users).hasSize(1);
+        final String actor = users.getFirst();
+
+        final List<Map<String, Object>> proposals = new ArrayList<>();
+        final Map<String, String> details = Map.of("login", "Authenticate", "logout", "Authenticate", "export",
+                "Export");
+        kinds.forEach(kind -> {
+            final String value = String.valueOf(kind.get("value"));
+            final Map<String, Object> proposal = new LinkedHashMap<>(Map.of("field", kind.get("field"), "value",
+                    value, "description", "Records app " + value, "event_detail", details.get(value), "actor",
+                    actor, "confidence", "high"));
+            if (!"export".equals(value)) {
+                proposal.put("action", "login".equals(value)
+                        ? "Logon"
+                        : "Logoff");
             }
+            proposals.add(proposal);
         });
-        content.put("text", "purge deletes the audit records: Delete, not Alert");
-        return new ElicitResult(ElicitResult.Action.ACCEPT, content, null);
+        json("classify_kinds", args("build", build, "proposals", proposals));
+        client.answeringWith(this::answer);
+        final Map<String, Object> accepted = json("classify_kinds", args("build", build, "confirm", true));
+        client.answeringWith(McpTestClient::agree);
+        assertThat((List<String>) accepted.get("recorded")).hasSize(3);
+
+        final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", raw, "build", build,
+                "source_name", "Records app", "system_name", "Records", "environment", "Test"));
+        dump("draft_translation_mapping " + shape, draft);
+        final String rules = JsonUtil.writeValueAsString(map(draft, "mapping").get("events"), false);
+        assertThat(rules).contains("Records app login", "Records app logout", "Records app export",
+                "EventDetail/Authenticate/Action", "{\"path\":\"EventSource/User/Id\",\"field\":\"" + actor + "\"}");
+    }
+
+    // Twelve records, four of each kind, in the shape named.
+    private static String shaped(final String shape) {
+        final List<String> actions = List.of("login", "logout", "export");
+        final List<String> lines = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            final String time = "2026-11-06T09:%02d:00Z".formatted(i);
+            final String action = actions.get(i % actions.size());
+            final String user = "user" + (i % 5);
+            lines.add(switch (shape) {
+                case "json-nested" -> "{\"ts\": \"" + time + "\", \"event\": {\"type\": \"" + action
+                                      + "\"}, \"actor\": {\"user\": \"" + user + "\"}}";
+                case "xml-fragments" -> "<Record><Time>" + time + "</Time><Action>" + action + "</Action><User>"
+                                        + user + "</User></Record>";
+                case "json-kv-message" -> "{\"ts\": \"" + time + "\", \"host\": \"app1\", \"message\": \"action="
+                                          + action + " user=" + user + " src=10.0.0.1\"}";
+                case "json-xml-message" -> "{\"ts\": \"" + time + "\", \"host\": \"app1\", \"message\": "
+                                           + "\"<Event><Action>" + action + "</Action><User>" + user
+                                           + "</User></Event>\"}";
+                default -> throw new IllegalArgumentException(shape);
+            });
+        }
+        return String.join("\n", lines) + "\n";
+    }
+
+    // Each set's one question (accept or amend, not both): the high- and medium-confidence ones accepted with the
+    // button, the low one amended in words.
+    private ElicitResult answer(final ElicitFormRequest form) {
+        final Map<String, Object> fields = (Map<String, Object>) form.requestedSchema().get("properties");
+        assertThat(fields).containsOnlyKeys("answer");
+        final Map<String, Object> question = (Map<String, Object>) fields.get("answer");
+        return new ElicitResult(ElicitResult.Action.ACCEPT, Map.of("answer", form.message().contains("low-")
+                ? "purge deletes the audit records: Delete, not Alert"
+                : ((List<?>) question.get("examples")).getFirst()), null);
     }
 
     private static String sample() {

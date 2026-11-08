@@ -2794,33 +2794,42 @@ file's 985 records).
 ### `classify_kinds`
 
 Content · write (the build's source notes doc) · checks View and Edit; reads the sample streams (View Data) · changes
-only its build · chat group build · Classes: `ClassifyKindsTool`, `RecordSourceNotesTool`, `Consent.review`,
-`DraftMapping`
+only its build · chat group build · Classes: `ClassifyKindsTool`, `RecordSourceNotesTool`, `Consent.answer`,
+`DraftMapping`, `LocalCheck`
 
 Work package E8, every decision the user's: before the translation is drafted, the agent classifies each kind of
 event the user's documentation doesn't cover and the user confirms the classifications in one form. Called without
 proposals, it finds the kinds as the draft does (each rule's last field = value condition), leaves out those the
 source notes settle (an event with that field and value, from the documentation or confirmed by the user), and lists
 the rest (`to_classify`: `field`, `value`, `rule`, `records`, up to three `examples` whose values differ), keeping
-them in the notes block as `pending`. One kind (or none told apart), or none left, records nothing pending: the plan's
+them in the notes block as `pending`. The records are read as the draft reads them, inner messages unpacked (the
+keys of JSON text, the elements of XML text, the values the draft's extractions take from text), so a kind told apart
+inside a message field has its records, sample and actor; records a JSON or XML parser reads need no splitter. A kind
+told apart by its format alone is marked `catch_all` (a format's records, its events not told apart; a format's
+`other` rule is listed with only the records its own rules leave, and not at all when they leave none); a high
+proposal for one is rated medium (`rated_medium`), so the user confirms it on its own, and the hint says to refine
+the splitter when its records name their event. The build keeps one notes doc: the one named for the source, else the
+one it has. One kind (or none told apart), or none left, records nothing pending: the plan's
 `classify` step is done. Called with `proposals` (one catalogue entry a pending kind: `field`, `value`,
 `description`, `event_detail`, `action`, `success`, `type_id`, `actor`, `affected`, `affected_as`, `confidence`), each
 is checked as a catalogue event and kept in the notes block (`proposed`, with its `title` and `product` and the
-kind's sample record kept from the listing, numbered high confidence first); the reply's `table` (Markdown) is for
-the agent to show in the chat, in two rounds: first `## High-confidence classifications`, one table `# | Rule |
-Kind | Mapping` (product, title, action element and Action), confirmed together or amended in a short form; then the
-others under `## Medium-confidence classifications` and `## Low-confidence classifications`, each a numbered heading
-`[product] title`, its sample preformatted, and a two-column table of only the rows it has (Action element first,
-then Action, Outcome, Type id, Who acted, Acted on), each confirmed on its own by number and title. A listing takes
-18 kinds a round (`round` says how many are left), so a form never needs more than 20 fields; kinds the user
-rejected (`rejected` in the notes) are left out of later rounds. The draft treats a kinds field (named for kinds) as
-one with up to 200 values, which renders Markdown, where a form's fields are plain text (asked for by the user: no
-Markdown in a form). Called then with `confirm: true`, a short plain form (`Consent.review`): one checkbox accepts
-every high and medium proposal ("in the table above"), each low one (up to 10) has its own, and a text field takes
-corrections. Accepted proposals are recorded `basis: user_confirmed`; rejected ones
-leave `pending` and come back as `rejected` for the agent to ask about (the draft keeps them Unknown); the
-corrections come back for the agent to send as `from_user: true` proposals, recorded without another form (any kind
-the draft found, pending or not). Without forms, `asked: false` and the `table` for the chat; nothing recorded. The
+kind's sample record kept from the listing, and its place among those of its confidence); the reply's `table`
+(Markdown, which the chat renders, where a form's fields are plain text: asked for by the user, no Markdown in a
+form) is for the agent to show in the chat: high-confidence ones as one table `# | Rule | Kind | Mapping` (product,
+title, and action element, Action and outcome, e.g. `Authenticate: Logon (Failure)`); medium- and low-confidence ones
+in detail, each a numbered heading `[product] title`, its sample preformatted, and a two-column table of only the
+rows it has (Action element first, then Action, Outcome, Type id, Who acted, Acted on). A listing takes 18 kinds a
+round (`round` says how many are left); kinds rejected earlier (`rejected` in the notes) are left out of later
+rounds. The draft treats a kinds field (named for kinds) as one with up to 200 values. The proposals are put to the user a set at a time (asked for by the user): up to ten of one
+confidence, high first, then medium, then low, each set numbered from 1 under a heading saying which of that
+confidence it shows (`## Medium-confidence classifications (1-10 of 21)`). `confirm: true` sent with proposals is not
+taken: the user sees the table first. Called then with `confirm: true`, a short plain form (`Consent.answer`) asks one
+question of the set shown, answered one way or the other (asked for by the user: a checkbox beside a text box let
+them both accept and amend): an `Accept all N` button, or amendments in the user's own words. Accepted, the set is
+recorded `basis: user_confirmed` and the next set's table comes back; amended (`amendments`, nothing recorded), the
+agent sends the set again as `from_user: true` proposals, recorded without another form (any kind the draft found,
+pending or not; the proposals still to confirm are kept, and the next set shown), leaving out any the user rejects and
+asking what it is. `from_user` is only for what the user said. Without forms, `asked: false` and the `table` for the chat; nothing recorded. The
 plan's `classify` step (after the converter, before the translation) is done when the notes say nothing is pending,
 not recorded once the translation is written.
 
