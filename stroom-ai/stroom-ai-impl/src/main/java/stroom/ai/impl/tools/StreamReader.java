@@ -456,6 +456,26 @@ public class StreamReader {
         return new RawHead(text, truncated, (int) Math.min(Integer.MAX_VALUE, parts));
     }
 
+    /// The size of one part of a raw stream, in bytes as stored (before decoding), to tell how much of it a survey
+    /// has left to read.
+    ///
+    /// @param streamId The stream.
+    /// @param part     The zero-based index of the part.
+    /// @return Its size in bytes.
+    /// @throws StreamReadException if the stream can't be read, or the user doesn't have the View Data permission.
+    public long partSize(final long streamId, final int part) {
+        requireViewData(streamId);
+        try (final Source source = storeProvider.get().openSource(streamId);
+                final InputStreamProvider provider = source.get(part);
+                final SegmentInputStream in = provider.get()) {
+            in.includeAll();
+            return in.size();
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to read stream {}: {}", streamId, e.getMessage()), e);
+            throw couldNotRead(streamId, e.getMessage());
+        }
+    }
+
     /// Text from further into one part of a raw stream than its head: windows spread evenly from `fromByte` to the
     /// part's end, the last one its tail, each starting at the start of a line and cut at a line end, with the
     /// number of the line it starts on, so a record in it can be stepped where it is. Seen in testing: a survey read
@@ -569,7 +589,8 @@ public class StreamReader {
         long position = 0;
         long lines = 0;
         boolean atLineStart = true;
-        for (final long start : starts) {
+        for (int n = 0; n < starts.size(); n++) {
+            final long start = starts.get(n);
             if (start < position) {
                 continue;
             }
@@ -585,8 +606,15 @@ public class StreamReader {
                 atLineStart = buffer[read - 1] == '\n';
                 position += read;
             }
-            final byte[] read = in.readNBytes(maxBytes);
-            final boolean last = read.length < maxBytes;
+            // Never past the next window's start, which would then be passed over: seen in the e2e suite, the
+            // windows read as many bytes as a window's characters could take (four a character), the last
+            // windows' starts passed, so the part's tail, the last window, was never read.
+            final long next = n + 1 < starts.size()
+                    ? starts.get(n + 1)
+                    : Long.MAX_VALUE;
+            final int want = (int) Math.max(1, Math.min(maxBytes, next - position));
+            final byte[] read = in.readNBytes(want);
+            final boolean last = read.length < want;
             // The rest of the line the window starts in belongs to a record before it: passed over.
             int from = 0;
             if (!atLineStart) {

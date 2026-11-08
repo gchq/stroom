@@ -274,7 +274,14 @@ class TestBuildPlanOnExistingData {
         assertThat(next(stepped).get("step")).isEqualTo("covered");
         assertThat(call(stepped)).isEqualTo(Map.of("tool", "survey_feed", "arguments", Map.of("feed", "ACME",
                 "build", "b")));
+        // Not processed until covered (asked for by the user: seen in chat 163, a feed processed and called
+        // complete while its survey said NOT COVERED): create_processor_filter refuses, saying why.
+        assertThat(plan.uncovered("b")).hasValueSatisfying(why -> assertThat(why).startsWith("The survey of the "
+                                                                                            + "feed build 'b' works "
+                                                                                            + "from isn't covered yet")
+                .contains("survey_feed build=b", "or they choose to stop there"));
         facts.survey = survey(true, locations, List.of(5L), null, null);
+        assertThat(plan.uncovered("b")).isEmpty();
         final Map<String, Object> covered = status();
         // Then the surveyed streams are processed where they are (their Events go to the build's test feed).
         assertThat(next(covered).get("step")).isEqualTo("processed");

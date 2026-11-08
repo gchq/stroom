@@ -302,14 +302,35 @@ public class Consent {
                                    final String intro,
                                    final String question,
                                    final String suggested) {
+        return answer(call, context, action, intro, question, List.of(suggested));
+    }
+
+    /// As [#answer(ToolCall, ToolCallContext, String, String, String, String)], with several answers suggested,
+    /// each a button: e.g. stop here, read further, or read to the end.
+    ///
+    /// @param call      The call asking.
+    /// @param context   The call's context.
+    /// @param action    The tool asking, e.g. `survey_feed`.
+    /// @param intro     What the form is about, its message.
+    /// @param question  The question, its field's title.
+    /// @param suggested The answers suggested, in the order shown.
+    /// @return The answer, trimmed: one suggested, or the user's own words; empty when the session can't show a
+    /// form now, or the form would be too large to show (the agent then asks the user).
+    /// @throws ToolRefusal if the user declined the form or gave no answer.
+    public Optional<String> answer(final ToolCall call,
+                                   final ToolCallContext context,
+                                   final String action,
+                                   final String intro,
+                                   final String question,
+                                   final List<String> suggested) {
         if (!context.userQuestions().canAsk()) {
             return Optional.empty();
         }
         final Map<String, Object> field = new LinkedHashMap<>();
         field.put("type", "string");
         field.put("title", heading(question));
-        // Shown as a button, with a box for the user's own answer under it.
-        field.put("examples", List.of(suggested));
+        // Shown as buttons, with a box for the user's own answer under them.
+        field.put("examples", List.copyOf(suggested));
         final Map<String, Object> schema = new LinkedHashMap<>();
         schema.put("type", "object");
         schema.put("required", List.of("answer"));

@@ -215,6 +215,24 @@ class TestStreamReader {
     }
 
     @Test
+    void windowsCloseTogetherStillReadThePartsTail() {
+        // Seen in the e2e suite: a window read as many bytes as its characters could take (four a character), past
+        // the next windows' starts, which were passed over, so the part's tail, the last window, was never read.
+        final StringBuilder text = new StringBuilder("n,kind\n");
+        for (int n = 0; n < 400; n++) {
+            text.append(n).append(',').append(n == 399 ? "rare" : "common").append('\n');
+        }
+        world.addRaw(15, "");
+        world.bytes.put(15L, text.toString().getBytes(StandardCharsets.UTF_8));
+
+        // Eight windows of 300 characters over the last ~3,000 bytes: closer together than four bytes a character.
+        final List<StreamReader.Window> windows = reader.readWindows(15, 0, text.length() - 3_000, 8, 300);
+
+        assertThat(windows).hasSize(8);
+        assertThat(windows.getLast().text()).as("the last is the part's tail").endsWith("399,rare\n");
+    }
+
+    @Test
     void noWindowsAreReadOfAPartNoLongerThanItsHeadOrWhoseLineEndIsNotOneByte() {
         world.addRaw(13, "");
         world.bytes.put(13L, "a\nb\n".getBytes(StandardCharsets.UTF_8));

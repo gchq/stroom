@@ -25,6 +25,7 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.sample.FeedSampling;
+import stroom.ai.impl.tools.sample.RecordStream;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
@@ -167,9 +168,11 @@ class TestSurveyFeedTool {
         assertThat(String.valueOf(result.get("shapes"))).contains("useralert");
         assertThat((List<Map<String, Object>>) result.get("locations"))
                 .anySatisfy(location -> assertThat(((Number) location.get("record")).longValue()).isEqualTo(9_998L));
-        assertThat((String) result.get("coverage")).contains("windows spread to their end were read")
-                .contains("review_coverage")
+        // Read in part, and the client shows no forms: the agent asks the user whether to read deeper.
+        assertThat((String) result.get("coverage")).startsWith("NOT COVERED: 1 part(s) read only in part")
                 .doesNotContain("max_chars_per_stream=5000000");
+        assertThat((String) result.get("hint")).contains("ask the user in the chat whether to read these parts "
+                                                         + "deeper", "read_deeper=");
     }
 
     @Test
@@ -263,14 +266,104 @@ class TestSurveyFeedTool {
         assertThat(result.get("saturated")).isEqualTo(false);
         assertThat(((Map<?, ?>) ((List<?>) result.get("per_stream")).getFirst()).get("head_only")).isEqualTo(true);
         assertThat(String.valueOf(result.get("coverage")))
-                .startsWith("NOT COVERED: every stream in the feed was picked, but only part of stream(s) "
-                            + "[15911122]")
-                .contains("stream_ids=[15911122]");
+                .startsWith("NOT COVERED: 1 part(s) read only in part: [stream 15911122 part 1");
 
         stream(15911122, "SecretServer", 1_760_000_000_000L, records, false);
         final Map<String, Object> whole = json(call("{\"feed\": \"SecretServer\"}"));
         assertThat(whole.get("saturated")).isEqualTo(true);
         assertThat(whole.get("coverage")).isEqualTo("covered: every stream in the feed has been read whole");
+    }
+
+    @Test
+    void aPartReadOnlyInPartIsReadDeeperAsTheUserSaysFindingKindsFurtherIn() {
+        // Seen in testing: a 25,000-record stream surveyed to its 10,000th record, its two rarest kinds, near its
+        // end, never seen nor classified. The user is asked whether to read deeper, and how far.
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, logins(10), true);
+        Mockito.when(streamReader.partSize(7L, 0)).thenReturn(30_000L);
+        // The first 8 read in order (the windows a quarter of the 10); read on from the 9th.
+        Mockito.when(streamReader.rawRecords(eq(7L), eq(0), any(), anyBoolean(), eq(8L), anyInt(), anyInt()))
+                .thenReturn(new RecordStream.Read(null, List.of(
+                        "time=2026-10-01T11:00:00Z action=login user=u4",
+                        "time=2026-10-01T23:59:00Z action=csrf_block user=u5"), 10, true, false, false));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "Read to the end"));
+
+        final Map<String, Object> result = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
+                                                     + "\"max_records_per_stream\": 10, \"build\": \"acme-v1\"}",
+                user.context()));
+
+        // Asked in a short form, how far each part was read and the choices.
+        assertThat(user.shown()).singleElement().asString().startsWith("Survey of feed 'ACME-VPN': 1 part(s) read "
+                                                                      + "only in part.")
+                .contains("Stream 7: 8 of about");
+        // Read on from where it stopped: the rare kind further in found; the part read whole, so covered.
+        assertThat(String.valueOf(result.get("shapes"))).contains("csrf_block");
+        assertThat(result.get("records_read")).isEqualTo(10);
+        assertThat((List<Map<String, Object>>) result.get(SurveyDepth.DEPTH)).singleElement().satisfies(part ->
+                assertThat(part).containsEntry("whole", true).containsEntry("records_read", 10).containsEntry(
+                        "choice", "-1"));
+        assertThat(result.get("saturated")).isEqualTo(true);
+        assertThat(result.get("coverage")).isEqualTo("covered: every part read to its end");
+    }
+
+    @Test
+    void theUserChoosingToStopSettlesTheCoverageAndIsntAskedAgain() {
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, logins(10), true);
+        Mockito.when(streamReader.partSize(7L, 0)).thenReturn(40_000L);
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", SurveyDepth.STOP_HERE));
+        final String arguments = "{\"stream_ids\": [7], \"max_streams\": 1, \"max_records_per_stream\": 10, "
+                                 + "\"build\": \"acme-v1\"}";
+
+        final Map<String, Object> result = json(call(arguments, user.context()));
+
+        assertThat(result.get("saturated")).isEqualTo(true);
+        assertThat((String) result.get("coverage")).startsWith("covered as far as the user chose: [stream 7 part 1 "
+                                                               + "read to 8 of about")
+                .endsWith("they chose to stop there");
+        Mockito.verify(streamReader, Mockito.never()).rawRecords(anyLong(), anyInt(), any(), anyBoolean(),
+                anyLong(), anyInt(), anyInt());
+        // Kept in the build's survey doc: surveyed again, not asked again.
+        json(call(arguments, user.context()));
+        assertThat(user.shown()).hasSize(1);
+    }
+
+    @Test
+    void withoutFormsTheUsersAnswerFromTheChatIsGivenAsReadDeeper() {
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, logins(10), true);
+        Mockito.when(streamReader.rawRecords(eq(7L), eq(0), any(), anyBoolean(), eq(8L), anyInt(), anyInt()))
+                .thenReturn(new RecordStream.Read(null, List.of("time=2026-10-01T11:00:00Z action=purge user=u2"), 9,
+                        true, false, false));
+
+        final Map<String, Object> result = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
+                                                     + "\"max_records_per_stream\": 10, \"read_deeper\": \"another "
+                                                     + "5,000\"}"));
+
+        assertThat(String.valueOf(result.get("shapes"))).contains("purge");
+        assertThat((List<Map<String, Object>>) result.get(SurveyDepth.DEPTH)).singleElement().satisfies(part ->
+                assertThat(part).containsEntry("choice", "5008").containsEntry("records_read", 9));
+    }
+
+    @Test
+    void eachPartOfAStreamHasItsOwnBudget() {
+        // Asked for by the user: a source can write different data to different parts, so a budget shared by the
+        // parts could miss kinds of event in the later ones.
+        final Meta meta = meta(9, "ACME-VPN", 0);
+        Mockito.when(streamReader.meta(9L)).thenReturn(meta);
+        Mockito.when(streamReader.readHead(eq(9L), eq(0), anyInt())).thenReturn(new StreamReader.RawHead(
+                logins(8), false, 2));
+        Mockito.when(streamReader.readHead(eq(9L), eq(1), anyInt())).thenReturn(new StreamReader.RawHead(
+                logins(8).replace("action=login", "action=export"), false, 2));
+
+        final Map<String, Object> result = json(call("{\"stream_ids\": [9], \"max_streams\": 1, "
+                                                     + "\"max_records_per_stream\": 10}"));
+
+        // Each part's eight records read: shared, the second part would have had only two.
+        assertThat(result.get("records_read")).isEqualTo(16);
+        assertThat(String.valueOf(result.get("shapes"))).contains("export");
+        assertThat(result.get("coverage")).isEqualTo("all 1 given stream(s) read whole: these are the kinds of "
+                                                     + "event the sample holds");
     }
 
     @Test
@@ -452,6 +545,13 @@ class TestSurveyFeedTool {
     }
 
     // The build's feed, which the sample streams were uploaded to.
+    // Key=value login records, one a line.
+    private static String logins(final int count) {
+        return IntStream.range(0, count)
+                .mapToObj(i -> "time=2026-10-01T10:%02d:00Z action=login user=u%d\n".formatted(i, i))
+                .collect(Collectors.joining());
+    }
+
     private void sampleFeedInABuild() {
         final DocRef feed = world.inBuild("acme-v1", FeedDoc.TYPE, "ACME-VPN", "feed-1");
         Mockito.when(feedNames.feedsNamed("ACME-VPN")).thenReturn(List.of(feed));

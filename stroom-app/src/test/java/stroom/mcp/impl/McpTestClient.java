@@ -189,6 +189,10 @@ public final class McpTestClient {
         if (schema.get("enum") instanceof final List<?> options && !options.isEmpty()) {
             return options.getFirst();
         }
+        // A question with answers suggested (buttons): the first, as a user taking the suggestion does.
+        if (schema.get("examples") instanceof final List<?> suggested && !suggested.isEmpty()) {
+            return suggested.getFirst();
+        }
         return null;
     }
 

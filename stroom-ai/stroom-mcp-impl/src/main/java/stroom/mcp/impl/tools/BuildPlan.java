@@ -95,6 +95,8 @@ public class BuildPlan {
 
     // The step that writes the build's Events.
     private static final String PROCESSED = "processed";
+    // The step an existing feed's survey is covered by.
+    private static final String COVERED = "covered";
     private static final List<List<String>> STAGE_1 = List.of(
             List.of("feed", "Create the feed in the build", "create_feed"),
             List.of("samples", "Upload every sample file as its own stream",
@@ -295,6 +297,30 @@ public class BuildPlan {
             }
             return Optional.ofNullable(JsonValues.map(status.get("next")))
                     .filter(next -> isBeforeEvents(next.get("step")));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No status for build {}: {}", build, e.getMessage()), e);
+            return Optional.empty();
+        }
+    }
+
+    /// @param build A build, or null.
+    /// @return Why the build can't be processed yet for want of coverage: it surveys an existing feed and its plan's
+    /// coverage step is still to do (asked for by the user: seen in chat 163, a feed processed and called complete
+    /// while its survey said NOT COVERED, its two rarest kinds of event never seen nor classified). Empty when it is
+    /// covered (or the user chose to stop reading deeper), surveys no existing feed, or can't be told.
+    public Optional<String> uncovered(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        try {
+            return JsonValues.maps(status(build, null).get("steps")).stream()
+                    .filter(step -> COVERED.equals(step.get("step")) && "to do".equals(step.get("state")))
+                    .findFirst()
+                    .map(step -> "The survey of the feed build '" + build + "' works from isn't covered yet: "
+                                 + "survey_feed build=" + build + " until it is (it asks the user whether to read "
+                                 + "deeper the parts it read only in part, or they choose to stop there), then "
+                                 + "process. Processed before, kinds of event no one has classified would go "
+                                 + "through the mapping's catch-all rules unseen.");
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("No status for build {}: {}", build, e.getMessage()), e);
             return Optional.empty();
