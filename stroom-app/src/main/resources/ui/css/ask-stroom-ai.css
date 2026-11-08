@@ -1590,12 +1590,16 @@
 }
 
 /* A box for free text: one line to start, growing with each line the user adds (Shift+Enter) to five, then
-   scrolling. Its height is set as the user types; the most it may grow to is here. */
+   scrolling. Its height is set as the user types; it starts at one line here (a one-row textarea's own height can
+   be taller, e.g. room for a scroll bar under it, so it shrank once typed in), and the most it may grow to is
+   here. */
 .ai-textarea-grow {
     display: block;
     resize: none;
+    overflow-x: hidden;
     overflow-y: auto;
     line-height: 1.4;
+    height: calc(1.4em + 10px);
     min-height: calc(1.4em + 10px);
     max-height: calc(5 * 1.4em + 10px);
 }

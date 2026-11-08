@@ -29,9 +29,13 @@ import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.draft.DraftMapping;
+import stroom.ai.impl.tools.draft.LocalCheck;
+import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.shared.AiToolCategory;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -48,46 +52,91 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /// `classify_kinds` - the agent classifies every kind of event in the sample the user's documentation doesn't
-/// cover, and the user confirms the classifications in one form, before the translation is drafted (work package
-/// E8, every decision the user's).
+/// cover, and the user confirms the classifications, before the translation is drafted (work package E8, every
+/// decision the user's).
 ///
-/// Called without proposals, it lists those kinds (found as the draft finds them), each with its count and up to
-/// three of its records, and keeps them in the build's source notes as still to classify. Called with proposals (a
-/// catalogue entry a kind: its action element, Action, outcome, which field is the actor and which acted on, and how
-/// sure the agent is), it puts them to the user: every proposal in a table, those of high and medium confidence
-/// accepted together, each low one on its own, and a field for corrections. What the user accepts is recorded in
-/// the source notes as `user_confirmed`, which the draft follows (a rule a kind) and the build checks against. A
-/// proposal the user rejected is left out (the agent asks what it is); corrections come back for the agent, which
-/// sends the corrected entries as the user's (`from_user`), recorded without another form. Without forms, the
-/// table comes back for the agent to put to the user in the chat.
+/// Called without proposals, it lists those kinds (found as the draft finds them, inner messages unpacked), each
+/// with its count and up to three of its records, and keeps them in the build's source notes as still to classify.
+/// Called with proposals (a catalogue entry a kind: its action element, Action, outcome, which field is the actor
+/// and which acted on, and how sure the agent is), it keeps them and gives back a table for the chat: a set at a
+/// time, high confidence first (one table), then medium, then low (in detail), each set numbered from 1. Called with
+/// confirm, a short form asks the user to accept the set shown or amend it, one or the other. What the user accepts
+/// is recorded in the source notes as `user_confirmed`, which the draft follows (a rule a kind) and the build checks
+/// against; amendments come back for the agent, which sends the amended entries as the user's (`from_user`),
+/// recorded without another form. Without forms, the agent puts the table to the user in the chat.
 ///
 /// The tool holds no knowledge of any source: the meanings are the agent's and the user's.
 class ClassifyKindsTool extends AbstractBuiltInTool {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClassifyKindsTool.class);
+
     static final String NAME = "classify_kinds";
-    static final String BUILD_ARG = "build";
-    static final String SOURCE_ARG = "source";
-    static final String STREAM_IDS_ARG = "stream_ids";
-    static final String SPLITTER_ARG = "splitter";
-    static final String PROPOSALS_ARG = "proposals";
-    static final String CONFIRM_ARG = "confirm";
+    private static final String BUILD_ARG = "build";
+    private static final String SOURCE_ARG = "source";
+    private static final String STREAM_IDS_ARG = "stream_ids";
+    private static final String SPLITTER_ARG = "splitter";
+    private static final String PROPOSALS_ARG = "proposals";
+    private static final String CONFIRM_ARG = "confirm";
+
+    // A proposal's keys, as given and as kept in the notes (a catalogue event's, as record_source_notes takes them).
+    private static final String FIELD = "field";
+    private static final String VALUE = "value";
+    private static final String EVENT = "event";
+    private static final String TITLE = "title";
+    private static final String PRODUCT = "product";
+    private static final String DESCRIPTION = "description";
+    private static final String EVENT_DETAIL = "event_detail";
+    private static final String ACTION = "action";
+    private static final String SUCCESS = "success";
+    private static final String TYPE_ID = "type_id";
+    private static final String ACTOR = "actor";
+    private static final String AFFECTED = "affected";
+    private static final String AFFECTED_AS = "affected_as";
+    private static final String CONFIDENCE = "confidence";
+    private static final String BASIS = "basis";
+    private static final String FROM_USER = "from_user";
+    // A kept proposal's kind, as field=value.
+    private static final String KEY = "kind";
+    // A proposal's number in the set shown, from 1, as the chat shows it.
+    private static final String NUMBER = "number";
+    // A kept proposal's place among those of its confidence, from 1, and how many there are: the heading's range.
+    private static final String POSITION = "position";
+    private static final String OF = "of";
+    // A kind's sample record, shown with its proposal.
+    private static final String SAMPLE = "sample";
     /// The notes block's key for each kind's sample record (from the listing), shown with its proposal.
     static final String SAMPLES = "samples";
+    // A kind told apart by its format alone.
     private static final String CATCH_ALL = "catch_all";
 
-    // The kinds a round takes (asked for by the user: a source of a hundred kinds in rounds a person can read):
-    // the second form's items, one a kind, and its corrections field stay within the twenty fields a form holds.
+    // How sure the agent is of a proposal, in the order the proposals are put to the user.
+    private static final String HIGH = "high";
+    private static final String MEDIUM = "medium";
+    private static final String LOW = "low";
+    private static final List<String> CONFIDENCES = List.of(HIGH, MEDIUM, LOW);
+
+    // A result's keys.
+    private static final String HINT = "hint";
+    private static final String TABLE = "table";
+    private static final String RECORDED = "recorded";
+    private static final String SOURCE_NOTES = "source_notes";
+    private static final String TO_CLASSIFY = "to_classify";
+    private static final String STILL_TO_CLASSIFY = "still_to_classify";
+    private static final String AMENDMENTS = "amendments";
+
+    // The draft's mapping and its rules' keys.
+    private static final String MAPPING = "mapping";
+    private static final String EVENTS = "events";
+    private static final String EQUALS = "equals";
+
+    // The kinds a round takes (asked for by the user: a source of a hundred kinds in rounds a person can read).
     static final int BATCH = 18;
+    // The proposals put to the user at once, of one confidence (asked for by the user).
+    static final int SET_SIZE = 10;
     private static final int MAX_SAMPLE_STREAMS = 5;
     private static final int EXAMPLES = 3;
     private static final int EXAMPLE_FIELDS = 20;
     private static final int EXAMPLE_VALUE = 100;
-    private static final String FROM_USER = "from_user";
-    private static final String BLOCK = "block";
-    // A kept proposal's kind, as field=value.
-    private static final String KEY = "kind";
-    // A kept proposal's number, as the chat shows it.
-    private static final String NUMBER = "number";
     private static final int SAMPLE_CHARS = 100;
     // A field's name that says it names a user or account (generic words, no product's).
     private static final Pattern USER_NAME = Pattern.compile("(?i)(user|account|login|principal|subject|actor|"
@@ -143,8 +192,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                              + "the translation. Call first without proposals: it lists those kinds, each with its "
                              + "count and records. Then call with a proposal for every kind listed, from the records "
                              + "and what you know of the source: it gives back a table to show the user in your "
-                             + "reply. Then call with confirm=true: a short form asks them to accept those you are "
-                             + "sure of together and the others one by one, or correct them. What is confirmed goes "
+                             + "reply. Then call with confirm=true: a short form asks them to accept them all or "
+                             + "amend them, a set at a time (high confidence, then medium, then low), each set's "
+                             + "table shown first. What is confirmed goes "
                              + "into the build's source notes, which draft_translation_mapping follows (a rule a "
                              + "kind). Send corrections the user gave (in the form or the chat) as proposals with "
                              + "from_user: true; leave out a kind the user rejected and ask them what it is. "
@@ -180,27 +230,27 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
 
     private static ObjectSchema proposal() {
         return ObjectSchema.builder()
-                .addStringProperty("field", "The field the kind is told by, as listed.")
-                .addStringProperty("value", "Its value for this kind, as listed.")
-                .addStringProperty("event", "The kind's name or id (the value when left out).")
-                .addStringProperty("title", "A short name for the kind, the heading the user reads, e.g. 'SQL "
+                .addStringProperty(FIELD, "The field the kind is told by, as listed.")
+                .addStringProperty(VALUE, "Its value for this kind, as listed.")
+                .addStringProperty(EVENT, "The kind's name or id (the value when left out).")
+                .addStringProperty(TITLE, "A short name for the kind, the heading the user reads, e.g. 'SQL "
                                             + "injection signature'.")
-                .addStringProperty("product", "The product or part of it the kind comes from, in the heading's "
+                .addStringProperty(PRODUCT, "The product or part of it the kind comes from, in the heading's "
                                               + "brackets, e.g. 'NetScaler AppFirewall'.")
-                .addStringProperty("description", "What the event is.")
-                .addStringProperty("event_detail", "The EventDetail action element.")
-                .addStringProperty("action", "The action element's Action, when it has one.")
-                .addBooleanProperty("success", "The outcome, when the kind says it.")
-                .addStringProperty("type_id", "The event's TypeId.")
-                .addStringProperty("actor", "The field naming the user or account who acted (one of user_fields); "
+                .addStringProperty(DESCRIPTION, "What the event is.")
+                .addStringProperty(EVENT_DETAIL, "The EventDetail action element.")
+                .addStringProperty(ACTION, "The action element's Action, when it has one.")
+                .addBooleanProperty(SUCCESS, "The outcome, when the kind says it.")
+                .addStringProperty(TYPE_ID, "The event's TypeId.")
+                .addStringProperty(ACTOR, "The field naming the user or account who acted (one of user_fields); "
                                             + "left out when the records name none, as for network traffic.")
-                .addStringProperty("affected", "The field naming the user or object acted on; left out when there "
+                .addStringProperty(AFFECTED, "The field naming the user or object acted on; left out when there "
                                                + "is none, as for an alert or a connection.")
-                .addStringProperty("affected_as", "What the affected field names, as the action element's object: "
+                .addStringProperty(AFFECTED_AS, "What the affected field names, as the action element's object: "
                                                   + "User, File, Document, Group... (or its leaf, User/Name).")
-                .addStringProperty("confidence", "high, medium or low: how sure you are.")
+                .addStringProperty(CONFIDENCE, "high, medium or low: how sure you are.")
                 .addBooleanProperty(FROM_USER, "True for what the user said (recorded without asking again).")
-                .required("field", "value", "description")
+                .required(FIELD, VALUE, DESCRIPTION)
                 .build();
     }
 
@@ -229,10 +279,10 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 : confirming(call)
                         ? confirmed(call, context, build, source, notesNow)
                         : listed(call, context, build, source, notesNow);
-        if (!proposals.isEmpty() && confirming(call) && result.containsKey("table")) {
+        if (!proposals.isEmpty() && confirming(call) && result.containsKey(TABLE)) {
             // Seen in testing: confirm=true sent with the proposals, the form expected; the user hasn't seen the
             // table yet, so the form waits for the next call.
-            result.put("hint", "No form yet: confirm=true is not taken with proposals. " + result.get("hint"));
+            result.put(HINT, "No form yet: confirm=true is not taken with proposals. " + result.get(HINT));
         }
         return plan.withNext(context, build, result);
     }
@@ -252,8 +302,12 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         }
         final Map<String, String> samples = sampleStreamTexts.read(streams).texts();
         final SplitterSpec splitter = BuildTranslationXsltTool.Request.splitter(rawArg(call, SPLITTER_ARG));
-        final List<Map<String, Object>> records = DraftMapping.records(samples, splitter).records();
-        final List<Kind> kinds = kinds(samples, splitter, source, records);
+        final Map<String, Object> draft = DraftMapping.draft(List.copyOf(samples.values()), source, null, null, null,
+                null, splitter);
+        @SuppressWarnings("unchecked") final Map<String, Object> mapping = (Map<String, Object>) draft.get(MAPPING);
+        final List<Map<String, Object>> records = unpacked(DraftMapping.records(samples, splitter).records(),
+                mapping);
+        final List<Kind> kinds = kinds(draft, records);
         final List<String> recordFields = recordFields(records);
         final Set<String> settled = settled(notesNow);
         // Not those the user rejected: the agent asks what they are, and they stay out of later rounds.
@@ -267,11 +321,11 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         result.put("already_settled", kinds.stream().map(Kind::key).filter(settled::contains).toList());
         if (kinds.size() <= 1 || todo.isEmpty()) {
             // Nothing for the user to decide: one kind (the draft's own rule), or every kind settled already.
-            result.put("source_notes", notes.recordClassified(context, build, source, List.of(), List.of(),
+            result.put(SOURCE_NOTES, notes.recordClassified(context, build, source, List.of(), List.of(),
                     Map.of(RecordSourceNotesTool.RECORD_FIELDS, recordFields, RecordSourceNotesTool.PROPOSED,
                             List.of())));
-            result.put("to_classify", List.of());
-            result.put("hint", kinds.size() <= 1
+            result.put(TO_CLASSIFY, List.of());
+            result.put(HINT, kinds.size() <= 1
                     ? "One kind of event (or none told apart): nothing to classify. Go on to the draft."
                     : "Every kind is settled by the documentation or the user: go on to the draft.");
             return result;
@@ -279,13 +333,13 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         // Each kind's first record, shown with its proposal.
         final List<Map<String, Object>> kindSamples = batch.stream()
                 .filter(kind -> !kind.examples().isEmpty())
-                .map(kind -> Map.<String, Object>of(KEY, kind.key(), "sample", sampleText(kind.examples().getFirst()),
+                .map(kind -> Map.<String, Object>of(KEY, kind.key(), SAMPLE, sampleText(kind.examples().getFirst()),
                         CATCH_ALL, kind.catchAll()))
                 .toList();
-        result.put("source_notes", notes.recordClassified(context, build, source, List.of(),
+        result.put(SOURCE_NOTES, notes.recordClassified(context, build, source, List.of(),
                 todo.stream().map(Kind::key).toList(), Map.of(RecordSourceNotesTool.RECORD_FIELDS, recordFields,
                         RecordSourceNotesTool.PROPOSED, List.of(), SAMPLES, kindSamples)));
-        result.put("to_classify", batch.stream().map(Kind::shown).toList());
+        result.put(TO_CLASSIFY, batch.stream().map(Kind::shown).toList());
         if (todo.size() > batch.size()) {
             result.put("round", batch.size() + " of the " + todo.size() + " kinds still to classify; the next round "
                                 + "lists the others");
@@ -295,11 +349,17 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         result.put("user_fields", users.isEmpty()
                 ? "None: the records name no user or account, so leave actor out."
                 : users);
-        result.put("hint", "Propose a classification for each of these " + batch.size() + " kinds (proposals=, one "
+        result.put(HINT, "Propose a classification for each of these " + batch.size() + " kinds (proposals=, one "
                            + "each, with its field and value as listed, a short title and the product it comes "
                            + "from), from its records and what you know of the source, saying how sure you are; the "
-                           + "user confirms the high-confidence ones together, then the others one by one. A kind "
-                           + "marked catch_all is a whole format's records, not one event: at most medium.");
+                           + "user confirms them a set at a time: high confidence, then medium, then low. A kind "
+                           + "marked catch_all is a whole format's records, not one event: at most medium."
+                           + (batch.stream().anyMatch(Kind::catchAll)
+                ? " A catch_all kind may hold several kinds of event (seen: a syslog format's records, the "
+                  + "product's event names left inside the message): if its records name their event, refine the "
+                  + "splitter (build_data_splitter) so a field holds the name, save it, and list again, so the "
+                  + "user confirms each kind; else propose it as one."
+                : ""));
         return result;
     }
 
@@ -317,16 +377,15 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final List<String> rated = new ArrayList<>();
         for (int i = 0; i < given.size(); i++) {
             final Map<?, ?> item = given.get(i);
-            final String key = ToolText.str(item.get("field")) + "=" + ToolText.str(item.get("value"));
-            final boolean fromUser = Boolean.TRUE.equals(item.get(FROM_USER))
-                                     || "true".equals(String.valueOf(item.get(FROM_USER)));
-            final String stated = ToolText.str(Objects.requireNonNullElse(item.get("confidence"), ""));
+            final String key = ToolText.str(item.get(FIELD)) + "=" + ToolText.str(item.get(VALUE));
+            final boolean fromUser = isTrue(item.get(FROM_USER));
+            final String stated = valueText(item.get(CONFIDENCE));
             // A catch-all kind (a format's records, the events in it not told apart) is shown to the user on its
             // own: one classification for many events is a guess, however sure the agent is (asked for by the
             // user, after the agent rated catch-alls high in testing).
-            final boolean lowered = !fromUser && "high".equals(stated) && catchAll(notesNow, key);
+            final boolean lowered = !fromUser && HIGH.equals(stated) && catchAll(notesNow, key);
             final String confidence = lowered
-                    ? "medium"
+                    ? MEDIUM
                     : stated;
             if (lowered) {
                 rated.add(key);
@@ -334,12 +393,11 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             if (!fromUser && !pending.contains(key)) {
                 problems.add("proposals[" + i + "]: " + key + " isn't a kind still to classify (" + String.join(
                         ", ", pending) + ")");
-            } else if (!fromUser && !List.of("high", "medium", "low").contains(confidence)) {
+            } else if (!fromUser && !CONFIDENCES.contains(confidence)) {
                 problems.add("proposals[" + i + "]: confidence is high, medium or low");
-            } else if (!fromUser && ToolText.isBlank(ToolText.str(Objects.requireNonNullElse(item.get(
-                    "event_detail"), "")))) {
+            } else if (!fromUser && ToolText.isBlank(valueText(item.get(EVENT_DETAIL)))) {
                 problems.add("proposals[" + i + "]: give event_detail, the action element");
-            } else if (unknownField(item, "actor", recordFields) || unknownField(item, "affected", recordFields)) {
+            } else if (unknownField(item, ACTOR, recordFields) || unknownField(item, AFFECTED, recordFields)) {
                 // Seen in the agent eval: a label from the text ('By User') given for a field, the event's user
                 // then drafted empty.
                 problems.add("proposals[" + i + "]: actor and affected name fields of the records, as listed ("
@@ -362,8 +420,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 fromUser.add(confirmedEntry(entry));
             } else {
                 entry.put(KEY, proposals.get(i).key());
-                entry.put("confidence", proposals.get(i).confidence());
-                for (final String shown : List.of("title", "product")) {
+                entry.put(CONFIDENCE, proposals.get(i).confidence());
+                for (final String shown : List.of(TITLE, PRODUCT)) {
                     final Object value = proposals.get(i).given().get(shown);
                     if (value != null && !ToolText.isBlank(ToolText.str(value))) {
                         entry.put(shown, ToolText.str(value));
@@ -373,18 +431,25 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 JsonValues.maps(notesNow.get(SAMPLES)).stream()
                         .filter(sample -> key.equals(sample.get(KEY)))
                         .findFirst()
-                        .ifPresent(sample -> entry.put("sample", sample.get("sample")));
+                        .ifPresent(sample -> entry.put(SAMPLE, sample.get(SAMPLE)));
                 toConfirm.add(entry);
             }
         }
-        // High confidence first, then medium, then low: the order they are put to the user, numbered so.
-        toConfirm.sort(Comparator.comparingInt(entry -> List.of("high", "medium", "low")
-                .indexOf(String.valueOf(entry.get("confidence")))));
-        for (int i = 0; i < toConfirm.size(); i++) {
-            toConfirm.get(i).put(NUMBER, i + 1);
+        // High confidence first, then medium, then low: the order the sets are put to the user; each with its place
+        // among those of its confidence, for the heading's range (asked for by the user: "1-10 of 21").
+        toConfirm.sort(Comparator.comparingInt(entry -> CONFIDENCES
+                .indexOf(String.valueOf(entry.get(CONFIDENCE)))));
+        for (final String confidence : CONFIDENCES) {
+            final List<Map<String, Object>> ofConfidence = toConfirm.stream()
+                    .filter(entry -> confidence.equals(entry.get(CONFIDENCE)))
+                    .toList();
+            for (int i = 0; i < ofConfidence.size(); i++) {
+                ofConfidence.get(i).put(POSITION, i + 1);
+                ofConfidence.get(i).put(OF, ofConfidence.size());
+            }
         }
         final Set<String> recorded = new LinkedHashSet<>();
-        fromUser.forEach(entry -> recorded.add(entry.get("field") + "=" + entry.get("value")));
+        fromUser.forEach(entry -> recorded.add(entry.get(FIELD) + "=" + entry.get(VALUE)));
         final List<String> left = pending.stream().filter(key -> !recorded.contains(key)).toList();
         // Only the user's (a correction between the rounds, say): the proposals still to confirm stay.
         final List<Map<String, Object>> kept = toConfirm.isEmpty()
@@ -396,37 +461,33 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 Map.of(RecordSourceNotesTool.PROPOSED, kept));
         final Map<String, Object> result = new LinkedHashMap<>();
         if (!recorded.isEmpty()) {
-            result.put("recorded", List.copyOf(recorded));
+            result.put(RECORDED, List.copyOf(recorded));
         }
-        result.put("source_notes", doc);
+        result.put(SOURCE_NOTES, doc);
         if (!rated.isEmpty()) {
             result.put("rated_medium", rated);
             result.put("rated_medium_why", "Catch-all kinds (a format's records, its events not told apart): "
-                                           + "the user confirms each on its own.");
+                                           + "shown in detail, with the medium-confidence ones.");
         }
         if (toConfirm.isEmpty()) {
             if (!kept.isEmpty()) {
                 result.put("still_to_confirm", kept.stream().map(entry -> entry.get(KEY)).toList());
-                result.put("hint", "Call classify_kinds build=" + build + " confirm=true for the classifications "
-                                   + "still to confirm.");
+                presented(result, build, firstSet(kept));
                 return result;
             }
             if (!left.isEmpty()) {
-                result.put("still_to_classify", left);
+                result.put(STILL_TO_CLASSIFY, left);
             }
-            result.put("hint", hint(List.of(), "", left));
+            result.put(HINT, hint(left));
             return result;
         }
-        final List<Map<String, Object>> high = toConfirm.stream().filter(ClassifyKindsTool::isHigh).toList();
-        presented(result, build, high.isEmpty()
-                ? toConfirm
-                : high, !high.isEmpty());
+        presented(result, build, firstSet(toConfirm));
         return result;
     }
 
-    // The proposals kept, put to the user in a short form of plain text (what it asks about is in the chat), and
-    // what they confirmed recorded. First the high-confidence ones, accepted together or amended; then the others,
-    // each on its own (asked for by the user).
+    // The proposals kept, put to the user a set at a time, high confidence first, then medium, then low (asked for
+    // by the user): the set's table shown in the chat, numbered from 1, then a short form of plain text with one
+    // question, accept them all (a button) or amend them (in the user's own words), one or the other.
     private Map<String, Object> confirmed(final ToolCall call,
                                           final ToolCallContext context,
                                           final String build,
@@ -437,99 +498,120 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             throw new ToolRefusal("Nothing to confirm: send the proposals first (proposals=), and show what comes "
                                   + "back in the chat");
         }
-        final List<Map<String, Object>> high = proposed.stream().filter(ClassifyKindsTool::isHigh).toList();
-        final boolean together = !high.isEmpty();
-        final List<Map<String, Object>> asked = together
-                ? high
-                : proposed;
-        final Map<String, Consent.Editable> items = new LinkedHashMap<>();
-        if (together) {
-            items.put(BLOCK, new Consent.Editable("Accept the " + high.size() + " high-confidence classification"
-                                                  + (high.size() == 1
-                    ? ""
-                    : "s") + " in the table above", null));
-        } else {
-            asked.forEach(entry -> items.put(String.valueOf(entry.get(KEY)), new Consent.Editable(line(entry), null)));
+        final List<Map<String, Object>> set = firstSet(proposed);
+        final String confidence = confidenceOf(set);
+        final String accept = set.size() == 1
+                ? "Accept it"
+                : "Accept all " + set.size();
+        final Optional<String> answer = consent.answer(call, context, NAME,
+                "Review the " + confidence + "-confidence classifications shown in the chat.",
+                accept + ", or type your amendments (e.g. 2 is Access, not Alert)", accept);
+        if (answer.isEmpty()) {
+            return noForms();
         }
-        final Optional<Map<String, Object>> answers = consent.review(call, context, NAME, together
-                ? "Review the high-confidence classifications shown in the chat: accept them, or suggest amendments."
-                : "Confirm each of the classifications shown in the chat, or correct them.", items, together
-                ? "Amendments, if any (e.g. 2 is Access, not Alert)"
-                : "Corrections, if any (e.g. 5 is Delete, not Update)");
+        if (accepting(answer.get(), accept)) {
+            return recorded(context, build, source, notesNow, proposed, set);
+        }
+        // Amended: nothing recorded yet; the agent sends them again as the user said, and the next set follows.
         final Map<String, Object> result = new LinkedHashMap<>();
-        if (answers.isEmpty()) {
-            result.put("asked", false);
-            result.put("hint", "This client shows no forms: ask the user in the chat whether what you showed is "
-                               + "right, then send what they confirmed or corrected as proposals with from_user: "
-                               + "true; leave out any they reject and ask what it is.");
-            return result;
-        }
-        final Set<String> accepted = new LinkedHashSet<>();
-        final List<String> rejected = new ArrayList<>();
-        for (final Map<String, Object> entry : asked) {
-            final String key = String.valueOf(entry.get(KEY));
-            final boolean yes = together
-                    ? Boolean.TRUE.equals(answers.get().get(BLOCK))
-                    : Boolean.TRUE.equals(answers.get().get(key));
-            (yes
-                    ? accepted
-                    : rejected).add(key);
-        }
-        final String corrections = ToolText.str(Objects.requireNonNullElse(answers.get().get(Consent.REVIEW_TEXT),
-                ""));
-        final List<Map<String, Object>> confirmedEntries = asked.stream()
-                .filter(entry -> accepted.contains(String.valueOf(entry.get(KEY))))
-                .map(entry -> confirmedEntry(new LinkedHashMap<>(entry)))
-                .toList();
-        final List<Map<String, Object>> remaining = proposed.stream().filter(entry -> !asked.contains(entry))
-                .toList();
-        final List<String> left = pending(notesNow).stream()
-                .filter(key -> !accepted.contains(key) && !rejected.contains(key))
-                .toList();
-        final List<String> allRejected = new ArrayList<>(JsonValues.strings(notesNow.get(
-                RecordSourceNotesTool.REJECTED)));
-        rejected.stream().filter(key -> !allRejected.contains(key)).forEach(allRejected::add);
-        final Map<String, Object> doc = notes.recordClassified(context, build, source, confirmedEntries, left,
-                Map.of(RecordSourceNotesTool.PROPOSED, remaining, RecordSourceNotesTool.REJECTED, allRejected));
-        result.put("recorded", List.copyOf(accepted));
-        result.put("source_notes", doc);
-        if (!rejected.isEmpty()) {
-            result.put("rejected", rejected);
-        }
-        if (!corrections.isBlank()) {
-            result.put(together
-                    ? "amendments"
-                    : "corrections", corrections);
-        }
-        if (!remaining.isEmpty()) {
-            // Then the others, in detail.
-            presented(result, build, remaining, false);
-            if (!corrections.isBlank() || !rejected.isEmpty()) {
-                result.put("hint", hint(rejected, corrections, List.of()) + " Then " + result.get("hint"));
-            }
-            return result;
-        }
-        if (!left.isEmpty()) {
-            result.put("still_to_classify", left.size());
-        }
-        result.put("hint", hint(rejected, corrections, left));
+        result.put(RECORDED, List.of());
+        result.put(AMENDMENTS, answer.get());
+        result.put(HINT, "The user amended the " + confidence + "-confidence classifications: send "
+                         + (set.size() == 1
+                ? "it"
+                : "all " + set.size() + " of them") + " again with the amendments applied, as proposals with "
+                         + "from_user: true (ask the user first if an amendment isn't clear; leave out any they "
+                         + "reject and ask what it is); the next set then follows.");
         return result;
     }
 
-    // What the agent shows the user before the form: the high-confidence proposals as one table, or the others in
-    // detail, with what to call next.
+    // Whether the answer accepts: the button's, or the user's own words saying the same.
+    private static boolean accepting(final String answer, final String accept) {
+        return answer.equalsIgnoreCase(accept)
+               || answer.matches("(?i)(accept( all| them| it)?|yes|ok|okay|agreed?|confirm(ed)?)[.!]?");
+    }
+
+    private static Map<String, Object> noForms() {
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("asked", false);
+        result.put(HINT, "This client shows no forms: ask the user in the chat whether what you showed is "
+                         + "right, then send what they confirmed or corrected as proposals with from_user: "
+                         + "true; leave out any they reject and ask what it is.");
+        return result;
+    }
+
+    // The set the user accepted recorded, and the next set presented.
+    private Map<String, Object> recorded(final ToolCallContext context,
+                                         final String build,
+                                         final String source,
+                                         final Map<String, Object> notesNow,
+                                         final List<Map<String, Object>> proposed,
+                                         final List<Map<String, Object>> set) {
+        final Set<String> accepted = new LinkedHashSet<>();
+        set.forEach(entry -> accepted.add(String.valueOf(entry.get(KEY))));
+        final List<Map<String, Object>> confirmedEntries = set.stream()
+                .map(entry -> confirmedEntry(new LinkedHashMap<>(entry)))
+                .toList();
+        final List<Map<String, Object>> remaining = proposed.stream()
+                .filter(entry -> !accepted.contains(String.valueOf(entry.get(KEY))))
+                .toList();
+        final List<String> left = pending(notesNow).stream()
+                .filter(key -> !accepted.contains(key))
+                .toList();
+        final Map<String, Object> doc = notes.recordClassified(context, build, source, confirmedEntries, left,
+                Map.of(RecordSourceNotesTool.PROPOSED, remaining));
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put(RECORDED, List.copyOf(accepted));
+        result.put(SOURCE_NOTES, doc);
+        if (!remaining.isEmpty()) {
+            presented(result, build, firstSet(remaining));
+            return result;
+        }
+        if (!left.isEmpty()) {
+            result.put(STILL_TO_CLASSIFY, left.size());
+        }
+        result.put(HINT, hint(left));
+        return result;
+    }
+
+    // What the agent shows the user before the form: a set of proposals of one confidence, the high-confidence
+    // ones as one table, the others in detail, with what to call next.
     private static void presented(final Map<String, Object> result,
                                   final String build,
-                                  final List<Map<String, Object>> entries,
-                                  final boolean high) {
-        result.put("table", high
-                ? summary(entries)
-                : details(entries));
-        result.put("hint", "Show the table to the user in your reply, as it is (Markdown the chat renders), then "
-                           + "call classify_kinds build=" + build + " confirm=true: a short form asks them to "
-                           + (high
-                ? "accept the high-confidence classifications or suggest amendments; the others follow in detail."
-                : "confirm or correct each."));
+                                  final List<Map<String, Object>> set) {
+        final String confidence = confidenceOf(set);
+        result.put(TABLE, HIGH.equals(confidence)
+                ? summary(set)
+                : details(set));
+        result.put(HINT, "Show the table to the user in your reply, as it is (Markdown the chat renders), then "
+                         + "call classify_kinds build=" + build + " confirm=true: a short form asks them to accept "
+                         + "all the " + confidence + "-confidence classifications or amend them. Show only this "
+                         + "table: any others are shown after the form, so don't describe them now.");
+    }
+
+    // The set put to the user next (asked for by the user): up to ten proposals of the first confidence they have
+    // (high, then medium, then low), numbered from 1, as the table shows them and the user's amendments name them.
+    private static List<Map<String, Object>> firstSet(final List<Map<String, Object>> entries) {
+        for (final String confidence : CONFIDENCES) {
+            final List<Map<String, Object>> ofConfidence = entries.stream()
+                    .filter(entry -> confidence.equals(entry.get(CONFIDENCE)))
+                    .limit(SET_SIZE)
+                    .toList();
+            if (!ofConfidence.isEmpty()) {
+                final List<Map<String, Object>> set = new ArrayList<>();
+                for (int i = 0; i < ofConfidence.size(); i++) {
+                    final Map<String, Object> numbered = new LinkedHashMap<>(ofConfidence.get(i));
+                    numbered.put(NUMBER, i + 1);
+                    set.add(numbered);
+                }
+                return set;
+            }
+        }
+        return entries;
+    }
+
+    private static String confidenceOf(final List<Map<String, Object>> set) {
+        return String.valueOf(set.getFirst().get(CONFIDENCE));
     }
 
     // Whether the kind was listed as a catch-all: a format's records, the events in it not told apart.
@@ -538,13 +620,14 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 .anyMatch(sample -> key.equals(sample.get(KEY)) && Boolean.TRUE.equals(sample.get(CATCH_ALL)));
     }
 
-    private static boolean isHigh(final Map<String, Object> entry) {
-        return "high".equals(entry.get("confidence"));
+    // A boolean argument given as true or "true".
+    private static boolean isTrue(final Object given) {
+        return Boolean.TRUE.equals(given) || "true".equals(String.valueOf(given));
     }
 
     private boolean confirming(final ToolCall call) {
         final Object given = argsMap(call).get(CONFIRM_ARG);
-        return Boolean.TRUE.equals(given) || "true".equals(String.valueOf(given));
+        return isTrue(given);
     }
 
     private static List<String> pending(final Map<String, Object> notesNow) {
@@ -557,12 +640,14 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     // An entry as recorded once the user confirmed it.
     private static Map<String, Object> confirmedEntry(final Map<String, Object> entry) {
         entry.remove(KEY);
-        entry.remove("confidence");
-        entry.remove("title");
-        entry.remove("product");
-        entry.remove("sample");
+        entry.remove(CONFIDENCE);
+        entry.remove(TITLE);
+        entry.remove(PRODUCT);
+        entry.remove(SAMPLE);
         entry.remove(NUMBER);
-        entry.put("basis", RecordSourceNotesTool.USER_CONFIRMED);
+        entry.remove(POSITION);
+        entry.remove(OF);
+        entry.put(BASIS, RecordSourceNotesTool.USER_CONFIRMED);
         return entry;
     }
 
@@ -577,11 +662,17 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private static List<String> recordFields(final List<Map<String, Object>> records) {
         final Set<String> seen = new LinkedHashSet<>();
         records.forEach(record -> record.forEach((field, value) -> {
-            if (value != null && !ToolText.isBlank(ToolText.str(value))) {
+            if (named(field) && value != null && !ToolText.isBlank(ToolText.str(value))) {
                 seen.add(field);
             }
         }));
         return List.copyOf(seen);
+    }
+
+    // Not an inner XML element's 'anywhere below' alias (message//User beside message/Event/User): the draft
+    // matches with it, but the same value is shown and named by its path.
+    private static boolean named(final String field) {
+        return !field.contains("//");
     }
 
     // The fields whose names say user or account and whose values aren't addresses: who may have acted.
@@ -595,39 +686,23 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 .toList();
     }
 
-    private static String hint(final List<String> rejected, final String corrections, final List<String> left) {
-        final List<String> said = new ArrayList<>();
-        if (!corrections.isBlank()) {
-            said.add("Apply the user's corrections: call again with each corrected entry, from_user: true");
-        }
-        if (!rejected.isEmpty()) {
-            said.add("Ask the user what the rejected kinds are (" + String.join(", ", rejected) + "); send their "
-                     + "answers with from_user: true, or leave them for the draft to keep Unknown");
-        }
-        if (!left.isEmpty()) {
-            said.add("Then call classify_kinds without proposals for the next round of the " + left.size() + " kinds "
-                     + "still to classify");
-        }
-        return said.isEmpty()
+    private static String hint(final List<String> left) {
+        return left.isEmpty()
                 ? "Every kind is classified: draft_translation_mapping build=... follows them, a rule a kind."
-                : String.join(". ", said) + ".";
+                : "Call classify_kinds without proposals for the next round of the " + left.size() + " kinds still "
+                  + "to classify.";
     }
 
     // The kinds the draft makes rules for, each with its records.
-    private static List<Kind> kinds(final Map<String, String> samples,
-                                    final SplitterSpec splitter,
-                                    final String source,
-                                    final List<Map<String, Object>> records) {
-        final Map<String, Object> draft = DraftMapping.draft(List.copyOf(samples.values()), source, null, null, null,
-                null, splitter);
+    private static List<Kind> kinds(final Map<String, Object> draft, final List<Map<String, Object>> records) {
         final List<Kind> kinds = new ArrayList<>();
-        @SuppressWarnings("unchecked") final Map<String, Object> mapping = (Map<String, Object>) draft.get("mapping");
+        @SuppressWarnings("unchecked") final Map<String, Object> mapping = (Map<String, Object>) draft.get(MAPPING);
         final String variantField = variantField(draft);
         final List<List<Map<String, Object>>> earlierRules = new ArrayList<>();
-        for (final Map<String, Object> rule : JsonValues.maps(mapping.get("events"))) {
+        for (final Map<String, Object> rule : JsonValues.maps(mapping.get(EVENTS))) {
             final List<Map<String, Object>> when = JsonValues.maps(rule.get("when"));
             final List<Map<String, Object>> equals = when.stream()
-                    .filter(c -> c.get("field") != null && c.get("equals") != null)
+                    .filter(c -> c.get(FIELD) != null && c.get(EQUALS) != null)
                     .toList();
             if (equals.isEmpty()) {
                 continue;
@@ -635,7 +710,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             // The kind is told by its last condition (a variant's own condition comes first).
             final Map<String, Object> told = equals.getLast();
             // Told by its format alone: a catch-all, the format's events not told apart.
-            final boolean catchAll = equals.size() == 1 && told.get("field").equals(variantField);
+            final boolean catchAll = equals.size() == 1 && told.get(FIELD).equals(variantField);
             // A catch-all after its format's own rules (its 'other') has the records they leave; none left, it is
             // the rule for events the sample doesn't have, as a single format's is, and not listed.
             final List<Map<String, Object>> ofKind = records.stream()
@@ -646,7 +721,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             if (catchAll && ofKind.isEmpty()) {
                 continue;
             }
-            final Kind kind = new Kind(String.valueOf(told.get("field")), String.valueOf(told.get("equals")),
+            final Kind kind = new Kind(String.valueOf(told.get(FIELD)), String.valueOf(told.get(EQUALS)),
                     String.valueOf(rule.get("name")), ofKind.size(), examples(ofKind), catchAll);
             // One kind in several rules (a rule a variant): listed once, its records counted together.
             final Kind earlier = kinds.stream().filter(k -> k.key().equals(kind.key())).findFirst().orElse(null);
@@ -662,10 +737,42 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         return kinds;
     }
 
+    // The records with the fields the draft reads inside an inner message: the keys of JSON text (json_fields),
+    // the elements of XML text (xml_fields) and the values its extractions take from text (key/value pairs, say),
+    // as the translation reads them. Seen in testing: kinds told apart inside a message field listed with no
+    // records or sample, and no user field to name as the actor.
+    private static List<Map<String, Object>> unpacked(final List<Map<String, Object>> records,
+                                                      final Map<String, Object> mapping) {
+        final List<Object> held = new ArrayList<>(records);
+        LocalCheck.withJsonFields(held, JsonValues.strings(mapping.get("json_fields")));
+        LocalCheck.withXmlFields(held, JsonValues.strings(mapping.get("xml_fields")));
+        if (JsonValues.maps(mapping.get("extract")).isEmpty()) {
+            return records;
+        }
+        final TranslationMapping read;
+        try {
+            read = TranslationMapping.fromJson(mapping);
+        } catch (final RuntimeException e) {
+            LOGGER.debug("The draft's extractions can't be read: {}", e.getMessage());
+            return records;
+        }
+        for (final Map<String, Object> record : records) {
+            final Map<String, String> extracted = LocalCheck.extractedValues(read, record);
+            if (extracted != null) {
+                extracted.forEach((name, value) -> {
+                    if (!value.isEmpty()) {
+                        record.putIfAbsent(name, value);
+                    }
+                });
+            }
+        }
+        return records;
+    }
+
     // Whether the record meets each of the conditions.
     private static boolean matches(final Map<String, Object> record, final List<Map<String, Object>> conditions) {
-        return conditions.stream().allMatch(c -> String.valueOf(c.get("equals"))
-                .equals(String.valueOf(record.get(String.valueOf(c.get("field"))))));
+        return conditions.stream().allMatch(c -> String.valueOf(c.get(EQUALS))
+                .equals(String.valueOf(record.get(String.valueOf(c.get(FIELD))))));
     }
 
     // The field a record's format (its variant) is written in, when the records are in several; else none.
@@ -686,8 +793,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         for (final Map<String, Object> record : records) {
             final Map<String, Object> shown = new LinkedHashMap<>();
             record.forEach((field, value) -> {
-                final String text = ToolText.str(Objects.requireNonNullElse(value, ""));
-                if (!text.isBlank() && shown.size() < EXAMPLE_FIELDS) {
+                final String text = valueText(value);
+                if (named(field) && !text.isBlank() && shown.size() < EXAMPLE_FIELDS) {
                     shown.put(field, text.length() <= EXAMPLE_VALUE
                             ? text
                             : text.substring(0, EXAMPLE_VALUE) + "...");
@@ -706,10 +813,10 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     // The kinds the notes settle: catalogue events the documentation gave, or the user confirmed, by field=value.
     private static Set<String> settled(final Map<String, Object> notesNow) {
         final Set<String> out = new LinkedHashSet<>();
-        for (final Map<String, Object> event : JsonValues.maps(notesNow.get("events"))) {
-            if (event.get("field") != null && event.get("value") != null
-                && !"agent_knowledge".equals(event.get("basis"))) {
-                out.add(event.get("field") + "=" + event.get("value"));
+        for (final Map<String, Object> event : JsonValues.maps(notesNow.get(EVENTS))) {
+            if (event.get(FIELD) != null && event.get(VALUE) != null
+                && !RecordSourceNotesTool.AGENT_KNOWLEDGE.equals(event.get(BASIS))) {
+                out.add(event.get(FIELD) + "=" + event.get(VALUE));
             }
         }
         return out;
@@ -723,41 +830,39 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         String group = null;
         for (final Map<String, Object> e : entries) {
             // Grouped by confidence, under a heading as the high-confidence ones are (asked for by the user).
-            final String confidence = text(e.get("confidence"));
+            final String confidence = text(e.get(CONFIDENCE));
             if (!confidence.equals(group)) {
                 group = confidence;
-                lines.add("## " + Character.toUpperCase(confidence.charAt(0)) + confidence.substring(1)
-                          + "-confidence classifications");
+                final String shown = confidence;
+                lines.add(heading(confidence, entries.stream()
+                        .filter(entry -> shown.equals(text(entry.get(CONFIDENCE))))
+                        .toList()));
                 lines.add("");
             }
-            lines.add("### " + e.get(NUMBER) + ". " + (ToolText.isBlank(text(e.get("product")))
+            lines.add("### " + e.get(NUMBER) + ". " + (ToolText.isBlank(text(e.get(PRODUCT)))
                     ? ""
-                    : "[" + text(e.get("product")) + "] ") + title(e));
+                    : "[" + text(e.get(PRODUCT)) + "] ") + title(e));
             lines.add("");
-            if (e.get("sample") != null) {
+            if (e.get(SAMPLE) != null) {
                 // Preformatted (asked for by the user), so above the table: a table's cell can't hold it.
                 lines.add("```");
-                lines.add(ToolText.str(e.get("sample")).replace("```", "'''"));
+                lines.add(ToolText.str(e.get(SAMPLE)).replace("```", "'''"));
                 lines.add("```");
                 lines.add("");
             }
             // The headings name the kind and its confidence (asked for by the user: no Kind or Confidence row); every
             // proposal has an action element, the table's first row (a table needs one).
-            lines.add("| Action element | " + cell(e.get("event_detail")) + " |");
+            lines.add("| Action element | " + cell(e.get(EVENT_DETAIL)) + " |");
             lines.add("| --- | --- |");
-            row(lines, "Action", e.get("action"));
-            row(lines, "Outcome", e.get("success") == null
+            row(lines, "Action", e.get(ACTION));
+            row(lines, "Outcome", outcome(e));
+            row(lines, "Type id", e.get(TYPE_ID));
+            row(lines, "Who acted", e.get(ACTOR));
+            row(lines, "Acted on", e.get(AFFECTED) == null
                     ? null
-                    : JsonValues.truthy(e.get("success"))
-                            ? "Success"
-                            : "Failure");
-            row(lines, "Type id", e.get("type_id"));
-            row(lines, "Who acted", e.get("actor"));
-            row(lines, "Acted on", e.get("affected") == null
-                    ? null
-                    : text(e.get("affected")) + (e.get("affected_as") == null
+                    : text(e.get(AFFECTED)) + (e.get(AFFECTED_AS) == null
                             ? ""
-                            : " (" + text(e.get("affected_as")) + ")"));
+                            : " (" + text(e.get(AFFECTED_AS)) + ")"));
             lines.add("");
         }
         return String.join("\n", lines).strip();
@@ -766,22 +871,62 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     // The high-confidence proposals as one table: their number, the product (Rule), the kind's title and its
     // mapping (asked for by the user).
     static String summary(final List<Map<String, Object>> entries) {
-        final List<String> lines = new ArrayList<>(List.of("## High-confidence classifications", "",
+        final List<String> lines = new ArrayList<>(List.of(heading(HIGH, entries), "",
                 "| # | Rule | Kind | Mapping |", "| --- | --- | --- | --- |"));
         for (final Map<String, Object> e : entries) {
-            lines.add("| " + e.get(NUMBER) + " | " + cell(text(e.get("product"))) + " | " + cell(title(e)) + " | "
-                      + cell(text(e.get("event_detail")) + (e.get("action") == null
-                    ? ""
-                    : ": " + text(e.get("action")))) + " |");
+            lines.add("| " + e.get(NUMBER) + " | " + cell(text(e.get(PRODUCT))) + " | " + cell(title(e)) + " | "
+                      + cell(mapping(e)) + " |");
         }
         return String.join("\n", lines);
     }
 
+    // A set's heading: its confidence, and which of those of its confidence it shows (asked for by the user), e.g.
+    // "## Medium-confidence classifications (1-10 of 21)".
+    private static String heading(final String confidence, final List<Map<String, Object>> set) {
+        final String title = "## " + Character.toUpperCase(confidence.charAt(0)) + confidence.substring(1)
+                             + "-confidence classifications";
+        // Numbers as kept in the notes (read back from JSON) or as just numbered.
+        final List<Integer> positions = set.stream()
+                .map(entry -> entry.get(POSITION))
+                .filter(Number.class::isInstance)
+                .map(position -> ((Number) position).intValue())
+                .toList();
+        if (positions.isEmpty() || !(set.getFirst().get(OF) instanceof final Number of)) {
+            return title;
+        }
+        final int first = positions.stream().mapToInt(Integer::intValue).min().orElse(1);
+        final int last = positions.stream().mapToInt(Integer::intValue).max().orElse(first);
+        return title + " (" + (first == last
+                ? String.valueOf(first)
+                : first + "-" + last) + " of " + of.intValue() + ")";
+    }
+
+    // A proposal's mapping in short: its action element, Action and outcome, e.g. "Authenticate: Logon (Failure)".
+    // Seen in testing: failed and successful logons both shown as "Authenticate: Logon" in the table accepted
+    // together.
+    private static String mapping(final Map<String, Object> e) {
+        final String outcome = outcome(e);
+        return text(e.get(EVENT_DETAIL)) + (e.get(ACTION) == null
+                ? ""
+                : ": " + text(e.get(ACTION))) + (outcome == null
+                ? ""
+                : " (" + outcome + ")");
+    }
+
+    // A proposal's outcome, where it says one.
+    private static String outcome(final Map<String, Object> e) {
+        return e.get(SUCCESS) == null
+                ? null
+                : JsonValues.truthy(e.get(SUCCESS))
+                        ? "Success"
+                        : "Failure";
+    }
+
     // A proposal's short name: its title, else the start of its description.
     private static String title(final Map<String, Object> e) {
-        return ToolText.isBlank(text(e.get("title")))
-                ? cut(text(e.get("description")), 70)
-                : text(e.get("title"));
+        return ToolText.isBlank(text(e.get(TITLE)))
+                ? cut(text(e.get(DESCRIPTION)), 70)
+                : text(e.get(TITLE));
     }
 
     // A row of a proposal's table, only where it has a value.
@@ -810,14 +955,12 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         return String.join("\n", lines);
     }
 
-    // A low-confidence proposal as its form item, plain and short: its number and title as the chat shows them,
-    // and its action element.
-    private static String line(final Map<String, Object> e) {
-        return e.get(NUMBER) + ". " + title(e) + " (" + text(e.get("event_detail")) + (e.get("action") == null
-                ? ""
-                : ": " + text(e.get("action"))) + ")";
+    // A value as text, "" for none.
+    private static String valueText(final Object value) {
+        return ToolText.str(Objects.requireNonNullElse(value, ""));
     }
 
+    // A value as text for a table cell or form title: "" for none, with no '|' to break a table.
     private static String text(final Object value) {
         return value == null
                 ? ""
@@ -842,8 +985,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
 
         Map<String, Object> shown() {
             final Map<String, Object> out = new LinkedHashMap<>();
-            out.put("field", field);
-            out.put("value", value);
+            out.put(FIELD, field);
+            out.put(VALUE, value);
             out.put("rule", rule);
             out.put("records", records);
             out.put("examples", examples);
@@ -860,9 +1003,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         Map<?, ?> entry() {
             final Map<String, Object> out = new LinkedHashMap<>();
             given.forEach((k, v) -> out.put(String.valueOf(k), v));
-            out.putIfAbsent("event", given.get("value"));
+            out.putIfAbsent(EVENT, given.get(VALUE));
             out.remove(FROM_USER);
-            out.remove("confidence");
+            out.remove(CONFIDENCE);
             return out;
         }
     }
