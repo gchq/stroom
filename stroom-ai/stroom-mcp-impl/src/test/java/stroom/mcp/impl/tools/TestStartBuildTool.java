@@ -46,7 +46,8 @@ class TestStartBuildTool {
         feeds.buildFeed("bb", "ACME-COPY");
 
         final Map<String, Object> started = json(tool.execute(BuildToolCalls.call(StartBuildTool.NAME,
-                "{\"build\": \"bb\", \"feeds\": [\"ACME\", \"ACME-COPY\", \"NEW\"]}"), BuildToolCalls.context()));
+                "{\"build\": \"bb\", \"feeds\": [\"ACME\", \"ACME-COPY\", \"NEW\"], \"carry_on\": true}"),
+                BuildToolCalls.context()));
 
         // Only a feed outside the build counts: the build's own (a test feed) and one not made yet don't.
         assertThat(started).containsEntry("works_from", List.of("ACME"))

@@ -254,9 +254,25 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         final Map<String, Object> sourceNotes = build == null
                 ? null
                 : builds.notesInBuild(build);
+        awaitingConfirmation(sourceNotes);
         final SystemGiven system = system(call, build);
+        // The spec given, else the build's saved Data Splitter, as classify_kinds and the sample check read the
+        // records (seen in chat 169: the draft inferred a splitter of its own, and the agent drafted again with the
+        // saved one's spec).
+        SplitterSpec splitter = BuildTranslationXsltTool.Request.splitter(ToolArgs.raw(call, SPLITTER_ARG));
+        String readWith = null;
+        if (splitter == null && build != null) {
+            final Optional<Map.Entry<String, String>> saved = builds.dataSplitter(build, null);
+            if (saved.isPresent()) {
+                splitter = SplitterSpec.ofConverter(saved.get().getValue());
+                readWith = saved.get().getKey();
+            }
+        }
         final Map<String, Object> result = drafted(samples, call, system, sourceNotes,
-                detailCheck(context, build, sourceNotes, version));
+                detailCheck(context, build, sourceNotes, version), splitter);
+        if (readWith != null) {
+            result.put("read_with", "the build's Data Splitter '" + readWith + "'");
+        }
         @SuppressWarnings("unchecked") final Map<String, Object> mapping = MappingCompaction.compactPairs(
                 MappingCompaction.compactRules((Map<String, Object>) result.get("mapping")));
         result.put("mapping", mapping);
@@ -282,7 +298,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         // Several formats, each its own rules: a System/Name each, unless one was given (seen: one name for five
         // products).
         final List<Object> systemNotes = new ArrayList<>(JsonValues.listOrEmpty(result.get("notes")));
-        SystemNames.apply(mapping, variantFieldOf(result.get("splitter")), system.systemName(), systemNotes);
+        SystemNames.apply(mapping, variantFieldOf(splitter, result.get("splitter")), system.systemName(), systemNotes);
         result.put("notes", systemNotes);
         result.put("schema_check", schemaCheck(context, build, mapping, version));
         result.put("schema_version", version);
@@ -334,7 +350,14 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
     }
 
     // The field an alternatives splitter writes each record's variant in, or null for one of one format.
-    private static String variantFieldOf(final Object splitter) {
+    private static String variantFieldOf(final SplitterSpec given, final Object splitter) {
+        // A saved converter's formats, from its XML.
+        final Optional<String> saved = given == null
+                ? Optional.empty()
+                : given.converterVariants().map(SplitterSpec.ConverterVariants::field);
+        if (saved.isPresent()) {
+            return saved.get();
+        }
         if (splitter instanceof final Map<?, ?> spec && SplitterSpec.ALTERNATIVES.equals(spec.get("kind"))) {
             return spec.get("variant_field") == null
                     ? SplitterSpec.VARIANT
@@ -369,11 +392,24 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                         final ToolCall call,
                                         final SystemGiven system,
                                         final Map<String, Object> sourceNotes,
-                                        final Function<String, String> detailCheck) {
-        final SplitterSpec splitter = BuildTranslationXsltTool.Request.splitter(ToolArgs.raw(call,
-                SPLITTER_ARG));
+                                        final Function<String, String> detailCheck,
+                                        final SplitterSpec splitter) {
         return new LinkedHashMap<>(DraftMapping.draft(samples, NullSafe.string(rawArg(call, SOURCE_NAME_ARG)),
                 SystemNames.single(system.systemName()), system.environment(), sourceNotes, detailCheck, splitter));
+    }
+
+    // Classifications shown to the user and not yet confirmed: the draft would leave them out, so it waits for them
+    // (seen in chat 169: the agent drafted with eight kinds still to confirm, then searched its own history for 20
+    // calls to find why the plan said classify).
+    private static void awaitingConfirmation(final Map<String, Object> sourceNotes) {
+        if (sourceNotes == null) {
+            return;
+        }
+        final int waiting = JsonValues.maps(sourceNotes.get(RecordSourceNotesTool.PROPOSED)).size();
+        if (waiting > 0) {
+            throw new ToolRefusal(waiting + " classification(s) shown to the user are still to confirm: call "
+                                  + "classify_kinds build=... confirm=true (a short form asks the user), then draft.");
+        }
     }
 
     // The System/Name and Environment the draft writes: those the user gave, as the build's record keeps them (from

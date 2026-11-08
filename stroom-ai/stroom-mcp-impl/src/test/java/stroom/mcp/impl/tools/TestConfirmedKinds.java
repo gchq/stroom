@@ -98,6 +98,50 @@ class TestConfirmedKinds {
     }
 
     @Test
+    void aPatternKindWhoseRecordsGoElsewhereIsLost() {
+        // A kind told by a pattern its message matches (asked for by the user after chat 166).
+        final TranslationMapping mapping = mapping("""
+                [{"name": "rest", "allow_unknown": "other lines",
+                  "fields": [{"path": "EventDetail/Unknown/Data", "data_name": "msg", "field": "msg"}]}]""");
+        final Map<String, Object> failed = new LinkedHashMap<>();
+        failed.put("event", "Failed password");
+        failed.put("field", "msg");
+        failed.put("matches", "^Failed password for");
+        failed.put("event_detail", "Authenticate");
+        failed.put("action", "Logon");
+        failed.put("basis", RecordSourceNotesTool.USER_CONFIRMED);
+
+        final List<ConfirmedKinds.Lost> lost = ConfirmedKinds.lost(mapping, List.of(
+                Map.of("msg", "Failed password for alice from 10.0.0.1"),
+                Map.of("msg", "Failed password for bob from 10.0.0.2"),
+                Map.of("msg", "Server listening on port 22")), List.of(failed));
+
+        assertThat(lost).singleElement().satisfies(one -> {
+            assertThat(one.records()).isEqualTo(2);
+            assertThat(one.writes()).isEqualTo("Unknown");
+            assertThat(one.value()).isEqualTo("~^Failed password for");
+        });
+    }
+
+    @Test
+    void aDroppedKindARuleStillTranslatesIsWarnedOf() {
+        final TranslationMapping translated = mapping("""
+                [{"name": "logon", "when": [{"field": "action", "equals": "login"}],
+                  "fields": [{"path": "EventDetail/Authenticate/Action", "value": "Logon"}]},
+                 {"name": "rest", "allow_unknown": "other",
+                  "fields": [{"path": "EventDetail/Unknown/Data", "data_name": "action", "field": "action"}]}]""");
+        final TranslationMapping dropped = mapping("""
+                [{"name": "logon", "when": [{"field": "action", "equals": "login"}],
+                  "fields": [{"path": "EventDetail/Authenticate/Action", "value": "Logon"}]}]""", """
+                [{"reason": "the user said to leave these untranslated: action=usb",
+                  "when": [{"field": "action", "equals": "usb"}]}]""");
+
+        assertThat(ConfirmedKinds.undropped(translated, RECORDS, List.of("action=usb"))).singleElement().asString()
+                .startsWith("dropped kind action=usb: 1 sample records are translated by rule 'rest'");
+        assertThat(ConfirmedKinds.undropped(dropped, RECORDS, List.of("action=usb"))).isEmpty();
+    }
+
+    @Test
     void onlyWhatTheUserConfirmedIsCheckedAndKindsTheSampleLacksAreNot() {
         final TranslationMapping mapping = mapping("""
                 [{"name": "logon", "when": [{"field": "action", "equals": "login"}],

@@ -156,7 +156,7 @@ final class SurveyDepth {
                 whole = read.ended();
                 break;
             }
-            final RecordSplitter.Chunk chunk = RecordSplitter.split((part.header() == null
+            final RecordSplitter.Chunk chunk = RecordSplitter.splitAs(part.format(), (part.header() == null
                     ? ""
                     : part.header() + "\n") + String.join("\n", read.records()), read.records().size() + 1, false);
             if (!chunk.format().equals(part.format())) {

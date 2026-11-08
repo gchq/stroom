@@ -1305,7 +1305,8 @@ public class ContextAssembler {
                     .name(call.tool())
                     .arguments(call.arguments())
                     .build());
-            results.add(NullSafe.string(result.text()));
+            // A table the chat showed the user isn't the model's to repeat (ToolOutputs.forModel).
+            results.add(ToolOutputs.forModel(NullSafe.string(result.text())));
         }
 
         void end() {

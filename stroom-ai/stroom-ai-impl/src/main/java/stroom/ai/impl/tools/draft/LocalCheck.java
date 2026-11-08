@@ -49,6 +49,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -84,6 +85,8 @@ public final class LocalCheck {
     private static final Pattern DOMAIN_QUALIFIED = Pattern.compile(
             "[^\\\\\\s@]+\\\\[^\\\\\\s@]+|[^\\s@]+@[^\\s@]+\\.[^\\s@]+");
     private static final int CACHED_PATTERNS = 512;
+    // The most sample values a warning names.
+    private static final int MAX_VALUES_SHOWN = 8;
     private static final Map<String, Optional<Pattern>> PATTERNS = new ConcurrentHashMap<>();
 
     private LocalCheck() {
@@ -1042,6 +1045,84 @@ public final class LocalCheck {
             }
         }
         return out;
+    }
+
+    /// Value maps none of whose keys is a value the sample records give them: every record gets the default (or
+    /// nothing). Seen in testing: iptables' `PROTO=TCP` mapped by protocol number (6, 17, 1), so every dropped
+    /// packet's TransportProtocol was Other, and no check said so.
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample records, as the mapping reads them.
+    /// @return A warning for each such entry, naming its keys and the values the sample has.
+    public static List<String> mapKeysNotHeld(final TranslationMapping mapping, final List<Object> records) {
+        if (hasText(mapping.forEach()) || records.isEmpty()) {
+            return List.of();
+        }
+        final Set<String> derived = derived(mapping);
+        final List<String> rules = new ArrayList<>();
+        final List<Map<String, String>> extracted = new ArrayList<>();
+        for (int n = 0; n < records.size(); n++) {
+            final Map<String, String> values = extracted(mapping, records, null, n);
+            extracted.add(values);
+            rules.add(ruleOf(mapping, records.get(n), values));
+        }
+        final List<String> out = new ArrayList<>();
+        final List<Integer> all = new ArrayList<>();
+        for (int n = 0; n < records.size(); n++) {
+            if (rules.get(n) != null) {
+                all.add(n);
+            }
+        }
+        mapping.common().forEach(entry -> mapKeysNotHeld("common", entry, all, records, extracted, derived)
+                .ifPresent(out::add));
+        for (final EventRule rule : mapping.events()) {
+            final List<Integer> taken = new ArrayList<>();
+            for (int n = 0; n < records.size(); n++) {
+                if (rule.name().equals(rules.get(n))) {
+                    taken.add(n);
+                }
+            }
+            rule.fields().forEach(entry -> mapKeysNotHeld("rule '" + rule.name() + "'", entry, taken, records,
+                    extracted, derived).ifPresent(out::add));
+        }
+        return out;
+    }
+
+    // One entry's map, over the records it is written for.
+    private static Optional<String> mapKeysNotHeld(final String where,
+                                                   final FieldMapping entry,
+                                                   final List<Integer> taken,
+                                                   final List<Object> records,
+                                                   final List<Map<String, String>> extracted,
+                                                   final Set<String> derived) {
+        // One input field read as it is: a transform changes the value matched, so it isn't told here.
+        if (!entry.hasMap() || !hasText(entry.field()) || entry.transform() != null || taken.isEmpty()) {
+            return Optional.empty();
+        }
+        final String field = entry.field();
+        final Set<String> values = new TreeSet<>();
+        for (final int n : taken) {
+            final String value = derived.contains(field)
+                    ? (extracted.get(n) == null
+                            ? null
+                            : extracted.get(n).get(field))
+                    : valueOf(records.get(n), field);
+            if (hasText(value)) {
+                values.add(value);
+            }
+        }
+        if (values.isEmpty() || values.stream().anyMatch(entry.map()::containsKey)) {
+            return Optional.empty();
+        }
+        final List<String> shown = values.stream().limit(MAX_VALUES_SHOWN).toList();
+        return Optional.of("[" + where + "] '" + entry.strippedPath() + "' maps field '" + field + "' by the keys "
+                           + String.join(", ", entry.map().keySet()) + ", but none of the values the "
+                           + taken.size() + " sample records give it is one of them (they are "
+                           + String.join(", ", shown) + (values.size() > shown.size()
+                ? ", ..."
+                : "") + "): every record gets " + (entry.defaultValue() != null
+                ? "the default '" + entry.defaultValue() + "'"
+                : "no value") + ". Key the map by the values the source writes.");
     }
 
     /// Fields mapped as they are into a user's Id whose sample values are domain-qualified (`DOMAIN\\user`,

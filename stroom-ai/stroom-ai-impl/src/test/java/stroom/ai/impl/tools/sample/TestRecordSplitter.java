@@ -33,6 +33,22 @@ class TestRecordSplitter {
     private static final String WINDOWS = "http://schemas.microsoft.com/win/2004/08/events/event";
 
     @Test
+    void linesFromFurtherIntoAMixedPartAreItsRecordsWhateverTheirFormat() {
+        // A stretch of one format's lines, from a part read as mixed lines: a record a line, as the part's, the
+        // cut-off last line dropped.
+        final RecordSplitter.Chunk chunk = RecordSplitter.splitAs(SampleProfiler.MIXED_LINES,
+                "user=bob action=logout\nuser=carol action=login\nuser=da", 10, true);
+
+        assertThat(chunk.format()).isEqualTo(SampleProfiler.MIXED_LINES);
+        assertThat(chunk.records()).containsExactly("user=bob action=logout", "user=carol action=login");
+        assertThat(RecordSplitter.splitAs(SampleProfiler.MIXED_LINES, "a\nb\nc\n", 2, false).records())
+                .containsExactly("a", "b");
+        // Other formats split as ever.
+        assertThat(RecordSplitter.splitAs(RecordSplitter.JSON_LINES, "{\"a\": 1}\n{\"a\": 2}\n", 10, false)
+                .format()).isEqualTo(RecordSplitter.JSON_LINES);
+    }
+
+    @Test
     void xmlFragmentsAreRecordsWithTheirOwnNamespace() {
         final String text = IntStream.range(0, 5)
                 .mapToObj(n -> "<Event xmlns=\"urn:win\"><Id>" + n + "</Id></Event>")

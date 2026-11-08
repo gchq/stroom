@@ -19,7 +19,9 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.draft.SplitterXml;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
+import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.util.json.JsonUtil;
@@ -35,6 +37,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -179,7 +182,8 @@ class TestClassifyKindsTool {
                 .containsEntry("actor", "user").containsEntry("basis", "user_confirmed")
                 .doesNotContainKey("confidence").doesNotContainKey("number");
         assertThat(world.body(String.valueOf(map(done.get("source_notes")).get("uuid"))))
-                .contains("| login | A user logged on | Authenticate |  | agent's proposal, confirmed by the user |");
+                .contains("| login | `action=login` | A user logged on | Authenticate |  | agent's proposal, confirmed "
+                          + "by the user |");
     }
 
     @Test
@@ -224,9 +228,13 @@ class TestClassifyKindsTool {
         assertThat(pending()).containsExactly("action=logout", "action=purge");
 
         // The agent leaves out the one the user rejected (to ask what it is): it isn't put to the user again, the
-        // next set is.
-        final Map<String, Object> next = call("{\"build\": \"acme\", \"confirm\": true}",
-                BuildToolCalls.user(Map.of("answer", "Accept it")).context());
+        // next set is: shown first, as nothing showed it, then confirmed.
+        final BuildToolCalls.FormUser accepting = BuildToolCalls.user(Map.of("answer", "Accept it"));
+        final Map<String, Object> shownNext = call("{\"build\": \"acme\", \"confirm\": true}", accepting.context());
+        assertThat(shownNext).containsKey("shown_again").doesNotContainKey("recorded");
+        assertThat(String.valueOf(shownNext.get("table"))).startsWith("## Low-confidence classifications");
+        assertThat(accepting.shown()).isEmpty();
+        final Map<String, Object> next = call("{\"build\": \"acme\", \"confirm\": true}", accepting.context());
         assertThat(next.get("recorded")).isEqualTo(List.of("action=purge"));
         assertThat(pending()).containsExactly("action=logout");
     }
@@ -294,8 +302,10 @@ class TestClassifyKindsTool {
                 final String table = String.valueOf(step.get("table"));
                 final boolean high = table.startsWith("## High-confidence classifications");
                 final String heading = table.substring(3, table.indexOf('-'));
-                // One confidence a set, at most ten, numbered from 1.
+                // One confidence a set, at most ten, numbered from where its heading's range starts (asked for by
+                // the user after chat 169: "11-14 of 14" numbered 1 to 4).
                 assertThat(table.split("-confidence classifications", -1)).hasSize(2);
+                final int first = Integer.parseInt(table.substring(table.indexOf('(') + 1).split("[- )]")[0]);
                 final int shown = (int) table.lines()
                         .filter(line -> high
                                 ? line.matches("\\| \\d+ \\| .*")
@@ -303,10 +313,10 @@ class TestClassifyKindsTool {
                         .count();
                 assertThat(shown).as("%s", table).isBetween(1, ClassifyKindsTool.SET_SIZE);
                 assertThat(table).contains(high
-                        ? "| 1 | Acme app | Event "
-                        : "### 1. [Acme app] Event ").doesNotContain(high
-                        ? "| " + (shown + 1) + " | Acme app"
-                        : "### " + (shown + 1) + ". ");
+                        ? "| " + first + " | Acme app | Event "
+                        : "### " + first + ". [Acme app] Event ").doesNotContain(high
+                        ? "| " + (first + shown) + " | Acme app"
+                        : "### " + (first + shown) + ". ");
                 sets.add(heading + " " + shown + " " + table.substring(table.indexOf('('), table.indexOf(')') + 1));
                 step = call("{\"build\": \"acme\", \"confirm\": true}", user.context());
                 classified += JsonValues.strings(step.get("recorded")).size();
@@ -523,7 +533,8 @@ class TestClassifyKindsTool {
         assertThat(list(listed.get("to_classify"))).isEmpty();
         assertThat(String.valueOf(listed.get("hint"))).as("%s", listed)
                 .startsWith("No kinds told apart, yet the records say what happened in free text ('message')")
-                .contains("refine the splitter (build_data_splitter)", "one_kind=true");
+                .contains("read it into a field (build_data_splitter)", "one_kind=true",
+                        "never make a part for each wording");
         // Not recorded as classified: the plan's step is still to do.
         assertThat(notes()).doesNotContainKey(RecordSourceNotesTool.PENDING);
 
@@ -598,7 +609,7 @@ class TestClassifyKindsTool {
                         + "\"description\": \"Web host lines\", \"event_detail\": \"Unknown\", "
                         + "\"confidence\": \"medium\"}]}"))
                 .startsWith("Nothing recorded: proposals[0]: variant=syslog is a catch_all kind")
-                .contains("refine the splitter (build_data_splitter)");
+                .contains("read it into a field (build_data_splitter)");
         // Its sample is its own line as logged, though its value (the format's name) isn't in it.
         final Map<String, Object> shown = call("{\"build\": \"acme\", \"proposals\": [{\"field\": \"variant\", "
                                                + "\"value\": \"syslog\", \"description\": \"Web host lines\", "
@@ -609,6 +620,95 @@ class TestClassifyKindsTool {
         // A catch-all says what it covers: every record of its format no other kind takes.
         assertThat(String.valueOf(shown.get("table"))).contains("| Covers | Every 'syslog' record no other kind takes "
                                                                + "(4 records) |");
+    }
+
+    @Test
+    void aCatchAllsEventsAreToldApartByPatternsTheUserConfirms() {
+        // Asked for by the user after chat 166: events said in free text told apart by patterns, not splitter parts.
+        final String mixed = THREE_KINDS + String.join("\n", List.of(
+                "Nov  6 09:02:00 web1 cache warmed after 12 seconds",
+                "Nov  6 09:02:05 web2 cache warmed after 9 seconds",
+                "Nov  6 09:02:09 web1 disk 80% full on the data volume",
+                "Nov  6 09:02:13 web3 disk 91% full on the data volume")) + "\n";
+        samples(10L, mixed);
+        final String splitter = JsonUtil.writeValueAsString(SplitterDryRun.inferSpec(mixed).spec().toMap(), false);
+        final String listing = "{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [10], "
+                               + "\"splitter\": " + splitter;
+        call(listing + "}", BuildToolCalls.context());
+        final String cache = "{\"field\": \"message\", \"matches\": \"^cache warmed after (\\\\d+) seconds\", "
+                             + "\"names\": [\"warm_seconds\"], \"within\": \"variant=syslog\", \"title\": "
+                             + "\"Cache warmed\", \"description\": \"The cache was warmed\", \"event_detail\": "
+                             + "\"Process\", \"action\": \"Execute\", \"confidence\": \"medium\"}";
+
+        // Checked against the catch-all's records before anything is kept: a pattern matching none, one with
+        // lookaround, one outside a listed kind, and two that overlap are refused, saying why.
+        assertThat(text(listing + ", \"proposals\": [" + cache.replace("^cache warmed", "^cache cooled") + "]}"))
+                .contains("holds for none of the 4 variant=syslog records left to classify");
+        assertThat(text(listing + ", \"proposals\": [" + cache.replace("^cache warmed", "^(?=cache) warmed")
+                        + "]}"))
+                .contains("no lookaround");
+        assertThat(text(listing + ", \"proposals\": [" + cache.replace("variant=syslog", "variant=nope") + "]}"))
+                .contains("a pattern is proposed within a listed kind");
+        assertThat(text(listing + ", \"proposals\": [" + cache.replace("[\"warm_seconds\"]", "[]") + "]}"))
+                .contains("matches has 1 capture group(s) and names 0");
+        assertThat(text(listing + ", \"proposals\": [" + cache + ", " + cache.replace(
+                "^cache warmed after (\\\\d+) seconds", "warmed after (\\\\d+)").replace("warm_seconds",
+                "other_seconds").replace("Cache warmed", "Cache") + "]}"))
+                .contains("'Cache warmed' and 'Cache' both match 2 record(s)");
+
+        final Map<String, Object> shown = call(listing + ", \"proposals\": [" + cache + "]}",
+                BuildToolCalls.context());
+
+        final String table = String.valueOf(shown.get("table"));
+        assertThat(table).as("%s", shown).contains("| Within | variant=syslog |",
+                "| Matches | `message` matching `^cache warmed after (\\d+) seconds` (2 records) |",
+                "| Reads | warm_seconds |", "```\nNov  6 09:02:00 web1 cache warmed after 12 seconds\n```");
+        // What the pattern leaves of the catch-all is said, so none of it is taken as covered.
+        assertThat(String.valueOf(shown.get("patterns_leave"))).contains("variant=syslog").contains("records=2");
+
+        // Confirmed, the catch-all is listed again with what the pattern leaves; covered whole, it is settled.
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "Accept it"));
+        call("{\"build\": \"acme\", \"confirm\": true}", user.context());
+        final Map<String, Object> again = call(listing + "}", BuildToolCalls.context());
+        assertThat(list(again.get("to_classify"))).filteredOn(kind -> "syslog".equals(kind.get("value")))
+                .singleElement().satisfies(kind -> assertThat(kind).containsEntry("records", 2));
+        final String disk = cache.replace("^cache warmed after (\\\\d+) seconds", "^disk (\\\\d+)% full")
+                .replace("warm_seconds", "full_percent").replace("Cache warmed", "Disk filling");
+        call(listing + ", \"proposals\": [" + disk + "]}", BuildToolCalls.context());
+        call("{\"build\": \"acme\", \"confirm\": true}", user.context());
+        final Map<String, Object> covered = call(listing + "}", BuildToolCalls.context());
+        assertThat(list(covered.get("to_classify"))).noneMatch(kind -> "syslog".equals(kind.get("value")));
+        // Records the confirmed patterns cover aren't said to be in no kind (seen in chat 169).
+        assertThat(covered).doesNotContainKey("unlisted_records");
+        assertThat(JsonValues.maps(notes().get("events"))).extracting(event -> event.get("matches"))
+                .contains("^cache warmed after (\\d+) seconds", "^disk (\\d+)% full");
+    }
+
+    @Test
+    void aProposalSentBeforeTheFormJoinsThoseShownRatherThanReplacingThem() {
+        // Seen in chat 168: one more proposal sent before the form replaced the 18 shown, and the user confirmed only
+        // it; the 18 were proposed again.
+        call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        final List<Map<String, Object>> all = JsonUtil.readValue("{\"p\": " + PROPOSALS + "}", Map.class)
+                .get("p") instanceof final List<?> list
+                ? JsonValues.maps(list)
+                : List.of();
+        call("{\"build\": \"acme\", \"proposals\": " + JsonUtil.writeValueAsString(all.subList(0, 2), false)
+             + "}", BuildToolCalls.context());
+
+        final Map<String, Object> more = call("{\"build\": \"acme\", \"proposals\": "
+                                              + JsonUtil.writeValueAsString(all.subList(2, 3), false) + "}",
+                BuildToolCalls.context());
+
+        assertThat(String.valueOf(more.get("added_to"))).startsWith("2 proposals sent earlier");
+        assertThat(JsonValues.maps(notes().get(RecordSourceNotesTool.PROPOSED))).extracting(entry -> entry.get("kind"))
+                .containsExactlyInAnyOrder("action=login", "action=logout", "action=purge");
+        // The first set is still the high-confidence one, sent first.
+        assertThat(String.valueOf(more.get("table"))).startsWith("## High-confidence classifications (1 of 1)")
+                .contains("User logon");
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "Accept it"));
+        assertThat(call("{\"build\": \"acme\", \"confirm\": true}", user.context()).get("recorded"))
+                .isEqualTo(List.of("action=login"));
     }
 
     @Test
@@ -645,7 +745,7 @@ class TestClassifyKindsTool {
         assertThat(list(listed.get("to_classify"))).filteredOn(kind -> "login".equals(kind.get("value")))
                 .allMatch(kind -> !kind.containsKey("catch_all"));
         assertThat(String.valueOf(listed.get("hint"))).contains("catch_all", "at most medium",
-                "refine the splitter (build_data_splitter)");
+                "read it into a field (build_data_splitter)", "matches, within");
 
         final String field = String.valueOf(catchAll.getFirst().get("field"));
         final String value = String.valueOf(catchAll.getFirst().get("value"));
@@ -662,6 +762,59 @@ class TestClassifyKindsTool {
                 .filteredOn(entry -> (field + "=" + value).equals(entry.get("kind")))
                 .extracting(entry -> entry.get("confidence"))
                 .containsExactly("medium");
+    }
+
+    @Test
+    void theBuildsSavedConvertersFormatsAreEachListedNotOneCatchAll() {
+        // Seen in chat 165: the saved converter's formats' field the agent's own ('srcfmt'), the draft took every
+        // record as one format, and three kinds were listed of some 4,000 records, the rest in one catch-all.
+        final StringBuilder text = new StringBuilder();
+        for (int i = 0; i < 6; i++) {
+            text.append("2026-11-06T09:00:0%d gw01 GW %s alice%d\n".formatted(i, i % 2 == 0
+                    ? "LOGIN"
+                    : "LOGOUT", i));
+            text.append("2026-11-06T09:01:0%d web01 LINUX %s bob%d\n".formatted(i, i % 2 == 0
+                    ? "SUDO"
+                    : "CRON", i));
+        }
+        samples(8L, text.toString());
+        final SplitterSpec spec = SplitterSpec.fromMap(Map.of("kind", "alternatives", "variant_field", "srcfmt",
+                "parts", List.of(
+                        Map.of("kind", "regex", "variant", "gw", "pattern", "^(\\S+) (\\S+) GW (\\S+) (\\S+)$",
+                                "names", List.of("time", "host", "event", "user")),
+                        Map.of("kind", "regex", "variant", "linux", "pattern",
+                                "^(\\S+) (\\S+) LINUX (\\S+) (\\S+)$",
+                                "names", List.of("time", "host", "event", "user")))));
+        final TranslationBuilds builds = Mockito.mock(TranslationBuilds.class);
+        Mockito.when(builds.dataSplitter("acme", null)).thenReturn(Optional.of(Map.entry("Acme splitter",
+                SplitterXml.converter(spec))));
+        final ClassifyKindsTool withSaved = new ClassifyKindsTool(notesTool, sampleStreamTexts, consent, plan, builds);
+
+        final Map<String, Object> listed = BuildToolCalls.json(withSaved.execute(BuildToolCalls.call(
+                ClassifyKindsTool.NAME, "{\"build\": \"acme\", \"source\": \"Acme\", \"stream_ids\": [8]}"),
+                BuildToolCalls.context()).text());
+
+        assertThat(listed.get("read_with")).isEqualTo("the build's Data Splitter 'Acme splitter'");
+        assertThat(list(listed.get("to_classify"))).as("%s", listed)
+                .extracting(kind -> kind.get("field") + "=" + kind.get("value"))
+                .contains("event=LOGIN", "event=LOGOUT", "event=SUDO", "event=CRON");
+        assertThat(listed).doesNotContainKey("unlisted_records");
+    }
+
+    @Test
+    void recordsInNoKindListedAreSaidNotCovered() {
+        // Seen in chat 165: "every kind is classified" said with most records in the draft's rule for the rest.
+        samples(9L, THREE_KINDS + String.join("\n", List.of(
+                "time=2026-11-06T09:01:00Z host=web01 msg=disk_full",
+                "time=2026-11-06T09:01:05Z host=web02 msg=fan_fail",
+                "time=2026-11-06T09:01:09Z host=web03 msg=psu_fail")) + "\n");
+
+        final Map<String, Object> listed = call("{\"build\": \"acme\", \"source\": \"Acme app\", "
+                                                + "\"stream_ids\": [9]}", BuildToolCalls.context());
+
+        assertThat(String.valueOf(listed.get("unlisted_records"))).as("%s", listed)
+                .contains("3 of the 11 records are in no kind listed").contains("never take this listing");
+        assertThat(String.valueOf(listed.get("hint"))).contains("3 of the 11 records are in no kind listed");
     }
 
     private void samples(final long stream, final String text) {
