@@ -92,8 +92,10 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     // The block keys classify_kinds keeps, carried from one write of the notes to the next.
     // The notes block's kinds the user rejected in classify_kinds, left out of its later rounds.
     static final String REJECTED = "rejected";
+    // The notes block's kinds the user said to leave untranslated in classify_kinds: settled, left out of its rounds.
+    static final String DROPPED = "dropped";
     private static final List<String> CLASSIFY_KEYS = List.of(RECORD_FIELDS, PROPOSED, ClassifyKindsTool.SAMPLES,
-            REJECTED);
+            REJECTED, DROPPED);
     private static final List<String> CONFIDENCES = List.of("high", "medium", "low");
 
     private final WriteGuard guard;
@@ -428,6 +430,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         if (problems.isEmpty()) {
             final EventSchema schema = schemaOrNull(context, build);
             events.forEach(event -> affectedChecked(schema, event).ifPresent(problems::add));
+            events.forEach(event -> problems.addAll(partsChecked(schema, event)));
         }
         if (problems.isEmpty()) {
             problems.addAll(SourceNotes.catalogueProblems(events, null));
@@ -488,6 +491,26 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         } catch (final IllegalArgumentException e) {
             return Optional.of("event " + text(event.get("event")) + ": " + e.getMessage());
         }
+    }
+
+    // An event's Action and outcome checked against its action element: the parts it has no element for (seen in chat
+    // 163: Alert given an outcome and an Action, which the user confirmed, and the draft then failed on). None when
+    // the schema is unreadable.
+    private static List<String> partsChecked(final EventSchema schema, final Map<String, Object> event) {
+        if (schema == null || !JsonValues.truthy(event.get("event_detail"))) {
+            return List.of();
+        }
+        final String detail = "EventDetail/" + text(event.get("event_detail"));
+        final List<String> problems = new ArrayList<>();
+        if (event.get("success") != null && !schema.hasPath(detail + "/Outcome")) {
+            problems.add("event " + text(event.get("event")) + ": " + detail + " has no Outcome, so leave success "
+                         + "out");
+        }
+        if (JsonValues.truthy(event.get("action")) && !schema.hasPath(detail + "/Action")) {
+            problems.add("event " + text(event.get("event")) + ": " + detail + " has no Action, so leave action "
+                         + "out");
+        }
+        return problems;
     }
 
     // The event-logging schema of the build's version (else the newest held), or null when unreadable.

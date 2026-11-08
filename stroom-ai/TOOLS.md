@@ -2862,7 +2862,11 @@ plan's `classify` step (after the converter, before the translation) is done whe
 not recorded once the translation is written.
 
 * **Arguments**: `build` (required); `source` (the source's name; the notes' when the build has them); `stream_ids`
-  (the build's newest five raw sample streams when left out); `splitter`; `proposals`; `confirm`; `one_kind`.
+  (the build's newest five raw sample streams when left out); `splitter` (the build's saved Data Splitter when left
+  out, `read_with` naming it); `proposals` (each may carry `drop: true` with `from_user`: a kind the user said to
+  leave untranslated, kept as settled in the notes' `dropped` and left out of later rounds; an Action or outcome its
+  action element has no place for is refused); `confirm`; `one_kind`. A catch-all kind's table has a Covers row: every
+  record of its format no other kind takes, with their count.
 * **Returns**: listing: `kinds_found`, `already_settled`, `to_classify`, `record_fields` (kept in the notes:
   proposals' `actor` and `affected` must be among them), `user_fields` (fields named for a user or account whose
   values aren't addresses, else a note to leave `actor` out), `source_notes`, `hint`, `next`; proposals:
@@ -4494,10 +4498,12 @@ feeds the user may view) · takes a run slot · Classes: `ReviewCoverageTool`, `
 Whole-feed coverage of an events pipeline once its feed is processed: the kinds of event the sample missed. The
 generated translation logs, into the Error stream of the raw stream a record came from, each record no rule
 matched (`No event mapping matched record N (...)`, WARN, `XsltGenerator.UNMATCHED`) and, once a stream for each
-kind (the rule and the values the rules test; `mcp_kept_unknown`), the first record a rule keeps as Unknown (`Kept as
+kind (the rule and the values the rules test; `mcp_log_kind`), the first record a rule keeps as Unknown (`Kept as
 Unknown by rule 'r': record N (...)`, INFO, benign in triage), with the values its rules test (up to 4,
-`LOGGED_FIELDS`). A kept-Unknown kind's streams are counted (`streams`), not its records, and told apart in
-`tell_user`. So the kinds are grouped from the Error streams alone, however large the feed, with a
+`LOGGED_FIELDS`); and so too, once a stream for each kind, the first record a catch-all rule takes (a rule taking
+what earlier rules leave: `Caught by rule 'r': record N (...)`, the same template, `mcp_log_kind`). A kept-Unknown or
+caught kind's streams are counted (`streams`), not its records, and told apart in `tell_user`: a caught kind is for the
+agent to check against the kinds classified, and a new one is the user's to classify. So the kinds are grouped from the Error streams alone, however large the feed, with a
 few raw records read only for examples (`CoverageReads.example`).
 
 A feed of hundreds of thousands of streams is read in bounded batches by Id (`max_streams` a call,

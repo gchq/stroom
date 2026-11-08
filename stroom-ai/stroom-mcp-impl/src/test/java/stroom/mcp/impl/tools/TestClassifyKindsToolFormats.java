@@ -57,7 +57,8 @@ class TestClassifyKindsToolFormats {
             world::guard, world::records, () -> Mockito.mock(EventsTargetInference.class));
     private final RecordSourceNotesTool notesTool = new RecordSourceNotesTool(world.guard(), world.documentAccess,
             new DocumentWrites(world.documentAccess), eventVersions, plan);
-    private final ClassifyKindsTool tool = new ClassifyKindsTool(notesTool, sampleStreamTexts, consent, plan);
+    private final ClassifyKindsTool tool = new ClassifyKindsTool(notesTool, sampleStreamTexts, consent, plan,
+            Mockito.mock(TranslationBuilds.class));
 
     @BeforeEach
     void setUp() {
