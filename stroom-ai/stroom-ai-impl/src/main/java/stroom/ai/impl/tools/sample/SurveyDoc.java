@@ -278,6 +278,16 @@ public final class SurveyDoc {
                 : List.of();
         merged.put("streams_read", sortedUnion((Collection<Object>) merged.get("streams_read"), resultStreams));
         merged.put("saturated", JsonValues.truthy(result.get("saturated")));
+        // How far each part read only in part has been read, and what the user chose for it (survey_feed's
+        // SurveyDepth), by stream:part: a later call reads on from there, or doesn't ask again.
+        if (result.get("depth") instanceof final List<?> depth && !depth.isEmpty()) {
+            final Map<String, Object> parts = new LinkedHashMap<>(JsonValues.mapOrEmpty(merged.get("depth")));
+            for (final Object item : depth) {
+                final Map<String, Object> part = (Map<String, Object>) item;
+                parts.put(part.get("stream") + ":" + part.get("part"), part);
+            }
+            merged.put("depth", parts);
+        }
         ((List<Object>) merged.get("surveys")).add(SampleProfiler.map("at", now,
                 "streams", new ArrayList<>(resultStreams),
                 "records", result.getOrDefault("records_read", 0),
