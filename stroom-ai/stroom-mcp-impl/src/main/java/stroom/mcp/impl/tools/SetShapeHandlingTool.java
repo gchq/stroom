@@ -52,6 +52,9 @@ class SetShapeHandlingTool extends AbstractBuiltInTool {
     static final String REASON_ARG = "reason";
     static final String DROP = "drop";
     static final String TRANSLATE = "translate";
+    static final String CONFIRM_ARG = "confirm";
+    // The status of a result whose table is for the user as it is (Stroom AI's chat shows it itself).
+    private static final String NEEDS_SHOWING = "needs_showing";
 
     private final SurveyDocuments surveyDocuments;
     private final Consent consent;
@@ -94,7 +97,9 @@ class SetShapeHandlingTool extends AbstractBuiltInTool {
         return ToolDefinition.builder()
                 .name(NAME)
                 .description("Record, in the build's survey doc, that some kinds of event are left untranslated on "
-                             + "purpose (or no longer are). The user confirms: dropping records means they never "
+                             + "purpose (or no longer are). Called first, it gives back a table of those kinds for "
+                             + "the user; called again with confirm=true, the user confirms in a short form: "
+                             + "dropping records means they never "
                              + "reach Events. Afterwards survey_feed marks those kinds and gives their locations "
                              + "expect='none', and step_records counts such a record as clean when it produces no "
                              + "Event (and flags it if it produces one). Translate them with a drop rule in the "
@@ -111,6 +116,9 @@ class SetShapeHandlingTool extends AbstractBuiltInTool {
                                                                                  + "records; translate: undo that.")
                         .addStringProperty(REASON_ARG, "Why, in the user's words, e.g. 'cluster housekeeping, no "
                                                        + "security value'.")
+                        .addBooleanProperty(CONFIRM_ARG, "True once the table of these kinds (from the call "
+                                                         + "without it) is shown: the user confirms in a short "
+                                                         + "form.")
                         .required(BUILD_ARG, FEED_ARG, SHAPES_ARG, HANDLING_ARG)
                         .build())
                 .build();
@@ -149,19 +157,19 @@ class SetShapeHandlingTool extends AbstractBuiltInTool {
         final Map<String, Map<String, Object>> shapes = (Map<String, Map<String, Object>>) state.get("shapes");
         final Map<String, Long> counts = new LinkedHashMap<>();
         shapes.forEach((signature, shape) -> counts.put(signature, ((Number) shape.get("count")).longValue()));
-        final List<String> kinds = new ArrayList<>();
-        for (final String signature : signatures) {
-            kinds.add(signature + " (" + counts.get(signature) + " records seen, " + Shapes.share(counts, signature)
-                      + "%)");
+        final String verb = DROP.equals(handling)
+                ? "Leave untranslated (no Events)"
+                : "Translate again";
+        if (!confirming(call)) {
+            // The kinds as a table for the chat, the form after it short and plain (asked for by the user: seen, the
+            // kinds run together in the form's message and cut short).
+            return plan.withNext(context, build, shown(verb, feed, signatures, counts, context.session().isChat()));
         }
         final Map<String, Object> details = new LinkedHashMap<>();
         details.put("feed", feed);
         details.put("build", build);
         details.put("reason", reason);
-        details.put("kinds", kinds);
-        final String verb = DROP.equals(handling)
-                ? "Leave untranslated (no Events)"
-                : "Translate again";
+        details.put("kinds", signatures.size() + ", in the table shown");
         consent.require(call, context, Consent.Request.confirmation(NAME,
                 verb + ": " + signatures.size() + " kind(s) of event in feed '" + feed + "'", details));
         SurveyDoc.setHandling(state, signatures, handling, reason.strip(), SurveyDoc.at(Instant.now()));
@@ -186,6 +194,40 @@ class SetShapeHandlingTool extends AbstractBuiltInTool {
                   + "produce no Event."
                 : "Add rules to translate these kinds, regenerate and step_records over their locations.");
         return plan.withNext(context, build, result);
+    }
+
+    // The kinds of event, a row each, for the user to see before the form; Stroom AI's chat shows the table itself.
+    private static Map<String, Object> shown(final String verb,
+                                             final String feed,
+                                             final List<String> signatures,
+                                             final Map<String, Long> counts,
+                                             final boolean shownByChat) {
+        final List<String> lines = new ArrayList<>(List.of("## " + verb + ": kinds of event in '" + feed + "'", "",
+                "| # | Kind of event | Records | Share |", "| --- | --- | --- | --- |"));
+        for (int i = 0; i < signatures.size(); i++) {
+            final String signature = signatures.get(i);
+            lines.add("| " + (i + 1) + " | " + code(signature) + " | " + counts.get(signature) + " | "
+                      + Shapes.share(counts, signature) + "% |");
+        }
+        final String form = "call set_shape_handling again with the same arguments and confirm=true: a short form "
+                            + "asks the user to agree.";
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("status", NEEDS_SHOWING);
+        result.put("table", String.join("\n", lines));
+        result.put("hint", shownByChat
+                ? "The chat shows the user this table itself, as it is: don't repeat or restyle it. Now " + form
+                : "Show the table to the user in your reply, as it is, then " + form);
+        return result;
+    }
+
+    // A signature in a table cell: as code (its <n> placeholders kept), its pipes escaped.
+    private static String code(final String signature) {
+        return "`" + signature.replace("`", "'").replace("|", "\\|").replace("\n", " ") + "`";
+    }
+
+    private boolean confirming(final ToolCall call) {
+        final Object given = argsMap(call).get(CONFIRM_ARG);
+        return Boolean.TRUE.equals(given) || "true".equals(String.valueOf(given));
     }
 
     @SuppressWarnings("unchecked")
