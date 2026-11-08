@@ -68,7 +68,8 @@ class CoverageReads {
     /// The most markers read of one Error stream.
     static final int MAX_MARKERS = 5_000;
     private static final Pattern LOGGED = Pattern.compile(
-            "(?:No event mapping matched record |Kept as Unknown by rule '(.*)': record )(\\d+)(?: \\((.*)\\))?\\s*$");
+            "(?:No event mapping matched record |Kept as Unknown by rule '(.*)': record "
+            + "|Caught by rule '(.*)': record )(\\d+)(?: \\((.*)\\))?\\s*$");
     private static final Pattern DATA_NAME = Pattern.compile("Data\\[@Name='([^']+)'\\]");
     private static final List<String> COUNTS = List.of("Warning Count", "Error Count", "Fatal Error Count",
             "Info Count");
@@ -100,13 +101,15 @@ class CoverageReads {
             return null;
         }
         final Map<String, String> values = new LinkedHashMap<>();
-        for (final String part : NullSafe.string(matcher.group(3)).split(Pattern.quote(" | "), -1)) {
+        for (final String part : NullSafe.string(matcher.group(4)).split(Pattern.quote(" | "), -1)) {
             final int equals = part.indexOf('=');
             if (equals >= 0) {
                 values.put(part.substring(0, equals), part.substring(equals + 1));
             }
         }
-        return new Logged(0, null, Integer.parseInt(matcher.group(2)), matcher.group(1), values);
+        return matcher.group(2) != null
+                ? new Logged(0, null, Integer.parseInt(matcher.group(3)), matcher.group(2), values, true)
+                : new Logged(0, null, Integer.parseInt(matcher.group(3)), matcher.group(1), values);
     }
 
     /// Up to `budget` of the pipeline's Error streams with an Id above `after`, oldest first.
@@ -186,7 +189,7 @@ class CoverageReads {
                 final Logged parsed = parseLogged(marker.message());
                 if (parsed != null) {
                     found.add(new Logged(meta.parentId(), meta.createMs(), parsed.record(), parsed.rule(),
-                            parsed.values()));
+                            parsed.values(), parsed.caught()));
                 }
             }
         }
@@ -454,10 +457,16 @@ class CoverageReads {
     /// @param raw     The raw stream it is in.
     /// @param created When its Error stream was made, or null.
     /// @param record  The record (from 0).
-    /// @param rule    The rule that kept it as Unknown, or null for no rule matched.
+    /// @param rule    The rule that kept it as Unknown or caught it, or null for no rule matched.
     /// @param values  The values the rules test.
-    record Logged(long raw, Long created, int record, String rule, Map<String, String> values) {
+    /// @param caught  Whether a catch-all rule took it (a kind no rule names), not one kept as Unknown.
+    record Logged(long raw, Long created, int record, String rule, Map<String, String> values, boolean caught) {
 
+        /// A record no rule matched (no rule), or a rule kept as Unknown.
+        Logged(final long raw, final Long created, final int record, final String rule,
+               final Map<String, String> values) {
+            this(raw, created, record, rule, values, false);
+        }
     }
 
     /// The records logged in a batch of Error streams.

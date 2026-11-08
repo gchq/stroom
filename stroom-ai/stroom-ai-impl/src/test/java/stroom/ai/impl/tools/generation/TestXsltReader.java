@@ -181,8 +181,9 @@ class TestXsltReader extends XsltRuns {
                 + "</xsl:call-template></Authenticate>").replace("</xsl:stylesheet>", SEEN + "</xsl:stylesheet>"),
                 List.of("rule logon: EventDetail/Authenticate/Data Data host_seen",
                         "rule logon: EventDetail/Authenticate/Data Data via"), List.of()));
-        edits.put("a condition changed", new HandEdit(code -> once(code, "data[@name='action']/@value = 'login'",
-                "data[@name='action']/@value = ('login', 'keepalive')"), List.of(), List.of()));
+        // The rule's test reads action as a variable: the catch-all rule's log of its kinds reads it too.
+        edits.put("a condition changed", new HandEdit(code -> once(code, "$action = 'login'",
+                "$action = ('login', 'keepalive')"), List.of(), List.of()));
         return edits.entrySet().stream().map(e -> DynamicTest.dynamicTest(e.getKey(), () -> handEdit(e.getKey(),
                 e.getValue())));
     }
