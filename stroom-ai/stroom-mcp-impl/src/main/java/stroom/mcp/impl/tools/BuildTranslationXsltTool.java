@@ -676,6 +676,16 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             final SampleStreamTexts.Texts texts = sampleStreamTexts.read(request.streamIds());
             samples = new ArrayList<>(texts.texts().values());
             texts.notes().forEach(note -> warnings.add("sample: " + note));
+            if (!texts.cut().isEmpty()) {
+                // The records the survey found further in than the sample is read to, checked too.
+                final SurveyExamples.Added added = SurveyExamples.added(texts.texts(), texts.cut(),
+                        builds.surveyStatesInBuild(request.build()));
+                if (!added.texts().isEmpty()) {
+                    samples.addAll(added.texts());
+                    warnings.add("sample: " + added.records() + " record(s) the survey found further into streams "
+                                 + added.streams() + " than the sample is read to are checked too");
+                }
+            }
         } else if (samples != null) {
             for (final String text : samples) {
                 SampleTexts.checkSample(text, SAMPLE_ARG);

@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.draft.SplitterXml;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.XsltCompileCheck;
@@ -217,6 +218,56 @@ class TestBuildTranslationXsltTool {
         assertThat((List<?>) checked.get("problems")).anySatisfy(p -> assertThat(String.valueOf(p))
                 .contains("'tiem'").contains("did you mean ['time']"));
         Mockito.verify(world.sampleStreamTexts).read(List.of(7L));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void fieldsOnlyInRecordsTheSurveyFoundPastTheSamplesCutAreChecked() {
+        // Seen in testing: a sample read to its 4,004th record of 25,000; a file upload's name, only in records near
+        // the end, was refused as in none of the sample's records, so the agent read it through raw XPath.
+        final String head = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "alice"}
+                {"ts": "2026-09-28T10:01:00.000Z", "host": "ws02", "user": "bob"}
+                """;
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", head), List.of("stream 7 is read up to its first 172 characters"),
+                List.of(new SampleStreamTexts.Cut("stream 7", 7L, 0))));
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace(
+                "{\"path\": \"EventDetail/Authenticate/User/Id\", \"field\": \"user\"}",
+                "{\"path\": \"EventDetail/Authenticate/User/Id\", \"field\": \"user\"}, "
+                + "{\"path\": \"EventDetail/Authenticate/Data\", \"data_name\": \"fname\", \"field\": \"fname\"}"),
+                Map.class);
+        final Map<String, Object> arguments = Map.of("mapping", mapping, "stream_ids", List.of(7), "build",
+                "acme-v1", "name", "ACME-Events");
+
+        final Map<String, Object> unchecked = world.call(tool, arguments);
+        assertThat(findings(unchecked)).as("without the survey").anyMatch(p -> p.contains("'fname'"));
+
+        final String uuid = world.inBuild("acme-v1", DocumentationDoc.TYPE, SurveyDoc.docName("ACME"))
+                .getUuid();
+        final Map<String, Object> state = Map.of("feed", "ACME", "format", "json lines", "streams_read", List.of(7),
+                "surveys", List.of(), "shapes", Map.of("upload", Map.of("count", 1, "streams", List.of(7),
+                "examples", List.of(Map.of("text", "{\"ts\": \"2026-09-28T23:59:00.000Z\", \"host\": \"ws09\", "
+                                                   + "\"user\": \"erin\", \"fname\": \"report.pdf\"}",
+                        "location", Map.of("stream", 7, "part", 0, "record", 24_000))))));
+        world.world.docs.put(uuid, ((DocumentationDoc) world.world.docs.get(uuid)).copy()
+                .data(SurveyDoc.render(state)).build());
+        final Map<String, Object> checked = world.call(tool, Map.of("mapping", mapping, "stream_ids", List.of(7),
+                "build", "acme-v1", "name", "ACME-Events-2"));
+
+        assertThat(findings(checked)).noneMatch(p -> p.contains("'fname'"));
+        assertThat(list(checked.get("warnings"))).contains("sample: 1 record(s) the survey found further into "
+                                                           + "streams [7] than the sample is read to are checked "
+                                                           + "too");
+    }
+
+    // A result's problems and warnings, as text.
+    private static List<String> findings(final Map<String, Object> result) {
+        assertThat(result).as("a result, not a refusal").doesNotContainKey("error");
+        final List<String> out = new ArrayList<>();
+        JsonValues.listOrEmpty(result.get("problems")).forEach(p -> out.add(String.valueOf(p)));
+        JsonValues.listOrEmpty(result.get("warnings")).forEach(w -> out.add(String.valueOf(w)));
+        return out;
     }
 
     @Test
