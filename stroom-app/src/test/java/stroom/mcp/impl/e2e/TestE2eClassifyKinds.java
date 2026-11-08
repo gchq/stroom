@@ -335,6 +335,26 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
                 .orElse("none");
     }
 
+    // ### Chat 163: classify_kinds called without splitter six times, the records read with a spec inferred afresh
+    // (two giant catch-alls each time), then called again with the spec. Without one, the build's saved Data
+    // Splitter is used.
+    @Test
+    void theBuildsSavedDataSplitterIsUsedWhenNoSplitterIsGiven() {
+        final String build = "e2e-classify-saved";
+        createFeed(build, "E2E-CLASSIFY-SAVED");
+        final List<Long> raw = List.of(upload("E2E-CLASSIFY-SAVED", sample()));
+        final Map<String, Object> saved = json("build_data_splitter", args("stream_ids", raw, "save_as",
+                "E2E-CLASSIFY-SAVED", "build", build));
+        dump("build_data_splitter", saved);
+
+        final Map<String, Object> listed = json("classify_kinds", args("build", build, "source", "Records app",
+                "stream_ids", raw));
+        dump("classify_kinds with the saved splitter", listed);
+        assertThat(String.valueOf(listed.get("read_with"))).startsWith("the build's Data Splitter");
+        assertThat(list(listed, "to_classify")).extracting(kind -> kind.get("value"))
+                .containsExactlyInAnyOrder("login", "logout", "export", "purge");
+    }
+
     // ### Many kinds: rounds of 18, put to the user in sets of up to ten of one confidence, each numbered from 1
     // under a heading naming its range.
     @Test

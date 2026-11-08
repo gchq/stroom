@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.IpAddresses;
 import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
@@ -98,6 +99,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private static final String CONFIDENCE = "confidence";
     private static final String BASIS = "basis";
     private static final String FROM_USER = "from_user";
+    // A kind the user said to leave untranslated, sent as theirs.
+    private static final String DROP = "drop";
     // A kept proposal's kind, as field=value.
     private static final String KEY = "kind";
     // A proposal's number in the set shown, from 1, as the chat shows it.
@@ -111,6 +114,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     static final String SAMPLES = "samples";
     // A kind told apart by its format alone.
     private static final String CATCH_ALL = "catch_all";
+    // A kind's record count, kept with its sample.
+    private static final String RECORDS = "records";
     // The action element of an event not classified.
     private static final String UNKNOWN = "Unknown";
 
@@ -161,16 +166,19 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private final SampleStreamTexts sampleStreamTexts;
     private final Consent consent;
     private final BuildPlan plan;
+    private final TranslationBuilds builds;
 
     @Inject
     ClassifyKindsTool(final RecordSourceNotesTool notes,
                       final SampleStreamTexts sampleStreamTexts,
                       final Consent consent,
-                      final BuildPlan plan) {
+                      final BuildPlan plan,
+                      final TranslationBuilds builds) {
         this.notes = notes;
         this.sampleStreamTexts = sampleStreamTexts;
         this.consent = consent;
         this.plan = plan;
+        this.builds = builds;
     }
 
     @Override
@@ -224,7 +232,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                 "The sample streams; the build's newest when left out."))
                         .addProperty(SPLITTER_ARG, TranslationArgs.object("The Data Splitter spec the text is read "
                                                                           + "with (build_data_splitter's spec), as "
-                                                                          + "for draft_translation_mapping."))
+                                                                          + "for draft_translation_mapping; the "
+                                                                          + "build's saved Data Splitter when left "
+                                                                          + "out."))
                         .addProperty(PROPOSALS_ARG, ArraySchema.builder()
                                 .description("One per kind listed: its field and value (as listed), description, "
                                              + "event_detail (the action element, e.g. Authenticate, Update, "
@@ -268,6 +278,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                                   + "User, File, Document, Group... (or its leaf, User/Name).")
                 .addStringProperty(CONFIDENCE, "high, medium or low: how sure you are.")
                 .addBooleanProperty(FROM_USER, "True for what the user said (recorded without asking again).")
+                .addBooleanProperty(DROP, "With from_user, true for a kind the user said to leave untranslated: "
+                                          + "kept as settled (not classified) and left out of later rounds; give "
+                                          + "it a drop rule in the mapping (drop_when).")
                 .required(FIELD, VALUE, DESCRIPTION)
                 .build();
     }
@@ -319,23 +332,41 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             throw new ToolRefusal("No sample streams: upload the samples first, or give stream_ids");
         }
         final Map<String, String> samples = sampleStreamTexts.read(streams).texts();
-        final SplitterSpec splitter = BuildTranslationXsltTool.Request.splitter(rawArg(call, SPLITTER_ARG));
+        SplitterSpec splitter = BuildTranslationXsltTool.Request.splitter(rawArg(call, SPLITTER_ARG));
+        String readWith = null;
+        if (splitter == null) {
+            // The build's saved Data Splitter, where it has one (seen in chat 163: called without splitter six times,
+            // the records read with a spec inferred afresh, two giant catch-alls each time, then called again with
+            // the spec).
+            final Optional<Map.Entry<String, String>> saved = builds.dataSplitter(build, null);
+            if (saved.isPresent()) {
+                splitter = SplitterSpec.ofConverter(saved.get().getValue());
+                readWith = saved.get().getKey();
+            }
+        }
         final Map<String, Object> draft = DraftMapping.draft(List.copyOf(samples.values()), source, null, null, null,
                 null, splitter);
         @SuppressWarnings("unchecked") final Map<String, Object> mapping = (Map<String, Object>) draft.get(MAPPING);
         final List<Map<String, Object>> records = unpacked(DraftMapping.records(samples, splitter).records(),
                 mapping);
         final List<Kind> kinds = kinds(draft, records);
-        final String variantField = variantField(draft);
+        final String variantField = variantField(draft, records);
         final List<String> recordFields = recordFields(records);
         final Set<String> settled = settled(notesNow);
         // Not those the user rejected: the agent asks what they are, and they stay out of later rounds.
         final List<String> rejected = JsonValues.strings(notesNow.get(RecordSourceNotesTool.REJECTED));
+        // Nor those the user said to leave untranslated (seen in chat 163: a kind the user said to drop put to them
+        // four times).
+        final List<String> dropped = JsonValues.strings(notesNow.get(RecordSourceNotesTool.DROPPED));
         final List<Kind> todo = kinds.stream()
-                .filter(kind -> !settled.contains(kind.key()) && !rejected.contains(kind.key()))
+                .filter(kind -> !settled.contains(kind.key()) && !rejected.contains(kind.key())
+                                && !dropped.contains(kind.key()))
                 .toList();
         final List<Kind> batch = todo.subList(0, Math.min(BATCH, todo.size()));
         final Map<String, Object> result = new LinkedHashMap<>();
+        if (readWith != null) {
+            result.put("read_with", "the build's Data Splitter '" + readWith + "'");
+        }
         result.put("kinds_found", kinds.size());
         result.put("already_settled", kinds.stream().map(Kind::key).filter(settled::contains).toList());
         final Optional<String> freeText = kinds.size() <= 1
@@ -366,7 +397,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final List<Map<String, Object>> kindSamples = batch.stream()
                 .filter(kind -> kind.first() != null)
                 .map(kind -> Map.<String, Object>of(KEY, kind.key(), SAMPLE, recordText(kind, samples, variantField),
-                        CATCH_ALL, kind.catchAll()))
+                        CATCH_ALL, kind.catchAll(), RECORDS, kind.records()))
                 .toList();
         result.put(SOURCE_NOTES, notes.recordClassified(context, build, source, List.of(),
                 todo.stream().map(Kind::key).toList(), Map.of(RecordSourceNotesTool.RECORD_FIELDS, recordFields,
@@ -408,10 +439,20 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final List<String> problems = new ArrayList<>();
         final List<String> rated = new ArrayList<>();
         final List<String> unknownFields = new ArrayList<>();
+        final List<String> drops = new ArrayList<>();
         for (int i = 0; i < given.size(); i++) {
             final Map<?, ?> item = given.get(i);
             final String key = ToolText.str(item.get(FIELD)) + "=" + ToolText.str(item.get(VALUE));
             final boolean fromUser = isTrue(item.get(FROM_USER));
+            if (isTrue(item.get(DROP))) {
+                if (fromUser) {
+                    drops.add(key);
+                } else {
+                    problems.add("proposals[" + i + "]: drop is only for a kind the user said to leave untranslated "
+                                 + "(with from_user: true)");
+                }
+                continue;
+            }
             final String stated = valueText(item.get(CONFIDENCE));
             // A catch-all kind (a format's records, the events in it not told apart) is shown to the user on its
             // own: one classification for many events is a guess, however sure the agent is (asked for by the
@@ -476,7 +517,13 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 JsonValues.maps(notesNow.get(SAMPLES)).stream()
                         .filter(sample -> key.equals(sample.get(KEY)))
                         .findFirst()
-                        .ifPresent(sample -> entry.put(SAMPLE, sample.get(SAMPLE)));
+                        .ifPresent(sample -> {
+                            entry.put(SAMPLE, sample.get(SAMPLE));
+                            if (Boolean.TRUE.equals(sample.get(CATCH_ALL))) {
+                                entry.put(CATCH_ALL, true);
+                                entry.put(RECORDS, sample.get(RECORDS));
+                            }
+                        });
                 toConfirm.add(entry);
             }
         }
@@ -495,18 +542,29 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         }
         final Set<String> recorded = new LinkedHashSet<>();
         fromUser.forEach(entry -> recorded.add(entry.get(FIELD) + "=" + entry.get(VALUE)));
-        final List<String> left = pending.stream().filter(key -> !recorded.contains(key)).toList();
+        final List<String> left = pending.stream()
+                .filter(key -> !recorded.contains(key) && !drops.contains(key))
+                .toList();
         // Only the user's (a correction between the rounds, say): the proposals still to confirm stay.
         final List<Map<String, Object>> kept = toConfirm.isEmpty()
                 ? JsonValues.maps(notesNow.get(RecordSourceNotesTool.PROPOSED)).stream()
-                        .filter(entry -> !recorded.contains(String.valueOf(entry.get(KEY))))
+                        .filter(entry -> !recorded.contains(String.valueOf(entry.get(KEY)))
+                                         && !drops.contains(String.valueOf(entry.get(KEY))))
                         .toList()
                 : toConfirm;
+        final Set<String> allDropped = new LinkedHashSet<>(JsonValues.strings(notesNow.get(
+                RecordSourceNotesTool.DROPPED)));
+        allDropped.addAll(drops);
         final Map<String, Object> doc = notes.recordClassified(context, build, source, fromUser, left,
-                Map.of(RecordSourceNotesTool.PROPOSED, kept));
+                Map.of(RecordSourceNotesTool.PROPOSED, kept, RecordSourceNotesTool.DROPPED, List.copyOf(allDropped)));
         final Map<String, Object> result = new LinkedHashMap<>();
         if (!recorded.isEmpty()) {
             result.put(RECORDED, List.copyOf(recorded));
+        }
+        if (!drops.isEmpty()) {
+            result.put("dropped", drops);
+            result.put("dropped_note", "Left untranslated, as the user said: settled, so not listed again. Give "
+                                       + "each a drop rule in the mapping (drop_when, with the user's reason).");
         }
         result.put(SOURCE_NOTES, doc);
         if (!rated.isEmpty()) {
@@ -574,7 +632,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 ? "it"
                 : "all " + set.size() + " of them") + " again with the amendments applied, as proposals with "
                          + "from_user: true (ask the user first if an amendment isn't clear; leave out any they "
-                         + "reject and ask what it is); the next set then follows.");
+                         + "reject and ask what it is; one they say to drop, send with drop: true); the next set "
+                         + "then follows.");
         return result;
     }
 
@@ -710,6 +769,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         entry.remove(NUMBER);
         entry.remove(POSITION);
         entry.remove(OF);
+        entry.remove(CATCH_ALL);
+        entry.remove(RECORDS);
         entry.put(BASIS, RecordSourceNotesTool.USER_CONFIRMED);
         return entry;
     }
@@ -760,7 +821,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private static List<Kind> kinds(final Map<String, Object> draft, final List<Map<String, Object>> records) {
         final List<Kind> kinds = new ArrayList<>();
         @SuppressWarnings("unchecked") final Map<String, Object> mapping = (Map<String, Object>) draft.get(MAPPING);
-        final String variantField = variantField(draft);
+        final String variantField = variantField(draft, records);
         final List<List<Map<String, Object>>> earlierRules = new ArrayList<>();
         for (final Map<String, Object> rule : JsonValues.maps(mapping.get(EVENTS))) {
             final List<Map<String, Object>> when = JsonValues.maps(rule.get("when"));
@@ -908,14 +969,23 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 .equals(String.valueOf(record.get(String.valueOf(c.get(FIELD))))));
     }
 
-    // The field a record's format (its variant) is written in, when the records are in several; else none.
+    // The field a record's format (its variant) is written in, when the records are in several; else none. A spec
+    // the draft can't read back (a saved Data Splitter's, read by Stroom's own parser; seen in the e2e suite, the
+    // call failed on it): the field a converter build_data_splitter wrote names the variant in, where the records
+    // have it.
     @SuppressWarnings("unchecked")
-    private static String variantField(final Map<String, Object> draft) {
+    private static String variantField(final Map<String, Object> draft, final List<Map<String, Object>> records) {
         if (draft.get("splitter") instanceof final Map<?, ?> spec) {
-            final SplitterSpec read = SplitterSpec.fromMap((Map<String, ?>) spec);
-            return NullSafe.isEmptyCollection(read.parts())
-                    ? null
-                    : read.variantField();
+            try {
+                final SplitterSpec read = SplitterSpec.fromMap((Map<String, ?>) spec);
+                return NullSafe.isEmptyCollection(read.parts())
+                        ? null
+                        : read.variantField();
+            } catch (final IllegalArgumentException e) {
+                return records.stream().anyMatch(record -> record.containsKey(SplitterSpec.VARIANT))
+                        ? SplitterSpec.VARIANT
+                        : null;
+            }
         }
         return null;
     }
@@ -987,6 +1057,14 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             // kind and its confidence): the action element always, the others where the proposal has them.
             lines.add("| Element | Value |");
             lines.add("| --- | --- |");
+            if (Boolean.TRUE.equals(e.get(CATCH_ALL))) {
+                // What a catch-all covers, so one example's meaning isn't confirmed for a whole format (seen in chat
+                // 163: a format's 200 records confirmed from one line, as one kind).
+                item(lines, "Covers", "Every '" + text(e.get(VALUE)) + "' record no other kind takes"
+                                      + (e.get(RECORDS) instanceof final Number count
+                        ? " (" + StreamReader.thousands(count.longValue()) + " records)"
+                        : ""));
+            }
             item(lines, "Schema action", e.get(EVENT_DETAIL));
             item(lines, "Action", e.get(ACTION));
             item(lines, "Outcome", outcome(e));
