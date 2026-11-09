@@ -177,6 +177,8 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
                                 + "'src=(\\S+)'}} (each field found anywhere, in any order). Options: escape: '\\\\' "
                                 + "(delimited: a character escaping the delimiter or quote); spaced_values: true "
                                 + "(key_value: values hold spaces unquoted, read from the end; inferred when needed); "
+                                + "name_prefix: 'relay_' (syslog: the header's names start with it, a relay's "
+                                + "header before the source's own; inferred); "
                                 + "blank_line_records: true (a record is a block of lines ended by a blank line); "
                                 + "catch_all: true (a record the spec doesn't match is kept whole as 'unparsed' "
                                 + "instead of an error and lost: agree it with the user). Lines in several formats, "

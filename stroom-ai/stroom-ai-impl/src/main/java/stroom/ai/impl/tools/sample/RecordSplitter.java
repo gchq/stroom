@@ -217,7 +217,14 @@ public final class RecordSplitter {
     private static Chunk delimitedSyslog(final String format, final List<String> lines) {
         final String text = String.join("\n", lines);
         final SplitterSpec spec = SplitterDryRun.inferSpec(text).spec();
-        if (spec == null || spec.body() == null || !"delimited".equals(spec.body().kind())) {
+        // The source's own body, inside any relay's header or collector's words.
+        SplitterSpec body = spec == null
+                ? null
+                : spec.body();
+        while (body != null && "syslog".equals(body.kind()) && body.body() != null) {
+            body = body.body();
+        }
+        if (body == null || !"delimited".equals(body.kind())) {
             return null;
         }
         final List<Map<String, String>> records = SplitterDryRun.dryRun(spec, text).records();
@@ -225,7 +232,7 @@ public final class RecordSplitter {
             return null;
         }
         final List<Map<String, Object>> parsed = objects(records);
-        return new Chunk(format, lines, parsed, null, null, namingColumns(spec.body().columns(), parsed));
+        return new Chunk(format, lines, parsed, null, null, namingColumns(body.columns(), parsed));
     }
 
     private static Chunk delimited(final String format,

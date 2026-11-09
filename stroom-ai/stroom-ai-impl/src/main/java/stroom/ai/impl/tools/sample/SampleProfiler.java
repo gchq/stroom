@@ -64,6 +64,8 @@ public final class SampleProfiler {
     public static final String SYSLOG_5424_FORMAT = "syslog rfc5424";
     /// RFC 3164 syslog.
     public static final String SYSLOG_3164_FORMAT = "syslog rfc3164";
+    /// A syslog profile's key: how many words a collector wrote before each line's header (its time, its host).
+    public static final String PREFIX_WORDS = "prefix_words";
     /// Kubernetes CRI container log lines.
     public static final String CRI = "cri";
     /// Records of several lines, each starting with its time.
@@ -493,10 +495,51 @@ public final class SampleProfiler {
                 return "embedded json";
             }
         }
+        if (decodedString(text) != null) {
+            // JSON encoded twice: a JSON string whose text is JSON.
+            return "embedded json";
+        }
         if (ToolText.search(JSON_AFTER_PREFIX, text) && parses(text.substring(text.indexOf('{')))) {
             return "embedded json after prefix";
         }
         return "string";
+    }
+
+    /// JSON encoded twice: a JSON string (`"{\"user\": \"alice\"}"`) whose text is a JSON object or array.
+    ///
+    /// @param text A value's text.
+    /// @return The JSON text the string holds, or null when the text isn't that.
+    public static String decodedString(final String text) {
+        final String trimmed = ToolText.strip(text);
+        if (trimmed.length() < 4 || !trimmed.startsWith("\"") || !trimmed.endsWith("\"")) {
+            return null;
+        }
+        final Object decoded;
+        try {
+            decoded = ToolJson.loads(trimmed);
+        } catch (final ToolJson.JsonDecodeException e) {
+            return null;
+        }
+        if (!(decoded instanceof final String inner)) {
+            return null;
+        }
+        final String json = ToolText.strip(inner);
+        if (!(json.startsWith("{") || json.startsWith("[")) || !parses(json)) {
+            return null;
+        }
+        return json;
+    }
+
+    /// A JSON text read, a JSON string holding JSON (encoded twice) read again.
+    ///
+    /// @param text JSON text.
+    /// @return Its value.
+    /// @throws ToolJson.JsonDecodeException if it isn't JSON.
+    public static Object loadsDecoded(final String text) {
+        final String inner = decodedString(text);
+        return ToolJson.loads(inner == null
+                ? text
+                : inner);
     }
 
     private static boolean parses(final String json) {
@@ -1321,6 +1364,13 @@ public final class SampleProfiler {
             }
             if (value instanceof Map) {
                 jsonLines.add(value);
+            } else if (decodedString(line) != null && loadsDecoded(line) instanceof final Map<?, ?> held) {
+                // JSON encoded twice, a JSON string holding the object: a record, but not one Stroom's JSONParser
+                // gives keys for, so read as a line whose JSON the mapping parses (json_fields decodes it again).
+                jsonLines.add(held);
+                bad.add(map("line", n, "reason", "is a JSON string holding a JSON object (encoded twice): read by "
+                                                 + "json_fields, which decodes it again", "text",
+                        ToolText.head(line, 160)));
             } else {
                 bad.add(map("line", n, "reason", "isn't a JSON object", "text", ToolText.head(line, 160)));
             }
@@ -1437,6 +1487,10 @@ public final class SampleProfiler {
             return continued(with(result, "format", SYSLOG_3164_FORMAT, "records", firsts.size(), "examples",
                     examples, "suggested_parser", "Data Splitter with a regex for PRI, timestamp, host, tag and "
                                                   + "message"), grouped);
+        }
+        final Map<String, Object> prefixed = prefixedSyslog(firsts, result, examples);
+        if (prefixed != null) {
+            return continued(prefixed, grouped);
         }
         if (!lines.isEmpty() && count(lines, line -> ToolText.match(CRI_LINE, line)) >= 0.9 * lines.size()) {
             final List<String> records = SplitterDryRun.groupLinesToEnd(lines, SplitterDryRun.CRI_END);
@@ -1566,6 +1620,39 @@ public final class SampleProfiler {
             pairs.put(pair[0], ToolText.strip(pair[1], "\""));
         }
         return pairs;
+    }
+
+    // Lines four in five of which are the same number of a collector's words then a syslog header
+    // (`2026-11-09T10:00:00Z relay01 <14>Oct ...`): the header's format, with prefix_words; else null.
+    private static Map<String, Object> prefixedSyslog(final List<String> firsts,
+                                                      final Map<String, Object> result,
+                                                      final List<String> examples) {
+        if (firsts.isEmpty()) {
+            return null;
+        }
+        final Map<Integer, Integer> counts = new LinkedHashMap<>();
+        firsts.forEach(line -> counts.merge(SyslogHeaders.prefixWords(line), 1, Integer::sum));
+        final Map.Entry<Integer, Integer> most = counts.entrySet().stream()
+                .filter(entry -> entry.getKey() > 0)
+                .max(Map.Entry.comparingByValue())
+                .orElse(null);
+        if (most == null || most.getValue() < 0.8 * firsts.size()) {
+            return null;
+        }
+        final int words = most.getKey();
+        final Map<String, Integer> formats = new LinkedHashMap<>();
+        firsts.forEach(line -> {
+            final String format = SyslogHeaders.formatOf(SyslogHeaders.withoutWords(line, words));
+            if (format != null) {
+                formats.merge(format, 1, Integer::sum);
+            }
+        });
+        final String format = formats.getOrDefault(SYSLOG_5424_FORMAT, 0) > formats.getOrDefault(SYSLOG_3164_FORMAT, 0)
+                ? SYSLOG_5424_FORMAT
+                : SYSLOG_3164_FORMAT;
+        return with(result, "format", format, PREFIX_WORDS, words, "records", firsts.size(), "examples", examples,
+                "suggested_parser", "Data Splitter: a collector's " + words + " word(s) before each line (its time, "
+                                    + "its host...), then the syslog header (build_data_splitter infers both)");
     }
 
     private static long count(final List<String> lines, final Predicate<String> test) {

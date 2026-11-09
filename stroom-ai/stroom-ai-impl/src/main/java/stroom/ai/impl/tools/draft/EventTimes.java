@@ -16,8 +16,8 @@
 
 package stroom.ai.impl.tools.draft;
 
-import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.SyslogHeaders;
 import stroom.ai.impl.tools.sample.TimePatterns;
 
 import java.util.ArrayList;
@@ -88,29 +88,87 @@ final class EventTimes {
     }
 
     /// The fields a container writes around a record (a syslog header before CEF, JSON or pairs), by the spec that
-    /// reads them; a time there is the relay's or the collector's, read after the record's own.
+    /// reads them; a time there is the relay's or the collector's, read after the record's own. A relay's header
+    /// around the source's ([#relayFields]) is a container too.
     ///
     /// @param spec The splitter's spec, or null.
     /// @return The container's fields, none if the spec has no container.
     static Set<String> containerFields(final SplitterSpec spec) {
-        if (spec == null || spec.body() == null) {
-            return Set.of();
-        }
-        final List<String> header = switch (spec.kind()) {
-            // CEF's body is the header before it.
-            case "cef" -> Objects.requireNonNullElse(spec.body().names(), List.of());
-            case "syslog" -> "rfc5424".equals(spec.rfc())
-                    ? SplitterDryRun.SYSLOG_5424_NAMES
-                    : SplitterDryRun.SYSLOG_3164_NAMES;
-            default -> Objects.requireNonNullElse(spec.names(), List.of());
-        };
-        final Set<String> out = new LinkedHashSet<>(header);
-        if ("cef".equals(spec.kind())) {
+        final Set<String> out = new LinkedHashSet<>(relayFields(spec));
+        final SplitterSpec inner = innermostHeader(spec);
+        if (inner == null || inner.body() == null) {
             return out;
         }
-        out.remove(spec.bodyField());
-        out.remove("message");
+        final Set<String> header = new LinkedHashSet<>(headerNames(inner));
+        if (!"cef".equals(inner.kind())) {
+            header.remove(inner.bodyField());
+            header.remove("message");
+        }
+        out.addAll(header);
         return out;
+    }
+
+    /// The fields of the headers around the source's own: a relay's syslog header whose message is the source's
+    /// line (syslog within syslog), a collector's words before a header. Their time is when a relay or collector
+    /// passed the record on, read after any of the source's own.
+    ///
+    /// @param spec The splitter's spec, or null.
+    /// @return The fields, outermost first; none if nothing wraps the source's header.
+    static Set<String> relayFields(final SplitterSpec spec) {
+        final Set<String> out = new LinkedHashSet<>();
+        if (spec != null && !wrapsHeader(spec) && "regex".equals(spec.kind())) {
+            // One regex for lines relayed and sent directly: its relay's fields are named so.
+            spec.names().stream().filter(name -> name.startsWith(SyslogHeaders.RELAY_PREFIX)).forEach(out::add);
+        }
+        SplitterSpec at = spec;
+        while (wrapsHeader(at)) {
+            final List<String> names = new ArrayList<>(headerNames(at));
+            names.remove(at.bodyField());
+            out.addAll(names);
+            at = at.body();
+        }
+        return out;
+    }
+
+    /// The fields whose text is a whole line the spec reads further as a syslog header (a relay's message, a
+    /// collector's line after its words): every part of it is a field of its own, so the text itself isn't mapped.
+    ///
+    /// @param spec The splitter's spec, or null.
+    /// @return The fields.
+    static Set<String> wrappedTexts(final SplitterSpec spec) {
+        final Set<String> out = new LinkedHashSet<>();
+        SplitterSpec at = spec;
+        while (wrapsHeader(at)) {
+            out.add(at.bodyField());
+            at = at.body();
+        }
+        return out;
+    }
+
+    // A spec whose body is a syslog header: the relay's header, or the regex reading a collector's words.
+    private static boolean wrapsHeader(final SplitterSpec spec) {
+        return spec != null && spec.body() != null && "syslog".equals(spec.body().kind())
+               && ("syslog".equals(spec.kind()) || "regex".equals(spec.kind()));
+    }
+
+    // The source's own header: the spec itself, or the header inside every relay's.
+    private static SplitterSpec innermostHeader(final SplitterSpec spec) {
+        SplitterSpec at = spec;
+        while (wrapsHeader(at)) {
+            at = at.body();
+        }
+        return at;
+    }
+
+    private static List<String> headerNames(final SplitterSpec spec) {
+        return switch (spec.kind()) {
+            // CEF's body is the header before it.
+            case "cef" -> spec.body() == null
+                    ? List.of()
+                    : Objects.requireNonNullElse(spec.body().names(), List.of());
+            case "syslog" -> spec.syslogNames();
+            default -> Objects.requireNonNullElse(spec.names(), List.of());
+        };
     }
 
     /// What tells a kind's time fields apart, for the agent to choose from: each one's share of the records, its
