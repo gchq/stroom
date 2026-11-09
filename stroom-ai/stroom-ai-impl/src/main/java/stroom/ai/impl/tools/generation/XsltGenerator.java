@@ -112,13 +112,17 @@ public final class XsltGenerator {
     public static final Map<String, String> JSON_RECORDS = Map.of("array", "/array/map | /map/array/map",
             "lines", "/map/map");
     /// The guarded json-to-xml: an empty value, or one that isn't JSON, gives nothing rather than stopping the
-    /// pipeline ("empty sequence" fatal errors, seen in a test environment).
+    /// pipeline ("empty sequence" fatal errors, seen in a test environment). JSON encoded twice (a JSON string whose
+    /// text is a JSON object or array) is read again, so its keys are read as any JSON's.
     public static final String SAFE_JSON = "<xsl:function xmlns:xsl=\"" + XmlTrees.XSL + "\" xmlns:mcp=\""
                                            + MappingFacts.MCP_NS + "\" name=\"mcp:json-to-xml\" as=\"node()?\">"
                                            + "<xsl:param name=\"text\" as=\"item()*\"/>"
                                            + "<xsl:variable name=\"json\" select=\"string(($text)[1])\"/>"
-                                           + "<xsl:if test=\"normalize-space($json)\"><xsl:try><xsl:sequence "
-                                           + "select=\"json-to-xml($json)\"/><xsl:catch/></xsl:try></xsl:if>"
+                                           + "<xsl:if test=\"normalize-space($json)\"><xsl:try>"
+                                           + "<xsl:variable name=\"parsed\" select=\"json-to-xml($json)\"/>"
+                                           + "<xsl:sequence select=\"if ($parsed/*[local-name() = 'string'] and "
+                                           + "matches($parsed/*, '^\\s*[\\[{]')) then mcp:json-to-xml(string("
+                                           + "$parsed/*)) else $parsed\"/><xsl:catch/></xsl:try></xsl:if>"
                                            + "</xsl:function>";
     /// XML held in a field, read safely: an empty value, or one that isn't XML, gives nothing rather than stopping
     /// the pipeline.

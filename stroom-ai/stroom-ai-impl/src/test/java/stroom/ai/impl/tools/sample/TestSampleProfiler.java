@@ -469,4 +469,21 @@ class TestSampleProfiler {
         assertThat(profile.get("format")).as(name).isNotEqualTo("unknown text");
         assertThat(profile).as(name).doesNotContainKey("_records");
     }
+
+    @Test
+    void jsonLinesEncodedTwiceAreJsonLinesReadByADataSplitter() {
+        // Each line a JSON string holding the object: no keys for Stroom's JSONParser, so read a line a record and
+        // parsed by the mapping.
+        final String text = """
+                "{\\"user\\": \\"alice\\", \\"action\\": \\"login\\"}"
+                "{\\"user\\": \\"bob\\", \\"action\\": \\"logout\\"}"
+                """;
+
+        final Map<String, Object> profile = SampleProfiler.profile(text);
+
+        assertThat(profile).containsEntry("format", SampleProfiler.JSON_LINES).containsKey("malformed_lines");
+        assertThat(String.valueOf(profile.get("malformed_lines"))).contains("encoded twice");
+        assertThat(SampleProfiler.valueType("\"{\\\"a\\\": 1}\"")).isEqualTo("embedded json");
+        assertThat(SampleProfiler.valueType("\"just text\"")).isEqualTo("string");
+    }
 }

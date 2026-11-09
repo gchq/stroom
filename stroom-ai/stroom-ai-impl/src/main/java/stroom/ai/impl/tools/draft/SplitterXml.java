@@ -438,9 +438,7 @@ public final class SplitterXml {
                         .pattern(rfc5424
                                 ? SplitterDryRun.SYSLOG_5424
                                 : SplitterDryRun.SYSLOG_3164)
-                        .names(rfc5424
-                                ? SplitterDryRun.SYSLOG_5424_NAMES
-                                : SplitterDryRun.SYSLOG_3164_NAMES)
+                        .names(spec.syslogNames())
                         .body(spec.body())
                         .bodyField(spec.bodyField())
                         .build();

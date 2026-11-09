@@ -299,4 +299,48 @@ class TestShapes {
         assertThat(Shapes.share(Map.of("a", 2, "b", 1), "a")).isEqualTo(66.7);
         assertThat(Shapes.share(Map.of(), "a")).isEqualTo(0.0);
     }
+
+    @Test
+    void aRelayedLineIsSignedByTheSourcesOwnProgram() {
+        // A relay's header before each source's line: signed by the source's program, not the relay's whole line.
+        final String text = SSH.lines()
+                .map(line -> "<13>Nov  9 10:00:01 relay01 " + line)
+                .collect(Collectors.joining("\n"));
+
+        final Map<String, Integer> counts = counts(shapesOf(text));
+
+        assertThat(counts.keySet()).allSatisfy(signature -> assertThat(signature).startsWith("text:sshd|"));
+        assertThat(counts.values()).containsExactlyInAnyOrder(3, 1);
+    }
+
+    @Test
+    void aMessageFieldHoldingTheEndOfAnRfc5424HeaderIsSignedByItsAppAndMessage() {
+        // A shipper's JSON: the header read up to the host, the rest one value, with no naming pairs in it.
+        final String text = json(
+                SampleProfiler.map("timestamp", "t", "hostname", "h", "body",
+                        "mailer 11886 - [journald PRIORITY=\"6\" _PID=\"11886\"] delivered 3 messages to alice"),
+                SampleProfiler.map("timestamp", "t", "hostname", "h", "body",
+                        "mailer 11890 - [journald PRIORITY=\"6\" _PID=\"11890\"] delivered 12 messages to bob"),
+                SampleProfiler.map("timestamp", "t", "hostname", "h", "body",
+                        "indexer 11892 - [journald PRIORITY=\"6\" _PID=\"11892\"] indexed 40 messages"));
+
+        final Map<String, Integer> counts = counts(shapesOf(text));
+
+        assertThat(counts).hasSize(2);
+        assertThat(counts.keySet()).anySatisfy(signature -> assertThat(signature)
+                .endsWith("body: text:mailer|delivered <n> messages to <*>"));
+    }
+
+    @Test
+    void jsonEncodedTwiceIsSignedAsJson() {
+        final String text = json(
+                SampleProfiler.map("ts", "t", "message", ToolJson.dumps(ToolJson.dumps(SampleProfiler.map(
+                        "action", "login", "user", "a")))),
+                SampleProfiler.map("ts", "t", "message", ToolJson.dumps(ToolJson.dumps(SampleProfiler.map(
+                        "action", "logout", "user", "b")))));
+
+        assertThat(counts(shapesOf(text)).keySet()).containsExactlyInAnyOrder(
+                "fields:message,ts > message: json:action,user | action=login",
+                "fields:message,ts > message: json:action,user | action=logout");
+    }
 }
