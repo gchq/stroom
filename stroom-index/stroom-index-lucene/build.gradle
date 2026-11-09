@@ -46,7 +46,7 @@ dependencies {
     implementation "org.apache.lucene:lucene-analysis-common:10.5.2"
     implementation "org.apache.lucene:lucene-memory:10.5.2"
     implementation "org.apache.lucene:lucene-queryparser:10.5.2"
-    implementation "org.apache.lucene:lucene-highlighter:10.5.2"
+    implementation "org.apache.lucene:lucene-highlighter:10.6.0"
 
     // Needed to read shards written by older versions, e.g. 9.8.0
     runtimeOnly "org.apache.lucene:lucene-backward-codecs:10.5.2"
