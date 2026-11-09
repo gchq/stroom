@@ -14,6 +14,13 @@
 # limitations under the License.
 #**********************************************************************
 
+FROM eclipse-temurin:25.0.5_8-jdk-alpine-3.23@sha256:b903bc22d49da99a0af3d50cf08f6056eaf39646b71bf3a51f74720f8243b34b AS jcmd_base
+RUN jlink \
+      --module-path $JAVA_HOME/jmods \
+      --add-modules jdk.jcmd \
+      --output /opt/jcmd
+
+
 # ~~~ stroom base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Intermediate build stage that is common to stroom and proxy to speed up
@@ -24,7 +31,7 @@
 # jstat/jmap/jcmd/etc.
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:25.0.5_8-jdk-alpine-3.23@sha256:b903bc22d49da99a0af3d50cf08f6056eaf39646b71bf3a51f74720f8243b34b AS stroom-base-stage
+FROM eclipse-temurin:25.0.5_8-jre-alpine-3.23@sha256:b903bc22d49da99a0af3d50cf08f6056eaf39646b71bf3a51f74720f8243b34b AS stroom-base-stage
 
 # bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
 # curl is required for the docker healthcheck
@@ -43,6 +50,9 @@ RUN echo "http_proxy: $http_proxy" && \
         'brotli-libs>=1.2.1-r0'
 
         #'expat>=2.10.0-r0'
+
+copy --from=jdk_base /opt/jcmd /opt/jcmd
+ENV path="/opt/jcmd/bin:${path}"
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
