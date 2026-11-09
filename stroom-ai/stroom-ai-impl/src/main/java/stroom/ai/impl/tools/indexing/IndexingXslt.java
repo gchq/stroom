@@ -217,8 +217,12 @@ final class IndexingXslt {
             final String first = FieldPlans.steps(field.source()).getFirst();
             // One data element per value: a field of several (repeated Data elements, say) is multi-valued in
             // Lucene, not one value of them joined by spaces (seen: two ports indexed as "80 443").
+            // A union's values each once (the same user as actor and as the one authenticated).
+            final String each = FieldPlans.branches(field.source()).size() > 1
+                    ? "distinct-values(" + field.source() + ")"
+                    : field.source();
             final String line = field.multiple()
-                    ? "      <xsl:for-each select=\"" + FieldPlans.quoted(field.source()) + "\"><data name=\""
+                    ? "      <xsl:for-each select=\"" + FieldPlans.quoted(each) + "\"><data name=\""
                       + field.name() + "\" value=\"{" + FieldPlans.quoted(field.value(".")) + "}\" /></xsl:for-each>"
                     : "      <data name=\"" + field.name() + "\" value=\"{" + FieldPlans.quoted(field.value(null))
                       + "}\" />";

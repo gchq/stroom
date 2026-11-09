@@ -74,6 +74,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 /// `draft_index_mapping` - drafts the index for a build: a field plan from the chosen convention, limited to the paths
 /// the sample Events populate, named after the user's example index template where there is one, or a discovery index.
@@ -378,7 +379,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             // Answered in the form just now: drafted as the user chose (seen in VS Code: the user picked ECS here
             // too, and was told to be asked again, a third time, in the chat).
             picked = "chosen".equals(options.get("status"))
-                    ? memory.namingChosen()
+                    ? conventions.namingChosen(context)
                     : Map.of();
             if (!picked.isEmpty()) {
                 draft.chosen = picked;
@@ -480,7 +481,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         if (draft.followed != null) {
             // Agreed: not asked again when the draft is called again with a component Stroom couldn't read.
             memory.chooseNaming(Map.of("like_index", draft.likeIndex));
-            draft.chosen = memory.namingChosen();
+            draft.chosen = conventions.namingChosen(context);
         }
         if (draft.likeIndex.equals(draft.chosen.get("like_index")) && draft.followed == null) {
             draft.likeNote = (draft.likeNote == null
@@ -532,8 +533,23 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         final EcsSchema ecs = plans.ecs();
         final List<String> namespaces = new ArrayList<>(ToolArgs.strings(call, CUSTOM_NAMESPACES_ARG));
         final String own = actionNamespace(draft, indexName, ecs, namespaces);
-        actionFields(populated, fields, mapped, "nested".equals(profile.get("structure")), own);
+        final List<PlannedField> extras = IndexingArgs.fields(call, EXTRA_FIELDS_ARG);
+        final List<String> draftNotes = new ArrayList<>();
+        if (draft.exampleTemplate == null) {
+            // The agent's own fields first (asked for by the user): one of a path's own takes the path, so the tool
+            // plans no field of its own for it, and one named as a convention field replaces it. Seen in testing:
+            // added last, an extra field of a name already planned was ignored, and one reading an action's path
+            // couldn't stop the tool's own field for it, which then clashed with the agent's names.
+            withExtras(fields, extras, draftNotes);
+        }
+        final Set<String> planned = new LinkedHashSet<>();
+        fields.forEach(field -> planned.add(field.name()));
+        actionFields(populated, fields, mapped, "nested".equals(profile.get("structure")), own, unionNames(extras));
         final List<String> ecsData = ecsDataFields(draft, events, fields, ecs);
+        // The fields the tool planned of its own accord (an action's elements, ECS-named Data): renamed where they
+        // clash with one given or the convention's.
+        final Set<String> tools = new LinkedHashSet<>();
+        fields.stream().map(PlannedField::name).filter(name -> !planned.contains(name)).forEach(tools::add);
         final List<String> exampleNotes = new ArrayList<>();
         boolean subobjects = true;
         if (draft.exampleTemplate != null) {
@@ -543,10 +559,9 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             }
             subobjects = !Boolean.FALSE.equals(named);
         }
-        for (final PlannedField extra : IndexingArgs.fields(call, EXTRA_FIELDS_ARG)) {
-            if (fields.stream().noneMatch(f -> f.name().equals(extra.name()))) {
-                fields.add(extra);
-            }
+        if (draft.exampleTemplate != null) {
+            withExtras(fields, extras, draftNotes);
+            tools.removeAll(extras.stream().map(PlannedField::name).toList());
         }
         String timeField = fields.stream()
                 .filter(f -> "EventTime/TimeCreated".equals(f.source()))
@@ -564,6 +579,11 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                 ? SiblingSharedCalls.forPlan(siblingSharedCalls.forStage(InstructionRules.INDEXING), sharedNotes)
                 : IndexingArgs.shared(call, SHARED_ARG);
         sharedFields(shared, fields, exampleNotes);
+        if (FieldPlan.ELASTICSEARCH.equals(backend) && subobjects) {
+            IndexFieldClashes.renameTools(fields, tools, draftNotes);
+            IndexFieldClashes.refuseOthers(fields, tools, extras, draftNotes);
+        }
+        IndexFieldClashes.alsoFrom(fields, tools, draftNotes);
         if ("ecs".equals(draft.convention) && draft.exampleTemplate != null && ecs != null) {
             // The user's example names the fields: its top-level names are theirs, declared, not reported as un-ECS.
             final Set<String> theirs = new TreeSet<>();
@@ -612,6 +632,9 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         }
         if (!ecsData.isEmpty()) {
             result.put("ecs_data_elements", ecsData);
+        }
+        if (!draftNotes.isEmpty()) {
+            result.put("draft_notes", draftNotes);
         }
         if (!standInWarnings.isEmpty()) {
             final List<Object> warnings = result.get("warnings") instanceof final List<?> given
@@ -713,17 +736,22 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
 
     // What happened, from the event's action element (Alert's Type and Severity, Authenticate's Action and
     // Outcome, Process, Update), planned by default: a user asked for these each time. Network's are the profile's.
+    // A path a field of the agent's reads as one of a union (all the users an event names) isn't taken by it: the
+    // path keeps a field of its own too (asked for by the user: user.id of every user beside sender.id and
+    // recipient.id).
     private static void actionFields(final Map<String, Double> populated,
                                      final List<PlannedField> fields,
                                      final List<String> mapped,
                                      final boolean nested,
-                                     final String own) {
+                                     final String own,
+                                     final Set<String> unions) {
         int added = 0;
         for (final String path : new TreeMap<>(populated).keySet()) {
             if (added >= ACTION_FIELDS || !holds(path, populated) || !path.startsWith("EventDetail/")
                 || List.of(path.split("/", -1)).contains("Data") || path.startsWith("EventDetail/Network/")
                 || ExampleNames.fieldGroup(path) == null
-                || fields.stream().anyMatch(f -> FieldPlans.sourceMatches(f.source(), path))
+                || fields.stream().anyMatch(f -> !unions.contains(f.name())
+                                                 && FieldPlans.sourceMatches(f.source(), path))
                 || mapped.stream().anyMatch(m -> FieldPlans.sourceMatches(m, path))) {
                 continue;
             }
@@ -746,6 +774,36 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             fields.add(PlannedField.of(name, type, path));
             added++;
         }
+    }
+
+    // The agent's extra fields in the plan: one named as a field already planned replaces it, said in the notes.
+    private static void withExtras(final List<PlannedField> fields,
+                                   final List<PlannedField> extras,
+                                   final List<String> notes) {
+        for (final PlannedField extra : extras) {
+            final int at = IntStream.range(0, fields.size())
+                    .filter(i -> fields.get(i).name().equals(extra.name()))
+                    .findFirst()
+                    .orElse(-1);
+            if (at < 0) {
+                fields.add(extra);
+            } else {
+                if (!fields.get(at).source().equals(extra.source())) {
+                    notes.add("'" + extra.name() + "' from extra_fields (" + extra.source() + ") replaces the "
+                              + "one planned (" + fields.get(at).source() + ")");
+                }
+                fields.set(at, extra);
+            }
+        }
+    }
+
+    // The names of the extra fields whose sources are unions of paths.
+    private static Set<String> unionNames(final List<PlannedField> extras) {
+        final Set<String> out = new LinkedHashSet<>();
+        extras.stream()
+                .filter(extra -> JsonValues.truthy(extra.source()) && FieldPlans.branches(extra.source()).size() > 1)
+                .forEach(extra -> out.add(extra.name()));
+        return out;
     }
 
     // ECS: a Data element whose name is an ECS field's, written another way (source_ip, SourceIp as source.ip),

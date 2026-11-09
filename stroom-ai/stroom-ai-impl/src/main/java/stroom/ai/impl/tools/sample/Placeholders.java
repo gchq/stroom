@@ -26,6 +26,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /// Values a source writes in a field to stand for none, such as `-` or `N/A`, found in sample values so the user
@@ -48,6 +49,7 @@ public final class Placeholders {
     static final int MAX_MISFIT_LENGTH = 16;
     /// The share of a field's other values that must be of one kind for a value not of it to stand out.
     static final double KIND_SHARE = 0.8;
+    private static final Pattern DIGITS = ToolText.re("\\d+");
     // The kinds a field's values can be strictly, by the profiler's type of a value, and how the user is told.
     private static final Map<String, String> KINDS = Map.of(
             "ip", "IP addresses",
@@ -78,7 +80,7 @@ public final class Placeholders {
             for (final String value : recurring) {
                 final boolean known = isKnown(value);
                 final boolean misfit = kind != null && ToolText.len(value) <= MAX_MISFIT_LENGTH
-                                       && !kind.equals(kindOf(value));
+                                       && !kind.equals(kindOf(value)) && !numberAmongNumbers(kind, value);
                 if (known || misfit) {
                     final Found was = found.get(value);
                     final List<String> fields = new ArrayList<>(was == null
@@ -128,6 +130,12 @@ public final class Placeholders {
             }
         }
         return null;
+    }
+
+    // Whether the value is digits alone in a field of numbers: a number, though it could be read as a time too (seen
+    // in testing: a file size of 20231015 is a date by its digits).
+    private static boolean numberAmongNumbers(final String kind, final String value) {
+        return "integer".equals(kind) && ToolText.fullmatch(DIGITS, ToolText.strip(value));
     }
 
     // The strict kind of a value (see KINDS), or null for text.

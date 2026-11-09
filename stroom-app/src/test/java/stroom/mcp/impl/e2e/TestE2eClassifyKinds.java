@@ -231,15 +231,22 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
                 Map.of("field", "action", "value", "login", "description", "A user logged on", "event_detail",
                         "Authenticate", "action", "Logon", "from_user", true))));
         assertThat(sent.get("recorded")).isEqualTo(List.of("action=login"));
+        // The one left out is the one the user rejected: recorded so, for the agent to ask what it is.
+        assertThat(sent.get("rejected")).isEqualTo(List.of("action=logout"));
         assertThat(String.valueOf(sent.get("table"))).startsWith("## Medium-confidence classifications (1 of 1)")
                 .doesNotContain("logged off");
         client.answeringWith(TestE2eClassifyKinds::acceptingAll);
         json("classify_kinds", args("build", build, "confirm", true));
         json("classify_kinds", args("build", build, "confirm", true));
         client.answeringWith(McpTestClient::agree);
-        // Only the one left out still to classify: listed again for the agent to ask about.
+        // The rejected one isn't listed again (seen in testing: put to the user round after round); once the user
+        // says what it is, it is sent as theirs.
         final Map<String, Object> again = json("classify_kinds", args("build", build, "stream_ids", raw));
-        assertThat(list(again, "to_classify")).extracting(kind -> kind.get("value")).containsExactly("logout");
+        assertThat(list(again, "to_classify")).isEmpty();
+        final Map<String, Object> told = json("classify_kinds", args("build", build, "proposals", List.of(
+                Map.of("field", "action", "value", "logout", "description", "A session timed out", "event_detail",
+                        "Authenticate", "action", "Logoff", "from_user", true))));
+        assertThat(told.get("recorded")).isEqualTo(List.of("action=logout"));
     }
 
     // ### confirm=true sent with the proposals: no form until the user has seen the table.

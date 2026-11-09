@@ -69,6 +69,10 @@ class TestIndexingHelpers {
                 PlannedField.of("acme.port", "long", "EventDetail/Authenticate/Data[@Name='port']/@Value")));
         final FieldPlan marked = IndexingHelpers.withCardinality(plan, SCHEMA);
         assertThat(marked.fields()).extracting(PlannedField::multiple).containsExactly(false, false, true);
+        // A union of paths: a value from each.
+        assertThat(IndexingHelpers.withCardinality(FieldPlan.of("elasticsearch", "x", "@timestamp", List.of(
+                PlannedField.of("user.id", "keyword", "EventSource/User/Id | EventDetail/Authenticate/User/Id"))),
+                SCHEMA).fields()).extracting(PlannedField::multiple).containsExactly(true);
         // Unread: as before.
         assertThat(IndexingHelpers.withCardinality(plan, null)).isEqualTo(plan);
         // A discovery plan's fields are its own.

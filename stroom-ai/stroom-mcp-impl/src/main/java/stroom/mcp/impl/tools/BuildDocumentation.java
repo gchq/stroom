@@ -338,7 +338,10 @@ class BuildDocumentation {
     /// mid-sentence where the agent read them).
     static Map<String, Object> needsDescriptions(final Descriptions described, final List<String> unmatched) {
         final List<Map<String, Object>> fields = new ArrayList<>();
-        described.wanted().values().forEach(field -> {
+        final int wanted = described.wanted().size();
+        // A round at a time (seen in testing: 75 fields asked for at once, and the agent tried again and again to
+        // send every description, with the markdown, in one call, which its context couldn't hold).
+        described.wanted().values().stream().limit(DESCRIPTIONS_ROUND).forEach(field -> {
             final Map<String, Object> compact = new LinkedHashMap<>(field);
             if (compact.get("schemas_say") instanceof final Map<?, ?> says) {
                 final Map<String, Object> cut = new LinkedHashMap<>();
@@ -355,8 +358,12 @@ class BuildDocumentation {
         round.put("hint", "NOT WRITTEN. Nothing is written yet, nor until every field is described: the "
                           + "documentation is not done. Call write_documentation again with "
                           + "field_descriptions={field: description} for "
-                          + "the " + fields.size() + " field(s) below, keyed as listed; the markdown and the "
-                          + "descriptions already given are kept, so give only the new ones. Describe each in one "
+                          + "the " + fields.size() + " field(s) below, keyed as listed, and nothing else (no "
+                          + "markdown): the markdown and the descriptions already given are kept, so give only the "
+                          + "new ones." + (wanted > fields.size()
+                ? " These are the first " + fields.size() + " of the " + wanted + " to describe: the rest follow, a "
+                  + "round at a time, once these are given."
+                : "") + " Describe each in one "
                           + "short sentence for this source, for someone searching the data, from its name, from, "
                           + "values and the user's source notes; build on schemas_say (the vendor's first) without "
                           + "only repeating it; where the values don't make it clear, say so rather than guess."
@@ -376,6 +383,8 @@ class BuildDocumentation {
         return round;
     }
 
+    // The most fields asked to be described in one round.
+    static final int DESCRIPTIONS_ROUND = 25;
     // The most of each schema's words shown with a field asked for.
     private static final int SAID_MOST = 160;
 

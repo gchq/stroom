@@ -1188,38 +1188,74 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                     .forEach(found -> b.placeholderChoices.put(found.value(), before.get(found.value())));
             return false;
         }
+        // A value whose fields are the only source of an element the schema requires, left out, leaves those
+        // events without it (asked for by the user; seen in testing: "Leave out" recommended for '-' in the only
+        // host field, EventSource/Device's). The sender can stand in for a Device; nothing for another element, so
+        // such a value is kept as written, not asked about.
+        final Map<String, List<String>> emptied = RequiredSources.emptied(b.mapping, b.schema, b.placeholders);
+        final Map<String, List<String>> device = new LinkedHashMap<>();
+        final Map<String, List<String>> keptForSchema = new LinkedHashMap<>();
+        emptied.forEach((value, paths) -> (List.of(RequiredSources.DEVICE).equals(paths)
+                ? device
+                : keptForSchema).put(value, paths));
         final List<Placeholders.Found> unasked = b.placeholders.stream()
-                .filter(found -> !before.containsKey(found.value()))
+                .filter(found -> !before.containsKey(found.value()) && !keptForSchema.containsKey(found.value()))
                 .toList();
         final Map<String, String> answers = unasked.isEmpty()
                 ? Map.of()
                 : PlaceholderChoices.byValue(unasked, consent.chooseEach(call, context, NAME, PlaceholderChoices.INTRO,
-                        PlaceholderChoices.questions(unasked, PlaceholderChoices.OPTIONS)).orElse(Map.of()));
+                        PlaceholderChoices.questions(unasked, PlaceholderChoices.OPTIONS, device)).orElse(Map.of()));
         final List<String> leaveOut = new ArrayList<>();
+        final Set<String> fallBack = new LinkedHashSet<>();
+        final List<String> applied = new ArrayList<>(NullSafe.list(b.applied));
         for (final Placeholders.Found found : b.placeholders) {
+            if (keptForSchema.containsKey(found.value())) {
+                b.placeholderChoices.put(found.value(), PlaceholderChoices.KEEP);
+                applied.add("'" + found.value() + "' kept as written: its fields are the only source of "
+                            + String.join(", ", keptForSchema.get(found.value())) + ", which the schema requires, "
+                            + "so left out those events would fail validation");
+                continue;
+            }
             final String chosen = before.containsKey(found.value())
                     ? before.get(found.value())
                     : answers.get(found.value());
             if (chosen == null) {
                 // No form: the warning is the agent's.
+                if (device.containsKey(found.value())) {
+                    TranslationBuilds.warnings(b.result).add("sample: '" + found.value() + "' is in the only "
+                                                             + "fields EventSource/Device is written from: left "
+                                                             + "out alone, those events have no Device, which the "
+                                                             + "schema requires. Ask the user: keep it, or leave it "
+                                                             + "out (nil_values) with meta_fallback ['RemoteHost', "
+                                                             + "'RemoteAddress'] on its Device entry, the sender "
+                                                             + "standing in");
+                }
                 continue;
             }
             b.placeholderChoices.put(found.value(), chosen);
-            if (PlaceholderChoices.LEAVE_OUT.equals(chosen)) {
+            if (PlaceholderChoices.LEAVE_OUT.equals(chosen) || PlaceholderChoices.DEVICE_FALLBACK.equals(chosen)) {
                 leaveOut.add(found.value());
+            }
+            if (PlaceholderChoices.DEVICE_FALLBACK.equals(chosen)) {
+                fallBack.addAll(found.fields());
             }
         }
         // Kept now, as this call may yet fail before the XSLT is saved with them.
         UnsavedChoices.remember(context, request.target(), TranslationBuilds.PLACEHOLDERS_CHOSEN,
                 b.placeholderChoices);
+        b.applied = applied;
         if (leaveOut.isEmpty()) {
             return false;
         }
         b.mapping = PlaceholderChoices.leaveOut(b.mapping, leaveOut);
-        final List<String> applied = new ArrayList<>(NullSafe.list(b.applied));
         leaveOut.forEach(value -> applied.add("'" + value + "' left out where a field holds it (nil_values), as "
                                               + "the user chose"));
-        b.applied = applied;
+        if (!fallBack.isEmpty()) {
+            b.mapping = RequiredSources.withDeviceFallback(b.mapping, fallBack);
+            applied.add("EventSource/Device written from the sender's name or address (meta_fallback RemoteHost, "
+                        + "RemoteAddress) for a record whose " + String.join(", ", fallBack) + " holds none, as the "
+                        + "user chose");
+        }
         return true;
     }
 
