@@ -28,7 +28,6 @@
 
 set -euo pipefail
 
-readonly GITHUB_API_URL="https://api.github.com"
 readonly GITHUB_REPOSITORY="gchq/stroom"
 readonly UNRELEASED_CHANGES_DIR="unreleased_changes"
 
@@ -41,41 +40,14 @@ require_command() {
   fi
 }
 
-github_api() {
-  local endpoint="$1"
-
-  curl \
-    --fail \
-    --silent \
-    --show-error \
-    --location \
-    --header "Accept: application/vnd.github+json" \
-    --header "X-GitHub-Api-Version: 2022-11-28" \
-    "${GITHUB_API_URL}${endpoint}"
-}
-
 get_dependabot_pull_requests() {
-  local page=1
-  local response
-  local page_count
-
-  while true; do
-    response="$(github_api "/repos/${GITHUB_REPOSITORY}/pulls?state=open&per_page=100&page=${page}")"
-    page_count="$(jq 'length' <<< "${response}")"
-
-    if [[ "${page_count}" -eq 0 ]]; then
-      break
-    fi
-
-    jq -r '
-      .[]
-      | select(.user.login == "dependabot[bot]")
-      | [.number, .head.ref, .title]
-      | @tsv
-    ' <<< "${response}"
-
-    page=$((page + 1))
-  done
+  gh pr list \
+    --repo "${GITHUB_REPOSITORY}" \
+    --state open \
+    --app dependabot \
+    --limit 1000 \
+    --json number,headRefName,title \
+    --jq '.[] | [.number, .headRefName, .title] | @tsv'
 }
 
 select_with_fzf() {
@@ -97,11 +69,10 @@ select_pull_request_with_fzf() {
   shift
 
   local preview_command
-  preview_command="curl --fail --silent --show-error --location \\
-    --header 'Accept: application/vnd.github+json' \\
-    --header 'X-GitHub-Api-Version: 2022-11-28' \\
-    '${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/pulls/{1}' \\
-    | jq -r '.body // \"(No description)\"'"
+  preview_command="gh pr view {1} \\
+    --repo '${GITHUB_REPOSITORY}' \\
+    --json body \\
+    --jq '.body // \"(No description)\"'"
 
   printf '%s\n' "$@" \
     | fzf \
@@ -123,10 +94,9 @@ main() {
   repo_root_dir="$(git rev-parse --show-toplevel)"
   cd "${repo_root_dir}"
 
-  require_command curl
+  require_command gh
   require_command fzf
   require_command git
-  require_command jq
 
   local pull_request_rows
   pull_request_rows="$(get_dependabot_pull_requests)"
