@@ -18,14 +18,31 @@ package stroom.pipeline.cache;
 
 public class PoolKey<K> {
 
-    private final K key;
+    /// The pool id of a key that doesn't belong to any pool, e.g. for an item that isn't pooled.
+    static final long NO_POOL_ID = 0;
 
+    private final K key;
+    private final long poolId;
+
+    /// Creates a key that doesn't belong to any pool.
+    ///
+    /// @param key The key of the item.
     public PoolKey(final K key) {
+        this(key, NO_POOL_ID);
+    }
+
+    PoolKey(final K key, final long poolId) {
         this.key = key;
+        this.poolId = poolId;
     }
 
     public K getKey() {
         return key;
+    }
+
+    /// @return The id of the pool this key was created by, or [#NO_POOL_ID] if it wasn't created by one.
+    long getPoolId() {
+        return poolId;
     }
 
     // Lack of hashcode is intentional so object instance id is used
