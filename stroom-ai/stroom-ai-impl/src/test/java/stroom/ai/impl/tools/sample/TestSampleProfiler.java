@@ -19,6 +19,7 @@ package stroom.ai.impl.tools.sample;
 import stroom.ai.impl.tools.ToolRefusal;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -53,6 +54,23 @@ class TestSampleProfiler {
 
     private static String good(final int from, final int to) {
         return IntStream.range(from, to).mapToObj(i -> String.format(GOOD, i, i)).collect(Collectors.joining());
+    }
+
+    @Test
+    @Timeout(10)
+    void aLongRunOfWordCharactersIsReadForPairsInLinearTime() {
+        // Seen in testing: a key pattern scanned a long run with no '=' after it from every position in it, so a
+        // 250,000-character URL took about seven minutes to profile, and a 100,000-character value about three.
+        final String run = "0123456789abcdef".repeat(15_625);
+
+        assertThat(SampleProfiler.keyValues("2026-09-28T10:05:00,bob,https://api.example.com/x" + run)).isEmpty();
+        assertThat(SampleProfiler.profile("time,user,url\n2026-09-28T10:00:00,alice,/a\n2026-09-28T10:05:00,bob,"
+                                          + run + "\n", SampleProfiler.MAX_RECORDS).get("format"))
+                .isEqualTo(SampleProfiler.DELIMITED);
+        // The pairs found are as before: a key starts at its run's start, after a dot or dash too.
+        assertThat(SampleProfiler.keyValues("a.b-c=1 x=\"y z\" --flag=on url=" + run))
+                .containsEntry("a.b-c", "1").containsEntry("x", "y z").containsEntry("flag", "on")
+                .containsEntry("url", run);
     }
 
     @Test
