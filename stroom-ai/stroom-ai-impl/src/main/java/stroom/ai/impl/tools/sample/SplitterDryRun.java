@@ -50,8 +50,12 @@ public final class SplitterDryRun {
     public static final String CRI_END = "\\S+ (?:stdout|stderr) F ";
     /// The XPath joining a CRI record's parts: each line's prefix after the first taken out, with its new line.
     public static final String CRI_JOIN = "replace(data[@name='message']/@value, '\\n\\S+ (stdout|stderr) [PF] ', '')";
-    /// The RFC 5424 syslog header's regex; the body is the group named message.
-    public static final String SYSLOG_5424 = "^(?:<(\\d+)>)?1 (\\S+) (\\S+) (\\S+) (\\S+) (\\S+) (-|\\[.*?\\]) ?(.*)$";
+    /// The RFC 5424 syslog header's regex; the body is the group named message. Its structured data is every
+    /// element, each read to its own closing bracket: a `]` escaped (`\]`) or in quotes inside a value doesn't end it
+    /// (seen in testing: `event="User [alice\] ..."`, the element read only to the escaped bracket
+    /// and the rest taken for the message).
+    public static final String SYSLOG_5424 = "^(?:<(\\d+)>)?1 (\\S+) (\\S+) (\\S+) (\\S+) (\\S+) ("
+                                             + SyslogHeaders.STRUCTURED_DATA + ") ?(.*)$";
     /// The names of [#SYSLOG_5424]'s groups.
     public static final List<String> SYSLOG_5424_NAMES = List.of("pri", "time", "host", "app", "pid", "msgid",
             "structured", "message");
@@ -453,9 +457,7 @@ public final class SplitterDryRun {
                     .pattern(rfc5424
                             ? SYSLOG_5424
                             : SYSLOG_3164)
-                    .names(rfc5424
-                            ? SYSLOG_5424_NAMES
-                            : SYSLOG_3164_NAMES)
+                    .names(spec.syslogNames())
                     .body(spec.body())
                     .bodyField(spec.bodyField())
                     .build();
@@ -1007,7 +1009,13 @@ public final class SplitterDryRun {
             final String rfc = format.endsWith("3164")
                     ? "rfc3164"
                     : "rfc5424";
-            return new Inferred(syslogSpec(rfc, lines).build(), info);
+            if (info.get(SampleProfiler.PREFIX_WORDS) instanceof final Integer words && words > 0) {
+                return new Inferred(prefixedSyslog(rfc, words, lines), info);
+            }
+            final List<SplitterSpec> parts = syslogParts(rfc, lines, "syslog");
+            return new Inferred(parts.size() == 1
+                    ? parts.getFirst().toBuilder().variant(null).build()
+                    : SplitterSpec.builder(SplitterSpec.ALTERNATIVES).parts(parts).build(), info);
         }
         return new Inferred(null, info);
     }
@@ -1015,6 +1023,13 @@ public final class SplitterDryRun {
     // A syslog spec for lines of its header, its messages' body read as they are: key=value, delimited, or (some
     // key=value, some not) each by its own part.
     private static SplitterSpec.Builder syslogSpec(final String rfc, final List<String> lines) {
+        return syslogSpec(rfc, lines, true);
+    }
+
+    // As above; with nested, a message that is itself a syslog line (a relay's header before the source's own) read
+    // as that header, the relay's fields named relay_time, relay_host... One level only: a relay's relay is left in
+    // the message.
+    private static SplitterSpec.Builder syslogSpec(final String rfc, final List<String> lines, final boolean nested) {
         final SplitterSpec head = SplitterSpec.builder("syslog").rfc(rfc).build();
         final List<String> messages = new ArrayList<>();
         final List<String> structured = new ArrayList<>();
@@ -1022,6 +1037,14 @@ public final class SplitterDryRun {
             messages.add(record.getOrDefault("message", ""));
             structured.add(record.getOrDefault(STRUCTURED, ""));
         });
+        final String innerRfc = nested
+                ? nestedRfc(messages)
+                : null;
+        if (innerRfc != null) {
+            final List<String> inner = messages.stream().filter(message -> !ToolText.isBlank(message)).toList();
+            return SplitterSpec.builder("syslog").rfc(rfc).namePrefix(SyslogHeaders.RELAY_PREFIX)
+                    .body(syslogSpec(innerRfc, inner, false).build());
+        }
         final SplitterSpec inBrackets = structuredBody(messages, structured);
         if (inBrackets != null) {
             return SplitterSpec.builder("syslog").rfc(rfc).body(inBrackets).bodyField(STRUCTURED);
@@ -1031,6 +1054,106 @@ public final class SplitterDryRun {
             body = mixedBody(messages);
         }
         return SplitterSpec.builder("syslog").rfc(rfc).body(body);
+    }
+
+    // Syslog lines, some of them relayed (a relay's header before the source's own) and some not, in one stream (a
+    // relay forwarding some sources while others send directly): one regex whose relay header may be there or not, so
+    // a kind of event is one kind however its line came (seen as two parts: a login relayed and a login sent directly
+    // were two rules, sharing a TypeId, which the mapping's check refused, and two questions to the user). The relayed
+    // sources in another header format than the direct ones can't share a regex: a part each, the relayed first. One
+    // spec when the lines are all of one kind (four in five relayed are read as relayed).
+    private static List<SplitterSpec> syslogParts(final String rfc, final List<String> lines, final String variant) {
+        final List<String> relayed = new ArrayList<>();
+        final List<String> direct = new ArrayList<>();
+        for (final String line : lines) {
+            final String message = SyslogHeaders.messageOf(line);
+            if (message != null && SyslogHeaders.startsWithHeader(message)) {
+                relayed.add(line);
+            } else {
+                direct.add(line);
+            }
+        }
+        if (relayed.isEmpty() || direct.isEmpty() || relayed.size() >= 0.8 * lines.size()) {
+            return List.of(syslogSpec(rfc, lines).variant(variant).build());
+        }
+        final SplitterSpec relayedPart = syslogSpec(rfc, relayed).variant(variant + "_relayed")
+                .match(SyslogHeaders.relayedStart(rfc)).build();
+        if (relayedPart.namePrefix() == null) {
+            // The relayed lines' sources are in no one header format: read as the others are.
+            return List.of(syslogSpec(rfc, lines, false).variant(variant).build());
+        }
+        if (rfc.equals(relayedPart.body().rfc())) {
+            return List.of(optionalRelaySpec(rfc, relayed, direct, variant));
+        }
+        return List.of(relayedPart, syslogSpec(rfc, direct, false).variant(variant).build());
+    }
+
+    // One regex for lines relayed and sent directly, sources all in the relay's header format: the relay's fields
+    // empty on a line sent directly, the source's under the plain names, its message's body read as the spec for all
+    // the sources' lines reads it.
+    private static SplitterSpec optionalRelaySpec(final String rfc,
+                                                  final List<String> relayed,
+                                                  final List<String> direct,
+                                                  final String variant) {
+        final List<String> sources = new ArrayList<>(direct);
+        relayed.forEach(line -> sources.add(SyslogHeaders.messageOf(line)));
+        final SplitterSpec source = syslogSpec(rfc, sources, false).build();
+        final List<String> names = new ArrayList<>(SyslogHeaders.relayNames(rfc));
+        names.addAll(source.syslogNames());
+        return SplitterSpec.builder("regex")
+                .pattern("^" + SyslogHeaders.optionalRelay(rfc) + ("rfc5424".equals(rfc)
+                        ? SYSLOG_5424
+                        : SYSLOG_3164).substring(1))
+                .names(names)
+                .body(source.body())
+                .bodyField(source.bodyField())
+                .variant(variant)
+                .build();
+    }
+
+    // The header format most messages start with, when four in five do (syslog within syslog: a relay that sent the
+    // source's line on as its message); else null.
+    private static String nestedRfc(final List<String> messages) {
+        final List<String> bodies = messages.stream().filter(message -> !ToolText.isBlank(message)).toList();
+        final Map<String, Integer> formats = new LinkedHashMap<>();
+        bodies.forEach(body -> {
+            final String format = SyslogHeaders.formatOf(body);
+            if (format != null) {
+                formats.merge(format, 1, Integer::sum);
+            }
+        });
+        return formats.entrySet().stream()
+                .filter(entry -> entry.getValue() >= 0.8 * bodies.size())
+                .map(entry -> SampleProfiler.SYSLOG_5424_FORMAT.equals(entry.getKey())
+                        ? "rfc5424"
+                        : "rfc3164")
+                .findFirst()
+                .orElse(null);
+    }
+
+    // Lines of a collector's words then a syslog header (`2026-11-09T10:00:00Z relay01 <14>Oct ...`): the words read
+    // as fields of the relay's (a time as relay_time, the others relay_word1, relay_word2...), the rest as the syslog
+    // line it is.
+    private static SplitterSpec prefixedSyslog(final String rfc, final int words, final List<String> lines) {
+        final List<String> stripped = lines.stream().map(line -> SyslogHeaders.withoutWords(line, words)).toList();
+        final List<List<String>> prefixes = lines.stream()
+                .map(line -> List.of(ToolText.strip(line).split("\\s+")).subList(0, words))
+                .filter(prefix -> prefix.size() == words)
+                .toList();
+        final List<String> names = new ArrayList<>();
+        final String time = SyslogHeaders.RELAY_PREFIX + "time";
+        for (int n = 0; n < words; n++) {
+            final int at = n;
+            final boolean times = !prefixes.isEmpty() && prefixes.stream()
+                    .allMatch(prefix -> TimePatterns.inferTimePattern(prefix.get(at)) != null);
+            names.add(times && !names.contains(time)
+                    ? time
+                    : SyslogHeaders.RELAY_PREFIX + "word" + (n + 1));
+        }
+        final String line = SyslogHeaders.RELAY_PREFIX + "line";
+        names.add(line);
+        return SplitterSpec.builder("regex").pattern("^" + "(\\S+)\\s+".repeat(words) + "(.*)$").names(names)
+                .body(syslogSpec(rfc, stripped).build()).bodyField(line).build();
     }
 
     // Where most messages are empty and the structured data in brackets holds pairs (Check Point's Log Exporter:
@@ -1091,6 +1214,10 @@ public final class SplitterDryRun {
             final List<String> lines = LineFormats.firstLines(held);
             if (LineFormats.TIMESTAMPED_TEXT.equals(format)) {
                 parts.addAll(textParts(lines));
+            } else if (SampleProfiler.SYSLOG_5424_FORMAT.equals(format)) {
+                parts.addAll(syslogParts("rfc5424", lines, "syslog_5424"));
+            } else if (SampleProfiler.SYSLOG_3164_FORMAT.equals(format)) {
+                parts.addAll(syslogParts("rfc3164", lines, "syslog"));
             } else if (LineFormats.DATE_HEADER.equals(format)) {
                 parts.add(headerPart(lines));
             } else {
@@ -1122,8 +1249,6 @@ public final class SplitterDryRun {
     private static SplitterSpec partFor(final String format, final List<String> lines) {
         return switch (format) {
             case SampleProfiler.CEF_FORMAT -> cefSpec(lines).toBuilder().variant("cef").build();
-            case SampleProfiler.SYSLOG_5424_FORMAT -> syslogSpec("rfc5424", lines).variant("syslog_5424").build();
-            case SampleProfiler.SYSLOG_3164_FORMAT -> syslogSpec("rfc3164", lines).variant("syslog").build();
             case SampleProfiler.KEY_VALUE_FORMAT -> {
                 final boolean quoted = lines.stream().anyMatch(line -> line.contains("=\""));
                 yield SplitterSpec.builder("key_value").variant("key_value").delimiter(" ").quote(quoted

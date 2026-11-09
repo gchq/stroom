@@ -17,8 +17,12 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.draft.SplitterXml;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
@@ -26,6 +30,7 @@ import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.util.json.JsonUtil;
 
+import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -38,8 +43,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// classify_kinds (work package E8): the kinds the documentation doesn't cover listed, proposed by the agent,
 /// confirmed by the user in one form, and recorded in the source notes the draft follows.
@@ -74,8 +81,9 @@ class TestClassifyKindsTool {
             world::guard, world::records, () -> Mockito.mock(EventsTargetInference.class));
     private final RecordSourceNotesTool notesTool = new RecordSourceNotesTool(world.guard(), world.documentAccess,
             new DocumentWrites(world.documentAccess), eventVersions, plan);
+    private final AtomicLong now = new AtomicLong(1_800_000_000_000L);
     private final ClassifyKindsTool tool = new ClassifyKindsTool(notesTool, sampleStreamTexts, consent, plan,
-            Mockito.mock(TranslationBuilds.class));
+            Mockito.mock(TranslationBuilds.class), now::get);
 
     @BeforeEach
     void setUp() {
@@ -206,6 +214,56 @@ class TestClassifyKindsTool {
         final Map<String, Object> elsewhere = call("{\"build\": \"acme\", \"confirm\": true}", user.context());
         assertThat(elsewhere).containsEntry("status", "needs_showing");
         assertThat(String.valueOf(elsewhere.get("hint"))).startsWith("Show the table to the user in your reply");
+    }
+
+    @Test
+    void anAnswerGivenLongAfterTheTableWasShownIsKept() {
+        // Seen in testing: the chat stops at the form and makes the call again with the answer; the user answered
+        // five minutes after the table was shown, the answer was dropped as if the table were stale, the table was
+        // shown again and the user asked a second time.
+        call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        call("{\"build\": \"acme\", \"proposals\": " + PROPOSALS + "}", BuildToolCalls.context());
+        now.addAndGet(10_000);
+        final ToolCall confirm = new ToolCall("call-7", ClassifyKindsTool.NAME, "{\"build\": \"acme\", \"confirm\": "
+                                                                                + "true}");
+        final ToolCallContext waiting = ToolCallContext.builder(ToolSession.chat(1)).userQuestions(new UserQuestions() {
+            @Override
+            public boolean canAsk() {
+                return true;
+            }
+
+            @Override
+            public ElicitResult ask(final String toolName,
+                                    final String callId,
+                                    final String intro,
+                                    final Map<String, Object> form) {
+                throw new AiChatRunManager.WaitingForUserException("waiting for the form");
+            }
+        }).build();
+        assertThatThrownBy(() -> tool.execute(confirm, waiting))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+
+        // The user answers five minutes later, and the chat makes the same call again with the answer.
+        now.addAndGet(300_000);
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "Accept it"));
+        final Map<String, Object> answered = BuildToolCalls.json(tool.execute(confirm, user.chatContext()).text());
+
+        assertThat(answered).doesNotContainKey("shown_again");
+        assertThat(answered.get("recorded")).isEqualTo(List.of("action=login"));
+    }
+
+    @Test
+    void aTableShownLongBeforeAnotherCallsFormIsShownAgain() {
+        // A later call, not the one that asked: the table is far up the chat, so shown again before its form.
+        call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        call("{\"build\": \"acme\", \"proposals\": " + PROPOSALS + "}", BuildToolCalls.context());
+        now.addAndGet(300_000);
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "Accept it"));
+        final Map<String, Object> later = BuildToolCalls.json(tool.execute(new ToolCall("call-8",
+                ClassifyKindsTool.NAME, "{\"build\": \"acme\", \"confirm\": true}"), user.chatContext()).text());
+
+        assertThat(later).containsKey("shown_again").doesNotContainKey("recorded");
+        assertThat(user.shown()).isEmpty();
     }
 
     @Test

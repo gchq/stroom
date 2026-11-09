@@ -8,7 +8,8 @@
     <xsl:variable name="json" select="string(($text)[1])"/>
     <xsl:if test="normalize-space($json)">
       <xsl:try>
-        <xsl:sequence select="json-to-xml($json)"/>
+        <xsl:variable name="parsed" select="json-to-xml($json)"/>
+        <xsl:sequence select="if ($parsed/*[local-name() = 'string'] and matches($parsed/*, '^\s*[\[{]')) then mcp:json-to-xml(string($parsed/*)) else $parsed"/>
         <xsl:catch/>
       </xsl:try>
     </xsl:if>

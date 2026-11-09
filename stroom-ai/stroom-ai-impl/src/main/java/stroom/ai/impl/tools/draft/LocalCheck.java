@@ -222,7 +222,8 @@ public final class LocalCheck {
             return null;
         }
         try {
-            return ToolJson.loads(value == null
+            // JSON encoded twice (a JSON string holding it) read again, as the XSLT's mcp:json-to-xml does.
+            return SampleProfiler.loadsDecoded(value == null
                     ? ""
                     : (String) value);
         } catch (final ToolJson.JsonDecodeException e) {

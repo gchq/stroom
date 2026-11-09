@@ -25,6 +25,7 @@ import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.SyslogHeaders;
 import stroom.ai.impl.tools.sample.TimePatterns;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.sample.XmlTree;
@@ -37,6 +38,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -361,7 +363,8 @@ public final class DraftMapping {
             return null;
         }
         try {
-            return ToolJson.loads(line);
+            // A line encoded twice (a JSON string holding the object) read as the object.
+            return SampleProfiler.loadsDecoded(line);
         } catch (final ToolJson.JsonDecodeException e) {
             return null;
         }
@@ -573,7 +576,7 @@ public final class DraftMapping {
 
     private static boolean jsonObject(final String text) {
         try {
-            return ToolJson.loads(text) instanceof Map;
+            return SampleProfiler.loadsDecoded(text) instanceof Map;
         } catch (final ToolJson.JsonDecodeException e) {
             return false;
         }
@@ -596,6 +599,41 @@ public final class DraftMapping {
         return String.join(", ", names.stream().map(ToolText::repr).toList());
     }
 
+
+    // A text field holding a syslog line, or the end of an RFC 5424 header after its host, in most of its values (at
+    // least four in five): how to read it; else null.
+    private static HeldHeader heldHeader(final List<String> held) {
+        final List<String> texts = held.stream().map(value -> ToolText.strip(value.replace(BYTE_ORDER_MARK, "")))
+                .filter(value -> !value.isEmpty())
+                .toList();
+        if (texts.isEmpty()) {
+            return null;
+        }
+        final Map<String, Integer> formats = new LinkedHashMap<>();
+        texts.forEach(text -> formats.merge(Objects.requireNonNullElse(SyslogHeaders.formatOf(text), ""), 1,
+                Integer::sum));
+        final Map.Entry<String, Integer> most = formats.entrySet().stream()
+                .filter(entry -> !entry.getKey().isEmpty())
+                .max(Map.Entry.comparingByValue())
+                .orElse(null);
+        if (most != null && most.getValue() >= 0.8 * texts.size()) {
+            final boolean rfc5424 = SampleProfiler.SYSLOG_5424_FORMAT.equals(most.getKey());
+            return new HeldHeader(rfc5424
+                    ? SplitterDryRun.SYSLOG_5424
+                    : SplitterDryRun.SYSLOG_3164, "", rfc5424
+                    ? SplitterDryRun.SYSLOG_5424_NAMES
+                    : SplitterDryRun.SYSLOG_3164_NAMES, "a syslog line (" + (rfc5424
+                    ? "RFC 5424"
+                    : "RFC 3164") + ")", true);
+        }
+        final long tails = texts.stream().filter(SyslogHeaders::isTail).count();
+        if (tails >= 0.8 * texts.size() && texts.stream().anyMatch(SyslogHeaders::hasStructuredData)) {
+            return new HeldHeader(SyslogHeaders.TAIL_5424, "s", SyslogHeaders.TAIL_5424_NAMES, "what follows the "
+                                  + "host in an RFC 5424 syslog header (app, process id, message id, structured "
+                                  + "data, message)", false);
+        }
+        return null;
+    }
 
     // --------------------------------------------------------------------------------
 
@@ -645,6 +683,8 @@ public final class DraftMapping {
         // A field of times of day alone (FortiOS's time=), which a date-only field may be joined with, or null.
         private String clockField;
         private Set<String> containerFields = Set.of();
+        // The headers' fields around the source's own (a relay's, a collector's): their times last.
+        private Set<String> relayFields = Set.of();
         private final List<Map<String, Object>> timeCandidates = new ArrayList<>();
 
         /// @param read       The sample as the draft reads it.
@@ -681,8 +721,10 @@ public final class DraftMapping {
             survey();
             List<String> heldFields = heldJson();
             heldFields = heldXml(heldFields);
+            heldFields = heldSyslog(heldFields);
             heldFields = heldPairs(heldFields);
             taken.addAll(heldFields);
+            wrappedLines();
             final String keyTime = keyedTime();
             final String timeField = keyTime != null
                     ? keyTime
@@ -906,13 +948,99 @@ public final class DraftMapping {
             return out;
         }
 
+        // Text holding a syslog line (a shipper's JSON around the source's own line: a container runtime's log, a
+        // collector's message), or what follows the host in an RFC 5424 header (a shipper that read the header up to
+        // the host into keys of its own, the rest kept as one value: seen in testing): the header's parts are fields
+        // of their own through extract (<field>.time, <field>.app, ... <field>.message), any pairs in them read
+        // after, and the text itself isn't mapped. A line's header is the source's, so its time and host are read
+        // before the wrapper's.
+        @SuppressWarnings("unchecked")
+        private List<String> heldSyslog(final List<String> heldFields) {
+            final List<String> out = new ArrayList<>(heldFields);
+            final Set<String> skipped = new HashSet<>(heldFields);
+            skipped.addAll(EventTimes.wrappedTexts(spec));
+            final List<String> derived = new ArrayList<>();
+            for (final String name : List.copyOf(names)) {
+                final HeldHeader header = skipped.contains(name) || !"string".equals(type(name))
+                        ? null
+                        : heldHeader(values.get(name));
+                if (header == null) {
+                    continue;
+                }
+                final List<String> fields = header.names().stream().map(part -> name + "." + part).toList();
+                if (fields.stream().anyMatch(names::contains)) {
+                    // Names the record already has: not read again.
+                    continue;
+                }
+                final Pattern pattern = ToolText.re(header.regex(), header.flags().contains("s")
+                        ? Pattern.DOTALL
+                        : 0);
+                for (final Map<String, Object> record : records) {
+                    final Matcher found = pattern.matcher(JsonValues.text(record.get(name)));
+                    if (found.find()) {
+                        for (int n = 1; n <= fields.size(); n++) {
+                            if (found.group(n) != null && !ToolText.isBlank(found.group(n))) {
+                                record.put(fields.get(n - 1), found.group(n));
+                            }
+                        }
+                    }
+                }
+                final Map<String, Object> extract = dict(FIELD, name, "regex", header.regex(), NAMES,
+                        new ArrayList<>(fields));
+                if (!header.flags().isEmpty()) {
+                    extract.put("flags", header.flags());
+                }
+                ((List<Map<String, Object>>) mapping.computeIfAbsent(EXTRACT, k -> new ArrayList<>())).add(extract);
+                derived.addAll(fields);
+                out.add(name);
+                notes.add("'" + name + "' holds " + header.what() + ": its parts are fields of their own through "
+                          + "extract (" + reprs(fields) + "), read before the record's other fields"
+                          + (header.line()
+                        ? " (the line's header is the source's, so its time and host come before the wrapper's)"
+                        : "") + ". The text itself isn't mapped.");
+            }
+            if (!derived.isEmpty()) {
+                // First in each record, so a name read by order (the time, the host) is the source's own.
+                for (final Map<String, Object> record : records) {
+                    final Map<String, Object> rest = new LinkedHashMap<>(record);
+                    record.clear();
+                    derived.stream().filter(rest::containsKey).forEach(field -> record.put(field, rest.get(field)));
+                    rest.forEach(record::putIfAbsent);
+                }
+                survey();
+            }
+            return out;
+        }
+
+        // The splitter's text that is a whole line it reads further as a syslog header (a relay's message holding
+        // the source's line, a collector's line after its words): all of it is in the fields read from it.
+        private void wrappedLines() {
+            final List<String> wrapped = EventTimes.wrappedTexts(spec).stream().filter(names::contains).toList();
+            if (wrapped.isEmpty()) {
+                return;
+            }
+            taken.addAll(wrapped);
+            final List<String> relays = EventTimes.relayFields(spec).stream()
+                    .filter(name -> names.contains(name) && !wrapped.contains(name))
+                    .toList();
+            notes.add("The source's syslog line is wrapped (a relay's syslog header, or a collector's words, before "
+                      + "it): " + reprs(wrapped) + " " + (wrapped.size() == 1
+                    ? "is"
+                    : "are") + " the source's whole line, read into its fields, and isn't mapped; the wrapper's "
+                      + "fields (" + reprs(relays) + ") are read after the source's own (its time last), and left "
+                      + "as Data.");
+        }
+
         // Text holding key/value pairs: each key a field of its own, through extract (keys alike are written as
         // one function, called with the key), and so homed, ruled on and carried as Data like any field. The text
         // itself isn't mapped when every value had pairs.
         @SuppressWarnings("unchecked")
         private List<String> heldPairs(final List<String> heldFields) {
             final List<String> out = new ArrayList<>(heldFields);
-            final Map<String, PairExtracts> paired = pairExtracts(values, new HashSet<>(heldFields));
+            final Set<String> skipped = new HashSet<>(heldFields);
+            // A relay's message, or a collector's line: the source's whole line, its pairs read from its own message.
+            skipped.addAll(EventTimes.wrappedTexts(spec));
+            final Map<String, PairExtracts> paired = pairExtracts(values, skipped);
             paired.forEach((field, pairs) -> {
                 final List<Map<String, Object>> extracts = pairs.extracts();
                 withPairs(records, extracts);
@@ -1036,6 +1164,7 @@ public final class DraftMapping {
         // is joined. The container's time is the fallback for records without their own.
         private String time() {
             containerFields = EventTimes.containerFields(spec);
+            relayFields = EventTimes.relayFields(spec);
             final List<String> stamps = names.stream().filter(n -> type(n).startsWith(TIMESTAMP)).toList();
             stamps.stream().filter(n -> EventTimes.rank(timeKey(n)) != EventTimes.Rank.OBJECT)
                     .sorted(Comparator.comparingInt(this::timeOrder))
@@ -1060,7 +1189,8 @@ public final class DraftMapping {
                 final String precise = usableTimes.stream()
                         .filter(n -> !n.equals(first) && subSecond(n)
                                      && (type(n).contains("H") || type(n).contains("epoch"))
-                                     && (containerFields.contains(first) || !containerFields.contains(n)))
+                                     && (containerFields.contains(first) || !containerFields.contains(n))
+                                     && (relayFields.contains(first) || !relayFields.contains(n)))
                         .findFirst()
                         .orElse(null);
                 if (precise != null) {
@@ -1126,7 +1256,12 @@ public final class DraftMapping {
             final int dateAlone = dateOnly && rank != EventTimes.Rank.EVENT
                     ? 100
                     : 0;
-            return dateAlone + rank.ordinal() * 2 + (container
+            // A relay's or collector's time after any of the source's own: when it was passed on, not when it
+            // happened.
+            final int relay = relayFields.contains(name)
+                    ? 50
+                    : 0;
+            return dateAlone + relay + rank.ordinal() * 2 + (container
                     ? 1
                     : 0);
         }
@@ -1983,6 +2118,12 @@ public final class DraftMapping {
                          boolean anyPairs,
                          List<String> kinds,
                          List<Map<String, Object>> rules) {
+
+    }
+
+    // How a text field's syslog header is read: the extraction's regex, flags and field names (each under the
+    // field's own), what the notes call it, and whether it is a whole line (its time and host the source's).
+    private record HeldHeader(String regex, String flags, List<String> names, String what, boolean line) {
 
     }
 }

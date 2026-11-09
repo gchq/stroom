@@ -31,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,6 +60,10 @@ class TestStroomSplitterRun {
     private static final String TRACE = "java.lang.IllegalStateException: boom\n"
                                         + "\tat com.acme.Foo.bar(Foo.java:12)\n"
                                         + "\tat com.acme.Main.main(Main.java:3)\n";
+
+    private static final String COLLECTED = TestSplitterDryRun.RELAYED.lines()
+            .map(line -> "2026-11-09T10:00:01Z collector01 " + line.substring(28))
+            .collect(Collectors.joining("\n", "", "\n"));
 
     private static final SplitterSpec KEYED = SplitterSpec.builder("key_value").delimiter(" ").quote("\"")
             .recordKey("(?<!\\S)msg=(\"[^\"]*\"|[^\\s\"]+)").keyField("msg")
@@ -158,6 +163,19 @@ class TestStroomSplitterRun {
                         + "2026-10-11T10:00:02Z WARN [req-1] respond 200 slow\n"
                         + "2026-10-11T10:00:03Z INFO [req-2] receive GET /stock\n"
                         + "2026-10-11T10:00:03Z INFO [req-2] respond 404\n"),
+                // A relay's header before the source's own line, and a collector's words before it.
+                Arguments.of("Syslog within syslog", SplitterDryRun.inferSpec(TestSplitterDryRun.RELAYED).spec(),
+                        TestSplitterDryRun.RELAYED),
+                Arguments.of("Relayed and direct syslog in one stream",
+                        SplitterDryRun.inferSpec(TestSplitterDryRun.RELAYED_AND_DIRECT).spec(),
+                        TestSplitterDryRun.RELAYED_AND_DIRECT),
+                Arguments.of("A collector's words before syslog", SplitterDryRun.inferSpec(COLLECTED).spec(),
+                        COLLECTED),
+                Arguments.of("RFC 5424 structured data holding escaped brackets",
+                        SplitterSpec.builder("syslog").rfc("rfc5424").build(),
+                        "<14>1 2026-11-09T21:32:22+11:00 nas01 Connection - - [app@32473 user=\"EXAMPLE\\\\alice\" "
+                        + "event=\"User [EXAMPLE\\\\alice\\] opened [Projects\\].\"][meta sequenceId=\"1\"] User "
+                        + "[EXAMPLE\\alice] opened [Projects].\n"),
                 Arguments.of("W3C directives",
                         SplitterSpec.builder("delimited").delimiter(" ").header(true).commentPrefix("#")
                                 .headerDirective("#Fields:").build(),

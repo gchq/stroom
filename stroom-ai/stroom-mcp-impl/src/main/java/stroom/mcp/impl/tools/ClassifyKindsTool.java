@@ -53,6 +53,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.LongSupplier;
 import java.util.regex.Pattern;
 
 /// `classify_kinds` - the agent classifies every kind of event in the sample the user's documentation doesn't
@@ -152,6 +153,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private static final String AWAITING_AMENDMENTS = "awaiting_amendments";
     // How long a shown set stays in view for its form: past it, the set is shown again before the form.
     private static final long SHOWN_FRESH_MS = 90_000;
+    // Between a shown mark's time and the call that asked its form.
+    private static final String ASKED_BY = "@";
     private static final String HINT = "hint";
     private static final String TABLE = "table";
     private static final String RECORDED = "recorded";
@@ -190,6 +193,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private final Consent consent;
     private final BuildPlan plan;
     private final TranslationBuilds builds;
+    private final LongSupplier clock;
 
     @Inject
     ClassifyKindsTool(final RecordSourceNotesTool notes,
@@ -197,11 +201,29 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                       final Consent consent,
                       final BuildPlan plan,
                       final TranslationBuilds builds) {
+        this(notes, sampleStreamTexts, consent, plan, builds, System::currentTimeMillis);
+    }
+
+    /// As the injected constructor, with the clock given, for tests.
+    ///
+    /// @param notes             The build's source notes.
+    /// @param sampleStreamTexts Reads the sample streams.
+    /// @param consent           Asks the user.
+    /// @param plan              The build's plan.
+    /// @param builds            The builds.
+    /// @param clock             The time now, in milliseconds.
+    ClassifyKindsTool(final RecordSourceNotesTool notes,
+                      final SampleStreamTexts sampleStreamTexts,
+                      final Consent consent,
+                      final BuildPlan plan,
+                      final TranslationBuilds builds,
+                      final LongSupplier clock) {
         this.notes = notes;
         this.sampleStreamTexts = sampleStreamTexts;
         this.consent = consent;
         this.plan = plan;
         this.builds = builds;
+        this.clock = clock;
     }
 
     @Override
@@ -851,7 +873,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                   + "back in the chat");
         }
         final List<Map<String, Object>> set = firstSet(proposed);
-        if (!freshlyShown(notesNow, set)) {
+        if (!freshlyShown(notesNow, set, call.id())) {
             // Shown long ago, or another set: shown again, right before the form (seen in chat 169: the medium set
             // shown, the agent drafting for some forty calls, then the form asking about a table far up the chat).
             final Map<String, Object> again = new LinkedHashMap<>();
@@ -866,6 +888,10 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final String accept = set.size() == 1
                 ? "Accept it"
                 : "Accept all " + set.size();
+        // Marked as asked by this call: in the chat the run stops at the form and the same call is made again with
+        // the answer, however long the user took (seen in testing: an answer given five minutes after the table was
+        // shown was dropped, the table shown again and the user asked a second time).
+        markAsked(context, build, source, notesNow, call.id());
         final Optional<String> answer;
         try {
             answer = consent.answer(call, context, NAME,
@@ -940,29 +966,52 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     }
 
     // What marks the set of proposals shown now: when, then its kinds (for freshlyShown).
-    private static List<String> shownMark(final List<Map<String, Object>> proposed) {
-        final List<String> mark = new ArrayList<>(List.of(String.valueOf(System.currentTimeMillis())));
+    private List<String> shownMark(final List<Map<String, Object>> proposed) {
+        final List<String> mark = new ArrayList<>(List.of(String.valueOf(clock.getAsLong())));
         firstSet(proposed).forEach(entry -> mark.add(String.valueOf(entry.get(KEY))));
         return proposed.isEmpty()
                 ? List.of()
                 : mark;
     }
 
-    // Whether the set was the last shown the user, and lately (within SHOWN_FRESH_MS), so the form follows it.
-    private static boolean freshlyShown(final Map<String, Object> notesNow, final List<Map<String, Object>> set) {
+    // Whether the set was the last shown the user, and lately (within SHOWN_FRESH_MS), so the form follows it; or
+    // its form was asked by this call (the chat making the call again with the answer).
+    private boolean freshlyShown(final Map<String, Object> notesNow,
+                                 final List<Map<String, Object>> set,
+                                 final String callId) {
         final List<String> mark = JsonValues.strings(notesNow.get(RecordSourceNotesTool.SHOWN));
-        if (mark.isEmpty()) {
+        if (mark.isEmpty() || !mark.subList(1, mark.size()).equals(set.stream()
+                .map(entry -> String.valueOf(entry.get(KEY)))
+                .toList())) {
             return false;
+        }
+        final String[] when = mark.getFirst().split(ASKED_BY, 2);
+        if (when.length == 2 && when[1].equals(callId)) {
+            return true;
         }
         final long at;
         try {
-            at = Long.parseLong(mark.getFirst());
+            at = Long.parseLong(when[0]);
         } catch (final NumberFormatException e) {
             return false;
         }
-        return System.currentTimeMillis() - at <= SHOWN_FRESH_MS
-               && mark.subList(1, mark.size()).equals(set.stream().map(entry -> String.valueOf(entry.get(KEY)))
-                .toList());
+        return clock.getAsLong() - at <= SHOWN_FRESH_MS;
+    }
+
+    // The shown set's mark with the call asking its form: `<when>@<call id>`.
+    private void markAsked(final ToolCallContext context,
+                           final String build,
+                           final String source,
+                           final Map<String, Object> notesNow,
+                           final String callId) {
+        final List<String> mark = new ArrayList<>(JsonValues.strings(notesNow.get(RecordSourceNotesTool.SHOWN)));
+        final String when = mark.getFirst().split(ASKED_BY, 2)[0];
+        if (mark.getFirst().equals(when + ASKED_BY + callId)) {
+            return;
+        }
+        mark.set(0, when + ASKED_BY + callId);
+        notes.recordClassified(context, build, source, List.of(), pending(notesNow),
+                Map.of(RecordSourceNotesTool.SHOWN, List.copyOf(mark)));
     }
 
     // Whether the answer accepts: the button's, or the user's own words saying the same.

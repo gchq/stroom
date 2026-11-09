@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -75,7 +76,7 @@ public final class Shapes {
                     "<uuid>"),
             Map.entry(ToolText.re("\\b(?:0x)?[0-9a-fA-F]{12,}\\b"), "<hex>"));
     private static final Pattern SYSLOG_5424_PARTS = ToolText.re(
-            "^<\\d+>1 \\S+ \\S+ (\\S+) \\S+ \\S+ (?:\\[.*?\\]|-) ?(.*)$");
+            "^<\\d+>1 \\S+ \\S+ (\\S+) \\S+ \\S+ (?:" + SyslogHeaders.STRUCTURED_DATA + ") ?(.*)$");
     private static final Pattern SYSLOG_3164_PARTS = ToolText.re(
             "^(?:<\\d+>)?\\w{3} [ \\d]\\d \\d{2}:\\d{2}:\\d{2} \\S+ ([^:\\[\\s]+)(?:\\[\\d+\\])?: ?(.*)$");
     private static final List<String> CEF_FIELDS = List.of("version", "vendor", "product", "device_version",
@@ -224,6 +225,11 @@ public final class Shapes {
     // names the event) its masked text.
     private String inner(final String value, final int depth, final boolean drain) {
         final String text = ToolText.strip(value.replace("﻿", ""));
+        final String decoded = SampleProfiler.decodedString(text);
+        if (decoded != null) {
+            // JSON encoded twice: a JSON string holding the JSON text.
+            return inner(decoded, depth, drain);
+        }
         final int start = text.indexOf('{');
         if (start >= 0) {
             Object json = null;
@@ -247,9 +253,11 @@ public final class Shapes {
         if (!pairs.isEmpty()) {
             return "kv:" + String.join(", ", pairs);
         }
-        return drain
-                ? text("", text)
-                : null;
+        if (!drain) {
+            return null;
+        }
+        final String[] parts = heldParts(text);
+        return text(parts[0], parts[1]);
     }
 
     private String text(final String program, final String message) {
@@ -396,15 +404,27 @@ public final class Shapes {
         return tokens;
     }
 
-    // (program, message) for syslog lines; ("", line) otherwise.
+    // (program, message) for syslog lines, of the source's own header inside any relay's or collector's; ("",
+    // line) otherwise.
     private static String[] syslogParts(final String line) {
-        Matcher m = ToolText.matchAt(SYSLOG_5424_PARTS, line);
+        final String own = SyslogHeaders.innermost(line);
+        Matcher m = ToolText.matchAt(SYSLOG_5424_PARTS, own);
         if (m == null) {
-            m = ToolText.matchAt(SYSLOG_3164_PARTS, line);
+            m = ToolText.matchAt(SYSLOG_3164_PARTS, own);
         }
         return m != null
                 ? new String[]{m.group(1), m.group(2)}
                 : new String[]{"", line};
+    }
+
+    // (program, message) for a message field's text: a syslog line, or what follows the host in an RFC 5424 header
+    // (a shipper that read the header up to the host: app, process id, message id, structured data, message).
+    private static String[] heldParts(final String text) {
+        if (SyslogHeaders.isTail(text)) {
+            final Matcher m = SyslogHeaders.tailOf(text);
+            return new String[]{m.group(1), Objects.requireNonNullElse(m.group(5), "")};
+        }
+        return syslogParts(text);
     }
 
     /// A CEF record's header fields (after any syslog prefix), its pipes escaped as `\|` inside a field.

@@ -29,7 +29,9 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
   stroom://guide/reference-data) or from a Dictionary doc (`save_dictionary`).
 - A text field holding several values (a message with a time, user, action and description) is parsed with `extract`,
   never substring-before/after chains; JSON held in a string is read with an `xpath` using `json-to-xml()`
-  (stroom://guide/json-input).
+  (stroom://guide/json-input), JSON encoded twice (a JSON string holding it) too. A syslog line held in a field (a
+  shipper's JSON around it), or what follows the host in an RFC 5424 header, is drafted as an `extract` of its
+  header's parts (`<field>.time`, `<field>.app`, `<field>.structured`, `<field>.message`...).
 - Only `stroom:` functions that exist may be used (`format-date`, `lookup`, `meta`, `dictionary`, `log`,
   `json-to-xml`, ...; there is no `stroom:json-parse`): `check_xslt` refuses unknown ones, elements the schema has no
   place for, and expressions that would select nothing for want of a namespace (stroom://guide/xslt).

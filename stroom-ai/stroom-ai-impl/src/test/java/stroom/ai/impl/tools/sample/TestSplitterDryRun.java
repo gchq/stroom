@@ -423,4 +423,160 @@ class TestSplitterDryRun {
                 .hasMessage("header_directive names the columns: give header: true with it");
         assertThat(SplitterSpec.builder("key_value").build().delimiter()).isEqualTo(" ");
     }
+
+    // A relay's RFC 3164 header before each source's own line, as a relay forwards what it received.
+    static final String RELAYED = """
+            <13>Nov  9 10:00:01 relay01 <38>Nov  9 09:59:58 bastion01 sshd[2211]: user=alice action=login src=192.0.2.5
+            <13>Nov  9 10:00:02 relay01 <38>Nov  9 09:59:59 bastion01 sshd[2215]: user=bob action=failed src=192.0.2.9
+            <13>Nov  9 10:00:03 relay01 <38>Nov  9 10:00:00 bastion02 sshd[2219]: user=carol action=login src=192.0.2.7
+            """;
+
+    @Test
+    void aRelaysHeaderBeforeTheSourcesIsReadAsItsOwnFields() {
+        final SplitterSpec spec = SplitterDryRun.inferSpec(RELAYED).spec();
+
+        assertThat(spec.kind()).isEqualTo("syslog");
+        assertThat(spec.namePrefix()).isEqualTo("relay_");
+        assertThat(spec.bodyField()).isEqualTo("relay_message");
+        assertThat(spec.body().kind()).isEqualTo("syslog");
+        assertThat(spec.body().namePrefix()).isNull();
+        assertThat(spec.body().body().kind()).isEqualTo("key_value");
+        final Map<String, String> first = SplitterDryRun.dryRun(spec, RELAYED).records().getFirst();
+        assertThat(first).containsEntry("relay_time", "Nov  9 10:00:01").containsEntry("relay_host", "relay01")
+                .containsEntry("time", "Nov  9 09:59:58").containsEntry("host", "bastion01")
+                .containsEntry("app", "sshd").containsEntry("pid", "2211").containsEntry("user", "alice");
+        // The relay's message is the source's whole line.
+        assertThat(first.get("relay_message")).startsWith("<38>Nov  9 09:59:58 bastion01 sshd[2211]: ");
+    }
+
+    @Test
+    void anRfc5424RelayAroundAnRfc3164SourceIsReadToo() {
+        final String sample = RELAYED.lines()
+                .map(line -> "<13>1 2026-11-09T10:00:01.123Z relay01 rsyslogd - - - " + line.substring(28))
+                .collect(Collectors.joining("\n"));
+        final SplitterSpec spec = SplitterDryRun.inferSpec(sample).spec();
+
+        assertThat(spec.rfc()).isEqualTo("rfc5424");
+        assertThat(spec.body().rfc()).isEqualTo("rfc3164");
+        assertThat(SplitterDryRun.dryRun(spec, sample).records().getFirst())
+                .containsEntry("relay_time", "2026-11-09T10:00:01.123Z").containsEntry("host", "bastion01");
+    }
+
+    @Test
+    void aCollectorsWordsBeforeEachHeaderAreTheRelaysFields() {
+        final String sample = RELAYED.lines()
+                .map(line -> "2026-11-09T10:00:01Z collector01 " + line.substring(28))
+                .collect(Collectors.joining("\n"));
+        final Map<String, Object> profile = SampleProfiler.profile(sample);
+        assertThat(profile).containsEntry("format", SampleProfiler.SYSLOG_3164_FORMAT)
+                .containsEntry(SampleProfiler.PREFIX_WORDS, 2);
+
+        final SplitterSpec spec = SplitterDryRun.inferSpec(sample).spec();
+
+        assertThat(spec.kind()).isEqualTo("regex");
+        assertThat(spec.names()).containsExactly("relay_time", "relay_word2", "relay_line");
+        assertThat(spec.body().kind()).isEqualTo("syslog");
+        final SplitterDryRun.DryRun run = SplitterDryRun.dryRun(spec, sample);
+        assertThat(run.records()).hasSize(3);
+        assertThat(run.records().getFirst()).containsEntry("relay_time", "2026-11-09T10:00:01Z")
+                .containsEntry("relay_word2", "collector01").containsEntry("time", "Nov  9 09:59:58")
+                .containsEntry("user", "alice");
+    }
+
+    @Test
+    void aPlainSyslogStreamIsNotTakenForARelayedOne() {
+        final String sample = RELAYED.lines().map(line -> line.substring(28)).collect(Collectors.joining("\n"));
+        final SplitterSpec spec = SplitterDryRun.inferSpec(sample).spec();
+
+        assertThat(spec.namePrefix()).isNull();
+        assertThat(spec.body().kind()).isEqualTo("key_value");
+    }
+
+    @Test
+    void structuredDataIsReadToItsOwnClosingBracket() {
+        // A quoted value holding escaped brackets, then a second element.
+        final String line = "<14>1 2026-11-09T21:32:22+11:00 nas01 Connection - - [synolog@6574 event_id=\"0x0004\" "
+                            + "event=\"User [EXAMPLE\\\\alice\\] from [192.0.2.10\\] accessed [Projects\\].\"]"
+                            + "[meta sequenceId=\"12\"] User [EXAMPLE\\alice] accessed [Projects].";
+        final Map<String, String> fields = SplitterDryRun.dryRun(SplitterSpec.builder("syslog").rfc("rfc5424").build(),
+                line).records().getFirst();
+
+        assertThat(fields.get("structured")).startsWith("[synolog@6574 ").endsWith("[meta sequenceId=\"12\"]");
+        assertThat(fields).containsEntry("message", "User [EXAMPLE\\alice] accessed [Projects].");
+    }
+
+    @Test
+    void aNamePrefixIsForSyslogAndRoundTrips() {
+        final SplitterSpec spec = SplitterSpec.builder("syslog").namePrefix("relay_")
+                .body(SplitterSpec.builder("syslog").build()).build();
+
+        assertThat(spec.syslogNames()).containsExactly("relay_pri", "relay_time", "relay_host", "relay_app",
+                "relay_pid", "relay_message");
+        assertThat(spec.toMap()).containsEntry("name_prefix", "relay_").doesNotContainKey("body_field");
+        assertThat(SplitterSpec.fromMap(spec.toMap())).isEqualTo(spec);
+        assertThatThrownBy(() -> SplitterSpec.builder("key_value").namePrefix("relay_").build())
+                .hasMessageContaining("name_prefix is for syslog");
+        assertThatThrownBy(() -> SplitterSpec.builder("syslog").namePrefix("relay-").build())
+                .hasMessageContaining("name_prefix is for syslog");
+    }
+
+    // Relayed lines and lines the sources sent directly, in one stream.
+    static final String RELAYED_AND_DIRECT = RELAYED + """
+            <38>Nov  9 10:00:05 bastion03 sshd[3001]: user=erin action=login src=192.0.2.21
+            <38>Nov  9 10:00:06 bastion03 sshd[3002]: user=frank action=failed src=192.0.2.22
+            <38>Nov  9 10:00:07 bastion04 sshd[3003]: user=grace action=logout src=192.0.2.23
+            """;
+
+    @Test
+    void relayedAndDirectLinesInOneStreamAreEachReadAsTheSourcesOwn() {
+        final SplitterSpec spec = SplitterDryRun.inferSpec(RELAYED_AND_DIRECT).spec();
+
+        // One regex, so a kind of event is one kind however its line came.
+        assertThat(spec.kind()).isEqualTo("regex");
+        assertThat(spec.names()).startsWith("relay_pri", "relay_time", "relay_host").contains("time", "host");
+        assertThat(spec.body().kind()).isEqualTo("key_value");
+        final List<Map<String, String>> records = SplitterDryRun.dryRun(spec, RELAYED_AND_DIRECT).records();
+        assertThat(records).hasSize(6);
+        // Either way, the source's own header is under the plain names.
+        assertThat(records.getFirst()).containsEntry("host", "bastion01").containsEntry("time", "Nov  9 09:59:58")
+                .containsEntry("relay_host", "relay01").containsEntry("user", "alice");
+        assertThat(records.getLast()).containsEntry("host", "bastion04").containsEntry("time", "Nov  9 10:00:07")
+                .containsEntry("relay_host", "").containsEntry("user", "grace");
+    }
+
+    @Test
+    void relayedSourcesInAnotherHeaderFormatThanTheDirectOnesHaveAPartEach() {
+        final String sample = """
+                <13>Nov  9 10:00:01 relay01 <38>1 2026-11-09T09:59:58Z bastion01 sshd 2211 - - user=alice action=login
+                <13>Nov  9 10:00:02 relay01 <38>1 2026-11-09T09:59:59Z bastion01 sshd 2215 - - user=bob action=logout
+                <38>Nov  9 10:00:05 bastion03 sshd[3001]: user=erin action=login src=192.0.2.21
+                <38>Nov  9 10:00:06 bastion03 sshd[3002]: user=frank action=logout src=192.0.2.22
+                """;
+        final SplitterSpec spec = SplitterDryRun.inferSpec(sample).spec();
+
+        assertThat(spec.parts()).extracting(SplitterSpec::variant).containsExactly("syslog_relayed", "syslog");
+        final List<Map<String, String>> records = SplitterDryRun.dryRun(spec, sample).records();
+        assertThat(records.getFirst()).containsEntry("variant", "syslog_relayed").containsEntry("host", "bastion01")
+                .containsEntry("time", "2026-11-09T09:59:58Z").containsEntry("relay_host", "relay01");
+        assertThat(records.getLast()).containsEntry("variant", "syslog").containsEntry("host", "bastion03")
+                .doesNotContainKey("relay_host");
+    }
+
+    @Test
+    void relayedAndDirectSyslogAmongOtherFormatsAreOnePart() {
+        final String sample = RELAYED_AND_DIRECT + """
+                2026-11-09 10:00:08 ERROR disk full on /var
+                2026-11-09 10:00:09 WARN queue backing up
+                2026-11-09 10:00:10 INFO queue drained
+                """;
+        final SplitterSpec spec = SplitterDryRun.inferSpec(sample).spec();
+
+        assertThat(spec.kind()).isEqualTo(SplitterSpec.ALTERNATIVES);
+        assertThat(spec.parts()).extracting(SplitterSpec::variant).contains("syslog", "text")
+                .doesNotContain("syslog_relayed");
+        final List<Map<String, String>> records = SplitterDryRun.dryRun(spec, sample).records();
+        assertThat(records).hasSize(9);
+        assertThat(records).filteredOn(record -> "syslog".equals(record.get("variant"))).hasSize(6)
+                .allSatisfy(record -> assertThat(record).containsKeys("relay_host", "host", "user"));
+    }
 }

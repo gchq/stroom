@@ -48,6 +48,9 @@ import java.util.regex.PatternSyntaxException;
 /// @param names           regex: a field name per capture group, in order; "" skips a group.
 /// @param pairSeparator   key_value: what separates a key from its value.
 /// @param rfc             syslog: the header format, `rfc5424` or `rfc3164`.
+/// @param namePrefix      syslog: what the header's field names start with (`relay_` writes `relay_time`,
+///                        `relay_host`... and `relay_message`), so a relay's header keeps apart from the source's
+///                        own header inside its message; or null for the plain names.
 /// @param body            The spec the field named by bodyField is parsed further with, or null.
 /// @param bodyField       The field body parses.
 /// @param quotedNewlines  delimited, with quote: values in quotes may hold new lines, so a record ends at a new line
@@ -112,6 +115,7 @@ public record SplitterSpec(String kind,
                            List<String> names,
                            String pairSeparator,
                            String rfc,
+                           String namePrefix,
                            SplitterSpec body,
                            String bodyField,
                            boolean quotedNewlines,
@@ -162,6 +166,7 @@ public record SplitterSpec(String kind,
     /// The field a record's first line's name is written in, unless lead_field names another.
     public static final String LEAD = "lead";
     private static final Pattern VARIANT_NAME = Pattern.compile("[A-Za-z0-9_.-]+");
+    private static final Pattern NAME_PREFIX = Pattern.compile("[A-Za-z][A-Za-z0-9_]*");
     // A data element of a converter's XML with a value of its own (no $ group): how an alternatives part writes its
     // variant (SplitterXml).
     private static final Pattern LITERAL_DATA = Pattern.compile(
@@ -187,7 +192,18 @@ public record SplitterSpec(String kind,
         names = List.copyOf(Objects.requireNonNullElse(names, List.of()));
         pairSeparator = Objects.requireNonNullElse(pairSeparator, "=");
         rfc = Objects.requireNonNullElse(rfc, "rfc3164");
+        if (namePrefix != null && namePrefix.isEmpty()) {
+            namePrefix = null;
+        }
+        if (namePrefix != null && (!"syslog".equals(kind) || !NAME_PREFIX.matcher(namePrefix).matches())) {
+            throw new IllegalArgumentException("name_prefix is for syslog, and is letters, digits and '_' (e.g. "
+                                               + "'relay_')");
+        }
         bodyField = Objects.requireNonNullElse(bodyField, "message");
+        if (namePrefix != null && "message".equals(bodyField)) {
+            // The header's message is named with the prefix too.
+            bodyField = namePrefix + "message";
+        }
         directives = List.copyOf(Objects.requireNonNullElse(directives, List.of()));
         fields = Collections.unmodifiableMap(new LinkedHashMap<>(Objects.requireNonNullElse(fields, Map.of())));
         parts = List.copyOf(Objects.requireNonNullElse(parts, List.of()));
@@ -337,6 +353,20 @@ public record SplitterSpec(String kind,
         }
     }
 
+    /// The names a syslog spec's header writes its fields as: RFC 5424's or RFC 3164's, each with the name prefix.
+    ///
+    /// @return The names, in the header regex's group order ([SplitterDryRun#SYSLOG_5424] or
+    /// [SplitterDryRun#SYSLOG_3164]).
+    public List<String> syslogNames() {
+        final List<String> plain = "rfc5424".equals(rfc)
+                ? SplitterDryRun.SYSLOG_5424_NAMES
+                : SplitterDryRun.SYSLOG_3164_NAMES;
+        if (namePrefix == null) {
+            return plain;
+        }
+        return plain.stream().map(name -> namePrefix + name).toList();
+    }
+
     /// The regex a record matches at its start to be read by this spec as an alternatives part: its `match`, else
     /// its kind's own (a syslog header, CEF's, pairs from start to end, a regex's own pattern).
     ///
@@ -481,7 +511,8 @@ public record SplitterSpec(String kind,
     /// Reads a spec from its JSON (the form [#toMap()] writes).
     ///
     /// @param json The spec as JSON: `kind`, and any of `delimiter`, `header` (true or false, or the column
-    ///             names), `quote`, `pattern`, `names`, `pair_separator`, `rfc`, `body` (a spec), `body_field`,
+    ///             names), `quote`, `pattern`, `names`, `pair_separator`, `rfc`, `name_prefix`, `body` (a spec),
+    ///             `body_field`,
     ///             `quoted_newlines`, `record_end`, `record_start`, `comment_prefix`, `header_directive`,
     ///             `directives`, `escape`, `spaced_values`, `catch_all`, `blank_line_records`, `fields`,
     ///             `continuation`, `parts` (specs), `variant`, `match`, `variant_field` and `carry`.
@@ -505,6 +536,7 @@ public record SplitterSpec(String kind,
         builder.names = (List<String>) json.get("names");
         builder.pairSeparator = (String) json.get("pair_separator");
         builder.rfc = (String) json.get("rfc");
+        builder.namePrefix = (String) json.get("name_prefix");
         if (json.get("body") instanceof final Map<?, ?> body) {
             builder.body = fromMap((Map<String, ?>) body);
         }
@@ -569,6 +601,7 @@ public record SplitterSpec(String kind,
         builder.names = names;
         builder.pairSeparator = pairSeparator;
         builder.rfc = rfc;
+        builder.namePrefix = namePrefix;
         builder.body = body;
         builder.bodyField = bodyField;
         builder.quotedNewlines = quotedNewlines;
@@ -643,10 +676,12 @@ public record SplitterSpec(String kind,
         putIf(map, "names", names, !names.isEmpty());
         putIf(map, "pair_separator", pairSeparator, !"=".equals(pairSeparator));
         putIf(map, "rfc", rfc, !"rfc3164".equals(rfc));
+        putIf(map, "name_prefix", namePrefix, namePrefix != null);
         putIf(map, "body", body == null
                 ? null
                 : body.toMap(), body != null);
-        putIf(map, "body_field", bodyField, !"message".equals(bodyField));
+        putIf(map, "body_field", bodyField, !(Objects.requireNonNullElse(namePrefix, "") + "message")
+                .equals(bodyField));
         putIf(map, "quoted_newlines", quotedNewlines, quotedNewlines);
         putIf(map, "record_end", recordEnd, recordEnd != null);
         putIf(map, "record_start", recordStart, recordStart != null);
@@ -698,6 +733,7 @@ public record SplitterSpec(String kind,
         private List<String> names = List.of();
         private String pairSeparator = "=";
         private String rfc = "rfc3164";
+        private String namePrefix;
         private SplitterSpec body;
         private String bodyField = "message";
         private boolean quotedNewlines;
@@ -786,6 +822,13 @@ public record SplitterSpec(String kind,
         /// @return This builder.
         public Builder rfc(final String rfc) {
             this.rfc = rfc;
+            return this;
+        }
+
+        /// @param namePrefix What a syslog header's field names start with, or null.
+        /// @return This builder.
+        public Builder namePrefix(final String namePrefix) {
+            this.namePrefix = namePrefix;
             return this;
         }
 
@@ -966,7 +1009,7 @@ public record SplitterSpec(String kind,
 
         public SplitterSpec build() {
             return new SplitterSpec(kind, delimiter, headerLine, columns, quote, pattern, names, pairSeparator, rfc,
-                    body, bodyField, quotedNewlines, recordEnd, recordStart, commentPrefix, headerDirective,
+                    namePrefix, body, bodyField, quotedNewlines, recordEnd, recordStart, commentPrefix, headerDirective,
                     directives, escape, spacedValues, catchAll, blankLineRecords, fields, continuation, parts,
                     variant, match, variantField, carry, recordKey, keyField, lineName, leadField,
                     joinUnkeyed, skipLines, words, singleQuotes, converter);
