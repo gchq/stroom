@@ -89,6 +89,42 @@ select_pull_request_with_fzf() {
       --preview-label "PR description"
 }
 
+confirm_pull_request() {
+  local pull_request_number="$1"
+  local answer
+
+  echo
+  echo "Pull request ${pull_request_number} diff:"
+  echo
+  if ! gh pr diff "${pull_request_number}" \
+    --repo "${GITHUB_REPOSITORY}" \
+    --color always \
+    --allow-escape-sequences; then
+    echo "Unable to fetch the pull request diff." >&2
+    return 2
+  fi
+
+  echo
+  while true; do
+    if ! read -r -p "Apply this change? [Y/N] " answer; then
+      echo
+      return 2
+    fi
+
+    case "${answer,,}" in
+      y)
+        return 0
+        ;;
+      n)
+        return 1
+        ;;
+      *)
+        echo "Please answer Y or N."
+        ;;
+    esac
+  done
+}
+
 main() {
   local repo_root_dir
   repo_root_dir="$(git rev-parse --show-toplevel)"
@@ -135,6 +171,19 @@ main() {
 
   if [[ -z "${pull_request_number}" || -z "${source_branch}" || -z "${pull_request_title}" ]]; then
     echo "The selected pull request has incomplete metadata." >&2
+    exit 1
+  fi
+
+  if confirm_pull_request "${pull_request_number}"; then
+    :
+  else
+    local confirmation_status=$?
+    if [[ "${confirmation_status}" -eq 1 ]]; then
+      echo "Change not approved. Exiting."
+      exit 0
+    fi
+
+    echo "Unable to confirm the change. Exiting." >&2
     exit 1
   fi
 
