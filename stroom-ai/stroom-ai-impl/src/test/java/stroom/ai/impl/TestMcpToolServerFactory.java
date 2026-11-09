@@ -20,6 +20,7 @@ import stroom.credentials.api.KeyStore;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.shared.AccessTokenSecret;
+import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.UsernamePasswordSecret;
 import stroom.openai.shared.McpAuthMode;
 import stroom.openai.shared.McpToolPolicy;
@@ -58,14 +59,17 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@SuppressWarnings("deprecation") // Credential's no-argument constructor, for tests
 class TestMcpToolServerFactory {
 
     private final StoredSecrets storedSecrets = new StoredSecrets() {
         @Override
         public StoredSecret get(final String name) {
             return switch (name) {
-                case "token" -> new StoredSecret(null, new AccessTokenSecret("secret-token"), null);
-                case "userpass" -> new StoredSecret(null, new UsernamePasswordSecret("user", "pass"), null);
+                // A stored secret has its credential (upstream requires it, since 7.14's f6cdd41c40).
+                case "token" -> new StoredSecret(new Credential(), new AccessTokenSecret("secret-token"), null);
+                case "userpass" -> new StoredSecret(new Credential(), new UsernamePasswordSecret("user", "pass"),
+                        null);
                 default -> null;
             };
         }
