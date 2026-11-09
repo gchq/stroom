@@ -46,8 +46,13 @@ get_dependabot_pull_requests() {
     --state open \
     --app dependabot \
     --limit 1000 \
-    --json number,headRefName,title \
-    --jq '.[] | [.number, .headRefName, .title] | @tsv'
+    --json number,headRefName,title,files \
+    --jq '
+      .[]
+      | select((any(.files[]?; .path | startswith("unreleased_changes/"))) | not)
+      | [.number, .headRefName, .title]
+      | @tsv
+    '
 }
 
 select_with_fzf() {
@@ -91,12 +96,13 @@ select_pull_request_with_fzf() {
 
 confirm_pull_request() {
   local pull_request_number="$1"
+  local pull_request_title="$2"
   local answer
 
   echo
-  echo "Pull request ${pull_request_number} diff:"
+  echo "Diff for pull request '${pull_request_title}'"
   echo
-  if ! gh pr diff "${pull_request_number}" \
+  if ! env GH_PAGER=cat gh pr diff "${pull_request_number}" \
     --repo "${GITHUB_REPOSITORY}" \
     --color always \
     --allow-escape-sequences; then
@@ -174,7 +180,7 @@ main() {
     exit 1
   fi
 
-  if confirm_pull_request "${pull_request_number}"; then
+  if confirm_pull_request "${pull_request_number}" "${pull_request_title}"; then
     :
   else
     local confirmation_status=$?
