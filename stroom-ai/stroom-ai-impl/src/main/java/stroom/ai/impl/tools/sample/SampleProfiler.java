@@ -82,10 +82,15 @@ public final class SampleProfiler {
     /// The start of an RFC 3164 syslog line.
     public static final Pattern SYSLOG_3164 = ToolText.re(
             "^(<\\d{1,3}>)?[A-Z][a-z]{2} [ \\d]\\d \\d{2}:\\d{2}:\\d{2} \\S+ ");
+    // A key starts only where no word character is before it, and is taken whole (possessive): otherwise a long run
+    // of word characters with no '=' after it (a 100,000-character value, a long URL's hex) was scanned to its end
+    // from every position in it, its time growing with the square of its length (seen in testing: a 250,000-character
+    // URL took about seven minutes to profile). The pairs found are the same: a key from inside a run would only
+    // match where the one from its start does.
     /// A key=value pair.
-    public static final Pattern KEY_VALUE = ToolText.re("(\\w[\\w.-]*)=(\"[^\"]*\"|\\S*)");
-    // A quoted key:"value" pair (Check Point's).
-    private static final Pattern COLON_PAIR = ToolText.re("\\w[\\w.-]*:\"");
+    public static final Pattern KEY_VALUE = ToolText.re("(?<!\\w)(\\w[\\w.-]*+)=(\"[^\"]*\"|\\S*)");
+    /// A quoted key:"value" pair (Check Point's), its key read as [#KEY_VALUE]'s is.
+    public static final Pattern COLON_PAIR = ToolText.re("(?<!\\w)\\w[\\w.-]*+:\"");
     /// The start of a CEF record.
     public static final Pattern CEF = ToolText.re("CEF:\\d+\\|");
     /// Lines read when looking for those that aren't what the rest are (a JSON line cut short, a row short of a

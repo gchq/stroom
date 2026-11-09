@@ -117,8 +117,6 @@ public final class SplitterDryRun {
             "^(.*?)LEEF:(\\d\\.\\d)\\|(?:" + ToolText.escapedRun("|") + "\\|){4}(?:([^|]{0,4})\\|)?");
     private static final Pattern LEEF_HEX = Pattern.compile("(?:0?x)([0-9A-Fa-f]{2})");
     private static final String LEEF_ATTRIBUTES = "leef_attributes";
-    // A quoted key:"value" pair's start.
-    private static final Pattern COLON_PAIR = Pattern.compile("\\w[\\w.-]*:\"");
     // A syslog record's structured data in brackets, read as a body where it holds the pairs (its message empty).
     private static final String BRACKETED = "(?s)^\\[(.*)\\]$";
     private static final String STRUCTURED = "structured";
@@ -267,7 +265,9 @@ public final class SplitterDryRun {
     /// @param separator What separates a key from its value.
     /// @return The delimiter between the pairs, as [#pairDelimiter(List)] finds it.
     public static String pairDelimiter(final List<String> records, final String separator) {
-        final Pattern pair = Pattern.compile("\\w[\\w.-]*" + Pattern.quote(separator));
+        // A key as SampleProfiler.KEY_VALUE reads one: from no word character before it, taken whole, so a long run of
+        // word characters isn't scanned again from every position in it.
+        final Pattern pair = Pattern.compile("(?<!\\w)\\w[\\w.-]*+" + Pattern.quote(separator));
         long later = 0;
         for (final String record : records) {
             later += Math.max(0, pair.matcher(record).results().count() - 1);
@@ -292,7 +292,8 @@ public final class SplitterDryRun {
     /// @param records Records.
     /// @return The separator.
     public static String pairSeparator(final List<String> records) {
-        final long colons = records.stream().filter(record -> COLON_PAIR.matcher(record).results().count() >= 3)
+        final long colons = records.stream()
+                .filter(record -> SampleProfiler.COLON_PAIR.matcher(record).results().count() >= 3)
                 .count();
         final long equals = records.stream()
                 .filter(record -> ToolText.findallGroups(SampleProfiler.KEY_VALUE, record).size() >= 3)

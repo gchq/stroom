@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.sample;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -106,6 +107,7 @@ class TestRecordSplitter {
     }
 
     @Test
+    @Timeout(30)
     void aDelimitedRecordWithAVeryLongFieldIsSplit() {
         // Seen in testing: a 250,000-character URL query stopped the whole stream part being split, so the survey
         // read none of it ("could not split records: field larger than field limit (131072)").
