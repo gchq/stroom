@@ -230,13 +230,14 @@ main() {
 
   change_file="${new_change_files[0]}"
   echo "Adding ${change_file} to git"
-#  git add -- "${change_file}"
+  git add -- "${change_file}"
   echo "Committing changes"
-#  git commit --message="${change_text}"
+  git commit --message="${change_text}"
   echo "Pushing changes"
-#  git push origin "${selected_branch}"
+  git push origin "${selected_branch}"
   echo "Checking out master"
-#  git checkout master
+  git checkout master
+  echo "Complete"
 }
 
 main "$@"
