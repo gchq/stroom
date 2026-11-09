@@ -2863,7 +2863,11 @@ them both accept and amend): an `Accept all N` button, or amendments in the user
 recorded `basis: user_confirmed` and the next set's table comes back; amended (`amendments`, nothing recorded), the
 agent sends the set again as `from_user: true` proposals, recorded without another form (any kind the draft found,
 pending or not; an amended set leaves the proposals at once, so a kind the agent leaves out isn't put to the user
-again, and stays still to classify), leaving out any the user rejects and asking what it is. `from_user` is only for what the user said. Without forms, `asked: false` and the `table` for the chat; nothing recorded. The
+again, and stays still to classify), leaving out any the user rejects and asking what it is. Until it comes back the
+set is `amended` in the notes: a listing says `awaiting_amendments` (no plan step) and lists nothing, and a proposal of
+it without `from_user` is refused; those of it not sent back are recorded `rejected` (as are any left when the next
+`confirm` comes). A declined form is taken as amended (the agent asks in the chat, no second form); one closed
+unanswered is not a refusal and changes nothing. A listing keeps proposals still to confirm. `from_user` is only for what the user said. Without forms, `asked: false` and the `table` for the chat; nothing recorded. The
 plan's `classify` step (after the converter, before the translation) is done when the notes say nothing is pending,
 not recorded once the translation is written.
 
@@ -4423,9 +4427,9 @@ tool generates two sections in it and keeps the version control:
   the agent to check it was written), `link` and an open-document action, `field_mapping` (the generated section;
   `reference_maps` instead for a reference data pipeline),
   `note`, the build's `next`; for a promoted pipeline `working_copy_of` and a `next` about promote_build. Or
-  `needs_descriptions` (nothing written yet): the fields not yet described, each with where it comes from, sample
-  values, `schemas_say` (the vendor notes and the schemas), `under` for a Data name, `was` for one whose source
-  changed.
+  `needs_descriptions` (nothing written yet): the fields not yet described, 25 a round (the rest follow once those
+  are given), each with where it comes from, sample values, `schemas_say` (the vendor notes and the schemas), `under`
+  for a Data name, `was` for one whose source changed.
 * **Refuses**: no `build`; empty markdown; neither `pipeline_uuid` nor `index_uuid`; an unknown layout; an update
   without `change` ("give change, one line for its version control"); accepting `EventDetail/Unknown` events as a
   benign error (Unknown is agreed per rule in build_translation_xslt); `accept_errors` with `index_uuid`; an
@@ -4674,8 +4678,10 @@ to 60 Elastic Index docs with name, uuid and path), then one "<profile> conventi
 with no example. The hint says to offer exactly these and recommend none (seen: an agent offered "follow an
 existing index", ECS and Stroom flat, and dropped the template the user had). For Lucene, the profiles are put in
 a form. An answer given in a form is remembered for the session (`IndexingMemory.chooseNaming`, four hours), so
-`draft_index_mapping` with that `convention` or `like_index` neither asks nor confirms again. Following an existing
-index with several to choose from asks which in a second form.
+`draft_index_mapping` with that `convention` or `like_index` neither asks nor confirms again; the backend and naming
+chosen in these forms are also recorded with the session's build (`indexing_choices` in the build record), so a call
+with neither, after a compacted context or a restart, returns them as settled (`status: chosen`) instead of asking
+again. Following an existing index with several to choose from asks which in a second form.
 
 * **Arguments**: `name` (profile: `ecs` or `stroom-flat` as bundled); `backend` (`lucene` or `elasticsearch`);
   `ecs_fields` (with `name=ecs`: a field set or prefix, e.g. `process`, `user.target`, listing its fields with type
@@ -4729,8 +4735,15 @@ action (seen: `authenticate.*`, `copy.*` drafted and passed). Under ECS a Data e
 written another way (`source_ip`, `SourceIp` as `source.ip`) is planned under that name (`ecs_data_elements`);
 abbreviations are not guessed. With an example, fields take the example's names for the same data and the rest are
 named in its style (`ExampleNames.namesFromExample`), its components composed as Elasticsearch composes them;
-`subobjects: false` in the example is kept in the plan. `extra_fields` are then added, and for Elasticsearch
-`@timestamp` from `EventTime/TimeCreated` if not planned. The plan is marked with the fields whose source can hold
+`subobjects: false` in the example is kept in the plan. Without an example, `extra_fields` go in before the tool's
+own fields: one reading a path alone takes it (no field of the tool's for it; a union of paths takes none), and one
+named as a field already planned replaces it (`draft_notes` says so); with an example they are added after it, also
+replacing by name. For Elasticsearch `@timestamp` from `EventTime/TimeCreated` if not planned. Where a name is a value
+and also the object holding another, the tool's own field is renamed (`name.value`, or joined at the clash:
+`user.id` under `user` becomes `user_id`) and the draft kept, said in `draft_notes`; a clash between fields given or
+the convention's is refused, naming where each came from. A tool field whose path ends as one a planned field reads
+(`.../User/Id`) is noted for the user to decide: a second source, its own field, or both. A union source is several
+values, each written once. The plan is marked with the fields whose source can hold
 several values (`IndexPlans.withCardinality`, from the event-logging schema).
 
 **Shared templates.** Left out, `shared` defaults to the shared templates the environment's indexing pipelines call

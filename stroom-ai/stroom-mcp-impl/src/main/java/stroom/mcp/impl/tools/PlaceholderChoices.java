@@ -50,8 +50,14 @@ final class PlaceholderChoices {
     static final String NULL = "Null";
     /// The option that writes the value as an empty string, in JSON.
     static final String EMPTY = "Empty string";
+    /// The option that leaves the value out and writes the sender's name or address for EventSource/Device in its
+    /// place (see [RequiredSources#withDeviceFallback]).
+    static final String DEVICE_FALLBACK = "Leave out, Device from the sender's address";
     /// The options for event-logging XML, the recommended one first.
     static final List<String> OPTIONS = List.of(LEAVE_OUT, KEEP);
+    /// The options for a value in the only fields EventSource/Device is written from: left out alone, those events
+    /// would have no Device, which the schema requires (asked for by the user).
+    static final List<String> DEVICE_OPTIONS = List.of(KEEP, DEVICE_FALLBACK);
     /// The options for JSON (a discovery index's documents), the recommended one first, each with what it is kept
     /// as (Discovery#STAND_IN_TREATMENTS).
     static final Map<String, String> JSON_OPTIONS = jsonOptions();
@@ -103,14 +109,33 @@ final class PlaceholderChoices {
     /// @return The questions put to the user, by value: one for each, unless there are more than a form can show,
     /// when the most common are asked about one by one and one more question ([#OTHERS]) covers the rest.
     static Map<String, Consent.Question> questions(final List<Placeholders.Found> found, final List<String> options) {
+        return questions(found, options, Map.of());
+    }
+
+    /// @param found   The stand-ins found, most records first.
+    /// @param options The options of each, but those in `emptied`.
+    /// @param emptied The required elements each value, left out, would leave empty ([RequiredSources#emptied]),
+    ///                by value: only EventSource/Device, which the sender's address can stand in for; a value
+    ///                emptying another required element isn't asked about.
+    /// @return The questions put to the user, by value, those in `emptied` first and each asked one by one, with
+    /// [#DEVICE_OPTIONS] and why.
+    static Map<String, Consent.Question> questions(final List<Placeholders.Found> found,
+                                                   final List<String> options,
+                                                   final Map<String, List<String>> emptied) {
+        final List<Placeholders.Found> ordered = new ArrayList<>(found.stream()
+                .filter(each -> emptied.containsKey(each.value()))
+                .toList());
+        found.stream().filter(each -> !emptied.containsKey(each.value())).forEach(ordered::add);
         final Map<String, Consent.Question> out = new LinkedHashMap<>();
-        final int oneByOne = found.size() <= MAX_QUESTIONS
-                ? found.size()
+        final int oneByOne = ordered.size() <= MAX_QUESTIONS
+                ? ordered.size()
                 : MAX_QUESTIONS - 1;
-        found.subList(0, oneByOne).forEach(each -> out.put(each.value(), new Consent.Question(question(each),
-                options)));
-        if (oneByOne < found.size()) {
-            out.put(OTHERS, new Consent.Question(others(found.subList(oneByOne, found.size())), options));
+        ordered.subList(0, oneByOne).forEach(each -> out.put(each.value(), emptied.containsKey(each.value())
+                ? new Consent.Question(question(each) + ": the only source of EventSource/Device. Left out, those "
+                                       + "events would have no Device, which the schema requires", DEVICE_OPTIONS)
+                : new Consent.Question(question(each), options)));
+        if (oneByOne < ordered.size()) {
+            out.put(OTHERS, new Consent.Question(others(ordered.subList(oneByOne, ordered.size())), options));
         }
         return out;
     }

@@ -824,7 +824,17 @@ public final class XsltGenerator {
             return key + " = (" + entry.map().keySet().stream().map(XPathText::literal)
                     .collect(Collectors.joining(", ")) + ")";
         }
+        if (entry.metaFallback() != null) {
+            return "(" + entryHas(entry) + ") or exists(" + metaFallbackText(entry) + ")";
+        }
         return entryHas(entry);
+    }
+
+    // The first of the entry's meta_fallback attributes the stream has a value for (none if it has none).
+    private static String metaFallbackText(final FieldMapping entry) {
+        return "(" + entry.metaFallback().stream()
+                .map(name -> "string(stroom:meta(" + XPathText.literal(name) + "))")
+                .collect(Collectors.joining(", ")) + ")[normalize-space(.)][1]";
     }
 
     private String valueExpression(final FieldMapping entry) {
@@ -876,6 +886,10 @@ public final class XsltGenerator {
         }
         if (entry.defaultValue() != null) {
             return XPathText.defaultText(entryHas(entry), expression, entry.defaultValue());
+        }
+        if (entry.metaFallback() != null) {
+            // A record whose input gives none (a stand-in for none left out) takes the stream's, as the user chose.
+            return "if (" + entryHas(entry) + ") then " + expression + " else " + metaFallbackText(entry);
         }
         return expression;
     }

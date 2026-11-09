@@ -606,10 +606,12 @@ class TestBuildTranslationXsltTool {
                 "{\"input\": \"json\", \"json_layout\": \"lines\","), Map.class);
         final String sample = """
                 {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "alice"}
-                {"ts": "2026-09-28T10:01:00.000Z", "host": "-", "user": "N/A"}
-                {"ts": "2026-09-28T10:02:00.000Z", "host": "-", "user": "N/A"}
+                {"ts": "2026-09-28T10:01:00.000Z", "host": "ws02", "user": "-"}
+                {"ts": "2026-09-28T10:02:00.000Z", "host": "ws03", "user": "-"}
+                {"ts": "2026-09-28T10:03:00.000Z", "host": "ws04", "user": "N/A"}
+                {"ts": "2026-09-28T10:04:00.000Z", "host": "ws05", "user": "N/A"}
                 """;
-        final String warned = "sample: placeholder '-' in host (2 values)";
+        final String warned = "sample: placeholder '-' in user (2 values)";
 
         // Without forms the warning is the agent's.
         final Map<String, Object> unasked = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
@@ -642,6 +644,41 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
+    void aStandInInTheOnlyDeviceFieldIsNotLeftOutWithoutTheSenderStandingIn() {
+        // Seen in testing: '-' in the host field, EventSource/Device's only source, was put to the user with
+        // "Leave out" recommended, which would have left those events without the Device the schema requires.
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("{\"input\": \"json\",",
+                "{\"input\": \"json\", \"json_layout\": \"lines\","), Map.class);
+        final String sample = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "alice"}
+                {"ts": "2026-09-28T10:01:00.000Z", "host": "-", "user": "bob"}
+                {"ts": "2026-09-28T10:02:00.000Z", "host": "-", "user": "carol"}
+                """;
+        world.forms = true;
+        world.answers.put("'-' in", PlaceholderChoices.DEVICE_FALLBACK);
+        final Map<String, Object> saved = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "F", "sample", sample));
+
+        assertThat(saved).as(String.valueOf(saved)).containsKey("saved");
+        // Keep first (recommended), and no plain "Leave out".
+        final String form = String.valueOf(world.formsShown.getLast());
+        assertThat(form).contains("the only source of EventSource/Device", PlaceholderChoices.DEVICE_FALLBACK)
+                .doesNotContain("[" + PlaceholderChoices.LEAVE_OUT + ",", PlaceholderChoices.LEAVE_OUT + "]");
+        assertThat(form.indexOf(PlaceholderChoices.KEEP)).isLessThan(form.indexOf(
+                PlaceholderChoices.DEVICE_FALLBACK));
+        assertThat(list(saved.get("changes_applied")))
+                .contains("'-' left out where a field holds it (nil_values), as the user chose")
+                .anyMatch(change -> String.valueOf(change).startsWith("EventSource/Device written from the "
+                                                                      + "sender's name or address"));
+        final String uuid = String.valueOf(map(saved.get("saved")).get("uuid"));
+        final Map<String, Object> kept = map(KeptMapping.readMapping(world.xslt(uuid).getDescription())
+                .orElseThrow().payload().get("mapping"));
+        assertThat(kept.get("nil_values")).isEqualTo(List.of("-"));
+        assertThat(String.valueOf(kept.get("common"))).contains("meta_fallback=[RemoteHost, RemoteAddress]");
+        assertThat(world.xslt(uuid).getData()).contains("stroom:meta('RemoteHost')");
+    }
+
+    @Test
     void aChoiceIsKeptWhenALaterFormFailsTheCallSoTheUserIsNotAskedAgain() {
         // Seen in testing: the domain split answered, then the stand-ins' form couldn't be shown, so the call failed
         // before saving, and each call after asked about the domain again; the user could never get past it.
@@ -665,7 +702,8 @@ class TestBuildTranslationXsltTool {
         // Made again, once the form can be shown: only the stand-ins are asked about, and the domain is split as
         // the user chose before.
         world.unshowable.clear();
-        world.answers.put("'-' in", PlaceholderChoices.LEAVE_OUT);
+        // '-' in the only host field: the sender stands in for the Device.
+        world.answers.put("'-' in", PlaceholderChoices.DEVICE_FALLBACK);
         final Map<String, Object> saved = world.call(tool, arguments);
         assertThat(saved).as(String.valueOf(saved)).containsKey("saved");
         assertThat(world.asked).hasSize(3).last().isEqualTo(PlaceholderChoices.INTRO);

@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.api.ElasticIndexTemplates.ReadException;
 import stroom.ai.api.ElasticIndexTemplates.Reason;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.StreamReader.RawHead;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -38,6 +39,7 @@ import org.mockito.Mockito;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -290,6 +292,104 @@ class TestDraftIndexMappingTool {
                         "source", "EventDetail/Alert/Data[@Name='Reason']/@Value")))), IndexingWorld.noForms());
         assertThat(fieldNames(amended)).hasSize(fieldNames(drafted).size() + 1)
                 .contains("firewall.ssl.bypass", "firewall.ssl.bypass_reason");
+    }
+
+    @Test
+    void theAgentsFieldForAnActionsPathTakesItAndOneOfAConventionsNameReplacesIt() {
+        // Seen in testing: added after the tool's own fields, an extra field couldn't stop netscaler.authenticate.
+        // user.id, nor replace one of a name already planned (ignored silently).
+        final Map<String, Object> result = draft("ecs-firewall-v1", Map.of("convention", "ecs", "without_example",
+                true, "extra_fields", List.of(
+                        ordered("name", "user.name", "type", "keyword", "source", "EventDetail/Authenticate/User/Id"),
+                        ordered("name", "event.action", "type", "keyword", "source", "EventDetail/TypeId"))),
+                agreeing());
+
+        assertThat(field(result, "user.name").get("source")).isEqualTo("EventDetail/Authenticate/User/Id");
+        assertThat(fieldNames(result)).doesNotContain("firewall.authenticate.user.id");
+        assertThat(field(result, "event.action").get("source")).isEqualTo("EventDetail/TypeId");
+        assertThat(JsonValues.strings(result.get("draft_notes")))
+                .anyMatch(note -> note.startsWith("'event.action' from extra_fields (EventDetail/TypeId) replaces"));
+    }
+
+    @Test
+    void anExtraFieldForAPathTheToolWouldNameAddsOnlyItself() {
+        // Seen in the e2e suite: a Lucene index's v2 adding Success from Authenticate's Outcome also gained the
+        // tool's own OutcomeSuccess.
+        final List<String> without = fieldNames(draft(Map.of("backend", "lucene", "convention", "stroom-flat",
+                "without_example", true), agreeing()));
+        final List<String> with = fieldNames(draft(Map.of("backend", "lucene", "convention", "stroom-flat",
+                "without_example", true, "extra_fields", List.of(ordered("name", "Success", "type", "keyword",
+                        "source", "EventDetail/Authenticate/Outcome/Success"))), agreeing()));
+        final List<String> added = new ArrayList<>(with);
+        added.removeAll(without);
+        assertThat(added).containsExactly("Success");
+    }
+
+    @Test
+    void aUnionOfTheAgentsLeavesEachPathItsOwnFieldToo() {
+        // Asked for by the user: user.id of every user an event names, beside a field of each.
+        final Map<String, Object> result = draft("ecs-firewall-v1", Map.of("convention", "ecs", "without_example",
+                true, "extra_fields", List.of(ordered("name", "related.user", "type", "keyword", "source",
+                        "EventSource/User/Id | EventDetail/Authenticate/User/Id"))), agreeing());
+
+        assertThat(fieldNames(result)).contains("related.user", "firewall.authenticate.user.id");
+    }
+
+    @Test
+    void theToolsOwnFieldGivesWayWhereItClashesAndTheDraftIsKept() {
+        // Seen in testing: the clash refused the whole draft, nothing was kept for changes= to amend, and no
+        // argument could rename the tool's field; the agent looped.
+        final Map<String, Object> result = draft("ecs-firewall-v1", Map.of("convention", "ecs", "without_example",
+                true, "extra_fields", List.of(
+                        ordered("name", "firewall.authenticate.user", "type", "keyword", "source",
+                                "EventSource/User/Id"),
+                        ordered("name", "firewall.alert.type.code", "type", "keyword", "source",
+                                "EventDetail/Alert/Data[@Name='code']/@Value"))), agreeing());
+
+        assertThat(fieldNames(result)).contains("firewall.authenticate.user", "firewall.authenticate.user_id",
+                "firewall.alert.type.code", "firewall.alert.type.value")
+                .doesNotContain("firewall.authenticate.user.id", "firewall.alert.type");
+        assertThat(JsonValues.strings(result.get("draft_notes")))
+                .anyMatch(note -> note.startsWith("Renamed the tool's own field 'firewall.authenticate.user.id' to "
+                                                  + "'firewall.authenticate.user_id'"));
+        // Kept, so a change amends it.
+        final Map<String, Object> amended = call(Map.of("backend", "elasticsearch", "index_name", "ecs-firewall-v1",
+                "changes", Map.of("fields", List.of(ordered("name", "firewall.auth.user_id", "type", "keyword",
+                        "source", "EventDetail/Authenticate/User/Id")))), IndexingWorld.noForms());
+        assertThat(fieldNames(amended)).contains("firewall.auth.user_id");
+    }
+
+    @Test
+    void aClashBetweenTheAgentsOwnFieldsIsRefusedSayingWhichToChange() {
+        final ToolResult result = world.draftTool().execute(BuildToolCalls.call(DraftIndexMappingTool.NAME,
+                ToolJson.dumps(ordered("backend", "elasticsearch", "index_name", "ecs-firewall-v1",
+                        "events_stream_ids", List.of(1), "convention", "ecs", "without_example", true,
+                        "extra_fields", List.of(ordered("name", "firewall.ssl.bypass", "type", "keyword", "source",
+                                        "EventDetail//Configuration/Type"),
+                                ordered("name", "firewall.ssl.bypass.reason", "type", "keyword", "source",
+                                        "EventDetail/Alert/Data[@Name='Reason']/@Value"))))), agreeing());
+        assertThat(result.isError()).isTrue();
+        final String refused = result.text();
+
+        assertThat(refused).contains("'firewall.ssl.bypass' (from extra_fields) is a value and also the object "
+                                     + "holding 'firewall.ssl.bypass.reason' (from extra_fields)",
+                "Nothing was kept", "Rename or leave out the one from extra_fields")
+                .doesNotContain("send the change again");
+    }
+
+    @Test
+    void aPathLikeOneAFieldReadsIsPutToTheUserNotMerged() {
+        final Map<String, Integer> population = new LinkedHashMap<>(POPULATED);
+        population.put("EventSource/User/Id", 100);
+        world.populated(population, Map.of());
+        final Map<String, Object> result = draft("ecs-firewall-v1", Map.of("convention", "ecs", "without_example",
+                true), agreeing());
+
+        assertThat(field(result, "user.name").get("source")).isEqualTo("EventSource/User/Id");
+        assertThat(fieldNames(result)).contains("firewall.authenticate.user.id");
+        assertThat(JsonValues.strings(result.get("draft_notes"))).anyMatch(note -> note.startsWith(
+                "EventDetail/Authenticate/User/Id (planned as 'firewall.authenticate.user.id') is a User/Id like "
+                + "'user.name' reads"));
     }
 
     // --------------------------------------------------------------------------------

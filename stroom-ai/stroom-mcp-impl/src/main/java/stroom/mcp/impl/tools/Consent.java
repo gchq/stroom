@@ -348,8 +348,13 @@ public class Consent {
                 NullSafe.isBlankString(given)
                         ? "declined"
                         : "answered: " + given, NullSafe.isNonBlankString(given));
+        if (answer.action() == ElicitResult.Action.CANCEL) {
+            // Closed or run out unanswered: not a refusal (seen in testing: taken for one, and the same set of
+            // classifications put to the user again).
+            throw new ToolRefusal(notAgreed(heading(question), action, true));
+        }
         if (NullSafe.isBlankString(given)) {
-            throw new ToolRefusal("The user declined: " + heading(question));
+            throw new Declined("The user declined: " + heading(question));
         }
         return Optional.of(given);
     }
@@ -801,5 +806,19 @@ public class Consent {
 
         private final Map<String, String> edits = new LinkedHashMap<>();
         private final Map<String, Change> changes = new LinkedHashMap<>();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The user declined a form that asked for an answer ([#answer]): a refusal, told apart from a form closed or run
+    /// out unanswered, which isn't one.
+    static final class Declined extends ToolRefusal {
+
+        /// @param message What the agent is told.
+        Declined(final String message) {
+            super(message);
+        }
     }
 }

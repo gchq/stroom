@@ -123,6 +123,40 @@ class TestGetFieldConventionsTool {
     }
 
     @Test
+    void theBackendAndNamingChosenInABuildAreNotAskedAgain() {
+        // Seen in testing: asked twice which indexing backend to use in one build, once the agent's context was
+        // compacted (which lost the answer); kept with the build, they survive that and a restarted node.
+        final Map<String, Object> elastic = Map.of("uuid", "t1", "name", "Events to Elasticsearch", "backend",
+                "elasticsearch");
+        final Map<String, Object> lucene = Map.of("uuid", "t2", "name", "Indexing", "backend", "lucene");
+        Mockito.when(world.pipelineTemplates.find(anyString())).thenReturn(Map.of("candidates", List.of(elastic,
+                lucene)));
+        world.world.folder("System/" + BuildWorld.WORKSPACE + "/b1");
+        final ToolCallContext forms = world.forms(question -> Map.of("choice", question.contains("backend")
+                ? "Elasticsearch"
+                : "ECS (Elastic Common Schema) convention"));
+        world.processing.feeds.plan.rememberBuild(forms, "b1");
+        final GetFieldConventionsTool tool = world.conventionsTool();
+        // As draft_index_mapping asks it, once the build has Events.
+        assertThat(tool.conventions(BuildToolCalls.call(GetFieldConventionsTool.NAME, "{}"), forms, null, null, null)
+                .get("status")).isEqualTo("chosen");
+        assertThat(world.asked).hasSize(2);
+        assertThat(world.world.records().indexingChoices("b1")).containsEntry("backend", "elasticsearch")
+                .containsEntry("naming", Map.of("convention", "ecs"));
+
+        // Asked again with nothing given, the node's memory gone: settled, no form.
+        world.memory.chooseNaming(Map.of());
+        final Map<String, Object> again = tool.conventions(BuildToolCalls.call(GetFieldConventionsTool.NAME, "{}"),
+                forms, null, null, null);
+        assertThat(world.asked).hasSize(2);
+        assertThat(again).containsEntry("status", "chosen").containsEntry("backend", "elasticsearch")
+                .containsEntry("convention", "ecs");
+        assertThat(String.valueOf(again.get("settled"))).contains("earlier in this build", "don't ask about either "
+                                                                                          + "again");
+        assertThat(world.memory.namingChosen()).containsEntry("convention", "ecs");
+    }
+
+    @Test
     void withNoBuildTheBackendIsAskedAsBefore() {
         final Map<String, Object> elastic = Map.of("uuid", "t1", "name", "Events to Elasticsearch", "backend",
                 "elasticsearch");

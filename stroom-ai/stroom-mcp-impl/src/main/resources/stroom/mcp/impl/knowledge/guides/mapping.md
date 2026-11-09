@@ -76,6 +76,7 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 | `time_format`, `timezone` | Time parsing: see below |
 | `rollover: true` | A time of day on a date that doesn't move on by itself: see below |
 | `time_fallback` | A stream meta time written when the time won't parse: see below |
+| `meta_fallback` | Stream meta attributes tried in order (e.g. `["RemoteHost", "RemoteAddress"]`) for a record whose input gives no value; only as the user chose (a stand-in left out of a required element's only source) |
 | `data_name`, `data_parent` | A `Data` entry: see below |
 
 ## Times
@@ -119,6 +120,9 @@ completion of a dateless time (it moves a time later than the stream's creation 
   Otherwise read each layout (a splitter part each, or a rule each with its own `time_format`). A record whose time
   still won't parse gets an empty time the schema refuses, unless the user agrees to
   `"time_fallback": "ReceivedTime"`, which writes that instead and logs a warning naming the record.
+- **Times that repeat the event's:** where every record has the time EventTime/TimeCreated reads, the draft lists
+  the other time fields that only say it again (the same instant, or a date and a time of day that make it) in
+  `ignored_fields`, so processing doesn't log them as unread. A time named as a start or a creation stays to map.
 - **Which time is the event's:** the draft reads the record's own time before its container's (a syslog header's),
   falling back to the container's record by record, and keeps an object's times (an expiry, a file's creation, an
   account's last logon) as Data. Where two times could each be the event's, it drafts with the first and lists them

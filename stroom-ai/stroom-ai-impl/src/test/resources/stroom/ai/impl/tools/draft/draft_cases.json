@@ -7225,6 +7225,10 @@
        }
       ]
      }
+    ],
+    "ignored_fields": [
+     "date",
+     "time"
     ]
    },
    "source_notes": null,
@@ -7247,12 +7251,11 @@
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): 0101039424: Alert for subtype vpn; 0101039425: Alert for subtype vpn; 0101039426: Alert for subtype vpn.",
-    "One rule per value of 'logid' (0101039424, 0101039425, 0101039426), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
+    "One rule per value of 'logid' (0101039424, 0101039425, 0101039426), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes.",
+    "'date', 'time' only repeat the time EventTime/TimeCreated reads, in every record: listed in ignored_fields, so processing doesn't log them as fields no rule reads. Mapping one (changes=) reads it all the same."
    ],
    "unmapped_fields": [
     "itime",
-    "date",
-    "time",
     "type",
     "subtype",
     "action",
@@ -13479,6 +13482,11 @@
        }
       ]
      }
+    ],
+    "ignored_fields": [
+     "col7",
+     "col22",
+     "col36"
     ]
    },
    "source_notes": null,
@@ -13545,7 +13553,8 @@
     "Timestamp fields: 'time' (the container's, event time, in 100% of records, MMM dd HH:mm:ss); 'col2' (the record's own, a time its name says nothing of, in 100% of records, yyyy/MM/dd HH:mm:ss); 'col7' (the record's own, a time its name says nothing of, in 100% of records, yyyy/MM/dd HH:mm:ss); 'col22' (the record's own, a time its name says nothing of, in 100% of records, yyyy/MM/dd HH:mm:ss); 'col36' (the record's own, a time its name says nothing of, in 100% of records, yyyy/MM/dd HH:mm:ss). EventTime/TimeCreated reads 'col2'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
-    "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
+    "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart.",
+    "'col7', 'col22', 'col36' only repeat the time EventTime/TimeCreated reads, in every record: listed in ignored_fields, so processing doesn't log them as fields no rule reads. Mapping one (changes=) reads it all the same."
    ],
    "unmapped_fields": [
     "pri",
@@ -13555,7 +13564,6 @@
     "col4",
     "col5",
     "col6",
-    "col7",
     "col8",
     "col9",
     "col10",
@@ -13569,7 +13577,6 @@
     "col19",
     "col20",
     "col21",
-    "col22",
     "col23",
     "col24",
     "col25",
@@ -13583,7 +13590,6 @@
     "col33",
     "col34",
     "col35",
-    "col36",
     "col37",
     "col38",
     "col39",
@@ -14211,6 +14217,10 @@
        }
       ]
      }
+    ],
+    "ignored_fields": [
+     "generated_time",
+     "future_use3"
     ]
    },
    "source_notes": null,
@@ -14280,7 +14290,8 @@
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action allow.",
-    "One rule per value of 'type' (TRAFFIC), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
+    "One rule per value of 'type' (TRAFFIC), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes.",
+    "'generated_time', 'future_use3' only repeat the time EventTime/TimeCreated reads, in every record: listed in ignored_fields, so processing doesn't log them as fields no rule reads. Mapping one (changes=) reads it all the same."
    ],
    "unmapped_fields": [
     "pri",
@@ -14289,7 +14300,6 @@
     "serial",
     "subtype",
     "future_use2",
-    "generated_time",
     "natsrc",
     "natdst",
     "rule",
@@ -14299,7 +14309,6 @@
     "inbound_if",
     "outbound_if",
     "logset",
-    "future_use3",
     "repeatcnt",
     "natsport",
     "natdport",
@@ -14937,6 +14946,10 @@
        }
       ]
      }
+    ],
+    "ignored_fields": [
+     "generated_time",
+     "future_use3"
     ]
    },
    "source_notes": null,
@@ -15006,7 +15019,8 @@
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action allow.",
-    "One rule per value of 'type' (TRAFFIC), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
+    "One rule per value of 'type' (TRAFFIC), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes.",
+    "'generated_time', 'future_use3' only repeat the time EventTime/TimeCreated reads, in every record: listed in ignored_fields, so processing doesn't log them as fields no rule reads. Mapping one (changes=) reads it all the same."
    ],
    "unmapped_fields": [
     "pri",
@@ -15015,7 +15029,6 @@
     "serial",
     "subtype",
     "future_use2",
-    "generated_time",
     "natsrc",
     "natdst",
     "rule",
@@ -15025,7 +15038,6 @@
     "inbound_if",
     "outbound_if",
     "logset",
-    "future_use3",
     "repeatcnt",
     "natsport",
     "natdport",
@@ -16584,6 +16596,10 @@
        }
       ]
      }
+    ],
+    "ignored_fields": [
+     "date",
+     "time"
     ]
    },
    "source_notes": null,
@@ -16604,11 +16620,10 @@
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): 0000000013: Network/Permit for action accept; Network/Deny for action deny; 0100032001: Authenticate for action login.",
-    "One rule per value of 'logid' (0000000013, 0100032001), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
+    "One rule per value of 'logid' (0000000013, 0100032001), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes.",
+    "'date', 'time' only repeat the time EventTime/TimeCreated reads, in every record: listed in ignored_fields, so processing doesn't log them as fields no rule reads. Mapping one (changes=) reads it all the same."
    ],
    "unmapped_fields": [
-    "date",
-    "time",
     "devid",
     "tz",
     "type",
@@ -17111,6 +17126,10 @@
        }
       ]
      }
+    ],
+    "ignored_fields": [
+     "date",
+     "time"
     ]
    },
    "source_notes": null,
@@ -17132,11 +17151,10 @@
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): 0000000013: Network/Permit for action accept; Network/Deny for action deny; 0419016384: Network/Deny for action dropped; 0100032001: Authenticate for action login.",
-    "One rule per value of 'logid' (0000000013, 0419016384, 0100032001), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
+    "One rule per value of 'logid' (0000000013, 0419016384, 0100032001), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes.",
+    "'date', 'time' only repeat the time EventTime/TimeCreated reads, in every record: listed in ignored_fields, so processing doesn't log them as fields no rule reads. Mapping one (changes=) reads it all the same."
    ],
    "unmapped_fields": [
-    "date",
-    "time",
     "devid",
     "tz",
     "type",
@@ -23288,6 +23306,9 @@
        }
       ]
      }
+    ],
+    "ignored_fields": [
+     "message.timestamp"
     ]
    },
    "source_notes": null,
@@ -23304,11 +23325,11 @@
     "'message' holds JSON: its keys are fields of their own, e.g. 'message.timestamp', 'message.event_type', 'message.user' (json_fields). The text itself isn't mapped.",
     "Timestamp fields: 'timestamp' (event time, in 50% of records, yyyy-MM-dd'T'HH:mm:ssX); '@timestamp' (event time, in 50% of records, yyyy-MM-dd'T'HH:mm:ssX); 'message.timestamp' (event time, in 50% of records, yyyy-MM-dd'T'HH:mm:ssX). EventTime/TimeCreated reads 'timestamp', '@timestamp'.",
     "The sample's records come in 2 shapes (their fields differ): each element reads every shape's field in turn (EventTime/TimeCreated from timestamp or @timestamp; EventSource/User/Id from user or message.user; EventDetail/TypeId from event_type or message.event_type), and each shape's kinds have rules. Check them against each file.",
-    "One rule per value of 'event_type' or 'message.event_type' (login, logout, user_authentication_check, password_change), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
+    "One rule per value of 'event_type' or 'message.event_type' (login, logout, user_authentication_check, password_change), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes.",
+    "'message.timestamp' only repeat the time EventTime/TimeCreated reads, in every record: listed in ignored_fields, so processing doesn't log them as fields no rule reads. Mapping one (changes=) reads it all the same."
    ],
    "unmapped_fields": [
-    "level",
-    "message.timestamp"
+    "level"
    ],
    "fields_seen": [
     "timestamp",
@@ -24975,6 +24996,10 @@
        }
       ]
      }
+    ],
+    "ignored_fields": [
+     "date",
+     "time"
     ]
    },
    "source_notes": null,
@@ -24996,12 +25021,11 @@
     "Timestamp fields: 'date' (may be the event's time or something else's (a creation, a period's start or end): check, in 100% of records, yyyy-MM-dd); 'x-timestamp-unix' (event time, in 100% of records, epoch_s). EventTime/TimeCreated reads 'x-timestamp-unix'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
-    "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
+    "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart.",
+    "'date', 'time' only repeat the time EventTime/TimeCreated reads, in every record: listed in ignored_fields, so processing doesn't log them as fields no rule reads. Mapping one (changes=) reads it all the same."
    ],
    "unmapped_fields": [
     "#Software",
-    "date",
-    "time",
     "c-ip",
     "cs-username",
     "sc-status"

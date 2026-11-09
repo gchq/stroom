@@ -77,8 +77,9 @@ public final class IndexingHelpers {
     /// The plan with each field whose source can hold several values in one event (a repeatable element on its
     /// path, by the event-logging schema: Data, say) marked multiple, so the indexing XSLT writes them all. Seen
     /// (asked about by the user): written with value-of, two ports were indexed as the one number "80 443", two
-    /// tags as "a b". Unmarked when the schema can't be read: the fields are then written as single values, as
-    /// before.
+    /// tags as "a b". A union of paths (`EventSource/User/Id | EventDetail/Authenticate/User/Id`) is marked too:
+    /// one event can name a value in each (asked for by the user: one field of every user an event names). Unmarked
+    /// when the schema can't be read: the fields are then written as single values, as before.
     ///
     /// @param plan   A plan.
     /// @param schema The event-logging schema the Events follow, or null if it can't be read.
@@ -89,7 +90,8 @@ public final class IndexingHelpers {
         }
         final List<PlannedField> fields = plan.fields().stream()
                 .map(field -> !field.multiple() && !field.isObjects() && !field.source().startsWith("@")
-                              && !field.source().startsWith("shared:") && schema.canRepeat(field.source())
+                              && !field.source().startsWith("shared:")
+                              && (schema.canRepeat(field.source()) || FieldPlans.branches(field.source()).size() > 1)
                         ? field.withMultiple(true)
                         : field)
                 .toList();

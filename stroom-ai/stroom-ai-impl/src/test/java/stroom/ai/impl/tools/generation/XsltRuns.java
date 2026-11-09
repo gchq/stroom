@@ -73,6 +73,8 @@ class XsltRuns extends GenerationFixtures {
     static final String XSL = XmlTrees.XSL;
     /// The time the stream stroom:meta speaks of was received and created.
     static final String RECEIVED = "2026-10-12T08:00:00.000Z";
+    /// The address stroom:meta says the stream was sent from.
+    static final String REMOTE_ADDRESS = "192.0.2.10";
     static final String EVT = XsltGenerator.EVT;
 
     XsltRuns() {
@@ -103,7 +105,8 @@ class XsltRuns extends GenerationFixtures {
             processor.registerExtensionFunction(new KeptValueStub("put", kept));
             processor.registerExtensionFunction(new KeptValueStub("get", kept));
             // stroom:meta, as a stream received and created at RECEIVED gives it.
-            final Map<String, String> meta = new HashMap<>(Map.of("ReceivedTime", RECEIVED, "CreatedTime", RECEIVED));
+            final Map<String, String> meta = new HashMap<>(Map.of("ReceivedTime", RECEIVED, "CreatedTime", RECEIVED,
+                    "RemoteAddress", REMOTE_ADDRESS));
             processor.registerExtensionFunction(new KeptValueStub("meta", meta));
             final XsltCompiler compiler = processor.newXsltCompiler();
             compiler.setURIResolver((href, base) -> imports.containsKey(href)
