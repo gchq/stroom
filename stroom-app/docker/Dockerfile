@@ -14,11 +14,14 @@
 # limitations under the License.
 #**********************************************************************
 
+# ~~~ JCDM base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Build the jcmd/jmap/jstat binaries using jlink so we can have them witout the rest of the JDK
 FROM eclipse-temurin:25.0.5_8-jdk-alpine-3.23@sha256:b903bc22d49da99a0af3d50cf08f6056eaf39646b71bf3a51f74720f8243b34b AS jcmd_base
 RUN jlink \
-      --module-path $JAVA_HOME/jmods \
+      --module-path "$JAVA_HOME/jmods" \
       --add-modules jdk.jcmd \
       --output /opt/jcmd
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 # ~~~ stroom base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -37,22 +40,26 @@ FROM eclipse-temurin:25.0.5_8-jre-alpine-3.23@sha256:b903bc22d49da99a0af3d50cf08
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user
 # tini required for process control in the entrypoint
-# Semi-fixed brotli version is to fix CVE-2026-111497, can remove once eclipse-temurin includes latest alpine
-# Semi-fixed expat version is to fix 4 CVEs in it, can remove once eclipse-temurin includes latest alpine
+# All the packages in the add --upgrade section had CVEs at some point.
+# Make sure binutils is not present as that has unfixed CVEs
 RUN echo "http_proxy: $http_proxy" && \
     echo "https_proxy: $https_proxy" && \
+    apk del \
+        binutils && \
     apk add --no-cache \
         bash \
         jq \
         curl \
         su-exec \
-        tini \
-        'brotli-libs>=1.2.1-r0'
+        tini && \
+    apk add --upgrade \
+        brotli-libs \
+        expat \
+        zlib
 
-        #'expat>=2.10.0-r0'
-
-copy --from=jdk_base /opt/jcmd /opt/jcmd
-ENV path="/opt/jcmd/bin:${path}"
+# Pull in the jcmd binaries from our JDK based stage
+COPY --from=jcmd_base /opt/jcmd /opt/jcmd
+ENV PATH="/opt/jcmd/bin:${PATH}"
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
