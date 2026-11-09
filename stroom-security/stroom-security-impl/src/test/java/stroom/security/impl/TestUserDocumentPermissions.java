@@ -21,14 +21,21 @@ import stroom.security.shared.DocumentPermission;
 import stroom.test.common.TestUtil;
 
 import io.vavr.Tuple;
+import it.unimi.dsi.fastutil.objects.Object2ByteMap;
+import it.unimi.dsi.fastutil.objects.Object2ByteOpenHashMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SuppressWarnings("checkstyle:AvoidStaticImport")
 class TestUserDocumentPermissions {
@@ -41,9 +48,14 @@ class TestUserDocumentPermissions {
 
     @BeforeEach
     void setUp() {
-        userDocPerms = new UserDocumentPermissions();
-        userDocPerms.setPermission(DOC_UUID_1, DocumentPermission.OWNER);
-        userDocPerms.setPermission(DOC_UUID_2, DocumentPermission.DELETE);
+        userDocPerms = UserDocumentPermissions.builder()
+                .setPermission(DOC_UUID_1.getUuid(), DocumentPermission.OWNER)
+                .setPermission(DOC_UUID_2.getUuid(), DocumentPermission.DELETE)
+                .build();
+
+        assertThat(userDocPerms.getPermissions())
+                .containsEntry(DOC_UUID_1.getUuid(), DocumentPermission.OWNER)
+                .containsEntry(DOC_UUID_2.getUuid(), DocumentPermission.DELETE);
     }
 
     @TestFactory
@@ -76,6 +88,93 @@ class TestUserDocumentPermissions {
                 .build();
     }
 
+    @Test
+    void testPermissionPrimitiveValuesDoNotEqualPermissionNotFoundValue() {
+        assertThat(DocumentPermission.values())
+                .allSatisfy(documentPermission ->
+                        assertThat(documentPermission.getPrimitiveValue())
+                                .isNotEqualTo(UserDocumentPermissions.PERMISSION_NOT_FOUND_VALUE));
+    }
+
+    @Test
+    void testPermissionPrimitiveValuesGrreaterThanPermissionNotFoundValue() {
+        assertThat(DocumentPermission.values())
+                .allSatisfy(documentPermission ->
+                        assertThat(documentPermission.getPrimitiveValue())
+                                .isGreaterThan(UserDocumentPermissions.PERMISSION_NOT_FOUND_VALUE));
+    }
+
+    @Test
+    void testObject2ByteMapConstructorCopiesInput() {
+        final Object2ByteMap<String> permissions = new Object2ByteOpenHashMap<>();
+        permissions.put(DOC_UUID_1.getUuid(), DocumentPermission.OWNER.getPrimitiveValue());
+
+        final UserDocumentPermissions userDocumentPermissions = UserDocumentPermissions.create(permissions);
+
+        permissions.clear();
+
+        assertThat(userDocumentPermissions.hasDocumentPermission(DOC_UUID_1, DocumentPermission.OWNER))
+                .isTrue();
+    }
+
+    @Test
+    void testMapConstructorCopiesInput() {
+        final Map<String, Byte> permissions = new HashMap<>();
+        permissions.put(DOC_UUID_1.getUuid(), DocumentPermission.OWNER.getPrimitiveValue());
+
+        final UserDocumentPermissions userDocumentPermissions = UserDocumentPermissions.create(permissions);
+
+        permissions.clear();
+
+        assertThat(userDocumentPermissions.hasDocumentPermission(DOC_UUID_1, DocumentPermission.OWNER))
+                .isTrue();
+    }
+
+    @Test
+    void testNullPermissionsMap() {
+        assertThatThrownBy(() -> UserDocumentPermissions.create((Map<String, Byte>) null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessage("Null permissions map");
+    }
+
+    @Test
+    void testNullKey() {
+        final Map<String, Byte> permissions = new HashMap<>();
+        permissions.put(null, DocumentPermission.OWNER.getPrimitiveValue());
+
+        assertThatThrownBy(() -> UserDocumentPermissions.create(permissions))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Null key in permissions entry");
+    }
+
+    @Test
+    void testNullValue() {
+        final Map<String, Byte> permissions = new HashMap<>();
+        permissions.put(DOC_UUID_1.getUuid(), null);
+
+        assertThatThrownBy(() -> UserDocumentPermissions.create(permissions))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Null DocumentPermission for key 123");
+    }
+
+    @Test
+    void testInvalidPermissionPrimitiveValue() {
+        final Map<String, Byte> permissions = Map.of(DOC_UUID_1.getUuid(), (byte) 99);
+
+        assertThatThrownBy(() -> UserDocumentPermissions.create(permissions))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Null or invalid DocumentPermission primitive 99 for key 123");
+    }
+
+    @Test
+    void testObject2ByteMapWithInvalidPermissionPrimitiveValue() {
+        final Object2ByteMap<String> permissions = new Object2ByteOpenHashMap<>();
+        permissions.put(DOC_UUID_1.getUuid(), (byte) 99);
+
+        assertThatThrownBy(() -> UserDocumentPermissions.create(permissions))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Null or invalid DocumentPermission primitive 99 for key 123");
+    }
 
     @Test
     void addPermission() {
@@ -84,7 +183,7 @@ class TestUserDocumentPermissions {
         assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_3, DocumentPermission.VIEW))
                 .isFalse();
 
-        userDocPerms.setPermission(DOC_UUID_3, DocumentPermission.EDIT);
+        setPermission(DOC_UUID_3, DocumentPermission.EDIT);
 
         assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_3, DocumentPermission.EDIT))
                 .isTrue();
@@ -92,7 +191,7 @@ class TestUserDocumentPermissions {
                 .isTrue();
 
         // Add same again
-        userDocPerms.setPermission(DOC_UUID_3, DocumentPermission.EDIT);
+        setPermission(DOC_UUID_3, DocumentPermission.EDIT);
 
         assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_3, DocumentPermission.EDIT))
                 .isTrue();
@@ -109,7 +208,7 @@ class TestUserDocumentPermissions {
         assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.EDIT))
                 .isTrue();
 
-        userDocPerms.setPermission(DOC_UUID_1, DocumentPermission.EDIT);
+        setPermission(DOC_UUID_1, DocumentPermission.EDIT);
 
         assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.OWNER))
                 .isFalse();
@@ -119,7 +218,7 @@ class TestUserDocumentPermissions {
                 .isTrue();
 
         // Remove same again
-        userDocPerms.setPermission(DOC_UUID_1, DocumentPermission.EDIT);
+        setPermission(DOC_UUID_1, DocumentPermission.EDIT);
 
         assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.OWNER))
                 .isFalse();
@@ -141,7 +240,7 @@ class TestUserDocumentPermissions {
         assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_2, DocumentPermission.VIEW))
                 .isTrue();
 
-        userDocPerms.clearPermission(DOC_UUID_1);
+        removePermission(DOC_UUID_1);
 
         assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.OWNER))
                 .isFalse();
@@ -154,7 +253,7 @@ class TestUserDocumentPermissions {
                 .isTrue();
 
         // Same again
-        userDocPerms.clearPermission(DOC_UUID_1);
+        removePermission(DOC_UUID_1);
 
         assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.OWNER))
                 .isFalse();
@@ -166,9 +265,34 @@ class TestUserDocumentPermissions {
         assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_2, DocumentPermission.VIEW))
                 .isTrue();
 
-        userDocPerms.clearPermission(DOC_UUID_2);
+        removePermission(DOC_UUID_2);
 
         assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_2, DocumentPermission.VIEW))
                 .isFalse();
+    }
+
+    private void removePermission(final DocRef docRef) {
+        final Map<String, DocumentPermission> copy = new HashMap<>(userDocPerms.getPermissions());
+        copy.remove(docRef.getUuid());
+        buildUserDocumentPermissions(copy);
+    }
+
+    private void setPermission(final DocRef docRef, final DocumentPermission documentPermission) {
+        final Map<String, DocumentPermission> copy = new HashMap<>(userDocPerms.getPermissions());
+
+        // Set the permission
+        copy.put(docRef.getUuid(), documentPermission);
+        buildUserDocumentPermissions(copy);
+    }
+
+    private void buildUserDocumentPermissions(final Map<String, DocumentPermission> permsMap) {
+        final Map<String, Byte> modifiedMap = permsMap
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        Entry::getKey,
+                        stringDocumentPermissionEntry ->
+                                stringDocumentPermissionEntry.getValue().getPrimitiveValue()));
+        userDocPerms = UserDocumentPermissions.create(modifiedMap);
     }
 }

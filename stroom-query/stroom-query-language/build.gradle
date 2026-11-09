@@ -28,7 +28,7 @@ dependencies {
 
     implementation libs.classgraph
     implementation libs.fast.infoset
-    implementation libs.fastutil.core
+    implementation libs.fastutil
     implementation libs.guava
     implementation libs.jackson.annotations
     implementation libs.jackson.jq

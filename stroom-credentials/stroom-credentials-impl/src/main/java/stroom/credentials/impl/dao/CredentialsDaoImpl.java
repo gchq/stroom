@@ -164,6 +164,7 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
     @Override
     public ResultPage<Credential> findCredentials(final FindCredentialRequest request,
                                                   final Predicate<Credential> permissionFilter) {
+        Objects.requireNonNull(permissionFilter, "permissionFilter must not be null");
         final List<Condition> conditions = createConditions(request);
         final List<Credential> list = JooqUtil.contextResult(credentialsDbConnProvider, context ->
                         context

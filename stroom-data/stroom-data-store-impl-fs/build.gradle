@@ -45,7 +45,7 @@ dependencies {
     implementation libs.aws.s3.transfer.manager
     implementation libs.commons.compress
     implementation libs.eventLogging
-    implementation libs.fastutil.core
+    implementation libs.fastutil
     implementation libs.guava
     implementation libs.guice
     implementation libs.jackson.annotations

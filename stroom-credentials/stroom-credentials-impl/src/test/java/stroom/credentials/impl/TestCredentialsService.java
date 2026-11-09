@@ -429,7 +429,9 @@ class TestCredentialsService {
         when(credentialsDao.getCredentialByUuid(UUID)).thenReturn(null);
 
         credentialsService.storeCredentials(new PutCredentialRequest(
-                createCredential("file creds", CredentialType.KEY_STORE_FILE, null),
+                createCredential("file creds",
+                        CredentialType.KEY_STORE_FILE,
+                        null),
                 new KeyStoreFileSecret(KeyStoreType.PKCS12, keyStoreFile.toString(), "changeit")));
 
         final ArgumentCaptor<StoredSecret> stored = ArgumentCaptor.forClass(StoredSecret.class);
@@ -615,7 +617,7 @@ class TestCredentialsService {
     void testGetKeyStoreOfAKeyStoreFileCredentialUsesTheFileWhereItIs(@TempDir final Path tempDir)
             throws Exception {
         final Path keyStoreFile = createAllowedKeyStoreFile(tempDir, "changeit");
-        when(securityContext.hasDocumentPermission(any(DocRef.class), eq(DocumentPermission.VIEW)))
+        when(securityContext.hasDocumentPermission(any(DocRef.class), eq(DocumentPermission.USE)))
                 .thenReturn(true);
         when(credentialsDao.getStoredSecretByName("file creds")).thenReturn(new StoredSecret(
                 createStoredCredential(CredentialType.KEY_STORE_FILE, KeyStoreType.PKCS12),
@@ -640,7 +642,7 @@ class TestCredentialsService {
             throws Exception {
         final Path keyStoreFile = createAllowedKeyStoreFile(tempDir, "changeit");
         credentialsConfig = new CredentialsConfig();
-        when(securityContext.hasDocumentPermission(any(DocRef.class), eq(DocumentPermission.VIEW)))
+        when(securityContext.hasDocumentPermission(any(DocRef.class), eq(DocumentPermission.USE)))
                 .thenReturn(true);
         when(credentialsDao.getStoredSecretByName("file creds")).thenReturn(new StoredSecret(
                 createStoredCredential(CredentialType.KEY_STORE_FILE, KeyStoreType.PKCS12),

@@ -167,6 +167,23 @@ public class CollectionUtil {
      * <p>
      * If duplicate values are found, the behaviour is defined by duplicateMode.
      * </p>
+     */
+    public static <K, V> Map<K, V> mapBy(final Function<V, K> keyExtractor,
+                                         final Set<V> values) {
+        // No dups in a set obvs, so just use THROW
+        return NullSafe.stream(values)
+                .collect(Collectors.toMap(
+                        keyExtractor,
+                        Function.identity(),
+                        createMergeFunction(DuplicateMode.THROW)));
+    }
+
+    /**
+     * Convert a {@link Collection} of values into a {@link Map} of those values
+     * keyed using keyExtractor.
+     * <p>
+     * If duplicate values are found, the behaviour is defined by duplicateMode.
+     * </p>
      *
      * @param duplicateMode How to handle multiple values for the same key.
      */
