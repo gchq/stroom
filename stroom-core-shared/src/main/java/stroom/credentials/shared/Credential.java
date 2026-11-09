@@ -29,8 +29,7 @@ import java.util.Objects;
         "updateUser",
         "credentialType",
         "expiryTimeMs",
-        "secret"
-})
+        "secret"})
 @JsonInclude(Include.NON_NULL)
 public class Credential implements HasAuditInfoGetters, HasDisplayValue {
 
@@ -59,6 +58,9 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
     @JsonProperty
     private final Long expiryTimeMs;
 
+    @JsonIgnore
+    private transient volatile DocRef docRef;
+
     /**
      * Constructor.
      *
@@ -78,15 +80,13 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
             @JsonProperty("credentialType") final CredentialType credentialType,
             @JsonProperty("keyStoreType") final KeyStoreType keyStoreType,
             @JsonProperty("expiryTimeMs") final Long expiryTimeMs) {
-        this.uuid = uuid;
-        this.name = name;
+        this.uuid = Objects.requireNonNull(uuid, () -> "Credential with name '" + name + "' must have a uuid");
+        this.name = Objects.requireNonNull(name, () -> "Credential with uuid '" + uuid + "' must have a name");
         this.createTimeMs = createTimeMs;
         this.updateTimeMs = updateTimeMs;
         this.createUser = createUser;
         this.updateUser = updateUser;
-        this.credentialType = credentialType == null
-                ? CredentialType.USERNAME_PASSWORD
-                : credentialType;
+        this.credentialType = Objects.requireNonNullElse(credentialType, CredentialType.USERNAME_PASSWORD);
         this.keyStoreType = keyStoreType;
         this.expiryTimeMs = expiryTimeMs;
     }
@@ -132,7 +132,10 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
     }
 
     public DocRef asDocRef() {
-        return new DocRef(TYPE, uuid, name);
+        if (docRef == null) {
+            docRef = new DocRef(TYPE, uuid, name);
+        }
+        return docRef;
     }
 
     @JsonIgnore
@@ -168,5 +171,15 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
                ", keyStoreType=" + keyStoreType +
                ", expiryTimeMs=" + expiryTimeMs +
                '}';
+    }
+
+    /// @return A new [DocRef] for this document's type with the supplied uuid.
+    public static DocRef getDocRef(final String uuid) {
+        return new DocRef(TYPE, uuid);
+    }
+
+    /// @return A new builder for creating a [DocRef] for this document's type.
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(TYPE);
     }
 }

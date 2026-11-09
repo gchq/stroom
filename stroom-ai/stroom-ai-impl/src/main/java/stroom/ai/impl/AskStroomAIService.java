@@ -52,6 +52,7 @@ import stroom.query.impl.QueryService;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.resource.api.ResourceStore;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -92,6 +93,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -146,6 +148,7 @@ public class AskStroomAIService {
     private final Provider<TableAnalysisConfig> tableAnalysisConfigProvider;
     private final ConcurrentHashMap<Integer, AtomicBoolean> cancellationFlags = new ConcurrentHashMap<>();
     private final TaskContextFactory taskContextFactory;
+    private final SecurityContext securityContext;
 
     @Inject
     public AskStroomAIService(final AiService aiService,
@@ -158,7 +161,8 @@ public class AskStroomAIService {
                               final Provider<AskStroomAiConfig> defaultConfigProvider,
                               final Provider<GlobalConfig> globalConfigProvider,
                               final Provider<TableAnalysisConfig> tableAnalysisConfigProvider,
-                              final TaskContextFactory taskContextFactory) {
+                              final TaskContextFactory taskContextFactory,
+                              final SecurityContext securityContext) {
         this.aiService = aiService;
         this.attachmentFileStore = attachmentFileStore;
         this.dashboardService = dashboardService;
@@ -170,6 +174,7 @@ public class AskStroomAIService {
         this.globalConfigProvider = globalConfigProvider;
         this.tableAnalysisConfigProvider = tableAnalysisConfigProvider;
         this.taskContextFactory = taskContextFactory;
+        this.securityContext = securityContext;
     }
 
     /**
@@ -1544,31 +1549,30 @@ public class AskStroomAIService {
     }
 
     private OpenAIModelDoc getModelDoc(final AskStroomAiConfig config) {
-        if (config == null || config.getModelRef() == null) {
-            throw new RuntimeException("No model specified");
-        }
+        NullSafe.requireNonNull(config, AskStroomAiConfig::getModelRef, () -> "No model specified");
+
         final DocRef docRef = config.getModelRef();
         if (!OpenAIModelDoc.TYPE.equals(docRef.getType())) {
             throw new RuntimeException("Default OpenAI API doc ref is incorrect");
         }
 
-        final OpenAIModelDoc openAIModelDoc = openAIModelStore.readDocument(docRef);
-        if (openAIModelDoc == null) {
-            throw new RuntimeException("Default OpenAI API doc cannot be found");
-        }
+        // User only needs Use perm on the model doc (and Use on any Credential in the model)
+        final OpenAIModelDoc openAIModelDoc = securityContext.useAsReadResult(() ->
+                openAIModelStore.readDocument(docRef));
+        Objects.requireNonNull(openAIModelDoc, "Default OpenAI API doc cannot be found");
         return openAIModelDoc;
     }
 
     private ChatModel getChatModel(final OpenAIModelDoc openAIModelDoc) {
         // Stub mode: return a test ChatModel that requires no API key or network.
         if (STUB_MODEL_ID.equals(openAIModelDoc.getModelId())) {
-            LOGGER.info(() -> "Using stub ChatModel for testing (modelId='" + STUB_MODEL_ID + "')");
+            LOGGER.info("Using stub ChatModel for testing (modelId='{}')", STUB_MODEL_ID);
             return new StubChatModel();
+        } else {
+            LOGGER.debug(() -> "getChatModel: modelId='" + openAIModelDoc.getModelId()
+                               + "' docRef=" + openAIModelDoc.getUuid());
+            return aiService.getChatModel(openAIModelDoc);
         }
-
-        LOGGER.debug(() -> "getChatModel: modelId='" + openAIModelDoc.getModelId()
-                           + "' docRef=" + openAIModelDoc.getUuid());
-        return aiService.getChatModel(openAIModelDoc);
     }
 
     private TableAnalysisConfig getTableAnalysisConfig(final AskStroomAiConfig config) {

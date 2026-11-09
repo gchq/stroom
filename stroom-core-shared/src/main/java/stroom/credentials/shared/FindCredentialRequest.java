@@ -4,6 +4,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -12,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
@@ -38,7 +40,14 @@ public class FindCredentialRequest extends BaseCriteria {
         super(pageRequest, sortList);
         this.filter = filter;
         this.credentialTypes = credentialTypes;
-        this.requiredPermission = requiredPermission;
+        this.requiredPermission = Objects.requireNonNull(requiredPermission);
+    }
+
+    @SerialisationTestConstructor
+    FindCredentialRequest() {
+        filter = "foo";
+        credentialTypes = Collections.emptySet();
+        requiredPermission = DocumentPermission.VIEW;
     }
 
     public String getFilter() {

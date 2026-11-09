@@ -24,9 +24,6 @@ import stroom.annotation.impl.AnnotationValues;
 import stroom.annotation.impl.AnnotationValues.FieldValueEntry;
 import stroom.annotation.impl.dao.AnnotationEventLinkCache.AnnotationEventLink;
 import stroom.annotation.impl.db.AnnotationDbConnProvider;
-import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink;
-import stroom.annotation.impl.db.jooq.tables.AnnotationLink;
-import stroom.annotation.impl.db.jooq.tables.AnnotationTagLink;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationDataLinkRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationLinkRecord;
@@ -2145,7 +2142,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     private void reloadEventIdCache() {
         final AnnotationConfig config = annotationConfigProvider.get();
         final int limit = config.getEventLinkCacheSizeLimit() + 1;
-        LOGGER.logDurationIfInfoEnabled(() -> {
+        LOGGER.logDurationIfDebugEnabled(() -> {
             final List<AnnotationEventLink> eventLinks = new ArrayList<>();
             JooqUtil.contextResult(connectionProvider, context -> context
                             .select(ANNOTATION_DATA_LINK.STREAM_ID,

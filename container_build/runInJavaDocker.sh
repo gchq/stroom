@@ -238,12 +238,27 @@ else
   tty_args=()
 fi
 
+# If GRADLE_BUILD_CACHE_DIR is set (e.g. by CI so it can save/restore the
+# gradle build cache between runs), mount it into the container and make gradle
+# use it for its local build cache. The path is on the host.
+build_cache_args=()
+if [[ -n "${GRADLE_BUILD_CACHE_DIR:-}" ]]; then
+  container_build_cache_dir="/builder/gradle-build-cache"
+  mkdir -p "${GRADLE_BUILD_CACHE_DIR}"
+  echo -e "${GREEN}Using gradle build cache dir ${BLUE}${GRADLE_BUILD_CACHE_DIR}${NC}"
+  build_cache_args=(
+    "--mount" "type=bind,src=${GRADLE_BUILD_CACHE_DIR},dst=${container_build_cache_dir}"
+    "--env" "GRADLE_BUILD_CACHE_DIR=${container_build_cache_dir}"
+  )
+fi
+
 docker run \
   "${tty_args[@]+"${tty_args[@]}"}" \
   --rm \
   --tmpfs /tmp:exec \
   --mount "type=bind,src=${host_abs_repo_dir},dst=${dest_dir}" \
   --volume builder-home-dir-vol:/home/builder \
+  "${build_cache_args[@]}" \
   --group-add "${docker_group_id}" \
   --volume /var/run/docker.sock:/var/run/docker.sock \
   --read-only \

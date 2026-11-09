@@ -22,6 +22,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.impl.DocTypeIdDao;
 import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.UserDocumentPermissions;
+import stroom.security.impl.UserDocumentPermissions.Builder;
 import stroom.security.impl.db.SecurityDbConnProvider;
 import stroom.security.impl.db.jooq.tables.PermissionDoc;
 import stroom.security.impl.db.jooq.tables.PermissionDocCreate;
@@ -31,6 +32,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
+import stroom.util.collections.CollectionUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -60,12 +62,12 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static stroom.security.impl.db.jooq.tables.PermissionDoc.PERMISSION_DOC;
@@ -115,7 +117,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
     public UserDocumentPermissions getPermissionsForUser(final String userUuid) {
         Objects.requireNonNull(userUuid, "Null user UUID");
 
-        final Map<String, Byte> permissionMap = new ConcurrentHashMap<>();
+        final Builder builder = UserDocumentPermissions.builder();
         JooqUtil.contextResult(securityDbConnProvider, context -> context
                         .select(PERMISSION_DOC.DOC_UUID, PERMISSION_DOC.PERMISSION_ID)
                         .from(PERMISSION_DOC)
@@ -125,9 +127,59 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                 .forEach(r -> {
                     final String docUuid = r.get(PERMISSION_DOC.DOC_UUID);
                     final byte permission = r.get(PERMISSION_DOC.PERMISSION_ID).byteValue();
-                    permissionMap.put(docUuid, permission);
+                    builder.setPermission(docUuid, permission);
                 });
-        return new UserDocumentPermissions(permissionMap);
+        return builder.build();
+    }
+
+    /// Gets the document permissions for each of the supplied users.
+    ///
+    /// An empty [DocumentUserPermissions] will be returned for a user that has no document permissions.
+    ///
+    /// @param userRefs The UUIDs of the users whose document permissions are required.
+    /// @return The document permissions for each supplied user.
+    @Override
+    public Map<UserRef, UserDocumentPermissions> getPermissionsForUsers(final Set<UserRef> userRefs) {
+        Objects.requireNonNull(userRefs, "Null user UUIDs");
+        if (userRefs.stream().anyMatch(Objects::isNull)) {
+            throw new IllegalArgumentException("Null user UUID in userUuids");
+        }
+        if (userRefs.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        final Map<String, UserRef> userUuidToUserRefMap = CollectionUtil.mapBy(UserRef::getUuid, userRefs);
+        final Map<UserRef, UserDocumentPermissions.Builder> userUuidToBuilderMap = new HashMap<>(userRefs.size());
+
+        JooqUtil.contextResult(securityDbConnProvider, context -> context
+                        .select(PERMISSION_DOC.USER_UUID,
+                                PERMISSION_DOC.DOC_UUID,
+                                PERMISSION_DOC.PERMISSION_ID)
+                        .from(PERMISSION_DOC)
+                        .join(STROOM_USER).on(STROOM_USER.UUID.eq(PERMISSION_DOC.USER_UUID))
+                        .where(PERMISSION_DOC.USER_UUID.in(userUuidToUserRefMap.keySet()))
+                        .fetch())
+                .forEach(r -> {
+                    final String userUuid = r.get(PERMISSION_DOC.USER_UUID);
+                    final String docUuid = r.get(PERMISSION_DOC.DOC_UUID);
+                    final byte permission = r.get(PERMISSION_DOC.PERMISSION_ID).byteValue();
+                    final UserRef userRef = userUuidToUserRefMap.get(userUuid);
+                    userUuidToBuilderMap.computeIfAbsent(
+                                    userRef,
+                                    ignored -> UserDocumentPermissions.builder())
+                            .setPermission(docUuid, permission);
+                });
+
+        final Map<UserRef, UserDocumentPermissions> userToPermsMap = new HashMap<>(userRefs.size());
+        for (final UserRef userRef : userRefs) {
+            final Builder builder = userUuidToBuilderMap.get(userRef);
+            if (builder != null) {
+                userToPermsMap.put(userRef, builder.build());
+            } else {
+                userToPermsMap.put(userRef, UserDocumentPermissions.EMPTY);
+            }
+        }
+        return userToPermsMap;
     }
 
     @Override
@@ -142,7 +194,8 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                         .where(PERMISSION_DOC.DOC_UUID.eq(documentUuid))
                         .and(PERMISSION_DOC.USER_UUID.eq(userUuid))
                         .fetchOptional(PERMISSION_DOC.PERMISSION_ID))
-                .map(r -> DocumentPermission.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(r.byteValue()))
+                .map(r ->
+                        DocumentPermission.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(r.byteValue()))
                 .orElse(null);
     }
 
