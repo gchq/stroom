@@ -39,6 +39,8 @@ import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
@@ -59,9 +61,13 @@ import java.util.Set;
 /// picks a convention itself; with a name, the profile's field map and the fields of its reference index docs.
 class GetFieldConventionsTool extends AbstractBuiltInTool {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GetFieldConventionsTool.class);
+
     static final String NAME = "get_field_conventions";
     static final String NAME_ARG = "name";
     static final String BACKEND_ARG = "backend";
+    // The indexing choice of how fields are named, as recorded for the build.
+    private static final String NAMING = "naming";
     static final String ECS_FIELDS_ARG = "ecs_fields";
     /// What each convention profile is shown as.
     static final Map<String, String> PROFILE_LABELS = Map.of("ecs", "ECS (Elastic Common Schema)",
@@ -86,6 +92,7 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
     private final IndexingMemory memory;
     private final BuildPlan plan;
     private final PendingDocumentation pendingDocs;
+    private final BuildRecords records;
 
     @Inject
     GetFieldConventionsTool(final AgentKnowledge knowledge,
@@ -96,7 +103,8 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
                             final Consent consent,
                             final IndexingMemory memory,
                             final BuildPlan plan,
-                            final PendingDocumentation pendingDocs) {
+                            final PendingDocumentation pendingDocs,
+                            final BuildRecords records) {
         this.knowledge = knowledge;
         this.pipelineTemplates = pipelineTemplates;
         this.pipelineIndex = pipelineIndex;
@@ -106,6 +114,7 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
         this.memory = memory;
         this.plan = plan;
         this.pendingDocs = pendingDocs;
+        this.records = records;
     }
 
     @Override
@@ -211,6 +220,16 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
         String chosenBackend = backend;
         List<Map<String, Object>> templates = null;
         boolean asked = false;
+        final Map<String, Object> recorded = recordedChoices(context);
+        if (name == null && backend == null && recorded.get(BACKEND_ARG) instanceof final String kind) {
+            // Chosen in a form earlier in the build (seen in testing: asked again once the agent's context was
+            // compacted, which lost the answer).
+            chosenBackend = kind;
+            asked = true;
+            if (recorded.get(NAMING) instanceof final Map<?, ?> naming) {
+                return settledEarlier(context, kind, BuildRecords.asMap(naming));
+            }
+        }
         if (name == null && backend == null) {
             // Seen: an agent asked without the backend, got the profiles, then looked the backend up and asked
             // again. When every indexing template has the same backend, that's the index's backend.
@@ -247,6 +266,7 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
                 }
                 chosenBackend = labels.get(picked.get());
                 asked = true;
+                remember(context, BACKEND_ARG, chosenBackend);
                 // The chosen backend's templates come back with the naming, so they needn't be looked up.
                 final String kind = chosenBackend;
                 templates = found.stream()
@@ -332,6 +352,76 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
         return result;
     }
 
+    /// How the user chose in a form to name the index's fields: this session's choice, else the one recorded for its
+    /// build (so a restarted node, or a compacted context, doesn't ask again).
+    ///
+    /// @param context The call's context.
+    /// @return The choice (`convention` or `like_index`), or empty if none.
+    Map<String, Object> namingChosen(final ToolCallContext context) {
+        final Map<String, Object> chosen = memory.namingChosen();
+        if (!chosen.isEmpty()) {
+            return chosen;
+        }
+        if (recordedChoices(context).get(NAMING) instanceof final Map<?, ?> naming) {
+            final Map<String, Object> recorded = BuildRecords.asMap(naming);
+            memory.chooseNaming(recorded);
+            return recorded;
+        }
+        return Map.of();
+    }
+
+    // Remembered for the session's drafts, and recorded for the build.
+    private void chooseNaming(final ToolCallContext context, final Map<String, Object> naming) {
+        memory.chooseNaming(naming);
+        remember(context, NAMING, naming);
+    }
+
+    // A choice recorded for the session's build, if it has one. A convenience: without it, the user is asked again.
+    private void remember(final ToolCallContext context, final String key, final Object chosen) {
+        plan.currentBuild(context).ifPresent(build -> {
+            try {
+                records.rememberIndexingChoice(build, key, chosen);
+            } catch (final RuntimeException e) {
+                LOGGER.debug("Indexing choice not recorded for build {}", build, e);
+            }
+        });
+    }
+
+    // The choices recorded for the session's build, or none.
+    private Map<String, Object> recordedChoices(final ToolCallContext context) {
+        return plan.currentBuild(context).map(build -> {
+            try {
+                return records.indexingChoices(build);
+            } catch (final RuntimeException e) {
+                LOGGER.debug("Indexing choices not read for build {}", build, e);
+                return Map.<String, Object>of();
+            }
+        }).orElse(Map.of());
+    }
+
+    // The backend and naming the user chose in forms earlier in the build: said, not asked again.
+    private Map<String, Object> settledEarlier(final ToolCallContext context,
+                                               final String backend,
+                                               final Map<String, Object> naming) {
+        memory.chooseNaming(naming);
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("status", "chosen");
+        result.put("backend", backend);
+        result.putAll(naming);
+        final String how = naming.get("like_index") != null
+                ? "following the existing index " + naming.get("like_index")
+                : "the " + naming.get("convention") + " convention";
+        result.put("settled", "The user chose the backend (" + backend + ") and how fields are named (" + how
+                              + ") in forms earlier in this build (recorded with the build): don't ask about either "
+                              + "again, in a form, ask_user or the chat. Only if the user says to change them, call "
+                              + "again with backend= their answer.");
+        result.put("hint", naming.get("like_index") != null
+                ? "draft_index_mapping like_index=" + naming.get("like_index") + " (with the events streams)."
+                : "draft_index_mapping convention=" + naming.get("convention") + " (with the events streams).");
+        plan.currentBuild(context).ifPresent(build -> result.put("build", build));
+        return result;
+    }
+
     // What the user settled in the forms, so it isn't asked again (seen in testing: the user chose Elasticsearch and
     // ECS in these forms, and the agent, told only the naming, asked the backend again with an example template to
     // follow, in its own form).
@@ -378,7 +468,7 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
                     : consent.choose(call, context, NAME, "Which existing index should it follow?",
                             List.copyOf(labels.keySet()), null).map(labels::get).orElse(null);
             if (pick != null) {
-                memory.chooseNaming(Map.of("like_index", pick.get("uuid")));
+                chooseNaming(context, Map.of("like_index", pick.get("uuid")));
                 result.put("like_index", pick.get("uuid"));
                 result.put("hint", "The user chose to follow '" + pick.get("name") + "': draft_index_mapping "
                                    + "like_index=" + pick.get("uuid") + " (with the events streams); not asked "
@@ -390,7 +480,7 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
                                + "example_template= it, exactly as given.");
         } else if (kind.startsWith("convention profile ")) {
             final String profile = kind.substring("convention profile ".length());
-            memory.chooseNaming(Map.of("convention", profile));
+            chooseNaming(context, Map.of("convention", profile));
             result.put("hint", "draft_index_mapping convention=" + profile + " (with the events streams): the user "
                                + "chose it in the form, so it isn't asked again.");
         }
@@ -425,7 +515,7 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
             if (chosen.isPresent()) {
                 final String profile = labels.get(chosen.get());
                 // Remembered, as for Elasticsearch: draft_index_mapping convention= doesn't ask it again.
-                memory.chooseNaming(Map.of("convention", profile));
+                chooseNaming(context, Map.of("convention", profile));
                 final Map<String, Object> result = new LinkedHashMap<>();
                 result.put("status", "chosen");
                 result.put("choice", chosen.get());

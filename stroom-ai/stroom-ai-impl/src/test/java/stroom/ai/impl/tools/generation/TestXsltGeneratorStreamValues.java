@@ -93,6 +93,35 @@ class TestXsltGeneratorStreamValues extends XsltRuns {
     }
 
     @Test
+    void aDeviceLeftOutAsAStandInTakesTheSendersAddress() {
+        // Seen in testing: '-' for the host, the only source of EventSource/Device, was to be left out, and those
+        // events would have had no Device, which the schema requires.
+        final List<Object> common = commonWith(TIME);
+        common.set(4, Map.of("path", "EventSource/Device/IPAddress", "field", "host", "meta_fallback",
+                List.of("RemoteAddress")));
+        final XsltGenerator.Generated generated = XsltGenerator.generate(GenerationFixtures.mapping(
+                GenerationFixtures.with("drop_when", List.of(HEADER), "common", common, "nil_values",
+                        List.of("-"))), GenerationFixtures.SCHEMA, "4.1.0");
+        assertThat(generated.problems()).isEmpty();
+        final XmlElement events = transform(generated.xslt(), records(header("2026-10-11"),
+                line("10:00:00").replace("<record>", "<record><data name=\"host\" value=\"10.0.0.1\"/>"),
+                line("10:00:01").replace("<record>", "<record><data name=\"host\" value=\"-\"/>"),
+                line("10:00:02")));
+
+        assertThat(invalid(events, GenerationFixtures.XSD)).as(generated.xslt()).isEmpty();
+        assertThat(children(events, "Event").stream()
+                .map(event -> text(event, "EventSource/Device/IPAddress"))
+                .toList()).containsExactly("10.0.0.1", REMOTE_ADDRESS, REMOTE_ADDRESS);
+        // Kept in the mapping's JSON, as saved, and checked.
+        assertThat(GenerationFixtures.mapping(GenerationFixtures.with("drop_when", List.of(HEADER), "common", common))
+                .toJson(DumpMode.COMPACT).toString()).contains("meta_fallback=[RemoteAddress]");
+        common.set(4, Map.of("path", "EventSource/Device/IPAddress", "value", "x", "meta_fallback",
+                List.of("RemoteAddress")));
+        assertThatThrownBy(() -> GenerationFixtures.mapping(GenerationFixtures.with("common", common)))
+                .hasMessageContaining("meta_fallback");
+    }
+
+    @Test
     void aRolloverIsChecked() {
         assertThatThrownBy(() -> GenerationFixtures.mapping(GenerationFixtures.with("common", commonWith(Map.of(
                 "path", "EventTime/TimeCreated", "field", "time", "time_format", "epoch_ms", "rollover", true)))))

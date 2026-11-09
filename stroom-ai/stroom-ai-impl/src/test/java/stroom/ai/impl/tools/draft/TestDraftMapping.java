@@ -247,6 +247,39 @@ class TestDraftMapping extends DraftFixtures {
     }
 
     @Test
+    void timesTheEventTimeLeavesUnreadAreIgnoredWhenItIsInEveryRecord() {
+        // Seen in testing: a proxy's CSV had date and time columns and a precise x-cs-timestamp; EventTime was read
+        // from x-cs-timestamp, and processing logged date and time as fields no rule reads.
+        final String csv = """
+                date,time,x-cs-timestamp,host,c-ip,cs-host
+                2026-11-09,10:00:00,2026-11-09T10:00:00.123Z,proxy01,10.0.0.1,example.com
+                2026-11-09,10:00:05,2026-11-09T10:00:05.456Z,proxy01,10.0.0.2,example.org
+                2026-11-09,10:00:09,2026-11-09T10:00:09.789Z,proxy01,10.0.0.3,example.net
+                """;
+        final Map<String, Object> draft = draft(Map.of("proxy.csv", csv), "Proxy", "Proxy", "Prod");
+        assertThat(common(draft).get("EventTime/TimeCreated").get("field")).isEqualTo("x-cs-timestamp");
+        assertThat(mappingOf(draft).get("ignored_fields")).isEqualTo(List.of("date", "time"));
+        assertThat(JsonValues.strings(draft.get("unmapped_fields"))).doesNotContain("date", "time");
+        assertThat(notes(draft)).anyMatch(n -> n.contains("ignored_fields") && n.contains("'date'")
+                                               && n.contains("'time'"));
+        final XsltGenerator.Generated generated = generate(mappingOf(draft), SCHEMA, "4.1.0");
+        assertThat(generated.ok()).as(String.valueOf(generated.problems())).isTrue();
+    }
+
+    @Test
+    void timesAreNotIgnoredWhereTheEventTimeIsMissingFromSomeRecords() {
+        final String csv = """
+                date,time,x-cs-timestamp,c-ip,cs-host
+                2026-11-09,10:00:00,2026-11-09T10:00:00.123Z,10.0.0.1,example.com
+                2026-11-09,10:00:05,,10.0.0.2,example.org
+                2026-11-09,10:00:09,2026-11-09T10:00:09.789Z,10.0.0.3,example.net
+                2026-11-09,10:00:12,2026-11-09T10:00:12.789Z,10.0.0.4,example.net
+                """;
+        final Map<String, Object> draft = draft(Map.of("proxy.csv", csv), "Proxy", "Proxy", "Prod");
+        assertThat(mappingOf(draft)).doesNotContainKey("ignored_fields");
+    }
+
+    @Test
     void aFirewallsTrafficAndAdminRecordsAreDraftedWithTheirActionElements() {
         // Seen in VS Code (three sessions on this sample): the draft left every kind Unknown, the agent found
         // Network's and Authenticate's structure hard, gave up, and asked the user to accept traffic and admin as

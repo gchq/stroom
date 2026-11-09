@@ -93,6 +93,8 @@ public class BuildRecords {
     public static final String SOURCE_FEEDS = "source_feeds";
     /// The record's key for the event-logging version chosen for the build's translation.
     public static final String EVENT_LOGGING_VERSION = "event_logging_version";
+    /// The record's key for the indexing choices the user made in forms (`backend`, `naming`).
+    public static final String INDEXING_CHOICES = "indexing_choices";
     /// The record's key for the kind of work the build was started as, when it was named: `events`, `discovery` or
     /// `reference`.
     public static final String KIND = "kind";
@@ -239,6 +241,36 @@ public class BuildRecords {
                 chosen.put("uuid", uuid);
             }
             state.put(EVENT_LOGGING_VERSION, chosen);
+        });
+    }
+
+    /// @param build A build's name.
+    /// @return The indexing choices the user made in forms for the build: `backend` (`elasticsearch` or `lucene`)
+    /// and `naming` (`{convention: profile}` or `{like_index: uuid}`), each once made; empty when none was recorded.
+    public Map<String, Object> indexingChoices(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Map.of();
+        }
+        return load(build).get(INDEXING_CHOICES) instanceof final Map<?, ?> chosen
+                ? asMap(chosen)
+                : Map.of();
+    }
+
+    /// Records an indexing choice the user made in a form, so a later call (after the agent's context was compacted,
+    /// or in another session) doesn't ask again. Seen in testing: the backend was asked twice in one build.
+    ///
+    /// @param build  A build's name.
+    /// @param key    `backend` or `naming`.
+    /// @param chosen What the user chose.
+    /// @return The record as saved.
+    public Map<String, Object> rememberIndexingChoice(final String build, final String key, final Object chosen) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> {
+            final Map<String, Object> choices = state.get(INDEXING_CHOICES) instanceof final Map<?, ?> earlier
+                    ? new LinkedHashMap<>(asMap(earlier))
+                    : new LinkedHashMap<>();
+            choices.put(key, chosen);
+            state.put(INDEXING_CHOICES, choices);
         });
     }
 

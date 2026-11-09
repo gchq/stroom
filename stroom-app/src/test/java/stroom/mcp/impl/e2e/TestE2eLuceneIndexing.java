@@ -400,8 +400,10 @@ class TestE2eLuceneIndexing extends AbstractE2eTest {
         final List<Object> paths = ((List<Map<String, Object>>) diff.get("fields_changed")).stream()
                 .map(field -> field.get("path"))
                 .toList();
-        assertThat(paths).as("v2 differs from v1 only by the added field")
-                .containsExactly("record/data[Success]/@value");
+        // The agent's field for the outcome takes its path, so the tool's own field for it (OutcomeSuccess) gives way:
+        // one field a path the agent names, not two (asked for by the user, 2026-11-09).
+        assertThat(paths).as("v2's Success replaces v1's OutcomeSuccess, and nothing else differs")
+                .containsExactlyInAnyOrder("record/data[Success]/@value", "record/data[OutcomeSuccess]/@value");
         // The copy's code changed, so it is stepped clean before it processes, as for any pipeline.
         final Map<String, Object> stepped = client.json("step_sample", Map.of("pipeline_uuid", copyUuid,
                 "stream_ids", v1.events()));

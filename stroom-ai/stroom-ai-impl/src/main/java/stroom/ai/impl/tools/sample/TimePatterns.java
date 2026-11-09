@@ -67,8 +67,12 @@ public final class TimePatterns {
     // Windows FILETIME: 100 ns ticks since 1601-01-01, also Active Directory's lastLogon and pwdLastSet.
     private static final long FILETIME_EPOCH_SECONDS = 11_644_473_600L;
     private static final long FILETIME_TICKS = 10_000_000L;
-    private static final Pattern COMPACT_DATE_TIME = ToolText.re("\\d{14}");
-    private static final Pattern COMPACT_DATE = ToolText.re("\\d{8}");
+    // Digits read as a date only where they are one, in the years epoch times are taken in (1990 to 2099): seen in
+    // testing, a file size of 14681927 was taken for a date (month 19), so a field of numbers holding it twice had it
+    // put to the user as a stand-in for none.
+    private static final String COMPACT_YMD = "(?:199\\d|20\\d\\d)(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\\d|3[01])";
+    private static final Pattern COMPACT_DATE_TIME = ToolText.re(COMPACT_YMD + "(?:[01]\\d|2[0-3])[0-5]\\d[0-5]\\d");
+    private static final Pattern COMPACT_DATE = ToolText.re(COMPACT_YMD);
     private static final Pattern COMPACT_ISO = ToolText.re("\\d{8}T\\d{6}(\\.\\d+)?Z?");
     private static final Pattern FRACTION = ToolText.re("\\.(\\d+)");
     // A pattern's fraction of a second, with its dot: ".SSSSSS".

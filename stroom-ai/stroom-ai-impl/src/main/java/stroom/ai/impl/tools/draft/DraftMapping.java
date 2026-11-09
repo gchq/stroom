@@ -160,6 +160,9 @@ public final class DraftMapping {
     private static final Pattern DESTINATION_SIDE = ignoringCase(
             "^(dst|dest|destination|server|target|resp|responder)(_|$)");
     private static final Pattern KEY_SPLIT = Pattern.compile("[./]");
+    // A time zone offset is a whole number of quarter hours, and at most 14 hours.
+    private static final long QUARTER_HOUR_SECONDS = 900L;
+    private static final long MAX_OFFSET_SECONDS = 14L * 3_600L;
     private static final Pattern CLOCK = ToolText.re("\\d{1,2}:\\d{2}(:\\d{2})?(\\.\\d+)?");
     private static final Pattern ZONE_NAME = ToolText.re("[A-Z][a-z]+/[A-Za-z_]+(?:/[A-Za-z_]+)?");
     private static final Pattern LETTER = ToolText.re("[A-Za-z]");
@@ -639,6 +642,8 @@ public final class DraftMapping {
         // times aside), best first.
         private final List<String> chosenTimes = new ArrayList<>();
         private final List<String> usableTimes = new ArrayList<>();
+        // A field of times of day alone (FortiOS's time=), which a date-only field may be joined with, or null.
+        private String clockField;
         private Set<String> containerFields = Set.of();
         private final List<Map<String, Object>> timeCandidates = new ArrayList<>();
 
@@ -703,6 +708,14 @@ public final class DraftMapping {
                 // from names.
                 applied = SourceNotes.applyToDraft(mapping, names, values, sourceNotes, detailCheck);
                 rest = withNotes(applied, rest);
+            }
+            final List<String> unusedTimes = unusedTimes(rest);
+            if (!unusedTimes.isEmpty()) {
+                mapping.put("ignored_fields", unusedTimes);
+                rest = rest.stream().filter(name -> !unusedTimes.contains(name)).toList();
+                notes.add(reprs(unusedTimes) + " only repeat the time EventTime/TimeCreated reads, in every "
+                          + "record: listed in ignored_fields, so processing doesn't log them as fields no rule "
+                          + "reads. Mapping one (changes=) reads it all the same.");
             }
             nilValues();
             doubledQuotes();
@@ -1038,6 +1051,7 @@ public final class DraftMapping {
                                  && values.get(n).stream().allMatch(v -> ToolText.fullmatch(CLOCK, ToolText.strip(v))))
                     .findFirst()
                     .orElse(null);
+            clockField = clock;
             final boolean chosenPrecise = timeField != null && dateOnly && clock != null
                     ? subSecond(clock)
                     : subSecond(timeField);
@@ -1165,6 +1179,81 @@ public final class DraftMapping {
             taken.addAll(fields);
             chosenTimes.addAll(fields);
             return timeField;
+        }
+
+        // The time fields EventTime/TimeCreated doesn't read, nor anything else (in rest), that only say again the
+        // time it reads: in every record, the same instant (or the same shifted by a whole zone offset, a local copy
+        // of a UTC time), a date and a time of day together counted as one. Asked for by the user (seen in testing:
+        // a proxy's date and time columns, left unread beside its x-cs-timestamp, were logged to the Error streams as
+        // fields no rule reads). A time saying something else (a session's start, a log's receipt) stays to be
+        // mapped, as does one named as a start or a creation (the sample's values may agree by chance), and any where
+        // a record lacks the time EventTime reads.
+        private List<String> unusedTimes(final List<String> rest) {
+            if (chosenTimes.isEmpty()
+                || !records.stream().allMatch(r -> chosenTimes.stream().anyMatch(f -> EventTimes.held(r, f)))) {
+                return List.of();
+            }
+            final List<String> unused = new ArrayList<>();
+            for (final String name : usableTimes) {
+                if (chosenTimes.contains(name) || !rest.contains(name)) {
+                    continue;
+                }
+                // A time named as a period's start or a creation may say something else, the sample's values aside.
+                if (fullTime(name) && EventTimes.rank(timeKey(name)) != EventTimes.Rank.AMBIGUOUS
+                    && sameTime(List.of(name))) {
+                    unused.add(name);
+                } else if (!fullTime(name) && clockField != null && !chosenTimes.contains(clockField)
+                           && rest.contains(clockField) && sameTime(List.of(name, clockField))) {
+                    unused.add(name);
+                    unused.add(clockField);
+                }
+            }
+            return unused.stream().distinct().toList();
+        }
+
+        // Whether these fields (one time, or a date and a time of day) hold the time EventTime reads in every record
+        // that has them: the same instant, or one shifted by the same whole quarter hours in each.
+        private boolean sameTime(final List<String> fields) {
+            Long shift = null;
+            int compared = 0;
+            for (final Map<String, Object> record : records) {
+                if (fields.stream().noneMatch(f -> EventTimes.held(record, f))) {
+                    continue;
+                }
+                final Long theirs = instant(record, fields);
+                final Long chosen = instant(record, chosenTimes.size() == 2 && !fullTime(chosenTimes.getFirst())
+                        ? chosenTimes
+                        : chosenTimes.stream().filter(f -> EventTimes.held(record, f)).limit(1).toList());
+                if (theirs == null || chosen == null) {
+                    return false;
+                }
+                // To the second: one may carry a fraction the other doesn't.
+                final long gap = theirs / 1_000L - chosen / 1_000L;
+                if (shift == null) {
+                    shift = gap;
+                }
+                if (gap != shift || gap % QUARTER_HOUR_SECONDS != 0 || Math.abs(gap) > MAX_OFFSET_SECONDS) {
+                    return false;
+                }
+                compared++;
+            }
+            return compared > 0;
+        }
+
+        // A record's time from one field, or a date and a time of day joined; null if it doesn't parse.
+        private Long instant(final Map<String, Object> record, final List<String> fields) {
+            if (fields.isEmpty() || fields.stream().anyMatch(f -> !EventTimes.held(record, f))) {
+                return null;
+            }
+            if (fields.size() == 1) {
+                return TimePatterns.epochMillis(patternOf(type(fields.getFirst())), String.valueOf(record.get(
+                        fields.getFirst())));
+            }
+            final String clock = ToolText.strip(String.valueOf(record.get(fields.get(1)))).split("\\.", 2)[0];
+            return TimePatterns.epochMillis(patternOf(type(fields.getFirst())) + " HH:mm" + (ToolText.count(clock,
+                    ":") == 2
+                    ? ":ss"
+                    : ""), ToolText.strip(String.valueOf(record.get(fields.getFirst()))) + " " + clock);
         }
 
         // The time_format of a time field.

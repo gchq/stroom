@@ -148,6 +148,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private static final String STATUS = "status";
     // A result's status when its table is for the user, as it is.
     private static final String NEEDS_SHOWING = "needs_showing";
+    // A set the user amended or declined, waiting to be sent back as theirs: no plan step meanwhile.
+    private static final String AWAITING_AMENDMENTS = "awaiting_amendments";
     // How long a shown set stays in view for its form: past it, the set is shown again before the form.
     private static final long SHOWN_FRESH_MS = 90_000;
     private static final String HINT = "hint";
@@ -357,6 +359,12 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                        final String build,
                                        final String source,
                                        final Map<String, Object> notesNow) {
+        final List<String> amended = JsonValues.strings(notesNow.get(RecordSourceNotesTool.AMENDED));
+        if (!amended.isEmpty()) {
+            // Seen in testing: after an amendment the plan sent the agent to list the kinds, which put the amended
+            // set to the user again, with a second form.
+            return awaitingAmendments(amended);
+        }
         final Sampled read = sampled(call, build, source);
         final Map<String, String> samples = read.samples();
         final String readWith = read.readWith();
@@ -441,9 +449,10 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 .map(kind -> Map.<String, Object>of(KEY, kind.key(), SAMPLE, recordText(kind, samples, variantField),
                         CATCH_ALL, kind.catchAll(), RECORDS, kind.records()))
                 .toList();
+        // Proposals still to confirm are kept: listing again doesn't take them back from the user.
         result.put(SOURCE_NOTES, notes.recordClassified(context, build, source, List.of(),
                 todo.stream().map(Kind::key).toList(), Map.of(RecordSourceNotesTool.RECORD_FIELDS, recordFields,
-                        RecordSourceNotesTool.PROPOSED, List.of(), SAMPLES, kindSamples)));
+                        SAMPLES, kindSamples)));
         result.put(TO_CLASSIFY, batch.stream().map(Kind::shown).toList());
         if (todo.size() > batch.size()) {
             result.put("round", batch.size() + " of the " + todo.size() + " kinds still to classify; the next round "
@@ -566,6 +575,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                          final Map<String, Object> notesNow,
                                          final List<Map<?, ?>> given) {
         final List<String> pending = pending(notesNow);
+        final List<String> amended = JsonValues.strings(notesNow.get(RecordSourceNotesTool.AMENDED));
         final List<String> recordFields = JsonValues.strings(notesNow.get(RecordSourceNotesTool.RECORD_FIELDS));
         final List<Proposal> proposals = new ArrayList<>();
         final List<String> problems = new ArrayList<>();
@@ -614,7 +624,11 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             if (lowered) {
                 rated.add(key);
             }
-            if (!fromUser && !pattern && !pending.contains(key)) {
+            if (!fromUser && amended.contains(key)) {
+                // Seen in testing: an amended kind sent back as a proposal, put to the user again with a form.
+                problems.add("proposals[" + i + "]: the user amended " + key + " in the form: send it with their "
+                             + "amendment applied as from_user: true (no form), or leave it out if they rejected it");
+            } else if (!fromUser && !pattern && !pending.contains(key)) {
                 problems.add("proposals[" + i + "]: " + key + " isn't a kind still to classify (" + String.join(
                         ", ", pending) + ")");
             } else if (!fromUser && !CONFIDENCES.contains(confidence)) {
@@ -723,10 +737,32 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         keptKeys.put(RecordSourceNotesTool.PROPOSED, kept);
         keptKeys.put(RecordSourceNotesTool.DROPPED, List.copyOf(allDropped));
         keptKeys.put(RecordSourceNotesTool.SHOWN, shownMark(kept));
+        // The amended set sent back as the user's: those of it left out are the ones the user rejected, kept so no
+        // later round lists them again (seen in testing: a rejected kind put to the user round after round). A kind
+        // sent as the user's is no longer rejected.
+        final List<String> rejectedNow = amended.stream()
+                .filter(key -> !recorded.contains(key) && !drops.contains(key))
+                .toList();
+        // Only a call sending back some of the amended set: a correction of another kind leaves it waiting.
+        final boolean resent = amended.stream().anyMatch(key -> recorded.contains(key) || drops.contains(key));
+        final Set<String> rejected = new LinkedHashSet<>(JsonValues.strings(notesNow.get(
+                RecordSourceNotesTool.REJECTED)));
+        if (resent) {
+            rejected.addAll(rejectedNow);
+            keptKeys.put(RecordSourceNotesTool.AMENDED, List.of());
+        }
+        rejected.removeAll(recorded);
+        keptKeys.put(RecordSourceNotesTool.REJECTED, List.copyOf(rejected));
         final Map<String, Object> doc = notes.recordClassified(context, build, source, fromUser, left, keptKeys);
         final Map<String, Object> result = new LinkedHashMap<>();
         if (!recorded.isEmpty()) {
             result.put(RECORDED, List.copyOf(recorded));
+        }
+        if (resent && !rejectedNow.isEmpty()) {
+            result.put("rejected", rejectedNow);
+            result.put("rejected_note", "Of the set the user amended, these weren't sent back, so they are taken as "
+                                        + "rejected and not listed again. Ask the user what each is; send what "
+                                        + "they say as from_user: true (which takes it out of rejected).");
         }
         if (!drops.isEmpty()) {
             result.put("dropped", drops);
@@ -771,7 +807,45 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                           final String build,
                                           final String source,
                                           final Map<String, Object> notesNow) {
+        final List<String> amendedLeft = JsonValues.strings(notesNow.get(RecordSourceNotesTool.AMENDED));
+        if (!amendedLeft.isEmpty()) {
+            // On to the next set without sending the amended one back: the user rejected what wasn't sent, which
+            // isn't listed again (the agent asks what each is).
+            final Set<String> rejected = new LinkedHashSet<>(JsonValues.strings(notesNow.get(
+                    RecordSourceNotesTool.REJECTED)));
+            rejected.addAll(amendedLeft);
+            notes.recordClassified(context, build, source, List.of(), pending(notesNow), Map.of(
+                    RecordSourceNotesTool.AMENDED, List.of(), RecordSourceNotesTool.REJECTED, List.copyOf(rejected)));
+            final Map<String, Object> afterRejected = new LinkedHashMap<>(notesNow);
+            afterRejected.remove(RecordSourceNotesTool.AMENDED);
+            afterRejected.put(RecordSourceNotesTool.REJECTED, List.copyOf(rejected));
+            final Map<String, Object> result = confirmedAfter(call, context, build, source, afterRejected);
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("rejected", amendedLeft);
+            out.put("rejected_note", "The amended set wasn't sent back as the user's, so these are taken as "
+                                     + "rejected and not listed again: ask the user what each is, and send what "
+                                     + "they say as from_user: true.");
+            out.putAll(result);
+            return out;
+        }
+        return confirmedAfter(call, context, build, source, notesNow);
+    }
+
+    private Map<String, Object> confirmedAfter(final ToolCall call,
+                                               final ToolCallContext context,
+                                               final String build,
+                                               final String source,
+                                               final Map<String, Object> notesNow) {
         final List<Map<String, Object>> proposed = JsonValues.maps(notesNow.get(RecordSourceNotesTool.PROPOSED));
+        if (proposed.isEmpty() && notesNow.containsKey(RecordSourceNotesTool.REJECTED)
+            && !JsonValues.strings(notesNow.get(RecordSourceNotesTool.REJECTED)).isEmpty()) {
+            final Map<String, Object> result = new LinkedHashMap<>();
+            final List<String> left = pending(notesNow).stream()
+                    .filter(key -> !JsonValues.strings(notesNow.get(RecordSourceNotesTool.REJECTED)).contains(key))
+                    .toList();
+            result.put(HINT, hint(left));
+            return result;
+        }
         if (proposed.isEmpty()) {
             throw new ToolRefusal("Nothing to confirm: send the proposals first (proposals=), and show what comes "
                                   + "back in the chat");
@@ -792,34 +866,76 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final String accept = set.size() == 1
                 ? "Accept it"
                 : "Accept all " + set.size();
-        final Optional<String> answer = consent.answer(call, context, NAME,
-                "Review the " + confidence + "-confidence classifications shown in the chat.",
-                accept + ", or type your amendments (e.g. 2 is Access, not Alert)", accept);
+        final Optional<String> answer;
+        try {
+            answer = consent.answer(call, context, NAME,
+                    "Review the " + confidence + "-confidence classifications shown in the chat.",
+                    accept + ", or type your amendments (e.g. 2 is Access, not Alert)", accept);
+        } catch (final Consent.Declined e) {
+            // Declined: as amended, but the agent asks the user in the chat what is wrong (asked for by the user:
+            // no second form for the same set).
+            return amended(context, build, source, notesNow, proposed, set, null);
+        }
         if (answer.isEmpty()) {
             return noForms();
         }
         if (accepting(answer.get(), accept)) {
             return recorded(context, build, source, notesNow, proposed, set);
         }
-        // Amended: nothing recorded yet; the agent sends them again as the user said, and the next set follows.
-        // The set leaves the proposals now, so one the user rejected (left out by the agent, which asks what it is)
-        // isn't put to them again, and stays still to classify.
-        final Set<String> amended = new LinkedHashSet<>();
+        return amended(context, build, source, notesNow, proposed, set, answer.get());
+    }
+
+    // Amended (or declined, with no amendments): nothing recorded yet; the agent sends them again as the user said,
+    // and the next set follows. The set leaves the proposals now and is kept as amended until it comes back as the
+    // user's, so it isn't put to them again with another form, nor listed (seen in testing: the medium set shown
+    // twice, each time with a form); one the user rejected is left out by the agent, which asks what it is.
+    private Map<String, Object> amended(final ToolCallContext context,
+                                        final String build,
+                                        final String source,
+                                        final Map<String, Object> notesNow,
+                                        final List<Map<String, Object>> proposed,
+                                        final List<Map<String, Object>> set,
+                                        final String amendments) {
+        final String confidence = confidenceOf(set);
+        final Set<String> amended = new LinkedHashSet<>(JsonValues.strings(notesNow.get(
+                RecordSourceNotesTool.AMENDED)));
         set.forEach(entry -> amended.add(String.valueOf(entry.get(KEY))));
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put(SOURCE_NOTES, notes.recordClassified(context, build, source, List.of(), pending(notesNow),
                 Map.of(RecordSourceNotesTool.PROPOSED, proposed.stream()
                         .filter(entry -> !amended.contains(String.valueOf(entry.get(KEY))))
-                        .toList())));
+                        .toList(), RecordSourceNotesTool.AMENDED, List.copyOf(amended))));
+        result.put(STATUS, AWAITING_AMENDMENTS);
         result.put(RECORDED, List.of());
-        result.put(AMENDMENTS, answer.get());
-        result.put(HINT, "The user amended the " + confidence + "-confidence classifications: send "
-                         + (set.size() == 1
+        final String all = set.size() == 1
                 ? "it"
-                : "all " + set.size() + " of them") + " again with the amendments applied, as proposals with "
-                         + "from_user: true (ask the user first if an amendment isn't clear; leave out any they "
-                         + "reject and ask what it is; one they say to drop, send with drop: true); the next set "
-                         + "then follows.");
+                : "all " + set.size() + " of them";
+        if (amendments == null) {
+            result.put("declined", true);
+            result.put(HINT, "The user declined the " + confidence + "-confidence classifications. Ask them in the "
+                             + "chat what is wrong (no form: don't call confirm=true for this set), then send " + all
+                             + " as they say, as proposals with from_user: true; leave out any they reject; one "
+                             + "they say to drop, send with drop: true. The next set then follows.");
+        } else {
+            result.put(AMENDMENTS, amendments);
+            result.put(HINT, "The user amended the " + confidence + "-confidence classifications: send " + all
+                             + " again with the amendments applied, in one call, as proposals with from_user: true "
+                             + "(ask the user first if an amendment isn't clear; those they didn't amend as "
+                             + "shown; leave out any they reject, which is then recorded as rejected; one they say "
+                             + "to drop, send with drop: true). No form follows for these; the next set then does.");
+        }
+        return result;
+    }
+
+    // What a listing says while an amended set waits to come back as the user's.
+    private static Map<String, Object> awaitingAmendments(final List<String> amended) {
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put(STATUS, AWAITING_AMENDMENTS);
+        result.put("amended", amended);
+        result.put(HINT, "The user amended (or declined) " + amended.size() + " classification(s) in a form: "
+                         + String.join(", ", amended) + ". Send them first, in one call, with the user's amendments "
+                         + "applied, as proposals with from_user: true (leave out any they rejected; ask the user in "
+                         + "the chat if unsure). Nothing is listed until then.");
         return result;
     }
 

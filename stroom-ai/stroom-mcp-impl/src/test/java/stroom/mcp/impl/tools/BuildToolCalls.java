@@ -69,6 +69,11 @@ final class BuildToolCalls {
         return new FormUser(new ElicitResult(ElicitResult.Action.DECLINE, null));
     }
 
+    /// @return A user of an MCP client that shows forms, who closes every form unanswered (or lets it run out).
+    static FormUser cancelling() {
+        return new FormUser(new ElicitResult(ElicitResult.Action.CANCEL, null));
+    }
+
     /// @return A result's JSON text, read.
     @SuppressWarnings("unchecked")
     static Map<String, Object> json(final String text) {

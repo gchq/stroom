@@ -1038,7 +1038,9 @@ public class BuildPlan {
             case "unmapped" -> call("build_translation_xslt", args("uuid", "<the translation XSLT's uuid>",
                             "changes", "<each field in unmapped_fields mapped, or added to ignored_fields>"),
                     "ask the user about each field in unmapped_fields: map it, then reprocess_streams the streams it "
-                    + "lists, or leave it out (ignored_fields, no reprocessing); then build_status");
+                    + "lists, or leave it out (ignored_fields, no reprocessing needed); then build_status. Tell the "
+                    + "user the Error streams already written keep their 'No rule reads field' lines until those "
+                    + "streams are reprocessed (reprocess_streams, if they want them gone)");
             case "validated" -> call("check_events", args("stream_ids", orElse(events,
                             "<the Events streams wait_for_processing gave>")),
                     "the server reads the Events itself: never read them back to send them");

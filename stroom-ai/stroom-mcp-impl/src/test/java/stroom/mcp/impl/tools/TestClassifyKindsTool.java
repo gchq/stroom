@@ -240,6 +240,101 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    void anAmendedSetIsNotPutToTheUserAgainWithAnotherForm() {
+        // Seen in testing: the medium-confidence set shown twice, each time with a form.
+        startWithTwoMedium();
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "2 is a purge of audit records"));
+        final Map<String, Object> amended = call("{\"build\": \"acme\", \"confirm\": true}", user.context());
+        // No plan step after it: the agent sends the set back first.
+        assertThat(amended).containsEntry("status", "awaiting_amendments").doesNotContainKey("next");
+        assertThat(notes().get(RecordSourceNotesTool.AMENDED)).isEqualTo(List.of("action=logout", "action=purge"));
+
+        // Following the plan back to the listing: nothing listed, nor shown, until the set comes back.
+        final Map<String, Object> listed = call("{\"build\": \"acme\"}", BuildToolCalls.context());
+        assertThat(listed).containsEntry("status", "awaiting_amendments")
+                .doesNotContainKey("to_classify").doesNotContainKey("table");
+        // Sent back as fresh proposals: refused, nothing shown.
+        assertThat(text("{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", \"value\": \"logout\", "
+                        + "\"description\": \"A user logged off\", \"event_detail\": \"Authenticate\", "
+                        + "\"action\": \"Logoff\", \"confidence\": \"medium\"}]}"))
+                .contains("the user amended action=logout", "from_user: true");
+
+        // A correction of another kind meanwhile leaves the amended set waiting.
+        call("{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", \"value\": \"login\", "
+             + "\"description\": \"A user logged on\", \"event_detail\": \"Authenticate\", \"action\": \"Logon\", "
+             + "\"from_user\": true}]}", BuildToolCalls.context());
+        assertThat(notes().get(RecordSourceNotesTool.AMENDED)).isEqualTo(List.of("action=logout", "action=purge"));
+        assertThat(notes()).doesNotContainKey(RecordSourceNotesTool.REJECTED);
+
+        // Sent back as the user's, one left out as rejected: recorded, the rejected one not listed again.
+        final Map<String, Object> sent = call("{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", "
+                                              + "\"value\": \"logout\", \"description\": \"A user logged off\", "
+                                              + "\"event_detail\": \"Authenticate\", \"action\": \"Logoff\", "
+                                              + "\"from_user\": true}]}", BuildToolCalls.context());
+        assertThat(sent.get("recorded")).isEqualTo(List.of("action=logout"));
+        assertThat(sent.get("rejected")).isEqualTo(List.of("action=purge"));
+        assertThat(notes()).doesNotContainKey(RecordSourceNotesTool.AMENDED);
+        assertThat(notes().get(RecordSourceNotesTool.REJECTED)).isEqualTo(List.of("action=purge"));
+        final Map<String, Object> again = call("{\"build\": \"acme\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        assertThat(JsonValues.maps(again.get("to_classify"))).extracting(kind -> kind.get("kind"))
+                .doesNotContain("action=purge", "action=logout");
+        // One form in all for the medium set.
+        assertThat(user.shown()).hasSize(1);
+    }
+
+    @Test
+    void aDeclinedSetIsAskedAboutInTheChatNotWithAnotherForm() {
+        startWithTwoMedium();
+        final BuildToolCalls.FormUser user = BuildToolCalls.declining();
+        final Map<String, Object> declined = call("{\"build\": \"acme\", \"confirm\": true}", user.context());
+
+        assertThat(declined).containsEntry("status", "awaiting_amendments").containsEntry("declined", true);
+        assertThat(String.valueOf(declined.get("hint"))).contains("Ask them in the chat", "don't call confirm=true");
+        assertThat(notes().get(RecordSourceNotesTool.AMENDED)).isEqualTo(List.of("action=logout", "action=purge"));
+        assertThat(JsonValues.maps(notes().get(RecordSourceNotesTool.PROPOSED))).isEmpty();
+    }
+
+    @Test
+    void aFormClosedUnansweredIsNotTakenForARefusal() {
+        startWithTwoMedium();
+        final String closed = tool.execute(BuildToolCalls.call(ClassifyKindsTool.NAME,
+                "{\"build\": \"acme\", \"confirm\": true}"), BuildToolCalls.cancelling().context()).text();
+
+        assertThat(closed).contains("No answer yet", "they didn't decline").doesNotContain("The user declined");
+        // Nothing changed: the same set is still to confirm.
+        assertThat(JsonValues.maps(notes().get(RecordSourceNotesTool.PROPOSED))).extracting(entry -> entry.get("kind"))
+                .containsExactly("action=logout", "action=purge");
+        assertThat(notes()).doesNotContainKey(RecordSourceNotesTool.AMENDED);
+    }
+
+    @Test
+    void kindsConfirmedWithTheSameEventNameAreBothKept() {
+        // Seen in testing: a later kind confirmed with an earlier one's event name replaced it, and the earlier kind
+        // was put to the user again.
+        call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        call("{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", \"value\": \"login\", "
+             + "\"event\": \"Session\", \"description\": \"A user logged on\", \"event_detail\": "
+             + "\"Authenticate\", \"action\": \"Logon\", \"from_user\": true}]}", BuildToolCalls.context());
+        call("{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", \"value\": \"logout\", "
+             + "\"event\": \"Session\", \"description\": \"A user logged off\", \"event_detail\": "
+             + "\"Authenticate\", \"action\": \"Logoff\", \"from_user\": true}]}", BuildToolCalls.context());
+
+        final Map<String, Object> listed = call("{\"build\": \"acme\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        assertThat(JsonValues.maps(listed.get("to_classify"))).extracting(kind -> kind.get("kind"))
+                .doesNotContain("action=login", "action=logout");
+    }
+
+    // The kinds listed and proposed: login high, logout and purge medium, the high one accepted.
+    private void startWithTwoMedium() {
+        call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        call("{\"build\": \"acme\", \"proposals\": " + PROPOSALS.replace("\"low\"", "\"medium\"") + "}",
+                BuildToolCalls.context());
+        call("{\"build\": \"acme\", \"confirm\": true}", BuildToolCalls.user(Map.of("answer", "Accept it"))
+                .context());
+        // Accepted, the medium set is shown: the next confirm=true is its form.
+    }
+
+    @Test
     void manyKindsAreClassifiedInRounds() {
         // Asked for by the user: a source of many kinds in rounds a person can read.
         final List<String> lines = new ArrayList<>();

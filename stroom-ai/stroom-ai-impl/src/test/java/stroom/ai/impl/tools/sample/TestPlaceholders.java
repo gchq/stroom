@@ -63,6 +63,17 @@ class TestPlaceholders {
     }
 
     @Test
+    void aNumberOfEightDigitsInAFieldOfNumbersIsNotAStandIn() {
+        // Seen in testing: a file size of 14681927 (twice) in x-rs-file-size was put to the user as a stand-in, read
+        // as a date (yyyyMMdd) among numbers.
+        assertThat(find("x-rs-file-size", "5120", "14681927", "830", "14681927", "20231015", "20231015", "77"))
+                .isEmpty();
+        // A stand-in among them is still found.
+        assertThat(find("x-rs-file-size", "5120", "-", "830", "-", "14681927", "77"))
+                .containsExactly(new Placeholders.Found("-", List.of("x-rs-file-size"), 2, "numbers"));
+    }
+
+    @Test
     void ordinaryValuesAreNotFound() {
         // Recurring text in a text field.
         assertThat(find("user", "admin", "admin", "bob")).isEmpty();

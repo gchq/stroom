@@ -197,9 +197,8 @@ class IndexPlans {
         // Refused before it is kept: kept, every later change= failed to render it (seen in Ask Stroom AI).
         final List<String> clashes = plan.valueAndObjectClashes();
         if (!clashes.isEmpty()) {
-            throw new ToolRefusal(String.join("; ", clashes) + ". Nothing was kept: send the change again with one "
-                                  + "of each renamed (e.g. acme.ssl.bypass_reason beside acme.ssl.bypass), "
-                                  + "or without it.");
+            throw new ToolRefusal(String.join("; ", clashes) + ". Nothing was kept: call again with one of each "
+                                  + "renamed (e.g. acme.ssl.bypass_reason beside acme.ssl.bypass), or without it.");
         }
         final EcsSchema ecs = ecs();
         final Map<String, Object> reply = new LinkedHashMap<>();

@@ -67,6 +67,11 @@ import java.util.regex.Pattern;
 /// @param timeFallback `time_fallback`: with time_format, a stream meta time (`ReceivedTime`, `CreatedTime`) written
 ///                     for a record whose time doesn't parse, with a warning naming the record, in place of an empty
 ///                     time the schema refuses; only as the user agreed, as it is an approximation.
+/// @param metaFallback `meta_fallback`: stream meta attributes (e.g. `RemoteAddress`) tried in order, the first with
+///                     a value written, for a record whose input gives none (blank, or one of nil_values): asked for
+///                     by the user, for a required element (EventSource/Device) whose only source holds a stand-in
+///                     for none, which left out would leave the element empty, which the schema refuses. Null for
+///                     none.
 /// @param zoneSource   `timezone` given as an object: the field or stream meta attribute each record's zone is read
 ///                     from, with a map and a default (see [ZoneSource]); null for a fixed `timezone` or none.
 public record FieldMapping(String path,
@@ -90,12 +95,15 @@ public record FieldMapping(String path,
                            String separator,
                            boolean rollover,
                            String timeFallback,
-                           ZoneSource zoneSource) {
+                           ZoneSource zoneSource,
+                           List<String> metaFallback) {
 
     /// The transforms an input may be given.
     public static final List<String> TRANSFORMS = List.of("lower", "upper", "trim", "strip_domain", "domain",
             "digits", "unescape_quotes", "strip_control");
 
+    // A stream meta attribute's name, as stroom:meta reads it.
+    private static final Pattern META_NAME = Pattern.compile("[A-Za-z][\\w-]*");
     private static final Pattern SPILLED = Pattern.compile("[^\\w/@.-]", Pattern.UNICODE_CHARACTER_CLASS);
 
     /// @param json A field mapping as JSON-like values.
@@ -112,7 +120,7 @@ public record FieldMapping(String path,
     /// @return The entry carrying the field as that Data.
     public static FieldMapping data(final String path, final String dataName, final String field) {
         return new FieldMapping(path, field, null, null, null, null, null, null, null, false, null, null, null,
-                null, null, dataName, null, null, null, false, null, null);
+                null, null, dataName, null, null, null, false, null, null, null);
     }
 
     /// Reads one from JSON-like values: lax types, defaults and the model's own checks, every error collected.
@@ -150,7 +158,7 @@ public record FieldMapping(String path,
                 fields.optionalString("separator"), fields.bool("rollover", false),
                 fields.optionalString("time_fallback"), fields.input().get("timezone") instanceof Map
                         ? fields.optionalModel("timezone", (value, at) -> ZoneSource.read(reader, value, at))
-                        : null);
+                        : null, fields.optionalStrings("meta_fallback"));
         if (!fields.ok()) {
             return null;
         }
@@ -254,6 +262,12 @@ public record FieldMapping(String path,
             return "'" + path + "': time_fallback names a stream meta time (e.g. 'ReceivedTime') written when the "
                    + "time doesn't parse, so it goes with time_format, one value and no rollover";
         }
+        if (metaFallback != null && (metaFallback.isEmpty() || value != null || repeat || isSet(timeFormat) || hasMap()
+                                     || metaFallback.stream().anyMatch(name -> !ToolText.fullmatch(META_NAME, name)))) {
+            return "'" + path + "': meta_fallback names stream meta attributes (e.g. ['RemoteAddress']) tried in "
+                   + "order for a record whose input gives no value, so it goes with an input (not a value), one "
+                   + "value, no map and no time_format (time_fallback is a time's)";
+        }
         if (zoneSource != null && (!isSet(timeFormat) || XPathText.EPOCH_FORMATS.contains(timeFormat) || repeat)) {
             return "'" + path + "': timezone from a field or meta attribute goes with a time_format pattern (not an "
                    + "epoch, which has no zone to read) and one value";
@@ -290,7 +304,7 @@ public record FieldMapping(String path,
     private FieldMapping withMetaRead() {
         return new FieldMapping(path, field, anyOf, value, "stroom:meta('" + ToolText.strip(meta) + "')", null, lookup,
                 dictionary, transform, repeat, scope, timeFormat, timezone, map, defaultValue, dataName, dataParent,
-                join, separator, rollover, timeFallback, zoneSource);
+                join, separator, rollover, timeFallback, zoneSource, metaFallback);
     }
 
     /// @param defaultValue The output when the input is empty.
@@ -298,7 +312,7 @@ public record FieldMapping(String path,
     public FieldMapping withDefault(final String defaultValue) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource);
+                zoneSource, metaFallback);
     }
 
     /// @param dataName The Data element's Name.
@@ -306,7 +320,7 @@ public record FieldMapping(String path,
     public FieldMapping withDataName(final String dataName) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource);
+                zoneSource, metaFallback);
     }
 
     /// @return The Data entry's Name with the Names of the Data elements it is written in, e.g. `members/member`:
@@ -322,7 +336,7 @@ public record FieldMapping(String path,
     public FieldMapping withDataParent(final String dataParent) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource);
+                zoneSource, metaFallback);
     }
 
     /// @return What join puts between its values.
@@ -377,6 +391,7 @@ public record FieldMapping(String path,
                         ? Boolean.TRUE
                         : null)
                 .putIfSet("time_fallback", timeFallback)
+                .putIfSet("meta_fallback", metaFallback)
                 .build();
     }
 }

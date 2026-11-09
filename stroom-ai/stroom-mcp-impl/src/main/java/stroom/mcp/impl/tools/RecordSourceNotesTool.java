@@ -102,8 +102,11 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     static final String DROPPED = "dropped";
     /// The set of proposals last shown the user (classify_kinds): when, then its kinds.
     static final String SHOWN = "shown";
+    /// The kinds of a set the user amended or declined in classify_kinds, until the agent sends them again as the
+    /// user's (from_user): not proposed again, nor listed, meanwhile.
+    static final String AMENDED = "amended";
     private static final List<String> CLASSIFY_KEYS = List.of(RECORD_FIELDS, PROPOSED, ClassifyKindsTool.SAMPLES,
-            REJECTED, DROPPED, SHOWN);
+            REJECTED, DROPPED, SHOWN, AMENDED);
     private static final List<String> CONFIDENCES = List.of("high", "medium", "low");
 
     private final WriteGuard guard;
@@ -384,7 +387,8 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         final Map<String, Object> earlier = earlierNotes(contents, notesName);
         final List<Map<String, Object>> fields = merged(earlier.get("fields"), List.of(), FIELD_KEYS,
                 FIELD_REQUIRED);
-        final List<Map<String, Object>> merged = merged(earlier.get("events"), events, EVENT_KEYS, EVENT_REQUIRED);
+        final List<Map<String, Object>> merged = merged(earlier.get("events"), events, EVENT_KEYS, EVENT_REQUIRED,
+                RecordSourceNotesTool::kindOf);
         final String summary = NullSafe.nonBlankStringElse(text(earlier.get("summary")),
                 "The kinds of event the agent classified and the user confirmed.");
         final DocumentationDoc doc = written(context.session(), contents, build, notesName, notesText(source,
@@ -710,18 +714,40 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                                                     final List<String> keys,
                                                     final List<String> required) {
         final String key = required.getFirst();
+        return merged(earlier, given, keys, required, note -> text(note.get(key)));
+    }
+
+    // The earlier notes, those the same as one given (by identity) replaced by it.
+    private static List<Map<String, Object>> merged(final Object earlier,
+                                                    final List<Map<String, Object>> given,
+                                                    final List<String> keys,
+                                                    final List<String> required,
+                                                    final Function<Map<String, Object>, String> identity) {
         final Set<String> again = new LinkedHashSet<>();
-        given.forEach(note -> again.add(text(note.get(key))));
+        given.forEach(note -> again.add(identity.apply(note)));
         final List<Map<String, Object>> out = new ArrayList<>();
         if (earlier instanceof final List<?> list) {
             for (final Object item : list) {
-                if (item instanceof final Map<?, ?> note && !again.contains(text(note.get(key)))) {
-                    out.add(normalised(note, keys, required));
+                if (item instanceof final Map<?, ?> note) {
+                    final Map<String, Object> normalised = normalised(note, keys, required);
+                    if (!again.contains(identity.apply(normalised))) {
+                        out.add(normalised);
+                    }
                 }
             }
         }
         out.addAll(given);
         return out;
+    }
+
+    // Which kind of record a classified event is: what tells its records (with the kind a pattern is within), else
+    // its name. Seen in testing: two kinds confirmed with the same event name, the later replaced the earlier, whose
+    // records were then put to the user again.
+    private static String kindOf(final Map<String, Object> event) {
+        final String told = toldBy(event);
+        return told.isEmpty()
+                ? "event:" + text(event.get("event"))
+                : told + " within " + text(event.get(WITHIN));
     }
 
     // The notes given for an argument: each a JSON object, with its required keys.

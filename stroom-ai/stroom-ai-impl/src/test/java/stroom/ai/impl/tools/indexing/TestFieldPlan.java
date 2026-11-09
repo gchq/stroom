@@ -539,6 +539,36 @@ class TestFieldPlan {
                 .doesNotContain("<xsl:for-each");
     }
 
+    @Test
+    void aUnionOfPathsIsSeveralValuesEachWrittenOnce() {
+        // Asked for by the user: user.id from every user an event names. Single-valued, the same user as actor and
+        // as the one authenticated was written "alice alice", and two users "alice bob".
+        final List<PlannedField> fields = List.of(PlannedField.of("StreamId", "id", "@StreamId"),
+                PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
+                new PlannedField("user.id", "keyword", "EventSource/User/Id | EventDetail/Authenticate/User/Id", "",
+                        null, true));
+        final FieldPlan es = FieldPlan.of("elasticsearch", "x", "@timestamp", fields);
+        final String same = IndexingFixtures.compact(IndexingFixtures.transform(es.xslt(), users("alice", "alice")));
+        final String two = IndexingFixtures.compact(IndexingFixtures.transform(es.xslt(), users("alice", "bob")));
+        final String lucene = IndexingFixtures.compact(IndexingFixtures.transform(
+                IndexingFixtures.withBackend(es, "lucene").xslt(), users("alice", "alice")));
+
+        assertThat(same).contains("<string key=\"id\">alice</string>")
+                .doesNotContain("alice alice", "<array key=\"id\"");
+        assertThat(two).contains("<array key=\"id\"><string>alice</string><string>bob</string></array>");
+        assertThat(lucene).containsOnlyOnce("value=\"alice\"");
+    }
+
+    // An event naming a user as the actor and another (or the same) as the one authenticated.
+    private static String users(final String actor, final String authenticated) {
+        return """
+                <Events xmlns="event-logging:3"><Event StreamId="7" EventId="1">\
+                <EventTime><TimeCreated>2026-10-20T08:00:00.000Z</TimeCreated></EventTime>\
+                <EventSource><User><Id>%s</Id></User></EventSource>\
+                <EventDetail><Authenticate><User><Id>%s</Id></User></Authenticate></EventDetail></Event></Events>"""
+                .formatted(actor, authenticated);
+    }
+
     private static PlannedField data(final String name, final String type) {
         return new PlannedField("acme." + name, type, "EventDetail/Authenticate/Data[@Name='" + name + "']/@Value",
                 "", null, true);

@@ -347,11 +347,19 @@ final class ElasticDocument {
             return indent + "<xsl:if test=\"" + FieldPlans.quoted(at) + "\">" + single + "</xsl:if>";
         }
         // Several values (repeated Data elements, say) as an array of them. Seen (asked about by the user): with
-        // value-of over them all, two ports came out as the one number "80 443", two tags as the string "a b".
-        return indent + "<xsl:choose><xsl:when test=\"count(" + FieldPlans.quoted(at) + ") gt 1\"><array key=\""
-               + key + "\"><xsl:for-each select=\"" + FieldPlans.quoted(at) + "\"><" + element
+        // value-of over them all, two ports came out as the one number "80 443", two tags as the string "a b". A
+        // union's values each once: the same user named as actor and as the one authenticated is one value.
+        final String each = FieldPlans.branches(at).size() > 1
+                ? "distinct-values(" + at + ")"
+                : at;
+        return indent + "<xsl:choose><xsl:when test=\"count(" + FieldPlans.quoted(each) + ") gt 1\"><array key=\""
+               + key + "\"><xsl:for-each select=\"" + FieldPlans.quoted(each) + "\"><" + element
                + "><xsl:value-of select=\"" + FieldPlans.quoted(field.value(".")) + "\" /></" + element
-               + "></xsl:for-each></array></xsl:when><xsl:when test=\"" + FieldPlans.quoted(at) + "\">" + single
+               + "></xsl:for-each></array></xsl:when><xsl:when test=\"" + FieldPlans.quoted(at) + "\">"
+               + (each.equals(at)
+                ? single
+                : "<" + element + " key=\"" + key + "\"><xsl:value-of select=\"" + FieldPlans.quoted(field.value(each))
+                  + "\" /></" + element + ">")
                + "</xsl:when></xsl:choose>";
     }
 

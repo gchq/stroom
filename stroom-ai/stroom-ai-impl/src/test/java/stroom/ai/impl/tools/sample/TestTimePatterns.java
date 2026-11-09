@@ -39,6 +39,14 @@ class TestTimePatterns {
             "Wed, 01 Oct 2026 10:00:00 GMT|EEE, dd MMM yyyy HH:mm:ss z",
             "1 Oct 2026 10:00:00|d MMM yyyy HH:mm:ss",
             "1790600000|epoch seconds",
+            "20261001|yyyyMMdd",
+            "20261001103000|yyyyMMddHHmmss",
+            // Eight or fourteen digits that are no date and time: a size, an id (seen in testing: a file size of
+            // 14681927 taken for a date in a field of numbers).
+            "14681927|None",
+            "12345678|None",
+            "20261341|None",
+            "20261001250000|None",
             "alice|None",
             "10.0.0.1|None"})
     void timePatternsAreInferredAndFitTheirValues(final String value, final String pattern) {

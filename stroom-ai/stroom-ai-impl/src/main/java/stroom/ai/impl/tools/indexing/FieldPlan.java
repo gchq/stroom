@@ -407,7 +407,7 @@ public record FieldPlan(String backend,
             // Nested names make 'time' an object if 'time.min' exists; with subobjects: false (flat names) both
             // are fields of their own.
             if (subobjects) {
-                problems.addAll(valuesAndObjects(names));
+                problems.addAll(valuesAndObjects(leafNames(names)));
             }
         }
         return problems;
@@ -422,7 +422,18 @@ public record FieldPlan(String backend,
         if (!isElasticsearch() || !subobjects) {
             return List.of();
         }
-        return valuesAndObjects(fields.stream().map(PlannedField::name).toList());
+        return valuesAndObjects(leafNames(fields.stream().map(PlannedField::name).toList()));
+    }
+
+    // The names as the index holds them: a field of objects as its items' names, not a value of its own (seen in
+    // testing: an objects field 'user', its items 'user.login', flagged as a value beside ECS's user.name).
+    private List<String> leafNames(final Collection<String> names) {
+        final Set<String> objects = new LinkedHashSet<>();
+        fields.stream().filter(PlannedField::isObjects).forEach(field -> objects.add(field.name()));
+        final Set<String> out = new LinkedHashSet<>();
+        names.stream().filter(name -> !objects.contains(name)).forEach(out::add);
+        leafFields().forEach(field -> out.add(field.name()));
+        return List.copyOf(out);
     }
 
     private static List<String> valuesAndObjects(final Collection<String> names) {
