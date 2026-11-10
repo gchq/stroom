@@ -36,7 +36,7 @@ RUN jlink \
 # jstat/jmap/jcmd/etc.
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:25.0.5_8-jre-alpine-3.23@sha256:b903bc22d49da99a0af3d50cf08f6056eaf39646b71bf3a51f74720f8243b34b AS stroom-base-stage
+FROM eclipse-temurin:25.0.5_8-jre-alpine-3.23@sha256:e3ec242a23cf736c024475da9cd2a26f1f9d896840dd797da1bb95d30ed3f659 AS stroom-base-stage
 
 # bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
 # curl is required for the docker healthcheck
@@ -61,7 +61,7 @@ RUN echo "http_proxy: $http_proxy" && \
 
 # Pull in the jcmd binaries from our JDK based stage
 COPY --from=jcmd_base /opt/jcmd /opt/jcmd
-ENV PATH="/opt/jcmd/bin:${PATH}"
+ENV PATH="${PATH}:/opt/jcmd/bin"
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
