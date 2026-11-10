@@ -39,7 +39,8 @@ class TestSqlDataSourceStoreImpl {
     private static SqlDataSourceStoreImpl store() {
         final MockSecurityContext securityContext = new MockSecurityContext();
         final SqlDataSourceConfig config = new SqlDataSourceConfig(
-                List.of("^jdbc:mysql://reporting-db:3306/.*$"), null, null, null, null, null, null, null);
+                List.of("^jdbc:mysql://reporting-db:3306/.*$"), null, null, null, null, null, null, null,
+                List.of("^eu-west-2/stroom-.*$"), null, true);
         return new SqlDataSourceStoreImpl(
                 new StoreFactoryImpl(new MemoryPersistence(), null, securityContext, null, () -> null),
                 securityContext,
@@ -126,9 +127,41 @@ class TestSqlDataSourceStoreImpl {
                 .connectionType(SqlConnectionType.ATHENA)
                 .athena(AthenaConnectionSettings.builder()
                         .region("eu-west-2")
+                        .workGroup("stroom-reports")
                         .build())
                 .build());
 
         assertThat(store.readDocument(doc.asDocRef()).getConnectionType()).isEqualTo(SqlConnectionType.ATHENA);
+    }
+
+    @Test
+    void athenaWorkGroupNotAllowedIsRefusedOnSave() {
+        final SqlDataSourceStoreImpl store = store();
+        final SqlDataSourceDoc doc = store.readDocument(store.createDocument("Events"));
+
+        assertThatThrownBy(() -> store.writeDocument(doc.copy()
+                .connectionType(SqlConnectionType.ATHENA)
+                .athena(AthenaConnectionSettings.builder()
+                        .region("eu-west-2")
+                        .workGroup("primary")
+                        .build())
+                .build()))
+                .isInstanceOf(EntityServiceException.class)
+                .hasMessageContaining("allowedAthenaWorkGroups");
+    }
+
+    @Test
+    void athenaDocumentWithNoRegionYetCanBeSaved() {
+        final SqlDataSourceStoreImpl store = store();
+        final SqlDataSourceDoc doc = store.readDocument(store.createDocument("Events"));
+
+        store.writeDocument(doc.copy()
+                .connectionType(SqlConnectionType.ATHENA)
+                .athena(AthenaConnectionSettings.builder()
+                        .workGroup("anything")
+                        .build())
+                .build());
+
+        assertThat(store.readDocument(doc.asDocRef()).getAthena().getWorkGroup()).isEqualTo("anything");
     }
 }

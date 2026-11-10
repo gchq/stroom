@@ -118,6 +118,16 @@ class TestSqlStatementParser {
     }
 
     @Test
+    void firstKeywordSkipsSpaceCommentsAndBrackets() {
+        assertThat(SqlStatementParser.firstKeyword("  SELECT 1")).isEqualTo("select");
+        assertThat(SqlStatementParser.firstKeyword("-- note\n/* more */ ((with t as (select 1) select * from t))"))
+                .isEqualTo("with");
+        assertThat(SqlStatementParser.firstKeyword("insert into t values (1)")).isEqualTo("insert");
+        assertThat(SqlStatementParser.firstKeyword("   ")).isEmpty();
+        assertThat(SqlStatementParser.firstKeyword(null)).isEmpty();
+    }
+
+    @Test
     void postgresCastIsNotAPlaceholder() {
         final ParsedSql parsed = SqlStatementParser.parse("select id::text, :value::int");
 

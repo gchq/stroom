@@ -33,7 +33,8 @@ class TestJdbcConnectionValidator {
     private static final String MYSQL_URL = "jdbc:mysql://reporting-db:3306/hr";
 
     private static SqlDataSourceConfig config(final String... allowedUrlPatterns) {
-        return new SqlDataSourceConfig(List.of(allowedUrlPatterns), null, null, null, null, null, null, null);
+        return new SqlDataSourceConfig(List.of(allowedUrlPatterns), null, null, null, null, null, null, null,
+                null, null, null);
     }
 
     private static JdbcConnectionSettings settings(final String url) {

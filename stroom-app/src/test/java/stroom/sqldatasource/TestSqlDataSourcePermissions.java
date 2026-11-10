@@ -165,12 +165,11 @@ class TestSqlDataSourcePermissions extends StroomIntegrationTest {
                     null, null, Query.builder().build(), null, DateTimeSettings.builder().build(), false);
             final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
             final SearchRequest searchRequest = searchRequestFactory.create(
-                    "from \"" + doc.getName() + "\" select name", sampleRequest, expressionContext);
-            final SearchResponse response = resultStoreManager.search(searchRequest.copy()
-                    .query(searchRequest.getQuery().copy()
-                            .nativeQuery(SqlDataSourceTestDatabase.ALL_STAFF_SQL)
-                            .build())
-                    .build());
+                    "from \"" + doc.getName() + "\" sql \"\"\"" + SqlDataSourceTestDatabase.ALL_STAFF_SQL
+                    + "\"\"\" select name",
+                    sampleRequest,
+                    expressionContext);
+            final SearchResponse response = resultStoreManager.search(searchRequest);
             resultStoreManager.destroy(response.getKey(), DestroyReason.NO_LONGER_NEEDED);
             return response;
         });

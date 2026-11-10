@@ -17,6 +17,7 @@
 package stroom.sqldatasource;
 
 import stroom.credentials.impl.CredentialsService;
+import stroom.credentials.shared.AwsKeySecret;
 import stroom.docref.DocRef;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.DestroyReason;
@@ -29,13 +30,17 @@ import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResult;
 import stroom.query.api.TimeRange;
 import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
+import stroom.sqldatasource.impl.AthenaClientFactory;
 import stroom.sqldatasource.impl.JdbcConnectionPoolCache;
+import stroom.sqldatasource.impl.ResolvedAthenaConnection;
 import stroom.sqldatasource.impl.SqlDataSourceConfig;
 import stroom.sqldatasource.impl.SqlDataSourceSearchProvider;
 import stroom.sqldatasource.impl.SqlDataSourceStore;
@@ -44,16 +49,19 @@ import stroom.sqldatasource.shared.SqlDataSourceDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.services.athena.AthenaClient;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -89,6 +97,10 @@ class TestSqlDataSourceIntegration extends AbstractCoreIntegrationTest {
     private SearchRequestFactory searchRequestFactory;
     @Inject
     private ExpressionContextFactory expressionContextFactory;
+    @Inject
+    private AthenaClientFactory athenaClientFactory;
+    @Inject
+    private DataSourceProviderRegistry dataSourceProviderRegistry;
 
     private String url;
     private String credentialName;
@@ -118,8 +130,7 @@ class TestSqlDataSourceIntegration extends AbstractCoreIntegrationTest {
                 .build());
     }
 
-    // Runs a StroomQL query against the document, with the SQL carried as the query's native query,
-    // as the StroomQL sql clause will do.
+    // Runs a StroomQL query against the document, with the SQL in a triple-quoted sql clause.
     private SearchResponse search(final SqlDataSourceDoc doc,
                                   final String stroomQlAfterFrom,
                                   final String sql,
@@ -148,15 +159,13 @@ class TestSqlDataSourceIntegration extends AbstractCoreIntegrationTest {
                 DateTimeSettings.builder().build(),
                 false);
         final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
-        final SearchRequest searchRequest = searchRequestFactory.create(
-                "from \"" + doc.getName() + "\" " + stroomQlAfterFrom,
+        final String sqlClause = sql == null
+                ? ""
+                : "sql \"\"\"\n" + sql + "\n\"\"\"\n";
+        return searchRequestFactory.create(
+                "from \"" + doc.getName() + "\"\n" + sqlClause + stroomQlAfterFrom,
                 sampleRequest,
                 expressionContext);
-        return searchRequest.copy()
-                .query(searchRequest.getQuery().copy()
-                        .nativeQuery(sql)
-                        .build())
-                .build();
     }
 
     private static List<List<String>> rows(final SearchResponse response, final int selectedFields) {
@@ -462,10 +471,79 @@ class TestSqlDataSourceIntegration extends AbstractCoreIntegrationTest {
     }
 
     @Test
+    void athenaClientCanBeBuiltOnStroomsClassPath() {
+        // Stroom has several AWS HTTP clients on its class path, which the SDK refuses to choose
+        // between unless told. Building a client makes no call to AWS.
+        final ResolvedAthenaConnection connection = new ResolvedAthenaConnection(
+                "eu-west-2", "primary", "AwsDataCatalog", "default", null, 0,
+                new AwsKeySecret("AKIAEXAMPLE", "not-a-real-secret"));
+
+        try (final AthenaClient client = athenaClientFactory.create(connection)) {
+            assertThat(client.serviceClientConfiguration().region().id()).isEqualTo("eu-west-2");
+        }
+    }
+
+    @Test
     void missingSqlIsReported() {
         final SqlDataSourceDoc doc = saveDocument();
 
         assertThatThrownBy(() -> search(doc, "select name", null, null, null))
-                .hasMessageContaining("No SQL");
+                .hasMessageContaining("needs the SQL to run, in a sql clause");
+    }
+
+    @Test
+    void selectStarGivesEveryColumnOfTheSql() {
+        final SqlDataSourceDoc doc = saveDocument();
+
+        final SearchResponse response = search(doc, "select *", ALL_STAFF_SQL, null, null);
+
+        assertThat(messages(response, Severity.ERROR)).isEmpty();
+        assertThat(rows(response, 3).getFirst())
+                .as("id, name and joined, in some order")
+                .contains("1", "Smith");
+    }
+
+    @Test
+    void sqlWithDoubleQuotesAndBackslashesNeedsNoEscaping() {
+        final SqlDataSourceDoc doc = saveDocument();
+
+        final SearchResponse response = search(
+                doc,
+                "select quoted, slash",
+                "select '\"Smith\"' as quoted, 'a\\\\b' as slash from " + TABLE + " where id = 1",
+                null,
+                null);
+
+        assertThat(messages(response, Severity.ERROR)).isEmpty();
+        assertThat(rows(response, 2)).containsExactly(List.of("\"Smith\"", "a\\b"));
+    }
+
+    @Test
+    void completionListsTheColumnsOfTheSqlInTheQuery() {
+        final SqlDataSourceDoc doc = saveDocument();
+        final String stroomQl = "from \"" + doc.getName() + "\" sql \"\"\"" + ALL_STAFF_SQL + "\"\"\" select ";
+
+        final String sql = searchRequestFactory.extractNativeQuery(stroomQl).orElseThrow();
+        final List<String> fieldNames = dataSourceProviderRegistry.getFieldInfo(new FindFieldCriteria(
+                        PageRequest.unlimited(), FindFieldCriteria.DEFAULT_SORT_LIST, doc.asDocRef(), null, null, sql))
+                .getValues()
+                .stream()
+                .map(QueryField::getFldName)
+                .toList();
+
+        assertThat(fieldNames).containsExactlyInAnyOrder("id", "name", "joined");
+    }
+
+    @Test
+    void describingTheSqlDoesNotRunIt() {
+        // MySQL's driver may run a prepared statement to describe it, which for a slow query would
+        // make listing its fields as slow as running it.
+        final SqlDataSourceDoc doc = saveDocument();
+        final long start = System.nanoTime();
+
+        final List<QueryField> fields = searchProvider.getFields(doc.asDocRef(), "select sleep(5) as s");
+
+        assertThat(fields).extracting(QueryField::getFldName).containsExactly("s");
+        assertThat(Duration.ofNanos(System.nanoTime() - start)).isLessThan(Duration.ofSeconds(4));
     }
 }

@@ -26,7 +26,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestSqlQueryLimits {
 
     private static SqlDataSourceConfig config(final StroomDuration maxQueryTimeout, final int maxRowsLimit) {
-        return new SqlDataSourceConfig(null, null, null, maxQueryTimeout, maxRowsLimit, null, null, null);
+        return new SqlDataSourceConfig(null, null, null, maxQueryTimeout, maxRowsLimit, null, null, null, null,
+                null, null);
     }
 
     @Test

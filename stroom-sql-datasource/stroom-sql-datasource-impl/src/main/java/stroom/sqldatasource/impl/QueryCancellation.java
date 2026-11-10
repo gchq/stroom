@@ -25,23 +25,24 @@ import java.sql.Statement;
 
 /// Lets a search that is closed or terminated stop its SQL in the database, not just in Stroom.
 ///
-/// The running query registers its statement here. Cancelling calls `Statement.cancel()` on it, and
-/// a statement registered after cancelling is cancelled at once.
+/// The running query registers how to stop it here: a JDBC statement, which is stopped with
+/// `Statement.cancel()`, or any other action, such as stopping an Amazon Athena query execution.
+/// Something registered after cancelling is stopped at once.
 public class QueryCancellation {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(QueryCancellation.class);
 
-    private Statement statement;
+    private Runnable stopAction;
     private boolean cancelled;
 
-    /// Asks the running statement, if any, to stop, and marks the query as cancelled.
+    /// Stops the running query, if any, and marks the query as cancelled.
     public void cancel() {
-        final Statement toCancel;
+        final Runnable toRun;
         synchronized (this) {
             cancelled = true;
-            toCancel = statement;
+            toRun = stopAction;
         }
-        cancelQuietly(toCancel);
+        runQuietly(toRun);
     }
 
     /// @return True if the query has been cancelled.
@@ -53,27 +54,41 @@ public class QueryCancellation {
     ///
     /// @param statement The statement.
     public void register(final Statement statement) {
+        register(() -> {
+            try {
+                statement.cancel();
+            } catch (final SQLException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
+    }
+
+    /// Records how to stop the query now running, stopping it at once if the query is already
+    /// cancelled.
+    ///
+    /// @param stopAction Stops the query. It may throw; the failure is only logged.
+    public void register(final Runnable stopAction) {
         final boolean alreadyCancelled;
         synchronized (this) {
-            this.statement = statement;
+            this.stopAction = stopAction;
             alreadyCancelled = cancelled;
         }
         if (alreadyCancelled) {
-            cancelQuietly(statement);
+            runQuietly(stopAction);
         }
     }
 
-    /// Forgets the statement once it has finished, so it is not cancelled after being closed.
+    /// Forgets the running query once it has finished, so it is not stopped after that.
     public synchronized void unregister() {
-        statement = null;
+        stopAction = null;
     }
 
-    private static void cancelQuietly(final Statement statement) {
-        if (statement != null) {
+    private static void runQuietly(final Runnable stopAction) {
+        if (stopAction != null) {
             try {
-                statement.cancel();
-            } catch (final SQLException | RuntimeException e) {
-                LOGGER.debug(() -> LogUtil.message("Unable to cancel statement: {}", e.getMessage()), e);
+                stopAction.run();
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> LogUtil.message("Unable to stop the query: {}", e.getMessage()), e);
             }
         }
     }

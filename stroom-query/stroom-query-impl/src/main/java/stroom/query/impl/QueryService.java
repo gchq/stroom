@@ -59,6 +59,12 @@ public interface QueryService {
 
     ResultPage<QueryField> findFields(FindFieldCriteria criteria);
 
+    /// Finds the native query, such as SQL, in the `sql` clause of query text that may be incomplete.
+    ///
+    /// @param query The query text.
+    /// @return The native query, or empty if there is none.
+    Optional<String> getReferencedNativeQuery(String query);
+
     int getFieldCount(DocRef dataSourceRef);
 
     Optional<String> fetchDocumentation(DocRef dataSourceRef);

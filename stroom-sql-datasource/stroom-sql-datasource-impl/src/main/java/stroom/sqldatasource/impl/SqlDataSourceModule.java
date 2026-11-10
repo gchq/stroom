@@ -35,6 +35,8 @@ public class SqlDataSourceModule extends AbstractModule {
         DocumentStoreBinder.create(binder())
                 .bind(SqlDataSourceDoc.TYPE, SqlDataSourceStore.class, SqlDataSourceStoreImpl.class);
 
+        bind(AthenaClientFactory.class).to(AthenaClientFactoryImpl.class);
+
         RestResourcesBinder.create(binder())
                 .bind(SqlDataSourceResourceImpl.class);
 

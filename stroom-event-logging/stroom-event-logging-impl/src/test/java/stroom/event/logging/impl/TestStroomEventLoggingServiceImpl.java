@@ -17,6 +17,7 @@
 package stroom.event.logging.impl;
 
 import stroom.activity.api.CurrentActivity;
+import stroom.credentials.shared.AwsKeySecret;
 import stroom.credentials.shared.SshKeySecret;
 import stroom.docref.HasName;
 import stroom.event.logging.api.ObjectInfoProvider;
@@ -283,6 +284,17 @@ class TestStroomEventLoggingServiceImpl {
         assertThat(allData).noneMatch(data -> "my-private-key".equals(data.getValue()));
         // Known hosts are not secret
         assertThat(allData).anyMatch(data -> "my-known-hosts".equals(data.getValue()));
+    }
+
+    @Test
+    void testAwsKeySecretIsRedacted() {
+        // The credentials resource is auto logged, so a stored or replaced AWS access key passes
+        // through here and its secret access key may not reach the audit log.
+        final List<Data> allData = stroomEventLoggingService.getDataItems(
+                new AwsKeySecret("AKIAEXAMPLE", "my-secret-access-key"));
+
+        assertThat(allData).anyMatch(data -> data.getName().equals("secretAccessKey"));
+        assertThat(allData).noneMatch(data -> "my-secret-access-key".equals(data.getValue()));
     }
 
     @Test

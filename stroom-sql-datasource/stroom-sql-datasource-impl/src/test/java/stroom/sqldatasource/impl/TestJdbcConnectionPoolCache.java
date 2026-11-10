@@ -22,6 +22,7 @@ import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.UsernamePasswordSecret;
 import stroom.sqldatasource.shared.JdbcConnectionSettings;
+import stroom.sqldatasource.shared.SqlDataSourceDoc;
 import stroom.util.cache.CacheConfig;
 import stroom.util.io.PathCreator;
 
@@ -37,6 +38,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -75,7 +77,7 @@ class TestJdbcConnectionPoolCache {
                     null));
         }
         final SqlDataSourceConfig config = new SqlDataSourceConfig(
-                allowedUrlPatterns, null, null, null, null, null, null, null);
+                allowedUrlPatterns, null, null, null, null, null, null, null, null, null, null);
         final JdbcConnectionResolver resolver = new JdbcConnectionResolver(() -> config, () -> storedSecrets);
         final JdbcDriverLoader driverLoader = new JdbcDriverLoader(() -> config, Mockito.mock(PathCreator.class));
         poolCache = new JdbcConnectionPoolCache(cacheManager, () -> config, resolver, driverLoader);
@@ -179,12 +181,14 @@ class TestJdbcConnectionPoolCache {
                 .maximumSize(10L)
                 .build());
         final SqlDataSourceConfig config = new SqlDataSourceConfig(
-                List.of(FakeJdbcDriver.ALLOWED_URL_PATTERN), null, null, null, null, null, null, null);
+                List.of(FakeJdbcDriver.ALLOWED_URL_PATTERN), null, null, null, null, null, null, null, null,
+                null, null);
         final CacheManagerImpl ownCacheManager = new CacheManagerImpl();
         final JdbcConnectionPoolCache rebuiltPoolCache = new JdbcConnectionPoolCache(
                 ownCacheManager,
                 () -> new SqlDataSourceConfig(
-                        config.getAllowedUrlPatterns(), null, null, null, null, null, cacheConfig.get(), null),
+                        config.getAllowedUrlPatterns(), null, null, null, null, null, cacheConfig.get(), null,
+                        null, null, null),
                 new JdbcConnectionResolver(() -> config, () -> storedSecrets),
                 new JdbcDriverLoader(() -> config, Mockito.mock(PathCreator.class)));
         try {
@@ -279,6 +283,23 @@ class TestJdbcConnectionPoolCache {
             });
 
             assertThat(count).isEqualTo(2);
+        }
+
+        @Test
+        void sqlIsDescribedWithoutRunningIt() throws SQLException {
+            // PostgreSQL's driver describes a prepared statement without running it.
+            final JdbcQueryRunner runner = new JdbcQueryRunner(poolCache, SqlDataSourceConfig::new);
+            final SqlDataSourceDoc doc = SqlDataSourceDoc.builder()
+                    .uuid("uuid-1")
+                    .jdbc(settings)
+                    .build();
+            final long start = System.nanoTime();
+
+            final List<SqlColumn> columns = runner.describe(doc, SqlStatementParser.parse(
+                    "select id, name, pg_sleep(5) as slept from " + TABLE + " where name = :name"));
+
+            assertThat(columns).extracting(SqlColumn::name).containsExactly("id", "name", "slept");
+            assertThat(Duration.ofNanos(System.nanoTime() - start)).isLessThan(Duration.ofSeconds(4));
         }
 
         @Test

@@ -130,9 +130,11 @@ public final class SqlTypeMapper {
                 : val;
     }
 
-    // Reads a whole number of any size the driver gives, falling back to a double when it is too big
-    // for a long.
-    private static Val readWholeNumber(final Object value) {
+    /// Reads a whole number of any size, falling back to a double when it is too big for a long.
+    ///
+    /// @param value A number, or `null`.
+    /// @return The value, or `null` for `null`.
+    static Val readWholeNumber(final Object value) {
         return switch (value) {
             case null -> null;
             case final BigInteger bigInteger -> bigInteger.bitLength() < Long.SIZE

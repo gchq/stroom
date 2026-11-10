@@ -67,7 +67,8 @@ public class DataSourceProviderRegistry {
                     criteria.getSortList(),
                     docRef,
                     criteria.getFilter(),
-                    criteria.getQueryable());
+                    criteria.getQueryable(),
+                    criteria.getNativeQuery());
 
             return getDataSourceProvider(docRef.getType())
                     .map(dsp -> dsp.getFieldInfo(findFieldCriteria))
@@ -76,6 +77,15 @@ public class DataSourceProviderRegistry {
             LOGGER.debug(e.getMessage(), e);
             return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
         }
+    }
+
+    /// @param dataSourceRef A data source.
+    /// @return True if queries of the data source carry their own native query, such as SQL.
+    public boolean takesNativeQuery(final DocRef dataSourceRef) {
+        final DocRef docRef = LegacyDocRefConverter.convert(dataSourceRef);
+        return getDataSourceProvider(docRef.getType())
+                .map(DataSourceProvider::takesNativeQuery)
+                .orElse(false);
     }
 
     public int getFieldCount(final DocRef dataSourceRef) {

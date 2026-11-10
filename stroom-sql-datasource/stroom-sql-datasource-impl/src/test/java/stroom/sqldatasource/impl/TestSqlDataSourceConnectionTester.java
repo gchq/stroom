@@ -19,6 +19,7 @@ package stroom.sqldatasource.impl;
 import stroom.credentials.api.StoredSecrets;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
+import stroom.sqldatasource.shared.AthenaConnectionSettings;
 import stroom.sqldatasource.shared.JdbcConnectionSettings;
 import stroom.sqldatasource.shared.SqlConnectionType;
 import stroom.sqldatasource.shared.SqlDataSourceDoc;
@@ -31,10 +32,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import software.amazon.awssdk.services.athena.AthenaClient;
+import software.amazon.awssdk.services.athena.model.GetDatabaseResponse;
+import software.amazon.awssdk.services.athena.model.GetWorkGroupResponse;
+import software.amazon.awssdk.services.athena.model.WorkGroup;
+import software.amazon.awssdk.services.athena.model.WorkGroupConfiguration;
+import software.amazon.awssdk.services.athena.model.WorkGroupState;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -53,14 +61,54 @@ class TestSqlDataSourceConnectionTester {
         driver.deregister();
     }
 
-    private static SqlDataSourceConnectionTester tester(final SecurityContext securityContext) {
+    private final AthenaClient athenaClient = Mockito.mock(AthenaClient.class);
+
+    private SqlDataSourceConnectionTester tester(final SecurityContext securityContext) {
         final SqlDataSourceConfig config = new SqlDataSourceConfig(
-                List.of(FakeJdbcDriver.ALLOWED_URL_PATTERN), null, null, null, null, null, null, null);
-        final JdbcConnectionResolver resolver = new JdbcConnectionResolver(
-                () -> config,
-                () -> Mockito.mock(StoredSecrets.class));
+                List.of(FakeJdbcDriver.ALLOWED_URL_PATTERN), null, null, null, null, null, null, null,
+                List.of("^eu-west-2/primary$"), null, true);
+        final StoredSecrets storedSecrets = Mockito.mock(StoredSecrets.class);
+        final JdbcConnectionResolver resolver = new JdbcConnectionResolver(() -> config, () -> storedSecrets);
         final JdbcDriverLoader driverLoader = new JdbcDriverLoader(() -> config, Mockito.mock(PathCreator.class));
-        return new SqlDataSourceConnectionTester(() -> securityContext, resolver, driverLoader);
+        final AthenaConnectionResolver athenaResolver = new AthenaConnectionResolver(
+                () -> config,
+                () -> storedSecrets);
+        return new SqlDataSourceConnectionTester(
+                () -> securityContext,
+                resolver,
+                driverLoader,
+                athenaResolver,
+                connection -> athenaClient);
+    }
+
+    private static SqlDataSourceDoc athenaDoc(final String region) {
+        return SqlDataSourceDoc.builder()
+                .uuid("uuid-1")
+                .name("Events")
+                .connectionType(SqlConnectionType.ATHENA)
+                .athena(AthenaConnectionSettings.builder()
+                        .region(region)
+                        .database("events")
+                        .build())
+                .build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void givenWorkGroup(final Long scanLimit) {
+        Mockito.when(athenaClient.getWorkGroup(Mockito.any(Consumer.class))).thenReturn(GetWorkGroupResponse.builder()
+                .workGroup(WorkGroup.builder()
+                        .name("primary")
+                        .state(WorkGroupState.ENABLED)
+                        .configuration(WorkGroupConfiguration.builder()
+                                .bytesScannedCutoffPerQuery(scanLimit)
+                                .enforceWorkGroupConfiguration(false)
+                                .resultConfiguration(result -> result.outputLocation("s3://results/stroom/"))
+                                .build())
+                        .build())
+                .build());
+        Mockito.when(athenaClient.getDatabase(Mockito.any(Consumer.class))).thenReturn(GetDatabaseResponse.builder()
+                .database(database -> database.name("events"))
+                .build());
     }
 
     private static SqlDataSourceDoc doc(final String url) {
@@ -117,15 +165,55 @@ class TestSqlDataSourceConnectionTester {
     }
 
     @Test
-    void athenaIsNotAvailableYet() {
-        final SqlDataSourceTestResponse response = tester(new MockSecurityContext())
-                .test(doc(FakeJdbcDriver.URL).copy()
-                        .connectionType(SqlConnectionType.ATHENA)
-                        .build());
+    @SuppressWarnings("unchecked")
+    void athenaTestLooksUpTheWorkGroupAndDatabaseWithoutRunningAQuery() {
+        // Every Athena query is billed, so the test must not run one.
+        givenWorkGroup(1_000_000_000L);
+
+        final SqlDataSourceTestResponse response = tester(new MockSecurityContext()).test(athenaDoc("eu-west-2"));
+
+        assertThat(response.isOk()).isTrue();
+        assertThat(response.getMessage())
+                .contains("Amazon Athena in eu-west-2")
+                .contains("Workgroup: primary (ENABLED)")
+                .contains("Workgroup result location: s3://results/stroom/")
+                .contains("Database: AwsDataCatalog.events")
+                .contains("Stroom's own AWS identity")
+                .doesNotContain("none set")
+                .contains("Workgroup enforces its settings: no, so the document's output location is used")
+                .contains(SqlDataSourceConnectionTester.ATHENA_ADVICE);
+        Mockito.verify(athenaClient, Mockito.never()).startQueryExecution(Mockito.any(Consumer.class));
+        Mockito.verify(athenaClient).close();
+    }
+
+    @Test
+    void athenaTestPointsOutAMissingScanLimit() {
+        givenWorkGroup(null);
+
+        final SqlDataSourceTestResponse response = tester(new MockSecurityContext()).test(athenaDoc("eu-west-2"));
+
+        assertThat(response.getMessage()).contains("Data scan limit per query: none set");
+    }
+
+    @Test
+    void athenaWorkGroupNotAllowedFailsWithoutCallingAws() {
+        final SqlDataSourceTestResponse response = tester(new MockSecurityContext()).test(athenaDoc("us-east-1"));
 
         assertThat(response.isOk()).isFalse();
-        assertThat(response.getMessage()).isEqualTo(SqlDataSourceConnectionTester.ATHENA_NOT_AVAILABLE);
-        assertThat(driver.getConnections()).isEmpty();
+        assertThat(response.getMessage()).contains("allowedAthenaWorkGroups");
+        Mockito.verifyNoInteractions(athenaClient);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void athenaErrorIsReported() {
+        Mockito.when(athenaClient.getWorkGroup(Mockito.any(Consumer.class)))
+                .thenThrow(new IllegalStateException("The security token included in the request is invalid."));
+
+        final SqlDataSourceTestResponse response = tester(new MockSecurityContext()).test(athenaDoc("eu-west-2"));
+
+        assertThat(response.isOk()).isFalse();
+        assertThat(response.getMessage()).contains("security token");
     }
 
     @Test

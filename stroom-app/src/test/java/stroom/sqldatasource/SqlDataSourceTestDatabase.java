@@ -104,6 +104,9 @@ final class SqlDataSourceTestDatabase {
                 config.getMaxRowsLimit(),
                 config.getMaxPoolSizeLimit(),
                 config.getConnectionPoolCache(),
-                config.getFieldCache());
+                config.getFieldCache(),
+                config.getAllowedAthenaWorkGroups(),
+                config.getAllowedAthenaOutputLocations(),
+                config.isAllowDefaultAwsCredentials());
     }
 }

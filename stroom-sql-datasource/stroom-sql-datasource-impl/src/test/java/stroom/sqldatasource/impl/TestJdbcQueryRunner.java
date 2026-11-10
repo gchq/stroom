@@ -26,6 +26,7 @@ import stroom.sqldatasource.impl.JdbcConnectionPoolCache.ConnectionFunction;
 import stroom.sqldatasource.shared.JdbcConnectionSettings;
 import stroom.sqldatasource.shared.SqlDataSourceDoc;
 
+import com.mysql.cj.jdbc.JdbcConnection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -91,7 +92,7 @@ class TestJdbcQueryRunner {
         return resultSet;
     }
 
-    private JdbcQueryRunner.RunSummary run(final int maxRows, final QueryCancellation cancellation)
+    private QueryRunSummary run(final int maxRows, final QueryCancellation cancellation)
             throws SQLException {
         return runner.run(
                 doc(maxRows),
@@ -139,10 +140,45 @@ class TestJdbcQueryRunner {
     }
 
     @Test
+    void mySqlStatementIsPreparedOnTheServerToDescribeIt() throws SQLException {
+        // MySQL's driver runs a statement prepared on the client to describe it.
+        final JdbcConnection mySqlConnection = Mockito.mock(JdbcConnection.class);
+        final PreparedStatement serverStatement = Mockito.mock(PreparedStatement.class);
+        Mockito.when(connection.isWrapperFor(JdbcConnection.class)).thenReturn(true);
+        Mockito.when(connection.unwrap(JdbcConnection.class)).thenReturn(mySqlConnection);
+        Mockito.when(mySqlConnection.serverPrepareStatement("select id from staff where name = ?"))
+                .thenReturn(serverStatement);
+        Mockito.when(serverStatement.getMetaData()).thenReturn(metaData);
+
+        final List<SqlColumn> columns = runner.describe(doc(100), SqlStatementParser.parse(SQL));
+
+        assertThat(columns).extracting(SqlColumn::name).containsExactly("id");
+        Mockito.verify(serverStatement, Mockito.never()).executeQuery();
+        Mockito.verify(serverStatement).close();
+        Mockito.verify(connection, Mockito.never())
+                .prepareStatement(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt());
+    }
+
+    @Test
+    void mySqlStatementTheServerWillNotPrepareIsDescribedTheUsualWay() throws SQLException {
+        // Such as a statement the server cannot prepare, or when it has no room for more.
+        final JdbcConnection mySqlConnection = Mockito.mock(JdbcConnection.class);
+        Mockito.when(connection.isWrapperFor(JdbcConnection.class)).thenReturn(true);
+        Mockito.when(connection.unwrap(JdbcConnection.class)).thenReturn(mySqlConnection);
+        Mockito.when(mySqlConnection.serverPrepareStatement(Mockito.anyString()))
+                .thenThrow(new SQLException("Can't create more than max_prepared_stmt_count statements"));
+        Mockito.when(statement.getMetaData()).thenReturn(metaData);
+
+        final List<SqlColumn> columns = runner.describe(doc(100), SqlStatementParser.parse(SQL));
+
+        assertThat(columns).extracting(SqlColumn::name).containsExactly("id");
+    }
+
+    @Test
     void runSetsTheLimitsAndBindsTheValues() throws SQLException {
         givenRows(2);
 
-        final JdbcQueryRunner.RunSummary summary = run(100, new QueryCancellation());
+        final QueryRunSummary summary = run(100, new QueryCancellation());
 
         Mockito.verify(statement).setQueryTimeout(30);
         Mockito.verify(statement).setMaxRows(101);
@@ -157,7 +193,7 @@ class TestJdbcQueryRunner {
     void runStopsAtTheRowLimitAndSaysSo() throws SQLException {
         givenRows(5);
 
-        final JdbcQueryRunner.RunSummary summary = run(3, new QueryCancellation());
+        final QueryRunSummary summary = run(3, new QueryCancellation());
 
         assertThat(summary.rowsRead()).isEqualTo(3);
         assertThat(summary.limitReached()).isTrue();
@@ -168,7 +204,7 @@ class TestJdbcQueryRunner {
     void resultThatExactlyFillsTheLimitIsNotCutShort() throws SQLException {
         givenRows(3);
 
-        final JdbcQueryRunner.RunSummary summary = run(3, new QueryCancellation());
+        final QueryRunSummary summary = run(3, new QueryCancellation());
 
         assertThat(summary.limitReached()).isFalse();
     }
@@ -179,7 +215,7 @@ class TestJdbcQueryRunner {
         final QueryCancellation cancellation = new QueryCancellation();
         cancellation.cancel();
 
-        final JdbcQueryRunner.RunSummary summary = run(100, cancellation);
+        final QueryRunSummary summary = run(100, cancellation);
 
         assertThat(summary.rowsRead()).isZero();
         Mockito.verify(statement).cancel();

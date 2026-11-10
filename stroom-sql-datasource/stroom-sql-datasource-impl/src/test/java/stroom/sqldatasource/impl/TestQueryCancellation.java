@@ -70,6 +70,28 @@ class TestQueryCancellation {
     }
 
     @Test
+    void cancelRunsAnyStopAction() {
+        // Such as stopping an Amazon Athena query execution.
+        final int[] stops = new int[1];
+        cancellation.register(() -> stops[0]++);
+
+        cancellation.cancel();
+
+        assertThat(stops[0]).isEqualTo(1);
+    }
+
+    @Test
+    void failingStopActionIsNotThrown() {
+        cancellation.register(() -> {
+            throw new IllegalStateException("query already finished");
+        });
+
+        cancellation.cancel();
+
+        assertThat(cancellation.isCancelled()).isTrue();
+    }
+
+    @Test
     void notCancelledToBeginWith() {
         assertThat(cancellation.isCancelled()).isFalse();
     }

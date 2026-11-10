@@ -60,6 +60,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;
+import java.util.function.Function;
 
 /// Runs StroomQL and dashboard queries against a [SqlDataSourceDoc].
 ///
@@ -77,6 +78,15 @@ import java.util.concurrent.Executor;
 /// - Otherwise, if the document names a time column, rows are filtered on it in Stroom.
 /// - Otherwise the time range is not used, and the query warns that it was ignored.
 ///
+/// Amazon Athena bills by the data a query scans, so filtering in Stroom after Athena has read
+/// everything would cost money for nothing. An Athena query with a time range must therefore take it
+/// through `:from` or `:to`, and is refused otherwise.
+///
+/// ## Amazon Athena fields
+///
+/// Athena cannot describe a query without running it, and every run is billed. So the fields of an
+/// Athena query are only known once it has run; until then [#getFields(DocRef, String)] has none.
+///
 /// ## Permissions
 ///
 /// Running a query, or listing its fields, needs Use on the document. The document's credential is
@@ -85,7 +95,10 @@ public class SqlDataSourceSearchProvider implements SearchProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SqlDataSourceSearchProvider.class);
 
-    static final String ATHENA_NOT_AVAILABLE = "Querying Amazon Athena is not available yet.";
+    static final String ATHENA_TIME_RANGE_REFUSED = "The query has a time range, but its SQL has no :from or :to "
+                                                    + "placeholder. Amazon Athena bills by the data a query scans, "
+                                                    + "so the time range must go into the SQL, for example "
+                                                    + "'where event_time >= :from and event_time < :to'.";
     static final String FIELDS_HINT = "The fields of a SQL Data Source are the columns returned by the " +
                                       "query's SQL, so write the SQL first.";
 
@@ -101,6 +114,8 @@ public class SqlDataSourceSearchProvider implements SearchProvider {
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
     private final JdbcQueryRunner jdbcQueryRunner;
     private final JdbcConnectionResolver connectionResolver;
+    private final AthenaQueryRunner athenaQueryRunner;
+    private final AthenaConnectionResolver athenaConnectionResolver;
     private final SqlFieldCache fieldCache;
 
     /// Creates the provider. Guice supplies every argument.
@@ -117,6 +132,8 @@ public class SqlDataSourceSearchProvider implements SearchProvider {
                                 final FieldInfoResultPageFactory fieldInfoResultPageFactory,
                                 final JdbcQueryRunner jdbcQueryRunner,
                                 final JdbcConnectionResolver connectionResolver,
+                                final AthenaQueryRunner athenaQueryRunner,
+                                final AthenaConnectionResolver athenaConnectionResolver,
                                 final SqlFieldCache fieldCache) {
         this.executor = executor;
         this.store = store;
@@ -130,6 +147,8 @@ public class SqlDataSourceSearchProvider implements SearchProvider {
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
         this.jdbcQueryRunner = jdbcQueryRunner;
         this.connectionResolver = connectionResolver;
+        this.athenaQueryRunner = athenaQueryRunner;
+        this.athenaConnectionResolver = athenaConnectionResolver;
         this.fieldCache = fieldCache;
     }
 
@@ -148,11 +167,35 @@ public class SqlDataSourceSearchProvider implements SearchProvider {
         return docFinder.findByName(getDataSourceType(), name);
     }
 
-    /// The fields depend on the SQL, which the criteria do not carry, so there are none until the
-    /// query editors ask with the SQL through [#getFields(DocRef, String)].
+    /// The SQL of a SQL Data Source is given in each query.
+    @Override
+    public boolean takesNativeQuery() {
+        return true;
+    }
+
+    /// The fields are the columns of the SQL in the criteria, as [#getFields(DocRef, String)] gives
+    /// them. With no SQL there are none.
+    ///
+    /// This serves field completion while a query is typed, so SQL that cannot be described yet, or a
+    /// document or credential the user may not use, gives no fields rather than an error. Running the
+    /// query reports the problem.
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
-        return fieldInfoResultPageFactory.create(criteria, List.of());
+        return fieldInfoResultPageFactory.create(criteria, fieldsOrNone(criteria));
+    }
+
+    private List<QueryField> fieldsOrNone(final FindFieldCriteria criteria) {
+        final String sql = criteria.getNativeQuery();
+        if (NullSafe.isBlankString(sql)) {
+            return List.of();
+        }
+        try {
+            return getFields(criteria.getDataSourceRef(), sql);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to list the fields of SQL for {}: {}",
+                    criteria.getDataSourceRef(), e.getMessage()), e);
+            return List.of();
+        }
     }
 
     @Override
@@ -179,16 +222,22 @@ public class SqlDataSourceSearchProvider implements SearchProvider {
     ///
     /// @param docRef The SQL Data Source.
     /// @param sql    The query's SQL.
-    /// @return The fields, in column order.
+    /// @return The fields, in column order. For Amazon Athena, none until the SQL has run.
     /// @throws PermissionException If the user may not use the document or its credential.
     /// @throws RuntimeException    If the SQL cannot be read or the database refuses it.
     public List<QueryField> getFields(final DocRef docRef, final String sql) {
         final SqlDataSourceDoc doc = getDoc(docRef);
-        requireJdbc(doc);
+        requireConnection(doc);
+        final ParsedSql parsedSql = SqlStatementParser.parse(sql);
         // The cache may answer without connecting, so check here that the user may use the
         // credential, as connecting would.
+        if (isAthena(doc)) {
+            athenaConnectionResolver.resolve(doc.getAthena());
+            return fieldCache.getIfPresent(doc, sql)
+                    .map(SqlDataSourceSearchProvider::toQueryFields)
+                    .orElse(List.of());
+        }
         connectionResolver.resolve(doc.getJdbc());
-        final ParsedSql parsedSql = SqlStatementParser.parse(sql);
         final List<SqlColumn> columns = fieldCache.get(doc, sql, ignored -> {
             try {
                 return jdbcQueryRunner.describe(doc, parsedSql);
@@ -196,6 +245,10 @@ public class SqlDataSourceSearchProvider implements SearchProvider {
                 throw new RuntimeException("The database could not describe the SQL: " + e.getMessage(), e);
             }
         });
+        return toQueryFields(columns);
+    }
+
+    private static List<QueryField> toQueryFields(final List<SqlColumn> columns) {
         return columns.stream()
                 .map(SqlColumn::toQueryField)
                 .toList();
@@ -207,7 +260,8 @@ public class SqlDataSourceSearchProvider implements SearchProvider {
         final Query query = modifiedSearchRequest.getQuery();
         final DocRef docRef = query.getDataSource();
         final SqlDataSourceDoc doc = getDoc(docRef);
-        requireJdbc(doc);
+        requireConnection(doc);
+        final boolean athena = isAthena(doc);
 
         // Check everything that can be checked before the search starts, so a mistake in the
         // query is reported straight away rather than as a search error.
@@ -219,11 +273,15 @@ public class SqlDataSourceSearchProvider implements SearchProvider {
                 query.getTimeRange(),
                 query.getParams(),
                 dateTimeSettings);
-        final ExpressionOperator expression = addTimeRange(
-                query.getExpression(),
-                query.getTimeRange(),
-                parsedSql,
-                doc.getTimeField());
+        if (athena) {
+            AthenaQueryRunner.requireReadOnly(parsedSql);
+            if (hasTimeRange(query.getTimeRange()) && !parsedSql.usesTimeRange()) {
+                throw new IllegalArgumentException(ATHENA_TIME_RANGE_REFUSED);
+            }
+        }
+        final ExpressionOperator expression = athena
+                ? query.getExpression()
+                : addTimeRange(query.getExpression(), query.getTimeRange(), parsedSql, doc.getTimeField());
         final boolean filtersOnTimeColumn = expression != query.getExpression();
 
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
@@ -250,24 +308,23 @@ public class SqlDataSourceSearchProvider implements SearchProvider {
             try {
                 if (!cancellation.isCancelled()) {
                     taskContext.info(() -> infoPrefix + "running query");
-                    final JdbcQueryRunner.RunSummary summary = jdbcQueryRunner.run(
-                            doc,
-                            parsedSql,
-                            values,
-                            columns -> {
-                                fieldCache.put(doc, sql, columns);
-                                if (filtersOnTimeColumn) {
-                                    requireTimeColumn(doc, columns);
-                                }
-                                return SqlRowConsumer.create(
-                                        columns,
-                                        coprocessors.getFieldIndex(),
-                                        expression,
-                                        dateTimeSettings,
-                                        expressionPredicateFactory,
-                                        coprocessors);
-                            },
-                            cancellation);
+                    final Function<List<SqlColumn>, SqlRowConsumer> rowConsumerFactory = columns -> {
+                        fieldCache.put(doc, sql, columns);
+                        if (filtersOnTimeColumn) {
+                            requireTimeColumn(doc, columns);
+                        }
+                        return SqlRowConsumer.create(
+                                columns,
+                                coprocessors.getFieldIndex(),
+                                expression,
+                                dateTimeSettings,
+                                expressionPredicateFactory,
+                                coprocessors);
+                    };
+                    final QueryRunSummary summary = athena
+                            ? athenaQueryRunner.run(doc, parsedSql, values, rowConsumerFactory, cancellation,
+                                    message -> taskContext.info(() -> infoPrefix + message))
+                            : jdbcQueryRunner.run(doc, parsedSql, values, rowConsumerFactory, cancellation);
                     addWarnings(summary, coprocessors);
                     LOGGER.debug(() -> LogUtil.message("{} read {} rows, {} passed the where expression",
                             infoPrefix, summary.rowsRead(), summary.rowsPassed()));
@@ -350,7 +407,10 @@ public class SqlDataSourceSearchProvider implements SearchProvider {
                && (!NullSafe.isBlankString(timeRange.getFrom()) || !NullSafe.isBlankString(timeRange.getTo()));
     }
 
-    private static void addWarnings(final JdbcQueryRunner.RunSummary summary, final CoprocessorsImpl coprocessors) {
+    private static void addWarnings(final QueryRunSummary summary, final CoprocessorsImpl coprocessors) {
+        if (summary.info() != null) {
+            coprocessors.getErrorConsumer().add(Severity.INFO, summary::info);
+        }
         if (summary.limitReached()) {
             coprocessors.getErrorConsumer().add(Severity.WARNING, () -> LogUtil.message(
                     "The SQL returned more than {} rows, so only the first {} were used. Filter in the SQL, " +
@@ -375,9 +435,17 @@ public class SqlDataSourceSearchProvider implements SearchProvider {
         }
     }
 
-    private static void requireJdbc(final SqlDataSourceDoc doc) {
-        if (SqlConnectionType.ATHENA.equals(doc.getConnectionType())) {
-            throw new IllegalArgumentException(ATHENA_NOT_AVAILABLE);
+    private static boolean isAthena(final SqlDataSourceDoc doc) {
+        return SqlConnectionType.ATHENA.equals(doc.getConnectionType());
+    }
+
+    private static void requireConnection(final SqlDataSourceDoc doc) {
+        if (isAthena(doc)) {
+            if (doc.getAthena() == null) {
+                throw new IllegalArgumentException("SQL Data Source '" + doc.getName()
+                                                   + "' has no Amazon Athena settings.");
+            }
+            return;
         }
         if (doc.getJdbc() == null || NullSafe.isBlankString(doc.getJdbc().getUrl())) {
             throw new IllegalArgumentException("SQL Data Source '" + doc.getName() + "' has no JDBC URL.");

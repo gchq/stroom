@@ -1360,6 +1360,9 @@ appConfig:
       maxBooleanClauseCount: 1024
       maxStoredDataQueueSize: 1000
   sqlDataSource:
+    allowDefaultAwsCredentials: false
+    allowedAthenaOutputLocations: []
+    allowedAthenaWorkGroups: []
     allowedUrlPatterns: []
     connectionPoolCache:
       expireAfterAccess: "PT10M"

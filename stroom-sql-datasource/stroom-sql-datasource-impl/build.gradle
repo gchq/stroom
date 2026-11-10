@@ -33,6 +33,8 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.aws.apache5.client
+    implementation libs.aws.athena
     implementation libs.guice
     implementation libs.hikari
     implementation libs.jackson.annotations

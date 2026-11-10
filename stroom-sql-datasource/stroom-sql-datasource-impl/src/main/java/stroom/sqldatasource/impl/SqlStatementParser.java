@@ -18,6 +18,7 @@ package stroom.sqldatasource.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /// Reads the SQL of a query before it is prepared.
 ///
@@ -43,7 +44,9 @@ public final class SqlStatementParser {
     ///                                  `?`, or a quote, comment or placeholder format is not closed.
     public static ParsedSql parse(final String sql) {
         if (sql == null || sql.isBlank()) {
-            throw new IllegalArgumentException("No SQL has been given for the SQL Data Source.");
+            throw new IllegalArgumentException("No SQL has been given for the SQL Data Source. In StroomQL, "
+                                               + "put it in a sql clause after from, e.g. "
+                                               + "from \"my source\" sql \"\"\"select * from my_table\"\"\"");
         }
         final String statement = withoutFinalSemicolon(sql);
         if (statement.indexOf(';') >= 0) {
@@ -91,6 +94,37 @@ public final class SqlStatementParser {
             i = end;
         }
         return new ParsedSql(sql, jdbcSql.toString(), placeholders);
+    }
+
+    /// Finds the first keyword of the SQL, skipping white space, comments and opening brackets.
+    ///
+    /// @param sql The SQL.
+    /// @return The first word in lower case, or an empty string if there is none.
+    public static String firstKeyword(final String sql) {
+        if (sql == null) {
+            return "";
+        }
+        int i = 0;
+        while (i < sql.length()) {
+            final char c = sql.charAt(i);
+            final char next = i + 1 < sql.length()
+                    ? sql.charAt(i + 1)
+                    : 0;
+            if (Character.isWhitespace(c) || c == '(') {
+                i++;
+            } else if (c == '-' && next == '-') {
+                i = endOfLineComment(sql, i);
+            } else if (c == '/' && next == '*') {
+                i = endOfBlockComment(sql, i);
+            } else {
+                break;
+            }
+        }
+        final int start = i;
+        while (i < sql.length() && isNamePart(sql.charAt(i))) {
+            i++;
+        }
+        return sql.substring(start, i).toLowerCase(Locale.ROOT);
     }
 
     private static String withoutFinalSemicolon(final String sql) {

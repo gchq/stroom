@@ -93,6 +93,27 @@ class Structures {
                         ```
                         """,
                 "from \"${1:view}\"$0");
+        add(list, name(TokenType.SQL),
+                """
+                        Give the SQL to run against a SQL Data Source, straight after `from`, e.g.
+                        ```stroomql
+                        from "Reporting DB"
+                        sql \"""
+                        select feed, count(*) as total
+                        from events
+                        where event_time >= :from and event_time < :to
+                        group by feed
+                        \"""
+                        select feed, total
+                        ```
+
+                        In triple quotes the SQL is taken as written, so it can hold quotes and backslashes.
+                        The columns of the SQL become the fields of the query.
+
+                        `:from` and `:to` take the query's time range, and any other `:name` takes the
+                        query parameter of that name. Values are always bound, never pasted into the SQL.
+                        """,
+                "sql \"\"\"\n${1:select * from my_table}\n\"\"\"\n$0");
         add(list, name(TokenType.WHERE),
                 """
                         Use where to construct query criteria, e.g.

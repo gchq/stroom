@@ -19,6 +19,7 @@ package stroom.sqldatasource.impl;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
 import stroom.security.api.SecurityContext;
+import stroom.sqldatasource.shared.AthenaConnectionSettings;
 import stroom.sqldatasource.shared.JdbcConnectionSettings;
 import stroom.sqldatasource.shared.SqlConnectionType;
 import stroom.sqldatasource.shared.SqlDataSourceDoc;
@@ -34,9 +35,10 @@ import java.util.Objects;
 
 /// Stores [SqlDataSourceDoc] documents.
 ///
-/// A JDBC URL is checked against the administrator's controls when a user saves a document, so a
-/// mistake is reported at once. Imports are not checked, so a content pack can be imported and then
-/// edited; its URL is checked again whenever it connects.
+/// A JDBC URL, or an Amazon Athena region and workgroup, is checked against the administrator's
+/// controls when a user saves a document, so a mistake is reported at once. Imports are not checked,
+/// so a content pack can be imported and then edited; its settings are checked again whenever it
+/// connects.
 @Singleton
 public class SqlDataSourceStoreImpl
         extends AbstractDocumentStore<SqlDataSourceDoc>
@@ -59,30 +61,37 @@ public class SqlDataSourceStoreImpl
         this.configProvider = configProvider;
     }
 
-    /// Saves a document, refusing a JDBC URL or driver property the administrator has not allowed.
+    /// Saves a document, refusing settings the administrator has not allowed: a JDBC URL or driver
+    /// property, or an Athena region and workgroup.
     ///
-    /// A document with no URL yet may be saved, so it can be built up over several saves.
+    /// A document with no URL or region yet may be saved, so it can be built up over several saves.
+    /// Only the settings of the document's connection type are checked.
     ///
     /// @param document The document to save.
     /// @return The saved document.
-    /// @throws EntityServiceException If the JDBC settings break the administrator's controls.
+    /// @throws EntityServiceException If the settings break the administrator's controls.
     @Override
     public SqlDataSourceDoc writeDocument(final SqlDataSourceDoc document) {
-        checkJdbcSettings(document);
+        final List<String> problems = findProblems(document);
+        if (!problems.isEmpty()) {
+            throw new EntityServiceException(String.join("\n", problems));
+        }
         return super.writeDocument(document);
     }
 
-    private void checkJdbcSettings(final SqlDataSourceDoc document) {
+    private List<String> findProblems(final SqlDataSourceDoc document) {
         final SqlConnectionType connectionType = Objects.requireNonNullElse(
                 document.getConnectionType(),
                 SqlConnectionType.JDBC);
-        final JdbcConnectionSettings jdbc = document.getJdbc();
-        if (connectionType == SqlConnectionType.JDBC
-            && NullSafe.isNonBlankString(NullSafe.get(jdbc, JdbcConnectionSettings::getUrl))) {
-            final List<String> problems = JdbcConnectionValidator.findProblems(jdbc, configProvider.get());
-            if (!problems.isEmpty()) {
-                throw new EntityServiceException(String.join("\n", problems));
-            }
+        if (connectionType == SqlConnectionType.ATHENA) {
+            final AthenaConnectionSettings athena = document.getAthena();
+            return NullSafe.isNonBlankString(NullSafe.get(athena, AthenaConnectionSettings::getRegion))
+                    ? AthenaConnectionValidator.findProblems(athena, configProvider.get())
+                    : List.of();
         }
+        final JdbcConnectionSettings jdbc = document.getJdbc();
+        return NullSafe.isNonBlankString(NullSafe.get(jdbc, JdbcConnectionSettings::getUrl))
+                ? JdbcConnectionValidator.findProblems(jdbc, configProvider.get())
+                : List.of();
     }
 }

@@ -102,6 +102,9 @@ public class SqlDataSourceConfig extends AbstractConfig implements IsStroomConfi
     private final int maxPoolSizeLimit;
     private final CacheConfig connectionPoolCache;
     private final CacheConfig fieldCache;
+    private final List<String> allowedAthenaWorkGroups;
+    private final List<String> allowedAthenaOutputLocations;
+    private final boolean allowDefaultAwsCredentials;
 
     /// Creates the configuration with its default values.
     public SqlDataSourceConfig() {
@@ -113,6 +116,9 @@ public class SqlDataSourceConfig extends AbstractConfig implements IsStroomConfi
         maxPoolSizeLimit = DEFAULT_MAX_POOL_SIZE_LIMIT;
         connectionPoolCache = createDefaultConnectionPoolCache();
         fieldCache = createDefaultFieldCache();
+        allowedAthenaWorkGroups = List.of();
+        allowedAthenaOutputLocations = List.of();
+        allowDefaultAwsCredentials = false;
     }
 
     /// Creates the configuration from JSON or YAML. Any value not supplied takes its default.
@@ -125,6 +131,10 @@ public class SqlDataSourceConfig extends AbstractConfig implements IsStroomConfi
     /// @param maxPoolSizeLimit           The largest connection pool a document may set.
     /// @param connectionPoolCache        The cache of connection pools, one per document.
     /// @param fieldCache                 The cache of the columns each SQL query returns.
+    /// @param allowedAthenaWorkGroups    Regular expressions an Athena `region/workgroup` must match one of.
+    /// @param allowedAthenaOutputLocations Regular expressions an Athena output location must match one of.
+    /// @param allowDefaultAwsCredentials True to let Athena documents with no credential use Stroom's own
+    ///                                   AWS identity.
     @SuppressWarnings("unused")
     @JsonCreator
     public SqlDataSourceConfig(
@@ -135,7 +145,10 @@ public class SqlDataSourceConfig extends AbstractConfig implements IsStroomConfi
             @JsonProperty("maxRowsLimit") final Integer maxRowsLimit,
             @JsonProperty("maxPoolSizeLimit") final Integer maxPoolSizeLimit,
             @JsonProperty("connectionPoolCache") final CacheConfig connectionPoolCache,
-            @JsonProperty("fieldCache") final CacheConfig fieldCache) {
+            @JsonProperty("fieldCache") final CacheConfig fieldCache,
+            @JsonProperty("allowedAthenaWorkGroups") final List<String> allowedAthenaWorkGroups,
+            @JsonProperty("allowedAthenaOutputLocations") final List<String> allowedAthenaOutputLocations,
+            @JsonProperty("allowDefaultAwsCredentials") final Boolean allowDefaultAwsCredentials) {
         this.allowedUrlPatterns = NullSafe.list(allowedUrlPatterns);
         this.deniedConnectionProperties = Objects.requireNonNullElse(
                 deniedConnectionProperties,
@@ -150,6 +163,44 @@ public class SqlDataSourceConfig extends AbstractConfig implements IsStroomConfi
         this.fieldCache = Objects.requireNonNullElseGet(
                 fieldCache,
                 SqlDataSourceConfig::createDefaultFieldCache);
+        this.allowedAthenaWorkGroups = NullSafe.list(allowedAthenaWorkGroups);
+        this.allowedAthenaOutputLocations = NullSafe.list(allowedAthenaOutputLocations);
+        this.allowDefaultAwsCredentials = Objects.requireNonNullElse(allowDefaultAwsCredentials, false);
+    }
+
+    /// @return The regular expressions an Athena `region/workgroup` must match one of.
+    @NotNull
+    @JsonPropertyDescription("Regular expressions that the AWS region and Athena workgroup of an Amazon Athena " +
+            "SQL Data Source, written as 'region/workgroup', must match one of, e.g. '^eu-west-2/stroom-.*$'. " +
+            "Checked when the document is saved and again when it runs a query. With no patterns, no Athena " +
+            "connection is allowed. Each workgroup should set a per-query data scan limit, as that is the " +
+            "control on cost. The AWS identities used, and the accounts of any federated connectors, should " +
+            "only be able to read, as Stroom cannot see what a connector does with the SQL it is passed.")
+    @JsonProperty("allowedAthenaWorkGroups")
+    public List<String> getAllowedAthenaWorkGroups() {
+        return allowedAthenaWorkGroups;
+    }
+
+    /// @return The regular expressions an Athena output location must match one of.
+    @NotNull
+    @JsonPropertyDescription("Regular expressions that the S3 output location of an Amazon Athena SQL Data " +
+            "Source must match one of, e.g. '^s3://stroom-athena-results/.*$'. Every query writes its full " +
+            "result there, with the AWS identity of the user running it. With no patterns, documents may not " +
+            "set an output location, and the workgroup's own is used.")
+    @JsonProperty("allowedAthenaOutputLocations")
+    public List<String> getAllowedAthenaOutputLocations() {
+        return allowedAthenaOutputLocations;
+    }
+
+    /// @return True if Athena documents with no credential may use Stroom's own AWS identity.
+    @JsonPropertyDescription("Whether an Amazon Athena SQL Data Source that names no credential may use " +
+            "Stroom's own AWS identity from the default credentials chain: its instance or container role, " +
+            "web identity, environment or profile. Any user who can create a document could then query " +
+            "whatever that identity can read, so it is off by default and documents must name an AWS access " +
+            "key credential, which needs Use permission.")
+    @JsonProperty("allowDefaultAwsCredentials")
+    public boolean isAllowDefaultAwsCredentials() {
+        return allowDefaultAwsCredentials;
     }
 
     /// @return The regular expressions a JDBC URL must match one of.
@@ -157,7 +208,7 @@ public class SqlDataSourceConfig extends AbstractConfig implements IsStroomConfi
     @JsonPropertyDescription("Regular expressions that the JDBC URL of a SQL Data Source must match one of, " +
             "e.g. '^jdbc:mysql://reporting-db\\.example\\.com:3306/.*$'. A URL is checked when the document " +
             "is saved and again when it connects. With no patterns, no JDBC connection is allowed. " +
-            "Amazon Athena connections do not use a JDBC URL and are not checked.")
+            "Amazon Athena connections are controlled by allowedAthenaWorkGroups instead.")
     @JsonProperty("allowedUrlPatterns")
     public List<String> getAllowedUrlPatterns() {
         return allowedUrlPatterns;
@@ -239,6 +290,9 @@ public class SqlDataSourceConfig extends AbstractConfig implements IsStroomConfi
                ", maxPoolSizeLimit=" + maxPoolSizeLimit +
                ", connectionPoolCache=" + connectionPoolCache +
                ", fieldCache=" + fieldCache +
+               ", allowedAthenaWorkGroups=" + allowedAthenaWorkGroups +
+               ", allowedAthenaOutputLocations=" + allowedAthenaOutputLocations +
+               ", allowDefaultAwsCredentials=" + allowDefaultAwsCredentials +
                '}';
     }
 

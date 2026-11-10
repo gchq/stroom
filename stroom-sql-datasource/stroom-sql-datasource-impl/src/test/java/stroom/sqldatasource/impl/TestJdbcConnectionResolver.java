@@ -43,7 +43,8 @@ class TestJdbcConnectionResolver {
 
     private JdbcConnectionResolver resolver(final int maxPoolSizeLimit) {
         final SqlDataSourceConfig config = new SqlDataSourceConfig(
-                List.of(FakeJdbcDriver.ALLOWED_URL_PATTERN), null, null, null, null, maxPoolSizeLimit, null, null);
+                List.of(FakeJdbcDriver.ALLOWED_URL_PATTERN), null, null, null, null, maxPoolSizeLimit, null, null,
+                null, null, null);
         return new JdbcConnectionResolver(() -> config, () -> storedSecrets);
     }
 

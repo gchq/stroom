@@ -20,7 +20,9 @@ import stroom.sqldatasource.shared.JdbcConnectionSettings;
 import stroom.sqldatasource.shared.SqlDataSourceDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
+import com.mysql.cj.jdbc.JdbcConnection;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -58,11 +60,14 @@ public class JdbcQueryRunner {
         this.configProvider = configProvider;
     }
 
-    /// Finds the columns the SQL returns, without fetching any rows.
+    /// Finds the columns the SQL returns, without running it.
     ///
-    /// It asks the driver to describe the prepared statement. A driver that cannot do that before
-    /// running it is given `select * from (<sql>) q where 1 = 0` instead. Placeholders are bound
-    /// to `NULL`, which is enough to describe the statement.
+    /// The SQL is prepared and the driver asked to describe it. MySQL's driver normally prepares
+    /// statements on the client and runs them to describe them, which for a slow query is as slow as
+    /// the query, so on MySQL the statement is prepared on the server instead, which describes it
+    /// without running it. A driver that cannot describe a statement before running it is given
+    /// `select * from (<sql>) q where 1 = 0` instead. Placeholders are bound to `NULL`, which is
+    /// enough to describe the statement.
     ///
     /// @param doc       The SQL Data Source.
     /// @param parsedSql The query's SQL.
@@ -71,6 +76,21 @@ public class JdbcQueryRunner {
     public List<SqlColumn> describe(final SqlDataSourceDoc doc, final ParsedSql parsedSql) throws SQLException {
         final SqlQueryLimits limits = SqlQueryLimits.of(doc, configProvider.get());
         return poolCache.useConnection(doc.getJdbc(), connection -> {
+            if (connection.isWrapperFor(JdbcConnection.class)) {
+                try (final PreparedStatement statement = connection.unwrap(JdbcConnection.class)
+                        .serverPrepareStatement(parsedSql.jdbcSql())) {
+                    final ResultSetMetaData metaData = statement.getMetaData();
+                    if (metaData != null) {
+                        return SqlTypeMapper.toColumns(metaData);
+                    }
+                } catch (final SQLException e) {
+                    // The server can refuse to prepare some statements, or have no room for more
+                    // prepared statements, so describe it as for other databases.
+                    LOGGER.debug(() -> LogUtil.message("MySQL could not prepare the SQL on the server: {}",
+                            e.getMessage()));
+                }
+            }
+
             try (final PreparedStatement statement = prepare(connection, parsedSql.jdbcSql(), limits)) {
                 bindNulls(statement, parsedSql);
                 final ResultSetMetaData metaData = statement.getMetaData();
@@ -100,7 +120,7 @@ public class JdbcQueryRunner {
     /// @param cancellation       Stops the statement when the search is cancelled.
     /// @return What the run read.
     /// @throws SQLException If the database refuses the SQL or fails while it runs.
-    public RunSummary run(final SqlDataSourceDoc doc,
+    public QueryRunSummary run(final SqlDataSourceDoc doc,
                           final ParsedSql parsedSql,
                           final List<Object> values,
                           final Function<List<SqlColumn>, SqlRowConsumer> rowConsumerFactory,
@@ -129,7 +149,7 @@ public class JdbcQueryRunner {
         });
     }
 
-    private static RunSummary readRows(final ResultSet resultSet,
+    private static QueryRunSummary readRows(final ResultSet resultSet,
                                        final SqlQueryLimits limits,
                                        final Function<List<SqlColumn>, SqlRowConsumer> rowConsumerFactory,
                                        final QueryCancellation cancellation) throws SQLException {
@@ -152,8 +172,8 @@ public class JdbcQueryRunner {
                 rowsPassed++;
             }
         }
-        return new RunSummary(columns, rowConsumer.getUnmatchedFields(), rowsRead, rowsPassed, limitReached,
-                limits.maxRows());
+        return new QueryRunSummary(columns, rowConsumer.getUnmatchedFields(), rowsRead, rowsPassed, limitReached,
+                limits.maxRows(), null);
     }
 
     /// @param limits The query's limits.
@@ -192,24 +212,4 @@ public class JdbcQueryRunner {
         }
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
-    /// What a run read.
-    ///
-    /// @param columns         The columns the SQL returned.
-    /// @param unmatchedFields The query's fields that no column supplied.
-    /// @param rowsRead        The rows read from the database.
-    /// @param rowsPassed      The rows that passed the `where` expression.
-    /// @param limitReached    True if the SQL returned more rows than the limit, so some were not read.
-    /// @param maxRows         The row limit.
-    public record RunSummary(List<SqlColumn> columns,
-                             List<String> unmatchedFields,
-                             long rowsRead,
-                             long rowsPassed,
-                             boolean limitReached,
-                             int maxRows) {
-
-    }
 }

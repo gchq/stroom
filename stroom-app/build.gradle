@@ -250,6 +250,7 @@ dependencies {
     testImplementation project(':stroom-task:stroom-task-api')
     testImplementation project(':stroom-test-common')
 
+    testImplementation libs.aws.athena
     testImplementation libs.classgraph
     testImplementation libs.data.faker
     testImplementation libs.guice.extension

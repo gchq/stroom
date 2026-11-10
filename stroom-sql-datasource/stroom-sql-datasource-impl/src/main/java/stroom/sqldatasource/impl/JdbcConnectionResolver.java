@@ -16,7 +16,6 @@
 
 package stroom.sqldatasource.impl;
 
-import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.shared.UsernamePasswordSecret;
 import stroom.sqldatasource.shared.JdbcConnectionSettings;
@@ -84,24 +83,10 @@ public class JdbcConnectionResolver {
     }
 
     private UsernamePasswordSecret getUsernamePasswordSecret(final String credentialName) {
-        final StoredSecret storedSecret;
-        try {
-            // Throws if the current user does not have Use permission on the credential.
-            storedSecret = storedSecretsProvider.get().get(credentialName);
-        } catch (final PermissionException e) {
-            throw cannotUse(credentialName);
-        }
-        if (storedSecret == null) {
-            throw cannotUse(credentialName);
-        }
-        if (storedSecret.secret() instanceof final UsernamePasswordSecret usernamePasswordSecret) {
-            return usernamePasswordSecret;
-        }
-        throw new IllegalArgumentException("Credential '" + credentialName + "' is not a username and password");
-    }
-
-    private static PermissionException cannotUse(final String credentialName) {
-        return new PermissionException(null, "Unable to use credential '" + credentialName
-                                             + "'. It does not exist, or you do not have permission to use it.");
+        return CredentialSecrets.get(
+                storedSecretsProvider.get(),
+                credentialName,
+                UsernamePasswordSecret.class,
+                "a username and password");
     }
 }

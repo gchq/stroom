@@ -54,7 +54,7 @@ class TestSqlDataSourceConfig {
     void jsonCreatorWithNullsMatchesDefaults() {
         // A config file that leaves out the sqlDataSource branch, or any of its properties.
         final SqlDataSourceConfig fromNulls = new SqlDataSourceConfig(
-                null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null);
         final SqlDataSourceConfig defaults = new SqlDataSourceConfig();
 
         assertThat(fromNulls.getAllowedUrlPatterns()).isEqualTo(defaults.getAllowedUrlPatterns());
@@ -65,6 +65,13 @@ class TestSqlDataSourceConfig {
         assertThat(fromNulls.getMaxPoolSizeLimit()).isEqualTo(defaults.getMaxPoolSizeLimit());
         assertThat(fromNulls.getConnectionPoolCache()).isEqualTo(defaults.getConnectionPoolCache());
         assertThat(fromNulls.getFieldCache()).isEqualTo(defaults.getFieldCache());
+        assertThat(fromNulls.getAllowedAthenaWorkGroups()).isEqualTo(defaults.getAllowedAthenaWorkGroups());
+    }
+
+    @Test
+    void noAthenaWorkGroupIsAllowedByDefault() {
+        // Otherwise any document editor could run Athena queries with Stroom's own AWS identity.
+        assertThat(new SqlDataSourceConfig().getAllowedAthenaWorkGroups()).isEmpty();
     }
 
     @Test
@@ -84,7 +91,7 @@ class TestSqlDataSourceConfig {
                 50,
                 4,
                 cache,
-                fieldCache);
+                fieldCache, null, null, null);
 
         assertThat(config.getAllowedUrlPatterns()).containsExactly("^jdbc:mysql://db:3306/.*$");
         assertThat(config.getDeniedConnectionProperties())
@@ -102,7 +109,7 @@ class TestSqlDataSourceConfig {
     void anEmptyDenyListIsKept() {
         // Unlike a missing list, an empty one is a deliberate choice and is not replaced.
         final SqlDataSourceConfig config = new SqlDataSourceConfig(
-                null, List.of(), null, null, null, null, null, null);
+                null, List.of(), null, null, null, null, null, null, null, null, null);
 
         assertThat(config.getDeniedConnectionProperties()).isEmpty();
     }
