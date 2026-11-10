@@ -16,10 +16,12 @@
 
 package stroom.credentials.impl;
 
+import stroom.ai.shared.KeyStoreType;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.FindCredentialRequest;
+import stroom.credentials.shared.Secret;
 import stroom.util.shared.ResultPage;
 
 import java.util.function.Function;
@@ -93,4 +95,20 @@ public interface CredentialsDao {
     /// @param secret The new secret, keyed by the UUID of its credential.
     /// @return True if the credential was found and updated.
     boolean updateSecret(StoredSecret secret);
+
+
+    // --------------------------------------------------------------------------------
+
+
+    record UpdateSecretState(
+            String credentialUuid,
+            KeyStoreType keyStoreType,
+            String keyStorePath,
+            Long updateTimeMs,
+            String updateUser,
+            Long expiryTimeMs,
+            Secret secret,
+            byte[] keyStore) {
+
+    }
 }

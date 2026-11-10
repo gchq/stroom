@@ -17,6 +17,7 @@
 package stroom.widget.dropdowntree.client.view;
 
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.util.client.HtmlBuilder;
 
@@ -172,6 +173,13 @@ public class QuickFilter extends FlowPanel
     public void clear() {
         textBox.setText("");
         onChange(true);
+    }
+
+    /// Sets the hint shown in the text box while it is empty, in place of 'Quick Filter'.
+    ///
+    /// @param placeholder The hint to show.
+    public void setPlaceholder(final String placeholder) {
+        textBox.getElement().setAttribute("placeholder", NullSafe.string(placeholder));
     }
 
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {

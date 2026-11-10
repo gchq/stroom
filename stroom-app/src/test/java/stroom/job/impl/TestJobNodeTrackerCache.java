@@ -25,6 +25,7 @@ import stroom.node.api.NodeInfo;
 import stroom.node.mock.MockNodeInfo;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.shared.ThreadPool;
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
@@ -71,12 +72,14 @@ class TestJobNodeTrackerCache extends StroomUnitTest {
         test(5000, 1, TimeUnit.SECONDS);
     }
 
+    @PerformanceTest
     @Disabled
     @Test
     void testQuickPerformance() throws InterruptedException {
         test(0, 40, TimeUnit.SECONDS);
     }
 
+    @PerformanceTest
     @Disabled
     @Test
     void testDelayedPerformance() throws InterruptedException {

@@ -151,6 +151,12 @@ public enum ConditionSet {
     ELASTIC_BOOLEAN(
             Condition.EQUALS,
             Condition.NOT_EQUALS),
+    // A virtual field's values are the names of its groups, so it is only matched against group names
+    ELASTIC_VIRTUAL(
+            Condition.EQUALS,
+            Condition.NOT_EQUALS,
+            Condition.IN,
+            Condition.IN_DICTIONARY),
 
     // Solr Conditions.
     SOLR_ID(

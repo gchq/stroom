@@ -23,6 +23,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class PermissionChangeEvent {
@@ -33,23 +37,26 @@ public class PermissionChangeEvent {
     private final DocRef docRef;
 
     @JsonCreator
-    public PermissionChangeEvent(@JsonProperty("userRef") final UserRef userRef,
-                                 @JsonProperty("docRef") final DocRef docRef) {
+    public PermissionChangeEvent(@Nullable @JsonProperty("userRef") final UserRef userRef,
+                                 @Nullable @JsonProperty("docRef") final DocRef docRef) {
         this.userRef = userRef;
         this.docRef = docRef;
     }
 
+    @Nullable
     public UserRef getUserRef() {
         return userRef;
     }
 
+    @Nullable
     public DocRef getDocRef() {
         return docRef;
     }
 
     public static void fire(final PermissionChangeEventBus eventBus,
-                            final UserRef userRef,
-                            final DocRef docRef) {
+                            @Nullable final UserRef userRef,
+                            @Nullable final DocRef docRef) {
+        Objects.requireNonNull(eventBus);
         eventBus.fire(new PermissionChangeEvent(userRef, docRef));
     }
 
@@ -59,6 +66,6 @@ public class PermissionChangeEvent {
 
     public interface Handler {
 
-        void onChange(PermissionChangeEvent event);
+        void onChange(@NonNull PermissionChangeEvent event);
     }
 }

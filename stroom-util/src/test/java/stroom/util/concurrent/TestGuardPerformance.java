@@ -16,6 +16,8 @@
 
 package stroom.util.concurrent;
 
+import stroom.test.common.PerformanceTest;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -43,6 +45,7 @@ public class TestGuardPerformance {
     }
 
     @Test
+    @PerformanceTest
     @Disabled
     public void perfTest() {
         for (int i = 1; i <= 3; i++) {

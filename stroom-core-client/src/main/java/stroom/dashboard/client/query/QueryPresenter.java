@@ -54,6 +54,7 @@ import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
+import stroom.query.client.presenter.FieldValuesScope;
 import stroom.query.client.presenter.QueryUiHandlers;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
@@ -428,6 +429,7 @@ public class QueryPresenter
         // We only want queryable fields.
         fieldSelectionBoxModel.setQueryable(true);
         expressionPresenter.init(restFactory, dataSourceRef, fieldSelectionBoxModel);
+        expressionPresenter.setValueScopeSupplier(this::getValueScope);
 
         if (!Objects.equals(getQuerySettings().getDataSource(), dataSourceRef)) {
             setSettings(getQuerySettings()
@@ -444,6 +446,18 @@ public class QueryPresenter
 
         // Defer init until all data source load handlers have had a chance to update the loaded data source.
         Scheduler.get().scheduleDeferred(this::init);
+    }
+
+    // The value picker counts values within the dashboard's time range. The query's expression, resolved as for a
+    // search, is passed too so the data source can also apply the query's own conditions, e.g. on its time field.
+    private FieldValuesScope getValueScope() {
+        final DashboardContext dashboardContext = getDashboardContext();
+        if (dashboardContext == null) {
+            return null;
+        }
+        return new FieldValuesScope(
+                dashboardContext.getResolvedTimeRange(),
+                dashboardContext.replaceExpression(expressionPresenter.write(), true));
     }
 
     private void addOperator() {

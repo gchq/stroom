@@ -1,0 +1,123 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  ~ Copyright 2026 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client">
+    <ui:style>
+        .groups {
+            height: 200px;
+        }
+
+        /* Fill the width of the section rather than shrinking to the content */
+        .fill {
+            align-self: stretch;
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        /* As the section headings of the stream browser's Info tab */
+        .sectionTitle {
+            color: var(--heading-color);
+            font-weight: bold;
+            font-size: 125%;
+            padding-top: 1rem;
+        }
+
+        /* The field name heads the tab, so needs no space above it, and long names wrap */
+        .sectionTitle.fieldName {
+            padding-top: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .checkboxRow {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 4px;
+        }
+    </ui:style>
+
+    <g:ScrollPanel styleName="max">
+        <g:FlowPanel styleName="form-padding form">
+            <g:Label ui:field="fieldName" addStyleNames="{style.sectionTitle} {style.fieldName}" visible="false"/>
+
+            <!-- The tick box, its label and its help button sit on one line -->
+            <g:FlowPanel ui:field="enabledRow" addStyleNames="{style.checkboxRow}">
+                <tickbox:CustomCheckBox ui:field="enabled" identity="elasticFieldSettingsEnabled" label="Enabled"/>
+            </g:FlowPanel>
+            <g:Label ui:field="enabledNote" visible="false"/>
+
+            <g:FlowPanel ui:field="denseVectorSection" addStyleNames="{style.section}">
+                <g:Label text="Vector search" addStyleNames="{style.sectionTitle}"/>
+                <form:FormGroup identity="elasticFieldSettingsEmbeddingModel" label="Embedding model"
+                                helpText="Model that turns the query text into a vector for kNN search on this
+                                          field.">
+                    <g:SimplePanel ui:field="embeddingModel"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsNearestNeighbourCount" label="Nearest-neighbour count"
+                                helpText="Number of nearest neighbours (k) the kNN query returns. 0 uses the
+                                          Elasticsearch default.">
+                    <valuespinner:ValueSpinner ui:field="nearestNeighbourCount" width="100px"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsRerankModel" label="Rerank model"
+                                helpText="Model that scores each hit's relevance to the query text. Leave empty to
+                                          skip reranking.">
+                    <g:SimplePanel ui:field="rerankModel"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsRerankBatchSize" label="Rerank batch size"
+                                helpText="Maximum number of hits sent to the rerank model in one call.">
+                    <valuespinner:ValueSpinner ui:field="rerankBatchSize" width="100px"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsRerankTextField" label="Rerank text field"
+                                helpText="Text field whose values are sent to the rerank model.">
+                    <l:BaseSelectionBox ui:field="rerankTextField" width="400px"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsRerankScoreField" label="Score field name"
+                                helpText="Name of the field that holds each hit's rerank score in search results.">
+                    <g:TextBox ui:field="rerankScoreField" width="400px"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsRerankScoreMinimum" label="Rerank score minimum"
+                                helpText="Hits with a rerank score below this value are dropped.">
+                    <g:FlowPanel>
+                        <g:TextBox ui:field="rerankScoreMinimum" width="100px"/>
+                        <g:Label ui:field="rerankScoreMinimumError" styleName="invalid-feedback"
+                                 visible="false"/>
+                    </g:FlowPanel>
+                </form:FormGroup>
+            </g:FlowPanel>
+
+            <g:FlowPanel ui:field="virtualSection" addStyleNames="{style.section}">
+                <g:Label text="Virtual field" addStyleNames="{style.sectionTitle}"/>
+                <form:FormGroup identity="elasticFieldSettingsVirtualGroups" label="Groups"
+                                addStyleNames="{style.fill}"
+                                helpText="Each group is a named query. Searching this field for a group runs that
+                                          group's query. Double-click a group to edit it.">
+                    <g:SimplePanel ui:field="groups" addStyleNames="{style.groups} stroom-control w-100"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+        </g:FlowPanel>
+    </g:ScrollPanel>
+</ui:UiBinder>

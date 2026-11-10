@@ -1,0 +1,26 @@
+[
+  {
+    "_id": "1", "StreamId": 1, "EventId": 1, "Date": "2026-01-01T00:00:00.000Z",
+    "Users": [
+      {
+        "Name": "alice", "Message": "Logged in", "Address": { "City": "Paris" },
+        "Roles": [ { "Role": "admin" }, { "Role": "user" } ]
+      },
+      { "Name": "alice", "Roles": [ { "Role": "admin" } ] },
+      { "Name": "bob", "Address": { "City": "Rome" }, "Roles": [ { "Role": "user" } ] }
+    ]
+  },
+  {
+    "_id": "2", "StreamId": 1, "EventId": 2, "Date": "2026-01-02T00:00:00.000Z",
+    "Users": [
+      { "Name": "bob", "Message": "Logged out", "Address": { "City": "Paris" }, "Roles": [ { "Role": "user" } ] }
+    ]
+  },
+  {
+    "_id": "3", "StreamId": 1, "EventId": 3, "Date": "2026-01-03T00:00:00.000Z",
+    "Users": [
+      { "Name": "carol", "Roles": [ { "Role": "admin" } ] }
+    ]
+  },
+  { "_id": "4", "StreamId": 1, "EventId": 4, "Date": "2026-01-04T00:00:00.000Z" }
+]

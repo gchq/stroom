@@ -22,11 +22,19 @@ import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.PipelineLink;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -44,9 +52,17 @@ import java.util.Set;
  * boundary has captured nothing below it, and a planner reading the set from the store would conclude there
  * was nothing below it to run. The set has to come from the pipeline for the same reason the record count
  * does not: it is a property of the configuration, not of how far a capture happened to get.
+ * <p>
+ * Only elements linked below {@code Source} count. {@link PipelineFactory} builds the pipeline by following
+ * links from {@code Source}, so an element nothing links to never runs and never captures a record. Counting
+ * one would make it look like a record-boundary element with no records, which the planner reads as a
+ * boundary change, so every step would wait for a full capture of the stream (gh-5986).
  */
 @Singleton
 public class SteppableElements {
+
+    // The id PipelineDataMerger gives the source element and PipelineFactory builds the pipeline from.
+    private static final String SOURCE_ELEMENT_ID = "Source";
 
     private final ElementRegistryFactory elementRegistryFactory;
 
@@ -83,13 +99,36 @@ public class SteppableElements {
 
     private Set<String> withRole(final PipelineData pipelineData, final String role) {
         final ElementRegistry registry = elementRegistryFactory.get();
+        final Set<String> reachable = reachableFromSource(pipelineData);
         final Set<String> ids = new LinkedHashSet<>();
         for (final PipelineElement element : pipelineData.getAddedElements()) {
+            if (!reachable.contains(element.getId())) {
+                continue;
+            }
             final PipelineElementType type = registry.getElementType(element.getType());
             if (type != null && type.hasRole(role)) {
                 ids.add(element.getId());
             }
         }
         return ids;
+    }
+
+    // The ids of the elements a pipeline built from this data would run: Source and every element linked
+    // below it, directly or through other elements.
+    private static Set<String> reachableFromSource(final PipelineData pipelineData) {
+        final Map<String, List<String>> linksFrom = new HashMap<>();
+        for (final PipelineLink link : pipelineData.getAddedLinks()) {
+            linksFrom.computeIfAbsent(link.getFrom(), k -> new ArrayList<>()).add(link.getTo());
+        }
+        final Set<String> reachable = new HashSet<>();
+        final Deque<String> toVisit = new ArrayDeque<>();
+        toVisit.add(SOURCE_ELEMENT_ID);
+        while (!toVisit.isEmpty()) {
+            final String id = toVisit.removeFirst();
+            if (reachable.add(id)) {
+                toVisit.addAll(linksFrom.getOrDefault(id, List.of()));
+            }
+        }
+        return reachable;
     }
 }

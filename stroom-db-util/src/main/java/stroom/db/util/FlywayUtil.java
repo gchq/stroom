@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
 
@@ -48,6 +49,12 @@ public final class FlywayUtil {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FlywayUtil.class);
 
     private static final ThreadLocal<Set<String>> THREAD_LOCAL_COMPLETED_MIGRATIONS = new ThreadLocal<>();
+
+    // The migrations completed by this JVM. Stroom only migrates each module once, but tests
+    // create a new injector, and so call migrate again, for every test class. As the
+    // DataSource is part of the key, a new database, which has a new DataSource, is
+    // always migrated.
+    private static final Set<CompletedMigration> COMPLETED_MIGRATIONS = ConcurrentHashMap.newKeySet();
 
     private FlywayUtil() {
         // Utility class.
@@ -126,6 +133,14 @@ public final class FlywayUtil {
             LOGGER.info("Skipping database migration for module {} because Stroom is already " +
                         "at the correct version", moduleName);
         } else {
+            final CompletedMigration completedMigration = CompletedMigration.of(
+                    dataSource, flywayLocations, javaMigrations, target, flywayTableName);
+            if (COMPLETED_MIGRATIONS.contains(completedMigration)) {
+                LOGGER.debug("Skipping database migration for module {} because this JVM has already " +
+                             "migrated it", moduleName);
+                return;
+            }
+
             LOGGER.info(LogUtil.inBoxOnNewLine("Migrating database module: {}", moduleName));
 
             FluentConfiguration fluentConfiguration = Flyway.configure()
@@ -207,6 +222,41 @@ public final class FlywayUtil {
                 LOGGER.error("{} - Error migrating database: {}", moduleName, e.getMessage(), e);
                 throw e;
             }
+            COMPLETED_MIGRATIONS.add(completedMigration);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A migration that has been completed, identified by everything that affects what it does.
+    ///
+    /// @param dataSource           Compared by identity, as data sources do not override equals.
+    /// @param javaMigrationClasses The class names of the java migrations, as the instances
+    ///                             are created per injector.
+    private record CompletedMigration(DataSource dataSource,
+                                      List<String> flywayLocations,
+                                      List<String> javaMigrationClasses,
+                                      MigrationVersion target,
+                                      String flywayTableName) {
+
+        static CompletedMigration of(final DataSource dataSource,
+                                     final List<String> flywayLocations,
+                                     final Collection<JavaMigration> javaMigrations,
+                                     final MigrationVersion target,
+                                     final String flywayTableName) {
+            final List<String> javaMigrationClasses = NullSafe.stream(javaMigrations)
+                    .filter(Objects::nonNull)
+                    .map(javaMigration -> javaMigration.getClass().getName())
+                    .sorted()
+                    .toList();
+            return new CompletedMigration(
+                    dataSource,
+                    NullSafe.list(flywayLocations),
+                    javaMigrationClasses,
+                    target,
+                    flywayTableName);
         }
     }
 }

@@ -20,6 +20,8 @@ import stroom.ai.shared.KeyStoreType;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasAuditInfoGetters;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -29,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Credentials as stored by the Credentials storage system.
@@ -77,6 +80,9 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
     private final String keyStorePath;
     @JsonProperty
     private final Long expiryTimeMs;
+
+    @JsonIgnore
+    private transient volatile DocRef docRef;
 
     /// Constructor for credentials with no key store file path, i.e. any type other than
     /// [CredentialType#KEY_STORE_FILE].
@@ -137,7 +143,8 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
             @JsonProperty("keyStorePath") final String keyStorePath,
             @JsonProperty("expiryTimeMs") final Long expiryTimeMs) {
         this.uuid = Objects.requireNonNull(uuid, () -> "Credential with name '" + name + "' must have a uuid");
-        this.name = Objects.requireNonNull(name, () -> "Credential with uuid '" + uuid + "' must have a name");
+        this.name = NullSafe.requireNonBlankString(name,
+                () -> "Credential with uuid '" + uuid + "' must have a non-blank name");
         this.createTimeMs = createTimeMs;
         this.updateTimeMs = updateTimeMs;
         this.createUser = createUser;
@@ -146,6 +153,23 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
         this.keyStoreType = keyStoreType;
         this.keyStorePath = keyStorePath;
         this.expiryTimeMs = expiryTimeMs;
+    }
+
+    /// Test use only
+    @Deprecated
+    @SerialisationTestConstructor
+    public Credential() {
+        this(
+                UUID.randomUUID().toString(),
+                "Foo",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
     }
 
     public String getUuid() {
@@ -194,7 +218,10 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
     }
 
     public DocRef asDocRef() {
-        return new DocRef(TYPE, uuid, name);
+        if (docRef == null) {
+            docRef = new DocRef(TYPE, uuid, name);
+        }
+        return docRef;
     }
 
     @JsonIgnore
@@ -231,5 +258,15 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
                ", keyStorePath='" + keyStorePath + '\'' +
                ", expiryTimeMs=" + expiryTimeMs +
                '}';
+    }
+
+    /// @return A new [DocRef] for this document's type with the supplied uuid.
+    public static DocRef getDocRef(final String uuid) {
+        return new DocRef(TYPE, uuid);
+    }
+
+    /// @return A new builder for creating a [DocRef] for this document's type.
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(TYPE);
     }
 }
