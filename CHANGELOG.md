@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.11-parallel-pathways] - 2026-11-10
+
 * Feature : Add field-level query options to dashboard query expression terms on Elasticsearch fields, set with a cog button beside the term's value: case-insensitive and fuzzy matching for `keyword` and `wildcard` fields, and matching all words, phrase matching with slop and fuzzy matching for text fields.
 
 * Feature : Replace the Elasticsearch term suggestions in dashboard query expressions with a value picker that lists a field's most common values in the dashboard's time range, with the share of documents that have each, and can be filtered. Fields within `nested` objects are included, with each value's share counted by the documents that have it rather than by the nested objects. The number of values is set by `stroom.elastic.search.suggestions.topValuesCount`.
@@ -2892,7 +2894,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.10-parallel-pathways...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.11-parallel-pathways...HEAD
+[v7.14-beta.11-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.10-parallel-pathways...v7.14-beta.11-parallel-pathways
 [v7.14-beta.10-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.9-parallel-pathways...v7.14-beta.10-parallel-pathways
 [v7.14-beta.9-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.9...v7.14-beta.9-parallel-pathways
 [v7.14-beta.8-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.8...v7.14-beta.8-parallel-pathways
