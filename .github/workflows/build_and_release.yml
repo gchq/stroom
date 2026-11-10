@@ -60,6 +60,9 @@ jobs:
               echo "BUILD_IS_PULL_REQUEST=false"
             fi
 
+            # Holds the downloaded gradle distribution and dependencies
+            echo "GRADLE_USER_HOME_DIR=${RUNNER_TEMP}/gradle-user-home"
+
             if [[ ${GITHUB_REF} =~ ^refs/tags/v ]]; then
               echo "BUILD_IS_RELEASE=true"
             else
@@ -82,6 +85,24 @@ jobs:
           key: gradle-build-cache-${{ github.sha }}
           restore-keys: |
             gradle-build-cache-
+
+        # Saves the downloaded gradle distribution, plugins and dependencies,
+        # so each run doesn't download them all again. The key only changes
+        # when the gradle version or build scripts change, and an exact hit
+        # isn't saved again. The lock files are left out as they belong to the
+        # gradle process that wrote them.
+      - name: Gradle dependency cache
+        id: gradle_dependency_cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            ${{ env.GRADLE_USER_HOME_DIR }}/wrapper/dists
+            ${{ env.GRADLE_USER_HOME_DIR }}/caches/modules-2
+            !${{ env.GRADLE_USER_HOME_DIR }}/caches/modules-2/*.lock
+            !${{ env.GRADLE_USER_HOME_DIR }}/caches/modules-2/gc.properties
+          key: gradle-user-home-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', 'gradle/libs.versions.toml', '**/*.gradle') }}
+          restore-keys: |
+            gradle-user-home-
 
         # Separate step to show what is visible across steps
       - name: Build Environment Info
