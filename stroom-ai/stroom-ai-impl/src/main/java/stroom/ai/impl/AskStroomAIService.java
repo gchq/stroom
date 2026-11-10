@@ -852,11 +852,10 @@ public class AskStroomAIService {
      * Works out the answer to the question in the request and stores it, or the error, in the chat.
      */
     private void answerQuestion(final int chatId, final AskStroomAiRequest request) {
-        String responseText;
         // The last message of the answer (or error), so anything the user sends after it can be found.
         int answeredUpTo = 0;
         try {
-            responseText = processQuestion(request);
+            String responseText = processQuestion(request);
 
             if (responseText != null && !CANCELLED_MESSAGE.equals(responseText)) {
                 responseText = withLinks(chatId, responseText);
@@ -876,35 +875,54 @@ public class AskStroomAIService {
         } catch (final TaskTerminatedException | AiChatRunManager.WaitingForUserException e) {
             throw e;
         } catch (final RuntimeException e) {
-            LOGGER.debug(e::getMessage, e);
-            final boolean timedOut = isTimeoutError(e);
-            if (timedOut) {
-                responseText = "The AI model took too long to respond and the request "
-                               + "timed out. This can happen with complex questions, large "
-                               + "context, or reasoning models. You can increase the timeout "
-                               + "in the OpenAI Model document's HTTP Client Configuration "
-                               + "settings (timeout field).";
-            } else {
-                responseText = e.getMessage();
-            }
-            final int errorId = aiService.storeMessage(chatId, AiMessageType.ERROR, responseText).getId();
-            if (answeredUpTo > 0) {
-                // The answer was stored before the failure (writing the digest, say): the turn is answered, so
-                // the run isn't failed, and late messages are answered after it as usual.
-                answeredUpTo = errorId;
-            } else if (!answerLateMessages(chatId, request, errorId)) {
-                // The turn is left unanswered. The run fails, so it can be resumed with the steps taken so far
-                // kept, rather than only asked again from scratch.
-                throw new AiChatRunManager.ModelFailedException(
-                        NullSafe.nonBlankStringElse(e.getMessage(), e.toString()),
-                        timedOut
-                                ? AiChatRunStopReason.MODEL_TIMED_OUT
-                                : AiChatRunStopReason.ANSWER_FAILED);
-            }
+            answeredUpTo = answerFailure(chatId, request, answeredUpTo, e);
         }
         if (answeredUpTo > 0) {
             answerLateMessages(chatId, request, answeredUpTo);
         }
+    }
+
+    /// Puts a failure answering a question in the chat, as an error, and says whether the turn is answered.
+    /// Seen in testing: a model timeout lost the turn's steps on Retry, so a turn left unanswered fails the run,
+    /// which can then be resumed with them kept.
+    ///
+    /// @param chatId       The chat.
+    /// @param request      The question's request.
+    /// @param answeredUpTo The id of the answer, if it was stored before the failure (writing the digest, say),
+    ///                     else 0.
+    /// @param e            The failure.
+    /// @return The id of the message the turn is answered up to, for late messages to be answered after: the
+    /// error's when the answer was stored before it, else 0 (any late messages are answered here).
+    /// @throws AiChatRunManager.ModelFailedException When the turn is left unanswered and nothing came after it.
+    int answerFailure(final int chatId,
+                      final AskStroomAiRequest request,
+                      final int answeredUpTo,
+                      final RuntimeException e) {
+        LOGGER.debug(e::getMessage, e);
+        final boolean timedOut = isTimeoutError(e);
+        final String errorText = timedOut
+                ? "The AI model took too long to respond and the request "
+                  + "timed out. This can happen with complex questions, large "
+                  + "context, or reasoning models. You can increase the timeout "
+                  + "in the OpenAI Model document's HTTP Client Configuration "
+                  + "settings (timeout field)."
+                : e.getMessage();
+        final int errorId = aiService.storeMessage(chatId, AiMessageType.ERROR, errorText).getId();
+        if (answeredUpTo > 0) {
+            // The answer was stored before the failure: the turn is answered, so the run isn't failed, and late
+            // messages are answered after it as usual.
+            return errorId;
+        }
+        if (!answerLateMessages(chatId, request, errorId)) {
+            // The turn is left unanswered. The run fails, so it can be resumed with the steps taken so far kept,
+            // rather than only asked again from scratch.
+            throw new AiChatRunManager.ModelFailedException(
+                    NullSafe.nonBlankStringElse(e.getMessage(), e.toString()),
+                    timedOut
+                            ? AiChatRunStopReason.MODEL_TIMED_OUT
+                            : AiChatRunStopReason.ANSWER_FAILED);
+        }
+        return 0;
     }
 
     /**
