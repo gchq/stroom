@@ -734,7 +734,7 @@ last closed dialog for a moment only.
 
 ### The data grid's follow-ups
 
-**Re-checked** (6 November 2026, against the code): a row update replacing a focused control is **fixed** (`RowWritePlan`, `TestRowWritePlan`, `GridRows.writeCells`), and `DataGrid.java` is split (1,922 lines). The row update's HTML compare stays, as decided. Still open: a grid's selection depends on its rows' keys, and no grid check has been done (`DataGrid.java:1622`, `:1651` fall back to the row object).
+**Re-checked** (6 November 2026, against the code): a row update replacing a focused control is **fixed** (`RowWritePlan`, `TestRowWritePlan`, `GridRows.writeCells`), and `DataGrid.java` is split (1,922 lines). The row update's HTML compare stays, as decided. ~~Still open: a grid's selection depends on its rows' keys, and no grid check has been done (`DataGrid.java:1622`, `:1651` fall back to the row object).~~ **Fixed** (6 and 10 November 2026): the selection follows rows by the grid's key, and rows with no key by `equals` (R-S13, R-S14 in `DATA_GRID_DESIGN.md`); every list was checked (see "A list's selection kept a stale row" and "Lists selected differently after each action" under Fixed).
 
 **Deferred** (October 2026, after the switch to `DataGrid`; for a later session). The grid
 works and its cells are covered by stories; these are the next steps, none urgent.
@@ -869,7 +869,7 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 
 ### Left from wave 15
 
-**Re-checked** (6 November 2026, against the code): the screens left as "stays" match the code (WelcomeTab, Main, Navigation); `CurveTabLayout`'s right indent is gone. Main's banner role is now in its template (`Main.ui.xml:15`), so that sentence is stale; `ActivitySummary` still builds its heading in Java. Commented-out code is gone (`1c1fea1bad`); `UsersController.onEditUserOrGroup` is still an unused private method; unused `view` fields need an IDE inspection.
+**Re-checked** (6 November 2026, against the code): the screens left as "stays" match the code (WelcomeTab, Main, Navigation); `CurveTabLayout`'s right indent is gone. Main's banner role is now in its template (`Main.ui.xml:15`), so that sentence is stale; `ActivitySummary` still builds its heading in Java. Commented-out code is gone (`1c1fea1bad`); `UsersController.onEditUserOrGroup` was an unused private method (removed 10 November 2026); unused `view` fields need an IDE inspection.
 
 **Reported** (28 October 2026, overnight; decisions taken without the user, to check). **Accepted**
 (30 October 2026, the user's decision): the decisions below stand as recorded.
@@ -902,8 +902,8 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   * ~~The filters of Server Tasks, Properties and Dependencies use `addValueChangeHandler` where
     `QuickFilter.setOnChange` exists (to check they fire alike first).~~ Done in wave 20 (28 October 2026). They fire together, with the same text; every quick filter uses `setOnChange`.
   * Unused `view` fields in about a dozen of the new controllers (16 removed in wave 20) (assigned, only the constructor's
-    parameter used), and dead code carried over (`UsersController.onEditUserOrGroup`, commented-out
-    code in the API keys, retention, source and template screens).
+    parameter used), and dead code carried over (~~`UsersController.onEditUserOrGroup`~~ removed 10
+    November 2026; commented-out code in the API keys, retention, source and template screens).
 
 ### Left from wave 16
 
@@ -1089,7 +1089,7 @@ shows one), and the app itself.
 
 | Item | Now |
 |---|---|
-| A list keeps the old object selected after an edit | **Confirmed**, worse than reported: `NotificationConfig.equals` compares every field, so a second edit's `indexOf` finds nothing and `replace` adds a duplicate row (`NotificationListController.java:106-115`, `:159-168`) |
+| A list keeps the old object selected after an edit | **Fixed** (6 November 2026): it was worse than reported, a second notification edit added a duplicate row; see "A list's selection kept a stale row" under Fixed |
 | Tree `Keyboard` and TopBar `Keyboard` screenshots; `AceEditorFeatures` `Snippet`; screenshots that differ with many workers; the light theme's `CalendarToolbarsInTheDialog` and `ShortcutsAreButtons` | Need runs |
 | `TraceOverviewChart` draws its fixed text and ARIA as HTML | Still open |
 | The floor map Layers drag never forgets `dragFromIndex` after a drop | Still open (`FloorMapLayers.java:498-511`) |
