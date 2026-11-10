@@ -43,6 +43,12 @@ GRADLE_ARGS=(
   "--console=plain"
 )
 
+# When CI saves and restores the build cache between runs, stop it growing.
+# The path is relative to the repo root, where main runs gradle from.
+if [[ -n "${GRADLE_BUILD_CACHE_DIR:-}" ]]; then
+  GRADLE_ARGS+=( "--init-script" "container_build/ci-build-cache.init.gradle" )
+fi
+
 GWT_ARGS=(
   "-PgwtCompilerWorkers=${MAX_WORKERS:-6}"
   "-PgwtCompilerMinHeap=${GWT_MIN_HEAP:-1G}"
@@ -90,6 +96,8 @@ wait_for_db() {
 
   echo -e "${GREEN}Waiting for the DB on ${BLUE}${STROOM_JDBC_DRIVER_HOST}:${port}${GREEN} to be ready${NC}"
   for (( attempt=1; attempt<=max_attempts; attempt++ )); do
+    # The inner bash expands $0 and $1, the host and port
+    # shellcheck disable=SC2016
     if timeout 5 bash -c 'exec 3<>"/dev/tcp/$0/$1" && head -c 1 <&3' \
         "${STROOM_JDBC_DRIVER_HOST}" "${port}" 2>/dev/null \
         | grep -q .; then

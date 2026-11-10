@@ -107,17 +107,19 @@ jobs:
           restore-keys: |
             gradle-user-home-
 
-        # Saves ~/.stroom, which holds the content pack zips and the clones of
-        # the stroom-content and stroom-visualisations-dev repos used by the
-        # stroom-app tests. Saved on every run as the build checks the repos'
-        # remotes and clones them again when they have changed.
-      - name: Stroom content cache
+        # Restores the content pack zips and the clones of the stroom-content
+        # and stroom-visualisations-dev repos used by the stroom-app tests, which
+        # are kept in ~/.stroom. The build checks the repos' remotes and clones
+        # them again when they have changed. Saved after the build by "Save stroom
+        # content cache", only if they have changed.
+      - name: Restore stroom content cache
         id: stroom_content_cache
         if: ${{ env.STROOM_USER_DIR != '' }}
-        uses: actions/cache@v6
+        uses: actions/cache/restore@v6
         with:
           path: |
-            ${{ env.STROOM_USER_DIR }}
+            ${{ env.STROOM_USER_DIR }}/contentPackDownload
+            ${{ env.STROOM_USER_DIR }}/git-repo-cache
             !${{ env.STROOM_USER_DIR }}/contentPackDownload/*.lock
             !${{ env.STROOM_USER_DIR }}/git-repo-cache/**/.tmp-*
           key: stroom-content-${{ github.run_id }}
@@ -163,6 +165,32 @@ jobs:
           echo -e "${GREEN}Running ${BLUE}ci_build.sh${NC}"
           ./ci_build.sh
           echo -e "${GREEN}Finished running build script${NC}"
+
+        # Works out what content the build has downloaded, so it is only saved
+        # when that has changed. The key of the cache restored above has the
+        # fingerprint of what it held.
+      - name: Stroom content fingerprint
+        id: stroom_content_fingerprint
+        if: ${{ always() && env.STROOM_USER_DIR != '' }}
+        run: |
+          fingerprint="$("${ACTIONS_SCRIPTS_DIR}/stroom_content_fingerprint.sh" "${STROOM_USER_DIR}")"
+          echo "Stroom content fingerprint: ${fingerprint}"
+          echo "fingerprint=${fingerprint}" >> "${GITHUB_OUTPUT}"
+
+      - name: Save stroom content cache
+        if: >-
+          ${{ always()
+            && steps.stroom_content_fingerprint.outputs.fingerprint != ''
+            && steps.stroom_content_cache.outputs.cache-matched-key
+              != format('stroom-content-{0}', steps.stroom_content_fingerprint.outputs.fingerprint) }}
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ${{ env.STROOM_USER_DIR }}/contentPackDownload
+            ${{ env.STROOM_USER_DIR }}/git-repo-cache
+            !${{ env.STROOM_USER_DIR }}/contentPackDownload/*.lock
+            !${{ env.STROOM_USER_DIR }}/git-repo-cache/**/.tmp-*
+          key: stroom-content-${{ steps.stroom_content_fingerprint.outputs.fingerprint }}
 
 #      - name: Tar Test Results
 #        if: always()
