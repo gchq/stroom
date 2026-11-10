@@ -78,6 +78,9 @@ public final class DraftMapping {
     // kinds (event id, type, action), so up to 200 (asked for by the user: a source of a hundred event types; until
     // 2026-11-07, 12, when a domain controller's 40 event ids were drafted as no kinds at all; then 64).
     private static final int MAX_KINDS = 200;
+    // The records a naming field's values must each be in one of, a value a record, for it to read as an
+    // identifier rather than kinds.
+    private static final int EACH_ONCE_RECORDS = 5;
     // Values a kinds field may have without repeating (the limit before it was raised to 200): a sample's excerpt
     // may show each of a few dozen kinds once (seen: a Windows excerpt's event ids).
     private static final int FEW_KINDS = 64;
@@ -1819,7 +1822,11 @@ public final class DraftMapping {
 
         private void homes() {
             for (final FieldHomes.Home home : FieldHomes.HOMES) {
-                final Predicate<String> fits = n -> FieldHomes.matches(home.regex(), n) && !"empty".equals(type(n));
+                // A name that is a user only by its values (subject) fits the user home when they read as one.
+                final boolean byValue = FieldHomes.USER_ID.equals(home.path());
+                final Predicate<String> fits = n -> !"empty".equals(type(n)) && (FieldHomes.matches(home.regex(), n)
+                        || byValue && FieldHomes.matches(FieldHomes.USER_BY_VALUE, n)
+                           && FieldHomes.readsAsIdentifiers(values.get(n)));
                 final String field = names.stream()
                         .filter(n -> !taken.contains(n) && fits.test(n))
                         .findFirst()
@@ -1947,6 +1954,17 @@ public final class DraftMapping {
             return kinds <= FEW_KINDS || kinds * 2L <= held;
         }
 
+        // Whether each of the field's values is in one record only, over EACH_ONCE_RECORDS records or more: an
+        // identifier's shape, such as a message's id. Fewer records each of another kind is usual (a firewall's
+        // TRAFFIC and LOGIN), and a short excerpt may show each kind once (an event id each once), so it is only a
+        // preference.
+        private boolean eachOnce(final String name) {
+            final List<String> held = values.get(name).stream()
+                    .filter(value -> value != null && !NIL.contains(value))
+                    .toList();
+            return held.size() >= EACH_ONCE_RECORDS && new HashSet<>(held).size() == held.size();
+        }
+
         // Seen: syslog's msgid, always '-', taken over an action field: a field with only nil values names no kind.
         // One number, the same in every record, names no kind (a word may: SYSTEM, its actions split in another
         // field). Seen: a Windows EventID always 1000 taken over the category in the text's pairs (Event: [User],
@@ -1987,6 +2005,14 @@ public final class DraftMapping {
 
         private Kinds kinds() {
             String naming = headerKinds();
+            if (naming == null) {
+                // A naming field whose values repeat before one with a value a record: seen in testing, a mail log's
+                // msgid (each message's own id) drafted as the kinds over its action (deliver, reject...).
+                naming = names.stream()
+                        .filter(n -> !taken.contains(n) && namesKinds(n) && !oneNumber(n) && !eachOnce(n))
+                        .findFirst()
+                        .orElse(null);
+            }
             if (naming == null) {
                 naming = names.stream()
                         .filter(n -> !taken.contains(n) && namesKinds(n) && !oneNumber(n))

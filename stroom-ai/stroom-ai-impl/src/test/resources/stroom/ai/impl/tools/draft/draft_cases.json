@@ -17861,28 +17861,29 @@
       "field": "host"
      },
      {
-      "path": "EventSource/User/Id",
-      "field": "subject"
-     },
-     {
       "path": "EventSource/Generator",
       "value": "50_kv_mail_repeated_keys"
      },
      {
       "path": "EventDetail/TypeId",
-      "field": "msgid"
+      "field": "action"
      }
     ],
     "events": [
      {
-      "name": "0_mail_example_com",
+      "name": "deliver",
       "when": [
        {
-        "field": "msgid",
-        "equals": "<0@mail.example.com>"
+        "field": "action",
+        "equals": "deliver"
        }
       ],
       "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "msgid",
+        "field": "msgid"
+       },
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "from",
@@ -17896,25 +17897,30 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "size",
-        "field": "size"
+        "data_name": "subject",
+        "field": "subject"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
+        "data_name": "size",
+        "field": "size"
        }
       ]
      },
      {
-      "name": "1_mail_example_com",
+      "name": "reject",
       "when": [
        {
-        "field": "msgid",
-        "equals": "<1@mail.example.com>"
+        "field": "action",
+        "equals": "reject"
        }
       ],
       "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "msgid",
+        "field": "msgid"
+       },
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "from",
@@ -17928,25 +17934,30 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "size",
-        "field": "size"
+        "data_name": "subject",
+        "field": "subject"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
+        "data_name": "size",
+        "field": "size"
        }
       ]
      },
      {
-      "name": "2_mail_example_com",
+      "name": "quarantine",
       "when": [
        {
-        "field": "msgid",
-        "equals": "<2@mail.example.com>"
+        "field": "action",
+        "equals": "quarantine"
        }
       ],
       "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "msgid",
+        "field": "msgid"
+       },
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "from",
@@ -17960,109 +17971,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "size",
-        "field": "size"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
-       }
-      ]
-     },
-     {
-      "name": "3_mail_example_com",
-      "when": [
-       {
-        "field": "msgid",
-        "equals": "<3@mail.example.com>"
-       }
-      ],
-      "fields": [
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "from",
-        "field": "from"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "rcpt",
-        "field": "rcpt",
-        "repeat": true
+        "data_name": "subject",
+        "field": "subject"
        },
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "size",
         "field": "size"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
-       }
-      ]
-     },
-     {
-      "name": "4_mail_example_com",
-      "when": [
-       {
-        "field": "msgid",
-        "equals": "<4@mail.example.com>"
-       }
-      ],
-      "fields": [
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "from",
-        "field": "from"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "rcpt",
-        "field": "rcpt",
-        "repeat": true
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "size",
-        "field": "size"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
-       }
-      ]
-     },
-     {
-      "name": "5_mail_example_com",
-      "when": [
-       {
-        "field": "msgid",
-        "equals": "<5@mail.example.com>"
-       }
-      ],
-      "fields": [
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "from",
-        "field": "from"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "rcpt",
-        "field": "rcpt",
-        "repeat": true
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "size",
-        "field": "size"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
        }
       ]
      },
@@ -18071,6 +17986,11 @@
       "fields": [
        {
         "path": "EventDetail/Unknown/Data",
+        "data_name": "msgid",
+        "field": "msgid"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
         "data_name": "from",
         "field": "from"
        },
@@ -18082,13 +18002,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "size",
-        "field": "size"
+        "data_name": "subject",
+        "field": "subject"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
+        "data_name": "size",
+        "field": "size"
        }
       ]
      }
@@ -18103,23 +18023,21 @@
    "format": "key=value",
    "records": 6,
    "kinds": [
-    "<0@mail.example.com>",
-    "<1@mail.example.com>",
-    "<2@mail.example.com>",
-    "<3@mail.example.com>",
-    "<4@mail.example.com>",
-    "<5@mail.example.com>"
+    "deliver",
+    "reject",
+    "quarantine"
    ],
    "notes": [
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
-    "One rule per value of 'msgid' (<0@mail.example.com>, <1@mail.example.com>, <2@mail.example.com>, <3@mail.example.com>, <4@mail.example.com>, <5@mail.example.com>): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action.",
+    "One rule per value of 'action' (deliver, reject, quarantine): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action.",
     "'rcpt' is given more than once in a record (once a value): its Data entry has repeat: true, writing each value, not only the first."
    ],
    "unmapped_fields": [
+    "msgid",
     "from",
     "rcpt",
-    "size",
-    "action"
+    "subject",
+    "size"
    ],
    "fields_seen": [
     "time",
@@ -18162,10 +18080,6 @@
       "field": "host"
      },
      {
-      "path": "EventSource/User/Id",
-      "field": "subject"
-     },
-     {
       "path": "EventSource/Generator",
       "value": "50_kv_mail_repeated_keys"
      },
@@ -18202,6 +18116,11 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
+        "data_name": "subject",
+        "field": "subject"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
         "data_name": "size",
         "field": "size"
        }
@@ -18231,6 +18150,11 @@
         "data_name": "rcpt",
         "field": "rcpt",
         "repeat": true
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "subject",
+        "field": "subject"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -18266,6 +18190,11 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
+        "data_name": "subject",
+        "field": "subject"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
         "data_name": "size",
         "field": "size"
        }
@@ -18289,6 +18218,11 @@
         "data_name": "rcpt",
         "field": "rcpt",
         "repeat": true
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "subject",
+        "field": "subject"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -18321,6 +18255,7 @@
     "msgid",
     "from",
     "rcpt",
+    "subject",
     "size"
    ],
    "fields_seen": [

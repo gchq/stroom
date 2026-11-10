@@ -249,6 +249,11 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
         }
         String summary = "Create processor filter and reprocess streams\nReprocess " + streamIds.size()
                          + " stream(s) with '" + pipeline.getName() + "'.";
+        final List<String> verified = verifiedIndexingBesides(ref);
+        if (!verified.isEmpty()) {
+            summary += " Until the new Events are indexed, searches of the build's index won't show these streams' "
+                       + "events.";
+        }
         if (details.containsKey(IndexingRuns.ALREADY_INDEXED)) {
             summary += " Approve only once the index is dropped, as said below.";
         }
@@ -261,27 +266,35 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
                 ProcessorFilterWrites.DEFAULT_PRIORITY, maxTasks, null, true);
         final Map<String, Object> result = result(created, pipeline, streamIds, maxTasks, true);
         result.put("hint", "wait_for_processing with filter_id=" + created.getId() + " so only this run's outputs "
-                           + "count." + reindexHint(ref));
+                           + "count." + reindexHint(verified));
         return plan.nextFor(context, ref, result);
     }
 
-    // An Events reprocess leaves a verified index without the new Events (seen in testing: the plan still said
-    // indexed, over an index of the Events the reprocess replaced).
-    private String reindexHint(final DocRef ref) {
-        final List<String> verified;
+    // The build's other pipelines verified as indexing, or none (a hint only: the plan's next step still says
+    // what indexing needs).
+    private List<String> verifiedIndexingBesides(final DocRef ref) {
         try {
-            verified = buildRecords.verifiedIndexingBesides(ref);
+            return buildRecords.verifiedIndexingBesides(ref);
         } catch (final RuntimeException e) {
-            // A hint only: the filter is made, and the plan's next step still says what indexing needs.
-            return "";
+            return List.of();
         }
+    }
+
+    // An Events reprocess leaves a verified index without the new Events (seen in testing: the plan still said
+    // indexed, over an index of the Events the reprocess replaced), and its documents of the replaced Events out of
+    // every search: a search looks up each hit's stream, and the reprocess deletes the Events it replaces (seen in
+    // testing: the agent didn't know why a search of the index found nothing after a reprocess).
+    private static String reindexHint(final List<String> verified) {
         if (verified.isEmpty()) {
             return "";
         }
         return " The build's index (verified through " + String.join(", ", verified) + ") holds the Events this "
-               + "replaces: once processing finishes, offer the user to index the new Events (the plan's next "
-               + "step: create_processor_filter on the indexing pipeline with the new Events stream ids, dropping "
-               + "the index first, then wait_for_processing and verify_index).";
+               + "replaces, and searches won't show them from now on: a search looks up each hit's stream, and "
+               + "reprocessing deletes the Events it replaces. So a search of the index finding none of these "
+               + "events is expected, not a broken index or query. Once processing finishes, offer the user to "
+               + "index the new Events (the plan's next step: create_processor_filter on the indexing pipeline "
+               + "with the new Events stream ids, dropping the index first, then wait_for_processing and "
+               + "verify_index).";
     }
 
     private static Map<String, Object> result(final ProcessorFilter created,

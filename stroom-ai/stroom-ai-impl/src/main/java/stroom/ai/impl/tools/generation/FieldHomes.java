@@ -47,13 +47,25 @@ public final class FieldHomes {
             home("EventSource/Server/Port", "^(dst_?port|dest_?port|destination_?port|server_?port|dport"
                                             + "|service_?port|dpt)$"),
             home("EventSource/User/Id", "^(user|username|user_?name|user_?id|userid|account|account_?name|login"
-                                        + "|subject|actor|principal|uid|target_?user_?name|suser|src_?user"
+                                        + "|actor|principal|uid|target_?user_?name|suser|src_?user"
                                         + "|source_?user|holder|card_?holder|badge_?holder|badge_?user)$"),
             home("EventSource/RunAs/Id", "^(run_?as|run_?as_?user|effective_?user|euser|as_?user)$"),
             home("EventSource/SessionId", "^(session_?id|sessionid|session_?key)$"),
             home("EventSource/Generator", "^(generator|app|app_?name|application|program|process_?name|logger"
                                           + "|service|cef_?product)$"),
             home("EventDetail/Description", "^(message|msg|description|desc|text|summary|details)$"));
+
+    /// Field names that are the event's user only when their values read as identifiers ([#readsAsIdentifiers]):
+    /// in an access log `subject` is who acted, but a mail's or a certificate's subject is text (seen in testing: a
+    /// mail log's subject line drafted as EventSource/User/Id). Not in the user home's pattern, so a Data entry so
+    /// named isn't said to have a home either.
+    public static final Pattern USER_BY_VALUE = Pattern.compile("^subject$",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    /// The home [#USER_BY_VALUE] names are tried for.
+    public static final String USER_ID = "EventSource/User/Id";
+    // The share of a field's values that must be one token each for them to read as identifiers.
+    private static final double IDENTIFIER_SHARE = 0.8;
+    private static final Pattern WHITESPACE = Pattern.compile("\\s");
 
     private static final Pattern DATA_NAME = Pattern.compile("\\[@Name='([^']+)'\\]$");
     private static final Pattern PART_SEPARATOR = Pattern.compile("[./]");
@@ -97,6 +109,28 @@ public final class FieldHomes {
     /// @return True if one of the names the field may be known by matches it (at its start).
     public static boolean matches(final Pattern regex, final String name) {
         return keys(name).stream().anyMatch(key -> regex.matcher(key).lookingAt());
+    }
+
+    /// Whether a field's values read as identifiers (a user name, an account, a SID): at least four in five of
+    /// those given are one token, without whitespace. Text such as a mail's subject line is mostly words.
+    ///
+    /// @param values The field's sample values (null or blank ones aside).
+    /// @return True if there are values and they read as identifiers.
+    public static boolean readsAsIdentifiers(final List<String> values) {
+        if (values == null) {
+            return false;
+        }
+        final List<String> given = values.stream()
+                .filter(value -> value != null && !value.isBlank())
+                .map(String::strip)
+                .toList();
+        if (given.isEmpty()) {
+            return false;
+        }
+        final long tokens = given.stream()
+                .filter(value -> !WHITESPACE.matcher(value).find())
+                .count();
+        return tokens >= IDENTIFIER_SHARE * given.size();
     }
 
     private static String lstripAt(final String part) {
