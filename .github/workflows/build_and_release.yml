@@ -184,22 +184,12 @@ jobs:
 #          path: test-results.tar.gz
 #          retention-days: 5
 
-        # Copies the test results into one directory, keeping their paths in the
-        # repo, so the upload doesn't have to search the whole workspace for them,
-        # which is slow. find skips the directories that can't hold any.
+        # Copies the test results into one directory, so the upload doesn't have
+        # to search the whole workspace for them, which is slow
       - name: Collect Test Results
         if: always()
         run: |
-          start_ms="$(date +%s%3N)"
-          results_dir="${RUNNER_TEMP}/test-results"
-          mkdir -p "${results_dir}"
-          cd "${GITHUB_WORKSPACE}"
-          find . \
-            -type d \( -name .git -o -name node_modules -o -name .gradle \) -prune \
-            -o -type f -path '*/build/test-results/*' -name '*.xml' -print0 \
-            | xargs -0 -r cp --parents -t "${results_dir}"
-          file_count="$(find "${results_dir}" -type f | wc -l)"
-          echo "Collected ${file_count} test result files in $(( $(date +%s%3N) - start_ms ))ms"
+          "${ACTIONS_SCRIPTS_DIR}/collect_test_results.sh" "${RUNNER_TEMP}/test-results"
 
       - name: Upload Test Results
         if: always()
