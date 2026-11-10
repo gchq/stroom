@@ -33,7 +33,7 @@ import java.util.Objects;
 /**
  * {@value #CLASS_DESC}
  */
-@JsonPropertyOrder({"dataSource", "expression", "params", "timeRange"})
+@JsonPropertyOrder({"dataSource", "expression", "params", "timeRange", "nativeQuery"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = Query.CLASS_DESC)
 public final class Query {
@@ -58,15 +58,23 @@ public final class Query {
     @JsonProperty
     private final TimeRange timeRange;
 
+    @JsonPropertyDescription("A query in the native language of the data source, e.g. SQL for a SQL data " +
+            "source. It is run by the data source before the expression is applied to its results. " +
+            "Ignored by data sources that have no native query language.")
+    @JsonProperty
+    private final String nativeQuery;
+
     @JsonCreator
     public Query(@JsonProperty("dataSource") final DocRef dataSource,
                  @JsonProperty("expression") final ExpressionOperator expression,
                  @JsonProperty("params") final List<Param> params,
-                 @JsonProperty("timeRange") final TimeRange timeRange) {
+                 @JsonProperty("timeRange") final TimeRange timeRange,
+                 @JsonProperty("nativeQuery") final String nativeQuery) {
         this.dataSource = dataSource;
         this.expression = expression;
         this.params = params;
         this.timeRange = timeRange;
+        this.nativeQuery = nativeQuery;
     }
 
     public DocRef getDataSource() {
@@ -85,6 +93,13 @@ public final class Query {
         return timeRange;
     }
 
+    /// Gets the query in the native language of the data source, e.g. SQL for a SQL data source.
+    ///
+    /// @return The native query, or `null` if there is none.
+    public String getNativeQuery() {
+        return nativeQuery;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -97,12 +112,13 @@ public final class Query {
         return Objects.equals(dataSource, query.dataSource) &&
                 Objects.equals(expression, query.expression) &&
                 Objects.equals(params, query.params) &&
-                Objects.equals(timeRange, query.timeRange);
+                Objects.equals(timeRange, query.timeRange) &&
+                Objects.equals(nativeQuery, query.nativeQuery);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dataSource, expression, params, timeRange);
+        return Objects.hash(dataSource, expression, params, timeRange, nativeQuery);
     }
 
     @Override
@@ -112,6 +128,7 @@ public final class Query {
                 ", expression=" + expression +
                 ", params=" + params +
                 ", timeRange=" + timeRange +
+                ", nativeQuery=" + nativeQuery +
                 '}';
     }
 
@@ -132,6 +149,7 @@ public final class Query {
         private ExpressionOperator expression;
         private List<Param> params;
         private TimeRange timeRange;
+        private String nativeQuery;
 
         private Builder() {
         }
@@ -141,6 +159,7 @@ public final class Query {
             this.expression = query.expression;
             this.params = query.params;
             this.timeRange = query.timeRange;
+            this.nativeQuery = query.nativeQuery;
         }
 
         /**
@@ -205,8 +224,17 @@ public final class Query {
             return this;
         }
 
+        /// Sets the query in the native language of the data source, e.g. SQL for a SQL data source.
+        ///
+        /// @param nativeQuery The native query, or `null` for none.
+        /// @return The [Builder], enabling method chaining.
+        public Builder nativeQuery(final String nativeQuery) {
+            this.nativeQuery = nativeQuery;
+            return this;
+        }
+
         public Query build() {
-            return new Query(dataSource, expression, params, timeRange);
+            return new Query(dataSource, expression, params, timeRange, nativeQuery);
         }
     }
 }

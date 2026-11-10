@@ -115,6 +115,12 @@ public class DocumentTypeRegistry {
             "SqlTemporalStore",
             "SQL Temporal Store",
             SvgImage.DOCUMENT_SQL_TEMPORAL_STORE);
+    // Uses a stand-in icon until it has its own.
+    public static final DocumentType SQL_DATA_SOURCE_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            "SqlDataSource",
+            "SQL Data Source",
+            SvgImage.DOCUMENT_SEARCHABLE);
     public static final DocumentType DOCUMENTATION_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.CONFIGURATION,
             "Documentation",
@@ -310,6 +316,7 @@ public class DocumentTypeRegistry {
         put(TRACES_DOCUMENT_TYPE);
         put(FLOOR_MAP_EVENT_STORE_DOCUMENT_TYPE);
         put(SQL_TEMPORAL_STORE_DOCUMENT_TYPE);
+        put(SQL_DATA_SOURCE_DOCUMENT_TYPE);
 
         // Searchables
         put(DUAL_DOCUMENT_TYPE);

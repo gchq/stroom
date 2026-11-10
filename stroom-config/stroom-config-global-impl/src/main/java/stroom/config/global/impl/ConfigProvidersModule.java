@@ -847,6 +847,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.sqldatasource.impl.SqlDataSourceConfig getSqlDataSourceConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.sqldatasource.impl.SqlDataSourceConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.sqlstore.impl.SqlStoreConfig getSqlStoreConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(

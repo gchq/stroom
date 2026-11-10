@@ -1359,6 +1359,63 @@ appConfig:
     search:
       maxBooleanClauseCount: 1024
       maxStoredDataQueueSize: 1000
+  sqlDataSource:
+    allowedUrlPatterns: []
+    connectionPoolCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 100
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
+    deniedConnectionProperties:
+    - "allowLoadLocalInfile"
+    - "allowLoadLocalInfileInPath"
+    - "allowUrlInLocalInfile"
+    - "clientCertificateKeyStoreUrl"
+    - "ociConfigFile"
+    - "serverRSAPublicKeyFile"
+    - "trustCertificateKeyStoreUrl"
+    - "authenticationPlugins"
+    - "autoDeserialize"
+    - "clientInfoProvider"
+    - "connectionLifecycleInterceptors"
+    - "defaultAuthenticationPlugin"
+    - "exceptionInterceptors"
+    - "ha.loadBalanceStrategy"
+    - "loadBalanceExceptionChecker"
+    - "logger"
+    - "profilerEventHandler"
+    - "propertiesTransform"
+    - "queryInterceptors"
+    - "socketFactory"
+    - "readOnlyPropagatesToServer"
+    - "gsslib"
+    - "jaasLogin"
+    - "loggerFile"
+    - "options"
+    - "service"
+    - "sslcert"
+    - "sslkey"
+    - "sslrootcert"
+    - "authenticationPluginClassName"
+    - "socketFactoryArg"
+    - "sslfactory"
+    - "sslfactoryarg"
+    - "sslhostnameverifier"
+    - "sslpasswordcallback"
+    - "sspiServiceClass"
+    - "readOnly"
+    - "readOnlyMode"
+    driverDirectory: null
+    fieldCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
+    maxPoolSizeLimit: 20
+    maxQueryTimeout: "PT10M"
+    maxRowsLimit: 1000000
   sqlStore:
     db:
       connection:

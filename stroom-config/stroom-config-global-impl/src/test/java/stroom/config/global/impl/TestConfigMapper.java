@@ -74,6 +74,7 @@ import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
+import stroom.sqldatasource.impl.SqlDataSourceConfig;
 import stroom.sqlstore.impl.SqlStoreConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
@@ -1121,6 +1122,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
                 @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
                 @JsonProperty(PROP_NAME_SESSION) final SessionConfig sessionConfig,
+                @JsonProperty(PROP_NAME_SQL_DATA_SOURCE) final SqlDataSourceConfig sqlDataSourceConfig,
                 @JsonProperty(PROP_NAME_SQL_STORE) final SqlStoreConfig sqlStoreConfig,
                 @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
                 @JsonProperty(PROP_NAME_PLANB) final PlanBConfig planBConfig,
@@ -1193,6 +1195,7 @@ class TestConfigMapper {
                     sessionCookieConfig,
                     sessionConfig,
                     solrConfig,
+                    sqlDataSourceConfig,
                     sqlStoreConfig,
                     planBConfig,
                     statisticsConfig,

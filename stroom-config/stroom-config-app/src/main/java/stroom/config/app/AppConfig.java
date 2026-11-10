@@ -59,6 +59,7 @@ import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
+import stroom.sqldatasource.impl.SqlDataSourceConfig;
 import stroom.sqlstore.impl.SqlStoreConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
@@ -138,6 +139,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_SESSION_COOKIE = "sessionCookie";
     public static final String PROP_NAME_SESSION = "session";
     public static final String PROP_NAME_SOLR = "solr";
+    public static final String PROP_NAME_SQL_DATA_SOURCE = "sqlDataSource";
     public static final String PROP_NAME_SQL_STORE = "sqlStore";
     public static final String PROP_NAME_PLANB = "planb";
 
@@ -205,6 +207,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final SessionCookieConfig sessionCookieConfig;
     private final SessionConfig sessionConfig;
     private final SolrConfig solrConfig;
+    private final SqlDataSourceConfig sqlDataSourceConfig;
     private final SqlStoreConfig sqlStoreConfig;
     private final PlanBConfig planBConfig;
     private final StatisticsConfig statisticsConfig;
@@ -265,6 +268,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new SessionCookieConfig(),
                 new SessionConfig(),
                 new SolrConfig(),
+                new SqlDataSourceConfig(),
                 new SqlStoreConfig(),
                 new PlanBConfig(),
                 new StatisticsConfig(),
@@ -324,6 +328,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
                      @JsonProperty(PROP_NAME_SESSION) final SessionConfig sessionConfig,
                      @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
+                     @JsonProperty(PROP_NAME_SQL_DATA_SOURCE) final SqlDataSourceConfig sqlDataSourceConfig,
                      @JsonProperty(PROP_NAME_SQL_STORE) final SqlStoreConfig sqlStoreConfig,
                      @JsonProperty(PROP_NAME_PLANB) final PlanBConfig planBConfig,
                      @JsonProperty(PROP_NAME_STATISTICS) final StatisticsConfig statisticsConfig,
@@ -382,6 +387,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.sessionCookieConfig = sessionCookieConfig;
         this.sessionConfig = sessionConfig;
         this.solrConfig = solrConfig;
+        this.sqlDataSourceConfig = sqlDataSourceConfig;
         this.sqlStoreConfig = sqlStoreConfig;
         this.planBConfig = planBConfig;
         this.statisticsConfig = statisticsConfig;
@@ -650,6 +656,12 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_SESSION)
     public SessionConfig getSessionConfig() {
         return sessionConfig;
+    }
+
+    @JsonProperty(PROP_NAME_SQL_DATA_SOURCE)
+    @JsonPropertyDescription("Configuration for SQL Data Sources, which query external databases")
+    public SqlDataSourceConfig getSqlDataSourceConfig() {
+        return sqlDataSourceConfig;
     }
 
     @JsonProperty(PROP_NAME_SQL_STORE)
