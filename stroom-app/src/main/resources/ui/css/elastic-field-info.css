@@ -19,8 +19,9 @@
    (stroom.search.elastic.client.component.ElasticFieldInfo), named BEM style: a field's mapping and
    the statistics' values as a list of names and values (elastic-field-info__entries), the
    Statistics heading with its actions (elastic-field-info__heading), the time range's boxes
-   (elastic-field-info__controls), and labelled bars (elastic-field-info__bar-row), each a label, a
-   percentage bar (percent-bar-cell.css) and a count.
+   (elastic-field-info__controls), and blocks of labelled bars (elastic-field-info__bars, a row each:
+   elastic-field-info__bar-row), each a label, a bar (elastic-field-info__bar, filled to
+   --elastic-field-info__percent), a count and a share.
 */
 
 .elastic-field-info__heading {
@@ -105,30 +106,63 @@
     width: 220px;
 }
 
-.elastic-field-info__bar-row {
+/* A block of labelled bars, each row a label, a bar as wide as the share of all documents, the count
+   and the share. The block is the grid, so its bars line up: the label column fits the block's
+   longest label, up to a limit (wider for ranges of timestamps), and the numbers line up too */
+.elastic-field-info__bars {
     display: grid;
-    grid-template-columns: 250px 240px 160px;
-    column-gap: 8px;
+    grid-template-columns: fit-content(250px) 200px max-content max-content;
+    column-gap: 10px;
+    row-gap: 4px;
     align-items: center;
-    margin-bottom: 2px;
 }
 
-/* Wide enough for a range of two timestamps */
-.elastic-field-info__bar-row--wide {
-    grid-template-columns: 420px 240px 160px;
+.elastic-field-info__bars--wide {
+    grid-template-columns: fit-content(420px) 200px max-content max-content;
 }
 
+/* A row's parts are the block's grid items */
+.elastic-field-info__bar-row {
+    display: contents;
+}
+
+/* A message in place of the bars, e.g. that none match the filter */
+.elastic-field-info__bars-message {
+    grid-column: 1 / -1;
+}
+
+/* At least as wide as most labels, so the blocks' bars start in the same place */
 .elastic-field-info__bar-label {
-    min-width: 0;
+    min-width: 160px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
+/* The track: the whole, in a pale tint of the theme's blue, with the share filled */
 .elastic-field-info__bar {
-    height: 14px;
+    height: 8px;
+    border-radius: 4px;
+    background-color: rgba(var(--blue-500-rgb), 0.18);
+    overflow: hidden;
+}
+
+.elastic-field-info__bar-fill {
+    width: var(--elastic-field-info__percent, 0);
+    height: 100%;
+    border-radius: 4px;
+    background-color: var(--blue-500);
 }
 
 .elastic-field-info__bar-count {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
+}
+
+.elastic-field-info__bar-percent {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--text-color--muted);
 }

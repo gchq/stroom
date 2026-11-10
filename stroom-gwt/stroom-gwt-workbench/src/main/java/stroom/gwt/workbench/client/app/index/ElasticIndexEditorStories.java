@@ -90,6 +90,17 @@ public final class ElasticIndexEditorStories {
     private static final Consumer<RestFixtures.Builder> NO_ROUTES = routes -> {
     };
 
+    // ElasticIndexResource.fetchFieldStats() for EventTime: exact counts in a time range, spread over
+    // ranges of timestamps
+    private static final String DATE_FIELD_STATS = """
+            {"fieldName": "EventTime", "totalDocs": 1000, "docsWithValue": 1000, "exact": true,
+              "min": "2026-01-01T00:00:00.000Z", "max": "2026-01-05T00:00:00.000Z",
+              "histogram": [
+                {"value": "2026-01-01T00:00:00.000Z to 2026-01-02T00:00:00.000Z", "count": 120},
+                {"value": "2026-01-02T00:00:00.000Z to 2026-01-03T00:00:00.000Z", "count": 410},
+                {"value": "2026-01-03T00:00:00.000Z to 2026-01-04T00:00:00.000Z", "count": 300},
+                {"value": "2026-01-04T00:00:00.000Z to 2026-01-05T00:00:00.000Z", "count": 170}]}""";
+
     private static final String FIELD_STATS_PATH = "/elasticIndex/v1/fieldStats";
 
     // ElasticIndexResource.fetchFieldStats(): a random sample's statistics
@@ -199,7 +210,8 @@ public final class ElasticIndexEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("Native type")).toBeInTheDocument());
                     play.expect(play.getByText("stroom-events-2")).toBeInTheDocument();
                     play.waitFor(() -> play.expect(play.getByText("Documents with a value")).toBeInTheDocument());
-                    play.expect(play.getByText("900 (90%)")).toBeInTheDocument();
+                    play.expect(play.getByText("900", ".elastic-field-info__bar-count")).toBeInTheDocument();
+                    play.expect(play.getByText("90%", ".elastic-field-info__bar-percent")).toBeInTheDocument();
                     play.expect(play.getByText("admin")).toBeInTheDocument();
                     scrollIntoView(play, "bob");
                     DocEditors.expectNoProblems(play);
@@ -555,6 +567,19 @@ public final class ElasticIndexEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("Documents with a value")).toBeInTheDocument());
                     scrollIntoView(play, "bob");
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                })
+                // A date field's distribution: its values spread over ranges of timestamps, whose
+                // long labels get the wider label column, with each range's count and share
+                .story("Distribution", context -> render(context, false, NO_ROUTES,
+                        RestReply.json(DATE_FIELD_STATS)))
+                .withPlay(play -> {
+                    openFields(play);
+                    selectField(play, "EventTime");
+                    play.waitFor(() -> play.expect(play.getByText("Distribution")).toBeInTheDocument());
+                    play.expect(play.getByText("410", ".elastic-field-info__bar-count")).toBeInTheDocument();
+                    play.expect(play.getByText("41%", ".elastic-field-info__bar-percent")).toBeInTheDocument();
+                    scrollIntoView(play, "2026-01-04T00:00:00.000Z to 2026-01-05T00:00:00.000Z");
+                    DocEditors.expectNoProblems(play);
                 })
                 // Left open, to look at: the new virtual field's dialog, with a name typed
                 .story("AddVirtualFieldOpen", context -> render(context, false))

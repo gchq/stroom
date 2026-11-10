@@ -75,8 +75,9 @@ public class ElasticFieldInfo extends Component {
     private static final String MODE_RANDOM = "Random sample";
     private static final String MODE_EXACT = "Exact (all documents)";
     private static final String BAR_ROW = "elastic-field-info__bar-row";
-    private static final String BAR_ROW_WIDE = "elastic-field-info__bar-row--wide";
-    private static final String PERCENT_WIDTH = "--percent-bar-cell__width";
+    private static final String BARS = "elastic-field-info__bars";
+    private static final String BARS_WIDE = "elastic-field-info__bars--wide";
+    private static final String PERCENT_PROPERTY = "--elastic-field-info__percent";
 
     @UiField
     Label mappingMessage;
@@ -167,6 +168,7 @@ public class ElasticFieldInfo extends Component {
 
     private void createTopValuesControls() {
         topValuesControls.setStyleName("elastic-field-info__top-values-controls");
+        topValuesList.setStyleName(BARS);
         topValuesCount.addStyleName("elastic-field-info__top-values-count");
         topValuesCount.setDisplayValueFunction(count -> "Top " + count);
         topValuesCount.addItems(ElasticFieldStatsSupport.TOP_VALUES_COUNTS);
@@ -290,9 +292,8 @@ public class ElasticFieldInfo extends Component {
                 : SAMPLED_HELP;
 
         final FlowPanel coverage = new FlowPanel();
-        coverage.add(createBarRow("Documents with a value", false,
-                ElasticFieldStatsSupport.getPercent(docsWithValue, totalDocs),
-                countText(docsWithValue, totalDocs)));
+        coverage.setStyleName(BARS);
+        coverage.add(createBarRow("Documents with a value", false, docsWithValue, totalDocs));
         statsContent.add(createBlock("Coverage", null, coverage));
 
         final FlowPanel values = new FlowPanel();
@@ -323,6 +324,7 @@ public class ElasticFieldInfo extends Component {
 
         if (NullSafe.hasItems(stats.getHistogram())) {
             final FlowPanel histogram = new FlowPanel();
+            histogram.setStyleName(BARS);
             // Ranges of timestamps are long, so need a wider label column to show in full
             int longestLabel = 0;
             for (final ElasticFieldValueCount bucket : stats.getHistogram()) {
@@ -331,12 +333,10 @@ public class ElasticFieldInfo extends Component {
             final boolean wideLabels = longestLabel > WIDE_LABEL_LENGTH;
             for (final ElasticFieldValueCount bucket : stats.getHistogram()) {
                 final long count = Objects.requireNonNullElse(bucket.getCount(), 0L);
-                final Widget row = createBarRow(bucket.getValue(), false,
-                        ElasticFieldStatsSupport.getPercent(count, totalDocs),
-                        countText(count, totalDocs));
-                row.setStyleName(BAR_ROW_WIDE, wideLabels);
+                final Widget row = createBarRow(bucket.getValue(), false, count, totalDocs);
                 histogram.add(row);
             }
+            histogram.setStyleName(BARS_WIDE, wideLabels);
             statsContent.add(createBlock("Distribution", DISTRIBUTION_HELP + sampledHelp, histogram));
         }
     }
@@ -348,15 +348,15 @@ public class ElasticFieldInfo extends Component {
     public void showTopValues(final List<ElasticFieldValueCount> topValues) {
         topValuesList.clear();
         if (NullSafe.isEmptyCollection(topValues)) {
-            topValuesList.add(new Label(NullSafe.isBlankString(topValuesFilter.getText())
+            final Label none = new Label(NullSafe.isBlankString(topValuesFilter.getText())
                     ? "No values."
-                    : "No values match the filter."));
+                    : "No values match the filter.");
+            none.addStyleName("elastic-field-info__bars-message");
+            topValuesList.add(none);
         } else {
             for (final ElasticFieldValueCount valueCount : topValues) {
                 final long count = Objects.requireNonNullElse(valueCount.getCount(), 0L);
-                topValuesList.add(createBarRow(valueCount.getValue(), true,
-                        ElasticFieldStatsSupport.getPercent(count, topValuesTotalDocs),
-                        countText(count, topValuesTotalDocs)));
+                topValuesList.add(createBarRow(valueCount.getValue(), true, count, topValuesTotalDocs));
             }
         }
     }
@@ -417,10 +417,6 @@ public class ElasticFieldInfo extends Component {
         this.onRefresh = Objects.requireNonNull(onRefresh, "onRefresh");
     }
 
-    private static String countText(final long count, final long total) {
-        return ElasticFieldStatsSupport.formatCount(count) + " (" +
-               ElasticFieldStatsSupport.formatPercent(count, total) + ")";
-    }
 
     // A block of the statistics under its label, with help if given
     private static FormGroup createBlock(final String heading, final String helpText, final Widget content) {
@@ -433,11 +429,11 @@ public class ElasticFieldInfo extends Component {
         return block;
     }
 
-    // A labelled bar as wide as a percentage, with a count after it
+    // A labelled bar as wide as the share of all documents, with the count and the share after it
     private static Widget createBarRow(final String label,
                                        final boolean copyable,
-                                       final double percent,
-                                       final String countText) {
+                                       final long count,
+                                       final long total) {
         final FlowPanel row = new FlowPanel();
         row.setStyleName(BAR_ROW);
 
@@ -448,20 +444,23 @@ public class ElasticFieldInfo extends Component {
         labelWidget.setTitle(NullSafe.string(label));
         row.add(labelWidget);
 
-        // The percentage bar of a grid's cells (percent-bar-cell.css); the count after it says the
-        // same, so it is only drawn
+        // Only drawn: the count and share after it say the same
+        final double percent = Math.max(0, Math.min(100, ElasticFieldStatsSupport.getPercent(count, total)));
+        final FlowPanel fill = new FlowPanel();
+        fill.setStyleName("elastic-field-info__bar-fill");
+        CssProperties.set(fill.getElement(), PERCENT_PROPERTY, percent + "%");
         final FlowPanel bar = new FlowPanel();
-        bar.setStyleName("percent-bar-cell__bar percent-bar-cell__bar--healthy");
-        CssProperties.set(bar.getElement(), PERCENT_WIDTH, Math.max(0, Math.min(100, percent)) + "%");
-        final FlowPanel track = new FlowPanel();
-        track.setStyleName("percent-bar-cell elastic-field-info__bar");
-        track.getElement().setAttribute("aria-hidden", "true");
-        track.add(bar);
-        row.add(track);
+        bar.setStyleName("elastic-field-info__bar");
+        bar.getElement().setAttribute("aria-hidden", "true");
+        bar.add(fill);
+        row.add(bar);
 
-        final Label count = new Label(countText);
-        count.addStyleName("elastic-field-info__bar-count");
-        row.add(count);
+        final Label countLabel = new Label(ElasticFieldStatsSupport.formatCount(count));
+        countLabel.addStyleName("elastic-field-info__bar-count");
+        row.add(countLabel);
+        final Label percentLabel = new Label(ElasticFieldStatsSupport.formatPercent(count, total));
+        percentLabel.addStyleName("elastic-field-info__bar-percent");
+        row.add(percentLabel);
         return row;
     }
 
