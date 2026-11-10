@@ -14,7 +14,7 @@
 # limitations under the License.
 #**********************************************************************
 
-# ~~~ JCDM base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~ JCMD base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Build the jcmd/jmap/jstat binaries using jlink so we can have them witout the rest of the JDK
 FROM eclipse-temurin:25.0.5_8-jdk-alpine-3.23@sha256:b903bc22d49da99a0af3d50cf08f6056eaf39646b71bf3a51f74720f8243b34b AS jcmd_base
 RUN jlink \
