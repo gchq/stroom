@@ -198,17 +198,19 @@ public final class UserGroupsScreenStories {
                     play.expect(play.body()).toHaveTextContent(TextMatch.regex(
                             "is a member of:.*Members of group"));
                     // The panes' tab stops: a quick filter, its buttons (one toolbar, named by its
-                    // first button), its toolbar and its pager, then its grid, the master's, then
+                    // first button), its toolbar and its pager (the rows shown, a button, unless the
+                    // list is empty, then its buttons), then its grid, the master's, then
                     // Member Of's, then Members', with the splitter (named by the pane it resizes)
                     // between each. A grid is one tab stop: the row with the keyboard focus (named
                     // by its text; its row actions are reached with Right), or, with no rows, the
                     // grid itself, so its headers can still be reached (named by its table name, Users)
                     play.expect(TabStops.names(play.body())).toEqual(List.of(
-                            FILTER, "Show Recent Filters", "Create Group", "First", "Administrators",
+                            FILTER, "Show Recent Filters", "Create Group", "Rows 1 to 2 of 2", "First",
+                            "Administrators",
                             "Users and groups",
                             FILTER, "Show Recent Filters", "Add to Group", "First", "Users",
                             "Members",
-                            FILTER, "Show Recent Filters", "Add Member to Group", "First",
+                            FILTER, "Show Recent Filters", "Add Member to Group", "Rows 1 to 1 of 1", "First",
                             "Alice Anderson Alice A Anderson"));
                 })
                 // Create / Edit / Delete, with titles from the selection; Edit renames a group

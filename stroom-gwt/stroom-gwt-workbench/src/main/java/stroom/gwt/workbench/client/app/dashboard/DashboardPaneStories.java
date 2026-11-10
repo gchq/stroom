@@ -379,7 +379,7 @@ public final class DashboardPaneStories {
                             screen.querySelectorAll(StroomDom.MENU_ITEM_TEXT).textContents());
                     play.expect("the items' order", () -> inOrder(labels.get(), List.of("Rename", "Edit Expression",
                             "Sort", "Group", "Format", "Filter", "Filter Values", "Move Column to Start",
-                            "Move Column to End",
+                            "Move Column Left", "Move Column Right", "Move Column to End", "Resize Column",
                             "Duplicate", "Hide Column", "Remove"))).toBe(true);
                     play.expect("index of Remove after Hide Column",
                                     () -> labels.get().indexOf("Remove") > labels.get().indexOf("Hide Column"))
@@ -387,6 +387,74 @@ public final class DashboardPaneStories {
                     play.expect(labels).not().toContain("Column Filter");
                     play.click(screen.getByText("Rename", StroomDom.MENU_ITEM_TEXT));
                     play.expect(screen.findByText("Rename Field", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // The column menu moves a column one place and sets its width, as dragging its header
+                // and its edge do, so the keyboard can: Move Column Left is dead on the first column;
+                // Resize Column's dialog sets the width on OK, and Cancel leaves it
+                .story("TableColumnMoveAndResize", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
+                        routes -> {
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    final Query labels = play.querySelectorAll(".column-header__label");
+
+                    // The table's one column, Name, can move neither way
+                    StroomDom.clickHeader(play, DashboardPlays.header(play, "Name"));
+                    play.expect(screen.findByRole("menuitem", "Move Column Left"))
+                            .toHaveAttribute("aria-disabled", "true");
+                    play.expect(screen.getByRole("menuitem", "Move Column Right"))
+                            .toHaveAttribute("aria-disabled", "true");
+                    // A copy of it, after it, gives it somewhere to go
+                    play.click(screen.getByText("Duplicate", StroomDom.MENU_ITEM_TEXT));
+                    play.waitFor(() -> play.expect(labels.count()).toBe(2));
+
+                    // Move it right: it swaps with its copy
+                    StroomDom.clickHeader(play, DashboardPlays.header(play, "Name"));
+                    play.click(screen.findByText("Move Column Right", StroomDom.MENU_ITEM_TEXT));
+                    play.waitFor(() -> play.expect("Name is second",
+                            () -> labels.textContents().get().indexOf("Name")).toBe(1));
+                    play.expect(play.getByRole("button", "Save")).not().toHaveAttribute("aria-disabled");
+                    // And back
+                    StroomDom.clickHeader(play, DashboardPlays.header(play, "Name"));
+                    play.expect(screen.findByRole("menuitem", "Move Column Right"))
+                            .toHaveAttribute("aria-disabled", "true");
+                    play.click(screen.getByText("Move Column Left", StroomDom.MENU_ITEM_TEXT));
+                    play.waitFor(() -> play.expect("Name is first",
+                            () -> labels.textContents().get().indexOf("Name")).toBe(0));
+
+                    // Resize it to 200 pixels
+                    final String moved = "Name";
+                    StroomDom.clickHeader(play, DashboardPlays.header(play, moved));
+                    play.click(screen.findByText("Resize Column", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = DashboardPlays.dialog(screen, "Column Width");
+                    final Query width = dialog.getByRole("spinbutton", "Width (pixels)");
+                    play.waitFor(() -> play.expect(width).toHaveFocus());
+                    play.clear(width);
+                    play.type(width, "200");
+                    play.keyboard("{Enter}");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Column Width", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.waitFor(() -> play.expect(DashboardPlays.headerCell(play, moved).width())
+                            .toSatisfy("200 pixels wide", w -> Math.abs((Double) w - 200) <= 1));
+
+                    // Cancel leaves it as it is
+                    StroomDom.clickHeader(play, DashboardPlays.header(play, moved));
+                    play.click(screen.findByText("Resize Column", StroomDom.MENU_ITEM_TEXT));
+                    final Play again = DashboardPlays.dialog(screen, "Column Width");
+                    final Query widthAgain = again.getByRole("spinbutton", "Width (pixels)");
+                    play.waitFor(() -> play.expect(widthAgain).toHaveValue("200"));
+                    play.clear(widthAgain);
+                    play.type(widthAgain, "400");
+                    play.click(again.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Column Width", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.expect(DashboardPlays.headerCell(play, moved).width())
+                            .toSatisfy("still 200 pixels wide", w -> Math.abs((Double) w - 200) <= 1);
                     DashboardPlays.expectNoProblems(play);
                 })
                 // Add Column's button opens its list, and a second press closes it. A column chosen

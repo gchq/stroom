@@ -77,6 +77,7 @@ import stroom.query.client.model.DynamicColumnSelectionListModel;
 import stroom.query.client.model.DynamicColumnSelectionListModel.ColumnSelectionItem;
 import stroom.query.client.result.component.ColumnFormatController;
 import stroom.query.client.result.component.ColumnValuesFilterController;
+import stroom.query.client.result.component.ColumnWidthController;
 import stroom.query.client.result.component.DownloadSearchResultsController;
 import stroom.query.client.result.component.ResultTable;
 import stroom.query.client.result.table.ColumnValuesDataSupplier;
@@ -202,6 +203,7 @@ public class TableController extends DashboardPaneController
     /// @param renameColumnControllerProvider Makes the rename column controller.
     /// @param expressionProvider             Makes the expression.
     /// @param columnFormatProvider           Makes the column format.
+    /// @param columnWidthProvider            Makes a column's Column Width dialog.
     /// @param columnFilterTabs             The column filter dialog.
     /// @param settingsControllerProvider     Makes the settings controller.
     /// @param downloadOptions                The download options.
@@ -222,6 +224,7 @@ public class TableController extends DashboardPaneController
                            final Provider<RenameColumnController> renameColumnControllerProvider,
                            final Provider<ColumnFunctionEditorController> expressionProvider,
                            final Provider<ColumnFormatController> columnFormatProvider,
+                           final Provider<ColumnWidthController> columnWidthProvider,
                            final ColumnFilterTabsController columnFilterTabs,
                            final Provider<TableSettingsController> settingsControllerProvider,
                            final DownloadSearchResultsController downloadOptions,
@@ -292,6 +295,7 @@ public class TableController extends DashboardPaneController
                 renameColumnControllerProvider,
                 expressionProvider,
                 columnFormatProvider,
+                columnWidthProvider,
                 columnFilterTabs,
                 columnValuesFilter);
         dataGrid.setHeadingListener(columnsManager);
