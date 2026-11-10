@@ -193,8 +193,9 @@ class TestScriptedChatRuns {
         assertThat(review).hasSizeGreaterThan(ToolOutputs.MAX_INLINE_CHARS);
         assertThat(workspaceFiles.created).isEmpty();
         assertMatchesReference("mcp-review-in-full",
-                "A needs_review result over the inline limit is kept in full for the model, as it must show it "
-                + "to the user exactly as it is.");
+                "A needs_review result over the inline limit is kept in full, not stubbed, as the user must see it "
+                + "exactly as it is: the chat shows its index template (dev_tools) itself, and the model is given "
+                + "the rest with the template replaced.");
     }
 
     @Test

@@ -316,22 +316,33 @@ public final class ToolOutputs {
     }
 
     // The output read as a JSON object or array, or null if it is something else.
-    /// A result as the model is given it in Stroom AI's chat: the `table` of a `needs_showing` result, which the
-    /// chat shows the user itself, replaced by [#SHOWN_TABLE]. Seen in chats 168 and 169: the agent retyped the
-    /// table the chat had just shown, and said it showed "all 33 kinds" when it showed ten. Any other result as it is.
+    /// A result as the model is given it in Stroom AI's chat: what the chat shows the user itself replaced by
+    /// [#SHOWN_TABLE], the `table` of a `needs_showing` result, and the index template (`dev_tools`) of a
+    /// `needs_review` one. Seen in chats 168 and 169: the agent retyped the table the chat had just shown, and said
+    /// it showed "all 33 kinds" when it showed ten. Seen in testing: told to print an index template and call again
+    /// without waiting, the agent called again, and the form asked the user to confirm a template never shown. Any
+    /// other result as it is.
     ///
     /// @param output A tool's output, as stored.
     /// @return It for the model.
     static String forModel(final String output) {
-        if (output == null || !output.contains("\"needs_showing\"")) {
+        if (output == null || !(output.contains("\"needs_showing\"") || output.contains("\"dev_tools\""))) {
             return output;
         }
         final JsonNode json = readJson(output);
-        if (json == null || !json.isObject() || !"needs_showing".equals(json.path(STATUS_FIELD).asText())
-            || !json.path("table").isTextual()) {
+        if (json == null || !json.isObject()) {
             return output;
         }
-        ((ObjectNode) json).put("table", SHOWN_TABLE);
+        final String status = json.path(STATUS_FIELD).asText();
+        final String shown = "needs_showing".equals(status)
+                ? "table"
+                : "needs_review".equals(status)
+                        ? "dev_tools"
+                        : null;
+        if (shown == null || !json.path(shown).isTextual()) {
+            return output;
+        }
+        ((ObjectNode) json).put(shown, SHOWN_TABLE);
         try {
             return MAPPER.writeValueAsString(json);
         } catch (final JsonProcessingException e) {

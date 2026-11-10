@@ -154,6 +154,15 @@ class TestAiChatTexts {
                 .endsWith("will not be undone.");
     }
 
+    @Test
+    void retryFromScratchQuestions() {
+        assertThat(AiChatTexts.retryFromScratchQuestion(1))
+                .startsWith("Retrying from scratch will discard the 1 tool step this question")
+                .contains("Continue keeps them");
+        assertThat(AiChatTexts.retryFromScratchQuestion(4))
+                .startsWith("Retrying from scratch will discard the 4 tool steps this question");
+    }
+
     private static AiChatStatus status(final AiChatRunStatus runStatus,
                                        final boolean unread,
                                        final boolean approveEverything) {

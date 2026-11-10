@@ -54,7 +54,13 @@ class AskUserTool extends AbstractBuiltInTool {
     static final int MAX_QUESTIONS = 8;
     static final int MAX_OPTIONS = 6;
     static final int MAX_QUESTION_CHARS = 500;
-    static final int MAX_OPTION_CHARS = 200;
+    /// The longest an option's label may be. A longer one is refused rather than cut (a cut label reads wrongly,
+    /// and no longer matches the answer recommended), and the model told to put the detail in its description.
+    static final int MAX_OPTION_LABEL_CHARS = 120;
+    /// The label length the model is asked to keep under.
+    static final int SHORT_OPTION_LABEL_CHARS = 80;
+    /// The longest an option's description may be. A longer one is refused rather than cut.
+    static final int MAX_OPTION_DESCRIPTION_CHARS = 500;
     private static final int MAX_ANSWER_CHARS = 2_000;
     private static final String DEFAULT_INTRO = "Some questions before I carry on";
 
@@ -73,8 +79,11 @@ class AskUserTool extends AbstractBuiltInTool {
                 .addStringProperty(QUESTION, "The question, on its own, e.g. 'Which environment is it?'.")
                 .addProperty(OPTIONS, ArraySchema.builder()
                         .items(StringSchema.builder().build())
-                        .description("Sensible answers to choose from (2 to " + MAX_OPTIONS + "), each short, "
-                                     + "the best first.")
+                        .description("Sensible answers to choose from (2 to " + MAX_OPTIONS + "), the best "
+                                     + "first. Each is a short label, under " + SHORT_OPTION_LABEL_CHARS
+                                     + " characters, e.g. 'Production'. Put any detail in the option's "
+                                     + "description, by giving the option as {\"label\": \"...\", "
+                                     + "\"description\": \"...\"}, not in the label.")
                         .build())
                 .addStringProperty(RECOMMENDED, "The answer you recommend: one of the options.")
                 .addBooleanProperty(ALLOW_CUSTOM, "True (the default) if the user may type their own answer; "
@@ -178,10 +187,10 @@ class AskUserTool extends AbstractBuiltInTool {
             final List<String> descriptions = new ArrayList<>();
             if (map.get(OPTIONS) instanceof final List<?> given2) {
                 for (final Object option : given2) {
-                    final String value = shorten(optionLabel(option));
+                    final String value = checkedLabel(optionLabel(option));
                     if (!value.isEmpty() && !options.contains(value)) {
                         options.add(value);
-                        descriptions.add(shorten(optionDescription(option)));
+                        descriptions.add(checkedDescription(optionDescription(option)));
                     }
                 }
             }
@@ -225,11 +234,33 @@ class AskUserTool extends AbstractBuiltInTool {
                 : "";
     }
 
-    private static String shorten(final String text) {
+    /// @return The option's label, trimmed.
+    /// @throws IllegalArgumentException if it is too long, telling the model to give a short label instead.
+    private static String checkedLabel(final String text) {
         final String value = NullSafe.trim(text);
-        return value.length() > MAX_OPTION_CHARS
-                ? value.substring(0, MAX_OPTION_CHARS)
-                : value;
+        if (value.length() > MAX_OPTION_LABEL_CHARS) {
+            throw new IllegalArgumentException("The option '" + value.substring(0, SHORT_OPTION_LABEL_CHARS)
+                                               + "...' is " + value.length() + " characters long, but an option's "
+                                               + "label may be at most " + MAX_OPTION_LABEL_CHARS + ". Give each "
+                                               + "option a short label (under " + SHORT_OPTION_LABEL_CHARS
+                                               + " characters) and put the detail in its description, as "
+                                               + "{\"label\": \"...\", \"description\": \"...\"}, then call "
+                                               + "again; nothing was asked.");
+        }
+        return value;
+    }
+
+    /// @return The option's description, trimmed.
+    /// @throws IllegalArgumentException if it is too long.
+    private static String checkedDescription(final String text) {
+        final String value = NullSafe.trim(text);
+        if (value.length() > MAX_OPTION_DESCRIPTION_CHARS) {
+            throw new IllegalArgumentException("An option's description may be at most "
+                                               + MAX_OPTION_DESCRIPTION_CHARS + " characters (one is "
+                                               + value.length() + "). Make it shorter, or put the detail in your "
+                                               + "answer, then call again; nothing was asked.");
+        }
+        return value;
     }
 
     /// @return The questions as a form: a text field per question, whose suggested answers are its examples (or

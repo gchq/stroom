@@ -68,7 +68,7 @@ import java.util.regex.Pattern;
 /// A record is `{"docs": {uuid: entry}}`, with `source_feeds` once a build works from existing feeds and
 /// `event_logging_version` (`version`, `how`) once the version its translation writes is settled; an entry may
 /// hold `type`, `name`, `copy_of`, `version_of`, `stepped`, `verified`, `validated` (lists of digests),
-/// `stepped_streams` and `sample_files`.
+/// `stepped_streams`, `indexed_streams` and `sample_files`.
 @Singleton
 public class BuildRecords {
 
@@ -85,6 +85,9 @@ public class BuildRecords {
     public static final String VERIFIED = "verified";
     /// Events that passed check_events.
     public static final String VALIDATED = "validated";
+    /// In an indexing pipeline's entry: the streams the last passed index verification searched (the Events it
+    /// indexed). Records made before it was kept have none.
+    public static final String INDEXED_STREAMS = "indexed_streams";
     /// What the record keeps digests of.
     public static final List<String> KINDS = List.of(STEPPED, VERIFIED, VALIDATED);
     /// What a record holds the entry of each document in.
@@ -232,6 +235,24 @@ public class BuildRecords {
                                                            final String version,
                                                            final String how,
                                                            final String uuid) {
+        return rememberEventLoggingVersion(build, version, how, uuid, null);
+    }
+
+    /// As [#rememberEventLoggingVersion(String, String, String, String)], with the Events schema variant (its
+    /// namespace: event-logging's, or a fork's) the version is in, so a later call naming the namespace is given
+    /// the version chosen rather than asking again.
+    ///
+    /// @param build     A build's name.
+    /// @param version   The version.
+    /// @param how       How it was settled: `given`, `form` or `only`.
+    /// @param uuid      The UUID of the document chosen (kept as `uuid`), or null.
+    /// @param namespace The variant's namespace (kept as `namespace`), or null.
+    /// @return The record as saved.
+    public Map<String, Object> rememberEventLoggingVersion(final String build,
+                                                           final String version,
+                                                           final String how,
+                                                           final String uuid,
+                                                           final String namespace) {
         final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
         return save(build, found.orElse(null), state -> {
             final Map<String, Object> chosen = new LinkedHashMap<>();
@@ -239,6 +260,9 @@ public class BuildRecords {
             chosen.put("how", how);
             if (uuid != null) {
                 chosen.put("uuid", uuid);
+            }
+            if (namespace != null) {
+                chosen.put("namespace", namespace);
             }
             state.put(EVENT_LOGGING_VERSION, chosen);
         });
@@ -444,6 +468,47 @@ public class BuildRecords {
     /// @return Whether verify_index passed for its current code.
     public boolean verified(final DocRef pipeline) {
         return passed(pipeline, VERIFIED);
+    }
+
+    /// @param pipeline An indexing pipeline.
+    /// @return The streams its last passed index verification searched, as its build's record keeps them; empty
+    /// when none are kept (a record made before they were, or a pipeline outside a build).
+    public List<Long> indexedStreams(final DocRef pipeline) {
+        final Map<String, Object> entry = entry(guardProvider.get().buildOf(pipeline).orElse(null),
+                pipeline.getUuid());
+        return streamIds(entry.get(INDEXED_STREAMS));
+    }
+
+    /// @param pipeline One of a build's pipelines.
+    /// @return The names of the build's other pipelines that passed an index verification (any code), as its record
+    /// keeps them: an Events reprocess leaves their index without the new Events. Empty outside a build.
+    public List<String> verifiedIndexingBesides(final DocRef pipeline) {
+        final String build = guardProvider.get().buildOf(pipeline).orElse(null);
+        if (NullSafe.isBlankString(build)) {
+            return List.of();
+        }
+        final List<String> names = new ArrayList<>();
+        docs(load(build)).forEach((uuid, value) -> {
+            if (!uuid.equals(pipeline.getUuid()) && value instanceof final Map<?, ?> entry
+                && !JsonValues.strings(entry.get(VERIFIED)).isEmpty()) {
+                names.add(NullSafe.nonBlankStringElse(NullSafe.get(entry.get("name"), String::valueOf), uuid));
+            }
+        });
+        return names;
+    }
+
+    /// @param value A list of stream ids read from a record (numbers, or text of numbers), or null.
+    /// @return The ids; any that aren't numbers are left out.
+    static List<Long> streamIds(final Object value) {
+        final List<Long> ids = new ArrayList<>();
+        for (final Object id : JsonValues.listOrEmpty(value)) {
+            if (id instanceof final Number number) {
+                ids.add(number.longValue());
+            } else if (id != null && String.valueOf(id).matches("\\d{1,18}")) {
+                ids.add(Long.parseLong(String.valueOf(id)));
+            }
+        }
+        return ids;
     }
 
     /// @param pipeline A pipeline.

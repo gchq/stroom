@@ -136,6 +136,24 @@ class TestBuildRecords {
     }
 
     @Test
+    void aVerificationKeepsTheStreamsItSearched() {
+        // Seen in testing: after an Events reprocess the plan still said indexed, the index holding the Events the
+        // reprocess replaced. The streams verified tell the plan which Events the index holds.
+        assertThat(records.indexedStreams(P)).isEmpty();
+        records.recordPassed(P, BuildRecords.VERIFIED, null, Map.of(BuildRecords.INDEXED_STREAMS, List.of(9L, 10L)));
+
+        assertThat(records.verified(P)).isTrue();
+        assertThat(records.indexedStreams(P)).containsExactly(9L, 10L);
+        // Reprocessing another of the build's pipelines (its events pipeline): the verified one is named, for the
+        // offer to index the new Events.
+        assertThat(records.verifiedIndexingBesides(new DocRef(PipelineDoc.TYPE, "q", "Other")))
+                .containsExactly("Acme");
+        assertThat(records.verifiedIndexingBesides(P)).isEmpty();
+        assertThat(BuildRecords.streamIds(List.of(1, "2", "x", 3L))).containsExactly(1L, 2L, 3L);
+        assertThat(BuildRecords.streamIds(null)).isEmpty();
+    }
+
+    @Test
     void tagsOfEarlierVersionsAreFoldedIntoTheRecordAndRemoved() {
         // Seen in production: a build in progress when the server was upgraded, its records still tags.
         final String digest = BuildRecords.fingerprintDigest(records.codeFingerprint("p", null));

@@ -118,6 +118,26 @@ class TestSampleProfiler {
     }
 
     @Test
+    void xmlHeldInTextIsTypedAndNoted() {
+        // Seen in testing: a syslog message's XML read with a regex per element in the Data Splitter.
+        assertThat(SampleProfiler.valueType("<Event><User>alice</User></Event>")).isEqualTo("embedded xml");
+        assertThat(SampleProfiler.valueType("EventLog: <Event><User>alice</User></Event>"))
+                .isEqualTo("embedded xml after prefix");
+        // Not XML: a comparison, a broken element, a syslog priority.
+        assertThat(SampleProfiler.valueType("a < b and c > d")).isEqualTo("string");
+        assertThat(SampleProfiler.valueType("EventLog: <Event><User>alice</Event>")).isEqualTo("string");
+        assertThat(SampleProfiler.valueType("<13>Nov  9 10:00:00 host app: started")).isEqualTo("string");
+
+        final List<Map<String, Object>> fields = SampleProfiler.inventory(List.of(
+                Map.of("msg", "EventLog: <Event><User>alice</User></Event>", "host", "a"),
+                Map.of("msg", "EventLog: <Event><User>bob</User></Event>", "host", "b")));
+        assertThat(fields).filteredOn(field -> "msg".equals(field.get("field"))).singleElement()
+                .satisfies(field -> assertThat(field).containsEntry("note", SampleProfiler.HELD_XML_NOTE));
+        assertThat(fields).filteredOn(field -> "host".equals(field.get("field"))).singleElement()
+                .satisfies(field -> assertThat(field).doesNotContainKey("note"));
+    }
+
+    @Test
     void xmlRecords() {
         final Map<String, Object> result = SampleProfiler.profile(
                 "<logs><entry><when>2026-09-28 10:00:00</when><who>alice</who></entry>"

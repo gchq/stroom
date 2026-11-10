@@ -34,6 +34,7 @@ import jakarta.inject.Provider;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /// `propose_dashboard` - offers the user a "Create dashboard…" button for a new dashboard built from a StroomQL
@@ -43,6 +44,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 /// dashboard is only created, with the agent's settings, if the user confirms the dialog (which checks their
 /// permission to create it in the folder they choose, and logs it as Stroom logs any new document). The query must
 /// be valid and read a data source the user can use, and the dashboard must be one Stroom can build from it.
+///
+/// While the session's build has an indexing pipeline whose indexing isn't verified ([BuildProgress]), it is refused:
+/// the plan's indexing steps end with verify_index, which makes the build's own dashboard over the data's real time
+/// window.
 class ProposeDashboardTool extends AbstractWorkspaceTool {
 
     static final String NAME = "propose_dashboard";
@@ -58,16 +63,19 @@ class ProposeDashboardTool extends AbstractWorkspaceTool {
     private final DataSourceAccess dataSourceAccess;
     private final Provider<QueryService> queryServiceProvider;
     private final DashboardBuilder dashboardBuilder;
+    private final Optional<BuildProgress> buildProgress;
 
     @Inject
     ProposeDashboardTool(final ChatWorkspace workspace,
                          final DataSourceAccess dataSourceAccess,
                          final Provider<QueryService> queryServiceProvider,
-                         final DashboardBuilder dashboardBuilder) {
+                         final DashboardBuilder dashboardBuilder,
+                         final Optional<BuildProgress> buildProgress) {
         super(workspace);
         this.dataSourceAccess = dataSourceAccess;
         this.queryServiceProvider = queryServiceProvider;
         this.dashboardBuilder = dashboardBuilder;
+        this.buildProgress = buildProgress;
     }
 
     @Override
@@ -106,7 +114,9 @@ class ProposeDashboardTool extends AbstractWorkspaceTool {
                         .general("; whether they want a data preview; and which data source, if more than one "
                                  + "could hold what they asked for. Write the query in StroomQL either way: for "
                                  + "classic, Stroom turns its where clause into the query's expression and its "
-                                 + "select into the table's columns. Validate it first.")
+                                 + "select into the table's columns. Validate it first. While a build's indexing "
+                                 + "isn't verified, it is refused: follow the build's plan (verify_index makes its "
+                                 + "dashboard).")
                         .build())
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(NAME_ARG, "The name to suggest for the new dashboard.")
@@ -153,6 +163,12 @@ class ProposeDashboardTool extends AbstractWorkspaceTool {
         }
         if (context.runContext().isEmpty()) {
             return ToolResult.text("Error: a button can only be offered while answering a question in a chat.");
+        }
+        // Seen in testing: mid-build, the agent skipped the processor filter and verify_index and proposed a
+        // dashboard over the last 24 hours, which showed none of the sample's months-old events.
+        final Optional<String> notYet = buildProgress.flatMap(progress -> progress.beforeDashboard(context));
+        if (notYet.isPresent()) {
+            return ToolResult.text(notYet.get());
         }
         final QueryService queryService = queryServiceProvider.get();
         final DocRef dataSource = queryService.getReferencedDataSource(query)

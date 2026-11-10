@@ -158,6 +158,20 @@ public final class DraftMapping {
     private static final Pattern DASH_KEY = ToolText.re("(?:^|\\s-\\s+)(?!" + Pairs.WORDS
                                                         + ": )([A-Za-z][A-Za-z0-9_()]*)\\s+(\")?(?=\\S)");
     private static final String SPACED_DASH = " - ";
+    // A key=, and a quoted value (its escaped quotes in it): for the keys a line gives more than once.
+    private static final Pattern REPEATABLE_KEY = ToolText.re("(?:^|[\\s,;])([A-Za-z_][A-Za-z0-9_.-]*)=");
+    private static final Pattern QUOTED_VALUE = ToolText.re("\"(?:\\\\.|[^\"\\\\])*+\"");
+    // The info key the keys given more than once in a line are kept under.
+    private static final String REPEATED_KEYS = "repeated_keys";
+    // An unquoted value with two items or more (group 1 the second's separator), to white space or the end.
+    private static final Pattern LIST_VALUE = ToolText.re("[^\\s,;\"=]+([,;][^\\s,;\"=]+)+(?:\\s|$)");
+    // The type of a value ending in XML after words of its own.
+    private static final String XML_AFTER_WORDS = SampleProfiler.EMBEDDED_XML + " after prefix";
+    // The XML a text ends with, after words of its own: from the first < opening an element (as
+    // SampleProfiler.xmlStart finds it). No lookahead: the XSLT's regexes have none.
+    private static final String XML_TAIL = "^.*?(<[A-Za-z_?].*>)\\s*$";
+    // What follows a quoted value's closing quote when the quote closes its own pair: a spaced dash or the end.
+    private static final Pattern QUOTE_ENDS_PAIR = ToolText.re("\\s+-\\s|\\s*$");
     private static final Pattern SOURCE_SIDE = ignoringCase("^(src|source|client|orig|origin)(_|$)");
     private static final Pattern DESTINATION_SIDE = ignoringCase(
             "^(dst|dest|destination|server|target|resp|responder)(_|$)");
@@ -294,6 +308,7 @@ public final class DraftMapping {
                 : SampleProfiler.profile(named.values().iterator().next());
         final String fmt = (String) info.get("format");
         final List<Map<String, Object>> records = new ArrayList<>();
+        final Set<String> repeated = new LinkedHashSet<>();
         SplitterSpec spec = given;
         for (final String text : named.values()) {
             switch (fmt) {
@@ -330,10 +345,35 @@ public final class DraftMapping {
                     if (spec != null) {
                         SplitterDryRun.dryRun(spec, text).records().forEach(r -> records.add(new LinkedHashMap<>(r)));
                     }
+                    repeated.addAll(repeatedKeys(text));
                 }
             }
         }
-        return new Records(info, records, spec);
+        if (repeated.isEmpty()) {
+            return new Records(info, records, spec);
+        }
+        final Map<String, Object> withRepeated = new LinkedHashMap<>(info);
+        withRepeated.put(REPEATED_KEYS, List.copyOf(repeated));
+        return new Records(withRepeated, records, spec);
+    }
+
+    // The keys a line of text gives more than once (rcpt= once a recipient), outside quoted values: Stroom's Data
+    // Splitter writes each as a data element of its own, and the dry run's record keeps the first.
+    private static Set<String> repeatedKeys(final String text) {
+        final Set<String> repeated = new LinkedHashSet<>();
+        for (final String line : ToolText.splitlines(text)) {
+            if (line.indexOf('=') < 0) {
+                continue;
+            }
+            final Set<String> seen = new HashSet<>();
+            final Matcher key = REPEATABLE_KEY.matcher(QUOTED_VALUE.matcher(line).replaceAll("\"\""));
+            while (key.find()) {
+                if (!seen.add(key.group(1))) {
+                    repeated.add(key.group(1));
+                }
+            }
+        }
+        return repeated;
     }
 
     private static Map<String, Object> asText(final Map<String, Object> flat, final String prefix) {
@@ -428,7 +468,8 @@ public final class DraftMapping {
                     n++;
                 }
                 used.add(name);
-                final String mostCommon = JsonValues.mostCommon(style.getValue()).getFirst();
+                final String mostCommon = readsEachValue(style.getKey(), style.getValue(), vals, found,
+                        styles.keySet());
                 extracts.add(dict(FIELD, field, "regex", Pairs.pairRegex(mostCommon, style.getKey()), NAMES,
                         new ArrayList<>(List.of(name))));
             });
@@ -437,6 +478,61 @@ public final class DraftMapping {
             }
         }
         return out;
+    }
+
+    // Whether the unquoted value starting at the index is a list: items parted by , or ; to the next white space,
+    // none of them a pair (seen in testing: a mail log's recipients=a@example.com,b@example.com read as its first).
+    private static boolean listed(final String text, final int start) {
+        final Matcher value = LIST_VALUE.matcher(text).region(start, text.length());
+        return value.lookingAt() && value.group(1) != null;
+    }
+
+    // The style a key is read in, the one most of its values are written in: listed in place of equals where some
+    // values are lists, and dashed in place of dashed_quoted where the quoted regex reads a value holding the
+    // key wrongly, nothing (its quote unclosed) or past another of the text's keys (to the next quote anywhere). Seen
+    // in testing: an unclosed quote in a browser's name, `Browser_type "Mozilla/5.0 (...) - Next_key value`.
+    private static String readsEachValue(final String key,
+                                         final Map<String, Integer> counts,
+                                         final List<String> vals,
+                                         final List<Map<String, String>> found,
+                                         final Set<String> keys) {
+        final String style = JsonValues.mostCommon(counts).getFirst();
+        if ("equals".equals(style) && counts.containsKey("listed")) {
+            // A list in some values: the list's regex reads a single value too.
+            return "listed";
+        }
+        if (!"dashed_quoted".equals(style)) {
+            return style;
+        }
+        final Pattern regex = ToolText.re(Pairs.pairRegex(style, key));
+        for (int i = 0; i < vals.size(); i++) {
+            if (!found.get(i).containsKey(key)) {
+                continue;
+            }
+            final Matcher matched = regex.matcher(vals.get(i));
+            if (!matched.find() || ToolText.isBlank(matched.group(1))
+                || spansKey(matched.group(1), key, keys)) {
+                return "dashed";
+            }
+        }
+        return style;
+    }
+
+    // Whether a value holds another key after a spaced dash: the next pair, read into this one.
+    private static boolean spansKey(final String value, final String key, final Set<String> keys) {
+        for (final String other : keys) {
+            if (!other.equals(key) && value.contains(SPACED_DASH + other + " ")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Whether the quote opening at the index closes inside its own pair: its closing quote is followed by a spaced
+    // dash or the text's end. A spaced dash inside the quotes is the value's (`Group(s) "Staff - North"`).
+    private static boolean quoteClosesInPair(final String text, final int opening) {
+        final int closing = text.indexOf('"', opening + 1);
+        return closing >= 0 && QUOTE_ENDS_PAIR.matcher(text).region(closing + 1, text.length()).lookingAt();
     }
 
     // The keys in a text, each with its style (Pairs.PAIR_REGEX); a key written in two styles has the last.
@@ -452,7 +548,9 @@ public final class DraftMapping {
         while (equals.find()) {
             found.put(equals.group(1), equals.group(2) != null
                     ? "quoted"
-                    : "equals");
+                    : listed(text, equals.end())
+                            ? "listed"
+                            : "equals");
         }
         // Pairs a spaced dash parts, where the text has at least two such dashes (one is as likely prose) and more keys
         // written so than colon keys (a colon-pairs text may hold a dash in a value: Secret Server's "Secret: Firewall
@@ -463,7 +561,8 @@ public final class DraftMapping {
             final Matcher dashed = DASH_KEY.matcher(text);
             while (dashed.find()) {
                 if (!found.containsKey(dashed.group(1))) {
-                    dashedKeys.put(dashed.group(1), dashed.group(2) != null
+                    dashedKeys.put(dashed.group(1), dashed.group(2) != null && quoteClosesInPair(text,
+                            dashed.start(2))
                             ? "dashed_quoted"
                             : "dashed");
                 }
@@ -720,9 +819,13 @@ public final class DraftMapping {
             heldContinuation();
             survey();
             List<String> heldFields = heldJson();
-            heldFields = heldXml(heldFields);
+            heldFields = heldXml(heldFields, false);
             heldFields = heldSyslog(heldFields);
+            // A syslog line's message, read from the line, may hold XML too: read before its pairs (an element's
+            // attributes aren't the text's pairs), and once more after them (a pair's value holding XML).
+            heldFields = heldXml(heldFields, true);
             heldFields = heldPairs(heldFields);
+            heldFields = heldXml(heldFields, true);
             taken.addAll(heldFields);
             wrappedLines();
             final String keyTime = keyedTime();
@@ -761,6 +864,7 @@ public final class DraftMapping {
             }
             nilValues();
             doubledQuotes();
+            repeatedKeys();
             final Map<String, Object> result = new LinkedHashMap<>();
             result.put("mapping", mapping);
             result.put("source_notes", applied);
@@ -921,31 +1025,128 @@ public final class DraftMapping {
             return new ArrayList<>(jsonFields);
         }
 
-        // Fields holding XML text (a SOAP payload): their elements are fields of their own (<field>/<path>, read
-        // through xml_fields), and the text itself is never mapped.
-        private List<String> heldXml(final List<String> jsonFields) {
-            final List<String> xmlFields = names.stream()
-                    .filter(n -> !jsonFields.contains(n) && !values.get(n).isEmpty()
-                                 && values.get(n).stream().filter(DraftMapping::xmlElement).count()
-                                    >= 0.8 * values.get(n).size())
+        // Fields holding XML text (a SOAP payload, a syslog message): their elements are fields of their own
+        // (<field>/<path>, read through xml_fields), and the text itself is never mapped. With prefixed, XML after
+        // words of the source's own ("EventLog: <Event>...") too: the XML is a field of its own through extract
+        // (<field>.xml), read the same way. Only once a syslog line is read into its parts: a line's PRI and header
+        // are words before XML too, and the line's own.
+        @SuppressWarnings("unchecked")
+        private List<String> heldXml(final List<String> heldFields, final boolean prefixed) {
+            final List<String> already = mapping.get("xml_fields") instanceof final List<?> held
+                    ? (List<String>) held
+                    : List.of();
+            final Set<String> skipped = new HashSet<>(heldFields);
+            skipped.addAll(already);
+            skipped.addAll(EventTimes.wrappedTexts(spec));
+            final List<String> candidates = names.stream()
+                    .filter(n -> !skipped.contains(n) && !values.get(n).isEmpty()
+                                 && already.stream().noneMatch(x -> n.startsWith(x + "/")))
                     .toList();
-            if (xmlFields.isEmpty()) {
-                return jsonFields;
+            final List<String> wholes = candidates.stream()
+                    .filter(n -> mostly(values.get(n), DraftMapping::xmlElement))
+                    .toList();
+            final List<String> afterWords = prefixed
+                    ? candidates.stream()
+                            .filter(n -> !wholes.contains(n) && mostly(values.get(n), v ->
+                                    XML_AFTER_WORDS.equals(SampleProfiler.valueType(v))))
+                            .toList()
+                    : List.of();
+            if (wholes.isEmpty() && afterWords.isEmpty()) {
+                return heldFields;
+            }
+            final List<String> xmlFields = new ArrayList<>(wholes);
+            for (final String name : afterWords) {
+                final String tail = name + ".xml";
+                final Pattern pattern = ToolText.re(XML_TAIL, Pattern.DOTALL);
+                for (final Map<String, Object> record : records) {
+                    final Matcher found = pattern.matcher(JsonValues.text(record.get(name)));
+                    if (found.find()) {
+                        record.put(tail, found.group(1));
+                    }
+                }
+                ((List<Map<String, Object>>) mapping.computeIfAbsent(EXTRACT, k -> new ArrayList<>())).add(dict(
+                        FIELD, name, "regex", XML_TAIL, "flags", "s", NAMES, new ArrayList<>(List.of(tail))));
+                xmlFields.add(tail);
             }
             LocalCheck.withXmlFields(new ArrayList<>(records), xmlFields);
             survey();
-            mapping.put("xml_fields", new ArrayList<>(xmlFields));
+            final List<String> allXml = new ArrayList<>(already);
+            allXml.addAll(xmlFields);
+            mapping.put("xml_fields", allXml);
             final List<String> inside = names.stream()
                     .filter(n -> xmlFields.stream().anyMatch(x -> n.startsWith(x + "/") && !n.contains("//")))
                     .limit(4)
                     .toList();
-            notes.add(reprs(xmlFields) + " " + (xmlFields.size() == 1
+            final List<String> holding = new ArrayList<>(wholes);
+            holding.addAll(afterWords);
+            notes.add(reprs(holding) + " " + (holding.size() == 1
                     ? "holds"
-                    : "hold") + " XML: its elements are fields of their own, e.g. " + reprs(inside)
-                      + " (xml_fields; '<field>//<name>' for one anywhere below). The text itself isn't mapped.");
-            final List<String> out = new ArrayList<>(jsonFields);
-            out.addAll(xmlFields);
+                    : "hold") + " XML" + (afterWords.isEmpty()
+                    ? ""
+                    : " (" + reprs(afterWords) + " after words of its own, the XML read out through extract as "
+                      + reprs(afterWords.stream().map(n -> n + ".xml").toList()) + ")")
+                      + ": its elements are fields of their own, e.g. " + reprs(inside)
+                      + " (xml_fields; '<field>//<name>' for one anywhere below), read in the translation: not by "
+                      + "regexes in the splitter or a second parser. The text itself isn't mapped.");
+            final List<String> out = new ArrayList<>(heldFields);
+            out.addAll(holding);
+            out.addAll(xmlFields.stream().filter(n -> !out.contains(n)).toList());
             return out;
+        }
+
+        // Keys a line gives more than once (rcpt= once a recipient): each Data entry reading one writes every value
+        // (repeat), not just the first.
+        @SuppressWarnings("unchecked")
+        private void repeatedKeys() {
+            if (!(info.get(REPEATED_KEYS) instanceof final List<?> keys)) {
+                return;
+            }
+            final List<Map<String, Object>> entries = new ArrayList<>(common);
+            for (final Object rule : (List<Object>) mapping.getOrDefault(EVENTS, List.of())) {
+                if (rule instanceof final Map<?, ?> map && map.get(FIELDS) instanceof final List<?> fields) {
+                    fields.forEach(field -> entries.add((Map<String, Object>) field));
+                }
+            }
+            final Set<String> repeated = new LinkedHashSet<>();
+            for (final Map<String, Object> entry : entries) {
+                if (entry.get(DATA_NAME) != null && keys.contains(entry.get(FIELD))) {
+                    entry.put("repeat", true);
+                    repeated.add((String) entry.get(FIELD));
+                }
+            }
+            if (!repeated.isEmpty()) {
+                notes.add(reprs(List.copyOf(repeated)) + " " + (repeated.size() == 1
+                        ? "is"
+                        : "are") + " given more than once in a record (once a value): " + (repeated.size() == 1
+                        ? "its Data entry has"
+                        : "their Data entries have") + " repeat: true, writing each value, not only the first.");
+            }
+        }
+
+        // Whether the field's text holds pairs (two or more) that are each already a field of its record, in at
+        // least four in five of the records holding it.
+        private boolean pairsAlreadyRead(final String name) {
+            int holding = 0;
+            int read = 0;
+            for (final Map<String, Object> record : records) {
+                if (!(record.get(name) instanceof final String text) || text.isEmpty()) {
+                    continue;
+                }
+                holding++;
+                final Set<String> keys = pairsIn(text).keySet();
+                // The same values too: not a record's own fields that a text happens to name.
+                if (keys.size() >= 2 && keys.stream().allMatch(key -> !key.equals(name)
+                        && record.get(key) instanceof final String value && text.contains(key + "=")
+                        && text.contains(value))) {
+                    read++;
+                }
+            }
+            return holding > 0 && read >= 0.8 * holding;
+        }
+
+        // Whether at least four in five of the values fit.
+        private boolean mostly(final List<String> held, final Predicate<String> fits) {
+            return held.stream().filter(fits).count() >= 0.8 * held.size();
         }
 
         // Text holding a syslog line (a shipper's JSON around the source's own line: a container runtime's log, a
@@ -961,7 +1162,9 @@ public final class DraftMapping {
             skipped.addAll(EventTimes.wrappedTexts(spec));
             final List<String> derived = new ArrayList<>();
             for (final String name : List.copyOf(names)) {
+                // Text, or text ending in XML (a syslog line whose message is XML).
                 final HeldHeader header = skipped.contains(name) || !"string".equals(type(name))
+                                          && !XML_AFTER_WORDS.equals(type(name))
                         ? null
                         : heldHeader(values.get(name));
                 if (header == null) {
@@ -1040,6 +1243,19 @@ public final class DraftMapping {
             final Set<String> skipped = new HashSet<>(heldFields);
             // A relay's message, or a collector's line: the source's whole line, its pairs read from its own message.
             skipped.addAll(EventTimes.wrappedTexts(spec));
+            // The text the splitter read its pairs from (a syslog line's key=value message): its pairs are fields
+            // already, so it isn't read again (seen in testing: every key twice, the second read short) or mapped.
+            final List<String> read = names.stream()
+                    .filter(name -> !skipped.contains(name) && pairsAlreadyRead(name))
+                    .toList();
+            if (!read.isEmpty()) {
+                skipped.addAll(read);
+                out.addAll(read);
+                notes.add(reprs(read) + " " + (read.size() == 1
+                        ? "is"
+                        : "are") + " the text the splitter read its key/value pairs from: they are fields "
+                          + "already, so the text isn't read again or mapped.");
+            }
             final Map<String, PairExtracts> paired = pairExtracts(values, skipped);
             paired.forEach((field, pairs) -> {
                 final List<Map<String, Object>> extracts = pairs.extracts();

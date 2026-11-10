@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AgentKnowledge;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
@@ -24,6 +25,7 @@ import stroom.ai.impl.tools.fielddoc.IndexFieldDocs;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
+import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.util.logging.LambdaLogger;
@@ -34,6 +36,7 @@ import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import jakarta.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +49,9 @@ import java.util.function.Predicate;
 class IndexPlans {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexPlans.class);
+    private static final String STATUS = "status";
+    private static final String NEEDS_SHOWING = "needs_showing";
+    private static final String TABLE = "table";
 
     private final IndexingMemory memory;
     private final KeptMappings keptMappings;
@@ -259,6 +265,63 @@ class IndexPlans {
                   + "leave the field out."
                 : ""));
         return reply;
+    }
+
+    /// A drafted or amended plan's result as the user is to see it: `status: needs_showing` and a `table` of its
+    /// fields (name, type and source path), which Stroom AI's chat shows the user itself, before the agent asks
+    /// them to agree to anything built from it (seen in testing: the agent asked the user to approve an index of
+    /// fields it had never shown them).
+    ///
+    /// @param result      The result: one holding a `plan` and no `status` of its own (anything else is left as
+    ///                    it is).
+    /// @param shownByChat Whether Stroom AI's chat shows the table itself; else the agent is told to show it.
+    /// @return The result, with the table first and the hint saying who shows it.
+    static Map<String, Object> withShownPlan(final Map<String, Object> result, final boolean shownByChat) {
+        if (result == null || result.containsKey(STATUS) || !(result.get("plan") instanceof final Map<?, ?> json)) {
+            return result;
+        }
+        final FieldPlan plan;
+        try {
+            plan = FieldPlan.fromJson(BuildRecords.asMap(json));
+        } catch (final RuntimeException e) {
+            // Shown as it was: the plan in the result is still the agent's to show.
+            LOGGER.debug(() -> LogUtil.message("Plan not shown as a table: {}", e.getMessage()));
+            return result;
+        }
+        final Map<String, Object> shown = new LinkedHashMap<>();
+        shown.put(STATUS, NEEDS_SHOWING);
+        shown.put(TABLE, fieldTable(plan));
+        shown.putAll(result);
+        final String said = shownByChat
+                ? "The chat shows the user the plan's fields (table) itself, as it is: don't repeat or restyle it; "
+                  + "refer to it when you ask them about it. "
+                : "Show the user the plan's fields (table) in your reply, as it is, whole (Markdown your client "
+                  + "renders), before asking them about it or creating the index. ";
+        shown.put("hint", said + NullSafe.string(NullSafe.get(result.get("hint"), String::valueOf)));
+        return shown;
+    }
+
+    /// @param plan An index plan.
+    /// @return Its fields as a Markdown table: a row each (an object field's parts each a row of their own), with
+    /// its name, type and source path.
+    static String fieldTable(final FieldPlan plan) {
+        final List<String> lines = new ArrayList<>(List.of(
+                "## Index fields planned for '" + plan.indexName() + "'", "",
+                "| # | Field | Type | Source path |", "| --- | --- | --- | --- |"));
+        final List<PlannedField> fields = plan.leafFields();
+        for (int i = 0; i < fields.size(); i++) {
+            final PlannedField field = fields.get(i);
+            lines.add("| " + (i + 1) + " | " + cell(field.name()) + " | " + NullSafe.string(field.type()) + " | "
+                      + (JsonValues.truthy(field.source())
+                    ? cell(field.source())
+                    : "-") + " |");
+        }
+        return String.join("\n", lines);
+    }
+
+    // A value in a table cell: as code, its pipes escaped.
+    private static String cell(final String value) {
+        return "`" + NullSafe.string(value).replace("`", "'").replace("|", "\\|").replace("\n", " ") + "`";
     }
 
     /// @return The bundled ECS schema, or null if none is bundled.

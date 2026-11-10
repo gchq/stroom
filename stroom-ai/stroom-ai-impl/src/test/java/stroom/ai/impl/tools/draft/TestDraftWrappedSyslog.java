@@ -179,6 +179,38 @@ class TestDraftWrappedSyslog extends DraftFixtures {
     }
 
     @Test
+    void xmlInASyslogLinesMessageIsReadInTheTranslation() {
+        // Seen in testing: XML inside a syslog message, read by a regex per element in the Data Splitter. The message
+        // is read out of the line first, so the XML is found in it, whole or after words of its own.
+        for (final String prefix : List.of("", "EventLog: ")) {
+            final String lines = SOURCE.stream()
+                    .map(line -> line.substring(0, line.indexOf(": ") + 2) + prefix + "<Event><User>u"
+                                 + SOURCE.indexOf(line) + "</User><Action>login</Action></Event>")
+                    .map(line -> ToolJson.dumps(Map.of("log", line, "stream", "stdout")))
+                    .collect(Collectors.joining("\n"));
+            final Map<String, Object> draft = DraftMapping.draft(List.of(lines), "Shipped XML", null, null, null,
+                    null, null);
+            final Map<String, Object> mapping = mappingOf(draft);
+            final String held = prefix.isEmpty()
+                    ? "log.message"
+                    : "log.message.xml";
+
+            assertThat(mapping.get("xml_fields")).as(prefix).isEqualTo(List.of(held));
+            if (!prefix.isEmpty()) {
+                assertThat(JsonValues.maps(mapping.get("extract"))).anySatisfy(extract -> assertThat(extract)
+                        .containsEntry("field", "log.message").containsEntry("names", List.of(held)));
+            }
+            // No pairs read from the XML, and its elements are fields of their own.
+            assertThat(String.valueOf(mapping.get("extract"))).doesNotContain("Action=");
+            assertThat(notes(draft)).anySatisfy(note -> assertThat(note).contains("XML")
+                    .contains("'" + held + "/Event/User'").contains("not by regexes in the splitter"));
+            final XsltGenerator.Generated generated = XsltGenerator.generate(TranslationMapping.fromJson(
+                    TestDraftMapping.decided(mapping)), DraftFixtures.SCHEMA_352, "3.5.2");
+            assertThat(generated.problems()).as(prefix).isEmpty();
+        }
+    }
+
+    @Test
     void textThatIsNotASyslogHeaderIsLeftAlone() {
         final String lines = """
                 {"msg": "User alice logged - in from the office", "level": "info"}

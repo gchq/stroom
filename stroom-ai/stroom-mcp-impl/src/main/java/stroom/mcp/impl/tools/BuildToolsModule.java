@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.BuildProgress;
 import stroom.ai.impl.tools.DocumentAnalyses;
 import stroom.ai.impl.tools.StroomTool;
 import stroom.util.guice.GuiceUtil;
@@ -97,5 +98,8 @@ public class BuildToolsModule extends AbstractModule {
         // What read_document (stroom-ai-impl) gives of an index doc and an XSLT from the build tools' helpers.
         OptionalBinder.newOptionalBinder(binder(), DocumentAnalyses.class)
                 .setBinding().to(DocumentAnalysesImpl.class);
+        // Whether propose_dashboard (stroom-ai-impl) waits for the session's build to verify its indexing.
+        OptionalBinder.newOptionalBinder(binder(), BuildProgress.class)
+                .setBinding().to(BuildProgressImpl.class);
     }
 }

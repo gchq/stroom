@@ -81,6 +81,8 @@ public final class LocalCheck {
     private static final String USER_TYPE = "UserComplexType";
     // Users of that type that are an email's addressees: their Ids are email addresses, the domain part of them.
     private static final Set<String> EMAIL_USERS = Set.of("From", "To", "Cc", "Bcc");
+    // The XSD base types that take any text.
+    private static final Set<String> TEXT_BASE_TYPES = Set.of("string", "normalizedString", "token");
     // DOMAIN\\user or user@domain: one name, then a domain.
     private static final Pattern DOMAIN_QUALIFIED = Pattern.compile(
             "[^\\\\\\s@]+\\\\[^\\\\\\s@]+|[^\\s@]+@[^\\s@]+\\.[^\\s@]+");
@@ -313,8 +315,43 @@ public final class LocalCheck {
     public static SampleRecords sampleRecords(final TranslationMapping mapping, final Object sample,
                                               final SplitterSpec splitter) {
         final SampleRecords found = rawRecords(mapping, sample, splitter);
-        return new SampleRecords(withXmlFields(withJsonFields(found.records(), mapping.jsonFields()),
-                mapping.xmlFields()), found.note());
+        final List<Object> records = withXmlFields(withJsonFields(found.records(), mapping.jsonFields()),
+                mapping.xmlFields());
+        return new SampleRecords(withExtractedXml(mapping, records), found.note());
+    }
+
+    // The fields of XML an extract reads out of a text (a syslog line's message, XML after words of its own): read
+    // from the extracted value, as the XSLT reads them.
+    @SuppressWarnings("unchecked")
+    private static List<Object> withExtractedXml(final TranslationMapping mapping, final List<Object> records) {
+        if (mapping.xmlFields() == null || mapping.xmlFields().isEmpty() || mapping.extract().isEmpty()) {
+            return records;
+        }
+        final Set<String> extracted = new HashSet<>();
+        mapping.extract().forEach(ex -> extracted.addAll(ex.names()));
+        final List<String> fields = mapping.xmlFields().stream().filter(extracted::contains).toList();
+        if (fields.isEmpty()) {
+            return records;
+        }
+        for (final Object item : records) {
+            if (!(item instanceof Map)) {
+                continue;
+            }
+            final Map<String, Object> record = (Map<String, Object>) item;
+            final Map<String, String> values = extractedValues(mapping, record);
+            if (values == null) {
+                continue;
+            }
+            for (final String field : fields) {
+                final XmlTree.Element root = record.containsKey(field)
+                        ? null
+                        : parsedXml(values.get(field));
+                if (root != null) {
+                    addXmlFields(record, field, root);
+                }
+            }
+        }
+        return records;
     }
 
     private static SampleRecords rawRecords(final TranslationMapping mapping, final Object sample,
@@ -1202,26 +1239,61 @@ public final class LocalCheck {
 
     /// Values the sample's records hold in the fields the mapping writes, that look like stand-ins for none (`-`,
     /// `N/A`, ...; see [Placeholders]), for the user to say whether to leave them out. Asked for by the user (seen:
-    /// W3C logs' `-` for a missing address went on into an Elasticsearch ip field).
+    /// W3C logs' `-` for a missing address went on into an Elasticsearch ip field). A value that only misfits its
+    /// field's other values is asked only where the schema would refuse it: in a field every entry writes into a
+    /// string element without a pattern or a list of values, or into a Data element's Value, it is data.
     ///
     /// @param mapping The mapping.
     /// @param records The sample's records.
+    /// @param schema  The event-logging schema, or null: then no field's destination is known to take text.
     /// @return The stand-ins found, those the mapping's nil_values already leave out aside.
     public static List<Placeholders.Found> placeholders(final TranslationMapping mapping,
-                                                        final List<Object> records) {
+                                                        final List<Object> records,
+                                                        final EventSchema schema) {
         final FieldValues values = new FieldValues(mapping, records);
         final Map<String, List<String>> byField = new LinkedHashMap<>();
+        final Map<String, Boolean> takesText = new LinkedHashMap<>();
         for (final FieldMapping entry : mapping.allEntries()) {
             // Only fields written as they are: a value map, lookup or dictionary says what each value becomes.
             if (!hasText(entry.field()) || entry.value() != null || entry.hasMap() || entry.lookup() != null
-                || hasText(entry.dictionary()) || hasText(entry.xpath()) || byField.containsKey(entry.field())) {
+                || hasText(entry.dictionary()) || hasText(entry.xpath())) {
                 continue;
             }
-            byField.put(entry.field(), values.of(entry));
+            takesText.merge(entry.field(), takesText(entry, schema), Boolean::logicalAnd);
+            byField.putIfAbsent(entry.field(), values.of(entry));
         }
+        final Set<String> textFields = new LinkedHashSet<>();
+        takesText.forEach((field, text) -> {
+            if (text) {
+                textFields.add(field);
+            }
+        });
         return Placeholders.find(byField, mapping.nilValues() == null
                 ? Set.of()
-                : Set.copyOf(mapping.nilValues()));
+                : Set.copyOf(mapping.nilValues()), textFields);
+    }
+
+    // Whether the entry's element takes any text: a Data element's Value, or a string leaf the schema gives no
+    // pattern or list of values. False when unknown (no schema, a path it lacks).
+    private static boolean takesText(final FieldMapping entry, final EventSchema schema) {
+        if (schema == null || !hasText(entry.path())) {
+            return false;
+        }
+        if (entry.dataName() != null || entry.path().endsWith("Data")) {
+            return true;
+        }
+        final List<EventSchema.Child> chain;
+        try {
+            chain = schema.resolve(entry.path());
+        } catch (final RuntimeException e) {
+            return false;
+        }
+        if (chain.isEmpty()) {
+            return false;
+        }
+        final EventSchema.Child leaf = chain.getLast();
+        return schema.isLeaf(leaf.decl()) && TEXT_BASE_TYPES.contains(schema.baseType(leaf.decl()))
+               && schema.patterns(leaf.decl()).isEmpty() && schema.enumeration(leaf.decl()) == null;
     }
 
     // An Id of one of the schema's users, not an email's addressee; without the schema, an Id of an element named

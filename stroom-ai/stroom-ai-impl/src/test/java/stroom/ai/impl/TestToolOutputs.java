@@ -288,4 +288,20 @@ class TestToolOutputs {
         assertThat(ToolOutputs.forModel(review)).isEqualTo(review);
         assertThat(ToolOutputs.forModel("plain text")).isEqualTo("plain text");
     }
+
+    @Test
+    void anIndexTemplateUnderReviewIsTheChatsToShow() {
+        // Seen in testing: told to print the template and call again without waiting, the agent called again, and
+        // the form asked the user to confirm a template they were never shown. The chat shows it itself.
+        final String review = "{\"status\": \"needs_review\", \"dev_tools\": \"PUT _index_template/acme\\n{}\", "
+                              + "\"review_id\": \"r1\", \"notes\": [\"keyword from the example\"]}";
+
+        final String forModel = ToolOutputs.forModel(review);
+
+        assertThat(forModel).doesNotContain("PUT _index_template").contains(ToolOutputs.SHOWN_TABLE)
+                .contains("\"review_id\":\"r1\"").contains("keyword from the example");
+        // A template agreed (no review) is the agent's to give for committing.
+        final String agreed = "{\"agreed\": true, \"dev_tools\": \"PUT _index_template/acme\"}";
+        assertThat(ToolOutputs.forModel(agreed)).isEqualTo(agreed);
+    }
 }
