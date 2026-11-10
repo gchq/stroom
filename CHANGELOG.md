@@ -12,6 +12,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.14-beta.11] - 2026-11-10
+
+* Feature : Add field-level query options to dashboard query expression terms on Elasticsearch fields, set with a cog button beside the term's value: case-insensitive and fuzzy matching for `keyword` and `wildcard` fields, and matching all words, phrase matching with slop and fuzzy matching for text fields.
+
+* Feature : Replace the Elasticsearch term suggestions in dashboard query expressions with a value picker that lists a field's most common values in the dashboard's time range, with the share of documents that have each, and can be filtered. Fields within `nested` objects are included, with each value's share counted by the documents that have it rather than by the nested objects. The number of values is set by `stroom.elastic.search.suggestions.topValuesCount`.
+
+* Feature : Change Elasticsearch `keyword` wildcard values to be matched case-sensitively unless the term's case-insensitive query option is set, and search `wildcard` fields with term-level queries like `keyword` fields. See BREAKING_CHANGES.md.
+
+* Feature : Allow wildcard values, e.g. `1.*`, in the `=`, `!=`, `in` and dictionary conditions of Elasticsearch `version` fields, which previously matched nothing.
+
+* Feature **#5976** : Add Elasticsearch per-field settings (enable/disable fields and per-field `dense_vector` settings), field information and sampled statistics in the index Fields tab, and virtual fields that group the values of keyword fields.
+
+* Bug **#5986** : Fix stepping waiting for the whole stream to be captured, and failing with the stepping store's byte limit, when the pipeline has an element that isn't linked to anything.
+
+* Bug **#6000** : Fix pooled XSLTs, schemas and parsers that were borrowed or being created when their pool was invalidated being returned to the pool, e.g. a stepping or processing pipeline continuing to use an old version of an imported XSLT after it has been saved.
+
 * Bug **#5961** : Change error handling when a dashboard's config cannot be deserialised to include the dashboard's identity.
 
 * Bug : Fix bug in display of the `None` item in the DocRef pickers. Was incorrectly using instance equality.
@@ -2849,7 +2866,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.11...HEAD
+[v7.14-beta.11]: https://github.com/gchq/stroom/compare/v7.14-beta.10...v7.14-beta.11
 [v7.14-beta.10]: https://github.com/gchq/stroom/compare/v7.14-beta.9...v7.14-beta.10
 [v7.14-beta.9]: https://github.com/gchq/stroom/compare/v7.14-beta.8...v7.14-beta.9
 [v7.14-beta.8]: https://github.com/gchq/stroom/compare/v7.14-beta.7...v7.14-beta.8
