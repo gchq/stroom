@@ -1880,7 +1880,8 @@ public class AskStroomAIService {
             return null;
         }
         try {
-            return openAIModelStore.readDocument(docRef);
+            // The user only needs Use on the model doc (and on any credential it has), as upstream's gh-5992.
+            return securityContext.useAsReadResult(() -> openAIModelStore.readDocument(docRef));
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> "Unable to read AI model " + docRef + ": " + e.getMessage(), e);
             return null;

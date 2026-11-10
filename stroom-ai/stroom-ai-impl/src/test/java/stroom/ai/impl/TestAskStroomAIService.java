@@ -60,6 +60,7 @@ import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.UserRef;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
@@ -72,6 +73,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -94,6 +96,14 @@ class TestAskStroomAIService {
 
     private final AiBackgroundTasks backgroundTasks = Mockito.mock(AiBackgroundTasks.class);
     private final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
+
+    @BeforeEach
+    void runSecuredReadsAsGiven() {
+        // A model is read with the user's Use permission (useAsReadResult), which the test's security context
+        // runs as it is.
+        Mockito.when(securityContext.useAsReadResult(Mockito.any())).thenAnswer(invocation ->
+                ((Supplier<?>) invocation.getArgument(0)).get());
+    }
 
     private AskStroomAIService service() {
         return new AskStroomAIService(aiService, null, null, null, null, null, null, () -> null, null, null,
