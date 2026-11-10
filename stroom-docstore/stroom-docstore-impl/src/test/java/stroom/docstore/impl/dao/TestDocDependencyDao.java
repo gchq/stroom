@@ -138,6 +138,27 @@ class TestDocDependencyDao {
     }
 
     @Test
+    void testGetSourceUuids() {
+        final DocRef filter1 = docRef("ProcessorFilter", "");
+        final DocRef filter2 = docRef("ProcessorFilter", "");
+        final DocRef dashboard = docRef("Dashboard", "My Dashboard");
+        final DocRef pipeline = docRef("Pipeline", "My Pipeline");
+        final DocRef index = docRef("Index", "My Index");
+
+        // A source with several edges is only returned once
+        dao.setDependencies(filter1, Set.of(pipeline, index));
+        dao.setDependencies(filter2, Set.of(pipeline));
+        dao.setDependencies(dashboard, Set.of(index));
+
+        assertThat(dao.getSourceUuids("ProcessorFilter"))
+                .containsExactlyInAnyOrder(filter1.getUuid(), filter2.getUuid());
+        assertThat(dao.getSourceUuids("Dashboard"))
+                .containsExactly(dashboard.getUuid());
+        assertThat(dao.getSourceUuids("Unknown"))
+                .isEmpty();
+    }
+
+    @Test
     void testSetDependencies_emptySetDeletesAll() {
         final DocRef from = docRef("Dashboard", "My Dashboard");
         final DocRef to1 = docRef("Index", "My Index");
@@ -410,6 +431,82 @@ class TestDocDependencyDao {
         assertThat(broken).containsOnlyKeys(filter);
         assertThat(broken.get(filter).stream().map(DocRef::getUuid))
                 .containsExactly(missingDict.getUuid());
+    }
+
+    @Test
+    void testGetBrokenDependencies_rollsUpToAnalyticRuleOwner() {
+        // The filter of a streaming analytic is owned by its analytic rule rather than a pipeline
+        final DocRef filter = docRef("ProcessorFilter", "");
+        final DocRef analyticRule = docRef("AnalyticRule", "My Rule");
+        final DocRef missingDict = docRef("Dictionary", "Ghost Dictionary");
+        createDocRow(analyticRule);
+
+        dao.setDependencies(filter, Set.of(analyticRule, missingDict));
+
+        final Map<DocRef, Set<DocRef>> broken = dao.getBrokenDependencies(Set.of());
+
+        assertThat(broken).containsOnlyKeys(analyticRule);
+        assertThat(broken.get(analyticRule).stream().map(DocRef::getUuid))
+                .containsExactly(missingDict.getUuid());
+    }
+
+    @Test
+    void testFetchDependencies_nonExplorerSourceTakesOwnerName() {
+        // A processor filter has no name of its own, so it is shown with its pipeline's name
+        final DocRef filter = docRef("ProcessorFilter", "");
+        final DocRef pipeline = docRef("Pipeline", "My Pipeline");
+        final DocRef index = docRef("Index", "My Index");
+        createDocRow(pipeline);
+        createDocRow(index);
+        dao.setDependencies(filter, Set.of(pipeline, index));
+
+        assertThat(filter("fromtype:ProcessorFilter").getValues())
+                .hasSize(2)
+                .extracting(dependency -> dependency.getFrom().getName())
+                .containsOnly("My Pipeline");
+
+        // The name is the pipeline's live name, so a rename needs no propagating
+        renameDocRow(pipeline, "Renamed Pipeline");
+        assertThat(filter("fromtype:ProcessorFilter").getValues())
+                .extracting(dependency -> dependency.getFrom().getName())
+                .containsOnly("Renamed Pipeline");
+
+        // The quick filter on the source name uses the same name
+        assertThat(filter("fromname:Renamed").getValues())
+                .hasSize(2);
+    }
+
+    @Test
+    void testFetchDependencies_nonExplorerSourceWithDeletedOwnerKeepsStoredName() {
+        final DocRef filter = docRef("ProcessorFilter", "");
+        final DocRef pipeline = docRef("Pipeline", "My Pipeline");
+        createDocRow(pipeline);
+        dao.setDependencies(filter, Set.of(pipeline));
+        deleteDocRow(pipeline);
+
+        assertThat(filter("fromtype:ProcessorFilter").getValues())
+                .singleElement()
+                .satisfies(dependency -> {
+                    assertThat(dependency.getFrom().getName())
+                            .isEmpty();
+                    assertThat(dependency.isOk())
+                            .isFalse();
+                });
+    }
+
+    @Test
+    void testFetchDependencies_documentSourceKeepsItsOwnName() {
+        // A document is never given the name of a pipeline it depends on, e.g. a child pipeline
+        final DocRef child = docRef("Pipeline", "Child Pipeline");
+        final DocRef parent = docRef("Pipeline", "Parent Pipeline");
+        createDocRow(child);
+        createDocRow(parent);
+        dao.setDependencies(child, Set.of(parent));
+
+        assertThat(filter("fromuuid:" + child.getUuid()).getValues())
+                .singleElement()
+                .extracting(dependency -> dependency.getFrom().getName())
+                .isEqualTo("Child Pipeline");
     }
 
     // --- fetchDependencies (paginated) ---
@@ -868,6 +965,14 @@ class TestDocDependencyDao {
         JooqUtil.context(connProvider, ctx -> ctx
                 .update(DOC)
                 .set(DOC.DELETED, System.currentTimeMillis())
+                .where(DOC.UUID.eq(docRef.getUuid()))
+                .execute());
+    }
+
+    private void renameDocRow(final DocRef docRef, final String name) {
+        JooqUtil.context(connProvider, ctx -> ctx
+                .update(DOC)
+                .set(DOC.NAME, name)
                 .where(DOC.UUID.eq(docRef.getUuid()))
                 .execute());
     }

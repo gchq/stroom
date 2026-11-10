@@ -31,8 +31,14 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
 
-/// An icon button in a [Toolbar]: a `<button class="toolbar-button">` holding its icon. It is named
-/// by its title, which is also its tooltip, and styled by toolbar-button.css.
+/// An icon button in a [Toolbar]: a `<button class="toolbar-button">` holding its icon and its label.
+/// It is named by its title, which is also its tooltip, and styled by toolbar-button.css.
+///
+/// Its label is shown beside its icon, or in place of it, when the user's toolbar display
+/// preference says so (`toolbar-display--*`, on the page); otherwise only the icon shows. The label
+/// is the title unless a shorter one is given ([#setLabel(String)]), which the title must start
+/// with, so that the button's name always holds what it shows (WCAG 2.5.3, label in name). The
+/// label is hidden from screen readers, which read the title.
 ///
 /// A button that a shortcut also presses shows the shortcut in its tooltip, e.g. "Save (Ctrl+S)"
 /// (see [#setShortcut(Action)]).
@@ -63,10 +69,22 @@ public class ToolbarButton extends ButtonBase implements IsButton {
     private Action shortcutAction;
     // The title as given, without the shortcut
     private String plainTitle;
+    // The label given, or null to show the title
+    private String label;
+    // The icon, e.g. for a toolbar's More menu to show it
+    private SvgImage icon;
+    // Shows the label (toolbar-button.css draws it from data-label, and shows or hides it by the
+    // toolbar display preference)
+    private final Element labelElement;
 
     public ToolbarButton() {
         super(Document.get().createPushButtonElement());
         setStyleName("toolbar-button");
+        labelElement = Document.get().createSpanElement();
+        labelElement.setClassName("toolbar-button__label");
+        // Read as the title instead, which holds it
+        labelElement.setAttribute("aria-hidden", "true");
+        getElement().appendChild(labelElement);
         sinkEvents(Event.ONCLICK | Event.ONMOUSEDOWN | Event.ONKEYDOWN | Event.ONBLUR);
         // Shows the button's name when it has the keyboard focus
         FocusTooltip.install();
@@ -109,6 +127,7 @@ public class ToolbarButton extends ButtonBase implements IsButton {
     @Override
     public void setTitle(final String title) {
         plainTitle = title;
+        updateLabel();
         final String shortcut = shortcutAction == null
                 ? null
                 : KeyBinding.getShortcut(shortcutAction);
@@ -138,8 +157,41 @@ public class ToolbarButton extends ButtonBase implements IsButton {
                 : super.getTitle();
     }
 
+    /// Sets the label shown when the toolbar display preference shows text, in place of the title,
+    /// e.g. "Batch Edit" for "Batch Edit Permissions For Filtered Documents". The title must start
+    /// with it, so that the button's name holds what it shows (`TestToolbarButtonLabels` checks the
+    /// templates'). In a template: `<b:ToolbarButton svg="EDIT" title="Edit Permissions" label="Edit"/>`.
+    ///
+    /// @param label The label, or null to show the title.
+    public void setLabel(final String label) {
+        this.label = label;
+        updateLabel();
+    }
+
+    /// @return The label shown when the preference shows text: the label given, or else the title.
+    public String getLabel() {
+        return NullSafe.isBlankString(label)
+                ? getTitle()
+                : label;
+    }
+
+    /// @return The button's icon, or null if it has none.
+    public SvgImage getSvg() {
+        return icon;
+    }
+
+    // Held as an attribute that toolbar-button.css draws (data-label), not as text, so that the page's
+    // text (what text queries and textContent read) doesn't hold it while it is hidden
+    private void updateLabel() {
+        final String text = getLabel();
+        labelElement.setAttribute("data-label", text == null
+                ? ""
+                : text);
+    }
+
     /// @param icon The button's icon.
     public void setSvg(final SvgImage icon) {
+        this.icon = icon;
         final Element holder = Document.get().createDivElement();
         holder.setInnerHTML(icon.getSvg());
         final Element svg = holder.getFirstChildElement();
@@ -150,8 +202,10 @@ public class ToolbarButton extends ButtonBase implements IsButton {
                 : classes + " ") + "toolbar-button__icon");
         // The icon is decoration: the button is named by its title
         svg.setAttribute("aria-hidden", "true");
+        // In place of the icon before, before the label
         getElement().removeAllChildren();
         getElement().appendChild(svg);
+        getElement().appendChild(labelElement);
     }
 
     /// Sets what pressing the button does, replacing anything set before. There is only ever one,

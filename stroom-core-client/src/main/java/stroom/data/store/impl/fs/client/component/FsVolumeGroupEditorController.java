@@ -85,10 +85,12 @@ public class FsVolumeGroupEditorController extends Controller {
         fsVolumeStatusList.getToolbar().setName("Volume actions");
         fsVolumeStatusList.getToolbar().button(SvgImage.ADD, "New Data Volume", this::create);
         openButton = fsVolumeStatusList.getToolbar().button(SvgImage.EDIT,
-                "Edit Selected Data Volume", this::edit);
+                "Edit Selected Data Volume",
+                "Edit", this::edit);
         openButton.setEnabled(false);
         deleteButton = fsVolumeStatusList.getToolbar().button(SvgImage.DELETE,
-                "Delete Selected Data Volumes", this::delete);
+                "Delete Selected Data Volumes",
+                "Delete", this::delete);
         deleteButton.setEnabled(false);
         fsVolumeStatusList.getToolbar().button(SvgImage.REFRESH, "Rescan Data Volumes", this::onRescan);
         delayedUpdate = new DelayedUpdate(fsVolumeStatusList::refresh);

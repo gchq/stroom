@@ -9,7 +9,7 @@
              xmlns:st="urn:import:stroom.pipeline.stepping.client.component"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <split:SplitPane sizes="245px, *"
-                     names="Elements, Filter" addStyleNames="stepping-filter-editor max">
+                     names="Elements, Filter" addStyleNames="stepping-filter-editor max split-pane--forms">
         <split:ScrollPane addStyleNames="max control-box">
             <g:SimplePanel styleName="max">
                 <dg:DataGrid ui:field="elementChooser"
@@ -19,7 +19,7 @@
                              addStyleNames="stepping-filter-editor__elements"/>
             </g:SimplePanel>
         </split:ScrollPane>
-        <g:FlowPanel styleName="max form">
+        <g:FlowPanel styleName="max form split-pane__form">
             <tx:Label ui:field="nameLabel" addStyleNames="form-heading"/>
             <form:FormGroup identity="steppingSeverity" label="Minimum Severity"
                             helpText="Stops stepping at the next record where the selected element produced a message of this severity or higher: INFO, WARN, ERROR or FATAL. Leave blank to turn this condition off."

@@ -64,8 +64,8 @@
             <g:FlowPanel styleName="max dock-container-vertical">
                 <form:TextArea ui:field="apiKeyTextArea" enabled="false" addStyleNames="w-100"/>
                 <g:FlowPanel styleName="max dock-container-horizontal align-center">
-                    <b:Toolbar ui:field="apiKeyButtonPanel" name="API key actions">
-                        <b:ToolbarButton ui:field="copyButton" svg="COPY" title="Copy API Key to Clipboard"/>
+                    <b:Toolbar ui:field="apiKeyButtonPanel" name="API key actions" addStyleNames="toolbar--icons">
+                        <b:ToolbarButton ui:field="copyButton" svg="COPY" title="Copy API Key to Clipboard" label="Copy API Key"/>
                     </b:Toolbar>
                     <tx:Label ui:field="copyToClipboardLabel" text="API Key copied to clipboard" visible="false"/>
                 </g:FlowPanel>

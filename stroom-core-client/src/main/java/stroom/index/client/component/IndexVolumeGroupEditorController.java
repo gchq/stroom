@@ -94,10 +94,12 @@ public class IndexVolumeGroupEditorController extends Controller {
         indexVolumeStatusList.getToolbar().setName("Volume actions");
         indexVolumeStatusList.getToolbar().button(SvgImage.ADD, "New Index Volume", this::create);
         openButton = indexVolumeStatusList.getToolbar().button(SvgImage.EDIT,
-                "Edit Selected Index Volume", this::edit);
+                "Edit Selected Index Volume",
+                "Edit", this::edit);
         openButton.setEnabled(false);
         deleteButton = indexVolumeStatusList.getToolbar().button(SvgImage.DELETE,
-                "Delete Selected Index Volumes", this::delete);
+                "Delete Selected Index Volumes",
+                "Delete", this::delete);
         deleteButton.setEnabled(false);
         indexVolumeStatusList.getToolbar().button(SvgImage.REFRESH, "Rescan Index Volumes", this::onRescan);
         delayedUpdate = new DelayedUpdate(indexVolumeStatusList::refresh);

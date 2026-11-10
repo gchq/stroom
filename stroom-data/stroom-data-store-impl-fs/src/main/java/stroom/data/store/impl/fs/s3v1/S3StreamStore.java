@@ -33,7 +33,6 @@ import stroom.data.store.impl.fs.PhysicalDeleteOutcome;
 import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
-import stroom.data.store.impl.fs.shared.S3LocationDataVolume;
 import stroom.data.store.impl.fs.shared.ValidationResult;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
@@ -54,6 +53,8 @@ import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.NonNull;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -88,7 +89,7 @@ public class S3StreamStore extends AbstractS3StreamStore {
     private static final CIKey ID_PATH_VAR = CIKey.internStaticKey("idPath");
     private static final CIKey ID_PADDED_VAR = CIKey.internStaticKey("idPadded");
 
-    private final Map<Long, TrackedSource> cache = new ConcurrentHashMap<>();
+    private final Map<Long, TrackedSource> cacheByMetaId = new ConcurrentHashMap<>();
     private final Set<TrackedSource> evictable = new HashSet<>();
     private final MetaService metaService;
     private final TemplateCache templateCache;
@@ -121,27 +122,43 @@ public class S3StreamStore extends AbstractS3StreamStore {
         }
     }
 
-//    @Override
-//    public void physicallyDelete(final Collection<DataVolume> dataVolumes) {
-//        // TODO
-//        throw new UnsupportedOperationException("TODO");
-//    }
+    @NonNull
+    private S3Location getS3Location(final SimpleMeta meta,
+                                     final DataVolume dataVolume,
+                                     final boolean storeLocation) {
+        Objects.requireNonNull(meta);
+        Objects.requireNonNull(dataVolume);
+        final Set<S3Location> s3Locations = dataVolumeService.findS3Locations(meta, dataVolume);
+        final S3Location s3Location;
+        if (NullSafe.isEmptyCollection(s3Locations)) {
+            // Legacy streams may still exist with no record in the s3Locations table,
+            // as <7.14 we used to always derive the s3 bucket/key. Thus, it may be null, in which
+            // case it will be derived based on the config. If the region/bucket/key patterns in the
+            // config have changed then we have no idea where the data is in S3.
+            s3Location = deriveS3Location(dataVolume, meta);
+            Objects.requireNonNull(s3Location, "S3Location cannot be null after derivation");
+            if (storeLocation) {
+                // Store it in the db, so next time we can avoid deriving it.
+                // It is possible we are storing a location that is not valid if the config
+                // has changed, but not a lot we can do.
+                // Use tryCreate in case another node is hitting the same stream.
+                dataVolumeService.tryCreateS3Location(meta, dataVolume, s3Location);
+            }
+        } else {
+            if (NullSafe.hasMoreThanOneItem(s3Locations)) {
+                throw new IllegalStateException(LogUtil.message(
+                        "DataVolume {} has more than one S3Location. This store only supports one S3Location. " +
+                        "s3Locations: {}",
+                        dataVolume, s3Locations));
+            }
+            s3Location = NullSafe.first(s3Locations);
+        }
+        return Objects.requireNonNull(s3Location);
+    }
 
     @Override
     public Source openSource(final Meta meta, final DataVolume dataVolume) throws DataException {
-        final Set<S3Location> s3Locations = dataVolumeService.findS3Locations(dataVolume);
-        if (NullSafe.size(s3Locations) > 1) {
-            throw new IllegalStateException(LogUtil.message(
-                    "DataVolume {} has more than one S3Location. This store only supports one S3Location. " +
-                    "s3Locations: {}",
-                    dataVolume, s3Locations));
-        }
-        // Legacy streams may still exist with no record in the s3Locations table,
-        // as we used to always derive the s3 bucket/key, thus it may be null, in which
-        // case it will be derived.
-        // As legacy streams are accessed, the s3 location will be persisted on successful download
-        // from S3.
-        final S3Location s3Location = NullSafe.first(s3Locations);
+        final S3Location s3Location = getS3Location(meta, dataVolume, true);
         return openSource(meta, dataVolume, s3Location, FilePadStyle.MULTIPLE_OF_THREE_DIGITS);
     }
 
@@ -149,20 +166,16 @@ public class S3StreamStore extends AbstractS3StreamStore {
                       final DataVolume dataVolume,
                       final S3Location s3Location,
                       final FilePadStyle filePadStyle) throws DataException {
-
-        final boolean shouldStoreLocation = s3Location == null;
-        // If no s3Location is provided (i.e. a legacy stream), derive it then we can store it
-        // after a successful download from S3.
-        final S3Location effectiveS3Location = Objects.requireNonNullElseGet(s3Location, () ->
-                deriveS3Location(dataVolume, meta));
-
-        Objects.requireNonNull(effectiveS3Location, "Null effectiveS3Location");
+        Objects.requireNonNull(meta);
+        Objects.requireNonNull(dataVolume);
+        Objects.requireNonNull(s3Location);
+        Objects.requireNonNull(filePadStyle);
 
         LOGGER.debug(
-                "openSource() - meta: {}, dataVolume: {}, s3Location: {}, filePadStyle: {}, effectiveS3Location: {}",
-                meta, dataVolume, s3Location, filePadStyle, effectiveS3Location);
+                "openSource() - meta: {}, dataVolume: {}, s3Location: {}, filePadStyle: {}, s3Location: {}",
+                meta, dataVolume, s3Location, filePadStyle, s3Location);
 
-        final TrackedSource trackedSource = cache.compute(meta.getId(), (k, v) -> {
+        final TrackedSource trackedSource = cacheByMetaId.compute(meta.getId(), (k, v) -> {
             if (v == null) {
                 final Path tempPath = createTempPath(meta.getId());
                 try {
@@ -176,15 +189,10 @@ public class S3StreamStore extends AbstractS3StreamStore {
                         s3Manager.download(
                                 meta,
                                 null,
-                                effectiveS3Location.getBucketName(),
-                                effectiveS3Location.getKey(),
+                                s3Location.getBucketName(),
+                                s3Location.getKey(),
                                 zipFile,
                                 true);
-
-                        // Successful download so store the location for future use.
-                        if (shouldStoreLocation) {
-                            storeS3Location(dataVolume, meta, effectiveS3Location);
-                        }
 
                         ZipUtil.unzip(zipFile, tempPath);
                     } catch (final IOException e) {
@@ -196,7 +204,6 @@ public class S3StreamStore extends AbstractS3StreamStore {
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);
                     deleteDir("Deleting source dir: ", tempPath);
-
                     throw e;
                 }
 
@@ -222,7 +229,7 @@ public class S3StreamStore extends AbstractS3StreamStore {
         return new S3Source(
                 this,
                 trackedSource.getPath(),
-                effectiveS3Location,
+                s3Location,
                 meta,
                 filePadStyle);
     }
@@ -244,63 +251,55 @@ public class S3StreamStore extends AbstractS3StreamStore {
                                                   final Progress progress) {
         Objects.requireNonNull(simpleMeta);
         Objects.requireNonNull(dataVolume);
+        boolean success = true;
         LOGGER.debug("physicallyDelete() - simpleMeta: {}, dataVolume: {}", simpleMeta, dataVolume);
         // Remove the files on S3 first.
-        final S3LocationDataVolume s3LocationDataVolume = dataVolumeService.findS3Locations(simpleMeta.getId());
+        // No point storing a derived location as we are deleting it anyway
+        final S3Location s3Location = getS3Location(simpleMeta, dataVolume, false);
         final List<S3Location> deletedLocations = new ArrayList<>();
-        if (s3LocationDataVolume != null && !s3LocationDataVolume.isEmpty()) {
-            final S3Manager s3Manager = createS3Manager(s3LocationDataVolume.dataVolume());
-            final Set<S3Location> s3Locations = s3LocationDataVolume.s3Locations();
-            s3Manager.delete(s3LocationDataVolume.s3Locations());
-            deletedLocations.addAll(s3Locations);
-
-            // Now remove the S3 location records in the DB.
-            fsMetaS3LocationDao.delete(List.of(simpleMeta.getId()));
-        } else {
-            LOGGER.debug("physicallyDelete() - Nothing to delete");
+        final S3Manager s3Manager = createS3Manager(dataVolume);
+        try {
+            s3Manager.delete(s3Location);
+            deletedLocations.add(s3Location);
+        } catch (final NoSuchKeyException e) {
+            LOGGER.warn("Unable to delete S3 object as key not found. May have previously been deleted. " +
+                        "s3Location: {}", s3Location);
+            success = false;
         }
 
-        return new S3PhysicalDeleteOutcome(true, dataVolume, simpleMeta, deletedLocations);
+        // Now remove the S3 location records in the DB.
+        final int count = fsMetaS3LocationDao.delete(List.of(simpleMeta.getId()));
+        LOGGER.debug("physicallyDelete() - simpleMeta: {}, dataVolume: {}, count: {}",
+                simpleMeta, dataVolume, count);
+
+        deleteCachedData(simpleMeta.getId());
+
+        return new S3PhysicalDeleteOutcome(success, dataVolume, simpleMeta, deletedLocations);
     }
 
-//    /// Deletes the locally cached source for a stream.
-//    ///
-//    /// @param metaId the ID of the stream whose cache should be deleted
-//    /// @return {@code true} if the cache was deleted or was not present
-//    boolean delete(final long metaId) {
-//        final boolean[] success = {true};
-//        cache.compute(metaId, (k, v) -> {
-//            if (v == null) {
-//                return null;
-//            }
-//
-//            if (deleteDirAndReport("Physical delete: ", v.getPath())) {
-//                synchronized (S3Store.this) {
-//                    evictable.remove(v);
-//                }
-//                return null;
-//            } else {
-//                success[0] = false;
-//                return v;
-//            }
-//        });
-//        return success[0];
-//    }
-//
-//    private boolean deleteDirAndReport(final String message, final Path dir) {
-//        if (dir == null) {
-//            return true;
-//        }
-//        try {
-//            LOGGER.debug(() -> message + FileUtil.getCanonicalPath(dir));
-//            FileUtil.deleteDir(dir);
-//            return true;
-//        } catch (final RuntimeException e) {
-//            LOGGER.debug(e::getMessage, e);
-//            return false;
-//        }
-//    }
+    /// Deletes the locally cached source for a stream.
+    ///
+    /// @param metaId the ID of the stream whose cache should be deleted
+    /// @return {@code true} if the cache was deleted or was not present
+    boolean deleteCachedData(final long metaId) {
+        final boolean[] success = {true};
+        cacheByMetaId.compute(metaId, (k, v) -> {
+            if (v == null) {
+                return null;
+            }
 
+            if (deleteDir("Deleting cached data for meta " + metaId + " - ", v.getPath())) {
+                synchronized (S3StreamStore.this) {
+                    evictable.remove(v);
+                }
+                return null;
+            } else {
+                success[0] = false;
+                return v;
+            }
+        });
+        return success[0];
+    }
 
     @Override
     public ValidationResult validateVolume(final FsVolume volume,
@@ -320,31 +319,8 @@ public class S3StreamStore extends AbstractS3StreamStore {
         return s3Location;
     }
 
-    private void storeS3Location(final DataVolume dataVolume,
-                                 final SimpleMeta simpleMeta,
-                                 final S3Location s3Location) {
-        Objects.requireNonNull(dataVolume);
-        Objects.requireNonNull(simpleMeta);
-        dataVolumeService.createS3LocationDataVolume(
-                simpleMeta.getId(),
-                dataVolume.volume(),
-                Set.of(s3Location),
-                false);
-        LOGGER.debug("storeS3Location() - dataVolume: {}, simpleMeta: {}, s3Location: {}",
-                dataVolume, simpleMeta, s3Location);
-    }
-
-
-//    private String getS3Path(final DataVolume dataVolume, final SimpleMeta simpleMeta) {
-//        final S3Manager s3Manager = createS3Manager(dataVolume);
-//        return "S3 > " +
-//               createBucketName(s3Manager.getBucketNamePattern(), simpleMeta) +
-//               " > " +
-//               createKey(s3Manager.getKeyNamePattern(), simpleMeta);
-//    }
-
     void release(final Meta meta, final Path path) {
-        cache.compute(meta.getId(), (ignored, v) -> {
+        cacheByMetaId.compute(meta.getId(), (ignored, v) -> {
             if (v == null) {
                 deleteDir("Release deleting: ", path);
             } else {
@@ -363,7 +339,7 @@ public class S3StreamStore extends AbstractS3StreamStore {
     }
 
     private void evict() {
-        if (cache.size() > MAX_CACHED_ITEMS) {
+        if (cacheByMetaId.size() > MAX_CACHED_ITEMS) {
             final List<TrackedSource> list;
             synchronized (S3StreamStore.this) {
                 list = new ArrayList<>(evictable);
@@ -371,8 +347,8 @@ public class S3StreamStore extends AbstractS3StreamStore {
             list.sort(Comparator.comparing(TrackedSource::getCreateTime));
 
             for (final TrackedSource trackedSource : list) {
-                if (cache.size() > MAX_CACHED_ITEMS) {
-                    cache.compute(trackedSource.metaId, (ignored, v) -> {
+                if (cacheByMetaId.size() > MAX_CACHED_ITEMS) {
+                    cacheByMetaId.compute(trackedSource.metaId, (ignored, v) -> {
                         if (v == null || v.getUseCount().get() == 0) {
                             deleteDir("Evict delete dir: ", trackedSource.getPath());
                             synchronized (S3StreamStore.this) {
@@ -412,7 +388,8 @@ public class S3StreamStore extends AbstractS3StreamStore {
                     meta,
                     attributeMap,
                     null,
-                    zipFile);
+                    zipFile,
+                    false);
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
@@ -432,14 +409,18 @@ public class S3StreamStore extends AbstractS3StreamStore {
         }
     }
 
-    private void deleteDir(final String message, final Path dir) {
+    private boolean deleteDir(final String message, final Path dir) {
         if (dir != null) {
             try {
                 LOGGER.debug(() -> message + FileUtil.getCanonicalPath(dir));
                 FileUtil.deleteDir(dir);
-            } catch (final RuntimeException e2) {
-                LOGGER.debug(e2::getMessage, e2);
+                return true;
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+                return false;
             }
+        } else {
+            return true;
         }
     }
 
@@ -514,6 +495,26 @@ public class S3StreamStore extends AbstractS3StreamStore {
         }
 
         return keyName;
+    }
+
+    public void shutdown() {
+        synchronized (S3StreamStore.this) {
+            LOGGER.debug(() -> LogUtil.message("shutdown() - Deleting {} cached items", cacheByMetaId.size()));
+            final AtomicInteger cnt = new AtomicInteger();
+            cacheByMetaId.forEach((ignored, trackedSource) -> {
+                if (trackedSource != null) {
+                    deleteDir("Shutdown deleting: ", trackedSource.getPath());
+                    try {
+                        Files.delete(trackedSource.getPath());
+                        cnt.incrementAndGet();
+                    } catch (final IOException e) {
+                        // It may have been deleted by cache eviction
+                        LOGGER.debug("Failed to delete file {}", trackedSource.getPath(), e);
+                    }
+                }
+            });
+            LOGGER.debug("shutdown() - Deleted {} cached items", cnt);
+        }
     }
 
 

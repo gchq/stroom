@@ -10,16 +10,16 @@
             <b:Toolbar name="Expression actions" addStyleNames="dock-max">
                 <b:ToolbarButton ui:field="addTerm" svg="ADD" title="Add Term"/>
                 <b:ToolbarButton ui:field="addOperator" svg="OPERATOR" title="Add Operator"/>
-                <b:ToolbarButton ui:field="copy" svg="COPY" title="Duplicate Selected Expression Item"
+                <b:ToolbarButton ui:field="copy" svg="COPY" title="Duplicate Selected Expression Item" label="Duplicate"
                                  enabled="false"/>
-                <b:ToolbarButton ui:field="disableItem" svg="DISABLE" title="Disable Selected Expression Item"
+                <b:ToolbarButton ui:field="disableItem" svg="DISABLE" title="Disable Selected Expression Item" label="Disable"
                                  enabled="false"/>
-                <b:ToolbarButton ui:field="deleteItem" svg="DELETE" title="Delete Selected Expression Item"
+                <b:ToolbarButton ui:field="deleteItem" svg="DELETE" title="Delete Selected Expression Item" label="Delete"
                                  enabled="false"/>
                 <b:ToolbarButton ui:field="history" svg="HISTORY" title="Show Query History"/>
                 <b:ToolbarButton ui:field="favourites" svg="FAVOURITES" title="Show Favourite Queries"/>
                 <b:ToolbarButton ui:field="downloadQuery" svg="DOWNLOAD" title="Download Query" enabled="false"/>
-                <b:ToolbarButton ui:field="process" svg="PROCESS" title="Process Query with Pipeline"
+                <b:ToolbarButton ui:field="process" svg="PROCESS" title="Process Query with Pipeline" label="Process Query"
                                  visible="false"/>
             </b:Toolbar>
             <b:Toolbar name="Query messages" addStyleNames="dock-min">

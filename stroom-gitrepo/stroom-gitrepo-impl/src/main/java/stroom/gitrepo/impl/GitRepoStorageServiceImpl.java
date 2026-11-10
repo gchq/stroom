@@ -29,7 +29,6 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.gitrepo.api.GitRepoStorageService;
-import stroom.gitrepo.impl.db.jooq.tables.GitRepo;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportSerializer;
@@ -41,6 +40,7 @@ import stroom.util.io.PathCreator;
 import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -289,7 +289,8 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                         if (calledFromUi) {
                             throw new IOException("No local changes; therefore not pushing to Git");
                         } else {
-                            LOGGER.info("{}: No local changes; not pushing to Git", gitRepoDoc.getName());
+                            LOGGER.debug(() -> LogUtil.message("{}: No local changes; not pushing to Git",
+                                    gitRepoDoc.getName()));
                         }
                     }
                 } catch (final GitAPIException e) {
@@ -724,7 +725,8 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
     private void gitCloneForPull(final GitRepoDoc gitRepoDoc,
                                  final Path gitWorkDir)
             throws IOException {
-        LOGGER.info("Cloning repository '{}' to '{}' for pull", gitRepoDoc.getUrl(), gitWorkDir);
+        LOGGER.info(() -> LogUtil.message("Cloning repository '{}' to '{}' for pull",
+                gitRepoDoc.getUrl(), gitWorkDir));
 
         // Delete everything under gitWork (including all git stuff)
         this.ensureDirectoryExists(gitWorkDir);
@@ -844,10 +846,10 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
             final String newGitCommitName = this.gitGetCurrentRevCommitName(git);
             final String oldGitCommitName = gitRepoDao.getHash(gitRepoDoc.getUuid());
 
-            LOGGER.info("Stroom commit: {}; git commit available: {}; match: {}",
+            LOGGER.debug(() -> LogUtil.message("Stroom commit: {}; git commit available: {}; match: {}",
                     oldGitCommitName,
                     newGitCommitName,
-                    Objects.equals(oldGitCommitName, newGitCommitName));
+                    Objects.equals(oldGitCommitName, newGitCommitName)));
             if (messages != null) {
                 if (oldGitCommitName == null) {
                     messages.add("Nothing downloaded; remote content available");
@@ -945,7 +947,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
      */
     @Override
     public boolean areUpdatesAvailable(final List<String> messages, final GitRepoDoc gitRepoDoc) throws IOException {
-        LOGGER.info("Checking if updates are available for '{}'", gitRepoDoc.getUrl());
+        LOGGER.debug(() -> LogUtil.message("Checking if updates are available for '{}'", gitRepoDoc.getUrl()));
 
         if (!gitRepoDoc.getUrl().isEmpty()) {
             final Path localDir = pathCreator.toAppPath(config.get().getLocalDir());

@@ -8,7 +8,7 @@
         <dg:PagerPanel ui:field="pager" toolbarName="Pathway actions">
             <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Pathway"/>
             <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Pathway" enabled="false"/>
-            <b:ToolbarButton ui:field="removeButton" svg="DELETE" title="Delete Selected Pathways" enabled="false"/>
+            <b:ToolbarButton ui:field="removeButton" svg="DELETE" title="Delete Selected Pathways" label="Delete" enabled="false"/>
             <dg:DataGrid ui:field="dataGrid" tableName="Pathways"/>
         </dg:PagerPanel>
     </v:QuickFilterPage>

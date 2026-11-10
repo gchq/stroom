@@ -10,7 +10,7 @@
              xmlns:svg="urn:import:stroom.svg.client">
     <g:HTMLPanel ui:field="root" styleName="ai-message">
         <div ui:field="header" class="ai-message__header">
-            <b:Toolbar name="Attachment" addStyleNames="ai-message__toolbar">
+            <b:Toolbar name="Attachment" addStyleNames="ai-message__toolbar toolbar--icons">
                 <!-- Named when the message is an attachment, so hidden ones are never found by name -->
                 <b:ToolbarButton ui:field="viewData" svg="TABLE"/>
             </b:Toolbar>
@@ -22,7 +22,7 @@
         </div>
         <div ui:field="content"></div>
         <div class="ai-message__footer">
-            <b:Toolbar ui:field="actions" name="Message" addStyleNames="ai-message__toolbar">
+            <b:Toolbar ui:field="actions" name="Message" addStyleNames="ai-message__toolbar toolbar--icons">
                 <!-- Named when the message can be deleted, for what it deletes -->
                 <b:ToolbarButton ui:field="delete" svg="DELETE" addStyleNames="ai-message__delete"/>
             </b:Toolbar>

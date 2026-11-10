@@ -5,7 +5,7 @@
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <dg:PagerPanel ui:field="pager" toolbarName="Task actions">
         <b:ToolbarToggleButton ui:field="autoRefreshButton" svg="AUTO_REFRESH" title="Auto Refresh" pressed="true"/>
-        <b:ToolbarButton ui:field="terminateButton" svg="DELETE" title="Terminate Selected Tasks"/>
+        <b:ToolbarButton ui:field="terminateButton" svg="DELETE" title="Terminate Selected Tasks" label="Terminate"/>
         <b:ToolbarButton ui:field="expandAllButton" svg="EXPAND_ALL" title="Expand All Tasks" enabled="false"/>
         <b:ToolbarButton ui:field="collapseAllButton" svg="COLLAPSE_ALL" title="Collapse All Tasks" enabled="false"/>
         <b:ToolbarToggleButton ui:field="wrapToggleButton" svg="TEXT_WRAP" title="Wrap Text"/>

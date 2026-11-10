@@ -5,8 +5,8 @@
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <dg:PagerPanel toolbarName="Constraint actions">
         <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Constraint"/>
-        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Constraint" enabled="false"/>
-        <b:ToolbarButton ui:field="removeButton" svg="DELETE" title="Delete Selected Constraints" enabled="false"/>
+        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Constraint" label="Edit" enabled="false"/>
+        <b:ToolbarButton ui:field="removeButton" svg="DELETE" title="Delete Selected Constraints" label="Delete" enabled="false"/>
         <dg:DataGrid ui:field="dataGrid" tableName="Constraints"/>
     </dg:PagerPanel>
 </ui:UiBinder>

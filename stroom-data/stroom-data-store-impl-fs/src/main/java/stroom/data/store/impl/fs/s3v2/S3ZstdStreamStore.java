@@ -31,7 +31,6 @@ import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
 import stroom.data.store.impl.fs.PhysicalDeleteOutcome;
 import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
-import stroom.data.store.impl.fs.shared.S3LocationDataVolume;
 import stroom.data.store.impl.fs.shared.ValidationResult;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
@@ -207,12 +206,7 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
         LOGGER.debug("physicallyDelete() - simpleMeta: {}, dataVolume: {}", simpleMeta, dataVolume);
         final long metaId = simpleMeta.getId();
 
-        // TODO Need to read all the file locations from fsMetaS3LocationDao
-        final S3LocationDataVolume s3LocationDataVolume = fsMetaS3LocationDao.getS3LocationDataVolume(
-                simpleMeta.getId());
-        final Set<S3Location> s3Locations = NullSafe.set(NullSafe.get(
-                s3LocationDataVolume,
-                S3LocationDataVolume::s3Locations));
+        final Set<S3Location> s3Locations = fsMetaS3LocationDao.getS3LocationDataVolume(dataVolume);
 
         final S3Manager s3Manager = createS3Manager(dataVolume);
 

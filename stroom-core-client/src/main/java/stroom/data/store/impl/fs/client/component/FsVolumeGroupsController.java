@@ -76,10 +76,12 @@ public class FsVolumeGroupsController extends ContentTabController {
         newButton = fsVolumeGroupList.getToolbar().button(SvgImage.ADD,
                 "New Data Volume Group", this::add);
         openButton = fsVolumeGroupList.getToolbar().button(SvgImage.EDIT,
-                "Edit Selected Data Volume Group", this::edit);
+                "Edit Selected Data Volume Group",
+                "Edit", this::edit);
         openButton.setEnabled(false);
         deleteButton = fsVolumeGroupList.getToolbar().button(SvgImage.DELETE,
-                "Delete Selected Data Volume Group", this::delete);
+                "Delete Selected Data Volume Group",
+                "Delete", this::delete);
         deleteButton.setEnabled(false);
 
         initWidget(fsVolumeGroupList.asWidget());

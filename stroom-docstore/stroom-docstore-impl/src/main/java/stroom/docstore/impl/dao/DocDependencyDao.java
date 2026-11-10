@@ -22,6 +22,7 @@ import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.db.DocStoreDbConnProvider;
 import stroom.docstore.impl.db.jooq.tables.Doc;
+import stroom.docstore.impl.db.jooq.tables.DocDependency;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.query.api.token.TokenErrorUtil;
@@ -66,6 +67,17 @@ public class DocDependencyDao {
     // Aliased doc tables for the LEFT JOINs
     private static final Doc FROM_DOC = DOC.as("d1");
     private static final Doc TO_DOC = DOC.as("d2");
+    // Aliased tables for finding the owner of a non-explorer source
+    private static final DocDependency OWNER_DEPENDENCY = DOC_DEPENDENCY.as("od");
+    private static final Doc OWNER_DOC = DOC.as("d3");
+
+    // Explorer-document types that "own" a non-explorer entity (e.g. a ProcessorFilter is owned by its
+    // Pipeline, or by its AnalyticRule for a streaming analytic filter). A non-explorer source (its
+    // from_uuid is absent from the doc table) takes its owner's name, and a broken dependency from it is
+    // rolled up to its owner, so it can surface on a real explorer tree node rather than being invisible.
+    // The owner is found via one of the source's own dependency edges of these types. Extend this set if
+    // other non-explorer entities with a different owner type are added to the dependency store.
+    private static final Set<String> OWNER_DOC_TYPES = Set.of("Pipeline", "AnalyticRule");
 
     private static final String STATUS_OK = "OK";
     private static final String STATUS_MISSING = "Missing";
@@ -75,8 +87,20 @@ public class DocDependencyDao {
     // Each exists in two forms. The unaliased *_EXPR form is for the WHERE clause: jOOQ renders an
     // .as(...) aliased field as a bare alias reference outside the SELECT clause, and MySQL does
     // not allow select aliases in WHERE. The aliased form is for SELECT and ORDER BY.
+    //
+    // A non-explorer source, e.g. a processor filter, has no name of its own, so it is shown with the live
+    // name of its owner, e.g. the filter's pipeline. Resolving this at read time means a rename of the
+    // owner needs no propagating. A subquery rather than a join so a source can never produce duplicate
+    // rows, and MIN() so it is a single value even if a source had more than one owner edge.
+    private static final Field<String> OWNER_NAME_EXPR = DSL.field(DSL
+            .select(DSL.min(OWNER_DOC.NAME))
+            .from(OWNER_DEPENDENCY)
+            .join(OWNER_DOC).on(OWNER_DOC.UUID.eq(OWNER_DEPENDENCY.TO_UUID)
+                    .and(OWNER_DOC.DELETED.isNull()))
+            .where(OWNER_DEPENDENCY.FROM_UUID.eq(DOC_DEPENDENCY.FROM_UUID))
+            .and(OWNER_DEPENDENCY.TO_TYPE.in(OWNER_DOC_TYPES)));
     private static final Field<String> FROM_NAME_EXPR =
-            DSL.coalesce(FROM_DOC.NAME, DOC_DEPENDENCY.FROM_NAME);
+            DSL.coalesce(FROM_DOC.NAME, OWNER_NAME_EXPR, DOC_DEPENDENCY.FROM_NAME);
     private static final Field<String> TO_NAME_EXPR =
             DSL.coalesce(TO_DOC.NAME, DOC_DEPENDENCY.TO_NAME);
     private static final Field<String> FROM_NAME_RESOLVED = FROM_NAME_EXPR.as("from_name_resolved");
@@ -123,14 +147,6 @@ public class DocDependencyDao {
                 ? targetExists.or(DOC_DEPENDENCY.TO_UUID.in(pseudoRefUuids))
                 : targetExists;
     }
-
-    // Explorer-document types that "own" a non-explorer entity (e.g. a ProcessorFilter is owned by its
-    // Pipeline). A broken dependency whose source is a non-explorer entity (its from_uuid is absent
-    // from the doc table) is rolled up to the owning document — found via one of the source's own
-    // dependency edges of these types — so it can surface on a real explorer tree node rather than
-    // being invisible. Extend this set if other non-explorer entities with a different owner type are
-    // added to the dependency store.
-    private static final Set<String> OWNER_DOC_TYPES = Set.of("Pipeline");
 
     /// The version of the dependency extraction logic. Each document's `dependency_version` column is
     /// stamped with this when its edges are written. Increment it when a change to the extraction logic
@@ -300,6 +316,18 @@ public class DocDependencyDao {
                                 r.get(DOC_DEPENDENCY.TO_TYPE),
                                 r.get(DOC_DEPENDENCY.TO_UUID),
                                 r.get(DOC_DEPENDENCY.TO_NAME)))));
+    }
+
+    /// Get the UUIDs of every source of the given type that has stored dependency edges.
+    ///
+    /// @param fromType The source type, e.g. `ProcessorFilter`.
+    /// @return The distinct source UUIDs. Empty if there are none.
+    public Set<String> getSourceUuids(final String fromType) {
+        return JooqUtil.contextResult(connProvider, context -> context
+                .selectDistinct(DOC_DEPENDENCY.FROM_UUID)
+                .from(DOC_DEPENDENCY)
+                .where(DOC_DEPENDENCY.FROM_TYPE.eq(fromType))
+                .fetchSet(DOC_DEPENDENCY.FROM_UUID));
     }
 
     /**

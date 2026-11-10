@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max default-min-sizes dock-container-vertical">
+    <g:FlowPanel styleName="max default-min-sizes form">
         <form:FormGroup identity="maxTotalRows" label="Max Total Rows"
                         helpText="Maximum number of rows taken from a table for AI analysis. If the table has more, the data is truncated and the AI is told so. 1 to 1,000,000. Default is 10,000."
                         screenReaderText="Rows, 1 to 1,000,000. Default is 10,000.">

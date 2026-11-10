@@ -8,7 +8,7 @@
         <dg:PagerPanel ui:field="pager" toolbarName="Account actions">
             <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Account"/>
             <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Account" enabled="false"/>
-            <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Account" enabled="false"/>
+            <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Account" label="Delete" enabled="false"/>
             <dg:DataGrid ui:field="dataGrid" pageSize="1000" tableName="Accounts"/>
         </dg:PagerPanel>
     </v:QuickFilterPage>

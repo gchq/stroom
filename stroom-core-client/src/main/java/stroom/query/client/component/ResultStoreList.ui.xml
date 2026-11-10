@@ -5,8 +5,8 @@
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <dg:PagerPanel ui:field="pager" toolbarName="Result store actions">
         <b:ToolbarButton ui:field="terminateButton" svg="STOP" title="Terminate Search" enabled="false"/>
-        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Result Store" enabled="false"/>
-        <b:ToolbarButton ui:field="settingsButton" svg="SETTINGS" title="Edit Result Store Settings"
+        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Result Store" label="Delete" enabled="false"/>
+        <b:ToolbarButton ui:field="settingsButton" svg="SETTINGS" title="Edit Result Store Settings" label="Edit"
                          enabled="false"/>
         <dg:DataGrid ui:field="dataGrid" tableName="Result Stores"/>
     </dg:PagerPanel>

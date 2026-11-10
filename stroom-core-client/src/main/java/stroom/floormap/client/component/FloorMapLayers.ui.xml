@@ -24,10 +24,10 @@
                          text="No layers configured. They are added on the Editor tab."
                          visible="false"/>
                 <g:FlowPanel ui:field="discoverFooter" addStyleNames="floor-map-layers__footer" visible="false">
-                    <b:Toolbar name="Discover types" addStyleNames="floor-map-layers__toolbar">
+                    <b:Toolbar name="Discover types" addStyleNames="floor-map-layers__toolbar toolbar--icons">
                         <b:ToolbarButton ui:field="discover"
                                          svg="REFRESH"
-                                         title="Discover types from the facts store"
+                                         title="Discover types from the facts store" label="Discover types"
                                          addStyleNames="floor-map-layers__discover"/>
                     </b:Toolbar>
                     <!-- Kept clickable as a larger pointer target for the button beside it, which

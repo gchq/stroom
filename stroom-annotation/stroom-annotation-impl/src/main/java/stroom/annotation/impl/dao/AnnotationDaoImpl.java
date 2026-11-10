@@ -2149,7 +2149,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     private void reloadEventIdCache() {
         final AnnotationConfig config = annotationConfigProvider.get();
         final int limit = config.getEventLinkCacheSizeLimit() + 1;
-        LOGGER.logDurationIfInfoEnabled(() -> {
+        LOGGER.logDurationIfDebugEnabled(() -> {
             final List<AnnotationEventLink> eventLinks = new ArrayList<>();
             JooqUtil.contextResult(connectionProvider, context -> context
                             .select(ANNOTATION_DATA_LINK.STREAM_ID,

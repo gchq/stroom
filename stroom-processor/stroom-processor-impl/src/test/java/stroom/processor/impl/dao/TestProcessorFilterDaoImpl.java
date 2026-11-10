@@ -28,6 +28,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
@@ -148,9 +150,13 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
 
         final Instant threshold = Instant.now().plus(1, ChronoUnit.DAYS);
 
-        processorFilterDao.logicallyDeleteOldProcessorFilters(threshold);
+        final Set<String> deletedUuids = processorFilterDao.logicallyDeleteOldProcessorFilters(threshold);
 
         dumpProcessorFilterTable();
+
+        // The caller is told which filters were deleted
+        assertThat(deletedUuids)
+                .containsExactly(processorFilter3.getUuid());
 
         // No change to row counts as they have been logically deleted
         assertThat(getProcessorCount(null))
@@ -330,6 +336,119 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
     }
 
     @Test
+    void testFetchUuidsByProcessorId() {
+        processor1 = createProcessor();
+        processor2 = createProcessor();
+        processorFilter1 = createProcessorFilter(processor1);
+        processorFilter2 = createProcessorFilter(processor1);
+        processorFilter3 = createProcessorFilter(processor2);
+        // Deleted filters are included
+        processorFilterDao.logicalDeleteByProcessorFilterId(processorFilter2.getId());
+
+        final Set<String> uuids = processorFilterDao.fetchUuidsByProcessorId(processor1.getId());
+
+        assertThat(uuids)
+                .containsExactlyInAnyOrder(processorFilter1.getUuid(), processorFilter2.getUuid());
+    }
+
+    @Test
+    void testFetchUuidsByProcessorId_noFilters() {
+        processor1 = createProcessor();
+
+        assertThat(processorFilterDao.fetchUuidsByProcessorId(processor1.getId()))
+                .isEmpty();
+    }
+
+    @Test
+    void testFetchExistingUuids() {
+        processor1 = createProcessor();
+        processorFilter1 = createProcessorFilter(processor1);
+        processorFilter2 = createProcessorFilter(processor1);
+        // Deleted filters still exist
+        processorFilterDao.logicalDeleteByProcessorFilterId(processorFilter2.getId());
+
+        final Set<String> uuids = processorFilterDao.fetchExistingUuids(List.of(
+                processorFilter1.getUuid(),
+                processorFilter2.getUuid(),
+                "unknown-uuid"));
+
+        assertThat(uuids)
+                .containsExactlyInAnyOrder(processorFilter1.getUuid(), processorFilter2.getUuid());
+    }
+
+    @Test
+    void testFetchExistingUuids_empty() {
+        assertThat(processorFilterDao.fetchExistingUuids(List.of()))
+                .isEmpty();
+        assertThat(processorFilterDao.fetchExistingUuids(null))
+                .isEmpty();
+    }
+
+    @Test
+    void testFindWithStaleDependencies() {
+        final int currentVersion = 2;
+        processor1 = createProcessor();
+        // Never stamped
+        processorFilter1 = createProcessorFilter(processor1);
+        // Stamped by an older version
+        processorFilter2 = createProcessorFilter(processor1);
+        processorFilterDao.setDependencyVersion(processorFilter2.getId(), processorFilter2.getVersion(), 1);
+        // Stamped by the current version
+        processorFilter3 = createProcessorFilter(processor1);
+        processorFilterDao.setDependencyVersion(
+                processorFilter3.getId(), processorFilter3.getVersion(), currentVersion);
+        // Deleted filters are included so their edges can be removed
+        final ProcessorFilter deletedFilter = createProcessorFilter(processor1);
+        processorFilterDao.logicalDeleteByProcessorFilterId(deletedFilter.getId());
+
+        final List<ProcessorFilter> staleFilters = processorFilterDao.findWithStaleDependencies(
+                currentVersion, 0, 100);
+
+        assertThat(staleFilters)
+                .extracting(ProcessorFilter::getUuid)
+                .containsExactly(processorFilter1.getUuid(), processorFilter2.getUuid(), deletedFilter.getUuid());
+        assertThat(staleFilters)
+                .last()
+                .extracting(ProcessorFilter::isDeleted)
+                .isEqualTo(true);
+        // The processor is included so its pipeline and deleted state are known
+        assertThat(staleFilters)
+                .first()
+                .extracting(ProcessorFilter::getPipelineUuid)
+                .isEqualTo(processor1.getPipelineUuid());
+    }
+
+    @Test
+    void testFindWithStaleDependencies_batches() {
+        processor1 = createProcessor();
+        processorFilter1 = createProcessorFilter(processor1);
+        processorFilter2 = createProcessorFilter(processor1);
+        processorFilter3 = createProcessorFilter(processor1);
+
+        final List<ProcessorFilter> firstBatch = processorFilterDao.findWithStaleDependencies(1, 0, 2);
+        final List<ProcessorFilter> secondBatch = processorFilterDao.findWithStaleDependencies(
+                1, firstBatch.getLast().getId(), 2);
+
+        assertThat(firstBatch)
+                .extracting(ProcessorFilter::getUuid)
+                .containsExactly(processorFilter1.getUuid(), processorFilter2.getUuid());
+        assertThat(secondBatch)
+                .extracting(ProcessorFilter::getUuid)
+                .containsExactly(processorFilter3.getUuid());
+    }
+
+    @Test
+    void testLogicallyDeleteOldProcessorFilters_noneToDelete() {
+        processor1 = createProcessor();
+        processorFilter1 = createProcessorFilter(processor1);
+
+        assertThat(processorFilterDao.logicallyDeleteOldProcessorFilters(Instant.now().plus(1, ChronoUnit.DAYS)))
+                .isEmpty();
+        assertThat(getProcessorFilterCount(PROCESSOR_FILTER.DELETED.eq(true)))
+                .isEqualTo(0);
+    }
+
+    @Test
     void restoringUndeletesTheProcessor() {
         final Processor processor = createProcessor();
         final ProcessorFilter original = createProcessorFilter(processor);
@@ -371,5 +490,44 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
                 .getProcessorFilterTracker()
                 .getNextPollMs())
                 .isEqualTo(1234L);
+    }
+
+    @Test
+    void testSetDependencyVersion() {
+        processor1 = createProcessor();
+        processorFilter1 = createProcessorFilter(processor1);
+
+        final boolean stamped = processorFilterDao.setDependencyVersion(
+                processorFilter1.getId(), processorFilter1.getVersion(), 1);
+
+        assertThat(stamped)
+                .isTrue();
+        assertThat(processorFilterDao.findWithStaleDependencies(1, 0, 100))
+                .isEmpty();
+        // Stamping is not a change to the filter, so its version is unchanged
+        assertThat(processorFilterDao.fetch(processorFilter1.getId()).orElseThrow().getVersion())
+                .isEqualTo(processorFilter1.getVersion());
+    }
+
+    @Test
+    void testSetDependencyVersion_filterChangedSinceRead() {
+        processor1 = createProcessor();
+        processorFilter1 = createProcessorFilter(processor1);
+        processorFilterDao.update(processorFilter1.copy().priority(99).build());
+
+        final boolean stamped = processorFilterDao.setDependencyVersion(
+                processorFilter1.getId(), processorFilter1.getVersion(), 1);
+
+        assertThat(stamped)
+                .isFalse();
+        assertThat(processorFilterDao.findWithStaleDependencies(1, 0, 100))
+                .extracting(ProcessorFilter::getUuid)
+                .containsExactly(processorFilter1.getUuid());
+    }
+
+    @Test
+    void testSetDependencyVersion_unknownFilter() {
+        assertThat(processorFilterDao.setDependencyVersion(-1, 1, 1))
+                .isFalse();
     }
 }

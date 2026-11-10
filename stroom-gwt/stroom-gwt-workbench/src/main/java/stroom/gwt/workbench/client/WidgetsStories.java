@@ -26,6 +26,7 @@ import stroom.gwt.workbench.client.widgets.buttons.RefreshButtonStories;
 import stroom.gwt.workbench.client.widgets.buttons.StepControlsStories;
 import stroom.gwt.workbench.client.widgets.buttons.ToolbarButtonStateStories;
 import stroom.gwt.workbench.client.widgets.buttons.ToolbarButtonStories;
+import stroom.gwt.workbench.client.widgets.buttons.ToolbarDisplayStories;
 import stroom.gwt.workbench.client.widgets.buttons.ToolbarStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.DocRefCellStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.DocumentTypeCellStories;
@@ -193,6 +194,7 @@ public final class WidgetsStories {
         ToolbarStories.addTo(registry);
         // Widgets/Buttons/ToolbarButtonStates
         ToolbarButtonStateStories.addTo(registry);
+        ToolbarDisplayStories.addTo(registry);
         // Widgets/Buttons/ButtonStates
         ButtonStateStories.addTo(registry);
         // Widgets/Date & Time/CalendarGrid

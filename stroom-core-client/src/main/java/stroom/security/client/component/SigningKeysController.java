@@ -73,12 +73,13 @@ public class SigningKeysController extends ContentTabController implements HasRe
         initWidget(signingKeyList.asWidget());
 
         signingKeyList.getToolbar().setName("Signing key actions");
-        revokeButton = signingKeyList.getToolbar().button(SvgImage.DELETE, "Revoke Selected Signing Key",
+        revokeButton = signingKeyList.getToolbar().button(SvgImage.DELETE, "Revoke Selected Signing Key", "Revoke",
                 this::revokeSelected);
         revokeButton.setEnabled(false);
         // Always enabled: it acts on every key rather than the selected one, so setButtonStates() —
         // which is driven by the selection — has nothing to say about it.
         revokeAllButton = signingKeyList.getToolbar().button(SvgImage.CLEAR, "Revoke All Signing Keys Still in Use",
+                "Revoke All",
                 this::revokeAll);
 
         own(getSelectionModel().addSelectionHandler(e -> setButtonStates()));

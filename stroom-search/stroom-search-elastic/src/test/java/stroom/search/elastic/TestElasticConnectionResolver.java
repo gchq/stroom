@@ -20,6 +20,8 @@ import stroom.credentials.api.HttpConfigResolver;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.shared.AccessTokenSecret;
+import stroom.credentials.shared.Credential;
+import stroom.credentials.shared.CredentialType;
 import stroom.credentials.shared.UsernamePasswordSecret;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.util.shared.PermissionException;
@@ -35,6 +37,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -89,7 +93,7 @@ class TestElasticConnectionResolver {
     @Test
     void testResolve_accessToken() {
         when(storedSecrets.get(API_KEY_NAME))
-                .thenReturn(new StoredSecret(null, new AccessTokenSecret(" encodedKey== "), null));
+                .thenReturn(new StoredSecret(createCred(), new AccessTokenSecret(" encodedKey== "), null));
 
         final ResolvedElasticConnection connection = resolver.resolve(
                 new ElasticConnectionConfig(URLS, API_KEY_NAME, null));
@@ -114,7 +118,7 @@ class TestElasticConnectionResolver {
     @Test
     void testResolve_wrongCredentialType() {
         when(storedSecrets.get(API_KEY_NAME))
-                .thenReturn(new StoredSecret(null, new UsernamePasswordSecret("user", "pass"), null));
+                .thenReturn(new StoredSecret(createCred(), new UsernamePasswordSecret("user", "pass"), null));
 
         assertThatThrownBy(() -> resolver.resolve(new ElasticConnectionConfig(URLS, API_KEY_NAME, null)))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -124,7 +128,7 @@ class TestElasticConnectionResolver {
     @Test
     void testResolve_blankAccessToken() {
         when(storedSecrets.get(API_KEY_NAME))
-                .thenReturn(new StoredSecret(null, new AccessTokenSecret("  "), null));
+                .thenReturn(new StoredSecret(createCred(), new AccessTokenSecret("  "), null));
 
         assertThatThrownBy(() -> resolver.resolve(new ElasticConnectionConfig(URLS, API_KEY_NAME, null)))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -152,5 +156,23 @@ class TestElasticConnectionResolver {
 
         assertThat(resolver.resolve(config))
                 .isEqualTo(resolver.resolve(config));
+    }
+
+    private Credential createCred() {
+        return createCred(null);
+    }
+
+    private Credential createCred(final String uuid) {
+        final long now = System.currentTimeMillis();
+        return new Credential(
+                Objects.requireNonNullElseGet(uuid, () -> UUID.randomUUID().toString()),
+                "MyCredential",
+                now,
+                now,
+                "admin",
+                "admin",
+                CredentialType.USERNAME_PASSWORD,
+                null,
+                null);
     }
 }

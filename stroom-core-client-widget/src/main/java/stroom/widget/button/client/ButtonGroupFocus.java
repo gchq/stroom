@@ -84,6 +84,11 @@ public final class ButtonGroupFocus {
         update();
     }
 
+    /// @return Whether the buttons are in a column.
+    public boolean isVertical() {
+        return vertical;
+    }
+
     /// Names the group, e.g. "Dictionary actions", which a screen reader announces with its role.
     /// The name is only given while the group is a toolbar (has two or more buttons), as a name on
     /// an element with no role is ignored, and flagged by accessibility checkers.

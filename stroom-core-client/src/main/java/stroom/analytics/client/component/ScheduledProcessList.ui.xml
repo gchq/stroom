@@ -5,8 +5,8 @@
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <dg:PagerPanel ui:field="pager" toolbarName="Schedule actions">
         <b:ToolbarButton ui:field="addButton" svg="ADD" title="New Execution Schedule"/>
-        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Execution Schedule" enabled="false"/>
-        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Execution Schedule"
+        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Execution Schedule" label="Edit" enabled="false"/>
+        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Execution Schedule" label="Delete"
                          enabled="false"/>
         <dg:DataGrid ui:field="dataGrid" tableName="Scheduled Processes"/>
     </dg:PagerPanel>

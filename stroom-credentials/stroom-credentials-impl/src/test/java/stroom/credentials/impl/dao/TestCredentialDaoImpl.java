@@ -26,6 +26,7 @@ import stroom.credentials.shared.FindCredentialRequest;
 import stroom.credentials.shared.KeyStoreFileSecret;
 import stroom.credentials.shared.Secret;
 import stroom.credentials.shared.UsernamePasswordSecret;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
@@ -181,8 +182,9 @@ public class TestCredentialDaoImpl {
         assertThat(credentialsDao.getCredentialByUuid("file").getKeyStorePath())
                 .isEqualTo("/etc/certs/client.p12");
 
-        credentialsDao.updateSecret(new StoredSecret(new Credential("file",
-                null,
+        credentialsDao.updateSecret(new StoredSecret(new Credential(
+                "file",
+                "my cred",
                 null,
                 3_000L,
                 null,
@@ -273,7 +275,7 @@ public class TestCredentialDaoImpl {
                 null,
                 filter,
                 null,
-                null);
+                DocumentPermission.EDIT);
         return credentialsDao.findCredentialsWithPermissions(request, cred ->
                 new CredentialWithPerms(cred, true, true));
     }
@@ -302,7 +304,7 @@ public class TestCredentialDaoImpl {
                 credentialType == null
                         ? null
                         : Set.of(credentialType),
-                null);
+                DocumentPermission.EDIT);
     }
 
     private ResultPage<CredentialWithPerms> find(final CredentialType credentialType) {

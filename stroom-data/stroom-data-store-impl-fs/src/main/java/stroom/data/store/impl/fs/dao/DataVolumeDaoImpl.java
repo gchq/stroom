@@ -124,9 +124,8 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
 
     @Override
     public DataVolume createDataVolume(final long metaId, final FsVolume volume) {
-        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> {
-            return createDataVolume(context, metaId, volume);
-        });
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context ->
+                createDataVolume(context, metaId, volume));
     }
 
     @Override

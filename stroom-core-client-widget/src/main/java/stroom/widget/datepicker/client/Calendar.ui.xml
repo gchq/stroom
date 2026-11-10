@@ -13,7 +13,7 @@
         <g:FlowPanel styleName="calendar__header">
             <g:FlowPanel styleName="calendar__row">
                 <i:SelectionBox ui:field="yearSelect" addStyleNames="calendar__select" ariaLabel="Year"/>
-                <b:Toolbar name="Year" addStyleNames="calendar__toolbar">
+                <b:Toolbar name="Year" addStyleNames="calendar__toolbar toolbar--icons">
                     <b:ToolbarButton ui:field="previousYear" addStyleNames="calendar__button toolbar-button--arrow"
                                      svg="ARROW_LEFT" title="Previous Year"/>
                     <b:ToolbarButton ui:field="nextYear" addStyleNames="calendar__button toolbar-button--arrow"
@@ -22,7 +22,7 @@
             </g:FlowPanel>
             <g:FlowPanel styleName="calendar__row">
                 <i:SelectionBox ui:field="monthSelect" addStyleNames="calendar__select" ariaLabel="Month"/>
-                <b:Toolbar name="Month" addStyleNames="calendar__toolbar">
+                <b:Toolbar name="Month" addStyleNames="calendar__toolbar toolbar--icons">
                     <b:ToolbarButton ui:field="previousMonth" addStyleNames="calendar__button toolbar-button--arrow"
                                      svg="ARROW_LEFT" title="Previous Month"/>
                     <b:ToolbarButton ui:field="nextMonth" addStyleNames="calendar__button toolbar-button--arrow"

@@ -88,6 +88,7 @@ public class S3Manager {
     static final String META_METADATA_KEY_PREFIX = "meta-";
 
     public static final String META_ID_TAG_KEY = "meta-id";
+    public static final boolean DEFAULT_ALLOW_OVERWRITE = false;
 
     private final S3ClientConfig s3ClientConfig;
     private final S3ClientHelper s3ClientHelper;
@@ -109,7 +110,7 @@ public class S3Manager {
      * {@link Meta} is used to provide values for the templated bucket name.
      */
     public String createBucketName(final SimpleMeta meta, final TimeBasis timeBasis) {
-        return createBucketName(null, timeBasis);
+        return createBucketName(null, meta, timeBasis);
     }
 
     /**
@@ -165,11 +166,12 @@ public class S3Manager {
      * combination with {@link SimpleMeta}.
      */
     public S3Location deriveS3Location(final SimpleMeta meta, final TimeBasis timeBasis) {
-        final String region = s3ClientConfig.getRegion();
-        final String key = createKey(meta, timeBasis);
-        final String bucket = createBucketName(meta, timeBasis);
-        final S3Location s3Location = new S3Location(region, key, bucket);
-        LOGGER.debug("createS3Location() - meta: {}, s3Location: {}", meta, s3Location);
+        final String region = Objects.requireNonNull(s3ClientConfig.getRegion(),
+                "'region' not configured in S3 client configuration");
+        final String key = createKey(null, meta, timeBasis);
+        final String bucket = createBucketName(null, meta, timeBasis);
+        final S3Location s3Location = new S3Location(region, bucket, key);
+        LOGGER.debug("createS3Location() - meta: {}, timeBasis: {}, s3Location: {}", meta, timeBasis, s3Location);
         return s3Location;
     }
 
@@ -265,7 +267,8 @@ public class S3Manager {
     public PutObjectResponse upload(final Meta meta,
                                     final AttributeMap attributeMap,
                                     final Path source,
-                                    final TimeBasis timeBasis) {
+                                    final TimeBasis timeBasis,
+                                    final boolean allowOverwrite) {
         return upload(
                 getBucketNamePattern(),
                 getKeyNamePattern(),
@@ -273,13 +276,15 @@ public class S3Manager {
                 convertAttributeMapToS3Metadata(attributeMap),
                 null,
                 source,
-                timeBasis);
+                timeBasis,
+                allowOverwrite);
     }
 
     public PutObjectResponse upload(final Meta meta,
                                     final Map<CIKey, String> s3MetaData,
                                     final Path source,
-                                    final TimeBasis timeBasis) {
+                                    final TimeBasis timeBasis,
+                                    final boolean allowOverwrite) {
         return upload(
                 getBucketNamePattern(),
                 getKeyNamePattern(),
@@ -287,7 +292,8 @@ public class S3Manager {
                 s3MetaData,
                 null,
                 source,
-                timeBasis);
+                timeBasis,
+                allowOverwrite);
     }
 
     /**
@@ -305,7 +311,8 @@ public class S3Manager {
                                     final Meta meta,
                                     final AttributeMap attributeMap,
                                     final S3UploadProperties uploadProperties,
-                                    final Path source) {
+                                    final Path source,
+                                    final boolean allowOverwrite) {
         NullSafe.requireNonBlankString(bucketName);
         NullSafe.requireNonBlankString(key);
         final Map<String, String> tags = createS3TagsFromMeta(meta);
@@ -315,7 +322,8 @@ public class S3Manager {
                 tags,
                 convertAttributeMapToS3Metadata(attributeMap),
                 uploadProperties,
-                source);
+                source,
+                allowOverwrite);
     }
 
     /**
@@ -333,7 +341,8 @@ public class S3Manager {
                                     final Meta meta,
                                     final Map<CIKey, String> s3MetaData,
                                     final S3UploadProperties uploadProperties,
-                                    final Path source) {
+                                    final Path source,
+                                    final boolean allowOverwrite) {
         NullSafe.requireNonBlankString(bucketName);
         NullSafe.requireNonBlankString(key);
         final Map<String, String> tags = createS3TagsFromMeta(meta);
@@ -343,7 +352,8 @@ public class S3Manager {
                 tags,
                 s3MetaData,
                 uploadProperties,
-                source);
+                source,
+                allowOverwrite);
     }
 
     public PutObjectResponse upload(final String bucketNamePattern,
@@ -352,7 +362,8 @@ public class S3Manager {
                                     final Map<CIKey, String> s3MetaData,
                                     final S3UploadProperties uploadProperties,
                                     final Path source,
-                                    final TimeBasis timeBasis) {
+                                    final TimeBasis timeBasis,
+                                    final boolean allowOverwrite) {
         final String bucketName = createBucketName(bucketNamePattern, meta, timeBasis);
         final String key = createKey(keyNamePattern, meta, timeBasis);
         final Map<String, String> tags = createS3TagsFromMeta(meta);
@@ -362,7 +373,8 @@ public class S3Manager {
                 tags,
                 s3MetaData,
                 uploadProperties,
-                source);
+                source,
+                allowOverwrite);
     }
 
     private Map<CIKey, String> convertAttributeMapToS3Metadata(final AttributeMap attributeMap) {
@@ -770,28 +782,32 @@ public class S3Manager {
                                  final AtomicLong sequenceNumber,
                                  final TimeBasis timeBasis) {
         final Template template = templateCache.getTemplate(templateStr);
-        ExecutorBuilder executorBuilder = template.buildExecutor();
+        final String output;
+        if (template.isStatic()) {
+            output = templateStr;
+        } else {
+            ExecutorBuilder executorBuilder = template.buildExecutor();
 
-        executorBuilder = executorBuilder
-                .addUuidReplacement(false)
-                .addLazyReplacement(FEED_VAR, meta::getFeedName)
-                .addLazyReplacement(TYPE_VAR, meta::getTypeName)
-                .addLazyReplacement(ID_VAR, () -> String.valueOf(meta.getId()))
-                .addLazyReplacement(ID_PATH_VAR, () -> getIdPath(meta.getId()))
-                .addLazyReplacement(ID_PADDED_VAR, () -> padId(meta.getId()))
-                .addStandardTimeReplacements(() ->
-                        getTimeForVariableReplacement(timeBasis, meta));
+            executorBuilder = executorBuilder
+                    .addUuidReplacement(false)
+                    .addLazyReplacement(FEED_VAR, meta::getFeedName)
+                    .addLazyReplacement(TYPE_VAR, meta::getTypeName)
+                    .addLazyReplacement(ID_VAR, () -> String.valueOf(meta.getId()))
+                    .addLazyReplacement(ID_PATH_VAR, () -> getIdPath(meta.getId()))
+                    .addLazyReplacement(ID_PADDED_VAR, () -> padId(meta.getId()))
+                    .addStandardTimeReplacements(() ->
+                            getTimeForVariableReplacement(timeBasis, meta));
 
-        if (contextVariableResolver != null) {
-            contextVariableResolver.addContextReplacements(executorBuilder);
+            if (contextVariableResolver != null) {
+                contextVariableResolver.addContextReplacements(executorBuilder);
+            }
+
+            if (sequenceNumber != null) {
+                executorBuilder = executorBuilder.addSequenceNumberReplacement(
+                        SEQUENCE_NO_VAR, sequenceNumber, true);
+            }
+            output = executorBuilder.execute();
         }
-
-        if (sequenceNumber != null) {
-            executorBuilder = executorBuilder.addSequenceNumberReplacement(
-                    SEQUENCE_NO_VAR, sequenceNumber, true);
-        }
-        final String output = executorBuilder.execute();
-
         LOGGER.debug("applyTemplate() - template: '{}', timeBasis: {}, output: '{}", template, timeBasis, output);
         return output;
     }

@@ -19606,13 +19606,13 @@ components:
     ReplaceSecretRequest:
       type: object
       properties:
+        credential:
+          $ref: "#/components/schemas/Credential"
         expiryTimeMs:
           type: integer
           format: int64
         secret:
           $ref: "#/components/schemas/Secret"
-        uuid:
-          type: string
     ReportDoc:
       type: object
       properties:
@@ -23292,6 +23292,12 @@ components:
           type: string
         timeZone:
           $ref: "#/components/schemas/UserTimeZone"
+        toolbarDisplay:
+          type: string
+          enum:
+          - ICONS
+          - ICONS_AND_TEXT
+          - TEXT
         visualisationPalette:
           type: string
     UserRef:

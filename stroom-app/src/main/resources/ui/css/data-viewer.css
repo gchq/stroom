@@ -64,6 +64,17 @@
     height: 0px;
 }
 
+/* Not a dialog's gap below its tabs (tab-bar.css): they share a row with the navigator, and the
+   progress bar's room is below them, so the content is spaced from them as it is in a pane */
+.dialog__content .data-viewer__layer-container {
+    padding-top: 0;
+}
+
+/* Nor its tab bar's room below drawn into that gap, which would pull the bar off the row's centre */
+.dialog__content .data-viewer__tab-bar-outer .data-viewer__tab-bar-inner {
+    margin-bottom: 0;
+}
+
 /* The source link (a LinkButton, which has a pointer and an underline on a hover): greyed while
    it can't be followed (DisabledState's class), with no pointer or underline */
 .data-viewer__source-link-label.disabled,

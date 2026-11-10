@@ -67,6 +67,59 @@
     inset: 0;
 }
 
+/* Panes that hold forms (e.g. a filter's Include and Exclude), which clip, so a form can't reach out
+   of its pane for room for focus rings (layout-helpers.css): what each pane holds is inset by the
+   room, and the split pane reaches as far outside its place (into its parent's room), so the forms'
+   controls, and a bordered box beside them (e.g. a list), stay where they were */
+.split-pane--forms {
+    width: calc(100% + 2 * var(--focus-ring__room));
+    height: calc(100% + 2 * var(--focus-ring__room));
+    margin: calc(-1 * var(--focus-ring__room));
+}
+
+/* A form (split-pane__form, on a .form) fills its pane, its padding the room (not reaching out of the
+   pane, as .form.max does elsewhere, which this outranks) */
+.split-pane.split-pane--forms > .split-pane__pane > .split-pane__form {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+/* Anything else (e.g. a bordered list, which may not be placed as the pane's widgets are, above) is
+   inset by the room at the split pane's edges, back where it was, but not beside a splitter, which it
+   was already against (outranking a scroll pane's size, scroll-pane.css) */
+.split-pane.split-pane--forms > .split-pane__pane > :not(.split-pane__form) {
+    width: 100%;
+    height: calc(100% - 2 * var(--focus-ring__room));
+    margin: var(--focus-ring__room) 0;
+}
+
+.split-pane.split-pane--forms > .split-pane__pane:first-child > :not(.split-pane__form) {
+    width: calc(100% - var(--focus-ring__room));
+    margin-left: var(--focus-ring__room);
+}
+
+.split-pane.split-pane--forms > .split-pane__pane:last-child > :not(.split-pane__form) {
+    width: calc(100% - var(--focus-ring__room));
+    margin-right: var(--focus-ring__room);
+}
+
+.split-pane--vertical.split-pane--forms > .split-pane__pane > :not(.split-pane__form) {
+    width: calc(100% - 2 * var(--focus-ring__room));
+    height: 100%;
+    margin: 0 var(--focus-ring__room);
+}
+
+.split-pane--vertical.split-pane--forms > .split-pane__pane:first-child > :not(.split-pane__form) {
+    height: calc(100% - var(--focus-ring__room));
+    margin-top: var(--focus-ring__room);
+}
+
+.split-pane--vertical.split-pane--forms > .split-pane__pane:last-child > :not(.split-pane__form) {
+    height: calc(100% - var(--focus-ring__room));
+    margin-bottom: var(--focus-ring__room);
+}
+
 /* A splitter. It can be grabbed by more than its track (its margins reach into the panes): a
    regular splitter's track is the gap between its panes, a thin splitter's its 1px line. */
 .split-pane__splitter {

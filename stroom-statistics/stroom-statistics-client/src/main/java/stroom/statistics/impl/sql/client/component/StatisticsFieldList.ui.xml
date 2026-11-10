@@ -5,8 +5,8 @@
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <dg:PagerPanel toolbarName="Field actions">
         <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Statistic Field"/>
-        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Statistic Field" enabled="false"/>
-        <b:ToolbarButton ui:field="removeButton" svg="REMOVE" title="Remove Selected Statistic Fields"
+        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Statistic Field" label="Edit" enabled="false"/>
+        <b:ToolbarButton ui:field="removeButton" svg="REMOVE" title="Remove Selected Statistic Fields" label="Remove"
                          enabled="false"/>
         <dg:DataGrid ui:field="dataGrid" tableName="Statistics Fields"/>
     </dg:PagerPanel>

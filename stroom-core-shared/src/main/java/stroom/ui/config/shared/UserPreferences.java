@@ -111,6 +111,11 @@ public class UserPreferences {
                              "the browser's.")
     private final TextContextMenu textContextMenu;
 
+    @JsonProperty
+    @JsonPropertyDescription("How toolbar buttons are shown: as icons (`ICONS`), as icons with their names " +
+                             "(`ICONS_AND_TEXT`) or as their names alone (`TEXT`).")
+    private final ToolbarDisplay toolbarDisplay;
+
     @JsonCreator
     public UserPreferences(@JsonProperty("theme") final String theme,
                            @JsonProperty("editorTheme") final String editorTheme,
@@ -127,7 +132,8 @@ public class UserPreferences {
                            @JsonProperty("keyBindings") final Map<String, List<String>> keyBindings,
                            @JsonProperty("enableCharacterKeyShortcuts") final Boolean enableCharacterKeyShortcuts,
                            @JsonProperty("visualisationPalette") final String visualisationPalette,
-                           @JsonProperty("textContextMenu") final TextContextMenu textContextMenu) {
+                           @JsonProperty("textContextMenu") final TextContextMenu textContextMenu,
+                           @JsonProperty("toolbarDisplay") final ToolbarDisplay toolbarDisplay) {
         this.theme = theme;
         this.editorTheme = editorTheme;
         this.editorKeyBindings = Objects.requireNonNullElse(
@@ -146,6 +152,7 @@ public class UserPreferences {
         this.enableCharacterKeyShortcuts = Objects.requireNonNullElse(enableCharacterKeyShortcuts, true);
         this.visualisationPalette = visualisationPalette;
         this.textContextMenu = Objects.requireNonNullElse(textContextMenu, TextContextMenu.DEFAULT);
+        this.toolbarDisplay = Objects.requireNonNullElse(toolbarDisplay, ToolbarDisplay.DEFAULT);
     }
 
     public String getTheme() {
@@ -219,6 +226,11 @@ public class UserPreferences {
         return textContextMenu;
     }
 
+    /// @return How toolbar buttons are shown: as icons, icons and text, or text.
+    public ToolbarDisplay getToolbarDisplay() {
+        return toolbarDisplay;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -243,7 +255,8 @@ public class UserPreferences {
                Objects.equals(keyBindings, that.keyBindings) &&
                Objects.equals(enableCharacterKeyShortcuts, that.enableCharacterKeyShortcuts) &&
                Objects.equals(visualisationPalette, that.visualisationPalette) &&
-               textContextMenu == that.textContextMenu;
+               textContextMenu == that.textContextMenu &&
+               toolbarDisplay == that.toolbarDisplay;
     }
 
     @Override
@@ -262,7 +275,8 @@ public class UserPreferences {
                 keyBindings,
                 enableCharacterKeyShortcuts,
                 visualisationPalette,
-                textContextMenu);
+                textContextMenu,
+                toolbarDisplay);
     }
 
     @Override
@@ -284,6 +298,7 @@ public class UserPreferences {
                ", enableCharacterKeyShortcuts=" + enableCharacterKeyShortcuts +
                ", visualisationPalette='" + visualisationPalette + '\'' +
                ", textContextMenu=" + textContextMenu +
+               ", toolbarDisplay=" + toolbarDisplay +
                '}';
     }
 
@@ -375,6 +390,45 @@ public class UserPreferences {
     //--------------------------------------------------------------------------------
 
 
+    /// How toolbar buttons are shown. Only an action toolbar's buttons follow it: buttons in or
+    /// beside a field, a pager's arrows and the like stay icons (`toolbar--icons`).
+    public enum ToolbarDisplay {
+        /// Each button's icon, its name its tooltip (the default).
+        ICONS("Icons"),
+        /// Each button's icon and its label beside it.
+        ICONS_AND_TEXT("Icons and Text"),
+        /// Each button's label, with no icon.
+        TEXT("Text");
+
+        public static final ToolbarDisplay DEFAULT = ICONS;
+
+        private final String displayValue;
+
+        ToolbarDisplay(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        /// @return The value's name, as the preferences dialog shows it.
+        public String getDisplayValue() {
+            return displayValue;
+        }
+
+        /// @param displayValue A value's name, as the preferences dialog shows it.
+        /// @return The value, or the default if the name is no value's.
+        public static ToolbarDisplay fromDisplayValue(final String displayValue) {
+            for (final ToolbarDisplay value : values()) {
+                if (value.displayValue.equalsIgnoreCase(displayValue)) {
+                    return value;
+                }
+            }
+            return DEFAULT;
+        }
+    }
+
+
+    //--------------------------------------------------------------------------------
+
+
     public static final class Builder {
 
         private String theme;
@@ -393,6 +447,7 @@ public class UserPreferences {
         private Boolean enableCharacterKeyShortcuts;
         private String visualisationPalette;
         private TextContextMenu textContextMenu;
+        private ToolbarDisplay toolbarDisplay;
 
         private Builder() {
             theme = DEFAULT_THEME_NAME;
@@ -426,6 +481,7 @@ public class UserPreferences {
             this.enableCharacterKeyShortcuts = userPreferences.enableCharacterKeyShortcuts;
             this.visualisationPalette = userPreferences.visualisationPalette;
             this.textContextMenu = userPreferences.textContextMenu;
+            this.toolbarDisplay = userPreferences.toolbarDisplay;
         }
 
         public Builder theme(final String theme) {
@@ -520,6 +576,13 @@ public class UserPreferences {
             return this;
         }
 
+        /// @param toolbarDisplay How toolbar buttons are shown, or null for the default (icons).
+        /// @return This builder.
+        public Builder toolbarDisplay(final ToolbarDisplay toolbarDisplay) {
+            this.toolbarDisplay = toolbarDisplay;
+            return this;
+        }
+
         public UserPreferences build() {
             return new UserPreferences(
                     theme,
@@ -537,7 +600,8 @@ public class UserPreferences {
                     keyBindings,
                     enableCharacterKeyShortcuts,
                     visualisationPalette,
-                    textContextMenu);
+                    textContextMenu,
+                    toolbarDisplay);
         }
     }
 

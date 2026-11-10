@@ -17,7 +17,7 @@
 package stroom.explorer.client.component;
 
 import stroom.cell.tickbox.client.TickBoxState;
-import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.client.ExplorerCell;
@@ -84,11 +84,7 @@ public class ExplorerTree extends Component implements Focus {
 
     /// The tree's first item where a picker may choose nothing (see [ExplorerTreeController]).
     public static final ExplorerNode NULL_SELECTION = ExplorerNode.builder()
-            .docRef(DocRef.builder()
-                    .uuid("")
-                    .name("None")
-                    .type("")
-                    .build())
+            .docRef(DocRefUtil.NULL_SELECTION)
             .build();
 
     private static final Binder BINDER = GWT.create(Binder.class);

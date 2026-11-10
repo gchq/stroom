@@ -5,12 +5,12 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tab="urn:import:stroom.widget.tab.client"
              xmlns:c="urn:import:stroom.widget.component.client">
-    <g:FlowPanel styleName="max dock-container-vertical form">
+    <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="dock-min link-tab-panel">
             <tab:LinkTabBar ui:field="tabBar" accessibleName="Settings views" addStyleNames="link-tab-panel__middle"/>
         </g:FlowPanel>
         <c:LayerContainer ui:field="layerContainer" styleName="dock-max"/>
-        <g:FlowPanel styleName="button-group dock-min">
+        <g:FlowPanel styleName="button-group button-group--gap-above dock-min">
             <b:Button ui:field="restoreFromDefaults"
                       text="Restore From Defaults"
                       addStyleNames="allow-focus"/>

@@ -178,6 +178,7 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
     @Override
     public ResultPage<Credential> findCredentials(final FindCredentialRequest request,
                                                   final Predicate<Credential> permissionFilter) {
+        Objects.requireNonNull(permissionFilter, "permissionFilter must not be null");
         final AtomicReference<TokenError> filterError = new AtomicReference<>();
         final List<Condition> conditions = createConditions(request, filterError);
         final List<Credential> list = JooqUtil.contextResult(credentialsDbConnProvider, context ->
@@ -195,7 +196,6 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                 .filterError(filterError.get())
                 .build();
     }
-
 
 
     private Credential mapToCredential(final Record record) {
@@ -414,9 +414,7 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
     @Override
     public boolean updateSecret(final StoredSecret secret) {
         final Credential credential = secret.credential();
-        final String keyStoreType = credential.getKeyStoreType() == null
-                ? null
-                : credential.getKeyStoreType().name();
+        final String keyStoreType = NullSafe.get(credential.getKeyStoreType(), KeyStoreType::name);
         final JSON json = JSON.valueOf(JsonUtil.writeValueAsString(secret.secret()));
         final int count = JooqUtil.contextResult(credentialsDbConnProvider, context -> context
                 .update(CREDENTIAL)

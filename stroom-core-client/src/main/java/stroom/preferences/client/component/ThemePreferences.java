@@ -17,6 +17,7 @@
 package stroom.preferences.client.component;
 
 import stroom.ui.config.shared.UserPreferences;
+import stroom.ui.config.shared.UserPreferences.ToolbarDisplay;
 import stroom.visualisation.shared.VisPalette;
 import stroom.widget.component.client.Component;
 import stroom.widget.selection.client.SelectionBox;
@@ -30,8 +31,9 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 import java.util.Objects;
 
-/// The Theme tab of the user's preferences: the theme, layout density, font and its size, the
-/// visualisations' colours, and whether dialogs are translucent and tables show conditional styles.
+/// The Theme tab of the user's preferences: the theme, layout density, how toolbar buttons are
+/// shown, the font and its size, the visualisations' colours, and whether dialogs are translucent and
+/// tables show conditional styles.
 public class ThemePreferences extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -42,6 +44,8 @@ public class ThemePreferences extends Component {
     SelectionBox<String> theme;
     @UiField
     SelectionBox<String> density;
+    @UiField
+    SelectionBox<String> toolbarDisplay;
     @UiField
     SelectionBox<String> font;
     @UiField
@@ -61,6 +65,9 @@ public class ThemePreferences extends Component {
         initWidget(BINDER.createAndBindUi(this));
 
         density.addItems(DENSITIES);
+        for (final ToolbarDisplay display : ToolbarDisplay.values()) {
+            toolbarDisplay.addItem(display.getDisplayValue());
+        }
 
         fontSize.addItem("Small");
         fontSize.addItem("Medium");
@@ -72,6 +79,7 @@ public class ThemePreferences extends Component {
 
         theme.addValueChangeHandler(e -> onChange.run());
         density.addValueChangeHandler(e -> onChange.run());
+        toolbarDisplay.addValueChangeHandler(e -> onChange.run());
         font.addValueChangeHandler(e -> onChange.run());
         fontSize.addValueChangeHandler(e -> onChange.run());
         enableTransparency.addValueChangeHandler(e -> onChange.run());
@@ -91,6 +99,7 @@ public class ThemePreferences extends Component {
         theme.addItems(themes);
         theme.setValue(userPreferences.getTheme());
         density.setValue(shownDensity(userPreferences.getDensity()));
+        toolbarDisplay.setValue(userPreferences.getToolbarDisplay().getDisplayValue());
         font.clear();
         font.addItems(fonts);
         font.setValue(userPreferences.getFont());
@@ -122,6 +131,7 @@ public class ThemePreferences extends Component {
         builder
                 .theme(theme.getValue())
                 .density(density.getValue())
+                .toolbarDisplay(ToolbarDisplay.fromDisplayValue(toolbarDisplay.getValue()))
                 .font(font.getValue())
                 .fontSize(fontSize.getValue())
                 .enableTransparency(enableTransparency.getValue())

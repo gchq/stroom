@@ -5,8 +5,8 @@
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <dg:PagerPanel toolbarName="Notification actions">
         <b:ToolbarButton ui:field="addButton" svg="ADD" title="New Notification"/>
-        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Notification" enabled="false"/>
-        <b:ToolbarButton ui:field="removeButton" svg="DELETE" title="Remove Selected Notification" enabled="false"/>
+        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Notification" label="Edit" enabled="false"/>
+        <b:ToolbarButton ui:field="removeButton" svg="DELETE" title="Remove Selected Notification" label="Remove" enabled="false"/>
         <dg:DataGrid ui:field="dataGrid" tableName="Notifications"/>
     </dg:PagerPanel>
 </ui:UiBinder>
