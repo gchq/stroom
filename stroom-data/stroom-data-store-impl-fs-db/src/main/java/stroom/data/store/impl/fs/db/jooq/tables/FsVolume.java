@@ -17,13 +17,14 @@ import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.Select;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableLike;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -56,7 +57,7 @@ public class FsVolume extends TableImpl<FsVolumeRecord> {
     /**
      * The column <code>stroom.fs_volume.id</code>.
      */
-    public final TableField<FsVolumeRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<FsVolumeRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).generatedByDefaultAsIdentity(), this, "");
 
     /**
      * The column <code>stroom.fs_volume.version</code>.
@@ -86,7 +87,7 @@ public class FsVolume extends TableImpl<FsVolumeRecord> {
     /**
      * The column <code>stroom.fs_volume.path</code>.
      */
-    public final TableField<FsVolumeRecord, String> PATH = createField(DSL.name("path"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<FsVolumeRecord, String> PATH = createField(DSL.name("path"), SQLDataType.VARCHAR(255), this, "");
 
     /**
      * The column <code>stroom.fs_volume.status</code>.
@@ -164,7 +165,7 @@ public class FsVolume extends TableImpl<FsVolumeRecord> {
 
     @Override
     public List<UniqueKey<FsVolumeRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_FS_VOLUME_PATH);
+        return Arrays.asList(Keys.KEY_FS_VOLUME_FS_VOLUME_TYPE_PATH_IDX);
     }
 
     @Override
@@ -221,7 +222,7 @@ public class FsVolume extends TableImpl<FsVolumeRecord> {
      */
     @Override
     public FsVolume where(Condition condition) {
-        return new FsVolume(getQualifiedName(), aliased() ? this : null, null, condition);
+        return new FsVolume(getQualifiedName(), aliased() ? this : null, null, Internal.condition(this, condition));
     }
 
     /**
@@ -288,7 +289,7 @@ public class FsVolume extends TableImpl<FsVolumeRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public FsVolume whereExists(Select<?> select) {
+    public FsVolume whereExists(TableLike<?> select) {
         return where(DSL.exists(select));
     }
 
@@ -296,7 +297,7 @@ public class FsVolume extends TableImpl<FsVolumeRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public FsVolume whereNotExists(Select<?> select) {
+    public FsVolume whereNotExists(TableLike<?> select) {
         return where(DSL.notExists(select));
     }
 }

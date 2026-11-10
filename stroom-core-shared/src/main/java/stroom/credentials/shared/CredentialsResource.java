@@ -16,14 +16,12 @@
 
 package stroom.credentials.shared;
 
-import stroom.docref.DocRef;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -55,16 +53,6 @@ public interface CredentialsResource extends RestResource, DirectRestService {
             summary = "Find credentials",
             operationId = "findCredentials")
     ResultPage<Credential> findCredentials(FindCredentialRequest request);
-
-    /**
-     * Create a temporary doc ref to use for new credentials so that we can assign permissions straight away.
-     */
-    @GET
-    @Path("/createDocRef")
-    @Operation(
-            summary = "Returns a newly generated DocRef that can be used to for permissions",
-            operationId = "createDocRef")
-    DocRef createDocRef();
 
     /**
      * Stores a credential in the DB. Errors are indicated in the return value.
