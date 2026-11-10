@@ -1345,6 +1345,18 @@ public enum SvgImage {
             ".636719 z\"/></svg> \n" +
             ""),
 
+    DOCUMENT_SQL_DATA_SOURCE("document/SqlDataSource.svg", "svg-image__document-sql-data-source", "" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
+            "1792 1792\"><path style=\"fill:var(--icon-colour__purple)\" d=\"M896 768q237 0 443-4" +
+            "3t325-127v170q0 69-103 128t-280 93.5-385 34.5-385-34.5-280-93.5-103-128v-170q119" +
+            " 84 325 127t443 43zm0 768q237 0 443-43t325-127v170q0 69-103 128t-280 93.5-385 34" +
+            ".5-385-34.5-280-93.5-103-128v-170q119 84 325 127t443 43zm0-384q237 0 443-43t325-" +
+            "127v170q0 69-103 128t-280 93.5-385 34.5-385-34.5-280-93.5-103-128v-170q119 84 32" +
+            "5 127t443 43zm0-1152q208 0 385 34.5t280 93.5 103 128v128q0 69-103 128t-280 93.5-" +
+            "385 34.5-385-34.5-280-93.5-103-128v-128q0-69 103-128t280-93.5 385-34.5z\"/></svg>" +
+            " \n" +
+            ""),
+
     DOCUMENT_SQL_TEMPORAL_STORE("document/SqlTemporalStore.svg", "svg-image__document-sql-temporal-store", "" +
             "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" version=\"1.1\" id=\"svg4\" " +
             "xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\"><defs " +

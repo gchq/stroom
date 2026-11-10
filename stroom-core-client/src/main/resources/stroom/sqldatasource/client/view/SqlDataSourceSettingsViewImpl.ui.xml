@@ -1,0 +1,101 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="sqlDataSourceConnectionType"
+                        label="Connection Type"
+                        helpText="How Stroom connects to the database: by JDBC, or to Amazon Athena through the AWS SDK.">
+            <l:SelectionBox ui:field="connectionType" width="400px"/>
+        </form:FormGroup>
+
+        <g:FlowPanel ui:field="jdbcSettings">
+            <form:FormGroup identity="sqlDataSourceJdbcUrl"
+                            label="JDBC URL"
+                            helpText="The JDBC URL of the database, e.g. jdbc:mysql://reporting-db:3306/reports. It must match one of the patterns an administrator has allowed in the sqlDataSource.allowedUrlPatterns property. Do not put a user name or password in it; choose a credential instead.">
+                <g:TextBox ui:field="jdbcUrl" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="sqlDataSourceJdbcCredential"
+                            label="Credential"
+                            helpText="The username and password credential to connect with. You need Use permission on it, as does anyone who queries this data source. Use a database account that can only read: Stroom asks for read-only connections, but only the database can enforce it.">
+                <form:DescriptionHTML ui:field="jdbcCredentialNote"/>
+                <l:SelectionBox ui:field="jdbcCredential" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="sqlDataSourceConnectionProperties"
+                            label="Connection Properties"
+                            helpText="Extra JDBC driver properties, one name=value per line. For MySQL, add useCursorFetch=true so large results are read in batches of the fetch size rather than all at once. Properties that can read files, load classes or turn off read-only connections are refused.">
+                <g:TextArea ui:field="connectionProperties" width="400px" visibleLines="4"/>
+            </form:FormGroup>
+            <form:FormGroup identity="sqlDataSourceMaxPoolSize"
+                            label="Max Pool Size"
+                            helpText="The most connections Stroom keeps open to this database at once. An administrator may set a lower ceiling. Default: 5">
+                <v:ValueSpinner ui:field="maxPoolSize" width="200px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="sqlDataSourceFetchSize"
+                            label="Fetch Size"
+                            helpText="How many rows are fetched from the database in each round trip. 0 uses the driver's own default. Default: 1000">
+                <v:ValueSpinner ui:field="fetchSize" width="200px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="sqlDataSourceTimeField"
+                            label="Time Column (optional)"
+                            helpText="A date or timestamp column the SQL returns. When a query has a time range and its SQL has no :from or :to placeholder, rows are filtered on this column in Stroom.">
+                <g:TextBox ui:field="timeField" width="400px"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+
+        <g:FlowPanel ui:field="athenaSettings">
+            <form:FormGroup identity="sqlDataSourceRegion"
+                            label="AWS Region"
+                            helpText="The AWS region of the Athena workgroup, e.g. eu-west-2.">
+                <g:TextBox ui:field="region" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="sqlDataSourceWorkGroup"
+                            label="Workgroup"
+                            helpText="The Athena workgroup queries run in. The region and workgroup must match one of the patterns an administrator has allowed in the sqlDataSource.allowedAthenaWorkGroups property. The workgroup's per-query data scan limit is the control on cost. Default: primary">
+                <g:TextBox ui:field="workGroup" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="sqlDataSourceCatalog"
+                            label="Data Catalog"
+                            helpText="The data catalog queries run in. Default: AwsDataCatalog">
+                <g:TextBox ui:field="catalog" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="sqlDataSourceDatabase"
+                            label="Database"
+                            helpText="The database queries run in. Default: default">
+                <g:TextBox ui:field="database" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="sqlDataSourceOutputLocation"
+                            label="Output Location (optional)"
+                            helpText="The S3 URI query results are written to, e.g. s3://my-bucket/athena/. Leave empty to use the workgroup's. It must match one of the patterns an administrator has allowed in the sqlDataSource.allowedAthenaOutputLocations property.">
+                <g:TextBox ui:field="outputLocation" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="sqlDataSourceAthenaCredential"
+                            label="Credential"
+                            helpText="The AWS access key credential to query with. You need Use permission on it, as does anyone who queries this data source. With none, Stroom's own AWS identity is used, if an administrator has turned on sqlDataSource.allowDefaultAwsCredentials. Use an identity that can only read the tables Stroom should query.">
+                <form:DescriptionHTML ui:field="athenaCredentialNote"/>
+                <l:SelectionBox ui:field="athenaCredential" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="sqlDataSourceResultReuseMinutes"
+                            label="Result Reuse (minutes)"
+                            helpText="How old a result of the same query may be and still be reused instead of running the query again. Athena bills every run, so this saves cost when a dashboard is refreshed. 0 never reuses a result. Default: 0">
+                <v:ValueSpinner ui:field="resultReuseMinutes" width="200px"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+
+        <form:FormGroup identity="sqlDataSourceQueryTimeout"
+                        label="Query Timeout (seconds)"
+                        helpText="How long a query may run before it is stopped. An administrator may set a lower ceiling. Default: 60">
+            <v:ValueSpinner ui:field="queryTimeoutSeconds" width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="sqlDataSourceMaxRows"
+                        label="Max Rows"
+                        helpText="The most rows a query's SQL may return; a query that returns more uses the first ones and says so. An administrator may set a lower ceiling. Default: 100000">
+            <v:ValueSpinner ui:field="maxRows" width="200px"/>
+        </form:FormGroup>
+
+        <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
+    </g:FlowPanel>
+</ui:UiBinder>
