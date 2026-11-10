@@ -112,8 +112,7 @@ wait_for_elasticsearch() {
 
   echo -e "${GREEN}Waiting for elasticsearch to be ready${NC}"
   for (( attempt=1; attempt<=max_attempts; attempt++ )); do
-    # The build image has busybox's wget but not curl
-    if wget -q -T 10 -O /dev/null "${health_url}" 2>/dev/null; then
+    if curl --silent --fail --max-time 10 --output /dev/null "${health_url}"; then
       echo -e "${GREEN}elasticsearch is ready${NC}"
       return 0
     fi
