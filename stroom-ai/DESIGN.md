@@ -292,7 +292,8 @@ flowchart TD
     backend was asked before the translation was written). Then it asks, in forms, the backend (Elasticsearch, or
     Lucene inside Stroom), then the naming: an example index template, an existing index to follow, or a bundled
     convention (ECS, Stroom flat). It never picks one itself.
-13. **index.** `draft_index_mapping` drafts the field plan from the Events, named as the example names fields.
+13. **index.** `draft_index_mapping` drafts the field plan from the Events, named as the example names fields,
+    and shows its fields (name, type, source path) as a `needs_showing` table, which Stroom AI's chat shows itself.
     `create_index_doc` confirms the backend, cluster (the one existing Elastic Index docs use, by default), index
     name, index doc name and time field (or the volume group, for Lucene) in one form. It never creates an Elastic
     Cluster doc, which holds credentials.
@@ -301,7 +302,8 @@ flowchart TD
     Events streams.
 15. **index_template (Elasticsearch).** `propose_index_template` steps the indexing pipeline to see the documents it
     writes, and builds the template from the user's example and its component templates. It returns `needs_review`
-    with the template as a Dev Tools request, which the agent shows in the chat; called again with
+    with the template as a Dev Tools request, shown in the chat (in Stroom AI by the chat itself, as a JSON code block
+    with its notes; the model's copy says it was shown); called again with
     `reviewed=<review_id>`, it asks the user to agree in a short form. The agreement is kept in the indexing
     pipeline's description, with the index, cluster and a digest of the indexing XSLT. A user's own correction goes
     through `check_index_template`. The cluster administrator commits the template; the user's `user_actions` carry
@@ -312,7 +314,10 @@ flowchart TD
     template's batch size. An index the pipeline wrote to before is dropped first (`drop_first`).
 17. **indexed.** `wait_for_processing`, then `verify_index`: a `<index>-VERIFY` dashboard, columns the user
     confirms, and test searches through Stroom (counts per stream, an exact match per key field, a time range), each
-    check's first hit traced back to its record by stepping. A pass is recorded by the code's digest.
+    check's first hit traced back to its record by stepping. A pass is recorded by the code's digest, with the
+    streams searched: the step is done only while they are all the build's current Events, so an Events reprocess
+    leads to indexing the new Events (a record without the streams, from before, still counts). Until the step is
+    done, `propose_dashboard` is refused and names the plan's next step.
 18. **index_documented.** `write_documentation` on the indexing pipeline.
 19. **promoted.** `build_status` shows what the build still lacks. `promote_build` returns the layout for review
     (`needs_review`), then asks for approval in a form bound to that layout (first asking about any working copy
@@ -693,6 +698,11 @@ sequenceDiagram
   WAITING_FOR_USER, STOPPING, STOPPED, INTERRUPTED, FAILED, DONE. A heartbeat every 10 s; a run whose heartbeat is
   older than 60 s is marked INTERRUPTED. Limits: `maxRunsPerUser` 3 (cluster-wide), `maxRunsPerNode` 20,
   `maxRunDuration` 2 h. Runs over a limit queue; runs waiting for the user don't count.
+* **A failure part way through a turn** (e.g. the model timing out) shows the error and marks the run FAILED, with the
+  reason (`MODEL_TIMED_OUT`, `ANSWER_FAILED`; `AiChatRunManager.ModelFailedException`), not DONE, so it can be
+  resumed: the error offers **Continue** (resume: the turn's tool steps are kept and given to the model again) and
+  **Retry from scratch** (asks the question again, discarding the turn's steps; confirmed first when there are any).
+  Before, the run ended DONE, Resume wasn't offered, and Retry lost the turn's work.
 * **A run never outlives the session that started it** (`AiChatRunSessionListener`): sign-out or expiry stops it,
   resumably. A run is **unattended** when no browser has polled the user's chats for `unattendedAfter` (10 min);
   unattended runs make only read-only calls, and nothing that needs the user is asked.
@@ -801,7 +811,7 @@ The building tools share a layer in `stroom.mcp.impl.tools`:
 | Class | Role |
 | --- | --- |
 | `WriteGuard` | Creates land in `System/<workspace>/<build>/` (`stroom.ai.builds.workspaceFolder`, default `MCP Workspace`), in role subfolders (Events, Records, Indexing, CEF, Reference). Updates only on documents tagged `mcp-managed`. Refusals are audited. A duplicate type and name in a build is refused (seen in testing: after a summarised conversation an indexing pipeline was made twice). Folder creation takes one of 64 locks, so parallel calls can't make twin folders. |
-| `BuildRecords` | The build record: a Documentation doc, `Build record`, in each build folder, holding a `build-record` JSON block: working copies (`copy_of`, and `copy_of_version`, the original's version when copied), versions (`version_of`), digests that stepped clean, verified or validated, sample files, source feeds, the event-logging version, the build's kind. Saves retry up to 5 times on a concurrent change, so two writers lose nothing. Its format and its code digests stay as they are: records already in Stroom read and are written back unchanged, and a clean step recorded earlier still matches the code it was taken on (see [Where state lives](#where-state-lives)). |
+| `BuildRecords` | The build record: a Documentation doc, `Build record`, in each build folder, holding a `build-record` JSON block: working copies (`copy_of`, and `copy_of_version`, the original's version when copied), versions (`version_of`), digests that stepped clean, verified or validated, the streams a verification searched (`indexed_streams`), sample files, source feeds, the event-logging version, the build's kind. Saves retry up to 5 times on a concurrent change, so two writers lose nothing. Its format and its code digests stay as they are: records already in Stroom read and are written back unchanged, and a clean step recorded earlier still matches the code it was taken on (see [Where state lives](#where-state-lives)). |
 | `BuildPlan` | The plan: steps, each one's state derived from what the build holds, and `next`. |
 | `BuildChecks`, `BuildStatusTool` | What the build still lacks before promotion. |
 | `Consent` | Confirmations and approvals as forms; `needs_review` rounds with a `review_id` digest. |
@@ -1446,6 +1456,11 @@ while any template for the stage exists, and are confirmed in a form (2026-10-27
   `draft_index_mapping`.
 * Detection errs towards asking. A missed stand-in costs rejected documents and reprocessing; a false one costs a
   remembered click.
+* The destination decides (2026-11-10). A value that only misfits its field's other values (not one of the usual
+  stand-ins) is asked only where the destination would refuse it: an Events element with a non-string base type, a
+  pattern or a list of values (resolved in the schema), or an index field that isn't keyword or text. A string
+  element, a Data Value or a keyword field takes it as written. Among numbers a misfit holding a digit is data (a
+  version, a post code). The usual stand-ins are asked anywhere.
 * One found only later goes in the mapping's `nil_values`, or an XPath predicate for one field; the agent then reads
   the saved XSLT for that field before reprocessing (seen in testing: a mapping's guard that never reached the XSLT).
 
@@ -1612,7 +1627,12 @@ every pipeline type):
   numbers (seen: a reference environment's fork at 4.1.0, its namespace as its system id). A version given before the
   variant is settled asks the variant first; the variant chosen is kept for the session, so a version given next is
   read within it. The fork's document is kept as the build's chosen document (its UUID, as for a version held
-  twice), so every later call reads it.
+  twice), so every later call reads it. A namespace given again once a version is chosen for the build in that
+  variant is given that version, not asked again (seen in testing: the agent passed the namespace on every turn, as
+  the variant question's hint said, and the user was asked the version each time); only another namespace asks.
+  The agent is told to give the version (or the fork's document UUID) from then on. The build record keeps the
+  variant (`namespace`) with the version; a choice made before the build had a folder is copied to its record once
+  it has one, and one made before the session named a build is taken as that build's.
 * **The schema model.** `EventSchema` knows its namespace (the XSD's targetNamespace) and system id, so mapping
   checks, element checks and `read_document` see the fork's own elements (its extra activities). `HeldSchemas`
   resolves a fork by its document's UUID.
@@ -2385,6 +2405,11 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-10 | From external test notes (indexing). propose_dashboard is refused while the session's build has an indexing pipeline whose indexing isn't verified (`BuildProgress`, bound by stroom-mcp-impl), naming the plan's next step: verify_index makes the build's dashboard over the data's real time window (seen: the steps skipped, and a dashboard over the last 24 hours showed none of the sample). Telling the user a data source's time range when a dashboard's window matches nothing was not done: the tool runs no search, and there is no cheap way. draft_index_mapping shows the plan's fields as a `needs_showing` table, and create_index_doc's form refers to it (seen: an index approved whose fields were never shown). A passed verification keeps the streams it searched (`indexed_streams`); `indexed` is done only while none of them has been deleted since or left out of the build's current Events (not "all among the newest Events listed": on a busy feed the streams verified fall out of that list), so after an Events reprocess the plan leads to a new indexing filter on the new Events; records without them still count; reprocess_streams' hint offers reindexing when the build has a verified index. An index template under review (`needs_review`, `dev_tools`) is shown by Stroom AI's chat itself, as a JSON code block with its notes, and replaced in the model's copy (seen: the agent called again before printing it, and the form asked the user to confirm a template never shown). | Builds and onboarding |
+| 2026-11-10 | From an external test. Stand-ins: the destination decides whether a misfit is asked (see "Stand-ins for missing values"); browser versions, post codes and an id among numbers are no longer asked. Dashed pairs: a quote opens a quoted value only where it closes inside its own pair (its closing quote followed by a spaced dash or the end); otherwise the value runs to the next spaced dash, and a quoted reading that comes out empty or runs past another key falls back to that. XML held in text: the profile types it `embedded xml` (or `embedded xml after prefix`) with a note to keep it one field and read it in the translation; the draft looks for it again once a syslog line is read into its parts (a message holding XML), and reads XML after words of its own through an extract (`<field>.xml`) and xml_fields; create_pipeline refuses a second parser, as a pipeline has one, reading the raw stream. Key=value lists (repro tests first): a whitespace-delimited value ending in `,` or `;` runs past the space while what follows isn't a key (`rcpt=a@x; b@x`, which went into words); a pairs value that is a list is the `listed` style (`a@x,b@x`, which was read as its first); a text the splitter already read its pairs from (a syslog message) isn't read for them again (every key had been drafted twice); a key a line gives more than once gets `repeat: true` on its Data entry. | Translation |
+| 2026-11-10 | A failure part way through a turn (a model timeout, or any error answering) fails the run, with its reason, so it can be resumed with the turn's tool steps kept; the error offers Continue first and Retry from scratch second (confirmed when the turn took tool steps). Before, the run ended DONE and Retry was the only way on, losing the turn's work. | Runs |
+| 2026-11-10 | ask_user refuses an option label over 120 characters (the model is asked for under 80, with detail in the option's description) or a description over 500, rather than cutting them: a cut label read wrongly and no longer matched `recommended`. The chat wraps long options. | Tools |
+| 2026-11-10 | A schema_version naming the variant (namespace) of the version already chosen for the build is given that version, not asked again; the agent is told to give the version or document UUID from then on, and the build record keeps the variant. | Event-logging versions |
 | 2026-11-09 | Encapsulated syslog (asked for by the user, after a test run whose records were syslog read into JSON keys by a shipper): syslog within syslog, a collector's words before syslog, a syslog line (or the end of an RFC 5424 header after the host) in a JSON field, and JSON encoded twice. Each is told by its format alone; no product's fields are special-cased (the user's rule). Inferred as format-level inference for published formats (RFC 3164, RFC 5424), as CEF and LEEF are. The relay's names take the prefix (`relay_time`, `relay_host`), so the source's keep the names homes and time ranking know. Pairs in a syslog message are still read again by the draft's pairs extracts (needed where a pair is named as a header field, `time`), except in a relay's whole-line text. Relayed and direct lines in one stream (asked for by the user) are one regex with an optional relay header, not a part each: found end to end, two parts made a login relayed and a login sent directly two rules sharing a TypeId, which the mapping's check refused, and would have put each kind to the user twice. Not inferred: a collector's words in mixed lines, a relay of a relay. | Builds and onboarding |
 | 2026-11-09 | classify_kinds keeps a form's answer however long the user takes (seen in testing: an answer given five minutes after the table was shown was dropped, the table shown again and the user asked twice). In the chat a form stops the run and the same call is made again with the answer; the shown set's mark is stamped with the call that asks its form (`<when>@<call id>`), and that call's re-run takes it as fresh. Another, later call still shows a table older than 90 seconds again before its form. | Sessions |
 | 2026-11-09 | From an external test (six notes, the user's decisions). A number of eight or fourteen digits is a date only where it is one (year 1990-2099, a real month, day and time of day), and digits alone among numbers are a number, so a file size isn't put to the user as a stand-in for none. A stand-in in the only fields a required element is written from (`RequiredSources`) isn't offered "Leave out": for EventSource/Device the options are "Keep as written" (first) and "Leave out, Device from the sender's address", which adds `meta_fallback` (`RemoteHost`, `RemoteAddress`; a new entry key, the stream's meta attributes tried in order for a record whose input gives none) to the Device entries; another required element's stand-in is kept as written and the reply says why. The draft lists in `ignored_fields` the time fields that only repeat the event's time in every record (the same instant or a whole zone offset away; a date and a time of day joined), not one named as a start or a creation; the `unmapped` step says Error streams already written keep their lines until reprocessed. classify_kinds: an amended or declined set is kept as `amended` until it comes back as the user's (`from_user`), meanwhile not listed (status `awaiting_amendments`, so no plan step) nor taken as fresh proposals; those of it not sent back are recorded `rejected`, and the next `confirm` takes any left as rejected; a form closed unanswered is not a refusal (`Consent.answer` says so, and declining is `Consent.Declined`); listing keeps proposals still to confirm; confirmed events in the notes are merged by what tells their records (field and value, or pattern and kind), not their name. draft_index_mapping: `extra_fields` go in before the tool's own fields (a path one reads alone gets no field of the tool's; one named as a planned field replaces it, said in `draft_notes`), a union of paths in an extra field takes none of them (a field of every user beside one of each is wanted), a union source is several values each written once (`distinct-values`), the tool's own field that clashes as a value and an object is renamed (`name.value`, or joined at the clash, `user_id`) and the draft kept, a clash between fields given or the convention's is refused naming where each came from, a field of objects is an object in the clash check, and a tool field whose path ends like one a planned field reads is put to the user (merge, keep, or both), never merged. get_field_conventions records the backend and naming chosen in its forms with the build (`indexing_choices` in the build record), and gives them back as settled rather than asking again; write_documentation asks for field descriptions 25 at a time. | Builds and onboarding |

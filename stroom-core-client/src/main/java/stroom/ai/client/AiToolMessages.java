@@ -35,6 +35,10 @@ final class AiToolMessages {
 
     // The status of a tool result whose content the user is to see as it is, shown by the chat itself.
     static final String NEEDS_SHOWING = "needs_showing";
+    // The status of a tool result the user reviews before the agent goes on; one with an index template (in
+    // dev_tools) is shown by the chat itself.
+    static final String NEEDS_REVIEW = "needs_review";
+    static final String DEV_TOOLS = "dev_tools";
 
     private AiToolMessages() {
         // Static only.
@@ -341,16 +345,25 @@ final class AiToolMessages {
     }
 
     /// @param resultJson A tool result message's JSON.
-    /// @return The Markdown its tool gave for the user to see as it is (a result whose status is `needs_showing`,
-    /// with a `table`, e.g. classify_kinds' proposals), or null.
+    /// @return The Markdown its tool gave for the user to see as it is, or null: a result whose status is
+    /// `needs_showing`, with a `table` (e.g. classify_kinds' proposals), or one whose status is `needs_review`, with
+    /// an index template in `dev_tools` (shown as a JSON code block, with its `from_example` and `notes`).
     static String shownTable(final String resultJson) {
         final String text = getString(resultJson, "text");
-        if (text == null || !text.contains(NEEDS_SHOWING)) {
+        if (text == null || !(text.contains(NEEDS_SHOWING) || text.contains(DEV_TOOLS))) {
             return null;
         }
         try {
             final JSONObject result = JSONParser.parseStrict(text).isObject();
-            if (result == null || !NEEDS_SHOWING.equals(text(result, "status"))) {
+            if (result == null) {
+                return null;
+            }
+            final String status = text(result, "status");
+            if (NEEDS_REVIEW.equals(status)) {
+                return devToolsMarkdown(text(result, DEV_TOOLS), strings(result, "from_example"),
+                        strings(result, "notes"));
+            }
+            if (!NEEDS_SHOWING.equals(status)) {
                 return null;
             }
             final String table = text(result, "table");
@@ -361,6 +374,60 @@ final class AiToolMessages {
             // Not a JSON result.
             return null;
         }
+    }
+
+    /// @param devTools    An index template under review, as the Dev Tools request that commits it, or null.
+    /// @param fromExample What of it came from the user's example, or none.
+    /// @param notes       Notes on it, or none.
+    /// @return The template as a JSON code block, with what came from where; null without a template.
+    static String devToolsMarkdown(final String devTools, final List<String> fromExample, final List<String> notes) {
+        if (devTools == null || devTools.isBlank()) {
+            return null;
+        }
+        // A fence longer than any run of backticks in the template, so none of it can end the block.
+        String fence = "```";
+        while (devTools.contains(fence)) {
+            fence = fence + "`";
+        }
+        final StringBuilder sb = new StringBuilder("The index template to review (not to go on the cluster until "
+                                                   + "you have confirmed it):\n\n")
+                .append(fence).append("json\n").append(devTools.trim()).append('\n').append(fence).append('\n');
+        appendList(sb, "From your example", fromExample);
+        appendList(sb, "Notes", notes);
+        return sb.toString();
+    }
+
+    private static void appendList(final StringBuilder sb, final String heading, final List<String> items) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        sb.append("\n**").append(heading).append(":**\n\n");
+        for (final String item : items) {
+            sb.append("- ").append(item.replace('\n', ' ')).append('\n');
+        }
+    }
+
+    // A field of the object that is a string or a list of them, as strings; none if it is missing.
+    private static List<String> strings(final JSONObject object, final String name) {
+        final List<String> out = new ArrayList<>();
+        final JSONValue value = object.get(name);
+        if (value == null || value.isNull() != null) {
+            return out;
+        }
+        final JSONArray array = value.isArray();
+        if (array == null) {
+            out.add(text(object, name));
+            return out;
+        }
+        for (int i = 0; i < array.size(); i++) {
+            final JSONValue item = array.get(i);
+            if (item != null && item.isNull() == null) {
+                out.add(item.isString() != null
+                        ? item.isString().stringValue()
+                        : item.toString());
+            }
+        }
+        return out;
     }
 
     /**

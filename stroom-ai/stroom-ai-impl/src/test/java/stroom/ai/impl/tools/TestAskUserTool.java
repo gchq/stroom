@@ -117,11 +117,53 @@ class TestAskUserTool {
     }
 
     @Test
+    void anOverLongOptionLabelIsRefusedRatherThanCut() {
+        final String longLabel = "Use the existing feed and add a second translation for the new format "
+                                 + "x".repeat(AskUserTool.MAX_OPTION_LABEL_CHARS);
+        final String question = "{\"questions\": [{\"question\": \"Which?\", \"options\": [\"" + longLabel
+                                + "\", \"New feed\"], \"recommended\": \"" + longLabel + "\"}]}";
+
+        assertThat(run(question))
+                .startsWith("Error: The option 'Use the existing feed")
+                .contains("may be at most " + AskUserTool.MAX_OPTION_LABEL_CHARS)
+                .contains("put the detail in its description")
+                .contains("nothing was asked");
+        Mockito.verifyNoInteractions(elicitations);
+    }
+
+    @Test
+    void anOverLongOptionDescriptionIsRefusedRatherThanCut() {
+        final String question = "{\"questions\": [{\"question\": \"Which?\", \"options\": [{\"label\": \"A\", "
+                                + "\"description\": \"" + "d".repeat(AskUserTool.MAX_OPTION_DESCRIPTION_CHARS + 1)
+                                + "\"}, \"B\"]}]}";
+
+        assertThat(run(question))
+                .startsWith("Error: An option's description may be at most "
+                            + AskUserTool.MAX_OPTION_DESCRIPTION_CHARS);
+        Mockito.verifyNoInteractions(elicitations);
+    }
+
+    @Test
+    void optionsAtTheirLimitsAreKeptWholeAndTheRecommendedOneMatches() {
+        final String label = "L".repeat(AskUserTool.MAX_OPTION_LABEL_CHARS);
+        final String description = "d".repeat(AskUserTool.MAX_OPTION_DESCRIPTION_CHARS);
+        final List<AskUserTool.Question> questions = AskUserTool.questions(
+                "{\"questions\": [{\"question\": \"Which?\", \"options\": [{\"label\": \"" + label
+                + "\", \"description\": \"" + description + "\"}, \"B\"], \"recommended\": \"" + label
+                + "\"}]}");
+
+        assertThat(questions.getFirst().options()).containsExactly(label, "B");
+        assertThat(questions.getFirst().optionDescriptions()).containsExactly(description, "");
+        assertThat(questions.getFirst().recommended()).isEqualTo(label);
+    }
+
+    @Test
     void questionsTooLargeForOneFormAreRefusedWithTheLimitsSoTheyCanBeAskedShorter() {
         // Each question and option within its own limit, but 8 questions of 6 long options, with what each means,
         // come to more than one form can show; and the intro has no limit of its own.
-        final String option = "{\"label\": \"%d" + "o".repeat(AskUserTool.MAX_OPTION_CHARS - 1) + "\", "
-                              + "\"description\": \"" + "d".repeat(AskUserTool.MAX_OPTION_CHARS) + "\"}";
+        final String option = "{\"label\": \"%d" + "o".repeat(AskUserTool.MAX_OPTION_LABEL_CHARS - 1) + "\", "
+                              + "\"description\": \"" + "d".repeat(AskUserTool.MAX_OPTION_DESCRIPTION_CHARS)
+                              + "\"}";
         final String options = String.join(", ", IntStream.range(0, AskUserTool.MAX_OPTIONS)
                 .mapToObj(i -> option.formatted(i)).toList());
         final String question = "{\"question\": \"" + "q".repeat(AskUserTool.MAX_QUESTION_CHARS) + "\", "

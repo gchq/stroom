@@ -233,6 +233,10 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
         details.put("index doc", proposedName);
         details.put("time field", timeField);
         details.putAll(target);
+        if (fieldPlan != null) {
+            // Seen in testing: the user was asked to approve an index of fields the agent had never shown them.
+            details.put("fields", planShown(fieldPlan, context));
+        }
         Consent.Request request = Consent.Request.confirmation(NAME, "Create " + backend + " index doc '"
                                                                      + proposedName + "'", details)
                 .withEditable(NAME_ARG, "Index doc name", proposedName);
@@ -304,6 +308,18 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
         return plan.withNext(context, build, result);
     }
 
+    /// @param fieldPlan The plan the index is made from.
+    /// @param context   The call.
+    /// @return What the form says of the plan's fields: the table draft_index_mapping showed, which a form, short
+    /// plain text, doesn't repeat.
+    static String planShown(final FieldPlan fieldPlan, final ToolCallContext context) {
+        final int count = fieldPlan.leafFields().size();
+        return count + " field(s), as the index field plan " + (context.session() != null
+                                                                 && context.session().isChat()
+                ? "shown in the chat"
+                : "the agent showed you") + " lists them";
+    }
+
     // The build's Lucene index has the name already: the plan's fields it lacks are added, once the user confirms, on
     // any call, not only the first (seen in testing, eval cases 02 and 13: a field wanted after indexing couldn't be
     // added, and the agent asked the user to add it in Stroom, or made a second index).
@@ -322,6 +338,7 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
         details.put("index doc", index.getName());
         details.put("fields in the plan", ToolText.list(fieldPlan.fields().stream().map(PlannedField::name)
                 .toList()));
+        details.put("fields", planShown(fieldPlan, context));
         consent.require(call, context, Consent.Request.confirmation(NAME, "Add the plan's fields to Lucene index "
                                                                           + "doc '" + index.getName() + "'", details));
         final Map<String, Object> result = new LinkedHashMap<>();

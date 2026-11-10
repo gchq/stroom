@@ -71,6 +71,13 @@ class PipelineWrites {
     /// The parser element types.
     static final Set<String> PARSERS = Set.of("XMLParser", "XMLFragmentParser", "JSONParser", "DSParser",
             "CombinedParser");
+    /// Why a second parser is refused. Seen in testing: the agent read a syslog message's XML with a regex per
+    /// element in the Data Splitter, then pushed for an XMLFragmentParser after the splitter.
+    static final String ONE_PARSER = "A pipeline has one parser, reading the raw stream: XML or JSON held in a text "
+                                     + "field (a syslog message, say) stays one field in the splitter and is read in "
+                                     + "the translation through the mapping's xml_fields or json_fields "
+                                     + "(draft_translation_mapping sets them), never by a second parser or by "
+                                     + "regexes in the splitter.";
     /// Elements whose settings are the template's: they validate the pipeline's output.
     static final Set<String> VALIDATION = Set.of("SchemaFilter");
 
@@ -140,6 +147,26 @@ class PipelineWrites {
                 ? acronym.group().toLowerCase() + elementType.substring(acronym.end())
                 : elementType;
         return Character.toLowerCase(lowered.charAt(0)) + lowered.substring(1);
+    }
+
+    /// Refuses settings for a parser element the pipeline lacks when it has a parser already: a second parser,
+    /// which nothing could feed.
+    ///
+    /// @param unknown  The element ids the settings name that the pipeline doesn't have.
+    /// @param elements Each of the pipeline's elements' types, by id.
+    /// @throws ToolRefusal if an unknown id is a parser's and the pipeline has a parser.
+    static void oneParser(final Set<String> unknown, final Map<String, String> elements) {
+        final Set<String> parserIds = new HashSet<>();
+        PARSERS.forEach(type -> parserIds.add(elementId(type)));
+        final List<String> extra = unknown.stream().filter(parserIds::contains).sorted().toList();
+        final List<String> held = elements.entrySet().stream()
+                .filter(element -> PARSERS.contains(element.getValue()))
+                .map(Map.Entry::getKey)
+                .toList();
+        if (!extra.isEmpty() && !held.isEmpty()) {
+            throw new ToolRefusal("The pipeline already has its parser " + ToolText.list(held) + ", so it can't "
+                                  + "have " + ToolText.list(extra) + " too. " + ONE_PARSER);
+        }
     }
 
     /// @param uuid A pipeline's UUID.
@@ -457,6 +484,12 @@ class PipelineWrites {
                                       + "record. Call create_pipeline again with replace_parser='XMLFragmentParser': "
                                       + "its xmlFragmentParser.textConverter is the build's XML fragment wrapper "
                                       + "(build_data_splitter save_as=<name> saves it first, if the build has none).");
+            }
+            if (replaceParser != null && !"DSParser".equals(replaceParser) && readers.contains("DSParser")) {
+                // Seen in testing: an XMLFragmentParser asked for to read the XML a syslog message holds.
+                throw new ToolRefusal("The build's sample (stream " + format.get("stream_id") + " of feed "
+                                      + format.get("feed") + ") is " + format.get("format") + ", text that only "
+                                      + readers.getFirst() + " reads, not " + replaceParser + ". " + ONE_PARSER);
             }
             throw new ToolRefusal("The build's sample (stream " + format.get("stream_id") + " of feed "
                                   + format.get("feed") + ") is " + format.get("format") + ", which this template's "

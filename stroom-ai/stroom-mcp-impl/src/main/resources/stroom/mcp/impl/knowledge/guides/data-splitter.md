@@ -332,6 +332,17 @@ change only the parts it gets wrong.
 
 Step the pipeline after each change: the `dsParser` element's output shows the records produced.
 
+## XML or JSON held in a text field
+
+A pipeline has one parser, and it reads the raw stream: there is no second parser after the splitter. XML or JSON
+inside a line (a syslog message holding an `<Event>`, a key's value holding a JSON object) stays one field in the
+splitter, never an expression per element, and is read in the translation: name the field in the mapping's
+`xml_fields` (or `json_fields`) and read inside it as `<field>/<path>` from the document's root element down,
+`<field>//<name>` for an element anywhere in it and `<field>//<name>/@<attr>` for an attribute (steps match by local
+name). `profile_sample` types such a field `embedded xml` (or `embedded xml after prefix`, words before the XML), and
+`draft_translation_mapping` does this itself, the XML after words read out through an extract entry first
+(`<field>.xml`). See stroom://guide/json-input for json_fields.
+
 ## XML fragments (XML_FRAGMENT converter)
 
 Several root elements, e.g. one `<Event>` per line with no document root, are not XML the `XMLParser` can read.

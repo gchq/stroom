@@ -19,9 +19,11 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolRefusal;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /// What the plan ([BuildPlan]) reads from Stroom about a build: its documents, their streams, its pipelines and what
 /// its record says of them. Kept apart from the plan's own logic, which works only from these, so that logic is tested
@@ -77,6 +79,15 @@ interface BuildFacts {
     /// @param pipeline One of the build's indexing pipelines.
     /// @return Whether verify_index passed for its current code.
     boolean verified(Map<String, Object> pipeline);
+
+    /// @param pipeline One of the build's indexing pipelines.
+    /// @return The streams its last passed verify_index searched (the Events it indexed); empty when its record keeps
+    /// none (made before they were kept).
+    List<Long> indexedStreams(Map<String, Object> pipeline);
+
+    /// @param streamIds Streams.
+    /// @return Those deleted since, or that can't be found (an Events reprocess deletes the Events it replaces).
+    Set<Long> goneStreams(Collection<Long> streamIds);
 
     /// @param pipeline One of the build's pipelines.
     /// @return Whether Events from its current code passed check_events.

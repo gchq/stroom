@@ -348,6 +348,14 @@ public class AiChatRunManager {
         } catch (final TaskTerminatedException e) {
             LOGGER.debug(() -> "Run " + run.getId() + " was terminated");
             stopped(run, AiChatRunStopReason.TERMINATED);
+        } catch (final ModelFailedException e) {
+            // The chat already shows the error. The run failed, so it can be resumed with the turn's steps kept.
+            LOGGER.debug(() -> "Run " + run.getId() + " for chat " + run.getChatId() + " failed: " + e.getMessage());
+            if (!runDao.compareAndSetStatus(run.getId(), List.of(AiChatRunStatus.RUNNING), AiChatRunStatus.FAILED,
+                    e.getStopReason(), e.getMessage())) {
+                // A stop was asked for while it worked.
+                stopped(run, null);
+            }
         } catch (final RuntimeException e) {
             LOGGER.error(() -> "Run " + run.getId() + " for chat " + run.getChatId() + " failed", e);
             runDao.compareAndSetStatus(run.getId(), ACTIVE, AiChatRunStatus.FAILED, null,
@@ -672,6 +680,26 @@ public class AiChatRunManager {
         }
 
         /// @return What the run waits for.
+        public AiChatRunStopReason getStopReason() {
+            return stopReason;
+        }
+    }
+
+    /// Thrown by a run's work when the AI model failed (e.g. timed out) part way through a turn, after the error has
+    /// been put in the chat. The run is marked [AiChatRunStatus#FAILED], with the reason, so that it can be resumed
+    /// with the steps the turn has taken kept, rather than the turn being lost.
+    public static class ModelFailedException extends RuntimeException {
+
+        private final AiChatRunStopReason stopReason;
+
+        /// @param message    What went wrong, kept as the run's error message.
+        /// @param stopReason Why the run failed, e.g. [AiChatRunStopReason#MODEL_TIMED_OUT].
+        public ModelFailedException(final String message, final AiChatRunStopReason stopReason) {
+            super(message);
+            this.stopReason = stopReason;
+        }
+
+        /// @return Why the run failed.
         public AiChatRunStopReason getStopReason() {
             return stopReason;
         }

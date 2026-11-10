@@ -321,6 +321,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         final Set<String> unknown = new HashSet<>();
         given.forEach(property -> unknown.add(property.element()));
         unknown.removeAll(elements);
+        PipelineWrites.oneParser(unknown, elementTypes);
         if (!unknown.isEmpty()) {
             throw new ToolRefusal("The pipeline has no element(s) " + ToolText.list(
                     PipelineWrites.sorted(unknown)) + "; its elements are " + ToolText.list(
@@ -596,6 +597,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         final Set<String> unknown = new HashSet<>();
         given.forEach(property -> unknown.add(property.element()));
         unknown.removeAll(types.keySet());
+        PipelineWrites.oneParser(unknown, types);
         if (!unknown.isEmpty()) {
             throw new ToolRefusal("The events pipeline has no element(s) " + ToolText.list(
                     PipelineWrites.sorted(unknown)) + "; its elements are " + ToolText.list(

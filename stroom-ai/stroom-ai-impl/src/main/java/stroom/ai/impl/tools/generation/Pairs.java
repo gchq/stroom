@@ -45,7 +45,7 @@ public final class Pairs {
     /// Each style's regex, with `{key}` where the key goes. The value runs to the next separator: a dash only where
     /// a key or a `[` follows it ("Secret: Firewall - Edge Admin;").
     public static final Map<String, String> PAIR_REGEX = pairRegexes();
-    /// The styles, in order: `colon`, `bracketed`, `equals`, `quoted`, `dashed`, `dashed_quoted`.
+    /// The styles, in order: `colon`, `bracketed`, `equals`, `quoted`, `dashed`, `dashed_quoted`, `listed`.
     public static final List<String> STYLES = List.copyOf(PAIR_REGEX.keySet());
 
     private static final Pattern NOT_ALPHANUMERIC = Pattern.compile("[^A-Za-z0-9]+");
@@ -72,6 +72,10 @@ public final class Pairs {
         // The same, a key whose value is quoted: to its closing quote, so a spaced dash inside it is kept
         // (`Group(s) "Staff - North"`).
         regexes.put("dashed_quoted", "(?:^|\\s-\\s+){key}:?\\s+\"([^\"]*)\"");
+        // As equals, a value that is a list (`rcpt=a@example.com,b@example.com;c@example.com`): its items to the next
+        // white space, an item holding no = (`a=1,b=2` is two pairs). No lookahead: an item followed by = is given
+        // back by the end the match needs.
+        regexes.put("listed", "(?:^|[\\s,;]){key}=([^\\s,;\"]*(?:[,;][^\\s,;\"=]+)*)(?:[\\s,;]|$)");
         return Collections.unmodifiableMap(regexes);
     }
 

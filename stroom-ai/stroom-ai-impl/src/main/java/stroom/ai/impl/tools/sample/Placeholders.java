@@ -37,7 +37,11 @@ import java.util.stream.Collectors;
 ///
 /// A value counts when it recurs in a field (two records or more) and is either one of the usual stand-ins
 /// ([#KNOWN]), or, in a field whose other values are nearly all of one kind (addresses, numbers, times or
-/// booleans), a short value that isn't of that kind.
+/// booleans), a short value that isn't of that kind (a misfit). The destination decides whether a misfit is
+/// asked: one a field's destination takes as text (a string element, a keyword index field) is written as it is,
+/// so only the usual stand-ins are asked there. Among numbers, a misfit holding a digit is data, not a stand-in
+/// (seen in testing: `146.0.0.0`, `7.0;` and `11.0)` among browser versions, `D02` and `102-0082` among post
+/// codes).
 public final class Placeholders {
 
     /// The usual stand-ins for none, compared ignoring case.
@@ -49,7 +53,7 @@ public final class Placeholders {
     static final int MAX_MISFIT_LENGTH = 16;
     /// The share of a field's other values that must be of one kind for a value not of it to stand out.
     static final double KIND_SHARE = 0.8;
-    private static final Pattern DIGITS = ToolText.re("\\d+");
+    private static final Pattern DIGIT = ToolText.re("\\d");
     // The kinds a field's values can be strictly, by the profiler's type of a value, and how the user is told.
     private static final Map<String, String> KINDS = Map.of(
             "ip", "IP addresses",
@@ -62,10 +66,24 @@ public final class Placeholders {
         // Static only.
     }
 
+    /// As [#find(Map, Set, Set)], with no field's destination known to take text: a misfit is asked in any field.
+    ///
     /// @param valuesByField Each field's sample values, a record each (null where a record has none).
     /// @param decided       Values already decided on (e.g. a mapping's nil_values), which aren't found again.
     /// @return The stand-ins found, each with the fields holding it, most records first.
     public static List<Found> find(final Map<String, List<String>> valuesByField, final Set<String> decided) {
+        return find(valuesByField, decided, Set.of());
+    }
+
+    /// @param valuesByField Each field's sample values, a record each (null where a record has none).
+    /// @param decided       Values already decided on (e.g. a mapping's nil_values), which aren't found again.
+    /// @param textFields    The fields whose destination takes any text (a string element, a keyword or text index
+    ///                      field), where only the usual stand-ins ([#KNOWN]) are found, not misfits: the destination
+    ///                      would not refuse them.
+    /// @return The stand-ins found, each with the fields holding it, most records first.
+    public static List<Found> find(final Map<String, List<String>> valuesByField,
+                                   final Set<String> decided,
+                                   final Set<String> textFields) {
         final Map<String, Found> found = new LinkedHashMap<>();
         valuesByField.forEach((field, values) -> {
             final Map<String, Long> counts = values.stream()
@@ -77,10 +95,11 @@ public final class Placeholders {
                     .map(Map.Entry::getKey)
                     .toList();
             final String kind = kind(counts, recurring);
+            final boolean takesText = textFields.contains(field);
             for (final String value : recurring) {
                 final boolean known = isKnown(value);
-                final boolean misfit = kind != null && ToolText.len(value) <= MAX_MISFIT_LENGTH
-                                       && !kind.equals(kindOf(value)) && !numberAmongNumbers(kind, value);
+                final boolean misfit = !takesText && kind != null && ToolText.len(value) <= MAX_MISFIT_LENGTH
+                                       && !kind.equals(kindOf(value)) && !dataAmongNumbers(kind, value);
                 if (known || misfit) {
                     final Found was = found.get(value);
                     final List<String> fields = new ArrayList<>(was == null
@@ -132,10 +151,12 @@ public final class Placeholders {
         return null;
     }
 
-    // Whether the value is digits alone in a field of numbers: a number, though it could be read as a time too (seen
-    // in testing: a file size of 20231015 is a date by its digits).
-    private static boolean numberAmongNumbers(final String kind, final String value) {
-        return "integer".equals(kind) && ToolText.fullmatch(DIGITS, ToolText.strip(value));
+    // Whether the value holds a digit in a field of numbers: data, not a stand-in. Digits alone are a number, though
+    // they could be read as a time (seen in testing: a file size of 20231015 is a date by its digits); digits with
+    // more are a version, a code or an address the source writes there (146.0.0.0 among browser versions, D02
+    // among post codes).
+    private static boolean dataAmongNumbers(final String kind, final String value) {
+        return "integer".equals(kind) && DIGIT.matcher(value).find();
     }
 
     // The strict kind of a value (see KINDS), or null for text.

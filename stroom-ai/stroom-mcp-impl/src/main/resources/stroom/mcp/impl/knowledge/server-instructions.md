@@ -96,7 +96,9 @@ from the generated documentation and the indexes' fields. Answer in plain words 
 Parsing: profile_sample names the parser and the namespace the XSLT reads its output in (xslt_input): JSON is read by
 the JSON template's JSONParser with no text converter, text (CSV, syslog, key=value) by a Data Splitter written with
 build_data_splitter from a spec, never by hand first, and XML fragments by an XMLFragmentParser with a wrapper
-(stroom://guide/xslt, stroom://guide/data-splitter).
+(stroom://guide/xslt, stroom://guide/data-splitter). A pipeline has one parser, reading the raw stream: XML or JSON
+held in a text field (a syslog message, say) stays one field in the splitter and is read in the translation through
+xml_fields or json_fields, never by a second parser or by regexes in the splitter.
 
 Translation: start from draft_translation_mapping. The user first chooses the event-logging version it writes, from
 those this Stroom holds (a form, or needs_guidance for you to ask, with its options): never name or offer a version

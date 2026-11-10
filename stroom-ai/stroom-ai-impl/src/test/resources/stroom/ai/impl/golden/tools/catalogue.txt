@@ -177,7 +177,7 @@ Asks the user the questions you need answered before you carry on, and waits for
             "type" : "boolean"
           },
           "options" : {
-            "description" : "Sensible answers to choose from (2 to 6), each short, the best first.",
+            "description" : "Sensible answers to choose from (2 to 6), the best first. Each is a short label, under 80 characters, e.g. 'Production'. Put any detail in the option's description, by giving the option as {\"label\": \"...\", \"description\": \"...\"}, not in the label.",
             "items" : {
               "type" : "string"
             },
@@ -1418,7 +1418,7 @@ offered in modes:
 
 ### Description
 
-Offers the user a 'Create dashboard…' button for a new Dashboard built from your StroomQL: a query, a table of the columns your select gives (with any grouping, sorting and limit), and optionally a data preview (a Text widget showing the event of the selected row). It creates nothing itself: the button opens Stroom's New Dashboard dialog with the name you suggest. Before using it, ask the user with one ask_user call: whether the query should be StroomQL or Expression Language (classic); which fields the table should show, unless their request says (offer sets of fields from describe_data_source as options); whether they want a data preview; and which data source, if more than one could hold what they asked for. Write the query in StroomQL either way: for classic, Stroom turns its where clause into the query's expression and its select into the table's columns. Validate it first.
+Offers the user a 'Create dashboard…' button for a new Dashboard built from your StroomQL: a query, a table of the columns your select gives (with any grouping, sorting and limit), and optionally a data preview (a Text widget showing the event of the selected row). It creates nothing itself: the button opens Stroom's New Dashboard dialog with the name you suggest. Before using it, ask the user with one ask_user call: whether the query should be StroomQL or Expression Language (classic); which fields the table should show, unless their request says (offer sets of fields from describe_data_source as options); whether they want a data preview; and which data source, if more than one could hold what they asked for. Write the query in StroomQL either way: for classic, Stroom turns its where clause into the query's expression and its select into the table's columns. Validate it first. While a build's indexing isn't verified, it is refused: follow the build's plan (verify_index makes its dashboard).
 
 ### Parameters
 

@@ -265,6 +265,44 @@ class TestSplitterDryRun {
     }
 
     @Test
+    void aLongListOfRecipientsIsReadWholeHoweverItIsWritten() {
+        // Seen in testing: a mail gateway's syslog key=value lines with some 300 recipients, beside a quoted
+        // subject. Written with '; ' and unquoted, all but the first went into words.
+        for (final String separator : List.of(",", "; ")) {
+            for (final boolean quoted : List.of(true, false)) {
+                final List<String> lists = new ArrayList<>();
+                final StringBuilder text = new StringBuilder();
+                for (int r = 0; r < 4; r++) {
+                    final int record = r;
+                    final String list = IntStream.range(0, 300)
+                            .mapToObj(n -> "user" + n + "." + record + "@example.org")
+                            .collect(Collectors.joining(separator));
+                    lists.add(list);
+                    text.append("<22>Nov 10 10:00:0").append(r).append(" mail01 mailgw[123]: id=q").append(r)
+                            .append(" from=alice@example.org recipients=").append(quoted
+                                    ? "\"" + list + "\""
+                                    : list).append(" subject=\"Hi there\" size=512\n");
+                }
+                final SplitterDryRun.DryRun run = SplitterDryRun.dryRun(
+                        SplitterDryRun.inferSpec(text.toString()).spec(), text.toString());
+
+                final String shape = "'" + separator + "' quoted " + quoted;
+                assertThat(run.unmatchedLines()).as(shape).isEmpty();
+                assertThat(run.records()).as(shape).hasSize(4);
+                for (int r = 0; r < 4; r++) {
+                    assertThat(run.records().get(r)).as(shape).containsEntry("recipients", lists.get(r))
+                            .containsEntry("subject", "Hi there").containsEntry("size", "512")
+                            .doesNotContainKey(SplitterSpec.WORDS);
+                }
+            }
+        }
+        // A list's items past white space, but not a pair after a value that ends in ; (it is the next pair).
+        final SplitterSpec spec = SplitterSpec.builder("key_value").delimiter(" ").quote("\"").build();
+        assertThat(SplitterDryRun.dryRun(spec, "a=x; b=y c=1, 2\n").records())
+                .containsExactly(Map.of("a", "x;", "b", "y", "c", "1, 2"));
+    }
+
+    @Test
     void aRepeatedKeyIsReadByItsFirst() {
         // Seen in eval case 50: normalize-space() over every rcpt failed each record with two recipients.
         final SplitterSpec spec = SplitterSpec.builder("key_value").delimiter(" ").build();

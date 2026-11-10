@@ -252,7 +252,11 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
                     call.put("confirmation_id", result.get("confirmation_id"));
                 }
             } else {
-                assertThat(status).as("%s left waiting: %s", tool, result).doesNotStartWith("needs_");
+                // A needs_showing answer is a table the chat shows the user (draft_index_mapping's field plan):
+                // nothing more is asked.
+                if (!"needs_showing".equals(status)) {
+                    assertThat(status).as("%s left waiting: %s", tool, result).doesNotStartWith("needs_");
+                }
                 if (enablesDisabledFilters()) {
                     enableIfDisabled(result);
                 }

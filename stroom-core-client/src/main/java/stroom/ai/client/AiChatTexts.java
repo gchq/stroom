@@ -278,6 +278,16 @@ public final class AiChatTexts {
                 : "");
     }
 
+    /// @param toolSteps The number of tool steps the unanswered turn has taken so far.
+    /// @return The question asked before an unanswered turn is asked again from scratch, saying that the steps it
+    /// has taken will be discarded (Continue keeps them).
+    static String retryFromScratchQuestion(final int toolSteps) {
+        return "Retrying from scratch will discard the " + toolSteps + " tool step" + (toolSteps == 1
+                ? ""
+                : "s") + " this question has taken so far and ask it again. Continue keeps them. Changes the agent "
+               + "has made with tools will not be undone. Retry from scratch?";
+    }
+
     /// @param progress What the Working line says, e.g. "Let me check the schema (read_document)".
     /// @param text     What the model said alongside its tool calls, as Markdown.
     /// @return True if the Working line is showing that text: it starts the same way, ignoring Markdown marks,

@@ -50,6 +50,7 @@ class TestProposeDashboardTool {
     private final DataSourceAccess dataSourceAccess = Mockito.mock(DataSourceAccess.class);
     private final QueryService queryService = Mockito.mock(QueryService.class);
     private final DashboardBuilder dashboardBuilder = Mockito.mock(DashboardBuilder.class);
+    private final BuildProgress buildProgress = Mockito.mock(BuildProgress.class);
     private final ToolRunContext context = new ToolRunContext(null, null, () -> false);
     private final List<Map<String, Object>> offered = new ArrayList<>();
     private ProposeDashboardTool tool;
@@ -70,7 +71,32 @@ class TestProposeDashboardTool {
                         DashboardBuilder.CLASSIC.equals(invocation.getArgument(2))
                                 ? List.of("Query: everything", "Table columns: EventTime, User")
                                 : List.of()));
-        tool = new ProposeDashboardTool(workspace, dataSourceAccess, () -> queryService, dashboardBuilder);
+        Mockito.when(buildProgress.beforeDashboard(Mockito.any())).thenReturn(Optional.empty());
+        tool = new ProposeDashboardTool(workspace, dataSourceAccess, () -> queryService, dashboardBuilder,
+                Optional.of(buildProgress));
+    }
+
+    @Test
+    void aDashboardWaitsForTheBuildsIndexingToBeVerified() {
+        // Seen in testing: mid-build, the agent skipped the processor filter and verify_index, and proposed a
+        // dashboard over the last 24 hours that showed none of the sample's events.
+        Mockito.when(buildProgress.beforeDashboard(Mockito.any()))
+                .thenReturn(Optional.of("No dashboard was proposed: do the plan's next step, verify_index"));
+
+        assertThat(run(args("from \"Windows events\" select EventTime, User", "classic", true)))
+                .isEqualTo("No dashboard was proposed: do the plan's next step, verify_index");
+        assertThat(takeUserActions()).isEmpty();
+        Mockito.verifyNoInteractions(dashboardBuilder);
+    }
+
+    @Test
+    void withoutTheBuildToolsADashboardIsOfferedAsBefore() {
+        tool = new ProposeDashboardTool(workspace, dataSourceAccess, () -> queryService, dashboardBuilder,
+                Optional.empty());
+
+        run(args("from \"Windows events\" select EventTime, User", "stroomql", false));
+
+        assertThat(takeUserActions()).hasSize(1);
     }
 
     @Test

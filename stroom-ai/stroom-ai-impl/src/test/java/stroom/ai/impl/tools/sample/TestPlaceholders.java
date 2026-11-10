@@ -107,6 +107,33 @@ class TestPlaceholders {
                 new Placeholders.Found("N/A", List.of("cs-host"), 2, null));
     }
 
+    @Test
+    void aMisfitHoldingADigitAmongNumbersIsData() {
+        // Seen in testing: browser versions and post codes, others numbers, asked as stand-ins for none.
+        assertThat(find("browser-version", "146.0", "120.0", "146.0.0.0", "146.0.0.0", "7.0;", "7.0;", "11.0)",
+                "11.0)", "121.0", "118.0", "119.0", "117.0", "116.0", "115.0", "114.0")).isEmpty();
+        assertThat(find("zipcode", "2000", "3000", "D02", "D02", "102-0082", "102-0082", "4000", "5000", "6000",
+                "7000")).isEmpty();
+        // A misfit without a digit is still asked among numbers.
+        assertThat(find("bytes", "15", "n.a", "20", "n.a", "35"))
+                .containsExactly(new Placeholders.Found("n.a", List.of("bytes"), 2, "numbers"));
+    }
+
+    @Test
+    void aMisfitIsNotAskedWhereTheDestinationTakesText() {
+        // Seen in testing: 'orgname' among numbers in a field written as text.
+        final Map<String, List<String>> values = new LinkedHashMap<>();
+        values.put("app-instance-id", List.of("12345", "67890", "orgname", "orgname", "11111"));
+        values.put("s-ip", List.of("10.0.0.1", "-", "10.0.0.2", "-"));
+
+        assertThat(Placeholders.find(values, Set.of(), Set.of("app-instance-id", "s-ip")))
+                .containsExactly(new Placeholders.Found("-", List.of("s-ip"), 2, "IP addresses"));
+        // Where the destination isn't known to take text, the misfit is asked.
+        assertThat(Placeholders.find(values, Set.of()))
+                .extracting(Placeholders.Found::value)
+                .containsExactlyInAnyOrder("orgname", "-");
+    }
+
     private static List<Placeholders.Found> find(final String field, final String... values) {
         return Placeholders.find(Map.of(field, Arrays.asList(values)), Set.of());
     }

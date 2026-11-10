@@ -729,36 +729,6 @@
   "result": {
    "mapping": {
     "input": "data_splitter",
-    "extract": [
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])TTY=([^\\s,;\"]*)",
-      "names": [
-       "tty"
-      ]
-     },
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])PWD=([^\\s,;\"]*)",
-      "names": [
-       "pwd"
-      ]
-     },
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])USER=([^\\s,;\"]*)",
-      "names": [
-       "user"
-      ]
-     },
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])COMMAND=([^\\s,;\"]*)",
-      "names": [
-       "command"
-      ]
-     }
-    ],
     "common": [
      {
       "path": "EventTime/TimeCreated",
@@ -830,26 +800,6 @@
         "path": "EventDetail/Process/Data",
         "data_name": "PWD",
         "field": "PWD"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "tty",
-        "field": "tty"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "pwd",
-        "field": "pwd"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "user",
-        "field": "user"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "command",
-        "field": "command"
        }
       ]
      }
@@ -876,10 +826,9 @@
    "records": 3,
    "kinds": [],
    "notes": [
-    "'message' holds key/value pairs: 4 keys are fields of their own through pairs ('tty', 'pwd', 'user', 'command'), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
+    "'message' is the text the splitter read its key/value pairs from: they are fields already, so the text isn't read again or mapped.",
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
-    "Records hold several user fields: 'USER' (unsaid), 'user' (unsaid). EventSource/User is who acted (drafted as 'USER'); for each kind, decide which field is the actor and which the user or account acted on, and map that one in the action element (e.g. Authenticate/User, or the object a Create, Update or Delete names), not as Data.",
     "Every record runs a command ('COMMAND'): drafted as Process (Action Execute, Type Application). Check it, and split the program from its arguments (Process/Arguments) if you want them apart."
    ],
    "unmapped_fields": [
@@ -888,11 +837,7 @@
     "prefix2",
     "TTY",
     "PWD",
-    "COMMAND",
-    "tty",
-    "pwd",
-    "user",
-    "command"
+    "COMMAND"
    ],
    "time_zones": {
     "examples": {
@@ -916,11 +861,7 @@
     "TTY",
     "PWD",
     "USER",
-    "COMMAND",
-    "tty",
-    "pwd",
-    "user",
-    "command"
+    "COMMAND"
    ]
   }
  },
@@ -934,43 +875,6 @@
   "result": {
    "mapping": {
     "input": "data_splitter",
-    "extract": [
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])action=([^\\s,;\"]*)",
-      "names": [
-       "action_2"
-      ]
-     },
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])src=([^\\s,;\"]*)",
-      "names": [
-       "src_2"
-      ]
-     },
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])dst=([^\\s,;\"]*)",
-      "names": [
-       "dst_2"
-      ]
-     },
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])dport=([^\\s,;\"]*)",
-      "names": [
-       "dport_2"
-      ]
-     },
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])proto=([^\\s,;\"]*)",
-      "names": [
-       "proto_2"
-      ]
-     }
-    ],
     "common": [
      {
       "path": "EventTime/TimeCreated",
@@ -1041,31 +945,6 @@
         "path": "EventDetail/Network/Permit/Data",
         "data_name": "prefix2",
         "field": "prefix2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "action_2",
-        "field": "action_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Source/Data",
-        "data_name": "src_2",
-        "field": "src_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Destination/Data",
-        "data_name": "dst_2",
-        "field": "dst_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "dport_2",
-        "field": "dport_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "proto_2",
-        "field": "proto_2"
        }
       ]
      },
@@ -1102,31 +981,6 @@
         "path": "EventDetail/Network/Deny/Data",
         "data_name": "prefix2",
         "field": "prefix2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "action_2",
-        "field": "action_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Source/Data",
-        "data_name": "src_2",
-        "field": "src_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Destination/Data",
-        "data_name": "dst_2",
-        "field": "dst_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "dport_2",
-        "field": "dport_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "proto_2",
-        "field": "proto_2"
        }
       ]
      },
@@ -1142,31 +996,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "proto",
         "field": "proto"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "action_2",
-        "field": "action_2"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "src_2",
-        "field": "src_2"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "dst_2",
-        "field": "dst_2"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "dport_2",
-        "field": "dport_2"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "proto_2",
-        "field": "proto_2"
        }
       ]
      }
@@ -1193,7 +1022,7 @@
     "deny"
    ],
    "notes": [
-    "'message' holds key/value pairs: 5 keys are fields of their own through pairs ('action_2', 'src_2', 'dst_2', 'dport_2', 'proto_2'), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
+    "'message' is the text the splitter read its key/value pairs from: they are fields already, so the text isn't read again or mapped.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "Drafted from the sample's values (check them): allow: Network/Permit for action allow; deny: Network/Deny for action deny.",
@@ -1201,12 +1030,7 @@
    ],
    "unmapped_fields": [
     "prefix2",
-    "proto",
-    "action_2",
-    "src_2",
-    "dst_2",
-    "dport_2",
-    "proto_2"
+    "proto"
    ],
    "fields_seen": [
     "time",
@@ -1216,12 +1040,7 @@
     "src",
     "dst",
     "dport",
-    "proto",
-    "action_2",
-    "src_2",
-    "dst_2",
-    "dport_2",
-    "proto_2"
+    "proto"
    ]
   }
  },
@@ -4672,57 +4491,6 @@
   "result": {
    "mapping": {
     "input": "data_splitter",
-    "extract": [
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])user=([^\\s,;\"]*)",
-      "names": [
-       "user_2"
-      ]
-     },
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])src=([^\\s,;\"]*)",
-      "names": [
-       "src_2"
-      ]
-     },
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])dst=([^\\s,;\"]*)",
-      "names": [
-       "dst_2"
-      ]
-     },
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])url=([^\\s,;\"]*)",
-      "names": [
-       "url_2"
-      ]
-     },
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])category=([^\\s,;\"]*)",
-      "names": [
-       "category_2"
-      ]
-     },
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])action=([^\\s,;\"]*)",
-      "names": [
-       "action_2"
-      ]
-     },
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])referer=([^\\s,;\"]*)",
-      "names": [
-       "referer_2"
-      ]
-     }
-    ],
     "common": [
      {
       "path": "EventTime/TimeCreated",
@@ -4813,41 +4581,6 @@
         "path": "EventDetail/Network/Permit/Data",
         "data_name": "referer",
         "field": "referer"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "user_2",
-        "field": "user_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Source/Data",
-        "data_name": "src_2",
-        "field": "src_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Destination/Data",
-        "data_name": "dst_2",
-        "field": "dst_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "url_2",
-        "field": "url_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "category_2",
-        "field": "category_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "action_2",
-        "field": "action_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "referer_2",
-        "field": "referer_2"
        }
       ]
      },
@@ -4901,41 +4634,6 @@
         "path": "EventDetail/Network/Deny/Data",
         "data_name": "referer",
         "field": "referer"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "user_2",
-        "field": "user_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Source/Data",
-        "data_name": "src_2",
-        "field": "src_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Destination/Data",
-        "data_name": "dst_2",
-        "field": "dst_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "url_2",
-        "field": "url_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "category_2",
-        "field": "category_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "action_2",
-        "field": "action_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "referer_2",
-        "field": "referer_2"
        }
       ]
      },
@@ -4989,41 +4687,6 @@
         "path": "EventDetail/Network/Permit/Data",
         "data_name": "referer",
         "field": "referer"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "user_2",
-        "field": "user_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Source/Data",
-        "data_name": "src_2",
-        "field": "src_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Destination/Data",
-        "data_name": "dst_2",
-        "field": "dst_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "url_2",
-        "field": "url_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "category_2",
-        "field": "category_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "action_2",
-        "field": "action_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "referer_2",
-        "field": "referer_2"
        }
       ]
      },
@@ -5077,41 +4740,6 @@
         "path": "EventDetail/Network/Deny/Data",
         "data_name": "referer",
         "field": "referer"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "user_2",
-        "field": "user_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Source/Data",
-        "data_name": "src_2",
-        "field": "src_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Destination/Data",
-        "data_name": "dst_2",
-        "field": "dst_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "url_2",
-        "field": "url_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "category_2",
-        "field": "category_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "action_2",
-        "field": "action_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "referer_2",
-        "field": "referer_2"
        }
       ]
      },
@@ -5165,41 +4793,6 @@
         "path": "EventDetail/Network/Permit/Data",
         "data_name": "referer",
         "field": "referer"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "user_2",
-        "field": "user_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Source/Data",
-        "data_name": "src_2",
-        "field": "src_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Destination/Data",
-        "data_name": "dst_2",
-        "field": "dst_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "url_2",
-        "field": "url_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "category_2",
-        "field": "category_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "action_2",
-        "field": "action_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "referer_2",
-        "field": "referer_2"
        }
       ]
      },
@@ -5240,41 +4833,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "referer",
         "field": "referer"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "user_2",
-        "field": "user_2"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "src_2",
-        "field": "src_2"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "dst_2",
-        "field": "dst_2"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "url_2",
-        "field": "url_2"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "category_2",
-        "field": "category_2"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "action_2",
-        "field": "action_2"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "referer_2",
-        "field": "referer_2"
        }
       ]
      }
@@ -5302,11 +4860,11 @@
     "-"
    ],
    "notes": [
-    "'message' holds key/value pairs: 7 keys are fields of their own through pairs ('user_2', 'src_2', 'dst_2', 'url_2', 'category_2', 'action_2' ...), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
+    "'message' is the text the splitter read its key/value pairs from: they are fields already, so the text isn't read again or mapped.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "Drafted from the sample's values (check them): business: Network/Permit for action allow; malware: Network/Deny for action block; news: Network/Permit for action allow; phishing: Network/Deny for action block; -: Network/Permit for action allow.",
     "One rule per value of 'category' (business, malware, news, phishing, -), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes.",
-    "['category', 'category_2', 'referer', 'referer_2', 'user', 'user_2'] hold '-' for none: nil_values ['-'] leaves those elements out rather than writing '-'."
+    "['category', 'referer', 'user'] hold '-' for none: nil_values ['-'] leaves those elements out rather than writing '-'."
    ],
    "unmapped_fields": [
     "pri",
@@ -5315,14 +4873,7 @@
     "structured",
     "url",
     "action",
-    "referer",
-    "user_2",
-    "src_2",
-    "dst_2",
-    "url_2",
-    "category_2",
-    "action_2",
-    "referer_2"
+    "referer"
    ],
    "fields_seen": [
     "pri",
@@ -5339,14 +4890,7 @@
     "url",
     "category",
     "action",
-    "referer",
-    "user_2",
-    "src_2",
-    "dst_2",
-    "url_2",
-    "category_2",
-    "action_2",
-    "referer_2"
+    "referer"
    ]
   }
  },
@@ -17948,7 +17492,7 @@
     "UpdateAccount"
    ],
    "notes": [
-    "'payload' holds XML: its elements are fields of their own, e.g. 'payload/Envelope/Header', 'payload/Envelope/Body/Login/User', 'payload/Envelope/Body/Login/Result', 'payload/Envelope/Body/GetAccount/User' (xml_fields; '<field>//<name>' for one anywhere below). The text itself isn't mapped.",
+    "'payload' holds XML: its elements are fields of their own, e.g. 'payload/Envelope/Header', 'payload/Envelope/Body/Login/User', 'payload/Envelope/Body/Login/Result', 'payload/Envelope/Body/GetAccount/User' (xml_fields; '<field>//<name>' for one anywhere below), read in the translation: not by regexes in the splitter or a second parser. The text itself isn't mapped.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'operation' (Login, GetAccount, UpdateAccount): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
@@ -18243,7 +17787,7 @@
     "UpdateAccount"
    ],
    "notes": [
-    "'payload' holds XML: its elements are fields of their own, e.g. 'payload/Envelope/Header', 'payload/Envelope/Body/Login/User', 'payload/Envelope/Body/Login/Result', 'payload/Envelope/Body/GetAccount/User' (xml_fields; '<field>//<name>' for one anywhere below). The text itself isn't mapped.",
+    "'payload' holds XML: its elements are fields of their own, e.g. 'payload/Envelope/Header', 'payload/Envelope/Body/Login/User', 'payload/Envelope/Body/Login/Result', 'payload/Envelope/Body/GetAccount/User' (xml_fields; '<field>//<name>' for one anywhere below), read in the translation: not by regexes in the splitter or a second parser. The text itself isn't mapped.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'operation' (Login, GetAccount, UpdateAccount): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
@@ -18347,7 +17891,8 @@
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "rcpt",
-        "field": "rcpt"
+        "field": "rcpt",
+        "repeat": true
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -18378,7 +17923,8 @@
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "rcpt",
-        "field": "rcpt"
+        "field": "rcpt",
+        "repeat": true
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -18409,7 +17955,8 @@
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "rcpt",
-        "field": "rcpt"
+        "field": "rcpt",
+        "repeat": true
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -18440,7 +17987,8 @@
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "rcpt",
-        "field": "rcpt"
+        "field": "rcpt",
+        "repeat": true
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -18471,7 +18019,8 @@
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "rcpt",
-        "field": "rcpt"
+        "field": "rcpt",
+        "repeat": true
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -18502,7 +18051,8 @@
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "rcpt",
-        "field": "rcpt"
+        "field": "rcpt",
+        "repeat": true
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -18527,7 +18077,8 @@
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "rcpt",
-        "field": "rcpt"
+        "field": "rcpt",
+        "repeat": true
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -18561,7 +18112,8 @@
    ],
    "notes": [
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
-    "One rule per value of 'msgid' (<0@mail.example.com>, <1@mail.example.com>, <2@mail.example.com>, <3@mail.example.com>, <4@mail.example.com>, <5@mail.example.com>): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
+    "One rule per value of 'msgid' (<0@mail.example.com>, <1@mail.example.com>, <2@mail.example.com>, <3@mail.example.com>, <4@mail.example.com>, <5@mail.example.com>): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action.",
+    "'rcpt' is given more than once in a record (once a value): its Data entry has repeat: true, writing each value, not only the first."
    ],
    "unmapped_fields": [
     "from",
@@ -18645,7 +18197,8 @@
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "rcpt",
-        "field": "rcpt"
+        "field": "rcpt",
+        "repeat": true
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -18676,7 +18229,8 @@
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "rcpt",
-        "field": "rcpt"
+        "field": "rcpt",
+        "repeat": true
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -18707,7 +18261,8 @@
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "rcpt",
-        "field": "rcpt"
+        "field": "rcpt",
+        "repeat": true
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -18732,7 +18287,8 @@
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "rcpt",
-        "field": "rcpt"
+        "field": "rcpt",
+        "repeat": true
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -18758,7 +18314,8 @@
    ],
    "notes": [
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
-    "One rule per value of 'action' (deliver, reject, quarantine): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
+    "One rule per value of 'action' (deliver, reject, quarantine): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action.",
+    "'rcpt' is given more than once in a record (once a value): its Data entry has repeat: true, writing each value, not only the first."
    ],
    "unmapped_fields": [
     "msgid",
@@ -26072,50 +25629,6 @@
   "result": {
    "mapping": {
     "input": "data_splitter",
-    "extract": [
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])action=([^\\s,;\"]*)",
-      "names": [
-       "action_2"
-      ]
-     },
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])src=([^\\s,;\"]*)",
-      "names": [
-       "src_2"
-      ]
-     },
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])dst=([^\\s,;\"]*)",
-      "names": [
-       "dst_2"
-      ]
-     },
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])dport=([^\\s,;\"]*)",
-      "names": [
-       "dport_2"
-      ]
-     },
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])proto=([^\\s,;\"]*)",
-      "names": [
-       "proto_2"
-      ]
-     },
-     {
-      "field": "message",
-      "regex": "(?:^|[\\s,;])user=([^\\s,;\"]*)",
-      "names": [
-       "user_2"
-      ]
-     }
-    ],
     "common": [
      {
       "path": "EventTime/TimeCreated",
@@ -26209,36 +25722,6 @@
         "path": "EventDetail/Network/Permit/Data",
         "data_name": "structured",
         "field": "structured"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "action_2",
-        "field": "action_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Source/Data",
-        "data_name": "src_2",
-        "field": "src_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Destination/Data",
-        "data_name": "dst_2",
-        "field": "dst_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "dport_2",
-        "field": "dport_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "proto_2",
-        "field": "proto_2"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "user_2",
-        "field": "user_2"
        }
       ]
      },
@@ -26290,36 +25773,6 @@
         "path": "EventDetail/Network/Deny/Data",
         "data_name": "structured",
         "field": "structured"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "action_2",
-        "field": "action_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Source/Data",
-        "data_name": "src_2",
-        "field": "src_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Destination/Data",
-        "data_name": "dst_2",
-        "field": "dst_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "dport_2",
-        "field": "dport_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "proto_2",
-        "field": "proto_2"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "user_2",
-        "field": "user_2"
        }
       ]
      },
@@ -26350,36 +25803,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "proto",
         "field": "proto"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "action_2",
-        "field": "action_2"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "src_2",
-        "field": "src_2"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "dst_2",
-        "field": "dst_2"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "dport_2",
-        "field": "dport_2"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "proto_2",
-        "field": "proto_2"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "user_2",
-        "field": "user_2"
        }
       ]
      }
@@ -26404,24 +25827,18 @@
     "deny"
    ],
    "notes": [
-    "'message' holds key/value pairs: 6 keys are fields of their own through pairs ('action_2', 'src_2', 'dst_2', 'dport_2', 'proto_2', 'user_2'), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
+    "'message' is the text the splitter read its key/value pairs from: they are fields already, so the text isn't read again or mapped.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "Drafted from the sample's values (check them): allow: Network/Permit for action allow; deny: Network/Deny for action deny.",
     "One rule per value of 'action' (allow, deny), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes.",
-    "['user', 'user_2'] hold '-' for none: nil_values ['-'] leaves those elements out rather than writing '-'."
+    "['user'] hold '-' for none: nil_values ['-'] leaves those elements out rather than writing '-'."
    ],
    "unmapped_fields": [
     "pri",
     "pid",
     "msgid",
     "structured",
-    "proto",
-    "action_2",
-    "src_2",
-    "dst_2",
-    "dport_2",
-    "proto_2",
-    "user_2"
+    "proto"
    ],
    "fields_seen": [
     "pri",
@@ -26437,13 +25854,7 @@
     "dst",
     "dport",
     "proto",
-    "user",
-    "action_2",
-    "src_2",
-    "dst_2",
-    "dport_2",
-    "proto_2",
-    "user_2"
+    "user"
    ]
   }
  },

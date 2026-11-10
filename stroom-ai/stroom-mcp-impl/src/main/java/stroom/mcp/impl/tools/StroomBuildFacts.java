@@ -50,6 +50,7 @@ import jakarta.inject.Inject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -236,6 +237,16 @@ class StroomBuildFacts implements BuildFacts {
     @Override
     public boolean verified(final Map<String, Object> pipeline) {
         return buildRecords.verified(ref(pipeline));
+    }
+
+    @Override
+    public List<Long> indexedStreams(final Map<String, Object> pipeline) {
+        return buildRecords.indexedStreams(ref(pipeline));
+    }
+
+    @Override
+    public Set<Long> goneStreams(final Collection<Long> streamIds) {
+        return GoneStreams.of(streamReader, streamIds);
     }
 
     @Override

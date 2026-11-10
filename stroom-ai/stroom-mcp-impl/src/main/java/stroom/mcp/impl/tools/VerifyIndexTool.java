@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 
 /// `verify_index` - verifies indexed events through Stroom, not by querying the backend: a workspace dashboard on the
 /// index doc, made in the build once the user confirms its columns, then the test searches of the sample's streams
@@ -401,7 +402,7 @@ class VerifyIndexTool extends AbstractBuiltInTool {
         result.put("dashboard", shown);
         result.putAll(searchedResult);
         if (Boolean.TRUE.equals(searchedResult.get("passed"))) {
-            final List<String> recorded = recordVerified(contents, docType, indexUuid, index.indexName());
+            final List<String> recorded = recordVerified(contents, docType, indexUuid, index.indexName(), streamIds);
             if (!recorded.isEmpty()) {
                 result.put("verified", recorded);
                 return plan.withNext(context, build, result);
@@ -480,11 +481,15 @@ class VerifyIndexTool extends AbstractBuiltInTool {
         found.put("passed", false);
     }
 
-    // The plan's 'indexed' step is done for the build's pipelines that write to this index.
+    // The plan's 'indexed' step is done for the build's pipelines that write to this index, while the streams
+    // searched are still the build's current Events (an Events reprocess makes new ones, which the index lacks).
     private List<String> recordVerified(final List<WriteGuard.BuildDoc> contents,
                                         final String docType,
                                         final String indexUuid,
-                                        final String indexName) {
+                                        final String indexName,
+                                        final List<Long> streamIds) {
+        final Map<String, Object> indexed = Map.of(BuildRecords.INDEXED_STREAMS,
+                List.copyOf(new TreeSet<>(streamIds)));
         final List<String> recorded = new ArrayList<>();
         for (final WriteGuard.BuildDoc doc : contents) {
             if (!PipelineDoc.TYPE.equals(doc.type())) {
@@ -499,7 +504,7 @@ class VerifyIndexTool extends AbstractBuiltInTool {
             }
             if (IndexDocs.writesTo(merged.properties(), docType, indexUuid, indexName)
                 && records.recordPassed(new DocRef(PipelineDoc.TYPE, doc.uuid(), doc.name()), BuildRecords.VERIFIED,
-                    null, null).filter("recorded"::equals).isPresent()) {
+                    null, indexed).filter("recorded"::equals).isPresent()) {
                 recorded.add(doc.name());
             }
         }

@@ -475,6 +475,36 @@ class TestIndexTemplateTools {
                 UserQuestions.NONE);
     }
 
+    @Test
+    void testInStroomAiTheChatShowsTheTemplateUnderReviewItself() {
+        // Seen in testing: told to print the template and call again without waiting, the agent called again, and
+        // the form asked the user to confirm a template never shown. The chat shows dev_tools itself.
+        final FieldPlan plan = FieldPlan.of("elasticsearch", "whatever", "@timestamp", List.of(
+                PlannedField.of("StreamId", "id", "@StreamId"), PlannedField.of("EventId", "id", "@EventId"),
+                PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
+                PlannedField.of("user.name", "keyword", "EventSource/User/Id"),
+                PlannedField.of("event.outcome", "keyword", "EventDetail/Authenticate/Outcome/Success")));
+        documents = DOCS.stream().map(doc -> {
+            final Map<String, Object> copy = new LinkedHashMap<>(doc);
+            copy.remove("source.ip");
+            return copy;
+        }).toList();
+        final Map<String, Object> given = with(args("plan", plan.toJson(), "example_template", EXAMPLE,
+                "component_templates", COMPONENTS), "pipeline_uuid", "p1", "events_stream_ids", List.of(8));
+        final ToolResult result = proposeTool().execute(call(ProposeIndexTemplateTool.NAME, given),
+                ToolCallContext.builder(ToolSession.chat(7))
+                        .userQuestions(UserQuestions.NONE)
+                        .links(StroomLinks.absolute("https://stroom.example"))
+                        .build());
+        assertThat(result.isError()).as(result.text()).isFalse();
+        final Map<String, Object> shown = BuildToolCalls.json(result.text());
+
+        assertThat(shown).containsEntry("status", "needs_review").containsKey("dev_tools");
+        assertThat(String.valueOf(shown.get("hint"))).contains("is shown to the user in the chat")
+                .doesNotContain("json code block")
+                .contains("reviewed='" + shown.get("review_id") + "'");
+    }
+
     private Map<String, Object> propose(final Map<String, Object> arguments, final UserQuestions user) {
         return run(proposeTool(), ProposeIndexTemplateTool.NAME, with(arguments, "pipeline_uuid", "p1"), user);
     }

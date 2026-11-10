@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /// What an index plan's fields mean: which event paths a plan source names (`*` for one element, `//` for any
@@ -52,10 +53,20 @@ public final class FieldPlans {
             List.of("EventId", "id", "stroom:record-no()"),
             List.of("@timestamp", "date", ""));
 
+    private static final Set<String> TEXT_TYPES = Set.of("keyword", "text");
     private static final Pattern ANY_ACTION = Pattern.compile("^EventDetail/Network/[^/]+/(?=.)");
 
     private FieldPlans() {
         // Static only.
+    }
+
+    /// Whether a planned field of the type indexes any text as it is: a keyword or text field does, a number,
+    /// date, address or boolean field refuses a value not of its kind.
+    ///
+    /// @param type A planned field's logical type ([#LOGICAL_TYPES]), or null.
+    /// @return True for `keyword` and `text`.
+    public static boolean takesText(final String type) {
+        return type != null && TEXT_TYPES.contains(type);
     }
 
     /// @param source A plan field's source.

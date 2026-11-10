@@ -190,9 +190,21 @@ public final class SplitterDryRun {
             final String q = ToolText.escape(spec.quote());
             final String quoted = ToolText.escapedRun(spec.quote());
             return List.of(lead(spec) + "(" + key + ")" + s + q + "?((?<=" + q + ")" + quoted + "(?=" + q + ")|(?<!"
-                           + q + ")[^" + d + q + "]*)" + q + "?");
+                           + q + ")" + unquotedValue(d, d + q, s) + ")" + q + "?");
         }
-        return List.of(lead(spec) + "(" + key + ")" + s + "([^" + d + "]*)");
+        return List.of(lead(spec) + "(" + key + ")" + s + "(" + unquotedValue(d, d, s) + ")");
+    }
+
+    // An unquoted value: to the next delimiter, and with white space the delimiter, past it where the value ends in
+    // a list's , or ; and what follows isn't a key (`rcpt=a@example.com; b@example.com subject=...`): a list of
+    // values written with spaces, its items read whole rather than as words that aren't pairs. Possessive: an item
+    // is read once, however long the list (seen in testing: some 300 recipients).
+    private static String unquotedValue(final String delimiter, final String notIn, final String separator) {
+        if (!WHITE_SPACE.equals(delimiter)) {
+            return "[^" + notIn + "]*";
+        }
+        return "(?:[^" + notIn + "]*+(?<=[,;])\\s++(?![^" + notIn + separator + "]*+" + separator + ")(?=[^"
+               + notIn + "]))*+[^" + notIn + "]*+";
     }
 
     // A key_value spec's delimiter as a regex, and as a character class's content. A delimiter with white space

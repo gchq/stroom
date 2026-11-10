@@ -35,6 +35,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -1002,6 +1004,120 @@ class TestDraftMapping extends DraftFixtures {
         assertThat(DraftMapping.pairExtracts(Map.of("msg", List.of("Backup done - all good", "Restore done - "
                                                                                              + "partly", "x")),
                 Set.of())).isEmpty();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aMailLogsRecipientsReachTheMappingOnceAndWhole() {
+        // Seen in testing: a mail gateway's syslog key=value lines. The splitter reads the pairs, and the draft read
+        // its message for them again (every key twice, a list cut at its first comma).
+        for (final String separator : List.of(",", "; ")) {
+            final String text = IntStream.range(0, 4)
+                    .mapToObj(r -> "<22>Nov 10 10:00:0" + r + " mail01 mailgw[123]: id=q" + r
+                                   + " from=alice@example.org recipients=" + IntStream.range(0, 300)
+                                           .mapToObj(n -> "u" + n + "@example.org")
+                                           .collect(Collectors.joining(separator)) + " subject=\"Hi there\" size=5")
+                    .collect(Collectors.joining("\n"));
+            final Map<String, Object> draft = draft(Map.of("mail.log", text), "Mail");
+            final Map<String, Object> mapping = mappingOf(draft);
+
+            assertThat(mapping).as(separator).doesNotContainKey("extract");
+            assertThat(String.valueOf(mapping)).contains("data_name=recipients, field=recipients")
+                    .doesNotContain("recipients_2").doesNotContain("data_name=words");
+            assertThat((List<String>) draft.get("notes")).anySatisfy(note -> assertThat(note)
+                    .startsWith("'message' is the text the splitter read its key/value pairs from"));
+        }
+    }
+
+    @Test
+    void aPairNamedLikeAHeaderFieldIsStillReadFromTheMessage() {
+        // The splitter's record holds the header's time, not the message's time= pair: reading the message again
+        // is the only way to reach that pair, so the text isn't taken as read already.
+        final String text = IntStream.range(0, 4)
+                .mapToObj(r -> "<22>Nov 10 10:00:0" + r + " host01 app[123]: time=2026-11-10T09:00:0" + r
+                               + "Z user=alice action=login")
+                .collect(Collectors.joining("\n"));
+        final Map<String, Object> draft = draft(Map.of("app.log", text), "App");
+
+        assertThat(String.valueOf(mappingOf(draft))).contains("time_2");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aKeyGivenOnceAValueIsWrittenForEachValue() {
+        // The splitter writes each rcpt= as a data element of its own; the dry run's record keeps the first, and
+        // the draft's Data entry writes them all.
+        final String text = IntStream.range(0, 4)
+                .mapToObj(r -> "<22>Nov 10 10:00:0" + r + " mail01 mailgw[123]: id=q" + r
+                               + " from=alice@example.org rcpt=a" + r + "@example.org rcpt=b" + r
+                               + "@example.org rcpt=c" + r + "@example.org subject=\"rcpt=x rcpt=y\" size=5")
+                .collect(Collectors.joining("\n"));
+        final Map<String, Object> draft = draft(Map.of("mail.log", text), "Mail");
+        final List<Map<String, Object>> fields = new ArrayList<>(JsonValues.maps(((Map<String, Object>) JsonValues
+                .maps(mappingOf(draft).get("events")).getFirst()).get("fields")));
+
+        assertThat(fields).filteredOn(field -> "rcpt".equals(field.get("field"))).singleElement()
+                .satisfies(field -> assertThat(field).containsEntry("data_name", "rcpt").containsEntry("repeat",
+                        true));
+        // A key given once is read once.
+        assertThat(fields).filteredOn(field -> "from".equals(field.get("field"))).singleElement()
+                .satisfies(field -> assertThat(field).doesNotContainKey("repeat"));
+        assertThat((List<String>) draft.get("notes")).anySatisfy(note -> assertThat(note)
+                .startsWith("'rcpt' is given more than once in a record"));
+    }
+
+    @Test
+    void aListInAPairsValueIsReadWhole() {
+        // Seen in testing: recipients=a@y,b@y read as its first address from a text field's pairs.
+        final Map<String, List<String>> values = Map.of("msg", List.of(
+                "from=alice@example.org recipients=a@example.org,b@example.org action=sent",
+                "from=bob@example.org recipients=c@example.org,d@example.org;e@example.org action=sent",
+                "from=carl@example.org recipients=f@example.org action=held",
+                "a=1,b=2 from=dan@example.org recipients=g@example.org"));
+        final List<Map<String, Object>> extracts = DraftMapping.pairExtracts(values, Set.of()).get("msg").extracts();
+        final List<Map<String, Object>> records = new ArrayList<>();
+        values.get("msg").forEach(value -> records.add(new LinkedHashMap<>(map("msg", value))));
+        DraftMapping.withPairs(records, extracts);
+
+        assertThat(records).extracting(record -> record.get("recipients")).containsExactly(
+                "a@example.org,b@example.org", "c@example.org,d@example.org;e@example.org", "f@example.org",
+                "g@example.org");
+        // Pairs parted by a comma are still two pairs.
+        assertThat(records.getLast()).containsEntry("a", "1").containsEntry("b", "2");
+        assertThat(extracts).anySatisfy(extract -> assertThat(extract).containsEntry("regex",
+                Pairs.pairRegex("listed", "recipients")));
+    }
+
+    @Test
+    void aQuoteLeftOpenInADashedPairIsReadToTheNextSpacedDash() {
+        // Seen in testing: a browser's name with its quote never closed was read as nothing, or (a quoted value
+        // later in the text) to that value's opening quote.
+        final String open = "Context john.smith@example.com - User john.smith@example.com - Client_ip 123.0.0.123 "
+                            + "- Browser_type \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) - SSLVPN_client_type "
+                            + "Clientless";
+        final String quotedLater = open + " - Group(s) \"N/A\"";
+        final String balanced = "Context ann@example.com - User ann@example.com - Client_ip 10.0.0.9 - Browser_type "
+                                + "\"Edge 120\" - SSLVPN_client_type Agent - Group(s) \"Staff - North\"";
+        for (final List<String> body : List.of(List.of(open, open), List.of(quotedLater, quotedLater),
+                List.of(open, balanced, quotedLater))) {
+            final Map<String, DraftMapping.PairExtracts> found = DraftMapping.pairExtracts(Map.of("body", body),
+                    Set.of());
+            final List<Map<String, Object>> records = new ArrayList<>();
+            body.forEach(text -> records.add(new LinkedHashMap<>(map("body", text))));
+            DraftMapping.withPairs(records, found.get("body").extracts());
+
+            assertThat(records.getFirst())
+                    .containsEntry("browser_type", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                    .containsEntry("sslvpn_client_type", "Clientless")
+                    .containsEntry("client_ip", "123.0.0.123");
+            if (body.size() == 3) {
+                // A balanced quote is still read to its closing quote, a spaced dash inside it kept.
+                assertThat(records.get(1)).containsEntry("browser_type", "Edge 120")
+                        .containsEntry("group_s", "Staff - North");
+                assertThat(records.getLast()).containsEntry("group_s", "N/A")
+                        .containsEntry("sslvpn_client_type", "Clientless");
+            }
+        }
     }
 
     @Test

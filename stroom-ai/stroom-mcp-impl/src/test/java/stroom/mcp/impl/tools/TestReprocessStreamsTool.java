@@ -25,6 +25,7 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResultPage;
 
@@ -82,6 +83,35 @@ class TestReprocessStreamsTool {
         // Stroom's own reprocessing is left alone: a new filter on the pipeline, by stream id.
         Mockito.verify(w.filterService, Mockito.never()).reprocess(any());
         assertThat(w.created.getLast().isReprocess()).isFalse();
+    }
+
+    @Test
+    void reprocessingTheEventsOfAVerifiedIndexOffersToIndexThemAgain() {
+        // Seen in testing: after an Events reprocess the index held the Events it replaced, and the plan said
+        // indexed. The hint offers indexing the new Events once processing finishes.
+        translationInBuild();
+        w.idFilter("p1", 3, 5);
+        final DocRef indexing = new DocRef(PipelineDoc.TYPE, "ixp", "ACME-Indexing");
+        w.pipeline(indexing, true, null);
+        w.lucene("ixp", LUCENE);
+        w.world.records().recordPassed(indexing, BuildRecords.VERIFIED, null,
+                Map.of(BuildRecords.INDEXED_STREAMS, List.of(6L)));
+
+        final Gated gated = reprocessed(Map.of("stream_ids", List.of(5)));
+
+        assertThat(String.valueOf(gated.result().get("hint"))).contains("filter_id=9")
+                .contains("The build's index (verified through ACME-Indexing) holds the Events this replaces")
+                .contains("create_processor_filter on the indexing pipeline with the new Events stream ids");
+    }
+
+    @Test
+    void reprocessingWithNoVerifiedIndexSaysNothingOfIndexing() {
+        translationInBuild();
+        w.idFilter("p1", 3, 5);
+
+        final Gated gated = reprocessed(Map.of("stream_ids", List.of(5)));
+
+        assertThat(String.valueOf(gated.result().get("hint"))).doesNotContain("index");
     }
 
     @ParameterizedTest

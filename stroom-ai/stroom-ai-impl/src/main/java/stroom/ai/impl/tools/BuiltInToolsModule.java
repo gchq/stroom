@@ -93,5 +93,7 @@ public class BuiltInToolsModule extends AbstractModule {
         OptionalBinder.newOptionalBinder(binder(), AgentKnowledge.class);
         // What read_document says of an index or an XSLT beyond its content, bound by stroom-mcp-impl.
         OptionalBinder.newOptionalBinder(binder(), DocumentAnalyses.class);
+        // The state of the build a session is working on, bound by stroom-mcp-impl.
+        OptionalBinder.newOptionalBinder(binder(), BuildProgress.class);
     }
 }

@@ -36,6 +36,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -227,6 +228,90 @@ class TestBuildPlan {
     }
 
     @Test
+    void anIndexVerifiedOverEventsSinceReprocessedIsToIndexAgain() {
+        // Seen in testing: after the Events were reprocessed, the plan still said indexed, over an index of the
+        // Events the reprocess replaced. The build's current Events are stream 9.
+        facts.indexedStreams = List.of(9L);
+        assertThat(states(elasticStatus(true, true, List.of(selecting(true, 9L)))).get("indexed"))
+                .isEqualTo("done");
+
+        // Verified over stream 8, since reprocessed into 9 (8 deleted): its finished filter doesn't count, a new
+        // one is made.
+        facts.indexedStreams = List.of(8L);
+        facts.goneStreams = Set.of(8L);
+        final Map<String, Object> stale = elasticStatus(true, true, List.of(selecting(true, 8L)));
+        assertThat(states(stale).get("indexed")).isEqualTo("to do");
+        final Map<?, ?> next = (Map<?, ?>) stale.get("next");
+        assertThat(next.get("step")).isEqualTo("indexed");
+        final Map<?, ?> call = (Map<?, ?>) next.get("call");
+        assertThat(call.get("tool")).isEqualTo("create_processor_filter");
+        assertThat(((Map<?, ?>) call.get("arguments")).get("stream_ids")).isEqualTo(List.of(9L));
+        assertThat(String.valueOf(next.get("then"))).contains("dropped first");
+
+        // The new filter on stream 9: waited for, then verified.
+        final Map<?, ?> running = (Map<?, ?>) elasticStatus(true, true, List.of(selecting(true, 8L),
+                selecting(false, 9L))).get("next");
+        assertThat(((Map<?, ?>) running.get("call")).get("tool")).isEqualTo("wait_for_processing");
+        final Map<?, ?> finished = (Map<?, ?>) elasticStatus(true, true, List.of(selecting(true, 8L),
+                selecting(true, 9L))).get("next");
+        assertThat(((Map<?, ?>) finished.get("call")).get("tool")).isEqualTo("verify_index");
+    }
+
+    @Test
+    void aVerificationRecordedBeforeItsStreamsWereKeptStillCounts() {
+        // A build verified before the record kept the streams isn't sent back to index again.
+        facts.indexedStreams = List.of();
+        assertThat(states(elasticStatus(true, true, List.of(filter(true, true)))).get("indexed"))
+                .isEqualTo("done");
+        assertThat(BuildPlan.staleIndex(List.of(), List.of(8L), Set.of(8L), false)).isFalse();
+        // Deleted since, or left out of the current Events: stale.
+        assertThat(BuildPlan.staleIndex(List.of(8L), List.of(), Set.of(8L), false)).isTrue();
+        assertThat(BuildPlan.staleIndex(List.of(8L, 9L), List.of(8L), Set.of(), false)).isTrue();
+        assertThat(BuildPlan.staleIndex(List.of(9L), List.of(8L), Set.of(), false)).isFalse();
+        // A discovery build indexes raw streams, not Events.
+        assertThat(BuildPlan.staleIndex(List.of(8L), List.of(8L), Set.of(8L), true)).isFalse();
+    }
+
+    @Test
+    void anIndexVerifiedOverStreamsOlderThanTheListedOnesStillCounts() {
+        // A busy feed: the streams verified are older than the newest streams the plan lists, but still there and
+        // not replaced, so the index isn't stale.
+        facts.indexedStreams = List.of(3L);
+        assertThat(states(elasticStatus(true, true, List.of(selecting(true, 3L)))).get("indexed"))
+                .isEqualTo("done");
+    }
+
+    @Test
+    void aFilterSelectsTheStreamsItNamesById() {
+        assertThat(BuildPlan.selectsAny(Map.of("selects", List.of("Id EQUALS 12", "Id EQUALS 13")), List.of(13L)))
+                .isTrue();
+        assertThat(BuildPlan.selectsAny(Map.of("selects", List.of("OR(Id EQUALS 12, Id EQUALS 13)",
+                "Pipeline IS_DOC_REF ACME-Events")), List.of(12L))).isTrue();
+        assertThat(BuildPlan.selectsAny(Map.of("selects", List.of("Id EQUALS 123")), List.of(12L))).isFalse();
+        assertThat(BuildPlan.selectsAny(Map.of("selects", List.of("Feed EQUALS ACME")), List.of(12L))).isFalse();
+        assertThat(BuildPlan.selectsAny(Map.of(), List.of(12L))).isFalse();
+    }
+
+    @Test
+    void aDashboardWaitsWhileTheBuildsIndexingIsUnverified() {
+        // Seen in testing: the agent skipped the processor filter and verify_index, and proposed a dashboard of
+        // its own over the last 24 hours, which showed none of the sample's events.
+        elasticStatus(false, true, List.of());
+        assertThat(plan.unverifiedIndexing("b")).hasValueSatisfying(said -> assertThat(said)
+                .startsWith("No dashboard was proposed: build 'b' has an indexing pipeline whose indexing isn't "
+                            + "verified yet")
+                .contains("indexed: create_processor_filter")
+                .contains("verify_index, which makes the build's -VERIFY dashboard"));
+
+        elasticStatus(true, true, List.of(filter(true, true)));
+        assertThat(plan.unverifiedIndexing("b")).isEmpty();
+        assertThat(plan.unverifiedIndexing(null)).isEmpty();
+        // No indexing pipeline yet: nothing to wait for.
+        facts.docs = List.of(FakeBuildFacts.doc("Feed", "f", "ACME"));
+        assertThat(plan.unverifiedIndexing("b")).isEmpty();
+    }
+
+    @Test
     void nextSaysWhereThePlanStandsForTheAgentsTaskList() {
         // Seen in testing: the agent's checklist stayed on 'Process samples into Events' while the work went on.
         final List<Map<String, Object>> steps = List.of(step("feed", "done"), step("covered", "not needed"),
@@ -374,6 +459,11 @@ class TestBuildPlan {
                 return Optional.ofNullable(next);
             }
         };
+    }
+
+    // An enabled filter selecting a stream by id, as processing_status lists it.
+    private static Map<String, Object> selecting(final boolean finished, final long streamId) {
+        return Map.of("finished", finished, "enabled", true, "selects", List.of("Id EQUALS " + streamId));
     }
 
     private static Map<String, Object> filter(final boolean finished, final boolean enabled) {

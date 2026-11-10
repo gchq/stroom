@@ -81,7 +81,8 @@ class TestEventVersions {
         // option.
         assertThat(drafted).containsEntry("schema_version_settled", "The user chose event-logging 4.1.0 in the "
                                                                     + "server's form: don't ask them for the version "
-                                                                    + "again.");
+                                                                    + "again. On later calls give "
+                                                                    + "schema_version=4.1.0, not the namespace.");
         assertThat((String) drafted.get("hint")).startsWith((String) drafted.get("schema_version_settled"));
         // build_translation_xslt, given no schema_version, writes the version chosen for the build: not asked
         // again (no answer is left to give).
@@ -208,7 +209,7 @@ class TestEventVersions {
         assertThat(later.settled(context, "b1", "3.5.2")).hasValueSatisfying(said ->
                 assertThat(said).contains("in the server's form"));
         assertThat(world.world.records().eventLoggingVersion("b1")).contains(Map.of("version", "3.5.2", "how",
-                "form"));
+                "form", "namespace", "event-logging:3"));
     }
 
     @Test
@@ -379,7 +380,7 @@ class TestEventVersions {
                 .contains("needs no change to the schema filter"));
         // Kept in the build's record, with the fork's document, for later sessions.
         assertThat(world.world.records().eventLoggingVersion("b1")).contains(Map.of("version", "4.1.0", "how",
-                EventVersions.INFERRED, "uuid", "fork-1"));
+                EventVersions.INFERRED, "uuid", "fork-1", "namespace", FORK_NS));
         // And not asked again.
         Mockito.reset(world.inference);
         assertThat(world.eventVersions.target(CALL, context, null, "b1").version()).isEqualTo("4.1.0");
@@ -422,6 +423,91 @@ class TestEventVersions {
         // Given by the agent: nothing it didn't see.
         assertThat(world.eventVersions.variantChosenInForm(context, "b1")).isFalse();
         assertThat(world.eventVersions.chosenFork(context, "b1")).isEmpty();
+    }
+
+    @Test
+    void eventLoggingsNamespaceGivenAgainAfterTheVersionWasPickedAsksNothing() {
+        // Seen in testing: the agent gave schema_version= the namespace on every call, as the variant question's
+        // hint told it, and the user was asked for the version on every turn.
+        holding("4.1.0", "3.5.2");
+        holdingFork();
+        world.forms = true;
+        world.answers.put(EventVersions.VERSION_QUESTION, "3.5.2");
+
+        assertThat(world.eventVersions.target(CALL, context, "event-logging:3", "b1").version()).isEqualTo("3.5.2");
+        final int formsShown = world.formsShown.size();
+        world.answers.clear();
+
+        assertThat(world.eventVersions.target(CALL, context, "event-logging:3", "b1").version()).isEqualTo("3.5.2");
+        assertThat(world.eventVersions.target(CALL, context, null, "b1").version()).isEqualTo("3.5.2");
+        assertThat(world.formsShown).hasSize(formsShown);
+        // The agent is told what to give from now on.
+        assertThat(world.eventVersions.settled(context, "b1", "3.5.2")).hasValueSatisfying(said ->
+                assertThat(said).contains("On later calls give schema_version=3.5.2, not the namespace"));
+        // Another variant named is a new choice: the fork's one version, settled with its document.
+        assertThat(world.eventVersions.target(CALL, context, FORK_NS, "b1").version()).isEqualTo("4.1.0");
+        assertThat(world.eventVersions.chosenDocs(context, "b1")).isEqualTo(Map.of(FORK_SYSTEM_ID, "fork-1"));
+    }
+
+    @Test
+    void aForksNamespaceGivenAgainAfterItsVersionWasPickedAsksNothing() {
+        final XmlSchemaDoc older = forkDoc("fork-0", "Test fork v1", FORK_XSD.replace("version=\"4.1.0\"",
+                "version=\"1.0.0\""));
+        final XmlSchemaDoc newer = forkDoc("fork-1", "Test fork", FORK_XSD);
+        holding("4.1.0", "3.5.2");
+        holdingForks(List.of(newer, older));
+        world.forms = true;
+        world.answers.put(EventVersions.forkVersionQuestion(FORK_NS), "1.0.0: /XML Schemas/Test fork v1");
+
+        assertThat(world.eventVersions.target(CALL, context, FORK_NS, "b1").version()).isEqualTo("1.0.0");
+        final int formsShown = world.formsShown.size();
+        world.answers.clear();
+
+        assertThat(world.eventVersions.target(CALL, context, FORK_NS, "b1").version()).isEqualTo("1.0.0");
+        assertThat(world.formsShown).hasSize(formsShown);
+        assertThat(world.eventVersions.chosenDocs(context, "b1")).isEqualTo(Map.of(FORK_SYSTEM_ID, "fork-0"));
+        assertThat(world.eventVersions.settled(context, "b1", "1.0.0")).hasValueSatisfying(said ->
+                assertThat(said).contains("On later calls give schema_version=fork-0"));
+        // Event-logging named instead is a new choice, asked.
+        world.forms = false;
+        assertThat(world.eventVersions.target(CALL, context, "event-logging:3", "b1").question())
+                .containsEntry("question", EventVersions.VERSION_QUESTION);
+    }
+
+    @Test
+    void aVersionChosenBeforeTheBuildHadAFolderIsKeptInItsRecordOnceItHasOne() {
+        holding("4.1.0", "3.5.2");
+        holdingFork();
+        world.forms = true;
+        world.answers.put(EventVersions.VERSION_QUESTION, "3.5.2");
+        assertThat(world.eventVersions.target(CALL, context, "event-logging:3", "b9").version()).isEqualTo("3.5.2");
+        assertThat(world.world.guard().buildFolder("b9", false)).isEmpty();
+
+        world.world.folder("System/" + BuildWorld.WORKSPACE + "/b9");
+
+        assertThat(world.eventVersions.chosen(context, "b9")).contains("3.5.2");
+        assertThat(world.world.records().eventLoggingVersion("b9")).contains(Map.of("version", "3.5.2", "how",
+                "form", "namespace", "event-logging:3"));
+        // So another session is not asked again either.
+        final EventVersions later = new EventVersions(world.heldSchemas, world.consent, new BuildMemory(),
+                world.world::guard, world.world::records, () -> world.inference);
+        world.answers.clear();
+        assertThat(later.target(CALL, context, "event-logging:3", "b9").version()).isEqualTo("3.5.2");
+    }
+
+    @Test
+    void aVersionChosenBeforeTheSessionNamedABuildIsTheBuildsWhenItDoes() {
+        holding("4.1.0", "3.5.2");
+        holdingFork();
+        world.forms = true;
+        world.answers.put(EventVersions.VERSION_QUESTION, "3.5.2");
+        // No build named, and none current.
+        assertThat(world.eventVersions.target(CALL, context, "event-logging:3", null).version()).isEqualTo("3.5.2");
+        world.answers.clear();
+        final int formsShown = world.formsShown.size();
+
+        assertThat(world.eventVersions.target(CALL, context, "event-logging:3", "b1").version()).isEqualTo("3.5.2");
+        assertThat(world.formsShown).hasSize(formsShown);
     }
 
     @Test

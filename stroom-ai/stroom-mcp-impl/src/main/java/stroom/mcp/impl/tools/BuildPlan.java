@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
@@ -47,6 +48,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /// The onboarding plan, with its state read from the build.
@@ -175,6 +179,9 @@ public class BuildPlan {
     private static final Map<String, String> STEP_OF = stepOf();
     // Parsers that read the raw data themselves: no text converter before them.
     private static final Set<String> NO_CONVERTER = Set.of("JSONParser", "XMLParser");
+    // A processor filter's term selecting a stream by id, as processing_status lists it ("Id EQUALS 123").
+    private static final Pattern SELECTED_ID = Pattern.compile(
+            "\\b" + ProcessorFilters.ID + " EQUALS (\\d{1,18})\\b");
     // A sample's processor filter is created enabled once the user approves it in a form (asked for by the user);
     // one made disabled (before, or a feed's) is the user's to enable.
     private static final String APPROVE = "the user approves it in a form, and processing starts";
@@ -321,6 +328,44 @@ public class BuildPlan {
                                  + "deeper the parts it read only in part, or they choose to stop there), then "
                                  + "process. Processed before, kinds of event no one has classified would go "
                                  + "through the mapping's catch-all rules unseen.");
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No status for build {}: {}", build, e.getMessage()), e);
+            return Optional.empty();
+        }
+    }
+
+    /// @param build A build, or null.
+    /// @return Why a dashboard isn't to be proposed yet: the build has an indexing pipeline whose indexing isn't
+    /// verified (its plan's `indexed` step still to do), so the index may hold nothing, or not all the build's
+    /// Events, and the time window a dashboard would guess may show none of them (seen in testing: the agent
+    /// skipped the processor filter and verify_index, and proposed a dashboard over the last 24 hours of data from
+    /// months before). Says the plan's next step. Empty when indexed (or not needed), with no indexing pipeline, or
+    /// when the build is unknown or unreadable.
+    public Optional<String> unverifiedIndexing(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        try {
+            final Map<String, Object> status = status(build, null);
+            final Map<String, Object> states = new LinkedHashMap<>();
+            JsonValues.maps(status.get("steps")).forEach(step -> states.put(String.valueOf(step.get("step")),
+                    step.get("state")));
+            if (!"done".equals(states.get("indexing_pipeline")) || !"to do".equals(states.get("indexed"))) {
+                return Optional.empty();
+            }
+            final Map<String, Object> next = JsonValues.mapOrEmpty(status.get("next"));
+            final Map<String, Object> call = JsonValues.mapOrEmpty(next.get("call"));
+            final String nextSaid = call.get("tool") == null
+                    ? "the plan's next step (build_status build=" + build + ")"
+                    : "the plan's next step, " + next.get("step") + ": " + call.get("tool") + " "
+                      + ToolJson.dumpsSortedKeys(JsonValues.mapOrEmpty(call.get("arguments")))
+                      + NullSafe.getOrElse(next.get("then"), then -> " (" + then + ")", "");
+            return Optional.of("No dashboard was proposed: build '" + build + "' has an indexing pipeline whose "
+                               + "indexing isn't verified yet, so its index may hold none (or not all) of the "
+                               + "build's Events. Do " + nextSaid + ". The indexing steps end with verify_index, "
+                               + "which makes the build's -VERIFY dashboard over the time window the data really "
+                               + "has; give the user its link. Propose another dashboard only once that passes, "
+                               + "if they still want one.");
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("No status for build {}: {}", build, e.getMessage()), e);
             return Optional.empty();
@@ -734,8 +779,16 @@ public class BuildPlan {
         done.put("index_template", agreed);
         // A working copy of a production indexing pipeline is stepped clean in the build; indexing production Events
         // into its index, after promotion, is the user's.
+        // Verified over Events that are still the build's current ones: an Events reprocess makes new streams, which
+        // the index lacks (seen in testing: the plan said indexed after a reprocess, and the index was stale).
+        final Predicate<Map<String, Object>> indexedNow = p -> {
+            final List<Long> indexed = facts.indexedStreams(p);
+            return facts.verified(p) && !staleIndex(indexed, eventsLeftOut, discovery || indexed.isEmpty()
+                    ? Set.of()
+                    : facts.goneStreams(indexed), discovery);
+        };
         done.put("indexed", !indexing.isEmpty() && indexing.stream().allMatch(p ->
-                (p.get("working_copy_of") != null && Boolean.TRUE.equals(p.get("stepped"))) || facts.verified(p)));
+                (p.get("working_copy_of") != null && Boolean.TRUE.equals(p.get("stepped"))) || indexedNow.test(p)));
         done.put("index_documented", !indexing.isEmpty() && allNamed(indexing, documented));
         done.put("cef_mapping", hasMapping(xslts, "cef")
                                 || forwarding.stream().anyMatch(p -> p.get("working_copy_of") != null));
@@ -791,11 +844,18 @@ public class BuildPlan {
         } else if ("indexed".equals(nextStep)) {
             // Which call indexing needs next: a processor filter, the wait for it, or the searches that verify it.
             final Map<String, Object> pendingIndexing = indexing.stream()
-                    .filter(p -> !facts.verified(p))
+                    .filter(indexedNow.negate())
                     .findFirst()
                     .orElse(indexing.getFirst());
             indexing = first(indexing, List.of(pendingIndexing));
-            final List<Map<String, Object>> filters = facts.processingFilters(uuid(pendingIndexing));
+            List<Map<String, Object>> filters = facts.processingFilters(uuid(pendingIndexing));
+            if (facts.verified(pendingIndexing)) {
+                // Verified over Events since reprocessed: only a filter on the current Events indexes them, so the
+                // earlier run's finished filter doesn't lead to verify_index again over an index without them.
+                filters = filters.stream()
+                        .filter(f -> selectsAny(f, events))
+                        .toList();
+            }
             processing = filters.isEmpty()
                     ? null
                     : filters.stream().noneMatch(f -> Boolean.TRUE.equals(f.get("enabled")))
@@ -1516,6 +1576,45 @@ public class BuildPlan {
 
     private static boolean hasMapping(final List<Map<String, Object>> xslts, final String kind) {
         return xslts.stream().anyMatch(x -> kind.equals(x.get("mapping")));
+    }
+
+    /// Whether a passed index verification is of Events the build has since replaced: an Events reprocess deletes
+    /// the Events it replaces, and Events made before the translation's code was last saved are left out of the
+    /// current ones. A stream verified that is neither (e.g. one older than the feed's newest streams the plan
+    /// lists, on a busy feed) still counts.
+    ///
+    /// @param indexed   The streams the verification searched, as the record keeps them; none for a record made
+    ///                  before they were kept, which still counts (an existing build isn't sent back).
+    /// @param leftOut   The build's Events streams left out of its current ones.
+    /// @param gone      Those of the streams verified that have been deleted since.
+    /// @param discovery Whether the build indexes its raw streams (no Events): never stale by Events.
+    /// @return True if some stream verified has been deleted or left out since.
+    static boolean staleIndex(final List<Long> indexed,
+                              final List<Long> leftOut,
+                              final Set<Long> gone,
+                              final boolean discovery) {
+        if (discovery || NullSafe.isEmptyCollection(indexed)) {
+            return false;
+        }
+        final Set<Long> replaced = new HashSet<>(leftOut);
+        replaced.addAll(gone);
+        return indexed.stream().anyMatch(replaced::contains);
+    }
+
+    /// @param filter A processor filter, as processing_status lists it (its `selects` terms).
+    /// @param ids    Stream ids.
+    /// @return Whether the filter selects any of the streams by id.
+    static boolean selectsAny(final Map<String, Object> filter, final Collection<Long> ids) {
+        final Set<Long> wanted = Set.copyOf(ids);
+        for (final String term : JsonValues.strings(filter.get("selects"))) {
+            final Matcher matcher = SELECTED_ID.matcher(term);
+            while (matcher.find()) {
+                if (wanted.contains(Long.parseLong(matcher.group(1)))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static boolean hasMissing(final Map<String, Object> pipeline) {

@@ -877,7 +877,8 @@ public class AskStroomAIService {
             throw e;
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
-            if (isTimeoutError(e)) {
+            final boolean timedOut = isTimeoutError(e);
+            if (timedOut) {
                 responseText = "The AI model took too long to respond and the request "
                                + "timed out. This can happen with complex questions, large "
                                + "context, or reasoning models. You can increase the timeout "
@@ -886,7 +887,20 @@ public class AskStroomAIService {
             } else {
                 responseText = e.getMessage();
             }
-            answeredUpTo = aiService.storeMessage(chatId, AiMessageType.ERROR, responseText).getId();
+            final int errorId = aiService.storeMessage(chatId, AiMessageType.ERROR, responseText).getId();
+            if (answeredUpTo > 0) {
+                // The answer was stored before the failure (writing the digest, say): the turn is answered, so
+                // the run isn't failed, and late messages are answered after it as usual.
+                answeredUpTo = errorId;
+            } else if (!answerLateMessages(chatId, request, errorId)) {
+                // The turn is left unanswered. The run fails, so it can be resumed with the steps taken so far
+                // kept, rather than only asked again from scratch.
+                throw new AiChatRunManager.ModelFailedException(
+                        NullSafe.nonBlankStringElse(e.getMessage(), e.toString()),
+                        timedOut
+                                ? AiChatRunStopReason.MODEL_TIMED_OUT
+                                : AiChatRunStopReason.ANSWER_FAILED);
+            }
         }
         if (answeredUpTo > 0) {
             answerLateMessages(chatId, request, answeredUpTo);
@@ -897,14 +911,16 @@ public class AskStroomAIService {
      * Answers anything the user sent after the answer was given but while the run was still finishing (e.g.
      * naming the chat). It was taken as steering the run, which no longer reads it, so it becomes the next
      * question instead, answered in this run. It is changed in place, so the chat shows it once.
+     *
+     * @return True if there were any to answer.
      */
-    private void answerLateMessages(final int chatId, final AskStroomAiRequest request, final int answeredUpTo) {
+    private boolean answerLateMessages(final int chatId, final AskStroomAiRequest request, final int answeredUpTo) {
         final List<AiChatMessage> late = aiService.getMessagesSince(chatId, answeredUpTo).stream()
                 .filter(message -> message.getMessageType() == AiMessageType.STEER_MESSAGE
                                    || message.getMessageType().isQueuedSteer())
                 .toList();
         if (late.isEmpty()) {
-            return;
+            return false;
         }
         // Suggestions for the last answer no longer apply.
         aiService.getMessagesSince(chatId, answeredUpTo).stream()
@@ -917,6 +933,7 @@ public class AskStroomAIService {
         aiService.askAsQuestion(late.getFirst().getId(), question);
         late.stream().skip(1).forEach(message -> aiService.deleteMessage(message.getId()));
         answerQuestion(chatId, new AskStroomAiRequest(request.getAiChat(), request.getConfig(), null, question));
+        return true;
     }
 
     // ---------------------------------------------------------------------

@@ -289,7 +289,9 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
     @Override
     public ToolResult execute(final ToolCall call, final ToolCallContext context) {
         try {
-            return JsonResults.of(draft(call, context));
+            // The plan's fields shown to the user before anything is built from them.
+            final boolean shownByChat = context.session() != null && context.session().isChat();
+            return JsonResults.of(IndexPlans.withShownPlan(draft(call, context), shownByChat));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         } catch (final IllegalArgumentException e) {
@@ -665,9 +667,14 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             return plan.withStandIns(remembered);
         }
         final Map<String, List<String>> byField = new LinkedHashMap<>();
+        // A keyword or text field indexes any text: there only the usual stand-ins are asked, not misfits.
+        final Set<String> textFields = new HashSet<>();
         for (final PlannedField field : plan.leafFields()) {
             if (!JsonValues.truthy(field.source())) {
                 continue;
+            }
+            if (FieldPlans.takesText(field.type())) {
+                textFields.add(field.name());
             }
             final List<String> values = new ArrayList<>();
             valuesByPath.forEach((path, held) -> {
@@ -681,7 +688,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         }
         final Set<String> decided = new HashSet<>(plan.standIns().keySet());
         decided.addAll(remembered.keySet());
-        final List<Placeholders.Found> found = Placeholders.find(byField, decided);
+        final List<Placeholders.Found> found = Placeholders.find(byField, decided, textFields);
         if (found.isEmpty()) {
             return plan.withStandIns(remembered);
         }

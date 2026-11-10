@@ -19,11 +19,14 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.KeptMapping;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /// What a build holds, as the plan's tests set it.
 final class FakeBuildFacts implements BuildFacts {
@@ -35,6 +38,10 @@ final class FakeBuildFacts implements BuildFacts {
     Map<String, KeptMapping.Kept> mappings = new LinkedHashMap<>();
     boolean stepped;
     boolean verified;
+    // The streams the passed verification searched, as the record keeps them (none: an older record).
+    List<Long> indexedStreams = List.of();
+    // Streams deleted since (an Events reprocess deletes the Events it replaces).
+    Set<Long> goneStreams = Set.of();
     boolean validated;
     List<Long> ownRaw = List.of();
     // Raw Reference sample streams of the build's own feed.
@@ -165,6 +172,18 @@ final class FakeBuildFacts implements BuildFacts {
     @Override
     public boolean verified(final Map<String, Object> pipeline) {
         return verified;
+    }
+
+    @Override
+    public List<Long> indexedStreams(final Map<String, Object> pipeline) {
+        return indexedStreams;
+    }
+
+    @Override
+    public Set<Long> goneStreams(final Collection<Long> streamIds) {
+        return streamIds.stream()
+                .filter(goneStreams::contains)
+                .collect(Collectors.toSet());
     }
 
     @Override

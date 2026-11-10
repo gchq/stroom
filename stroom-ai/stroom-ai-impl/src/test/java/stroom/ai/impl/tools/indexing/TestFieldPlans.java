@@ -59,6 +59,14 @@ class TestFieldPlans {
     }
 
     @Test
+    void onlyKeywordAndTextFieldsTakeAnyText() {
+        // A misfit among numbers is a stand-in to ask about only where the field would refuse it.
+        assertThat(FieldPlans.LOGICAL_TYPES.stream().filter(FieldPlans::takesText).toList())
+                .containsExactly("keyword", "text");
+        assertThat(FieldPlans.takesText(null)).isFalse();
+    }
+
+    @Test
     void aWildcardSourceNamesEveryNetworkAction() {
         final String source = "EventDetail/Network/*/Source/Device/IPAddress";
         assertThat(FieldPlans.sourceMatches(source, "EventDetail/Network/Deny/Source/Device/IPAddress")).isTrue();

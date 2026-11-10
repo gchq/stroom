@@ -1610,7 +1610,11 @@ class TestMcpAgentChat {
                 taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
 
         assertThat(review).hasSizeGreaterThan(ToolOutputs.MAX_INLINE_CHARS);
-        assertThat(lastToolResult(model.requests.get(1))).isEqualTo(review);
+        // Not stubbed: the chat shows the user its index template itself, so the model is given the rest of it
+        // with the template replaced (seen in testing: told to print it, the agent called again first, and the
+        // form asked the user to confirm a template never shown).
+        assertThat(lastToolResult(model.requests.get(1))).isEqualTo(ToolOutputs.forModel(review))
+                .contains(ToolOutputs.SHOWN_TABLE).contains("0123456789ab").doesNotContain("{}{}");
         Mockito.verifyNoInteractions(workspaceStore);
     }
 

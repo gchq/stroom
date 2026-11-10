@@ -261,8 +261,27 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
                 ProcessorFilterWrites.DEFAULT_PRIORITY, maxTasks, null, true);
         final Map<String, Object> result = result(created, pipeline, streamIds, maxTasks, true);
         result.put("hint", "wait_for_processing with filter_id=" + created.getId() + " so only this run's outputs "
-                           + "count.");
+                           + "count." + reindexHint(ref));
         return plan.nextFor(context, ref, result);
+    }
+
+    // An Events reprocess leaves a verified index without the new Events (seen in testing: the plan still said
+    // indexed, over an index of the Events the reprocess replaced).
+    private String reindexHint(final DocRef ref) {
+        final List<String> verified;
+        try {
+            verified = buildRecords.verifiedIndexingBesides(ref);
+        } catch (final RuntimeException e) {
+            // A hint only: the filter is made, and the plan's next step still says what indexing needs.
+            return "";
+        }
+        if (verified.isEmpty()) {
+            return "";
+        }
+        return " The build's index (verified through " + String.join(", ", verified) + ") holds the Events this "
+               + "replaces: once processing finishes, offer the user to index the new Events (the plan's next "
+               + "step: create_processor_filter on the indexing pipeline with the new Events stream ids, dropping "
+               + "the index first, then wait_for_processing and verify_index).";
     }
 
     private static Map<String, Object> result(final ProcessorFilter created,

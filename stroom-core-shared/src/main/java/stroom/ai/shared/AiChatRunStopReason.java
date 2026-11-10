@@ -37,7 +37,9 @@ public enum AiChatRunStopReason implements HasPrimitiveValue, HasDisplayValue {
     NEEDS_APPROVAL(9, "Waiting for your approval"),
     APPROVAL_EXPIRED(10, "Stopped because a request for your approval was not answered in time"),
     NEEDS_INPUT(11, "Waiting for you to fill in a form"),
-    NEEDS_ANSWERS(12, "Waiting for your answers");
+    NEEDS_ANSWERS(12, "Waiting for your answers"),
+    MODEL_TIMED_OUT(13, "Failed because the AI model took too long to respond"),
+    ANSWER_FAILED(14, "Failed with an error part way through answering");
 
     public static final PrimitiveValueConverter<AiChatRunStopReason> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AiChatRunStopReason.class, AiChatRunStopReason.values());
