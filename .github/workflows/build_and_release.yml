@@ -213,7 +213,7 @@ jobs:
 #          retention-days: 5
 
         # Copies the test results into one directory, so the upload doesn't have
-        # to search the whole workspace for them, which is slow
+        # to search the whole workspace for them, which is slow.
       - name: Collect Test Results
         if: always()
         run: |
