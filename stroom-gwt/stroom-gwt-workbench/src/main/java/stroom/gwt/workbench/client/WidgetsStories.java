@@ -103,6 +103,8 @@ import stroom.gwt.workbench.client.widgets.popover.InfoColumnStories;
 import stroom.gwt.workbench.client.widgets.popover.PopoverStories;
 import stroom.gwt.workbench.client.widgets.popuppositioner.PopupContractStories;
 import stroom.gwt.workbench.client.widgets.query.ExpressionEditorStories;
+import stroom.gwt.workbench.client.widgets.query.FieldValuePickerStories;
+import stroom.gwt.workbench.client.widgets.query.QueryOptionsStories;
 import stroom.gwt.workbench.client.widgets.selectors.DocSelectionStories;
 import stroom.gwt.workbench.client.widgets.selectors.DropDownBoxStories;
 import stroom.gwt.workbench.client.widgets.selectors.SelectionBoxStories;
@@ -270,6 +272,10 @@ public final class WidgetsStories {
         DocumentTickTreeStories.addTo(registry);
         // Widgets/Query/ExpressionBuilder
         ExpressionEditorStories.addTo(registry);
+        // Widgets/Query/FieldValuePicker
+        FieldValuePickerStories.addTo(registry);
+        // Widgets/Query/QueryOptions
+        QueryOptionsStories.addTo(registry);
         // Widgets/Inputs/DynamicSettingsPane
         DynamicSettingsPaneStories.addTo(registry);
         // Widgets/Inputs/FieldEnds

@@ -1,0 +1,83 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The value picker (stroom.query.client.component.FieldValuePicker), named BEM style: a filter
+   (field-value-picker__filter), shown only for fields holding text, a header saying what the values
+   were counted across (field-value-picker__scope) with a spinner while they are fetched, then the
+   values (field-value-picker__values), which scroll, or a message in their place
+   (field-value-picker__message), e.g. that there are none. Dragging the picker's bottom right corner
+   resizes it; once resized (field-value-picker--resized) its height is the one it was given
+   (--field-value-picker__height), with no cap.
+*/
+.field-value-picker {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    width: 300px;
+    max-height: 420px;
+    min-width: 200px;
+    min-height: 100px;
+    max-width: 90vw;
+    padding: 5px;
+    resize: both;
+    overflow: hidden;
+}
+
+.field-value-picker--resized {
+    height: var(--field-value-picker__height);
+    max-height: none;
+}
+
+.field-value-picker__filter {
+    flex-shrink: 0;
+    margin-bottom: 5px;
+}
+
+.field-value-picker__header {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    min-height: 22px;
+}
+
+.field-value-picker__scope {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 2px 5px;
+    font-size: 0.9em;
+    color: var(--text-color--muted);
+}
+
+.field-value-picker__spinner {
+    flex-shrink: 0;
+}
+
+.field-value-picker__values {
+    /* Fills the picker when it is resized taller than the list */
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.field-value-picker__message {
+    padding: 5px;
+    color: var(--text-color--muted);
+}

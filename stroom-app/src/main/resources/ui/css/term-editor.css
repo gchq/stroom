@@ -113,6 +113,13 @@
 	margin: 0;
 }
 
+/* The buttons that pick values from the field's most common values and set its query options
+   (a toolbar), after the value boxes, shown only where the field's data source offers them */
+.term-editor__actions {
+	flex-shrink: 0;
+	margin-left: 2px;
+}
+
 .term-editor__label {
     display: flex;
     margin: 0px;

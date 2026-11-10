@@ -1,0 +1,134 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The Info panel of an Elastic index's Fields tab
+   (stroom.search.elastic.client.component.ElasticFieldInfo), named BEM style: a field's mapping and
+   the statistics' values as a list of names and values (elastic-field-info__entries), the
+   Statistics heading with its actions (elastic-field-info__heading), the time range's boxes
+   (elastic-field-info__controls), and labelled bars (elastic-field-info__bar-row), each a label, a
+   percentage bar (percent-bar-cell.css) and a count.
+*/
+
+.elastic-field-info__heading {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+}
+
+.elastic-field-info__entries {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    column-gap: 16px;
+    row-gap: 2px;
+    margin-bottom: 8px;
+}
+
+.elastic-field-info__entry-name {
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.elastic-field-info__entry-value {
+    word-break: break-all;
+}
+
+.elastic-field-info__entry-value--list {
+    display: flex;
+    flex-direction: column;
+}
+
+.elastic-field-info__mode {
+    width: 180px;
+}
+
+.elastic-field-info__sample-size {
+    width: 140px;
+}
+
+.elastic-field-info__controls {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.elastic-field-info__date {
+    width: 220px;
+}
+
+.elastic-field-info__error-panel {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+
+.elastic-field-info__error {
+    color: var(--text-color--red);
+}
+
+.elastic-field-info__stats {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.elastic-field-info__top-values-controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.elastic-field-info__top-values-count {
+    width: 100px;
+}
+
+.elastic-field-info__top-values-filter {
+    width: 220px;
+}
+
+.elastic-field-info__bar-row {
+    display: grid;
+    grid-template-columns: 250px 240px 160px;
+    column-gap: 8px;
+    align-items: center;
+    margin-bottom: 2px;
+}
+
+/* Wide enough for a range of two timestamps */
+.elastic-field-info__bar-row--wide {
+    grid-template-columns: 420px 240px 160px;
+}
+
+.elastic-field-info__bar-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.elastic-field-info__bar {
+    height: 14px;
+}
+
+.elastic-field-info__bar-count {
+    white-space: nowrap;
+}

@@ -184,6 +184,8 @@
 @import url("content-store-tab.css");
 @import url("link-tab-panel.css");
 @import url("elastic-index-field-list.css");
+@import url("elastic-field-info.css");
+@import url("elastic-field-settings.css");
 @import url("source-viewer.css");
 @import url("data-viewer.css");
 @import url("data-retention.css");
@@ -216,6 +218,8 @@
 @import url("paging-bar.css");
 @import url("find-result-cell.css");
 @import url("column-value-cell.css");
+@import url("field-value-cell.css");
+@import url("field-value-picker.css");
 @import url("link-button.css");
 @import url("tab-layout.css");
 @import url("column-header.css");

@@ -21,6 +21,8 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.api.datasource.QueryOptionSet;
+import stroom.query.api.datasource.QueryOptionUtil;
 import stroom.query.client.FieldInfoSelectionItem;
 import stroom.query.client.Term;
 import stroom.query.client.TermValueSuggestions;
@@ -30,6 +32,8 @@ import stroom.query.shared.Suggestions;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.StringUtil;
 import stroom.util.shared.UserRef;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datepicker.client.component.DateTimeBox;
 import stroom.widget.dropdowntree.client.DropDownBox;
@@ -53,21 +57,28 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /// A term's editor: its field, its condition, and the boxes for the value the condition takes (a
 /// text, a range, a date or a range of dates, a document or a user). Its controller
 /// ([stroom.query.client.component.TermEditorController]) attaches the document and user pickers
-/// and the date boxes' dialogs, gives it the [Pickers] it reads and writes them through, and
-/// fetches the values it suggests.
+/// and the date boxes' dialogs, gives it the [Pickers] it reads and writes them through and that
+/// open the value picker and the query options dialog, and fetches the values it suggests.
 public class TermEditor extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
+    // Marks the query options' button while the term's options aren't the defaults, as a table's
+    // filter button is marked while it filters
+    private static final String OPTIONS_CHANGED = "icon-colour__blue";
 
     @UiField
     FlowPanel inner;
@@ -94,6 +105,12 @@ public class TermEditor extends Component {
     @UiField
     DropDownBox userRefBox;
     @UiField
+    Toolbar termActions;
+    @UiField
+    ToolbarButton valuesButton;
+    @UiField
+    ToolbarButton optionsButton;
+    @UiField
     Label fieldTypeLabel;
 
     private final TermValueSuggestions suggestions = new TermValueSuggestions();
@@ -109,6 +126,7 @@ public class TermEditor extends Component {
     private Runnable onSearch = () -> {
     };
 
+    private DocRef dataSource;
     private FieldSelectionListModel fieldSelectionListModel;
     // Narrows what the condition list offers beyond the field's own ConditionSet. The quick
     // filter's Advanced Query dialog uses it to offer only conditions its syntax can write back.
@@ -127,6 +145,8 @@ public class TermEditor extends Component {
         AccessibleName.set(date, "Date");
         AccessibleName.set(dateFrom, "From");
         AccessibleName.set(dateTo, "To");
+        valuesButton.setOnClick(this::showValuePicker);
+        optionsButton.setOnClick(this::showOptions);
     }
 
     /// @param pickers The document and user pickers, which its controller attached to the boxes.
@@ -185,6 +205,7 @@ public class TermEditor extends Component {
     public void init(final DocRef dataSource,
                      final FieldSelectionListModel fieldSelectionListModel) {
         suggestions.setDataSource(dataSource);
+        this.dataSource = dataSource;
 
         this.fieldSelectionListModel = fieldSelectionListModel;
         fieldListBox.setModel(fieldSelectionListModel);
@@ -349,6 +370,7 @@ public class TermEditor extends Component {
         conditionListBox.setValue(selected);
         NullSafe.consume(selected, Condition::getDescription, conditionListBox::setTitle);
         changeCondition(field, selected);
+        updateOptionsButton(field);
 
         if (NullSafe.nonNull(field, QueryField::getFldType)) {
             fieldTypeLabel.setText(field.getFldType().getShortTypeName());
@@ -421,6 +443,38 @@ public class TermEditor extends Component {
                     break;
             }
         }
+        updateValuesButton(selectedField, condition);
+    }
+
+    // Shows the value picker's button for a field whose data source can list its most common
+    // values, when the condition takes its values from the value box
+    private void updateValuesButton(final QueryField field, final Condition condition) {
+        final boolean supported = field != null
+                                  && field.supportsTopValues()
+                                  && (Condition.EQUALS.equals(condition)
+                                      || Condition.NOT_EQUALS.equals(condition)
+                                      || Condition.IN.equals(condition));
+        valuesButton.setVisible(supported);
+        updateTermActions();
+    }
+
+    // Shows the query options' button only for a field whose data source offers field-level query
+    // options, and marks it when the term's options aren't the defaults
+    private void updateOptionsButton(final QueryField field) {
+        final QueryOptionSet queryOptionSet = NullSafe.get(field, QueryField::getQueryOptionSet);
+        optionsButton.setVisible(queryOptionSet != null);
+        final boolean changed = queryOptionSet != null
+                                && QueryOptionUtil.hasNonDefaultOptions(queryOptionSet, term.getOptions());
+        optionsButton.setStyleName(OPTIONS_CHANGED, changed);
+        optionsButton.setTitle(changed
+                ? "Query Options (Changed)"
+                : "Query Options");
+        updateTermActions();
+    }
+
+    // The buttons' toolbar takes no room, nor a tab stop, while it has none to show
+    private void updateTermActions() {
+        termActions.setVisible(valuesButton.isVisible() || optionsButton.isVisible());
     }
 
     private void enterTextOrDateMode(final FieldType indexFieldType) {
@@ -547,6 +601,10 @@ public class TermEditor extends Component {
         registerHandler(fieldListBox.addValueChangeHandler(event -> {
             if (!reading) {
                 write(term);
+                // Keep only the options the new field offers
+                term.setOptions(QueryOptionUtil.normalise(
+                        NullSafe.get(event.getValue(), QueryField::getQueryOptionSet),
+                        term.getOptions()));
                 changeField(event.getValue(), conditionListBox.getValue(), true);
                 fireDirty();
             }
@@ -558,6 +616,52 @@ public class TermEditor extends Component {
                 fireDirty();
             }
         }));
+    }
+
+    private void showOptions() {
+        final QueryField field = fieldListBox.getValue();
+        if (pickers != null && field != null && field.getQueryOptionSet() != null) {
+            pickers.showQueryOptions(field, term.getOptions(), options -> {
+                term.setOptions(options);
+                updateOptionsButton(field);
+                fireDirty();
+            });
+        }
+    }
+
+    private void showValuePicker() {
+        final QueryField field = fieldListBox.getValue();
+        if (pickers != null && field != null && dataSource != null) {
+            // An 'in' term holds several values, which are ticked in the picker
+            pickers.showValuePicker(
+                    valuesButton.getElement(),
+                    dataSource,
+                    field,
+                    Condition.IN.equals(conditionListBox.getValue()),
+                    this::getTermValues,
+                    this::insertValue);
+        }
+    }
+
+    // Puts a picked value in the value box, in place of its text for '=' and '!='. For 'in' the
+    // value is added to the list, or removed if the list holds it, and the picker keeps the focus,
+    // so the user can carry on picking. The data source has already quoted the value as its query
+    // syntax needs.
+    private void insertValue(final String pickedValue) {
+        if (Condition.IN.equals(conditionListBox.getValue())) {
+            value.setText(TermValueList.toggle(value.getText(), pickedValue));
+        } else {
+            value.setText(pickedValue);
+            value.focus();
+        }
+        fireDirty();
+    }
+
+    // The values in an 'in' term's list, for the picker to tick
+    private Set<String> getTermValues() {
+        return Condition.IN.equals(conditionListBox.getValue())
+                ? new HashSet<>(TermValueList.parse(value.getText()))
+                : new HashSet<>();
     }
 
     private void unbind() {
@@ -596,6 +700,8 @@ public class TermEditor extends Component {
 
     /// The document and user pickers a term's value may be chosen with, which the editor's
     /// controller attaches to its boxes.
+    ///
+    /// It also opens the term's popups: the value picker and the query options dialog.
     public interface Pickers {
 
         /// Shows a document in the document picker, offering the documents the condition takes.
@@ -617,6 +723,29 @@ public class TermEditor extends Component {
 
         /// @return The user chosen, or null for none.
         UserRef getUserRef();
+
+        /// Shows the dialog for the field-level query options of a term's field.
+        ///
+        /// @param field   The term's field, which has a [QueryOptionSet].
+        /// @param options The options the term holds, or null for none.
+        /// @param onOk    Given the options for the term to hold when OK is pressed: only those that
+        ///                differ from their defaults, or null if none do.
+        void showQueryOptions(QueryField field, Map<String, String> options, Consumer<Map<String, String>> onOk);
+
+        /// Shows the value picker below an element, listing the field's most common values.
+        ///
+        /// @param target      The element it is shown below, the button that opens it.
+        /// @param dataSource  The data source to fetch values from.
+        /// @param field       The term's field.
+        /// @param multiSelect Whether the term holds several values, as an 'in' term does.
+        /// @param termValues  Gives the values the term holds, to tick when several can be picked.
+        /// @param onPick      Given each value picked, as the term must hold it.
+        void showValuePicker(Element target,
+                             DocRef dataSource,
+                             QueryField field,
+                             boolean multiSelect,
+                             Supplier<Set<String>> termValues,
+                             Consumer<String> onPick);
     }
 
 

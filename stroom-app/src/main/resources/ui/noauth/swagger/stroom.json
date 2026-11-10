@@ -2786,25 +2786,6 @@
         "tags" : [ "ContentStoreContentPacks" ]
       }
     },
-    "/credentials/createDocRef" : {
-      "get" : {
-        "operationId" : "createDocRef",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/DocRef"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Returns a newly generated DocRef that can be used to for permissions",
-        "tags" : [ "Credentials" ]
-      }
-    },
     "/credentials/delete" : {
       "post" : {
         "operationId" : "deleteCredential",
@@ -4227,6 +4208,69 @@
         },
         "summary" : "Update an Elasticsearch cluster doc",
         "tags" : [ "Elastic Clusters" ]
+      }
+    },
+    "/elasticIndex/v1/fieldStats" : {
+      "post" : {
+        "operationId" : "fetchElasticIndexFieldStats",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ElasticFieldStatsRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ElasticFieldStats"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch sampled statistics about a field of an Elasticsearch index doc",
+        "tags" : [ "Elastic Indices" ]
+      }
+    },
+    "/elasticIndex/v1/fields" : {
+      "post" : {
+        "operationId" : "fetchElasticIndexFields",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ElasticIndexDoc"
+              }
+            }
+          },
+          "description" : "elasticIndexDoc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ElasticIndexField"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Read the fields of an Elasticsearch index doc from its index mapping",
+        "tags" : [ "Elastic Indices" ]
       }
     },
     "/elasticIndex/v1/testIndex" : {
@@ -13071,6 +13115,36 @@
         "tags" : [ "Suggestions" ]
       }
     },
+    "/suggest/v1/fieldValues" : {
+      "post" : {
+        "operationId" : "fetchFieldValues",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FetchFieldValuesRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FieldValues"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch the most common values of a field",
+        "tags" : [ "Suggestions" ]
+      }
+    },
     "/systemInfo/v1" : {
       "get" : {
         "operationId" : "getAllSystemInfo",
@@ -19352,6 +19426,141 @@
           }
         }
       },
+      "ElasticDenseVectorSettings" : {
+        "type" : "object",
+        "properties" : {
+          "config" : {
+            "$ref" : "#/components/schemas/DenseVectorFieldConfig"
+          },
+          "rerankScoreField" : {
+            "type" : "string"
+          },
+          "rerankTextField" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ElasticFieldStats" : {
+        "type" : "object",
+        "properties" : {
+          "distinctCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "distinctCountExact" : {
+            "type" : "boolean"
+          },
+          "docsWithValue" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "exact" : {
+            "type" : "boolean"
+          },
+          "fieldName" : {
+            "type" : "string"
+          },
+          "histogram" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ElasticFieldValueCount"
+            }
+          },
+          "max" : {
+            "type" : "string"
+          },
+          "maxSampleSize" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "mean" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "median" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "min" : {
+            "type" : "string"
+          },
+          "sampleSize" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "sampledDocs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "topValues" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ElasticFieldValueCount"
+            }
+          },
+          "totalDocs" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "ElasticFieldStatsRequest" : {
+        "type" : "object",
+        "properties" : {
+          "exact" : {
+            "type" : "boolean"
+          },
+          "fieldName" : {
+            "type" : "string"
+          },
+          "fromMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "indexDocRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "sampleSize" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "toMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "topValuesCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "topValuesFilter" : {
+            "type" : "string"
+          },
+          "topValuesOnly" : {
+            "type" : "boolean"
+          },
+          "virtualGroups" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ElasticVirtualFieldGroup"
+            }
+          }
+        }
+      },
+      "ElasticFieldValueCount" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "value" : {
+            "type" : "string"
+          }
+        }
+      },
       "ElasticIndexDoc" : {
         "type" : "object",
         "properties" : {
@@ -19370,6 +19579,12 @@
           },
           "description" : {
             "type" : "string"
+          },
+          "fieldSettings" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ElasticIndexFieldSettings"
+            }
           },
           "fields" : {
             "type" : "array",
@@ -19431,6 +19646,12 @@
       "ElasticIndexField" : {
         "type" : "object",
         "properties" : {
+          "conflictingTypes" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
           "denseVectorFieldConfig" : {
             "$ref" : "#/components/schemas/DenseVectorFieldConfig"
           },
@@ -19454,8 +19675,52 @@
           "indexed" : {
             "type" : "boolean"
           },
+          "mappingParameters" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "multiFieldParent" : {
+            "type" : "string"
+          },
           "nativeType" : {
             "type" : "string"
+          },
+          "queryOptionSet" : {
+            "$ref" : "#/components/schemas/QueryOptionSet"
+          },
+          "sourceIndices" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "supportsTopValues" : {
+            "type" : "boolean"
+          },
+          "virtual" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "ElasticIndexFieldSettings" : {
+        "type" : "object",
+        "properties" : {
+          "denseVector" : {
+            "$ref" : "#/components/schemas/ElasticDenseVectorSettings"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "fieldName" : {
+            "type" : "string"
+          },
+          "virtualGroups" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ElasticVirtualFieldGroup"
+            }
           }
         }
       },
@@ -19467,6 +19732,17 @@
           },
           "ok" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "ElasticVirtualFieldGroup" : {
+        "type" : "object",
+        "properties" : {
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "name" : {
+            "type" : "string"
           }
         }
       },
@@ -20163,6 +20439,14 @@
               "type" : "string",
               "description" : "The name of the field that is being evaluated in this predicate term"
             },
+            "options" : {
+              "type" : "object",
+              "additionalProperties" : {
+                "type" : "string",
+                "description" : "Field-level query options that tailor how the data source searches the field, keyed by option id. Only options whose value differs from the default are stored. The options a field supports depend on its data source."
+              },
+              "description" : "Field-level query options that tailor how the data source searches the field, keyed by option id. Only options whose value differs from the default are stored. The options a field supports depend on its data source."
+            },
             "value" : {
               "type" : "string",
               "description" : "The value that the field value is being evaluated against. Not required if a dictionary is supplied"
@@ -20526,6 +20810,30 @@
           }
         }
       },
+      "FetchFieldValuesRequest" : {
+        "type" : "object",
+        "properties" : {
+          "dataSource" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "dateTimeSettings" : {
+            "$ref" : "#/components/schemas/DateTimeSettings"
+          },
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "field" : {
+            "$ref" : "#/components/schemas/QueryField"
+          },
+          "filter" : {
+            "type" : "string"
+          },
+          "timeRange" : {
+            "$ref" : "#/components/schemas/TimeRange"
+          }
+        },
+        "required" : [ "dataSource", "field" ]
+      },
       "FetchHighlightsRequest" : {
         "type" : "object",
         "properties" : {
@@ -20642,6 +20950,42 @@
           }
         },
         "required" : [ "dataSource", "field" ]
+      },
+      "FieldValueCount" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "termValue" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
+          }
+        }
+      },
+      "FieldValues" : {
+        "type" : "object",
+        "properties" : {
+          "allTime" : {
+            "type" : "boolean"
+          },
+          "scope" : {
+            "type" : "string"
+          },
+          "totalCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/FieldValueCount"
+            }
+          }
+        }
       },
       "FilterFieldDefinition" : {
         "type" : "object",
@@ -25804,7 +26148,7 @@
         "properties" : {
           "conditionSet" : {
             "type" : "string",
-            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'is not', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '==', '!==', 'in', 'in dictionary'", "'==', '!==', 'between', 'in', 'in dictionary'", "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains', 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches regex', 'matches regex (CS)', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'contains', '=', '!=', 'starts with', 'ends with', 'matches regex', '>', '>=', '<', '<=', 'in', 'in dictionary'", "'=', '!='", "'contains', '=', '!=', 'in', 'in dictionary'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', 'word boundary', '>', '>=', '<', '<=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is', 'is not'" ]
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'is not', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '==', '!==', 'in', 'in dictionary'", "'==', '!==', 'between', 'in', 'in dictionary'", "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains', 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches regex', 'matches regex (CS)', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'contains', '=', '!=', 'starts with', 'ends with', 'matches regex', '>', '>=', '<', '<=', 'in', 'in dictionary'", "'=', '!='", "'contains', '=', '!=', 'in', 'in dictionary'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', 'word boundary', '>', '>=', '<', '<=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is', 'is not'" ]
           },
           "docRefType" : {
             "type" : "string"
@@ -25819,7 +26163,13 @@
           "name" : {
             "type" : "string"
           },
+          "queryOptionSet" : {
+            "$ref" : "#/components/schemas/QueryOptionSet"
+          },
           "queryable" : {
+            "type" : "boolean"
+          },
+          "supportsTopValues" : {
             "type" : "boolean"
           },
           "type" : {
@@ -26006,6 +26356,83 @@
             "type" : "string",
             "description" : "The UUID that makes up the query key",
             "example" : "7740bcd0-a49e-4c22-8540-044f85770716"
+          }
+        }
+      },
+      "QueryOptionChoice" : {
+        "type" : "object",
+        "properties" : {
+          "displayValue" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
+          }
+        }
+      },
+      "QueryOptionDefinition" : {
+        "type" : "object",
+        "properties" : {
+          "choices" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/QueryOptionChoice"
+            }
+          },
+          "defaultValue" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "displayName" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "maxValue" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "minValue" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "rules" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/QueryOptionRule"
+            }
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "BOOLEAN", "CHOICE", "INTEGER" ]
+          }
+        }
+      },
+      "QueryOptionRule" : {
+        "type" : "object",
+        "properties" : {
+          "negate" : {
+            "type" : "boolean"
+          },
+          "optionId" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
+          }
+        }
+      },
+      "QueryOptionSet" : {
+        "type" : "object",
+        "properties" : {
+          "definitions" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/QueryOptionDefinition"
+            }
           }
         }
       },

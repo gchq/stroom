@@ -25,6 +25,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.client.widgets.query.FieldValuesFixture;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -34,7 +35,9 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /// The searching stories of `App/Editors/DashboardEditor` (see `DashboardEditorStories`): a
 /// dashboard's Query, Embedded Query and input components running Stroom's real searches
@@ -48,6 +51,9 @@ import java.util.List;
 /// | `POST /dataSource/v1/findFields` | a data source's fields |
 /// | `GET /wordList/v1/{dictionaryUuid}` | a dictionary's words |
 public final class DashboardSearchStories {
+
+    // The term value picker's request for a field's most common values
+    private static final String FIELD_VALUES = "/suggest/v1/fieldValues";
 
     private DashboardSearchStories() {
         // Static utility
@@ -152,6 +158,46 @@ public final class DashboardSearchStories {
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(play.getByText("alpha", StroomDom.GRID_CELL_TEXT))
                             .toBeInTheDocument());
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // A field whose data source lists its values and offers query options (as an
+                // Elasticsearch keyword field does) gives its term Pick Value and Query Options. The
+                // picker counts values within the dashboard's time range and the query's expression
+                .story("TermValuePicker", DashboardSupport.story(DashboardDocs.VALUE_PICKER_DASHBOARD,
+                        DashboardSearchStories::valuePickerRoutes))
+                .withPlay(play -> {
+                    DashboardPlays.opened(play);
+                    play.click(play.findByText("Name = alpha"));
+                    play.click(play.screen().findByRole("button", "Pick Value"));
+                    play.click(play.screen().findByRole("option", "beta"));
+                    play.waitFor(() -> play.expect(play.querySelector(".term-editor__item [aria-label='Value']"))
+                            .toHaveValue("beta"));
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post(FIELD_VALUES).withJsonBodyContaining("""
+                                    {"field": {"fldName": "Name"},
+                                      "timeRange": {"name": "Last hour"},
+                                      "expression": {"children": [
+                                        {"field": "Name", "condition": "EQUALS", "value": "alpha"}]}}""")
+                                    .toSpyMatcher());
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // A term's query options, set in its dialog, go to the search with the term
+                .story("TermQueryOptionsInSearch", DashboardSupport.story(DashboardDocs.VALUE_PICKER_DASHBOARD,
+                        DashboardSearchStories::valuePickerRoutes))
+                .withPlay(play -> {
+                    DashboardPlays.opened(play);
+                    play.click(play.findByText("Name = alpha"));
+                    final Play screen = play.screen();
+                    play.click(screen.findByRole("button", "Query Options"));
+                    final Play dialog = screen.within(screen.findByText("Query Options - Name", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.click(dialog.getByRole("checkbox", "Case-insensitive"));
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.findByRole("button", "Query Options (Changed)"))
+                            .toBeInTheDocument());
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            DashboardSupport.SEARCH.withBodyContaining("\"caseInsensitive\":\"true\"").toSpyMatcher()));
                     DashboardPlays.expectNoProblems(play);
                 })
                 // The dashboard toolbar's Execute Query runs every query
@@ -675,5 +721,22 @@ public final class DashboardSearchStories {
                                                      + "{\"word\": \"blue\", \"sourceUuid\": \"d1\"}], "
                                                      + "\"sourceUuidToDocRefMap\": {\"d1\": {\"type\": \"Dictionary\", "
                                                      + "\"uuid\": \"d1\", \"name\": \"Colours\"}}}"));
+    }
+
+    // The data source's field Name, whose values can be listed and which has the query option
+    // Case-insensitive, its values, and no suggestions
+    private static void valuePickerRoutes(final RestFixtures.Builder routes) {
+        final Map<String, Long> counts = new LinkedHashMap<>();
+        counts.put("alpha", 60L);
+        counts.put("beta", 40L);
+        final FieldValuesFixture values = new FieldValuesFixture(counts, 100);
+        routes.route(RequestMatcher.post("/dataSource/v1/findFields"), RestReply.json("""
+                        {"values": [{"fldName": "Name", "fldType": "KEYWORD", "queryable": true,
+                          "supportsTopValues": true,
+                          "queryOptionSet": {"definitions": [{"id": "caseInsensitive",
+                            "displayName": "Case-insensitive", "type": "BOOLEAN", "defaultValue": "false"}]}}],
+                          "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}}"""))
+                .route(RequestMatcher.post(FIELD_VALUES), request -> RestReply.json(values.find(request.getBody())))
+                .route(RequestMatcher.post("/suggest/v1"), RestReply.json("{\"list\": [], \"cacheable\": false}"));
     }
 }

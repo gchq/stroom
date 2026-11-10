@@ -34,6 +34,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.UUID;
 import java.util.function.BooleanSupplier;
 
 /// A document's scheduled executions ([ScheduledProcessing]): its schedules, which can be added
@@ -126,6 +127,8 @@ public class ScheduledProcessingController extends Controller {
             final ExecutionSchedule newSchedule = executionHistory
                     .getExecutionSchedule()
                     .copy()
+                    // The replay is a new schedule so must not reuse the UUID of the one it was copied from.
+                    .uuid(UUID.randomUUID().toString())
                     .name(executionHistory.getExecutionSchedule().getName() + " (replay)")
                     .enabled(false)
                     .scheduleBounds(ScheduleBounds

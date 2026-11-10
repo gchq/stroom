@@ -4,11 +4,13 @@
              xmlns:i="urn:import:stroom.widget.selection.client"
              xmlns:dt="urn:import:stroom.widget.datepicker.client.component"
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
-             xmlns:tx="urn:import:stroom.widget.text.client">
+             xmlns:tx="urn:import:stroom.widget.text.client"
+             xmlns:b="urn:import:stroom.widget.button.client">
     <!--
       A term's editor (term-editor.css): its field, its condition and the value boxes the condition
-      takes, which the Java shows for the field's type and condition, then the field's type. It is
-      shown while its term is edited
+      takes, which the Java shows for the field's type and condition, the buttons that pick values
+      and set the field's query options, shown only where the field's data source offers them, then
+      the field's type. It is shown while its term is edited
     -->
     <g:FlowPanel styleName="term-editor" visible="false">
         <g:FlowPanel ui:field="inner" styleName="term-editor__fields">
@@ -33,6 +35,10 @@
                             problemInTooltip="true" visible="false"/>
             <dd:DropDownBox ui:field="userRefBox" addStyleNames="term-editor__item term-editor__item--picker"
                             problemInTooltip="true" visible="false"/>
+            <b:Toolbar ui:field="termActions" name="Term actions" addStyleNames="term-editor__actions" visible="false">
+                <b:ToolbarButton ui:field="valuesButton" svg="VALUE_FILTER" title="Pick Value" visible="false"/>
+                <b:ToolbarButton ui:field="optionsButton" svg="SETTINGS" title="Query Options" visible="false"/>
+            </b:Toolbar>
         </g:FlowPanel>
         <tx:Label ui:field="fieldTypeLabel" addStyleNames="term-editor__label term-editor__label--field-type" wordWrap="false"
                  visible="false"/>

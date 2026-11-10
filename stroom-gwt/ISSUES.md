@@ -177,6 +177,28 @@ isn't clear whether a typed 0 is clamped when saved.
   it is left (`MyDateBox`, which these boxes were, marked nothing), but the screens don't check
   `isValid()` before saving, so OK still saves no date.
 
+### A document's Save missed bad input on a tab inside a tab
+
+**Fixed** (10 November 2026, 7.14 merge). `InvalidInputs` walked panels, components and form
+groups but not a `LayerContainer` (a plain `Composite`), so a field holding input that can't be kept
+on a tab inside a document's tab (the Elastic index Fields tab's Settings panel, its first such
+screen) was missed: the document wasn't marked changed and Save didn't refuse. It now walks a layer
+container's layers (`LayerContainer.getLayerWidgets`), shown or not, as a hidden tab's fields are
+still the screen's. Story `App/Index/ElasticIndexEditor` `RerankScoreNotAScore`, which failed before.
+A dialog holding a layer container now refuses OK for bad input on a tab not showing too, but focuses
+the field without selecting its tab, unless the dialog refuses for itself (`RefusesInvalidInput`, as
+`PaneSettingsController` does).
+
+### The replay dialog says Edit Schedule
+
+**Confirmed** (10 November 2026, 7.14 merge). Replaying an execution (an analytic's, report's or
+data generator's Execution tab, Replay Selected Execution) opens the schedule dialog captioned
+"Edit Schedule", though OK creates a new schedule. `ScheduledProcessEditorController.show` says
+"Create Schedule" only for a schedule without a UUID, and a replay's copy has one: the original's
+until #6008, a new one since (which the server needs, as the original's was a duplicate key). Fix:
+let the opener say which it is (e.g. a caption or an `isNew` argument to `show`). Story
+`App/Editors/DataGenEditor` `ReplayExecution` shows it.
+
 ### Thread count spinners wrap round
 
 **Fixed** (28 October 2026, wave 23). They stop at 0 and 1,000,000 (`App/Main/ProcessorProfilesScreen` `ThreadLimitsStopAtZero`). On master too.
