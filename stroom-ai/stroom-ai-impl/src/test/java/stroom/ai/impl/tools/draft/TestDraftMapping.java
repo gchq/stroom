@@ -1030,6 +1030,48 @@ class TestDraftMapping extends DraftFixtures {
     }
 
     @Test
+    void aMailsSubjectLineIsNotTheEventsUser() {
+        // Seen in testing: a mail log's subject drafted as EventSource/User/Id.
+        final String text = IntStream.range(0, 6)
+                .mapToObj(r -> "time=2026-11-10T09:00:0" + r + "Z host=mx01 from=alice@example.org"
+                               + " rcpt=bob@example.org subject=\"" + (r % 2 == 0
+                        ? "Q3 report"
+                        : "Invoice " + r) + "\" size=5")
+                .collect(Collectors.joining("\n"));
+        final Map<String, Object> mapping = mappingOf(draft(Map.of("mail.log", text), "Mail"));
+
+        assertThat(String.valueOf(mapping)).doesNotContain("path=EventSource/User/Id, field=subject");
+    }
+
+    @Test
+    void aMessagesOwnIdIsNotTheKindsOfEvent() {
+        // Seen in testing: a mail log's msgid (a different value in every record) drafted as EventDetail/TypeId,
+        // a rule a message, over its action.
+        final String text = IntStream.range(0, 6)
+                .mapToObj(r -> "time=2026-11-10T09:00:0" + r + "Z host=mx01 msgid=<" + r + "@mx01> action="
+                               + (r % 2 == 0
+                        ? "deliver"
+                        : "reject") + " size=5")
+                .collect(Collectors.joining("\n"));
+        final Map<String, Object> draft = draft(Map.of("mail.log", text), "Mail");
+
+        assertThat(common(draft).get("EventDetail/TypeId").get("field")).isEqualTo("action");
+        assertThat(rules(draft).keySet()).contains("deliver", "reject");
+    }
+
+    @Test
+    void aSubjectHoldingAccountsIsTheEventsUser() {
+        // In an access log the subject is who acted.
+        final String text = IntStream.range(0, 6)
+                .mapToObj(r -> "time=2026-11-10T09:00:0" + r + "Z host=dc01 subject=CORP\\\\user" + r
+                               + " action=logon")
+                .collect(Collectors.joining("\n"));
+        final Map<String, Object> mapping = mappingOf(draft(Map.of("access.log", text), "Access"));
+
+        assertThat(String.valueOf(mapping)).contains("path=EventSource/User/Id, field=subject");
+    }
+
+    @Test
     void aPairNamedLikeAHeaderFieldIsStillReadFromTheMessage() {
         // The splitter's record holds the header's time, not the message's time= pair: reading the message again
         // is the only way to reach that pair, so the text isn't taken as read already.

@@ -101,7 +101,12 @@ class TestReprocessStreamsTool {
 
         assertThat(String.valueOf(gated.result().get("hint"))).contains("filter_id=9")
                 .contains("The build's index (verified through ACME-Indexing) holds the Events this replaces")
-                .contains("create_processor_filter on the indexing pipeline with the new Events stream ids");
+                .contains("create_processor_filter on the indexing pipeline with the new Events stream ids")
+                // Seen in testing: the agent didn't know a search of the index finds none of the replaced Events.
+                .contains("searches won't show them from now on: a search looks up each hit's stream");
+        // The user is told too, before approving.
+        assertThat(String.valueOf(gated.gates().getLast().get("summary")))
+                .contains("searches of the build's index won't show these streams' events");
     }
 
     @Test
@@ -112,6 +117,7 @@ class TestReprocessStreamsTool {
         final Gated gated = reprocessed(Map.of("stream_ids", List.of(5)));
 
         assertThat(String.valueOf(gated.result().get("hint"))).doesNotContain("index");
+        assertThat(String.valueOf(gated.gates().getLast().get("summary"))).doesNotContain("searches");
     }
 
     @ParameterizedTest

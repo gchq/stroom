@@ -205,7 +205,10 @@ values per item instead (several values in one event).
 Some problems only appear when documents reach Elasticsearch (a value of the wrong type for the mapping, a field
 name it refuses, the field limit). Stroom reports each document Elasticsearch rejects in the Error stream, with
 Elasticsearch's reason, and triage gives each its record. Indexing again does not remove the documents already indexed (an amended translation's
-sample processed again leaves the superseded Events' documents in the index). So in a build, an indexing pipeline
+sample processed again leaves the superseded Events' documents in the index). Those documents stay in the index but no search
+returns them: a search looks up each hit's stream, and reprocessing deletes the Events it replaces. So after an
+Events reprocess, a search of the index shows none of those events until the new Events are indexed: that is
+expected, not a broken index or query. So in a build, an indexing pipeline
 that has already indexed something starts its index fresh when it gets a new sample filter or reprocesses: before
 the approval, a `drop_first` reply asks the user to have the cluster admin drop the index, with a button for the
 request (`DELETE _data_stream/<index>` when the agreed template makes a data stream, else `DELETE <index>`), and the
