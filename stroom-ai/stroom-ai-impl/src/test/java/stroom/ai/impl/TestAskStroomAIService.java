@@ -761,6 +761,38 @@ class TestAskStroomAIService {
     }
 
     @Test
+    void aFailureAfterTheAnswerIsStoredDoesNotFailTheRun() {
+        // The answer was stored (id 7) before a later step failed (writing the digest, say): the turn is answered,
+        // so the run isn't failed and Continue isn't offered on an answered turn. The error is still shown.
+        Mockito.when(aiService.storeMessage(Mockito.eq(1), Mockito.eq(AiMessageType.ERROR), Mockito.any()))
+                .thenReturn(message(8, AiMessageType.ERROR, "digest failed"));
+        final AskStroomAIService service = service();
+
+        final int answeredUpTo = service.answerFailure(1, new AskStroomAiRequest(chat, null, null, "Build me a feed."),
+                7, new RuntimeException("digest failed"));
+
+        // Late messages are then answered after the error, as after any answer.
+        assertThat(answeredUpTo).isEqualTo(8);
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.ERROR, "digest failed");
+        Mockito.verify(aiService, Mockito.never()).getMessagesSince(Mockito.anyInt(), Mockito.anyInt());
+    }
+
+    @Test
+    void aFailureBeforeAnyAnswerFailsTheRun() {
+        Mockito.when(aiService.storeMessage(Mockito.eq(1), Mockito.eq(AiMessageType.ERROR), Mockito.any()))
+                .thenReturn(message(8, AiMessageType.ERROR, "boom"));
+        Mockito.when(aiService.getMessagesSince(1, 8)).thenReturn(List.of());
+        final AskStroomAIService service = service();
+
+        assertThatThrownBy(() -> service.answerFailure(1,
+                new AskStroomAiRequest(chat, null, null, "Build me a feed."), 0, new RuntimeException("boom")))
+                .isInstanceOfSatisfying(AiChatRunManager.ModelFailedException.class, e -> {
+                    assertThat(e.getStopReason()).isEqualTo(AiChatRunStopReason.ANSWER_FAILED);
+                    assertThat(e.getMessage()).isEqualTo("boom");
+                });
+    }
+
+    @Test
     void aModelTimeoutFailsTheRunAsTimedOut() {
         final OpenAIModelStore store = Mockito.mock(OpenAIModelStore.class);
         Mockito.when(store.readDocument(DEFAULT_MODEL))
