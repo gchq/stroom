@@ -253,6 +253,18 @@ if [[ -n "${GRADLE_USER_HOME_DIR:-}" ]]; then
   )
 fi
 
+# If STROOM_USER_DIR is set (e.g. by CI so it can save/restore the downloaded
+# content packs and content git repos between runs), mount it into the
+# container as ~/.stroom. The path is on the host.
+stroom_user_dir_args=()
+if [[ -n "${STROOM_USER_DIR:-}" ]]; then
+  mkdir -p "${STROOM_USER_DIR}"
+  echo -e "${GREEN}Using stroom user dir ${BLUE}${STROOM_USER_DIR}${NC}"
+  stroom_user_dir_args=(
+    "--mount" "type=bind,src=${STROOM_USER_DIR},dst=/home/builder/.stroom"
+  )
+fi
+
 # Mount the whole repo into the container so we can run the build
 # The mount src is on the host file system
 # group-add gives the permission to interact with the docker cli
@@ -272,6 +284,7 @@ docker run \
   --volume builder-home-dir-vol:/home/builder \
   "${build_cache_args[@]}" \
   "${user_home_args[@]}" \
+  "${stroom_user_dir_args[@]}" \
   --group-add "${docker_group_id}" \
   --volume /var/run/docker.sock:/var/run/docker.sock \
   --read-only \

@@ -70,6 +70,9 @@ jobs:
               # Releases don't use the cached gradle build outputs, so
               # always run everything
               echo "GRADLE_BUILD_CACHE_DIR=${RUNNER_TEMP}/gradle-build-cache"
+              # Releases download the content packs that go in the distribution
+              # rather than use cached ones
+              echo "STROOM_USER_DIR=${RUNNER_TEMP}/stroom-user-dir"
             fi
           } >> $GITHUB_ENV
 
@@ -103,6 +106,23 @@ jobs:
           key: gradle-user-home-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', 'gradle/libs.versions.toml', '**/*.gradle') }}
           restore-keys: |
             gradle-user-home-
+
+        # Saves ~/.stroom, which holds the content pack zips and the clones of
+        # the stroom-content and stroom-visualisations-dev repos used by the
+        # stroom-app tests. Saved on every run as the build checks the repos'
+        # remotes and clones them again when they have changed.
+      - name: Stroom content cache
+        id: stroom_content_cache
+        if: ${{ env.STROOM_USER_DIR != '' }}
+        uses: actions/cache@v6
+        with:
+          path: |
+            ${{ env.STROOM_USER_DIR }}
+            !${{ env.STROOM_USER_DIR }}/contentPackDownload/*.lock
+            !${{ env.STROOM_USER_DIR }}/git-repo-cache/**/.tmp-*
+          key: stroom-content-${{ github.run_id }}
+          restore-keys: |
+            stroom-content-
 
         # Separate step to show what is visible across steps
       - name: Build Environment Info
