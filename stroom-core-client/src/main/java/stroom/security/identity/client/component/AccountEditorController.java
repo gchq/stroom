@@ -38,6 +38,8 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.function.Consumer;
+
 /// Creates or edits an internal identity provider account ([AccountEditor]) in a dialog made for one
 /// use. Unlocking and reactivating are applied at once; everything else when OK is pressed.
 public class AccountEditorController extends Controller {
@@ -51,6 +53,7 @@ public class AccountEditorController extends Controller {
 
     private Account account;
     private Runnable onChange;
+    private Consumer<Integer> onCreate;
     private String password;
     private String confirmPassword;
 
@@ -82,9 +85,10 @@ public class AccountEditorController extends Controller {
     /// OK.
     ///
     /// @param opener   What shows it.
-    /// @param onChange Run once the account is created.
-    public void create(final HasControllerNode opener, final Runnable onChange) {
-        this.onChange = onChange;
+    /// @param onCreate Given the new account's id once it is created.
+    public void create(final HasControllerNode opener, final Consumer<Integer> onCreate) {
+        this.onCreate = onCreate;
+        this.onChange = null;
         this.account = null;
         view.setStateVisible(false);
         show(opener, "Create Account");
@@ -170,7 +174,7 @@ public class AccountEditorController extends Controller {
                 .create(ACCOUNT_RESOURCE)
                 .method(res -> res.create(request))
                 .onSuccess(id -> {
-                    onChange.run();
+                    onCreate.accept(id);
                     e.hide();
                 })
                 .onFailure(throwable ->

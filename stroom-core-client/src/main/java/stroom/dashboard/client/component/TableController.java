@@ -59,6 +59,7 @@ import stroom.query.api.ExpressionTerm;
 import stroom.query.api.GroupSelection;
 import stroom.query.api.IncludeExcludeFilter;
 import stroom.query.api.OffsetRange;
+import stroom.query.api.Param;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
@@ -761,8 +762,15 @@ public class TableController extends DashboardPaneController
                 if (valuesRange.getOffset() == 0 || !values.isEmpty()) {
                     rowStyles.setConditionalFormattingRules(getTableComponentSettings()
                             .getConditionalFormattingRules());
+                    final List<List<Param>> selectedBefore = getSelectedParams();
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
+                    // The selection follows its rows to their new values, but rows are equal by their
+                    // group, so nothing fires: tell the components linked to the selection if the
+                    // selected rows' values have changed (e.g. as a search runs)
+                    if (!getSelectedParams().equals(selectedBefore)) {
+                        getDashboardContext().fireComponentChangeEvent(this);
+                    }
                 }
 
                 // Enable download of current results.
@@ -1354,6 +1362,13 @@ public class TableController extends DashboardPaneController
         return NullSafe.list(getTableComponentSettings().getColumns())
                 .stream()
                 .map(col -> new ColumnRef(col.getId(), col.getName()))
+                .collect(Collectors.toList());
+    }
+
+    // The selected rows' values, to tell whether they have changed
+    private List<List<Param>> getSelectedParams() {
+        return getSelection().stream()
+                .map(ComponentSelection::getParams)
                 .collect(Collectors.toList());
     }
 

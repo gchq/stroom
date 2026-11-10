@@ -60,6 +60,8 @@ public class CacheList extends Component {
         // Rows keyed by name, so a row whose values change is still the same row
         dataGrid.setKeyProvider(CacheIdentity::getCacheName);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
+        // The pane beside it shows the selected row (UI-GUIDE.md, "What a list selects")
+        selectionModel.setSelectFirst(true);
         addColumns();
     }
 

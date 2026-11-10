@@ -21,6 +21,7 @@ import stroom.floormap.client.overlay.FloorMapGroupSnapshot;
 import stroom.floormap.shared.FloorMapGroup;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
+import stroom.widget.util.client.ListSelection;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -188,8 +189,15 @@ public class FloorMapGroupsController extends Controller {
         // Highlights are by id, so the group's goes with it, or a later group with its id would
         // have it
         shownGroupIds.remove(selected.getId());
-        view.clearSelection();
+        final List<FloorMapGroup> before = groups;
         applyEdit(FloorMapGroup.without(groups, selected.getId()));
+        // The group in its place (UI-GUIDE.md, "What a list selects")
+        final FloorMapGroup next = ListSelection.nextAfterRemove(before, List.of(selected), groups);
+        if (next != null) {
+            view.select(next);
+        } else {
+            view.clearSelection();
+        }
         onHighlightChange.run();
     }
 

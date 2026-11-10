@@ -42,6 +42,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -269,8 +270,9 @@ public class ManageActivityController extends Controller {
                             .create(ACTIVITY_RESOURCE)
                             .method(res -> res.delete(selected.getId()))
                             .onSuccess(success -> {
+                                // The activity in its place (UI-GUIDE.md, "What a list selects")
+                                activityList.getSelectionModel().selectNextAfterRemove(List.of(selected));
                                 activityList.refresh();
-                                activityList.getSelectionModel().clear();
                                 updateQuickFilterTooltipContentSupplier();
                             })
                             .owner(this)

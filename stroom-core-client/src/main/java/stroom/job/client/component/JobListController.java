@@ -138,6 +138,8 @@ public class JobListController extends Controller {
     private void onEnabledChange(final int rowIndex, final JobWrapper ref, final boolean enabled) {
         final Job updated = ref.getJob().copy().enabled(enabled).build();
         ref.setJob(updated);
+        // The row ticked is selected (UI-GUIDE.md, "What a list selects")
+        view.getSelectionModel().setSelected(ref);
         restFactory
                 .create(JOB_RESOURCE)
                 .call(res -> {

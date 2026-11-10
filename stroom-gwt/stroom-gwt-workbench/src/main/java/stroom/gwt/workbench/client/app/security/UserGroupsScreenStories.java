@@ -90,6 +90,44 @@ public final class UserGroupsScreenStories {
                      "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}}"""))
             .build();
 
+    // The fixtures whose second find of everyone (a refresh) has the Administrators group renamed
+    // 'Admins' (by someone else)
+    private static final RestFixtures RENAMED_FIXTURES = RestFixtures.builder()
+            .route(RequestMatcher.post("/users/v1/find").withBodyContaining("ParentsOf"),
+                    RestReply.json(page()))
+            .route(RequestMatcher.post("/users/v1/find").withBodyContaining("ChildrenOf"),
+                    RestReply.json(page(ALICE)))
+            .post("/users/v1/find", RestReply.json(page(ALICE, ADMINS)),
+                    RestReply.json(page(ALICE, ADMINS.replace("Administrators", "Admins"))))
+            .build()
+            .followedBy(FIXTURES);
+
+    private static final String AUDITORS = """
+            {"id": 3, "uuid": "g-auditors", "subjectId": "Auditors", "displayName": "Auditors",
+              "group": true, "enabled": true}""";
+
+    // The second find of everyone has the group created
+    private static final RestFixtures CREATED_FIXTURES = RestFixtures.builder()
+            .route(RequestMatcher.post("/users/v1/find").withBodyContaining("ParentsOf"),
+                    RestReply.json(page()))
+            .route(RequestMatcher.post("/users/v1/find").withBodyContaining("ChildrenOf"),
+                    RestReply.json(page(ALICE)))
+            .post("/users/v1/find", RestReply.json(page(ALICE, ADMINS)),
+                    RestReply.json(page(ADMINS, ALICE, AUDITORS)))
+            .build()
+            .followedBy(FIXTURES);
+
+    // The second find of everyone, once Administrators is deleted
+    private static final RestFixtures DELETED_FIXTURES = RestFixtures.builder()
+            .route(RequestMatcher.post("/users/v1/find").withBodyContaining("ParentsOf"),
+                    RestReply.json(page()))
+            .route(RequestMatcher.post("/users/v1/find").withBodyContaining("ChildrenOf"),
+                    RestReply.json(page(ALICE)))
+            .post("/users/v1/find", RestReply.json(page(ADMINS, ALICE)), RestReply.json(page(ALICE)))
+            .delete("/users/v1/g-admins", RestReply.json("true"))
+            .build()
+            .followedBy(FIXTURES);
+
     private UserGroupsScreenStories() {
         // Static utility
     }
@@ -218,6 +256,84 @@ public final class UserGroupsScreenStories {
                                     .toSpyMatcher()));
                     SecurityPlays.expectNoProblems(play);
                 })
+                // A refresh that brings the selected group back renamed keeps it selected, as the
+                // group it now is: Edit (without clicking the row again) shows the new name. The
+                // selection once kept the group as it was first fetched (a User is equal to another
+                // with the same uuid, so the row still showed selected), and Edit showed the old name
+                .story("RefreshFollowsTheSelectedGroup", context -> render(context, RENAMED_FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play master = masterGrid(play);
+                    play.click(master.findAllByText("Administrators").nth(0));
+                    final Query edit = play.within(play.getByTitle("Create Group").closest(".toolbar"))
+                            .querySelectorAll("button").nth(1);
+                    play.waitFor(() -> play.expect(edit).toHaveAttribute("title", "Edit Group 'Administrators'"));
+                    play.click(master.getByRole("button", "Refresh"));
+                    play.waitFor(() -> play.expect(master.getByText("Admins")).toBeInTheDocument());
+                    play.expect(master.getByText("Admins").closest(StroomDom.GRID_ROW))
+                            .toHaveAttribute("aria-selected", "true");
+                    play.expect(edit).not().toHaveAttribute("aria-disabled");
+                    play.click(edit);
+                    final Play dialog = screen.within(screen.findByText("Edit User Group").closest(StroomDom.DIALOG));
+                    play.expect(dialog.getByLabelText("Name")).toHaveValue("Admins");
+                    SecurityPlays.expectNoProblems(play);
+                })
+                // A renamed group stays selected (UI-GUIDE.md, "What a list selects"); a rename once
+                // cleared the selection, so Edit and the membership panes went dead
+                .story("RenameKeepsIt", UserGroupsScreenStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play master = masterGrid(play);
+                    play.click(master.findAllByText("Administrators").nth(0));
+                    final Query edit = editButton(play);
+                    play.waitFor(() -> play.expect(edit).toHaveAttribute("title", "Edit Group 'Administrators'"));
+                    play.click(edit);
+                    final Play dialog = screen.within(screen.findByText("Edit User Group").closest(StroomDom.DIALOG));
+                    final Query name = dialog.getByLabelText("Name");
+                    play.clear(name);
+                    play.type(name, "Admins");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit User Group")).toBeNull());
+                    play.waitFor(() -> play.expect(master.getAllByText("Administrators").nth(0)
+                            .closest(StroomDom.GRID_ROW)).toHaveAttribute("aria-selected", "true"));
+                    play.expect(edit).not().toHaveAttribute("aria-disabled");
+                    SecurityPlays.expectNoProblems(play);
+                })
+                // A group created is selected once the list shows it; it once selected none
+                .story("CreateSelectsIt", context -> render(context, CREATED_FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play master = masterGrid(play);
+                    master.findByText("Alice A Anderson");
+                    play.click(play.getByTitle("Create Group"));
+                    final Play dialog = screen.within(screen.findByText("Add User Group", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.type(dialog.getByLabelText("Name"), "Auditors");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(master.getByText("Auditors").closest(StroomDom.GRID_ROW))
+                            .toHaveAttribute("aria-selected", "true"));
+                    play.findByText("Members of group \"Auditors\":");
+                    SecurityPlays.expectNoProblems(play);
+                })
+                // Deleting a group selects the row now in its place; it once selected none
+                .story("DeleteSelectsNext", context -> render(context, DELETED_FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play master = masterGrid(play);
+                    play.click(master.findAllByText("Administrators").nth(0));
+                    final Query delete = play.within(play.getByTitle("Create Group").closest(".toolbar"))
+                            .querySelectorAll("button").nth(2);
+                    play.waitFor(() -> play.expect(delete).not().toHaveAttribute("aria-disabled"));
+                    play.click(delete);
+                    final Play confirm = screen.within(screen.findByText(
+                                    TextMatch.containing("permanently delete group 'Administrators'"))
+                            .closest(StroomDom.DIALOG));
+                    play.click(confirm.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(master.queryByText("Administrators")).toBeNull());
+                    play.waitFor(() -> play.expect(master.getByText("Alice Anderson").closest(StroomDom.GRID_ROW))
+                            .toHaveAttribute("aria-selected", "true"));
+                    SecurityPlays.expectNoProblems(play);
+                })
                 // Create Group asks for the group's name; Enter creates it
                 .story("CreateGroup", UserGroupsScreenStories::render)
                 .withPlay(play -> {
@@ -285,6 +401,11 @@ public final class UserGroupsScreenStories {
 
     /// @return The master grid of all users and groups (with its label, quick filter, toolbar and
     /// pager).
+    // The master grid's Edit button
+    private static Query editButton(final Play play) {
+        return play.within(play.getByTitle("Create Group").closest(".toolbar")).querySelectorAll("button").nth(1);
+    }
+
     private static Play masterGrid(final Play play) {
         return play.within(play.getByText("User Groups:", "label").closest(".dock-container-vertical"));
     }
@@ -322,10 +443,17 @@ public final class UserGroupsScreenStories {
     }-*/;
 
     private static Widget render(final StoryContext context) {
+        return render(context, FIXTURES);
+    }
+
+    /// @param fixtures The story's fixtures.
+    private static Widget render(final StoryContext context, final RestFixtures fixtures) {
         final SecurityScreenGinjector injector = GWT.create(SecurityScreenGinjector.class);
-        final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
+        final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
                 .appPermissions(AppPermission.MANAGE_USERS_PERMISSION)
+                // Delete asks first
+                .realAlerts()
                 .build();
         harness.fn(OPEN_SCREEN);
         harness.getEventBus().addHandler(OpenUsersScreenEvent.getType(), event ->

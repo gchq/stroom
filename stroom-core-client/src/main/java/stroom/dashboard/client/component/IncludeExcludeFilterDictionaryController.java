@@ -75,6 +75,8 @@ public class IncludeExcludeFilterDictionaryController extends Controller {
         chooser.showOnce(this, docRef -> {
             if (docRef != null && !dictionaries.contains(docRef)) {
                 dictionaries.add(docRef);
+                // The dictionary added (UI-GUIDE.md, "What a list selects")
+                view.getSelectionModel().setSelected(docRef);
                 refresh();
             }
         });
@@ -93,8 +95,10 @@ public class IncludeExcludeFilterDictionaryController extends Controller {
                     message,
                     result -> {
                         if (result) {
+                            // The dictionary in place of the first (UI-GUIDE.md, "What a list
+                            // selects")
+                            selectionModel.selectNextAfterRemove(selected);
                             dictionaries.removeAll(selected);
-                            selectionModel.clear();
                             refresh();
                         }
                     });

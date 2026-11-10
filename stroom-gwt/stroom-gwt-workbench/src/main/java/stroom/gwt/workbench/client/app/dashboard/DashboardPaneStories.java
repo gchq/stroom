@@ -23,6 +23,7 @@ import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.ai.AiFixtures;
 import stroom.gwt.workbench.client.app.ai.AskStroomAiChat;
 import stroom.gwt.workbench.client.app.query.DocumentEditors;
+import stroom.gwt.workbench.client.app.query.QueryFixtures;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -64,6 +65,14 @@ public final class DashboardPaneStories {
             + DashboardDocs.field("f-event", "EventId") + "]",
             "[{\"values\": [\"alpha\", \"1001\", \"1\"], \"depth\": 0}, "
             + "{\"values\": [\"beta\", \"1002\", \"2\"], \"depth\": 0}]", 2);
+
+    // The Name, StreamId and EventId columns of a Text component's table
+    private static final String STREAM_FIELDS = "[" + DashboardDocs.NAME_FIELD + ", "
+                                                + DashboardDocs.field("f-stream", "StreamId") + ", "
+                                                + DashboardDocs.field("f-event", "EventId") + "]";
+
+    // How long a search's second poll takes to reply, so a row can be selected before it does
+    private static final int POLL_DELAY_MS = 3000;
 
     // The Name column's values, both in the table
     private static final String COLUMN_VALUES = "{\"values\": [{\"value\": \"alpha\", \"available\": true}, "
@@ -736,6 +745,43 @@ public final class DashboardPaneStories {
                             .count()).toBeGreaterThanOrEqual(1));
                     DashboardPlays.expectNoProblems(play);
                 })
+                // A poll that brings new values for the selected row keeps it selected as the new
+                // row, so what reads the table's selection gets the new values: alpha is selected
+                // while the search runs, the next poll moves its event to stream 1003, and the
+                // current selection then has StreamId 1003 (it once kept the previous poll's row,
+                // with 1001). The row is the same row (TableRow equals by its group key), so no
+                // selection event fires and the Text component isn't asked to fetch again
+                .story("PollKeepsSelectedValues", DashboardSupport.story(DashboardDocs.QUERY_TABLE_TEXT_DASHBOARD,
+                        DashboardPaneStories::pollRoutes))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    play.expect(play.getByText("alpha").closest(StroomDom.GRID_ROW)).toHaveTextContent("1001");
+                    play.click(play.getByText("alpha"));
+                    play.waitFor(() -> play.expect(play.getByText("alpha").closest(StroomDom.GRID_ROW))
+                            .toHaveAttribute("aria-selected", "true"));
+                    // The search completes with the next poll, which has alpha's new stream
+                    play.waitFor(POLL_DELAY_MS + 5000, () -> play.expect(
+                            play.querySelectorAll(DashboardPlays.QUERY_RUN_BUTTON).nth(0))
+                            .toHaveClass(DashboardPlays.QUERY_RUN_BUTTON_IDLE));
+                    play.waitFor(() -> play.expect(play.getByText("alpha").closest(StroomDom.GRID_ROW))
+                            .toHaveTextContent("1003"));
+                    play.expect(play.getByText("alpha").closest(StroomDom.GRID_ROW))
+                            .toHaveAttribute("aria-selected", "true");
+                    play.expect(play.getByText("beta").closest(StroomDom.GRID_ROW))
+                            .toHaveAttribute("aria-selected", "false");
+                    // The current selection is the row as the last poll brought it
+                    DashboardPlays.designMode(play, true);
+                    play.click(play.getByRole("button", "View Current Selection"));
+                    final Play dialog = DashboardPlays.dialog(screen, "Current Selection");
+                    play.waitFor(() -> play.expect(dialog.getByText("${component.t1.selection.StreamId}"))
+                            .toBeInTheDocument());
+                    play.expect(dialog.getAllByText("1003").count()).toBeGreaterThan(0);
+                    play.expect(dialog.queryByText("1001")).toBeNull();
+                    DashboardPlays.expectNoProblems(play);
+                })
                 // A Text component with a pipeline shows its source as HTML
                 .story("TextShowAsHtml", DashboardSupport.story(DashboardDocs.QUERY_TABLE_HTML_DASHBOARD,
                         DashboardPaneStories::htmlRoutes))
@@ -869,6 +915,23 @@ public final class DashboardPaneStories {
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.post("/storedQuery/v1/create").toSpyMatcher());
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // The favourites list has no pager, so every favourite is asked for: a default page
+                // (100) once hid the rest
+                .story("FavouritesAllFetched", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
+                        DashboardPaneStories::storedQueryRoutes))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    play.click(play.getByRole("button", "Show Favourite Queries"));
+                    DashboardPlays.dialog(screen, "Query Favourites");
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/storedQuery/v1/find")
+                                    .withJsonBodyContaining("""
+                                            {"favourite": true,
+                                             "pageRequest": {"offset": 0, "length": 10000000}}""")
+                                    .toSpyMatcher());
+                    DashboardPlays.expectNoProblems(play);
                 })
                 .story("QueryHistoryAndFavourites", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
                         DashboardPaneStories::storedQueryRoutes))
@@ -1107,6 +1170,22 @@ public final class DashboardPaneStories {
     private static void textRoutes(final RestFixtures.Builder routes) {
         routes.route(DashboardSupport.SEARCH, RestReply.json(STREAM_RESPONSE))
                 .post("/data/v1/fetch", RestReply.json(sourceData("sample source data")));
+    }
+
+    // A search that is still running, with alpha's event in stream 1001, then (its next poll, a
+    // little later) complete, with alpha's event in stream 1003; beta's is unchanged
+    private static void pollRoutes(final RestFixtures.Builder routes) {
+        routes.route(DashboardSupport.SEARCH,
+                        RestReply.json(streamResponse(false, "1001")),
+                        RestReply.json(streamResponse(true, "1003")).delayed(POLL_DELAY_MS))
+                .post("/data/v1/fetch", RestReply.json(sourceData("sample source data")));
+    }
+
+    // A dashboard search's reply with the Text component's table: alpha's event in the stream given
+    private static String streamResponse(final boolean complete, final String alphaStreamId) {
+        return QueryFixtures.response(complete, QueryFixtures.tableResult("t1", STREAM_FIELDS,
+                "[{\"values\": [\"alpha\", \"" + alphaStreamId + "\", \"1\"], \"depth\": 0}, "
+                + "{\"values\": [\"beta\", \"1002\", \"2\"], \"depth\": 0}]", 2));
     }
 
     // The source piped to HTML

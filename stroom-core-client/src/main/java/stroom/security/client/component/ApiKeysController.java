@@ -119,10 +119,18 @@ public class ApiKeysController extends ContentTabController
 
     private void createNewKey() {
         final boolean allowOwnerSelection = owner == null;
-        editApiKeyProvider.get().showCreateDialog(
+        final ApiKeyEditorController editor = editApiKeyProvider.get();
+        editor.showCreateDialog(
                 this,
                 ApiKeyEditorMode.PRE_CREATE,
-                apiKeysList::refresh,
+                () -> {
+                    // The new key, if the page shows it (UI-GUIDE.md, "What a list selects")
+                    final HashedApiKey created = editor.getApiKey();
+                    if (created != null) {
+                        getSelectionModel().selectWhenShown(key -> created.getId().equals(key.getId()));
+                    }
+                    apiKeysList.refresh();
+                },
                 allowOwnerSelection);
     }
 
@@ -136,7 +144,7 @@ public class ApiKeysController extends ContentTabController
         final List<HashedApiKey> selectedItems = getSelectedItems();
 
         final Runnable onSuccess = () -> {
-            getSelectionModel().clear();
+            getSelectionModel().selectNextAfterRemove(selectedItems);
             refresh();
         };
 

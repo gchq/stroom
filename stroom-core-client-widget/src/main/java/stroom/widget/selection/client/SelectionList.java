@@ -115,6 +115,8 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 selectionModel,
                 this);
         grid.setSelectionModel(selectionModel, selectionEventManager);
+        // The items chosen stay chosen while a filter or a closed folder hides them
+        grid.setKeepHiddenSelection(true);
         // A character typed on an option goes to the quick filter, or to the next option starting
         // with it
         selectionEventManager.setTypedHandler(this::typeAhead);

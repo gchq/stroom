@@ -66,6 +66,8 @@ public class ImportList extends Component {
         addTitle = addButton.getTitle();
         removeTitle = removeButton.getTitle();
         selectionModel = dataGrid.addDefaultSelectionModel(true);
+        // The words pane beside it shows the selected import's (UI-GUIDE.md, "What a list selects")
+        selectionModel.setSelectFirst(true);
         addButton.setOnClick(() -> onAdd.run());
         removeButton.setOnClick(() -> onRemove.run());
         addColumn();
@@ -77,11 +79,6 @@ public class ImportList extends Component {
     public void setData(final List<DocRef> docRefs) {
         dataGrid.setRowData(0, docRefs);
         dataGrid.setRowCount(docRefs.size());
-        if (NullSafe.hasItems(docRefs)) {
-            selectionModel.setSelected(docRefs.get(0));
-        } else {
-            selectionModel.clear();
-        }
     }
 
     /// @return The selection.

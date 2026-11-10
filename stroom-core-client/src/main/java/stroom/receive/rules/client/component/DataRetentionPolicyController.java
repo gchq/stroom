@@ -29,6 +29,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.Controller;
 import stroom.widget.menu.client.Item;
 import stroom.widget.menu.client.MenuBuilder;
+import stroom.widget.util.client.ListSelection;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -378,21 +379,17 @@ public class DataRetentionPolicyController extends Controller {
                     ok -> {
                         if (ok) {
                             if (!isDefaultRule(rule)) {
+                                final int index = visibleRules.indexOf(rule);
                                 visibleRules.remove(rule);
 
                                 update();
                                 setDirty(true);
 
-                                // Select the next rule.
-                                int index = visibleRules.indexOf(rule);
-                                if (index > 0) {
-                                    index--;
-                                }
-                                if (index < visibleRules.size()) {
-                                    dataRetentionPolicyList.getSelectionModel().setSelected(visibleRules.get(index));
-                                } else {
-                                    dataRetentionPolicyList.getSelectionModel().clear();
-                                }
+                                // The rule now in its place (UI-GUIDE.md, "What a list selects"). The
+                                // rules are renumbered, so it is found by position; it was once looked
+                                // up by the deleted rule, which threw
+                                dataRetentionPolicyList.getSelectionModel()
+                                        .setSelected(ListSelection.rowAt(visibleRules, index));
                             }
                         }
                     });
@@ -456,7 +453,8 @@ public class DataRetentionPolicyController extends Controller {
 
             update();
             setDirty(true);
-            dataRetentionPolicyList.getSelectionModel().setSelected(visibleRules.get(0));
+            // The new rule, where it was added (above the one selected)
+            dataRetentionPolicyList.getSelectionModel().setSelected(visibleRules.get(ruleNumber));
         });
     }
 
@@ -473,12 +471,13 @@ public class DataRetentionPolicyController extends Controller {
                 visibleRules.add(index, rule);
 
                 update();
+                // The rule edited, even if another was selected while its (non-modal) editor was
+                // open (UI-GUIDE.md, "What a list selects")
+                dataRetentionPolicyList.getSelectionModel().setSelected(visibleRules.get(index));
                 // Only mark the policies as dirty if the rule was actually changed.
                 if (!existingRule.equals(rule)) {
                     setDirty(true);
                 }
-
-                dataRetentionPolicyList.getSelectionModel().setSelected(visibleRules.get(index));
             }
         });
     }

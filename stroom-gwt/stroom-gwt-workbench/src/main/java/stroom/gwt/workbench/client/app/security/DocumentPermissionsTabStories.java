@@ -121,8 +121,11 @@ public final class DocumentPermissionsTabStories {
                     // 'create-document-types__icon' and titled with its type
                     play.expect(play.querySelectorAll(".create-document-types").count())
                             .toBeGreaterThanOrEqual(1);
-                    play.expect(play.getByTitle("Feed")).toHaveClass("create-document-types__icon");
-                    play.expect(play.getByTitle("Dictionary")).toHaveClass("create-document-types__icon");
+                    // (in admin's row: the details pane, showing the first user as it is selected,
+                    // has icons too)
+                    final Play adminRow = play.within(play.getByText("admin").closest(StroomDom.GRID_ROW));
+                    play.expect(adminRow.getByTitle("Feed")).toHaveClass("create-document-types__icon");
+                    play.expect(adminRow.getByTitle("Dictionary")).toHaveClass("create-document-types__icon");
                     // admin's effective column covers all three types: 'ALL'
                     play.expect(play.getByText("ALL")).toBeInTheDocument();
                     // The details of the selected user

@@ -57,6 +57,20 @@ public final class ApiKeysScreenStories {
             .put("/apikey/v2/1", request -> RestReply.json(request.getBody()))
             .build();
 
+    private static final String BACKUP_KEY = """
+            {"id": 2, "version": 1, "name": "Backup key", "apiKeyPrefix": "sk_def",
+              "owner": {"uuid": "u-alice", "subjectId": "alice", "displayName": "Alice Anderson",
+                        "group": false, "enabled": true},
+              "enabled": true, "expireTimeMs": 2000000000000, "hashAlgorithm": "SHA3_256",
+              "comments": "nightly backup"}""";
+
+    // Two keys; the second find (a refresh) has the backup key's comments changed
+    private static final RestFixtures TWO_KEYS = RestFixtures.builder()
+            .post("/apikey/v2/find", RestReply.json(page(KEY, BACKUP_KEY)),
+                    RestReply.json(page(KEY, BACKUP_KEY.replace("nightly backup", "nightly backup (rotated)"))))
+            .build()
+            .followedBy(FIXTURES);
+
     private ApiKeysScreenStories() {
         // Static utility
     }
@@ -87,12 +101,38 @@ public final class ApiKeysScreenStories {
                                     .withJsonBodyContaining("{\"id\": 1, \"name\": \"Renamed key\"}")
                                     .toSpyMatcher()));
                     SecurityPlays.expectNoProblems(play);
+                })
+                // The pager's Refresh keeps the key chosen selected (once, every fetch selected the
+                // first key)
+                .story("RefreshKeepsSelection", context -> render(context, TWO_KEYS))
+                .withPlay(play -> {
+                    play.click(play.findByText("Backup key"));
+                    final Query backup = play.getByText("Backup key").closest(StroomDom.GRID_ROW);
+                    play.waitFor(() -> play.expect(backup).toHaveAttribute("aria-selected", "true"));
+                    play.click(play.getByRole("button", "Refresh"));
+                    // The refreshed keys have arrived
+                    play.waitFor(() -> play.expect(play.getByText("nightly backup (rotated)")).toBeInTheDocument());
+                    play.expect(play.getByText("Backup key").closest(StroomDom.GRID_ROW))
+                            .toHaveAttribute("aria-selected", "true");
+                    play.expect(play.getByText("CI pipeline key").closest(StroomDom.GRID_ROW))
+                            .toHaveAttribute("aria-selected", "false");
+                    SecurityPlays.expectNoProblems(play);
                 });
     }
 
+    private static String page(final String... keys) {
+        return "{\"values\": [" + String.join(", ", keys) + "], \"pageResponse\": {\"offset\": 0, \"length\": "
+                + keys.length + ", \"total\": " + keys.length + ", \"exact\": true}}";
+    }
+
     private static Widget render(final StoryContext context) {
+        return render(context, FIXTURES);
+    }
+
+    /// @param fixtures The story's fixtures.
+    private static Widget render(final StoryContext context, final RestFixtures fixtures) {
         final SecurityScreenGinjector injector = GWT.create(SecurityScreenGinjector.class);
-        final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
+        final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
                 .appPermissions(AppPermission.MANAGE_USERS_PERMISSION)
                 .build();

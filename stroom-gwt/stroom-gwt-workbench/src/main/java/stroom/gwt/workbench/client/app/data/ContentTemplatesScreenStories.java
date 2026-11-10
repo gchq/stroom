@@ -26,6 +26,7 @@ import stroom.gwt.workbench.client.app.screen.ContentStorySupport;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
+import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
@@ -123,11 +124,8 @@ public final class ContentTemplatesScreenStories {
                     // are found by their labels
                     final Query description = play.getByText("Description", "label");
                     final Query expression = play.getByText("Expression", "label");
-                    // Nothing selected: both groups hidden
-                    play.expect(description).not().toBeVisible();
-                    play.expect(expression).not().toBeVisible();
-                    // Select the described template: both groups show; the expression is read only
-                    play.click(play.getByText("My template"));
+                    // The first template is selected, as the panes show it: both groups show; the
+                    // expression is read only
                     play.waitFor(() -> play.expect(description).toBeVisible());
                     play.expect(play.getByText("Creates a processor filter.")).toBeVisible();
                     play.expect(expression).toBeVisible();
@@ -194,7 +192,62 @@ public final class ContentTemplatesScreenStories {
                                             + "{\"name\": \"Undescribed\"}]}")
                                     .toSpyMatcher()));
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // A template added below the selected one is selected, and its row is the one shown
+                // selected. Before, the first row was selected instead
+                .story("AddTemplateSelectsIt", ContentTemplatesScreenStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("Undescribed"));
+                    play.waitFor(() -> play.expect(row(play, "Undescribed")).toHaveClass(StroomDom.SELECTED_ROW));
+                    play.click(play.getByTitle("Add Template Below"));
+                    final Play dialog = screen.within(screen.findByText("Add New Template", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    // A template needs a name, a type, a pipeline and a term
+                    play.type(dialog.getByLabelText("Template Name"), "Third template");
+                    play.click(dialog.getByLabelText("Template Type"));
+                    play.click(screen.findByRole("option", "PROCESSOR_FILTER"));
+                    play.waitFor(() -> play.expect(dialog.getByLabelText("Template Type"))
+                            .toHaveValue("PROCESSOR_FILTER"));
+                    play.fireEvent().mouseDown(dialog.querySelector(".drop-down"), EventInit.create());
+                    final Play picker = screen.within(screen.findByText("Choose item", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.click(picker.within(picker.findByText("Pipelines").closest(".explorer-cell"))
+                            .querySelector(".explorer-cell__expander"));
+                    play.click(picker.findByText("Ingest"));
+                    play.click(picker.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Choose item", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.click(dialog.getByTitle("Add Term"));
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Add New Template", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    // The new template, the third, is the one selected
+                    play.waitFor(() -> play.expect(row(play, "Third template")).toHaveClass(StroomDom.SELECTED_ROW));
+                    play.expect(play.querySelectorAll("." + StroomDom.SELECTED_ROW)).toHaveLength(1);
+                    play.expect(row(play, "My template")).not().toHaveClass(StroomDom.SELECTED_ROW);
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // Deleting a template selects the template now in its place (UI-GUIDE.md, "What a
+                // list selects"). It once looked the deleted template up after the templates were
+                // renumbered, found nothing and threw
+                .story("DeleteSelectsNext", ContentTemplatesScreenStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("My template"));
+                    play.waitFor(() -> play.expect(row(play, "My template")).toHaveClass(StroomDom.SELECTED_ROW));
+                    play.click(play.getByRole("button", TextMatch.containing("Delete Selected Template")));
+                    screen.findByText(TextMatch.containing("delete template 1"));
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.queryByText("My template")).toBeNull());
+                    play.waitFor(() -> play.expect(row(play, "Undescribed")).toHaveClass(StroomDom.SELECTED_ROW));
+                    ContentStorySupport.expectNoProblems(play);
                 });
+    }
+
+    // The grid row showing the text
+    private static Query row(final Play play, final String text) {
+        return play.getByText(text).closest(StroomDom.GRID_ROW);
     }
 
     // The alert is Stroom's alert dialog; the edit dialog stays open behind it (e.reset())

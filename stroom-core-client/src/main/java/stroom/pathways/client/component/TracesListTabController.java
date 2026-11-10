@@ -93,6 +93,8 @@ public class TracesListTabController extends Controller implements HasToolbar {
         own(tracesList.getSelectionModel().addSelectionHandler(e -> {
             final TraceRoot traceRoot = tracesList.getSelectionModel().getSelected();
             if (traceRoot == null) {
+                // None selected (e.g. no traces in the time range): no trace shown, not the last one
+                traceOverviewChart.setTrace(null);
                 return;
             }
             // Every span list is paged via the bounded getSpans path, regardless of size. The one

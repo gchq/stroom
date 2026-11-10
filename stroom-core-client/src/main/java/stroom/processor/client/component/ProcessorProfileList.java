@@ -74,9 +74,10 @@ public class ProcessorProfileList extends Component {
         editButton.setOnClick(() -> onEdit.run());
         deleteButton.setOnClick(() -> onDelete.run());
         selectionModel.addSelectionHandler(event -> {
-            final boolean selected = selectionModel.getSelected() != null;
-            editButton.setEnabled(selected);
-            deleteButton.setEnabled(selected);
+            // Edit edits one profile; Delete deletes all selected
+            final int count = selectionModel.getSelectedCount();
+            editButton.setEnabled(count == 1);
+            deleteButton.setEnabled(count > 0);
             if (event.getSelectionType().isDoubleSelect()) {
                 onEdit.run();
             }

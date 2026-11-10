@@ -127,10 +127,12 @@ public class AnnotationTagList extends Component {
         return selectionModel;
     }
 
-    /// @param enabled Whether Edit and Delete are enabled, for a selected tag.
-    public void setSelectionActionsEnabled(final boolean enabled) {
-        editButton.setEnabled(enabled);
-        deleteButton.setEnabled(enabled);
+    /// Enables Edit for one selected tag, and Delete for any.
+    ///
+    /// @param selectedCount How many tags are selected.
+    public void setSelectionActionsEnabled(final int selectedCount) {
+        editButton.setEnabled(selectedCount == 1);
+        deleteButton.setEnabled(selectedCount > 0);
     }
 
     /// Names the buttons after the kind of tag listed, e.g. "New Annotation Status".

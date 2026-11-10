@@ -82,6 +82,8 @@ public class PathwayList extends Component {
         // Rows keyed by name, unique in the document
         dataGrid.setKeyProvider(Pathway::getName);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
+        // The pane beside it shows the selected row (UI-GUIDE.md, "What a list selects")
+        selectionModel.setSelectFirst(true);
 
         newButton.setOnClick(() -> {
             if (!isReadOnly()) {
@@ -179,9 +181,12 @@ public class PathwayList extends Component {
     private void enableButtons() {
         final boolean readOnly = isReadOnly();
         newButton.setEnabled(!readOnly);
-        final boolean enabled = !readOnly && selectionModel.getSelected() != null;
-        editButton.setEnabled(enabled);
-        removeButton.setEnabled(enabled);
+        // Edit edits one; Remove removes all selected
+        final int count = readOnly
+                ? 0
+                : selectionModel.getSelectedCount();
+        editButton.setEnabled(count == 1);
+        removeButton.setEnabled(count > 0);
 
         final String readOnlySuffix = readOnly
                 ? READ_ONLY_SUFFIX
