@@ -99,20 +99,6 @@ main() {
   export STROOM_TEST_ELASTIC_REQUIRED=true
   echo -e "${GREEN}Setting STROOM_TEST_ELASTIC_URL to ${BLUE}${STROOM_TEST_ELASTIC_URL}${NC}"
 
-  echo "::group::Gradle vendors"
-  echo -e "${GREEN}Gradle Vendors${NC}"
-  ./gradlew \
-    --console=plain \
-    -q javaToolchains
-  echo "::endgroup::"
-
-  echo "::group::Gradle clean"
-  echo -e "${GREEN}Clean${NC}"
-  ./gradlew \
-    "${GRADLE_ARGS[@]}" \
-    clean
-  echo "::endgroup::"
-
   if [[ "${SKIP_TESTS:-false}" = true ]]; then
     echo -e "${YELLOW}Skipping tests${NC}"
     test_args=( "-x" "test" )
