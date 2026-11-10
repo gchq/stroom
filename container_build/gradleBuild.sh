@@ -196,18 +196,6 @@ main() {
     stroom-app-gwt:gwtCompile
   echo "::endgroup::"
 
-  echo "::group::Dashboard GWT UI build"
-  echo -e "${GREEN}RAM Stats:${NC}"
-  free -mh
-  echo -e "${GREEN}Do the dashboard GWT UI build${NC}"
-  ./gradlew \
-    "${GRADLE_ARGS[@]}" \
-    --scan \
-    --stacktrace \
-    "${GWT_ARGS[@]}" \
-    stroom-dashboard-gwt:gwtCompile
-  echo "::endgroup::"
-
   # Make the distribution.
   # Fully qualify the shadowJar tasks as have run lucene553 shadowJar
   echo "::group::Distribution build"
@@ -228,8 +216,7 @@ main() {
     -x checkstyleMain \
     -x checkstyleTest \
     -x test \
-    -x stroom-app-gwt:gwtCompile \
-    -x stroom-dashboard-gwt:gwtCompile
+    -x stroom-app-gwt:gwtCompile
   echo -e "${GREEN}Distribution built successfully${NC}"
   echo "::endgroup::"
 }

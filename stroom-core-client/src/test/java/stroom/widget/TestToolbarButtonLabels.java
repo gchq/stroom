@@ -41,7 +41,6 @@ class TestToolbarButtonLabels {
     private static final List<String> CODE_DIRS = List.of(
             "stroom-core-client-widget/src/main/java",
             "stroom-core-client/src/main/java",
-            "stroom-dashboard-gwt/src/main/java",
             "stroom-app-gwt/src/main/java");
     // A button in a template, its attributes
     private static final Pattern TEMPLATE_BUTTON = Pattern.compile(

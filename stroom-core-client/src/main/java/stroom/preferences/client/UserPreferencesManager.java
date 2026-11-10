@@ -47,8 +47,8 @@ import javax.inject.Singleton;
 /// Holds and applies the current user's preferences.
 ///
 /// The app fetches the user's preferences, and sets them with
-/// [#setCurrentPreferences(UserPreferences)], before it shows anything else (see `App` and
-/// `DashboardApp`), so after start up they are always the user's. Before then (and on pages
+/// [#setCurrentPreferences(UserPreferences)], before it shows anything else (see `App`), so
+/// after start up they are always the user's. Before then (and on pages
 /// shown without signing in) [#getCurrentUserPreferences()] gives defaults rather than null.
 /// Code that changes and saves the preferences uses [#whenLoaded(Consumer)], so that it never
 /// saves the defaults over the user's preferences.
