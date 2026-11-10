@@ -80,6 +80,50 @@ determine_host_address() {
   echo "$ip"
 }
 
+# The DB is started in the background by ci_build.sh, so wait for it to accept
+# connections before running the tests that use it. MySQL sends a greeting as
+# soon as a client connects, so read a byte of that rather than just connecting,
+# as docker accepts connections on the published port before MySQL is listening.
+wait_for_db() {
+  local -r port="${STROOM_JDBC_DRIVER_PORT:-3307}"
+  local -r max_attempts=60
+
+  echo -e "${GREEN}Waiting for the DB on ${BLUE}${STROOM_JDBC_DRIVER_HOST}:${port}${GREEN} to be ready${NC}"
+  for (( attempt=1; attempt<=max_attempts; attempt++ )); do
+    if timeout 5 bash -c 'exec 3<>"/dev/tcp/$0/$1" && head -c 1 <&3' \
+        "${STROOM_JDBC_DRIVER_HOST}" "${port}" 2>/dev/null \
+        | grep -q .; then
+      echo -e "${GREEN}The DB is ready${NC}"
+      return 0
+    fi
+    sleep 5
+  done
+
+  echo -e "${RED}ERROR${NC} The DB was not ready after $(( max_attempts * 5 )) seconds" >&2
+  docker ps -a >&2 || true
+  exit 1
+}
+
+# Elasticsearch is started in the background by ci_build.sh, so wait for it to
+# be ready before running the integration tests that use it
+wait_for_elasticsearch() {
+  local -r health_url="${STROOM_TEST_ELASTIC_URL}/_cluster/health?wait_for_status=yellow&timeout=5s"
+  local -r max_attempts=60
+
+  echo -e "${GREEN}Waiting for elasticsearch to be ready${NC}"
+  for (( attempt=1; attempt<=max_attempts; attempt++ )); do
+    if curl --silent --fail --output /dev/null "${health_url}"; then
+      echo -e "${GREEN}elasticsearch is ready${NC}"
+      return 0
+    fi
+    sleep 5
+  done
+
+  echo -e "${RED}ERROR${NC} elasticsearch was not ready after $(( max_attempts * 5 )) seconds" >&2
+  docker logs --tail 50 bounceit_elasticsearch >&2 || true
+  exit 1
+}
+
 main() {
 
   # We want to run from the repo root
@@ -161,6 +205,13 @@ main() {
   # Don't clean as this is a fresh clone and clean will wipe the cached
   # content pack zips
   # Fully qualify the shadowJar tasks as we want to run lucene553 shadowJar
+  if [[ "${SKIP_TESTS:-false}" != true ]]; then
+    echo "::group::Wait for the DB and elasticsearch"
+    wait_for_db
+    wait_for_elasticsearch
+    echo "::endgroup::"
+  fi
+
   echo "::group::Basic Java build"
   echo -e "${GREEN}RAM Stats:${NC}"
   free -mh
