@@ -76,9 +76,9 @@ import java.util.stream.Collectors;
 public class TermEditor extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
-    // Marks the query options' button while the term's options aren't the defaults, as a table's
-    // filter button is marked while it filters
-    private static final String OPTIONS_CHANGED = "icon-colour__blue";
+    // Marks the query options' button while the term's options aren't the defaults: the toolbar's
+    // "on" fill, as 7.14 showed it, but not a pressed toggle (term-editor.css)
+    private static final String OPTIONS_CHANGED = "term-editor__options--changed";
 
     @UiField
     FlowPanel inner;

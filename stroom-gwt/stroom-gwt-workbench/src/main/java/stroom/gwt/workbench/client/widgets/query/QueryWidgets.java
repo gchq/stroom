@@ -212,11 +212,11 @@ final class QueryWidgets {
                         .build());
     }
 
-    /// The stories' frame around the editor, as `ExpressionEditorStories` has.
+    /// The stories' frame around the editor, wide enough for a term being edited, with its buttons.
     private static Widget frame(final Widget editor) {
         final FlowPanel frame = new FlowPanel();
         final Style style = frame.getElement().getStyle();
-        style.setProperty("width", "760px");
+        style.setProperty("width", "1100px");
         style.setProperty("height", "420px");
         style.setProperty("border", "1px solid var(--border-color)");
         editor.setSize("100%", "100%");

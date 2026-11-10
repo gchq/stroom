@@ -43,6 +43,8 @@ public final class QueryOptionsStories {
 
     private static final String OPTIONS = "Query Options";
     private static final String OPTIONS_CHANGED = "Query Options (Changed)";
+    // The query options' button's mark while the term's options aren't the defaults
+    private static final String CHANGED_MARK = "term-editor__options--changed";
     private static final String CAPTION = "Query Options - Status";
 
     private QueryOptionsStories() {
@@ -80,7 +82,7 @@ public final class QueryOptionsStories {
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     expectClosed(play);
                     play.waitFor(() -> play.expect(play.screen().getByRole("button", OPTIONS_CHANGED))
-                            .toHaveClass("icon-colour__blue"));
+                            .toHaveClass(CHANGED_MARK));
                     play.waitFor(() -> play.expect(play.spy(QueryWidgets.ON_CHANGE)).toHaveBeenCalled());
                     // The term is still being edited, so its button is pressed again directly
                     final Play again = openDialog(play, OPTIONS_CHANGED);
@@ -97,7 +99,7 @@ public final class QueryOptionsStories {
                     play.click(dialog.getByRole("checkbox", "Case-insensitive"));
                     play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
                     expectClosed(play);
-                    play.expect(play.screen().getByRole("button", OPTIONS)).not().toHaveClass("icon-colour__blue");
+                    play.expect(play.screen().getByRole("button", OPTIONS)).not().toHaveClass(CHANGED_MARK);
                     play.expect(play.spy(QueryWidgets.ON_CHANGE)).not().toHaveBeenCalled();
                     expectNoProblems(play);
                 })
@@ -107,7 +109,7 @@ public final class QueryOptionsStories {
                 .withPlay(play -> {
                     QueryWidgets.editTerm(play, "Status = error");
                     play.expect(play.screen().findByRole("button", OPTIONS_CHANGED))
-                            .toHaveClass("icon-colour__blue");
+                            .toHaveClass(CHANGED_MARK);
                     expectNoProblems(play);
                 })
                 // Left open, to look at: the options of an Elasticsearch keyword field, the fuzzy ones
@@ -128,7 +130,7 @@ public final class QueryOptionsStories {
                     // The copy, as the original is still being edited, so shows no label
                     play.click(play.findByText("Status = error", ".expression-item__label"));
                     play.waitFor(() -> play.expect(play.screen().getByRole("button", OPTIONS_CHANGED))
-                            .toHaveClass("icon-colour__blue"));
+                            .toHaveClass(CHANGED_MARK));
                     expectNoProblems(play);
                 })
                 // Changing a term's field keeps only the options the new field offers: UserId offers
@@ -143,7 +145,7 @@ public final class QueryOptionsStories {
                             .toBeNull());
                     chooseField(play, "Status");
                     play.waitFor(() -> play.expect(play.screen().getByRole("button", OPTIONS)).toBeInTheDocument());
-                    play.expect(play.screen().getByRole("button", OPTIONS)).not().toHaveClass("icon-colour__blue");
+                    play.expect(play.screen().getByRole("button", OPTIONS)).not().toHaveClass(CHANGED_MARK);
                     expectNoProblems(play);
                 })
                 // A field whose data source offers no query options (UserId) has no Options button

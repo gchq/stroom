@@ -120,6 +120,14 @@
 	margin-left: 2px;
 }
 
+/* The query options' button while the term's options aren't the defaults: the fill a toolbar button
+   has when it is on (toolbar-button.css), drawn by its ::before under the icon. Not aria-pressed, as
+   it isn't a toggle: its name says "(Changed)" */
+.term-editor__options--changed::before {
+	background-color: var(--icon-button__background-color--on);
+	border: thin solid var(--icon-button__border-color--on);
+}
+
 .term-editor__label {
     display: flex;
     margin: 0px;
