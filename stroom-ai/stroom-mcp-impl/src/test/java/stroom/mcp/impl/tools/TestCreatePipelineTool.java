@@ -152,6 +152,31 @@ class TestCreatePipelineTool {
     }
 
     @Test
+    void aSecondParserIsRefusedWithWhereHeldXmlIsRead() {
+        // Seen in testing: the agent pushed for an XMLFragmentParser after the splitter, to read the XML a syslog
+        // message held.
+        textTemplate();
+        pipelines.feeds.facts.ownRaw = List.of(7L);
+        pipelines.feeds.facts.profiler = text -> FakeBuildFacts.profileOf("syslog rfc3164");
+
+        final ToolResult added = call("{\"build\": \"acme-v1\", \"name\": \"P\", \"template_uuid\": \"" + TEMPLATE
+                                      + "\", \"set_properties\": \"xmlFragmentParser.textConverter=tc\"}",
+                BuildToolCalls.context());
+        final ToolResult replaced = call("{\"build\": \"acme-v1\", \"name\": \"P\", \"template_uuid\": \""
+                                         + TEMPLATE + "\", \"replace_parser\": \"XMLFragmentParser\"}",
+                BuildToolCalls.context());
+
+        assertThat(added.isError()).isTrue();
+        assertThat(added.text()).startsWith("The pipeline already has its parser ['dsParser'], so it can't have "
+                                            + "['xmlFragmentParser'] too.")
+                .endsWith(PipelineWrites.ONE_PARSER);
+        assertThat(replaced.isError()).isTrue();
+        assertThat(replaced.text()).contains("text that only DSParser reads, not XMLFragmentParser")
+                .endsWith(PipelineWrites.ONE_PARSER);
+        assertThat(pipelines.world.created).isEmpty();
+    }
+
+    @Test
     void theParserIsSwappedForXmlFragmentsAndFedFromSource() {
         pipelines.template(TEMPLATE, "Event Data (XML)", PipelineLayers.layer(TEMPLATE).chain("Source", "Source",
                         "xmlParser", "XMLParser", "translationFilter", "XSLTFilter", "streamAppender", "StreamAppender")

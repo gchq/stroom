@@ -139,7 +139,7 @@ final class MappingSampleCheck {
                 schema);
         warnings.addAll(LocalCheck.domainQualifiedWarnings(qualified));
         // Values that look like stand-ins for none, for the user to decide on.
-        final List<Placeholders.Found> placeholders = LocalCheck.placeholders(mapping, found.records());
+        final List<Placeholders.Found> placeholders = LocalCheck.placeholders(mapping, found.records(), schema);
         warnings.addAll(PlaceholderChoices.warnings(placeholders));
         // Data a rule's own records never hold.
         warnings.addAll(LocalCheck.dataNotHeld(mapping, found.records()));

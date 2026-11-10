@@ -32,6 +32,14 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
   (stroom://guide/json-input), JSON encoded twice (a JSON string holding it) too. A syslog line held in a field (a
   shipper's JSON around it), or what follows the host in an RFC 5424 header, is drafted as an `extract` of its
   header's parts (`<field>.time`, `<field>.app`, `<field>.structured`, `<field>.message`...).
+- XML held in a text field (a SOAP envelope, a syslog message holding an `<Event>`): name the field in
+  `xml_fields` and read inside it as `<field>/<path>` from the document's root element down
+  (`payload/Envelope/Body/Login/User`), `<field>//<name>` for an element anywhere in it, and `<field>//<name>/@<attr>`
+  for an attribute; steps match by local name, and a value that isn't XML gives nothing rather than an error. XML
+  after words of the source's own is read out first by an `extract` entry (`<field>.xml`), then named in
+  `xml_fields`. A field an extract reads (`<field>.message`) can be named too. `draft_translation_mapping` does all
+  this itself. Never a second parser or regexes per element in the splitter: a pipeline has one parser, reading the
+  raw stream.
 - Only `stroom:` functions that exist may be used (`format-date`, `lookup`, `meta`, `dictionary`, `log`,
   `json-to-xml`, ...; there is no `stroom:json-parse`): `check_xslt` refuses unknown ones, elements the schema has no
   place for, and expressions that would select nothing for want of a namespace (stroom://guide/xslt).

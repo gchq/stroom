@@ -151,6 +151,16 @@ public final class SampleProfiler {
     private static final Pattern DECIMAL = ToolText.re("-?\\d+\\.\\d+");
     private static final Pattern NUMBER = ToolText.re("-?\\d+(\\.\\d+)?");
     private static final Pattern JSON_AFTER_PREFIX = ToolText.re("\\{.+\\}$");
+    /// The type of a value that is XML held in text ([#valueType(Object)]), with or without words before it.
+    public static final String EMBEDDED_XML = "embedded xml";
+    /// What a field holding XML is told: one field in the splitter, read in the translation.
+    public static final String HELD_XML_NOTE = "XML held in text: keep it as one field in the Data Splitter and "
+                                               + "read its elements in the translation (xml_fields, read through "
+                                               + "mcp:parse-xml; draft_translation does), not by regexes in the "
+                                               + "splitter or a second parser: a pipeline has one parser, reading "
+                                               + "the raw stream";
+    // The < opening an element (or the XML declaration).
+    private static final Pattern XML_START = ToolText.re("<[A-Za-z_?]");
     private static final Pattern NAME_CELL = ToolText.re("^[A-Za-z_][A-Za-z0-9_.-]{0,40}$");
     private static final Pattern JSON_START = ToolText.re("(\\[\\s*)?\\{\\s*\"");
     private static final Pattern SEPARATOR = ToolText.re(" *[^\\w\\s\"'.:/@()\\[\\]{}<>=+-]{1,3} *| +:: +| +- +");
@@ -445,7 +455,8 @@ public final class SampleProfiler {
     // --------------------------------------------------------------------------------
 
     /// The type of a value, as the profile names it: `boolean`, `number`, `timestamp (<pattern>)`, `object`,
-    /// `array`, `empty`, `ip`, `integer`, `decimal`, `embedded json`, `embedded json after prefix` or `string`.
+    /// `array`, `empty`, `ip`, `integer`, `decimal`, `embedded json`, `embedded json after prefix`, `embedded xml`,
+    /// `embedded xml after prefix` (XML held in text, after words of the source's own) or `string`.
     ///
     /// @param value A value (text, or a value read from JSON).
     /// @return Its type.
@@ -502,7 +513,36 @@ public final class SampleProfiler {
         if (ToolText.search(JSON_AFTER_PREFIX, text) && parses(text.substring(text.indexOf('{')))) {
             return "embedded json after prefix";
         }
+        if (text.endsWith(">")) {
+            final int start = xmlStart(text);
+            if (start >= 0 && isXmlElement(text.substring(start))) {
+                return start == 0
+                        ? EMBEDDED_XML
+                        : EMBEDDED_XML + " after prefix";
+            }
+        }
         return "string";
+    }
+
+    /// Where the XML element a text ends with starts: its first `<` opening an element, or -1.
+    ///
+    /// @param text A value's text.
+    /// @return The index of the element's `<`, or -1 if none opens in the text.
+    public static int xmlStart(final String text) {
+        final Matcher found = XML_START.matcher(text);
+        return found.find()
+                ? found.start()
+                : -1;
+    }
+
+    // Whether the text is one well-formed XML element.
+    private static boolean isXmlElement(final String text) {
+        try {
+            XmlTree.parse(text);
+            return true;
+        } catch (final XmlTree.XmlException e) {
+            return false;
+        }
     }
 
     /// JSON encoded twice: a JSON string (`"{\"user\": \"alice\"}"`) whose text is a JSON object or array.
@@ -619,8 +659,12 @@ public final class SampleProfiler {
             if (placeholders.containsKey(name)) {
                 field.put("placeholder_rate", ToolText.round(100.0 * placeholders.get(name) / total));
             }
-            field.put("type", mostCommon(types.get(name)));
+            final String type = mostCommon(types.get(name));
+            field.put("type", type);
             field.put("examples", examples.get(name));
+            if (type.startsWith(EMBEDDED_XML)) {
+                field.put("note", HELD_XML_NOTE);
+            }
             fields.add(field);
         }
         return fields;

@@ -147,6 +147,38 @@ class TestAiChatRunManager {
     }
 
     @Test
+    void testExecute_aModelFailureFailsTheRunWithItsReasonSoItCanBeResumed() {
+        Mockito.when(runDao.compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.FAILED), any(), any()))
+                .thenReturn(true);
+
+        runManager.execute(run, r -> {
+            throw new AiChatRunManager.ModelFailedException("Read timed out", AiChatRunStopReason.MODEL_TIMED_OUT);
+        }, () -> false);
+
+        Mockito.verify(runDao).compareAndSetStatus(eq(5), eq(List.of(AiChatRunStatus.RUNNING)),
+                eq(AiChatRunStatus.FAILED), eq(AiChatRunStopReason.MODEL_TIMED_OUT), eq("Read timed out"));
+        Mockito.verify(runDao, Mockito.never()).compareAndSetStatus(eq(5), anyCollection(),
+                eq(AiChatRunStatus.DONE), any(), any());
+        assertThat(AiChatRunManager.isResumable(new AiChatRun(5, 1, AiChatRunStatus.FAILED,
+                AiChatRunStopReason.MODEL_TIMED_OUT, 0L, null, false, "Read timed out"))).isTrue();
+    }
+
+    @Test
+    void testExecute_aModelFailureAfterAStopWasAskedForEndsStopped() {
+        Mockito.when(runDao.compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.FAILED), any(), any()))
+                .thenReturn(false);
+        Mockito.when(runDao.get(5)).thenReturn(Optional.of(new AiChatRun(
+                5, 1, AiChatRunStatus.STOPPING, AiChatRunStopReason.USER, 0L, null, false, null)));
+
+        runManager.execute(run, r -> {
+            throw new AiChatRunManager.ModelFailedException("boom", AiChatRunStopReason.ANSWER_FAILED);
+        }, () -> false);
+
+        Mockito.verify(runDao).compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.STOPPED),
+                eq(AiChatRunStopReason.USER), isNull());
+    }
+
+    @Test
     void testExecute_stoppedWhileWorkingEndsStoppedWithTheReason() {
         // The run was asked to stop (by the user) while it worked, so it is no longer RUNNING.
         Mockito.when(runDao.compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.DONE), any(), any()))

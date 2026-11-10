@@ -19,10 +19,12 @@ package stroom.ai.impl.tools.draft;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.sample.Placeholders;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.sample.XmlTree;
 
+import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -362,6 +364,24 @@ class TestLocalCheck extends DraftFixtures {
     }
 
     @Test
+    void xmlAnExtractReadsOutOfATextIsReadByLocalName() {
+        // A syslog message holding XML after words of its own: read out by an extract, then named in xml_fields.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines", "xml_fields": ["msg.xml"],
+                 "extract": [{"field": "msg", "regex": "^.*?(<[A-Za-z_?].*>)\\\\s*$", "flags": "s",
+                              "names": ["msg.xml"]}],
+                 "common": [{"path": "EventSource/User/Id", "field": "msg.xml//User"},
+                            {"path": "EventDetail/TypeId", "value": "x"}],
+                 "events": [{"name": "login", "fields": [{"path": "EventDetail/Authenticate/Action",
+                                                          "value": "Logon"}]}]}"""));
+        final List<Object> records = records(mapping, "{\"msg\": \"EventLog: <Event><User>alice</User></Event>\"}\n",
+                null);
+        @SuppressWarnings("unchecked")
+        final Map<String, Object> first = (Map<String, Object>) records.getFirst();
+        assertThat(first).containsEntry("msg.xml//User", "alice").containsEntry("msg.xml/Event/User", "alice");
+    }
+
+    @Test
     void sampleValuesAreCheckedAgainstTheSchemasPatterns() {
         // Seen in eval case 40: CloudTrail's sourceIPAddress is sometimes an AWS service's name, which Stroom's
         // schema check refuses in an IPAddress; the step failed where the mapping check could have said so.
@@ -593,5 +613,38 @@ class TestLocalCheck extends DraftFixtures {
                 "a user logged in from afar"), map("action", "LOGOUT", "n", 5));
         assertThat(LocalCheck.traits(records))
                 .isEqualTo("action: LOGIN, LOGOUT; e.g. message: \"a user logged in from afar\"");
+    }
+
+    @Test
+    void aValueOnlyMisfittingItsFieldIsAskedOnlyWhereTheSchemaWouldRefuseIt() {
+        // Seen in testing: 'orgname' in a field of numbers going into a string element was asked as a stand-in.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "data_splitter", "common": [
+                 {"path": "EventSource/Device/HostName", "field": "instance"},
+                 {"path": "EventSource/Device/IPAddress", "field": "ip"},
+                 {"path": "EventSource/Device/Port", "field": "port"},
+                 {"path": "EventDetail/Unknown/Data", "data_name": "count", "field": "count"}],
+                 "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "value": "x"}]}]}"""));
+        final List<String> instance = List.of("101", "102", "orgname", "orgname", "103");
+        final List<String> ip = List.of("10.0.0.1", "10.0.0.2", "-", "-", "10.0.0.3");
+        final List<String> port = List.of("80", "443", "n.a", "n.a", "8080");
+        final List<String> count = List.of("5", "7", "x", "x", "9");
+        final List<Object> records = new ArrayList<>();
+        for (int n = 0; n < instance.size(); n++) {
+            records.add(new LinkedHashMap<>(map("instance", instance.get(n), "ip", ip.get(n), "port", port.get(n),
+                    "count", count.get(n))));
+        }
+
+        // A string element and a Data element's Value take any text; an address and a port refuse a misfit, and a
+        // usual stand-in is asked anywhere.
+        assertThat(LocalCheck.placeholders(mapping, records, SCHEMA))
+                .extracting(Placeholders.Found::value, Placeholders.Found::fields)
+                .containsExactlyInAnyOrder(
+                        Tuple.tuple("-", List.of("ip")),
+                        Tuple.tuple("n.a", List.of("port")));
+        // Without the schema, no destination is known to take text: every misfit is asked.
+        assertThat(LocalCheck.placeholders(mapping, records, null))
+                .extracting(Placeholders.Found::value)
+                .containsExactlyInAnyOrder("-", "n.a", "orgname", "x");
     }
 }

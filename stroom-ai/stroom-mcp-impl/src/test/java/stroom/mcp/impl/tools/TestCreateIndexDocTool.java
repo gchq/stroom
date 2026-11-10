@@ -18,7 +18,9 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.api.ElasticClusterTests.TestResult;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.sample.ToolJson;
@@ -126,6 +128,22 @@ class TestCreateIndexDocTool {
         final ArgumentCaptor<AddField> added = ArgumentCaptor.forClass(AddField.class);
         Mockito.verify(world.indexResource, Mockito.times(2)).addField(added.capture());
         assertThat(added.getAllValues().getLast().getIndexField().getAnalyzerType().name()).isEqualTo("KEYWORD");
+        // The form refers to the plan's table draft_index_mapping showed, rather than listing it (seen in testing:
+        // the user was asked to approve an index of fields never shown to them).
+        assertThat(world.asked).first().asString().contains("- fields: 2 field(s), as the index field plan ");
+    }
+
+    @Test
+    void theFormSaysThePlansFieldsAreAsTheChatShowedThem() {
+        final FieldPlan plan = FieldPlan.of("lucene", "ACME-INDEX", "EventTime", List.of(
+                PlannedField.of("StreamId", "id", "@StreamId")));
+        assertThat(CreateIndexDocTool.planShown(plan, ToolCallContext.builder(
+                ToolSession.chat(4)).build()))
+                .isEqualTo("1 field(s), as the index field plan shown in the chat lists them");
+        assertThat(CreateIndexDocTool.planShown(plan, ToolCallContext.builder(new ToolSession(
+                ToolSession.Kind.MCP, "s1", new ToolCaller(
+                        ToolCaller.Kind.EXTERNAL_CLIENT, "A client"))).build()))
+                .isEqualTo("1 field(s), as the index field plan the agent showed you lists them");
     }
 
     @Test

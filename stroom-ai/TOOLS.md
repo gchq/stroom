@@ -682,12 +682,15 @@ options to click; the run stops until the user answers, however long they take, 
 with the answer. Over MCP (`McpUserQuestions`) the form is sent as an elicitation and the call waits, up to the form
 timeout, with its run slot given back and its time limit paused while it waits.
 
-* **Arguments**: `questions` (1 to 8, each `question` up to 500 characters, `options` 2 to 6 up to 200 characters
-  each, `recommended`, `allowCustom` default true); `intro` (default "Some questions before I carry on").
+* **Arguments**: `questions` (1 to 8, each `question` up to 500 characters, `options` 2 to 6, each a label of up to
+  120 characters (the model is asked for under 80) with an optional description of up to 500, `recommended`,
+  `allowCustom` default true); `intro` (default "Some questions before I carry on").
 * **Returns**: "The user answered:" with each question and its answer, marked "(in their own words)" when not one of
   the options; or that the user declined (carry on with what was recommended, saying so, or stop) or didn't answer
   (the chat stopped, they sent a message instead, or it timed out: "Don't carry on as if they had").
-* **Refuses**: questions malformed or over the limits; a form too large to show as one ("ask again shorter"); and,
+* **Refuses**: questions malformed or over the limits (an over-long option label or description is refused, never
+  cut: a cut label read wrongly and no longer matched `recommended`; the model is told to give a short label and put
+  the detail in the option's description); a form too large to show as one ("ask again shorter"); and,
   without asking, when the user can't be asked (an unattended chat run, or an MCP client that can't show forms):
   "Not asked: ... Put the questions in your answer instead".
 * **Notes**: options given as objects (`{"label", "description"}`, as an MCP form's titled choices) are taken, the
@@ -1919,7 +1922,16 @@ again from the query when the button is clicked. The new dashboard then opens, r
   holding `name`, `query`, `query_type`, `preview`, and for classic an `outline`: the Query and Table in plain
   words, which the user sees in place of the StroomQL.
 * **Refuses**: no usable data source; an invalid query; the builder's refusals ("The query has no select clause…",
-  a data preview on a grouped query, which can't trace rows to events, "A classic dashboard can't hold …").
+  a data preview on a grouped query, which can't trace rows to events, "A classic dashboard can't hold …"); while
+  the session's build (the one it last worked on) has an indexing pipeline whose indexing isn't verified (its plan's
+  `indexed` step to do: `BuildProgress`, bound by `stroom-mcp-impl` as `BuildProgressImpl` over
+  `BuildPlan.unverifiedIndexing`), "No dashboard was proposed: build '…' has an indexing pipeline whose indexing
+  isn't verified yet…", naming the plan's next step (`create_processor_filter`, `wait_for_processing` or
+  `verify_index`, which makes the build's -VERIFY dashboard over the data's real time window). Seen in testing: the
+  agent skipped those steps and proposed a dashboard over the last 24 hours that showed none of the sample's
+  months-old events. Outside a build, or once indexed, unchanged. Not done: telling the user the data source's
+  earliest and latest event times when the query's time filter matches nothing, as the tool runs no search and
+  there is no cheap way to read them for any data source.
 
 ### `propose_dashboard_change`
 
@@ -3058,7 +3070,9 @@ index still holding documents then gets `index_exists`); a build's own Lucene in
 * **Arguments**: `pipeline_uuid`, `stream_ids` (required; 1 to 10), `source_pipeline_uuid`, `index_dropped`,
   `template_committed_by_user`.
 * **Returns**: `filter_id`, `pipeline`, `streams`, `max_tasks`, `enabled`, a hint, `next`; for a disabled
-  filter what the user does first, with buttons; or a `drop_first` or `index_exists` reply.
+  filter what the user does first, with buttons; or a `drop_first` or `index_exists` reply. When the build has
+  another pipeline whose index was verified, the hint says that index holds the Events this replaces, and to offer
+  the user, once processing finishes, to index the new Events (the plan's next step).
 * **Refuses**: no `pipeline_uuid`; a pipeline not the tools' own in a build (promoted pipelines too: reprocessing
   production data is the user's); 0 or more than 10 streams (`Give 1 to 10 streams per call`); streams the pipeline
   hasn't processed (`use create_processor_filter`); no clean step of the current code (`... has no clean step of its
@@ -3680,7 +3694,10 @@ Making it, in order (`fromTemplate`):
    links, with the id of its type (`xmlFragmentParser`), fed from Source (added if the template stores none), as
    Stroom's editor draws it. A parser type that isn't one, or a template with no parser, is refused.
 2. Every element in `set_properties` must exist (`The pipeline has no element(s) [...]; its elements are [...]`);
-   validation properties refused; values typed.
+   validation properties refused; values typed. A parser element the pipeline lacks, when it has one, is refused with
+   `PipelineWrites.ONE_PARSER` (a pipeline has one parser, reading the raw stream; XML or JSON in a text field is read
+   in the translation through xml_fields or json_fields), as is a `replace_parser` other than DSParser for a text
+   sample.
 3. **The parser must read the sample** (`PipelineWrites.parserReadsSample`, checked first, as a template whose parser
    can't read the sample is the wrong one whatever else it lacks: an XML source was once refused the Data Splitter
    template for want of a text converter, not for its parser). The build's sample format (`BuildPlan.sampleFormat`,
@@ -3828,7 +3845,11 @@ What they share, all in `stroom-mcp-impl`:
 * **`EventVersions`**: the event-logging versions this Stroom holds, and the one a build's translation writes: the
   one given, else the one chosen for the build (kept in the build's record, `event_logging_version`, and in this
   node's memory for the session), else the only one held, else the user's pick in a form, else `needs_guidance`.
-  Never a version this Stroom doesn't hold.
+  Never a version this Stroom doesn't hold. A namespace given (`event-logging:3` or a fork's) where a version in
+  that variant is already chosen for the build is given that version without asking; only another namespace asks
+  again, and `schema_version_settled` tells the agent to give the version (or the fork's document UUID) from then on.
+  The record keeps the variant as `namespace`; a choice made before the build had a folder is written to its record
+  once it has one.
 * **`TranslationBuilds`**: the mapping `changes=` apply to, the kept mapping, `generated` (the generator's result
   compiled as Stroom compiles it), stream meta no sample carries, a named time zone the event never records, the
   Unknown, domain and stand-in choices kept with the XSLT, and the build's source notes.
@@ -3971,7 +3992,12 @@ generated without them.
     such keys than `Key: value` keys (Secret Server's colon pairs hold a dash in a value: `Secret: Firewall - Edge
     Admin`); a key whose value is quoted is read to its closing quote (`dashed_quoted`), so a dash inside it is kept
     (`Group(s) "Staff - North"`), the others to the next spaced dash. Covered by a golden draft case (`netscaler
-    sslvpn dashed pairs`) and through Stroom (`TestE2eDashedPairs`). A key after the header's ` : ` rather than a
+    sslvpn dashed pairs`) and through Stroom (`TestE2eDashedPairs`). A quote is a quoted value only where its closing
+  quote is followed by a spaced dash or the end (an unclosed quote is read as `dashed`), and `pairExtracts` falls back
+  to `dashed` where the quoted regex reads a value empty or past another key. A pairs value that is a list
+  (`rcpt=a@x,b@x;c@x`, items without `=`) is the `listed` style, chosen over `equals` where any value is a list. A text
+  whose pairs are all its record's fields already (the splitter's key=value body) isn't read again, and a key a line
+  gives more than once gets `repeat: true` on its Data entry. A key after the header's ` : ` rather than a
     dash (`Context`) isn't read.
 
 ### `build_translation_xslt`
@@ -4780,8 +4806,12 @@ stream (records:2) must be drafted with `input: delimited`, which reads each dat
   (Elasticsearch, user has no example); `replaces` (the old indexing XSLT's uuid, or its pipeline's);
   `custom_namespaces` (ECS); `changes` (amend instead of drafting); `pipeline_uuid` (with `changes`, the pipeline
   whose kept plan to amend). `plan`, `discovery`, `extra_fields` and `shared` may be given as JSON text.
-* **Returns**: `plan`, `problems` (`FieldPlan.required()`), `rendered` (Lucene field list, or Elasticsearch index
-  template), `convention_paths_not_in_sample`, `populated_paths_not_mapped`, `fields_not_in_sample` (no event read
+* **Returns**: `status: needs_showing` and `table` first (`IndexPlans.withShownPlan`): the plan's fields as a
+  Markdown table (`#`, field, type, source path; an object field's parts a row each), which Stroom AI's chat shows
+  the user itself after the call (the model's copy says it was shown, `ToolOutputs.forModel`) and another client's
+  agent is told to show as it is, before asking about it or creating the index (seen in testing: the user was asked
+  to approve an index of fields never shown to them). Then `plan`, `problems` (`FieldPlan.required()`), `rendered`
+  (Lucene field list, or Elasticsearch index template), `convention_paths_not_in_sample`, `populated_paths_not_mapped`, `fields_not_in_sample` (no event read
   has the source, and the translation that wrote the Events doesn't write it: the user chooses to leave it out, have
   the translation write it, or keep it), `fields_rare` (no event read has the source, but the translation writes it:
   kept, as a sample can't show a path is never populated; seen: a byte count early in its stream said to be one the
@@ -4839,7 +4869,9 @@ Makes the build's index doc in its folder (role Indexing): a Lucene Index in a v
 one shard per partition) with the plan's fields, or an Elastic Index doc on an existing Elastic Cluster doc naming
 the index or data stream, its cluster then tested. The user confirms the backend, names and target in a form, and
 may correct the doc name and (Elasticsearch) the index name there; the reply carries the names as made (seen in Ask
-Stroom AI: the reply kept the name from before the user's edit, and the agent offered it back to them).
+Stroom AI: the reply kept the name from before the user's edit, and the agent offered it back to them). With a plan,
+the form's `fields` line refers to the table `draft_index_mapping` showed ("12 field(s), as the index field plan
+shown in the chat lists them"; `CreateIndexDocTool.planShown`), as a form is short plain text.
 
 Given the name of the build's existing Lucene index doc again with a plan, it adds the plan's fields the index lacks
 instead, once the user confirms, and says to reprocess the Events through the indexing pipeline and verify again
@@ -4969,7 +5001,10 @@ The template is then checked against the documents the pipeline writes: up to 50
 JSON XML its XSLT sends to the ElasticIndexingFilter (`TemplatePipelines.documents`, audited as viewed), within the
 session's time limit for a long call. A template that doesn't fit (`self_check`) is shown, not put for
 confirmation. One that fits goes to the agreement (`TemplateReviews.agree`): first a `needs_review` round whose
-`dev_tools` the agent shows in the chat, then, called again with `reviewed=<review_id>` in the same turn, a short
+`dev_tools` is shown in the chat (in Stroom AI by the chat itself, as a JSON code block with `from_example` or
+`notes`, `AiToolMessages.shownTable`, the model's copy holding a note that it was shown; another client's agent shows
+it; seen in testing: told to print it and call again without waiting, the agent called again, and the form asked
+the user to confirm a template never shown), then, called again with `reviewed=<review_id>` in the same turn, a short
 form where the user confirms it (seen: an agent ended its turn after showing it, and the user committed the
 template before it was agreed). Agreed, it is kept with the pipeline (`KeptMapping.withAgreedTemplate`) with its
 index, cluster, component names, the digest of the indexing XSLT, the time and the request; the reply carries a
@@ -5075,8 +5110,14 @@ searched and is the hit's, matching on the hit's other columns when stepping num
 alone, every record was numbered 1). With `pipeline_uuid`, a field the pipeline's plan writes for these Events that
 the index lacks fails the run.
 
-Passing records the build's pipelines writing to the index as verified (`BuildRecords.VERIFIED`) and returns the
-build's `next`. `checks=false`, when the user asks to skip verification, makes the dashboard and returns its link
+Passing records the build's pipelines writing to the index as verified (`BuildRecords.VERIFIED`), with the streams
+searched (`indexed_streams`), and returns the build's `next`. The plan's `indexed` step stays done only while those
+streams are none of them deleted since (`BuildFacts.goneStreams`) or left out of the build's current Events
+(`BuildPlan.staleIndex`); one merely older than the feed's newest streams the plan lists still counts: after an Events reprocess the next step is
+a new processor filter on the indexing pipeline over the new Events (the index dropped first, as for any index the
+pipeline wrote to), an earlier filter counting only if it selects one of them by id (`BuildPlan.selectsAny`). A
+record made before the streams were kept still counts as done. Seen in testing: after a reprocess the plan said
+indexed, over an index of the Events it replaced. `checks=false`, when the user asks to skip verification, makes the dashboard and returns its link
 with no searches; nothing is marked verified.
 
 * **Arguments**: `build`, `index_uuid`, `backend`, `stream_ids`, `expected_documents`, `fields` (the table's
@@ -5135,7 +5176,9 @@ with its mapping also carries `mcp-kept-mapping`.
 fenced JSON (```` ```json build-record ````). It is `{"docs": {uuid: entry}}` with build-level `source_feeds`,
 `event_logging_version` (`version`, `how`) and `kind` (`events`, `discovery`, `reference`). An entry may hold `type`,
 `name`, `copy_of`, `version_of`, `copy_of_version` (a working copy's original's version when copied: `COPY_OF_VERSION`),
-`stepped`, `verified`, `validated` (lists of code digests), `stepped_streams`, `sample_files` and `user_samples`.
+`stepped`, `verified`, `validated` (lists of code digests), `stepped_streams`, `indexed_streams` (the streams the
+last passed verification searched: `indexedStreams`), `sample_files` and `user_samples`. `verifiedIndexingBesides`
+names a build's other pipelines that passed a verification, for `reprocess_streams`' hint.
 `recordPassed(pipeline, kind, draftCode, extra)` records a clean step (`STEPPED`), a passed verification (`VERIFIED`) or
 Events that passed `check_events` (`VALIDATED`), only for pipelines in a build. The digest is per element the pipeline
 sets its own code for: the draft stepped, else the saved XSLT or converter, never the version history, so a draft
@@ -5234,7 +5277,8 @@ fragment wrapper (`FragmentWrappers`).
   `json object`, `json lines`, `delimited`, `cef`, `syslog rfc5424`, `syslog rfc3164`, `cri`, `multi-line text`,
   `key=value` or `unknown text`), `records`, `fields` (each `field`, `fill_rate` (real values only: an empty
   value or a placeholder such as `-` isn't filled), `placeholder_rate` (when any), `type`, `examples`; types include
-  `ip`, `integer`, `decimal`, `embedded json` and `embedded json after prefix`), `suggested_parser`, and what the format
+  `ip`, `integer`, `decimal`, `embedded json`, `embedded json after prefix`, `embedded xml` and `embedded xml after
+  prefix`, the XML types with a `note` to keep the field whole and read it in the translation through xml_fields), `suggested_parser`, and what the format
   needs (`text_converter`, `parser_properties`, `xslt_input`, `delimiter`, `has_header`, `columns`, `malformed_lines`,
   `note`). Up to 200 records a sample are profiled. Lines that are not records are named from up to 5,000 lines (a JSON
   line cut short, a CSV row short of columns or with an unclosed quote, a key=value line with no pairs); a file mostly
@@ -5286,7 +5330,10 @@ fragment wrapper (`FragmentWrappers`).
   to that form would make clean steps and verifications look stale.
 * **`Placeholders`**: stand-ins for none (`-`, `N/A` and the like) in sample or Events values: a value that recurs in a
   field (two records or more) and is one of the usual stand-ins, or a short value of another kind in a field nearly all
-  addresses, numbers, times or booleans. Seen: W3C logs' `-` for a missing address went into an Elasticsearch ip field,
+  addresses, numbers, times or booleans (a misfit). A misfit is asked only where the destination would refuse it:
+  callers name the fields whose destination takes any text (`LocalCheck.placeholders` from the schema: a Data Value,
+  or a string leaf with no pattern or enumeration; `draft_index_mapping` from the plan: `FieldPlans.takesText`, keyword
+  and text), and among numbers a misfit holding a digit is data (`146.0.0.0`, `D02`). Seen: W3C logs' `-` for a missing address went into an Elasticsearch ip field,
   which refused every document holding it. Used by the translation draft's local check and by `draft_index_mapping`
   (its stand-in questions, through `PlaceholderChoices`), not by the tools above.
 

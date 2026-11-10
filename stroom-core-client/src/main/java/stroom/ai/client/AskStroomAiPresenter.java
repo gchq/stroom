@@ -264,6 +264,10 @@ public class AskStroomAiPresenter
     private static final String LOCATED_CLASS = "ai-message--located";
     private static final int LOCATED_MS = 2_000;
     private static final String ERROR_RETRY_CLASS = "ai-message-error-retry";
+    // Continue on an error that left its question unanswered: shown once the failed run is known to be resumable.
+    private static final String ERROR_CONTINUE_CLASS = "ai-message-error-continue";
+    private static final String CONTINUE_TURN_ATTRIBUTE = "data-continue-turn-id";
+    private static final String RETRY_FROM_SCRATCH_ATTRIBUTE = "data-retry-from-scratch-turn-id";
     private static final String APPROVAL_ID_ATTRIBUTE = "data-approval-id";
     private static final String APPROVAL_ANSWER_ATTRIBUTE = "data-approval-answer";
     private static final String APPROVAL_SCOPE_ATTRIBUTE = "data-approval-scope";
@@ -590,6 +594,18 @@ public class AskStroomAiPresenter
                     if (NullSafe.isNonBlankString(attachmentIdStr)) {
                         final String desc = button.getAttribute("data-attachment-desc");
                         onViewAttachmentData(Integer.parseInt(attachmentIdStr), desc);
+                        return;
+                    }
+
+                    // Carrying on with a question an error left unanswered, keeping the steps it has taken.
+                    if (NullSafe.isNonBlankString(button.getAttribute(CONTINUE_TURN_ATTRIBUTE))) {
+                        removeErrorRetries();
+                        onResumeRun();
+                        return;
+                    }
+                    final String retryFromScratchStr = button.getAttribute(RETRY_FROM_SCRATCH_ATTRIBUTE);
+                    if (NullSafe.isNonBlankString(retryFromScratchStr)) {
+                        onRetryFromScratch(Integer.parseInt(retryFromScratchStr));
                         return;
                     }
 
@@ -4450,6 +4466,30 @@ public class AskStroomAiPresenter
         }
     }
 
+    /**
+     * Asks a question an error left unanswered again from scratch, after asking the user if the turn has taken
+     * tool steps, as they are discarded (Continue keeps them).
+     *
+     * @param turnId The id of the question.
+     */
+    private void onRetryFromScratch(final int turnId) {
+        int toolSteps = 0;
+        for (final AiChatMessage msg : renderedMessages.values()) {
+            if (msg.getId() > turnId && msg.getMessageType() == AiMessageType.TOOL_CALL) {
+                toolSteps++;
+            }
+        }
+        if (toolSteps == 0) {
+            onRetry(turnId);
+        } else {
+            ConfirmEvent.fire(this, AiChatTexts.retryFromScratchQuestion(toolSteps), ok -> {
+                if (ok) {
+                    onRetry(turnId);
+                }
+            });
+        }
+    }
+
     private void onResumeRun() {
         if (currentChat == null) {
             return;
@@ -4471,13 +4511,18 @@ public class AskStroomAiPresenter
      */
     private void updateRunStatus(final AiChatRun run) {
         removeAllInConversation(RUN_STATUS_ID);
+        final boolean resumable = run != null
+                                  && (run.getStatus() == AiChatRunStatus.STOPPED
+                                      || run.getStatus() == AiChatRunStatus.INTERRUPTED
+                                      || run.getStatus() == AiChatRunStatus.FAILED);
+        // An error that left its question unanswered offers to carry on with it, in place of the Resume line.
+        if (showErrorContinues(resumable)) {
+            return;
+        }
         if (run == null || run.getStatus() == AiChatRunStatus.DONE
             || (run.isActive() && run.getStatus() != AiChatRunStatus.QUEUED)) {
             return;
         }
-        final boolean resumable = run.getStatus() == AiChatRunStatus.STOPPED
-                                  || run.getStatus() == AiChatRunStatus.INTERRUPTED
-                                  || run.getStatus() == AiChatRunStatus.FAILED;
         final HtmlBuilder hb = new HtmlBuilder();
         hb.div(div -> {
             div.span(text -> text.append(runStatusText(run)), Attribute.className("ai-run-status-text"));
@@ -4490,6 +4535,30 @@ public class AskStroomAiPresenter
             }
         }, Attribute.className("ai-message ai-message--run-status"), new Attribute("id", RUN_STATUS_ID));
         appendToContainer(hb);
+    }
+
+    /**
+     * Shows or hides the Continue buttons of errors that left their question unanswered.
+     *
+     * @param resumable Whether the chat's last run can be resumed.
+     * @return True if there is one to show and it is shown.
+     */
+    private boolean showErrorContinues(final boolean resumable) {
+        final NodeList<Element> buttons = getView().getMarkdownContainer().getElement()
+                .getElementsByTagName("button");
+        boolean shown = false;
+        for (int i = 0; i < buttons.getLength(); i++) {
+            final Element button = buttons.getItem(i);
+            if (button.hasClassName(ERROR_CONTINUE_CLASS)) {
+                if (resumable) {
+                    button.getStyle().clearDisplay();
+                    shown = true;
+                } else {
+                    button.getStyle().setDisplay(Display.NONE);
+                }
+            }
+        }
+        return shown;
     }
 
     private static String runStatusText(final AiChatRun run) {
@@ -5282,13 +5351,22 @@ public class AskStroomAiPresenter
                 }, Attribute.className("ai-message-avatar"));
             }
             wrapper.div(content -> content.append(markdownHtml), Attribute.className("ai-message-content"));
-            // An error that stopped a question being answered offers to ask it again, where it can be seen.
+            // An error that stopped a question being answered offers to carry on with it, keeping the steps it has
+            // taken (once its run is known to be resumable, see updateRunStatus), or to ask it again from scratch.
             if (error && retryTurnId > 0) {
-                wrapper.elem(button -> button.append("Retry"),
-                        BUTTON,
-                        Attribute.className(ERROR_RETRY_CLASS),
-                        Attribute.title("Ask the question again"),
-                        new Attribute(RETRY_TURN_ATTRIBUTE, String.valueOf(retryTurnId)));
+                wrapper.div(buttons -> {
+                    buttons.elem(button -> button.append("Continue"),
+                            BUTTON,
+                            Attribute.className(ERROR_RETRY_CLASS + " " + ERROR_CONTINUE_CLASS),
+                            Attribute.title("Carry on answering the question, keeping the steps it has taken"),
+                            new Attribute("style", "display: none"),
+                            new Attribute(CONTINUE_TURN_ATTRIBUTE, String.valueOf(retryTurnId)));
+                    buttons.elem(button -> button.append("Retry from scratch"),
+                            BUTTON,
+                            Attribute.className(ERROR_RETRY_CLASS),
+                            Attribute.title("Ask the question again, discarding the steps it has taken"),
+                            new Attribute(RETRY_FROM_SCRATCH_ATTRIBUTE, String.valueOf(retryTurnId)));
+                }, Attribute.className("ai-message-error-actions"));
             }
             // Add message footer (timestamp and buttons), shown when the message is hovered over.
             wrapper.div(footer -> {

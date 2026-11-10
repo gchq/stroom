@@ -61,14 +61,17 @@ import stroom.util.shared.PermissionException;
 import stroom.util.shared.UserRef;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 
+import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -724,6 +727,60 @@ class TestAskStroomAIService {
                 .contains("check the current state")
                 .endsWith("\n\n");
         assertThat(AskStroomAIService.resumeNote(failed)).contains("did not finish: failed");
+    }
+
+    @Test
+    void aFailureMidTurnFailsTheRunSoThatItCanBeResumed() {
+        final AiChatRun failed = new AiChatRun(2, 1, AiChatRunStatus.FAILED, AiChatRunStopReason.ANSWER_FAILED, 0L,
+                1L, false, "boom");
+        Mockito.when(runDao.getLatest(1)).thenReturn(Optional.of(failed));
+        // The turn had taken steps before the model failed.
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                message(1, AiMessageType.USER_MESSAGE, "Build me a feed."),
+                message(2, AiMessageType.TOOL_CALL, "{\"tool\":\"sample_profile\"}"),
+                message(3, AiMessageType.TOOL_RESULT, "{\"lines\":10}"),
+                message(4, AiMessageType.ERROR, "boom")));
+        Mockito.when(aiService.storeMessage(Mockito.eq(1), Mockito.eq(AiMessageType.ERROR), Mockito.any()))
+                .thenReturn(message(5, AiMessageType.ERROR, "No model"));
+        @SuppressWarnings("unchecked") final ArgumentCaptor<Consumer<AiChatRun>> work =
+                ArgumentCaptor.forClass(Consumer.class);
+        final AskStroomAIService service = service();
+
+        service.resumeRun(new AskStroomAiRequest(chat, null, null, null));
+
+        // Resuming keeps the turn's steps, for the model to be given again, unlike asking again from scratch.
+        Mockito.verify(runManager).start(Mockito.eq(1), work.capture());
+        Mockito.verify(aiService, Mockito.never()).deleteMessage(Mockito.anyInt());
+
+        // The resumed run fails too (there is no model): the error is shown and the run is failed, not done, so that
+        // it can be resumed again.
+        assertThatThrownBy(() -> work.getValue().accept(failed))
+                .isInstanceOfSatisfying(AiChatRunManager.ModelFailedException.class, e ->
+                        assertThat(e.getStopReason()).isEqualTo(AiChatRunStopReason.ANSWER_FAILED));
+        Mockito.verify(aiService).storeMessage(Mockito.eq(1), Mockito.eq(AiMessageType.ERROR), Mockito.any());
+    }
+
+    @Test
+    void aModelTimeoutFailsTheRunAsTimedOut() {
+        final OpenAIModelStore store = Mockito.mock(OpenAIModelStore.class);
+        Mockito.when(store.readDocument(DEFAULT_MODEL))
+                .thenReturn(OpenAIModelDoc.builder().uuid("default-uuid").name("Default").build());
+        Mockito.doThrow(new RuntimeException(new SocketTimeoutException("Read timed out")))
+                .when(aiService).deleteWorkingMessages(1);
+        Mockito.when(aiService.storeMessage(Mockito.eq(1), Mockito.eq(AiMessageType.ERROR), Mockito.any()))
+                .thenReturn(message(5, AiMessageType.ERROR, "timed out"));
+        @SuppressWarnings("unchecked") final ArgumentCaptor<Consumer<AiChatRun>> work =
+                ArgumentCaptor.forClass(Consumer.class);
+        final AskStroomAIService service = serviceForModels(store, DEFAULT_MODEL);
+
+        service.askStroomAi(new AskStroomAiRequest(chat, null, null, "Build me a feed."));
+        Mockito.verify(runManager).start(Mockito.eq(1), work.capture());
+
+        assertThatThrownBy(() -> work.getValue().accept(null))
+                .isInstanceOfSatisfying(AiChatRunManager.ModelFailedException.class, e ->
+                        assertThat(e.getStopReason()).isEqualTo(AiChatRunStopReason.MODEL_TIMED_OUT));
+        Mockito.verify(aiService).storeMessage(Mockito.eq(1), Mockito.eq(AiMessageType.ERROR),
+                Mockito.contains("took too long to respond"));
     }
 
     @Test

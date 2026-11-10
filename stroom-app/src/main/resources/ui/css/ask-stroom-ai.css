@@ -696,7 +696,20 @@
 
 .ai-message-error-retry {
     cursor: pointer;
+}
+
+/* Continue and Retry from scratch, under an error that left its question unanswered. */
+.ai-message-error-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
     margin-top: 6px;
+}
+
+/* Continue keeps the steps the question has taken, so it is the one offered first. */
+.ai-message-error-continue {
+    font-weight: 600;
+    border: 1px solid var(--blue-500);
 }
 
 .ai-message--run-status {
@@ -1566,6 +1579,9 @@
     color: inherit;
     font: inherit;
     cursor: pointer;
+    /* A long label or description wraps within the option rather than running out of it. */
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 .ai-question-option:hover,
@@ -1577,7 +1593,14 @@
 .ai-question-option-text {
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
     min-width: 0;
+}
+
+.ai-question-option-label,
+.ai-question-option-description {
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .ai-question-option-description {

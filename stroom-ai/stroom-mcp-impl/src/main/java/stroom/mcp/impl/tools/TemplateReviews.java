@@ -128,11 +128,18 @@ class TemplateReviews {
             round.put("status", "needs_review");
             round.put("dev_tools", devTools);
             round.put("review_id", reviewId);
-            round.put("hint", "Show the user this index template before anything else, in your reply (not in your "
-                              + "thinking, which they may not see): dev_tools as a json code block, exactly as it is "
-                              + "(a form can't show it readably), with the notes on what came from where, and say it "
-                              + "is not to go on the cluster until they've confirmed it. Then, in the same turn, "
-                              + "without waiting for a reply, call " + action + " again with the same arguments plus "
+            // Stroom AI's chat shows dev_tools itself, with the notes (seen in testing: told to print it, then call
+            // again without waiting, the agent called again, and the form asked the user to confirm a template
+            // never shown).
+            final String show = context.session() != null && context.session().isChat()
+                    ? "The index template (dev_tools), with the notes on what came from where, is shown to the user "
+                      + "in the chat, as it is: don't repeat, restyle or describe it. Now"
+                    : "Show the user this index template before anything else, in your reply (not in your "
+                      + "thinking, which they may not see): dev_tools as a json code block, exactly as it is "
+                      + "(a form can't show it readably), with the notes on what came from where, and say it "
+                      + "is not to go on the cluster until they've confirmed it. Then, in the same turn, "
+                      + "without waiting for a reply,";
+            round.put("hint", show + " call " + action + " again with the same arguments plus "
                               + "reviewed='" + reviewId + "' (this template's review_id); "
                               + (CheckIndexTemplateTool.NAME.equals(action)
                     ? "the template itself may be left out, and component templates given before are kept: don't "

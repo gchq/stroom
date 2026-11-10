@@ -40,6 +40,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -394,10 +395,12 @@ public class EventVersions {
             if (INFERRED.equals(how)) {
                 return Optional.of("The translation writes " + which + ", as the environment's translations already "
                                    + "do (their imports or template write it): don't ask the user which schema or "
-                                   + "namespace. " + EventsNamespaces.SCHEMA_GROUP_NOTE);
+                                   + "namespace. " + EventsNamespaces.SCHEMA_GROUP_NOTE
+                                   + laterCalls(chosenFork.get().getUuid()));
             }
             if (FORM.equals(how)) {
-                return Optional.of("The user chose " + which + " in the server's form: don't ask them again.");
+                return Optional.of("The user chose " + which + " in the server's form: don't ask them again."
+                                   + laterCalls(chosenFork.get().getUuid()));
             }
             return Optional.empty();
         }
@@ -414,6 +417,12 @@ public class EventVersions {
         return said;
     }
 
+    // Tells the agent what to give as schema_version from now on: the version settled (or its document), as the
+    // namespace alone reads as the variant only.
+    private static String laterCalls(final String schemaVersion) {
+        return " On later calls give schema_version=" + schemaVersion + ", not the namespace.";
+    }
+
     // What to tell the agent of an event-logging version settled without it.
     private Optional<String> settledEventLogging(final ToolCallContext context,
                                                  final String build,
@@ -426,7 +435,8 @@ public class EventVersions {
                 .orElse("");
         if (FORM.equals(how)) {
             return Optional.of("The user chose event-logging " + version + " in the server's form: don't ask them "
-                               + "for the version again." + doc);
+                               + "for the version again." + doc + laterCalls(chosenDoc(context, build, version)
+                    .orElse(version)));
         }
         if (ONLY.equals(how)) {
             // Never "nothing to ask" for a version held twice: which document was a question.
@@ -483,14 +493,39 @@ public class EventVersions {
                          final String how,
                          final String uuid) {
         final String key = buildKey(context, build);
-        chosen.put(sessionKey(context.session(), key), new Chosen(version, how, uuid));
+        final Chosen choice = new Chosen(version, how, uuid, namespaceFor(context, build, uuid), false);
+        chosen.put(sessionKey(context.session(), key), record(key, choice));
+    }
+
+    // The variant (namespace) of a version being remembered: the fork's, where its document is one, else the
+    // variant chosen for the build, else event-logging's.
+    private String namespaceFor(final ToolCallContext context, final String build, final String uuid) {
+        final Optional<XmlSchemaDoc> chosenFork = NullSafe.isNonBlankString(uuid)
+                ? fork(uuid)
+                : Optional.empty();
+        if (chosenFork.isPresent()) {
+            return namespaceOf(chosenFork.get());
+        }
+        final Variant variant = variants.get(sessionKey(context == null
+                ? null
+                : context.session(), buildKey(context, build)));
+        return variant != null && !heldSchemas.forksIn(variant.namespace()).isEmpty()
+                ? variant.namespace()
+                : EventsNamespaces.STANDARD;
+    }
+
+    // Keeps a choice in the build's record where the build has a folder, so another session doesn't ask again.
+    // A build's record is made only in its folder: a choice made before the build has one is kept in memory, and
+    // copied to the record once the folder is there (see chosenFor).
+    private Chosen record(final String key, final Chosen choice) {
         if (key.isEmpty()) {
-            return;
+            return choice;
         }
         try {
-            // A build's record is made only in its folder: a call before the build has one keeps it in memory.
             if (guardProvider.get().buildFolder(key, false).isPresent()) {
-                buildRecordsProvider.get().rememberEventLoggingVersion(key, version, how, uuid);
+                buildRecordsProvider.get().rememberEventLoggingVersion(key, choice.version(), choice.how(),
+                        choice.uuid(), choice.namespace());
+                return choice.asRecorded();
             }
         } catch (final RuntimeException e) {
             // A convenience: the session still remembers it.
@@ -500,6 +535,7 @@ public class EventVersions {
                     e.getMessage()),
                     e);
         }
+        return choice;
     }
 
     /// The Events schema a new translation writes, settled in two steps, as a fork needn't share event-logging's
@@ -541,19 +577,21 @@ public class EventVersions {
                 return Target.of(version);
             }
             if (EventsNamespaces.isStandard(given) || !heldSchemas.forksIn(given).isEmpty()) {
-                // The variant alone: its version next.
+                // The variant alone. Seen in testing: the agent passed the namespace on every call, as the variant
+                // question's hint told it, and the user was asked for the version again each time. The version
+                // already chosen for the build in that variant stands; only a different variant asks again.
+                final Optional<Target> earlier = earlierChoice(call, context, build, given, versions);
+                if (earlier.isPresent()) {
+                    return earlier.get();
+                }
                 final Variant variant = new Variant(given, GIVEN);
                 rememberVariant(context, build, variant);
                 return inVariant(call, context, build, variant, null);
             }
         } else {
-            final Optional<Chosen> earlier = chosenFor(context, build);
-            if (earlier.isPresent() && earlier.get().uuid() != null && fork(earlier.get().uuid()).isPresent()) {
-                // A fork chosen for the build, still held.
-                return Target.of(earlier.get().version());
-            }
-            if (earlier.isPresent() && versions.contains(earlier.get().version())) {
-                return withDoc(call, context, build, earlier.get().version(), earlier.get().how());
+            final Optional<Target> earlier = earlierChoice(call, context, build, null, versions);
+            if (earlier.isPresent()) {
+                return earlier.get();
             }
         }
         final Optional<Variant> variant = variant(context, build);
@@ -561,6 +599,35 @@ public class EventVersions {
             return askVariant(call, context, build, given);
         }
         return inVariant(call, context, build, variant.get(), given);
+    }
+
+    // The version chosen for the build earlier, while this Stroom still holds it, where it is in the variant given
+    // (any, for null): a fork's, by its document, or event-logging's.
+    private Optional<Target> earlierChoice(final ToolCall call,
+                                           final ToolCallContext context,
+                                           final String build,
+                                           final String namespace,
+                                           final List<String> versions) {
+        final Optional<Chosen> earlier = chosenFor(context, build);
+        if (earlier.isEmpty()) {
+            return Optional.empty();
+        }
+        final Chosen choice = earlier.get();
+        final Optional<XmlSchemaDoc> chosenFork = NullSafe.isNonBlankString(choice.uuid())
+                ? fork(choice.uuid())
+                : Optional.empty();
+        if (chosenFork.isPresent()) {
+            // A fork chosen for the build, still held.
+            return namespace == null || namespace.equals(namespaceOf(chosenFork.get()))
+                    ? Optional.of(Target.of(choice.version()))
+                    : Optional.empty();
+        }
+        final boolean inStandard = choice.namespace() == null || EventsNamespaces.isStandard(choice.namespace());
+        if (inStandard && versions.contains(choice.version())
+            && (namespace == null || EventsNamespaces.isStandard(namespace))) {
+            return Optional.of(withDoc(call, context, build, choice.version(), choice.how()));
+        }
+        return Optional.empty();
     }
 
     // The variant settled without asking: the one chosen for the build (a fork's document, or event-logging's
@@ -682,8 +749,7 @@ public class EventVersions {
         final Optional<String> earlier = chosenDoc(context, build, version);
         if (docs.size() < 2 || earlier.isPresent()) {
             final Optional<Chosen> kept = chosenFor(context, build);
-            final Chosen settled = new Chosen(version, how, earlier.orElse(null));
-            if (kept.isEmpty() || !kept.get().equals(settled)) {
+            if (kept.isEmpty() || !kept.get().isSame(version, how, earlier.orElse(null))) {
                 remember(context, build, version, how, earlier.orElse(null));
             }
             return Target.of(version);
@@ -754,7 +820,9 @@ public class EventVersions {
                           + "the translation writes: event-logging (namespace " + EventsNamespaces.STANDARD + ") or "
                           + "the fork (as the environment's other feeds may), then call again with schema_version= "
                           + "the namespace chosen; its version is settled, or asked, next. A fork's versions are its "
-                          + "own: don't ask for a version until the namespace is chosen.");
+                          + "own: don't ask for a version until the namespace is chosen. Once the version is "
+                          + "settled, give it (or the fork document's UUID) as schema_version on later calls, not "
+                          + "the namespace.");
         return new Target(null, asked);
     }
 
@@ -875,12 +943,30 @@ public class EventVersions {
     // The session's memory first, then the build's record.
     private Optional<Chosen> chosenFor(final ToolCallContext context, final String build) {
         final String key = buildKey(context, build);
-        final Chosen remembered = chosen.get(sessionKey(context.session(), key));
+        final String sessionKey = sessionKey(context.session(), key);
+        final Chosen remembered = chosen.get(sessionKey);
         if (remembered != null) {
+            if (!remembered.recorded() && !key.isEmpty()) {
+                // Chosen before the build had a folder: kept in its record now it may have one.
+                final Chosen kept = record(key, remembered);
+                if (kept.recorded()) {
+                    chosen.put(sessionKey, kept);
+                }
+            }
             return Optional.of(remembered);
         }
         if (key.isEmpty()) {
             return Optional.empty();
+        }
+        // Chosen before the session named a build (none was given, and none was current): it was for this one.
+        final Chosen beforeBuild = chosen.remove(sessionKey(context.session(), ""));
+        if (beforeBuild != null) {
+            chosen.put(sessionKey, record(key, beforeBuild));
+            final Variant variant = variants.remove(sessionKey(context.session(), ""));
+            if (variant != null) {
+                variants.putIfAbsent(sessionKey, variant);
+            }
+            return Optional.of(beforeBuild);
         }
         try {
             if (guardProvider.get().buildFolder(key, false).isEmpty()) {
@@ -889,7 +975,7 @@ public class EventVersions {
             return buildRecordsProvider.get().eventLoggingVersion(key)
                     .filter(kept -> NullSafe.isNonBlankString(text(kept.get("version"))))
                     .map(kept -> new Chosen(text(kept.get("version")), text(kept.get("how")),
-                            text(kept.get("uuid"))));
+                            text(kept.get("uuid")), text(kept.get("namespace")), true));
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message(
                     "Couldn't read build {}'s record for its event-logging version: {}",
@@ -973,10 +1059,21 @@ public class EventVersions {
         }
     }
 
-    // A version chosen, how, and the UUID of the XML schema document chosen where it is held in more than one (or
-    // null).
-    private record Chosen(String version, String how, String uuid) {
+    // A version chosen, how, the UUID of the XML schema document chosen where it is held in more than one (or
+    // null), the variant's namespace (or null, for a record kept before it was), and whether the build's record
+    // holds it.
+    private record Chosen(String version, String how, String uuid, String namespace, boolean recorded) {
 
+        // The same choice, however it is kept.
+        boolean isSame(final String version, final String how, final String uuid) {
+            return Objects.equals(this.version, version) && Objects.equals(this.how, how)
+                   && Objects.equals(this.uuid, uuid);
+        }
+
+        // It, kept in the build's record.
+        Chosen asRecorded() {
+            return new Chosen(version, how, uuid, namespace, true);
+        }
     }
 
     // A variant of the Events schema, by its namespace, and how it was settled (or null).
