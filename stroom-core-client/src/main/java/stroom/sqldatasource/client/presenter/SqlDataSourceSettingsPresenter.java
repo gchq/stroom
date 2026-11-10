@@ -109,6 +109,7 @@ public class SqlDataSourceSettingsPresenter
                 jdbc.getMaxPoolSize(),
                 JdbcConnectionSettings.DEFAULT_MAX_POOL_SIZE));
         view.setFetchSize(Objects.requireNonNullElse(jdbc.getFetchSize(), JdbcConnectionSettings.DEFAULT_FETCH_SIZE));
+        view.setJdbcMinRefreshMinutes(Objects.requireNonNullElse(jdbc.getMinRefreshMinutes(), 0));
         showCredential(jdbc.getCredentialName(),
                 jdbcCredential,
                 view.getJdbcCredentialSelectionBox(),
@@ -127,6 +128,9 @@ public class SqlDataSourceSettingsPresenter
                 AthenaConnectionSettings.DEFAULT_DATABASE));
         view.setOutputLocation(athena.getOutputLocation());
         view.setResultReuseMinutes(Objects.requireNonNullElse(athena.getResultReuseMinutes(), 0));
+        view.setAthenaMinRefreshMinutes(Objects.requireNonNullElse(
+                athena.getMinRefreshMinutes(),
+                AthenaConnectionSettings.DEFAULT_MIN_REFRESH_MINUTES));
         showCredential(athena.getCredentialName(),
                 athenaCredential,
                 view.getAthenaCredentialSelectionBox(),
@@ -182,6 +186,7 @@ public class SqlDataSourceSettingsPresenter
                 .connectionProperties(ConnectionPropertiesText.parse(view.getConnectionProperties()))
                 .maxPoolSize(view.getMaxPoolSize())
                 .fetchSize(view.getFetchSize())
+                .minRefreshMinutes(view.getJdbcMinRefreshMinutes())
                 .build();
         final AthenaConnectionSettings athena = AthenaConnectionSettings.builder()
                 .region(blankToNull(view.getRegion()))
@@ -191,6 +196,7 @@ public class SqlDataSourceSettingsPresenter
                 .outputLocation(blankToNull(view.getOutputLocation()))
                 .credentialName(athenaCredential.getName())
                 .resultReuseMinutes(view.getResultReuseMinutes())
+                .minRefreshMinutes(view.getAthenaMinRefreshMinutes())
                 .build();
         return doc.copy()
                 .connectionType(view.getConnectionType())
@@ -275,6 +281,12 @@ public class SqlDataSourceSettingsPresenter
         /// @param fetchSize The fetch size to show.
         void setFetchSize(int fetchSize);
 
+        /// @return The shortest automatic dashboard refresh of a JDBC source, in minutes; 0 for none.
+        int getJdbcMinRefreshMinutes();
+
+        /// @param minutes The shortest automatic dashboard refresh of a JDBC source to show.
+        void setJdbcMinRefreshMinutes(int minutes);
+
         /// @return The AWS region as entered.
         String getRegion();
 
@@ -318,6 +330,12 @@ public class SqlDataSourceSettingsPresenter
 
         /// @param resultReuseMinutes The result reuse age to show.
         void setResultReuseMinutes(int resultReuseMinutes);
+
+        /// @return The shortest automatic dashboard refresh of an Athena source, in minutes; 0 for none.
+        int getAthenaMinRefreshMinutes();
+
+        /// @param minutes The shortest automatic dashboard refresh of an Athena source to show.
+        void setAthenaMinRefreshMinutes(int minutes);
 
         /// @return The time column as entered.
         String getTimeField();

@@ -18,6 +18,7 @@ package stroom.query.api.datasource;
 
 import stroom.docref.DocRef;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.time.SimpleDuration;
 
 import java.util.List;
 import java.util.Optional;
@@ -68,6 +69,15 @@ public interface DataSourceProvider {
     /// @return True if this data source takes a native query.
     default boolean takesNativeQuery() {
         return false;
+    }
+
+    /// The shortest interval at which a dashboard may rerun a query of this data source
+    /// automatically, for data sources where every run costs money or load, such as Amazon Athena.
+    ///
+    /// @param docRef The data source.
+    /// @return The minimum, or empty for none beyond the dashboard's own.
+    default Optional<SimpleDuration> fetchMinRefreshInterval(final DocRef docRef) {
+        return Optional.empty();
     }
 
     /**

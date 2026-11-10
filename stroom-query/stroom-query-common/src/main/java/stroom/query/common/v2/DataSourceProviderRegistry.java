@@ -23,6 +23,7 @@ import stroom.query.api.datasource.QueryField;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.time.SimpleDuration;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -86,6 +87,15 @@ public class DataSourceProviderRegistry {
         return getDataSourceProvider(docRef.getType())
                 .map(DataSourceProvider::takesNativeQuery)
                 .orElse(false);
+    }
+
+    /// @param dataSourceRef A data source.
+    /// @return The shortest interval at which a dashboard may rerun its queries automatically, or
+    /// empty for none beyond the dashboard's own.
+    public Optional<SimpleDuration> fetchMinRefreshInterval(final DocRef dataSourceRef) {
+        final DocRef docRef = LegacyDocRefConverter.convert(dataSourceRef);
+        return getDataSourceProvider(docRef.getType())
+                .flatMap(dsp -> dsp.fetchMinRefreshInterval(docRef));
     }
 
     public int getFieldCount(final DocRef dataSourceRef) {

@@ -34,7 +34,8 @@ import java.util.Objects;
         "credentialName",
         "connectionProperties",
         "maxPoolSize",
-        "fetchSize"})
+        "fetchSize",
+        "minRefreshMinutes"})
 @JsonInclude(Include.NON_NULL)
 public class JdbcConnectionSettings {
 
@@ -53,6 +54,8 @@ public class JdbcConnectionSettings {
     private final Integer maxPoolSize;
     @JsonProperty
     private final Integer fetchSize;
+    @JsonProperty
+    private final Integer minRefreshMinutes;
 
     /// Creates JDBC connection settings.
     ///
@@ -61,17 +64,21 @@ public class JdbcConnectionSettings {
     /// @param connectionProperties Extra properties passed to the driver, or `null` for none.
     /// @param maxPoolSize          The most pooled connections, or `null` for [#DEFAULT_MAX_POOL_SIZE].
     /// @param fetchSize            The rows fetched per round trip, or `null` for [#DEFAULT_FETCH_SIZE].
+    /// @param minRefreshMinutes    The shortest automatic rerun interval of a dashboard in minutes, or
+    ///                             `null` for no minimum beyond the dashboard's own.
     @JsonCreator
     public JdbcConnectionSettings(@JsonProperty("url") final String url,
                                   @JsonProperty("credentialName") final String credentialName,
                                   @JsonProperty("connectionProperties") final Map<String, String> connectionProperties,
                                   @JsonProperty("maxPoolSize") final Integer maxPoolSize,
-                                  @JsonProperty("fetchSize") final Integer fetchSize) {
+                                  @JsonProperty("fetchSize") final Integer fetchSize,
+                                  @JsonProperty("minRefreshMinutes") final Integer minRefreshMinutes) {
         this.url = url;
         this.credentialName = credentialName;
         this.connectionProperties = connectionProperties;
         this.maxPoolSize = maxPoolSize;
         this.fetchSize = fetchSize;
+        this.minRefreshMinutes = minRefreshMinutes;
     }
 
     /// @return The JDBC URL of the database, or `null` if not set.
@@ -99,6 +106,12 @@ public class JdbcConnectionSettings {
         return fetchSize;
     }
 
+    /// @return The shortest interval, in minutes, at which a dashboard may rerun queries automatically, or `null` for
+    /// no minimum beyond the dashboard's own.
+    public Integer getMinRefreshMinutes() {
+        return minRefreshMinutes;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -112,12 +125,13 @@ public class JdbcConnectionSettings {
                Objects.equals(credentialName, that.credentialName) &&
                Objects.equals(connectionProperties, that.connectionProperties) &&
                Objects.equals(maxPoolSize, that.maxPoolSize) &&
-               Objects.equals(fetchSize, that.fetchSize);
+               Objects.equals(fetchSize, that.fetchSize) &&
+               Objects.equals(minRefreshMinutes, that.minRefreshMinutes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(url, credentialName, connectionProperties, maxPoolSize, fetchSize);
+        return Objects.hash(url, credentialName, connectionProperties, maxPoolSize, fetchSize, minRefreshMinutes);
     }
 
     @Override
@@ -131,6 +145,7 @@ public class JdbcConnectionSettings {
                 : connectionProperties.keySet()) +
                ", maxPoolSize=" + maxPoolSize +
                ", fetchSize=" + fetchSize +
+               ", minRefreshMinutes=" + minRefreshMinutes +
                '}';
     }
 
@@ -152,6 +167,7 @@ public class JdbcConnectionSettings {
         private Map<String, String> connectionProperties;
         private Integer maxPoolSize;
         private Integer fetchSize;
+        private Integer minRefreshMinutes;
 
         private Builder() {
         }
@@ -162,6 +178,7 @@ public class JdbcConnectionSettings {
             this.connectionProperties = settings.connectionProperties;
             this.maxPoolSize = settings.maxPoolSize;
             this.fetchSize = settings.fetchSize;
+            this.minRefreshMinutes = settings.minRefreshMinutes;
         }
 
         /// @param url The JDBC URL of the database.
@@ -199,9 +216,22 @@ public class JdbcConnectionSettings {
             return this;
         }
 
+        /// @param minRefreshMinutes The shortest automatic rerun interval of a dashboard in minutes,
+        ///                          or `null` for the default.
+        /// @return This builder.
+        public Builder minRefreshMinutes(final Integer minRefreshMinutes) {
+            this.minRefreshMinutes = minRefreshMinutes;
+            return this;
+        }
+
         /// @return New [JdbcConnectionSettings] holding the values set on this builder.
         public JdbcConnectionSettings build() {
-            return new JdbcConnectionSettings(url, credentialName, connectionProperties, maxPoolSize, fetchSize);
+            return new JdbcConnectionSettings(url,
+                    credentialName,
+                    connectionProperties,
+                    maxPoolSize,
+                    fetchSize,
+                    minRefreshMinutes);
         }
     }
 }

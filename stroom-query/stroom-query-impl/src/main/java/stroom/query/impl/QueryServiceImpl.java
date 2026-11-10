@@ -90,6 +90,7 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
+import stroom.util.shared.time.SimpleDuration;
 import stroom.util.string.ExceptionStringUtil;
 import stroom.util.string.StringUtil;
 
@@ -646,6 +647,12 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
     public Optional<DocRef> fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
         return securityContext.useAsReadResult(() ->
                 dataSourceProviderRegistry.fetchDefaultExtractionPipeline(dataSourceRef));
+    }
+
+    @Override
+    public Optional<SimpleDuration> fetchMinRefreshInterval(final DocRef dataSourceRef) {
+        return securityContext.useAsReadResult(() ->
+                dataSourceProviderRegistry.fetchMinRefreshInterval(dataSourceRef));
     }
 
     @Override

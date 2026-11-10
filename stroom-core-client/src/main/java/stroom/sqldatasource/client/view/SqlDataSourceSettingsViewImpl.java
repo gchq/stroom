@@ -49,6 +49,7 @@ public class SqlDataSourceSettingsViewImpl
     private static final int MAX_ROWS = 100_000_000;
     // Athena reuses a result for at most seven days.
     private static final int MAX_RESULT_REUSE_MINUTES = 10_080;
+    private static final int MAX_MIN_REFRESH_MINUTES = 1_440;
 
     private final Widget widget;
 
@@ -69,6 +70,8 @@ public class SqlDataSourceSettingsViewImpl
     @UiField
     ValueSpinner fetchSize;
     @UiField
+    ValueSpinner jdbcMinRefreshMinutes;
+    @UiField
     FlowPanel athenaSettings;
     @UiField
     TextBox region;
@@ -86,6 +89,8 @@ public class SqlDataSourceSettingsViewImpl
     DescriptionHTML athenaCredentialNote;
     @UiField
     ValueSpinner resultReuseMinutes;
+    @UiField
+    ValueSpinner athenaMinRefreshMinutes;
     @UiField
     TextBox timeField;
     @UiField
@@ -106,6 +111,8 @@ public class SqlDataSourceSettingsViewImpl
         setLimits(maxPoolSize, 1, MAX_POOL_SIZE);
         setLimits(fetchSize, 0, MAX_FETCH_SIZE);
         setLimits(resultReuseMinutes, 0, MAX_RESULT_REUSE_MINUTES);
+        setLimits(jdbcMinRefreshMinutes, 0, MAX_MIN_REFRESH_MINUTES);
+        setLimits(athenaMinRefreshMinutes, 0, MAX_MIN_REFRESH_MINUTES);
         setLimits(queryTimeoutSeconds, 1, MAX_TIMEOUT_SECONDS);
         setLimits(maxRows, 1, MAX_ROWS);
         testConnection.setIcon(SvgImage.OK);
@@ -195,6 +202,16 @@ public class SqlDataSourceSettingsViewImpl
     }
 
     @Override
+    public int getJdbcMinRefreshMinutes() {
+        return jdbcMinRefreshMinutes.getIntValue();
+    }
+
+    @Override
+    public void setJdbcMinRefreshMinutes(final int minutes) {
+        jdbcMinRefreshMinutes.setValue(minutes);
+    }
+
+    @Override
     public String getRegion() {
         return region.getValue();
     }
@@ -265,6 +282,16 @@ public class SqlDataSourceSettingsViewImpl
     }
 
     @Override
+    public int getAthenaMinRefreshMinutes() {
+        return athenaMinRefreshMinutes.getIntValue();
+    }
+
+    @Override
+    public void setAthenaMinRefreshMinutes(final int minutes) {
+        athenaMinRefreshMinutes.setValue(minutes);
+    }
+
+    @Override
     public String getTimeField() {
         return timeField.getValue();
     }
@@ -303,6 +330,7 @@ public class SqlDataSourceSettingsViewImpl
         connectionProperties.setEnabled(enabled);
         maxPoolSize.setEnabled(enabled);
         fetchSize.setEnabled(enabled);
+        jdbcMinRefreshMinutes.setEnabled(enabled);
         region.setEnabled(enabled);
         workGroup.setEnabled(enabled);
         catalog.setEnabled(enabled);
@@ -310,6 +338,7 @@ public class SqlDataSourceSettingsViewImpl
         outputLocation.setEnabled(enabled);
         athenaCredential.setEnabled(enabled);
         resultReuseMinutes.setEnabled(enabled);
+        athenaMinRefreshMinutes.setEnabled(enabled);
         timeField.setEnabled(enabled);
         queryTimeoutSeconds.setEnabled(enabled);
         maxRows.setEnabled(enabled);
@@ -344,7 +373,8 @@ public class SqlDataSourceSettingsViewImpl
     /// Marks the document as changed when a number setting changes.
     ///
     /// @param event The change.
-    @UiHandler({"maxPoolSize", "fetchSize", "resultReuseMinutes", "queryTimeoutSeconds", "maxRows"})
+    @UiHandler({"maxPoolSize", "fetchSize", "jdbcMinRefreshMinutes", "resultReuseMinutes",
+            "athenaMinRefreshMinutes", "queryTimeoutSeconds", "maxRows"})
     public void onNumberChange(final ValueChangeEvent<Long> event) {
         fireChange();
     }

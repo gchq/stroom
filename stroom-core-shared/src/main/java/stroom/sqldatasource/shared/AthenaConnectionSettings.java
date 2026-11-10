@@ -36,7 +36,8 @@ import java.util.Objects;
         "database",
         "outputLocation",
         "credentialName",
-        "resultReuseMinutes"})
+        "resultReuseMinutes",
+        "minRefreshMinutes"})
 @JsonInclude(Include.NON_NULL)
 public class AthenaConnectionSettings {
 
@@ -46,6 +47,9 @@ public class AthenaConnectionSettings {
     public static final String DEFAULT_CATALOG = "AwsDataCatalog";
     /// The Athena database used when none is set.
     public static final String DEFAULT_DATABASE = "default";
+    /// The shortest interval at which a dashboard reruns an Athena query automatically, when none
+    /// is set. Every Athena run is billed by the data it scans.
+    public static final int DEFAULT_MIN_REFRESH_MINUTES = 5;
 
     @JsonProperty
     private final String region;
@@ -61,6 +65,8 @@ public class AthenaConnectionSettings {
     private final String credentialName;
     @JsonProperty
     private final Integer resultReuseMinutes;
+    @JsonProperty
+    private final Integer minRefreshMinutes;
 
     /// Creates Athena connection settings.
     ///
@@ -71,6 +77,8 @@ public class AthenaConnectionSettings {
     /// @param outputLocation     The S3 URI for query results, or `null` to use the workgroup's.
     /// @param credentialName     The name of an AWS key credential, or `null` for the default chain.
     /// @param resultReuseMinutes How long Athena may reuse a previous result, or `null` to never reuse.
+    /// @param minRefreshMinutes  The shortest automatic rerun interval of a dashboard in minutes, or
+    ///                           `null` for [#DEFAULT_MIN_REFRESH_MINUTES].
     @JsonCreator
     public AthenaConnectionSettings(@JsonProperty("region") final String region,
                                     @JsonProperty("workGroup") final String workGroup,
@@ -78,7 +86,8 @@ public class AthenaConnectionSettings {
                                     @JsonProperty("database") final String database,
                                     @JsonProperty("outputLocation") final String outputLocation,
                                     @JsonProperty("credentialName") final String credentialName,
-                                    @JsonProperty("resultReuseMinutes") final Integer resultReuseMinutes) {
+                                    @JsonProperty("resultReuseMinutes") final Integer resultReuseMinutes,
+                                    @JsonProperty("minRefreshMinutes") final Integer minRefreshMinutes) {
         this.region = region;
         this.workGroup = workGroup;
         this.catalog = catalog;
@@ -86,6 +95,7 @@ public class AthenaConnectionSettings {
         this.outputLocation = outputLocation;
         this.credentialName = credentialName;
         this.resultReuseMinutes = resultReuseMinutes;
+        this.minRefreshMinutes = minRefreshMinutes;
     }
 
     /// @return The AWS region, or `null` if not set.
@@ -123,6 +133,12 @@ public class AthenaConnectionSettings {
         return resultReuseMinutes;
     }
 
+    /// @return The shortest interval, in minutes, at which a dashboard may rerun queries automatically, or `null` for
+    /// [#DEFAULT_MIN_REFRESH_MINUTES].
+    public Integer getMinRefreshMinutes() {
+        return minRefreshMinutes;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -138,7 +154,8 @@ public class AthenaConnectionSettings {
                Objects.equals(database, that.database) &&
                Objects.equals(outputLocation, that.outputLocation) &&
                Objects.equals(credentialName, that.credentialName) &&
-               Objects.equals(resultReuseMinutes, that.resultReuseMinutes);
+               Objects.equals(resultReuseMinutes, that.resultReuseMinutes) &&
+               Objects.equals(minRefreshMinutes, that.minRefreshMinutes);
     }
 
     @Override
@@ -149,7 +166,8 @@ public class AthenaConnectionSettings {
                 database,
                 outputLocation,
                 credentialName,
-                resultReuseMinutes);
+                resultReuseMinutes,
+                minRefreshMinutes);
     }
 
     @Override
@@ -162,6 +180,7 @@ public class AthenaConnectionSettings {
                ", outputLocation='" + outputLocation + '\'' +
                ", credentialName='" + credentialName + '\'' +
                ", resultReuseMinutes=" + resultReuseMinutes +
+               ", minRefreshMinutes=" + minRefreshMinutes +
                '}';
     }
 
@@ -185,6 +204,7 @@ public class AthenaConnectionSettings {
         private String outputLocation;
         private String credentialName;
         private Integer resultReuseMinutes;
+        private Integer minRefreshMinutes;
 
         private Builder() {
         }
@@ -197,6 +217,7 @@ public class AthenaConnectionSettings {
             this.outputLocation = settings.outputLocation;
             this.credentialName = settings.credentialName;
             this.resultReuseMinutes = settings.resultReuseMinutes;
+            this.minRefreshMinutes = settings.minRefreshMinutes;
         }
 
         /// @param region The AWS region, e.g. `eu-west-2`.
@@ -248,6 +269,14 @@ public class AthenaConnectionSettings {
             return this;
         }
 
+        /// @param minRefreshMinutes The shortest automatic rerun interval of a dashboard in minutes,
+        ///                          or `null` for the default.
+        /// @return This builder.
+        public Builder minRefreshMinutes(final Integer minRefreshMinutes) {
+            this.minRefreshMinutes = minRefreshMinutes;
+            return this;
+        }
+
         /// @return New [AthenaConnectionSettings] holding the values set on this builder.
         public AthenaConnectionSettings build() {
             return new AthenaConnectionSettings(
@@ -257,7 +286,8 @@ public class AthenaConnectionSettings {
                     database,
                     outputLocation,
                     credentialName,
-                    resultReuseMinutes);
+                    resultReuseMinutes,
+                    minRefreshMinutes);
         }
     }
 }

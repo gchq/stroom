@@ -40,6 +40,8 @@ import stroom.query.common.v2.SearchProcess;
 import stroom.query.common.v2.SearchProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
+import stroom.sqldatasource.shared.AthenaConnectionSettings;
+import stroom.sqldatasource.shared.JdbcConnectionSettings;
 import stroom.sqldatasource.shared.SqlConnectionType;
 import stroom.sqldatasource.shared.SqlDataSourceDoc;
 import stroom.task.api.TaskContext;
@@ -53,11 +55,14 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 
 import jakarta.inject.Inject;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
@@ -209,6 +214,31 @@ public class SqlDataSourceSearchProvider implements SearchProvider {
         return Optional.of(NullSafe.isBlankString(description)
                 ? FIELDS_HINT
                 : description + "\n\n" + FIELDS_HINT);
+    }
+
+    /// The document's minimum refresh interval for its connection type: Athena sources default to
+    /// [AthenaConnectionSettings#DEFAULT_MIN_REFRESH_MINUTES], JDBC sources to none.
+    ///
+    /// @param docRef The SQL Data Source.
+    /// @return The minimum, or empty for none.
+    /// @throws PermissionException If the user may not use the document.
+    @Override
+    public Optional<SimpleDuration> fetchMinRefreshInterval(final DocRef docRef) {
+        final int minutes = minRefreshMinutes(getDoc(docRef));
+        return minutes > 0
+                ? Optional.of(new SimpleDuration((long) minutes, TimeUnit.MINUTES))
+                : Optional.empty();
+    }
+
+    /// @param doc A SQL Data Source.
+    /// @return Its minimum refresh interval in minutes for its connection type, 0 for none.
+    static int minRefreshMinutes(final SqlDataSourceDoc doc) {
+        final Integer minutes = isAthena(doc)
+                ? Objects.requireNonNullElse(
+                        NullSafe.get(doc.getAthena(), AthenaConnectionSettings::getMinRefreshMinutes),
+                        AthenaConnectionSettings.DEFAULT_MIN_REFRESH_MINUTES)
+                : NullSafe.get(doc.getJdbc(), JdbcConnectionSettings::getMinRefreshMinutes);
+        return Math.max(0, Objects.requireNonNullElse(minutes, 0));
     }
 
     /// Always empty, so the time range is not added to the `where` expression. See the class

@@ -29,6 +29,7 @@ import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.time.SimpleDuration;
 
 import java.util.List;
 import java.util.Optional;
@@ -50,6 +51,11 @@ public interface QueryService {
     List<String> fetchTimeZones();
 
     Optional<DocRef> fetchDefaultExtractionPipeline(DocRef dataSourceRef);
+
+    /// @param dataSourceRef A data source the user may use.
+    /// @return The shortest interval at which a dashboard may rerun its queries automatically, or
+    /// empty for none beyond the dashboard's own.
+    Optional<SimpleDuration> fetchMinRefreshInterval(DocRef dataSourceRef);
 
     Optional<DocRef> getReferencedDataSource(String query);
 

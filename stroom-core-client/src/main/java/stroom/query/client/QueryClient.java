@@ -51,4 +51,26 @@ public class QueryClient {
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
+
+    /// Finds the data source a StroomQL query names. If it cannot be found, the consumer gets
+    /// `null`, as the query itself will report the problem when it runs.
+    ///
+    /// @param query              The StroomQL query.
+    /// @param consumer           Takes the data source, or `null`.
+    /// @param taskMonitorFactory Shows that the lookup is running.
+    public void fetchDataSourceFromQueryString(final String query,
+                                               final Consumer<DocRef> consumer,
+                                               final TaskMonitorFactory taskMonitorFactory) {
+        if (query == null || query.isBlank()) {
+            consumer.accept(null);
+        } else {
+            restFactory
+                    .create(QUERY_RESOURCE)
+                    .method(res -> res.fetchDataSourceFromQueryString(query))
+                    .onSuccess(consumer)
+                    .onFailure(error -> consumer.accept(null))
+                    .taskMonitorFactory(taskMonitorFactory)
+                    .exec();
+        }
+    }
 }

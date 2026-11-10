@@ -21,12 +21,15 @@ import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -67,6 +70,20 @@ class TestDataSourceProviderRegistry {
     void takesNativeQueryAsksTheProviderForTheType() {
         assertThat(registry.takesNativeQuery(SQL_SOURCE)).isTrue();
         assertThat(registry.takesNativeQuery(INDEX)).isFalse();
+    }
+
+    @Test
+    void minRefreshIntervalAsksTheProviderForTheType() {
+        final SimpleDuration fiveMinutes = new SimpleDuration(5L, TimeUnit.MINUTES);
+        Mockito.when(sqlProvider.fetchMinRefreshInterval(SQL_SOURCE)).thenReturn(Optional.of(fiveMinutes));
+
+        assertThat(registry.fetchMinRefreshInterval(SQL_SOURCE)).hasValue(fiveMinutes);
+        assertThat(registry.fetchMinRefreshInterval(INDEX)).isEmpty();
+    }
+
+    @Test
+    void unknownTypeHasNoMinRefreshInterval() {
+        assertThat(registry.fetchMinRefreshInterval(new DocRef("NoSuchType", "uuid-3", "Other"))).isEmpty();
     }
 
     @Test

@@ -49,6 +49,8 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -213,6 +215,83 @@ class TestSqlDataSourceSearchProvider {
 
         assertThat(provider.fetchDocumentation(DOC_REF))
                 .hasValue("Staff records.\n\n" + SqlDataSourceSearchProvider.FIELDS_HINT);
+    }
+
+    @Test
+    void athenaSourceDefaultsToFiveMinuteMinimumRefresh() {
+        givenDoc(athenaDoc(), true);
+
+        assertThat(provider.fetchMinRefreshInterval(DOC_REF))
+                .hasValue(new SimpleDuration(5L, TimeUnit.MINUTES));
+    }
+
+    @Test
+    void athenaSourceUsesItsOwnMinimumRefresh() {
+        givenDoc(doc()
+                .connectionType(SqlConnectionType.ATHENA)
+                .athena(AthenaConnectionSettings.builder()
+                        .region("eu-west-2")
+                        .minRefreshMinutes(30)
+                        .build())
+                .build(), true);
+
+        assertThat(provider.fetchMinRefreshInterval(DOC_REF))
+                .hasValue(new SimpleDuration(30L, TimeUnit.MINUTES));
+    }
+
+    @Test
+    void athenaSourceWithZeroMinimumHasNone() {
+        givenDoc(doc()
+                .connectionType(SqlConnectionType.ATHENA)
+                .athena(AthenaConnectionSettings.builder()
+                        .region("eu-west-2")
+                        .minRefreshMinutes(0)
+                        .build())
+                .build(), true);
+
+        assertThat(provider.fetchMinRefreshInterval(DOC_REF)).isEmpty();
+    }
+
+    @Test
+    void jdbcSourceHasNoMinimumRefreshByDefault() {
+        givenDoc(doc().build(), true);
+
+        assertThat(provider.fetchMinRefreshInterval(DOC_REF)).isEmpty();
+    }
+
+    @Test
+    void jdbcSourceUsesItsOwnMinimumRefresh() {
+        givenDoc(doc()
+                .jdbc(JdbcConnectionSettings.builder()
+                        .url("jdbc:mysql://reporting-db:3306/hr")
+                        .minRefreshMinutes(2)
+                        .build())
+                .build(), true);
+
+        assertThat(provider.fetchMinRefreshInterval(DOC_REF))
+                .hasValue(new SimpleDuration(2L, TimeUnit.MINUTES));
+    }
+
+    @Test
+    void jdbcMinimumIsIgnoredOnceSwitchedToAthena() {
+        // Each connection type keeps its own settings; only the chosen type's minimum applies.
+        givenDoc(doc()
+                .connectionType(SqlConnectionType.ATHENA)
+                .jdbc(JdbcConnectionSettings.builder()
+                        .minRefreshMinutes(0)
+                        .build())
+                .build(), true);
+
+        assertThat(provider.fetchMinRefreshInterval(DOC_REF))
+                .hasValue(new SimpleDuration(5L, TimeUnit.MINUTES));
+    }
+
+    @Test
+    void userWithoutUseCannotReadMinimumRefresh() {
+        givenDoc(athenaDoc(), false);
+
+        assertThatThrownBy(() -> provider.fetchMinRefreshInterval(DOC_REF))
+                .isInstanceOf(PermissionException.class);
     }
 
     private static SqlDataSourceDoc athenaDoc() {

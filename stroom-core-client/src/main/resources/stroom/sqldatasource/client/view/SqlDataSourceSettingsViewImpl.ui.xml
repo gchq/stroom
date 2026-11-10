@@ -39,6 +39,11 @@
                             helpText="How many rows are fetched from the database in each round trip. 0 uses the driver's own default. Default: 1000">
                 <v:ValueSpinner ui:field="fetchSize" width="200px"/>
             </form:FormGroup>
+            <form:FormGroup identity="sqlDataSourceJdbcMinRefreshMinutes"
+                            label="Minimum Refresh (minutes)"
+                            helpText="The shortest interval at which a dashboard may rerun a query of this data source automatically, to limit the load on the database. 0 sets no minimum beyond the dashboard's own 10 seconds. Default: 0">
+                <v:ValueSpinner ui:field="jdbcMinRefreshMinutes" width="200px"/>
+            </form:FormGroup>
             <form:FormGroup identity="sqlDataSourceTimeField"
                             label="Time Column (optional)"
                             helpText="A date or timestamp column the SQL returns. When a query has a time range and its SQL has no :from or :to placeholder, rows are filtered on this column in Stroom.">
@@ -82,6 +87,11 @@
                             label="Result Reuse (minutes)"
                             helpText="How old a result of the same query may be and still be reused instead of running the query again. Athena bills every run, so this saves cost when a dashboard is refreshed. 0 never reuses a result. Default: 0">
                 <v:ValueSpinner ui:field="resultReuseMinutes" width="200px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="sqlDataSourceAthenaMinRefreshMinutes"
+                            label="Minimum Refresh (minutes)"
+                            helpText="The shortest interval at which a dashboard may rerun a query of this data source automatically. Every Athena run is billed by the data it scans, and result reuse rarely helps a dashboard, as its time range changes on every refresh. Many refreshes also use up the account's limit on Athena queries running at once. 0 sets no minimum beyond the dashboard's own 10 seconds. Default: 5">
+                <v:ValueSpinner ui:field="athenaMinRefreshMinutes" width="200px"/>
             </form:FormGroup>
         </g:FlowPanel>
 
