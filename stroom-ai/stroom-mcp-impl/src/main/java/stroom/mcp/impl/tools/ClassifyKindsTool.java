@@ -784,6 +784,15 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final List<String> pending = pending(notesNow);
         final List<String> amended = JsonValues.strings(notesNow.get(RecordSourceNotesTool.AMENDED));
         final List<String> recordFields = JsonValues.strings(notesNow.get(RecordSourceNotesTool.RECORD_FIELDS));
+        // The kinds proposed and waiting for the user's form: theirs to accept, amend or drop there, not the
+        // agent's to settle as the user's (seen in testing: a low-confidence set shown, then sent back as from_user
+        // drops on the strength of an earlier answer, and never put to the user).
+        final Set<String> awaiting = new LinkedHashSet<>();
+        if (context.userQuestions().canAsk()) {
+            JsonValues.maps(notesNow.get(RecordSourceNotesTool.PROPOSED))
+                    .forEach(entry -> awaiting.add(String.valueOf(entry.get(KEY))));
+            awaiting.removeAll(amended);
+        }
         final List<Proposal> proposals = new ArrayList<>();
         final List<String> problems = new ArrayList<>();
         final List<String> rated = new ArrayList<>();
@@ -804,6 +813,12 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                     ? patternKey(item)
                     : ToolText.str(item.get(FIELD)) + "=" + ToolText.str(item.get(VALUE));
             final boolean fromUser = isTrue(item.get(FROM_USER));
+            if (fromUser && awaiting.contains(key)) {
+                problems.add("proposals[" + i + "]: " + key + " is proposed and waiting for the user's form: call "
+                             + "classify_kinds confirm=true, where they accept, amend or drop it; from_user is only "
+                             + "for what the user said about it, and they haven't answered it yet");
+                continue;
+            }
             if (pattern) {
                 final Optional<String> problem = patterned.add(i, item, key, pending, fromUser);
                 if (problem.isPresent()) {

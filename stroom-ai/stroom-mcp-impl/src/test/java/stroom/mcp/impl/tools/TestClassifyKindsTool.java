@@ -224,6 +224,25 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    void aKindWaitingForTheUsersFormIsNotSettledAsTheirsByTheAgent() {
+        // Seen in testing: the low-confidence set shown, then sent back as from_user drops on the strength of an
+        // earlier answer, the set never put to the user.
+        call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "Accept it"));
+        call("{\"build\": \"acme\", \"proposals\": " + PROPOSALS + "}", user.context());
+        final String dropPurge = "{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", \"value\": "
+                                 + "\"purge\", \"from_user\": true, \"drop\": true}]}";
+
+        final Map<String, Object> refused = call(dropPurge, user.context());
+
+        assertThat(String.valueOf(refused)).contains("action=purge is proposed and waiting for the user's form",
+                "confirm=true");
+        assertThat(String.valueOf(refused)).doesNotContain("dropped=");
+        // Without forms, the agent asks in the chat and sends what the user said.
+        assertThat(call(dropPurge, BuildToolCalls.context())).containsKey("dropped");
+    }
+
+    @Test
     void eachConfidenceIsASetAcceptedTogetherInTurn() {
         // Asked for by the user: the high-confidence classifications in one table, then the medium and the low ones
         // in detail, each set numbered from 1 and accepted all together or amended in a short form.
