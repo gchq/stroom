@@ -301,6 +301,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         SystemNames.apply(mapping, variantFieldOf(splitter, result.get("splitter")), system.systemName(), systemNotes);
         result.put("notes", systemNotes);
         result.put("schema_check", schemaCheck(context, build, mapping, version));
+        dataPlacement(context, build, mapping, version, result);
         result.put("schema_version", version);
         final Optional<String> settled = eventVersions.settled(context, build, version);
         settled.ifPresent(text -> result.put("schema_version_settled", text));
@@ -524,6 +525,33 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         final Map<String, Object> out = new LinkedHashMap<>(entry);
         out.remove(DraftMapping.CHOOSE_FROM);
         return out;
+    }
+
+    // The fields the draft carries as Data, beside the elements EventSource and each rule's action element have,
+    // for the agent to place each where one means it (asked for by the user: seen in testing, a city, a latitude,
+    // a URL, an HTTP method and a status code left as Data until the user asked for them to be mapped).
+    private void dataPlacement(final ToolCallContext context,
+                               final String build,
+                               final Map<String, Object> mapping,
+                               final String version,
+                               final Map<String, Object> result) {
+        final Map<String, Object> placement;
+        try {
+            placement = DataPlacements.of(mapping, eventVersions.eventSchema(context, build, version));
+        } catch (final ToolRefusal e) {
+            return;
+        }
+        if (placement.isEmpty()) {
+            return;
+        }
+        result.put("data_placement", placement);
+        final List<Object> notes = new ArrayList<>(JsonValues.listOrEmpty(result.get("notes")));
+        notes.add("Some fields are carried as Data (data_placement lists them per rule, beside the elements "
+                  + "EventSource and the rule's action element have): place each in the element that means it "
+                  + "(a city, coordinates, a URL, a method, a status code, a rule each have one), in EventSource "
+                  + "or the action element, before build_translation_xslt; keep Data only for those no element "
+                  + "means.");
+        result.put("notes", notes);
     }
 
     // Each problem's first sentence: build_translation_xslt gives them whole, and the draft's notes say the rest.

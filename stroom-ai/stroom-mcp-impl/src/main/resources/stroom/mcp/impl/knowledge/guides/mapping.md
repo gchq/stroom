@@ -23,6 +23,11 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
   draft gets wrong, and give `build_translation_xslt` the edited mapping with the draft's `schema_version`, the sample
   (and the Data Splitter's spec as `splitter`), so fields no record has and times their format doesn't fit are caught
   before stepping.
+- Before building, place every field the draft carries as Data in the schema element that means it, in EventSource
+  (Device, Client, Server, User and their Location: city, country, latitude, longitude) as well as the action element
+  (a URL, an HTTP method, a response code, a rule): the draft's `data_placement` lists each rule's Data entries beside
+  the elements available, and `read_document type=XMLSchema element=` says what each takes. Don't wait for the user
+  to ask.
 - A field that no element of the schema means (a rule id, a byte count, a vendor code) is carried as Data of the action
   element (see Data below): never invent an element for it, and never leave the event Unknown because of it.
   `read_document type=XMLSchema element=` says what an element takes (`EventDetail` for the action elements,
