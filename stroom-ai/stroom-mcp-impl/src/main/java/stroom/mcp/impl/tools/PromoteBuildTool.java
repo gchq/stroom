@@ -306,13 +306,14 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (!Consent.wasReviewed(reviewed, tree)) {
             return review(build, tree, warnings, processed, roles, reviewed);
         }
-        // The form stays short; the approval is bound to the exact layout shown, through its digest.
+        // The form stays short; the approval is bound to the exact layout shown, by its review id, which the form
+        // doesn't show (it meant nothing to the user).
         final long promoting = plan.stream()
                 .filter(p -> PromotionLayout.MOVE.equals(p.action()) || PromotionLayout.WRITE_BACK.equals(p.action()))
                 .count();
         final Map<String, Object> shortForm = new LinkedHashMap<>();
         shortForm.put("build", build);
-        shortForm.put("layout", promoting + " document(s), as shown in the chat (" + Consent.reviewId(tree) + ")");
+        shortForm.put("layout", promoting + " document(s), as shown in the chat");
         shortForm.put("folders", new ArrayList<>(new TreeSet<>(moveTargets(plan))));
         if (roles) {
             shortForm.put("role subfolders", roleSubfolders
@@ -326,7 +327,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             shortForm.put("processing after promotion", processed);
         }
         consent.require(call, context, Consent.Request.approval(NAME,
-                "Promote build '" + build + "' as shown in the chat", shortForm));
+                "Promote build '" + build + "' as shown in the chat", shortForm).boundTo(tree));
         final List<String> done = new ArrayList<>();
         carryOut(build, docs, plan, folders, creating, done);
         // A choice about a changed original holds for this promotion only: promoted again, it is asked again.

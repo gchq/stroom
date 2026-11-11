@@ -228,8 +228,8 @@ class TestIndexTemplateTools {
                 "Use Elasticsearch index template 'ecs-acme-v2' for index 'ecs-acme-v2' (cluster ES_DEV), as shown "
                 + "in the chat");
         final Map<String, Object> details = (Map<String, Object>) asked.get("details");
-        assertThat(details).containsEntry("index template", "ecs-acme-v2, exactly as shown in the chat (review id "
-                                                            + shown.get("review_id") + ")")
+        // Without the review id, which meant nothing to the user: the answer is bound to it unseen.
+        assertThat(details).containsEntry("index template", "ecs-acme-v2, exactly as shown in the chat")
                 .doesNotContainKey("notes");
         assertThat(String.valueOf(details.get("applies to"))).startsWith("ecs-acme-v2* (priority ");
         assertThat(Integer.parseInt(String.valueOf(details.get("fields mapped here")))).isPositive();

@@ -1334,7 +1334,8 @@ flowchart LR
   or index, dashboards with the index they search, source notes beside the feed. Anything unplaced is refused, all
   named together (seen in testing). `keep` leaves a document in the workspace.
 * **Two rounds.** `needs_review` returns the layout as a tree with a `review_id`; the approval form is bound to that
-  layout's digest. `reviewed=true`, or an id from another layout, gets the review again (seen in testing:
+  layout's digest, which the form doesn't show (`Consent.Request.boundTo`: the id meant nothing to the user). The
+  Unknown-records and index-template forms are bound the same way. `reviewed=true`, or an id from another layout, gets the review again (seen in testing:
   `reviewed=true` on the first call).
 * **Warnings** from `build_status` go in the approval, so the user decides with them in view. Promotion waits only for
   documentation the build's own change left behind; a hand edit only warns, so a user's own edits never hold a

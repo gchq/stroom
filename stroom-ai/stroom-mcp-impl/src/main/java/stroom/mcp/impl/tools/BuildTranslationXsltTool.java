@@ -1093,13 +1093,12 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                + "Unknown)." + Consent.reviewNote(request.reviewed()));
             return Optional.of(review);
         }
-        final Map<String, Object> details = new LinkedHashMap<>();
-        kept.forEach(rule -> details.put("rule '" + rule.name() + "'", sampled.get(rule.name()).get("records")
-                                                                       + " of " + check.get("records")
-                                                                       + " sample records"));
-        details.put("as shown in the chat", Consent.reviewId(shown));
+        // The form says which records in plain words; the answer is bound to the table shown by its review id, which
+        // the form doesn't show (it meant nothing to the user).
         consent.require(call, context, Consent.Request.confirmation(NAME,
-                "Translate the records shown in the chat as Unknown events", details));
+                "Translate these records as Unknown events (what happened in them isn't known; the chat lists them "
+                + "in full)", TranslationBuilds.unknownFormDetails(kept, sampled, check.get("records")))
+                .boundTo(shown));
         kept.forEach(rule -> agreedNow.put(rule.name(), TranslationBuilds.unknownKey(rule)));
         return Optional.empty();
     }
