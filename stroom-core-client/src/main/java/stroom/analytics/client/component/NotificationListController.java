@@ -16,6 +16,7 @@
 
 package stroom.analytics.client.component;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.NotificationConfig;
@@ -36,6 +37,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /// An analytic rule's or a report's notifications ([NotificationList]): New and Edit open a
 /// notification's editor, Remove removes the selected one once confirmed, and the tick boxes enable
@@ -71,17 +73,18 @@ public class NotificationListController extends Controller {
         view.setOnAdd(this::add);
         view.setOnEdit(this::edit);
         view.setOnRemove(this::remove);
-        view.setOnEnabledChange((row, enabled) -> {
-            replace(row, row.copy().enabled(enabled).build());
-            markChanged();
-            refresh();
-        });
-        view.setOnLimitChange((row, limit) -> {
-            replace(row, row.copy().limitNotifications(limit).build());
-            markChanged();
-            refresh();
-        });
+        view.setOnEnabledChange((row, enabled) -> changeRow(row, row.copy().enabled(enabled).build()));
+        view.setOnLimitChange((row, limit) -> changeRow(row, row.copy().limitNotifications(limit).build()));
         watch(Contexts.READ_ONLY, view::setReadOnly);
+    }
+
+    // A tick in a row changes it, and selects it (UI-GUIDE.md, "What a list selects")
+    private void changeRow(final NotificationConfig row, final NotificationConfig changed) {
+        if (replace(row, changed)) {
+            view.getSelectionModel().setSelected(changed);
+            markChanged();
+            refresh();
+        }
     }
 
     private void add() {
@@ -98,6 +101,8 @@ public class NotificationListController extends Controller {
         editProvider.get().edit(this, docRef, analyticProcessType, newNotification, "Add Notification",
                 notification -> {
                     list.add(notification);
+                    // The new notification (UI-GUIDE.md, "What a list selects")
+                    view.getSelectionModel().setSelected(notification);
                     markChanged();
                     refresh();
                 });
@@ -107,9 +112,14 @@ public class NotificationListController extends Controller {
         final NotificationConfig selected = view.getSelectionModel().getSelected();
         if (selected != null && !view.isReadOnly()) {
             editProvider.get().edit(this, docRef, analyticProcessType, selected, "Edit Notification", updated -> {
-                replace(selected, updated);
-                markChanged();
-                refresh();
+                if (replace(selected, updated)) {
+                    markChanged();
+                    refresh();
+                } else {
+                    // Removed behind the dialog, which isn't modal
+                    AlertEvent.fireWarn(this, "The notification was removed while it was being edited, "
+                                              + "so the changes can't be kept.", null);
+                }
             });
         }
     }
@@ -122,13 +132,14 @@ public class NotificationListController extends Controller {
                 result -> {
                     if (result) {
                         final NotificationConfig selected = view.getSelectionModel().getSelected();
-                        if (selected != null) {
-                            list.remove(selected);
+                        final int removedIndex = indexOf(selected);
+                        if (removedIndex >= 0) {
+                            list.remove(removedIndex);
                             markChanged();
                             refresh();
 
-                            // Select next item.
-                            int index = list.indexOf(selected);
+                            // Select the next item, now at the removed one's place
+                            int index = removedIndex;
                             if (NullSafe.hasItems(list)) {
                                 index = Math.max(index, 0);
                                 index = Math.min(index, list.size() - 1);
@@ -156,15 +167,31 @@ public class NotificationListController extends Controller {
         return null;
     }
 
-    private void replace(final NotificationConfig oldConfig,
-                         final NotificationConfig newConfig) {
-        final int index = list.indexOf(oldConfig);
-        if (index >= 0) {
-            list.remove(index);
-            list.add(index, newConfig);
-        } else {
-            list.add(newConfig);
+    // Puts a notification's new version in its place, returning false if it is no longer listed
+    private boolean replace(final NotificationConfig oldConfig,
+                            final NotificationConfig newConfig) {
+        final int index = indexOf(oldConfig);
+        if (index < 0) {
+            return false;
         }
+        list.set(index, newConfig);
+        return true;
+    }
+
+    // A notification's place in the list, found by its uuid (an edited copy is the same one), or -1
+    private int indexOf(final NotificationConfig config) {
+        if (config == null) {
+            return -1;
+        }
+        if (config.getUuid() == null) {
+            return list.indexOf(config);
+        }
+        for (int i = 0; i < list.size(); i++) {
+            if (Objects.equals(config.getUuid(), list.get(i).getUuid())) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /// The processing type lives on the Execution tab, so it can change while this tab is open. Whether

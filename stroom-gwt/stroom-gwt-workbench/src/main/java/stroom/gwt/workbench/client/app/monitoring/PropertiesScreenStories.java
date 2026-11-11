@@ -29,13 +29,17 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
+import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
+
+import java.util.List;
 
 /// Stories of `App/Main/PropertiesScreen`, showing Stroom's real [GlobalPropertyTabController] (the
 /// 'Properties' tab and its property edit dialog) with fake REST replies, for Stroom's
@@ -65,8 +69,19 @@ public final class PropertiesScreenStories {
               "requireRestart": false, "requireUiRestart": false, "description": "The home directory.",
               "dataTypeName": "String"}""";
     private static final String NO_OVERRIDE = "{\"hasOverride\": false}";
+    // node2 sees a YAML override on stroom.node, so its effective value differs
+    private static final String NODE2_YAML = "{\"hasOverride\": true, \"value\": \"node2-override\"}";
 
     private static final String HOME_NAME = "stroom.path.home";
+    private static final String NEW_HOME = "/data/stroom";
+    // stroom.path.home once the database value NEW_HOME has been saved
+    private static final String SAVED_HOME_PROP = HOME_PROP.replace(
+            "\"databaseOverrideValue\": {\"hasOverride\": false}",
+            "\"databaseOverrideValue\": {\"hasOverride\": true, \"value\": \"" + NEW_HOME + "\"}");
+
+    private static final String EDIT = "Edit Selected Property";
+    private static final String DIALOG_CAPTION = "Application Property - " + HOME_NAME;
+    private static final String NODE2_REQUEST = "POST /config/v1/nodeProperties/node2";
 
     private PropertiesScreenStories() {
         // Static utility
@@ -156,11 +171,110 @@ public final class PropertiesScreenStories {
                                             + "{\"hasOverride\": true, \"value\": \"/data/stroom\"}}")
                                     .toSpyMatcher()));
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // Saving a property fetches the properties again as new rows (and again as node2's
+                // values are merged in): the property's row stays selected, with its new value, and
+                // Edit, without selecting it again, opens it. The row once showed unselected after
+                // the save, as the new rows weren't the object selected
+                .story("SaveKeepsSelection", context -> render(context, savingFixtures()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
+                    // node2's values have been merged in (rebuilding the rows) once stroom.node
+                    // shows they differ
+                    play.findByText("[Multiple values]");
+                    play.click(play.getByText(HOME_NAME));
+                    play.waitFor(() -> play.expect(homeRow(play)).toHaveAttribute("aria-selected", "true"));
+                    play.click(play.getByTitle(EDIT));
+                    final Play dialog = propertyDialog(play);
+                    play.click(dialog.getByLabelText("Set Database value"));
+                    final Query dbValue = databaseValue(dialog);
+                    play.clear(dbValue);
+                    play.type(dbValue, NEW_HOME);
+                    final Value<Integer> node2Before = play.capture("node2 requests",
+                            () -> countRequests(requests, NODE2_REQUEST));
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText(DIALOG_CAPTION)).toBeNull());
+                    // The properties are fetched again, with the new value, then node2's are merged in
+                    play.waitFor(() -> play.expect(homeRow(play)).toHaveTextContent(NEW_HOME));
+                    play.waitFor(3000, () -> play.expect("node2 requests since the save",
+                            () -> countRequests(requests, NODE2_REQUEST) - node2Before.get()).toBeGreaterThan(0));
+                    play.waitFor(() -> play.expect(play.getByText("[Multiple values]")).toBeInTheDocument());
+                    play.expect(homeRow(play)).toHaveAttribute("aria-selected", "true");
+                    play.expect(play.querySelectorAll("." + StroomDom.SELECTED_ROW)).toHaveLength(1);
+                    // Edit opens the selected property, as now saved
+                    play.click(play.getByTitle(EDIT));
+                    final Play again = propertyDialog(play);
+                    play.waitFor(() -> play.expect(databaseValue(again)).toHaveValue(NEW_HOME));
+                    play.click(again.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText(DIALOG_CAPTION)).toBeNull());
+                    ContentStorySupport.expectNoProblems(play);
                 });
     }
 
+    // The stroom.path.home row
+    private static Query homeRow(final Play play) {
+        return play.getByText(HOME_NAME).closest(StroomDom.GRID_ROW);
+    }
+
+    // The property's edit dialog, once it is shown (it has no role="dialog"; it's found by its
+    // caption)
+    private static Play propertyDialog(final Play play) {
+        final Play screen = play.screen();
+        return screen.within(screen.findByText(DIALOG_CAPTION).closest(StroomDom.DIALOG));
+    }
+
+    // The 'Database Value' label is for the panel holding the text area (and a password box), not
+    // the text area itself
+    private static Query databaseValue(final Play dialog) {
+        return dialog.within(dialog.getByText("Database Value", "label").closest(".form-group"))
+                .querySelector("textarea");
+    }
+
+    // The number of requests the spy recorded with the method and path given
+    private static int countRequests(final Spy requests, final String methodAndPath) {
+        int count = 0;
+        for (final List<Object> call : requests.getCalls()) {
+            if (String.valueOf(call.get(0)).startsWith(methodAndPath)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    // Properties as a server keeps them: once stroom.path.home is updated, it is fetched (alone,
+    // in the properties and in node2's) with its new database value. Made for each rendering, so a
+    // rerun starts with the property as it was
+    private static RestFixtures savingFixtures() {
+        final boolean[] saved = {false};
+        return RestFixtures.builder()
+                .post("/config/v1/properties", request -> RestReply.json(list("node1", NO_OVERRIDE,
+                        homeProp(saved[0]))))
+                .get("/node/v1/enabled", RestReply.json("[\"node1\", \"node2\"]"))
+                .post("/config/v1/nodeProperties/node2", request -> RestReply.json(list("node2", NODE2_YAML,
+                        homeProp(saved[0]))))
+                .get("/config/v1/properties/" + HOME_NAME, request -> RestReply.json(homeProp(saved[0])))
+                .get("/config/v1/clusterProperties/" + HOME_NAME + "/yamlOverrideValue/*",
+                        RestReply.json(NO_OVERRIDE))
+                .put("/config/v1/clusterProperties/" + HOME_NAME, request -> {
+                    saved[0] = true;
+                    return echo(request);
+                })
+                .build();
+    }
+
+    private static String homeProp(final boolean saved) {
+        return saved
+                ? SAVED_HOME_PROP
+                : HOME_PROP;
+    }
+
     private static String list(final String nodeName, final String nodeYaml) {
-        return "{\"values\": [" + NODE_PROP.replace("YAML", nodeYaml) + ", " + HOME_PROP + "], "
+        return list(nodeName, nodeYaml, HOME_PROP);
+    }
+
+    private static String list(final String nodeName, final String nodeYaml, final String homeProp) {
+        return "{\"values\": [" + NODE_PROP.replace("YAML", nodeYaml) + ", " + homeProp + "], "
                 + "\"pageResponse\": {\"offset\": 0, \"length\": 2, \"total\": 2, \"exact\": true}, "
                 + "\"nodeName\": \"" + nodeName + "\"}";
     }
@@ -173,10 +287,8 @@ public final class PropertiesScreenStories {
                     .post("/config/v1/nodeProperties/node2", RestReply.error(500, "node2 is unreachable"))
                     .post("/config/v1/nodeProperties/node3", RestReply.error(500, "node3 is unreachable"));
         } else {
-            // node2 sees a YAML override on stroom.node, so its effective value differs
             builder.get("/node/v1/enabled", RestReply.json("[\"node1\", \"node2\"]"))
-                    .post("/config/v1/nodeProperties/node2", RestReply.json(list("node2",
-                            "{\"hasOverride\": true, \"value\": \"node2-override\"}")));
+                    .post("/config/v1/nodeProperties/node2", RestReply.json(list("node2", NODE2_YAML)));
         }
         return builder
                 .get("/config/v1/properties/" + HOME_NAME, RestReply.json(HOME_PROP))

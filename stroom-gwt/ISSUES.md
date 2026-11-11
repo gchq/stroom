@@ -28,7 +28,7 @@ well.
 
 ### Tracked elsewhere
 
-Everything else that is open (bugs, accessibility gaps, flaky stories and decisions) is in this
+Everything else that is open (bugs, flaky stories and decisions) is in this
 file. Kept elsewhere, on purpose:
 
 * the behaviour, branching and coverage suites' open phases: `stroom-gwt-suite/`'s
@@ -36,6 +36,7 @@ file. Kept elsewhere, on purpose:
   [BRANCHING-PLAN.md](stroom-gwt-suite/BRANCHING-PLAN.md),
   [COVERAGE-PLAN.md](stroom-gwt-suite/COVERAGE-PLAN.md) and its [README](stroom-gwt-suite/README.md)'s
   Status;
+* accessibility, open and fixed: [A11Y.md](A11Y.md), each finding's row in its batches and its detail under its Details (moved there 6 November 2026);
 * the workbench harness's known limits: [WRITING-STORIES.md](stroom-gwt-workbench/WRITING-STORIES.md);
 * what the UI audit didn't cover: [UI_AUDIT.md](UI_AUDIT.md), "Not covered or uncertain";
 * the UI audit's deliberate, accepted leftovers (e.g. the flex layout widgets staying in
@@ -49,12 +50,16 @@ file. Kept elsewhere, on purpose:
 
 ### A view's Meta Filter only applies to analytic rules
 
+**Re-checked** (6 November 2026, against the code): still open: the TODO is at `ViewSearchProvider.java:190`; `ViewDoc.getFilter()` is read only by the analytic executors (`TableBuilderAnalyticExecutor`, `AnalyticRuleProcessors`).
+
 **Reported.** `ViewSearchProvider` has `// TODO : ADD SOMETHING FOR VIEWDOC FILTER`, so ordinary
 searches of a view ignore its Meta Filter; only analytic rule processing applies it.
 
 * `stroom-view/stroom-view-impl/src/main/java/stroom/view/impl/ViewSearchProvider.java`
 
 ### Some Ask Stroom AI settings ignore the user's own values
+
+**Re-checked** (6 November 2026, against the code): still open: `AskStroomAIService` takes debug detail, the history cap, the chat system prompt and the download timeout from `defaultConfigProvider.get()`; only the model, table analysis and the history summary prompt come from the user's config.
 
 **Reported.** The server builds the chat from the server's default AI config, so a user's own Chat
 System Prompt, Max History Safety Cap, Enable Debug Detail and Attachment Download Timeout appear to
@@ -63,43 +68,11 @@ have no effect unless an administrator saves them as the default.
 * `stroom-core-client/src/main/java/stroom/ai/client/component/AiConfigGeneral.java` and the server's
   use of the default config provider
 
-### Editing an activity didn't save the change (on master too)
-
-**Fixed (27 October 2026, in wave 11), reproduced in a story.** OK on Edit Activity validated what
-was typed, but saved an existing activity with the details it had before, so the change was lost
-(a new activity was saved as typed). The `EditActivity` story of `App/Main/ManageActivityDialog`
-checks the details saved.
-
-* `stroom-core-client/src/main/java/stroom/activity/client/component/ActivityEditorController.java`
-
-### A node group can't be renamed
-
-**Checked: kept, not a bug** (28 October 2026, wave 23). Processor profiles refer to a node group by its name (`ProcessorProfile.nodeGroupName`), so renaming a group would leave every profile that uses it pointing at nothing; the name box says it can't be changed here. Renaming would need the profiles to follow (server side), or to refer to groups by id.
-
-**Reported.** The Node Group Name text box is disabled, and saving the name is commented out in the
-presenter.
-
-* `stroom-core-client/src/main/java/stroom/node/client/component/NodeGroupEditor.ui.xml`
-* `stroom-core-client/src/main/java/stroom/node/client/component/NodeGroupEditorController.java`
-
 ## Wrong values and failures
 
-### Signing in failed with "A widget that has an existing parent widget may not be added to the detach list"
-
-**Fixed** (4 November 2026; reported by another developer, who saw it straight after clicking to
-sign in, in a build with assertions on). A task that starts before sign-in has finished (e.g.
-"Fetching permissions…") shows the host page's loading message: `AppPageController.onTaskStart`
-calls `AppPage.showWorking`, which made the message (`#loading`) a widget with `RootPanel.get`,
-then its text (`#loadingText`, inside it in `app.html`) another. GWT refuses a root panel inside
-another, with an `AssertionError` where assertions are on (Super Dev Mode, draft compiles), wrapped
-in an `UmbrellaException`. `AppPage` (its loading message and its text, and `#logo`) and
-`AbstractSignInPageController.hideLoading` now change the host page's elements as elements
-(`Document.getElementById`), skipping any the page hasn't got. The workbench compiles without
-assertions, so a story couldn't see the error; `App/Main/AppPage` `HostPageLoading` instead checks
-the elements aren't made widgets (an attached widget's element has GWT's `__listener`), and that the
-message is shown with its text, hidden, and the logo hidden. It failed before the fix.
-
 ### Solr clients can't be made: SolrJ needs a Jetty client the app doesn't have
+
+**Re-checked** (6 November 2026, against the code): still open as far as the build shows: SolrJ 9.10.1, Jetty 12 forced app-wide (now by `jetty-bom` 12.1.14, `gradle/libs.versions.toml`), and `SolrClientFactory` builds `Http2SolrClient`. That it fails needs a run against Solr.
 
 **Confirmed** (by the classpath, and a unit test that tried). The app runs SolrJ 9.10.1, which is
 built against Jetty client 10, but Gradle resolves `org.eclipse.jetty:jetty-client` to 12.1.9 for
@@ -115,80 +88,6 @@ Fix: build Solr clients on a client that doesn't need Jetty 10 (e.g. SolrJ's JDK
 * `stroom-search/stroom-search-solr/src/main/java/stroom/search/solr/SolrClientFactory.java`
 * `stroom-search/stroom-search-solr/build.gradle`
 
-### Elastic number fields can fail when blank
-
-**Fixed** (28 October 2026, wave 24). The Minimum Rerank Score says why under it while it isn't a number from 0 to 1, and Save refuses (`App/Index/ElasticIndexEditor` `RerankScoreNotAScore`); leaving the box no longer throws. On master too.
-
-**Reported.**
-
-* Fixed: the connection and response timeouts were `IntegerBox`es unboxed to `int`, so a blank box
-  would throw a `NullPointerException` on save. They are now value spinners, which can't be blank
-  (`App/Editors/ElasticClusterEditor` `TimeoutSpinners`).
-* The index's Minimum rerank score is read with `Float.parseFloat` on the raw text
-  (`ElasticIndexSettings.write`), so a blank or non-numeric value throws as soon as the field is
-  left (the tab is written on every change), not only on save; there is no check that it is between
-  0 and 1.
-
-* `stroom-core-client/src/main/java/stroom/search/elastic/client/component/ElasticClusterSettings.ui.xml`
-* `stroom-core-client/src/main/java/stroom/search/elastic/client/component/ElasticIndexSettings.java`
-
-### A rejected column rename may still change conditional formatting
-
-**Fixed** (28 October 2026, wave 23). The name is checked before anything is renamed (`RenameColumnController.applyRename`, `TestRenameColumnController`). On master too.
-
-**Reported.** `RenameColumnController` renames the column's references in conditional formatting
-rules before checking whether the new name is already used, so a rename that is then rejected may
-already have changed those rules.
-
-* `stroom-core-client/src/main/java/stroom/dashboard/client/component/RenameColumnController.java`
-
-### Layout Density can be set to an option that doesn't exist
-
-**Fixed** (28 October 2026, wave 23). No saved density, or the "Default" this tab once saved, shows Comfortable, which is how the app looks without one (`ThemePreferences.shownDensity`, `TestThemePreferences`). On master too.
-
-**Reported.** `ThemePreferences.read` sets the density to "Default" when none is saved, which
-isn't one of the options (Comfortable, Compact).
-
-* `stroom-core-client/src/main/java/stroom/preferences/client/component/ThemePreferences.java`
-
-### Some HTTP client durations can't be set to 0
-
-**Fixed** (28 October 2026, wave 24). `DurationPicker`'s `zeroAllowed` on Timeout, Connection Timeout, Keep Alive and Validate After Inactivity Period (`App/Editors/ElasticClusterEditor` `KeepAliveTakesZero`). On master too.
-
-**Reported.** The duration picker's minimum is 1, but the help (and the defaults) for some HTTP
-client durations treat 0 as meaningful ("no timeout", or Keep Alive "close after each request"). It
-isn't clear whether a typed 0 is clamped when saved.
-
-* `stroom-core-client/src/main/java/stroom/http/client/component/HttpClientConfigEditor.ui.xml`
-* `stroom-core-client-widget/src/main/java/stroom/widget/duration/client/DurationPicker.java`
-
-### Values quietly replaced or dropped
-
-**Fixed** (28 October 2026, wave 24), as the user decided: bad input blocks OK and Save. A field that can hold input that can't be kept (`HasInvalidInput`: `DateTimeBox`, and a `TextBox` given a check) says why under it, and every dialog's OK and a document's Save and Save As refuse while one is shown, taking the user to it, on whichever tab (`InvalidInputs`, `RefusesInvalidInput`; UI-GUIDE.md). Each field below now refuses rather than changes: stories `IndexEditor` `DenseVectorFieldBadScoreRefused`, `PlanBEditor` `MaxStoreSizeNotASizeIsRefused`, `DashboardEditor` `TableMaxResultsRefused`, `CreateProcessors` `CreateTimeNotATimeRefused`. On master too.
-
-**Reported.** These fields silently change what the user entered instead of saying what is wrong:
-
-* Dashboard table Maximum Results: parts that aren't numbers are dropped.
-* Elastic and Lucene dense vector Minimum rerank score: invalid text becomes 0.8.
-* Plan B Max Store Size: an invalid entry becomes 10 GiB.
-* Plan B Max Spans Per Trace: an invalid entry becomes 100,000.
-* Date boxes: text that can't be parsed is saved as no date, as `DateTimeBox.getValue()` gives
-  `null` for it. In part fixed (October 2026): the box is now marked invalid (`aria-invalid`) when
-  it is left (`MyDateBox`, which these boxes were, marked nothing), but the screens don't check
-  `isValid()` before saving, so OK still saves no date.
-
-### A document's Save missed bad input on a tab inside a tab
-
-**Fixed** (10 November 2026, 7.14 merge). `InvalidInputs` walked panels, components and form
-groups but not a `LayerContainer` (a plain `Composite`), so a field holding input that can't be kept
-on a tab inside a document's tab (the Elastic index Fields tab's Settings panel, its first such
-screen) was missed: the document wasn't marked changed and Save didn't refuse. It now walks a layer
-container's layers (`LayerContainer.getLayerWidgets`), shown or not, as a hidden tab's fields are
-still the screen's. Story `App/Index/ElasticIndexEditor` `RerankScoreNotAScore`, which failed before.
-A dialog holding a layer container now refuses OK for bad input on a tab not showing too, but focuses
-the field without selecting its tab, unless the dialog refuses for itself (`RefusesInvalidInput`, as
-`PaneSettingsController` does).
-
 ### The replay dialog says Edit Schedule
 
 **Confirmed** (10 November 2026, 7.14 merge). Replaying an execution (an analytic's, report's or
@@ -199,16 +98,9 @@ until #6008, a new one since (which the server needs, as the original's was a du
 let the opener say which it is (e.g. a caption or an `isNew` argument to `show`). Story
 `App/Editors/DataGenEditor` `ReplayExecution` shows it.
 
-### Thread count spinners wrap round
-
-**Fixed** (28 October 2026, wave 23). They stop at 0 and 1,000,000 (`App/Main/ProcessorProfilesScreen` `ThreadLimitsStopAtZero`). On master too.
-
-**Reported.** The processor profile's Max Node Threads and Max Cluster Threads spinners go from
-their maximum back to 0.
-
-* `stroom-core-client/src/main/java/stroom/processor/client/component/ProcessorProfileEditor.ui.xml`
-
 ### Analytic notification limit resets on restart
+
+**Re-checked** (6 November 2026, against the code): still open: `NotificationStateService` keeps its state in an in-memory map.
 
 **Reported.** The notification count is held in memory on each node (`NotificationStateService`),
 so it resets when Stroom restarts. With Resume Notifications After blank, sending never resumes.
@@ -217,24 +109,17 @@ so it resets when Stroom restarts. With Resume Notifications After blank, sendin
 
 ### Credential expiry isn't enforced
 
+**Re-checked** (6 November 2026, against the code): expiry: still open (nothing on the server reads `getExpiryTimeMs()` outside the credentials DAO and service, `stroom-credentials/stroom-credentials-impl/.../CredentialsService.java`). Uploading the key store again on every save: **fixed**, saving an existing credential keeps its secret (`CredentialsService` lines 220-245), and changing it is Replace Secret.
+
 **Reported.** A credential's Expires date is only stored and shown in the list; nothing on the
 server stops expired credentials being used. A key store file must also be uploaded again every time
 the credentials are saved, including edits that don't change it.
 
 * `stroom-core-client/src/main/java/stroom/credentials/client/component/KeyStoreSecretForm.ui.xml`
 
-### Annotation status and assignee dialogs act on what they start with
-
-**Fixed in part** (28 October 2026, wave 23). Change Status with no status chosen says one is needed, under the status, and keeps the dialog (`App/Editors/QueryEditor` `ChangeStatusNeedsAStatus`); the faded "None" takes the text colour on a highlighted setting, where it failed contrast. **Kept:** Change Assigned To starting at Nobody, whose OK unassigns: its help says so, and it is the only way to unassign (`ChangeAssignedTo` checks it).
-
-**Reported.**
-
-* Change Status starts at None, and OK while it shows None sends an empty status, which
-  `AnnotationDaoImpl.setTag` fails on (`ChangeStatusController`).
-* Change Assigned To always starts at Nobody, so OK without choosing a user unassigns every selected
-  annotation (`ChangeAssigneeController`).
-
 ### Overnight processing periods never match after midnight
+
+**Re-checked** (6 November 2026, against the code): still open: `ProcessorProfileCache.java:155-161` (in `stroom-processor/stroom-processor-impl`) takes the start from the current day and moves only the end on a day.
 
 **Reported.** In a processor profile, a period whose end is earlier than its start (e.g. 22:00 to
 06:00) is meant to run overnight, but `ProcessorProfileCache` always takes the start from the current
@@ -242,20 +127,16 @@ day, so the part after midnight never matches.
 
 ### Index "No partition" is saved as Month
 
+**Re-checked** (6 November 2026, against the code): the client no longer offers No partition (`IndexSettings.java:70-73`); the server still turns none into Month (`LuceneIndexDoc.java:127`).
+
 **Server side** (28 October 2026, wave 23): the client no longer offers No partition, and it is the shared model's constructor (`LuceneIndexDoc`, default Month) that turns none into Month; keeping none changes what stored documents mean, so it is left for the server-side list.
 
 **Reported.** Choosing No partition for a Lucene index saves nothing, and `LuceneIndexDoc` turns
 that into Month, so the choice can never be kept (`IndexSettings`).
 
-### Duration fields can't be left blank
-
-**Fixed** (28 October 2026, wave 24). `DurationPicker`'s `noneText`: Resume Notifications After may be Never, and a table builder's retention Keep all, both none to the server (`App/Editors/AnalyticRuleEditor` `ResumeAfterNever`). A table builder whose retention is none showed 1 hour, which a save stored; it shows Keep all. On master too.
-
-**Reported.** Duration pickers have a minimum of 1, so settings whose meaning includes "blank" can't
-be blank: an analytic notification's Resume Notifications After (blank meant "never resume") and a
-table builder's Time To Keep Data In The Table (blank meant "keep all data").
-
 ### Other values that disagree
+
+**Re-checked** (6 November 2026, against the code): still open: the batch schedule's Run As User picker (`BatchExecutionScheduleEditorController` never sets `FindUserContext.RUN_AS`, as `ScheduledProcessEditorController.java:102` does; which users are wrongly listed needs a run); Plan B condense's 1-year fallback (the widget, `CondenseSettingsForm.java:63,82`); `SessionDb.condense()` taking the later session's end (`SessionDb.java:522-527`; whether nested sessions occur needs data). **Fixed:** date boxes now always write `Z` or an offset in the user's time zone (`DateTimeModel.formatIso`), the data upload's Effective Date included. Send Empty Reports and Reprocess's Max Create Time are not bugs, as recorded. `WordListPresenter` is gone (`EffectiveWordsList`).
 
 **Checked** (28 October 2026, wave 23): Send Empty Reports isn't a bug (`ReportDoc` always fills in settings, with the model's default, true, so the tab's `false` fallback never applies); Process Data's Max Create Time set to now when Reprocess changes is deliberate (its help says so). **Fixed:** every folder has Permissions (`FolderTabs`; `App/Editors/FolderEditor` `ViewDataOnly`), on master too.
 
@@ -282,76 +163,9 @@ table builder's Time To Keep Data In The Table (blank meant "keep all data").
   **Fixed (22 October 2026):** the editor is now the component model pilot's copy, whose
   `EffectiveWordsList` breaks ties as intended, and `WordListPresenter` is deleted.
 
-### Events between screens and their parts that reached the wrong listeners
-
-**Fixed (22 October 2026), when they became callbacks** (component model, Phase 4).
-
-* A dashboard's Table Filter refreshed its columns and values whenever *any* table updated, in any
-  open dashboard or query: `TablePresenter.addUpdateHandler` (and `QueryResultTablePresenter`'s)
-  listened to every `TableUpdateEvent` on the app-wide bus rather than its own table's. Each table
-  now tells only its own listeners (`addUpdateListener`).
-* Two open copies of the same Floor Map document heard each other's event data: the Map and Editor
-  tabs took any `FloorMapDataEvent` stamped with their document's UUID. The document now passes
-  its own Events Query tab's data to its own tabs.
-
-**Fixed (23 October 2026), when the last presenter bus handlers became `listen`** (component
-model, Phase 7 step 3), two more:
-
-* The Application Permissions screen could fail when another screen changed a value: its edit
-  pane's `addValueChangeHandler` listened to every `ValueChangeEvent` on the app-wide bus, and a
-  dashboard's column selection (`ColumnSelectionPresenter`) put its changes on the bus too, so the
-  screen read a set of columns as its own `ValueChange` and threw. The edit pane now tells its
-  owner through `setOnChange`, and a column selection tells only its own listeners. Story:
-  `App/Main/AppPermissionsScreen` `IgnoresOtherScreensValueChanges`.
-* An analytic rule's Shards tab fetched its shard's data again whenever any query table with no
-  search of its own asked to be refreshed, e.g. another open rule's Shards tab:
-  `QueryResultTablePresenter.addRefreshRequestHandler` listened to every `RefreshRequestEvent`
-  on the bus. The table now asks its own owner (`setOnRefreshRequest`), and `RefreshRequestEvent`
-  is deleted. Story: `App/Editors/AnalyticRuleEditor` `ShardsRefreshOnlyTheirOwn`.
-
-### An analytic rule's Shards tab couldn't show a shard's data
-
-**Fixed (23 October 2026); on master too.** Choosing a shard fetched its data, but showing it threw
-(an alert, `Cannot read properties of undefined`) and the table stayed empty:
-`AnalyticDataShardsPresenter` never gave its `QueryResultTablePresenter` the table preferences
-it reads (`setQueryTablePreferencesSupplier`), as every other owner of one does. It now keeps
-preferences of its own for as long as the tab is open, as `AbstractQueryDataPresenter` does. Its
-data request is also owned now, so a reply after the tab has closed is dropped. Story:
-`App/Editors/AnalyticRuleEditor` `ShardsRefreshOnlyTheirOwn`.
-
-### UI config failures and annotation changes go nowhere
-
-**Fixed** (28 October 2026, wave 23). `UiConfigCache` fires on the application's event bus: a failure to fetch the UI config is shown (`App/Main/AboutDialog` `ConfigFetchFails`), and an annotation change elsewhere (the server's last change time moving, after the first fetch) reaches the tables. Callers aren't called with null on a failure, as most can't do without the config. On master too.
-
-**Confirmed.** `UiConfigCache` fires its events on a private event bus of its own, which has no
-alert or annotation listeners:
-
-* When fetching the UI config fails, `onFailure` makes a `DefaultErrorHandler` and drops it, so no
-  error is shown and the caller's consumer is never called (not even with null, as the code means).
-* The `AnnotationChangeEvent` it fires when the server's last annotation change time moves reaches
-  no annotation screen.
-
-(`UiConfigCache.fireEvent` now does nothing and says so; the property listeners are a `Listeners`
-list.)
-
-### Data Receipt Rules' Rules tab
-
-**Fixed (22 October 2026), when the tab and its dialogs became components** (component model,
-Phase 3; see `COMPONENT_MODEL_DESIGN.md`). Each fix has a story in `App/Main/DataReceiptRulesScreen`
-that fails without it.
-
-* Duplicating a rule didn't count as a change, so Save stayed disabled until something else changed
-  (`RuleSetSettingsPresenter.copyRuleButtonClickHandler` didn't call `change()`). Story
-  `DuplicateRule`.
-* Deleting asked about "the selected rules" when one rule was selected, and about "this rule" when
-  several were (the test was the wrong way round). Story `DeleteRule`.
-* With no rule selected (e.g. after deleting the selected one), Edit, Duplicate, Enable/Disable,
-  Delete and the move buttons stayed enabled, as `updateButtons` only set them for one or more
-  selected. Story `DeleteRule`.
-* The Edit Rule dialog put the focus on the rules grid behind it when it opened; it now goes to the
-  expression's Add Term button, in the dialog.
-
 ### The Pathways editor can't create a pathway or add a constraint
+
+**Re-checked** (6 November 2026, against the code): New Pathway and the read-only settings are fixed (`PathwayTree.java:129` guards a null root; a New Pathway story exists). Still open: a node with no constraints can never get one (`ConstraintListController.java:43`, 82-84, 138-142; `PathNode.constraints` may be null); the path New, Edit and Delete buttons have no actions; read only shows only once a node is chosen (`read()` and `onReadOnlyChange` never call `enableButtons()`).
 
 **Fixed in part** (28 October 2026, wave 23). New Pathway opens its dialog (`App/Editors/PathwaysEditor` `NewPathway`), and a read-only document's settings are all read only (`ReadOnly`); both on master too. **Still open, needing model work:** a node with no constraints has no map to add one to (`PathNode.constraints` is null), so enabling New there would fail; and the path buttons have no commands. Their buttons are left as they were.
 
@@ -386,6 +200,8 @@ basic use:
   (`onReadOnlyChange`)
 
 ### Workbench stories that fail
+
+**Re-checked** (6 November 2026, against the code): still open in the code: a static REST resource keeps its last callback (`RestFactoryImpl.java:257-272`; the static `RESOURCE` is now in `AskStroomAiClient.java:50`); `AppShell` `OpensDocument`'s play doesn't wait for the focus to settle. Fixed since: `CredentialsScreen` `KeyStore`, the 48 stories (all fixed; the "13 open" is stale), the reopen timeouts (`89141b51de`, which also removed `closeOnCleanUp`), the AI chat's leaks, the leak check running last, `VisAccessibilityStories`, the stories failing on master, the Groovy `+` (now `build.gradle:973`), `AppShell` `Embedded` and `ValueSpinnerColumn`'s polled time. The accessibility baseline now holds one entry. The flaky stories named (`HyperlinksByKeyboard`, `TableFilterDrivesQuery`, `CrossNavigation`, `DeleteAfterFailedLookupStillProceeds`, `FieldsReadOnly`, `Force3D` `ViewKeys`, `Tree` `Keyboard`, `LineChart` `PageKeys`, `AddToAnnotation`) have no fix; whether they still fail needs a full run.
 
 **Status** (28 October 2026, wave 22): the last full runs on the remove_gwtp branch (waves 17 to
 21) pass all 1,729 stories with the leak check. None of the flaky stories named below
@@ -522,75 +338,9 @@ run of 22 October 2026 (1,538 stories).
 
 * `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/credentials/CredentialsScreenStories.java`
 
-### A dictionary's word list ignores its secondary sort orders
-
-**Fixed** (checked 28 October 2026, in wave 17's audit: `EffectiveWordsList`, the list's
-component now, chains its secondary orders; `TestEffectiveWordsList` checks it since wave 21). **Confirmed.**
-`WordListPresenter.buildComparator` was given a primary comparator and the ones to
-break its ties, but the loop adds `comparator.thenComparing(comparator)` (itself) rather than
-`thenComparing(subsequentComparator)`. So sorting by Word, Source or Type never orders rows that
-tie on that column, e.g. words of one type stay in whatever order they came in. Fix: chain
-`subsequentComparator`.
-
-* `stroom-core-client/src/main/java/stroom/dictionary/client/component/EffectiveWordsList.java`
-  (the sort's comparator; was `WordListPresenter.buildComparator`)
-
-### A duplicated selection handler has the same id as its original
-
-**Fixed** (28 October 2026, wave 23). The copy gets an id of its own (`SelectionHandlersController.duplicate`, `TestSelectionHandlersController`). On master too.
-
-**Confirmed.** Duplicate Selected Selection Handler (`SelectionHandlersController.onCopy`) copies the
-handler with `selected.copy().build()`, which keeps its `id`; only a new handler gets a fresh one
-(`RandomId.createId(5)`). Conditional formatting's copy does give a new id. Two handlers with one id
-may be confused by anything that finds a handler by id. Found while giving the list a row key for
-the new data grid, which copes (rows with one key are told apart by position). Fix: give the copy
-`RandomId.createId(5)`.
-
-* `stroom-core-client/src/main/java/stroom/dashboard/client/component/SelectionHandlersController.java`
-  (`onCopy`)
-
-### The Replace Secret dialog cuts its warning off
-
-**Fixed** (28 October 2026, wave 23). GWT's theme makes every `gwt-Label` `nowrap`; the warning has `credentials-details-dialog__warning`, which wraps (`App/Main/CredentialsScreen` `ReplaceSecret` checks it fits). On master too.
-
-**Reproduced** (screenshots of `App/Main/CredentialsScreen` `ReplaceSecret`, October 2026). The
-warning at the top of "Replace … Secret" ("The current secret of 'My Creds' will be discarded and
-cannot be recovered. Everything that uses this credential will use t…") runs on one line past the
-dialog's edge and is cut off, so the end of the warning, which says what happens, can't be read.
-Fix: let the label wrap (e.g. `white-space: normal` on it, or a form-group help style).
-
-* `stroom-core-client/src/main/java/stroom/credentials/client/component/ReplaceSecret.ui.xml`
-  (the `warning` label)
-
-### A dialog's focus drops to the page when OK disables itself
-
-**Fixed** (2026-10-22: `keepFocus` moves the focus to the dialog's next tab stop). **Reproduced** (by `Widgets/Dialogs/Modal` `OkDisabledByItsRequest`, October 2026). When OK is
-pressed and its hide request disables OK (`DisablePopupEvent`, e.g. on failed validation) and then
-resets, OK rightly stays disabled, but the focus, which was on OK, is left on the page's body,
-outside the dialog (and its focus trap): `DialogButtonAction.keepFocus` puts it back only on the
-button it was taken from, and only once that is enabled again. A keyboard user is then lost until
-they click. The Cancel path is fine, as Cancel is enabled again. Fix: when the button stays
-disabled, give the focus to the dialog's next control (or its first tab stop). The story doesn't
-check the focus until then.
-
-* `stroom-core-client-widget/src/main/java/stroom/widget/popup/client/DialogButtonAction.java`
-  (`keepFocus`), used by `DialogFrame.onDialogAction`
-
-### A trace's operation list can't be scrolled with the keyboard
-
-**Fixed** (2026-10-22: the list is a named region that takes the focus; a keyboard list or tree of
-its rows would still be better). **Reproduced** (by `workbenchTest`'s accessibility check, October 2026). When the Traces screen's
-operation list (`#operationList`, built by `TraceOverviewChart`) is taller than its pane, it
-scrolls, but nothing in it can take the focus, so a keyboard user can't scroll it
-(`scrollable-region-focusable`). Seen once the workbench's screens fitted the window (see Fixed), which
-made the pane shorter; any short enough window shows it in Stroom. Baselined for
-`App/Main/TracesScreen` `Traces` in `test-runner/a11y-baseline.json`. Fix: make the list (or its
-rows) focusable, ideally with the keys of a tree, as the rows expand.
-
-* `stroom-core-client/src/main/java/stroom/pathways/client/component/TraceOverviewChart.java`
-  (`appendOperationList`)
-
 ### Some visualisation stories' screenshots differ from run to run
+
+**Re-checked** (6 November 2026, against the code): still open: the seed is in (`run.mjs:92-102`), but nothing stops the simulations at a fixed step, and the screenshot waits only for fonts, not transitions or tooltips (`run.mjs:595-613`). `Force3D` `ViewKeys` already waits for the camera (`CanvasNetworkStories.java:245-249`), so that fix isn't the answer.
 
 **Mostly fixed** (28 October 2026, wave 22): screenshot runs seed `Math.random` in every frame, so
 the layouts and the Force2D and Force3D flows are the same each run; two runs of every `Force`,
@@ -635,6 +385,8 @@ the camera to settle rather than checking once.
 
 ### Some other stories' screenshots differ from run to run, and one fails
 
+**Re-checked** (6 November 2026, against the code): still open: `TopBar` `Keyboard`'s real input check still ends with a click on Show Main Menu and Escape (`test-runner/lib/real-input/top-bar.mjs:70-76`). Fixed: `ValueSpinnerColumn` (polling stopped before the screenshot), `MenuPanel` `TypeAhead` (`performance.now()`). The rest need runs.
+
 **Confirmed** (full screenshot runs of master and data_grid2, 2 workers, 23 October 2026, then
 each story re-run against both builds with the same runner options):
 
@@ -672,6 +424,8 @@ each story re-run against both builds with the same runner options):
 
 ### The workbench's stories fail in a checkout that hasn't run gwtCompile
 
+**Re-checked** (6 November 2026, against the code): still open: `iframe.html` loads `ui/stroom/ace/ace.js`, served only from the git-ignored `stroom-app/src/main/resources/ui/stroom`, and `workbenchTest` depends on no copy task. The Groovy `+` is fixed (`build.gradle:973`).
+
 **Confirmed** (a copy of master made with `git archive`, 23 October 2026). `workbenchTest` failed 591
 of 1,545 stories: every story with a code editor stopped with `Cannot read properties of undefined
 (reading 'require')`, or timed out, because `/ui/stroom/ace/ace.js` was a 404. The workbench serves
@@ -690,6 +444,8 @@ with the `+`).
 
 ### A visualisation's selection offers only Name and Value to selection handlers
 
+**Re-checked** (6 November 2026, against the code): still open (`VisSelectionModel.java:44-46`, now in `stroom-core-client/.../query/client/result/vis/`).
+
 **Confirmed.** A visualisation can send any keys in its selection (`stroom.select`), and Stroom
 turns each into a parameter (`VisComponentSelection.getParams`). But `VisSelectionModel.getColumnRefs`
 offers only `name` and `value`, so the dashboard's selection handler editor can't pick the keys
@@ -702,6 +458,8 @@ its inputs are) and offer those.
 * `stroom-core-client/src/main/java/stroom/query/client/VisComponentSelection.java`
 
 ### GeoMap's map tiles are blocked in an asset-based visualisation
+
+**Re-checked** (6 November 2026, against the code): still open in the code: `DocumentAssetServlet.java:212-219` still has `img-src 'self' data:`, with no setting for other origins; a blank map needs a running Stroom to see.
 
 **Suspected (from the code, not yet seen on a running Stroom).** `DocumentAssetServlet` serves every
 asset, including a visualisation's `index.html`, with `img-src 'self' data:` and `default-src 'self'`.
@@ -716,113 +474,11 @@ retiring FloorMapLocalBuilder, 22 October 2026.
 * `stroom-document-asset/stroom-document-asset-impl/src/main/java/stroom/document/asset/impl/DocumentAssetServlet.java`
   (`CONTENT_SECURITY_POLICY_ASSET`)
 
-### Bootstrap's styles apply to every page
-
-**Fixed** (30 October 2026, by the CSS plan's step 5, wave 31: `app.css` no longer imports
-Bootstrap and `ui/css/bootstrap/` is gone; its element rules lead `base.css`). ~~**Open decision (not now).** `app.css` imports the whole of `bootstrap.min.css` (with
-`custom-bootstrap.css` recolouring parts of it), but Stroom uses only a few of its classes:
-`form-group` and `form-label` (`FormGroup`, `FormLabel` and about ten settings views), `dropdown`
-(`TermEditor`), and the `badge-*`, `form-control` and `dropdown-menu` looks. Its reboot and its
-generic classes (`.col`, `.row`, `.container`, `.table` and so on) apply to anything else with those
-names. The vis tooltip's key and value columns were classed `grid` and `col`, so they took
-Bootstrap's grid column (the whole width, shared equally, 1rem each side) and short values wrapped
-mid-word; the tooltip is now styled only by its own BEM classes (22 October 2026). Dropping
-Bootstrap would mean moving the classes Stroom uses into its own BEM styles, replacing the parts of
-reboot the app relies on (box sizing, margins, fonts), and a full screenshot diff of the workbench.~~
-
-* `stroom-app/src/main/resources/ui/css/app.css`
-* ~~`stroom-app/src/main/resources/ui/css/bootstrap/custom-bootstrap.css`~~ (gone)
-
-## Controls that stay enabled but do nothing
-
-**Fixed** (30 October 2026; all on master too).
-
-* ~~Dashboard table format: the date format and time zone controls stay enabled when Use Preferences
-  is ticked, although the server then ignores them (`FormatViewImpl.ui.xml`).~~ **Fixed** (30
-  October 2026, `ColumnFormat.updateEnabledState` disables Format, Custom, Custom Format and the
-  time zone fields while Use Preferences is ticked, on open and on change; `App/Editors/QueryEditor`
-  `FormatDateTimeFollowsUsePreferences`).
-* ~~Dashboard list input: the Dictionary picker stays enabled when Use Dictionary is unticked
-  (`component/BasicListInputSettings.ui.xml`).~~ **Fixed** (30 October 2026,
-  `BasicListInputSettingsController` enables and disables the picker with the tick box, as the
-  embedded query does; `TestBasicListInputSettingsController`, `App/Editors/DashboardEditor`
-  `ListInputSettingsDictionaryFollowsUseDictionary`).
-* ~~Embedded query: Referenced Query is only faded, not disabled, when Reference Existing Query is
-  unticked (`component/BasicEmbeddedQuerySettings.ui.xml`).~~ **Fixed** (30 October 2026,
-  `BasicEmbeddedQuerySettingsController` enables and disables the picker with the tick box, lines
-  69 and 103).
-* ~~Analytic notifications: Maximum and Resume Notifications After stay enabled when Limit
-  Notifications is unticked (`AnalyticNotificationEditor.ui.xml`).~~ **Fixed** (30 October 2026,
-  `AnalyticNotificationEditor.updateEnabledState` enables them only while Limit Notifications is
-  ticked; the editor is never opened read only; `App/Editors/AnalyticRuleEditor`
-  `LimitGatesMaximumAndResume`, and `ResumeAfterNever` now ticks Limit first).
-* ~~Solr index: the ZooKeeper fields stay enabled when Use ZK is unticked or for a single node
-  (`SolrIndexSettings.ui.xml`).~~ **Fixed** (30 October 2026,
-  `SolrIndexSettings.updateEnabledState` enables ZooKeeper Hosts and Path only for Solr Cloud with
-  Use ZK ticked; read only stays separate (`setReadOnly`); `App/Index/SolrIndexEditor`
-  `ZooKeeperFieldsFollowUseZk`).
-
-### The Go to Search Results shortcut did nothing (on master too)
-
-**Fixed (27 October 2026, in wave 11), seen in a story.** `ResultStorePlugin` bound G S to
-`resultStorePresenter::show` in its constructor, before the dialog had been made, so the shortcut
-had nothing to show (the menu item made the dialog as it was built, so it worked). The shortcut
-now makes the dialog when first pressed. `AppShell.GoToSearchResults` presses G S.
-
-* `stroom-core-client/src/main/java/stroom/query/client/ResultStorePlugin.java`
-
-### Document Permissions' Edit button stays disabled until a document is opened (on master too)
-
-**Fixed** (28 October 2026, wave 23). Edit is enabled while a document is chosen (`DocumentListController.setOnSelectionChange`; `App/Main/DocumentPermissionsScreen` `EditEnabledForChosenDocument`).
-
-**Open; found 26 October 2026 in wave 10.** On the Document Permissions tab
-(`BatchDocumentPermissionsPresenter`), 'Edit Permissions For Selected Document' is enabled only when
-a document is opened (Enter or a double click on it), which opens its permissions anyway. Choosing a
-document leaves Edit disabled: the selection handler that enabled it is commented out. Wave 10
-(`DocumentList`) keeps this as it is, so the screenshots match; the fix is to enable Edit on
-selection (the list chooses its first document when the filter changes, so Edit would then be
-enabled in the screenshots).
-
-### Menus that didn't open in the standalone dashboard (on master too)
-
-**Fixed (25 October 2026), confirmed in the code.** Widgets with no event bus ask for their menus
-with `MenuRequest`, which bubbles up the page to one relay that fires the `ShowMenuEvent`. Only
-`MainPresenter` installed the relay, and the standalone dashboard (`DashboardApp`) shows
-`FullScreenPresenter`, not the main presenter, so these menus never opened there: a split pane
-splitter's Pane Layout menu, and a dialog's menu button (`DialogWindow`). The relay is now
-installed by `CorePresenter`, which both apps show (once, as a singleton). Master has the bug too
-(`MenuRequest` came with `d3ddaab46f`, 12 October 2026, which master has; the wave 5 audit found
-this, after it was first recorded as this branch's only), so it has a changelog entry. The
-workbench's `ShellScreen` stories had two relays (`ScreenHarness`'s and the main presenter's); now
-they have one. Not checked in a running dashboard, and no regression story: the workbench has no
-story of the standalone dashboard (`CorePresenter` without `MainPresenter`).
-
-### A dashboard opened from a table's menu didn't get its parent dashboard (on master too)
-
-**Fixed (25 October 2026, wave 5), confirmed in the code.** A table's right-click menu's link items
-(Follow URL, Open In New Tab, Open In This Tab) fired the `HyperlinkEvent` on the app's bus, which
-skipped the dashboard's (or query's) table, where a click on the link goes and the table adds the
-dashboard it is in. So a dashboard opened from the menu got no parent context
-(`DashboardPlugin.openParameterisedDashboard` was given null), and with it none of its parent's
-`parent.*` values (time range, parameters, selections). The menu came with `f2243980ea`
-(`DataGridWidget`) on master. The grid now follows a link from its menu as a click does when
-something handles its links, and otherwise asks the app (`OpenHyperlinkRequest`). Stories
-`LinkMenuThroughTheGrid` and `LinkMenuToTheApp` (a stand-in for the table's handler); a changelog
-entry.
-
-### The Add Column button's list added a column twice (on master too)
-
-**Fixed (25 October 2026, the wave 5 audit), confirmed in the code.** A second press on a dashboard
-table's Add Column button, while its list was open, closed the list and then added another choice
-handler to the list (the list was shown before its handlers were added, and showing an open list
-closes it). On master, the next column chosen was added twice; in this branch, after wave 5 made
-the list's close a single callback, every later choice was. A second press now only closes the
-list, and the list's one choice handler is kept in a field. Story `TableAddColumnAfterClosingTheList`
-(`DashboardPaneStories`); a changelog entry.
-
 ## Memory
 
 ### Replies helpers give to lists that have gone
+
+**Re-checked** (6 November 2026, against the code): still open (deferred): none of `NodeClient`, `NodeGroupClient`, `CredentialClient`, `UiConfigCache` or `DocumentTypeCache` takes an owner.
 
 **Deferred** (28 October 2026, wave 23): several callers aren't controllers (the search and query models, `ResultStorePlugin`, `DocumentPluginEventManager`, the node group and credential list models), so giving the helpers an owner is an ownership pass of its own, not a bug fix.
 
@@ -838,34 +494,9 @@ owner, as `AnnotationResourceClient`'s finds now have.
 * `stroom-core-client/src/main/java/stroom/node/client/NodeClient.java`
 * `stroom-core-client/src/main/java/stroom/node/client/component/NodeStatusListController.java`
 
-### The stepping chooser can be left unowned
-
-**Fixed** (28 October 2026, wave 23). The pipeline is looked up, in the explorer too, before the chooser is made (`PipelinePlugin.findPipeline`, `DocumentChooserController.setSelectedNode`, `TestPipelinePlugin`).
-
-**Found in wave 8's audit** (26 October 2026). `PipelinePlugin.onBeginStepping` makes the "Choose
-Pipeline To Step With" chooser before it looks up the pipeline to choose first (a REST call, then the
-chooser's own lookup of it), and `AppRoot` owns it only once it is shown. If either lookup fails the
-chooser is never shown, never owned and never disposed; development builds count it as unowned.
-Fix: look up the pipeline first, and make the chooser only to show it.
-
-* `stroom-core-client/src/main/java/stroom/pipeline/client/PipelinePlugin.java`
-
-### Presenters nothing owned (found and fixed 22 October 2026)
-
-**Fixed** (the Phase 5 ownership audit of `COMPONENT_MODEL_DESIGN.md`):
-
-* The Task Manager (`UserTaskManagerController`) took a finished task's row out of its view but kept
-  its presenter in `taskPresenterMap` for good, one per finished task while the app ran. It now owns
-  each row's presenter and releases it, and drops it from the map, when its task ends. Not unit
-  tested: the class can't be loaded in a JVM (`GWT.create` in a static field).
-* A dashboard component's settings dialog, the annotation status and assignee dialogs (kept per
-  table), the secret editors of the credential dialogs, Ask Stroom AI's config, history, download
-  and attachment dialogs, and the login screen's password dialogs were never released. Each is now
-  owned by what shows it, or made for one use and disposed once hidden.
-* An annotation's presenter was made before it was loaded, so a failed load or a user without the
-  permission left it unowned; it is now made once there is an annotation to show.
-
 ### Closed screens are never released
+
+**Re-checked** (6 November 2026, against the code): paths 1 to 4 are fixed (Ace destroyed, `IFrameController` stops its poll, the vis released, presenters gone), as are `CurrentFocus`, `HasSaveRegistry`, `UserTaskManagerController`, `DelegatingAceCompleter` and stepping's Ctrl+Enter handler. Still so: only stories that open their screen with `afterStartUp` are leak checked (`leak-check.mjs`), so "every story" overstates it; heap growth isn't judged. The Info dialog's and the explorer menu's kept nodes, and a long session's memory, need `mem-leak.mjs` runs. Names since changed: `AbstractEditorPresenter` is `AceEditorPaneController`, `IFramePresenter` `IFrameController`; `TestPresenterScope` is gone.
 
 **Status** (28 October 2026, wave 22): every screen, dialog and tab is now a controller owned by
 what opened it and disposed with it (the GWTP presenters are gone), and the workbench's leak
@@ -1097,1043 +728,6 @@ last closed dialog for a moment only.
 * ~~`stroom-core-client/src/main/java/stroom/iframe/client/view/IFrameViewImpl.java` (line 71)~~
   Fixed in wave 3: the view went, and `IFramePresenter` stops its title poll in `onDispose`
 
-### The leak check fails 50 stories
-
-**Fixed** (checked 28 October 2026, wave 22: every full run since wave 13 passes all stories with
-the leak check; `AskStroomAiDialog`'s leak, the `target-size` stories and the screens that didn't
-reopen were fixed as recorded under "Workbench stories that fail"). **Confirmed** (by
-`workbenchTest -PworkbenchLeakCheck`, 22 October 2026, with the component model's
-Phase 1: every presenter owned, `PresenterScope` removed; 71 failed before).
-
-* **Still leaking:** `App/AI/AskStroomAiDialog` keeps 155-160 DOM nodes and 58 listeners per close,
-  with no component left unowned, so something else holds it (e.g. a handler on a shared bus or a
-  singleton, or a JavaScript object). The annotation editor's leak (1,256-1,364 nodes and 189
-  listeners per close in every `App/Main/AnnotationEditor` and `App/Annotations/decorateComment`
-  story) is gone: its presenters are now owned and disposed with its tab.
-* **Accessibility after reopening:** about 34 stories (mainly `AnalyticRuleEditor`, `ReportEditor`
-  and `QueryEditor`, and `DataRetentionScreen` `ImpactAbort`) break `target-size` on an element
-  they don't break it on when first opened, so the reopened screen lays something out differently.
-* **Not reopened:** 6 stories' screens don't open again within 15 s (`AppShell` `Embedded`,
-  `ContentTabPane` `NoDuplicateForSingleInstance`, `PipelineEditor` `FailedEmbeddedCreateKeepsDialogUsable`
-  and `MultiDocumentSave`, `docPlugin` `OnWriteTransformsAtSaveTime`, `Activity Chooser` `Default`),
-  probably as each opens more than one screen or a dialog, which the probe's `open()` doesn't repeat.
-* `App/Dashboard/QueryResultVis` `PauseButtonReportsUp` breaks `target-size` after reopening too.
-
-Without the leak check these stories pass. A failing leak now names the components each close
-leaves unowned (`Left unowned per close: ...`), which is where to start.
-
-## Accessibility
-
-### A column value filter's unavailable values are too faint
-
-**Fixed** (4 November 2026). The fade is now 60% opacity, 4.7:1 in the light theme and 5.0:1 in the
-dark one; the two stories below check it.
-
-**Confirmed** (4 November 2026, merging 7.14's #4841 into master). The column value filter lists
-the values the table has, then a line, then the values no row has given its other filters, which can
-still be ticked. 7.14 fades those to 50% opacity (`column-value-cell--unavailable` in
-`column-value-cell.css`): about 3.4:1 in the light theme and 3.9:1 in the dark one (worked out from
-the theme colours), under WCAG AA's 4.5:1. axe doesn't fail the `TableColumnValuesFilterUnavailable`
-(`App/Editors/DashboardEditor`) and `ColumnValuesFilterUnavailable` (`App/Editors/QueryEditor`)
-stories for it, as it leaves contrast through opacity for review. Screen readers are told by the
-row's `aria-description` ("Not in the table"). Fix: 60% opacity (4.7:1 light, 5.0:1 dark) keeps the
-even fade of a conditional formatting colour; or italics, as for a pipeline property's default value
-below.
-
-### A pipeline property's default value is too faint on its selected row
-
-**Fixed** (28 October 2026, wave 23). On a selected row a default takes the row's text colour, in italics (`pipeline-property.css`); `PipelineEditor` `PropertySourceAfterChange` leaves it selected for the accessibility check. On master too.
-
-**Reported** (found in wave 9's audit, 26 October 2026). The pipeline's property grid greys a
-property's default (and inherited) value (`pipeline-property--default`, and a
-document's `docRefLinkText`); on the selected row's blue it fails axe's `color-contrast`. A story that
-leaves a default property selected fails for it, so `PipelineEditor.PropertySourceAfterChange`
-chooses another element before it ends. Fix: a selected row's default value in the row's own text
-colour, kept distinct by its style (e.g. italic), not by a fainter colour.
-
-### Controls that can't be reached with the keyboard
-
-**Reported.**
-
-* ~~Traces: the Service & Operation list (`#operationList`, `TraceOverviewChart`) scrolls when it is
-  taller than its pane, but neither it nor its rows take the focus, so a keyboard user can't scroll
-  it (axe `scrollable-region-focusable`, baselined for `App/Main/TracesScreen/Traces`). It showed
-  once screen stories stopped being 48px taller than the page.~~ **Fixed** (22 October 2026: see "A
-  trace's operation list can't be scrolled with the keyboard"; no baseline entry is left). Left: it
-  wants the rows to be a keyboard list (or tree, as they nest), which would also let a row be
-  selected without a mouse.
-* `HoverActionMenuCell` showed its "..." only on a mouse over and opened its menu only on a mouse
-  press. Nothing used it, and it was deleted (data_grid2, 23 October 2026).
-* A grid's spinner doesn't repeat while a finger is held on an arrow (a tap steps once): it steps
-  on the mouse events the browser makes after a touch, and takes no touch or pointer events
-  (`ValueSpinnerCell`; the `ValueSpinner` widget does repeat). The new grid hands a cell its
-  events as they happen, so the cell could now take pointer events and hold the touch itself.
-  Whether Page Up and Page Down in its field still scroll the grid hasn't been checked with the new
-  grid.
-* **Confirmed** (master and data_grid2, 23 October 2026): in a grid that polls (`Widgets/Data
-  Grid/DataGrid` `ValueSpinnerColumn`, every 10ms), pressing a spinner's arrow with the mouse,
-  when the field hasn't the focus, steps the value (42 to 43), then the focus falls to the page and
-  the next poll puts the old value back. The arrow takes no focus, so the press leaves it on the
-  cell; the stepped value isn't saved until the press ends, and the poll draws the cell again in
-  between. A press in the field itself, then typing, keeps the field, its text and its caret
-  through the polls (`real-input/data-grid.mjs`). A fix: a press on an arrow focuses the field, so
-  the grid leaves the cell alone while the arrow is held (data grid completion design, item 1).
-
-### Toolbars are a tab stop per button
-
-**Deferred.** Every icon button in a toolbar is its own tab stop, so a keyboard user presses Tab
-five times to pass the expression editor's toolbar, and ten or more on a dashboard (more now that
-disabled icon buttons stay focusable, as `aria-disabled`). The standard is the ARIA toolbar pattern:
-the group is `role="toolbar"` with a name and one tab stop; Left and Right (and Home and End) move
-between its buttons, disabled ones included; and Tab returns to the button last used. Almost every
-toolbar is a `ButtonPanel` (about 100 uses), so most of the change is there; the dashboard's design
-toolbar and the main header are built without it. Tab bars (`role="tablist"`) and tables should
-likewise be one tab stop with arrow keys inside.
-
-Agreed design: buttons that sit next to each other are one group (one tab stop), whatever code adds
-them, so adjacent panels (e.g. a document tab's Save buttons and its editor's) become one; buttons
-apart on a row (e.g. at either end) are separate groups. Every image button is in a group, even on
-its own; a group is `role="toolbar"` (named) only with two or more visible buttons. Left/Right wrap
-and Home/End jump; the keys are the arrows only, not `KeyBinding`'s letters (A/D/H/L), which would
-swallow key sequences such as `g u`. Buttons inside a widget that owns its keys (e.g. the quick
-filter's) are exempt. `FocusWidget.onAttach` turns a `tabIndex` of -1 back into 0, so the roving
-tab index must be set after attach (or use -2, as a form group's help button does).
-
-Measured (`ButtonRuns` and `TabStops` in the workbench's `a11y` package; stories
-`Widgets/Buttons/ButtonGroup` and the `ToolbarTabStops` stories of `App/Main/AppShell`,
-`App/Main/UserGroupsScreen` and `App/Editors/DashboardEditor`): the explorer's header costs 7 tab
-stops, a dashboard with a query, table and text 30, its expression toolbar 8 and table toolbar 6,
-and each list pane 3 + 5 (its actions and its pager). Found while measuring:
-
-* ~~`SvgToggleButton` (`ButtonPanel.addToggleButton`) has no name: its tooltip is on the icon inside
-  it, not on the button (`Widgets/Buttons/ButtonGroup` `WithToggle`).~~ **Gone** (checked 30 October
-  2026: `SvgToggleButton` and `ButtonPanel` are deleted; toggles are `ToolbarToggleButton`s).
-* ~~A `FabButton` (the Text component's stepping button) is two tab stops, its outer `div` and its
-  inner `button` (`App/Editors/DashboardEditor` `ToolbarTabStops`).~~ **Fixed** (checked 30 October
-  2026: `FabButton.onAttach` takes the outer element out of the tab order).
-* ~~`TableController` adds its Ask Stroom AI button twice.~~ **Fixed** (30 October 2026, checked:
-  `TableController.java:286` adds it once, `button(SvgImage.AI, …)`).
-
-Done so far: `ButtonPanel` is a group (`ButtonGroupFocus`, which can also be installed on any
-element, merging the groups inside it), so each list's actions, the dictionary's Save buttons and a
-dashboard's expression and table toolbars are now one tab stop each (`Widgets/Buttons/ButtonGroup`,
-`Widgets/Query/ExpressionBuilder` `ToolbarIsRealButtons`). Still to do: the groups built as plain
-`FlowPanel`s (the explorer's header, the pagers, the main toolbar, the data navigators), merging
-adjacent groups (e.g. a document tab's toolbar row), naming each toolbar (`setAccessibleName`)~~, the
-`FabButton`'s second tab stop and the `SvgToggleButton`'s name~~ (both done, above).
-
-Since then: `Toolbar` and `ToolbarRow` (named groups built from an `SvgImage` and a name, also in
-UiBinder) with their own buttons (`ToolbarButton`, `ToolbarToggleButton`, styled only by
-`toolbar.css` under new BEM names, so the older buttons' names and rules can later be deleted;
-they match the older icon buttons pixel for pixel), toggles that say they are toggles before first
-pressed,
-`FocusTooltip` (an icon button's name shown on keyboard focus) and focus handed on when the focused
-button of a group is hidden or removed (`Widgets/Buttons/Toolbar`). Known limits: Escape in a
-dialog also closes the dialog (its popup handles Escape first).
-
-Checked since: real key presses and mouse clicks on a toolbar (`workbenchTest`'s real input check,
-story `Widgets/Buttons/Toolbar` `RealInput`), which found that a real click showed the focus
-tooltip (fixed: it now ignores focus that follows a pointer press); `workbenchTest` now fails a
-story that breaks a WCAG 2.x A or AA rule not in `test-runner/a11y-baseline.json` (365 stories have
-entries, mostly `target-size`, `label`, `button-name` and `color-contrast`); and the cost of keeping
-groups up to date is small (a dashboard with a query, table and text: 7 groups, 47 updates, 3 ms in
-all). Still to do: try a toolbar with a screen reader (NVDA or VoiceOver).
-
-The buttons' DOM was then simplified, each step checked against a screenshot baseline of every
-story (`workbenchScreenshotDiff`; stories `Widgets/Buttons/IconButtonStates`, whose hover and focus
-states are set with the real mouse and keyboard, `Widgets/Buttons/RefreshButton` `AllStates` and
-`Widgets/Buttons/FabButton`):
-
-* Icon buttons draw their hover, on and focus fill and border with `.icon-button::before` instead of
-  a `div.background` in every button, and their states are styled from `aria-pressed` and
-  `aria-disabled` rather than the `on` and `disabled` classes (which are still set), so what is
-  shown matches what screen readers are told. Pixel-identical.
-* `FabButton` is one tab stop: its outer element no longer takes the focus (real input check).
-* `RefreshButton` is its button and four icons (it was 14 elements); four rules choose the icons in
-  place of 13 competing selectors, identical in all eight combinations of refreshing, pausable and
-  paused, and it doesn't turn or pulse for `prefers-reduced-motion`.
-* The icons inside buttons are `aria-hidden` (the buttons are named by their titles).
-* `ButtonPanel.setVertical` lays its buttons out in a column (it set `display: block` on each,
-  which left them in a row and the focus outline adrift; unused in the app).
-
-Rollout: the explorer's header is a `Toolbar` (`toolbar--navigation`, in the explorer's colours),
-so its 7 buttons are one tab stop, named "Explorer", with 2px between them, which also meets
-`target-size` (`App/Main/AppShell` `ToolbarTabStops`). Every list's paging buttons are a `Toolbar`
-named "Paging" (`Pager.ui.xml`), one tab stop where they were five, and `RefreshButton` is a
-`ToolbarButton` with BEM names (`refresh-button`, `refresh-button__icon--…`,
-`refresh-button--refreshing/--pausable/--paused`); every story's screenshot is unchanged. A
-document's toolbar is a `Toolbar` ("Document actions": Save, Save As, a subclass's own buttons such
-as Download, then the showing tab's buttons from `HasToolbar.getDocumentButtons`), one tab stop for
-the buttons that sit together; controls apart at the end of the row (a query's time range and
-Execute) stay their own (`HasToolbar.getToolbars`). A dashboard's Save, Save As, Design Mode and
-Maximise were two tab stops and are one; `VisualisationAssetsPresenter` no longer adds its click
-handlers again each time its tab is shown. Screenshots unchanged. Then the other groups that were
-plain `FlowPanel`s: the application's toolbar (Ask Stroom AI and the main menu, `toolbar--header`),
-Find in Content's Match case and Regex (`toolbar--control`, now 2px apart for `target-size`), the
-data screen's item and character navigators, the stepping controls, the pipeline structure's
-buttons, query help's Insert and Copy, the export dialog's filter and each dashboard pane's
-Settings; each is one tab stop and, but for Find in Content's gap, looks the same. `ToolbarButton`
-and `ToolbarToggleButton` are `IsButton`s, so presenters given buttons
-that way work with them unchanged. Ask Stroom AI's buttons are a quiet toolbar ("Conversation",
-`toolbar--quiet`), 2px apart; their text labels never showed (`setSvg` replaced them), so toolbars
-are icon only for now (see "Display preference" in `COMPONENT_MODEL_DESIGN.md`), and its Send/Cancel
-button has a name. The Copy button under each chat reply is a labelled action on its message, not a
-toolbar, so stays a plain button (it is built as HTML with the old `icon-button` class, so should
-become a `Button` when that class goes). Left: `DataNavigator` and `SubStreamNavigator` (not used:
-to be deleted), and the remaining `ButtonPanel` callers, which already behave as toolbars and move
-as their areas are next changed.
-
-Retiring the older buttons, phase 1: `ButtonPanel.addButton(Preset)` makes a `ToolbarButton`, so the
-buttons of every list, document and dashboard toolbar built that way use the new names and styles
-(every screenshot unchanged); `addToggleButton`, `SvgToggleButton` (two icons, no name) and
-`BaseSvgButton` are gone, and the data retention impact's flat/nested switch is a pressed toggle
-named "Nested table" (seven stories no longer break `button-name`). Phase 2: `InlineSvgButton`,
-`InlineSvgToggleButton` and `SvgButton` are now deprecated subclasses of `ToolbarButton` and
-`ToolbarToggleButton`, so every remaining older button (beside inputs, help, table expand and
-collapse, date picker) renders the new markup; `FilterCell`'s and the chat's icon buttons emit it
-too (`SvgMarkup.decorative`); the rules that reached inside the older markup (password, Edit Tags,
-form help, date picker, chat, explorer) were moved to the new names. The chat's Copy buttons were
-already plain buttons of their own. `ToolbarButton` keeps the older buttons' mouse handling: pressing
-it with the mouse doesn't move the focus elsewhere (`setFocusOnMouseDown(false)` leaves it in the
-field beside it). Screenshots unchanged but for the show-password eye, now drawn on whole pixels.
-Phase 3: `InlineSvgButton` and `InlineSvgToggleButton` are deleted (their uses, in 54 files and
-templates, are `ToolbarButton` and `ToolbarToggleButton`), with `.icon-button`, `.inline-svg-button`,
-`.icon-button-group` and their rules (`stroom-button.css` keeps only the floating action button and
-`.navigation-menu-button`); nothing in the app emits those names. Every screenshot is unchanged.
-`SvgButton.create(Preset)` stays, deprecated (it makes a `ToolbarButton`), until `SvgPresets` goes;
-`FabButton` (`stroom-button-fab`, `face`) was left for a BEM pass of its own, done in wave 1 of the component migration (24 October 2026): `fab-button`, `fab-button__face`, in `fab-button.css`.
-Phase 4: `SvgButton` is deleted, with the unused `SubStreamNavigator` and `DataNavigator` templates.
-Every button it made is now made in the `Toolbar` it sits in (a button is never made on its own):
-the XML schema's validation indicator in the document's toolbar, the data receipt rules' Save and
-Show Warnings in theirs (now a `Toolbar`), and the drop down's warning in a one-button `Toolbar` in
-its template. `DocumentationTabController` makes its toolbar (Edit, Help) when it is first shown, and
-`setAddButtonsFirst(Consumer<Toolbar>)` replaces `setInsertedButtons`, so the annotation's Save is made
-in that toolbar, before Edit. A `Toolbar` nested in a document's toolbar sits as a nested
-`ButtonPanel` does (`.toolbar > .toolbar` beside the transitional `.toolbar > .button-container`).
-Then the buttons made on their own beside a toolbar in the same presenter were made in it: the
-document's Save and Save As (`DocTabPresenter.createToolbar`), the pipeline's stepping toggle, the
-query's Create Rule and Create Report, the dashboard's design buttons, stepping's Terminate and log
-pane toggle (hidden rather than removed), the visualisation assets' buttons and the query text
-view's Close; and the templates' loose buttons are in a `<b:Toolbar>` (query buttons, navigation,
-the query toolbar's errors, a property's copy name). Every screenshot is unchanged.
-Then every list's buttons: `PagerView` and `PagerViewWithHeading` hold a `Toolbar` (`getToolbar()`,
-named after the list with `setName`), and about 100 list presenters make their buttons in it with
-`getToolbar().button(icon, name, handler)` in place of `addButton(Preset)` and a click handler
-registered in `onBind`. The list presenters' own `add(Preset)`/`addButton(Preset)` pass-throughs are
-`getToolbar()`, as are the views' (`QueryView`'s left and right `ButtonPanel`s are its expression and
-messages toolbars; `PathwayTreeView`, both `EditExpressionView`s, `QueryFavouritesView` and the
-global property editor's value icons), and `PagerView.addButton(Preset)` is gone. A menu a button
-opens (a dashboard table's Add Column, the annotation menu) is placed against the button rather
-than whatever was clicked inside it (`AnnotationManager.showAnnotationMenu(Element, …)`). Every
-screenshot is unchanged. Still made on their own: the button widgets built on `ToolbarButton`
-(`RefreshButton` (the visualisations' own), table expand and collapse, the quick filter's and date
-picker's buttons), which `PagerView.addButton(IsButton)` still adds. The pathway
-tree's New, Edit and Remove buttons have never had a click handler, so do nothing.
-`ButtonPanel` is deleted, with its `button-container` rules: the last two were empty, holding a place
-in their rows (the data view's and query text view's), so are plain panels. Its stories
-(`Widgets/Buttons/ButtonGroup`) are of `Toolbar`, which has `setVertical` for a column of buttons.
-A form group's help button isn't a toolbar button: it is one button beside a label, out of the tab
-order (F1 in the field shows the same help). `HelpButton` is replaced by the form package's own
-`FormGroupHelpButton`, styled by `form-group__help` and `form-group__help-icon`, so the form groups
-are no longer counted as button runs (`UserGroupsScreen`'s `ToolbarTabStops`). Nothing else used
-`HelpButton`, so its standalone stories (`Widgets/Overlays/HelpButton`) and popup contract case are
-gone; the `FormGroup help` case checks the same popup, heading included.
-The form styles are in `form.css` (imported after Bootstrap, which also styles `.form-group`), with
-the form group's parts named BEM style: `form-group__label-row`, `__label`, `__help`,
-`__help-icon`, `__description-row`, `__description` and `__feedback` (no longer Bootstrap's
-`invalid-feedback`, so its styles are its own), and the `form-group--indented` and
-`form-group--inline-tick` modifiers. The help popup is `help-popup`.
-The quick filter's Clear and syntax help buttons are made in a toolbar (`quick-filter__toolbar`, placed
-over the end of the box) as regular toolbar buttons, so they are one tab stop with the arrow keys
-between them. Its help icon is the same size and colour everywhere (it was smaller, in the
-navigation colour, inside a form group), and Clear sits a toolbar gap from the help button (it
-overlapped it by a pixel).
-`RefreshButton` is a `ToolbarButton` itself (it was a `Composite` holding one), so it is one of its
-toolbar's buttons like any other: declared in the pagers' and data navigators' toolbars as before, or
-made by `Toolbar.refresh(onClick)`. Presenters set what it does with `setOnClick`. A visualisation's
-pause and resume button, which was on its own, is in a toolbar of its own ("Visualisation",
-`dashboardVis-refresh`, placed where the button was). The pagers, navigators and visualisations look
-as they did.
-A grouped table's Expand and Collapse are regular toolbar buttons, made by `GroupLevelButtons` (in
-the dashboard table's and query result table's pager toolbars, and in a "Group levels" toolbar on
-the traces screen, which made them one tab stop where they were two). The screen keeps the group
-selection; the helper works out the next level and names and enables the buttons for it.
-`TableExpandButton`, `TableCollapseButton` and `PagerView.addButton(IsButton)` are gone.
-The date picker's Previous and Next year and month buttons are two toolbars ("Year" and "Month"),
-one beside each select box, with names ("Previous year", "Next month" and so on) where they had none.
-They were out of the tab order; each toolbar is now one tab stop, with the arrow keys between its two
-buttons, so the calendar can be stepped a month or a year at a time from the keyboard. It looks as it
-did.
-Password fields are a `PasswordBox` (`stroom.widget.form.client`, styled by `password-box.css`): a
-box with a show/hide button over its end, in a toolbar, as every password field in the app now is
-(login, change and current password, the three credential secrets, and the global property's and
-Elastic cluster's secret values, which had no show/hide). Six views each had their own copy of the
-overlay and its click handler; they are gone, with the overlay rules in `Login.css` and
-`ChangePassword.css`. The button is named for what pressing it does ("Show password", then "Hide
-password", which its tooltip shows too), and a polite live region in the box tells a screen reader
-"Your password is shown" or "hidden", as the focus stays on the button. Validation marks the input
-itself (`getInput()`), and the change password screen's length badge sits beside the button
-(`setBadge`).
-`Preset` and `SvgPresets` (72 shared icon, title and enabled constants) are deleted. A table cell's
-icon is a `CellIcon` (`SvgCell`, `InfoColumn`, `ActionCell`, `ActionMenuCell` and the `DataGridUtil`
-column builders), made where it is used with its own name; each keeps the icon, name and enabled
-state its preset gave it (e.g. a rule's Delete icon starts disabled). Menu items and the security
-plugins' icons are a plain `SvgImage`, as only the image was used.
-
-### Opening a screen leaves the focus behind (#5405)
-
-**Fixed.** Opening a screen from the main menu left the focus on the menu's button (the closing
-menu gives it back), and opening a document from the explorer left it on the tree, so a keyboard
-user had to Tab across the explorer to reach what they opened (WCAG 2.4.3, Focus Order). The tab
-pane now focuses the screen it opens (`ContentFocus`, from `ContentTabPanePresenter.onOpen`): a
-screen that is a `Focus` focuses itself, otherwise its first tab stop takes the focus, or the screen
-itself (`tabindex="-1"`) if it has none. Focusing doesn't scroll (`preventScroll`), as focus scrolls
-even a container whose overflow is hidden. Two things had stopped it working at first: GWTP's (0.7)
-presenters aren't `IsWidget`, and link tabs carry an empty `tabindex` attribute, which looks like a
-tab stop but can't take the focus (the workbench's `TabStops` counted them too; both now read the
-browser's `tabIndex`).
-
-Screens split into panes were read and tabbed through out of order: `DockLayoutPanel` (and
-`SplitLayoutPanel`) must add its centre last, so a pane to the right of the centre came first in the
-DOM (e.g. User Groups' Members pane before its Member Of pane). `ReadingOrder.apply` reorders a dock
-panel's children as they are laid out (north, west, centre, east, south, splitters last), without
-changing the layout; it is applied to the ten views split that way (app permissions, document and
-create permissions, user access, user groups, pathways, query history and favourites, XSD browser).
-
-Checked by stories `App/Main/AppShell` `OpenedScreenTakesFocus` and `OpenedDocumentTakesFocus`,
-`App/Main/UserGroupsScreen` `ReadingOrder`, and `workbenchTest`'s focus check, which, after every
-story that shows a tab's screen (`ScreenHarness.show`) passes, focuses the screen as the tab
-pane does and fails the story unless the focus lands on one of its tab stops (`lib/focus-check.mjs`;
-pages shown on their own, such as sign in, use `ScreenHarness.showPage` and decide their own focus).
-Every screen passes. Screenshots changed only where a story opens a tab (the focus ring moves from
-the explorer to the opened document). Longer term, layouts built with CSS grid or flex keep DOM
-order and visual order together without `ReadingOrder`.
-
-Since then: `SplitPane` (`stroom.widget.layout.client`, styled by `split-pane.css` under BEM names)
-is to replace both split panels (`ThinSplitLayoutPanel` and `MySplitLayoutPanel`, copies of one
-widget but for the splitter's size). It is a CSS grid whose panes are in the page in the order they
-are shown, and its splitters are focusable separators (the WAI-ARIA window splitter pattern: arrow
-keys, Shift for bigger steps, Page Up and Down, Home, End, Enter to collapse and restore) that a
-mouse, finger or pen can drag, across a frame and on a right-to-left page. Panes are sized `30%`
-(kept as it is resized), `400px` or `*` (the rest), in Java or in a template (`sizes`, `names`,
-`minSizes`, `vertical`, `thin`); a pane left without a size is reported, by name, when the split
-pane is shown. See "Split panes" in `COMPONENT_MODEL_DESIGN.md`. Stories `Widgets/Layout/SplitPane`: `Compare*`
-show an old panel above a split pane set up alike and check their panes match, and the runner drags
-both with the real mouse (the split pane follows the mouse to the pixel; the old panels drift 4px
-on each grab of an end-anchored pane, and take 2px off a proportional one); the rest cover the
-keyboard, names, an end-anchored pane, a hidden pane, a right-to-left page, a drag across a frame,
-resize notices, a missing size and a nested template.
-
-Then, from research into what the old panels do when they are resized: a fixed pane kept its
-size however small the panel became (squeezing the centre to nothing), and a minimum size only
-limited drags. A split pane now shrinks the pane taking the rest first, to its minimum, then the
-sized panes, to theirs, and restores each as it widens (`Widgets/Layout/SplitPaneResizing`
-measures old and new at several sizes: first pane fixed, second fixed, a share, with minimums,
-stacked). Also: drags lay out at most once a frame; a pane collapsed to nothing is `inert`;
-double click collapses and restores (WCAG 2.5.7); keyboard focus is drawn as the app's focus; thin
-splitters show in forced colours (the runner checks it, and fails without the rule); and
-`setOnResized` says when the user has resized a pane. `Widgets/Layout/SplitPaneContent` tries it
-with Stroom's data grid and code editor, the stepping screen's four pane layout (beside the old
-panel), forms and double clicks. No screen uses it yet; User Groups is to be the first.
-
-Then, from measuring it against WCAG: splitter lines were 1.3:1 (dark) and 1:1 (light) against
-Stroom's table and editor, and keyboard focus 2.6:1, under the 3:1 of 1.4.11; they are now drawn
-with `--splitter__line-color` (grey-600) and `--splitter__focus-color` (per theme), which the
-runner checks in both themes. A splitter's name is required, and its value is said as "30% of the
-width". For 2.5.7, a splitter's menu (right click, long press, context menu key) maximises the pane
-either side or restores them, and Alt+M maximises the pane holding the focus (a visible collapse
-button was tried and dropped, as it sat over pane content). Known gap (2.5.8): a 7px splitter has
-no room where another meets it in a T at its centre, as in User Groups' 50/50 split.
-
-Since then, the line is drawn in the border colour again (`--border-color`), as other borders are,
-to be revisited with the theme colours; keyboard focus stays at least 3:1.
-
-Since then, every view uses `SplitPane` (the main screen's explorer and docked AI chat among them),
-and the old panels, their CSS, their stories and the comparison stories are deleted. The `Drag`
-stories in `Widgets/Layout/SplitPane` now drag split panes alone, checking each follows the mouse to
-the pixel.
-
-### Dashboard splitters out of reach of the keyboard
-
-**Fixed.** A dashboard's splitters (`FlexLayout`'s `Splitter`) couldn't be reached or moved from
-the keyboard (WCAG 2.1.1) and had no role or name. The panels and splitters were added to the page
-in a hash map's order, which happened to put the panels in layout order and every splitter after
-them. They are now focusable separators (`role="separator"`, the
-WAI-ARIA window splitter pattern), added in layout order (each after the last panel before it, the
-dashboard's own width and height splitters last), named for the panels either side ("Resize Query
-and Table") with their position as a value ("40% of the width"); the arrow keys along a splitter
-move it 10px (50px with Shift), and Home and End to its limits. See "Dashboard splitters" in
-`COMPONENT_MODEL_DESIGN.md`.
-
-Also: maximising or restoring a panel from its menu rebuilt the layout and lost the focus (the
-closing menu gave it back to the removed tab), so a keyboard user started again from the top of the
-page (WCAG 2.4.3). `FocusMemory` puts it back on the panel's tab, or the splitter it was on; a single
-deferred restore ran before the menu had closed, so it retries while the focus is in a popup. The
-splitter, glass and marker CSS moved from `dashboard.css` to `flex-layout.css` under BEM names, and
-the layout's sizing to `LayoutSizes` (`TestLayoutSizes`).
-
-Checked by stories `App/Editors/DashboardEditor`: `TabOrder*` (side by side, stacked, nested,
-deeply nested, tabbed, after docking), `SplitterKeyboardResize`, `SplitterKeyboardResizeStacked`,
-`FocusKeptWhenMaximised` (which fails without `FocusMemory`), `SplitterFocused`, `SplitterDragging`,
-and `SplitterAboveVisualisation` (the splitter stays above a visualisation's frame, by its overlay;
-see "Sample data installs the old visualisations"). Known gaps:
-drags are mouse only; Tab from inside a visualisation's frame goes to the end of the page; a
-splitter's name isn't refreshed when a tab is renamed while it has the focus.
-
-### Errors not identified to screen readers (#5409)
-
-**Fixed.** Several dialogs didn't identify input errors to assistive technology (WCAG 3.3.1, Error
-Identification):
-
-* Create (e.g. a new Feed) and Rename with no name showed a warning alert, which a screen reader
-  didn't read: the focus went to its Close button and the dialog wasn't described by its message.
-  The message is now shown under the Name field (`FormGroup.setFeedback`, which marks the field
-  `aria-invalid` and described by the message), and the field is focused, so its label and the
-  message are read. The field is also marked required (`CreateDocument`,
-  `NameDocumentViewImpl`; the workbench's `App/Main/CreateDocumentDialog` `NoName`).
-* Add External User(s) could be submitted with every field blank: no identity asked the server to
-  create a user with none, and no users in Add Multiple closed the dialog as Cancel does. Add User
-  Group with no name did the same as no identity. Each now says why under its field and keeps the
-  dialog open (`TestCreateExternalUserController`, `TestCreateMultipleUsersController`,
-  `TestCreateNewGroupPresenter`; the workbench's `App/Main/UsersScreen` `NoUserIdentity` and
-  `NoUsersToAdd`), and the server refuses a blank identity or group name
-  (`UserServiceImpl`, `TestUserServiceImpl`).
-* Every alert is now an alert dialog (`role="alertdialog"`) described by its message
-  (`aria-describedby`), so a screen reader reads the message when it opens
-  (`PopupUtil.setAlertDialogRole`; the workbench's `App/Main/ApiErrorAlertHost`).
-* Find In Content gave no guidance on what to type, and an invalid regex matched nothing and said
-  nothing (the server logged it as an error). The pattern box is now named, with guidance under it
-  that changes with the Regex toggle, and the server says why a regex is invalid
-  (`RegexPatternValidator`), which is shown under the box in a live region (the workbench's
-  `App/Main/FindInContentDialog` `InvalidRegex`). Find's quick filter is named "Find by name", says
-  what may be typed, and its syntax help lists the explorer's fields.
-* A quick filter the server rejected was only shown by its styling and hover text. The box is now
-  also `aria-invalid` and described by the reason, which is in a live region, so a screen reader
-  says it as the user types (`QuickFilter.setFilterError`; the workbench's
-  `Widgets/Inputs/QuickFilter` `RejectedFilter`).
-* A quick filter was a plain text box to assistive technology, so nothing said it searched. Its
-  input is now `type="search"` (a `searchbox`), with the browser's own clear button hidden as it
-  has its own (`QuickFilter`, `quick-filter.css`; the workbench's `Widgets/Inputs/QuickFilter`
-  `FiltersAList`).
-
-### An expression term being edited is under 24px high
-
-**Fixed** (2026-10-22: the rows and term fields are 24px). **Reported.** While a term is edited, its tree row (the `treeitem`) is 23px high (`TermEditor.css`,
-`.termEditor-inner`), under WCAG 2.5.8's 24px, which axe reports as `target-size` for a story that
-ends with a term open (found with `Widgets/Query/ExpressionBuilder` `DateTermBoxes`, which now
-leaves the term with Escape before it ends). For the expression tree's own work (session 5).
-
-### Keyboard trap in the code editor
-
-**Fixed (session 6).** Tab in an editable code editor inserted an indent, so keyboard users couldn't
-leave it (WCAG 2.1.2). Every editor now has Ace 1.44's keyboard accessibility mode on
-(`enableKeyboardAccessibility`, set by `AceEditorPane` through `AceEditor.setKeyboardAccessibility`, one of
-two setters added to `AceEditor` with approval): Tab reaches the editor's content, its one tab stop
-(Ace's text input is no longer one, and the gutter, which the mode also makes one, is put back as it
-was, its errors and folds having Ace's keys while editing: Alt+E, F2); Enter on the content starts editing, where Tab still
-indents; Escape stops editing, back to the content, and Tab then moves on. Chosen over a Stroom key
-of its own (Ctrl+M, or Escape then Tab) as it is Ace's own, documented pattern, named for screen
-readers. Dialogs already leave keys from Ace's text input to Ace (`AbstractPopupPanel`), so in a
-dialog the first Escape stops editing and the second cancels. With Vim keys, Escape leaves insert
-mode, and a second leaves editing. Ace's focus ring (a fixed blue for any focus) is replaced by
-Stroom's, for keyboard focus only, in a colour that follows the editor's theme. The text input's
-name ("Code editor"), which Ace now rewrites on focus, goes in through Ace's `textInputAriaLabel`
-(`AceEditor.setTextInputAriaLabel`). Stories: `Widgets/Editors & Viewers/AceEditor`
-`KeyboardWayOut`, `KeyboardErrorsAndFolds` and `KeyboardReadOnly`, `AceEditorFeatures` `VimKeys`, and `App/Editors/QueryEditor`
-`ColumnFilterMenu` (Escape in a dialog); real input `ace-editor.mjs`.
-
-### XML schema text tab handlers
-
-The XML schema's text tab adds its change handler again on every editable read.
-
-**Checked and intended:** a read-only dashboard can still enter design mode and change its layout
-and component settings (they aren't saved).
-
-### Upgrading the Ace editor
-
-**Upgraded.** Stroom now ships Ace 1.44.0 (the non-minified `src` of npm
-`ace-builds`), from its one tracked copy (`edu/ycp/cs/dh/acegwt/public/ace`; the copies in
-`stroom-app/src/main/resources/ui` are build outputs). `ace.js` is no longer patched: Stroom's
-annotation types go in as each annotation's `className`, and `AceEditor` labels their gutter
-markers for screen readers, which Ace only does for its own types. The workbench's
-`AceEditorFeatures` and `AceEditorThemes` stories cover folding, the search box, autocompletion,
-snippets, every annotation type (in the gutter, with its tooltip, and the overview bar), stepping's
-and the query editor's markers, the context menu, formatting, Vim keys, Stroom's modes and the
-editor themes, including the 10 that 1.44 added, which the user preferences now offer. Ace 1.44 has
-`enableKeyboardAccessibility`, which fixes the trap (Tab moves past the editor, Enter starts editing
-and Escape stops), now turned on (see Keyboard trap in the code editor).
-
-### Expression terms and tables
-
-**Reported.** The expression tree is now a named `tree` whose items say what they are and are
-reached and edited from the keyboard (`Widgets/Query/ExpressionBuilder` `Keyboard*`). Tables are
-`treegrid`s of rows, column headers and cells. Checked again (data_grid2, 23 October 2026): a grid
-with no name of its own is named by its table name, the number inputs in cells are named by their
-column's heading (`ValueSpinnerCell`), and the quick filter's buttons, help included, are 24px.
-**Fixed** (3 November 2026), the column headers with no name (item 5 of the
-[data grid completion design](https://claude.ai/artifact/JhmrPgGYipwy3ihPPQFPgW)): 85 in 45 grids, a
-grid's icon, tick box, expander and action columns. A header that shows no text is named by visually
-hidden text: by its column's kind (`ColumnNames`: "Select", "Expand", "Info", "Actions", or an
-`ActionCell`'s own name such as "Clear and rebuild cache"), or as its screen gives it
-(`DataGrid.hiddenHeader`: "Type", "Status", "Help", "Severity", "Highlight", "From Icon" and the
-like). The workbench runner checks axe's `empty-table-header` rule as well as the WCAG ones, so a new
-unnamed header fails its story.
-
-### Menu buttons don't say they open a menu
-
-**Fixed**: buttons that open menus say so and whether the menu is open (`ShowMenuEvent.Builder.opener`
-with a button marked by `ToolbarButton.setOpensMenu`, `MenuOpener.mark` or, in a grid row,
-`RowActions.menuButton`). Left: the row action menus of the data retention rules (`DataRetentionPolicyList`) and content templates
-(`ContentTemplateList`), whose `showActionMenu` is never called (dead code).
-
-### Controls with no accessible name
-
-**Fixed**: all those listed here (see Fixed), and a grid's icon columns' empty headers (see Expression
-terms and tables).
-
-
-### Missing roles and states
-
-**Fixed**: all those listed here (see Fixed).
-
-
-### GWT widgets and raw controls used where a Stroom component should be
-
-**Confirmed** (a search of the client code, 22 October 2026). Leaving out layout panels, text
-(`Label`, `HTML`), the forked text boxes (`TextBox`, `TextArea`: the Text inputs component) and the
-Stroom components that wrap a native element (`Button`, `TickBox`, `ColourBox`,
-`CustomFileUpload`, `PasswordBox`, the cells' inputs, `RowActions`, `NewTabLink`).
-
-Decided on 2026-10-22: change only what stops a keyboard or screen reader user, and only without
-changing how it looks. Reset Store, Reset Data and Show All became Stroom's `Button`; the floor
-map's form grids are now `role="presentation"` (`FloorMapAria.layoutTable`); the welcome page's
-build info names are row headers; and content pack icons have an empty `alt`.
-
-Still to do:
-
-* The Pathways editor's paths (`PathwayTree`) are an `HTML` widget whose nodes are chosen
-  by a click, with no roles and no keys, so they can't be used without a mouse. The grid's tree
-  profile (`DataGridProfile.TREE`) would fix both, but changes its look to the explorer tree's.
-  Left until the Pathways editor itself is fixed (see "The Pathways editor can't create a pathway
-  or add a constraint").
-
-Left as they are, on purpose:
-
-* GWT's `Button` for the navigation logo (`NavigationViewImpl`) and the floor map layer grip
-  (`FloorMapLayersPresenter`): real buttons already, so only their styling differs. (The task's
-  Terminate, `UserTaskViewImpl`'s, is a `ToolbarButton` in a `Toolbar` since wave 3's `UserTask`.)
-* GWT's `Hyperlink` for "Forgot password" (`Login`) and `Anchor` in the content pack
-  details (`ContentStoreContentPackDetails`): real links already.
-* "View Source" (`DataViewer`, a template `div` with `role="button"` since wave 13), complete (Enter and Space
-  press it, and it says when it is disabled).
-* The current selection's `<table>` (`TableBuilder`, from `DashboardContextImpl`): its components'
-  names are `<th>`; the name and value rows read in order, and row headers there would need `<th>`'s
-  heading look or a new `TableCell` option.
-* GWT's `SuggestBox` in the term editor (`TermEditor`): the Term editor in `COMPONENTS.md` replaces
-  it. **Decided** (28 October 2026, the wave after 24): not with `SelectionBox`, whose behaviour stays
-  as it is, but with a new Stroom `SuggestionBox` on `BaseSelectionBox`'s popup list, keys and async
-  model: its value is the field's text (suggestions are hints), typing opens the list filtered by
-  what was typed (an editable combobox with list autocomplete), choosing one fills the text, Escape
-  closes the list keeping the text; BEM block `suggestion-box`. `AsyncSuggestOracle` becomes an async
-  list model. **Done** (28 October 2026, wave 25): `SuggestionBox`, fed by `TermValueSuggestions`;
-  its list is its own (the selection box's list moves the focus into its rows, which an editable
-  combobox can't).
-* GWT's `PopupPanel` for the editor's indicator popup (`OverviewTooltip`): part of the Ace editor
-  work.
-* GWT's `FormPanel` round the asset add and rename dialogs and the step location dialog,
-  `FocusPanel` round the main and full-screen views (and the floor map canvas, its keyboard
-  surface), and `DockLayoutPanel` in six floor map views (the Layout panels row of `COMPONENTS.md`):
-  layout, not controls.
-* ~~`Templates.input()` and `ItemCell`'s `<select>`: unused, waiting for the removals.~~ **Deleted**
-  (`ItemCell` on 28 October 2026, `Templates.input()` on 29 October 2026, wave 34).
-
-### Dialogs larger than the window
-
-**Fixed** (`PopupUtil.showPopup` limits a dialog to the window, its content scrolling). **Confirmed** (measured in the workbench at 1280 x 720). Many dialogs open at a fixed size larger than a
-small window, so part of them is off screen and can't be reached: e.g. the processor filter, Find In
-Content, Recent Items, Batch Change Permissions and Change Permissions (800 x 800), the volume group
-editors and the stream viewer (1400 wide), the Edit Account dialog (737 high) and the index field
-editors. Dialogs aren't limited to the window's size, and long forms rely on scrolling inside them.
-
-### Text too faint on the dark theme's page colour
-
-**Confirmed** (`workbenchTest`'s accessibility check, dark theme). The workbench now shows stories
-on the theme's page colour (`--page__background-color`), which Stroom's panels and dialogs are drawn
-on, instead of the near-black app background, and two stories' text then falls below the WCAG AA
-contrast ratio (`color-contrast`) (a third, `CopyText`'s inserted text, was the story's own colour, a
-token that doesn't exist, and is fixed):
-
-* the Traces screen's histogram hint and timeline header text (`.histogram-hint`,
-  `.timeline-header` spans; `app-main-tracesscreen--traces`);
-* a disabled form group's description (`.form-group__description`, faded to 80% and in the
-  disabled colour; `widgets-inputs-formgroup--disabled`). WCAG exempts text that is part of a
-  disabled control, so this one may be acceptable. **Fixed**: a disabled description is no longer
-  faded as well as greyed (`form.css`); the story passes in both themes and is out of the baseline.
-
-They were in `test-runner/a11y-baseline.json`; neither story is now.
-
-### Top bar focus rings cut off
-
-**Fixed.** The keyboard focus ring of every control along the top of the app shell was partly
-hidden (WCAG 2.4.7, Focus Visible): each ring is a 1px border with a 4px `--focus-shadow` band
-outside it, and each control sat against the edge of an element that hides its overflow, at the top
-of the window with no room above it:
-
-| Control | Was | Cut off | By |
-|---|---|---|---|
-| Main Menu, beside the logo (`NavigationViewImpl`) | a plain `Button`, 44 x 41 | top 4px, right 4px | `.navigation` |
-| Hide Sidebar, left of the document tabs (`CurveTabLayoutViewImpl`) | a plain `Button`, 30 x 33 | top 4px, left 4px | `.split-pane__pane` |
-| Ask Stroom AI (`MainToolbar`) | a `toolbar--header` button, 32 x 32 | top 3px | `.mainViewImpl` |
-| Show Main Menu (`MainToolbar`) | a `toolbar--header` button, 32 x 32 | top 3px, right 3px | `.mainViewImpl` |
-
-Ask Stroom AI and Show Main Menu also drew their focus border twice: `toolbar--header` gave the button
-a 1px border of its own that turned the focus colour, inside which the standard toolbar button's
-`::before` drew its own.
-
-Main Menu and Hide Sidebar are now toolbar buttons, each in a toolbar of its own (Hide Sidebar swaps
-its icon and title as the sidebar is hidden and shown), and `toolbar--header` is gone, so all four
-are standard 24px toolbar buttons with the one `::before` focus border. Each bar centres its buttons
-(the tab bar's row and the application's toolbar are 33px high, the explorer's title bar 41px), and
-each toolbar keeps at least 4px from the edge beside it. The old `main-menu` and
-`navigation-menu-button` styles are removed.
-
-Checked by stories `App/Main/TopBar`: `FocusRings` (every ring shown with pseudo-state classes and
-measured with `FocusRingClipping`) and `Keyboard` (the real keyboard reaches each control and draws
-its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/Main/AppShell`
-`ToolbarTabStops` counts Main Menu and Hide Sidebar as one tab stop each.
-
-### Nothing has been tried with a screen reader
-
-**Open** (30 October 2026, moved from COMPONENTS.md § Checklist): every row of the checklist's
-Screen reader column is "no" (the Layout panels row aside, where it doesn't apply). Each component's
-roles, names and states are checked with axe and the workbench's play functions, but none has been
-heard in NVDA or VoiceOver, so what a screen reader actually says (e.g. a grid's row as it is
-selected, a live region's timing, a dialog's description) is unknown. `COMPONENT_MODEL_DESIGN.md`
-says the same of the data grid, the date and time boxes, the overlays and the code editor, and
-"Toolbars are a tab stop per button" of toolbars. Needs a person with a screen reader.
-
-### Tab bars: link tabs too small and unnamed, document tab names cut, loading not announced
-
-**Fixed** (30 October 2026, moved from COMPONENTS.md § Status, Tab bars (documents) and Link tabs;
-the first point fixed 3 November 2026, the rest 4 November 2026): left from the tab bars' retrofit (`AbstractTabBar`,
-shared by both bars):
-
-* **Fixed** (3 November 2026; "Toolbar buttons' and tabs' focus rings are cut off"): a link tab
-  is 24px high, a 24px target (WCAG 2.5.8). It was about 16px tall (its label's text:
-  `tab-bar.css` `.tab-bar--link`, sized by the invisible `tab-bar__strut`), under 24px, and passed
-  axe only where nothing was close enough beside it (the Data Retention one that didn't was fixed by
-  1px more room below its bar,
-  A11Y.md batch 5).
-* **Fixed** (4 November 2026, the user's naming): a link tab bar's `tablist` had no name, where
-  the document tabs' is "Open documents". Each is now "<what it shows> views", to tell it from the
-  other tab lists on the screen: a document editor's from its document type ("Pipeline views",
-  `TabbedController.read`), and the others in their templates ("Data Retention views", "Pane views"
-  for a dashboard pane, "Settings views" for a pane's settings and Ask Stroom AI's, "Column filter
-  views", "Query result views", "Preferences views", "Data views").
-* **Fixed** (4 November 2026): a document tab's name was cut at 50 characters with "..." in its
-  text, so a screen reader heard the shortened one. It is cut where it is drawn instead (`tab-bar.css`,
-  an ellipsis at 42ch, about the same place), so its name is all of it (`CurveTabBar` `LongName`).
-* **Fixed** (4 November 2026): a tab panel holding nothing focusable wasn't a tab stop, so Tab from
-  the tab list passed over the selected tab's content. It is one while it holds no tab stop of its
-  own, as the ARIA tabs pattern asks, checked whenever what it holds changes (`TabPanelTabStop`, a
-  `MutationObserver`), with an inset focus ring (`tab-bar__panel`; `LinkTabPanel` `Basic`).
-* **Fixed** (4 November 2026, the user's decisions): a document tab's loading wasn't announced, as
-  its spinner, a `SmallBusySpinner`, says nothing (see "The small busy spinner says nothing"). Now
-  only the selected tab's loading is announced, the one the user is waiting on, and only once it has
-  gone on for a second, so quick loads and tabs loading out of sight say nothing: "Loading <name>",
-  then "<name> loaded" when it is (only if its loading was said), in a polite status region in the
-  bar (`CurveTabBar.ui.xml`; `TabLoadAnnouncements` decides, `AbstractTabBar` runs the delay). While
-  it loads, a tab's description is "Loading" (heard after its name; one hidden element in the bar,
-  outside the tabs, as a tab's text is its name and is read by code too), and while the selected one
-  loads its panel is `aria-busy` (`CurveTabBar` `Loading`).
-
-### Document tabs don't shrink to fit
-
-**Fixed** (4 November 2026, the user's design). Raised 4 November 2026: the document tabs kept their
-natural width (a long name up to about 50 characters, 42ch), so a few long names filled the bar and
-the rest overflowed into the » selector, where most apps' tabs shrink first.
-
-Now, when they don't all fit, their labels are cut, the widest first, down to the next widest, then
-all alike, as a browser's tabs shrink (a 400px name shrinks to a 200px one's width, then both
-shrink together; the selected tab too), but no narrower than about 10 characters (`10ch`, so it
-follows the text's size; a shorter name is never cut). Past that the tabs that still don't fit
-overflow into the selector, as before. The bar works out the cap (`TabLabelCap`, from the labels'
-text widths, less each tab's icon, close cross and padding and the gaps) and sets it as
-`--tab-bar__label-cap` (`CurveTabBar.fitTabs`, called by `AbstractTabBar.onResize` before it
-picks the tabs shown); the stylesheet clamps it (`tab-bar.css`). Link tabs, short fixed names, keep
-their width. The bar is also laid out again once the page's fonts have loaded, as the tabs' widths
-change then though the bar's size doesn't (the `Overflow` story's keyboard check failed without it,
-the bar having been laid out with the fallback font; done for every tab bar, `AbstractTabBar.onLoad`).
-(`CurveTabBar` `ShrinkToFit`, `ShrinkThenOverflow`.)
-
-The » selector now looks like a tab (the user's design, 4 November 2026): a document tab's shape,
-height, background and hover, with no border of its own, and a tab's focus ring (a line on its edge
-and a band outside it, where it had an inset ring); the number of tabs hidden is on the arrows'
-line, in the tab's text size, where it sat below it in a smaller one (`tab-selector.css`).
-
-### A document tab dragged to a new place no longer shows its loading
-
-**Fixed** (4 November 2026). Found the same day reading the code for the loading announcements:
-dragging a document tab to reorder it (`DraggableTabBar` → `AbstractTabBar.moveTab`) removed its
-widget and made a new one (`createTab`), but a document's requests report to the tab widget it was
-opened with (`ContentTabPaneController.TabTaskMonitorFactory` keeps it). So after a move, the tab's
-spinner never showed, and its loading was never described or announced. Now a move puts the same
-tab in its new place, keeping its spinner, description and id (which names the panel). `CurveTabBar`
-`Loading` moves the loading tab (Move to Start) and checks it still says "Loading" with its spinner
-showing; it failed before the fix.
-
-### A link tab bar's overflow selector is drawn outside its bar
-
-**Fixed** (4 November 2026). Found the same day while restyling the selector (already in the
-baseline): in `LinkTabPanel` `Overflow` (a 320px box), the tabs shown ran to about 362px and the »
-selector was placed at 364px, past the bar's 338px. The room was right (the tab list's 305px); the
-walk that picks the tabs shown (`AbstractTabBar.getDisplayableTabs`) was wrong. It counted each
-tab and the gap between tabs, but not the "|" separators between link tabs (15px each), so six
-43px tabs and the selector (285px by its count) took 333px and more. Nor did it count the room
-before the selector: the last tab's gap, the selector's 2px offset and a link selector's 4px margin
-(a document bar's selector could hang 8px past the bar). Link tabs were 8px narrower before the
-3 November change, so it showed less. The walk now counts a separator between tabs (measured on one
-made for the purpose) and the selector's whole room. `LinkTabPanel` `Overflow` checks the last tab
-shown and the selector end in the bar, and `CurveTabBar` `OverflowAlgorithm` that the selector
-isn't drawn past the bar (its other cases are in a 260px bar, from 250px, to keep their results);
-both failed before the fix.
-
-### The small busy spinner says nothing
-
-**Open** (30 October 2026, moved from COMPONENTS.md § Status, Busy spinners): the large spinner is a
-`role="status"` live region that says "Loading..." once it shows (`LargeBusySpinner.ui.xml:5`,
-`LargeBusySpinner.java:36`), but the small one (`SmallBusySpinner.ui.xml`: a picture with the title
-"Loading...") has no role and no status text, so a document tab's, the explorer's and Ask Stroom
-AI's loading aren't announced. Also left there: `.sr-only`, a general utility, lives in
-`spinner.css`.
-
-**Fixed for document tabs** (4 November 2026; "Tab bars: link tabs too small…"): the spinner tells
-its owner when it starts and stops (`SmallBusySpinner.setOnBusyChange`), and a document tab's bar
-announces its selected tab's loading. Still open: the explorer's, and Ask Stroom AI's, which is
-waiting on changes to the AI window from another branch (its answers aren't announced either: it
-has no live region).
-
-### The pager's page boxes are unnamed and reached only by the mouse
-
-**Open** (30 October 2026, moved from COMPONENTS.md § Status, Data grids): a pager's "1 to 100"
-becomes two text boxes, `txtFrom` and `txtTo` (`Pager.ui.xml:11` and `:14`, hidden until then), only
-when its labels are clicked (`Pager.onClickFrom`/`onClickTo`, `Pager.java:156`-`163`): the labels
-are `Label`s, not tab stops, so the keyboard can't get to the boxes, and the boxes have no
-accessible name. The toolbar's First, Backward, Forward and Last buttons are named and reachable.
-
-### The floor map views' reading order isn't checked
-
-**Open** (30 October 2026, moved from COMPONENTS.md § Status and Checklist, Layout panels): every
-`DockLayoutPanel` became grid or flex layout, where the DOM order (what a screen reader reads and
-Tab follows) can differ from where a panel places its children; `ReadingOrder` was deleted, as no
-split panel is left. The floor map's views (its editor and map, added since, moved to flex in wave
-13) haven't been checked for it.
-
-### A data grid's columns can't be moved one place or resized from the keyboard
-
-**Open** (30 October 2026, moved from COMPONENT_MODEL_DESIGN.md § Data grid, "Not done yet"):
-
-* A column is resized only by dragging its header's edge, and moved only by dragging its header
-  (`ColumnInteractions`). The dashboard and query tables' column menus have Move Column to Start
-  and Move Column to End (`ColumnsManager.java:804`/`813`, `QueryTableColumnsManager.java:570`/`579`),
-  but nothing moves a column one place or changes its width. Agreed: Move and Resize items in the
-  column menu, not shortcuts.
-* A cell holding more than one control gives the focus to the first: `DataGridKeyboard`'s
-  `editableControl`, `directControl` and `formControl` (lines 767-783) each take the cell's first
-  match (`querySelector`), so the keyboard can't reach a second control in the same cell.
-
-### Toolbars can't show their buttons' names as text
-
-**Fixed** (4 November 2026; COMPONENT_MODEL_DESIGN.md § Toolbars, Display preference;
-`Widgets/Buttons/ToolbarDisplay`). The user's Toolbar Buttons preference (User Preferences, Theme)
-shows an action toolbar's buttons as icons (the default), icons and text, or text, the text-only
-buttons bordered; 114 buttons have short labels, the rest show their names; buttons that don't fit
-go into a More menu. `TestToolbarButtonLabels` checks each label is the start of its name.
-
-Found 30 October 2026 (moved from COMPONENT_MODEL_DESIGN.md § Toolbars, Display preference
-(later)): toolbars were icons only; a button's name is its tooltip and what a screen reader
-announces. The agreed preference (icons only, text only, or icons and text) wasn't implemented.
-
-**Decided** (4 November 2026, the user's choices): a preference of three, icons only (the default,
-as now), icons and text, or text only, on User Preferences' Theme tab beside Density
-(`UserPreferences`).
-
-* **Labels:** a button shows a short label (e.g. "Edit", "Batch Edit"), written for it, that its
-  name starts with, so that its screen reader name still contains what it shows (WCAG 2.5.3, label
-  in name); its name stays its tooltip. A button whose name is already short shows its name.
-  Measured: about 195 buttons in 50 toolbars; names average 19 characters, 57 are over 25 (up to
-  61, "Show Cluster Values (all nodes have the same effective value)").
-* **No room:** buttons that don't fit go into a "More" (⋯) menu at the end of the toolbar, as tabs
-  overflow into the » selector, so every button stays reachable.
-* **Scope:** action toolbars (a document's, a list's, a dialog's, a pane's) follow it; buttons in or
-  beside fields (quick filter help, show password, a spinner's arrows), the pager's arrows, window
-  options and the main toolbar's icons stay icons only.
-* **Text only:** no icons anywhere; a button whose icon shows a state says it in its label instead,
-  as its name already does ("Pause" / "Resume", "Disable" / "Enable").
-
-### Text size and high contrast (#3695)
-
-**Deferred** (30 October 2026, moved from A11Y.md § Batch 5): two parts of GitHub #3695, tracked
-apart since 23 October 2026. The issue's other items (from a 2023 comment: stepping, menus, the
-dashboard's scroll bar, the term editor's drop-down and more) are listed one by one in A11Y.md
-§ Batch 5, "#3695 item by item" (4 November 2026).
-
-* **Large text: fonts don't scale.** Waits for the whole-app text size pass, with the user's text
-  size preference (text size and spacing, e.g. the stepping bar's fixed-size chevrons; and the
-  density setting not making a grid row with controls tighter, `COMPONENT_MODEL_DESIGN.md` § Data
-  grid).
-* **High contrast: things disappear.** Many stylesheets have `forced-colors` rules (menus, grids,
-  tabs, dialogs, split panes, the calendar, the pipeline tree), and the workbench runs stories in
-  forced colours, some checks failing without a rule (e.g. the splitters). Still to do: a pass over
-  the whole app in forced colours (Windows High Contrast) for anything that disappears.
-
-### No warning on a low-contrast custom row style
-
-**Open** (30 October 2026, moved from A11Y.md § Batch 5): a table's conditional formatting can give
-rows a custom text and background colour (`CustomRowStyleEditor`), and nothing warns when the two
-don't meet WCAG's contrast ratio. The baseline entry that showed it was the story's own fault (a
-background with no text colour) and is fixed; a warning in the custom style dialog isn't done.
-
-### A field's focus ring and its validation message
-
-**Fixed in part** (2 November 2026). A focused field's ring is a 4px `box-shadow`
-(`--focus-shadow`, `--focus-shadow--invalid`), which takes no space, so it drew over the top of the
-form group's message (`form-group__feedback`, `margin-top: 0`). That message, and a spinner's own
-(`value-spinner__feedback`), now have `margin-top: .25rem`. A group with a message is taller than
-one without (by the message's line); only `form-group--reserve-feedback` groups keep the same
-spacing, and that stays as it is.
-
-**Fixed** (2 November 2026) for a picker outside a form group, seen on the pipeline's Inherit From
-(its message shown in the browser as `DropDownBox.showProblem` shows it): its own message
-(`drop-down__feedback`) had `margin-top: 0.2rem`, a little less than the ring, and is now `.25rem`;
-an invalid picker's ring was blue and is now red, as an invalid text field's is. Inherit From itself
-was in the bar of element buttons, where the message made the bar taller (31px to 48px) and moved
-the centred label and buttons down 8.5px, and the pane (`split-pane__pane`, `overflow: hidden`) cut
-off the top of its ring. It is now a form group above that bar (`PipelineStructure.ui.xml`), so its
-message is the group's; `PipelineEditor` `InheritFromNotFound` shows it, with the keyboard focus.
-
-**Checked** (2 November 2026): the other pickers and spinners that show their own message outside a
-form group. Ask Stroom AI's model picker (`AskStroomAi.ui.xml`) is fine: its ring clears its message.
-The floor map's image pickers (`FloorMapLayerStyle.ui.xml`, `FloorMapObjectEdit.ui.xml`) and the
-dashboard list input's (`ListInput.ui.xml`) never show one (their controllers don't report a
-problem). Find in Content's pattern uses the form group's message class, so the fix above covers it.
-
-**Fixed** (2 November 2026, the user's design): the expression term's document and user pickers
-(`TermEditor.ui.xml`, in a row of the tree). The message went beside the picker in the row, where the
-tree cut it off, and the keyboard focus drew the blue focus border inside the red ring. The row has
-no room for a line, so a picker can now show its problem as its tooltip
-(`DropDownBox.setProblemInTooltip`, `problemInTooltip="true"`): the red border, a red focus border
-with the keyboard focus (`term-editor.css`), the message as its `title` and its description for
-screen readers. `FocusTooltip` shows it with the keyboard focus too, and now wraps long text (it cut
-it off with an ellipsis). `ExpressionBuilder` `DocumentNotFound` shows it.
-
-**Fixed** (2 November 2026): the Select Record dialog's item number (`ItemSelection.ui.xml`). A
-spinner's message is as wide as its text up to 20rem (`value-spinner.css`), and the dialog is little
-wider than the field, so it cut off the message ("…a whole number from 1 to"). In this dialog the
-message now wraps to the field's width, and "of N" is level with the number rather than centred on
-the field and the message (`item-selection.css`). A spinner elsewhere in a narrow space would need
-the same; making every spinner's message fit the space around it would need container queries.
-
-### Text buttons' colours in their states
-
-**Fixed** (2 November 2026): a green button (`button--contained-green`, e.g. a dialog's Accept and
-New) had the blue focus border and ring, as it had no focus rule of its own. It now has a green one
-(`--focus-border--green`, `--focus-shadow--green`: green-900 in the light theme, green-300 in the
-dark, as a secondary button's are pink-800 and pink-300). `Widgets/Buttons/ButtonStates` shows each
-colour enabled, disabled and loading, and hovered, pressed and with the keyboard focus (the real
-input checks in `test-runner/lib/real-input/buttons.mjs`), for the screenshot comparison.
-
-**Fixed** (2 November 2026, found by that sheet): a loading button (`Button.setLoading`,
-`button--loading`) was faded (`opacity: 0.8`), as a disabled one is, but could still be pressed, so
-its action could run again (e.g. Git Push, Test Connection, Send Test Email; only Sign In disabled
-itself too). The fade took its white text below 4.5:1 (primary and green in both themes, secondary
-in the light). A loading button now can't be pressed (a click, Enter or Space runs nothing, and a
-press shows no ripple), is `aria-disabled` as well as `aria-busy`, keeps the focus, and shows the
-progress cursor; being inactive, its faded text is exempt from the contrast rule. `Button`
-`Loading` shows it.
-
-**Fixed** (2 November 2026, the user's decision): in the dark theme hovering darkened the primary
-and green buttons but lightened the secondary and the neutral ones. The dark theme now has each
-colour's pair the other way round (blue-800 to blue-700, green-900 to green-800), so hover lightens
-every button there, as it darkens every button in the light theme; both colours of each pair keep
-4.5:1 for the white text (green-700, at 4.1:1, can't be used).
-
-**Fixed** (2 November 2026, the user's decision): pressed looked the same as hovered, the only press
-feedback being the ripple (`button--down` only took away a faint top highlight). A pressed button
-(`:active`, the mouse or a held Space) now has a 12% black layer over its colour, under its text
-(on the ripple's container), so it is a step darker than hovered in the light theme, and back
-towards its normal colour in the dark; its white text only gains contrast. The colours had no
-further shade to use (green-900 is the darkest green; blue-700 and green-800 the lightest with
-4.5:1). `ButtonStates` `PressedX` show it.
-
-**Kept** (2 November 2026): a loading button's fade (now that it can't be pressed) is lighter in the
-light theme and darker in the dark, as it shows the page through.
-
-### Toolbar buttons' and tabs' focus rings are cut off
-
-**Fixed** (3 November 2026, for toolbars, link tabs and document tabs, below). Found 2 November
-2026, measured: a toolbar has a 2px margin (`toolbar.css`) but a
-toolbar button's focus band reaches 4px, and a link tab's ring reaches 5px above and below it and
-8px either side (`tab-bar.css`, a line outside the tab and a 4px band) in an 18px bar, so where
-something around them hides its overflow the ring is cut. A scan of the first story of each App/
-and Screens/ component (157 stories) found 870 of 1,498 visible toolbar buttons cut, almost all by
-2px at the top (`tab-layout__content` 471, `split-pane__pane` 148, `overflow-hidden` panels), and
-13 of 345 link tabs (e.g. the data viewer's, by `data-viewer__tab-bar-outer`).
-
-**Fixed for toolbars** (2 November 2026, the user's decision): a toolbar now has 4px of padding in
-place of its 2px margin (`toolbar.css`), so it holds its buttons' rings and nothing around it can
-cut them (the same scan: 1 of 1,496 cut, a button scrolled half out of view). A toolbar over or in
-a field, or in line with text, has none, as the field or text holds it (`toolbar--control`,
-`quick-filter__toolbar`, `password-box__toolbar`, `ai-message__toolbar`); nor does a toolbar in a
-toolbar. Where the room around a toolbar was its screen's own, the screen gives back the 2px, so
-the buttons stay where they were: the explorer's toolbar row and menu, the Hide Sidebar button, the
-query pane's and query toolbar's bars, a results table's and a visualisation's bars, the main
-toolbar, Ask Stroom AI's header, a dialog's window options, a dashboard pane's buttons and the
-stepping controls. Elsewhere (a document's toolbar, a list's bar, a link tab bar's toolbar, all
-against an edge that hides overflow, which is where rings were cut) the buttons move 2px in and the
-bar is 4px higher. Measured by putting the old rules back with an injected style and comparing each
-button's place.
-
-**Fixed for link tabs** (3 November 2026, the user's decision, as for toolbars): a link tab is now
-24px high and 4px wider than its label either side (a 24px target, WCAG 2.5.8), its ring on its
-edge, and a link bar has 4px of padding round its tabs for the ring's band (32px high, from 18px;
-`tab-bar.css`, the overflow selector in line, `LinkTabBar.getTabSpaceWidth` fitting tabs to the tab
-list). The room the bar's containers had becomes the bar's padding, so the tabs stay close to where
-they were (measured on the 345 link tabs in the first story of each App/ and Screens/ component):
-a document's tab bar (`link-tab-panel`) +3px across and -1px down, its 4px below overlapping the
-toolbar's padding under it, so what follows moves 1-3px; a dashboard pane's (`tab-layout`) 0 across
-and -3px; a dialog's (User Preferences) +3px down, its fields where they were; the query results',
-the data viewer's and data retention's +3-4px across, data retention's toolbar 8px lower. The bar's
-invisible strut, which gives it its height, now takes no clicks: transparent (opacity), it was drawn
-over the tabs and took clicks on the start of the first tab (a real-input check found it once it was
-a whole row). The remaining rings counted as cut are rounding (under 1px, the floor map's bars) or
-a results pane squeezed below its bar at 720px high, as before. Fewer link tabs fit a narrow bar, as
-each is 8px wider (`LinkTabPanel` `Overflow`: 6 of 9, from 8). A link tab's label is centred 1px low
-(its line's room for descenders left its letters 1px high); the "|" between tabs isn't, as it
-reaches below the baseline.
-
-**Fixed for document tabs** (3 November 2026, the user's design): the document tab bar
-(`CurveTabLayout`) is 32px high, from 33px, as is the main toolbar at its right, so its 24px tabs
-(from 29px) line up with the Hide Sidebar, Ask Stroom AI and main menu buttons, 4px into the bar, the
-bar's 4px above and below holding their rings' band. A tab's focus ring is a link tab's (one rule
-for both). A selected tab's line is drawn under the tab (`::before`), on the bar's bottom edge over
-the line along it, as it was, and the tab's width whether focused or not; with the keyboard focus
-it is drawn over the ring's band, so the band doesn't tint it. A tab's close cross was a 17px icon
-in a 27 by 18px target that reached past the tab's edge; it is a 24px target with a toolbar button's hover and pressed fills, 3px clear
-of the label (a closeable tab is 4px wider; one that can't be closed keeps its width), and the busy
-spinner is centred where the cross is. The overflow selector is 24px high, in line with the tabs.
-
-### A scroll pane that overflows can't be scrolled from the keyboard
-
-**Fixed** (3 November 2026) for Stroom's `ScrollPane`, and (4 November 2026) for the panes of text
-that used GWT's own `ScrollPanel`.
-
-Found 2 November 2026, shown by the toolbars' padding: when its content is taller than it, a scroll
-pane (`scroll-pane`) scrolls but can't take the focus, so a keyboard user can't scroll it (axe
-`scrollable-region-focusable`). `PipelineEditor` `Processors` shows it: the processor's details
-(309px) no longer fit its pane (307px) now that the toolbar above is 4px higher; at other window
-sizes it was already so.
-
-The fix: a `ScrollPane` is a tab stop while its content is bigger than it and holds nothing that
-takes the focus (tabbing to something in it scrolls it), checked whenever it or its content changes
-size (`ScrollPaneTabStop`). `setFocusable` still forces it either way. With the keyboard focus its
-scrollbars show it: the thumb in the focus colour on a track tinted the focus ring's colour (in
-Firefox, whose scrollbars can hide until scrolled, also the focus ring inside its edge, as a
-`scroll-region` shows). Processors' two panes are named
-regions ("Processor information", "Processor filter"); `Processors` passes again. A pane that may
-become a tab stop should be given a name (`role="region"`, `ariaLabel`), or a screen reader
-announces nothing when it is reached.
-
-Then (4 November 2026) the 13 templates that used GWT's `ScrollPanel` (`g:ScrollPanel`): the seven
-that scroll only text are `ScrollPane`s, each a named region: `HtmlPane` ("Text", the data
-viewer's "Info"), `Splash` ("Terms"), `CodeEditor`'s load error ("Load error"), `QueryDataTab`'s
-error ("Query error"), `ElasticIndexFieldList` ("Field list status"), `SolrIndexFieldList`
-("Synchronisation state") and `XsdDiagramBox`'s content (its box's title). The four sized by their
-own classes or content rather than filling their parent fit it (`fitContent`, `scroll-pane--fit`).
-The other six are left as `ScrollPanel`s, as what they scroll takes the focus (an expression tree,
-a grid, tick boxes, buttons), and tabbing to it scrolls them: `QueryHistory`, `QueryFavourites`,
-`ExpressionEditor`, `FloorMapGroupEdit`, `FloorMapLayers` and `TypeFilter`. The six regions made
-focusable by hand in Batch 4 (A11Y.md) still use `scroll-region`.
-
-### GitHub issues loosely related to accessibility
-
-**Open** (30 October 2026, moved from A11Y.md § Batch 7): open GitHub issues about reading and help,
-not yet worked on.
-
-* ~~**#3416** (marked wontfix): disabled rules look the same as enabled ones in the explorer (the
-  explorer tree has no disabled look).~~ **Kept wontfix** (30 October 2026, the user's decision).
-* **#5847**: nothing says that jobs are disabled for the whole cluster.
-* **#5743**: the Info pane's keys have no help.
-* **#3265** (found 4 November 2026): restructure the main menu to make it more logical and more
-  accessible (a Security menu; the user's menu as a profile icon). Its organisation rather than
-  its accessibility as such.
-
-### ~~A select-only selection box shows no focus ring~~
-
-**Fixed** (6 November 2026; found that day, in Change Step Filters' Minimum Severity): the value,
-which draws the field, shows the focus border and ring while the text box has the keyboard focus
-(`selection-box.css`); `Widgets/Selectors/SelectionBox` "Keyboard Focus Shows A Ring" checks it (and
-fails without the fix). A `SelectionBox` that
-can't be typed in (`selection-box--select-only`, e.g. Minimum Severity, Output, a credential's Type,
-the preferences' Theme) has the keyboard focus on its text box, which draws the ring
-(`text-field.css`'s focus shadow, measured as set), but the text box is unseen (`opacity: 0`,
-`selection-box.css`, so the value's picture shows) and the ring with it; nothing else draws one (the
-template's comment says the box draws its own, but no rule does). So a keyboard user can't see which
-select-only box has the focus (WCAG 2.4.7). Since wave 2 (`cfb8268022`). Fix: draw the ring on the
-box (`.selection-box--select-only:has(.selection-box__input:focus-visible)`) and add a story that
-checks it shows.
-
-### Dialog content doesn't line up with its title, and tab content has no padding
-
-**Open** (found 5 November 2026; measured in every dialog the stories show, 117). `.dialog__content`
-pads its content by the focus ring's room (7px) and `--dialog__padding--horizontal` (1rem) at the
-sides, so that a ring at any edge isn't cut. Three things undo or miss that:
-
-* ~~**Titles sit 5px right of the content in every dialog without an icon** (92 of 117 measured at 20px
-  against 15px). The title bar's `.dialog__icon` is there, 0px wide, when there's no icon, and the bar's
-  `gap: 5px` still comes after it (`dialog.css`, `.dialog__title-bar`).~~ **Fixed** (5 November 2026):
-  `.dialog__icon:empty` isn't shown, so the title starts at the content's edge. A dialog with an icon
-  is unchanged (the icon at the content's edge, the title 10px after it).
-* ~~**Tab content: forms that aren't `.form`.** Measured tab by tab (5 November 2026: 11 tabbed
-  dialogs, 26 shown tabs). A tab panel shouldn't pad its content (a grid, list or editor fills it, as
-  in a dashboard); a form's tab is a `.form`, whose `focus-ring-room` padding keeps rings whole
-  (`layout-helpers.css`). Most are: every dashboard Settings form tab and User Preferences. Not:
-  Credentials' Settings tab (`credential-settings`, not a `.form`, so `.tab-bar__panel`, which clips,
-  cuts the left of Name, Expires, Type, User Name and Password) and Configure Ask Stroom AI's two
-  tabs (a dock column with no gap between its groups, though nothing is cut).~~ **Fixed** (6 November
-  2026): all three are `.form`s, and in a dialog `.tab-bar__panel` doesn't clip (`tab-bar.css`; a
-  `LinkTabPanel`'s layer container did, so the form's room was cut off with it; it shows one layer
-  at a time, so has nothing to hide). The Ask Stroom AI tabs' groups are spaced as other forms'.
-  Every other tabbed dialog measures as before.
-* ~~**Tab content: gaps that differ.** The gap under the tabs depends on what wraps them, not on what
-  the tab holds: -3px (Credentials), 2-4px (dashboard Settings forms), 9px (their grids), 13-15px
-  (User Preferences and Ask Stroom AI, whose tabs sit in an outer `.form` with a flex gap; Stream).
-  `tab-bar.css` gives a dialog's link tab bar `max(0px, calc(var(--control__gap--vertical) - 10px))`
-  below it, which is 0 in compact density.~~ **Fixed** (6 November 2026): a dialog's tab panel is
-  a form group's gap (`--control__gap--vertical`) below its tabs, whatever it holds; User Preferences'
-  and Ask Stroom AI's outer `.form`s are gone (their buttons `button-group--gap-above`). The data
-  viewer (Stream) keeps its own spacing, its tabs sharing a row with its navigator.
-* ~~**Forms in split panes:** Filter's Include Exclude tab (`.form`s inside split panes, which clip both
-  sides).~~ **Fixed** (6 November 2026): `split-pane--forms` (`split-pane.css`) puts the room for
-  rings inside each pane and reaches the split pane as far outside its place, so the fields stay put.
-  Change Step Filters too (the list beside its form inset by the room).
-* ~~**Credentials' Permissions tab is inset 6px** (one control gap; 1rem at normal density) from the
-  title, where every other tab measured lines up with it: the shared permissions tab gives its groups
-  `form-padding` as its room for rings in a split pane, and in a dialog insets the list and details to
-  match. Same in Change Permissions (annotation tags). Its Users and Groups label had a second gap
-  under it (the quick filter's page padding).~~ **Fixed** (6 November 2026): the gap by
-  `quick-filter-page--under-label`; in a dialog the tab reaches out above and to each side by its form
-  padding (`document-user-permissions-tab.css`), which stays inside its panes as the rings' room. A
-  document's own Permissions tab (a page) is unchanged.
-* ~~**Other clipping panes:** Change Step Filters' right pane (`.split-pane__pane`, Minimum Severity and
-  Output)~~ (**Fixed**, above) and the annotation Status and Assigned To choosers' quick filter (cut
-  left, right and top; open).
-
-Some dialogs pad their content again (`form-padding`, 21px: Add Notification, the schedules, HTTP
-client configuration, the password dialogs) and some less (8px: New Dictionary and Save As, Add
-External Users, Edit Tags). Screenshots: `app-main-credentialsscreen--credentials` (New Credential),
-`app-main-annotationeditor--status-chooser-keys`.
-
 ## Copy-paste mistakes and typos
 
 **Reported.**
@@ -2143,11 +737,14 @@ External Users, Edit Tags). Screenshots: `app-main-credentialsscreen--credential
 * ~~`VisualisationAssetsAddItemDialogPresenter`: the blank name error reads "...the name of the
   fileyou wish to create" (missing space).~~ **Fixed** (30 October 2026, checked:
   `TestDocumentAssetAddItemController` is its regression test).
-* `ProcessorFilterChange.SET_RUN_AS_USER`: its description reads "Set a run asuser.".
+* `ProcessorFilterChange.SET_RUN_AS_USER`: its description reads "Set a run asuser." (still so, re-checked 6 November 2026).
 * `AccountServiceImpl`: a comment says a user ID can't change after the account is created, but the
-  field can be edited and the DAO updates it.
+  field can be edited and the DAO updates it (still so, re-checked 6 November 2026:
+  `AccountDaoImpl.java:516`).
 
 ### The data grid's follow-ups
+
+**Re-checked** (6 November 2026, against the code): a row update replacing a focused control is **fixed** (`RowWritePlan`, `TestRowWritePlan`, `GridRows.writeCells`), and `DataGrid.java` is split (1,922 lines). The row update's HTML compare stays, as decided. ~~Still open: a grid's selection depends on its rows' keys, and no grid check has been done (`DataGrid.java:1622`, `:1651` fall back to the row object).~~ **Fixed** (6 and 10 November 2026): the selection follows rows by the grid's key, and rows with no key by `equals` (R-S13, R-S14 in `DATA_GRID_DESIGN.md`); every list was checked (see "A list's selection kept a stale row" and "Lists selected differently after each action" under Fixed).
 
 **Deferred** (October 2026, after the switch to `DataGrid`; for a later session). The grid
 works and its cells are covered by stories; these are the next steps, none urgent.
@@ -2188,13 +785,19 @@ works and its cells are covered by stories; these are the next steps, none urgen
   2026): the event dispatch is `GridEvents`, as the keyboard (`DataGridKeyboard`), column
   interactions (`ColumnInteractions`) and context menu (`DataGridContextMenu`) are, and the grid is
   1,829 lines.
-* **A grid's selection depends on its rows' keys.** A presenter whose rows are fetched again as new
+* ~~**A grid's selection depends on its rows' keys.** A presenter whose rows are fetched again as new
   objects needs a key provider (or rows equal by identity), or its selection is lost on refresh:
   the floor map, the task summary and the processor profile periods were cases (see Fixed and
   Smaller oddities). Check each grid's presenter has one, e.g. by a story that refreshes a list
-  with a row selected.
+  with a row selected.~~ **Fixed** (6 November 2026): see "A list's selection kept a
+  stale row" under Fixed.
 
 ### No Cut, Copy, Paste or Select All on right-click (#5897)
+
+**Re-checked** (6 November 2026, against the code): still open: Stroom links (`link` attributes) outside grids get no menu (`ContextMenuManager.findLinkHref` matches only `a[href]`), and no Copy Image. Safari needs a hand check. The sign-in page is probably fixed: it runs the GIN app entry point, whose `AppModule` binds `ContextMenuManager`, so "no GIN there" looks wrong; a right-click there would settle it. Names since changed: `EditorViewImpl` is `CodeEditor`, and the grid's menu is `DataGridContextMenu`.
+
+**Fixed in part** (on this branch since the `copy_and_paste` work; the follow-ups under "Still to
+do" below are open).
 
 **Confirmed.** `app.html`'s `<body oncontextmenu="return false;">` (`UiConfig.oncontextmenu`)
 blocks the browser's own menu on every text field, password box, quick filter, spinner, date box
@@ -2206,7 +809,7 @@ Selected read-only text (alerts, help, info panes, markdown) and links outside g
 either; iframes (vis, the Documentation preview) still get the browser's. The workbench pages have
 no such handler, so stories see the browser's menu where Stroom doesn't.
 
-Fixed in worktree `copy_and_paste` (2026-10-23, unstaged): `ContextMenuManager` replaces the body's
+Fixed in worktree `copy_and_paste` (2026-10-23), now on this branch: `ContextMenuManager` replaces the body's
 handler (and `UiConfig.oncontextmenu`, removed) and shows Stroom's edit menu (`TextEditMenu`) on
 text fields and Ace (`CodeEditorText`); the grid, the expression tree and Ace put its items above
 their own; selected text gets Copy and links Open Link in New Tab and Copy Link Address; the Text
@@ -2239,6 +842,8 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   isn't closed.~~ Done in wave 21 (28 October 2026). `App/Editors/IndexEditor` `DataTabRun` closes the editor as its tab does and expects the destroy.
 
 ### Left from wave 14's audit
+
+**Re-checked** (6 November 2026, against the code): `HasCommonTabs` still has one implementation (`DocumentEditorHost`).
 
 **Reported** (28 October 2026).
 
@@ -2274,6 +879,8 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 
 ### Left from wave 15
 
+**Re-checked** (6 November 2026, against the code): the screens left as "stays" match the code (WelcomeTab, Main, Navigation); `CurveTabLayout`'s right indent is gone. Main's banner role is now in its template (`Main.ui.xml:15`), so that sentence is stale; `ActivitySummary` still builds its heading in Java. Commented-out code is gone (`1c1fea1bad`); `UsersController.onEditUserOrGroup` was an unused private method (removed 10 November 2026); unused `view` fields need an IDE inspection.
+
 **Reported** (28 October 2026, overnight; decisions taken without the user, to check). **Accepted**
 (30 October 2026, the user's decision): the decisions below stand as recorded.
 
@@ -2305,10 +912,12 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   * ~~The filters of Server Tasks, Properties and Dependencies use `addValueChangeHandler` where
     `QuickFilter.setOnChange` exists (to check they fire alike first).~~ Done in wave 20 (28 October 2026). They fire together, with the same text; every quick filter uses `setOnChange`.
   * Unused `view` fields in about a dozen of the new controllers (16 removed in wave 20) (assigned, only the constructor's
-    parameter used), and dead code carried over (`UsersController.onEditUserOrGroup`, commented-out
-    code in the API keys, retention, source and template screens).
+    parameter used), and dead code carried over (~~`UsersController.onEditUserOrGroup`~~ removed 10
+    November 2026; commented-out code in the API keys, retention, source and template screens).
 
 ### Left from wave 16
+
+**Re-checked** (6 November 2026, against the code): still open: tab sessions saved before wave 16 still reopen Caches and Batch Document Permissions (nothing migrates them); the suite's inventories still name presenters (`oracles/`, `tools/build-capability-specs.mjs:169`).
 
 **Reported** (28 October 2026, by the wave's audit).
 
@@ -2338,6 +947,8 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 
 ### Left from wave 17
 
+**Re-checked** (6 November 2026, against the code): the last "View" types are done, as recorded; the commented-out code named is gone (some is left in `QueryEditorController.java:252-253`).
+
 **Reported** (28 October 2026).
 
 * ~~**The explorer's other classes** (`navigation-title-bar`, `navigation-logo` and the like in
@@ -2357,6 +968,8 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   `QueryTableColumnsManager`) is still dead code, for the dead code clean-up.
 
 ### Left from the UI audit (waves 39 to 46)
+
+**Re-checked** (6 November 2026, against the code): all still open: `NameDialog` and `NameEntry`; Time Preferences without `TimeZoneBox` (lines 24-48 now; `TimeZoneBox` has had `setUserTimeZone` and `setTimeZoneUse` since, but its offset spinner has no name); `AbstractTabBar` makes its `TabSelector` in Java (line 123); `ContextChip`'s icon markup; `AnnotationHistory`'s `HtmlBuilder` rows; Find in Content's form group classes.
 
 **Open** (30 October 2026, moved from the wave records' "Left" sections; each checked in the code
 that day). Those the record accepts as right stay only there (see
@@ -2390,39 +1003,9 @@ that day). Those the record accepts as right stay only there (see
   § Left): its pattern's feedback and hint are `Label`s styled `form-group__feedback` and
   `form-group__description` (`FindInContent.ui.xml:23`-`24`), elements of a block they aren't in.
 
-### An opened document's focus lands on its tab bar or its first button, by timing
-
-**Fixed** (28 October 2026, wave 23). An opened document focuses its selected tab, laying its tabs out first if needed (`DocumentEditorHost.focus`, `AbstractTabBar.focusTabStop`); a document with no tabs shown falls back to the first tab stop (`App/Main/AppShell` `OpenedDocumentTakesFocus`). On master too.
-
-**Reproduced** (28 October 2026, wave 22, by `App/Main/AppShell` `OpensDocument`'s screenshot,
-which differs between runs). Opening a document focuses the new tab's first tab stop
-(`ContentFocus.focus`, deferred by `ContentTabPaneController.onOpen`). The document's tab bar
-(`AbstractTabBar`) only gives its selected tab `tabindex=0` in `onResize`, once the bar has been laid
-out (`getOffsetWidth() > 0`), and keeps its tabs `tab-bar__tab--hidden` until then. So if the
-deferred focus runs before the bar's first layout, the first tab stop is the document's first
-toolbar button; if after, it is the selected tab (e.g. Data). Keyboard users get a different
-starting point from one opening to the next.
-
-A fix: decide where an opened document's focus belongs (the selected tab, so the tab list's keys
-work at once, is the likely choice) and focus it on purpose, rather than the first tab stop, or
-give the selected tab its tab stop when it is added, not only after layout. With a story that
-checks which element has the focus after opening.
-
-* `stroom-core-client-widget/src/main/java/stroom/widget/tab/client/AbstractTabBar.java` (`onResize`)
-* `ContentTabPaneController.onOpen`, `ContentFocus.focus`
-
-### Two story classes share a title
-
-**Fixed** (30 October 2026, audit wave 11; found in wave 44): `QueryResultsTableStories` (`app.query`) and
-`QueryResultsTableDashboardStories` (`app.dashboard`) both register `App/Query/QueryResultsTable`,
-so their stories make one group. Titles can't change (they are the stories' ids and baselines), and
-merging the classes means making one area's helpers public (`DashboardPlays`, or the query's
-fixtures). To do with wave 11's query/dashboard merge, which brings the two together anyway.
-Wave 11 made the two tables one component (`ResultTable`), and the two classes one,
-`QueryResultsTableStories` in `app.dashboard` (where `DashboardPlays` is; the query's helpers were
-already public). The title and the stories' names and order are unchanged.
-
 ### Screenshots that differ in every run
+
+**Re-checked** (6 November 2026, against the code): the seed is in; the top bar's tooltip and the screenshots taken before the styles apply are still open (`run.mjs:598-601` waits for fonts only). The rest need runs.
 
 **Fixed** (28 October 2026, wave 22): the 52 stale baselines were taken again, the visualisations
 are seeded, the runner waits for fonts (the documentation editor's preview, missing from its
@@ -2461,40 +1044,9 @@ run, two Pipeline Editor stories in wave 37's), alongside a burst of stories tha
 second attempt. Both came right at 4 workers. To do: the runner could wait for the stylesheets (e.g.
 `document.styleSheets` all loaded, or a known rule applied) before its first screenshot.
 
-### A grid whose columns are made afresh loses its sort
-
-**Fixed** (28 October 2026, wave 21). A list that makes its columns afresh (the analytic rule's and
-report's schedules, `ScheduledProcessList`, does when its document's read only state changes) showed
-no sort: `DataGrid.removeColumn` left the removed column in the sort list, so the new column wasn't
-marked sorted and `setDefaultSort` (which applies only to an empty sort list) did nothing. Found when
-a story owned the editor's host before reading the document, which changes the read only state once
-the list is made; in Stroom, e.g. Save As of a document the user could only view. The grid now takes
-a removed column out of its sort, and a column added with the same sort field takes its place back
-(`SortRebuild`, `TestSortRebuild`); `ReportEditor`'s execution stories check the Name column is
-marked sorted.
-
-### Some components wire their handlers with `@UiHandler`
-
-**Fixed** (28 October 2026, wave 18: all 191 are wired in their constructors, and checkstyle refuses
-`@UiHandler`; see `component-migration/wave-18.md`). **Deferred** (agreed 27 October 2026; a
-clean-up pass after the waves). Every component wires its
-widgets' handlers in Java, in its constructor, rather than with `@UiHandler` methods, so that each
-handler is in one place and in one form, whether the widget is declared in the template or made in
-Java. `COMPONENT_MODEL_DESIGN.md` already wires buttons this way (`save.setOnClick(this::save)`);
-this extends it to every handler. When counted (wave 13), the converted components had 114
-`@UiHandler` methods against 446 handlers wired in Java.
-
-* Where the widget has a callback, use it: `setOnClick`, `setOnChange`, `setOnSelect` and the
-  like. `@UiHandler` can only bind GWT events (an `addXxxHandler` method), so it can't use these.
-* Where the widget only fires a GWT event (a plain `TextBox`'s key presses, a value widget that
-  hasn't got `setOnChange` yet), add the handler in the constructor, e.g.
-  `query.addKeyDownHandler(event -> ...)`.
-* Each converted component keeps its behaviour and its stories. Find the remaining ones with
-  `git grep -l "@UiHandler" -- '*/client/component/*.java'` (the presenters' views still being
-  converted are moved by their waves).
-* Until then, new and converted components already follow this.
-
 ### Sample data installs the old visualisations, with no assets
+
+**Re-checked** (6 November 2026, against the code): the code is as recorded (`SetupSampleData`, `ReleasedContentPacks`; `content-packs.json` now names `v8.0-beta.4`), still not run against a database; the splitter overlay and its stories exist. The explorer resized beside a dashboard needs a check in the app.
 
 **Fixed** (3 November 2026), not yet run against a database: `SetupSampleData` now leaves the
 Content Store's `stroom-visualisations` entry out (`ContentStoreTestSetup.installSampleDataPacks`
@@ -2541,34 +1093,45 @@ dragged by its overlay), and, with the real mouse, `VisToolbar` `SplitterBesideV
 real drag). Not checked: the app shell's explorer resized beside a dashboard (no app shell story
 shows one), and the app itself.
 
-### Text fields asking for `max` kept their default size
-
-**Fixed** (3 November 2026). The upload dialog's Meta Data area (`DataUpload`, `addStyleNames="max"`)
-was 200px by 80px in a 400px wide group, as was any text field sized only by `max`: `.max`
-(layout-helpers.css) and `.text-field` / `.text-field--multiline` (text-field.css) are each one
-class, and app.css imports text-field.css later, so its default size won. `w-100` (`!important`) and
-screens' own rules loaded later weren't affected. The defaults are now at no weight
-(`:where(.text-field)`, `:where(.text-field--multiline)`), so any class sizing a field wins wherever
-its sheet comes.
-
-### Value spinners too narrow for their values
-
-**Fixed** (3 November 2026). A spinner's default width was 96px (80px narrow), of which the arrows
-take 54px, so its field showed three or four digits: 8 spinners in the stories couldn't show their
-largest value (e.g. the processor filter's Max Processing Tasks, the processor profile's thread
-limits, the OpenAI model's token counts, Elastic's slices and scroll size). A spinner is now as wide
-as a text field (200px), and those four narrow ones are the default width. `value-spinner--narrow`
-is for a value of a few digits; `value-spinner--wide` is now the default width.
-
 ## Smaller oddities
 
-**Reported** (30 October 2026, found fixing the processor profile periods' Remove): lists that
+**Re-checked** (6 November 2026, against the code): the items not already closed, in order.
+
+| Item | Now |
+|---|---|
+| A list keeps the old object selected after an edit | **Fixed** (6 November 2026): it was worse than reported, a second notification edit added a duplicate row; see "A list's selection kept a stale row" under Fixed |
+| Tree `Keyboard` and TopBar `Keyboard` screenshots; `AceEditorFeatures` `Snippet`; screenshots that differ with many workers; the light theme's `CalendarToolbarsInTheDialog` and `ShortcutsAreButtons` | Need runs |
+| `TraceOverviewChart` draws its fixed text and ARIA as HTML | Still open |
+| The floor map Layers drag never forgets `dragFromIndex` after a drop | Still open (`FloorMapLayers.java:498-511`) |
+| No story hovers or drags on the floor map canvas but Set Scale | Still open |
+| A sized `PopupType.POPUP` sets an inline width and height | **Fixed**: `--popup__width` and `--popup__height` with `popup--sized-*` classes (`PopupUtil.java:159-168`, `popup.css`) |
+| A dialog's New shows its busy spinner on Cancel | Still so (`DialogFrame.java:138-142`, on purpose) |
+| The API key dialog and the start-up activity chooser can't hear a failed config fetch | Still open (`UiConfigCache.java:129-132`) |
+| Wave 11's dialogs with no story | In part: Batch Change All, Copy and Move, and the attachment data dialog have stories now; Chat History, the floor map's Track and the credential picker's empty OK and Cancel don't |
+| Solr fields mark the document changed on key down | Still open |
+| Wave 12's screens with no story | In part: the data generator's Execution grids have checks; the traces store's Settings tab and the permissions filter's help don't |
+| Classes wave 12 left un-BEM'd | **Done**: none of them is named anywhere |
+| Others still read `READ_ONLY` once | Still open (`QueryEditorController`, `StreamingProcessingController`, `DuplicateManagementListController`, `PathwayEditorController`; Solr's expression editor and pipeline) |
+| Templates given `SafeHtml.asString()` for a `title` | Still open: `ExplorerCell.java:150`, so a name with an apostrophe shows `&#39;` in its tooltip; the others weren't traced |
+| Server Tasks as a tree is 20px wider than its pane | **Fixed** (`TreeRowHandler.java:68`, `ServerTasksScreenStories`), as the entry under Fixed |
+| The 22px tick box column clips its box | Still open (the box is 20px now, not 16px); seeing the clip needs a render |
+| Ask Stroom AI's dock type offers only Dialog and Dock | Still so; nothing handles Tab or Float, so it looks deliberate |
+| Solr's ZooKeeper Path is a text area; Plan B's Bucket Granularity shows enum names | Still open |
+| Elastic's rerank suffix tooltip `$\{BaseField.score\}` | Still in the template; what shows needs the app |
+| The dashboard table filter dialog's focus on open | Needs a run; no story checks it (`ColumnFilterTabsController`, was `TableFilterPresenter`) |
+| `ColumnFilterEditorController`'s changed test can't be true; time preferences' Id, offset and Custom Format edits don't mark it changed; Table Builder's settings not read on switching; email recipients changed only on key up | Still open |
+| Debug logging in `DocumentationTabController` | In part: the `GWT.log` calls are left; the commented code is gone |
+| `XPathFilterEditor`'s default condition | Still so, harmless |
+| `CombinedParser.getMode()`'s guess for a None converter | Still so, and the entry is wrong that it has no effect: `ReaderRecorder.java:89-91` takes the stepping range mode from it, so an XML Fragment guess gives a Data Splitter the XML range mode |
+| `ElasticIndex`, `elastic_index` and `OpenAI` icons' `<style>` and `<title>` | Still open |
+
+**Fixed** (6 November 2026): ~~Reported (30 October 2026, found fixing the processor profile periods' Remove): lists that
 replace a row after an edit may keep the old object selected, as `MultiSelectionModelImpl` matches
 the selection by object, not by the grid's key provider. `NotificationListController.edit` passes
 the selected notification to `replace(selected, updated)`, so a second edit of the same row may act
 on the replaced object. Not checked; the profile periods' fix (moving the selection to the row with
 the same id in `ProfilePeriodList.setData`) is the pattern, or the selection model could use the key
-provider.
+provider.~~ The second edit did add a duplicate; see "A list's selection kept a stale row" under Fixed.
 
 **Kept** (30 October 2026, at the user's approval removed and then put back, as the check found a use): the activity editor shows the site's own configured HTML form, built of plain `input`, `select` and `textarea` elements, which only these rules give Stroom's look; without them its fields were the browser's white boxes, and the Manage Activity Validation Blocks Save story's contrast check failed. Removing them would need that form's controls styled another way (e.g. rules scoped to the activity editor's form). ~~the rules for bare inputs (`text-field.css`'s `textarea:where(:not(.text-field))` block and the
 `input:where(:not(.text-field))` selectors from line 38, the `select option` rules and the bare
@@ -4089,6 +2652,666 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   the row's button, Enter opens its menu); both failed before (no such button). The unused
   `RowActions.updateTabStops`, `MyDataGrid`'s, is deleted.
 
+Moved here from the sections above (6 November 2026), as they are fixed, with their headings unchanged so links to them still work:
+
+### Editing an activity didn't save the change (on master too)
+
+**Fixed (27 October 2026, in wave 11), reproduced in a story.** OK on Edit Activity validated what
+was typed, but saved an existing activity with the details it had before, so the change was lost
+(a new activity was saved as typed). The `EditActivity` story of `App/Main/ManageActivityDialog`
+checks the details saved.
+
+* `stroom-core-client/src/main/java/stroom/activity/client/component/ActivityEditorController.java`
+
+### Signing in failed with "A widget that has an existing parent widget may not be added to the detach list"
+
+**Fixed** (4 November 2026; reported by another developer, who saw it straight after clicking to
+sign in, in a build with assertions on). A task that starts before sign-in has finished (e.g.
+"Fetching permissions…") shows the host page's loading message: `AppPageController.onTaskStart`
+calls `AppPage.showWorking`, which made the message (`#loading`) a widget with `RootPanel.get`,
+then its text (`#loadingText`, inside it in `app.html`) another. GWT refuses a root panel inside
+another, with an `AssertionError` where assertions are on (Super Dev Mode, draft compiles), wrapped
+in an `UmbrellaException`. `AppPage` (its loading message and its text, and `#logo`) and
+`AbstractSignInPageController.hideLoading` now change the host page's elements as elements
+(`Document.getElementById`), skipping any the page hasn't got. The workbench compiles without
+assertions, so a story couldn't see the error; `App/Main/AppPage` `HostPageLoading` instead checks
+the elements aren't made widgets (an attached widget's element has GWT's `__listener`), and that the
+message is shown with its text, hidden, and the logo hidden. It failed before the fix.
+
+### Elastic number fields can fail when blank
+
+**Fixed** (28 October 2026, wave 24). The Minimum Rerank Score says why under it while it isn't a number from 0 to 1, and Save refuses (`App/Index/ElasticIndexEditor` `RerankScoreNotAScore`); leaving the box no longer throws. On master too.
+
+**Reported.**
+
+* Fixed: the connection and response timeouts were `IntegerBox`es unboxed to `int`, so a blank box
+  would throw a `NullPointerException` on save. They are now value spinners, which can't be blank
+  (`App/Editors/ElasticClusterEditor` `TimeoutSpinners`).
+* The index's Minimum rerank score is read with `Float.parseFloat` on the raw text
+  (`ElasticIndexSettings.write`), so a blank or non-numeric value throws as soon as the field is
+  left (the tab is written on every change), not only on save; there is no check that it is between
+  0 and 1.
+
+* `stroom-core-client/src/main/java/stroom/search/elastic/client/component/ElasticClusterSettings.ui.xml`
+* `stroom-core-client/src/main/java/stroom/search/elastic/client/component/ElasticIndexSettings.java`
+
+### A rejected column rename may still change conditional formatting
+
+**Fixed** (28 October 2026, wave 23). The name is checked before anything is renamed (`RenameColumnController.applyRename`, `TestRenameColumnController`). On master too.
+
+**Reported.** `RenameColumnController` renames the column's references in conditional formatting
+rules before checking whether the new name is already used, so a rename that is then rejected may
+already have changed those rules.
+
+* `stroom-core-client/src/main/java/stroom/dashboard/client/component/RenameColumnController.java`
+
+### Layout Density can be set to an option that doesn't exist
+
+**Fixed** (28 October 2026, wave 23). No saved density, or the "Default" this tab once saved, shows Comfortable, which is how the app looks without one (`ThemePreferences.shownDensity`, `TestThemePreferences`). On master too.
+
+**Reported.** `ThemePreferences.read` sets the density to "Default" when none is saved, which
+isn't one of the options (Comfortable, Compact).
+
+* `stroom-core-client/src/main/java/stroom/preferences/client/component/ThemePreferences.java`
+
+### Some HTTP client durations can't be set to 0
+
+**Fixed** (28 October 2026, wave 24). `DurationPicker`'s `zeroAllowed` on Timeout, Connection Timeout, Keep Alive and Validate After Inactivity Period (`App/Editors/ElasticClusterEditor` `KeepAliveTakesZero`). On master too.
+
+**Reported.** The duration picker's minimum is 1, but the help (and the defaults) for some HTTP
+client durations treat 0 as meaningful ("no timeout", or Keep Alive "close after each request"). It
+isn't clear whether a typed 0 is clamped when saved.
+
+* `stroom-core-client/src/main/java/stroom/http/client/component/HttpClientConfigEditor.ui.xml`
+* `stroom-core-client-widget/src/main/java/stroom/widget/duration/client/DurationPicker.java`
+
+### Values quietly replaced or dropped
+
+**Fixed** (28 October 2026, wave 24), as the user decided: bad input blocks OK and Save. A field that can hold input that can't be kept (`HasInvalidInput`: `DateTimeBox`, and a `TextBox` given a check) says why under it, and every dialog's OK and a document's Save and Save As refuse while one is shown, taking the user to it, on whichever tab (`InvalidInputs`, `RefusesInvalidInput`; UI-GUIDE.md). Each field below now refuses rather than changes: stories `IndexEditor` `DenseVectorFieldBadScoreRefused`, `PlanBEditor` `MaxStoreSizeNotASizeIsRefused`, `DashboardEditor` `TableMaxResultsRefused`, `CreateProcessors` `CreateTimeNotATimeRefused`. On master too.
+
+**Reported.** These fields silently change what the user entered instead of saying what is wrong:
+
+* Dashboard table Maximum Results: parts that aren't numbers are dropped.
+* Elastic and Lucene dense vector Minimum rerank score: invalid text becomes 0.8.
+* Plan B Max Store Size: an invalid entry becomes 10 GiB.
+* Plan B Max Spans Per Trace: an invalid entry becomes 100,000.
+* Date boxes: text that can't be parsed is saved as no date, as `DateTimeBox.getValue()` gives
+  `null` for it. In part fixed (October 2026): the box is now marked invalid (`aria-invalid`) when
+  it is left (`MyDateBox`, which these boxes were, marked nothing), but the screens don't check
+  `isValid()` before saving, so OK still saves no date.
+
+### A document's Save missed bad input on a tab inside a tab
+
+**Fixed** (10 November 2026, 7.14 merge). `InvalidInputs` walked panels, components and form
+groups but not a `LayerContainer` (a plain `Composite`), so a field holding input that can't be kept
+on a tab inside a document's tab (the Elastic index Fields tab's Settings panel, its first such
+screen) was missed: the document wasn't marked changed and Save didn't refuse. It now walks a layer
+container's layers (`LayerContainer.getLayerWidgets`), shown or not, as a hidden tab's fields are
+still the screen's. Story `App/Index/ElasticIndexEditor` `RerankScoreNotAScore`, which failed before.
+A dialog holding a layer container now refuses OK for bad input on a tab not showing too, but focuses
+the field without selecting its tab, unless the dialog refuses for itself (`RefusesInvalidInput`, as
+`PaneSettingsController` does).
+
+### Thread count spinners wrap round
+
+**Fixed** (28 October 2026, wave 23). They stop at 0 and 1,000,000 (`App/Main/ProcessorProfilesScreen` `ThreadLimitsStopAtZero`). On master too.
+
+**Reported.** The processor profile's Max Node Threads and Max Cluster Threads spinners go from
+their maximum back to 0.
+
+* `stroom-core-client/src/main/java/stroom/processor/client/component/ProcessorProfileEditor.ui.xml`
+
+### Duration fields can't be left blank
+
+**Fixed** (28 October 2026, wave 24). `DurationPicker`'s `noneText`: Resume Notifications After may be Never, and a table builder's retention Keep all, both none to the server (`App/Editors/AnalyticRuleEditor` `ResumeAfterNever`). A table builder whose retention is none showed 1 hour, which a save stored; it shows Keep all. On master too.
+
+**Reported.** Duration pickers have a minimum of 1, so settings whose meaning includes "blank" can't
+be blank: an analytic notification's Resume Notifications After (blank meant "never resume") and a
+table builder's Time To Keep Data In The Table (blank meant "keep all data").
+
+### Events between screens and their parts that reached the wrong listeners
+
+**Fixed (22 October 2026), when they became callbacks** (component model, Phase 4).
+
+* A dashboard's Table Filter refreshed its columns and values whenever *any* table updated, in any
+  open dashboard or query: `TablePresenter.addUpdateHandler` (and `QueryResultTablePresenter`'s)
+  listened to every `TableUpdateEvent` on the app-wide bus rather than its own table's. Each table
+  now tells only its own listeners (`addUpdateListener`).
+* Two open copies of the same Floor Map document heard each other's event data: the Map and Editor
+  tabs took any `FloorMapDataEvent` stamped with their document's UUID. The document now passes
+  its own Events Query tab's data to its own tabs.
+
+**Fixed (23 October 2026), when the last presenter bus handlers became `listen`** (component
+model, Phase 7 step 3), two more:
+
+* The Application Permissions screen could fail when another screen changed a value: its edit
+  pane's `addValueChangeHandler` listened to every `ValueChangeEvent` on the app-wide bus, and a
+  dashboard's column selection (`ColumnSelectionPresenter`) put its changes on the bus too, so the
+  screen read a set of columns as its own `ValueChange` and threw. The edit pane now tells its
+  owner through `setOnChange`, and a column selection tells only its own listeners. Story:
+  `App/Main/AppPermissionsScreen` `IgnoresOtherScreensValueChanges`.
+* An analytic rule's Shards tab fetched its shard's data again whenever any query table with no
+  search of its own asked to be refreshed, e.g. another open rule's Shards tab:
+  `QueryResultTablePresenter.addRefreshRequestHandler` listened to every `RefreshRequestEvent`
+  on the bus. The table now asks its own owner (`setOnRefreshRequest`), and `RefreshRequestEvent`
+  is deleted. Story: `App/Editors/AnalyticRuleEditor` `ShardsRefreshOnlyTheirOwn`.
+
+### An analytic rule's Shards tab couldn't show a shard's data
+
+**Fixed (23 October 2026); on master too.** Choosing a shard fetched its data, but showing it threw
+(an alert, `Cannot read properties of undefined`) and the table stayed empty:
+`AnalyticDataShardsPresenter` never gave its `QueryResultTablePresenter` the table preferences
+it reads (`setQueryTablePreferencesSupplier`), as every other owner of one does. It now keeps
+preferences of its own for as long as the tab is open, as `AbstractQueryDataPresenter` does. Its
+data request is also owned now, so a reply after the tab has closed is dropped. Story:
+`App/Editors/AnalyticRuleEditor` `ShardsRefreshOnlyTheirOwn`.
+
+### UI config failures and annotation changes go nowhere
+
+**Fixed** (28 October 2026, wave 23). `UiConfigCache` fires on the application's event bus: a failure to fetch the UI config is shown (`App/Main/AboutDialog` `ConfigFetchFails`), and an annotation change elsewhere (the server's last change time moving, after the first fetch) reaches the tables. Callers aren't called with null on a failure, as most can't do without the config. On master too.
+
+**Confirmed.** `UiConfigCache` fires its events on a private event bus of its own, which has no
+alert or annotation listeners:
+
+* When fetching the UI config fails, `onFailure` makes a `DefaultErrorHandler` and drops it, so no
+  error is shown and the caller's consumer is never called (not even with null, as the code means).
+* The `AnnotationChangeEvent` it fires when the server's last annotation change time moves reaches
+  no annotation screen.
+
+(`UiConfigCache.fireEvent` now does nothing and says so; the property listeners are a `Listeners`
+list.)
+
+### Data Receipt Rules' Rules tab
+
+**Fixed (22 October 2026), when the tab and its dialogs became components** (component model,
+Phase 3; see `COMPONENT_MODEL_DESIGN.md`). Each fix has a story in `App/Main/DataReceiptRulesScreen`
+that fails without it.
+
+* Duplicating a rule didn't count as a change, so Save stayed disabled until something else changed
+  (`RuleSetSettingsPresenter.copyRuleButtonClickHandler` didn't call `change()`). Story
+  `DuplicateRule`.
+* Deleting asked about "the selected rules" when one rule was selected, and about "this rule" when
+  several were (the test was the wrong way round). Story `DeleteRule`.
+* With no rule selected (e.g. after deleting the selected one), Edit, Duplicate, Enable/Disable,
+  Delete and the move buttons stayed enabled, as `updateButtons` only set them for one or more
+  selected. Story `DeleteRule`.
+* The Edit Rule dialog put the focus on the rules grid behind it when it opened; it now goes to the
+  expression's Add Term button, in the dialog.
+
+### A dictionary's word list ignores its secondary sort orders
+
+**Fixed** (checked 28 October 2026, in wave 17's audit: `EffectiveWordsList`, the list's
+component now, chains its secondary orders; `TestEffectiveWordsList` checks it since wave 21). **Confirmed.**
+`WordListPresenter.buildComparator` was given a primary comparator and the ones to
+break its ties, but the loop adds `comparator.thenComparing(comparator)` (itself) rather than
+`thenComparing(subsequentComparator)`. So sorting by Word, Source or Type never orders rows that
+tie on that column, e.g. words of one type stay in whatever order they came in. Fix: chain
+`subsequentComparator`.
+
+* `stroom-core-client/src/main/java/stroom/dictionary/client/component/EffectiveWordsList.java`
+  (the sort's comparator; was `WordListPresenter.buildComparator`)
+
+### A duplicated selection handler has the same id as its original
+
+**Fixed** (28 October 2026, wave 23). The copy gets an id of its own (`SelectionHandlersController.duplicate`, `TestSelectionHandlersController`). On master too.
+
+**Confirmed.** Duplicate Selected Selection Handler (`SelectionHandlersController.onCopy`) copies the
+handler with `selected.copy().build()`, which keeps its `id`; only a new handler gets a fresh one
+(`RandomId.createId(5)`). Conditional formatting's copy does give a new id. Two handlers with one id
+may be confused by anything that finds a handler by id. Found while giving the list a row key for
+the new data grid, which copes (rows with one key are told apart by position). Fix: give the copy
+`RandomId.createId(5)`.
+
+* `stroom-core-client/src/main/java/stroom/dashboard/client/component/SelectionHandlersController.java`
+  (`onCopy`)
+
+### The Replace Secret dialog cuts its warning off
+
+**Fixed** (28 October 2026, wave 23). GWT's theme makes every `gwt-Label` `nowrap`; the warning has `credentials-details-dialog__warning`, which wraps (`App/Main/CredentialsScreen` `ReplaceSecret` checks it fits). On master too.
+
+**Reproduced** (screenshots of `App/Main/CredentialsScreen` `ReplaceSecret`, October 2026). The
+warning at the top of "Replace … Secret" ("The current secret of 'My Creds' will be discarded and
+cannot be recovered. Everything that uses this credential will use t…") runs on one line past the
+dialog's edge and is cut off, so the end of the warning, which says what happens, can't be read.
+Fix: let the label wrap (e.g. `white-space: normal` on it, or a form-group help style).
+
+* `stroom-core-client/src/main/java/stroom/credentials/client/component/ReplaceSecret.ui.xml`
+  (the `warning` label)
+
+### Bootstrap's styles apply to every page
+
+**Fixed** (30 October 2026, by the CSS plan's step 5, wave 31: `app.css` no longer imports
+Bootstrap and `ui/css/bootstrap/` is gone; its element rules lead `base.css`). ~~**Open decision (not now).** `app.css` imports the whole of `bootstrap.min.css` (with
+`custom-bootstrap.css` recolouring parts of it), but Stroom uses only a few of its classes:
+`form-group` and `form-label` (`FormGroup`, `FormLabel` and about ten settings views), `dropdown`
+(`TermEditor`), and the `badge-*`, `form-control` and `dropdown-menu` looks. Its reboot and its
+generic classes (`.col`, `.row`, `.container`, `.table` and so on) apply to anything else with those
+names. The vis tooltip's key and value columns were classed `grid` and `col`, so they took
+Bootstrap's grid column (the whole width, shared equally, 1rem each side) and short values wrapped
+mid-word; the tooltip is now styled only by its own BEM classes (22 October 2026). Dropping
+Bootstrap would mean moving the classes Stroom uses into its own BEM styles, replacing the parts of
+reboot the app relies on (box sizing, margins, fonts), and a full screenshot diff of the workbench.~~
+
+* `stroom-app/src/main/resources/ui/css/app.css`
+* ~~`stroom-app/src/main/resources/ui/css/bootstrap/custom-bootstrap.css`~~ (gone)
+
+### Controls that stay enabled but do nothing
+
+**Fixed** (30 October 2026; all on master too).
+
+* ~~Dashboard table format: the date format and time zone controls stay enabled when Use Preferences
+  is ticked, although the server then ignores them (`FormatViewImpl.ui.xml`).~~ **Fixed** (30
+  October 2026, `ColumnFormat.updateEnabledState` disables Format, Custom, Custom Format and the
+  time zone fields while Use Preferences is ticked, on open and on change; `App/Editors/QueryEditor`
+  `FormatDateTimeFollowsUsePreferences`).
+* ~~Dashboard list input: the Dictionary picker stays enabled when Use Dictionary is unticked
+  (`component/BasicListInputSettings.ui.xml`).~~ **Fixed** (30 October 2026,
+  `BasicListInputSettingsController` enables and disables the picker with the tick box, as the
+  embedded query does; `TestBasicListInputSettingsController`, `App/Editors/DashboardEditor`
+  `ListInputSettingsDictionaryFollowsUseDictionary`).
+* ~~Embedded query: Referenced Query is only faded, not disabled, when Reference Existing Query is
+  unticked (`component/BasicEmbeddedQuerySettings.ui.xml`).~~ **Fixed** (30 October 2026,
+  `BasicEmbeddedQuerySettingsController` enables and disables the picker with the tick box, lines
+  69 and 103).
+* ~~Analytic notifications: Maximum and Resume Notifications After stay enabled when Limit
+  Notifications is unticked (`AnalyticNotificationEditor.ui.xml`).~~ **Fixed** (30 October 2026,
+  `AnalyticNotificationEditor.updateEnabledState` enables them only while Limit Notifications is
+  ticked; the editor is never opened read only; `App/Editors/AnalyticRuleEditor`
+  `LimitGatesMaximumAndResume`, and `ResumeAfterNever` now ticks Limit first).
+* ~~Solr index: the ZooKeeper fields stay enabled when Use ZK is unticked or for a single node
+  (`SolrIndexSettings.ui.xml`).~~ **Fixed** (30 October 2026,
+  `SolrIndexSettings.updateEnabledState` enables ZooKeeper Hosts and Path only for Solr Cloud with
+  Use ZK ticked; read only stays separate (`setReadOnly`); `App/Index/SolrIndexEditor`
+  `ZooKeeperFieldsFollowUseZk`).
+
+### The Go to Search Results shortcut did nothing (on master too)
+
+**Fixed (27 October 2026, in wave 11), seen in a story.** `ResultStorePlugin` bound G S to
+`resultStorePresenter::show` in its constructor, before the dialog had been made, so the shortcut
+had nothing to show (the menu item made the dialog as it was built, so it worked). The shortcut
+now makes the dialog when first pressed. `AppShell.GoToSearchResults` presses G S.
+
+* `stroom-core-client/src/main/java/stroom/query/client/ResultStorePlugin.java`
+
+### Document Permissions' Edit button stays disabled until a document is opened (on master too)
+
+**Fixed** (28 October 2026, wave 23). Edit is enabled while a document is chosen (`DocumentListController.setOnSelectionChange`; `App/Main/DocumentPermissionsScreen` `EditEnabledForChosenDocument`).
+
+**Open; found 26 October 2026 in wave 10.** On the Document Permissions tab
+(`BatchDocumentPermissionsPresenter`), 'Edit Permissions For Selected Document' is enabled only when
+a document is opened (Enter or a double click on it), which opens its permissions anyway. Choosing a
+document leaves Edit disabled: the selection handler that enabled it is commented out. Wave 10
+(`DocumentList`) keeps this as it is, so the screenshots match; the fix is to enable Edit on
+selection (the list chooses its first document when the filter changes, so Edit would then be
+enabled in the screenshots).
+
+### Menus that didn't open in the standalone dashboard (on master too)
+
+**Fixed (25 October 2026), confirmed in the code.** Widgets with no event bus ask for their menus
+with `MenuRequest`, which bubbles up the page to one relay that fires the `ShowMenuEvent`. Only
+`MainPresenter` installed the relay, and the standalone dashboard (`DashboardApp`) shows
+`FullScreenPresenter`, not the main presenter, so these menus never opened there: a split pane
+splitter's Pane Layout menu, and a dialog's menu button (`DialogWindow`). The relay is now
+installed by `CorePresenter`, which both apps show (once, as a singleton). Master has the bug too
+(`MenuRequest` came with `d3ddaab46f`, 12 October 2026, which master has; the wave 5 audit found
+this, after it was first recorded as this branch's only), so it has a changelog entry. The
+workbench's `ShellScreen` stories had two relays (`ScreenHarness`'s and the main presenter's); now
+they have one. Not checked in a running dashboard, and no regression story: the workbench has no
+story of the standalone dashboard (`CorePresenter` without `MainPresenter`).
+
+### A dashboard opened from a table's menu didn't get its parent dashboard (on master too)
+
+**Fixed (25 October 2026, wave 5), confirmed in the code.** A table's right-click menu's link items
+(Follow URL, Open In New Tab, Open In This Tab) fired the `HyperlinkEvent` on the app's bus, which
+skipped the dashboard's (or query's) table, where a click on the link goes and the table adds the
+dashboard it is in. So a dashboard opened from the menu got no parent context
+(`DashboardPlugin.openParameterisedDashboard` was given null), and with it none of its parent's
+`parent.*` values (time range, parameters, selections). The menu came with `f2243980ea`
+(`DataGridWidget`) on master. The grid now follows a link from its menu as a click does when
+something handles its links, and otherwise asks the app (`OpenHyperlinkRequest`). Stories
+`LinkMenuThroughTheGrid` and `LinkMenuToTheApp` (a stand-in for the table's handler); a changelog
+entry.
+
+### The Add Column button's list added a column twice (on master too)
+
+**Fixed (25 October 2026, the wave 5 audit), confirmed in the code.** A second press on a dashboard
+table's Add Column button, while its list was open, closed the list and then added another choice
+handler to the list (the list was shown before its handlers were added, and showing an open list
+closes it). On master, the next column chosen was added twice; in this branch, after wave 5 made
+the list's close a single callback, every later choice was. A second press now only closes the
+list, and the list's one choice handler is kept in a field. Story `TableAddColumnAfterClosingTheList`
+(`DashboardPaneStories`); a changelog entry.
+
+### The stepping chooser can be left unowned
+
+**Fixed** (28 October 2026, wave 23). The pipeline is looked up, in the explorer too, before the chooser is made (`PipelinePlugin.findPipeline`, `DocumentChooserController.setSelectedNode`, `TestPipelinePlugin`).
+
+**Found in wave 8's audit** (26 October 2026). `PipelinePlugin.onBeginStepping` makes the "Choose
+Pipeline To Step With" chooser before it looks up the pipeline to choose first (a REST call, then the
+chooser's own lookup of it), and `AppRoot` owns it only once it is shown. If either lookup fails the
+chooser is never shown, never owned and never disposed; development builds count it as unowned.
+Fix: look up the pipeline first, and make the chooser only to show it.
+
+* `stroom-core-client/src/main/java/stroom/pipeline/client/PipelinePlugin.java`
+
+### Presenters nothing owned (found and fixed 22 October 2026)
+
+**Fixed** (the Phase 5 ownership audit of `COMPONENT_MODEL_DESIGN.md`):
+
+* The Task Manager (`UserTaskManagerController`) took a finished task's row out of its view but kept
+  its presenter in `taskPresenterMap` for good, one per finished task while the app ran. It now owns
+  each row's presenter and releases it, and drops it from the map, when its task ends. Not unit
+  tested: the class can't be loaded in a JVM (`GWT.create` in a static field).
+* A dashboard component's settings dialog, the annotation status and assignee dialogs (kept per
+  table), the secret editors of the credential dialogs, Ask Stroom AI's config, history, download
+  and attachment dialogs, and the login screen's password dialogs were never released. Each is now
+  owned by what shows it, or made for one use and disposed once hidden.
+* An annotation's presenter was made before it was loaded, so a failed load or a user without the
+  permission left it unowned; it is now made once there is an annotation to show.
+
+### The leak check fails 50 stories
+
+**Fixed** (checked 28 October 2026, wave 22: every full run since wave 13 passes all stories with
+the leak check; `AskStroomAiDialog`'s leak, the `target-size` stories and the screens that didn't
+reopen were fixed as recorded under "Workbench stories that fail"). **Confirmed** (by
+`workbenchTest -PworkbenchLeakCheck`, 22 October 2026, with the component model's
+Phase 1: every presenter owned, `PresenterScope` removed; 71 failed before).
+
+* **Still leaking:** `App/AI/AskStroomAiDialog` keeps 155-160 DOM nodes and 58 listeners per close,
+  with no component left unowned, so something else holds it (e.g. a handler on a shared bus or a
+  singleton, or a JavaScript object). The annotation editor's leak (1,256-1,364 nodes and 189
+  listeners per close in every `App/Main/AnnotationEditor` and `App/Annotations/decorateComment`
+  story) is gone: its presenters are now owned and disposed with its tab.
+* **Accessibility after reopening:** about 34 stories (mainly `AnalyticRuleEditor`, `ReportEditor`
+  and `QueryEditor`, and `DataRetentionScreen` `ImpactAbort`) break `target-size` on an element
+  they don't break it on when first opened, so the reopened screen lays something out differently.
+* **Not reopened:** 6 stories' screens don't open again within 15 s (`AppShell` `Embedded`,
+  `ContentTabPane` `NoDuplicateForSingleInstance`, `PipelineEditor` `FailedEmbeddedCreateKeepsDialogUsable`
+  and `MultiDocumentSave`, `docPlugin` `OnWriteTransformsAtSaveTime`, `Activity Chooser` `Default`),
+  probably as each opens more than one screen or a dialog, which the probe's `open()` doesn't repeat.
+* `App/Dashboard/QueryResultVis` `PauseButtonReportsUp` breaks `target-size` after reopening too.
+
+Without the leak check these stories pass. A failing leak now names the components each close
+leaves unowned (`Left unowned per close: ...`), which is where to start.
+
+### Two story classes share a title
+
+**Fixed** (30 October 2026, audit wave 11; found in wave 44): `QueryResultsTableStories` (`app.query`) and
+`QueryResultsTableDashboardStories` (`app.dashboard`) both register `App/Query/QueryResultsTable`,
+so their stories make one group. Titles can't change (they are the stories' ids and baselines), and
+merging the classes means making one area's helpers public (`DashboardPlays`, or the query's
+fixtures). To do with wave 11's query/dashboard merge, which brings the two together anyway.
+Wave 11 made the two tables one component (`ResultTable`), and the two classes one,
+`QueryResultsTableStories` in `app.dashboard` (where `DashboardPlays` is; the query's helpers were
+already public). The title and the stories' names and order are unchanged.
+
+### A grid whose columns are made afresh loses its sort
+
+**Fixed** (28 October 2026, wave 21). A list that makes its columns afresh (the analytic rule's and
+report's schedules, `ScheduledProcessList`, does when its document's read only state changes) showed
+no sort: `DataGrid.removeColumn` left the removed column in the sort list, so the new column wasn't
+marked sorted and `setDefaultSort` (which applies only to an empty sort list) did nothing. Found when
+a story owned the editor's host before reading the document, which changes the read only state once
+the list is made; in Stroom, e.g. Save As of a document the user could only view. The grid now takes
+a removed column out of its sort, and a column added with the same sort field takes its place back
+(`SortRebuild`, `TestSortRebuild`); `ReportEditor`'s execution stories check the Name column is
+marked sorted.
+
+### Some components wire their handlers with `@UiHandler`
+
+**Fixed** (28 October 2026, wave 18: all 191 are wired in their constructors, and checkstyle refuses
+`@UiHandler`; see `component-migration/wave-18.md`). **Deferred** (agreed 27 October 2026; a
+clean-up pass after the waves). Every component wires its
+widgets' handlers in Java, in its constructor, rather than with `@UiHandler` methods, so that each
+handler is in one place and in one form, whether the widget is declared in the template or made in
+Java. `COMPONENT_MODEL_DESIGN.md` already wires buttons this way (`save.setOnClick(this::save)`);
+this extends it to every handler. When counted (wave 13), the converted components had 114
+`@UiHandler` methods against 446 handlers wired in Java.
+
+* Where the widget has a callback, use it: `setOnClick`, `setOnChange`, `setOnSelect` and the
+  like. `@UiHandler` can only bind GWT events (an `addXxxHandler` method), so it can't use these.
+* Where the widget only fires a GWT event (a plain `TextBox`'s key presses, a value widget that
+  hasn't got `setOnChange` yet), add the handler in the constructor, e.g.
+  `query.addKeyDownHandler(event -> ...)`.
+* Each converted component keeps its behaviour and its stories. Find the remaining ones with
+  `git grep -l "@UiHandler" -- '*/client/component/*.java'` (the presenters' views still being
+  converted are moved by their waves).
+* Until then, new and converted components already follow this.
+
+### Text fields asking for `max` kept their default size
+
+**Fixed** (3 November 2026). The upload dialog's Meta Data area (`DataUpload`, `addStyleNames="max"`)
+was 200px by 80px in a 400px wide group, as was any text field sized only by `max`: `.max`
+(layout-helpers.css) and `.text-field` / `.text-field--multiline` (text-field.css) are each one
+class, and app.css imports text-field.css later, so its default size won. `w-100` (`!important`) and
+screens' own rules loaded later weren't affected. The defaults are now at no weight
+(`:where(.text-field)`, `:where(.text-field--multiline)`), so any class sizing a field wins wherever
+its sheet comes.
+
+### Value spinners too narrow for their values
+
+**Fixed** (3 November 2026). A spinner's default width was 96px (80px narrow), of which the arrows
+take 54px, so its field showed three or four digits: 8 spinners in the stories couldn't show their
+largest value (e.g. the processor filter's Max Processing Tasks, the processor profile's thread
+limits, the OpenAI model's token counts, Elastic's slices and scroll size). A spinner is now as wide
+as a text field (200px), and those four narrow ones are the default width. `value-spinner--narrow`
+is for a value of a few digits; `value-spinner--wide` is now the default width.
+
+### Annotation status and assignee dialogs act on what they start with
+
+**Re-checked** (6 November 2026, against the code): closed: Change Status refuses OK with no status (`ChangeStatusController.java:88-90`); Change Assigned To starting at Nobody is kept on purpose, as above.
+
+**Fixed in part** (28 October 2026, wave 23). Change Status with no status chosen says one is needed, under the status, and keeps the dialog (`App/Editors/QueryEditor` `ChangeStatusNeedsAStatus`); the faded "None" takes the text colour on a highlighted setting, where it failed contrast. **Kept:** Change Assigned To starting at Nobody, whose OK unassigns: its help says so, and it is the only way to unassign (`ChangeAssignedTo` checks it).
+
+**Reported.**
+
+* Change Status starts at None, and OK while it shows None sends an empty status, which
+  `AnnotationDaoImpl.setTag` fails on (`ChangeStatusController`).
+* Change Assigned To always starts at Nobody, so OK without choosing a user unassigns every selected
+  annotation (`ChangeAssigneeController`).
+
+### A list's selection kept a stale row
+
+**Fixed** (6 November 2026). A list's selection (`Selection`, behind `MultiSelectionModelImpl`) held
+row objects compared with `equals`, and the grid's key provider served only its keyboard row. A row
+fetched again, polled or replaced by an edited copy either showed unselected, or showed selected
+while `getSelected()` was the old object. The worst case: a second Edit of a notification opened
+the old values and its OK added a duplicate (`NotificationListController.replace` fell back to
+`list.add`). A second Edit opened the old values in the accounts, group, label, query field, feed
+dependency and constraint lists; Terminate stayed enabled on a store found complete; a dashboard
+table's selection gave linked panes the previous poll's values.
+
+The fix, in the shared widgets: the grid gives its key provider to the selection
+(`DataGrid.setKeyProvider` / `setSelectionModel`), which compares rows by key (else `equals`), and
+`DataGrid.setRowData` swaps each selected row for its new object (`MultiSelectionModelImpl.followRows`),
+keeping a selected row not among them (another page, filtered out). One plain selection event fires
+if a selected row's new object isn't equal to the old (as selecting it again did), none otherwise, so
+lists equal by id don't reload anything as they poll (R-S13 in
+`stroom-core-client-widget/DATA_GRID_DESIGN.md`; rule in UI-GUIDE.md). JUnit: `TestSelection`,
+`TestMultiSelectionModelImpl`, `TestNotificationListController` (fails before). Story:
+`Widgets/Data Grid/DataGridRowUpdates` `SelectionFollowsTheRow`.
+
+All 130 files that use a selection were checked (6 November 2026); per list:
+- Keys added: users (uuid), document and app permissions (user uuid / find result), credentials
+  (uuid), AI chat history (id), node status (node name: the stories' nodes have no ids, so every node
+  equalled every other and clicking another did nothing, in the old code too).
+- Notifications: replaced and removed by uuid; an edit of one removed meanwhile warns rather than
+  adds (`App/Editors/AnalyticRuleEditor` `EditNotificationTwice`).
+- Selecting the wrong row: New Rule on data receipt rules selected the editor's rule numbered 0, so
+  Edit warned it had been deleted (`App/Main/DataReceiptRulesScreen` `EditNewRule`); a new retention
+  rule or content template selected the first row, not itself (`App/Main/DataRetentionScreen`
+  `AddRuleSelectsIt`, `App/Main/ContentTemplatesScreen` `AddTemplateSelectsIt`).
+- Left selected once gone: a deleted schedule (`AnalyticRuleEditor` `DeleteScheduleSelectsFirst`),
+  deleted duplicate checks (`DeleteDuplicatesClearsSelection`), an unlinked annotation
+  (`App/Main/AnnotationEditor` `RemoveLink`), a deleted credential (the first was selected before the
+  list reloaded: `App/Main/CredentialsScreen` `DeleteSelectsFirstRemaining`); another job's or node's
+  rows, which the batch schedule then changed (`App/Main/JobsScreen`
+  `SwitchJobClearsNodeSelection`, `App/Main/NodesScreen` `SwitchNodeClearsJobSelection`); another
+  path node's constraint and another element's XPath filter (`App/Editors/PathwaysEditor`
+  `OtherNodeClearsConstraint`, `App/Main/StepFilterDialog` `OtherElementClearsFilter`).
+- Credentials: after an edit the fetched row is selected, not one with made-up edit and delete
+  permissions, and the buttons follow the row's permissions when rows arrive; selecting none no
+  longer stores a credential of null (which `getSelectedCredentialsName` threw on).
+- API keys, user access and user dependencies selected the first row on every fetch, losing the
+  user's choice: now only when the selected row has gone (`App/Main/ApiKeysScreen`,
+  `App/Main/UserAccessScreen` `RefreshKeepsSelection`).
+- Properties' `getSelectedItem` threw with nothing selected.
+- Dashboard tables tell linked components when a poll changes the selected rows' values
+  (`TableController.setDataInternal`; rows are equal by group, so no selection event fires):
+  `App/Editors/DashboardEditor` `PollKeepsSelectedValues`.
+- Second Edit now shows the first: `App/Main/AccountsScreen` `EditTwiceShowsTheEdit`,
+  `App/Main/UserGroupsScreen` `RefreshFollowsTheSelectedGroup`, `App/Main/AnnotationTagScreen`
+  `EditLabelTwice`, `DataReceiptRulesScreen` `EditFieldTwice`, `PathwaysEditor` `EditConstraintTwice`,
+  `App/Main/ProcessorFilterEditDialog` `EditFeedDependencyTwice`, `App/Main/PropertiesScreen`
+  `SaveKeepsSelection`.
+- Shown unselected after a refetch: `App/Main/SigningKeysScreen` `RefreshFollowsTheSelectedKey`,
+  `App/Main/ResultStoresDialog` `RefreshFollowsSelectedStore`, `App/Main/NodeGroupsScreen`
+  `EnabledKeepsSelection`, `App/Main/DataVolumesScreen` `EditKeepsSelection`,
+  `App/Main/ContentStoreScreen` `RefreshKeepsSelection`; edit then Remove removed nothing:
+  `App/Editors/FloorMapSettings` `RemoveAfterEdit`.
+- Workarounds removed: the activity list's swap after each fetch (`matchSelectionToRow`), the
+  profile periods' swap (`ProfilePeriodList.reselect`, keeping only dropping a removed period), and
+  the re-select after an Edit in the data receipt, retention and content template rules. Kept, as
+  they aren't the same row again: re-selects after a copy, an add, a move or ticking Enabled (which
+  selects the ticked row), selections of a preset or new row, the explorer's `ensureVisible`, and
+  the conditional formatting and selection handler re-selects (their ids can be null in old
+  settings, so their rows fall back to `equals`).
+- Checked, no change: about 40 lists whose rows never change, are cleared on each fetch or whose
+  selection nothing reads; `SelectionList.navigateBack` deselecting the folder left (it focuses it
+  without choosing it, as intended).
+- Not shown by a story: document permissions (both edit dialogs fetch the user's permissions
+  again, so a stale row gave only a user that doesn't change), the AI chat history (its list is
+  fetched again only on a filter change, which selects the first row), the metadata browser (rows
+  equal by id already showed selected; nothing reads the stale object on demand).
+
+Limit: rows equal by id (`User`, `CredentialWithPerms`, `TableRow`, `MetaRow`) fire nothing when they
+change, as that can't be told; a screen that shows a selected row's details updates them when rows
+arrive (as the credentials list and the dashboard table now do).
+
+### Lists selected differently after each action, and kept rows they no longer showed
+
+**Fixed** (10 November 2026). An audit of every list with actions (about 75) found what was selected
+after Add, Edit and Delete varied from list to list, and paging wasn't handled: a selected row on
+another page, filtered out or under a closed folder stayed selected out of sight, so Edit and
+Delete acted on a row the user couldn't see and detail panes kept showing it. Agreed with the user:
+Delete selects the row now in its place; a row not shown is deselected; actions on one row need
+exactly one selected. The rules are in UI-GUIDE.md, "What a list selects"; the mechanism is R-S14
+in `stroom-core-client-widget/DATA_GRID_DESIGN.md` (`MultiSelectionModelImpl.settle`,
+`selectWhenShown`, `selectNextAfterRemove`, `setSelectFirst`, `DataGrid.setKeepHiddenSelection`,
+`ListSelection`). JUnit: `TestMultiSelectionModelImpl`, `TestSelection`, `TestListSelection`,
+`TestPageState`. Stories: `Widgets/Data Grid/DataGridSelectionRules` (delete next, delete last,
+multi-delete, delete every row, page change, add, add or rename onto another page); a story fixture
+that pages, `FakeRows` (WRITING-STORIES.md).
+
+Bugs found and fixed on the way:
+- Deleting a data retention rule or a content template threw (`visibleRules.get(-1)`: the deleted
+  rule was looked up after renumbering): `App/Main/DataRetentionScreen` `DeleteSelectsNext`,
+  `MoveKeepsIt`; `App/Main/ContentTemplatesScreen` `DeleteSelectsNext`.
+- A renamed data receipt field left its old name selected, and a second Edit threw:
+  `App/Main/DataReceiptRulesScreen` `RenameFieldTwice`, `DeleteLastFieldSelectsPrevious`.
+- A removed feed dependency stayed selected, and its Edit added it back:
+  `App/Main/ProcessorFilterEditDialog` `RemoveFeedDependencySelectsNext`.
+- A renamed constraint left its old name selected: `App/Editors/PathwaysEditor`
+  `RenameConstraintKeepsIt`. A removed constraint stayed selected.
+- A destroyed result store, deleted processor filters (but the last selected) and revoked or
+  removed rows stayed selected with their buttons live.
+- The document user permissions details went stale after Edit (a row equal by user fires no
+  event); they are fetched again after the edit.
+- `DocumentPermissionsListController` selected the first row from a reply the provider discarded.
+- The dictionary imports' words pane kept a removed import's words.
+- Execution Schedules' batch edit waited for every change to succeed, so one failure left the list
+  as it was; every refresh fetched every schedule to drop gone selections.
+- Multi-row deletes (node groups, volume groups, volumes, index fields, labels, processor profiles,
+  pathways) sent one fetch per row, each re-selecting, and most had no failure handling: one fetch
+  once all are answered (`CountDownAndRun`), failures reported.
+- `CachesController` threw once the cache selection was cleared.
+
+Per list (what changed to meet the rules):
+- Select the new or edited item: accounts (`App/Main/AccountsScreen` `AddSelectsIt`), API keys,
+  users and user groups (create, rename and Enabled once cleared the selection:
+  `App/Main/UserGroupsScreen` `CreateSelectsIt`, `RenameKeepsIt`), node, volume and index volume
+  groups and volumes, index fields, labels/collections/statuses, rule schedules, linked events,
+  linked annotations, processor profiles and periods, feed dependencies, pathways, constraints,
+  receipt fields, query favourites (key added: `StoredQuery` has no `equals`), pipeline references
+  and properties (a refresh once cleared them), dictionary imports (once selected the first).
+- Delete selects the next: accounts (`DeleteSelectsNext`), API keys, users and groups
+  (`App/Main/UserGroupsScreen` `DeleteSelectsNext`; the members panes once picked the previous
+  row), credentials (`App/Main/CredentialsScreen` `DeleteSelectsNext`, `DeleteLastSelectsPrevious`),
+  user access revoke (`App/Main/UserAccessScreen` `RevokeSelectsNext`; a user still listed stays
+  selected), sessions (`EndSessionSelectsNext`; a refresh once cleared them), signing keys
+  (`App/Main/SigningKeysScreen` `RevokeKeepsIt`: a revoked key is still listed), node groups
+  (`App/Main/NodeGroupsScreen` `MultiDeleteSelectsNext`), execution schedules, rule schedules
+  (`App/Editors/AnalyticRuleEditor` `DeleteScheduleSelectsNext`), duplicate checks
+  (`DeleteDuplicatesSelectsNext`), notifications, linked events (once the previous row), annotation
+  links, processor filters, retention and template rules, receipt rules and fields, selection
+  handlers, conditional formatting, include/exclude dictionaries, script dependencies, XPath
+  filters, Solr fields, floor map groups and schema, activities.
+- Rows not shown deselected: every list but the pickers (choosers, `UserRefPopup`, `SelectionList`,
+  the tab session chooser, the floor map facts, the credentials picker) and the trees (explorer,
+  document assets), which keep them (`App/Main/NodeGroupsScreen` `PageChangeDropsSelection`). The
+  processor list's and execution schedules' own versions of this were removed.
+- Select first when none is: API keys, user access, credentials, rule schedules, linked events,
+  dictionary imports (their `changeData` overrides removed).
+- Single-select, as every action is on one row: user access (`OneUserAtATimeAndSplitPane`),
+  sessions, signing keys, activities. Edit needs exactly one: node groups, volume groups, volumes,
+  index fields, labels, processor profiles, pathways, constraints.
+
+Not done, or kept:
+- The floor map time list and groups use GWT's `SingleSelectionModel` (not this selection): the
+  groups' Delete selects the next (`ListSelection`). The time list's Delete selected the row above
+  (none if it was the first); it now selects the next, else the new last (fixed 10 November 2026:
+  `FloorMapEditorModel.stageTimeEntryDeletion`, `TestFloorMapEditorModel`,
+  `App/Editors/FloorMapEditor` `DeleteTimeSelectsNext`).
+- The document asset tree reloads with nothing selected after Add, Rename or Delete.
+- Query favourites fetched only the first 100 (`PageRequest.createDefault()`) into a grid with no
+  pager, so a 101st was never shown. Fixed (10 November 2026): every favourite is fetched
+  (`App/Editors/DashboardEditor` `FavouritesAllFetched`). Query history still asks for 100, which
+  suits a list of recent queries.
+- The Users screen's Delete title kept a renamed user's old name until the selection changed: a
+  renamed user's row is equal to the old (`User` is equal by uuid), so no selection event fires as
+  it arrives. Fixed (10 November 2026): the title is set again as each page of users arrives
+  (`App/Main/UsersScreen` `RenameUpdatesDeleteTitle`); the unused
+  `UsersController.onEditUserOrGroup` is gone.
+- The meta list's and index shards' tick boxes (`stroom.util.shared.Selection`) are not this
+  selection: ticks on other pages are kept or dropped as before.
+- Paging plays are on one server list (node groups) and the grid story; most screens' fixtures
+  return one fixed page. No play removes a constraint (each fixture node has one).
+
+An audit of the change (10 November 2026, three independent reviews: the mechanism, and every list)
+found, and these were fixed:
+- Deleting or adding on a shortened last page left the selection unsettled: the pager moves the page
+  back (to show a full page) as the count arrives, and `RestDataProvider` dropped that fetch, as
+  the fetch the rows came in still counted as running. A placeholder row showed, the deleted row
+  stayed selected out of sight, and the pending choice later acted on another page. The provider
+  now stops counting the fetch before giving the rows (`App/Main/NodeGroupsScreen`
+  `DeleteOnTheLastPageSelectsPrevious`).
+- The jobs and node jobs lists never settled: their gap row is `null`, which counted as a row not
+  yet arrived (`PageState` now tells a placeholder from a `null` row given).
+- Events: a changed row's event and the settling's are now one; rows that arrive as the selection
+  settles settle in a render of their own; a picker's hidden choices are kept when a removed row
+  is still shown; rows without a key are compared with `equals` alone (a row class may not override
+  `hashCode`); a new key provider cancels a pending choice.
+- Pending choices were set before the link or unlink of an annotation or event succeeded.
+- The processor filters' Refresh kept only the most recent of several rows selected; the task
+  summary cleared and re-selected its row on every refresh (two events, the tasks fetched twice);
+  the traces chart kept showing a trace no longer selected.
+- The floor map schema's Remove took the first of two equal new mappings, not the one selected.
+- The activity chooser is a picker: the current activity stays chosen while a filter hides it, so
+  Close keeps it (`App/Main/ManageActivityDialog` `QuickFilter`).
+- Rule gaps: Add selects the new notification, dictionary, script and mapping; Edit selects the
+  edited rule or template though another was selected while its editor was open; an Enabled tick
+  selects its row (schedules, notifications, jobs, job nodes, nodes, node groups); Edit and
+  Duplicate need exactly one row (receipt and Solr fields, processor filters); key binding Remove
+  selects the row in its place.
+- Select-first only where a pane shows the selected row: added for caches, jobs, nodes, app and
+  document user permissions, the content store, analytic shards (now single-select), the
+  retention, receipt and template rules, pathways, processor filters, traces and find in content;
+  removed from API keys, credentials and user dependencies, whose selection only enables buttons.
+  Not added to query favourites (a chooser whose OK would apply a favourite not chosen) or the
+  meta browser (each page would load its first stream's data).
+- Tidy-ups: the unused three-argument deletes, the task summary's key getter, stale javadoc and
+  the detached comment on `addSelectionHandler`.
+
 ## Checked and not bugs
 
 Reported by the suite and found not to be bugs, kept so they aren't reported again:
@@ -4112,6 +3335,25 @@ Reported by the suite and found not to be bugs, kept so they aren't reported aga
 * A press on a grid's tick box ends in no `click`: `TickBoxCell` acts on mousedown and redraws
   itself, so the element pressed is gone by mouseup. Both grids do it with real input (checked on
   `Widgets/Cell Renderers/TickBoxCell` `InGrid`), so switching grids changed nothing. Stories that want to know a tick happened should listen for mousedown.
+
+Moved here from the sections above (6 November 2026):
+
+### A node group can't be renamed
+
+**Checked: kept, not a bug** (28 October 2026, wave 23). Processor profiles refer to a node group by its name (`ProcessorProfile.nodeGroupName`), so renaming a group would leave every profile that uses it pointing at nothing; the name box says it can't be changed here. Renaming would need the profiles to follow (server side), or to refer to groups by id.
+
+**Reported.** The Node Group Name text box is disabled, and saving the name is commented out in the
+presenter.
+
+* `stroom-core-client/src/main/java/stroom/node/client/component/NodeGroupEditor.ui.xml`
+* `stroom-core-client/src/main/java/stroom/node/client/component/NodeGroupEditorController.java`
+
+### XML schema text tab handlers
+
+The XML schema's text tab adds its change handler again on every editable read.
+
+**Checked and intended:** a read-only dashboard can still enter design mode and change its layout
+and component settings (they aren't saved).
 
 ## Checking a fix
 

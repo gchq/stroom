@@ -94,6 +94,8 @@ public class ConstraintListController extends Controller {
         constraintEditorProvider.get().edit(this, "New Constraint", new Constraint("New", null, false),
                 constraint -> {
                     pathNode.getConstraints().put(constraint.getName(), constraint);
+                    // The new constraint (UI-GUIDE.md, "What a list selects")
+                    view.getSelectionModel().setSelected(constraint);
                     refresh();
                 });
     }
@@ -102,9 +104,11 @@ public class ConstraintListController extends Controller {
         final Constraint existingConstraint = view.getSelectionModel().getSelected();
         if (existingConstraint != null) {
             constraintEditorProvider.get().edit(this, "Edit Constraint", existingConstraint, constraint -> {
-                // A renamed constraint replaces the one it was
+                // A renamed constraint replaces the one it was, and is selected as it is now (the
+                // old name was once left selected)
                 pathNode.getConstraints().remove(existingConstraint.getName());
                 pathNode.getConstraints().put(constraint.getName(), constraint);
+                view.getSelectionModel().setSelected(constraint);
                 refresh();
             });
         }
@@ -120,6 +124,8 @@ public class ConstraintListController extends Controller {
 
             ConfirmEvent.fire(this, message, result -> {
                 if (result) {
+                    // The constraint in place of the first (they were once left selected)
+                    view.getSelectionModel().selectNextAfterRemove(list);
                     for (final Constraint constraint : list) {
                         pathNode.getConstraints().remove(constraint.getName());
                     }
@@ -137,6 +143,11 @@ public class ConstraintListController extends Controller {
     /// @param readOnly Whether its constraints are read only.
     public void setData(final PathNode pathNode,
                         final boolean readOnly) {
+        if (pathNode != this.pathNode) {
+            // Another node's constraints: none of the last node's is selected (a constraint of the
+            // same name on this node would otherwise be)
+            view.getSelectionModel().clear();
+        }
         this.pathNode = pathNode;
         this.readOnly = readOnly;
         refresh();

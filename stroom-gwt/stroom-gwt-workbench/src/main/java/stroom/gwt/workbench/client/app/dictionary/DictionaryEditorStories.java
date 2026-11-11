@@ -197,13 +197,14 @@ public final class DictionaryEditorStories {
                     play.expect(play.getAllByText("Local").count())
                             .toSatisfy("more than none", count -> ((Integer) count) > 0);
 
-                    // Permissions: the users/groups grid loads; selecting a row shows its details
-                    // and enables Edit, which opens the Set Permissions dialog
+                    // Permissions: the users/groups grid loads with its first row selected, as the
+                    // details pane shows it; Edit opens the Set Permissions dialog
                     play.click(tab(play, "Permissions"));
                     play.waitFor(() -> play.expect(play.getByText("admin")).toBeInTheDocument());
                     play.expect(play.getByText("Analysts")).toBeInTheDocument();
                     final Query editButton = play.getByRole("button", TextMatch.regex("edit permissions", "i"));
-                    play.expect(editButton).toHaveAttribute("aria-disabled", "true");
+                    play.waitFor(() -> play.expect(play.querySelectorAll("." + StroomDom.SELECTED_ROW))
+                            .toHaveLength(1));
                     play.click(play.getByText("admin"));
                     play.waitFor(() -> play.expect(editButton).not().toHaveAttribute("aria-disabled"));
                     play.click(editButton);

@@ -35,6 +35,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -126,6 +127,9 @@ public class ResultStoreListController extends Controller {
                             (done) -> {
                                 if (done) {
                                     AlertEvent.fireInfo(this, "Destroyed store", null);
+                                    // The store in its place (UI-GUIDE.md, "What a list selects"); the
+                                    // destroyed store was once left selected, its buttons live
+                                    getSelectionModel().selectNextAfterRemove(List.of(selected));
                                 } else {
                                     AlertEvent.fireWarn(this, "Failed to destroy store", null);
                                 }

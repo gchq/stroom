@@ -98,7 +98,7 @@ what has been done and what is left in words; this one is for seeing at a glance
   `block--modifier`), states from ARIA attributes where there is one; shared tokens and the
   shared control classes (`stroom-control`, `allow-focus`) aside.
 - **Minimal DOM**: no more elements than the pattern and the layout need.
-- **Screen reader**: tried with a real screen reader (NVDA, VoiceOver), not only axe. (ISSUES.md:
+- **Screen reader**: tried with a real screen reader (NVDA, VoiceOver), not only axe. (A11Y.md:
   Nothing has been tried with a screen reader)
 
 `done`, `part`, `no`; `?` not yet checked; `—` doesn't apply. The quick filter, selection box, value spinner, date and time and icon box rows

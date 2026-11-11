@@ -39,7 +39,6 @@ public class ContentStoreContentPackList extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
     // Index of the first item in the list of content packs
-    private static final int FIRST_ITEM_INDEX = 0;
 
     @UiField
     PagerPanel pager;
@@ -57,24 +56,12 @@ public class ContentStoreContentPackList extends Component {
         dataGrid.setKeyProvider(ContentStoreContentPackWithDynamicState::getContentPack);
         // Don't allow multi-selection
         gridSelectionModel = dataGrid.addDefaultSelectionModel(false);
+        // The pane beside it shows the selected row (UI-GUIDE.md, "What a list selects")
+        gridSelectionModel.setSelectFirst(true);
         addColumns();
 
-        // Get notified when the data has loaded & load up the first item on the page
+        // Get notified when the data has loaded (the selection settles on the rows itself)
         dataGrid.addLoadingStateChangeHandler(event -> {
-            // If any data has loaded, try to select something
-            // Note: MUST NOT use .equals() here - it won't work
-            if (event.getLoadingState() == LoadingState.LOADED
-                || event.getLoadingState() == LoadingState.PARTIALLY_LOADED) {
-
-                // Got some data, so select the first row if there is one
-                if (gridSelectionModel.getSelected() == null
-                    && dataGrid.getRowCount() > 0) {
-                    // Nothing selected and we've got data so set something selected
-                    final ContentStoreContentPackWithDynamicState cpds = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
-                    gridSelectionModel.setSelected(cpds);
-                }
-            }
-
             // Note: MUST NOT use .equals() here - it won't work
             if (event.getLoadingState() == LoadingState.LOADED) {
                 onLoaded.run();

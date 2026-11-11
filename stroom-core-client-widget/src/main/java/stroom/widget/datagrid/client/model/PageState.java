@@ -33,6 +33,9 @@ import java.util.List;
 public final class PageState<T> {
 
     private final List<T> rows = new ArrayList<>();
+    // Whether each row has arrived: false for a placeholder, true for a row given (which may itself
+    // be null, e.g. a list's gap between groups)
+    private final List<Boolean> arrived = new ArrayList<>();
     private int pageStart;
     private int pageSize;
     private int rowCount;
@@ -83,6 +86,7 @@ public final class PageState<T> {
         final int cacheOffset = Math.max(0, boundedStart - pageStart - rows.size());
         for (int i = 0; i < cacheOffset; i++) {
             rows.add(null);
+            arrived.add(false);
         }
 
         for (int i = boundedStart; i < boundedEnd; i++) {
@@ -90,8 +94,10 @@ public final class PageState<T> {
             final int dataIndex = i - pageStart;
             if (dataIndex < rows.size()) {
                 rows.set(dataIndex, value);
+                arrived.set(dataIndex, true);
             } else {
                 rows.add(value);
+                arrived.add(true);
             }
         }
         markDirty(boundedStart - cacheOffset - pageStart, boundedEnd - pageStart);
@@ -123,17 +129,19 @@ public final class PageState<T> {
                     final int increase = start - pageStart;
                     if (rows.size() > increase) {
                         rows.subList(0, increase).clear();
+                        arrived.subList(0, increase).clear();
                     } else {
-                        rows.clear();
+                        clearRows();
                     }
                 } else {
                     final int decrease = pageStart - start;
                     if (!rows.isEmpty() && decrease < pageSize) {
                         for (int i = 0; i < decrease; i++) {
                             rows.add(0, null);
+                            arrived.add(0, false);
                         }
                     } else {
-                        rows.clear();
+                        clearRows();
                     }
                 }
             }
@@ -147,7 +155,7 @@ public final class PageState<T> {
         }
 
         if (clearData) {
-            rows.clear();
+            clearRows();
             allDirty = true;
         }
 
@@ -205,6 +213,13 @@ public final class PageState<T> {
         return rows.size();
     }
 
+    /// @return Whether every row of the page has arrived: as many rows as the row count leaves on
+    /// the page, and no placeholders (a `null` row given, e.g. a gap, has arrived).
+    public boolean isComplete() {
+        final int expectedSize = Math.max(0, Math.min(pageSize, rowCount - pageStart));
+        return rows.size() == expectedSize && !arrived.contains(false);
+    }
+
     /// @return The absolute index of the first row on the page.
     public int getPageStart() {
         return pageStart;
@@ -225,6 +240,11 @@ public final class PageState<T> {
         return rowCountExact;
     }
 
+    private void clearRows() {
+        rows.clear();
+        arrived.clear();
+    }
+
     private void markDirty(final int from, final int to) {
         dirtyFrom = Math.min(dirtyFrom, Math.max(0, from));
         dirtyTo = Math.max(dirtyTo, to);
@@ -234,6 +254,7 @@ public final class PageState<T> {
         final int expectedSize = Math.max(0, Math.min(pageSize, rowCount - pageStart));
         if (rows.size() > expectedSize) {
             rows.subList(expectedSize, rows.size()).clear();
+            arrived.subList(expectedSize, arrived.size()).clear();
             allDirty = true;
         }
     }

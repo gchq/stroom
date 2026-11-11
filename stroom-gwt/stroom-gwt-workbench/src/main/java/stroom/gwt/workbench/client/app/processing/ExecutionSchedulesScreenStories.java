@@ -96,9 +96,10 @@ public final class ExecutionSchedulesScreenStories {
             RestReply.json("{\"ok\": false, \"string\": \"Expression term has a missing field\"}"),
             "[\"node1\", \"node2\", \"node3\"]", RestReply.json(SCHEDULES));
     private static final RestFixtures ONE_NODE_FIXTURES = fixtures("[\"node1\"]", RestReply.json(SCHEDULES));
-    // The list as loaded (the first load and the flush of selections that goes with each), then edited
+    // The list as loaded, then edited (a refresh once also fetched every schedule, to drop selected
+    // ones gone; the grid now drops rows not shown)
     private static final RestFixtures EDIT_FIXTURES = fixtures("[\"node1\", \"node2\", \"node3\"]",
-            RestReply.json(SCHEDULES), RestReply.json(SCHEDULES), RestReply.json(EDITED_SCHEDULES));
+            RestReply.json(SCHEDULES), RestReply.json(EDITED_SCHEDULES));
 
     private static final String RUN_NOW = "Run Schedules Now";
     private static final String EDIT = "Edit Selected Schedule";

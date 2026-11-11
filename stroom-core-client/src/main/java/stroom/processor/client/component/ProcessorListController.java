@@ -66,7 +66,6 @@ public class ProcessorListController extends Controller implements HasRefresh {
     private final InfoTooltipController infoTooltip;
     private final ProcessorInfoBuilder processorInfoBuilder;
     private ProcessorList view;
-    private ProcessorListRow nextSelection;
 
     private final RestSaveQueue<Integer, Boolean> processorEnabledSaveQueue;
     private final RestSaveQueue<Integer, Boolean> processorFilterEnabledSaveQueue;
@@ -158,12 +157,6 @@ public class ProcessorListController extends Controller implements HasRefresh {
                         .owner(ProcessorListController.this)
                         .taskMonitorFactory(view.getTaskMonitor())
                         .exec();
-            }
-
-            @Override
-            protected void changeData(final ProcessorListRowResultPage data) {
-                super.changeData(data);
-                onChangeData(data);
             }
         };
     }
@@ -259,33 +252,6 @@ public class ProcessorListController extends Controller implements HasRefresh {
     /// @param expression What the processors shown are to match, from the next fetch.
     public void setExpression(final ExpressionOperator expression) {
         this.expression = expression;
-    }
-
-    /// @param nextSelection The row to select once the next fetch is in, e.g. one just added.
-    public void setNextSelection(final ProcessorListRow nextSelection) {
-        this.nextSelection = nextSelection;
-    }
-
-    private void onChangeData(final ProcessorListRowResultPage data) {
-        final MultiSelectionModel<ProcessorListRow> selectionModel = view.getSelectionModel();
-        final ProcessorListRow selected = selectionModel.getSelected();
-
-        if (nextSelection != null) {
-            for (final ProcessorListRow row : data.getValues()) {
-                if (row instanceof ProcessorFilterRow) {
-                    if (nextSelection.equals(row)) {
-                        selectionModel.setSelected(row);
-                        break;
-                    }
-                }
-            }
-            nextSelection = null;
-
-        } else if (selected != null) {
-            if (!data.getValues().contains(selected)) {
-                selectionModel.setSelected(selected, false);
-            }
-        }
     }
 
     private void onEnabledChange(final ProcessorListRow row, final boolean enabled) {

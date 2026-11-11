@@ -278,7 +278,7 @@ public final class EditAccountDialogStories {
         harness.afterStartUp(() -> {
             final AccountEditorController dialog = injector.getEditAccountController();
             if (account == null) {
-                dialog.create(harness.getAppRoot(), onChanged);
+                dialog.create(harness.getAppRoot(), id -> onChanged.run());
             } else {
                 dialog.edit(harness.getAppRoot(), account.toAccount(), onChanged);
             }

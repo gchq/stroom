@@ -118,6 +118,21 @@ public class FeedDependencyList extends Component implements Focus {
         enableButtons();
     }
 
+    /// Selects a feed dependency, e.g. one just added.
+    ///
+    /// @param feedDependency The feed dependency.
+    public void setSelected(final FeedDependency feedDependency) {
+        selectionModel.setSelected(feedDependency);
+    }
+
+    /// Selects the feed dependency in place of one removed, once they are shown again (UI-GUIDE.md,
+    /// "What a list selects").
+    ///
+    /// @param feedDependency The feed dependency removed.
+    public void selectNextAfterRemove(final FeedDependency feedDependency) {
+        selectionModel.selectNextAfterRemove(List.of(feedDependency));
+    }
+
     /// @param onAdd Run when New is pressed.
     public void setOnAdd(final Runnable onAdd) {
         this.onAdd = onAdd;

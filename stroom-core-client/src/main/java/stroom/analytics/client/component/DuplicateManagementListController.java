@@ -147,7 +147,12 @@ public class DuplicateManagementListController extends Controller {
                             restFactory
                                     .create(DUPLICATE_CHECK_RESOURCE)
                                     .method(res -> res.delete(request))
-                                    .onSuccess(r -> refresh())
+                                    .onSuccess(r -> {
+                                        // The row in place of those deleted (it once kept them
+                                        // selected, with Delete enabled)
+                                        view.selectNextAfterRemove(selected);
+                                        refresh();
+                                    })
                                     .owner(this)
                                     .taskMonitorFactory(view.getTaskMonitor())
                                     .exec();

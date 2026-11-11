@@ -1363,8 +1363,8 @@ public class FloorMapEditorTabController
     ///
     /// @param entry the entry to delete
     private void onDeleteTimeFromTimeList(final TemporalEntry entry) {
-        // Stage the deletion and compute the row to select afterwards (the item
-        // above the deleted one) so the user stays in context.
+        // Stage the deletion and compute the row to select afterwards (the one now in
+        // its place, else the new last row) so the user stays in context.
         final int selectIndex = model.stageTimeEntryDeletion(entry);
         onChange.run();
 

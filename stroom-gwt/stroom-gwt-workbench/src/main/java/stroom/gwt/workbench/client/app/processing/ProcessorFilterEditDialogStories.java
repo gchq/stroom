@@ -36,6 +36,8 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.client.component.ProcessorEditorController;
+import stroom.processor.shared.FeedDependencies;
+import stroom.processor.shared.FeedDependency;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
@@ -48,6 +50,7 @@ import stroom.util.shared.time.TimeUnit;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.List;
 import java.util.Map;
 
 /// Stories of `App/Main/ProcessorFilterEditDialog`, showing Stroom's real [ProcessorEditorController]
@@ -61,6 +64,7 @@ import java.util.Map;
 /// | `POST /processorFilter/v1` | creating a filter |
 /// | `GET /meta/v1/getTypes` | stream types |
 /// | the explorer tree's `POST /explorer/v2/fetchExplorerNodes` | the feed picker |
+/// | `GET /feed/v1/getDocRefForName/{name}`, `POST /explorer/v2/decorate` | an existing dependency's feed |
 ///
 /// `onSaved` is a spy called by the dialog's consumer, with the saved filter's id, and updates are
 /// checked on the request spy. The confirmations are Stroom's real dialogs (`realAlerts()`).
@@ -84,6 +88,17 @@ public final class ProcessorFilterEditDialogStories {
     // Creating a filter fails, e.g. the server refuses it
     private static final RestFixtures FAILING_CREATE = builder("{\"ok\": true}")
             .post("/processorFilter/v1", RestReply.error(500, "Unable to create the filter"))
+            .build();
+
+    // The feed of a feed dependency
+    private static final String MY_FEED_REF = """
+            {"type": "Feed", "uuid": "my-feed", "name": "MY_FEED"}""";
+
+    // A feed dependency's editor finds its feed by name (FeedResource.getDocRefForName), and its
+    // feed picker checks it (the explorer's decorate)
+    private static final RestFixtures FEED_DEPENDENCY_FIXTURES = builder("{\"ok\": true}")
+            .get("/feed/v1/getDocRefForName/MY_FEED", RestReply.json(MY_FEED_REF))
+            .post("/explorer/v2/decorate", RestReply.json(MY_FEED_REF))
             .build();
 
     private ProcessorFilterEditDialogStories() {
@@ -277,6 +292,78 @@ public final class ProcessorFilterEditDialogStories {
                     play.expect(deps.getByTitle("Edit Selected Feed Dependency"))
                             .not().toHaveAttribute("aria-disabled");
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // Editing a feed dependency twice without selecting it again edits it as last edited.
+                // The selection kept the dependency as first read, so the second Edit showed its old
+                // stream type
+                .story("EditFeedDependencyTwice", context -> render(context, FEED_DEPENDENCY_FIXTURES,
+                        filter(12, feedExpression())
+                                .queryData(QueryData.builder()
+                                        .expression(feedExpression())
+                                        .feedDependencies(new FeedDependencies(
+                                                List.of(new FeedDependency("dep-1", "MY_FEED", "Events")),
+                                                null,
+                                                null))
+                                        .build())
+                                .build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    screen.findByText("Edit Filter", StroomDom.DIALOG_TITLE);
+                    play.click(screen.getByRole("button", TextMatch.startingWith("Set Feed Dependencies")));
+                    final Play deps = dialog(screen, "Set Feed Dependencies");
+                    play.click(deps.findByText("MY_FEED"));
+                    final Query edit = deps.getByTitle("Edit Selected Feed Dependency");
+                    play.waitFor(() -> play.expect(edit).not().toHaveAttribute("aria-disabled"));
+                    play.click(edit);
+                    final Play first = dialog(screen, "Edit Feed Dependency");
+                    play.waitFor(() -> play.expect(first.querySelector(".drop-down")).toHaveTextContent("MY_FEED"));
+                    play.waitFor(() -> play.expect(first.querySelector(StroomDom.SELECTION_BOX)).toHaveValue("Events"));
+                    play.click(first.querySelector(StroomDom.SELECTION_BOX));
+                    play.click(screen.findByText("Reference", ".selection-popup *"));
+                    play.click(first.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Feed Dependency", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    deps.findByText("Reference", StroomDom.GRID_CELL_TEXT);
+                    // Edit again, the row still selected
+                    play.click(edit);
+                    final Play second = dialog(screen, "Edit Feed Dependency");
+                    play.waitFor(() -> play.expect(second.querySelector(".drop-down")).toHaveTextContent("MY_FEED"));
+                    play.waitFor(() -> play.expect(second.querySelector(StroomDom.SELECTION_BOX))
+                            .toHaveValue("Reference"));
+                    play.click(second.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Feed Dependency", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.expect(deps.querySelectorAll(StroomDom.GRID_ROW)).toHaveLength(1);
+                    expectNoProblems(play);
+                })
+                // Removing a feed dependency selects the one now in its place (UI-GUIDE.md, "What a
+                // list selects"). The removed one was once left selected, with Edit and Remove live,
+                // and its Edit added it back
+                .story("RemoveFeedDependencySelectsNext", context -> render(context, FEED_DEPENDENCY_FIXTURES,
+                        filter(12, feedExpression())
+                                .queryData(QueryData.builder()
+                                        .expression(feedExpression())
+                                        .feedDependencies(new FeedDependencies(
+                                                List.of(new FeedDependency("dep-1", "MY_FEED", "Events"),
+                                                        new FeedDependency("dep-2", "OTHER_FEED", "Events")),
+                                                null,
+                                                null))
+                                        .build())
+                                .build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    screen.findByText("Edit Filter", StroomDom.DIALOG_TITLE);
+                    play.click(screen.getByRole("button", TextMatch.startingWith("Set Feed Dependencies")));
+                    final Play deps = dialog(screen, "Set Feed Dependencies");
+                    play.click(deps.findByText("MY_FEED"));
+                    final Query remove = deps.getByTitle("Remove Selected Feed Dependency");
+                    play.waitFor(() -> play.expect(remove).not().toHaveAttribute("aria-disabled"));
+                    play.click(remove);
+                    play.waitFor(() -> play.expect(deps.queryByText("MY_FEED")).toBeNull());
+                    play.waitFor(() -> play.expect(deps.getByText("OTHER_FEED").closest(StroomDom.GRID_ROW))
+                            .toHaveAttribute("aria-selected", "true"));
+                    play.expect(deps.querySelectorAll(StroomDom.GRID_ROW)).toHaveLength(1);
+                    expectNoProblems(play);
                 });
     }
 

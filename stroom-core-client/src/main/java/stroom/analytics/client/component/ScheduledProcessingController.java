@@ -158,8 +158,9 @@ public class ScheduledProcessingController extends Controller {
                             .create(EXECUTION_SCHEDULE_RESOURCE)
                             .method(res -> res.createExecutionSchedule(executionSchedule))
                             .onSuccess(created -> {
-                                scheduleList.refresh();
+                                // The new schedule, if the page shows it
                                 scheduleList.setSelected(created);
+                                scheduleList.refresh();
                             })
                             .owner(this)
                             .taskMonitorFactory(taskMonitor())
@@ -178,8 +179,8 @@ public class ScheduledProcessingController extends Controller {
                             .create(EXECUTION_SCHEDULE_RESOURCE)
                             .method(res -> res.updateExecutionSchedule(executionSchedule))
                             .onSuccess(updated -> {
-                                scheduleList.refresh();
                                 scheduleList.setSelected(updated);
+                                scheduleList.refresh();
                             })
                             .owner(this)
                             .taskMonitorFactory(taskMonitor())
@@ -200,7 +201,12 @@ public class ScheduledProcessingController extends Controller {
                             restFactory
                                     .create(EXECUTION_SCHEDULE_RESOURCE)
                                     .method(res -> res.deleteExecutionSchedule(selected))
-                                    .onSuccess(success -> scheduleList.refresh())
+                                    .onSuccess(success -> {
+                                        // The schedule in its place, and its history (UI-GUIDE.md,
+                                        // "What a list selects")
+                                        scheduleList.selectNextAfterRemove(selected);
+                                        scheduleList.refresh();
+                                    })
                                     .owner(this)
                                     .taskMonitorFactory(taskMonitor())
                                     .exec();

@@ -19,6 +19,8 @@ package stroom.cache.client.component;
 import stroom.content.client.component.ContentTabController;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.cache.CacheIdentity;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -49,9 +51,9 @@ public class CachesController extends ContentTabController {
 
         own(
                 cacheList.getSelectionModel().addSelectionHandler(event -> {
-                    final String cacheName = cacheList.getSelectionModel()
-                            .getSelected()
-                            .getCacheName();
+                    // None once a filter or another page hides it
+                    final String cacheName = NullSafe.get(cacheList.getSelectionModel().getSelected(),
+                            CacheIdentity::getCacheName);
                     cacheNodeList.read(cacheName);
                 }));
         // When a cache is cleared/evicted refresh the node list

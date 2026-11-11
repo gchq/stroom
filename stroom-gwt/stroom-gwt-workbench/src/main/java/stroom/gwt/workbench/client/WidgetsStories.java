@@ -41,6 +41,7 @@ import stroom.gwt.workbench.client.widgets.datagrid.BenchmarkStories;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridKeyboardStories;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridRowStateStories;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridRowUpdateStories;
+import stroom.gwt.workbench.client.widgets.datagrid.DataGridSelectionRuleStories;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.CalendarGridStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.DateTimePickerStories;
@@ -238,6 +239,8 @@ public final class WidgetsStories {
         DataGridKeyboardStories.addTo(registry);
         // Widgets/Data Grid/DataGridRowUpdates
         DataGridRowUpdateStories.addTo(registry);
+        // Widgets/Data Grid/DataGridSelectionRules
+        DataGridSelectionRuleStories.addTo(registry);
         // Widgets/Cell Renderers/DocRefCell
         DocRefCellStories.addTo(registry);
         // Widgets/Cell Renderers/DocumentTypeCell

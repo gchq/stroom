@@ -64,10 +64,13 @@ public abstract class RestDataProvider<R, T extends ResultPage<R>> extends Async
         exec(range,
                 resultList -> {
                     if (requestedRange.equals(range) && !refetch) {
+                        // Done before the rows are given, so a range the display moves to as they
+                        // arrive (the pager moves a shortened last page back, to show a full page)
+                        // is fetched, not dropped as if this fetch were still running
+                        fetching = false;
                         if (resultList != null) {
                             changeData(resultList);
                         }
-                        fetching = false;
                     } else {
                         refetch = false;
                         doFetch(requestedRange);

@@ -173,4 +173,59 @@ class TestPageState {
         assertThat(state.getRows()).containsExactly("a", "b", "c");
         assertThat(state.getPageSize()).isEqualTo(3);
     }
+
+    @Test
+    void testPageIsCompleteOnceEveryRowHasArrived() {
+        final PageState<String> state = new PageState<>(2);
+        assertThat(state.isComplete()).isTrue();
+
+        state.setRowCount(3, true);
+        assertThat(state.isComplete()).isFalse();
+
+        state.setRowData(0, Arrays.asList("a", "b"));
+        assertThat(state.isComplete()).isTrue();
+
+        // The second page, before its rows arrive
+        state.setVisibleRange(2, 2, true);
+        assertThat(state.isComplete()).isFalse();
+        state.setRowData(2, Collections.singletonList("c"));
+        assertThat(state.isComplete()).isTrue();
+    }
+
+    @Test
+    void testANullRowGivenHasArrived() {
+        // e.g. the jobs list's gap between its groups
+        final PageState<String> state = new PageState<>(10);
+
+        state.setRowData(0, Arrays.asList("a", null, "b"));
+
+        assertThat(state.isComplete()).isTrue();
+    }
+
+    @Test
+    void testAPageMovedBackHasPlaceholdersUntilItsRowsArrive() {
+        final PageState<String> state = new PageState<>(3);
+        state.setRowCount(5, true);
+        state.setVisibleRange(2, 3, true);
+        state.setRowData(2, Arrays.asList("c", "d", "e"));
+
+        // As the pager moves a shortened last page back
+        state.setVisibleRange(1, 3, false);
+        assertThat(state.getRows()).containsExactly(null, "c", "d");
+        assertThat(state.isComplete()).isFalse();
+
+        state.setRowData(1, Arrays.asList("b", "c", "d"));
+        assertThat(state.isComplete()).isTrue();
+    }
+
+    @Test
+    void testPageWithAPlaceholderIsNotComplete() {
+        final PageState<String> state = new PageState<>(10);
+        state.setRowCount(3, true);
+
+        state.setRowData(2, Collections.singletonList("c"));
+
+        assertThat(state.getRows()).containsExactly(null, null, "c");
+        assertThat(state.isComplete()).isFalse();
+    }
 }

@@ -53,6 +53,8 @@ public class TabSessionChooser extends Component {
         initWidget(BINDER.createAndBindUi(this));
         // Escape goes on to the dialog (Cancel)
         list.setSelectionModel(selectionModel, new DataGridSelectionEventManager<>(list, selectionModel, false));
+        // The session chosen stays chosen while a filter hides it
+        list.setKeepHiddenSelection(true);
         selectionModel.addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
                 onConfirm.run();

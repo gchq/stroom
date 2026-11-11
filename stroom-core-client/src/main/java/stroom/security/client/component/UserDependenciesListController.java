@@ -150,16 +150,6 @@ public class UserDependenciesListController extends Controller {
                             .exec();
                 }
             }
-
-            @Override
-            protected void changeData(final ResultPage<UserDependency> data) {
-                super.changeData(data);
-                if (!data.isEmpty()) {
-                    view.getSelectionModel().setSelected(data.getFirst());
-                } else {
-                    view.getSelectionModel().clear();
-                }
-            }
         };
         view.setDataProvider(dataProvider);
     }

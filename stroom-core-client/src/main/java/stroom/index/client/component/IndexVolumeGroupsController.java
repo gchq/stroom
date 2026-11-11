@@ -16,6 +16,7 @@
 
 package stroom.index.client.component;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.component.ContentTabController;
 import stroom.dispatch.client.RestFactory;
@@ -23,6 +24,7 @@ import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.util.client.CountDownAndRun;
 import stroom.widget.button.client.IsButton;
 
 import com.google.gwt.core.client.GWT;
@@ -31,6 +33,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
+import java.util.Objects;
 
 /// Shows the index volume groups, and adds, edits and deletes them.
 public class IndexVolumeGroupsController extends ContentTabController {
@@ -94,6 +97,9 @@ public class IndexVolumeGroupsController extends ContentTabController {
 
     private void add() {
         newIndexVolumeGroupControllerProvider.get().show(this, "", indexVolumeGroup -> {
+            // The new group, if the page shows it (UI-GUIDE.md, "What a list selects")
+            indexVolumeGroupList.getSelectionModel().selectWhenShown(row ->
+                    Objects.equals(row.getId(), indexVolumeGroup.getId()));
             edit(indexVolumeGroup);
             refresh();
         });
@@ -128,12 +134,20 @@ public class IndexVolumeGroupsController extends ContentTabController {
             ConfirmEvent.fire(IndexVolumeGroupsController.this, message,
                     result -> {
                         if (result) {
-                            indexVolumeGroupList.getSelectionModel().clear();
+                            // Once all are answered, the group in place of the first
+                            final CountDownAndRun countdown = new CountDownAndRun(list.size(), () -> {
+                                indexVolumeGroupList.getSelectionModel().selectNextAfterRemove(list);
+                                refresh();
+                            });
                             for (final IndexVolumeGroup volume : list) {
                                 restFactory
                                         .create(INDEX_VOLUME_GROUP_RESOURCE)
                                         .method(res -> res.delete(volume.getId()))
-                                        .onSuccess(response -> refresh())
+                                        .onSuccess(response -> countdown.countdown())
+                                        .onFailure(error -> {
+                                            AlertEvent.fireError(this, error.getMessage(), null);
+                                            countdown.countdown();
+                                        })
                                         .taskMonitorFactory(this)
                                         .exec();
                             }
@@ -143,9 +157,10 @@ public class IndexVolumeGroupsController extends ContentTabController {
     }
 
     private void enableButtons() {
-        final boolean enabled = indexVolumeGroupList.getSelectionModel().getSelected() != null;
-        openButton.setEnabled(enabled);
-        deleteButton.setEnabled(enabled);
+        // Open edits one group; Delete deletes all selected
+        final int count = indexVolumeGroupList.getSelectionModel().getSelectedCount();
+        openButton.setEnabled(count == 1);
+        deleteButton.setEnabled(count > 0);
     }
 
     /// Fetches the volume groups again.

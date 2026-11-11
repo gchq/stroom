@@ -16,18 +16,21 @@
 
 package stroom.node.client.component;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.component.ContentTabController;
 import stroom.node.client.NodeGroupClient;
 import stroom.node.shared.NodeGroup;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.util.client.CountDownAndRun;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
+import java.util.Objects;
 
 /// Shows the node groups, and adds, edits and deletes them.
 public class NodeGroupsController extends ContentTabController {
@@ -71,6 +74,8 @@ public class NodeGroupsController extends ContentTabController {
 
     private void add() {
         newNodeGroupControllerProvider.get().show(this, "", nodeGroup -> {
+            // The new group, if the page shows it (UI-GUIDE.md, "What a list selects")
+            nodeGroupList.getSelectionModel().selectWhenShown(row -> Objects.equals(row.getId(), nodeGroup.getId()));
             edit(nodeGroup);
             refresh();
         });
@@ -97,9 +102,19 @@ public class NodeGroupsController extends ContentTabController {
             ConfirmEvent.fire(NodeGroupsController.this, message,
                     result -> {
                         if (result) {
-                            nodeGroupList.getSelectionModel().clear();
+                            // Once all are answered, the group in place of the first
+                            final CountDownAndRun countdown = new CountDownAndRun(list.size(), () -> {
+                                nodeGroupList.getSelectionModel().selectNextAfterRemove(list);
+                                refresh();
+                            });
                             for (final NodeGroup nodeGroup : list) {
-                                nodeGroupClient.delete(nodeGroup.getId(), response -> refresh(), this);
+                                nodeGroupClient.delete(nodeGroup.getId(),
+                                        response -> countdown.countdown(),
+                                        error -> {
+                                            AlertEvent.fireError(this, error.getMessage(), null);
+                                            countdown.countdown();
+                                        },
+                                        this);
                             }
                         }
                     });

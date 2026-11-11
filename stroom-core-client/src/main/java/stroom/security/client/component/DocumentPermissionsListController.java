@@ -99,7 +99,11 @@ public class DocumentPermissionsListController extends Controller {
                     criteriaBuilder.pageRequest(new PageRequest(range.getStart(), range.getLength()));
                     final AdvancedDocumentFindWithPermissionsRequest request = criteriaBuilder.build();
                     final ExpressionOperator filter = request.getExpression();
-                    final boolean isFilterChange = !Objects.equals(lastFilter, filter);
+                    if (!Objects.equals(lastFilter, filter)) {
+                        // The first document the new filter finds, once its page is shown (a reply
+                        // the provider throws away, for a request made since, doesn't choose it)
+                        selectionModel.selectWhenShown(row -> true);
+                    }
                     lastFilter = filter;
 
                     restFactory
@@ -111,14 +115,6 @@ public class DocumentPermissionsListController extends Controller {
                                 onFilterError.accept(NullSafe.get(resultPage.getFilterError(), TokenError::getText));
                                 onResultPage.accept(resultPage);
                                 dataConsumer.accept(resultPage);
-
-                                if (isFilterChange) {
-                                    if (!resultPage.isEmpty()) {
-                                        selectionModel.setSelected(resultPage.getValues().get(0));
-                                    } else {
-                                        selectionModel.clear();
-                                    }
-                                }
                             })
                             .onFailure(errorHandler)
                             .owner(DocumentPermissionsListController.this)

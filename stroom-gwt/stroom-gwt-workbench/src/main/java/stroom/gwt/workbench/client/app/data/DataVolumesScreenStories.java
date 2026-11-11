@@ -40,21 +40,23 @@ import com.google.gwt.user.client.ui.Widget;
 /// replies.
 ///
 /// The stories answer Stroom's `FsVolumeGroupResource` (`/fsVolume/volumeGroup/v2`: `findExtended`,
-/// `fetch`) and `FsVolumeResource` (`/fsVolume/v1`: `find`, `validate`, `create`), and the requests
-/// made are checked on the request spy.
+/// `fetch`) and `FsVolumeResource` (`/fsVolume/v1`: `find`, `validate`, `create`, and `fetch` and
+/// `update` for an edit), and the requests made are checked on the request spy.
 public final class DataVolumesScreenStories {
 
     private static final String GROUP = "{\"id\": 1, \"name\": \"Default\"}";
 
-    private static final String VOLUMES = """
-            {
-              "values": [
-                {"id": 10, "volumeGroup": {"id": 1, "name": "Default"}, "path": "/data1", "volumeType": "STANDARD",
-                  "status": "ACTIVE", "volumeState": {"bytesUsed": 500, "bytesFree": 500, "bytesTotal": 1000,
-                  "updateTimeMs": 1700000000000}}
-              ],
-              "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}
-            }""";
+    private static final String VOLUME = """
+            {"id": 10, "volumeGroup": {"id": 1, "name": "Default"}, "path": "/data1", "volumeType": "STANDARD",
+              "status": "ACTIVE", "volumeState": {"bytesUsed": 500, "bytesFree": 500, "bytesTotal": 1000,
+              "updateTimeMs": 1700000000000}}""";
+
+    private static final String VOLUMES = "{\"values\": [" + VOLUME + "], "
+                                          + "\"pageResponse\": {\"offset\": 0, \"length\": 1, \"total\": 1, "
+                                          + "\"exact\": true}}";
+
+    // The path the volume is given by an edit
+    private static final String EDITED_PATH = "/archive1";
 
     private static final String NEW_VOLUME = "New Data Volume";
 
@@ -112,6 +114,37 @@ public final class DataVolumesScreenStories {
                                     .toSpyMatcher()));
                     ContentStorySupport.expectNoProblems(play);
                 })
+                // Editing the selected volume saves it and fetches the volumes again, with its new
+                // path: its row stays selected. It once showed unselected, as the fetched volume
+                // wasn't equal to the one selected
+                .story("EditKeepsSelection", context -> render(context, editingFixtures()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.dblClick(play.findByText("Default"));
+                    final Play groupDialog = screen.within(screen.findByText("Edit Data Volume Group - Default")
+                            .closest(StroomDom.DIALOG));
+                    play.click(groupDialog.findByText("/data1"));
+                    play.waitFor(() -> play.expect(groupDialog.getByText("/data1").closest(StroomDom.GRID_ROW))
+                            .toHaveAttribute("aria-selected", "true"));
+                    play.click(groupDialog.getByTitle("Edit Selected Data Volume"));
+                    final Play volumeDialog = screen.within(
+                            screen.findByText("Edit Data Volume", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    final Query path = volumeDialog.getByLabelText("Path");
+                    play.waitFor(() -> play.expect(path).toHaveValue("/data1"));
+                    play.clear(path);
+                    play.type(path, EDITED_PATH);
+                    play.click(volumeDialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put("/fsVolume/v1/10")
+                                    .withJsonBodyContaining("{\"id\": 10, \"path\": \"" + EDITED_PATH + "\"}")
+                                    .toSpyMatcher()));
+                    // The volumes as fetched again
+                    final Query row = groupDialog.findByText(EDITED_PATH).closest(StroomDom.GRID_ROW);
+                    play.expect(row).toHaveAttribute("aria-selected", "true");
+                    play.expect(groupDialog.querySelectorAll("." + StroomDom.SELECTED_ROW)).toHaveLength(1);
+                    play.expect(groupDialog.queryByText("/data1")).toBeNull();
+                    ContentStorySupport.expectNoProblems(play);
+                })
                 // New group: a name, then Enter, creates it, and its dialog opens
                 .story("NewGroup", context -> render(context, NEW_GROUP_FIXTURES))
                 .withPlay(play -> {
@@ -158,6 +191,23 @@ public final class DataVolumesScreenStories {
                             RequestMatcher.post("/fsVolume/volumeGroup/v2").toSpyMatcher());
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 });
+    }
+
+    // Volumes as a server keeps them: once volume 10 is updated, it is found as updated. Made for
+    // each rendering, so a rerun starts with the volume as it was
+    private static RestFixtures editingFixtures() {
+        final boolean[] saved = {false};
+        return RestFixtures.builder()
+                .get("/fsVolume/v1/10", RestReply.json(VOLUME))
+                .put("/fsVolume/v1/10", request -> {
+                    saved[0] = true;
+                    return RestReply.json(request.getBody());
+                })
+                .post("/fsVolume/v1/find", request -> RestReply.json(saved[0]
+                        ? VOLUMES.replace("\"/data1\"", "\"" + EDITED_PATH + "\"")
+                        : VOLUMES))
+                .addAll(FIXTURES)
+                .build();
     }
 
     private static Widget render(final StoryContext context) {

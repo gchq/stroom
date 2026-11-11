@@ -178,7 +178,7 @@ public class PropertyListController extends Controller {
         this.pipelineModel = pipelineModel;
     }
 
-    /// Shows an element's properties, with none selected.
+    /// Shows an element's properties; the one selected stays selected if it is among them.
     ///
     /// @param currentElement The element, or `null` for none.
     public void setCurrentElement(final PipelineElement currentElement) {

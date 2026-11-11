@@ -139,11 +139,11 @@ public class PropertyList extends Component {
         }, "Description", 70, 200);
     }
 
-    /// Shows properties, with none selected.
+    /// Shows properties, the one selected still selected if it is among them (an edit keeps it, as
+    /// another element's properties don't).
     ///
     /// @param propertyList The properties.
     public void setData(final List<PipelineProperty> propertyList) {
-        selectionModel.clear();
         dataGrid.setRowData(0, propertyList);
         dataGrid.setRowCount(propertyList.size());
         enableButtons();

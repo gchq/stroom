@@ -367,9 +367,9 @@ public class ManageGlobalPropertyListController extends Controller {
         dataProvider.refresh(false);
     }
 
-    /// @return The property selected.
+    /// @return The property selected, or `null` if none is.
     public ConfigProperty getSelectedItem() {
-        return view.getSelectionModel().getSelected().getConfigProperty();
+        return NullSafe.get(view.getSelectionModel().getSelected(), ConfigPropertyRow::getConfigProperty);
     }
 
     /// Filters the properties by name, after a pause for typing.
