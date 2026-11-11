@@ -34,6 +34,7 @@ import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XPathRegex;
+import stroom.ai.impl.tools.sample.KindFields;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.shared.AiToolCategory;
 import stroom.security.shared.DocumentPermission;
@@ -83,6 +84,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private static final String PROPOSALS_ARG = "proposals";
     private static final String CONFIRM_ARG = "confirm";
     private static final String ONE_KIND_ARG = "one_kind";
+    private static final String KIND_FIELD_ARG = "kind_field";
     // The answer a form suggests for records that are one kind of event.
     private static final String ONE_KIND = "One kind";
 
@@ -296,6 +298,12 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                         .addBooleanProperty(ONE_KIND_ARG, "True when the records, not told apart into kinds, are one "
                                                           + "kind of event: the user confirms it in a short form "
                                                           + "(without forms, ask them in the chat first).")
+                        .addStringProperty(KIND_FIELD_ARG, "The field that tells the records' kinds of event apart, "
+                                                           + "as the user said (e.g. 'msg_act'; two as 'a, b'), or "
+                                                           + "'" + KindFields.ONE_KIND_ANSWER + "'. Only what the "
+                                                           + "user said: when no field is named like one and the "
+                                                           + "tool isn't sure, it asks them (or, with no forms, says "
+                                                           + "to ask in the chat). Kept in the source notes.")
                         .required(BUILD_ARG)
                         .build())
                 .build();
@@ -387,7 +395,10 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             // set to the user again, with a second form.
             return awaitingAmendments(amended);
         }
-        final Sampled read = sampled(call, build, source);
+        final Sampled read = sampled(call, context, build, source, notesNow, true);
+        if (read.asking() != null) {
+            return read.asking();
+        }
         final Map<String, String> samples = read.samples();
         final String readWith = read.readWith();
         final List<Map<String, Object>> records = read.records();
@@ -457,8 +468,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             // Nothing for the user to decide: one kind (the draft's own rule, confirmed by the user when its records
             // are free text), or every kind settled already.
             result.put(SOURCE_NOTES, notes.recordClassified(context, build, source, List.of(), List.of(),
-                    Map.of(RecordSourceNotesTool.RECORD_FIELDS, recordFields, RecordSourceNotesTool.PROPOSED,
-                            List.of())));
+                    withKindFields(read, Map.of(RecordSourceNotesTool.RECORD_FIELDS, recordFields,
+                            RecordSourceNotesTool.PROPOSED, List.of()))));
             result.put(TO_CLASSIFY, List.of());
             result.put(HINT, (kinds.size() <= 1
                     ? "One kind of event (or none told apart): nothing to classify. Go on to the draft."
@@ -473,8 +484,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 .toList();
         // Proposals still to confirm are kept: listing again doesn't take them back from the user.
         result.put(SOURCE_NOTES, notes.recordClassified(context, build, source, List.of(),
-                todo.stream().map(Kind::key).toList(), Map.of(RecordSourceNotesTool.RECORD_FIELDS, recordFields,
-                        SAMPLES, kindSamples)));
+                todo.stream().map(Kind::key).toList(), withKindFields(read, Map.of(RecordSourceNotesTool.RECORD_FIELDS,
+                        recordFields, SAMPLES, kindSamples))));
         result.put(TO_CLASSIFY, batch.stream().map(Kind::shown).toList());
         if (todo.size() > batch.size()) {
             result.put("round", batch.size() + " of the " + todo.size() + " kinds still to classify; the next round "
@@ -516,7 +527,15 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     }
 
     // The sample's records as the draft reads them, the kinds it tells apart in them, and how they were read.
-    private Sampled sampled(final ToolCall call, final String build, final String source) {
+    // The sample's records as the draft reads them, the kinds it tells apart in them (by the kind fields the user
+    // chose: given now, kept in the source notes or the survey; else asked for, when mayAsk, where no field is named
+    // like one and the values leave it unsure), and how they were read. With asking set when the user is to say.
+    private Sampled sampled(final ToolCall call,
+                            final ToolCallContext context,
+                            final String build,
+                            final String source,
+                            final Map<String, Object> notesNow,
+                            final boolean mayAsk) {
         List<Long> streams = StartOnboardingTool.streamIds(call, STREAM_IDS_ARG);
         if (streams.isEmpty()) {
             streams = plan.rawSampleStreams(build, MAX_SAMPLE_STREAMS);
@@ -537,12 +556,86 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 readWith = saved.get().getKey();
             }
         }
-        final Map<String, Object> draft = DraftMapping.draft(List.copyOf(samples.values()), source, null, null, null,
+        final DraftMapping.Records raw = DraftMapping.records(samples, splitter);
+        final KindsChosen chosen = kindFields(call, context, build, notesNow, raw.records(),
+                mayAsk && KindFields.structured(String.valueOf(raw.info().get("format"))));
+        if (chosen.asking() != null) {
+            return new Sampled(samples, readWith, List.of(), List.of(), null, chosen.asking(), List.of());
+        }
+        final Map<String, Object> draft = DraftMapping.draft(List.copyOf(samples.values()), source, null, null,
+                chosen.fields().isEmpty()
+                        ? null
+                        : Map.of(SourceNotes.KIND_FIELDS, chosen.fields()),
                 null, splitter);
         @SuppressWarnings("unchecked") final Map<String, Object> mapping = (Map<String, Object>) draft.get(MAPPING);
         final List<Map<String, Object>> records = unpacked(DraftMapping.records(samples, splitter).records(),
                 mapping);
-        return new Sampled(samples, readWith, records, kinds(draft, records), variantField(draft, records));
+        return new Sampled(samples, readWith, records, kinds(draft, records), variantField(draft, records), null,
+                chosen.fields());
+    }
+
+    // What a listing keeps in the source notes, with the kind fields the kinds were told apart by (the user's), so the
+    // draft makes its rules by them.
+    private static Map<String, Object> withKindFields(final Sampled read, final Map<String, Object> kept) {
+        if (read.kindFields().isEmpty()) {
+            return kept;
+        }
+        final Map<String, Object> out = new LinkedHashMap<>(kept);
+        out.put(SourceNotes.KIND_FIELDS, read.kindFields());
+        return out;
+    }
+
+    // The kind fields: given now (kept in the source notes as the user's), kept in the notes, kept by the survey, or,
+    // where the records have no field named like one and their values leave it unsure, asked for (asked for by the
+    // user: seen in testing, a CSV mail log's msg_act unknown by name, every record one kind, and no form put to the
+    // user). Empty when the draft is to choose by name as before.
+    private KindsChosen kindFields(final ToolCall call,
+                                   final ToolCallContext context,
+                                   final String build,
+                                   final Map<String, Object> notesNow,
+                                   final List<Map<String, Object>> records,
+                                   final boolean mayAsk) {
+        final List<String> given = KindFields.parse(stringArg(call, KIND_FIELD_ARG));
+        if (given != null) {
+            return new KindsChosen(given, null);
+        }
+        final List<String> kept = JsonValues.strings(notesNow.get(SourceNotes.KIND_FIELDS));
+        if (!kept.isEmpty()) {
+            return new KindsChosen(kept, null);
+        }
+        final Optional<List<String>> surveyed = builds.surveyKindFields(build);
+        if (surveyed.isPresent()) {
+            return new KindsChosen(surveyed.get(), null);
+        }
+        final KindFields.Choice choice = KindFields.choose(records);
+        if (choice.certain() || !mayAsk) {
+            return new KindsChosen(List.of(), null);
+        }
+        final Optional<String> answer = consent.answer(call, context, NAME, "No field of the sample is named like a "
+                                                                            + "kind of event (type, action...), but "
+                                                                            + "these could tell its kinds apart:\n"
+                                                                            + choice.said(),
+                "Which field tells the kinds of event apart?", choice.options());
+        if (answer.isEmpty()) {
+            final Map<String, Object> result = new LinkedHashMap<>();
+            result.put(STATUS, "needs_kind_field");
+            result.put("candidates", choice.candidates().stream().map(candidate -> Map.<String, Object>of(
+                    "field", candidate.field(),
+                    "values", candidate.values().subList(0, Math.min(10, candidate.values().size())),
+                    "records", candidate.records())).toList());
+            result.put(HINT, "No field is named like a kind of event, but these could tell the kinds apart. Ask the "
+                             + "user in the chat which one does (show them the candidates and their values), or "
+                             + "whether the records are all one kind, then call " + NAME + " again with "
+                             + KIND_FIELD_ARG + " as they said. Don't choose for them.");
+            return new KindsChosen(List.of(), result);
+        }
+        final List<String> said = KindFields.fromAnswer(answer.get(), choice);
+        if (said.isEmpty()) {
+            throw new ToolRefusal("The user's answer ('" + answer.get() + "') names none of the sample's fields: "
+                                  + "ask them in the chat which field tells the kinds of event apart, and call again "
+                                  + "with " + KIND_FIELD_ARG + ".");
+        }
+        return new KindsChosen(said, null);
     }
 
     // A pattern proposal's key: the kind it is within, its field and its pattern.
@@ -608,7 +701,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         // 166: events said in free text told apart by patterns the agent proposes and the user confirms).
         final Patterned patterned = given.stream().anyMatch(item -> SourceNotes.isPattern(item)
                                                                     || SourceNotes.isSplit(item))
-                ? new Patterned(sampled(call, build, source), notesNow)
+                ? new Patterned(sampled(call, context, build, source, notesNow, false), notesNow)
                 : null;
         for (int i = 0; i < given.size(); i++) {
             final Map<?, ?> item = given.get(i);
@@ -1826,7 +1919,14 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                            String readWith,
                            List<Map<String, Object>> records,
                            List<Kind> kinds,
-                           String variantField) {
+                           String variantField,
+                           Map<String, Object> asking,
+                           List<String> kindFields) {
+
+    }
+
+    // The kind fields chosen (empty for the draft to choose by name), or what to return while the user is asked.
+    private record KindsChosen(List<String> fields, Map<String, Object> asking) {
 
     }
 

@@ -93,6 +93,9 @@ public final class SourceNotes {
     /// The kinds the user said to leave untranslated (classify_kinds), each as its key: `field=value`, or a split's
     /// `within: field = value` / `within: field matches pattern`.
     public static final String DROPPED = "dropped";
+    /// The fields that tell the kinds of event apart, as the user chose them (classify_kinds, survey_feed), or
+    /// [stroom.ai.impl.tools.sample.KindFields#ONE_KIND] alone: the draft makes its rules by them.
+    public static final String KIND_FIELDS = "kind_fields";
     /// The reason a dropped kind's drop rule gives.
     public static final String DROPPED_REASON = "the user said to leave these untranslated";
     // A split's key: the kind it is within, the field, and its value or pattern.
@@ -531,7 +534,11 @@ public final class SourceNotes {
         final List<Map<String, Object>> events = new ArrayList<>();
         final List<Map<String, Object>> proposed = new ArrayList<>();
         final Set<String> dropped = new LinkedHashSet<>();
+        List<String> kindFields = List.of();
         for (final Map<String, Object> note : NullSafe.list(notes)) {
+            if (kindFields.isEmpty()) {
+                kindFields = JsonValues.strings(note.get(KIND_FIELDS));
+            }
             JsonValues.maps(note.get("fields")).forEach(field -> fields.putIfAbsent(text(field.get("field")), field));
             events.addAll(JsonValues.maps(note.get("events")));
             proposed.addAll(JsonValues.maps(note.get(PROPOSED)));
@@ -547,6 +554,9 @@ public final class SourceNotes {
         if (!dropped.isEmpty()) {
             // Kinds the user said to leave untranslated: the draft gives each a drop rule.
             out.put(DROPPED, new ArrayList<>(dropped));
+        }
+        if (!kindFields.isEmpty()) {
+            out.put(KIND_FIELDS, kindFields);
         }
         return out;
     }

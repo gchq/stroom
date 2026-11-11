@@ -11,7 +11,10 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
   and the `product` it comes from, saying how sure you are; show the table it gives back in your reply, as it is (in Stroom AI's chat, the
   chat shows it itself: don't repeat it), then call it
   with `confirm: true`: the user accepts the set shown (up to ten of one confidence, high first) or amends it,
-  then you show the next set it gives back and confirm again; a source of many kinds goes in rounds of 18. For each, who acted (`actor`) and what it was done to (`affected`, and
+  then you show the next set it gives back and confirm again; a source of many kinds goes in rounds of 18. When no field
+  is named like a kind of event, it may first ask the user which field tells the kinds apart (without forms
+  `needs_kind_field`: ask them in the chat, show the candidates, and pass what they say as `kind_field`); never
+  choose it yourself. For each, who acted (`actor`) and what it was done to (`affected`, and
   `affected_as`: User, File, Document, Group...). The draft then follows them, a rule a kind. Send the user's
   amendments and corrections back as proposals with `from_user: true` (only ever what the user said, never your own
   proposals unconfirmed); ask about any they reject. Show only the table each call gives back: the others come after

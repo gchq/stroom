@@ -86,6 +86,9 @@ public final class Shapes {
     private final int examples;
     // Text templates by program and word count.
     private final Map<List<Object>, List<List<String>>> templates = new LinkedHashMap<>();
+    // The fields that tell structured records' kinds apart, chosen once for the survey (KindFields), or null to
+    // choose by name in each part as before.
+    private List<String> kindFields;
 
     /// Shapes with none known, keeping two examples each.
     public Shapes() {
@@ -115,6 +118,20 @@ public final class Shapes {
         }
     }
 
+    /// Signs structured records by these fields' values from now on, in every part, rather than by the fields each
+    /// part's names or values suggest (asked for by the user: seen in testing, a CSV mail log's kind columns chosen
+    /// afresh in each part, its kinds shifting from part to part, and the survey never covered).
+    ///
+    /// @param fields The kind fields ([KindFields]): empty or [KindFields#ONE_KIND] for one kind; null to choose
+    ///               in each part.
+    public void useKindFields(final List<String> fields) {
+        this.kindFields = fields == null
+                ? null
+                : KindFields.oneKind(fields)
+                        ? List.of()
+                        : List.copyOf(fields);
+    }
+
     /// @return The shapes by signature, in the order first seen: each `signature`, `known`, `count`, `examples`
     /// and `streams`.
     public Map<String, Map<String, Object>> shapes() {
@@ -134,7 +151,9 @@ public final class Shapes {
         final Map<String, Object> parsed = chunk.parsedAt(index);
         if (RecordSplitter.DELIMITED.equals(chunk.format())
             || (!chunk.namingColumns().isEmpty() && parsed != null)) {
-            final List<String> columns = chunk.namingColumns();
+            final List<String> columns = kindFields != null && parsed != null
+                    ? kindFields
+                    : chunk.namingColumns();
             if (columns.isEmpty()) {
                 return "row:all";
             }
@@ -175,7 +194,10 @@ public final class Shapes {
         final List<String> naming = new ArrayList<>();
         for (final String key : keys) {
             final Object value = parsed.get(key);
-            if (ToolText.search(NAMING, lastPart(key))
+            final boolean kindField = depth == 0 && kindFields != null
+                    ? kindFields.contains(key)
+                    : ToolText.search(NAMING, lastPart(key));
+            if (kindField
                 && (value instanceof String || value instanceof Long || value instanceof Integer
                     || value instanceof BigInteger || value instanceof Boolean)
                 && ToolText.len(ToolText.str(value)) <= 60) {

@@ -56,6 +56,9 @@ public final class SurveyDoc {
     /// The streams read only in part, in a survey's result and its state: a survey with no streams left to pick
     /// isn't complete while one of them is unsettled.
     public static final String STREAMS_IN_PART = "streams_in_part";
+    /// The state's key for the fields that tell the kinds of event apart: `fields` (a list; [KindFields#ONE_KIND]
+    /// alone for one kind) and `by` (`user` or `tool`).
+    public static final String KIND_FIELDS = "kind_fields";
 
     private static final DateTimeFormatter AT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
             .withZone(ZoneOffset.UTC);
@@ -285,6 +288,10 @@ public final class SurveyDoc {
         merged.put("streams_read", sortedUnion((Collection<Object>) merged.get("streams_read"), resultStreams));
         merged.put(STREAMS_IN_PART, inPart(merged, result, resultStreams));
         merged.put("saturated", JsonValues.truthy(result.get("saturated")));
+        // The fields that tell the feed's kinds of event apart, chosen once (KindFields): kept for later calls.
+        if (result.get(KIND_FIELDS) != null) {
+            merged.put(KIND_FIELDS, result.get(KIND_FIELDS));
+        }
         // How far each part read only in part has been read, and what the user chose for it (survey_feed's
         // SurveyDepth), by stream:part: a later call reads on from there, or doesn't ask again.
         if (result.get("depth") instanceof final List<?> depth && !depth.isEmpty()) {

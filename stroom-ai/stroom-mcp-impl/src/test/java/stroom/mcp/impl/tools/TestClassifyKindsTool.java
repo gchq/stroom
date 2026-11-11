@@ -121,6 +121,33 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    void aKindFieldNamedLikeNoneIsPutToTheUserAndItsKindsListed() {
+        // Seen in testing: a CSV mail log's kind in msg_act, a name the draft didn't know, so the records were one
+        // kind, nothing was put to the user to classify, and they went to the catch-all as Unknown.
+        final StringBuilder csv = new StringBuilder("timestamp,sender,subject,msg_act\n");
+        for (int i = 0; i < 30; i++) {
+            csv.append("2026-11-11T08:%02d:04Z,u%d@example.com,Subject %d,%s\n".formatted(i, i, i,
+                    List.of("allow", "quarantine", "reject").get(i % 3)));
+        }
+        samples(11L, csv.toString());
+
+        // Without forms: the agent asks the user in the chat; nothing is listed yet.
+        final Map<String, Object> asking = call("{\"build\": \"acme\", \"source\": \"SEG\", "
+                                                + "\"stream_ids\": [11]}", BuildToolCalls.context());
+        assertThat(asking).containsEntry("status", "needs_kind_field").doesNotContainKey("to_classify");
+
+        // As the user said: kept in the source notes, and a kind listed per value.
+        final Map<String, Object> listed = call("{\"build\": \"acme\", \"source\": \"SEG\", "
+                                                + "\"stream_ids\": [11], \"kind_field\": \"msg_act\"}",
+                BuildToolCalls.context());
+        assertThat(list(listed.get("to_classify"))).extracting(kind -> kind.get("value"))
+                .containsExactlyInAnyOrder("allow", "quarantine", "reject");
+        final Map<String, Object> again = call("{\"build\": \"acme\", \"source\": \"SEG\", "
+                                               + "\"stream_ids\": [11]}", BuildToolCalls.context());
+        assertThat(again).doesNotContainEntry("status", "needs_kind_field");
+    }
+
+    @Test
     void oneKindLeavesNothingToClassify() {
         samples(8L, THREE_KINDS.replace("action=logout", "action=login").replace("action=purge", "action=login"));
         final Map<String, Object> listed = call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [8]}",
