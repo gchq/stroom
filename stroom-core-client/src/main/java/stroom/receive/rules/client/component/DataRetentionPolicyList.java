@@ -71,6 +71,8 @@ public class DataRetentionPolicyList extends Component {
         // Rows keyed by rule number (their position): a tick rebuilds them
         dataGrid.setKeyProvider(DataRetentionRule::getRuleNumber);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
+        // The pane beside it shows the selected row (UI-GUIDE.md, "What a list selects")
+        selectionModel.setSelectFirst(true);
         addColumns();
     }
 

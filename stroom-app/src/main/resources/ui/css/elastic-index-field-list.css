@@ -15,10 +15,32 @@
  */
 
 /*
-   An Elastic index's field list
-   (stroom.search.elastic.client.component.ElasticIndexFieldList), named BEM style. Its rules were in `components.css`.
+   An Elastic index's Fields tab (stroom.search.elastic.client.component.ElasticIndexFieldList), named
+   BEM style: the name and type filters side by side above the tree of fields
+   (elastic-index-field-list__filters), and the prompt shown below it while no field is selected
+   (elastic-index-field-list__no-selection), and the selected field's panels
+   (elastic-index-field-list__details), which scroll within the space below their tabs.
 */
 
-.elastic-index-field-list__status-message {
-    padding: 5px;
+.elastic-index-field-list__filters {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 4px 4px 4px;
+}
+
+.elastic-index-field-list__filter {
+    width: 250px;
+    flex-shrink: 0;
+}
+
+.elastic-index-field-list__no-selection {
+    padding: 10px;
+    color: var(--text-color--muted);
+}
+
+/* Its panels may shrink to the space below the tabs, so they scroll in it rather than push past it */
+.elastic-index-field-list__details {
+    min-height: 0;
 }

@@ -22,6 +22,7 @@ import stroom.datagen.shared.DataGenResource;
 import stroom.docref.DocRef;
 import stroom.document.client.editor.DocumentEditorHost;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
+import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.rest.StartupFixtures;
@@ -70,12 +71,15 @@ public final class DataGenEditorStories {
               "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}}"""
             .replace("SCHEDULE", SCHEDULE);
 
+    private static final String CREATE_SCHEDULE = "/executionSchedule/v1/createExecutionSchedule";
+
     private static final RestFixtures FIXTURES = DocEditors.docSelectionRoutes(
                     DocEditors.permissionRoutes(RestFixtures.builder()))
             .get("/datagen/v1/datagen-1", RestReply.json(DOC))
             .put("/datagen/v1/datagen-1", request -> RestReply.json(request.getBody()))
             .post("/executionSchedule/v1/fetchExecutionSchedule", RestReply.json(SCHEDULES))
             .post("/executionSchedule/v1/fetchExecutionHistory", RestReply.json(HISTORY))
+            .post(CREATE_SCHEDULE, request -> RestReply.json(request.getBody()))
             // NodeResource.listAllNodes()
             .get("/node/v1/all", RestReply.json("[\"node1\", \"node2\"]"))
             .post("/scheduledTime/v1", RestReply.json("{\"nextScheduledTimeMs\": 1700086400000}"))
@@ -147,6 +151,31 @@ public final class DataGenEditorStories {
                     play.click(DocEditors.tab(play, "Execution"));
                     play.click(play.findByText("Nightly"));
                     play.waitFor(() -> play.expect(play.getByText("Complete")).toBeInTheDocument());
+                    DocEditors.expectNoProblems(play);
+                })
+                // Replaying an execution makes a new schedule for its time: a copy of its schedule,
+                // with a UUID of its own (#6008: it had the original's, which the server refused)
+                .story("ReplayExecution", context -> render(context, false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(DocEditors.tab(play, "Execution")).toBeInTheDocument());
+                    play.click(DocEditors.tab(play, "Execution"));
+                    play.click(play.findByText("Nightly"));
+                    play.click(play.findByText("Complete"));
+                    play.click(play.getByRole("button", "Replay Selected Execution"));
+                    final Play screen = play.screen();
+                    // Edit Schedule, though it creates one (ISSUES.md: The replay dialog says Edit)
+                    final Play dialog = screen.within(screen.findByText("Edit Schedule", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.expect(dialog.getByDisplayValue("Nightly (replay)")).toBeInTheDocument();
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post(CREATE_SCHEDULE)
+                                    .withBody("a copy named 'Nightly (replay)' without the original's UUID",
+                                            body -> body != null
+                                                    && body.contains("Nightly (replay)")
+                                                    && body.contains("\"uuid\"")
+                                                    && !body.contains("\"sched-1\""))
+                                    .toSpyMatcher()));
                     DocEditors.expectNoProblems(play);
                 })
                 .story("ReadOnly", context -> render(context, true))

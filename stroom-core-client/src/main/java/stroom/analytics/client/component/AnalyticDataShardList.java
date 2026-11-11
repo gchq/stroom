@@ -54,7 +54,10 @@ public class AnalyticDataShardList extends Component {
         initWidget(BINDER.createAndBindUi(this));
         // Rows come from every node, so are keyed by node and path
         dataGrid.setKeyProvider(shard -> shard.getNode() + ":" + shard.getPath());
-        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        // One shard at a time, as the data pane beside it shows one; the first when none is
+        // (UI-GUIDE.md, "What a list selects")
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        selectionModel.setSelectFirst(true);
     }
 
     /// Adds the columns, once.

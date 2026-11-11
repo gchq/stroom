@@ -43,6 +43,7 @@ import java.util.Set;
 public class Pager extends AbstractPager {
 
     private static final Binder BINDER = GWT.create(Binder.class);
+    private static final String CHOOSE_ROWS = "Choose the rows to show";
     @UiField
     ToolbarButton first;
     @UiField
@@ -88,6 +89,15 @@ public class Pager extends AbstractPager {
         lblFrom.addClickHandler(this::onClickFrom);
         lblTo.addClickHandler(this::onClickTo);
 
+        // The rows shown are a button, the keyboard's way to the boxes that choose them (the mouse
+        // clicks either number): Enter or Space shows the boxes, From first, then Tab reaches To
+        lblFrom.getElement().setTabIndex(0);
+        lblFrom.getElement().setAttribute("role", "button");
+        lblFrom.setTitle(CHOOSE_ROWS);
+        lblFrom.addDomHandler(this::onKeyDownRows, KeyDownEvent.getType());
+        txtFrom.setAriaLabel("First row");
+        txtTo.setAriaLabel("Last row");
+
         // Disable the buttons by default.
         setupButton(first);
         setupButton(prev);
@@ -125,15 +135,44 @@ public class Pager extends AbstractPager {
         RangeChangeEvent.fire(getDisplay(), getDisplay().getVisibleRange());
     }
 
-    private void onKeyDownFrom(final KeyDownEvent event) {
-        if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-            setEditing(false);
+    private void onKeyDownRows(final KeyDownEvent event) {
+        final int key = event.getNativeKeyCode();
+        if (key == KeyCodes.KEY_ENTER || key == KeyCodes.KEY_SPACE) {
+            event.preventDefault();
+            setEditing(true);
+            txtFrom.setFocus(true);
         }
     }
 
+    private void onKeyDownFrom(final KeyDownEvent event) {
+        onKeyDownBox(event);
+    }
+
     private void onKeyDownTo(final KeyDownEvent event) {
-        if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-            setEditing(false);
+        onKeyDownBox(event);
+    }
+
+    // Enter shows the rows typed, Escape the rows as they were; either gives the focus back to the
+    // rows shown, as the boxes hide. Escape goes no further, so a dialog the pager is in stays open
+    private void onKeyDownBox(final KeyDownEvent event) {
+        final int key = event.getNativeKeyCode();
+        if (key == KeyCodes.KEY_ENTER || key == KeyCodes.KEY_ESCAPE) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (key == KeyCodes.KEY_ESCAPE) {
+                cancelEditing();
+            } else {
+                setEditing(false);
+            }
+            lblFrom.getElement().focus();
+        }
+    }
+
+    // Hides the boxes without showing the rows typed in them
+    private void cancelEditing() {
+        if (editing) {
+            editing = false;
+            showLabels();
         }
     }
 
@@ -177,13 +216,16 @@ public class Pager extends AbstractPager {
                 lblTo.setVisible(false);
             } else {
                 fireMoveEvent();
-
-                lblFrom.setVisible(true);
-                lblTo.setVisible(true);
-                txtFrom.setVisible(false);
-                txtTo.setVisible(false);
+                showLabels();
             }
         }
+    }
+
+    private void showLabels() {
+        lblFrom.setVisible(true);
+        lblTo.setVisible(true);
+        txtFrom.setVisible(false);
+        txtTo.setVisible(false);
     }
 
     private void fireMoveEvent() {
@@ -244,6 +286,16 @@ public class Pager extends AbstractPager {
         } else {
             lblOf.setText("?");
         }
+        // The button's name: the rows shown, as the labels read them ("Rows 1 to 100 of 1,234")
+        final String total = isRowCountExact
+                ? " of " + lblOf.getText()
+                : "";
+        lblFrom.getElement().setAttribute("aria-label",
+                "Rows " + lblFrom.getText() + " to " + lblTo.getText() + total);
+        // An empty list has no rows to choose, so its pager adds no tab stop
+        lblFrom.getElement().setTabIndex(empty
+                ? -1
+                : 0);
 
         // Update the buttons.
         first.setEnabled(hasPreviousPage);

@@ -59,6 +59,8 @@ public class JobList extends Component {
     public JobList() {
         initWidget(BINDER.createAndBindUi(this));
         selectionModel = dataGrid.addDefaultSelectionModel(false);
+        // The pane beside it shows the selected row (UI-GUIDE.md, "What a list selects")
+        selectionModel.setSelectFirst(true);
         addColumns();
     }
 

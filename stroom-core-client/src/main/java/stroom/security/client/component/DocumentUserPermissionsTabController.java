@@ -115,8 +115,13 @@ public class DocumentUserPermissionsTabController extends Controller {
         final DocumentUserPermissions selected =
                 documentUserPermissionsList.getSelectionModel().getSelected();
         if (selected != null) {
+            // The row's user is unchanged, so its new row fires no selection event: the details
+            // are fetched again here
             documentUserPermissionsEditProvider.get().show(
-                    this, docRef, selected, documentUserPermissionsList::refresh, taskMonitor());
+                    this, docRef, selected, () -> {
+                        documentUserPermissionsList.refresh();
+                        updateDetails();
+                    }, taskMonitor());
         }
     }
 

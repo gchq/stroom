@@ -75,6 +75,9 @@ public class ImportsTabController extends Controller {
                 && !event.getSelectionType().isMultiSelect()
                 && getSelectionModel().getSelectedCount() == 1) {
                 effectiveWords.setDocRef(getSelectionModel().getSelected());
+            } else if (getSelectionModel().getSelectedCount() == 0) {
+                // None selected (e.g. the last removed): no words, not the removed import's
+                effectiveWords.setDocRef(null);
             }
         }));
 
@@ -128,6 +131,8 @@ public class ImportsTabController extends Controller {
         chooser.show(guard(docRef -> {
             if (docRef != null && !docRef.equals(dictionary) && !imports.contains(docRef)) {
                 imports.add(docRef);
+                // The import added, and its words (it once selected the first)
+                getSelectionModel().setSelected(docRef);
                 showImports();
                 onChange.run();
             }
@@ -142,8 +147,10 @@ public class ImportsTabController extends Controller {
                     : "Are you sure you want to remove this imported dictionary?";
             ConfirmEvent.fire(this, message, confirmed -> {
                 if (confirmed && !isDisposed()) {
+                    // The import in place of the first, and its words (UI-GUIDE.md, "What a list
+                    // selects")
+                    getSelectionModel().selectNextAfterRemove(selected);
                     imports.removeAll(selected);
-                    getSelectionModel().clear();
                     showImports();
                     onChange.run();
                 }

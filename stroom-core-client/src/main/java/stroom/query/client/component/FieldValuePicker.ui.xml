@@ -1,0 +1,31 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:v="urn:import:stroom.widget.quickfilter.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client"
+             xmlns:spinner="urn:import:stroom.widget.spinner.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <!--
+      The value picker (field-value-picker.css): a filter, shown only for text fields, what the
+      values were counted across with a spinner while they are fetched, then a field's most common
+      values, each with the share of records that have it, which its controller fills. A value is
+      picked with a click, Enter or Space; moving through the list picks nothing. The picker can be
+      resized by dragging its bottom right corner
+    -->
+    <g:FlowPanel styleName="field-value-picker">
+        <g:FlowPanel ui:field="filterBar" styleName="field-value-picker__filter">
+            <v:QuickFilter ui:field="filter" accessibleName="Filter values" placeholder="Filter values"/>
+        </g:FlowPanel>
+        <g:FlowPanel styleName="field-value-picker__header">
+            <tx:Label ui:field="scope" addStyleNames="field-value-picker__scope" wordWrap="false"/>
+            <spinner:SmallBusySpinner ui:field="spinner" addStyleNames="field-value-picker__spinner"/>
+        </g:FlowPanel>
+        <g:FlowPanel styleName="field-value-picker__values">
+            <dg:DataGrid ui:field="list" profile="LISTBOX" fitContent="true" accessibleName="Values"
+                         addStyleNames="w-100"/>
+            <!-- In place of the list, e.g. that there are no values: an empty list box has no options,
+                 which assistive technology refuses -->
+            <tx:Label ui:field="message" addStyleNames="field-value-picker__message" visible="false"/>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

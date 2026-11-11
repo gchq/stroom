@@ -34,6 +34,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.List;
+
 /// Shows who currently holds access, and takes it away.
 ///
 /// It is deliberately one screen covering sessions and tokens together. They stop different things -
@@ -145,10 +147,10 @@ public class UserAccessController extends ContentTabController
                         .create(USER_ACCESS_RESOURCE)
                         .method(res -> res.revokeAccess(row.getSubjectId()))
                         .onSuccess(tokensRevoked -> {
-                            getSelectionModel().clear();
+                            // The user in their place, unless still listed (as inactive), when the
+                            // sessions pane follows their changed row
+                            getSelectionModel().selectNextAfterRemove(List.of(row));
                             refresh();
-                            // The sessions we were showing have just been ended.
-                            userSessionsList.setUser(null, null);
                         })
                         .onFailure(restError -> {
                             AlertEvent.fireError(this, restError.getMessage(), null);

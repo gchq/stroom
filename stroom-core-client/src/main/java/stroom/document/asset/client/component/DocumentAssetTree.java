@@ -94,6 +94,8 @@ public class DocumentAssetTree extends Composite implements Focus {
         }, "", 100);
         grid.setTreeRows(DocumentAssetTree::expanderOf, DocumentAssetTreeItem::setState);
         grid.setSelectionModel(selectionModel, new SelectionEventManager());
+        // The open asset stays chosen under a closed folder
+        grid.setKeepHiddenSelection(true);
         selectionModel.addSelectionHandler(this::onSelect);
 
     }

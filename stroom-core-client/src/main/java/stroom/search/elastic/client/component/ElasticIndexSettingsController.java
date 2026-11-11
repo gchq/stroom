@@ -20,7 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.component.DocSelectionController;
-import stroom.openai.shared.OpenAIModelDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
@@ -37,15 +36,13 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.UUID;
 
 /// An Elasticsearch index's Settings tab ([ElasticIndexSettings]), with its cluster's, pipeline's
-/// and models' pickers, which tests the connection to the index when asked.
+/// and pipeline's pickers, which tests the connection to the index when asked.
 public class ElasticIndexSettingsController extends Controller {
 
     private static final ElasticIndexResource ELASTIC_INDEX_RESOURCE = GWT.create(ElasticIndexResource.class);
 
     private final ElasticIndexSettings view;
     private final DocSelectionController cluster;
-    private final DocSelectionController vectorGenerationModel;
-    private final DocSelectionController rerankModel;
     private final DocSelectionController pipeline;
     private final RestFactory restFactory;
 
@@ -69,14 +66,6 @@ public class ElasticIndexSettingsController extends Controller {
         cluster.attach(view.getClusterBox());
         cluster.setIncludedTypes(ElasticClusterDoc.TYPE);
         cluster.setRequiredPermissions(DocumentPermission.USE);
-        vectorGenerationModel = make(docSelectionProvider);
-        vectorGenerationModel.attach(view.getVectorGenerationModelBox());
-        vectorGenerationModel.setIncludedTypes(OpenAIModelDoc.TYPE);
-        vectorGenerationModel.setRequiredPermissions(DocumentPermission.USE);
-        rerankModel = make(docSelectionProvider);
-        rerankModel.attach(view.getRerankModelBox());
-        rerankModel.setIncludedTypes(OpenAIModelDoc.TYPE);
-        rerankModel.setRequiredPermissions(DocumentPermission.USE);
         pipeline = make(docSelectionProvider);
         pipeline.attach(view.getDefaultExtractionPipelineBox());
         pipeline.setIncludedTypes(PipelineDoc.TYPE);
@@ -85,8 +74,6 @@ public class ElasticIndexSettingsController extends Controller {
         view.setOnChange(this::markChanged);
         view.setOnTestConnection(this::testIndex);
         own(cluster.addSelectionListener(event -> markChanged()));
-        own(vectorGenerationModel.addSelectionListener(event -> markChanged()));
-        own(rerankModel.addSelectionListener(event -> markChanged()));
         own(pipeline.addSelectionListener(selection -> markChanged()));
         watch(Contexts.READ_ONLY, this::setReadOnly);
     }
@@ -97,8 +84,6 @@ public class ElasticIndexSettingsController extends Controller {
     /// @param index  Its settings.
     public void read(final DocRef docRef, final ElasticIndexDoc index) {
         cluster.setSelectedEntityReference(index.getClusterRef(), true);
-        vectorGenerationModel.setSelectedEntityReference(index.getVectorGenerationModelRef(), true);
-        rerankModel.setSelectedEntityReference(index.getRerankModelRef(), true);
         view.read(index);
         pipeline.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
     }
@@ -110,8 +95,6 @@ public class ElasticIndexSettingsController extends Controller {
     public ElasticIndexDoc write(final ElasticIndexDoc index) {
         return view.write(index.copy())
                 .clusterRef(cluster.getSelectedEntityReference())
-                .vectorGenerationModelRef(vectorGenerationModel.getSelectedEntityReference())
-                .rerankModelRef(rerankModel.getSelectedEntityReference())
                 .defaultExtractionPipeline(pipeline.getSelectedEntityReference())
                 .build();
     }
@@ -138,8 +121,6 @@ public class ElasticIndexSettingsController extends Controller {
     private void setReadOnly(final boolean readOnly) {
         view.setReadOnly(readOnly);
         cluster.setReadOnly(readOnly);
-        vectorGenerationModel.setReadOnly(readOnly);
-        rerankModel.setReadOnly(readOnly);
         pipeline.setReadOnly(readOnly);
     }
 }

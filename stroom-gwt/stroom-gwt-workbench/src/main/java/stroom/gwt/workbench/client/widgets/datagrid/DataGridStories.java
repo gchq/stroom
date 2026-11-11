@@ -168,6 +168,37 @@ public final class DataGridStories {
                 .story("Pager", DataGridStories::pager)
                 .withPlay(play -> play.waitFor(() -> play.expect(play.querySelectorAll(ROW))
                         .toHaveLength(PAGER_PAGE_SIZE)))
+                // The rows shown are a button: Enter shows the First row and Last row boxes; Enter in
+                // them shows the rows typed, Escape the rows as they were, and the focus goes back to
+                // the button. The boxes were reached only by a click on the numbers, and had no names
+                .story("PagerKeyboard", DataGridStories::pager)
+                .withPlay(play -> {
+                    final Query rows = play.findByRole("button", TextMatch.startingWith("Rows 1 to 5 of"));
+                    play.run("focus the rows shown", () -> rows.element().get().focus());
+                    play.keyboard("{Enter}");
+                    final Query from = play.getByRole("textbox", "First row");
+                    final Query to = play.getByRole("textbox", "Last row");
+                    play.waitFor(() -> play.expect(from).toHaveFocus());
+                    play.clear(from);
+                    play.type(from, "6");
+                    play.keyboard("{Tab}");
+                    play.expect(to).toHaveFocus();
+                    play.clear(to);
+                    play.type(to, "10");
+                    play.keyboard("{Enter}");
+                    final Query moved = play.getByRole("button", TextMatch.startingWith("Rows 6 to 10 of"));
+                    play.waitFor(() -> play.expect(moved).toHaveFocus());
+                    play.expect(play.spy(ON_NAVIGATE)).toHaveBeenLastCalledWith(5);
+                    // Escape: the rows stay as they were, and the boxes hide
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(from).toHaveFocus());
+                    play.clear(from);
+                    play.type(from, "11");
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(moved).toHaveFocus());
+                    play.expect(play.queryByRole("textbox", "First row")).toBeNull();
+                    play.expect(play.spy(ON_NAVIGATE)).toHaveBeenLastCalledWith(5);
+                })
                 // The pager panel's message over the list, as a table shows a search's errors: each
                 // line on a line of its own, none wrapped (the screenshot shows it). It is centred on
                 // its nearest positioned container: in Stroom a component's layer, here the canvas

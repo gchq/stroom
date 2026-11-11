@@ -60,7 +60,6 @@ class TestStylesheets {
     private static final List<String> CODE_DIRS = List.of(
             "stroom-core-client/src/main",
             "stroom-core-client-widget/src/main/java/stroom",
-            "stroom-dashboard-gwt/src/main",
             "stroom-app-gwt/src/main",
             "stroom-statistics/stroom-statistics-client/src/main",
             "stroom-core-shared/src/main/java",

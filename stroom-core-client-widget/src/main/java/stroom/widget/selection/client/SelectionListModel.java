@@ -47,6 +47,14 @@ public interface SelectionListModel<T, I extends SelectionItem> {
 
     I wrap(T item);
 
+    /// The item a box shows while its value is null, e.g. a "None" item that the list offers to
+    /// clear the choice.
+    ///
+    /// @return The item, or null to show nothing.
+    default I getNoValueItem() {
+        return null;
+    }
+
     T unwrap(I selectionItem);
 
     boolean isEmptyItem(I selectionItem);

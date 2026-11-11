@@ -767,9 +767,9 @@ class TestFloorMapEditorModel {
     }
 
     /// Staging deletion of a middle time entry suggests selecting the index
-    /// immediately before the deleted entry's former position.
+    /// now in the deleted entry's place: the next one.
     @Test
-    void testTimeEntryDeletion_suggestsPreviousIndex() {
+    void testTimeEntryDeletion_suggestsNextIndex() {
         model.setSelectedFactKey("k1");
         model.setServerEntriesForSelectedFact(List.of(
                 entry("k1", 100, "{}"),
@@ -778,19 +778,43 @@ class TestFloorMapEditorModel {
         model.setSelectedTime(200);
 
         final int suggestedIndex = model.stageTimeEntryDeletion(entry("k1", 200, "{}"));
-        // After deleting 200, the list is [100, 300].
-        // The entry at time 200 would have been at index 1, so suggestion is 0.
-        assertThat(suggestedIndex).isEqualTo(0);
+        // After deleting 200, the list is [100, 300]: 300 is now at index 1
+        assertThat(suggestedIndex).isEqualTo(1);
     }
 
-    /// Staging deletion of the first time entry, with nothing before it,
-    /// suggests no selection (index -1).
+    /// Staging deletion of the first time entry suggests the entry after it, now first (it once
+    /// suggested -1).
     @Test
-    void testTimeEntryDeletion_deletingFirst_suggestsMinusOne() {
+    void testTimeEntryDeletion_deletingFirst_suggestsTheNext() {
         model.setSelectedFactKey("k1");
         model.setServerEntriesForSelectedFact(List.of(
                 entry("k1", 100, "{}"),
                 entry("k1", 200, "{}")));
+        model.setSelectedTime(100);
+
+        final int suggestedIndex = model.stageTimeEntryDeletion(entry("k1", 100, "{}"));
+        assertThat(suggestedIndex).isEqualTo(0);
+    }
+
+    /// Staging deletion of the last time entry suggests the new last entry.
+    @Test
+    void testTimeEntryDeletion_deletingLast_suggestsTheNewLast() {
+        model.setSelectedFactKey("k1");
+        model.setServerEntriesForSelectedFact(List.of(
+                entry("k1", 100, "{}"),
+                entry("k1", 200, "{}"),
+                entry("k1", 300, "{}")));
+        model.setSelectedTime(300);
+
+        final int suggestedIndex = model.stageTimeEntryDeletion(entry("k1", 300, "{}"));
+        assertThat(suggestedIndex).isEqualTo(1);
+    }
+
+    /// Staging deletion of the only time entry suggests none (-1).
+    @Test
+    void testTimeEntryDeletion_deletingTheOnly_suggestsMinusOne() {
+        model.setSelectedFactKey("k1");
+        model.setServerEntriesForSelectedFact(List.of(entry("k1", 100, "{}")));
         model.setSelectedTime(100);
 
         final int suggestedIndex = model.stageTimeEntryDeletion(entry("k1", 100, "{}"));

@@ -205,10 +205,11 @@ public class SelectionHandlersController extends SettingsTabController implement
 
     private void confirmDelete() {
         ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
-            if (ok) {
-                final ComponentSelectionHandler rule = selectionHandlerList.getSelectionModel().getSelected();
+            final ComponentSelectionHandler rule = selectionHandlerList.getSelectionModel().getSelected();
+            if (ok && rule != null) {
+                // The handler in its place (UI-GUIDE.md, "What a list selects")
+                selectionHandlerList.getSelectionModel().selectNextAfterRemove(List.of(rule));
                 selectionHandlers.remove(rule);
-                selectionHandlerList.getSelectionModel().clear();
                 update();
                 setDirty(true);
             }

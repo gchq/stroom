@@ -57,7 +57,8 @@ public class SigningKeyList extends Component {
         initWidget(BINDER.createAndBindUi(this));
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(SigningKeyRow::getId);
-        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        // One key at a time, as Revoke revokes one
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
         addColumns();
     }
 
@@ -70,9 +71,6 @@ public class SigningKeyList extends Component {
     public void setData(final List<SigningKeyRow> rows) {
         dataGrid.setRowData(0, rows);
         dataGrid.setRowCount(rows.size(), true);
-        if (rows.isEmpty()) {
-            selectionModel.clear();
-        }
     }
 
     /// @return The selection.

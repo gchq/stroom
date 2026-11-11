@@ -15,5 +15,5 @@
 # limitations under the License.
 #
 
-./gradlew clean build -x test -x stroom-dashboard-gwt:gwtCompile "$@"
+./gradlew clean build -x test "$@"
 

@@ -41,6 +41,7 @@ import stroom.gwt.workbench.client.widgets.datagrid.BenchmarkStories;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridKeyboardStories;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridRowStateStories;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridRowUpdateStories;
+import stroom.gwt.workbench.client.widgets.datagrid.DataGridSelectionRuleStories;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.CalendarGridStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.DateTimePickerStories;
@@ -103,6 +104,8 @@ import stroom.gwt.workbench.client.widgets.popover.InfoColumnStories;
 import stroom.gwt.workbench.client.widgets.popover.PopoverStories;
 import stroom.gwt.workbench.client.widgets.popuppositioner.PopupContractStories;
 import stroom.gwt.workbench.client.widgets.query.ExpressionEditorStories;
+import stroom.gwt.workbench.client.widgets.query.FieldValuePickerStories;
+import stroom.gwt.workbench.client.widgets.query.QueryOptionsStories;
 import stroom.gwt.workbench.client.widgets.selectors.DocSelectionStories;
 import stroom.gwt.workbench.client.widgets.selectors.DropDownBoxStories;
 import stroom.gwt.workbench.client.widgets.selectors.SelectionBoxStories;
@@ -236,6 +239,8 @@ public final class WidgetsStories {
         DataGridKeyboardStories.addTo(registry);
         // Widgets/Data Grid/DataGridRowUpdates
         DataGridRowUpdateStories.addTo(registry);
+        // Widgets/Data Grid/DataGridSelectionRules
+        DataGridSelectionRuleStories.addTo(registry);
         // Widgets/Cell Renderers/DocRefCell
         DocRefCellStories.addTo(registry);
         // Widgets/Cell Renderers/DocumentTypeCell
@@ -270,6 +275,10 @@ public final class WidgetsStories {
         DocumentTickTreeStories.addTo(registry);
         // Widgets/Query/ExpressionBuilder
         ExpressionEditorStories.addTo(registry);
+        // Widgets/Query/FieldValuePicker
+        FieldValuePickerStories.addTo(registry);
+        // Widgets/Query/QueryOptions
+        QueryOptionsStories.addTo(registry);
         // Widgets/Inputs/DynamicSettingsPane
         DynamicSettingsPaneStories.addTo(registry);
         // Widgets/Inputs/FieldEnds

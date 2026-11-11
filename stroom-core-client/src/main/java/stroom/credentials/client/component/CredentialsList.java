@@ -42,11 +42,10 @@ import java.util.function.Function;
 
 /// The credentials, a row each (its name, type, key store type and when it expires), with New,
 /// Delete, Edit and Replace Secret, as the selected one's permissions allow; one can be selected, and
-/// a double click edits it. Unless told otherwise, the first is selected once they have loaded.
+/// a double click edits it.
 public class CredentialsList extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
-    private static final int FIRST_ITEM_INDEX = 0;
 
     @UiField
     PagerPanel pager;
@@ -62,7 +61,6 @@ public class CredentialsList extends Component {
     DataGrid<CredentialWithPerms> dataGrid;
 
     private final MultiSelectionModel<CredentialWithPerms> selectionModel;
-    private boolean selectFirstWhenLoaded = true;
     private Runnable onAdd = () -> {
     };
     private Runnable onDelete = () -> {
@@ -75,6 +73,8 @@ public class CredentialsList extends Component {
     /// Makes an empty list, with no columns until [#addColumns(Function)].
     public CredentialsList() {
         initWidget(BINDER.createAndBindUi(this));
+        // A credential fetched again after an edit is the same row
+        dataGrid.setKeyProvider(row -> NullSafe.get(row.getCredential(), Credential::getUuid));
         selectionModel = dataGrid.addDefaultSelectionModel(false);
 
         addButton.setOnClick(() -> onAdd.run());
@@ -90,15 +90,12 @@ public class CredentialsList extends Component {
         });
         selectionModel.addSelectionHandler(event -> enableButtons());
 
-        // Once loaded, select the first unless one is selected
+        // Once loaded: the selected credential, fetched again, may come with other permissions (it
+        // is the same credential, so the selection follows it without an event)
         dataGrid.addLoadingStateChangeHandler(event -> {
             if (event.getLoadingState() == LoadingState.LOADED ||
                 event.getLoadingState() == LoadingState.PARTIALLY_LOADED) {
-                if (selectFirstWhenLoaded) {
-                    if (selectionModel.getSelected() == null && dataGrid.getRowCount() > 0) {
-                        selectionModel.setSelected(dataGrid.getVisibleItem(FIRST_ITEM_INDEX));
-                    }
-                }
+                enableButtons();
             }
         });
 
@@ -156,18 +153,23 @@ public class CredentialsList extends Component {
         return selectionModel;
     }
 
-    /// Selects the first credential shown, if there is one.
-    public void selectFirst() {
-        final CredentialWithPerms firstItem = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
-        if (firstItem != null) {
-            selectionModel.setSelected(firstItem);
+    /// @param uuid A credential's uuid.
+    /// @return The credential shown with that uuid, with the user's permissions on it, or `null` if
+    ///         it isn't shown.
+    public CredentialWithPerms getShown(final String uuid) {
+        for (final CredentialWithPerms row : dataGrid.getVisibleItems()) {
+            if (row != null && row.getCredential() != null && uuid.equals(row.getCredential().getUuid())) {
+                return row;
+            }
         }
+        return null;
     }
 
-    /// @param selectFirstWhenLoaded Whether the first credential is selected once they have loaded,
-    ///                              if none is.
-    public void setSelectFirstWhenLoaded(final boolean selectFirstWhenLoaded) {
-        this.selectFirstWhenLoaded = selectFirstWhenLoaded;
+    /// @param picker Whether the list is a picker, whose credential chosen stays chosen while
+    ///               another page is shown, as it is the value chosen; else (the credentials screen)
+    ///               a credential not shown is deselected (UI-GUIDE.md, "What a list selects").
+    public void setPicker(final boolean picker) {
+        dataGrid.setKeepHiddenSelection(picker);
     }
 
     /// @param onAdd Run when New is pressed.

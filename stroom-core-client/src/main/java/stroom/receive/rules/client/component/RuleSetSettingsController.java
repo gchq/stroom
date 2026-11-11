@@ -29,6 +29,7 @@ import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
+import stroom.widget.util.client.ListSelection;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -156,7 +157,8 @@ public class RuleSetSettingsController extends Controller {
                 ruleEditorProvider.get().edit(this, newRule, fieldSelectionBoxModel, rule -> {
                     rules.add(0, rule);
                     update();
-                    getSelectionModel().setSelected(rule);
+                    // The rule as numbered by update(), not as the editor gave it (numbered 0)
+                    getSelectionModel().setSelected(rules.get(0));
                     change();
                 });
             }
@@ -181,7 +183,9 @@ public class RuleSetSettingsController extends Controller {
             }
             rules.set(index, rule);
             update();
-            getSelectionModel().setSelected(rule);
+            // The rule edited, even if another was selected while its (non-modal) editor was open
+            // (UI-GUIDE.md, "What a list selects")
+            getSelectionModel().setSelected(rules.get(index));
             // Only mark the rules as changed if the rule was actually changed.
             if (!existingRule.equals(rule)) {
                 change();
@@ -231,9 +235,16 @@ public class RuleSetSettingsController extends Controller {
                     : "Are you sure you want to delete the selected rules?";
             ConfirmEvent.fire(this, msg, ok -> {
                 if (ok) {
+                    final int first = selected.stream()
+                            .mapToInt(rules::indexOf)
+                            .filter(index -> index != -1)
+                            .min()
+                            .orElse(-1);
                     rules.removeAll(selected);
-                    getSelectionModel().clear();
                     update();
+                    // The rule now in place of the first (UI-GUIDE.md, "What a list selects"); the
+                    // rules are renumbered, so it is found by position
+                    getSelectionModel().setSelected(ListSelection.rowAt(rules, first));
                     change();
                 }
             });

@@ -62,7 +62,10 @@ public class UserAccessList extends Component {
         initWidget(BINDER.createAndBindUi(this));
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(UserAccessRow::getSubjectId);
-        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        // One user at a time, as every action is on one; the sessions pane beside it shows the
+        // selected user's (UI-GUIDE.md, "What a list selects")
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        selectionModel.setSelectFirst(true);
     }
 
     /// Adds the columns.

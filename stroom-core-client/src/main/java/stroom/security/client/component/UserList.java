@@ -76,6 +76,8 @@ public class UserList extends Component {
     /// Makes an empty list, with no columns until [#addColumns].
     public UserList() {
         initWidget(BINDER.createAndBindUi(this));
+        // A user fetched again (renamed, enabled, a member added) is the same row
+        dataGrid.setKeyProvider(User::getUuid);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         dataGrid.addColumnSortHandler(event -> onSortChange.run());
     }

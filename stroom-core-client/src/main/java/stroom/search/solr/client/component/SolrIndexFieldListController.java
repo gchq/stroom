@@ -155,8 +155,9 @@ public class SolrIndexFieldListController extends Controller {
 
             ConfirmEvent.fire(this, message, result -> {
                 if (result) {
+                    // The field in place of the first (UI-GUIDE.md, "What a list selects")
+                    getSelectionModel().selectNextAfterRemove(list);
                     fields.removeAll(list);
-                    getSelectionModel().clear();
                     refresh();
                     markChanged();
                 }

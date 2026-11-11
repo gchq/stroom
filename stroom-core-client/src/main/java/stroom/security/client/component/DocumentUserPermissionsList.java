@@ -86,7 +86,11 @@ public class DocumentUserPermissionsList extends Component {
     /// Makes an empty list, with no columns until [#addColumns].
     public DocumentUserPermissionsList() {
         initWidget(BINDER.createAndBindUi(this));
+        // A user's permissions fetched again after an edit are the same row
+        dataGrid.setKeyProvider(row -> row.getUserRef().getUuid());
         selectionModel = dataGrid.addDefaultSelectionModel(false);
+        // The pane beside it shows the selected row (UI-GUIDE.md, "What a list selects")
+        selectionModel.setSelectFirst(true);
         dataGrid.addColumnSortHandler(event -> onSortChange.run());
     }
 

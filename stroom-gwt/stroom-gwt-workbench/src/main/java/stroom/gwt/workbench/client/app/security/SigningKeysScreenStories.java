@@ -54,6 +54,13 @@ public final class SigningKeysScreenStories {
     private static final String EXPIRED = """
             {"id": 3, "status": "EXPIRED", "issuedMs": 1680000000000, "expiresMs": 1690000000000}""";
     private static final String REVOKED = "{\"id\": 4, \"status\": \"REVOKED\", \"issuedMs\": 1670000000000}";
+    // The retired key once it has been revoked (elsewhere)
+    private static final String RETIRED_NOW_REVOKED =
+            "{\"id\": 2, \"status\": \"REVOKED\", \"issuedMs\": 1690000000000}";
+
+    // The screen the current rendering shows, so a play can refresh it as Stroom's content pane
+    // does (HasRefresh.refresh())
+    private static SigningKeysController shownController;
 
     private SigningKeysScreenStories() {
         // Static utility
@@ -150,14 +157,66 @@ public final class SigningKeysScreenStories {
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.post("/signingKey/v1/revokeAll").toSpyMatcher());
                     SecurityPlays.expectNoProblems(play);
+                })
+                // A refresh that finds the selected key revoked (elsewhere) keeps it selected, as it
+                // now is, so Revoke goes dead. The selection once kept the key as first fetched (a
+                // row is equal only to one with the same values), so the row showed unselected and
+                // Revoke stayed live for the old, retired, key
+                .story("RefreshFollowsTheSelectedKey", context -> render(context, 2,
+                        RestReply.json(list(ACTIVE, RETIRED)), RestReply.json(list(ACTIVE, RETIRED_NOW_REVOKED))))
+                .withPlay(play -> {
+                    play.click(play.findByText(TextMatch.startingWith("Retired")));
+                    final Query revoke = play.getByRole("button", REVOKE_TITLE);
+                    play.waitFor(() -> play.expect(revoke).not().toHaveAttribute("aria-disabled"));
+                    play.run("the content pane refreshes the tab", () -> shownController.refresh());
+                    play.waitFor(() -> play.expect(play.getByText("Revoked")).toBeInTheDocument());
+                    play.expect(play.getByText("Revoked").closest(StroomDom.GRID_ROW))
+                            .toHaveAttribute("aria-selected", "true");
+                    play.expect(play.getByText("Active").closest(StroomDom.GRID_ROW))
+                            .toHaveAttribute("aria-selected", "false");
+                    play.waitFor(() -> play.expect(revoke).toHaveAttribute("aria-disabled", "true"));
+                    SecurityPlays.expectNoProblems(play);
+                })
+                // A key revoked here is still listed, as revoked, so it stays selected and Revoke goes
+                // dead (UI-GUIDE.md, "What a list selects"); a revoke once cleared the selection
+                .story("RevokeKeepsIt", context -> render(context, 2,
+                        RestReply.json(list(ACTIVE, RETIRED)), RestReply.json(list(ACTIVE, RETIRED_NOW_REVOKED))))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText(TextMatch.startingWith("Retired")));
+                    final Query revoke = play.getByRole("button", REVOKE_TITLE);
+                    play.waitFor(() -> play.expect(revoke).not().toHaveAttribute("aria-disabled"));
+                    play.click(revoke);
+                    screen.findByText(TextMatch.containing("revoke this signing key?"));
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.getByText("Revoked")).toBeInTheDocument());
+                    play.expect(play.getByText("Revoked").closest(StroomDom.GRID_ROW))
+                            .toHaveAttribute("aria-selected", "true");
+                    play.waitFor(() -> play.expect(revoke).toHaveAttribute("aria-disabled", "true"));
+                    SecurityPlays.expectNoProblems(play);
                 });
     }
 
+    // The keys as SigningKeyResource.list() returns them
+    private static String list(final String... rows) {
+        return "[" + String.join(", ", rows) + "]";
+    }
+
     private static Widget render(final StoryContext context, final String... rows) {
+        return render(context, rows.length, RestReply.json(list(rows)));
+    }
+
+    /// @param keyCount The number of keys Revoke All revokes.
+    /// @param list     The reply to the first fetch of the keys.
+    /// @param more     The replies to the fetches after it; the last repeats.
+    private static Widget render(final StoryContext context,
+                                 final int keyCount,
+                                 final RestReply list,
+                                 final RestReply... more) {
         final RestFixtures fixtures = RestFixtures.builder()
-                .get("/signingKey/v1/list", RestReply.json("[" + String.join(", ", rows) + "]"))
+                .get("/signingKey/v1/list", list, more)
                 .post("/signingKey/v1/revoke", RestReply.json("1"))
-                .post("/signingKey/v1/revokeAll", RestReply.json(String.valueOf(rows.length)))
+                .post("/signingKey/v1/revokeAll", RestReply.json(String.valueOf(keyCount)))
                 .build();
         final SecurityScreenGinjector injector = GWT.create(SecurityScreenGinjector.class);
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
@@ -169,6 +228,13 @@ public final class SigningKeysScreenStories {
         harness.afterStartUp(() -> {
             final SigningKeysController controller = harness.show(injector.getSigningKeysController());
             controller.refresh();
+            shownController = controller;
+            // Not kept once this rendering has gone
+            harness.addCleanUp(() -> {
+                if (shownController == controller) {
+                    shownController = null;
+                }
+            });
         });
         return harness.asWidget();
     }

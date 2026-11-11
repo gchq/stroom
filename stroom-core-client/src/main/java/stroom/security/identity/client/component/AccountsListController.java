@@ -44,6 +44,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 /// The accounts ([AccountsList]), a page at a time, found by its quick filter; New and Edit open the
@@ -105,7 +106,11 @@ public class AccountsListController extends Controller {
     }
 
     private void createNewAccount() {
-        editAccountProvider.get().create(this, dataProvider::refresh);
+        editAccountProvider.get().create(this, id -> {
+            // The new account, if the page shows it (UI-GUIDE.md, "What a list selects")
+            view.getSelectionModel().selectWhenShown(account -> id.equals(account.getId()));
+            refresh();
+        });
     }
 
     private void editSelectedAccount() {
@@ -127,7 +132,7 @@ public class AccountsListController extends Controller {
                             .create(ACCOUNT_RESOURCE)
                             .method(res -> res.delete(account.getId()))
                             .onSuccess(unused -> {
-                                view.getSelectionModel().clear();
+                                view.getSelectionModel().selectNextAfterRemove(List.of(account));
                                 refresh();
                             })
                             .onFailure(e ->

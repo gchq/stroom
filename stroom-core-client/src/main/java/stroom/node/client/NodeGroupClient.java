@@ -121,13 +121,21 @@ public class NodeGroupClient {
                 .exec();
     }
 
+    /// Deletes a node group.
+    ///
+    /// @param id                 The group's id.
+    /// @param consumer           Given whether it was deleted.
+    /// @param errorHandler       Told if the delete failed.
+    /// @param taskMonitorFactory Shows the request is running.
     public void delete(final int id,
                        final Consumer<Boolean> consumer,
+                       final RestErrorHandler errorHandler,
                        final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(NODE_GROUP_RESOURCE)
                 .method(res -> res.delete(id))
                 .onSuccess(consumer)
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

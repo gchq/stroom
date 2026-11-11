@@ -46,6 +46,7 @@ import stroom.query.client.cell.ColumnHeader;
 import stroom.query.client.result.component.ColumnFilterEditorController;
 import stroom.query.client.result.component.ColumnFormatController;
 import stroom.query.client.result.component.ColumnValuesFilterController;
+import stroom.query.client.result.component.ColumnWidthController;
 import stroom.query.client.result.component.ConditionalFormattingRulesController;
 import stroom.query.client.result.component.DownloadSearchResultsController;
 import stroom.query.client.result.component.ResultTable;
@@ -176,6 +177,7 @@ public class QueryResultTableController
     /// @param annotationManager          Annotates the rows selected.
     /// @param securityContext            Says whether the user may download.
     /// @param columnFormatProvider       Makes a column's Format dialog.
+    /// @param columnWidthProvider        Makes a column's Column Width dialog.
     /// @param rulesProvider              Makes the conditional formatting dialog.
     /// @param columnFilterEditorProvider Makes a column's filter dialog.
     /// @param columnValuesFilter         A column's values filter.
@@ -188,6 +190,7 @@ public class QueryResultTableController
                                       final AnnotationMenuController annotationManager,
                                       final ClientSecurityContext securityContext,
                                       final Provider<ColumnFormatController> columnFormatProvider,
+                                      final Provider<ColumnWidthController> columnWidthProvider,
                                       final Provider<ConditionalFormattingRulesController> rulesProvider,
                                       final Provider<ColumnFilterEditorController> columnFilterEditorProvider,
                                       final ColumnValuesFilterController columnValuesFilter,
@@ -208,6 +211,7 @@ public class QueryResultTableController
         columnsManager = new QueryTableColumnsManager(eventBus,
                 this,
                 columnFormatProvider,
+                columnWidthProvider,
                 rulesProvider,
                 columnFilterEditorProvider,
                 columnValuesFilter);

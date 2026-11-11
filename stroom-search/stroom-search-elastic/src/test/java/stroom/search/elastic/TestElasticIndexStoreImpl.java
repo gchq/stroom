@@ -19,7 +19,14 @@ package stroom.search.elastic;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.StoreFactory;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.datasource.DenseVectorFieldConfig;
+import stroom.search.elastic.shared.ElasticDenseVectorSettings;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.search.elastic.shared.ElasticIndexFieldSettings;
+import stroom.search.elastic.shared.ElasticVirtualFieldGroup;
 import stroom.security.api.SecurityContext;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -28,10 +35,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SuppressWarnings("deprecation")
 @ExtendWith(MockitoExtension.class)
 class TestElasticIndexStoreImpl {
 
@@ -100,6 +109,45 @@ class TestElasticIndexStoreImpl {
                 .isNull();
         assertThat(dependencyRemapper.getDependencies())
                 .containsExactlyInAnyOrder(CLUSTER, VECTOR_MODEL, RERANK_MODEL);
+    }
+
+    @Test
+    void testDependencyRemapFunction_remapsFieldSettingReferences() {
+        final DocRef newVectorModel = new DocRef("OpenAIModel", "new-vector-model-uuid", "New vector model");
+        final DocRef dictionary = new DocRef("Dictionary", "dictionary-uuid", "Hosts");
+        final DocRef newDictionary = new DocRef("Dictionary", "new-dictionary-uuid", "New hosts");
+        final DependencyRemapper dependencyRemapper = new DependencyRemapper(Map.of(
+                VECTOR_MODEL, newVectorModel,
+                dictionary, newDictionary));
+        final ElasticIndexDoc doc = ElasticIndexDoc.builder()
+                .uuid("index-uuid")
+                .fieldSettings(List.of(
+                        ElasticIndexFieldSettings.builder("content.vector")
+                                .denseVector(new ElasticDenseVectorSettings(
+                                        DenseVectorFieldConfig.builder()
+                                                .embeddingModelRef(VECTOR_MODEL)
+                                                .rerankModelRef(RERANK_MODEL)
+                                                .build(),
+                                        "content.text",
+                                        "content.score"))
+                                .build(),
+                        ElasticIndexFieldSettings.builder("Category")
+                                .virtualGroups(List.of(new ElasticVirtualFieldGroup("web", ExpressionOperator.builder()
+                                        .addDocRefTerm("host", Condition.IN_DICTIONARY, dictionary)
+                                        .build())))
+                                .build()))
+                .build();
+
+        final ElasticIndexDoc remapped = elasticIndexStore.getDependencyRemapFunction().remap(doc, dependencyRemapper);
+
+        final DenseVectorFieldConfig config = remapped.findFieldSettings("content.vector").getDenseVector().getConfig();
+        assertThat(config.getEmbeddingModelRef()).isEqualTo(newVectorModel);
+        assertThat(config.getRerankModelRef()).isEqualTo(RERANK_MODEL);
+        final ExpressionTerm term = (ExpressionTerm) remapped.findFieldSettings("Category")
+                .getVirtualGroups().getFirst().getExpression().getChildren().getFirst();
+        assertThat(term.getDocRef()).isEqualTo(newDictionary);
+        assertThat(dependencyRemapper.getDependencies())
+                .contains(newVectorModel, RERANK_MODEL, newDictionary);
     }
 
     private ElasticIndexDoc createDoc(final DocRef clusterRef, final DocRef defaultExtractionPipeline) {

@@ -81,6 +81,9 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
     @JsonProperty
     private final Long expiryTimeMs;
 
+    @JsonIgnore
+    private transient volatile DocRef docRef;
+
     /// Constructor for credentials with no key store file path, i.e. any type other than
     /// [CredentialType#KEY_STORE_FILE].
     ///
@@ -215,7 +218,10 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
     }
 
     public DocRef asDocRef() {
-        return new DocRef(TYPE, uuid, name);
+        if (docRef == null) {
+            docRef = new DocRef(TYPE, uuid, name);
+        }
+        return docRef;
     }
 
     @JsonIgnore
@@ -252,5 +258,15 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
                ", keyStorePath='" + keyStorePath + '\'' +
                ", expiryTimeMs=" + expiryTimeMs +
                '}';
+    }
+
+    /// @return A new [DocRef] for this document's type with the supplied uuid.
+    public static DocRef getDocRef(final String uuid) {
+        return new DocRef(TYPE, uuid);
+    }
+
+    /// @return A new builder for creating a [DocRef] for this document's type.
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(TYPE);
     }
 }

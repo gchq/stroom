@@ -116,6 +116,8 @@ public class FeedDependencyListController extends Controller implements Focus {
                             final int index = feedDependencies.indexOf(updated);
                             if (index == -1) {
                                 feedDependencies.add(updated);
+                                // The new dependency (UI-GUIDE.md, "What a list selects")
+                                view.setSelected(updated);
                             } else {
                                 feedDependencies.remove(index);
                                 feedDependencies.add(index, updated);
@@ -129,6 +131,9 @@ public class FeedDependencyListController extends Controller implements Focus {
 
     private void onRemove(final FeedDependency selected) {
         if (selected != null) {
+            // The dependency in its place; the removed one was once left selected, and its Edit
+            // added it back
+            view.selectNextAfterRemove(selected);
             feedDependencies.remove(selected);
             refresh();
         }
