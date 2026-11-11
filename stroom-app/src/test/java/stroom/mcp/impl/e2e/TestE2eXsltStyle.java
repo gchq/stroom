@@ -365,8 +365,11 @@ class TestE2eXsltStyle extends AbstractE2eTest {
         final Map<String, Object> kept = json("build_translation_xslt", with(keep, "reviewed",
                 shown.get("review_id")));
         final List<ElicitFormRequest> asked = client.forms().subList(formsBefore, client.forms().size());
+        // Saying which records in plain words, without the review id (asked for by the user).
         assertThat(asked).as("then a short form").extracting(ElicitFormRequest::message)
-                .anyMatch(message -> message.contains("Translate the records shown in the chat as Unknown events"));
+                .anyMatch(message -> message.contains("Translate these records as Unknown events")
+                                     && message.contains("Rule 'traffic': 2 of 8 sample records, holding")
+                                     && !message.contains(String.valueOf(shown.get("review_id"))));
         assertThat(kept.get("ok")).as("kept as Unknown once the user agrees: %s", kept.get("problems"))
                 .isEqualTo(true);
         final String keptUuid = (String) map(kept, "saved").get("uuid");
