@@ -2652,7 +2652,18 @@ addresses or times, is chosen without asking. Where none is, but fields with a f
 be, they are put to the user in a short form (each as `field (value, value...)`, or "All one kind of event", or a
 field they name); without forms the call reads nothing and returns `status: needs_kind_field` with the candidates,
 and the agent asks in the chat and calls again with `kind_field`. A `kind_field` other than the one kept starts the
-survey afresh (`kind_field_changed`). The head read to choose is the one the survey reads on from. Streams are picked in bisection order (newest, oldest, middle,
+survey afresh (`kind_field_changed`). The head read to choose is the one the survey reads on from.
+
+**Settling the survey.** A stream read only in part that a call can't read deeper (past the parts a call reads,
+records over several lines, or the most a call reads), once the survey has had to read it whole (given by id, or
+the feed's last), is put to the user: "Stop and accept them as read" or "Step records further in first"
+(`read_deeper` without forms); a stop is kept as `stopped_streams` and settles it, and no hint says to raise
+`max_chars_per_stream` for it. `accept_as_is` (asked for by the user: a survey that couldn't be covered and a user
+who wanted to go ahead with a limited sample) reads nothing: the user confirms going ahead with the survey as it is
+(in a form, or as they said in the chat), and the state is covered as far as they chose (`accepted`) until the
+survey reads on. The gate on create_processor_filter (`BuildPlan.uncovered(build, streamIds)`) lets a filter over
+stream_ids the survey read whole (or stopped at) go ahead uncovered, and a build on an existing feed with no survey
+record has its `covered` step still to do (seen: the agent deleted the record to get past the gate). Streams are picked in bisection order (newest, oldest, middle,
 quarters ...) by `FeedSampling.pickSpread`, skipping those already read; with `stream_ids` exactly those streams are
 read. For each stream up to `max_parts_per_stream` parts are read with `StreamReader.readHead`, split into records by
 `RecordSplitter` (same detection as the profile), and added to `Shapes` (see "Sample analysis" for how a shape is

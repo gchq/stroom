@@ -642,6 +642,55 @@ class TestSurveyFeedTool {
                 .doesNotContain("msg_act=");
     }
 
+    @Test
+    void theUserMayGoAheadWithTheSurveyAsItIs() {
+        // Seen in testing: a feed's survey couldn't be covered, the user asked to go ahead with a limited sample, and
+        // there was nowhere to record it, so the agent kept surveying.
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, logins(3), false);
+        json(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\"}"));
+
+        // Without forms, "true" alone isn't the user's word: the agent asks them.
+        assertThat(json(call("{\"feed\": \"ACME-VPN\", \"build\": \"acme-v1\", \"accept_as_is\": \"true\"}")))
+                .containsEntry("status", "needs_user");
+        // The user says no: the survey goes on.
+        assertThat(json(call("{\"feed\": \"ACME-VPN\", \"build\": \"acme-v1\", \"accept_as_is\": "
+                             + "\"no, keep going\"}"))).containsKey("user_says").doesNotContainKey("saturated");
+
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", SurveyFeedTool.ACCEPT));
+        final Map<String, Object> accepted = json(call("{\"feed\": \"ACME-VPN\", \"build\": \"acme-v1\", "
+                                                       + "\"accept_as_is\": \"true\"}", user.context()));
+
+        assertThat(user.shown()).singleElement().asString().contains("1 stream(s) of feed 'ACME-VPN' surveyed");
+        assertThat(accepted).containsEntry("saturated", true).containsKey(SurveyDoc.ACCEPTED);
+        assertThat((String) accepted.get("coverage")).startsWith("covered as far as the user chose");
+    }
+
+    @Test
+    void aStreamTooBigToReadFurtherIsSettledWhenTheUserStopsThere() {
+        // Seen in testing: three 20,000-30,000-record streams could never be reported read whole; the user chose to
+        // stop and accept them, the choice had nowhere to go, and the agent was told to raise max_chars_per_stream.
+        sampleFeedInABuild();
+        final Meta meta = meta(7, "ACME-VPN", 0);
+        Mockito.when(streamReader.meta(7L)).thenReturn(meta);
+        // More parts than a call reads.
+        Mockito.when(streamReader.readHead(eq(7L), anyInt(), anyInt()))
+                .thenReturn(new StreamReader.RawHead(logins(3), false, 25));
+        final String args = "{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\"";
+
+        final Map<String, Object> asked = json(call(args + "}"));
+        assertThat((String) asked.get("coverage")).startsWith("NOT COVERED: Stream(s) [7] can't be read further");
+        assertThat((String) asked.get("hint")).contains("stop and accept", "Don't raise max_chars_per_stream");
+
+        final Map<String, Object> stopped = json(call(args + ", \"read_deeper\": \"stop\"}"));
+        assertThat(stopped).containsEntry("saturated", true)
+                .containsEntry(SurveyDoc.STOPPED_STREAMS, List.of(7));
+        assertThat((String) stopped.get("coverage")).startsWith("covered as far as the user chose: stream(s) [7]");
+        // Kept: read again, the stream isn't asked about, and the survey stays covered.
+        final Map<String, Object> again = json(call(args + "}"));
+        assertThat(again).containsEntry("saturated", true);
+    }
+
     // A CSV mail log whose kind is in msg_act, a name nothing knows.
     private static String msgActCsv() {
         final StringBuilder text = new StringBuilder("timestamp,sender,subject,msg_act,direction\n");

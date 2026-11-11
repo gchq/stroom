@@ -69,6 +69,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -129,6 +130,12 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     static final String MAX_RECORDS_ARG = "max_records_per_stream";
     static final String READ_DEEPER_ARG = "read_deeper";
     static final String KIND_FIELD_ARG = "kind_field";
+    static final String ACCEPT_ARG = "accept_as_is";
+    // The answers to going ahead with the survey as it is, and to streams that can't be read further in a call.
+    static final String ACCEPT = "Go ahead with the survey as it is";
+    static final String KEEP_SURVEYING = "Keep surveying";
+    static final String STOP_THERE = "Stop and accept them as read";
+    static final String STEP_FURTHER = "Step records further in first";
     // The share of a part's budget its windows take when it is read in order from its start: a quarter.
     private static final int WINDOW_SHARE = 4;
     static final String EXAMPLES_ARG = "examples_per_shape";
@@ -277,6 +284,11 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                                            + "it asks them (or, with no forms, says to ask in the "
                                                            + "chat). Kept for the build's survey; a different one "
                                                            + "starts the survey afresh.")
+                        .addStringProperty(ACCEPT_ARG, "Only when the user wants to go ahead with the build's survey "
+                                                       + "as it is, before it is covered: 'true' (they confirm in a "
+                                                       + "form), or, when the client shows no forms, what they said "
+                                                       + "in the chat. Reads nothing: the survey is then covered as "
+                                                       + "far as the user chose, and processing can go ahead.")
                         .addProperty(EXAMPLES_ARG, new IntegerSchema(null))
                         .addStringProperty(BUILD_ARG, "Keep the survey record in this build: a Documentation doc "
                                                       + "'<feed> - Survey' with the kinds of event, examples and "
@@ -325,7 +337,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 orDefault(bounded(call, EXAMPLES_ARG, 1, 10), 2),
                 stringArg(call, BUILD_ARG),
                 stringArg(call, READ_DEEPER_ARG),
-                stringArg(call, KIND_FIELD_ARG));
+                stringArg(call, KIND_FIELD_ARG),
+                stringArg(call, ACCEPT_ARG));
     }
 
     // The streams named, by id.
@@ -452,6 +465,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final Set<String> dropped = read == null || state == null
                 ? Set.of()
                 : droppedShapes(read, state);
+        if (request.acceptAsIs() != null) {
+            return acceptAsIs(call, context, request, feed, record, state);
+        }
         final Set<Long> skip = new TreeSet<>(request.skipStreamIds());
         final Set<String> known = new LinkedHashSet<>(request.knownSignatures());
         known.removeAll(dropped);
@@ -584,6 +600,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final Map<String, Object> result = result(new Outcome(feed, span, chosen, exhausted, !known.isEmpty(),
                 state, streams.size(), request.maxStreams(), limits), reading, shapes, context);
         noteDepth(result, reading, depth);
+        settleInPart(call, context, request, result, reading, depth, state, !chosen.isEmpty() || exhausted);
         noteGone(result, gone, dropped);
         if (kinds != null) {
             result.put(SurveyDoc.KIND_FIELDS, kinds);
@@ -647,17 +664,165 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     }
 
     // The streams the survey state says were read only in part, less those whose parts the user settled (read to
-    // their end, or chose to stop).
+    // their end, or chose to stop), and those too big to read further that they chose to stop at.
     private static List<Long> unsettled(final Map<String, Object> state) {
         if (state == null) {
             return List.of();
         }
         final Map<Long, Boolean> settled = new LinkedHashMap<>();
         depthOf(state).values().forEach(part -> settled.merge(part.stream(), part.settled(), Boolean::logicalAnd));
+        final Set<Long> stopped = stoppedStreams(state);
         return JsonValues.listOrEmpty(state.get(SurveyDoc.STREAMS_IN_PART)).stream()
                 .map(id -> ((Number) id).longValue())
-                .filter(id -> !settled.getOrDefault(id, false))
+                .filter(id -> !settled.getOrDefault(id, false) && !stopped.contains(id))
                 .toList();
+    }
+
+    // The streams too big to read further in a call that the user chose to stop at.
+    private static Set<Long> stoppedStreams(final Map<String, Object> state) {
+        final Set<Long> out = new TreeSet<>();
+        if (state != null) {
+            JsonValues.listOrEmpty(state.get(SurveyDoc.STOPPED_STREAMS))
+                    .forEach(id -> out.add(((Number) id).longValue()));
+        }
+        return out;
+    }
+
+    // The user goes ahead with the build's survey as it is (asked for by the user: seen in testing, the survey of a
+    // feed of some 950 streams couldn't be covered, the user asked to go ahead with a limited sample, and there was
+    // nowhere to record it, so the agent kept surveying). Confirmed in a form, or as they said in the chat; reads
+    // nothing; the survey is then covered as far as they chose.
+    private Map<String, Object> acceptAsIs(final ToolCall call,
+                                           final ToolCallContext context,
+                                           final Request request,
+                                           final String feed,
+                                           final SurveyRecord record,
+                                           final Map<String, Object> state) {
+        if (request.build() == null || state == null) {
+            throw new ToolRefusal("Nothing surveyed yet" + (request.build() == null
+                    ? ": give build"
+                    : " for feed '" + feed + "' in build '" + request.build() + "'") + ": survey it first, then the "
+                                  + "user may go ahead with it as it is.");
+        }
+        final int read = JsonValues.listOrEmpty(state.get("streams_read")).size();
+        final int kinds = JsonValues.mapOrEmpty(state.get("shapes")).size();
+        final List<Long> inPart = unsettled(state);
+        final String said = read + " stream(s) of feed '" + feed + "' surveyed, " + kinds + " kind(s) of event found"
+                            + (inPart.isEmpty()
+                ? ""
+                : ", stream(s) " + inPart + " read only in part");
+        final String given = request.acceptAsIs().strip();
+        final Optional<String> answer = consent.answer(call, context, NAME, said + ". Going ahead with the survey "
+                                                                            + "as it is, kinds of event only in "
+                                                                            + "streams not read go to the mapping's "
+                                                                            + "catch-all rules, until review_coverage "
+                                                                            + "finds them after processing.",
+                "Go ahead with the survey as it is?", List.of(ACCEPT, KEEP_SURVEYING));
+        final String answered = answer.orElse("true".equalsIgnoreCase(given)
+                ? null
+                : given);
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("feed", feed);
+        if (answered == null) {
+            result.put("status", "needs_user");
+            result.put("hint", "Ask the user in the chat whether to go ahead with the survey as it is (" + said
+                               + "), then call " + NAME + " again with " + ACCEPT_ARG + " as they said.");
+            return result;
+        }
+        if (!agreesToGoAhead(answered)) {
+            result.put("user_says", answered);
+            result.put("hint", "The user wants the survey to go on: call " + NAME + " build=" + request.build()
+                               + " until it is covered.");
+            return result;
+        }
+        result.put("streams_read", List.of());
+        result.put("records_read", 0);
+        result.put("saturated", true);
+        result.put("coverage", "covered as far as the user chose: they went ahead with the survey as it is (" + said
+                               + ")");
+        result.put(SurveyDoc.ACCEPTED, entry("at", FeedSampling.iso(System.currentTimeMillis()),
+                "streams_read", read));
+        result.put("shapes", List.of());
+        result.put("new_shapes", 0);
+        result.put("locations", List.of());
+        result.put("hint", "The user went ahead with the survey as it is: go on with the plan (build_status). "
+                           + "review_coverage after processing finds any kind of event the survey didn't see.");
+        return keep(context, new SurveyRecords(request.build(), record, state, request.examples()), result,
+                Map.of());
+    }
+
+    // Whether the user's answer goes ahead: the button, or their own yes.
+    private static boolean agreesToGoAhead(final String answer) {
+        final String text = answer.strip().toLowerCase(Locale.ROOT);
+        return ACCEPT.equalsIgnoreCase(answer.strip()) || text.startsWith("yes") || text.startsWith("go ahead")
+               || text.startsWith("accept") || text.startsWith("ok") || text.startsWith("proceed");
+    }
+
+    // Streams read only in part for which reading deeper isn't offered (past the parts a call reads, records over
+    // several lines, a call's time cut, or the most a call reads): put to the user once the survey has had to read
+    // them whole (given by id, or the feed's last), to stop and accept them as read or step records further in;
+    // stopping is kept, and settles them (asked for by the user: seen in testing, three 20,000-30,000-record
+    // streams that could never be reported read whole, the user's choice to stop had nowhere to go, and the agent
+    // was told to raise max_chars_per_stream).
+    private void settleInPart(final ToolCall call,
+                              final ToolCallContext context,
+                              final Request request,
+                              final Map<String, Object> result,
+                              final Reading reading,
+                              final List<SurveyDepth.Part> depth,
+                              final Map<String, Object> state,
+                              final boolean wholeOnly) {
+        if (!wholeOnly || reading.stopped()) {
+            return;
+        }
+        final Set<Long> deep = new TreeSet<>();
+        depth.forEach(part -> deep.add(part.stream()));
+        final Set<Long> stoppedBefore = stoppedStreams(state);
+        final List<Long> other = reading.perStream.stream()
+                .filter(stream -> Boolean.TRUE.equals(stream.get("head_only")))
+                .map(stream -> ((Number) stream.get("stream")).longValue())
+                .filter(id -> !deep.contains(id) && !stoppedBefore.contains(id))
+                .toList();
+        final boolean depthOpen = depth.stream().anyMatch(part -> !part.settled());
+        if (other.isEmpty()) {
+            // Every stream read in part is read deeper or stopped at before: covered once no part is left open.
+            if (!depthOpen && !stoppedBefore.isEmpty() && !Boolean.TRUE.equals(result.get("saturated"))) {
+                result.put("saturated", true);
+                result.put("coverage", "covered as far as the user chose: stream(s) " + stoppedBefore + " read only "
+                                       + "in part, too big to read further in a call, and they chose to stop there");
+            }
+            return;
+        }
+        final String said = "Stream(s) " + other + " can't be read further in a call (records read: per_stream)";
+        final Optional<String> answer = NullSafe.isNonBlankString(request.readDeeper())
+                ? Optional.of(request.readDeeper())
+                : consent.answer(call, context, NAME, said + ": kinds of event only further in them weren't seen.",
+                        "Stop and accept them as read, or step records further in first?",
+                        List.of(STOP_THERE, STEP_FURTHER));
+        if (answer.isEmpty()) {
+            result.put("coverage", "NOT COVERED: " + said + "; the user decides whether to stop and accept them as "
+                                   + "read, or step records further in first");
+            result.put("hint", "Ask the user in the chat whether to stop and accept stream(s) " + other + " as read, "
+                               + "or step records further in first, then call " + NAME + " again with stream_ids "
+                               + other + " and " + READ_DEEPER_ARG + " as they said. Don't raise "
+                               + MAX_CHARS_ARG + ": a call reads no more of them.");
+            return;
+        }
+        if (SurveyDepth.decide(answer.get()).stop() || STOP_THERE.equalsIgnoreCase(answer.get().strip())) {
+            result.put(SurveyDoc.STOPPED_STREAMS, other);
+            if (!depthOpen) {
+                result.put("saturated", true);
+                result.put("coverage", "covered as far as the user chose: stream(s) " + other + " read only in part, "
+                                       + "too big to read further in a call, and they chose to stop there");
+                result.put("hint", "Covered as far as the user chose: go on with the plan (build_status).");
+            }
+            return;
+        }
+        result.put("coverage", "NOT COVERED: " + said + "; the user chose to step records further in first");
+        result.put("hint", "Step records further in these streams with step_records (their windows in per_stream), "
+                           + "then ask the user again whether to stop there, and call " + NAME + " with stream_ids "
+                           + other + " and " + READ_DEEPER_ARG + " as they say. Don't raise " + MAX_CHARS_ARG
+                           + ": a call reads no more of them.");
     }
 
     // Each part's depth as the survey state keeps it, by stream:part.
@@ -1422,7 +1587,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                            int examples,
                            String build,
                            String readDeeper,
-                           String kindField) {
+                           String kindField,
+                           String acceptAsIs) {
 
     }
 
