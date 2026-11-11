@@ -14,7 +14,7 @@
             <l:SelectionBox ui:field="sourceType" width="400px"/>
         </form:FormGroup>
 
-        <g:FlowPanel ui:field="jdbcSettings">
+        <g:FlowPanel ui:field="jdbcSettings" styleName="form-section">
             <form:FormGroup identity="externalDataSourceJdbcUrl"
                             label="JDBC URL"
                             helpText="The JDBC URL of the database, e.g. jdbc:mysql://reporting-db:3306/reports. It must match one of the patterns an administrator has allowed in the externalDataSource.allowedUrlPatterns property. Do not put a user name or password in it; choose a credential instead.">
@@ -48,7 +48,7 @@
             </form:FormGroup>
         </g:FlowPanel>
 
-        <g:FlowPanel ui:field="athenaSettings">
+        <g:FlowPanel ui:field="athenaSettings" styleName="form-section">
             <form:FormGroup identity="externalDataSourceRegion"
                             label="AWS Region"
                             helpText="The AWS region of the Athena workgroup, e.g. eu-west-2.">
@@ -97,7 +97,7 @@
             </form:FormGroup>
         </g:FlowPanel>
 
-        <g:FlowPanel ui:field="csvSettings">
+        <g:FlowPanel ui:field="csvSettings" styleName="form-section">
             <form:FormGroup identity="externalDataSourceCsvDelimiter"
                             label="Delimiter"
                             helpText="The character between the values of each row.">
@@ -113,7 +113,7 @@
                             helpText="The data, pasted here or read from a file on your computer with Load From File. It is held in this document and is queried as it stands when saved. An administrator sets the most it may hold with the externalDataSource.maxStoredDataSize property, so keep it to lookup tables and reference lists; bulk data belongs in a feed.">
                 <g:SimplePanel ui:field="csvEditor" height="300px" width="100%"/>
             </form:FormGroup>
-            <g:FlowPanel styleName="dock-container-horizontal">
+            <g:FlowPanel styleName="button-group">
                 <b:Button ui:field="loadCsvFile" text="Load From File" width="200px" addStyleNames="allow-focus"/>
                 <b:Button ui:field="detectColumns" text="Detect Columns" width="200px" addStyleNames="allow-focus"/>
                 <g:FileUpload ui:field="csvFile" visible="false"/>
@@ -125,14 +125,14 @@
             </form:FormGroup>
         </g:FlowPanel>
 
-        <g:FlowPanel ui:field="excelSettings">
+        <g:FlowPanel ui:field="excelSettings" styleName="form-section">
             <form:FormGroup identity="externalDataSourceExcelWorkbook"
                             label="Workbook"
                             helpText="The Excel .xlsx workbook, held in this document and queried as it stood when saved. Choose a file: it is uploaded straight away, and stored with the document when you save. Older .xls workbooks cannot be read; save them as .xlsx in Excel first. An administrator sets the most it may hold with the externalDataSource.maxStoredDataSize property, so keep it to lookup tables and reference lists; bulk data belongs in a feed.">
                 <form:DescriptionHTML ui:field="excelFileName"/>
                 <form:CustomFileUpload ui:field="excelFile"/>
             </form:FormGroup>
-            <g:FlowPanel styleName="dock-container-horizontal">
+            <g:FlowPanel styleName="button-group">
                 <b:Button ui:field="downloadExcel" text="Download" width="200px" addStyleNames="allow-focus"/>
                 <b:Button ui:field="removeExcel" text="Remove" width="200px" addStyleNames="allow-focus"/>
             </g:FlowPanel>
@@ -154,7 +154,7 @@
             </form:FormGroup>
         </g:FlowPanel>
 
-        <g:FlowPanel ui:field="timeFieldSettings">
+        <g:FlowPanel ui:field="timeFieldSettings" styleName="form-section">
             <form:FormGroup identity="externalDataSourceTimeField"
                             label="Time Column (optional)"
                             helpText="A date column of the data. When a query has a time range, rows are filtered on this column in Stroom. For JDBC this is only done when the SQL has no :from or :to placeholder; for CSV and Excel it must be a Date column. With none, the time range is ignored and the query says so.">
@@ -162,7 +162,7 @@
             </form:FormGroup>
         </g:FlowPanel>
 
-        <g:FlowPanel ui:field="queryTimeoutSettings">
+        <g:FlowPanel ui:field="queryTimeoutSettings" styleName="form-section">
             <form:FormGroup identity="externalDataSourceQueryTimeout"
                             label="Query Timeout (seconds)"
                             helpText="How long a query may run before it is stopped. An administrator may set a lower ceiling. Default: 60">

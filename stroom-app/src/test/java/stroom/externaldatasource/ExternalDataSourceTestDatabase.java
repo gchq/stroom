@@ -79,6 +79,18 @@ final class ExternalDataSourceTestDatabase {
     /// @param name The credential's name.
     /// @return A request to store the read-only account as a username and password credential.
     static PutCredentialRequest readerCredential(final String uuid, final String name) {
+        return credential(uuid, name, READER_USER, READER_PASSWORD);
+    }
+
+    /// @param uuid     The credential's UUID.
+    /// @param name     The credential's name.
+    /// @param user     The database account.
+    /// @param password The account's password.
+    /// @return A request to store the account as a username and password credential.
+    static PutCredentialRequest credential(final String uuid,
+                                           final String name,
+                                           final String user,
+                                           final String password) {
         return new PutCredentialRequest(
                 new Credential(uuid,
                         name,
@@ -89,7 +101,7 @@ final class ExternalDataSourceTestDatabase {
                         CredentialType.USERNAME_PASSWORD,
                         null,
                         null),
-                new UsernamePasswordSecret(READER_USER, READER_PASSWORD));
+                new UsernamePasswordSecret(user, password));
     }
 
     /// @param config The configuration to change.
