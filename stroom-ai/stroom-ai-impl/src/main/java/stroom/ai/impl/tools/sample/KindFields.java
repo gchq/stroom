@@ -140,6 +140,25 @@ public final class KindFields {
         return List.copyOf(fields);
     }
 
+    /// @param given  Kind fields as the user gave them ([#parse]).
+    /// @param fields The records' fields.
+    /// @return The given fields as the records spell them (matched ignoring case), [#ONE_KIND] kept; the ones the
+    /// records don't have left out.
+    public static List<String> asRecordsSpellThem(final List<String> given, final Set<String> fields) {
+        if (oneKind(given)) {
+            return given;
+        }
+        final List<String> out = new ArrayList<>();
+        for (final String name : given) {
+            fields.stream()
+                    .filter(field -> field.equalsIgnoreCase(name))
+                    .findFirst()
+                    .filter(field -> !out.contains(field))
+                    .ifPresent(out::add);
+        }
+        return out;
+    }
+
     /// @param fields Kind fields as kept (a choice's, or the user's).
     /// @return True if they say the records are all one kind of event.
     public static boolean oneKind(final List<String> fields) {

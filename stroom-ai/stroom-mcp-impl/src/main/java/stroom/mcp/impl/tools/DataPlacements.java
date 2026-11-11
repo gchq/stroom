@@ -60,7 +60,7 @@ final class DataPlacements {
             final List<Map<String, Object>> fields = JsonValues.maps(rule.get("fields"));
             final List<String> data = dataNames(fields);
             if (!data.isEmpty()) {
-                rules.add(rule(String.valueOf(rule.get("name")), data, action(fields), schema));
+                rules.add(rule(String.valueOf(rule.get("name")), data, action(fields, schema), schema));
             }
         }
         if (rules.isEmpty()) {
@@ -98,19 +98,31 @@ final class DataPlacements {
         return new ArrayList<>(names);
     }
 
-    // The action element a rule's fields write (EventDetail/Network/... gives Network), or null.
-    private static String action(final List<Map<String, Object>> fields) {
+    // The action element a rule's fields write (EventDetail/Network/... gives Network), or null: an element of
+    // EventDetail with elements of its own, not a leaf such as TypeId or Description, which every rule writes first.
+    private static String action(final List<Map<String, Object>> fields, final EventSchema schema) {
         for (final Map<String, Object> field : fields) {
             final String path = String.valueOf(field.get("path"));
             if (path.startsWith(EVENT_DETAIL)) {
                 final String rest = path.substring(EVENT_DETAIL.length());
                 final int slash = rest.indexOf('/');
-                return slash < 0
+                final String element = slash < 0
                         ? rest
                         : rest.substring(0, slash);
+                if (isAction(schema, element)) {
+                    return element;
+                }
             }
         }
         return null;
+    }
+
+    private static boolean isAction(final EventSchema schema, final String element) {
+        try {
+            return !schema.isLeaf(schema.resolve(EVENT_DETAIL + element).getLast().decl());
+        } catch (final IllegalArgumentException e) {
+            return false;
+        }
     }
 
     // The leaf elements below a path, as paths relative to it (Device/Location/City), Data aside; none when the

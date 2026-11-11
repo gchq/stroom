@@ -43,6 +43,8 @@ class TestDataPlacements {
                 "common", List.of(Map.of("path", "EventSource/Device/Data", "data_name", "city", "field", "city")),
                 "events", List.of(
                         Map.of("name", "connect", "fields", List.of(
+                                // Every rule writes its TypeId first (found in review: taken as the action).
+                                Map.of("path", "EventDetail/TypeId", "value", "Connect"),
                                 Map.of("path", "EventDetail/Network/Network/Destination/HostName", "field", "host"),
                                 Map.of("path", "EventDetail/Network/Network/Data", "data_name", "url", "field",
                                         "url"),
