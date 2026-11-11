@@ -157,6 +157,9 @@ public final class DraftMapping {
     // Seen in production: the agent writing 33 extractions by hand after the draft carried such a text whole.
     private static final Pattern COLON_KEY = ToolText.re(Pairs.BOUND + "(" + Pairs.WORDS + "): (\\[)?");
     private static final Pattern EQ_KEY = ToolText.re("(?:^|[\\s,;])([A-Za-z_][A-Za-z0-9_.-]*)=(\")?");
+    // A key = value with spaces round the '=' (Pairs, spaced_equals), after a space, a comma, a semicolon or an
+    // opening bracket: "(cpu = 99, threshold = 90)" (seen in chat 171: NetScaler's SNMP traps).
+    private static final Pattern SPACED_EQ_KEY = ToolText.re("(?:^|[\\s,;(])([A-Za-z_][A-Za-z0-9_.-]*) = (?=[^\\s=])");
     // A key a spaced dash parts from the pair before it, one word then a space and its value (Pairs, dashed).
     // Not a colon key's first word ("Source IP: ..."): those are the colon style's.
     private static final Pattern DASH_KEY = ToolText.re("(?:^|\\s-\\s+)(?!" + Pairs.WORDS
@@ -451,7 +454,10 @@ public final class DraftMapping {
             }
             final List<Map<String, String>> found = new ArrayList<>();
             vals.forEach(v -> found.add(pairsIn(v)));
-            if (found.stream().filter(f -> f.size() >= 2).count() * 2 < vals.size()) {
+            // A text of pairs by its other styles: key = value with spaces is read only in such a text (seen in
+            // testing: SQL's "SET credit_limit = 5000 WHERE id = 42" taken for pairs, and a log's message lost).
+            if (found.stream().filter(f -> f.values().stream().filter(style -> !Pairs.SPACED_EQUALS.equals(style))
+                    .count() >= 2).count() * 2 < vals.size()) {
                 continue;
             }
             final Map<String, Map<String, Integer>> styles = new LinkedHashMap<>();
@@ -555,6 +561,10 @@ public final class DraftMapping {
                     : listed(text, equals.end())
                             ? "listed"
                             : "equals");
+        }
+        final Matcher spaced = SPACED_EQ_KEY.matcher(text);
+        while (spaced.find()) {
+            found.putIfAbsent(spaced.group(1), Pairs.SPACED_EQUALS);
         }
         // Pairs a spaced dash parts, where the text has at least two such dashes (one is as likely prose) and more keys
         // written so than colon keys (a colon-pairs text may hold a dash in a value: Secret Server's "Secret: Firewall

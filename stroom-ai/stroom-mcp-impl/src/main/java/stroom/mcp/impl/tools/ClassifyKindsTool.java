@@ -32,7 +32,7 @@ import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.draft.SourceNotes;
-import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.generation.Extraction;
 import stroom.ai.impl.tools.generation.XPathRegex;
 import stroom.ai.impl.tools.sample.KindFields;
 import stroom.ai.impl.tools.sample.SplitterSpec;
@@ -128,6 +128,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private static final String CATCH_ALL = "catch_all";
     // A kind's record count, kept with its sample.
     private static final String RECORDS = "records";
+    // The fields a kind told by a value reads: those its records hold beyond what every record of its format has.
+    private static final String READS = "reads";
     // The action element of an event not classified.
     private static final String UNKNOWN = "Unknown";
 
@@ -493,7 +495,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final List<Map<String, Object>> kindSamples = batch.stream()
                 .filter(kind -> kind.first() != null)
                 .map(kind -> Map.<String, Object>of(KEY, kind.key(), SAMPLE, recordText(kind, samples, variantField),
-                        CATCH_ALL, kind.catchAll(), RECORDS, kind.records()))
+                        CATCH_ALL, kind.catchAll(), RECORDS, kind.records(),
+                        READS, reads(kind, records, variantField)))
                 .toList();
         // Proposals still to confirm are kept: listing again doesn't take them back from the user.
         result.put(SOURCE_NOTES, notes.recordClassified(context, build, source, List.of(),
@@ -694,6 +697,39 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         return Optional.empty();
     }
 
+    // The fields a kind's records hold beyond those every record of its format (its variant, or the sample) has
+    // values in, and beyond the field telling it: what its events carry of their own (ICA's source, destination
+    // and application; not the NetScaler header every line has), in the records' order.
+    private static List<String> reads(final Kind kind,
+                                      final List<Map<String, Object>> records,
+                                      final String variantField) {
+        final List<Map<String, Object>> members = NullSafe.list(kind.members());
+        if (members.isEmpty()) {
+            return List.of();
+        }
+        final Object variant = variantField == null
+                ? null
+                : members.getFirst().get(variantField);
+        final List<Map<String, Object>> format = records.stream()
+                .filter(record -> variant == null || variant.equals(record.get(variantField)))
+                .toList();
+        final List<String> out = new ArrayList<>();
+        for (final String field : recordFields(members)) {
+            if (field.equals(kind.field()) || field.equals(variantField)) {
+                continue;
+            }
+            final boolean everyRecord = format.stream().allMatch(record -> held(record.get(field)));
+            if (!everyRecord && members.stream().anyMatch(record -> held(record.get(field)))) {
+                out.add(field);
+            }
+        }
+        return out;
+    }
+
+    private static boolean held(final Object value) {
+        return value != null && !valueText(value).isBlank() && !"-".equals(valueText(value).strip());
+    }
+
     // A pattern proposal's key: the kind it is within, its field and its pattern.
     private static String patternKey(final Map<?, ?> item) {
         return ToolText.str(item.get(WITHIN)) + ": " + told(item);
@@ -866,7 +902,10 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                             entry.put(SAMPLE, sample.get(SAMPLE));
                             if (Boolean.TRUE.equals(sample.get(CATCH_ALL))) {
                                 entry.put(CATCH_ALL, true);
-                                entry.put(RECORDS, sample.get(RECORDS));
+                            }
+                            entry.putIfAbsent(RECORDS, sample.get(RECORDS));
+                            if (entry.get(WITHIN) == null && sample.get(READS) != null) {
+                                entry.put(READS, sample.get(READS));
                             }
                         });
                 toConfirm.add(entry);
@@ -1413,18 +1452,22 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final List<Object> held = new ArrayList<>(records);
         LocalCheck.withJsonFields(held, JsonValues.strings(mapping.get("json_fields")));
         LocalCheck.withXmlFields(held, JsonValues.strings(mapping.get("xml_fields")));
-        if (JsonValues.maps(mapping.get("extract")).isEmpty()) {
-            return records;
+        // The draft's extractions alone, each read on its own: the rest of the draft may still be unfinished (seen in
+        // chat 171: its time left for the agent to choose, the whole mapping refused, and every field the draft read
+        // from NetScaler's message bodies missing from the listing).
+        final List<Extraction> extractions = new ArrayList<>();
+        for (final Map<String, Object> entry : JsonValues.maps(mapping.get("extract"))) {
+            try {
+                extractions.add(Extraction.fromJson(entry));
+            } catch (final RuntimeException e) {
+                LOGGER.info("An extraction of the draft can't be read, so it isn't applied: {}", e.getMessage());
+            }
         }
-        final TranslationMapping read;
-        try {
-            read = TranslationMapping.fromJson(mapping);
-        } catch (final RuntimeException e) {
-            LOGGER.debug("The draft's extractions can't be read: {}", e.getMessage());
+        if (extractions.isEmpty()) {
             return records;
         }
         for (final Map<String, Object> record : records) {
-            final Map<String, String> extracted = LocalCheck.extractedValues(read, record);
+            final Map<String, String> extracted = LocalCheck.extractedValues(extractions, record);
             if (extracted != null) {
                 extracted.forEach((name, value) -> {
                     if (!value.isEmpty()) {
@@ -1638,6 +1681,19 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                         : ""));
                 item(lines, "Reads", e.get(NAMES) instanceof final List<?> names && !names.isEmpty()
                         ? String.join(", ", names.stream().map(ToolText::str).toList())
+                        : null);
+            } else if (e.get(FIELD) != null && e.get(VALUE) != null) {
+                // A kind told by a value: how, and what its records read, as a split's are said (asked for by the
+                // user: seen in chat 171, NetScaler's ICA and SNMP kinds shown with neither).
+                if (!Boolean.TRUE.equals(e.get(CATCH_ALL))) {
+                    item(lines, "Told by", toldText(e) + (e.get(RECORDS) instanceof final Number count
+                            ? " (" + StreamReader.thousands(count.longValue()) + (count.longValue() == 1
+                                    ? " record)"
+                                    : " records)")
+                            : ""));
+                }
+                item(lines, "Reads", e.get(READS) instanceof final List<?> reads && !reads.isEmpty()
+                        ? String.join(", ", reads.stream().map(ToolText::str).toList())
                         : null);
             }
             item(lines, "Schema action", e.get(EVENT_DETAIL));

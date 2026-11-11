@@ -121,6 +121,53 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    void theFieldsTheDraftReadsFromAMessageReachTheListingWhileItsTimeIsStillToChoose() {
+        // Seen in chat 171: the draft couldn't tell which of two times was the event's, so its whole mapping was
+        // refused when its extractions were applied, and every field it read from NetScaler's message bodies was
+        // missing from the listing (no source, destination or user to propose, nothing for the table to read).
+        final StringBuilder lines = new StringBuilder();
+        for (int i = 0; i < 6; i++) {
+            lines.append("2026-11-16T00:01:1%d+00:00 ns-gw02 11/16/2026:00:01:1%d ICASTART : Source 203.0.113.%d:59185 "
+                         .formatted(i, i, i)
+                         + "- Destination 10.20.0.%d:2598 - applicationName App%d - connectionId c%d\n"
+                                 .formatted(i, i, i));
+            lines.append("2026-11-16T00:03:3%d+00:00 ns-gw01 11/16/2026:00:03:3%d TRAP_SENT : Source 10.0.0.%d:161 "
+                         .formatted(i, i, i)
+                         + "- Trap cpuUtilization - Values (cpu = 9%d, threshold = 90)\n".formatted(i));
+        }
+        samples(15L, lines.toString());
+        final String splitter = "{\"kind\": \"regex\", \"pattern\": \"^(\\\\S+) (\\\\S+) (\\\\S+) (\\\\S+) : "
+                                + "(.*)$\", \"names\": [\"time\", \"host\", \"ns_time\", \"ns_event\", "
+                                + "\"ns_body\"]}";
+
+        final Map<String, Object> listed = call("{\"build\": \"acme\", \"source\": \"NetScaler\", "
+                                                + "\"stream_ids\": [15], \"kind_field\": \"ns_event\", "
+                                                + "\"splitter\": " + splitter + "}",
+                BuildToolCalls.context());
+
+        final Map<String, Map<String, Object>> byValue = new LinkedHashMap<>();
+        list(listed.get("to_classify")).forEach(kind -> byValue.put(String.valueOf(kind.get("value")), kind));
+        assertThat(byValue).as("%s", listed).containsKeys("ICASTART", "TRAP_SENT");
+        assertThat(list(byValue.get("ICASTART").get("examples")).getFirst())
+                .containsKeys("source", "destination", "applicationname");
+        // key = value with spaces, in a text of pairs.
+        assertThat(list(byValue.get("TRAP_SENT").get("examples")).getFirst()).containsKeys("cpu", "threshold");
+    }
+
+    @Test
+    void aKindToldByAValueSaysSoAndWhatItsRecordsRead() {
+        // Seen in chat 171: NetScaler's value kinds shown with no row saying how they're told or what they read,
+        // where the pattern kinds beside them had both.
+        final Map<String, Object> entry = new LinkedHashMap<>(Map.of("number", 1, "confidence", "medium",
+                "title", "ICA session started", "field", "ns_event", "value", "ICASTART", "records", 118,
+                "reads", List.of("source", "destination", "applicationname"), "event_detail", "Process"));
+
+        assertThat(ClassifyKindsTool.details(List.of(entry))).contains(
+                "| Told by | `ns_event = ICASTART` (118 records) |",
+                "| Reads | source, destination, applicationname |");
+    }
+
+    @Test
     void aKindFieldNamedLikeNoneIsPutToTheUserAndItsKindsListed() {
         // Seen in testing: a CSV mail log's kind in msg_act, a name the draft didn't know, so the records were one
         // kind, nothing was put to the user to classify, and they went to the catch-all as Unknown.
@@ -212,6 +259,7 @@ class TestClassifyKindsTool {
 
                 | Element | Value |
                 | --- | --- |
+                | Told by | `action = logout` (3 records) |
                 | Schema action | Authenticate |
                 | Action | Logoff |""");
         assertThat(String.valueOf(high.get("hint"))).contains("medium-confidence");
