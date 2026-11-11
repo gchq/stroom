@@ -741,6 +741,30 @@
         outline: 1px solid Highlight;
         outline-offset: -1px;
     }
+
+    /* A scroll thumb: its transparent 4px border (the gap round the visible bar) was drawn in the
+       text colour, making a heavy outlined pill over the cells. There it keeps its own colours: the
+       gap clear, the bar the text colour, Highlight while hovered or dragged */
+    .data-grid__thumb {
+        forced-color-adjust: none;
+        border-color: transparent;
+        background-color: CanvasText;
+    }
+
+    .data-grid__thumb:hover,
+    .data-grid__thumb.data-grid__thumb--active {
+        background-color: Highlight;
+    }
+
+    /* Column resize and move: the handle, lines and ghost are backgrounds, which vanished while
+       dragging. There they are Highlight, the ghost faint as it is in the normal theme */
+    .data-grid__resize-handle,
+    .data-grid__resize-line,
+    .data-grid__move-line,
+    .data-grid__move-ghost {
+        forced-color-adjust: none;
+        background-color: Highlight;
+    }
 }
 
 /* Not a row action (.row-action, row-action.css), a button that looks as the icon it holds: this

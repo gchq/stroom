@@ -89,3 +89,12 @@
 .setting-block:has(> .setting-block__icon:focus-visible) {
     background-color: var(--border-color);
 }
+
+/* In forced colours (e.g. Windows high contrast) the read-only value's grey was replaced by the text
+   colour, so it looked like its label, as if it could be changed. There it is GrayText, as other
+   dimmed values are (theme-root.css) */
+@media (forced-colors: active) {
+    .setting-block.setting-block--read-only .setting-block__setting {
+        color: GrayText;
+    }
+}

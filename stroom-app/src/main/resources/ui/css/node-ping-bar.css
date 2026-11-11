@@ -96,3 +96,21 @@
 .data-grid__cell--disabled span.node-ping-bar__text {
     color: var(--text-color--disabled) ;
 }
+
+/* In forced colours (e.g. Windows high contrast) the bar, a background, vanished (forced colours
+   replace backgrounds), leaving only its number or nothing. There the bar is filled in the text colour (GrayText when disabled), its own colours kept; its number
+   is beside it */
+@media (forced-colors: active) {
+    .node-ping-bar__bar {
+        forced-color-adjust: none;
+        background-color: CanvasText !important;
+    }
+
+    .data-grid__cell--disabled .node-ping-bar__bar {
+        background-color: GrayText !important;
+    }
+
+    .data-grid__row[aria-selected="true"] .node-ping-bar__bar {
+        background-color: HighlightText !important;
+    }
+}

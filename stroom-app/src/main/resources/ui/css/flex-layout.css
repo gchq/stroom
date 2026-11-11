@@ -309,3 +309,22 @@
     text-decoration: underline;
     cursor: pointer;
 }
+
+/* In forced colours (e.g. Windows high contrast) the design-mode grid, a background image, was dropped.
+   There it is drawn behind the panes by a pseudo-element that keeps its own colours (on the surface
+   itself, they would be kept by the panes too): major lines in the text colour, minor ones in GrayText */
+@media (forced-colors: active) {
+    .flex-layout--design-mode .flex-layout__design-surface::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        forced-color-adjust: none;
+        background-image:
+            linear-gradient(CanvasText 1px, transparent 1px),
+            linear-gradient(90deg, CanvasText 1px, transparent 1px),
+            linear-gradient(color-mix(in srgb, GrayText 50%, transparent) 1px, transparent 1px),
+            linear-gradient(90deg, color-mix(in srgb, GrayText 50%, transparent) 1px, transparent 1px);
+        background-size: 100px 100px, 100px 100px, 10px 10px, 10px 10px;
+    }
+}

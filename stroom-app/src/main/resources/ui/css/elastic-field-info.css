@@ -166,3 +166,17 @@
     white-space: nowrap;
     color: var(--text-color--muted);
 }
+
+/* In forced colours (e.g. Windows high contrast) the bar, a background, vanished (forced colours
+   replace backgrounds), leaving only its number or nothing. There the track is edged in the text colour and the share filled in it, its own colours kept */
+@media (forced-colors: active) {
+    .elastic-field-info__bar {
+        box-sizing: border-box;
+        border: 1px solid CanvasText;
+    }
+
+    .elastic-field-info__bar-fill {
+        forced-color-adjust: none;
+        background-color: CanvasText;
+    }
+}

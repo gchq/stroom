@@ -313,3 +313,33 @@
 .ace_editor .ace_search_counter {
     color: #555;
 }
+
+/* In forced colours (e.g. Windows high contrast) the overview bar's markers and summary were told
+   apart only by their fill colours, which are replaced, so info, warning and error were the same
+   hollow box. There they keep their own colours and differ by fill: info hollow, warning hatched,
+   error and fatal solid, all in the text colour (their tooltips say which) */
+@media (forced-colors: active) {
+    :is(.code-editor__summary, .code-editor__marker):is([class*="--info"], [class*="--warning"],
+            [class*="--error"], [class*="--fatal"]) {
+        forced-color-adjust: none;
+        border-color: CanvasText;
+        opacity: 1;
+    }
+
+    .code-editor__summary--info,
+    .code-editor__marker--info {
+        background: Canvas;
+    }
+
+    .code-editor__summary--warning,
+    .code-editor__marker--warning {
+        background: repeating-linear-gradient(45deg, CanvasText 0 1px, Canvas 1px 3px);
+    }
+
+    .code-editor__summary--error,
+    .code-editor__marker--error,
+    .code-editor__summary--fatal,
+    .code-editor__marker--fatal {
+        background: CanvasText;
+    }
+}

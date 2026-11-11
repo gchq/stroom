@@ -403,3 +403,19 @@
     align-items: center;
     gap: 3px;
 }
+
+/* In forced colours (e.g. Windows high contrast) the played part and the handle, backgrounds, vanished
+   (forced colours replace backgrounds), leaving an empty track. There the played part is filled in
+   the text colour, and the handle is the text colour edged in the page's, its own colours kept */
+@media (forced-colors: active) {
+    .floor-map-timeline__progress {
+        forced-color-adjust: none;
+        background-color: CanvasText;
+    }
+
+    .floor-map-timeline__handle {
+        forced-color-adjust: none;
+        background-color: CanvasText;
+        border-color: Canvas;
+    }
+}

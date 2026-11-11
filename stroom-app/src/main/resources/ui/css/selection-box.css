@@ -69,8 +69,20 @@
     opacity: 0;
 }
 
+/* In a box that can be typed in, the value still draws the field (its border and background), as the
+   text box has no border of its own: only its picture is hidden, and the text box over it is clear.
+   (It was hidden whole, so a List Input that can be typed in had no border, and in forced colours an
+   empty one couldn't be seen at all) */
 .selection-box:not(.selection-box--select-only) .selection-box__value {
-    opacity: 0;
+    color: transparent;
+}
+
+.selection-box:not(.selection-box--select-only) .selection-box__value > * {
+    visibility: hidden;
+}
+
+.selection-box:not(.selection-box--select-only) .selection-box__input {
+    background-color: transparent;
 }
 
 /* Disabled: the filled field with no border that every disabled control has, drawn by the value (the

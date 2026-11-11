@@ -148,3 +148,20 @@
 	background-color: var(--control__background-color--disabled);
 	color: var(--control__text-color--disabled);
 }
+
+/* In forced colours (e.g. Windows high contrast) a field's type badge (e.g. "keyword") vanished, text
+   and all, its colours being half-transparent ones forced colours don't replace well. There it is a
+   pill edged in the text colour on the page's, GrayText when its term is disabled */
+@media (forced-colors: active) {
+	.term-editor__label.term-editor__label--field-type {
+		forced-color-adjust: none;
+		background-color: Canvas;
+		border-color: CanvasText;
+		color: CanvasText;
+	}
+
+	.expression-item--disabled .term-editor__label.term-editor__label--field-type {
+		border-color: GrayText;
+		color: GrayText;
+	}
+}

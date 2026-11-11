@@ -48,3 +48,25 @@
 .data-grid__cell--disabled .percent-bar-cell__bar.percent-bar-cell__bar--danger {
      background-color: var(--text-color--disabled);
 }
+
+/* In forced colours (e.g. Windows high contrast) the bar, a background, vanished (forced colours
+   replace backgrounds), leaving only its number or nothing. There the bar is filled in the text colour (GrayText when disabled), its own colours kept, in a track
+   edged in the text colour */
+@media (forced-colors: active) {
+    .percent-bar-cell {
+        border-color: CanvasText;
+    }
+
+    .percent-bar-cell__bar {
+        forced-color-adjust: none;
+        background-color: CanvasText !important;
+    }
+
+    .data-grid__cell--disabled .percent-bar-cell__bar {
+        background-color: GrayText !important;
+    }
+
+    .data-grid__row[aria-selected="true"] .percent-bar-cell {
+        border-color: HighlightText;
+    }
+}
