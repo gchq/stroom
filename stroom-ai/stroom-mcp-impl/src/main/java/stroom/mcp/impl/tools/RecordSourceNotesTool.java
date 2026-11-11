@@ -106,7 +106,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     /// user's (from_user): not proposed again, nor listed, meanwhile.
     static final String AMENDED = "amended";
     private static final List<String> CLASSIFY_KEYS = List.of(RECORD_FIELDS, PROPOSED, ClassifyKindsTool.SAMPLES,
-            REJECTED, DROPPED, SHOWN, AMENDED, SourceNotes.KIND_FIELDS);
+            REJECTED, DROPPED, SHOWN, AMENDED, SourceNotes.KIND_FIELDS, SourceNotes.WHOLE_KIND);
     private static final List<String> CONFIDENCES = List.of("high", "medium", "low");
 
     private final WriteGuard guard;

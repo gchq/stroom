@@ -626,6 +626,19 @@ class TestSurveyFeedTool {
     }
 
     @Test
+    void aKindFieldTheUserGivesIsSpeltAsTheRecordsSpellItOrRefusedWhenTheyLackIt() {
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, msgActCsv(), false);
+
+        final Map<String, Object> cased = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
+                                                    + "\"build\": \"acme-v1\", \"kind_field\": \"MSG_ACT\"}"));
+        assertThat(cased.get(SurveyDoc.KIND_FIELDS)).isEqualTo(Map.of("fields", List.of("msg_act"), "by", "user"));
+        assertThat(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\", "
+                        + "\"kind_field\": \"verdict\"}").text())
+                .contains("names no field of the records", "msg_act");
+    }
+
+    @Test
     void anotherKindFieldTheUserGivesStartsTheSurveyAfresh() {
         sampleFeedInABuild();
         stream(7, "ACME-VPN", 0, msgActCsv(), false);

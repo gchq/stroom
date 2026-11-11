@@ -521,7 +521,11 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             result.put("locations", List.of());
             result.put("time_range", span);
             final List<Long> inPart = unsettled(state);
-            if (inPart.isEmpty()) {
+            if (state != null && state.get(SurveyDoc.ACCEPTED) != null) {
+                // The user went ahead with the survey as it is: it stays covered as far as they chose.
+                result.put("coverage", "covered as far as the user chose: they went ahead with the survey as it is");
+                result.put("hint", "The user went ahead with the survey as it is: go on with the plan (build_status).");
+            } else if (inPart.isEmpty()) {
                 result.put("hint", "Every stream in the feed has been read: the survey is complete.");
             } else {
                 // Seen in testing: a stream read to its 10,000th record of many more, then a call with no streams
@@ -543,7 +547,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final Map<Long, RawHead> peeked = new LinkedHashMap<>();
         final Map<String, Object> kinds;
         if (givenKinds != null) {
-            kinds = kindsKept(givenKinds, "user");
+            kinds = kindsKept(asTheRecordsSpellThem(givenKinds, peekKinds(streams.getFirst(), limits, peeked)),
+                    "user");
         } else if (!keptKinds.isEmpty()) {
             kinds = keptKinds;
         } else {
@@ -552,6 +557,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                     ? Optional.empty()
                     : peekKinds(streams.getFirst(), limits, peeked);
             if (choice.isEmpty()) {
+                kinds = null;
+            } else if (choice.get().certain() && choice.get().fields().isEmpty()) {
+                // No field to tell kinds apart in this head: chosen again from a later call's, not fixed by one.
                 kinds = null;
             } else if (choice.get().certain()) {
                 kinds = kindsKept(choice.get().fields(), "tool");
@@ -611,6 +619,21 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                              + "stream read again and the kinds of event found again.");
         }
         return keep(context, kept, result, shapes.shapes());
+    }
+
+    // The user's kind fields as the records spell them; refused when the records have none of them.
+    private static List<String> asTheRecordsSpellThem(final List<String> given,
+                                                      final Optional<KindFields.Choice> peeked) {
+        if (peeked.isEmpty() || KindFields.oneKind(given)) {
+            return given;
+        }
+        final List<String> spelt = KindFields.asRecordsSpellThem(given, peeked.get().recordFields());
+        if (spelt.isEmpty()) {
+            throw new ToolRefusal(KIND_FIELD_ARG + " " + given + " names no field of the records: they have "
+                                  + new TreeSet<>(peeked.get().recordFields()) + ". Ask the user which one they "
+                                  + "meant.");
+        }
+        return spelt;
     }
 
     private static Map<String, Object> kindsKept(final List<String> fields, final String by) {
@@ -794,8 +817,13 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             return;
         }
         final String said = "Stream(s) " + other + " can't be read further in a call (records read: per_stream)";
-        final Optional<String> answer = NullSafe.isNonBlankString(request.readDeeper())
-                ? Optional.of(request.readDeeper())
+        // The read_deeper answer only when it answers this question (stop, or step): "1,000 more" was for parts that
+        // can be read deeper.
+        final String given = NullSafe.string(request.readDeeper()).strip();
+        final boolean answersThis = SurveyDepth.decide(given).stop() || STOP_THERE.equalsIgnoreCase(given)
+                                    || given.toLowerCase(Locale.ROOT).contains("step");
+        final Optional<String> answer = answersThis
+                ? Optional.of(given)
                 : consent.answer(call, context, NAME, said + ": kinds of event only further in them weren't seen.",
                         "Stop and accept them as read, or step records further in first?",
                         List.of(STOP_THERE, STEP_FURTHER));
