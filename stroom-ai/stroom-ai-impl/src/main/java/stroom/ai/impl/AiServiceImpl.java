@@ -91,10 +91,19 @@ public class AiServiceImpl implements AiService {
      */
     private static final int MAX_ERROR_BODY_LENGTH = 2_000;
 
+    // Models can take a long time to produce a response, so allow plenty of time between bytes.
     private static final SimpleDuration DEFAULT_TIMEOUT = SimpleDuration
             .builder()
             .time(10)
             .timeUnit(TimeUnit.MINUTES)
+            .build();
+
+    // Establishing a connection should be quick, so an unreachable model server is reported promptly
+    // rather than after the much longer response timeout.
+    private static final SimpleDuration DEFAULT_CONNECTION_TIMEOUT = SimpleDuration
+            .builder()
+            .time(30)
+            .timeUnit(TimeUnit.SECONDS)
             .build();
 
     private final Provider<OpenAIModelStore> openAIModelStoreProvider;
@@ -575,6 +584,9 @@ public class AiServiceImpl implements AiService {
     }
 
     private HttpClientConfig createDefaultHttpClientConfig() {
-        return HttpClientUtil.createDefaultHttpClientConfig(DEFAULT_TIMEOUT);
+        return HttpClientUtil.createDefaultHttpClientConfig(DEFAULT_TIMEOUT)
+                .copy()
+                .connectionTimeout(DEFAULT_CONNECTION_TIMEOUT)
+                .build();
     }
 }
