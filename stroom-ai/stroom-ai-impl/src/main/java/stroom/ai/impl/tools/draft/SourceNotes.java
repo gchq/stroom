@@ -431,6 +431,10 @@ public final class SourceNotes {
 
         final List<Map<String, Object>> rules = new ArrayList<>();
         final Catalogued known = new Catalogued(knownNames, knownValues);
+        // The records classified as one kind (classify_kinds, where none was told apart: told by a field every record
+        // has the same value of): its rule is the rule for every record, in place of the draft's own, so records with
+        // another value of that field (another host, a newer version) aren't left out of it.
+        Map<String, Object> whole = null;
         for (final Map<String, Object> event : events) {
             String detail = ToolText.strip(NullSafe.nonBlankStringElse(text(event.get("event_detail")), UNKNOWN)
                     .strip(), "/");
@@ -464,6 +468,11 @@ public final class SourceNotes {
             final List<String> ownRest = new ArrayList<>(rest);
             JsonValues.strings(event.get(NAMES)).stream().filter(name -> !ownRest.contains(name)).forEach(ownRest::add);
             rules.add(rule(event, key, detail, common, detailFields, sampled, ownRest, known));
+            if (sampled.isEmpty() && events.size() == 1 && !isPattern(event) && !isSplit(event)
+                && Set.of(key.get(1)).equals(new LinkedHashSet<>(NullSafe.list(values.get(key.get(0)))))) {
+                whole = rules.getLast();
+                whole.remove("when");
+            }
             final String actor = text(event.get("actor"));
             if (!actor.isBlank() && known.person(actor) == null) {
                 unread.add(key.get(1) + ": actor '" + actor + "'" + (known.field(actor) == null
@@ -517,7 +526,7 @@ public final class SourceNotes {
             namesUsed.add(name);
         }
         final List<Map<String, Object>> all = new ArrayList<>(rules);
-        if (other != null) {
+        if (other != null && whole == null) {
             all.add(other);
         }
         mapping.put("events", all);
