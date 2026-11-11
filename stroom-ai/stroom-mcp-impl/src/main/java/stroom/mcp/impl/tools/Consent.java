@@ -103,7 +103,7 @@ public class Consent {
             audit(context.session(), request.kind().word(), request, "refused: no form can be shown", false);
             throw new ToolRefusal(FormsRequired.cannotAsk(context.session(), call.name(), request.summary()));
         }
-        ask(call, context, request, digest(request.action(), request.details()), state);
+        ask(call, context, request, digest(request.action(), request.details(), request.binding()), state);
     }
 
     /// The option the user picks in a form. Seen: an agent given the choices asked in the chat, on Gemma and on
@@ -604,10 +604,13 @@ public class Consent {
         return "The user did not agree to: " + summary;
     }
 
-    private static String digest(final String action, final Map<String, Object> details) {
+    private static String digest(final String action, final Map<String, Object> details, final String binding) {
         final List<Object> request = new ArrayList<>();
         request.add(action);
         request.add(NullSafe.map(details));
+        if (binding != null) {
+            request.add(binding);
+        }
         return XsltCode.sha256(ToolJson.dumpsSortedKeys(request));
     }
 
@@ -735,12 +738,15 @@ public class Consent {
     /// @param editable  The values the user may correct in the form, by key.
     /// @param documents The documents it names (in quotes in the summary, or as a detail's value), which its form
     ///                  links to open them; not part of what is agreed to.
+    /// @param binding   What the answer is bound to beyond the details, not shown in the form (the review id of what
+    ///                  the chat showed), or null: a changed one asks again.
     public record Request(Kind kind,
                           String action,
                           String summary,
                           Map<String, Object> details,
                           Map<String, Editable> editable,
-                          List<DocRef> documents) {
+                          List<DocRef> documents,
+                          String binding) {
 
         /// @param kind      A confirmation or an approval.
         /// @param action    The tool.
@@ -748,6 +754,7 @@ public class Consent {
         /// @param details   Its details.
         /// @param editable  The values the user may correct in the form.
         /// @param documents The documents it names, which its form links.
+        /// @param binding   What the answer is bound to beyond the details, not shown, or null.
         public Request {
             Objects.requireNonNull(kind, "kind");
             Objects.requireNonNull(action, "action");
@@ -764,7 +771,7 @@ public class Consent {
         public static Request confirmation(final String action,
                                            final String summary,
                                            final Map<String, Object> details) {
-            return new Request(Kind.CONFIRMATION, action, summary, details, Map.of(), List.of());
+            return new Request(Kind.CONFIRMATION, action, summary, details, Map.of(), List.of(), null);
         }
 
         /// @param action  The tool.
@@ -774,7 +781,7 @@ public class Consent {
         public static Request approval(final String action,
                                        final String summary,
                                        final Map<String, Object> details) {
-            return new Request(Kind.APPROVAL, action, summary, details, Map.of(), List.of());
+            return new Request(Kind.APPROVAL, action, summary, details, Map.of(), List.of(), null);
         }
 
         /// @param key      The value's key, e.g. `name`.
@@ -784,7 +791,7 @@ public class Consent {
         public Request withEditable(final String key, final String title, final String proposed) {
             final Map<String, Editable> more = new LinkedHashMap<>(editable);
             more.put(key, new Editable(title, proposed));
-            return new Request(kind, action, summary, details, more, documents);
+            return new Request(kind, action, summary, details, more, documents, binding);
         }
 
         /// @param named The documents the request names, by their names in it.
@@ -797,7 +804,15 @@ public class Consent {
                     more.add(docRef);
                 }
             }
-            return new Request(kind, action, summary, details, editable, more);
+            return new Request(kind, action, summary, details, editable, more, binding);
+        }
+
+        /// @param shown What the chat showed the user, which the answer is to agree to (a layout, a template, a
+        ///              table).
+        /// @return This request, its answer bound to exactly that, by its review id ([Consent#reviewId]), which the
+        /// form doesn't show (asked for by the user: "as shown in the chat: e998d10dadc5" meant nothing to them).
+        public Request boundTo(final String shown) {
+            return new Request(kind, action, summary, details, editable, documents, reviewId(shown));
         }
     }
 

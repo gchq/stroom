@@ -294,6 +294,23 @@ class TestConsent {
         assertThat(Consent.reviewNote(null)).isEmpty();
     }
 
+    @Test
+    void anAnswerIsBoundToWhatWasShownWithoutTheFormShowingItsReviewId() {
+        // Asked for by the user: "as shown in the chat: e998d10dadc5" meant nothing to them. The answer is still bound
+        // to exactly what the chat showed: the same form over another table is another question.
+        final Questions questions = new Questions(new ElicitResult(ElicitResult.Action.ACCEPT, Map.of("value", true)));
+        final ToolCallContext context = questions.context();
+        consent.require(CALL, context, confirmation().boundTo("the table shown"));
+        consent.require(CALL, context, confirmation().boundTo("the table shown"));
+        consent.require(CALL, context, confirmation().boundTo("another table"));
+
+        assertThat(questions.intros).allSatisfy(intro -> assertThat(intro)
+                .isEqualTo("Create feed A\n\n- feed name: A")
+                .doesNotContain(Consent.reviewId("the table shown"), Consent.reviewId("another table")));
+        assertThat(questions.callIds.get(0)).isEqualTo(questions.callIds.get(1));
+        assertThat(questions.callIds.get(2)).isNotEqualTo(questions.callIds.get(0));
+    }
+
     private static Consent.Request confirmation() {
         return Consent.Request.confirmation("create_feed", "Create feed A", Map.of("feed name", "A"));
     }

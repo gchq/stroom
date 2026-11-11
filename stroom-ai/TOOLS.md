@@ -2518,7 +2518,8 @@ Promotes a build out of the workspace in two calls. The first works out the whol
 changing anything (`status: needs_review`, a `layout` tree from `PromotionLayout.promotionTree`, and a `review_id`,
 the first 12 hex characters of the tree's SHA-256). The agent shows the tree in the chat; once the user confirms it,
 the second call passes `reviewed=<review_id>` and the user approves a short form bound to that layout (build, document
-count with the review id, folders, role subfolders, warnings, processing after promotion). `reviewed=true`, or an id
+count, folders, role subfolders, warnings, processing after promotion; the review id isn't shown, but the answer is
+bound to it through `Consent.Request.boundTo`). `reviewed=true`, or an id
 for another layout, gets the review again (seen: `reviewed=true` on the first call, and the user approved a form whose
 layout was never shown). Any change of destinations changes the tree and so the id.
 

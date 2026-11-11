@@ -206,8 +206,8 @@ class TestPromoteBuildTool {
         assertThat(gate).containsEntry("status", "needs_approval");
         final Map<?, ?> asked = (Map<?, ?>) gate.get("details");
         assertThat(asked.get("folders")).isEqualTo("System/Feeds/Acme");
-        assertThat(String.valueOf(asked.get("layout"))).startsWith("1 document(s), as shown in the chat")
-                .contains("(" + shown.get("review_id") + ")");
+        // Without the review id, which meant nothing to the user: the approval is bound to it unseen.
+        assertThat(String.valueOf(asked.get("layout"))).isEqualTo("1 document(s), as shown in the chat");
     }
 
     @Test
