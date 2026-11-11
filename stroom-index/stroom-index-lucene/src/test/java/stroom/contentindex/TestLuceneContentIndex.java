@@ -93,10 +93,14 @@ class TestLuceneContentIndex {
     }
 
     @AfterEach
-    void tearDown() {
-        // Let any re-build we held up finish so its thread can stop
+    void tearDown() throws InterruptedException {
+        // Let any re-build we held up go on, so its thread is not left waiting on the latch
         indexable.release();
         executorService.shutdownNow();
+        // Wait for every thread to stop before JUnit deletes the temp dir. A re-build that is
+        // still writing index files would make that delete fail.
+        assertThat(executorService.awaitTermination(MAX_WAIT.toMillis(), TimeUnit.MILLISECONDS))
+                .isTrue();
     }
 
     @Test
