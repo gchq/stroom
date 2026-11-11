@@ -329,7 +329,9 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
                 "stream_ids", raw, "splitter", coarse, "one_kind", true));
         client.answeringWith(McpTestClient::agree);
         assertThat(client.forms()).hasSize(forms + 1);
-        assertThat(String.valueOf(one.get("hint"))).startsWith("One kind of event");
+        // One kind, but no field every record shares to tell it by: nothing to put to the user.
+        assertThat(String.valueOf(one.get("hint"))).startsWith("No kinds told apart, and no field every record has "
+                                                               + "the same value of");
         assertThat(classifyState(build)).isEqualTo("done");
     }
 
