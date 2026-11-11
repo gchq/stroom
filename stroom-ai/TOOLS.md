@@ -3968,6 +3968,11 @@ values) the draft keeps the first and adds `time_candidates` (`rule` when a kind
 to choose from, the time entry marked `choose_from` (the fields), which a mapping may not carry
 (`FieldMapping.read` refuses it, so build_translation_xslt does, until the agent chooses; the draft's own
 `schema_check` reads it without); a note lists every timestamp field (`Timestamp fields: ...`) with its share, rank and format.
+Where the draft carries fields as Data, `data_placement` (`DataPlacements`) lists each rule's Data entries beside
+the leaf elements below EventSource and the rule's action element (from the schema, Data aside), and a note says to
+place each in the element that means it before building (asked for by the user: Netskope's city, coordinates, URL,
+method and status code stayed Data until the user asked); the mapping guide says the same, for EventSource as well
+as the action element. No field names are matched in code: the agent decides.
 Numbers in a field named as a time are read as one where they can be: epoch seconds to nanoseconds by range
 (1990-2100; before Sep 2001 only when named), and `windows_filetime` (FILETIME: 100 ns ticks since 1601). Kinds: a
 naming field (matched by its own name or with its parent's, `event_code`) may have up to 64 values, each with a
