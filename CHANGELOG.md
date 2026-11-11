@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13.8] - 2026-11-11
+
+* Bug **#6017** : Fix Ask Stroom AI ignoring the timeouts in the OpenAI Model document's HTTP client configuration. Requests to chat and embedding models always used a 60 second read timeout and a 15 second connect timeout.
+
+
 ## [v7.13.7] - 2026-11-11
 
 * Bug **#6008** : Fix duplicate key error when replaying a report or rule execution.
@@ -2664,7 +2669,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.8...HEAD
+[v7.13.8]: https://github.com/gchq/stroom/compare/v7.13.7...v7.13.8
 [v7.13.7]: https://github.com/gchq/stroom/compare/v7.13.6...v7.13.7
 [v7.13.6]: https://github.com/gchq/stroom/compare/v7.13.5...v7.13.6
 [v7.13.5]: https://github.com/gchq/stroom/compare/v7.13.4...v7.13.5
