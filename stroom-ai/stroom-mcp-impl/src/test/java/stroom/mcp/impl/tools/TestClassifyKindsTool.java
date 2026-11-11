@@ -148,12 +148,32 @@ class TestClassifyKindsTool {
     }
 
     @Test
-    void oneKindLeavesNothingToClassify() {
+    void oneKindIsClassifiedLikeAnyOther() {
+        // Asked for by the user: one kind of event was "nothing to classify", so the user was never asked what the
+        // events are, and the draft left them Unknown.
         samples(8L, THREE_KINDS.replace("action=logout", "action=login").replace("action=purge", "action=login"));
         final Map<String, Object> listed = call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [8]}",
                 BuildToolCalls.context());
-        assertThat(list(listed.get("to_classify"))).isEmpty();
-        assertThat(pending()).isEmpty();
+        assertThat(list(listed.get("to_classify"))).singleElement()
+                .satisfies(kind -> assertThat(kind).containsEntry("field", "action").containsEntry("value", "login"));
+        assertThat(pending()).containsExactly("action=login");
+    }
+
+    @Test
+    void recordsNoFieldTellsApartAreOneKindToldByAFieldTheyAllShare() {
+        // No kind told apart: the records are classified as one kind, told by a field every record has the same
+        // value of; the draft's rule for it is then the rule for every record.
+        final StringBuilder csv = new StringBuilder("time,product,user,src\n");
+        for (int i = 0; i < 6; i++) {
+            csv.append("2026-11-06T09:00:0%dZ,Gate,u%d,10.0.0.%d\n".formatted(i, i, i));
+        }
+        samples(12L, csv.toString());
+        final Map<String, Object> listed = call("{\"build\": \"acme\", \"source\": \"Gate\", "
+                                                + "\"stream_ids\": [12]}", BuildToolCalls.context());
+        assertThat(list(listed.get("to_classify"))).singleElement()
+                .satisfies(kind -> assertThat(kind).containsEntry("field", "product").containsEntry("value", "Gate")
+                        .containsEntry("records", 6));
+        assertThat(listed).doesNotContainKey("unlisted_records");
     }
 
     @Test
@@ -728,7 +748,8 @@ class TestClassifyKindsTool {
         final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "One kind"));
         final Map<String, Object> one = call(listing + ", \"one_kind\": true}", user.context());
         assertThat(user.shown()).hasSize(1);
-        assertThat(String.valueOf(one.get("hint"))).startsWith("One kind of event");
+        assertThat(String.valueOf(one.get("hint"))).startsWith("No kinds told apart, and no field every record has "
+                                                               + "the same value of");
         assertThat(pending()).isEmpty();
     }
 
