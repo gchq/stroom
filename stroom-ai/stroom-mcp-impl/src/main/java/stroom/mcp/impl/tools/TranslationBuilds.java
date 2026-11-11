@@ -327,6 +327,46 @@ class TranslationBuilds {
         return ToolJson.dumpsSortedKeys(key);
     }
 
+    /// The form's details for the records rules keep as Unknown: a line per rule, in plain text, saying how many of
+    /// the sample it takes and what they hold, so the user knows from the form alone which records they agree to.
+    /// Asked for by the user: the form said only "rule 'SEGOther': 1651 of 21503 sample records" and "as shown in
+    /// the chat: e998d10dadc5", and it was unclear which events it meant.
+    ///
+    /// @param kept    The rules.
+    /// @param sampled What the sample check says each holds (`kept_unknown`), by rule.
+    /// @param total   How many sample records were checked.
+    /// @return The details, by what the user reads as the rule's name.
+    static Map<String, Object> unknownFormDetails(final List<EventRule> kept,
+                                                  final Map<String, Map<String, Object>> sampled,
+                                                  final Object total) {
+        final Map<String, Object> details = new LinkedHashMap<>();
+        for (final EventRule rule : kept) {
+            final Map<String, Object> held = sampled.get(rule.name());
+            final String name = rule.when().isEmpty()
+                    ? "Records no other rule matches (rule '" + rule.name() + "')"
+                    : "Rule '" + rule.name() + "'";
+            final List<String> traits = new ArrayList<>();
+            for (final String part : NullSafe.string(NullSafe.get(held.get("sample"), String::valueOf))
+                    .split("; ", -1)) {
+                if (!part.isBlank() && traits.size() < 2) {
+                    traits.add(part);
+                }
+            }
+            final String count = counted(held.get("records")) + " of " + counted(total) + " sample records";
+            details.put(name, traits.isEmpty()
+                    ? count
+                    : count + ", holding " + String.join("; ", traits));
+        }
+        return details;
+    }
+
+    // A count as the user reads it, with thousands separators.
+    private static String counted(final Object count) {
+        return count instanceof final Number number
+                ? StreamReader.thousands(number.longValue())
+                : String.valueOf(count);
+    }
+
     /// The records rules keep as Unknown, for the user in the chat: per rule, how many of the sample, what they
     /// hold, what their values suggest instead and the reason given.
     ///

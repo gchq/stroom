@@ -153,7 +153,7 @@ class TemplateReviews {
         consent.require(call, context, Consent.Request.confirmation(action,
                 "Use Elasticsearch index template '" + name + "' for index '" + destination.get("index name")
                 + "' (cluster " + destination.get("cluster") + "), as shown in the chat",
-                summary(name, body, devTools)));
+                summary(name, body)).boundTo(devTools));
         final Map<String, Object> agreed = new LinkedHashMap<>();
         agreed.put("name", name);
         agreed.put("index", destination.get("index name"));
@@ -170,13 +170,13 @@ class TemplateReviews {
     /// The template in a few short lines, for the confirmation form: the user reviews the whole request, with its
     /// notes, in the chat first (seen in VS Code: the form showed it as one long unformatted line, and an invalid
     /// template was agreed). Seen in testing: with every field, note and component template in it, the form ran to
-    /// 2,000 characters and the client declined it as too long. Bound to exactly what was shown by its review id.
+    /// 2,000 characters and the client declined it as too long. The answer is bound to exactly what was shown by its
+    /// review id, which the form doesn't show ([Consent.Request#boundTo]).
     ///
-    /// @param name  The template's name.
-    /// @param body  Its body.
-    /// @param shown The template as shown (dev_tools).
+    /// @param name The template's name.
+    /// @param body Its body.
     /// @return The form's details.
-    static Map<String, Object> summary(final String name, final Map<String, Object> body, final String shown) {
+    static Map<String, Object> summary(final String name, final Map<String, Object> body) {
         final Map<String, Object> mappings = body.get("template") instanceof final Map<?, ?> template
                                              && template.get("mappings") instanceof final Map<?, ?> found
                 ? castMap(found)
@@ -191,8 +191,7 @@ class TemplateReviews {
                         ? List.of()
                         : List.of(String.valueOf(given));
         final Map<String, Object> details = new LinkedHashMap<>();
-        details.put("index template", name + ", exactly as shown in the chat (review id " + Consent.reviewId(shown)
-                                      + ")");
+        details.put("index template", name + ", exactly as shown in the chat");
         details.put("applies to", String.join(", ", patterns)
                                   + (body.get("priority") != null
                 ? " (priority " + body.get("priority") + ")"

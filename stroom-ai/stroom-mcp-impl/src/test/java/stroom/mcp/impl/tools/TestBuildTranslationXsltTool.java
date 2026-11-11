@@ -304,7 +304,7 @@ class TestBuildTranslationXsltTool {
                 .contains("| status check (action=status) | Authenticate, Action Logoff | 2 | Unknown | status |");
         world.forms = true;
         world.answers.put("This mapping translates kinds you confirmed otherwise", "Keep the mapping's change");
-        world.answers.put("Translate the records", "yes");
+        world.answers.put("Translate these records", "yes");
 
         // Kept: the Unknown review comes next, saying what the user confirmed of its records.
         final Map<String, Object> unknown = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name",
@@ -401,15 +401,18 @@ class TestBuildTranslationXsltTool {
         final Map<String, Object> refused = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N",
                 "sample", SAMPLE, "reviewed", reviewId));
         assertThat(refused.get("error")).asString()
-                .startsWith("Not done: Translate the records shown in the chat as Unknown events.")
+                .startsWith("Not done: Translate these records as Unknown events")
                 .doesNotContain("confirmation_id");
         world.forms = true;
-        world.answers.put("Translate the records", "yes");
+        world.answers.put("Translate these records", "yes");
         final Map<String, Object> done = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N",
                 "sample", SAMPLE, "reviewed", reviewId));
+        // The form says in plain words which records, without the review id (seen in testing: "rule 'SEGOther':
+        // 1651 of 21503 sample records" and "as shown in the chat: e998d10dadc5" left the user unsure which).
         assertThat(world.shown).singleElement().asString()
-                .startsWith("Translate the records shown in the chat as Unknown events")
-                .contains("- rule 'status': 2 of 4 sample records", "- as shown in the chat: ");
+                .startsWith("Translate these records as Unknown events")
+                .contains("- Rule 'status': 2 of 4 sample records, holding ", "action: status")
+                .doesNotContain(reviewId);
         assertThat(done).as(String.valueOf(done)).containsKey("saved");
         final String uuid = String.valueOf(map(done.get("saved")).get("uuid"));
         assertThat(world.xslt(uuid)).isNotNull();
