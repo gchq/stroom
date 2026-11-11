@@ -41,6 +41,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /// Source notes: what the user's vendor or event reference documentation says about a source, kept so the tools use
@@ -329,12 +330,33 @@ public final class SourceNotes {
     /// @param detailCheck Why an `event_detail` can't be an action element ([#detailProblem]), or null.
     /// @return What was applied, and what the sample and notes disagree on: `fields`, `events`, `not_in_sample`,
     /// `not_in_catalogue` and `from_sample`.
-    @SuppressWarnings("unchecked")
     public static Map<String, Object> applyToDraft(final Map<String, Object> mapping,
                                                    final List<String> names,
                                                    final Map<String, List<String>> values,
                                                    final Map<String, Object> notes,
                                                    final Function<String, String> detailCheck) {
+        return applyToDraft(mapping, names, values, notes, detailCheck, null);
+    }
+
+    /// [#applyToDraft(Map, List, Map, Map, Function)], each catalogue rule given as Data only the fields left over
+    /// that its own records hold (asked for by the user: seen in chat 172, every NetScaler rule given every key any
+    /// NetScaler message held, a logon's Data its ICA application and SNMP cpu, and the documentation listing them
+    /// "not in the sample"); all of them where the sample has none of its records.
+    ///
+    /// @param mapping     The draft's mapping, changed in place.
+    /// @param names       The records' fields.
+    /// @param values      Each field's values.
+    /// @param notes       The source notes.
+    /// @param detailCheck Why an event_detail can't be an action element, or null.
+    /// @param records     The sample's records, as the draft reads them, or null when not known.
+    /// @return What was applied, as [#applyToDraft(Map, List, Map, Map, Function)] returns.
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> applyToDraft(final Map<String, Object> mapping,
+                                                   final List<String> names,
+                                                   final Map<String, List<String>> values,
+                                                   final Map<String, Object> notes,
+                                                   final Function<String, String> detailCheck,
+                                                   final List<Map<String, Object>> records) {
         final List<Map<String, Object>> common = (List<Map<String, Object>>) mapping.get("common");
         final List<Map<String, Object>> drafted = (List<Map<String, Object>>) mapping.get("events");
         final List<Map<String, Object>> sampled = drafted.stream()
@@ -468,7 +490,7 @@ public final class SourceNotes {
                     detail = UNKNOWN;
                 }
             }
-            final List<String> ownRest = new ArrayList<>(rest);
+            final List<String> ownRest = heldBy(event, key, rest, records);
             JsonValues.strings(event.get(NAMES)).stream().filter(name -> !ownRest.contains(name)).forEach(ownRest::add);
             rules.add(rule(event, key, detail, common, detailFields, sampled, ownRest, known));
             if (sampled.isEmpty() && events.size() == 1 && !isPattern(event) && !isSplit(event)
@@ -997,6 +1019,32 @@ public final class SourceNotes {
     }
 
     // A pattern event's within (field=value) as a condition, when the records hold its field; empty for '*'.
+    // The fields left over that a catalogue event's own records hold: all of them when the records aren't known or
+    // none of them is the event's.
+    private static List<String> heldBy(final Map<String, Object> event,
+                                       final List<String> key,
+                                       final List<String> rest,
+                                       final List<Map<String, Object>> records) {
+        if (records == null) {
+            return new ArrayList<>(rest);
+        }
+        final String within = text(event.get("within"));
+        final int equals = within.indexOf('=');
+        final List<Map<String, Object>> own = records.stream()
+                .filter(record -> equals <= 0
+                                  || within.substring(equals + 1).equals(text(record.get(within.substring(0, equals)))))
+                .filter(record -> isPattern(event)
+                        ? matches(event, text(record.get(key.get(0))))
+                        : key.get(1).equals(text(record.get(key.get(0)))))
+                .toList();
+        if (own.isEmpty()) {
+            return new ArrayList<>(rest);
+        }
+        return rest.stream()
+                .filter(name -> own.stream().anyMatch(record -> !text(record.get(name)).isBlank()))
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
     private static Optional<Map<String, Object>> within(final Map<String, Object> event, final Catalogued known) {
         final String within = text(event.get("within"));
         final int equals = within.indexOf('=');

@@ -143,7 +143,9 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
                              + "index docs (Lucene Index or Elastic Index docs, read through Stroom).")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(NAME_ARG, "Convention profile to use; omit to list them.")
-                        .addEnumProperty(BACKEND_ARG, FieldPlans.BACKENDS, "The index's backend: for "
+                        .addEnumProperty(BACKEND_ARG, FieldPlans.BACKENDS, "The index's backend, only as the user "
+                                                                          + "said (omit it: where both can be used, "
+                                                                          + "the user is asked in a form): for "
                                                                           + "Elasticsearch, the user's example comes "
                                                                           + "first (an index template, or an existing "
                                                                           + "index in Stroom), a convention profile "
@@ -230,7 +232,12 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
                 return settledEarlier(context, kind, BuildRecords.asMap(naming));
             }
         }
-        if (name == null && backend == null) {
+        // A backend the agent gives is the user's only where no form can ask them, or as a change to the one they
+        // chose (asked for by the user: seen in chat 172, the agent called with backend=lucene unasked, the user was
+        // never asked, and the reply said they had chosen it).
+        final boolean backendTheUsers = backend == null || recorded.get(BACKEND_ARG) != null
+                                        || !context.userQuestions().canAsk();
+        if (name == null && (backend == null || !backendTheUsers)) {
             // Seen: an agent asked without the backend, got the profiles, then looked the backend up and asked
             // again. When every indexing template has the same backend, that's the index's backend.
             final Set<String> backends = new LinkedHashSet<>();
@@ -244,7 +251,7 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
                 chosenBackend = backends.iterator().next();
                 templates = found.stream().map(GetFieldConventionsTool::template).toList();
             }
-            if (chosenBackend == null && backends.containsAll(FieldPlans.BACKENDS)) {
+            if ((chosenBackend == null || !backendTheUsers) && backends.containsAll(FieldPlans.BACKENDS)) {
                 // Asked here, in a form, and the naming after it: seen in Ask Stroom AI, the agent, given the
                 // profiles before the backend, asked the user both in the chat, and draft_index_mapping asked the
                 // naming again in its own form (the agent's word isn't the user's).

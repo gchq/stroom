@@ -867,7 +867,7 @@ public final class DraftMapping {
                 && (JsonValues.truthy(sourceNotes.get(FIELDS)) || JsonValues.truthy(sourceNotes.get(EVENTS)))) {
                 // The user's documentation says where fields belong and what each event is: it wins over guesses
                 // from names.
-                applied = SourceNotes.applyToDraft(mapping, names, values, sourceNotes, detailCheck);
+                applied = SourceNotes.applyToDraft(mapping, names, values, sourceNotes, detailCheck, records);
                 rest = withNotes(applied, rest);
             }
             final List<String> unusedTimes = unusedTimes(rest);

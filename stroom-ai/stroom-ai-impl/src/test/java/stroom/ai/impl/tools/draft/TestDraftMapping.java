@@ -1253,6 +1253,34 @@ class TestDraftMapping extends DraftFixtures {
         assertThat(rules(absent).keySet()).containsExactly("other");
     }
 
+    @Test
+    void aClassifiedRuleCarriesAsDataOnlyTheFieldsItsOwnRecordsHold() {
+        // Seen in chat 172: every NetScaler rule given every key any NetScaler message held (a logon's Data its ICA
+        // application, an SNMP trap's cpu), and the documentation listing them "not in the sample".
+        final StringBuilder lines = new StringBuilder();
+        for (int i = 0; i < 4; i++) {
+            lines.append("time=2026-11-06T09:00:0%dZ action=login user=u%d session=s%d\n".formatted(i, i, i));
+            lines.append("time=2026-11-06T09:01:0%dZ action=print printer=p%d pages=%d\n".formatted(i, i, i + 1));
+        }
+        final Map<String, Object> notes = Map.of("fields", List.of(), "events", List.of(
+                Map.of("event", "logon", "field", "action", "value", "login", "event_detail", "Authenticate",
+                        "action", "Logon"),
+                Map.of("event", "printed", "field", "action", "value", "print", "event_detail", "Print")));
+
+        final Map<String, Map<String, Object>> rules = rules(DraftMapping.draft(List.of(lines.toString()), "App",
+                null, null, notes, null, null));
+
+        assertThat(dataNames(rules.get("logon"))).doesNotContain("printer", "pages");
+        assertThat(dataNames(rules.get("printed"))).doesNotContain("session").contains("printer", "pages");
+    }
+
+    private static List<String> dataNames(final Map<String, Object> rule) {
+        return JsonValues.maps(rule.get("fields")).stream()
+                .filter(field -> field.get("data_name") != null)
+                .map(field -> String.valueOf(field.get("data_name")))
+                .toList();
+    }
+
     private static String msgActCsv() {
         final List<String> lines = new ArrayList<>(List.of("timestamp,sender,recipient,subject,msg_act,direction"));
         for (int i = 0; i < 60; i++) {

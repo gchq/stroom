@@ -54,6 +54,27 @@ class TestGetFieldConventionsTool {
     }
 
     @Test
+    void aBackendTheAgentGivesIsStillPutToTheUserWhereBothCanBeUsed() {
+        // Seen in chat 172: the agent called with backend=lucene unasked, the user was never asked which backend,
+        // and the reply said they had chosen it.
+        final Map<String, Object> elastic = Map.of("uuid", "t1", "name", "Events to Elasticsearch", "path",
+                "System", "backend", "elasticsearch");
+        final Map<String, Object> lucene = Map.of("uuid", "t2", "name", "Indexing", "backend", "lucene");
+        Mockito.when(world.pipelineTemplates.find(anyString())).thenReturn(Map.of("candidates", List.of(elastic,
+                lucene)));
+        final ToolCallContext forms = world.forms(question -> Map.of("choice", question.contains("backend")
+                ? "Elasticsearch"
+                : "ECS (Elastic Common Schema) convention"));
+
+        final Map<String, Object> chosen = call("{\"backend\": \"lucene\"}", forms);
+
+        assertThat(world.asked).first().isEqualTo("Which backend should the new index use?");
+        assertThat(chosen.get("backend")).isEqualTo("elasticsearch");
+        // Without forms, the agent's backend is what the user said in the chat.
+        assertThat(call("{\"backend\": \"lucene\"}", IndexingWorld.noForms())).doesNotContainKey("question");
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void withoutABackendTheOnlyIndexingBackendIsTaken() {
         // Seen: asked without the backend, the agent got the profiles, looked the backend up and asked again.
