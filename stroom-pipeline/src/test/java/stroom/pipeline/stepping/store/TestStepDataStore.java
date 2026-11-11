@@ -392,6 +392,65 @@ class TestStepDataStore {
     }
 
     @Test
+    void testBackboneLeavesHeadroomForMaterialisedRecords(@TempDir final Path tempDir) {
+        // gh-5986: a backbone reading ahead through a stream bigger than the cap used to fill the store, so the
+        // record the user stepped to could not be written. It is now held to 90% of the cap.
+        // maxBytesPerStream = 10,000 bytes; records are ~100 bytes each.
+        final SteppingConfig config = new SteppingConfig(
+                null, null, 10_000L, null, null, null, null, null, null, null, null, null);
+        final StepDataStore store = newStore(tempDir, config);
+
+        // Write as a backbone does: check for headroom before each record, until there is none.
+        int backboneRecords = 0;
+        try {
+            while (backboneRecords < 1_000) {
+                store.checkBackboneHeadroom();
+                store.putElementData(loc(0, backboneRecords), E1, FP_A, data("x".repeat(40), "y".repeat(40)));
+                backboneRecords++;
+            }
+        } catch (final StepDataStoreException e) {
+            assertThat(e.getMessage())
+                    .as("the backbone is refused with the cap's own message")
+                    .contains("10000 byte limit")
+                    .contains("narrow your selection");
+        }
+        assertThat(backboneRecords)
+                .as("the backbone stopped short of the cap rather than running to the end")
+                .isGreaterThan(0)
+                .isLessThan(1_000);
+
+        // A materialised record still fits in the headroom the backbone left.
+        assertThatCode(() -> store.putElementData(loc(0, 0), E2, FP_B, data("x".repeat(40), "y".repeat(40))))
+                .as("a materialised record is written after the backbone has stopped")
+                .doesNotThrowAnyException();
+        assertThat(store.getElementData(loc(0, 0), E2, FP_B)).isPresent();
+
+        // And the backbone is still refused.
+        assertThatThrownBy(store::checkBackboneHeadroom)
+                .isInstanceOf(StepDataStoreException.class)
+                .hasMessageContaining("byte limit");
+    }
+
+    @Test
+    void testBackboneHeadroomOnAnEmptyStore(@TempDir final Path tempDir) {
+        final StepDataStore store = newStore(tempDir, new SteppingConfig());
+
+        assertThatCode(store::checkBackboneHeadroom)
+                .as("an empty store has headroom")
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void testBackboneHeadroomOnADeletedStoreThrows(@TempDir final Path tempDir) {
+        final StepDataStore store = newStore(tempDir, new SteppingConfig());
+        store.deleteAll();
+
+        assertThatThrownBy(store::checkBackboneHeadroom)
+                .isInstanceOf(StepDataStoreException.class)
+                .hasMessageContaining("deleted");
+    }
+
+    @Test
     void testMaxRecordsPerStreamExceededThrows(@TempDir final Path tempDir) {
         // maxRecordsPerStream = 3 (2nd ctor arg).
         final SteppingConfig config = new SteppingConfig(
