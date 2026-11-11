@@ -75,6 +75,19 @@ class TestGetFieldConventionsTool {
     }
 
     @Test
+    void aBackendTheAgentGivesIsKeptWhereOnlyOneHasATemplate() {
+        // Found in testing the fix above: with only a Lucene indexing template, the agent's elasticsearch was
+        // swapped for Lucene, unasked.
+        final Map<String, Object> lucene = Map.of("uuid", "t2", "name", "Indexing", "backend", "lucene");
+        Mockito.when(world.pipelineTemplates.find(anyString())).thenReturn(Map.of("candidates", List.of(lucene)));
+        final ToolCallContext forms = world.forms(question -> Map.of("choice", "Stroom flat convention"));
+
+        call("{\"backend\": \"elasticsearch\"}", forms);
+
+        assertThat(world.asked).doesNotContain("Which backend should the new index use?");
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void withoutABackendTheOnlyIndexingBackendIsTaken() {
         // Seen: asked without the backend, the agent got the profiles, looked the backend up and asked again.

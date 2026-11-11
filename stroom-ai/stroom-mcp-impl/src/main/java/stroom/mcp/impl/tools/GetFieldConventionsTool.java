@@ -247,7 +247,7 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
                     backends.add(kind);
                 }
             });
-            if (backends.size() == 1) {
+            if (backends.size() == 1 && backend == null) {
                 chosenBackend = backends.iterator().next();
                 templates = found.stream().map(GetFieldConventionsTool::template).toList();
             }
