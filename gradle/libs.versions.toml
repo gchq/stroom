@@ -9,14 +9,14 @@ dropwizard = "5.0.2" # used to set the dropwizard-bom version, that controls lot
 elasticsearch = "9.5.5"
 flyway = "12.0.0"
 guice = "7.0.0"
-gwt = "2.13.0"
+gwt = "2.13.1"
 jgit = "7.8.0.202609011348-r"
 jmh = "1.37"
 jooq = "3.21.9"
 junit-jupiter = "5.13.1"
 langchain4j = "1.17.1"
 langchain4j-cohere = "1.17.1-beta27"
-langchain4j-jina = "1.17.1-beta27"
+langchain4j-jina = "1.23.0-beta33"
 # This is the non-shaded lucene as used in stroom-index:stroom-index-lucene
 # Lucene 5.5.3 is used in stroom-index:stroon-index-lucene553
 lucene = "10.6.0"
@@ -90,7 +90,7 @@ guice-extension = { module = "name.falgout.jeffrey.testing.junit5:guice-extensio
 guice-grapher = { module = "com.google.inject.extensions:guice-grapher", version.ref = "guice" }
 gwt-dev = { module = "org.gwtproject:gwt-dev", version.ref = "gwt" }
 gwt-user = { module = "org.gwtproject:gwt-user", version.ref = "gwt" }
-hikari = { module = "com.zaxxer:HikariCP", version = "7.0.2" }
+hikari = { module = "com.zaxxer:HikariCP", version = "7.1.0" }
 http-client = { module = "org.apache.httpcomponents.client5:httpclient5" } # version controlled by dropwizard-dependencies
 jspecify = { module = "org.jspecify:jspecify", version = "1.0.0" }
 
@@ -209,7 +209,7 @@ zero-allocation-hashing = { module = "net.openhft:zero-allocation-hashing", vers
 zstd-jni = { module =  "com.github.luben:zstd-jni", version = "1.5.7-8" }
 zxcvbn = { module = "com.nulab-inc:zxcvbn", version = "1.9.0" }
 # Zookeeper is only here to
-zookeeper = { module = "org.apache.zookeeper:zookeeper", version = "3.9.6" }
+zookeeper = { module = "org.apache.zookeeper:zookeeper", version = "3.9.7" }
 
 
 # --------------------------------------------------------------------------------
