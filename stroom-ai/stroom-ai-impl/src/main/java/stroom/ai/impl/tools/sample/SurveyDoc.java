@@ -65,6 +65,8 @@ public final class SurveyDoc {
     /// The state's key for the user's going ahead with the survey as it is (`at`, `streams_read`): covered as far
     /// as they chose, until the survey reads on.
     public static final String ACCEPTED = "accepted";
+    /// The state's key for the streams a call the user agreed to survey the feed with, below the default.
+    public static final String FEWER_STREAMS = "fewer_streams";
 
     private static final DateTimeFormatter AT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
             .withZone(ZoneOffset.UTC);
@@ -301,6 +303,9 @@ public final class SurveyDoc {
         if (result.get(STOPPED_STREAMS) instanceof final List<?> stopped && !stopped.isEmpty()) {
             final List<Object> before = new ArrayList<>(JsonValues.listOrEmpty(merged.get(STOPPED_STREAMS)));
             merged.put(STOPPED_STREAMS, sortedUnion(before, new ArrayList<>(stopped)));
+        }
+        if (result.get(FEWER_STREAMS) != null) {
+            merged.put(FEWER_STREAMS, result.get(FEWER_STREAMS));
         }
         if (result.get(ACCEPTED) != null) {
             merged.put(ACCEPTED, result.get(ACCEPTED));

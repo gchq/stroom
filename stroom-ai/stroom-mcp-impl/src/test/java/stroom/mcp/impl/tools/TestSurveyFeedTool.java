@@ -582,6 +582,30 @@ class TestSurveyFeedTool {
 
     // A feed holding more streams than a call asks for: as many as asked for, but none to pick for a survey (whose
     // first find is of one, the newest).
+    @Test
+    void anAgreementToFewerStreamsIsKeptWithTheBuildsSurvey() {
+        // Asked for by the user: kept in node memory alone, the agreement was lost on a restart (and after four
+        // hours), and the user asked again.
+        // An existing feed, outside the build, three of its many streams named.
+        world.inBuild("acme-v1", FeedDoc.TYPE, "ACME-VPN-TEST", "feed-2");
+        feedHoldsMany();
+        for (final long id : List.of(7L, 8L, 9L)) {
+            stream(id, "ACME-VPN", id, logins(3), false);
+        }
+        final String args = "{\"stream_ids\": [7, 8, 9], \"build\": \"acme-v1\"}";
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+        assertThat(json(call(args, user.context()))).containsEntry(SurveyDoc.FEWER_STREAMS, 3);
+
+        // A node restarted (its memory empty), with no form to ask in: the build's survey record still says so.
+        final SurveyFeedTool restarted = new SurveyFeedTool(streamReader, feedNames, world.guard(),
+                new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)),
+                consent, new FewerStreams(securityContext), world.documentAccess, auditLog);
+        final ToolResult again = restarted.execute(BuildToolCalls.call(SurveyFeedTool.NAME, args),
+                BuildToolCalls.context());
+        assertThat(again.text()).doesNotContain("Not done: Survey feed 'ACME-VPN' only 3 stream(s)");
+        assertThat(json(again)).containsEntry(SurveyDoc.FEWER_STREAMS, 3);
+    }
+
     private void feedHoldsMany() {
         Mockito.when(streamReader.find(any(), anyInt(), anyBoolean())).thenAnswer(find -> {
             final int limit = find.getArgument(1);

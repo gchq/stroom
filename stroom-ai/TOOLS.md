@@ -2704,7 +2704,8 @@ never offered deeper, a later call said the survey was complete, and its rarest 
 
 **Fewer streams.** Fewer than 10 streams a call (a smaller `max_streams`, or fewer than 10 of an existing feed's
 streams by id) is confirmed by the user in a form, but only when the feed holds more streams than that (seen: a
-one-stream feed's user asked to agree to survey that one). The agreement holds for that user, feed and count for four
+one-stream feed's user asked to agree to survey that one). With a build, the agreement is kept in its survey state
+(`fewer_streams`) and holds for the build, restarts included; without one, for that user, feed and count for four
 hours in this node's memory (`FewerStreams`). Streams of a feed a build made (its uploaded sample) are read as they are.
 
 **The survey doc.** With `build`, the survey is kept in the build's Documentation doc `<feed> - Survey` (`SurveyDoc`
