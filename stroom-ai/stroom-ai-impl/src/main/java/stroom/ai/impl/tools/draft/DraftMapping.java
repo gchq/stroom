@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.FieldHomes;
 import stroom.ai.impl.tools.generation.Pairs;
 import stroom.ai.impl.tools.generation.ZoneSource;
+import stroom.ai.impl.tools.sample.KindFields;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
@@ -839,7 +840,9 @@ public final class DraftMapping {
             homes();
             users();
             correlated();
-            final Kinds kinds = kinds();
+            final Kinds kinds = kinds(sourceNotes == null
+                    ? List.of()
+                    : JsonValues.strings(sourceNotes.get(SourceNotes.KIND_FIELDS)));
             final String naming = kinds.namings().isEmpty()
                     ? null
                     : kinds.namings().getFirst();
@@ -2003,7 +2006,14 @@ public final class DraftMapping {
             return kinds.size();
         }
 
-        private Kinds kinds() {
+        // The kinds: by the kind fields the user chose (given: classify_kinds and survey_feed put the fields that could
+        // be to them, where none is named like one), else by the fields named like kind fields.
+        private Kinds kinds(final List<String> given) {
+            if (!given.isEmpty()) {
+                return kindsBy(KindFields.oneKind(given)
+                        ? List.of()
+                        : given.stream().filter(n -> names.contains(n) && !taken.contains(n)).toList());
+            }
             String naming = headerKinds();
             if (naming == null) {
                 // A naming field whose values repeat before one with a value a record: seen in testing, a mail log's
@@ -2022,9 +2032,13 @@ public final class DraftMapping {
             if (naming == null) {
                 naming = names.stream().filter(n -> !taken.contains(n) && namesKinds(n)).findFirst().orElse(null);
             }
-            final List<String> namings = naming == null
+            return kindsBy(naming == null
                     ? List.of()
-                    : covering(naming, this::namesKinds);
+                    : covering(naming, this::namesKinds));
+        }
+
+        // The kinds, each a value of the naming fields: rules a kind, and the fields left for Data.
+        private Kinds kindsBy(final List<String> namings) {
             if (!namings.isEmpty()) {
                 common.add(readFrom(dict(PATH, "EventDetail/TypeId", FIELD, namings.getFirst()), namings));
             }

@@ -2641,7 +2641,18 @@ slot · chat group build · Classes: `SurveyFeedTool`, `FeedSampling`, `RecordSp
 `SurveyDocuments`, `SurveyDepth`, `FewerStreams`, `StreamReader`, `Consent`
 
 Samples an existing feed's streams spread over its lifetime and groups their records into shapes (kinds of event),
-saying plainly whether the feed is covered yet. Streams are picked in bisection order (newest, oldest, middle,
+saying plainly whether the feed is covered yet.
+
+**Kind fields.** For structured records (delimited, JSON, key=value) the fields that tell the kinds apart are chosen
+once for the survey (`KindFields`), from the first stream's head, and kept in the survey state as `kind_fields`
+(`fields`, `by`: `user` or `tool`); every part is then signed by them, rather than by the columns each part's names or
+values suggest (seen in testing: a CSV mail log's `msg_act`, chosen afresh in each part, 16 kinds from 3, never
+covered). A field named like a kind field (`type`, `action`, `event_id`...) whose values aren't one a record, nor
+addresses or times, is chosen without asking. Where none is, but fields with a few short values that repeat could
+be, they are put to the user in a short form (each as `field (value, value...)`, or "All one kind of event", or a
+field they name); without forms the call reads nothing and returns `status: needs_kind_field` with the candidates,
+and the agent asks in the chat and calls again with `kind_field`. A `kind_field` other than the one kept starts the
+survey afresh (`kind_field_changed`). The head read to choose is the one the survey reads on from. Streams are picked in bisection order (newest, oldest, middle,
 quarters ...) by `FeedSampling.pickSpread`, skipping those already read; with `stream_ids` exactly those streams are
 read. For each stream up to `max_parts_per_stream` parts are read with `StreamReader.readHead`, split into records by
 `RecordSplitter` (same detection as the profile), and added to `Shapes` (see "Sample analysis" for how a shape is
@@ -2841,7 +2852,12 @@ event the user's documentation doesn't cover and the user confirms the classific
 proposals, it finds the kinds as the draft does (each rule's last field = value condition), leaves out those the
 source notes settle (an event with that field and value, from the documentation or confirmed by the user), and lists
 the rest (`to_classify`: `field`, `value`, `rule`, `records`, up to three `examples` whose values differ), keeping
-them in the notes block as `pending`. The records are read as the draft reads them, inner messages unpacked (the
+them in the notes block as `pending`. The kinds are told apart by the kind fields the user chose (`kind_field` now,
+`kind_fields` in the notes, or the survey's): where the records are structured, no field is named like a kind field
+and `KindFields` finds candidates, the user is asked which (as survey_feed asks; without forms `status:
+needs_kind_field`), and the answer is kept in the notes as `kind_fields`, which the draft follows
+(`SourceNotes.KIND_FIELDS`; `TranslationBuilds.notesInBuild` adds the survey's when the notes have none). The draft
+itself never takes a field by its values alone. The records are read as the draft reads them, inner messages unpacked (the
 keys of JSON text, the elements of XML text, the values the draft's extractions take from text), so a kind told apart
 inside a message field has its records, sample and actor; records a JSON or XML parser reads need no splitter. A kind
 told apart by its format alone is marked `catch_all` when it is a format's leftovers (its `other` rule, listed with

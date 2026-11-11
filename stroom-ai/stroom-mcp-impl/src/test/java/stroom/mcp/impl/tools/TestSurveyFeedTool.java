@@ -593,6 +593,67 @@ class TestSurveyFeedTool {
         });
     }
 
+    @Test
+    void aKindFieldNamedLikeNoneIsPutToTheUserAndKeptForTheSurvey() {
+        // Seen in testing: a CSV mail log's kind in msg_act, a name the survey didn't know, its kind columns chosen
+        // afresh in each part, and the survey never covered. The user says which field; the survey keeps it.
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, msgActCsv(), false);
+
+        // Without forms: nothing surveyed, the agent asks the user in the chat.
+        final Map<String, Object> asking = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
+                                                     + "\"build\": \"acme-v1\"}"));
+        assertThat(asking).containsEntry("status", "needs_kind_field").doesNotContainKey("streams_read");
+        assertThat((List<Map<String, Object>>) asking.get("candidates")).extracting(candidate -> candidate.get("field"))
+                .contains("msg_act", "direction").doesNotContain("timestamp", "sender", "subject");
+
+        // In a form: the user picks it, and every record is signed by it.
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer",
+                "msg_act (allow, quarantine, reject)"));
+        final Map<String, Object> chosen = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
+                                                     + "\"build\": \"acme-v1\"}", user.context()));
+        assertThat(user.shown()).singleElement().asString().contains("msg_act (allow, quarantine, reject)");
+        assertThat(chosen.get(SurveyDoc.KIND_FIELDS)).isEqualTo(Map.of("fields", List.of("msg_act"), "by", "user"));
+        assertThat(String.valueOf(chosen.get("shapes"))).contains("row:msg_act=allow", "row:msg_act=reject")
+                .doesNotContain("direction=");
+
+        // Kept: the next call asks nothing.
+        final BuildToolCalls.FormUser again = BuildToolCalls.user(Map.of("answer", "unused"));
+        final Map<String, Object> next = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
+                                                   + "\"build\": \"acme-v1\"}", again.context()));
+        assertThat(again.shown()).isEmpty();
+        assertThat(next.get(SurveyDoc.KIND_FIELDS)).isEqualTo(Map.of("fields", List.of("msg_act"), "by", "user"));
+    }
+
+    @Test
+    void anotherKindFieldTheUserGivesStartsTheSurveyAfresh() {
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, msgActCsv(), false);
+        json(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\", "
+                  + "\"kind_field\": \"msg_act\"}"));
+
+        final Map<String, Object> afresh = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
+                                                     + "\"build\": \"acme-v1\", \"kind_field\": \"direction\"}"));
+
+        assertThat(afresh.get(SurveyDoc.KIND_FIELDS)).isEqualTo(Map.of("fields", List.of("direction"), "by",
+                "user"));
+        assertThat((String) afresh.get("kind_field_changed")).contains("started afresh");
+        assertThat(String.valueOf(afresh.get("shapes"))).contains("row:direction=inbound")
+                .doesNotContain("msg_act=");
+    }
+
+    // A CSV mail log whose kind is in msg_act, a name nothing knows.
+    private static String msgActCsv() {
+        final StringBuilder text = new StringBuilder("timestamp,sender,subject,msg_act,direction\n");
+        for (int i = 0; i < 30; i++) {
+            text.append("2026-11-11T08:%02d:04Z,u%d@example.com,Subject %d,%s,%s\n".formatted(i, i, i,
+                    List.of("allow", "quarantine", "reject").get(i % 3), i % 2 == 0
+                            ? "inbound"
+                            : "outbound"));
+        }
+        return text.toString();
+    }
+
     // The build's feed, which the sample streams were uploaded to.
     // Key=value login records, one a line.
     private static String logins(final int count) {

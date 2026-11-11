@@ -37,6 +37,7 @@ import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.sample.FeedSampling;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
+import stroom.ai.impl.tools.sample.KindFields;
 import stroom.ai.impl.tools.sample.RecordSplitter;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.Shapes;
@@ -53,6 +54,9 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
@@ -82,6 +86,8 @@ import java.util.stream.LongStream;
 /// session's time limit for a call it stops reading and returns what it has read, for the next call to carry on
 /// from.
 class SurveyFeedTool extends AbstractBuiltInTool {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SurveyFeedTool.class);
 
     static final String NAME = "survey_feed";
     static final String FEED_ARG = "feed";
@@ -122,6 +128,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     static final int FEED_PARTS = 3;
     static final String MAX_RECORDS_ARG = "max_records_per_stream";
     static final String READ_DEEPER_ARG = "read_deeper";
+    static final String KIND_FIELD_ARG = "kind_field";
     // The share of a part's budget its windows take when it is read in order from its start: a quarter.
     private static final int WINDOW_SHARE = 4;
     static final String EXAMPLES_ARG = "examples_per_shape";
@@ -263,6 +270,13 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                                             + "said, in the chat, when asked whether to read the "
                                                             + "parts read in part deeper ('stop', a number of "
                                                             + "records more, or 'to the end').")
+                        .addStringProperty(KIND_FIELD_ARG, "The field that tells the records' kinds of event apart, "
+                                                           + "as the user said (e.g. 'msg_act'; two as 'a, b'), or "
+                                                           + "'" + KindFields.ONE_KIND_ANSWER + "'. Only what the "
+                                                           + "user said: when the tool isn't sure which field it is, "
+                                                           + "it asks them (or, with no forms, says to ask in the "
+                                                           + "chat). Kept for the build's survey; a different one "
+                                                           + "starts the survey afresh.")
                         .addProperty(EXAMPLES_ARG, new IntegerSchema(null))
                         .addStringProperty(BUILD_ARG, "Keep the survey record in this build: a Documentation doc "
                                                       + "'<feed> - Survey' with the kinds of event, examples and "
@@ -310,7 +324,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 maxRecords,
                 orDefault(bounded(call, EXAMPLES_ARG, 1, 10), 2),
                 stringArg(call, BUILD_ARG),
-                stringArg(call, READ_DEEPER_ARG));
+                stringArg(call, READ_DEEPER_ARG),
+                stringArg(call, KIND_FIELD_ARG));
     }
 
     // The streams named, by id.
@@ -420,10 +435,21 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final Set<Long> gone = read == null
                 ? Set.of()
                 : GoneStreams.of(streamReader, SurveyDoc.streams(read));
-        final Map<String, Object> state = read == null
+        final Map<String, Object> surveyed = read == null
                 ? null
                 : SurveyDoc.withoutStreams(read, gone);
-        final Set<String> dropped = read == null
+        // The kind field the user gives now, and the one the survey kept: another one starts the survey afresh, as
+        // every kind of event it found was told apart by the other.
+        final List<String> givenKinds = KindFields.parse(request.kindField());
+        final Map<String, Object> keptKinds = surveyed == null
+                ? Map.of()
+                : JsonValues.mapOrEmpty(surveyed.get(SurveyDoc.KIND_FIELDS));
+        final boolean kindsChanged = givenKinds != null && !keptKinds.isEmpty()
+                                     && !givenKinds.equals(JsonValues.strings(keptKinds.get("fields")));
+        final Map<String, Object> state = kindsChanged
+                ? null
+                : surveyed;
+        final Set<String> dropped = read == null || state == null
                 ? Set.of()
                 : droppedShapes(read, state);
         final Set<Long> skip = new TreeSet<>(request.skipStreamIds());
@@ -497,6 +523,40 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             throw new ToolRefusal("No " + request.streamType() + " streams in feed '" + feed + "'");
         }
         final Shapes shapes = new Shapes(new ArrayList<>(known), request.examples());
+        // The first stream's head, read to choose the kind fields, read once: the survey reads on from it.
+        final Map<Long, RawHead> peeked = new LinkedHashMap<>();
+        final Map<String, Object> kinds;
+        if (givenKinds != null) {
+            kinds = kindsKept(givenKinds, "user");
+        } else if (!keptKinds.isEmpty()) {
+            kinds = keptKinds;
+        } else {
+            // Not once the call is stopped: nothing more is read.
+            final Optional<KindFields.Choice> choice = Thread.currentThread().isInterrupted()
+                    ? Optional.empty()
+                    : peekKinds(streams.getFirst(), limits, peeked);
+            if (choice.isEmpty()) {
+                kinds = null;
+            } else if (choice.get().certain()) {
+                kinds = kindsKept(choice.get().fields(), "tool");
+            } else {
+                final Optional<String> answer = consent.answer(call, context, NAME, kindIntro(feed, choice.get()),
+                        "Which field tells the kinds of event apart?", choice.get().options());
+                if (answer.isEmpty()) {
+                    return needsKindField(feed, choice.get());
+                }
+                final List<String> said = KindFields.fromAnswer(answer.get(), choice.get());
+                if (said.isEmpty()) {
+                    throw new ToolRefusal("The user's answer ('" + answer.get() + "') names none of the fields "
+                                          + "put to them: ask them in the chat which field tells the kinds of event "
+                                          + "apart, and call again with " + KIND_FIELD_ARG + ".");
+                }
+                kinds = kindsKept(said, "user");
+            }
+        }
+        if (kinds != null) {
+            shapes.useKindFields(JsonValues.strings(kinds.get("fields")));
+        }
         // Parts the user had read deeper that a call's time cut short: read on from where they stopped, not read
         // again from their start (which would count their records twice).
         final Map<String, SurveyDepth.Part> earlier = depthOf(state);
@@ -508,7 +568,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         pending.forEach(part -> continuing.add(part.stream()));
         final Reading reading = read(context, progress, feed, streams.stream()
                 .filter(meta -> !continuing.contains(meta.getId()))
-                .toList(), shapes, limits);
+                .toList(), shapes, limits, peeked);
         if (reading.firstChunk() == null && pending.isEmpty()) {
             if (reading.stopped()) {
                 throw new ToolTimeoutException();
@@ -525,7 +585,65 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 state, streams.size(), request.maxStreams(), limits), reading, shapes, context);
         noteDepth(result, reading, depth);
         noteGone(result, gone, dropped);
+        if (kinds != null) {
+            result.put(SurveyDoc.KIND_FIELDS, kinds);
+        }
+        if (kindsChanged) {
+            result.put("kind_field_changed", "The user's kind field differs from the one the survey kept ("
+                                             + keptKinds.get("fields") + "): the survey started afresh, every "
+                                             + "stream read again and the kinds of event found again.");
+        }
         return keep(context, kept, result, shapes.shapes());
+    }
+
+    private static Map<String, Object> kindsKept(final List<String> fields, final String by) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("fields", List.copyOf(fields));
+        out.put("by", by);
+        return out;
+    }
+
+    // The kind fields the first stream's start suggests, when its records are structured (delimited, JSON,
+    // key=value); empty for text, or when it can't be read.
+    private Optional<KindFields.Choice> peekKinds(final Meta first,
+                                                  final Limits limits,
+                                                  final Map<Long, RawHead> peeked) {
+        try {
+            final RawHead head = streamReader.readHead(first.getId(), 0, limits.maxChars());
+            peeked.put(first.getId(), head);
+            final RecordSplitter.Chunk chunk = RecordSplitter.split(head.text(), limits.maxRecords() * SPLIT_MORE,
+                    head.truncated());
+            final List<Map<String, Object>> parsed = NullSafe.list(chunk.parsed()).stream()
+                    .filter(Objects::nonNull)
+                    .toList();
+            return parsed.isEmpty() || !KindFields.structured(chunk.format())
+                    ? Optional.empty()
+                    : Optional.of(KindFields.choose(parsed));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No kind fields from stream {}: {}", first.getId(), e.getMessage()));
+            return Optional.empty();
+        }
+    }
+
+    // The form's message: which fields could tell the kinds apart, in plain text.
+    private static String kindIntro(final String feed, final KindFields.Choice choice) {
+        return "No field of feed '" + feed + "' is named like a kind of event (type, action...), but these could "
+               + "tell its kinds apart:\n" + choice.said();
+    }
+
+    // With no forms: the agent asks the user which field, in the chat.
+    private static Map<String, Object> needsKindField(final String feed, final KindFields.Choice choice) {
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("feed", feed);
+        result.put("status", "needs_kind_field");
+        result.put("candidates", choice.candidates().stream().map(candidate -> entry("field", candidate.field(),
+                "values", candidate.values().subList(0, Math.min(10, candidate.values().size())), "records",
+                candidate.records())).toList());
+        result.put("hint", "Nothing was surveyed yet. No field is named like a kind of event, but these could tell "
+                           + "the kinds apart. Ask the user in the chat which one does (show them the candidates "
+                           + "and their values), or whether the records are all one kind, then call " + NAME
+                           + " again with " + KIND_FIELD_ARG + " as they said. Don't choose for them.");
+        return result;
     }
 
     // The streams the survey state says were read only in part, less those whose parts the user settled (read to
@@ -679,8 +797,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                          final String feed,
                          final List<Meta> streams,
                          final Shapes shapes,
-                         final Limits limits) {
+                         final Limits limits,
+                         final Map<Long, RawHead> peeked) {
         final Reading reading = new Reading();
+        reading.peeked.putAll(peeked);
         progress.say("Reading the head of " + streams.size() + " stream" + (streams.size() != 1
                 ? "s"
                 : "") + " of " + feed);
@@ -688,7 +808,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         try {
             for (final Meta meta : streams) {
                 n++;
-                if (timeIsUp()) {
+                // A head read already (to choose the kind fields) is surveyed, however late.
+                if (timeIsUp() && !reading.peeked.containsKey(meta.getId())) {
                     reading.stop();
                     break;
                 }
@@ -718,7 +839,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         int parts = 1;
         int part = 0;
         while (part < Math.min(parts, limits.maxParts())) {
-            if (timeIsUp()) {
+            if (timeIsUp() && !(part == 0 && reading.peeked.containsKey(meta.getId()))) {
                 // Stopped part-way: what is read of it so far counts, as the start of the stream.
                 reading.stop();
                 cut = true;
@@ -726,7 +847,12 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             }
             final RawHead head;
             try {
-                head = streamReader.readHead(meta.getId(), part, limits.maxChars());
+                final RawHead before = part == 0
+                        ? reading.peeked.remove(meta.getId())
+                        : null;
+                head = before != null
+                        ? before
+                        : streamReader.readHead(meta.getId(), part, limits.maxChars());
             } catch (final StreamReadException e) {
                 // A feed's oldest streams are read too, and the likeliest to be on a volume Stroom can no longer
                 // read: said for that stream, the rest of the survey still made.
@@ -1295,7 +1421,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                            Integer maxRecords,
                            int examples,
                            String build,
-                           String readDeeper) {
+                           String readDeeper,
+                           String kindField) {
 
     }
 
@@ -1355,6 +1482,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         private final Set<Long> quotedNewlinesIn = new LinkedHashSet<>();
         // The parts of streams to be read whole that were read only in part, and can be read deeper.
         private final List<SurveyDepth.Part> partial = new ArrayList<>();
+        // The first parts' heads read already (to choose the kind fields), by stream.
+        private final Map<Long, RawHead> peeked = new LinkedHashMap<>();
 
         private void stop() {
             stopped = true;

@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.generation.MappingCompaction;
 import stroom.ai.impl.tools.generation.Pairs;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.sample.KindFields;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
@@ -1190,5 +1191,36 @@ class TestDraftMapping extends DraftFixtures {
     @Test
     void aSampleWithNoTextGivesNoDraft() {
         assertThatThrownBy(() -> DraftMapping.records(Map.of(), null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void theKindFieldTheUserChoseMakesTheRules() {
+        // Seen in testing: a CSV mail log's kind in msg_act, a name the draft didn't know, so every record was one
+        // 'other' event. The draft doesn't guess a field by its values: classify_kinds and survey_feed put the
+        // candidates to the user, and the draft follows what they chose.
+        assertThat(rules(DraftMapping.draft(List.of(msgActCsv()), "SEG", null, null, null, null, null)).keySet())
+                .containsExactly("other");
+        final Map<String, Object> byAct = DraftMapping.draft(List.of(msgActCsv()), "SEG", null, null,
+                Map.of(SourceNotes.KIND_FIELDS, List.of("msg_act")), null, null);
+        final Map<String, Object> byDirection = DraftMapping.draft(List.of(msgActCsv()), "SEG", null, null,
+                Map.of(SourceNotes.KIND_FIELDS, List.of("direction")), null, null);
+        final Map<String, Object> oneKind = DraftMapping.draft(List.of(msgActCsv()), "SEG", null, null,
+                Map.of(SourceNotes.KIND_FIELDS, List.of(KindFields.ONE_KIND)), null, null);
+
+        assertThat(rules(byAct).keySet()).contains("allow", "quarantine", "reject");
+        assertThat(rules(byDirection).keySet()).contains("inbound", "outbound").doesNotContain("allow");
+        assertThat(rules(oneKind).keySet()).containsExactly("other");
+    }
+
+    private static String msgActCsv() {
+        final List<String> lines = new ArrayList<>(List.of("timestamp,sender,recipient,subject,msg_act,direction"));
+        for (int i = 0; i < 60; i++) {
+            lines.add("2026-11-11T08:" + String.format("%02d", i) + ":04Z,u" + i + "@example.com,r" + i
+                      + "@example.com,Subject " + i + "," + List.of("allow", "quarantine", "reject").get(i % 3) + ","
+                      + (i % 2 == 0
+                    ? "inbound"
+                    : "outbound"));
+        }
+        return String.join("\n", lines) + "\n";
     }
 }
