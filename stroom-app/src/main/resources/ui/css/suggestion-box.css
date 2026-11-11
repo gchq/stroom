@@ -74,4 +74,10 @@
         color: HighlightText;
         forced-color-adjust: none;
     }
+
+    /* Mouse over: its hovered fill is replaced, so a Highlight line round it, as a grid row's */
+    .suggestion-box__option:not(.suggestion-box__option--active):hover {
+        outline: 1px solid Highlight;
+        outline-offset: -1px;
+    }
 }

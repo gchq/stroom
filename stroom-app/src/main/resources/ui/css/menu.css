@@ -209,4 +209,12 @@
     .menu__separator {
         border-top-color: CanvasText;
     }
+
+    /* A disabled item is the system's GrayText, not faded (fading the system's colours was all but
+       invisible in the light palette); highlighted, still faded HighlightText, as GrayText on
+       Highlight can't be read */
+    .menu__row:not(.menu__row--active)[aria-disabled="true"] > .menu__item:not(.menu__item--info) > * {
+        opacity: 1;
+        color: GrayText;
+    }
 }

@@ -156,3 +156,18 @@
         border-style: dashed;
     }
 }
+
+/* In forced colours (e.g. Windows high contrast) a selected grid row keeps its own Highlight colours
+   (forced-color-adjust: none, data-grid.css), which its fields would inherit: they kept the theme's
+   colours, and their values took the row's HighlightText, unreadable on a field (white on white in
+   the light palette). There a field in a selected row is in the system's colours again */
+@media (forced-colors: active) {
+    .data-grid__row[aria-selected="true"] :is(.selection-box, .selection-box *) {
+        forced-color-adjust: auto;
+        color: CanvasText !important;
+    }
+
+    .data-grid__row[aria-selected="true"] :is(.selection-box--disabled, .selection-box--disabled *) {
+        color: GrayText !important;
+    }
+}

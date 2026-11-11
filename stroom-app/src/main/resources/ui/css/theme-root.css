@@ -361,3 +361,12 @@
     --vis-tip-text__color: #bbb;
 
 }
+
+/* In forced colours (e.g. Windows high contrast) secondary text lost its dimming, so a pipeline
+   property at its default looked set and a hint read as a value. There it is the system's dimmed
+   text colour, GrayText (the theme's colour would be replaced by the text colour) */
+@media (forced-colors: active) {
+    :root {
+        --text-color--muted: GrayText;
+    }
+}

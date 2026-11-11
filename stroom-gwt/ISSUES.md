@@ -214,6 +214,9 @@ out). Open from these runs:
   checks emulated forced colours for a check and then set them back to none, even in a
   forced-colours run; they now put back what the run had (`lib/real-input/forced-colours.mjs`),
   and the screenshots differ.
+* `Widgets/Date Time/ScheduleBox` `QuickSettingsAreGroupedButtons`: its Change Schedule dialog is
+  sometimes 1px higher in the screenshot (about one run in three, with the same stylesheets),
+  likely from when the dialog is centred; it flags as a screenshot change though nothing changed.
 * `Widgets/Tree/ExplorerTree` `Keys` and `Widgets/EntityCheckTree` `TriState` end blank or nearly
   blank in every run.
 * `App/Main/PropertiesScreen` `Properties` ended with a row selected in the normal run and none in

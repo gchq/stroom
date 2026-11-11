@@ -126,3 +126,15 @@
     border-radius: 50%;
     animation: busy-spinner-spin .75s linear infinite;
 }
+
+/* In forced colours (e.g. Windows high contrast) a ring's transparent side was drawn in the border
+   colour, so a spinning ring was a whole, still-looking circle. There it keeps its gap: its own
+   colours, the ring in CanvasText */
+@media (forced-colors: active) {
+    .busy-spinner__ring,
+    .busy-spinner--page {
+        forced-color-adjust: none;
+        border-color: CanvasText;
+        border-right-color: transparent;
+    }
+}

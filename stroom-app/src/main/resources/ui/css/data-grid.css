@@ -734,6 +734,13 @@
     .data-grid .data-grid__row:not([aria-selected="true"]) .data-grid__cell--disabled {
         color: GrayText;
     }
+
+    /* Mouse over a row that isn't selected: its hovered fill is replaced, so a Highlight line round
+       it, as the pipeline and expression trees' (the keyboard focus's outline wins over it) */
+    .data-grid .data-grid__row:not([aria-selected="true"]):hover {
+        outline: 1px solid Highlight;
+        outline-offset: -1px;
+    }
 }
 
 /* Not a row action (.row-action, row-action.css), a button that looks as the icon it holds: this

@@ -536,3 +536,29 @@ styles: only that content shows, as the button's own text
   Ripple effect
    */
 }
+
+/* In forced colours (e.g. Windows high contrast) the ring's transparent side was drawn in the border
+   colour, so a busy button showed a whole, still-looking circle. There it keeps its gap, in the
+   button's text colour */
+@media (forced-colors: active) {
+    .button__spinner-ring {
+        forced-color-adjust: none;
+        border-color: ButtonText;
+        border-right-color: transparent;
+    }
+}
+
+/* In forced colours (e.g. Windows high contrast) the variants' fills are replaced, so OK looked like
+   Cancel. There the default action (primary, e.g. OK and Close; green, e.g. New and Accept) has a
+   thicker border, as a system's default button does; the others keep the usual one */
+@media (forced-colors: active) {
+    .button--contained-primary,
+    .button--contained-green,
+    .button--default-primary {
+        border: 2px solid ButtonText;
+    }
+
+    :is(.button--contained-primary, .button--contained-green, .button--default-primary):is(:disabled, .button--disabled) {
+        border-color: GrayText;
+    }
+}

@@ -628,4 +628,19 @@ select[aria-invalid="true"] {
         outline: 2px solid Highlight !important;
         outline-offset: 0 !important;
     }
+
+    /* A rejected value has a thicker, dashed border, as a text field's (text-field.css), as its red
+       one is replaced */
+    select[aria-invalid="true"] {
+        border-width: 2px;
+        border-style: dashed;
+    }
+
+    /* Selected text is in the system's selection colours, also in a field whose text colour is set
+       with -webkit-text-fill-color (text-field.css), which would otherwise draw it over Highlight */
+    ::selection {
+        background-color: Highlight;
+        color: HighlightText;
+        -webkit-text-fill-color: HighlightText;
+    }
 }

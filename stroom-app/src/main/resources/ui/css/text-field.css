@@ -244,3 +244,20 @@ input.text-field:where(:-webkit-autofill, :-webkit-autofill:hover, :-webkit-auto
         border-style: dotted !important;
     }
 }
+
+/* In forced colours (e.g. Windows high contrast) a selected grid row keeps its own Highlight colours
+   (forced-color-adjust: none, data-grid.css), which its fields would inherit: they kept the theme's
+   colours, and their values took the row's HighlightText, unreadable on a field (white on white in
+   the light palette). There a field in a selected row is in the system's colours again */
+@media (forced-colors: active) {
+    .data-grid__row[aria-selected="true"] :is(input, textarea) {
+        forced-color-adjust: auto;
+        color: CanvasText !important;
+        -webkit-text-fill-color: CanvasText !important;
+    }
+
+    .data-grid__row[aria-selected="true"] :is(input, textarea):disabled {
+        color: GrayText !important;
+        -webkit-text-fill-color: GrayText !important;
+    }
+}
