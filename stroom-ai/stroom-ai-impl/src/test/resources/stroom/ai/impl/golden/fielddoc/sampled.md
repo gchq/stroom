@@ -25,7 +25,7 @@ When `action` = login (logon): 1 of the sample's 3 events. When `action` = logou
 | `EventDetail/Authenticate/User/Id` | An identifier for the user. | `user` | "o'neil" |
 | `EventDetail/Authenticate/Outcome/Success` | If the outcome of an event was successful then 'true', 'false' otherwise. | `result`: ok -> true, fail -> false | "false" |
 | `EventDetail/Authenticate/Data[@Name='session']/@Value` | The `session` value recorded in a Data element of Authenticate. | `sid` | "s1" |
-| `EventSource/Client/IPAddress` | The network IP address of the client. | `ip` (logoff) | (not in the sample) |
+| `EventSource/Client/IPAddress` | The network IP address of the client. | `ip` (logoff) | (no sample record reaches this rule) |
 
 #### other
 

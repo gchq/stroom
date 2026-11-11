@@ -85,6 +85,7 @@ class FieldMappingSections {
     private final IndexValues indexValues;
     private final ReferenceEvaluation referenceEvaluation;
     private final Provider<DocumentAccess> documentAccessProvider;
+    private final SteppedSamples steppedSamples;
 
     /// @param stepping        Steps the pipeline over the sample streams.
     /// @param cef             Steps a CEF pipeline, reading its lines and the Events they came from.
@@ -96,6 +97,7 @@ class FieldMappingSections {
     /// @param indexValues     Reads example values from the index for fields the documents stepped have none of.
     /// @param referenceEvaluation Reads a reference data pipeline's maps, feeds and the pipelines that look them up.
     /// @param documentAccessProvider Reads an XSLT written by hand, as the user.
+    /// @param steppedSamples  Steps the sample records (and the build's survey examples), kept for the session.
     @Inject
     FieldMappingSections(final PipelineStepping stepping,
                          final DraftCefMappingTool cef,
@@ -106,7 +108,8 @@ class FieldMappingSections {
                          final StreamSummaries streamSummaries,
                          final IndexValues indexValues,
                          final ReferenceEvaluation referenceEvaluation,
-                         final Provider<DocumentAccess> documentAccessProvider) {
+                         final Provider<DocumentAccess> documentAccessProvider,
+                         final SteppedSamples steppedSamples) {
         this.stepping = stepping;
         this.cef = cef;
         this.pipelineShapes = pipelineShapes;
@@ -117,6 +120,7 @@ class FieldMappingSections {
         this.indexValues = indexValues;
         this.referenceEvaluation = referenceEvaluation;
         this.documentAccessProvider = documentAccessProvider;
+        this.steppedSamples = steppedSamples;
     }
 
     /// The Field mapping section generated from the kept mapping (stepped over the sample streams, with each Event
@@ -142,7 +146,7 @@ class FieldMappingSections {
         final String kind = kept.kept().kind();
         final String section;
         if (KeptMapping.TRANSLATION.equals(kind)) {
-            section = translationSection(context, pipeline, kept, streamIds, layout, described);
+            section = translationSection(context, build, pipeline, kept, streamIds, layout, described);
         } else if ("cef".equals(kind)) {
             section = cefSection(context, pipeline, kept, streamIds, layout, described);
         } else {
@@ -396,6 +400,7 @@ class FieldMappingSections {
     }
 
     private String translationSection(final ToolCallContext context,
+                                      final String build,
                                       final PipelineDoc pipeline,
                                       final KeptMappings.KeptXslt kept,
                                       final List<Long> streamIds,
@@ -412,14 +417,17 @@ class FieldMappingSections {
                     marked.problems().subList(0, Math.min(3, marked.problems().size()))));
         }
         final SteppedPipeline loaded = load(pipeline.getUuid());
-        final Map<String, String> outputs = outputMap(context, loaded, streamIds, kept.element(),
-                Map.of(kept.element(), marked.xslt()));
+        // The streams' first records and the build's survey examples beyond them (asked for by the user: seen in
+        // chat 173, a stream's rarer kinds documented "(not in the sample)" from its first 200 records alone).
+        final Map<String, String> outputs = steppedOutputs(context, loaded, streamIds, kept.element(),
+                Map.of(kept.element(), marked.xslt()), build).outputs();
         final Optional<String> drift = mappingDrift.drift(kept);
         // An XSLT that isn't what its mapping generates (edited by hand) is documented as it runs: its own events,
         // each given the rule the mapping's marked XSLT gave the same record's event. Seen: a hand edit making
         // users distinct documented from what the mapping generates, duplicates and all.
         final List<XmlElement> events = drift.isPresent()
-                ? EventFieldDocs.runningEvents(outputMap(context, loaded, streamIds, kept.element(), null), outputs)
+                ? EventFieldDocs.runningEvents(steppedOutputs(context, loaded, streamIds, kept.element(), null,
+                        build).outputs(), outputs)
                 : EventFieldDocs.sampledEvents(new ArrayList<>(outputs.values()));
         if (events.isEmpty()) {
             // A section of "(not in the sample)" documents nothing: say what the streams are and what stopped them.
@@ -633,16 +641,26 @@ class FieldMappingSections {
         return steppedOutputs(context, pipeline, streamIds, element, code).outputs();
     }
 
-    // Each record's output and input at the element, up to RECORDS spread over the streams, within the call's time
-    // limit, and whether that ran out first.
     private PipelineStepping.Outputs steppedOutputs(final ToolCallContext context,
                                                     final SteppedPipeline pipeline,
                                                     final List<Long> streamIds,
                                                     final String element,
                                                     final Map<String, String> code) {
+        return steppedOutputs(context, pipeline, streamIds, element, code, null);
+    }
+
+    // Each record's output and input at the element, up to RECORDS spread over the streams and the build's survey
+    // examples beyond them, within the call's time limit, and whether that ran out first: as stepped earlier in the
+    // session where nothing they depend on has changed.
+    private PipelineStepping.Outputs steppedOutputs(final ToolCallContext context,
+                                                    final SteppedPipeline pipeline,
+                                                    final List<Long> streamIds,
+                                                    final String element,
+                                                    final Map<String, String> code,
+                                                    final String build) {
         try {
-            return PipelineStepping.withinTimeLimit(context, () -> stepping.outputs(context, pipeline, streamIds,
-                    element, code, RECORDS));
+            return PipelineStepping.withinTimeLimit(context, () -> steppedSamples.stepped(context, pipeline,
+                    streamIds, element, code, RECORDS, build));
         } finally {
             stepping.audit(context, streamIds, "Stepped stream(s) through " + pipeline.name() + " with the "
                                                + WriteDocumentationTool.NAME + " tool");

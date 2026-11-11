@@ -4465,7 +4465,14 @@ tool generates two sections in it and keeps the version control:
 * **Field mapping** is never taken from the markdown when the XSLT keeps a mapping or plan: it is generated
   (`FieldMappingSections.fieldMappingSection`) from the mapping (or index or CEF plan) kept with the pipeline's
   XSLT, stepped over the sample (at most 200 records, `RECORDS`), and put in place of whatever the markdown has
-  there, so it always agrees with the XSLT. For a translation the pipeline is stepped with the mapping's XSLT
+  there, so it always agrees with the XSLT. A translation's section is stepped over the build survey's examples
+  beyond those records too (`SteppedSamples`: at most 60, by their survey locations), so each kind the survey
+  found has values of its own (asked for by the user: a 10,000-record stream's rarer kinds documented "(not in the
+  sample)" from its first 200). What is stepped is kept for the session (`SteppedSamples`, four hours, by the
+  versions of the pipeline and every document it runs, the code stepped in an element's place, the streams and the
+  survey's records; never a run the call's time cut short), so the rounds of field descriptions don't step the same
+  records again. An empty Sample values cell says why: "(no sample record reaches this rule)" (or "these rules"),
+  or "(no value in the N sampled events)" (`EventFieldDocs.orWhyNone`). For a translation the pipeline is stepped with the mapping's XSLT
   generated with rule markers (processing instructions, `XsltGenerator.RULE_INSTRUCTION`, which survive stepping
   where comments don't), so each Event is matched to the rule that wrote it. The section opens with "Counts are of
   N sample records (n of stream ...)" so a reader knows which records were counted (seen: counts from a different
