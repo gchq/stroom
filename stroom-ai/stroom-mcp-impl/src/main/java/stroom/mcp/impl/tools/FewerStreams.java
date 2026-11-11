@@ -31,7 +31,8 @@ import java.util.Map;
 import java.util.function.LongSupplier;
 
 /// The users' agreements to survey a feed fewer streams a call than the default: an agreement holds for that user, feed
-/// and count for four hours, so later calls go on unasked. Kept in this node's memory.
+/// and count for four hours, so later calls go on unasked. Kept in this node's memory, for a survey with no build: a
+/// build's survey record keeps the agreement itself (`SurveyDoc.FEWER_STREAMS`), so it outlasts a restart.
 @Singleton
 class FewerStreams {
 
