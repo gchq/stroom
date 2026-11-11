@@ -196,6 +196,13 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         textBox.setName(name);
     }
 
+    /// Names the box for screen readers, for when no visible label is tied to it.
+    ///
+    /// @param label The name, set on the element that takes focus.
+    public void setAriaLabel(final String label) {
+        textBox.getElement().setAttribute("aria-label", label);
+    }
+
     public void setEnabled(final boolean enabled) {
         this.isEnabled = enabled;
         textBox.setEnabled(enabled);

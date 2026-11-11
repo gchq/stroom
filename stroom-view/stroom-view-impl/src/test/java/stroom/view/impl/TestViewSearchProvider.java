@@ -34,21 +34,20 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TestViewSearchProvider {
 
     private static final DocRef VIEW = new DocRef(ViewDoc.TYPE, "view-uuid", "HR view");
-    private static final DocRef SQL_SOURCE = new DocRef("SqlDataSource", "sql-uuid", "HR");
+    private static final DocRef EXTERNAL_SOURCE = new DocRef("ExternalDataSource", "external-uuid", "HR");
+    private static final DocRef OTHER_SQL_SOURCE = new DocRef("OtherSqlSource", "other-uuid", "Sales");
 
-    @Test
-    void viewOfADataSourceThatRunsSqlIsRefused() {
-        // A view adds extraction that SQL rows do not use, and cannot pass the SQL on.
+    private static void assertViewOfSourceIsRefused(final DocRef dataSource, final boolean takesSql) {
         final ViewStore viewStore = Mockito.mock(ViewStore.class);
         Mockito.when(viewStore.readDocument(VIEW)).thenReturn(ViewDoc.builder()
                 .uuid(VIEW.getUuid())
                 .name(VIEW.getName())
-                .dataSource(SQL_SOURCE)
+                .dataSource(dataSource)
                 .build());
-        final SearchProvider sqlProvider = Mockito.mock(SearchProvider.class);
-        Mockito.when(sqlProvider.takesNativeQuery()).thenReturn(true);
+        final SearchProvider delegate = Mockito.mock(SearchProvider.class);
+        Mockito.when(delegate.takesNativeQuery(Mockito.any())).thenReturn(takesSql);
         final SearchProviderRegistry registry = Mockito.mock(SearchProviderRegistry.class);
-        Mockito.when(registry.getSearchProvider(SQL_SOURCE)).thenReturn(Optional.of(sqlProvider));
+        Mockito.when(registry.getSearchProvider(dataSource)).thenReturn(Optional.of(delegate));
         final ViewSearchProvider provider = new ViewSearchProvider(
                 viewStore, () -> registry, null, null, null, null);
 
@@ -58,7 +57,19 @@ class TestViewSearchProvider {
                         .build())
                 .build()))
                 .hasMessageContaining("cannot be used through a view")
-                .hasMessageContaining("'HR'");
-        Mockito.verify(sqlProvider, Mockito.never()).createResultStore(Mockito.any());
+                .hasMessageContaining("'" + dataSource.getName() + "'");
+        Mockito.verify(delegate, Mockito.never()).createResultStore(Mockito.any());
+    }
+
+    @Test
+    void viewOfADataSourceThatRunsSqlIsRefused() {
+        // A view adds extraction that SQL rows do not use, and cannot pass the SQL on.
+        assertViewOfSourceIsRefused(OTHER_SQL_SOURCE, true);
+    }
+
+    @Test
+    void viewOfAnExternalDataSourceIsRefusedEvenWithoutSql() {
+        // A CSV External Data Source takes no SQL, but its rows have no use for a view's extraction.
+        assertViewOfSourceIsRefused(EXTERNAL_SOURCE, false);
     }
 }

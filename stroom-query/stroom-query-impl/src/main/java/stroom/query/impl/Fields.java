@@ -79,7 +79,7 @@ public class Fields {
             final QueryService queryService = queryServiceProvider.get();
             final Optional<DocRef> optional = Optional.ofNullable(request.getDataSourceRef())
                     .or(() -> queryService.getReferencedDataSource(request.getQuery()));
-            // The fields of a SQL Data Source are the columns of the SQL in its sql clause.
+            // The fields of an External Data Source are the columns of the SQL in its sql clause.
             final String nativeQuery = queryService.getReferencedNativeQuery(request.getQuery()).orElse(null);
 
             if (request.getParentPath().isBlank()) {
@@ -138,7 +138,7 @@ public class Fields {
             final QueryService queryService = queryServiceProvider.get();
             final Optional<DocRef> optDataSourceRef = Optional.ofNullable(request.getDataSourceRef())
                     .or(() -> queryService.getReferencedDataSource(request.getText()));
-            // The fields of a SQL Data Source are the columns of the SQL in its sql clause.
+            // The fields of an External Data Source are the columns of the SQL in its sql clause.
             final String nativeQuery = queryService.getReferencedNativeQuery(request.getText()).orElse(null);
 
             optDataSourceRef.ifPresent(dataSourceRef -> {

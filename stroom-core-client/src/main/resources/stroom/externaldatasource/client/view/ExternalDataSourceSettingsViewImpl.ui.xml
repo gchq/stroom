@@ -1,0 +1,175 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:edv="urn:import:stroom.externaldatasource.client.view">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="externalDataSourceType"
+                        label="Type"
+                        helpText="Where the data comes from: a database reached by JDBC, Amazon Athena through the AWS SDK, or CSV or an Excel workbook held in this document. Queries of a JDBC or Athena source give their SQL in a sql clause; CSV and Excel are queried with Stroom's own clauses.">
+            <l:SelectionBox ui:field="sourceType" width="400px"/>
+        </form:FormGroup>
+
+        <g:FlowPanel ui:field="jdbcSettings">
+            <form:FormGroup identity="externalDataSourceJdbcUrl"
+                            label="JDBC URL"
+                            helpText="The JDBC URL of the database, e.g. jdbc:mysql://reporting-db:3306/reports. It must match one of the patterns an administrator has allowed in the externalDataSource.allowedUrlPatterns property. Do not put a user name or password in it; choose a credential instead.">
+                <g:TextBox ui:field="jdbcUrl" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceJdbcCredential"
+                            label="Credential"
+                            helpText="The username and password credential to connect with. You need Use permission on it, as does anyone who queries this data source. Use a database account that can only read: Stroom asks for read-only connections, but only the database can enforce it.">
+                <form:DescriptionHTML ui:field="jdbcCredentialNote"/>
+                <l:SelectionBox ui:field="jdbcCredential" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceConnectionProperties"
+                            label="Connection Properties"
+                            helpText="Extra JDBC driver properties, one name=value per line. For MySQL, add useCursorFetch=true so large results are read in batches of the fetch size rather than all at once. Properties that can read files, load classes or turn off read-only connections are refused.">
+                <g:TextArea ui:field="connectionProperties" width="400px" visibleLines="4"/>
+            </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceMaxPoolSize"
+                            label="Max Pool Size"
+                            helpText="The most connections Stroom keeps open to this database at once. An administrator may set a lower ceiling. Default: 5">
+                <v:ValueSpinner ui:field="maxPoolSize" width="200px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceFetchSize"
+                            label="Fetch Size"
+                            helpText="How many rows are fetched from the database in each round trip. 0 uses the driver's own default. Default: 1000">
+                <v:ValueSpinner ui:field="fetchSize" width="200px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceJdbcMinRefreshMinutes"
+                            label="Minimum Refresh (minutes)"
+                            helpText="The shortest interval at which a dashboard may rerun a query of this data source automatically, to limit the load on the database. 0 sets no minimum beyond the dashboard's own 10 seconds. Default: 0">
+                <v:ValueSpinner ui:field="jdbcMinRefreshMinutes" width="200px"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+
+        <g:FlowPanel ui:field="athenaSettings">
+            <form:FormGroup identity="externalDataSourceRegion"
+                            label="AWS Region"
+                            helpText="The AWS region of the Athena workgroup, e.g. eu-west-2.">
+                <g:TextBox ui:field="region" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceWorkGroup"
+                            label="Workgroup"
+                            helpText="The Athena workgroup queries run in. The region and workgroup must match one of the patterns an administrator has allowed in the externalDataSource.allowedAthenaWorkGroups property. The workgroup's per-query data scan limit is the control on cost. Default: primary">
+                <g:TextBox ui:field="workGroup" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceCatalog"
+                            label="Data Catalog"
+                            helpText="The data catalog queries run in. Default: AwsDataCatalog">
+                <g:TextBox ui:field="catalog" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceDatabase"
+                            label="Database"
+                            helpText="The database queries run in. Default: default">
+                <g:TextBox ui:field="database" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceOutputLocation"
+                            label="Output Location (optional)"
+                            helpText="The S3 URI query results are written to, e.g. s3://my-bucket/athena/. Leave empty to use the workgroup's. It must match one of the patterns an administrator has allowed in the externalDataSource.allowedAthenaOutputLocations property.">
+                <g:TextBox ui:field="outputLocation" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceAthenaCredential"
+                            label="Credential"
+                            helpText="The AWS access key credential to query with. You need Use permission on it, as does anyone who queries this data source. With none, Stroom's own AWS identity is used, if an administrator has turned on externalDataSource.allowDefaultAwsCredentials. Use an identity that can only read the tables Stroom should query.">
+                <form:DescriptionHTML ui:field="athenaCredentialNote"/>
+                <l:SelectionBox ui:field="athenaCredential" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceResultReuseMinutes"
+                            label="Result Reuse (minutes)"
+                            helpText="How old a result of the same query may be and still be reused instead of running the query again. Athena bills every run, so this saves cost when a dashboard is refreshed. 0 never reuses a result. Default: 0">
+                <v:ValueSpinner ui:field="resultReuseMinutes" width="200px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceAthenaMinRefreshMinutes"
+                            label="Minimum Refresh (minutes)"
+                            helpText="The shortest interval at which a dashboard may rerun a query of this data source automatically. Every Athena run is billed by the data it scans, and result reuse rarely helps a dashboard, as its time range changes on every refresh. Many refreshes also use up the account's limit on Athena queries running at once. 0 sets no minimum beyond the dashboard's own 10 seconds. Default: 5">
+                <v:ValueSpinner ui:field="athenaMinRefreshMinutes" width="200px"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+
+        <g:FlowPanel ui:field="csvSettings">
+            <form:FormGroup identity="externalDataSourceCsvDelimiter"
+                            label="Delimiter"
+                            helpText="The character between the values of each row.">
+                <l:SelectionBox ui:field="csvDelimiter" width="200px"/>
+            </form:FormGroup>
+            <form:FormGroup helpText="Whether the first row holds the column names. Without it, columns are named column1, column2 and so on. Default: on">
+                <tickbox:CustomCheckBox ui:field="csvHeader"
+                                        identity="externalDataSourceCsvHeader"
+                                        label="First Row Is A Header"/>
+            </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceCsvData"
+                            label="CSV"
+                            helpText="The data, pasted here or read from a file on your computer with Load From File. It is held in this document and is queried as it stands when saved. An administrator sets the most it may hold with the externalDataSource.maxStoredDataSize property, so keep it to lookup tables and reference lists; bulk data belongs in a feed.">
+                <g:SimplePanel ui:field="csvEditor" height="300px" width="100%"/>
+            </form:FormGroup>
+            <g:FlowPanel styleName="dock-container-horizontal">
+                <b:Button ui:field="loadCsvFile" text="Load From File" width="200px" addStyleNames="allow-focus"/>
+                <b:Button ui:field="detectColumns" text="Detect Columns" width="200px" addStyleNames="allow-focus"/>
+                <g:FileUpload ui:field="csvFile" visible="false"/>
+            </g:FlowPanel>
+            <form:FormGroup identity="externalDataSourceCsvColumns"
+                            label="Columns"
+                            helpText="The columns, in the order their values appear in each row. Each becomes a query field of the same name, read as its type; a value that is not of its column's type is empty, and the query warns. Detect Columns names them from the header row and guesses each type from the values, keeping a type you set here for a column of the same name.">
+                <edv:DataColumnsPanel ui:field="csvColumns"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+
+        <g:FlowPanel ui:field="excelSettings">
+            <form:FormGroup identity="externalDataSourceExcelWorkbook"
+                            label="Workbook"
+                            helpText="The Excel .xlsx workbook, held in this document and queried as it stood when saved. Choose a file: it is uploaded straight away, and stored with the document when you save. Older .xls workbooks cannot be read; save them as .xlsx in Excel first. An administrator sets the most it may hold with the externalDataSource.maxStoredDataSize property, so keep it to lookup tables and reference lists; bulk data belongs in a feed.">
+                <form:DescriptionHTML ui:field="excelFileName"/>
+                <form:CustomFileUpload ui:field="excelFile"/>
+            </form:FormGroup>
+            <g:FlowPanel styleName="dock-container-horizontal">
+                <b:Button ui:field="downloadExcel" text="Download" width="200px" addStyleNames="allow-focus"/>
+                <b:Button ui:field="removeExcel" text="Remove" width="200px" addStyleNames="allow-focus"/>
+            </g:FlowPanel>
+            <form:FormGroup identity="externalDataSourceExcelSheet"
+                            label="Sheet (optional)"
+                            helpText="The name of the sheet to read. Leave empty to read the first sheet.">
+                <g:TextBox ui:field="excelSheet" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup helpText="Whether the first row with values holds the column names. Without it, columns are named column1, column2 and so on. Default: on">
+                <tickbox:CustomCheckBox ui:field="excelHeader"
+                                        identity="externalDataSourceExcelHeader"
+                                        label="First Row Is A Header"/>
+            </form:FormGroup>
+            <b:Button ui:field="detectExcelColumns" text="Detect Columns" width="200px" addStyleNames="allow-focus"/>
+            <form:FormGroup identity="externalDataSourceExcelColumns"
+                            label="Columns"
+                            helpText="The columns, in the order their values appear in each row. Each becomes a query field of the same name, read as its type; a value that is not of its column's type is empty, and the query warns. Numbers are read as plain numbers, whatever their format in Excel, dates as dates, and formulas as the value Excel last worked out. Detect Columns names them from the header row and guesses each type from the values, keeping a type you set here for a column of the same name.">
+                <edv:DataColumnsPanel ui:field="excelColumns"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+
+        <g:FlowPanel ui:field="timeFieldSettings">
+            <form:FormGroup identity="externalDataSourceTimeField"
+                            label="Time Column (optional)"
+                            helpText="A date column of the data. When a query has a time range, rows are filtered on this column in Stroom. For JDBC this is only done when the SQL has no :from or :to placeholder; for CSV and Excel it must be a Date column. With none, the time range is ignored and the query says so.">
+                <g:TextBox ui:field="timeField" width="400px"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+
+        <g:FlowPanel ui:field="queryTimeoutSettings">
+            <form:FormGroup identity="externalDataSourceQueryTimeout"
+                            label="Query Timeout (seconds)"
+                            helpText="How long a query may run before it is stopped. An administrator may set a lower ceiling. Default: 60">
+                <v:ValueSpinner ui:field="queryTimeoutSeconds" width="200px"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+        <form:FormGroup identity="externalDataSourceMaxRows"
+                        label="Max Rows"
+                        helpText="The most rows a query may read; a query with more uses the first ones and says so. An administrator may set a lower ceiling. Default: 100000">
+            <v:ValueSpinner ui:field="maxRows" width="200px"/>
+        </form:FormGroup>
+
+        <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
+    </g:FlowPanel>
+</ui:UiBinder>

@@ -82,7 +82,7 @@ public enum TokenType {
 
     // Other keywords
     FROM,
-    // The native query of a data source that takes one, such as the SQL of a SQL Data Source.
+    // The native query of a data source that takes one, such as the SQL of an External Data Source.
     SQL,
     WHERE,
     EVAL,

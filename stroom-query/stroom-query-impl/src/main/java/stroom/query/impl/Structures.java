@@ -95,7 +95,7 @@ class Structures {
                 "from \"${1:view}\"$0");
         add(list, name(TokenType.SQL),
                 """
-                        Give the SQL to run against a SQL Data Source, straight after `from`, e.g.
+                        Give the SQL to run against an External Data Source, straight after `from`, e.g.
                         ```stroomql
                         from "Reporting DB"
                         sql \"""

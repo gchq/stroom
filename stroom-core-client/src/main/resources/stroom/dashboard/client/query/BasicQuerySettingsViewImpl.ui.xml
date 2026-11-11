@@ -20,7 +20,7 @@
             <v:CustomCheckBox ui:field="autoRefresh" identity="basicQuerySettingsAutoRefresh" label="Auto Refresh"/>
         </form:FormGroup>
         <form:FormGroup identity="basicQuerySettingsRefreshInterval" label="Refresh Interval"
-                        helpText="How often the query reruns automatically, e.g. 30s or 5m. It never reruns more often than every 10 seconds, or than its data source allows: an Amazon Athena SQL Data Source sets a longer minimum, as every run is billed.">
+                        helpText="How often the query reruns automatically, e.g. 30s or 5m. It never reruns more often than every 10 seconds, or than its data source allows: an Amazon Athena External Data Source sets a longer minimum, as every run is billed.">
             <g:TextBox ui:field="refreshInterval" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>

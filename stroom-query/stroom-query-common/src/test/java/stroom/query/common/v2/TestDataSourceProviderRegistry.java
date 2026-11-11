@@ -36,10 +36,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDataSourceProviderRegistry {
 
-    private static final DocRef SQL_SOURCE = new DocRef("SqlDataSource", "uuid-1", "HR");
+    private static final DocRef SQL_SOURCE = new DocRef("ExternalDataSource", "uuid-1", "HR");
     private static final DocRef INDEX = new DocRef("Index", "uuid-2", "Events");
 
-    private final DataSourceProvider sqlProvider = provider("SqlDataSource", true);
+    private final DataSourceProvider sqlProvider = provider("ExternalDataSource", true);
     private final DataSourceProvider indexProvider = provider("Index", false);
     private final DataSourceProviderRegistry registry = new DataSourceProviderRegistry(
             Set.of(sqlProvider, indexProvider));
@@ -47,14 +47,14 @@ class TestDataSourceProviderRegistry {
     private static DataSourceProvider provider(final String type, final boolean takesNativeQuery) {
         final DataSourceProvider provider = Mockito.mock(DataSourceProvider.class);
         Mockito.when(provider.getDataSourceType()).thenReturn(type);
-        Mockito.when(provider.takesNativeQuery()).thenReturn(takesNativeQuery);
+        Mockito.when(provider.takesNativeQuery(Mockito.any())).thenReturn(takesNativeQuery);
         Mockito.when(provider.getFieldInfo(Mockito.any())).thenReturn(ResultPage.createUnboundedList(List.of()));
         return provider;
     }
 
     @Test
     void nativeQueryIsPassedToTheProvider() {
-        // The fields of a SQL Data Source are the columns of the SQL, so the SQL must reach it.
+        // The fields of an External Data Source are the columns of the SQL, so the SQL must reach it.
         registry.getFieldInfo(new FindFieldCriteria(
                 PageRequest.unlimited(), FindFieldCriteria.DEFAULT_SORT_LIST, SQL_SOURCE, "na", true,
                 "select name from staff"));
@@ -67,9 +67,11 @@ class TestDataSourceProviderRegistry {
     }
 
     @Test
-    void takesNativeQueryAsksTheProviderForTheType() {
+    void takesNativeQueryAsksTheProviderAboutTheDocument() {
+        // Some types of External Data Source take SQL and some do not, so the provider needs the document.
         assertThat(registry.takesNativeQuery(SQL_SOURCE)).isTrue();
         assertThat(registry.takesNativeQuery(INDEX)).isFalse();
+        Mockito.verify(sqlProvider).takesNativeQuery(SQL_SOURCE);
     }
 
     @Test

@@ -66,6 +66,8 @@ import stroom.explorer.client.presenter.FindInContentPresenter;
 import stroom.explorer.client.presenter.FindPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter;
 import stroom.explorer.client.presenter.RecentItemsPresenter;
+import stroom.externaldatasource.client.gin.ExternalDataSourceGinjector;
+import stroom.externaldatasource.client.gin.ExternalDataSourceModule;
 import stroom.feed.client.gin.FeedGinjector;
 import stroom.feed.client.gin.FeedModule;
 import stroom.floormap.client.gin.FloorMapGinjector;
@@ -111,8 +113,6 @@ import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
 import stroom.security.identity.client.gin.ChangePasswordGinjector;
 import stroom.security.identity.client.gin.ChangePasswordModule;
-import stroom.sqldatasource.client.gin.SqlDataSourceGinjector;
-import stroom.sqldatasource.client.gin.SqlDataSourceModule;
 import stroom.sqlstore.client.gin.SqlTemporalStoreGinjector;
 import stroom.sqlstore.client.gin.SqlTemporalStoreModule;
 import stroom.statistics.impl.sql.client.gin.StatisticsGinjector;
@@ -175,7 +175,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         ChangePasswordModule.class,
         ElasticClusterModule.class,
         ElasticIndexModule.class,
-        SqlDataSourceModule.class,
+        ExternalDataSourceModule.class,
         AnalyticsModule.class,
         DataGenModule.class,
         ReportModule.class,
@@ -231,7 +231,7 @@ public interface AppGinjectorUser extends
         FloorMapGinjector,
         ElasticClusterGinjector,
         ElasticIndexGinjector,
-        SqlDataSourceGinjector,
+        ExternalDataSourceGinjector,
         ReportGinjector,
         SolrIndexGinjector,
         SqlTemporalStoreGinjector,

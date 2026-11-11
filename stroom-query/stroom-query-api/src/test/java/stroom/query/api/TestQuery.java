@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestQuery {
 
-    private static final DocRef DATA_SOURCE = new DocRef("SqlDataSource", "uuid-1", "HR Database");
+    private static final DocRef DATA_SOURCE = new DocRef("ExternalDataSource", "uuid-1", "HR Database");
     private static final String SQL = "select id, name\nfrom staff\nwhere dept = 'Sales'";
 
     @Test
@@ -106,7 +106,7 @@ class TestQuery {
     @Test
     void jsonWithoutNativeQueryStillReads() {
         final String json = """
-                {"dataSource":{"type":"SqlDataSource","uuid":"uuid-1","name":"HR Database"}}""";
+                {"dataSource":{"type":"ExternalDataSource","uuid":"uuid-1","name":"HR Database"}}""";
 
         final Query query = JsonUtil.readValue(json, Query.class);
 

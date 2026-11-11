@@ -49,6 +49,7 @@ public class CustomFileUpload extends Composite {
 
     private String actionUrl;
     private final FileUploadResultHandler resultHandler = new FileUploadResultHandler();
+    private Runnable fileChosenHandler;
 
     private CustomFileUpload() {
         widget = BINDER.createAndBindUi(this);
@@ -110,6 +111,26 @@ public class CustomFileUpload extends Composite {
         chooseFile.setFocus(true);
     }
 
+    /// Sets what to do once the user has chosen a file, e.g. to upload it straight away.
+    ///
+    /// @param fileChosenHandler Called after a file is chosen.
+    /// @return This upload.
+    public CustomFileUpload onFileChosen(final Runnable fileChosenHandler) {
+        this.fileChosenHandler = fileChosenHandler;
+        return this;
+    }
+
+    /// Forgets the chosen file, so the same file can be chosen again.
+    public void reset() {
+        fileUpload.getElement().setPropertyString("value", "");
+        fileName.setText("");
+    }
+
+    /// @param enabled False to stop a file being chosen, e.g. when the document is read-only.
+    public void setEnabled(final boolean enabled) {
+        chooseFile.setEnabled(enabled);
+    }
+
     @UiHandler("chooseFile")
     void onChooseFile(final ClickEvent e) {
         fileUpload.click();
@@ -129,6 +150,9 @@ public class CustomFileUpload extends Composite {
             }
         }
         fileName.setText(name);
+        if (fileChosenHandler != null && name != null && !name.isEmpty()) {
+            fileChosenHandler.run();
+        }
     }
 
     public interface Binder extends UiBinder<Widget, CustomFileUpload> {

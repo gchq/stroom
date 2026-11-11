@@ -58,8 +58,8 @@ public final class Query {
     @JsonProperty
     private final TimeRange timeRange;
 
-    @JsonPropertyDescription("A query in the native language of the data source, e.g. SQL for a SQL data " +
-            "source. It is run by the data source before the expression is applied to its results. " +
+    @JsonPropertyDescription("A query in the native language of the data source, e.g. SQL for a JDBC External Data " +
+            "Source. It is run by the data source before the expression is applied to its results. " +
             "Ignored by data sources that have no native query language.")
     @JsonProperty
     private final String nativeQuery;
@@ -93,7 +93,7 @@ public final class Query {
         return timeRange;
     }
 
-    /// Gets the query in the native language of the data source, e.g. SQL for a SQL data source.
+    /// Gets the query in the native language of the data source, e.g. SQL for an external data source.
     ///
     /// @return The native query, or `null` if there is none.
     public String getNativeQuery() {
@@ -224,7 +224,7 @@ public final class Query {
             return this;
         }
 
-        /// Sets the query in the native language of the data source, e.g. SQL for a SQL data source.
+        /// Sets the query in the native language of the data source, e.g. SQL for an external data source.
         ///
         /// @param nativeQuery The native query, or `null` for none.
         /// @return The [Builder], enabling method chaining.

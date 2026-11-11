@@ -787,6 +787,18 @@ public enum SvgImage {
             " L1953.5,1909.9L1953.5,1909.9z\"/></svg> \n" +
             ""),
 
+    DOCUMENT_EXTERNAL_DATA_SOURCE("document/ExternalDataSource.svg", "svg-image__document-external-data-source", "" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
+            "1792 1792\"><path style=\"fill:var(--icon-colour__purple)\" d=\"M896 768q237 0 443-4" +
+            "3t325-127v170q0 69-103 128t-280 93.5-385 34.5-385-34.5-280-93.5-103-128v-170q119" +
+            " 84 325 127t443 43zm0 768q237 0 443-43t325-127v170q0 69-103 128t-280 93.5-385 34" +
+            ".5-385-34.5-280-93.5-103-128v-170q119 84 325 127t443 43zm0-384q237 0 443-43t325-" +
+            "127v170q0 69-103 128t-280 93.5-385 34.5-385-34.5-280-93.5-103-128v-170q119 84 32" +
+            "5 127t443 43zm0-1152q208 0 385 34.5t280 93.5 103 128v128q0 69-103 128t-280 93.5-" +
+            "385 34.5-385-34.5-280-93.5-103-128v-128q0-69 103-128t280-93.5 385-34.5z\"/></svg>" +
+            " \n" +
+            ""),
+
     DOCUMENT_FAVOURITES("document/Favourites.svg", "svg-image__document-favourites", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\"><path style=\"fill:var(--icon-colour__orange)\" d=\"M1728 647q0 22-26 48" +
@@ -1343,18 +1355,6 @@ public enum SvgImage {
             ".757813 c 4.39063,-2.972656 8.035644,-6.957519 10.609863,-11.617676 z m -35.4213" +
             "87,12.309082 8.819825,4.933594 c 3.718749,-0.308594 7.2622,-1.214844 10.53955,-2" +
             ".636719 z\"/></svg> \n" +
-            ""),
-
-    DOCUMENT_SQL_DATA_SOURCE("document/SqlDataSource.svg", "svg-image__document-sql-data-source", "" +
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
-            "1792 1792\"><path style=\"fill:var(--icon-colour__purple)\" d=\"M896 768q237 0 443-4" +
-            "3t325-127v170q0 69-103 128t-280 93.5-385 34.5-385-34.5-280-93.5-103-128v-170q119" +
-            " 84 325 127t443 43zm0 768q237 0 443-43t325-127v170q0 69-103 128t-280 93.5-385 34" +
-            ".5-385-34.5-280-93.5-103-128v-170q119 84 325 127t443 43zm0-384q237 0 443-43t325-" +
-            "127v170q0 69-103 128t-280 93.5-385 34.5-385-34.5-280-93.5-103-128v-170q119 84 32" +
-            "5 127t443 43zm0-1152q208 0 385 34.5t280 93.5 103 128v128q0 69-103 128t-280 93.5-" +
-            "385 34.5-385-34.5-280-93.5-103-128v-128q0-69 103-128t280-93.5 385-34.5z\"/></svg>" +
-            " \n" +
             ""),
 
     DOCUMENT_SQL_TEMPORAL_STORE("document/SqlTemporalStore.svg", "svg-image__document-sql-temporal-store", "" +

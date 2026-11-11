@@ -85,7 +85,7 @@ public class DataSourceProviderRegistry {
     public boolean takesNativeQuery(final DocRef dataSourceRef) {
         final DocRef docRef = LegacyDocRefConverter.convert(dataSourceRef);
         return getDataSourceProvider(docRef.getType())
-                .map(DataSourceProvider::takesNativeQuery)
+                .map(provider -> provider.takesNativeQuery(docRef))
                 .orElse(false);
     }
 

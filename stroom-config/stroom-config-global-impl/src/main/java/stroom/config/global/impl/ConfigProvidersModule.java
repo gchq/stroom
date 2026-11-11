@@ -324,6 +324,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.externaldatasource.impl.ExternalDataSourceConfig getExternalDataSourceConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.externaldatasource.impl.ExternalDataSourceConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.feed.impl.FeedConfig getFeedConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -842,15 +851,6 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.security.impl.StroomOpenIdConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.sqldatasource.impl.SqlDataSourceConfig getSqlDataSourceConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.sqldatasource.impl.SqlDataSourceConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

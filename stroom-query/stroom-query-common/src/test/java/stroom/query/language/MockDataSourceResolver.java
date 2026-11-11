@@ -62,7 +62,7 @@ public class MockDataSourceResolver extends DataSourceResolver {
         return new DocRef(name, name, name);
     }
 
-    /// Data sources named `sql_...` take a native query, as a SQL Data Source does.
+    /// Data sources named `sql_...` take a native query, as an External Data Source does.
     @Override
     public boolean takesNativeQuery(final DocRef dataSourceRef) {
         return dataSourceRef.getName().startsWith("sql_");
