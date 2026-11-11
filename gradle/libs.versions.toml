@@ -17,6 +17,9 @@ junit-jupiter = "5.13.1"
 langchain4j = "1.17.1"
 langchain4j-cohere = "1.17.1-beta27"
 langchain4j-jina = "1.23.0-beta33"
+# This is the non-shaded lucene as used in stroom-index:stroom-index-lucene
+# Lucene 5.5.3 is used in stroom-index:stroon-index-lucene553
+lucene = "10.6.0"
 kafka = "3.9.0"
 openai = "4.69.3"
 poi = "6.0.0"
@@ -159,6 +162,12 @@ kryo = { module = "com.esotericsoftware:kryo", version = "5.5.0" }
 # Potentially caused by https:#github.com/jnr/jffi/issues/138 and fixable with a jnr-ffi uplift in lmdbjava
 # lmdbjava 0.9.0 has a cursor bug though, https:#github.com/lmdbjava/lmdbjava/issues/228
 lmdbjava = { module = "org.lmdbjava:lmdbjava", version = "0.8.2" }
+# These are the non-shaded lucene dependencies as used in stroom-index:stroom-index-lucene
+lucene-analysis-common = { module = "org.apache.lucene:lucene-analysis-common", version.ref = "lucene" }
+lucene-backward-codecs = { module = "org.apache.lucene:lucene-backward-codecs", version.ref = "lucene" }
+lucene-highlighter = { module = "org.apache.lucene:lucene-highlighter", version.ref = "lucene" }
+lucene-memory = { module = "org.apache.lucene:lucene-memory", version.ref = "lucene" }
+lucene-queryparser = { module = "org.apache.lucene:lucene-queryparser", version.ref = "lucene" }
 # This is the bridge from log4j v1 to slf4j
 log4j-over-slf4j = { module = "org.slf4j:log4j-over-slf4j" } # version controlled by dropwizard-dependencies
 # This is the bridge from log4j v2 to slf4j
