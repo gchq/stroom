@@ -409,16 +409,17 @@ public class ExplorerTreeController extends Controller {
             addToRows(currentRootNodes, rows, openItems.getAllOpenItems());
         }
 
-        // If we are allowing null selection then insert a node at the root to make it
-        // possible.
+        // If we are allowing null selection then insert a node at the root to make it possible.
         if (includeNullSelection) {
-            if (rows.isEmpty() || rows.get(0) != ExplorerTree.NULL_SELECTION) {
+            //noinspection SequencedCollectionMethodCanBeUsed
+            if (rows.isEmpty() || !ExplorerTree.NULL_SELECTION.equals(rows.get(0))) {
                 // If there is any quick filter then ExplorerTree.NULL_SELECTION is a non-match
                 final boolean isFilterMatch = NullSafe.isBlankString(NullSafe.get(
                         currentCriteria,
                         FetchExplorerNodesRequest::getFilter,
                         ExplorerTreeFilter::getNameFilter));
 
+                //noinspection SequencedCollectionMethodCanBeUsed // Cos GWT
                 rows.add(0, ExplorerTree.NULL_SELECTION.copy()
                         .setGroupedNodeFlag(NodeFlagGroups.FILTER_MATCH_PAIR, isFilterMatch)
                         .build());

@@ -63,8 +63,13 @@ LATEST_SUFFIX="-LATEST"
 # It is used to determine which releases we push the swagger ui to ghpages for
 # As 7 is still in beta, this is currently 6.1
 
-# The version of stroom-resources used for running the DB and Elasticsearch, should be a tag really
+# The version of stroom-resources used for running the DB and Elasticsearch. Despite the
+# name this is a branch, as git clone --branch accepts either.
 STROOM_RESOURCES_GIT_TAG="7.14-stroom-7.14-proxy"
+# The stroom-resources service for the DB. CI DBs are thrown away after each run,
+# so use the non-durable MySQL config, which makes the DB tests much faster.
+# bounceIt.sh prefixes the container name with bounceit_
+STROOM_DB_SERVICE_NAME="stroom-all-dbs-non-durable"
 SWAGGER_UI_GIT_TAG="v3.49.0"
 doDockerBuild=false
 STROOM_RESOURCES_DIR="${BUILD_DIR}/stroom-resources"
@@ -109,6 +114,7 @@ stop_and_clear_down_stroom_all_dbs() {
   # clear down stroom-all-dbs container and volumes so we have a blank slate
   echo -e "${GREEN}Clearing down stroom-all-dbs${NC}"
   # bouncit.sh prefixes the volume and container names with bounceit_
+  # These filters are prefix matches so cover the durable and non-durable services
   docker ps -q -f=name='bounceit_stroom-all-dbs' | xargs -r docker stop --time 0
   docker ps -a -q -f=name='bounceit_stroom-all-dbs' | xargs -r docker rm
   docker volume ls -q -f=name='bounceit_stroom-all-dbs*' | xargs -r docker volume rm
@@ -144,26 +150,55 @@ start_services() {
   echo -e "${GREEN}Running Docker containers:${NC}"
   docker ps --format '{{.Names}}'
 
+  # Shows which MySQL config file is mounted, i.e. durable or non-durable.
+  # Asks docker rather than MySQL, so doesn't need to wait for MySQL to start.
+  echo -e "${GREEN}Mounts for ${BLUE}bounceit_${STROOM_DB_SERVICE_NAME}${GREEN}:${NC}"
+  docker inspect \
+    "bounceit_${STROOM_DB_SERVICE_NAME}" \
+    --format '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{"\n"}}{{end}}' \
+    || true
+
   popd > /dev/null
 }
 
-# Wait for the elasticsearch service to be ready for the integration tests that use it
-wait_for_elasticsearch() {
-  local -r health_url="http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s"
-  local -r max_attempts=60
+# Start the services in the background, so that pulling their images and
+# starting them overlaps with the rest of the build. gradleBuild.sh waits for
+# them to be ready before running the tests. The output goes to a file, which
+# show_services_start_output shows once they have started.
+start_services_in_background() {
+  services_log_file="$(mktemp)"
+  echo -e "${GREEN}Starting [$*] in the background${NC}"
+  start_services "$@" > "${services_log_file}" 2>&1 &
+  services_pid=$!
+}
 
-  echo -e "${GREEN}Waiting for elasticsearch to be ready${NC}"
-  for (( attempt=1; attempt<=max_attempts; attempt++ )); do
-    if curl --silent --fail --output /dev/null "${health_url}"; then
-      echo -e "${GREEN}elasticsearch is ready${NC}"
-      return 0
-    fi
-    sleep 5
-  done
+# Wait for start_services_in_background to finish and show its output. Fails
+# the build if they failed to start.
+show_services_start_output() {
+  if [[ -z "${services_pid:-}" ]]; then
+    return 0
+  fi
+  local exit_code=0
+  wait "${services_pid}" || exit_code=$?
+  services_pid=
 
-  echo -e "${RED}ERROR${NC} elasticsearch was not ready after $(( max_attempts * 5 )) seconds" >&2
-  docker logs --tail 50 bounceit_elasticsearch >&2 || true
-  exit 1
+  echo "::group::Start ${STROOM_DB_SERVICE_NAME} and elasticsearch"
+  cat "${services_log_file}"
+  echo "::endgroup::"
+
+  if [[ ${exit_code} -ne 0 ]]; then
+    echo -e "${RED}ERROR${NC} Starting the services failed with exit code ${exit_code}" >&2
+    exit 1
+  fi
+}
+
+# If the build fails while the services are starting or before their output
+# has been shown, show it, as it may be why the build failed
+on_exit() {
+  local -r exit_code=$?
+  if [[ ${exit_code} -ne 0 ]]; then
+    show_services_start_output || true
+  fi
 }
 
 generate_ddl_dump() {
@@ -173,7 +208,7 @@ generate_ddl_dump() {
   stop_and_clear_down_stroom_all_dbs
 
   # The service name is not prefixed with bounceit_ at this point
-  start_services stroom-all-dbs
+  start_services "${STROOM_DB_SERVICE_NAME}"
 
   # Run the db migration against the empty db to give us a vanilla
   # schema to dump
@@ -184,7 +219,7 @@ generate_ddl_dump() {
   echo -e "${GREEN}Dumping the database DDL${NC}"
   # Produce the dump file
   docker exec \
-    bounceit_stroom-all-dbs \
+    "bounceit_${STROOM_DB_SERVICE_NAME}" \
     mysqldump \
       -d \
       -p"my-secret-pw" \
@@ -655,12 +690,10 @@ pushd "${BUILD_DIR}" > /dev/null
 # Login to docker so we have authenticated pulls that are not rate limited
 docker_login
 
-check_for_out_of_date_puml_svgs
+trap on_exit EXIT
+start_services_in_background "${STROOM_DB_SERVICE_NAME}" elasticsearch
 
-echo "::group::Start stroom-all-dbs and elasticsearch"
-start_services stroom-all-dbs elasticsearch
-wait_for_elasticsearch
-echo "::endgroup::"
+check_for_out_of_date_puml_svgs
 
 echo "::group::Setup local.yml"
 # Ensure we have a local.yml file as the integration tests will need it
@@ -677,6 +710,8 @@ export BUILD_VERSION
 # MAX_WORKERS env var should be set in travis/github actions settings to
 # control max gradle/gwt workers
 ./container_build/runInJavaDocker.sh GRADLE_BUILD
+
+show_services_start_output
 
 # Don't do a docker build for pull requests
 if [ "$doDockerBuild" = true ]; then

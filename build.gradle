@@ -92,6 +92,21 @@ ext.getPropertyOrDefault = { propName, defaultValue ->
     return val
 }
 
+ext.getSystemPropertyOrDefault = { propName, defaultValue ->
+    // Not System.hasProperty(), which is Groovy asking whether the System class has a property of
+    // that name, so is always false
+    final String sysPropVal = System.getProperty(propName)
+    def val
+    if (sysPropVal != null
+            && sysPropVal != "unspecified"
+            && sysPropVal != "") {
+        val = sysPropVal
+    } else {
+        val = defaultValue
+    }
+    return val
+}
+
 // Try to determine the jdbc url from local.yml so that when using
 // Jooq code generator with a locally named database (from SetupDevEnv),
 // Jooq will point to the correct DB.
@@ -137,6 +152,16 @@ ext.contentPackDefinitionFile = contentPackDefinitionFile
 def contentPackDownloadDir = "${System.properties['user.home']}/.stroom/contentPackDownload"
 ext.contentPackDownloadDir = contentPackDownloadDir
 
+// The worker limit Gradle is actually using, however it was set (--max-workers,
+// -Dorg.gradle.workers.max or org.gradle.workers.max in a gradle.properties file).
+// Defaults to the number of processors.
+final int maxGradleWorkers = gradle.startParameter.maxWorkerCount
+
+// The JUnit tag of performance tests, see stroom.test.common.PerformanceTest.TAG
+final String performanceTestTag = "performance"
+
+logger.info("Max Gradle Workers: [$maxGradleWorkers]")
+
 //defines a list of gradle projects that we will publish with maven
 def projectsToBePublished = subprojects.findAll { project ->
     project.path in [
@@ -155,6 +180,17 @@ allprojects {
     tasks.withType(Javadoc) {
         options.addStringOption('Xdoclint:none', '-quiet')
         options.addBooleanOption('html5', true)
+    }
+
+    // stroom-util writes the build date into this file on every build, which would
+    // otherwise make every test classpath different and stop tests coming from the
+    // build cache
+    normalization {
+        runtimeClasspath {
+            properties('META-INF/stroom-util-build.properties') {
+                ignoreProperty 'buildDate'
+            }
+        }
     }
 }
 
@@ -270,7 +306,10 @@ subprojects {
     }
 
     test {
-        useJUnitPlatform()
+        useJUnitPlatform {
+            // Performance tests (@PerformanceTest) only run via the performanceTest task
+            excludeTags performanceTestTag
+        }
 
         // Gradle forks the test JVMs, so a -D on the gradle command line reaches the daemon and
         // stops there. Forward the ones measurement tests use to scale or enable themselves, e.g.
@@ -282,14 +321,25 @@ subprojects {
             key.startsWith("test") || key.startsWith("bench") || key.startsWith("run")
         }
 
-        // set heap size for the test JVM(s)
-//        minHeapSize = "128m"
-//        maxHeapSize = "8G"
+        // Set heap size for the test JVM(s) as we were running out of heap on GH Actions
+        //maxHeapSize = (8 / Runtime.runtime.availableProcessors().intdiv(2)) + "G"
+
+        final int totalHeapMb = 10 * 1024
+        //final int testForks = Math.max(1, Runtime.runtime.availableProcessors().intdiv(2).intValue())
+        // Not much point in setting maxParallelForks > maxGradleWorkers as the concurrent test forks
+        // are limited by the workers anyway.
+        maxParallelForks = maxGradleWorkers
+        minHeapSize = "128m"
+        final int heapPerFork = maxGradleWorkers == 1
+                ? totalHeapMb
+                : totalHeapMb.intdiv(maxGradleWorkers).intValue()
+        maxHeapSize = "${heapPerFork}M"
+        logger.info("Configuring tests - maxGradleWorkers: ${maxGradleWorkers}, maxHeapSize: ${maxHeapSize}")
 
         // Run test classes in N different JVMs
         // The internet seems to suggest the divide by 2, not sure why, maybe
         // not to exhaust all cores. Removing it doesn't seem to speed it up.
-        maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+        //maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
         // maxParallelForks = Runtime.runtime.availableProcessors() ?: 1
 
         // Capture the report output location here (where 'reports' is in scope on the
@@ -300,8 +350,10 @@ subprojects {
         addTestListener(new TestListener() {
             @Override
             void beforeSuite(TestDescriptor descriptor) {
-                if (descriptor?.className?.trim())
+                // Extra check to stop it logging for each TestFactory dynamic test
+                if (descriptor?.className?.trim() && descriptor.name == descriptor.className) {
                     println "Executing test class ${descriptor.className}"
+                }
             }
 
             @Override
@@ -311,12 +363,12 @@ subprojects {
                 }
             }
 
-            // Report duration of tests that take over 1s
+            // Report duration of tests that take over 5s
             @Override
             void afterTest(TestDescriptor descriptor, TestResult result) {
                 def durationSecs = (result.endTime - result.startTime) / 1000
-                if (durationSecs > 1) {
-                    println "  Test ${descriptor.className}.${descriptor.name}, took longer than 1s, result: ${result.resultType}, duration: ${durationSecs}s"
+                if (durationSecs > 5) {
+                    println "  Test ${descriptor.className}.${descriptor.name}, took longer than 5s, result: ${result.resultType}, duration: ${durationSecs}s"
                 }
             }
 
@@ -324,6 +376,7 @@ subprojects {
             void afterSuite(TestDescriptor descriptor, TestResult result) {
                 if (descriptor != null
                         && descriptor.className != null
+                        && descriptor.name == descriptor.className
                         && result.resultType.toString() == "FAILURE") {
 
                     // test class failed so add its project info and test report file to a global list for
@@ -343,6 +396,32 @@ subprojects {
             events "failed"
             exceptionFormat = 'full'
             showStackTraces = true
+        }
+    }
+
+    // Runs only the tests marked @PerformanceTest, which the test task excludes. Not part of
+    // check/build, so run explicitly, e.g. ./gradlew performanceTest or
+    // ./gradlew :stroom-lmdb:performanceTest
+    tasks.register('performanceTest', Test) {
+        description = 'Runs the performance tests, i.e. those marked @PerformanceTest.'
+        group = 'verification'
+        testClassesDirs = sourceSets.test.output.classesDirs
+        classpath = sourceSets.test.runtimeClasspath
+        useJUnitPlatform {
+            includeTags performanceTestTag
+        }
+        // One test JVM at a time, so other tests don't distort the timings
+        maxParallelForks = 1
+        maxHeapSize = "4G"
+        // Same as the test task, needed by LMDB
+        jvmArgs '--add-opens', 'java.base/java.nio=ALL-UNNAMED',
+                '--add-opens', 'java.base/sun.nio.ch=ALL-UNNAMED'
+        // Performance tests are run to see their timings, so always run them
+        outputs.upToDateWhen { false }
+        testLogging {
+            events "passed", "skipped", "failed"
+            showStandardStreams = true
+            exceptionFormat = 'full'
         }
     }
 

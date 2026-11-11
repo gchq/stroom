@@ -10,9 +10,9 @@ jobs:
     env:
       # Static env vars
 
-      # Github runners limited to 2 cores, 7Gb RAM
-      # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
-      MAX_WORKERS: 3
+      # Github runners limited to 4 cores, 16Gb RAM
+      # https://docs.github.com/en/actions/reference/runners/github-hosted-runners
+      MAX_WORKERS: 4
       # Fixed ssh-agent socket so multiple steps can use the same agent
       # if needs be
       SSH_AUTH_SOCK: "/tmp/ssh-agent-stroom.sock"
@@ -25,14 +25,14 @@ jobs:
           # Set this so it gets the annotated commit, not the commit being tagged.
           # Which means we can get the release msg
           # See https://github.com/actions/runner/issues/712
-          ref: ${{ github.ref }} 
+          ref: ${{ github.ref }}
 
         # Make sure the wrapper jar has not been tampered with
       - name: Validate gradle wrapper jar
         id: validate_gradle_wrapper
         uses: gradle/actions/wrapper-validation@v6
 
-        # Set variables in github's special env file which are then automatically 
+        # Set variables in github's special env file which are then automatically
         # read into env vars in each subsequent step
       - name: Set Environment Variables
         id: set_env_var
@@ -60,12 +60,71 @@ jobs:
               echo "BUILD_IS_PULL_REQUEST=false"
             fi
 
+            # Holds the downloaded gradle distribution and dependencies
+            echo "GRADLE_USER_HOME_DIR=${RUNNER_TEMP}/gradle-user-home"
+
             if [[ ${GITHUB_REF} =~ ^refs/tags/v ]]; then
               echo "BUILD_IS_RELEASE=true"
             else
               echo "BUILD_IS_RELEASE=false"
+              # Releases don't use the cached gradle build outputs, so
+              # always run everything
+              echo "GRADLE_BUILD_CACHE_DIR=${RUNNER_TEMP}/gradle-build-cache"
+              # Releases download the content packs that go in the distribution
+              # rather than use cached ones
+              echo "STROOM_USER_DIR=${RUNNER_TEMP}/stroom-user-dir"
             fi
           } >> $GITHUB_ENV
+
+        # Saves the gradle build cache at the end of the job and restores the
+        # most recent one (from this branch, else the default branch) at the
+        # start, so tasks whose inputs haven't changed don't need to run again.
+      - name: Gradle build cache
+        id: gradle_build_cache
+        if: ${{ env.GRADLE_BUILD_CACHE_DIR != '' }}
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.GRADLE_BUILD_CACHE_DIR }}
+          key: gradle-build-cache-${{ github.sha }}
+          restore-keys: |
+            gradle-build-cache-
+
+        # Saves the downloaded gradle distribution, plugins and dependencies,
+        # so each run doesn't download them all again. The key only changes
+        # when the gradle version or build scripts change, and an exact hit
+        # isn't saved again. The lock files are left out as they belong to the
+        # gradle process that wrote them.
+      - name: Gradle dependency cache
+        id: gradle_dependency_cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            ${{ env.GRADLE_USER_HOME_DIR }}/wrapper/dists
+            ${{ env.GRADLE_USER_HOME_DIR }}/caches/modules-2
+            !${{ env.GRADLE_USER_HOME_DIR }}/caches/modules-2/*.lock
+            !${{ env.GRADLE_USER_HOME_DIR }}/caches/modules-2/gc.properties
+          key: gradle-user-home-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', 'gradle/libs.versions.toml', '**/*.gradle') }}
+          restore-keys: |
+            gradle-user-home-
+
+        # Restores the content pack zips and the clones of the stroom-content
+        # and stroom-visualisations-dev repos used by the stroom-app tests, which
+        # are kept in ~/.stroom. The build checks the repos' remotes and clones
+        # them again when they have changed. Saved after the build by "Save stroom
+        # content cache", only if they have changed.
+      - name: Restore stroom content cache
+        id: stroom_content_cache
+        if: ${{ env.STROOM_USER_DIR != '' }}
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            ${{ env.STROOM_USER_DIR }}/contentPackDownload
+            ${{ env.STROOM_USER_DIR }}/git-repo-cache
+            !${{ env.STROOM_USER_DIR }}/contentPackDownload/*.lock
+            !${{ env.STROOM_USER_DIR }}/git-repo-cache/**/.tmp-*
+          key: stroom-content-${{ github.run_id }}
+          restore-keys: |
+            stroom-content-
 
         # Separate step to show what is visible across steps
       - name: Build Environment Info
@@ -107,6 +166,32 @@ jobs:
           ./ci_build.sh
           echo -e "${GREEN}Finished running build script${NC}"
 
+        # Works out what content the build has downloaded, so it is only saved
+        # when that has changed. The key of the cache restored above has the
+        # fingerprint of what it held.
+      - name: Stroom content fingerprint
+        id: stroom_content_fingerprint
+        if: ${{ always() && env.STROOM_USER_DIR != '' }}
+        run: |
+          fingerprint="$("${ACTIONS_SCRIPTS_DIR}/stroom_content_fingerprint.sh" "${STROOM_USER_DIR}")"
+          echo "Stroom content fingerprint: ${fingerprint}"
+          echo "fingerprint=${fingerprint}" >> "${GITHUB_OUTPUT}"
+
+      - name: Save stroom content cache
+        if: >-
+          ${{ always()
+            && steps.stroom_content_fingerprint.outputs.fingerprint != ''
+            && steps.stroom_content_cache.outputs.cache-matched-key
+              != format('stroom-content-{0}', steps.stroom_content_fingerprint.outputs.fingerprint) }}
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ${{ env.STROOM_USER_DIR }}/contentPackDownload
+            ${{ env.STROOM_USER_DIR }}/git-repo-cache
+            !${{ env.STROOM_USER_DIR }}/contentPackDownload/*.lock
+            !${{ env.STROOM_USER_DIR }}/git-repo-cache/**/.tmp-*
+          key: stroom-content-${{ steps.stroom_content_fingerprint.outputs.fingerprint }}
+
 #      - name: Tar Test Results
 #        if: always()
 #        run: tar -cvf test-results.tar "**/test-results/**/*.xml"
@@ -127,12 +212,19 @@ jobs:
 #          path: test-results.tar.gz
 #          retention-days: 5
 
+        # Copies the test results into one directory, so the upload doesn't have
+        # to search the whole workspace for them, which is slow.
+      - name: Collect Test Results
+        if: always()
+        run: |
+          "${ACTIONS_SCRIPTS_DIR}/collect_test_results.sh" "${RUNNER_TEMP}/test-results"
+
       - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: Unit Test Results
-          path: "**/test-results/**/*.xml"
+          path: ${{ runner.temp }}/test-results
           retention-days: 5
 
 #      - name: Publish Unit Test Results

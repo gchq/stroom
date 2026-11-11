@@ -26,6 +26,7 @@ import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.search.elastic.ElasticWireMock;
+import stroom.search.elastic.search.ElasticSearchTaskHandler.RerankTarget;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.task.api.TaskContext;
 import stroom.util.concurrent.UncheckedInterruptedException;
@@ -410,8 +411,10 @@ class TestElasticSearchTaskHandlerWireMock {
                 .build();
         final ElasticQueryParams queryParams = queryParams();
         queryParams.addKnnFieldQuery("content.vector", "some text");
+        final List<RerankTarget> rerankTargets = List.of(new RerankTarget(
+                "content.vector", "content.text", "content.score", rerankModel, 0.8F, 1000));
 
-        handler().searchSlice(index(1, 10), rerankModel, queryParams, null, coprocessors, resultStore,
+        handler().searchSlice(index(1, 10), rerankTargets, queryParams, null, coprocessors, resultStore,
                 valuesConsumer, errorConsumer, new AtomicLong(), client, 0, taskContext);
 
         assertThat(captureError())
@@ -426,14 +429,14 @@ class TestElasticSearchTaskHandlerWireMock {
         final AtomicLong hitCount = new AtomicLong();
         final Highlight highlightBuilder = Highlight.of(h -> h
                 .fields(NamedValue.of("host", HighlightField.of(f -> f))));
-        handler().searchSlice(index, null, queryParams(), highlightBuilder, coprocessors, resultStore,
+        handler().searchSlice(index, List.of(), queryParams(), highlightBuilder, coprocessors, resultStore,
                 valuesConsumer, errorConsumer, hitCount, client, slice, taskContext);
         return hitCount;
     }
 
     private ElasticSearchTaskHandler handler() {
         final ElasticSearchConfig config = new ElasticSearchConfig(
-                highlight, StroomDuration.ofMinutes(1), null, null);
+                highlight, StroomDuration.ofMinutes(1), null, null, null, null);
         return new ElasticSearchTaskHandler(() -> config, null, null, null, null, null, null);
     }
 

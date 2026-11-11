@@ -21,6 +21,7 @@ import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.lmdb.serde.IntegerSerde;
 import stroom.lmdb.serde.Serde;
 import stroom.lmdb.serde.StringSerde;
+import stroom.test.common.PerformanceTest;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
@@ -84,6 +85,7 @@ public class TestLmdbPerformance extends AbstractDualEnvLmdbTest {
     /**
      * Compare using MDB_APPEND vs not, when repeatedly putting a batch of entries.
      */
+    @PerformanceTest
     @Disabled // manual perf test only
     @Test
     void testAppendVsNonAppend() {
@@ -105,6 +107,7 @@ public class TestLmdbPerformance extends AbstractDualEnvLmdbTest {
      * Compare using MDB_APPEND vs not, when repeatedly putting a batch of entries
      * then deleting them all.
      */
+    @PerformanceTest
     @Disabled // manual perf test only
     @Test
     void testAppendVsNonAppend_withDeletes() {
@@ -125,6 +128,7 @@ public class TestLmdbPerformance extends AbstractDualEnvLmdbTest {
     /**
      * Compare using MDB_APPEND with and without MDB_INTEGERKEY
      */
+    @PerformanceTest
     @Disabled // manual perf test only
     @Test
     void testAppendVsAppendWithIntegerKey() {
@@ -146,6 +150,7 @@ public class TestLmdbPerformance extends AbstractDualEnvLmdbTest {
      * Compare using MDB_APPEND with and without MDB_INTEGERKEY, deleting entries
      * as we go
      */
+    @PerformanceTest
     @Disabled // manual perf test only
     @Test
     void testAppendVsAppendWithIntegerKey_withDeletes() {

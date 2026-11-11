@@ -24,6 +24,7 @@ import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.FindCredentialRequest;
 import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
+import stroom.docref.DocRef;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
@@ -56,12 +57,12 @@ public class CredentialsListController extends Controller {
 
     /// Made by GIN; [#attach(CredentialsList)] gives it its list.
     ///
-    /// @param eventBus                        The application's event bus.
-    /// @param credentialClient                Finds, makes and deletes the credentials.
-    /// @param credentialEditProvider          Makes a credential's editor.
-    /// @param replaceSecretProvider           Makes the dialog that replaces a credential's secret.
-    /// @param securityContext                 Tells whether the user may see credentials.
-    /// @param expiryFormatter                 Formats when a credential expires.
+    /// @param eventBus               The application's event bus.
+    /// @param credentialClient       Finds, makes and deletes the credentials.
+    /// @param credentialEditProvider Makes a credential's editor.
+    /// @param replaceSecretProvider  Makes the dialog that replaces a credential's secret.
+    /// @param securityContext        Tells whether the user may see credentials.
+    /// @param expiryFormatter        Formats when a credential expires.
     @Inject
     public CredentialsListController(final EventBus eventBus,
                                      final CredentialClient credentialClient,
@@ -161,10 +162,11 @@ public class CredentialsListController extends Controller {
     }
 
     private void handleAddButtonClick() {
-        credentialClient.createDocRef(docRef -> {
-            credentialEditProvider.get()
-                    .show(this, docRef, null, CreationState.NEW_CREDENTIALS, this::afterEdit);
-        }, view.getTaskMonitor());
+        final DocRef newDocRef = Credential.buildDocRef()
+                .randomUuid()
+                .build();
+        credentialEditProvider.get()
+                .show(this, newDocRef, null, CreationState.NEW_CREDENTIALS, this::afterEdit);
     }
 
     private void afterEdit(final Credential credential) {

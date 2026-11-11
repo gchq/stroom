@@ -117,7 +117,7 @@ public class ReplaceSecretController extends Controller {
                         onOk(secretForm, valid -> {
                             if (valid) {
                                 final ReplaceSecretRequest request = new ReplaceSecretRequest(
-                                        credential.getUuid(),
+                                        credential,
                                         secretForm.getSecret(),
                                         view.isCredExpire()
                                                 ? view.getExpiryTime()

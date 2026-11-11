@@ -55,6 +55,7 @@ import org.jooq.impl.DSL;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -316,11 +317,11 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
      * up.
      *
      * @param deleteThreshold Only logically delete filters with a last poll time older than the threshold.
-     * @return The number of logically deleted filters.
+     * @return The UUIDs of the logically deleted filters.
      */
     @Override
-    public int logicallyDeleteOldProcessorFilters(final Instant deleteThreshold) {
-        return JooqUtil.contextResult(processorDbConnProvider, context ->
+    public Set<String> logicallyDeleteOldProcessorFilters(final Instant deleteThreshold) {
+        return JooqUtil.transactionResult(processorDbConnProvider, context ->
                 logicallyDeleteOldFilters(deleteThreshold, context));
     }
 
@@ -385,13 +386,42 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         });
     }
 
-    public int logicallyDeleteOldFilters(final Instant deleteThreshold, final DSLContext context) {
+    /// Must be called within a transaction, so that the filters found are locked until they are deleted.
+    ///
+    /// @return The UUIDs of the logically deleted filters.
+    public Set<String> logicallyDeleteOldFilters(final Instant deleteThreshold, final DSLContext context) {
+        // Find and lock the filters first so the caller can be told which ones were deleted, e.g. so that
+        // their dependency edges can be removed
+        final Map<Integer, String> uuidsById = context
+                .select(PROCESSOR_FILTER.ID, PROCESSOR_FILTER.UUID)
+                .from(PROCESSOR_FILTER)
+                .where(oldFilterCondition(deleteThreshold))
+                .forUpdate()
+                .fetchMap(PROCESSOR_FILTER.ID, PROCESSOR_FILTER.UUID);
+        if (uuidsById.isEmpty()) {
+            LOGGER.debug("No processor filters with a state of COMPLETE with no outstanding tasks and " +
+                         "last poll before {}", deleteThreshold);
+            return Collections.emptySet();
+        }
+
         final UpdateConditionStep<ProcessorFilterRecord> query = context
                 .update(PROCESSOR_FILTER)
                 .set(PROCESSOR_FILTER.DELETED, true)
                 .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
                 .set(PROCESSOR_FILTER.UPDATE_TIME_MS, Instant.now().toEpochMilli())
-                .where(PROCESSOR_FILTER.DELETED.eq(false))
+                .where(PROCESSOR_FILTER.ID.in(uuidsById.keySet()));
+
+        LOGGER.trace("logicallyDeleteOldFilters query:\n{}", query);
+        final int count = query.execute();
+
+        LOGGER.debug("Logically deleted {} processor filters with a state of COMPLETE with no outstanding tasks and " +
+                     "last poll before {}",
+                count, deleteThreshold);
+        return new HashSet<>(uuidsById.values());
+    }
+
+    private static Condition oldFilterCondition(final Instant deleteThreshold) {
+        return PROCESSOR_FILTER.DELETED.eq(false)
                 .and(DSL.exists(
                         DSL.selectZero()
                                 .from(PROCESSOR_FILTER_TRACKER)
@@ -403,14 +433,6 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         DSL.selectZero()
                                 .from(PROCESSOR_TASK)
                                 .where(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))));
-
-        LOGGER.trace("logicallyDeleteOldFilters query:\n{}", query);
-        final int count = query.execute();
-
-        LOGGER.debug("Logically deleted {} processor filters with a state of COMPLETE with no outstanding tasks and " +
-                     "last poll before {}",
-                count, deleteThreshold);
-        return count;
     }
 
     /**
@@ -501,6 +523,64 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                                 .and(PROCESSOR_FILTER.DELETED.isFalse())
                                 .fetch())
                         .map(this::mapRecord));
+    }
+
+    @Override
+    public Set<String> fetchUuidsByProcessorId(final int processorId) {
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .select(PROCESSOR_FILTER.UUID)
+                .from(PROCESSOR_FILTER)
+                .where(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(processorId))
+                .fetchSet(PROCESSOR_FILTER.UUID));
+    }
+
+    @Override
+    public Set<String> fetchExistingUuids(final Collection<String> uuids) {
+        if (NullSafe.isEmptyCollection(uuids)) {
+            return Collections.emptySet();
+        }
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .select(PROCESSOR_FILTER.UUID)
+                .from(PROCESSOR_FILTER)
+                .where(PROCESSOR_FILTER.UUID.in(uuids))
+                .fetchSet(PROCESSOR_FILTER.UUID));
+    }
+
+    @Override
+    public List<ProcessorFilter> findWithStaleDependencies(final int currentDependencyVersion,
+                                                           final int afterId,
+                                                           final int limit) {
+        return securityContext.asProcessingUserResult(() ->
+                JooqUtil.contextResult(processorDbConnProvider, context -> context
+                                .select()
+                                .from(PROCESSOR_FILTER)
+                                .join(PROCESSOR_FILTER_TRACKER)
+                                .on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID
+                                        .eq(PROCESSOR_FILTER_TRACKER.ID))
+                                .join(PROCESSOR)
+                                .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                                .where(PROCESSOR_FILTER.DEPENDENCY_VERSION.isNull()
+                                        .or(PROCESSOR_FILTER.DEPENDENCY_VERSION.lt(currentDependencyVersion)))
+                                .and(PROCESSOR_FILTER.ID.gt(afterId))
+                                .orderBy(PROCESSOR_FILTER.ID)
+                                .limit(limit)
+                                .fetch())
+                        .map(this::mapRecord));
+    }
+
+    @Override
+    public boolean setDependencyVersion(final int processorFilterId,
+                                        final int filterVersion,
+                                        final int dependencyVersion) {
+        // Deliberately leaves VERSION and UPDATE_TIME_MS alone, as this records internal state rather
+        // than a change to the filter.
+        final int count = JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .update(PROCESSOR_FILTER)
+                .set(PROCESSOR_FILTER.DEPENDENCY_VERSION, dependencyVersion)
+                .where(PROCESSOR_FILTER.ID.eq(processorFilterId))
+                .and(PROCESSOR_FILTER.VERSION.eq(filterVersion))
+                .execute());
+        return count > 0;
     }
 
     @Override

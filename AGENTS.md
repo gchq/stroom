@@ -160,7 +160,7 @@ Stroom expects Java 25 (Eclipse Temurin)
 
 ### GWT UI components
 
-Before changing GWT client code (`stroom-core-client`, `stroom-core-client-widget`, `stroom-dashboard-gwt`, `stroom-app-gwt`, `stroom-statistics-client` or anything under `stroom-gwt/`), read `stroom-gwt/UI-GUIDE.md` and follow it.
+Before changing GWT client code (`stroom-core-client`, `stroom-core-client-widget`, `stroom-app-gwt`, `stroom-statistics-client` or anything under `stroom-gwt/`), read `stroom-gwt/UI-GUIDE.md` and follow it.
 The rules most costly to miss:
 
 * A screen, dialog or tab is a dumb **component** (a UiBinder template and its Java) and a **controller** that wires it; there are no presenters.

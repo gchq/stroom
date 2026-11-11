@@ -16,58 +16,36 @@
 
 package stroom.explorer.impl;
 
-import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.explorer.shared.PermissionChangeResource;
 import stroom.security.shared.SingleDocumentPermissionChangeRequest;
-import stroom.util.entityevent.EntityAction;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEventBus;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.util.Objects;
-
 /**
  * Resource to provide a central place for non-Explorer stuff to change permissions.
  */
-@AutoLogged(OperationType.MANUALLY_LOGGED)
+@AutoLogged(OperationType.MANUALLY_LOGGED) // Logging done by PermissionChangeService
 public class PermissionChangeResourceImpl implements PermissionChangeResource {
 
-    /** Service to do the permission change */
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PermissionChangeResourceImpl.class);
+
     private final Provider<PermissionChangeService> permissionChangeServiceProvider;
 
-    /** Event bus to notify of the change */
-    private final Provider<EntityEventBus> entityEventBusProvider;
-
-    /**
-     * Injected constructor.
-     * entityEventBus must be injected to keep java/stroom/dropwizard/common/TestRestResources.java
-     * happy.
-     */
     @SuppressWarnings("unused")
     @Inject
-    PermissionChangeResourceImpl(final Provider<PermissionChangeService> permissionChangeServiceProvider,
-                                 final Provider<EntityEventBus> entityEventBusProvider) {
+    PermissionChangeResourceImpl(final Provider<PermissionChangeService> permissionChangeServiceProvider) {
         this.permissionChangeServiceProvider = permissionChangeServiceProvider;
-        this.entityEventBusProvider = entityEventBusProvider;
     }
 
     @Override
     public Boolean changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
+        LOGGER.debug("changeDocumentPermissions() - request: {}", request);
         permissionChangeServiceProvider.get().changeDocumentPermissions(request);
-        fireEntityChangeEvent(request.getDocRef());
         return Boolean.TRUE;
-    }
-
-    private void fireEntityChangeEvent(final DocRef docRef) {
-        // A DocRef must have a UUID, so use the changed doc rather than a type-only DocRef
-        Objects.requireNonNull(docRef);
-        EntityEvent.fire(
-                entityEventBusProvider.get(),
-                docRef,
-                EntityAction.UPDATE);
     }
 }

@@ -23,6 +23,7 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.search.elastic.ElasticEndToEndTestHelper.SearchResult;
+import stroom.search.elastic.search.ElasticQueryOptionSets;
 import stroom.search.elastic.search.ElasticSearchProvider;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.StreamUtil;
@@ -30,7 +31,6 @@ import stroom.util.json.JsonUtil;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
@@ -54,7 +54,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// The documents are indexed directly rather than with a Stroom pipeline, as indexing is tested elsewhere.
 /// Documents 1 to 4 have a value for every field and document 5 has none (other than the ids every document
 /// Stroom searches needs), see `conditions-docs.json`. They all belong to one stream, which must exist.
-@Disabled // Elastic end to end tests keep failing the build
 class TestElasticSearchConditions_EndToEnd extends AbstractCoreIntegrationTest {
 
     private static final Path INDEX_BODY = ElasticEndToEndTestHelper.RESOURCES_DIR.resolve("conditions-index.json");
@@ -64,6 +63,9 @@ class TestElasticSearchConditions_EndToEnd extends AbstractCoreIntegrationTest {
     private static final List<String> ALL = List.of("1", "2", "3", "4", "5");
     private static final List<String> HAVE_VALUES = List.of("1", "2", "3", "4");
     private static final List<String> NONE = List.of();
+    private static final Map<String, String> CASE_INSENSITIVE = Map.of(ElasticQueryOptionSets.CASE_INSENSITIVE, "true");
+    private static final Map<String, String> PHRASE = Map.of(
+            ElasticQueryOptionSets.MATCH_MODE, ElasticQueryOptionSets.MATCH_MODE_PHRASE);
 
     @Inject
     private ElasticEndToEndTestHelper helper;
@@ -138,7 +140,7 @@ class TestElasticSearchConditions_EndToEnd extends AbstractCoreIntegrationTest {
     private static List<ConditionCase> createCases() {
         final List<ConditionCase> cases = new ArrayList<>();
 
-        // keyword: exact, case-sensitive terms, or case-insensitive wildcard patterns
+        // keyword: exact terms or wildcard patterns, case-sensitive unless the case-insensitive option is set
         cases.addAll(keyword("Keyword"));
         // A keyword within a passthrough object
         cases.addAll(keyword("Attributes.Host"));
@@ -160,6 +162,10 @@ class TestElasticSearchConditions_EndToEnd extends AbstractCoreIntegrationTest {
         cases.add(match("Wildcard", Condition.IN, "apple,banana", "1", "2"));
         cases.add(dictionary("Wildcard", List.of("banana", "*pie"), "2", "4"));
         cases.add(match("Wildcard", Condition.MATCHES_REGEX, "ban.*", "2"));
+        cases.add(match("Wildcard", Condition.EQUALS, "*PIE"));
+        cases.add(match("Wildcard", Condition.EQUALS, "*PIE", CASE_INSENSITIVE, "4"));
+        cases.add(match("Wildcard", Condition.EQUALS, "APPLE", CASE_INSENSITIVE, "1"));
+        cases.add(match("Wildcard", Condition.EQUALS, "aple", Map.of(ElasticQueryOptionSets.FUZZINESS, "1"), "1"));
         cases.addAll(existence("Wildcard"));
 
         // text: analysed, so matching is by case-insensitive word
@@ -169,7 +175,9 @@ class TestElasticSearchConditions_EndToEnd extends AbstractCoreIntegrationTest {
         // A keyword multi-field of the match_only_text field, holding the whole value
         cases.add(match("MatchOnlyText.keyword", Condition.EQUALS, "The red apple", "1"));
         cases.add(match("MatchOnlyText.keyword", Condition.EQUALS, "the red apple"));
-        cases.add(match("MatchOnlyText.keyword", Condition.EQUALS, "*PIE*", "4"));
+        cases.add(match("MatchOnlyText.keyword", Condition.EQUALS, "*PIE*"));
+        cases.add(match("MatchOnlyText.keyword", Condition.EQUALS, "*pie*", "4"));
+        cases.add(match("MatchOnlyText.keyword", Condition.EQUALS, "*PIE*", CASE_INSENSITIVE, "4"));
         cases.add(match("MatchOnlyText.keyword", Condition.NOT_EQUALS, "The red apple", "2", "3", "4", "5"));
         cases.add(match("MatchOnlyText.keyword", Condition.IN, "The red apple,A yellow banana", "1", "2"));
         cases.add(dictionary("MatchOnlyText.keyword", List.of("The dark cherry"), "3"));
@@ -230,6 +238,12 @@ class TestElasticSearchConditions_EndToEnd extends AbstractCoreIntegrationTest {
         cases.addAll(range("Byte", "1", "2", "3", "4"));
         // version: ordered by semantic version, so 10.0.0 is after 2.0.0
         cases.addAll(range("Version", "1.0.0", "1.2.0", "2.0.0", "10.0.0"));
+        // The equality conditions also take wildcard patterns, which match the version's text
+        cases.add(match("Version", Condition.EQUALS, "1.*", "1", "2"));
+        cases.add(match("Version", Condition.EQUALS, "1*", "1", "2", "4"));
+        cases.add(match("Version", Condition.NOT_EQUALS, "1.*", "3", "4", "5"));
+        cases.add(match("Version", Condition.IN, "1.2.?,10.*", "2", "4"));
+        cases.add(dictionary("Version", List.of("2.*"), "3"));
 
         // floating point numbers
         cases.addAll(range("Float", "1.5", "2.5", "3.5", "4.5"));
@@ -262,11 +276,24 @@ class TestElasticSearchConditions_EndToEnd extends AbstractCoreIntegrationTest {
         cases.add(match(field, Condition.EQUALS, "Apple"));
         cases.add(match(field, Condition.EQUALS, "apple pie", "4"));
         cases.add(match(field, Condition.EQUALS, "\"apple pie\"", "4"));
-        cases.add(match(field, Condition.EQUALS, "APP*", "1", "4"));
+        cases.add(match(field, Condition.EQUALS, "APP*"));
+        cases.add(match(field, Condition.EQUALS, "app*", "1", "4"));
+        cases.add(match(field, Condition.EQUALS, "APP*", CASE_INSENSITIVE, "1", "4"));
+        cases.add(match(field, Condition.EQUALS, "Apple", CASE_INSENSITIVE, "1"));
+        cases.add(match(field, Condition.IN, "Apple,BANANA", CASE_INSENSITIVE, "1", "2"));
+        cases.add(match(field, Condition.MATCHES_REGEX, "BAN.*", CASE_INSENSITIVE, "2"));
+        cases.add(dictionary(field, List.of("BANANA", "CHER*"), CASE_INSENSITIVE, "2", "3"));
+        cases.add(match(field, Condition.EQUALS, "aple", Map.of(ElasticQueryOptionSets.FUZZINESS, "1"), "1"));
+        cases.add(match(field, Condition.EQUALS, "banan",
+                Map.of(ElasticQueryOptionSets.FUZZINESS, ElasticQueryOptionSets.FUZZINESS_AUTO), "2"));
+        // A prefix that must match exactly rules out an edit in the first character
+        cases.add(match(field, Condition.EQUALS, "bpple", Map.of(
+                ElasticQueryOptionSets.FUZZINESS, "1",
+                ElasticQueryOptionSets.FUZZY_PREFIX_LENGTH, "1")));
         cases.add(match(field, Condition.EQUALS, "?herry", "3"));
         cases.add(match(field, Condition.NOT_EQUALS, "apple", "2", "3", "4", "5"));
         cases.add(match(field, Condition.IN, "apple,banana", "1", "2"));
-        cases.add(dictionary(field, List.of("banana", "cher*"), "2", "3"));
+        cases.add(dictionary(field, List.of("banana", "Cher*"), "2", "3"));
         cases.add(match(field, Condition.MATCHES_REGEX, "ban.*", "2"));
         cases.add(match(field, Condition.MATCHES_REGEX, "cherry"));
         cases.addAll(existence(field));
@@ -286,6 +313,18 @@ class TestElasticSearchConditions_EndToEnd extends AbstractCoreIntegrationTest {
         cases.add(dictionary(field, List.of("banana", "\"dark cherry\""), "2", "3"));
         cases.add(match(field, Condition.MATCHES_REGEX, "ban.*", "2"));
         cases.addAll(existence(field));
+        // Any word matches by default, or every word with the option set
+        cases.add(match(field, Condition.EQUALS, "red apple", "1", "4"));
+        cases.add(match(field, Condition.EQUALS, "red apple",
+                Map.of(ElasticQueryOptionSets.DEFAULT_OPERATOR, ElasticQueryOptionSets.OPERATOR_AND), "1"));
+        // Phrases match words in order, with slop allowing them to move
+        cases.add(match(field, Condition.EQUALS, "apple red", PHRASE));
+        cases.add(match(field, Condition.EQUALS, "apple red", Map.of(
+                ElasticQueryOptionSets.MATCH_MODE, ElasticQueryOptionSets.MATCH_MODE_PHRASE,
+                ElasticQueryOptionSets.PHRASE_SLOP, "2"), "1"));
+        cases.add(match(field, Condition.EQUALS, "aple", Map.of(ElasticQueryOptionSets.FUZZINESS, "1"), "1", "4"));
+        cases.add(match(field, Condition.EQUALS, "chery",
+                Map.of(ElasticQueryOptionSets.FUZZINESS, ElasticQueryOptionSets.FUZZINESS_AUTO), "3"));
         return cases;
     }
 
@@ -330,7 +369,15 @@ class TestElasticSearchConditions_EndToEnd extends AbstractCoreIntegrationTest {
                                        final Condition condition,
                                        final String value,
                                        final List<String> expectedIds) {
-        return new ConditionCase(field, condition, value, null, expectedIds);
+        return new ConditionCase(field, condition, value, null, null, expectedIds);
+    }
+
+    private static ConditionCase match(final String field,
+                                       final Condition condition,
+                                       final String value,
+                                       final Map<String, String> options,
+                                       final String... expectedIds) {
+        return new ConditionCase(field, condition, value, null, options, List.of(expectedIds));
     }
 
     private static ConditionCase dictionary(final String field,
@@ -342,34 +389,44 @@ class TestElasticSearchConditions_EndToEnd extends AbstractCoreIntegrationTest {
     private static ConditionCase dictionary(final String field,
                                             final List<String> lines,
                                             final List<String> expectedIds) {
-        return new ConditionCase(field, Condition.IN_DICTIONARY, null, lines, expectedIds);
+        return new ConditionCase(field, Condition.IN_DICTIONARY, null, lines, null, expectedIds);
+    }
+
+    private static ConditionCase dictionary(final String field,
+                                            final List<String> lines,
+                                            final Map<String, String> options,
+                                            final String... expectedIds) {
+        return new ConditionCase(field, Condition.IN_DICTIONARY, null, lines, options, List.of(expectedIds));
     }
 
     private static ConditionCase dictionaryError(final String field, final List<String> lines) {
-        return new ConditionCase(field, Condition.IN_DICTIONARY, null, lines, null);
+        return new ConditionCase(field, Condition.IN_DICTIONARY, null, lines, null, null);
     }
 
     private static ConditionCase error(final String field, final Condition condition, final String value) {
-        return new ConditionCase(field, condition, value, null, null);
+        return new ConditionCase(field, condition, value, null, null, null);
     }
 
     /// A search of one field with one condition.
     ///
-    /// @param field           The field to search.
-    /// @param condition       The condition.
-    /// @param value           The value of the term, or `null` for a dictionary term.
+    /// @param field The field to search.
+    /// @param condition The condition.
+    /// @param value The value of the term, or `null` for a dictionary term.
     /// @param dictionaryLines The lines of the dictionary for an `IN_DICTIONARY` term, otherwise `null`.
-    /// @param expectedIds     The ids of the documents that should match, or `null` if the search should fail.
+    /// @param options The field-level query options of the term, or `null` for none.
+    /// @param expectedIds The ids of the documents that should match, or `null` if the search should fail.
     private record ConditionCase(String field,
                                  Condition condition,
                                  String value,
                                  List<String> dictionaryLines,
+                                 Map<String, String> options,
                                  List<String> expectedIds) {
 
         void assertSearch(final ElasticEndToEndTestHelper helper, final DocRef indexRef) {
             final ExpressionTerm.Builder term = ExpressionTerm.builder()
                     .field(field)
-                    .condition(condition);
+                    .condition(condition)
+                    .options(options);
             if (dictionaryLines != null) {
                 term.docRef(helper.createDictionary(field + " dictionary", String.join("\n", dictionaryLines)));
             } else {
@@ -405,7 +462,10 @@ class TestElasticSearchConditions_EndToEnd extends AbstractCoreIntegrationTest {
             final String outcome = expectedIds != null
                     ? expectedIds.toString()
                     : "error";
-            return field + " " + condition.getDisplayValue() + " " + operand + " → " + outcome;
+            final String optionText = options != null
+                    ? " " + options
+                    : "";
+            return field + " " + condition.getDisplayValue() + " " + operand + optionText + " → " + outcome;
         }
     }
 }

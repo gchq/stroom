@@ -697,12 +697,18 @@ public class NullSafe {
                 : 0;
     }
 
-    /**
-     * @return True if the collection is non-null and contains exactly one item
-     */
+    /// @return True if the collection is non-null and contains exactly one item.
+    /// Includes items that are null.
     public static <T> boolean hasOneItem(final Collection<T> collection) {
         return collection != null
                && collection.size() == 1;
+    }
+
+    /// @return true if the collection is non-null and contains more than one item.
+    /// Includes items that are null.
+    public static <T> boolean hasMoreThanOneItem(final Collection<T> collection) {
+        return collection != null
+               && collection.size() > 1;
     }
 
     /**

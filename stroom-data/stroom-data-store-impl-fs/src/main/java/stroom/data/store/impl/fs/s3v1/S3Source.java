@@ -172,7 +172,6 @@ final class S3Source implements Source {
             } else {
                 s3StreamStore.release(meta, tempDir);
             }
-
         } finally {
             closed = true;
         }

@@ -225,6 +225,46 @@ else
   tty_args=()
 fi
 
+# If GRADLE_BUILD_CACHE_DIR is set (e.g. by CI so it can save/restore the
+# gradle build cache between runs), mount it into the container and make gradle
+# use it for its local build cache. The path is on the host.
+build_cache_args=()
+if [[ -n "${GRADLE_BUILD_CACHE_DIR:-}" ]]; then
+  container_build_cache_dir="/builder/gradle-build-cache"
+  mkdir -p "${GRADLE_BUILD_CACHE_DIR}"
+  echo -e "${GREEN}Using gradle build cache dir ${BLUE}${GRADLE_BUILD_CACHE_DIR}${NC}"
+  build_cache_args=(
+    "--mount" "type=bind,src=${GRADLE_BUILD_CACHE_DIR},dst=${container_build_cache_dir}"
+    "--env" "GRADLE_BUILD_CACHE_DIR=${container_build_cache_dir}"
+  )
+fi
+
+# If GRADLE_USER_HOME_DIR is set (e.g. by CI so it can save/restore the
+# downloaded gradle distribution and dependencies between runs), mount it into
+# the container and make gradle use it as its user home. The path is on the host.
+user_home_args=()
+if [[ -n "${GRADLE_USER_HOME_DIR:-}" ]]; then
+  container_user_home_dir="/builder/gradle-user-home"
+  mkdir -p "${GRADLE_USER_HOME_DIR}"
+  echo -e "${GREEN}Using gradle user home dir ${BLUE}${GRADLE_USER_HOME_DIR}${NC}"
+  user_home_args=(
+    "--mount" "type=bind,src=${GRADLE_USER_HOME_DIR},dst=${container_user_home_dir}"
+    "--env" "GRADLE_USER_HOME=${container_user_home_dir}"
+  )
+fi
+
+# If STROOM_USER_DIR is set (e.g. by CI so it can save/restore the downloaded
+# content packs and content git repos between runs), mount it into the
+# container as ~/.stroom. The path is on the host.
+stroom_user_dir_args=()
+if [[ -n "${STROOM_USER_DIR:-}" ]]; then
+  mkdir -p "${STROOM_USER_DIR}"
+  echo -e "${GREEN}Using stroom user dir ${BLUE}${STROOM_USER_DIR}${NC}"
+  stroom_user_dir_args=(
+    "--mount" "type=bind,src=${STROOM_USER_DIR},dst=/home/builder/.stroom"
+  )
+fi
+
 # Mount the whole repo into the container so we can run the build
 # The mount src is on the host file system
 # group-add gives the permission to interact with the docker cli
@@ -242,6 +282,9 @@ docker run \
   --tmpfs /tmp:exec \
   --mount "type=bind,src=${host_abs_repo_dir},dst=${dest_dir}" \
   --volume builder-home-dir-vol:/home/builder \
+  "${build_cache_args[@]}" \
+  "${user_home_args[@]}" \
+  "${stroom_user_dir_args[@]}" \
   --group-add "${docker_group_id}" \
   --volume /var/run/docker.sock:/var/run/docker.sock \
   --read-only \

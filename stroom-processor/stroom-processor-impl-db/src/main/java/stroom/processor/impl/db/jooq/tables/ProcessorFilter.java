@@ -17,13 +17,14 @@ import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.Select;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableLike;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -56,7 +57,7 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
     /**
      * The column <code>stroom.processor_filter.id</code>.
      */
-    public final TableField<ProcessorFilterRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<ProcessorFilterRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).generatedByDefaultAsIdentity(), this, "");
 
     /**
      * The column <code>stroom.processor_filter.version</code>.
@@ -153,6 +154,11 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
      * The column <code>stroom.processor_filter.profile_name</code>.
      */
     public final TableField<ProcessorFilterRecord, String> PROFILE_NAME = createField(DSL.name("profile_name"), SQLDataType.VARCHAR(255), this, "");
+
+    /**
+     * The column <code>stroom.processor_filter.dependency_version</code>.
+     */
+    public final TableField<ProcessorFilterRecord, Integer> DEPENDENCY_VERSION = createField(DSL.name("dependency_version"), SQLDataType.INTEGER, this, "");
 
     /**
      * The column <code>stroom.processor_filter.max_task_creation_delay</code>.
@@ -267,7 +273,7 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
      */
     @Override
     public ProcessorFilter where(Condition condition) {
-        return new ProcessorFilter(getQualifiedName(), aliased() ? this : null, null, condition);
+        return new ProcessorFilter(getQualifiedName(), aliased() ? this : null, null, Internal.condition(this, condition));
     }
 
     /**
@@ -334,7 +340,7 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public ProcessorFilter whereExists(Select<?> select) {
+    public ProcessorFilter whereExists(TableLike<?> select) {
         return where(DSL.exists(select));
     }
 
@@ -342,7 +348,7 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public ProcessorFilter whereNotExists(Select<?> select) {
+    public ProcessorFilter whereNotExists(TableLike<?> select) {
         return where(DSL.notExists(select));
     }
 }

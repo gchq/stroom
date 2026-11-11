@@ -370,6 +370,14 @@ public class QuickFilter extends Composite
         onChange(true);
     }
 
+    /// Sets the hint shown in the text box while it is empty, in place of `Quick Filter`, e.g.
+    /// `placeholder="Filter values"` in a template.
+    ///
+    /// @param placeholder The hint to show.
+    public void setPlaceholder(final String placeholder) {
+        textBox.setPlaceholder(placeholder);
+    }
+
     /// Names the filter's text box for screen readers, in place of its placeholder, which is only a
     /// hint and is lost once something is typed.
     ///

@@ -146,6 +146,13 @@ test {
     maxParallelForks = 1
 }
 
+processTestResources {
+    // TestProxyYamlUtil writes this into src/test/resources (it is gitignored). Keep it off
+    // the test classpath, else whether the test has run changes the inputs of the test task
+    // and stops it coming from the build cache.
+    exclude 'stroom/dist/proxy-actual.yaml'
+}
+
 
 // The gradle application plugin enables the distribution plugin
 // which creates .zip/tar archives by default, as does the shadow plugin

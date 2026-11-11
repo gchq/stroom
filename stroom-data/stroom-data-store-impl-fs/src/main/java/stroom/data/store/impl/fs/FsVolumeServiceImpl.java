@@ -537,6 +537,7 @@ public class FsVolumeServiceImpl implements FsVolumeService {
                 }
             }
         }
+        LOGGER.trace("getCurrentVolumes() - returning: {}", volumes);
         return volumes;
     }
 
@@ -584,32 +585,31 @@ public class FsVolumeServiceImpl implements FsVolumeService {
             || optMinUpdateTimeEpochMs.get() < updateTimeCutOffEpochMs) {
             for (final FsVolume volume : dbVolumes) {
                 final FsVolumeType volumeType = volume.getVolumeType();
+                final String groupName = groupIdToNameMap.get(volume.getVolumeGroupId());
 
+                final FsVolume updatedVol;
                 if (FsVolumeType.STANDARD == volumeType) {
                     taskContextFactory.current().info(() -> "Refreshing volume '" + getAbsVolumePath(volume) + "'");
                     // Update the volume state and save in the DB.
-                    final FsVolume updated = updateVolumeState(volume);
+                    updatedVol = updateVolumeState(volume);
 
                     // Record some statistics for the use of this volume.
-                    recordStats(updated);
-                    final String groupName = groupIdToNameMap.get(updated.getVolumeGroupId());
-                    groupNameToVolumesMap.computeIfAbsent(groupName, ignored -> new ArrayList<>())
-                            .add(updated);
+                    recordStats(updatedVol);
                 } else {
                     // We would have to make a LOT of api calls to get all size stats for S3 vols.
                     // Could maybe look into using
                     // https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-inventory.html
                     LOGGER.debug("Can't capture stats for volume type {}", volumeType);
+                    updatedVol = volume;
                 }
+                addVolumeToMap(updatedVol, groupIdToNameMap, groupNameToVolumesMap);
             }
         } else {
             LOGGER.debug(() -> LogUtil.message("Not updating state for vols {}, with min update time {}",
                     dbVolumes,
                     optMinUpdateTimeEpochMs.map(DateUtil::createNormalDateTimeString)));
-            for (final FsVolume volume : dbVolumes) {
-                final String groupName = groupIdToNameMap.get(volume.getVolumeGroupId());
-                groupNameToVolumesMap.computeIfAbsent(groupName, k -> new ArrayList<>()).add(volume);
-            }
+            dbVolumes.forEach(volume ->
+                    addVolumeToMap(volume, groupIdToNameMap, groupNameToVolumesMap));
         }
 
         final Volumes newList = new Volumes(now.toEpochMilli(), groupNameToVolumesMap);
@@ -618,7 +618,16 @@ public class FsVolumeServiceImpl implements FsVolumeService {
             currentVolumes.set(newList);
         }
 
+        LOGGER.debug("refreshVolumeList() - Returning: {}", newList);
         return newList;
+    }
+
+    private void addVolumeToMap(final FsVolume volume,
+                                final Map<Integer, String> groupIdToNameMap,
+                                final Map<String, List<FsVolume>> groupNameToVolumesMap) {
+        final String groupName = groupIdToNameMap.get(volume.getVolumeGroupId());
+        groupNameToVolumesMap.computeIfAbsent(groupName, ignored -> new ArrayList<>())
+                .add(volume);
     }
 
     private void recordStats(final FsVolume volume) {

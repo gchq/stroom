@@ -23,6 +23,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.client.model.FieldValuesScope;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
 import stroom.query.shared.SuggestionsResource;
@@ -37,18 +38,22 @@ import stroom.widget.datepicker.client.component.DateTimeBox;
 import stroom.widget.datepicker.client.component.DateTimeBoxController;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /// What a [TermEditor] can't do itself: the document and user pickers its boxes are, the dialogs
-/// its date boxes open, the values it suggests (fetched from the term's data source), and the
-/// field filter's help link. Owned by the expression tree's controller, which attaches one to
-/// each of its term editors.
+/// its date boxes open, the values it suggests (fetched from the term's data source), the value
+/// picker and query options dialog its buttons open, and the field filter's help link. Owned by
+/// the expression tree's controller, which attaches one to each of its term editors.
 public class TermEditorController extends Controller implements TermEditor.Pickers {
 
     private static final SuggestionsResource SUGGESTIONS_RESOURCE = GWT.create(SuggestionsResource.class);
@@ -58,8 +63,11 @@ public class TermEditorController extends Controller implements TermEditor.Picke
     private final Provider<DocSelectionController> docSelectionProvider;
     private final Provider<UserRefSelectionController> userRefSelectionProvider;
     private final Provider<DateTimeBoxController> dateTimeBoxControllerProvider;
+    private final Provider<QueryOptionsController> queryOptionsProvider;
+    private final Provider<FieldValuePickerController> fieldValuePickerProvider;
     private DocSelectionController docSelection;
     private UserRefSelectionController userRefSelection;
+    private Supplier<FieldValuesScope> valueScopeSupplier;
 
     /// Made by GIN; [#attach(TermEditor)] gives it its editor.
     ///
@@ -69,19 +77,33 @@ public class TermEditorController extends Controller implements TermEditor.Picke
     /// @param docSelectionProvider          Makes the document picker.
     /// @param userRefSelectionProvider      Makes the user picker.
     /// @param dateTimeBoxControllerProvider Makes what opens each date box's dialog.
+    /// @param queryOptionsProvider          Makes the query options dialog.
+    /// @param fieldValuePickerProvider      Makes the value picker.
     @Inject
     public TermEditorController(final EventBus eventBus,
                                 final RestFactory restFactory,
                                 final UiConfigCache uiConfigCache,
                                 final Provider<DocSelectionController> docSelectionProvider,
                                 final Provider<UserRefSelectionController> userRefSelectionProvider,
-                                final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
+                                final Provider<DateTimeBoxController> dateTimeBoxControllerProvider,
+                                final Provider<QueryOptionsController> queryOptionsProvider,
+                                final Provider<FieldValuePickerController> fieldValuePickerProvider) {
         super(eventBus);
         this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;
         this.docSelectionProvider = docSelectionProvider;
         this.userRefSelectionProvider = userRefSelectionProvider;
         this.dateTimeBoxControllerProvider = dateTimeBoxControllerProvider;
+        this.queryOptionsProvider = queryOptionsProvider;
+        this.fieldValuePickerProvider = fieldValuePickerProvider;
+    }
+
+    /// Sets what the value picker counts a field's values across, e.g. a dashboard's time range and
+    /// its query's expression. Without it, values are counted across all time.
+    ///
+    /// @param valueScopeSupplier Gives the scope when the picker opens, or null.
+    public void setValueScopeSupplier(final Supplier<FieldValuesScope> valueScopeSupplier) {
+        this.valueScopeSupplier = valueScopeSupplier;
     }
 
     /// Attaches this to the editor whose pickers, dialogs and suggestions it provides.
@@ -142,6 +164,31 @@ public class TermEditorController extends Controller implements TermEditor.Picke
     @Override
     public UserRef getUserRef() {
         return userRefSelection.getSelected();
+    }
+
+    @Override
+    public void showQueryOptions(final QueryField field,
+                                 final Map<String, String> options,
+                                 final Consumer<Map<String, String>> onOk) {
+        queryOptionsProvider.get().edit(this, field, options, onOk);
+    }
+
+    @Override
+    public void showValuePicker(final Element target,
+                                final DocRef dataSource,
+                                final QueryField field,
+                                final boolean multiSelect,
+                                final Supplier<Set<String>> termValues,
+                                final Consumer<String> onPick) {
+        fieldValuePickerProvider.get().show(
+                this,
+                target,
+                dataSource,
+                field,
+                multiSelect,
+                NullSafe.get(valueScopeSupplier, Supplier::get),
+                termValues,
+                onPick);
     }
 
     private void fetchSuggestions(final FetchSuggestionsRequest request, final Consumer<Suggestions> consumer) {

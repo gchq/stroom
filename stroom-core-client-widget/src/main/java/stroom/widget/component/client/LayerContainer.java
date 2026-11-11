@@ -90,6 +90,12 @@ public class LayerContainer extends Composite implements RequiresResize, Provide
         }
     }
 
+    /// @return The widgets of the layers added, shown or not, e.g. for [stroom.widget.form.client.InvalidInputs]
+    /// to look in, as a hidden tab's fields are still the screen's.
+    public Iterable<Widget> getLayerWidgets() {
+        return panel;
+    }
+
     /// Adds a layer's widget, which the layer does when it is first shown.
     ///
     /// @param isWidget The layer's widget.
