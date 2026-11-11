@@ -77,6 +77,8 @@ class StroomBuildFacts implements BuildFacts {
 
     /// What a survey doc's name ends with: `<feed> - Survey`.
     static final String SURVEY = " - Survey";
+    /// The survey state's key for the streams it read whole (or the user stopped at): see [#combine].
+    static final String READ_WHOLE = "read_whole";
     /// The most characters of an example a survey doc keeps: one this long was cut short.
     static final int MAX_EXAMPLE_CHARS = 4000;
     /// How much of a stream's head is read to profile it.
@@ -540,6 +542,19 @@ class StroomBuildFacts implements BuildFacts {
         final List<Long> streamList = new ArrayList<>(streams);
         final Map<String, Object> survey = new LinkedHashMap<>();
         survey.put("saturated", states.stream().allMatch(state -> Boolean.TRUE.equals(state.get("saturated"))));
+        // The streams read whole, or read in part and stopped at by the user: processing just these needs no more
+        // survey.
+        final Set<Long> readWhole = new TreeSet<>();
+        for (final Map<String, Object> state : states) {
+            final Set<Long> inPart = new TreeSet<>();
+            JsonValues.listOrEmpty(state.get(SurveyDoc.STREAMS_IN_PART)).forEach(id -> inPart.add(longOf(id)));
+            JsonValues.listOrEmpty(state.get(SurveyDoc.STOPPED_STREAMS)).forEach(id -> inPart.remove(longOf(id)));
+            JsonValues.listOrEmpty(state.get("streams_read")).stream()
+                    .map(StroomBuildFacts::longOf)
+                    .filter(id -> !inPart.contains(id))
+                    .forEach(readWhole::add);
+        }
+        survey.put(READ_WHOLE, new ArrayList<>(readWhole));
         survey.put("format", states.stream()
                 .map(state -> state.get("format"))
                 .filter(format -> format != null && !"".equals(format))
@@ -554,6 +569,12 @@ class StroomBuildFacts implements BuildFacts {
                 ? null
                 : sample);
         return Optional.of(survey);
+    }
+
+    private static long longOf(final Object id) {
+        return id instanceof final Number number
+                ? number.longValue()
+                : Long.parseLong(String.valueOf(id));
     }
 
     /// @param markdown A survey doc's text.

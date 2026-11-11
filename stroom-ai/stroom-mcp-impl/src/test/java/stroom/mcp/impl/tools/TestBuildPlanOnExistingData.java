@@ -664,6 +664,33 @@ class TestBuildPlanOnExistingData {
                 .doesNotContain("are for an events pipeline written anew");
     }
 
+    @Test
+    void anExistingFeedWithoutItsSurveyRecordIsStillToSurvey() {
+        // Seen in testing: the agent deleted the build's survey record to get past the gate on processing, and the
+        // plan's covered step went with it.
+        surveyedFeed();
+        facts.docs = facts.docs.stream().filter(doc -> !"s".equals(doc.get("uuid"))).toList();
+        facts.survey = null;
+        facts.stepped = true;
+
+        assertThat(state(status(), "covered")).isEqualTo("to do");
+        assertThat(plan.uncovered("b")).isPresent();
+    }
+
+    @Test
+    void streamsTheSurveyReadWholeMayBeProcessedBeforeItIsCovered() {
+        // Asked for by the user: processing the streams the survey read was refused as much as the whole feed.
+        surveyedFeed();
+        facts.stepped = true;
+        facts.survey = survey(false, List.of(), List.of(5L), null, null);
+        facts.survey.put(StroomBuildFacts.READ_WHOLE, List.of(5L, 6L));
+
+        assertThat(plan.uncovered("b", List.of(5L, 6L))).isEmpty();
+        assertThat(plan.uncovered("b", List.of(5L, 9L))).isPresent();
+        assertThat(plan.uncovered("b", List.of())).hasValueSatisfying(why -> assertThat(why)
+                .contains("accept_as_is=true"));
+    }
+
     private void surveyedFeed() {
         facts.docs = List.of(FakeBuildFacts.doc("Documentation", "s", "ACME - Survey"),
                 FakeBuildFacts.doc("Pipeline", "ev", "ACME-Events"), FakeBuildFacts.doc("XSLT", "x", "X"));

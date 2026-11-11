@@ -316,7 +316,20 @@ public class BuildPlan {
     /// while its survey said NOT COVERED, its two rarest kinds of event never seen nor classified). Empty when it is
     /// covered (or the user chose to stop reading deeper), surveys no existing feed, or can't be told.
     public Optional<String> uncovered(final String build) {
+        return uncovered(build, List.of());
+    }
+
+    /// @param build     A build, or null.
+    /// @param streamIds The streams to be processed, or empty for a feed-wide filter.
+    /// @return Why it isn't to be processed yet, as [#uncovered(String)]; empty too when every stream named was read
+    /// whole by the survey (or read in part and stopped at by the user): processing only those needs no more survey
+    /// (asked for by the user: seen in testing, a feed's survey couldn't be covered, and processing the streams it
+    /// had read was refused as much as the whole feed).
+    public Optional<String> uncovered(final String build, final List<Long> streamIds) {
         if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        if (!streamIds.isEmpty() && readWhole(build).containsAll(streamIds)) {
             return Optional.empty();
         }
         try {
@@ -327,10 +340,30 @@ public class BuildPlan {
                                  + "survey_feed build=" + build + " until it is (it asks the user whether to read "
                                  + "deeper the parts it read only in part, or they choose to stop there), then "
                                  + "process. Processed before, kinds of event no one has classified would go "
-                                 + "through the mapping's catch-all rules unseen.");
+                                 + "through the mapping's catch-all rules unseen. If the user wants to go ahead "
+                                 + "with the survey as it is, survey_feed build=" + build + " accept_as_is=true "
+                                 + "(they confirm it); a filter over stream_ids the survey read whole goes ahead "
+                                 + "as it is.");
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("No status for build {}: {}", build, e.getMessage()), e);
             return Optional.empty();
+        }
+    }
+
+    // The streams the build's survey read whole (or the user stopped at); none when it can't be told.
+    private Set<Long> readWhole(final String build) {
+        try {
+            final List<Map<String, Object>> surveys = facts.buildDocs(build).stream()
+                    .filter(doc -> DocumentationDoc.TYPE.equals(doc.get("type")))
+                    .filter(doc -> String.valueOf(doc.get("name")).endsWith(StroomBuildFacts.SURVEY))
+                    .toList();
+            final Set<Long> out = new HashSet<>();
+            facts.surveyState(surveys).ifPresent(survey -> JsonValues.listOrEmpty(
+                    survey.get(StroomBuildFacts.READ_WHOLE)).forEach(id -> out.add(((Number) id).longValue())));
+            return out;
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No survey read for build {}: {}", build, e.getMessage()), e);
+            return Set.of();
         }
     }
 
@@ -673,6 +706,10 @@ public class BuildPlan {
         final Map<String, Object> survey = surveyed && existing
                 ? facts.surveyState(surveys).orElse(null)
                 : null;
+        // An existing feed onboarded (not a copy of a production pipeline) is surveyed before it is processed, with
+        // or without a survey record: seen in testing, the agent deleted the build's survey record and the plan's
+        // covered step, and the gate on processing, went with it.
+        final boolean surveyRequired = !sources.isEmpty() && copies.isEmpty();
         if (survey != null && fmt == null && (JsonValues.truthy(survey.get("sample"))
                                               || JsonValues.truthy(survey.get("format")))) {
             fmt = formatFromSurvey(survey);
@@ -765,7 +802,9 @@ public class BuildPlan {
         done.put("stepped", translation.stream().anyMatch(p -> Boolean.TRUE.equals(p.get("stepped"))));
         // Not recorded (not needed) unless the build surveys an existing feed.
         done.put("covered", survey == null
-                ? null
+                ? surveyRequired
+                        ? Boolean.FALSE
+                        : null
                 : (Boolean) JsonValues.truthy(survey.get("saturated")));
         done.put("processed", !events.isEmpty());
         done.put("unmapped", !events.isEmpty() && unmapped.isEmpty());
@@ -814,7 +853,8 @@ public class BuildPlan {
 
         final Set<String> declined = memory.skippedStages(build);
         final List<Map<String, Object>> steps = steps(done, skipped(new Kinds(discovery, reference, referenceOnly),
-                survey != null, existing, !copies.isEmpty() && !ownFeed, stage1 && !declined.contains(STAGE_EVENTS),
+                survey != null || surveyRequired, existing, !copies.isEmpty() && !ownFeed,
+                stage1 && !declined.contains(STAGE_EVENTS),
                 stage2 && !declined.contains(STAGE_INDEXING), cefBuild && !declined.contains(STAGE_OUTPUT)));
         final Map<String, Object> next = steps.stream()
                 .filter(step -> "to do".equals(step.get("state")))
