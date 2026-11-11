@@ -42,10 +42,13 @@ public final class Pairs {
     /// A key of one to four words.
     public static final String WORDS = "[A-Za-z][A-Za-z0-9_-]*(?: [A-Za-z][A-Za-z0-9_-]*){0,3}";
 
+    /// The style of a key = value with spaces round the '=': `(cpu = 99, threshold = 90)`.
+    public static final String SPACED_EQUALS = "spaced_equals";
     /// Each style's regex, with `{key}` where the key goes. The value runs to the next separator: a dash only where
     /// a key or a `[` follows it ("Secret: Firewall - Edge Admin;").
     public static final Map<String, String> PAIR_REGEX = pairRegexes();
-    /// The styles, in order: `colon`, `bracketed`, `equals`, `quoted`, `dashed`, `dashed_quoted`, `listed`.
+    /// The styles, in order: `colon`, `bracketed`, `equals`, `quoted`, `dashed`, `dashed_quoted`, `listed`,
+    /// `spaced_equals`.
     public static final List<String> STYLES = List.copyOf(PAIR_REGEX.keySet());
 
     private static final Pattern NOT_ALPHANUMERIC = Pattern.compile("[^A-Za-z0-9]+");
@@ -76,6 +79,10 @@ public final class Pairs {
         // white space, an item holding no = (`a=1,b=2` is two pairs). No lookahead: an item followed by = is given
         // back by the end the match needs.
         regexes.put("listed", "(?:^|[\\s,;]){key}=([^\\s,;\"]*(?:[,;][^\\s,;\"=]+)*)(?:[\\s,;]|$)");
+        // A key = value with spaces round the '=', after a space, a comma, a semicolon or an opening bracket, its
+        // value to the next space, comma, semicolon, quote or closing bracket (asked for by the user: seen in chat 171,
+        // NetScaler's SNMP traps' "(cpu = 99, threshold = 90)" read into no field).
+        regexes.put(SPACED_EQUALS, "(?:^|[\\s,;(]){key} = \"?([^\\s,;\")]*)");
         return Collections.unmodifiableMap(regexes);
     }
 
