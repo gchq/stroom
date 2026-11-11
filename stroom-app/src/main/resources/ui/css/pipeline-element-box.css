@@ -232,6 +232,12 @@
 		border-color: Highlight;
 	}
 
+	/* Its ring (kept, as its colours are) shows a box's focus, so not the outline base.css gives
+	   whatever has the keyboard focus there (important, to win over it) */
+	.pipeline-element-box:focus-visible {
+		outline: none !important;
+	}
+
 	.pipeline-element-box[aria-selected="true"] {
 		--icon-colour__black: HighlightText;
 	}

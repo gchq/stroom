@@ -718,16 +718,17 @@
         color: HighlightText;
     }
 
+    /* Important, to win over the outline base.css gives whatever has the keyboard focus there */
     .data-grid .data-grid__row:focus-visible,
     .data-grid .data-grid__cell:focus-visible,
     .data-grid .data-grid__header-cell:focus-visible {
-        outline: 2px solid CanvasText;
-        outline-offset: -2px;
+        outline: 2px solid CanvasText !important;
+        outline-offset: -2px !important;
     }
 
     .data-grid .data-grid__row[aria-selected="true"]:focus-visible,
     .data-grid .data-grid__row[aria-selected="true"] .data-grid__cell:focus-visible {
-        outline-color: HighlightText;
+        outline-color: HighlightText !important;
     }
 
     .data-grid .data-grid__row:not([aria-selected="true"]) .data-grid__cell--disabled {

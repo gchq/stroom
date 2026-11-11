@@ -126,4 +126,10 @@
     .tab-selector:focus-visible::after {
         border-color: Highlight;
     }
+
+    /* The line shows its focus, so not the outline base.css gives whatever has the keyboard focus
+       there (important, to win over it) */
+    .tab-selector:focus-visible {
+        outline: none !important;
+    }
 }

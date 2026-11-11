@@ -124,7 +124,9 @@
         forced-color-adjust: none;
     }
 
+    /* Important, to win over the outline base.css gives whatever has the keyboard focus there */
     .calendar__day:focus-visible {
-        outline-color: CanvasText;
+        outline-color: CanvasText !important;
+        outline-offset: 1px !important;
     }
 }

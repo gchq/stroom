@@ -135,6 +135,10 @@ Options:
   --theme <dark|light>     The theme to show the stories in (default: the workbench's, dark)
   --forced-colours         Show the stories as with a high contrast theme (e.g. Windows'), the
                            browser emulating forced colours (CSS's forced-colors: active)
+  --colour-scheme <light|dark>
+                           The colour scheme the browser asks for (CSS's prefers-color-scheme;
+                           default: light). With --forced-colours it chooses the high contrast
+                           palette: dark text on light, or light text on dark
   --fixed-time <iso>       Fix the stories' clock (Date) at this time, e.g. 2026-01-01T12:00:00Z,
                            and make Math.random the same sequence every run, so that times and
                            random layouts are the same every run (for comparing screenshots).
@@ -178,6 +182,14 @@ function fixedTime(text) {
   return time;
 }
 
+// The colour scheme the browser asks for: light unless given
+function colourScheme(text) {
+  if (text === undefined || text === 'light' || text === 'dark') {
+    return text ?? 'light';
+  }
+  throw new Error(`--colour-scheme must be light or dark, not '${text}'`);
+}
+
 // The theme to show the stories in, or undefined for the workbench's default
 function theme(text) {
   if (text === undefined || text === 'dark' || text === 'light') {
@@ -207,6 +219,7 @@ function parseOptions() {
       'fixed-time': { type: 'string' },
       theme: { type: 'string' },
       'forced-colours': { type: 'boolean', default: false },
+      'colour-scheme': { type: 'string' },
       'leak-check': { type: 'boolean', default: false },
       'leak-cycles': { type: 'string', default: String(DEFAULT_LEAK_CYCLES) },
       'skip-a11y': { type: 'boolean', default: false },
@@ -245,6 +258,7 @@ function parseOptions() {
     fixedTime: fixedTime(values['fixed-time']),
     theme: theme(values.theme),
     forcedColours: values['forced-colours'],
+    colourScheme: colourScheme(values['colour-scheme']),
     leakCheck: values['leak-check'],
     leakCycles: integer('leak-cycles', values['leak-cycles'], 2),
     a11y: !values['skip-a11y'],
@@ -366,6 +380,7 @@ async function runStoryOnce(browser, story, options, attempt) {
     context = await browser.newContext({
       viewport: { width: 1280, height: 720 },
       forcedColors: options.forcedColours ? 'active' : 'none',
+      colorScheme: options.colourScheme,
     });
     await context.addInitScript(DOCUMENT_COUNTER_SCRIPT);
     if (options.classCensus) {

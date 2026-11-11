@@ -224,6 +224,12 @@
         background-color: Highlight;
         box-shadow: none;
     }
+
+    /* Its line shows a splitter's focus, so not the outline base.css gives whatever has the keyboard
+       focus there (important, to win over it) */
+    .split-pane__splitter:focus-visible {
+        outline: none !important;
+    }
 }
 
 /* A pane that is hidden, and a splitter beside one (last, so it outweighs their own display) */

@@ -201,6 +201,25 @@ basic use:
 
 ### Workbench stories that fail
 
+**Full runs, 11 November 2026** (after the master merge; normal dark theme, and forced colours in
+both palettes): 1,903 stories. The normal run's 6 failures are gone: the three `CredentialsScreen`
+replace-secret plays expected the old request (fixed), and the leak failures (`QueryEditor`
+`Default`, `Hyperlinks`, `QueryResultVis` `PauseButtonReportsUp`) passed at 4 workers. 11 passed
+on a retry: 8 heavy editors' leak checks and `Force3D` `Hover`, `Keyboard` and `ViewKeys` (timed
+out). Open from these runs:
+
+* `Widgets/Layout/SplitPane` `Keyboard` and `Widgets/Data Grid/DataGridKeyboard`
+  `SingleSelection`: their screenshots are the same bytes in the normal and both forced-colours
+  runs, so forced colours didn't reach what was captured; not yet known why.
+* `Widgets/Tree/ExplorerTree` `Keys` and `Widgets/EntityCheckTree` `TriState` end blank or nearly
+  blank in every run.
+* `App/Main/PropertiesScreen` `Properties` ended with a row selected in the normal run and none in
+  both forced runs; `App/Editors/DashboardEditor` `TableColumnValuesFilterUnavailable` ended with
+  alpha and beta ticked in the forced dark run only. Possibly flaky.
+* The normal run's stories reported console 404s for stylesheets (`solr-index-field-list.css`,
+  `pipeline-property.css`, `create-user.css`, `code-editor.css`, ...) while their screenshots were
+  taken; the forced runs, from the same copy, didn't.
+
 **Re-checked** (6 November 2026, against the code): still open in the code: a static REST resource keeps its last callback (`RestFactoryImpl.java:257-272`; the static `RESOURCE` is now in `AskStroomAiClient.java:50`); `AppShell` `OpensDocument`'s play doesn't wait for the focus to settle. Fixed since: `CredentialsScreen` `KeyStore`, the 48 stories (all fixed; the "13 open" is stale), the reopen timeouts (`89141b51de`, which also removed `closeOnCleanUp`), the AI chat's leaks, the leak check running last, `VisAccessibilityStories`, the stories failing on master, the Groovy `+` (now `build.gradle:973`), `AppShell` `Embedded` and `ValueSpinnerColumn`'s polled time. The accessibility baseline now holds one entry. The flaky stories named (`HyperlinksByKeyboard`, `TableFilterDrivesQuery`, `CrossNavigation`, `DeleteAfterFailedLookupStillProceeds`, `FieldsReadOnly`, `Force3D` `ViewKeys`, `Tree` `Keyboard`, `LineChart` `PageKeys`, `AddToAnnotation`) have no fix; whether they still fail needs a full run.
 
 **Status** (28 October 2026, wave 22): the last full runs on the remove_gwtp branch (waves 17 to

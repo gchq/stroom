@@ -192,6 +192,12 @@
 		outline-offset: -1px;
 	}
 
+	/* The item's label and rows show its focus, not the item: so not the outline base.css gives
+	   whatever has the keyboard focus there (important, to win over it) */
+	.expression-item:focus-visible {
+		outline: none !important;
+	}
+
 	.expression-item:focus-visible .expression-item__label {
 		box-shadow: 0 0 0 2px Canvas, 0 0 0 4px Highlight;
 	}

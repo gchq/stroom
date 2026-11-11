@@ -200,6 +200,12 @@
         outline-offset: 2px;
     }
 
+    /* Its item shows a row's focus, so not the outline base.css gives whatever has the keyboard
+       focus there (important, to win over it) */
+    .menu__viewport [role]:focus-visible {
+        outline: none !important;
+    }
+
     .menu__separator {
         border-top-color: CanvasText;
     }

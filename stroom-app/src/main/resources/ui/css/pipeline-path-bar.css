@@ -570,6 +570,12 @@
         color: GrayText;
     }
 
+    /* Its segment's ring (kept, as its colours are) shows a button's focus, so not the outline
+       base.css gives whatever has the keyboard focus there (important, to win over it) */
+    .pipeline-path-bar__button:focus-visible {
+        outline: none !important;
+    }
+
     /* The drop down chevron, pressed or open, is outlined rather than filled */
     .pipeline-path-bar__caret:active,
     .pipeline-path-bar__caret[aria-expanded="true"] {

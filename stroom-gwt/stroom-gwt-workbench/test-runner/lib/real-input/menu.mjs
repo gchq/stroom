@@ -19,6 +19,7 @@
 // and the focus ring shows for the keyboard, not the mouse.
 
 import assert from 'node:assert/strict';
+import { drawnFocusRing } from './focus-ring.mjs';
 
 const MENU = '.popup--floating:has(.menu)';
 
@@ -33,12 +34,9 @@ async function centreOf(page, text) {
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
 
-// The focused item's focus ring (its box shadow), or 'none'
+// The focused item's focus ring, or 'none' (see focus-ring.mjs)
 function ring(page) {
-  return page.evaluate(() => {
-    const item = document.activeElement?.querySelector('.menu__item');
-    return item ? getComputedStyle(item).boxShadow : 'none';
-  });
+  return page.evaluate(`(${drawnFocusRing})(document.activeElement?.querySelector('.menu__item'))`);
 }
 
 async function openWithMouse(page) {

@@ -54,8 +54,9 @@
 /* Forced colours (e.g. Windows high contrast) drop box shadows, so its keyboard focus is an outline
    inside its edge */
 @media (forced-colors: active) {
+    /* Important, to win over the outline base.css gives whatever has the keyboard focus there */
     .info-tooltip:focus-visible {
-        outline: 2px solid Highlight;
-        outline-offset: -2px;
+        outline: 2px solid Highlight !important;
+        outline-offset: -2px !important;
     }
 }
