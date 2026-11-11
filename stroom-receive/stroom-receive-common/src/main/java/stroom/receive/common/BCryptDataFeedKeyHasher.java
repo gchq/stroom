@@ -31,7 +31,7 @@ import java.util.Objects;
 // There are subtle differences between this and BCryptHasher, e.g. how the salt is generated,
 // so we can't delegate to it.
 @Singleton // For thread safe SecureRandom
-public class BCryptDataFeedKeyHasher implements DataFeedKeyHasher {
+class BCryptDataFeedKeyHasher implements DataFeedKeyHasher {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BCryptDataFeedKeyHasher.class);
     private static final int SALT_LOG_ROUNDS = 10;
@@ -56,14 +56,7 @@ public class BCryptDataFeedKeyHasher implements DataFeedKeyHasher {
     public HashOutput hash(final String dataFeedKey, final String salt) {
         Objects.requireNonNull(dataFeedKey);
 
-        // Bcrypt can only handle 72 bytes of input. JBcrypt (that we used before spring-security-crypto)
-        // would just ignore the rest of the bytes, but Spring throws an exception if the input is
-        // too long. To preserve backwards compatibility, we truncate the input to 72 bytes.
-        byte[] keyBytes = dataFeedKey.getBytes(StandardCharsets.UTF_8);
-        if (keyBytes.length > MAX_KEY_LENGTH_BYTES) {
-            keyBytes = Arrays.copyOfRange(keyBytes, 0, MAX_KEY_LENGTH_BYTES);
-        }
-
+        final byte[] keyBytes = getBcryptInput(dataFeedKey);
         final String hash = BCrypt.hashpw(keyBytes, salt);
         final HashOutput hashOutput = new HashOutput(hash, salt);
         LOGGER.debug("hash() - salt: '{}', hash: '{}', dataFeedKey: '{}'", salt, hash, dataFeedKey);
@@ -75,7 +68,10 @@ public class BCryptDataFeedKeyHasher implements DataFeedKeyHasher {
         if (NullSafe.isEmptyString(dataFeedKey)) {
             return false;
         } else {
-            final boolean isValid = BCrypt.checkpw(dataFeedKey, hash);
+            // BCrypt can only hash the first 72 bytes of input, so we truncate the input to 72 bytes.
+            // hashpw will throw if the input is >72 bytes, but checkpw won't. To keep things
+            // consistent we will always truncate the input.
+            final boolean isValid = BCrypt.checkpw(getBcryptInput(dataFeedKey), hash);
             LOGGER.debug("verify() - hash: '{}', dataFeedKey: '{}', isValid: {}", hash, dataFeedKey, isValid);
             return isValid;
         }
@@ -84,5 +80,15 @@ public class BCryptDataFeedKeyHasher implements DataFeedKeyHasher {
     @Override
     public DataFeedKeyHashAlgorithm getAlgorithm() {
         return DataFeedKeyHashAlgorithm.BCRYPT_2A;
+    }
+
+    private static byte[] getBcryptInput(final String dataFeedKey) {
+        // Bcrypt can only handle 72 bytes of input. JBcrypt (that we used before spring-security-crypto)
+        // would just ignore the rest of the bytes, but Spring throws an exception if the input is
+        // too long. To preserve backwards compatibility, we truncate the input to 72 bytes.
+        final byte[] keyBytes = dataFeedKey.getBytes(StandardCharsets.UTF_8);
+        return keyBytes.length > MAX_KEY_LENGTH_BYTES
+                ? Arrays.copyOfRange(keyBytes, 0, MAX_KEY_LENGTH_BYTES)
+                : keyBytes;
     }
 }
