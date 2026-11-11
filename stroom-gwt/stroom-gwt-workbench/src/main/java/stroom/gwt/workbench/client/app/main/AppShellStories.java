@@ -185,6 +185,11 @@ public final class AppShellStories {
                 .layout(StoryLayout.FULLSCREEN)
                 // The full shell over the rich fixture tree (Explorer left, empty content right)
                 .story("Default", context -> render(context, TreeFixtures.fixtureTree()))
+                // With no activities, no current activity below the explorer, nor its splitter
+                .withPlay(play -> {
+                    navTree(play, "Feeds");
+                    play.expect(play.queryByRole("separator", "Current activity")).toBeNull();
+                })
                 // The explorer's Filter Document Types button opens the type filter (the document types);
                 // turning a type off restricts the tree and lights the button
                 .story("ExplorerTypeFilter", context -> render(context, AppShellFixtures.dictTree(),
@@ -483,6 +488,9 @@ public final class AppShellStories {
                     // GWT's summary is a button with no title
                     final Query summary = play.findByRole("button", TextMatch.startingWith("Current Activity"));
                     play.expect(play.within(summary).getByText("none")).toBeInTheDocument();
+                    // A splitter between the tree and the current activity resizes the activity, to
+                    // give the tree more room or the activity more to show
+                    play.expect(play.getByRole("separator", "Current activity")).toBeInTheDocument();
                     play.click(play.within(summary).getByText("Current Activity"));
                     screen.findByText(ACTIVITY_TITLE, StroomDom.DIALOG_TITLE);
                     play.click(screen.findByText(TextMatch.containing("INV-1002")));

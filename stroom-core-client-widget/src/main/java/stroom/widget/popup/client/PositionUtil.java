@@ -49,6 +49,26 @@ public class PositionUtil {
                                        final PopupPosition popupPosition,
                                        final int offsetWidth,
                                        final int offsetHeight) {
+        return getPosition(shadowWidth, popupPosition, offsetWidth, offsetHeight,
+                new Rect(Window.getScrollTop(),
+                        Window.getScrollTop() + Window.getClientHeight(),
+                        Window.getScrollLeft(),
+                        Window.getScrollLeft() + Window.getClientWidth()));
+    }
+
+    /// Positions the popup in a window of the given bounds (so it can be tested without a browser).
+    ///
+    /// @param shadowWidth   The width of the popup's shadow, round the box it is placed beside.
+    /// @param popupPosition The box to place it beside, and on which side.
+    /// @param offsetWidth   The popup's width.
+    /// @param offsetHeight  The popup's height.
+    /// @param window        The window's visible area, in page coordinates (scrolling included).
+    /// @return Where the popup's top left corner goes.
+    static Position getPosition(final int shadowWidth,
+                                final PopupPosition popupPosition,
+                                final int offsetWidth,
+                                final int offsetHeight,
+                                final Rect window) {
         final Rect relativeRect = popupPosition.getRelativeRect();
         final Rect reference = relativeRect.grow(shadowWidth);
 
@@ -69,8 +89,8 @@ public class PositionUtil {
 
         // Make sure scrolling is taken into account, since
         // box.getAbsoluteLeft() takes scrolling into account.
-        final int windowRight = Window.getClientWidth() + Window.getScrollLeft();
-        final int windowLeft = Window.getScrollLeft();
+        final double windowRight = window.getRight();
+        final double windowLeft = window.getLeft();
 
         // Distance from the left edge of the text box to the right edge of the
         // window
@@ -85,7 +105,19 @@ public class PositionUtil {
         // for the overflow to the left, then show the popup on the left. If
         // there is not enough space on either side, then
         // position at the far left.
-        if (distanceToWindowRight < offsetWidth) {
+        // A popup beside its box (e.g. a submenu beside its item) with no room on that side goes to
+        // the box's other side, if there is room there, rather than over the box (and the menu it
+        // is in)
+        final boolean beside = PopupLocation.RIGHT.equals(popupPosition.getPopupLocation())
+                               || PopupLocation.LEFT.equals(popupPosition.getPopupLocation());
+        if (beside && distanceToWindowRight < offsetWidth
+            && reference.getLeft() - offsetWidth >= windowLeft) {
+            left = reference.getLeft() - offsetWidth;
+        } else if (PopupLocation.LEFT.equals(popupPosition.getPopupLocation())
+                   && distanceFromWindowLeft < 0
+                   && reference.getRight() + offsetWidth <= windowRight) {
+            left = reference.getRight();
+        } else if (distanceToWindowRight < offsetWidth) {
             if (distanceFromWindowLeft >= offsetWidth) {
                 // Positioned to the left but aligned with the right edge of the
                 // relative box.
@@ -110,8 +142,8 @@ public class PositionUtil {
 
         // Make sure scrolling is taken into account, since box.getAbsoluteTop()
         // takes scrolling into account.
-        final int windowTop = Window.getScrollTop();
-        final int windowBottom = Window.getScrollTop() + Window.getClientHeight();
+        final double windowTop = window.getTop();
+        final double windowBottom = window.getBottom();
 
         // Distance from the top edge of the window to the top edge of the text
         // box.
