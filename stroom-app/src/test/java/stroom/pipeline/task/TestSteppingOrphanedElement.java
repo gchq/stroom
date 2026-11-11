@@ -62,9 +62,11 @@ class TestSteppingOrphanedElement extends TranslationTest {
     private static final String ORPHAN_ELEMENT_TYPE = "XSLTFilter";
     // Big enough that the backbone is still running when the first record could have been served.
     private static final int RECORD_COUNT = 4_000;
-    // Room for the first records many times over, but far less than the backbone of the whole stream needs,
-    // standing in for the 2 GiB default against a 1 GiB compressed stream.
-    private static final long SMALL_STORE_CAP_BYTES = 200_000L;
+    // Far less than the backbone of the whole stream needs (about 2 KB a record, so about 8 MB), standing in for
+    // the 2 GiB default against a 1 GiB compressed stream. The backbone may fill only 90% of it, and the 10% it
+    // leaves must hold the first record materialised through every element below the parser, which is tens of
+    // KB, so the cap cannot be much smaller than this.
+    private static final long SMALL_STORE_CAP_BYTES = 2_000_000L;
 
     @Inject
     private SteppingService steppingService;

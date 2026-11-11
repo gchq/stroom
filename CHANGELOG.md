@@ -13,6 +13,26 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.15] - 2026-11-11
+
+* Bug **#6017** : Fix Ask Stroom AI ignoring the timeouts in the OpenAI Model document's HTTP client configuration. Requests to chat and embedding models always used a 60 second read timeout and a 15 second connect timeout.
+
+
+## [v7.14-beta.14] - 2026-11-11
+
+* Bug **#5953** : Change BCrypt Data Feed Key hashing to always truncate input on hashing and verification.
+
+
+## [v7.14-beta.13] - 2026-11-11
+
+* Bug **#5986** : Fix stepping a large stream failing with the stepping store byte limit before the first record is shown. The background capture of the stream now leaves 10% of `stroom.pipeline.stepping.maxBytesPerStream` free for the records being stepped to.
+
+
+## [v7.14-beta.12] - 2026-11-11
+
+* Bug **#6008** : Fix duplicate key error when replaying a report or rule execution.
+
+
 ## [v7.14-beta.11] - 2026-11-10
 
 * Feature : Add field-level query options to dashboard query expression terms on Elasticsearch fields, set with a cog button beside the term's value: case-insensitive and fuzzy matching for `keyword` and `wildcard` fields, and matching all words, phrase matching with slop and fuzzy matching for text fields.
@@ -2866,7 +2886,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.15...HEAD
+[v7.14-beta.15]: https://github.com/gchq/stroom/compare/v7.14-beta.14...v7.14-beta.15
+[v7.14-beta.14]: https://github.com/gchq/stroom/compare/v7.14-beta.13...v7.14-beta.14
+[v7.14-beta.13]: https://github.com/gchq/stroom/compare/v7.14-beta.12...v7.14-beta.13
+[v7.14-beta.12]: https://github.com/gchq/stroom/compare/v7.14-beta.11...v7.14-beta.12
 [v7.14-beta.11]: https://github.com/gchq/stroom/compare/v7.14-beta.10...v7.14-beta.11
 [v7.14-beta.10]: https://github.com/gchq/stroom/compare/v7.14-beta.9...v7.14-beta.10
 [v7.14-beta.9]: https://github.com/gchq/stroom/compare/v7.14-beta.8...v7.14-beta.9
