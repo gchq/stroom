@@ -602,7 +602,7 @@ public final class IndexFieldDocs {
                                 ? fromIndex.stream()
                                           .map(v -> "`" + ToolText.head(v, 40) + "`")
                                           .collect(Collectors.joining(", ")) + " (from the index)"
-                                : "(none in the sample)");
+                                : noValues(f, shared, population, documents.size(), indexValues));
             }
             rows.add(new IndexRow(shared != null
                     ? ""
@@ -1000,6 +1000,28 @@ public final class IndexFieldDocs {
 
     private static List<String> allValues(final List<Map<String, List<String>>> documents, final String name) {
         return documents.stream().flatMap(d -> d.getOrDefault(name, List.of()).stream()).toList();
+    }
+
+    // The Sample values cell of a field with none: for one some events have, why, from what is known (the documents
+    // stepped, and whether the index was searched); else that the sample has none.
+    private static String noValues(final PlannedField field,
+                                   final SharedTemplate shared,
+                                   final Map<String, Double> population,
+                                   final int documents,
+                                   final Map<String, List<String>> indexValues) {
+        if (shared != null || population == null || NullSafe.isBlankString(field.source())
+            || field.source().startsWith("@")) {
+            return "(none in the sample)";
+        }
+        final Double share = FieldPlans.populationOf(field.source(), population);
+        if (share == null || share <= 0) {
+            return "(none in the sample)";
+        }
+        return "(none in the " + documents + " document" + (documents == 1
+                ? ""
+                : "s") + " stepped; " + (indexValues == null
+                ? "index not searched"
+                : "not found in the index") + ")";
     }
 
     private static List<String> distinctNonEmpty(final List<String> values) {

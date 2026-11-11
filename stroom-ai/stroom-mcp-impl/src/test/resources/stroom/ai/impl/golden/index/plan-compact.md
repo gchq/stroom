@@ -13,7 +13,7 @@ Sample values are what the 3 documents written from the sample got.
 | `event.code` | A name/code/ID to uniquely identify the logical event type within the service providing the events. | keyword | `EventDetail/TypeId` | not in the sample | (none in the sample) |
 | `email.from` | An identifier for the user. | keyword | `EventDetail/Send/Source/User/Id` | 30% of events | `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa` |
 | `email.to` | An identifier for the user. | keyword | `EventDetail/Send/Destination/User/Id` | not in the sample | (none in the sample) |
-| `inbox.from` | An identifier for the user. | keyword | `EventDetail/Receive/Source/User/Id` | 20% of events | (none in the sample) |
+| `inbox.from` | An identifier for the user. | keyword | `EventDetail/Receive/Source/User/Id` | 20% of events | (none in the 3 documents stepped; index not searched) |
 | `inbox.to` | An identifier for the user. | keyword | `EventDetail/Receive/Destination/User/Id` | not in the sample | (none in the sample) |
 | `file.name` | The title or name of the document. | keyword | `EventDetail/View/Document/Title` | not in the sample | (none in the sample) |
 | `net.src` | The network IP address of the device, e.g. 192.168.0.3. | ip | `EventDetail/Network/*/Source/Device/IPAddress` | 79.1667% of events | `1.2.3.4` |

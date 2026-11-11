@@ -5742,9 +5742,17 @@ translation generator (its mapping records, `XsltComments`, `StyledXslt`, `Mappi
     from whichever action element the event has) is shown under each event type whose events have it, from
     `summarise_streams`' shares by action (seen: `source.ip`, in 40% of the events, and the object's and folder's
     fields shown as common to all). Each section names its events' TypeIds, most first, with each one's share of
-    all events (up to 15; seen: nothing said which kinds of event a section's fields came from). Fields the
-    sample's documents have none of are given example values from the index, shown as from the index (asked for by
-    the user). Percentages are whole numbers, a half rounded to the even number. `TestIndexFieldDocs` pins the text
+    all events (up to 15; seen: nothing said which kinds of event a section's fields came from). For a plan, the
+    shares are of the Events the indexing XSLT got for the records stepped (`StreamSummaries.summariseEventRecords`
+    over each step's input at the element), so they and the values are of the same records (seen: a field in 2.5%
+    of events, counted from records read spread through the first stream, with "(none in the sample)" for values
+    stepped from others); the streams are read apart only when the steps give no input. Any field the stepped
+    documents have no value of, whatever its share, is looked up in the index (`IndexValues.withoutValues`) and its
+    values shown as from the index (asked for by the user); a failed lookup gives none and is logged at INFO. A
+    field some events have that still has none says why: `(none in the N documents stepped; not found in the
+    index)`, or `index not searched` when no index could be read; one no event has keeps `(none in the sample)`.
+    When stepping stopped at the call's time limit, the section says so in a note. Percentages are whole numbers,
+    a half rounded to the even number. `TestIndexFieldDocs` pins the text
     against golden files of what is written for the same plans, documents and surveys; a change to them is a
     decision, not a fix.
   * `DocumentationText`: the doc's shape (`titled`, `sectionLevels`, text added below an agent's section).

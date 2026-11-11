@@ -30,7 +30,7 @@ In 30% (Send), 20% (Receive) of the sample's events.
 | --- | --- | --- | --- | --- | --- |
 | `email.from` | An identifier for the user. | keyword | `EventDetail/Send/Source/User/Id` | 30% of events | `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa` |
 | `email.to` | An identifier for the user. | keyword | `EventDetail/Send/Destination/User/Id` | not in the sample | (none in the sample) |
-| `inbox.from` | An identifier for the user. | keyword | `EventDetail/Receive/Source/User/Id` | 20% of events | (none in the sample) |
+| `inbox.from` | An identifier for the user. | keyword | `EventDetail/Receive/Source/User/Id` | 20% of events | (none in the 3 documents stepped; index not searched) |
 | `inbox.to` | An identifier for the user. | keyword | `EventDetail/Receive/Destination/User/Id` | not in the sample | (none in the sample) |
 
 #### View

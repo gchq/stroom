@@ -20,7 +20,6 @@ import stroom.ai.impl.tools.IndexSearches;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.indexing.FieldPlan;
-import stroom.ai.impl.tools.indexing.FieldPlans;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
@@ -74,8 +73,9 @@ class IndexValues {
     /// @param merged  The indexing pipeline, as Stroom runs it.
     /// @param plan    Its plan.
     /// @param fields  The plan's fields to find values of.
-    /// @return Up to [#MAX_VALUES] distinct values of each field the index holds any of, in the order found;
-    /// none when there are no fields, the pipeline writes to no index the user can read, or the search fails.
+    /// @return Up to [#MAX_VALUES] distinct values of each field the index holds any of, in the order found (none
+    /// when there are no fields); null when the index wasn't searched: the pipeline writes to no index the user can
+    /// read, or the search fails.
     Map<String, List<String>> examples(final ToolCallContext context,
                                        final MergedPipeline merged,
                                        final FieldPlan plan,
@@ -87,7 +87,9 @@ class IndexValues {
         try {
             final List<IndexDocs.Index> written = indexDocs.written(merged);
             if (written.isEmpty()) {
-                return out;
+                LOGGER.info("No example values read from the index: the pipeline writes to no index the user can "
+                            + "read");
+                return null;
             }
             final IndexDocs.Index index = written.getFirst();
             // The fields a wildcard finds a value of, searched for documents holding any; the rest in the first
@@ -97,8 +99,9 @@ class IndexValues {
             read(context, index, wild, anyOf(wild), out);
             read(context, index, rest, ExpressionOperator.builder().build(), out);
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> LogUtil.message("No example values read from the index: {}", e.getMessage()), e);
-            out.clear();
+            // A nicety: a failed search gives no values, but is logged so it can be traced.
+            LOGGER.info(() -> LogUtil.message("No example values read from the index: {}", e.getMessage()), e);
+            return null;
         }
         return out;
     }
@@ -116,7 +119,11 @@ class IndexValues {
         final IndexSearches.Found found = indexSearches.search(context, probe, MAX_ROWS,
                 "Reading example values of " + fields.size() + " field(s) from " + NullSafe.nonBlankStringElse(
                         index.indexName(), index.docRef().getName()), LONGEST);
-        for (final Map<String, String> row : found.rows()) {
+        if (NullSafe.isEmptyCollection(found.rows()) && !NullSafe.isEmptyCollection(found.errors())) {
+            // Nothing read and Stroom said why: the index wasn't searched, rather than holding no values.
+            throw new IllegalStateException(String.join("; ", found.errors()));
+        }
+        for (final Map<String, String> row : NullSafe.list(found.rows())) {
             for (final String field : fields) {
                 final String value = row.get(field);
                 if (NullSafe.isNonBlankString(value)) {
@@ -148,18 +155,24 @@ class IndexValues {
         return any.build();
     }
 
-    /// @param plan       The plan.
-    /// @param population The share of the sample's events (%) each path is populated in.
-    /// @return The plan's fields whose source no event of the sample has (not the ids, nor a shared template's).
-    static List<String> notInSample(final FieldPlan plan, final Map<String, Double> population) {
+    /// The fields to ask the index for: any whose values the stepped documents lack, whatever share of the sample's
+    /// events has its source (seen: a field in 2.5% of events, in none of the documents stepped, shown with no
+    /// values and never looked up).
+    ///
+    /// @param plan      The plan.
+    /// @param documents The documents the pipeline wrote from the sample, as field to values.
+    /// @return The plan's fields none of the documents holds a value of (not the ids, nor a shared template's).
+    static List<String> withoutValues(final FieldPlan plan, final List<Map<String, List<String>>> documents) {
         final List<String> out = new ArrayList<>();
         for (final PlannedField field : plan.leafFields()) {
             final String source = field.source();
             if (NullSafe.isBlankString(source) || source.startsWith("@") || plan.writtenBy(field.name()) != null) {
                 continue;
             }
-            final Double share = FieldPlans.populationOf(source, population);
-            if (share == null || share == 0) {
+            final boolean held = NullSafe.list(documents).stream()
+                    .flatMap(document -> NullSafe.list(document.get(field.name())).stream())
+                    .anyMatch(value -> value != null && !value.isEmpty());
+            if (!held) {
                 out.add(field.name());
             }
         }
