@@ -59,8 +59,6 @@ public class LinkedEventsController extends Controller {
 
     private DocRef annotationRef;
 
-    private List<EventId> currentData;
-    private EventId nextSelection;
     private Runnable onChange = () -> {
     };
     private boolean readOnly;
@@ -84,6 +82,8 @@ public class LinkedEventsController extends Controller {
 
         dataGrid = view.getDataGrid();
         selectionModel = dataGrid.addDefaultSelectionModel(false);
+        // The preview beside it shows the selected event (UI-GUIDE.md, "What a list selects")
+        selectionModel.setSelectFirst(true);
 
         this.annotationResourceClient = annotationResourceClient;
         this.dataController = own(dataController).attach(view.getData());
@@ -117,12 +117,25 @@ public class LinkedEventsController extends Controller {
 
     private void linkEvent(final EventId eventId) {
         annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef,
-                new LinkEvents(Collections.singletonList(eventId))), guard(this::onChangeComplete), taskMonitor());
+                new LinkEvents(Collections.singletonList(eventId))), guard(success -> {
+                    if (success != null && success) {
+                        // The event added, once shown (UI-GUIDE.md, "What a list selects")
+                        selectionModel.selectWhenShown(eventId::equals);
+                    }
+                    onChangeComplete(success);
+                }), taskMonitor());
     }
 
     private void unlinkEvent(final EventId eventId) {
         annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef,
-                new UnlinkEvents(Collections.singletonList(eventId))), guard(this::onChangeComplete), taskMonitor());
+                new UnlinkEvents(Collections.singletonList(eventId))), guard(success -> {
+                    if (success != null && success) {
+                        // The event in its place once the events are shown again (it was once the
+                        // one before)
+                        selectionModel.selectNextAfterRemove(List.of(eventId));
+                    }
+                    onChangeComplete(success);
+                }), taskMonitor());
     }
 
     private void onChangeComplete(final Boolean success) {
@@ -136,14 +149,6 @@ public class LinkedEventsController extends Controller {
     private void onRemoveEvent() {
         final EventId selected = selectionModel.getSelected();
         if (selected != null) {
-            nextSelection = null;
-            if (currentData != null && currentData.size() > 1) {
-                int index = currentData.indexOf(selected);
-                index--;
-                index = Math.max(0, index);
-                nextSelection = currentData.get(index);
-            }
-
             unlinkEvent(selected);
         }
     }
@@ -172,26 +177,17 @@ public class LinkedEventsController extends Controller {
     }
 
     private void setData(final List<EventId> data) {
-        this.currentData = data;
+        // The selection settles on the rows as they are shown: the event selected, the one in place
+        // of one removed, else the first
         dataGrid.setRowData(0, data);
         dataGrid.setRowCount(data.size());
-
-        // Change the selection if we need to.
-        if (!data.isEmpty()) {
-            final EventId currentSelection = selectionModel.getSelected();
-            if (nextSelection != null && data.contains(nextSelection)) {
-                selectionModel.setSelected(nextSelection);
-            } else if (currentSelection == null) {
-                selectionModel.setSelected(data.get(0));
-            } else if (!data.contains(currentSelection)) {
-                selectionModel.setSelected(data.get(0));
-            }
+        if (selectionModel.getSelected() == null) {
+            // Nothing to settle on (e.g. no events): the preview is cleared now, as no selection
+            // event will come
+            onSelection();
         } else {
-            selectionModel.clear();
+            enableButtons();
         }
-        nextSelection = null;
-
-        onSelection();
     }
 
     private void onSelection() {

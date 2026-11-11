@@ -33,6 +33,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// A query's favourites, above the expression of the one chosen, with buttons to add the current
@@ -68,6 +69,8 @@ public class QueryFavourites extends Component {
         deleteButton.setOnClick(this::onDeleteButton);
         // The one with the focus is chosen (and shown below it); Enter, or a double click, on one
         // opens it
+        // Keyed by uuid, as each fetch gives new objects
+        list.setKeyProvider(StoredQuery::getUuid);
         list.setSelectionModel(selectionModel,
                 new DataGridSelectionEventManager<>(list, selectionModel, false));
         selectionModel.addSelectionChangeHandler(event -> onSelect.accept(selectionModel.getSelected()));
@@ -87,13 +90,27 @@ public class QueryFavourites extends Component {
                 .build(), "", 200);
     }
 
-    /// Lists the favourites, none chosen.
+    /// Lists the favourites, the one chosen still chosen if it is among them.
     ///
     /// @param queries The favourites.
     public void setQueries(final List<StoredQuery> queries) {
-        selectionModel.clear();
         list.setRowData(0, queries);
         list.setRowCount(queries.size(), true);
+    }
+
+    /// Chooses a favourite once the list fetched again shows it, e.g. one just created or renamed
+    /// (UI-GUIDE.md, "What a list selects").
+    ///
+    /// @param query The favourite.
+    public void selectWhenShown(final StoredQuery query) {
+        selectionModel.selectWhenShown(row -> Objects.equals(row.getUuid(), query.getUuid()));
+    }
+
+    /// Chooses the favourite in place of one deleted, once the list is fetched again.
+    ///
+    /// @param query The favourite deleted.
+    public void selectNextAfterRemove(final StoredQuery query) {
+        selectionModel.selectNextAfterRemove(List.of(query));
     }
 
     /// @return The favourite chosen, or `null` for none.

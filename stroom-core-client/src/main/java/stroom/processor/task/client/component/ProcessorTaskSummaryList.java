@@ -42,7 +42,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.AbstractDataProvider;
-import com.google.gwt.view.client.ProvidesKey;
 
 import java.util.function.Function;
 
@@ -142,11 +141,6 @@ public class ProcessorTaskSummaryList extends Component {
     /// @return The selection, one row at most.
     public MultiSelectionModelImpl<ProcessorTaskSummary> getSelectionModel() {
         return selectionModel;
-    }
-
-    /// @return Keys a row by its group, not its count.
-    public ProvidesKey<ProcessorTaskSummary> getKeyProvider() {
-        return dataGrid.getKeyProvider();
     }
 
     /// @return How the rows are sorted, for the request for them.

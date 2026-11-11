@@ -24,6 +24,9 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,14 +35,55 @@ class TestDocumentPermission {
 
     @Test
     void test() {
-        higher(DocumentPermission.OWNER, DocumentPermission.DELETE);
-        higher(DocumentPermission.DELETE, DocumentPermission.EDIT);
-        higher(DocumentPermission.EDIT, DocumentPermission.VIEW);
-        higher(DocumentPermission.VIEW, DocumentPermission.USE);
+        final List<DocumentPermission> lowToHighPerms = Arrays.stream(DocumentPermission.values())
+                .sorted(Comparator.comparing(DocumentPermission::getPrimitiveValue))
+                .toList();
+
+        for (final DocumentPermission heldPerm : lowToHighPerms) {
+            for (final DocumentPermission requiredPerm : lowToHighPerms) {
+                final byte heldPermByte = heldPerm.getPrimitiveValue();
+                final byte requiredPermByte = requiredPerm.getPrimitiveValue();
+                if (heldPermByte < requiredPermByte) {
+                    assertThat(heldPerm.isHigher(requiredPerm))
+                            .isFalse();
+                    assertThat(DocumentPermission.highest(heldPerm, requiredPerm))
+                            .isEqualTo(requiredPerm);
+                } else if (heldPermByte == requiredPermByte) {
+                    assertThat(heldPerm)
+                            .isEqualTo(requiredPerm);
+                    assertThat(DocumentPermission.highest(heldPerm, requiredPerm))
+                            .isEqualTo(requiredPerm)
+                            .isEqualTo(heldPerm);
+                } else {
+                    // heldPerm > requiredPerm
+                    assertThat(heldPerm.isHigher(requiredPerm))
+                            .isTrue();
+                    assertThat(DocumentPermission.highest(heldPerm, requiredPerm))
+                            .isEqualTo(heldPerm);
+                }
+
+                if (heldPermByte >= requiredPermByte) {
+                    assertThat(heldPerm.isEqualOrHigher(requiredPerm))
+                            .isTrue();
+                    assertThat(heldPerm.isEqualOrHigher(requiredPermByte))
+                            .isTrue();
+                } else {
+                    assertThat(heldPerm.isEqualOrHigher(requiredPerm))
+                            .isFalse();
+                    assertThat(heldPerm.isEqualOrHigher(requiredPermByte))
+                            .isFalse();
+                }
+            }
+        }
     }
 
-    private void higher(final DocumentPermission permission1, final DocumentPermission permission2) {
-        assertThat(permission1.isEqualOrHigher(permission2)).isTrue();
+    /// Assert that permission1 is equal to or higher than permission2.
+    private void checkGreaterThanOrEqualTo(final DocumentPermission permission1,
+                                           final DocumentPermission permission2) {
+        assertThat(permission1.isEqualOrHigher(permission2))
+                .isTrue();
+        assertThat(permission1.isEqualOrHigher(permission2.getPrimitiveValue()))
+                .isTrue();
     }
 
     @TestFactory

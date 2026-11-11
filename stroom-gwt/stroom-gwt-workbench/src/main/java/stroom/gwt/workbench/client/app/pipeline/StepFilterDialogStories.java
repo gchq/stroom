@@ -152,6 +152,37 @@ public final class StepFilterDialogStories {
                     play.keyboard("{ArrowUp}");
                     play.expect(first).toHaveAttribute("aria-selected", "true");
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // Choosing another element leaves none of the XPath filters selected, so Edit and
+                // Delete are disabled. Before, the last element's filter stayed selected, with Edit
+                // and Delete enabled for it
+                .story("OtherElementClearsFilter", StepFilterDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    screen.findByText("Change Step Filters", StroomDom.DIALOG_TITLE);
+                    final Play xpathList = screen.within(screen.querySelector("#steppingConditions"));
+                    final Query edit = screen.getByTitle("Edit Selected XPath Filter");
+                    final Query delete = screen.getByTitle("Delete Selected XPath Filters");
+                    // The filter added is selected
+                    play.click(screen.getByTitle("New XPath Filter"));
+                    play.click(dialog(screen, "Add XPath Filter").getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(xpathList.getByText("Exists")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(edit).not().toHaveAttribute("aria-disabled"));
+                    play.expect(delete).not().toHaveAttribute("aria-disabled");
+                    // Another element: none of its (no) filters is selected
+                    final Play elements = screen.within(screen.querySelector(".stepping-filter-editor__elements"));
+                    play.click(elements.getByText("xmlWriter"));
+                    play.waitFor(() -> play.expect(xpathList.queryByText("Exists")).toBeNull());
+                    play.waitFor(() -> play.expect(edit).toHaveAttribute("aria-disabled", "true"));
+                    play.expect(delete).toHaveAttribute("aria-disabled", "true");
+                    // Back to the first: its filter is listed, but not selected
+                    play.click(elements.getByText("xsltFilter"));
+                    play.waitFor(() -> play.expect(xpathList.getByText("Exists")).toBeInTheDocument());
+                    play.expect(xpathList.getByText("Exists").closest(StroomDom.GRID_ROW))
+                            .not().toHaveClass(StroomDom.SELECTED_ROW);
+                    play.expect(edit).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 });
     }
 

@@ -350,7 +350,10 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     /// @return The item that stands for no value, e.g. `Never`, shown when the value is null, or
     /// null for none (the box is then empty).
     protected SelectionItem getNoValueItem() {
-        return null;
+        // E.g. the list's "None" item, which clears the choice (SimpleSelectionListModel)
+        return model == null
+                ? null
+                : model.getNoValueItem();
     }
 
     public String getText() {

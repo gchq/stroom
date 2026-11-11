@@ -19,6 +19,8 @@ package stroom.security.impl.event;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Inject;
@@ -29,6 +31,8 @@ import jakarta.ws.rs.client.Entity;
 @Singleton
 @AutoLogged(OperationType.UNLOGGED) //Perm changes logged by DocPermissionResourceImpl
 class PermissionChangeResourceImpl implements PermissionChangeResource {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PermissionChangeResourceImpl.class);
 
     private final Provider<NodeService> nodeServiceProvider;
     private final Provider<PermissionChangeEventHandlers> permissionChangeEventHandlersProvider;
@@ -55,7 +59,7 @@ class PermissionChangeResourceImpl implements PermissionChangeResource {
                 },
                 builder ->
                         builder.post(Entity.json(event)));
-
+        LOGGER.debug("fireChange() - nodeName: {}, event: {}, result: {}", nodeName, event, result);
         return result;
     }
 }

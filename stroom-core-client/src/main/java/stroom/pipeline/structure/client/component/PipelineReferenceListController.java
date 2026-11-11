@@ -201,6 +201,9 @@ public class PipelineReferenceListController extends Controller {
                                 builder.getReferences().getAddList().add(updated);
                             }
                             setPipelineData(builder.build());
+                            // The reference added or edited (UI-GUIDE.md, "What a list selects"); it
+                            // once left none selected
+                            view.getSelectionModel().setSelected(updated);
                             refresh();
                             e.hide();
                         }
@@ -232,6 +235,9 @@ public class PipelineReferenceListController extends Controller {
             }
 
             setPipelineData(builder.build());
+            // The reference in its place; an inherited one, still listed as removed, stays selected
+            // for Restore (it once had to be selected again)
+            view.getSelectionModel().selectNextAfterRemove(List.of(selected));
             refresh();
         }
     }
@@ -257,7 +263,6 @@ public class PipelineReferenceListController extends Controller {
     private void refresh() {
         referenceStateMap.clear();
         references.clear();
-        view.getSelectionModel().clear();
 
         if (currentElement != null) {
             final String id = currentElement.getId();

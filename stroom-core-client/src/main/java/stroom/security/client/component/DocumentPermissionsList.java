@@ -71,6 +71,8 @@ public class DocumentPermissionsList extends Component {
     /// [#addColumns(DocRefCell.Builder)].
     public DocumentPermissionsList() {
         initWidget(BINDER.createAndBindUi(this));
+        // A document's permissions fetched again after an edit are the same row
+        dataGrid.setKeyProvider(FindResultWithPermissions::getFindResult);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         editButton.setOnClick(() -> onEdit.run());
         filterButton.setOnClick(() -> onFilter.run());

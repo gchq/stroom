@@ -180,7 +180,9 @@ public final class ProcessorTaskSummaryStories {
                         context -> render(context, RestReply.json(SUMMARY), RestReply.json(SUMMARY)))
                 .withPlay(play -> {
                     selectAndRefresh(play);
-                    expectProcessingRowSelected(play, "3");
+                    // The row is unchanged, so its selection doesn't change and its tasks aren't
+                    // asked for again (the row was once deselected and selected again)
+                    expectProcessingRowSelected(play, "3", 1);
                     expectNoProblems(play);
                 })
                 // The pager's Refresh fetches the summary again, and the selected row's group now has
@@ -196,7 +198,9 @@ public final class ProcessorTaskSummaryStories {
                     expectRow(play, 0, "Events Pipeline", "EVENTS", "10", "Processing", "4");
                     expectRow(play, 1, "Events Pipeline", "EVENTS", "10", "Complete", "12,345");
                     expectRow(play, 2, "Reference Pipeline", "REFERENCE", "5", "Queued", "7");
-                    expectProcessingRowSelected(play, "4");
+                    // The row changed, so the selection's event fires and its tasks are asked for
+                    // again
+                    expectProcessingRowSelected(play, "4", 2);
                     expectNoProblems(play);
                 })
                 // A row's Info icon shows the row's key data in a tooltip
@@ -318,12 +322,14 @@ public final class ProcessorTaskSummaryStories {
     }
 
     // Checks the 'Processing' row, with the count given, is the one row selected after the refresh,
-    // and its tasks are listed. Selecting the row again (once the refreshed summary has arrived)
-    // asks for its tasks a second time
-    private static void expectProcessingRowSelected(final Play play, final String count) {
+    // its tasks are listed, and they were asked for the number of times given
+    private static void expectProcessingRowSelected(final Play play,
+                                                    final String count,
+                                                    final int taskRequests) {
         final Play summary = summary(play);
         final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
-        play.waitFor(() -> play.expect("task requests", () -> countRequests(requests, FIND_TASKS_PATH)).toBe(2));
+        play.waitFor(() -> play.expect("task requests", () -> countRequests(requests, FIND_TASKS_PATH))
+                .toBe(taskRequests));
         play.expect(summary.querySelectorAll(StroomDom.GRID_ROW).nth(0)).toHaveTextContent(count);
         play.expect(summary.getByText(PROCESSING).closest(StroomDom.GRID_ROW)).toHaveClass(StroomDom.SELECTED_ROW);
         play.expect(summary.querySelectorAll("." + StroomDom.SELECTED_ROW)).toHaveLength(1);

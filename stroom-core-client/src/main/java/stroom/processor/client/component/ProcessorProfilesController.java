@@ -16,12 +16,14 @@
 
 package stroom.processor.client.component;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.component.ContentTabController;
 import stroom.processor.client.ProcessorProfileClient;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.util.client.CountDownAndRun;
 import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.HasRefresh;
 
@@ -30,6 +32,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
+import java.util.Objects;
 
 /// Shows the processor profiles, and adds, edits and deletes them.
 public class ProcessorProfilesController extends ContentTabController implements HasRefresh {
@@ -67,7 +70,14 @@ public class ProcessorProfilesController extends ContentTabController implements
 
     private void add() {
         final ProcessorProfile processorProfile = ProcessorProfile.builder().name("New Profile").build();
-        editProvider.get().show(this, processorProfile, "Create Processor Profile", result -> refresh());
+        editProvider.get().show(this, processorProfile, "Create Processor Profile", result -> {
+            // The new profile, if the page shows it (UI-GUIDE.md, "What a list selects")
+            if (result != null) {
+                processorProfileList.getSelectionModel().selectWhenShown(row ->
+                        Objects.equals(row.getId(), result.getId()));
+            }
+            refresh();
+        });
     }
 
     private void edit() {
@@ -89,14 +99,24 @@ public class ProcessorProfilesController extends ContentTabController implements
         if (!NullSafe.isEmptyCollection(list)) {
             String message = "Are you sure you want to delete the selected processor profile?";
             if (list.size() > 1) {
-                message = "Are you sure you want to delete the selected processor profile?";
+                message = "Are you sure you want to delete the selected processor profiles?";
             }
             ConfirmEvent.fire(ProcessorProfilesController.this, message,
                     result -> {
                         if (result) {
-                            processorProfileList.getSelectionModel().clear();
+                            // Once all are answered, the profile in place of the first
+                            final CountDownAndRun countdown = new CountDownAndRun(list.size(), () -> {
+                                processorProfileList.getSelectionModel().selectNextAfterRemove(list);
+                                refresh();
+                            });
                             for (final ProcessorProfile processorProfile : list) {
-                                processorProfileClient.delete(processorProfile.getId(), response -> refresh(), this);
+                                processorProfileClient.delete(processorProfile.getId(),
+                                        response -> countdown.countdown(),
+                                        error -> {
+                                            AlertEvent.fireError(this, error.getMessage(), null);
+                                            countdown.countdown();
+                                        },
+                                        this);
                             }
                         }
                     });

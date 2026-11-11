@@ -95,7 +95,11 @@ public class NodeStatusList extends Component {
     /// Makes an empty list.
     public NodeStatusList() {
         initWidget(BINDER.createAndBindUi(this));
+        // A node is the same row by its name (as the screen selects one), whatever its id
+        dataGrid.setKeyProvider(row -> NullSafe.get(row, NodeStatusResult::getNode, Node::getName));
         selectionModel = dataGrid.addDefaultSelectionModel(false);
+        // The pane beside it shows the selected row (UI-GUIDE.md, "What a list selects")
+        selectionModel.setSelectFirst(true);
         redrawDelayedUpdate = new DelayedUpdate(dataGrid::redraw);
         addColumns();
         dataGrid.addColumnSortHandler(event -> onSortChange.run());

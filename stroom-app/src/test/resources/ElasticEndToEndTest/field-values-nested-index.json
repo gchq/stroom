@@ -1,0 +1,38 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "StreamId": { "type": "long" },
+      "EventId": { "type": "long" },
+      "Date": { "type": "date" },
+      "Users": {
+        "type": "nested",
+        "properties": {
+          "Name": { "type": "keyword" },
+          "Message": {
+            "type": "match_only_text",
+            "fields": {
+              "keyword": { "type": "keyword" }
+            }
+          },
+          "Address": {
+            "type": "object",
+            "properties": {
+              "City": { "type": "keyword" }
+            }
+          },
+          "Roles": {
+            "type": "nested",
+            "properties": {
+              "Role": { "type": "keyword" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

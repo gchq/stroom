@@ -32,6 +32,7 @@ import stroom.pathways.shared.UpdatePathway;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.util.client.CountDownAndRun;
 import stroom.util.shared.ResultPage;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
@@ -180,14 +181,18 @@ public class PathwayListController extends Controller {
 
             ConfirmEvent.fire(this, message, result -> {
                 if (result) {
+                    // Once all are answered, the pathway in place of the first (UI-GUIDE.md, "What a
+                    // list selects")
+                    final CountDownAndRun countdown = new CountDownAndRun(list.size(), () -> {
+                        view.getSelectionModel().selectNextAfterRemove(list);
+                        refresh();
+                    });
                     for (final Pathway pathway : list) {
                         restFactory
                                 .create(PATHWAYS_RESOURCE)
                                 .method(res -> res.deletePathway(new DeletePathway(docRef, pathway.getName())))
-                                .onSuccess(response -> {
-                                    view.getSelectionModel().clear();
-                                    refresh();
-                                })
+                                .onSuccess(response -> countdown.countdown())
+                                .onFailure(new DefaultErrorHandler(this, countdown::countdown))
                                 .owner(this)
                                 .taskMonitorFactory(view.getTaskMonitor())
                                 .exec();

@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A column's width (form.css), as dragging its header's edge sets it: the keyboard's way to resize -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="columnWidth" label="Width (pixels)" addStyleNames="dock-min"
+                        helpText="The column's width in pixels, as dragging the edge of its header sets it."
+                        screenReaderText="The column's width in pixels.">
+            <valuespinner:ValueSpinner ui:field="width"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

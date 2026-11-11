@@ -132,12 +132,10 @@ public final class NodesScreenStories {
                 .story("NodeJobs", context -> render(context, null))
                 .withPlay(play -> {
                     play.findByText("node1a");
-                    // Before selecting, the bottom pane is blank: GWT's job list is a plain grid with
-                    // no empty-state text, and no heading until a node is selected
-                    play.expect(play.queryByText(TEXT_ALL_JOBS_ON_NODE1A)).toBeNull();
-                    play.expect(play.queryByText("Data Retention")).toBeNull();
-                    // Select node1a: its job list loads in the bottom pane
-                    play.click(play.getByText("node1a"));
+                    // The first node (node1a) is selected, as the bottom pane shows the selected
+                    // node's jobs: its job list loads there without a click
+                    play.waitFor(() -> play.expect(play.getByText("node1a").closest(StroomDom.GRID_ROW))
+                            .toHaveClass(StroomDom.SELECTED_ROW));
                     play.findByText("Data Retention");
                     // GWT heads the pane 'All jobs on node ...'
                     // (NodeJobListController.updateFormGroupHeading)
@@ -172,6 +170,29 @@ public final class NodesScreenStories {
                     play.click(ticks.nth(1));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put("/node/v1/enabled/node2b").withJsonBody("true").toSpyMatcher()));
+                    expectNoProblems(play);
+                })
+                // Selecting another node leaves none of its jobs selected: back on the first node, the
+                // job selected there is no longer selected. The last node's selected jobs stayed
+                // selected, hidden, and showed selected again
+                .story("SwitchNodeClearsJobSelection", context -> render(context, null))
+                .withPlay(play -> {
+                    play.click(play.findByText("node1a"));
+                    play.click(play.findByText("Data Retention"));
+                    play.waitFor(() -> play.expect(play.getByText("Data Retention").closest(StroomDom.GRID_ROW))
+                            .toHaveClass(StroomDom.SELECTED_ROW));
+                    // Another node, which runs no jobs
+                    play.click(play.getByText("node2b"));
+                    play.findByText("All jobs on node 'node2b'");
+                    play.waitFor(() -> play.expect(play.queryByText("Data Retention")).toBeNull());
+                    // Back to the first
+                    play.click(play.getByText("node1a"));
+                    play.findByText(TEXT_ALL_JOBS_ON_NODE1A);
+                    play.findByText("Data Retention");
+                    play.expect(play.getByText("Data Retention").closest(StroomDom.GRID_ROW))
+                            .not().toHaveClass(StroomDom.SELECTED_ROW);
+                    play.expect(play.getByText("node1a").closest(StroomDom.GRID_ROW))
+                            .toHaveClass(StroomDom.SELECTED_ROW);
                     expectNoProblems(play);
                 });
     }

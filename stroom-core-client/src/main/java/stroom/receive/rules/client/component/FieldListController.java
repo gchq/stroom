@@ -83,6 +83,8 @@ public class FieldListController extends Controller {
 
         fieldEditorProvider.get().edit(this, "New Field", QueryField.createText(""), otherNames, newField -> {
             fields.add(newField);
+            // The new field (UI-GUIDE.md, "What a list selects")
+            view.getSelectionModel().setSelected(newField);
             refresh();
             markChanged();
         });
@@ -100,6 +102,9 @@ public class FieldListController extends Controller {
 
             fieldEditorProvider.get().edit(this, "Edit Field", field, otherNames, newField -> {
                 fields.set(fields.indexOf(field), newField);
+                // The field as it now is, renamed or not (a renamed field's old name was once left
+                // selected, so a second Edit threw)
+                view.getSelectionModel().setSelected(newField);
                 refresh();
                 markChanged();
             });
@@ -116,8 +121,9 @@ public class FieldListController extends Controller {
 
             ConfirmEvent.fire(this, message, result -> {
                 if (result) {
+                    // The field in place of the first, as the fields are sorted
+                    view.getSelectionModel().selectNextAfterRemove(list);
                     fields.removeAll(list);
-                    view.getSelectionModel().clear();
                     refresh();
                     markChanged();
                 }

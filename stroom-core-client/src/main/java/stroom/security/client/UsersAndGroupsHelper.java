@@ -119,10 +119,16 @@ public class UsersAndGroupsHelper {
                 : CellIcon.of(SvgImage.USER, "User", isEnabled);
     }
 
+    /// What a list of users does once a user is created or changed: the user is selected if the
+    /// page fetched again shows them, else none is (UI-GUIDE.md, "What a list selects").
+    ///
+    /// @param userList The list.
+    /// @return Given the user created or changed, or `null` if not known.
     public static Consumer<User> createAfterChangeConsumer(final UserListController userList) {
         return user -> {
-            userList.getSelectionModel()
-                    .clear(true);
+            if (user != null) {
+                userList.getSelectionModel().selectWhenShown(row -> user.getUuid().equals(row.getUuid()));
+            }
             userList.refresh();
         };
     }

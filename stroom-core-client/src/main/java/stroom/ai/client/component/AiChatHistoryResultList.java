@@ -54,6 +54,8 @@ public class AiChatHistoryResultList extends Component {
     /// Makes an empty list, with no column until [#addColumn(AiChatCell)].
     public AiChatHistoryResultList() {
         initWidget(BINDER.createAndBindUi(this));
+        // A chat fetched again (e.g. updated since) is the same row
+        resultList.setKeyProvider(AiChat::getId);
     }
 
     /// Adds the list's one column.

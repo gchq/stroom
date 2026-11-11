@@ -26,18 +26,25 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.datasource.DenseVectorFieldConfig;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.IndexField;
+import stroom.query.api.datasource.QueryOptionUtil;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.IndexFieldCache;
+import stroom.search.elastic.shared.ElasticDenseVectorSettings;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.search.elastic.shared.ElasticIndexFieldSettings;
+import stroom.search.elastic.shared.ElasticVirtualFieldGroup;
 import stroom.util.functions.TriFunction;
+import stroom.util.shared.NullSafe;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.mapping.Property.Kind;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchAllQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch._types.query_dsl.UntypedRangeQuery;
@@ -49,6 +56,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +78,8 @@ public class SearchExpressionQueryBuilder {
     private static final BigInteger UNSIGNED_LONG_MAX = BigInteger.ONE.shiftLeft(Long.SIZE).subtract(BigInteger.ONE);
     private static final Pattern WILDCARD_PATTERN = Pattern.compile(".*[*?].*");
     private static final Pattern QUOTED_PATTERN = Pattern.compile("^\"(.+)\"$");
+    // The most values Elasticsearch accepts in one `terms` query by default (`index.max_terms_count`)
+    static final int MAX_TERMS_COUNT = 65_536;
     private static final Pattern IPV4_ADDRESS_PATTERN =
             Pattern.compile("^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})(?:/(\\d{1,2}))?$");
     private static final int IPV4_OCTET_COUNT = 4;
@@ -83,6 +93,10 @@ public class SearchExpressionQueryBuilder {
     private final WordListProvider wordListProvider;
     private final DateTimeSettings dateTimeSettings;
     private final ElasticQueryParams elasticQueryParams;
+    // The doc's mapped fields by name, built when first needed
+    private Map<String, ElasticIndexField> mappedFields;
+    // How many virtual field groups are being built, whose fields need not be enabled
+    private int virtualGroupDepth;
 
     public SearchExpressionQueryBuilder(
             final Provider<AiService> aiServiceProvider,
@@ -224,7 +238,7 @@ public class SearchExpressionQueryBuilder {
             if (field == null) {
                 return null;
             }
-            final IndexField indexField = indexFieldCache.get(indexDoc.asDocRef(), field.trim());
+            final IndexField indexField = resolveField(field.trim());
             if (!(indexField instanceof final ElasticIndexField elasticIndexField)) {
                 return null;
             }
@@ -280,11 +294,21 @@ public class SearchExpressionQueryBuilder {
         if (field == null || field.isEmpty()) {
             throw new IllegalArgumentException("Field not set");
         }
-        final IndexField indexField = indexFieldCache.get(indexDoc.asDocRef(), field);
+        final IndexField indexField = resolveField(field);
         if (!(indexField instanceof final ElasticIndexField elasticIndexField)) {
             throw new SearchException("Field not found in index: " + field);
         }
+        checkFieldUsable(elasticIndexField);
+        if (elasticIndexField.isVirtual()) {
+            return buildVirtualFieldQuery(field, condition, value, docRef, enclosingPaths);
+        }
         final String fieldName = elasticIndexField.getFldName();
+
+        // Work out the effective field-level query options, e.g. case-insensitive matching, from those set on
+        // the term and the defaults for the field's mapping type
+        final Map<String, String> options = QueryOptionUtil.resolve(
+                ElasticQueryOptionSets.get(elasticIndexField.getNativeType()),
+                expressionTerm.getOptions());
 
         // Resolve the ordered list of `nested` object paths (outermost first) that this field lives
         // under, other than those the query is already inside. This is computed once per term and threaded
@@ -307,7 +331,7 @@ public class SearchExpressionQueryBuilder {
             if (docRef == null || docRef.getUuid() == null) {
                 throw new IllegalArgumentException("Dictionary not set for field: " + field);
             }
-            return buildDictionaryQuery(condition, fieldName, docRef, elasticIndexField, nestedPaths);
+            return buildDictionaryQuery(condition, fieldName, docRef, elasticIndexField, nestedPaths, options);
         }
         if (value == null || value.isEmpty()) {
             return null;
@@ -330,8 +354,7 @@ public class SearchExpressionQueryBuilder {
             return buildScalarQuery(
                     condition, elasticIndexField, fieldName, nestedPaths, value, this::getUnsignedLong);
         } else if (Kind.Version.jsonValue().equals(nativeType)) {
-            return buildScalarQuery(
-                    condition, elasticIndexField, fieldName, nestedPaths, value, this::getVersion);
+            return buildVersionQuery(condition, elasticIndexField, fieldName, nestedPaths, value);
         } else if (elasticFieldType.equals(FieldType.ID) ||
             elasticFieldType.equals(FieldType.LONG) ||
             elasticFieldType.equals(FieldType.INTEGER)) {
@@ -350,7 +373,7 @@ public class SearchExpressionQueryBuilder {
             return buildScalarQuery(
                     condition, elasticIndexField, fieldName, nestedPaths, value, this::getIpV4Address);
         } else {
-            return buildStringQuery(condition, value, elasticIndexField, fieldName, nestedPaths);
+            return buildStringQuery(condition, value, elasticIndexField, fieldName, nestedPaths, options);
         }
     }
 
@@ -358,22 +381,23 @@ public class SearchExpressionQueryBuilder {
                                    final String expression,
                                    final ElasticIndexField indexField,
                                    final String fieldName,
-                                   final List<String> nestedPaths) {
+                                   final List<String> nestedPaths,
+                                   final Map<String, String> options) {
         final List<String> terms = tokenizeExpression(expression).filter(term -> !term.isEmpty()).toList();
         if (terms.isEmpty()) {
             return null;
         }
 
         final BiFunction<String, String, Query> buildQueryFn;
-        if (Kind.Keyword.jsonValue().equals(indexField.getNativeType())) {
-            // Elasticsearch field mapping type is `keyword`, so generate a term-level query
-            buildQueryFn = this::buildKeywordQuery;
+        if (ElasticQueryOptionSets.isTermLevelStringType(indexField.getNativeType())) {
+            // Elasticsearch field mapping type is `keyword` or `wildcard`, so generate a term-level query
+            buildQueryFn = (field, value) -> buildKeywordQuery(field, value, options);
         } else if (Kind.DenseVector.jsonValue().equals(indexField.getNativeType())) {
             // Type is `dense_vector`, so generate a `knn` query
             buildQueryFn = this::buildDenseVectorQuery;
         } else {
-            // This is a type other than `keyword`, such as `text` or `wildcard`. Perform a full-text match.
-            buildQueryFn = this::buildTextQuery;
+            // This is a type such as `text`, so perform a full-text match
+            buildQueryFn = (field, value) -> buildTextQuery(field, value, options);
         }
 
         switch (condition) {
@@ -387,11 +411,14 @@ public class SearchExpressionQueryBuilder {
                 return wrapInNested(nestedPaths, QueryBuilders.regexp(q -> q
                         .field(fieldName)
                         .value(expression)
+                        .caseInsensitive(getCaseInsensitive(options))
                 ));
             }
             case IN -> {
                 final Query inQuery;
-                if (terms.size() > 1) {
+                if (terms.size() > 1 && canMergeIntoTerms(indexField.getNativeType(), options)) {
+                    inQuery = buildKeywordValuesQuery(fieldName, terms, options);
+                } else if (terms.size() > 1) {
                     inQuery = BoolQuery.of(q -> q
                             .should(terms.stream()
                                     .map(term -> buildQueryFn.apply(fieldName, term))
@@ -409,58 +436,382 @@ public class SearchExpressionQueryBuilder {
     }
 
     /**
-     * Creates an Elasticsearch query for a `keyword` field appropriate for the expression content
+     * Creates an Elasticsearch query for a `keyword` or `wildcard` field appropriate for the expression content.
+     * Values are matched case-sensitively unless the term's case-insensitive option is set. A value without
+     * wildcard characters is matched fuzzily if the term's fuzziness option is set.
      */
-    private Query buildKeywordQuery(final String fieldName, final String expression) {
+    private Query buildKeywordQuery(final String fieldName,
+                                    final String expression,
+                                    final Map<String, String> options) {
+        final Boolean caseInsensitive = getCaseInsensitive(options);
         final Matcher quotedMatcher = QUOTED_PATTERN.matcher(expression);
         if (quotedMatcher.matches()) {
-            // Expression is in quotes, so perform an exact match
-            return QueryBuilders.term(q -> q
-                    .field(fieldName)
-                    .value(quotedMatcher.group(1)));
+            // Expression is in quotes, so match the value literally, including any wildcard characters
+            return buildKeywordValueQuery(fieldName, quotedMatcher.group(1), options, caseInsensitive);
         } else if (WILDCARD_PATTERN.matcher(expression).matches()) {
             // Expression is a wildcard pattern, so return a wildcard query
             return QueryBuilders.wildcard(q -> q
                     .field(fieldName)
                     .value(expression)
-                    .caseInsensitive(true));
+                    .caseInsensitive(caseInsensitive));
         } else {
-            // Perform an exact match on the provided term
-            return QueryBuilders.term(q -> q
-                    .field(fieldName)
-                    .value(expression));
+            return buildKeywordValueQuery(fieldName, expression, options, caseInsensitive);
         }
     }
 
+    /// Creates a query matching a whole `keyword` or `wildcard` field value, fuzzily if the fuzziness option is set.
+    private Query buildKeywordValueQuery(final String fieldName,
+                                         final String value,
+                                         final Map<String, String> options,
+                                         final Boolean caseInsensitive) {
+        final String fuzziness = getFuzziness(options);
+        if (fuzziness != null) {
+            return QueryBuilders.fuzzy(q -> q
+                    .field(fieldName)
+                    .value(value)
+                    .fuzziness(fuzziness)
+                    .prefixLength(QueryOptionUtil.getInteger(options, ElasticQueryOptionSets.FUZZY_PREFIX_LENGTH))
+                    .transpositions(QueryOptionUtil.getBoolean(options, ElasticQueryOptionSets.FUZZY_TRANSPOSITIONS)));
+        }
+        return QueryBuilders.term(q -> q
+                .field(fieldName)
+                .value(value)
+                .caseInsensitive(caseInsensitive));
+    }
+
+    /// Finds a field by name. The index doc's own fields and settings come first, as they are read afresh with the
+    /// doc, whereas the field cache may hold a field for some time after the mapping or settings change. A mapped
+    /// field takes precedence over a virtual field of the same name.
+    ///
+    /// @param fieldName the name of the field
+    /// @return the field, or `null` if there is no such field
+    private IndexField resolveField(final String fieldName) {
+        final Map<String, ElasticIndexField> fields = getMappedFields();
+        final ElasticIndexField mappedField = fields.get(fieldName);
+        if (mappedField != null) {
+            return mappedField;
+        }
+        final IndexField cachedField = indexFieldCache.get(indexDoc.asDocRef(), fieldName);
+        final boolean cachedIsVirtual = cachedField instanceof final ElasticIndexField elasticField
+                                        && elasticField.isVirtual();
+        if (cachedField != null && !cachedIsVirtual && fields.isEmpty()) {
+            // The doc holds no fields, so rely on the cache for mapped fields
+            return cachedField;
+        }
+        final ElasticIndexFieldSettings settings = indexDoc.findFieldSettings(fieldName);
+        if (settings != null && settings.isVirtual()) {
+            return ElasticSearchProvider.createVirtualField(fieldName);
+        }
+        return cachedIsVirtual
+                ? null
+                : cachedField;
+    }
+
+    private Map<String, ElasticIndexField> getMappedFields() {
+        if (mappedFields == null) {
+            mappedFields = new HashMap<>();
+            NullSafe.list(indexDoc.getFields()).forEach(field -> mappedFields.put(field.getFldName(), field));
+        }
+        return mappedFields;
+    }
+
+    /// Throws if a field can't be used in a query, because it is disabled or its source indices disagree on its type.
+    private void checkFieldUsable(final ElasticIndexField field) {
+        if (field.hasTypeConflict()) {
+            throw new SearchException("Field '" + field.getFldName() + "' has conflicting types across the source " +
+                                      "indices of " + indexDoc.getName() + ", so can't be queried");
+        }
+        // A virtual field's groups may use fields that are disabled, so that users see only the virtual field
+        if (virtualGroupDepth == 0 && !ElasticSearchProvider.isFieldEnabled(indexDoc, field)) {
+            throw new SearchException("Field '" + field.getFldName() + "' is disabled in " + indexDoc.getName());
+        }
+    }
+
+    /// Creates a query matching any of several values of a `keyword` field. Exact values are matched by a single
+    /// `terms` query (split into several when there are more values than one `terms` query may hold), and
+    /// wildcard patterns by their own `wildcard` queries. Values are interpreted as by [#buildKeywordQuery].
+    private Query buildKeywordValuesQuery(final String fieldName,
+                                          final List<String> values,
+                                          final Map<String, String> options) {
+        final List<FieldValue> exactValues = new ArrayList<>();
+        final List<Query> wildcardQueries = new ArrayList<>();
+        for (final String value : values) {
+            final Matcher quotedMatcher = QUOTED_PATTERN.matcher(value);
+            if (quotedMatcher.matches()) {
+                exactValues.add(FieldValue.of(quotedMatcher.group(1)));
+            } else if (WILDCARD_PATTERN.matcher(value).matches()) {
+                wildcardQueries.add(buildKeywordQuery(fieldName, value, options));
+            } else {
+                exactValues.add(FieldValue.of(value));
+            }
+        }
+        final List<Query> queries = new ArrayList<>();
+        for (int from = 0; from < exactValues.size(); from += MAX_TERMS_COUNT) {
+            final List<FieldValue> chunk = exactValues.subList(
+                    from, Math.min(from + MAX_TERMS_COUNT, exactValues.size()));
+            queries.add(QueryBuilders.terms(q -> q
+                    .field(fieldName)
+                    .terms(t -> t.value(chunk))));
+        }
+        queries.addAll(wildcardQueries);
+        if (queries.size() == 1) {
+            return queries.getFirst();
+        }
+        return BoolQuery.of(q -> q.should(queries))._toQuery();
+    }
+
+    /// Creates the query for a term on a virtual field: the expressions of the named groups, ORed together.
+    ///
+    /// @param fieldName      the name of the virtual field
+    /// @param condition      the term's condition
+    /// @param value          the term's value, naming one or more groups
+    /// @param dictionaryRef  for `in dictionary`, the dictionary whose lines name groups
+    /// @param enclosingPaths the `nested` object paths the query will be placed inside
+    private Query buildVirtualFieldQuery(final String fieldName,
+                                         final Condition condition,
+                                         final String value,
+                                         final DocRef dictionaryRef,
+                                         final List<String> enclosingPaths) {
+        final List<String> groupNames = switch (condition) {
+            case EQUALS, NOT_EQUALS -> NullSafe.isBlankString(value)
+                    ? List.of()
+                    : List.of(unquote(value));
+            case IN -> tokenizeExpression(value).map(this::unquote).toList();
+            case IN_DICTIONARY -> {
+                if (dictionaryRef == null || dictionaryRef.getUuid() == null) {
+                    throw new IllegalArgumentException("Dictionary not set for field: " + fieldName);
+                }
+                yield Arrays.stream(wordListProvider.getWords(dictionaryRef))
+                        .map(String::trim)
+                        .filter(line -> !line.isEmpty())
+                        .toList();
+            }
+            default -> throw new UnsupportedOperationException(
+                    "Unsupported condition '" + condition.getDisplayValue() + "' for virtual field '" + fieldName +
+                    "'");
+        };
+        if (groupNames.isEmpty()) {
+            return null;
+        }
+
+        final List<ElasticVirtualFieldGroup> groups = NullSafe.list(NullSafe.get(
+                indexDoc.findFieldSettings(fieldName),
+                ElasticIndexFieldSettings::getVirtualGroups));
+        final List<Query> groupQueries = new ArrayList<>();
+        for (final String groupName : groupNames) {
+            final ElasticVirtualFieldGroup group = groups.stream()
+                    .filter(candidate -> groupName.equals(candidate.getName()))
+                    .findFirst()
+                    .orElseThrow(() -> new SearchException(
+                            "Unknown group '" + groupName + "' for virtual field '" + fieldName + "'"));
+            groupQueries.add(buildVirtualGroupQuery(fieldName, group, enclosingPaths));
+        }
+
+        final Query query = groupQueries.size() == 1
+                ? groupQueries.getFirst()
+                : BoolQuery.of(q -> q.should(groupQueries))._toQuery();
+        return Condition.NOT_EQUALS.equals(condition)
+                ? negate(query)
+                : query;
+    }
+
+    /// Creates the query for one group of a virtual field from its expression, after checking that the expression
+    /// only uses `keyword` fields of the index mapping.
+    ///
+    /// @param fieldName      the name of the virtual field
+    /// @param group          the group
+    /// @param enclosingPaths the `nested` object paths the query will be placed inside
+    /// @return the group's query
+    public Query buildVirtualGroupQuery(final String fieldName,
+                                 final ElasticVirtualFieldGroup group,
+                                 final List<String> enclosingPaths) {
+        final ExpressionOperator expression = group.getExpression();
+        if (expression != null) {
+            checkVirtualGroupFields(fieldName, group, expression);
+        }
+        Query query = null;
+        if (expression != null) {
+            virtualGroupDepth++;
+            try {
+                query = getQuery(expression, enclosingPaths);
+            } finally {
+                virtualGroupDepth--;
+            }
+        }
+        if (query == null) {
+            throw new SearchException("Group '" + group.getName() + "' of virtual field '" + fieldName +
+                                      "' has no conditions");
+        }
+        return query;
+    }
+
+    private void checkVirtualGroupFields(final String fieldName,
+                                         final ElasticVirtualFieldGroup group,
+                                         final ExpressionItem item) {
+        if (!item.enabled()) {
+            return;
+        }
+        if (item instanceof final ExpressionOperator operator) {
+            NullSafe.list(operator.getChildren())
+                    .forEach(child -> checkVirtualGroupFields(fieldName, group, child));
+        } else if (item instanceof final ExpressionTerm term) {
+            final String termField = NullSafe.get(term.getField(), String::trim);
+            final IndexField indexField = termField == null
+                    ? null
+                    : resolveField(termField);
+            if (!(indexField instanceof final ElasticIndexField elasticIndexField)
+                || elasticIndexField.isVirtual()
+                || !Kind.Keyword.jsonValue().equals(elasticIndexField.getNativeType())) {
+                throw new SearchException("Group '" + group.getName() + "' of virtual field '" + fieldName +
+                                          "' uses field '" + termField + "', which is not a keyword field of " +
+                                          indexDoc.getName());
+            }
+        }
+    }
+
+    private String unquote(final String value) {
+        final String trimmed = value.trim();
+        final Matcher quotedMatcher = QUOTED_PATTERN.matcher(trimmed);
+        return quotedMatcher.matches()
+                ? quotedMatcher.group(1)
+                : trimmed;
+    }
+
     private Query buildDenseVectorQuery(final String fieldName, final String expression) {
-        if (indexDoc.getVectorGenerationModelRef() == null) {
-            throw new IllegalArgumentException("Vector embedding model is not defined in data source " +
-                                               indexDoc.getName());
+        final DenseVectorFieldConfig config = NullSafe.get(
+                indexDoc.findFieldSettings(fieldName),
+                ElasticIndexFieldSettings::getDenseVector,
+                ElasticDenseVectorSettings::getConfig);
+        final DocRef embeddingModelRef = NullSafe.get(config, DenseVectorFieldConfig::getEmbeddingModelRef);
+        if (embeddingModelRef == null) {
+            throw new IllegalArgumentException("Vector embedding model is not set for field '" + fieldName +
+                                               "' in data source " + indexDoc.getName());
         }
 
         // Query the embeddings API for a vector representation of the query expression
-        final OpenAIModelDoc modelDoc = aiServiceProvider.get().getOpenAIModelDoc(
-                indexDoc.getVectorGenerationModelRef());
+        final OpenAIModelDoc modelDoc = aiServiceProvider.get().getOpenAIModelDoc(embeddingModelRef);
         try {
             final EmbeddingModel embeddingModel = aiServiceProvider.get().getEmbeddingModel(modelDoc);
             final List<Float> queryVector = embeddingModel.embed(expression).content().vectorAsList();
             elasticQueryParams.addKnnFieldQuery(fieldName, expression);
-            return QueryBuilders.knn(q -> q
-                    .field(fieldName)
-                    .queryVector(queryVector));
+            // A nearest neighbour count of 0 leaves `k` to Elasticsearch's default
+            final int nearestNeighbourCount = config.getNearestNeighbourCount();
+            return QueryBuilders.knn(q -> {
+                q.field(fieldName).queryVector(queryVector);
+                if (nearestNeighbourCount > 0) {
+                    q.k(nearestNeighbourCount);
+                }
+                return q;
+            });
         } catch (final Exception e) {
             throw new RuntimeException("Failed to create vector embeddings for field " + fieldName + ". " +
                                        e.getMessage(), e);
         }
     }
 
-    private Query buildTextQuery(final String fieldName, final String expression) {
-        // Contains wildcard chars, so use a query string query, which supports these
+    /// Creates a full-text query for a field such as `text`. By default this is a `query_string` query, which
+    /// supports wildcards and query syntax. The term's options can instead match the value as a phrase, require
+    /// all of its words, or match its words fuzzily.
+    private Query buildTextQuery(final String fieldName,
+                                 final String expression,
+                                 final Map<String, String> options) {
+        if (ElasticQueryOptionSets.MATCH_MODE_PHRASE.equals(options.get(ElasticQueryOptionSets.MATCH_MODE))) {
+            return QueryBuilders.matchPhrase(q -> q
+                    .field(fieldName)
+                    .query(expression)
+                    .slop(QueryOptionUtil.getInteger(options, ElasticQueryOptionSets.PHRASE_SLOP)));
+        }
+
+        final Operator operator = ElasticQueryOptionSets.OPERATOR_AND.equals(
+                options.get(ElasticQueryOptionSets.DEFAULT_OPERATOR))
+                ? Operator.And
+                : null;
+        final String fuzziness = getFuzziness(options);
+        if (fuzziness != null && !WILDCARD_PATTERN.matcher(expression).matches()) {
+            // Fuzzy matching applies to plain words only, so wildcard patterns use a query string below
+            return QueryBuilders.match(q -> q
+                    .field(fieldName)
+                    .query(expression)
+                    .operator(operator)
+                    .fuzziness(fuzziness)
+                    .prefixLength(QueryOptionUtil.getInteger(options, ElasticQueryOptionSets.FUZZY_PREFIX_LENGTH))
+                    .maxExpansions(QueryOptionUtil.getInteger(options, ElasticQueryOptionSets.FUZZY_MAX_EXPANSIONS)));
+        }
+
+        // Use a query string query, which supports wildcards and query syntax
         return QueryBuilders.queryString(q -> q
                 .fields(fieldName)
                 .query(expression)
                 .analyzeWildcard(true)
+                .defaultOperator(operator)
         );
+    }
+
+    /// @return True if the case-insensitive option is set, otherwise null so that Elasticsearch's default
+    /// (case-sensitive) applies and the query is unchanged.
+    /// Exact values of a `keyword` or `wildcard` field can be merged into one `terms` query, unless the term's
+    /// options match them case-insensitively or fuzzily, which a `terms` query can't do.
+    ///
+    /// @param nativeType the field's mapping type
+    /// @param options    the term's effective options
+    /// @return `true` if the values can be merged into a `terms` query
+    private static boolean canMergeIntoTerms(final String nativeType, final Map<String, String> options) {
+        return ElasticQueryOptionSets.isTermLevelStringType(nativeType)
+               && getCaseInsensitive(options) == null
+               && getFuzziness(options) == null;
+    }
+
+    private static Boolean getCaseInsensitive(final Map<String, String> options) {
+        return QueryOptionUtil.getBoolean(options, ElasticQueryOptionSets.CASE_INSENSITIVE)
+                ? Boolean.TRUE
+                : null;
+    }
+
+    /// @return The Elasticsearch fuzziness, e.g. `AUTO` or `1`, or null if fuzzy matching is off.
+    private static String getFuzziness(final Map<String, String> options) {
+        final String fuzziness = options.get(ElasticQueryOptionSets.FUZZINESS);
+        return fuzziness == null || ElasticQueryOptionSets.FUZZINESS_OFF.equals(fuzziness)
+                ? null
+                : fuzziness;
+    }
+
+    /// Creates a query for a `version` field. Versions are compared by their precedence like numbers, but as they
+    /// are text, the values of the equality conditions (`=`, `!=` and `in`) may also be wildcard patterns, e.g.
+    /// `1.*`.
+    private Query buildVersionQuery(final Condition condition,
+                                    final ElasticIndexField indexField,
+                                    final String fieldName,
+                                    final List<String> nestedPaths,
+                                    final String value) {
+        if (Condition.EQUALS.equals(condition)) {
+            return wrapInNested(nestedPaths, buildVersionValueQuery(condition, fieldName, value));
+        } else if (Condition.NOT_EQUALS.equals(condition)) {
+            return negate(wrapInNested(nestedPaths, buildVersionValueQuery(condition, fieldName, value)));
+        } else if (Condition.IN.equals(condition) && WILDCARD_PATTERN.matcher(value).matches()) {
+            // Match any of the versions, some of which are wildcard patterns
+            final List<Query> versionQueries = tokenizeExpression(value)
+                    .map(version -> buildVersionValueQuery(condition, fieldName, version))
+                    .toList();
+            return wrapInNested(nestedPaths, BoolQuery.of(q -> q.should(versionQueries))._toQuery());
+        } else {
+            // Without wildcards, `in` matches the versions with a `terms` query, and the other conditions compare
+            // versions by their precedence
+            return buildScalarQuery(condition, indexField, fieldName, nestedPaths, value, this::getVersion);
+        }
+    }
+
+    /// Creates a query matching one value of a `version` field. A value containing wildcard characters, e.g. `1.*`,
+    /// is matched as a wildcard pattern, otherwise the field must hold that exact version.
+    private Query buildVersionValueQuery(final Condition condition, final String fieldName, final String value) {
+        if (WILDCARD_PATTERN.matcher(value).matches()) {
+            return QueryBuilders.wildcard(q -> q
+                    .field(fieldName)
+                    .value(value));
+        }
+        final FieldValue version = getVersion(condition, fieldName, value);
+        return QueryBuilders.term(q -> q
+                .field(fieldName)
+                .value(version));
     }
 
     private Query buildScalarQuery(
@@ -602,7 +953,7 @@ public class SearchExpressionQueryBuilder {
      * @return true if the field at the given path is mapped in Elasticsearch as a `nested` type.
      */
     private boolean isNestedField(final String path) {
-        final IndexField indexField = indexFieldCache.get(indexDoc.asDocRef(), path);
+        final IndexField indexField = resolveField(path);
         return indexField instanceof final ElasticIndexField elasticIndexField &&
                Kind.Nested.jsonValue().equals(elasticIndexField.getNativeType());
     }
@@ -807,9 +1158,20 @@ public class SearchExpressionQueryBuilder {
             final String fieldName,
             final DocRef docRef,
             final ElasticIndexField indexField,
-            final List<String> nestedPaths
+            final List<String> nestedPaths,
+            final Map<String, String> options
     ) {
         final String[] lines = wordListProvider.getWords(docRef);
+        if (canMergeIntoTerms(indexField.getNativeType(), options)) {
+            // Every line is matched by a keyword query, so merge the exact values into `terms` queries
+            final List<String> values = Arrays.stream(lines)
+                    .filter(line -> !line.isEmpty())
+                    .toList();
+            if (values.isEmpty()) {
+                return wrapInNested(nestedPaths, new BoolQuery.Builder().build()._toQuery());
+            }
+            return wrapInNested(nestedPaths, buildKeywordValuesQuery(fieldName, values, options));
+        }
         final BoolQuery.Builder builder = new BoolQuery.Builder();
 
         for (final String line : lines) {
@@ -822,9 +1184,7 @@ public class SearchExpressionQueryBuilder {
                         .field(fieldName)
                         .value(getUnsignedLong(condition, fieldName, line))));
             } else if (Kind.Version.jsonValue().equals(nativeType)) {
-                mustQueries.must(QueryBuilders.term(q -> q
-                        .field(fieldName)
-                        .value(getVersion(condition, fieldName, line))));
+                mustQueries.must(buildVersionValueQuery(condition, fieldName, line));
             } else if (elasticFieldType.equals(FieldType.ID) ||
                 elasticFieldType.equals(FieldType.LONG) ||
                 elasticFieldType.equals(FieldType.INTEGER)) {
@@ -848,9 +1208,9 @@ public class SearchExpressionQueryBuilder {
                         .field(fieldName)
                         .value(getIpV4Address(condition, fieldName, line))));
             } else if (indexField.getFldType().equals(FieldType.KEYWORD)) {
-                mustQueries.must(buildKeywordQuery(fieldName, line));
+                mustQueries.must(buildKeywordQuery(fieldName, line, options));
             } else {
-                mustQueries.must(buildTextQuery(fieldName, line));
+                mustQueries.must(buildTextQuery(fieldName, line, options));
             }
 
             builder.should(mustQueries.build()._toQuery());

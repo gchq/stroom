@@ -107,6 +107,14 @@ public class DuplicateManagementList extends Component {
         return selectionModel.getSelectedItems();
     }
 
+    /// Selects the row in place of rows deleted, once the rows are fetched again (UI-GUIDE.md,
+    /// "What a list selects").
+    ///
+    /// @param rows The rows deleted.
+    public void selectNextAfterRemove(final List<DuplicateCheckRow> rows) {
+        selectionModel.selectNextAfterRemove(rows);
+    }
+
     /// @param enabled Whether Delete can be pressed.
     public void setDeleteEnabled(final boolean enabled) {
         deleteButton.setEnabled(enabled);

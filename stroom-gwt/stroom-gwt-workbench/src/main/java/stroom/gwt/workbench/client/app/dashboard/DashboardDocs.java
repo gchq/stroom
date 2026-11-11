@@ -164,6 +164,15 @@ public final class DashboardDocs {
             query("q1", "The Query", ", \"expression\": " + operator(term("Name", "EQUALS", "alpha"))),
             THE_TABLE);
 
+    /// As [#QUERY_FIELDS_DASHBOARD], with the time range `Last hour`, for the term value picker's
+    /// scope.
+    public static final String VALUE_PICKER_DASHBOARD = doc("dash-12b", "Value Picker", null,
+            "\"designMode\": false, \"timeRange\": {\"name\": \"Last hour\", \"from\": \"now()-1h\", "
+            + "\"to\": \"now()\"}",
+            split(0, sized(tabs(0, "q1"), 400, 100), sized(tabs(0, "t1"), 300, 100)),
+            query("q1", "The Query", ", \"expression\": " + operator(term("Name", "EQUALS", "alpha"))),
+            THE_TABLE);
+
     /// A List Input of the dictionary `Colours`, allowing free text.
     public static final String LIST_INPUT_DASHBOARD = listInput("dash-13", "List Input", "");
 

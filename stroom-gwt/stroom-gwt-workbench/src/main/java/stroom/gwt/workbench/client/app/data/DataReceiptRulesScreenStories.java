@@ -120,10 +120,8 @@ public final class DataReceiptRulesScreenStories {
                 .withPlay(play -> {
                     play.findByText("Reject test feeds");
                     final Play panel = play.within(play.querySelector(EXPRESSION_PANEL));
-                    // Nothing selected -> no term is shown
-                    play.expect(panel.queryByText(TextMatch.containingIgnoreCase("Feed"))).toBeNull();
-                    // Select the rule -> its expression shows, read only
-                    play.click(play.getByText("Reject test feeds"));
+                    // The first rule is selected, as the panel shows the selected rule -> its
+                    // expression shows, read only
                     play.waitFor(() -> play.expect(panel.getByText(TextMatch.regex("Feed\\s+contains\\s+TEST", "i")))
                             .toHaveClass("expression-item__label"));
                     play.expect(panel.queryByDisplayValue("TEST")).toBeNull();
@@ -291,6 +289,109 @@ public final class DataReceiptRulesScreenStories {
                     play.sleep(100);
                     play.expect(screen.queryByText("Edit Rule", StroomDom.DIALOG_TITLE)).toBeNull();
                     expectNoProblems(play);
+                })
+                // The rule just added is selected, so Edit (without selecting it again) edits it.
+                // Before, the selection kept the rule as the editor gave it (numbered 0, where the
+                // list renumbered it 1), so Edit opened that and OK warned that the rule was
+                // deleted while it was being edited
+                .story("EditNewRule", context -> render(context, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Reject test feeds");
+                    play.click(play.getByTitle("New Rule"));
+                    final Play add = dialog(screen, "Edit Rule");
+                    play.type(add.querySelector("#ruleRuleName"), "Drop everything else");
+                    play.click(add.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Rule", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.waitFor(() -> play.expect(play.getByText("Drop everything else").closest(StroomDom.GRID_ROW))
+                            .toHaveClass(StroomDom.SELECTED_ROW));
+                    final Query edit = play.getByTitle("Edit Selected Rule");
+                    play.expect(edit).not().toHaveAttribute("aria-disabled");
+                    play.click(edit);
+                    final Play editDialog = dialog(screen, "Edit Rule");
+                    final Query name = editDialog.querySelector("#ruleRuleName");
+                    play.expect(name).toHaveValue("Drop everything else");
+                    play.type(name, " (changed)");
+                    play.click(editDialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.getByText("Drop everything else (changed)"))
+                            .toBeInTheDocument());
+                    play.expect(screen.queryByText("Edit Rule", StroomDom.DIALOG_TITLE)).toBeNull();
+                    expectNoProblems(play);
+                })
+                // A field edited (its type: a field is the same field while its name is) and edited
+                // again without selecting it again opens as it now is. Before, the selection kept the
+                // field as it was, so the second Edit opened the old type
+                .story("EditFieldTwice", context -> render(context, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Reject test feeds");
+                    play.click(play.getByText("Fields", StroomDom.LINK_TAB_LABEL));
+                    play.click(play.findByText("System"));
+                    final Query edit = play.getByTitle("Edit Selected Field");
+                    play.waitFor(() -> play.expect(edit).not().toHaveAttribute("aria-disabled"));
+                    play.click(edit);
+                    final Play first = dialog(screen, "Edit Field");
+                    play.expect(first.getByLabelText("Type")).toHaveValue("Text");
+                    play.click(first.getByLabelText("Type"));
+                    play.click(screen.findByText("Boolean", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(first.getByLabelText("Type")).toHaveValue("Boolean"));
+                    play.click(first.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Field", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    // Edit again, without selecting the field again
+                    play.expect(edit).not().toHaveAttribute("aria-disabled");
+                    play.click(edit);
+                    final Play second = dialog(screen, "Edit Field");
+                    play.expect(second.getByLabelText("Name")).toHaveValue("System");
+                    play.expect(second.getByLabelText("Type")).toHaveValue("Boolean");
+                    play.click(second.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Field", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    expectNoProblems(play);
+                })
+                // A renamed field stays selected as it now is: Edit again shows the new name. The old
+                // name was once left selected, and a second Edit threw
+                .story("RenameFieldTwice", context -> render(context, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Reject test feeds");
+                    play.click(play.getByText("Fields", StroomDom.LINK_TAB_LABEL));
+                    play.click(play.findByText("System"));
+                    final Query edit = play.getByTitle("Edit Selected Field");
+                    play.waitFor(() -> play.expect(edit).not().toHaveAttribute("aria-disabled"));
+                    play.click(edit);
+                    final Play first = dialog(screen, "Edit Field");
+                    play.clear(first.getByLabelText("Name"));
+                    play.type(first.getByLabelText("Name"), "Zone");
+                    play.click(first.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Field", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.findByText("Zone");
+                    play.waitFor(() -> play.expect(play.getByText("Zone").closest(StroomDom.GRID_ROW))
+                            .toHaveAttribute("aria-selected", "true"));
+                    play.click(edit);
+                    final Play second = dialog(screen, "Edit Field");
+                    play.expect(second.getByLabelText("Name")).toHaveValue("Zone");
+                    play.click(second.getByRole("button", StroomDom.button("Cancel")));
+                    expectNoProblems(play);
+                })
+                // Deleting the last field selects the one before it (UI-GUIDE.md, "What a list
+                // selects"); it once selected none
+                .story("DeleteLastFieldSelectsPrevious", context -> render(context, false, true, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Reject test feeds");
+                    play.click(play.getByText("Fields", StroomDom.LINK_TAB_LABEL));
+                    play.click(play.findByText("System"));
+                    play.click(play.getByTitle("Delete Selected Fields"));
+                    screen.findByText("Are you sure you want to delete the selected field?");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.queryByText("System")).toBeNull());
+                    final Query edit = play.getByTitle("Edit Selected Field");
+                    play.waitFor(() -> play.expect(edit).not().toHaveAttribute("aria-disabled"));
+                    play.click(edit);
+                    play.expect(dialog(screen, "Edit Field").getByLabelText("Name")).toHaveValue("Feed");
                 });
     }
 

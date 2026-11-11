@@ -32,3 +32,9 @@ dependencies {
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
 }
+
+// The workbench's JUnit tests are for developing the workbench, not Stroom, so the build doesn't run
+// them. Run them on purpose with -PworkbenchUnitTests, e.g. './gradlew :stroom-gwt:stroom-gwt-workbench-framework:test -PworkbenchUnitTests'
+tasks.named('test') {
+    enabled = project.hasProperty('workbenchUnitTests')
+}

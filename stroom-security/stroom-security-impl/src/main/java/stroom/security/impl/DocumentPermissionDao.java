@@ -20,13 +20,24 @@ import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import java.util.BitSet;
+import java.util.Map;
 import java.util.Set;
 
 public interface DocumentPermissionDao {
 
     UserDocumentPermissions getPermissionsForUser(String userUuid);
+
+    /// Gets the document permissions for each of the supplied users.
+    ///
+    /// The returned permissions are in no particular order.
+    /// An empty permissions object is returned for a user that has no document permissions.
+    ///
+    /// @param userRefs The [UserRef]s of the users whose document permissions are required.
+    /// @return The document permissions for each supplied user.
+    Map<UserRef, UserDocumentPermissions> getPermissionsForUsers(Set<UserRef> userRefs);
 
     DocumentPermission getDocumentUserPermission(String documentUuid, String userUuid);
 

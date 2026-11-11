@@ -155,10 +155,11 @@ public class ConditionalFormattingRulesController extends LayerController implem
 
     private void onDelete() {
         ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
-            if (ok) {
-                final ConditionalFormattingRule rule = ruleList.getSelectionModel().getSelected();
+            final ConditionalFormattingRule rule = ruleList.getSelectionModel().getSelected();
+            if (ok && rule != null) {
+                // The rule in its place (UI-GUIDE.md, "What a list selects")
+                ruleList.getSelectionModel().selectNextAfterRemove(List.of(rule));
                 rules.remove(rule);
-                ruleList.getSelectionModel().clear();
                 update();
                 setDirty(true);
             }

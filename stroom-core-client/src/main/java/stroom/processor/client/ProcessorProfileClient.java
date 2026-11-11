@@ -107,13 +107,21 @@ public class ProcessorProfileClient {
                 .exec();
     }
 
+    /// Deletes a processor profile.
+    ///
+    /// @param id                 The profile's id.
+    /// @param consumer           Given whether it was deleted.
+    /// @param errorHandler       Told if the delete failed.
+    /// @param taskMonitorFactory Shows the request is running.
     public void delete(final int id,
                        final Consumer<Boolean> consumer,
+                       final RestErrorHandler errorHandler,
                        final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(PROCESSOR_PROFILE_RESOURCE)
                 .method(res -> res.delete(id))
                 .onSuccess(consumer)
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

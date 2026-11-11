@@ -60,8 +60,14 @@ public class ElasticIndexEditor extends DocumentEditor<ElasticIndexDoc> {
                 ElasticIndexSettingsController::read,
                 ElasticIndexSettingsController::write);
         addTab(FIELDS,
-                indexFieldListProvider::get,
-                ElasticIndexFieldListController::read);
+                () -> {
+                    final ElasticIndexFieldListController fieldList = indexFieldListProvider.get();
+                    // Refresh reads the fields with any unsaved cluster or index name from Settings
+                    fieldList.setCurrentDocSupplier(this::write);
+                    return fieldList;
+                },
+                ElasticIndexFieldListController::read,
+                ElasticIndexFieldListController::write);
         addDocumentationTab(DOCUMENTATION,
                 documentationTabProvider,
                 ElasticIndexDoc::getDescription,

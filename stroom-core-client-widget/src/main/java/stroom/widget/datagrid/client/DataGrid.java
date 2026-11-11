@@ -171,6 +171,10 @@ public class DataGrid<R> extends Widget
     private HandlerRegistration selectionModelRegistration;
     private HandlerRegistration selectionPreviewRegistration;
     private ProvidesKey<R> keyProvider;
+    // Whether a selected row that isn't shown stays selected (a picker, whose selection is its value)
+    private boolean keepHiddenSelection;
+    // Whether rows have arrived since the selection last settled on the page (R-S14)
+    private boolean rowsArrived;
     private KeyboardSelectionPolicy keyboardSelectionPolicy = KeyboardSelectionPolicy.ENABLED;
     // As GWT: the keyboard row starts at 0 and follows its row's key when the rows change (R-S12).
     private int keyboardSelectedRow;
@@ -1070,6 +1074,7 @@ public class DataGrid<R> extends Widget
     /// @param keyProvider Provides the key used to recognise a row across redraws.
     public void setKeyProvider(final ProvidesKey<R> keyProvider) {
         this.keyProvider = keyProvider;
+        giveKeyToSelection();
     }
 
     /// @return The key provider, or `null`.
@@ -1099,6 +1104,7 @@ public class DataGrid<R> extends Widget
         if (selectionModel != null) {
             selectionModelRegistration = selectionModel.addSelectionChangeHandler(e -> scheduleRender());
         }
+        giveKeyToSelection();
         setStyleName("data-grid--selectable", selectionModel != null);
         scheduleRender();
     }
@@ -1117,6 +1123,80 @@ public class DataGrid<R> extends Widget
         multiSelectable = handler instanceof final DataGridSelectionEventManager<?> manager
                           && manager.isAllowMultiSelect();
         setSelectionModel(selectionModel);
+    }
+
+    // The selection compares rows by the grid's keys, so it follows a row fetched again or edited
+    // (whichever of the key provider and the selection model is given first)
+    private void giveKeyToSelection() {
+        final MultiSelectionModelImpl<R> model = multiSelectionModel();
+        if (model != null) {
+            model.setKeyProvider(keyProvider);
+            model.setRowIndex(this::indexOnPage);
+        }
+    }
+
+    // The selection model, if it is one that can follow rows by key
+    @SuppressWarnings("unchecked")
+    private MultiSelectionModelImpl<R> multiSelectionModel() {
+        return selectionModel instanceof MultiSelectionModelImpl<?>
+                ? (MultiSelectionModelImpl<R>) selectionModel
+                : null;
+    }
+
+    /// Whether a selected row that isn't shown (on another page, filtered out, or under a closed
+    /// folder) stays selected. By default it is deselected once a page's rows have all arrived, so
+    /// nothing acts on a row the user can't see (R-S14); a picker, whose selection is the value
+    /// chosen, keeps it.
+    ///
+    /// @param keepHiddenSelection Whether hidden rows stay selected.
+    public void setKeepHiddenSelection(final boolean keepHiddenSelection) {
+        this.keepHiddenSelection = keepHiddenSelection;
+    }
+
+    // Once a page's rows have all arrived, the selection settles on them: a row pending (one
+    // created, or the one in place of rows removed) is selected, else rows not shown are deselected
+    // (R-S14)
+    private void settleSelection() {
+        final MultiSelectionModelImpl<R> model = multiSelectionModel();
+        if (!rowsArrived) {
+            return;
+        }
+        if (model == null) {
+            // Nothing to settle (a grid without a multi-selection model); cleared, or the render
+            // would be scheduled again for ever
+            rowsArrived = false;
+            return;
+        }
+        if (!pageState.isComplete()) {
+            // Not yet (e.g. the pager has moved a shortened last page back, and its rows are being
+            // fetched): a changed row's event isn't held until then
+            model.flushFollowed();
+            return;
+        }
+        rowsArrived = false;
+        final List<R> rows = pageState.getRows();
+        if (model.isRemovalPending()
+            && rows.isEmpty()
+            && pageState.getPageStart() > 0
+            && pageState.getRowCount() > 0) {
+            // The removal emptied the last page: the page before, whose last row is then selected
+            final int pageSize = pageState.getPageSize();
+            setVisibleRange(Math.max(0, pageState.getPageStart() - pageSize), pageSize);
+        } else {
+            model.settle(rows, pageState.getPageStart(), keepHiddenSelection);
+        }
+    }
+
+    // The absolute index of the row with the same key as a row, or -1 if the page doesn't show it
+    private int indexOnPage(final R row) {
+        final Object key = getKey(row, -1);
+        final List<R> rows = pageState.getRows();
+        for (int i = 0; i < rows.size(); i++) {
+            if (rows.get(i) != null && key.equals(getKey(rows.get(i), i))) {
+                return pageState.getPageStart() + i;
+            }
+        }
+        return -1;
     }
 
     @SuppressWarnings("unchecked")
@@ -1264,6 +1344,11 @@ public class DataGrid<R> extends Widget
         if (pageState.setRowData(start, values)) {
             RowCountChangeEvent.fire(this, pageState.getRowCount(), pageState.isRowCountExact());
         }
+        // A selected row that arrives as a new object (fetched again, or an edited copy) stays
+        // selected as that object, so the selection never holds a stale row (after the rows are
+        // stored, as a changed row's selection event may look at them)
+        NullSafe.consume(multiSelectionModel(), model -> model.followRows(values));
+        rowsArrived = true;
         updateLoadingState();
         scheduleRender();
     }
@@ -1276,6 +1361,7 @@ public class DataGrid<R> extends Widget
     @Override
     public void setRowCount(final int count, final boolean isExact) {
         if (pageState.setRowCount(count, isExact)) {
+            rowsArrived = true;
             updateLoadingState();
             scheduleRender();
             RowCountChangeEvent.fire(this, count, isExact);
@@ -1490,7 +1576,14 @@ public class DataGrid<R> extends Widget
             renderScheduled = true;
             Scheduler.get().scheduleFinally(() -> {
                 if (renderScheduled) {
+                    // First, so the rows are drawn with the selection as it settles
+                    settleSelection();
                     render();
+                    // Rows that arrived as it settled (e.g. a selection handler gave the grid
+                    // rows, or a step back to the page before) settle in their own render
+                    if (rowsArrived && pageState.isComplete()) {
+                        scheduleRender();
+                    }
                 }
             });
         }

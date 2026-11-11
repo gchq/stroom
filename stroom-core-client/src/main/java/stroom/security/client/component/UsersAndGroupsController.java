@@ -29,7 +29,6 @@ import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.button.client.Toolbar;
@@ -44,7 +43,6 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 /// The User Groups screen ([UsersAndGroups]): every user and group, which groups can be created,
 /// edited and deleted in; below, the groups the selected one is a member of and the members of the
@@ -364,27 +362,13 @@ public class UsersAndGroupsController extends Controller {
                     .method(res -> res.addUserToGroup(user.getUuid(), group.getUuid()))
                     .onSuccess(r -> {
 
-                        // Add a consumer to monitor the new result list when there is a refresh.
-                        // This allows us to try to select the newly added item.
-                        targetList.setResultPageConsumer(resultPage -> {
-                            targetList.setResultPageConsumer(null);
-                            if (selection == null) {
-                                targetList.getSelectionModel().clear();
-                            } else {
-                                if (resultPage != null && resultPage.getValues() != null) {
-                                    final Optional<User> optional = resultPage
-                                            .getValues()
-                                            .stream()
-                                            .filter(u -> u.getUuid().equals(selection.getUuid()))
-                                            .findAny();
-                                    if (optional.isPresent()) {
-                                        targetList.getSelectionModel().setSelected(optional.get());
-                                    } else {
-                                        targetList.getSelectionModel().clear();
-                                    }
-                                }
-                            }
-                        });
+                        // The row added, if the page shows it (UI-GUIDE.md, "What a list selects")
+                        if (selection == null) {
+                            targetList.getSelectionModel().clear();
+                        } else {
+                            targetList.getSelectionModel()
+                                    .selectWhenShown(u -> u.getUuid().equals(selection.getUuid()));
+                        }
 
                         userList.refresh();
                         parentsList.refresh();
@@ -400,21 +384,18 @@ public class UsersAndGroupsController extends Controller {
                                      final UserRef group,
                                      final UserListController targetList) {
         if (NullSafe.allNonNull(user, group)) {
-            final User nextSelection = getNextSelection(targetList);
+            // The row removed is the one selected
+            final List<User> removed = targetList.getSelectionModel().getSelectedItems();
 
             restFactory
                     .create(USER_RESOURCE)
                     .method(res -> res.removeUserFromGroup(user.getUuid(), group.getUuid()))
                     .onSuccess(r -> {
+                        // The row in its place (UI-GUIDE.md, "What a list selects")
+                        targetList.getSelectionModel().selectNextAfterRemove(removed);
                         userList.refresh();
                         parentsList.refresh();
                         childrenList.refresh();
-
-                        if (nextSelection == null) {
-                            targetList.getSelectionModel().clear();
-                        } else {
-                            targetList.getSelectionModel().setSelected(nextSelection);
-                        }
                     })
                     .owner(this)
                     .taskMonitorFactory(targetList.getTaskMonitor())
@@ -453,26 +434,6 @@ public class UsersAndGroupsController extends Controller {
                     .taskMonitorFactory(parentsList.getTaskMonitor())
                     .exec();
         }
-    }
-
-    private User getNextSelection(final UserListController targetList) {
-        final User currentSelection = targetList.getSelectionModel().getSelected();
-        User nextSelection = null;
-        final ResultPage<User> resultPage = targetList.getCurrentData();
-        if (resultPage != null) {
-            final List<User> list = resultPage.getValues();
-            if (currentSelection != null && list != null) {
-                final int index = list.indexOf(currentSelection);
-                if (index == 0) {
-                    if (list.size() > 1) {
-                        nextSelection = list.get(index + 1);
-                    }
-                } else if (index > 0) {
-                    nextSelection = list.get(index - 1);
-                }
-            }
-        }
-        return nextSelection;
     }
 
     private void onCreateUserOrGroup() {

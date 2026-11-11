@@ -80,6 +80,7 @@ public class ExpressionCopier {
         builder.condition(expressionTerm.getCondition());
         builder.value(expressionTerm.getValue());
         builder.docRef(expressionTerm.getDocRef());
+        builder.options(expressionTerm.getOptions());
         return builder;
     }
 }

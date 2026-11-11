@@ -81,6 +81,8 @@ public class UserRefPopup extends Component {
         selectionEventManager.setMoveUpFromFirst(dialog::focus);
         selectionEventManager.setTypedHandler(dialog::typeInFilter);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
+        // The user chosen stays chosen while a filter hides them
+        dataGrid.setKeepHiddenSelection(true);
         dialog.setFilterMoveDown(this::focusSelected);
         addColumns();
 

@@ -329,13 +329,8 @@ public class MetaListController extends Controller {
         // There might have been a selection change so fire a data selection event.
         selectionListeners.fire(selection);
 
-        final MetaRow selected = getSelectionModel().getSelected();
-        if (selected != null) {
-            if (!resultPage.getValues().contains(selected)) {
-                getSelectionModel().setSelected(selected, false);
-            }
-        }
-
+        // A selected row the page doesn't show is deselected by the grid as the page arrives
+        // (UI-GUIDE.md, "What a list selects")
         return data;
     }
 
