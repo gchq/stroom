@@ -459,6 +459,50 @@ class PipelineStepping {
         return new Outputs(outputs, inputs, spread.stopped());
     }
 
+    /// Each record at the locations given, its output and input at the element, the locations of one stream stepped
+    /// in one session (Stroom captures the stream once for them), in the order given, until the call's time is up.
+    ///
+    /// @param pipeline  The pipeline.
+    /// @param locations The records, each `stream`, `part` and `record` as survey_feed's locations give them.
+    /// @param element   The element whose output and input are read.
+    /// @param code      Code to step in place of an element's own, by element, or null.
+    /// @return The outputs and inputs by record key (a record not found left out), and whether the time ran out.
+    Outputs outputsAt(final SteppedPipeline pipeline,
+                      final List<StepLocation> locations,
+                      final String element,
+                      final Map<String, String> code) {
+        final Map<String, String> outputs = new LinkedHashMap<>();
+        final Map<String, String> inputs = new LinkedHashMap<>();
+        int at = 0;
+        while (at < locations.size()) {
+            final long streamId = locations.get(at).getMetaId();
+            int end = at;
+            while (end < locations.size() && locations.get(end).getMetaId() == streamId) {
+                end++;
+            }
+            try (final Walk walk = open(pipeline, streamId, code)) {
+                for (final StepLocation location : locations.subList(at, end)) {
+                    if (timeIsUp()) {
+                        return new Outputs(outputs, inputs, true);
+                    }
+                    final SteppingResult result = walk.refresh(location);
+                    if (isFound(result)) {
+                        final String key = SteppingWalks.recordKey(streamId, result.getFoundLocation());
+                        outputs.put(key, SteppingWalks.output(result, element));
+                        inputs.put(key, SteppingWalks.input(result, element));
+                    }
+                }
+            } catch (final ToolTimeoutException e) {
+                if (Thread.currentThread().isInterrupted()) {
+                    throw e;
+                }
+                return new Outputs(outputs, inputs, true);
+            }
+            at = end;
+        }
+        return new Outputs(outputs, inputs, false);
+    }
+
     // --------------------------------------------------------------------------------
     // After stepping.
     // --------------------------------------------------------------------------------

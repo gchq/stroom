@@ -9,7 +9,7 @@ Every event carries these. From is the mapping; Sample values are what the sampl
 | `EventSource/System/Environment` | The environment describes a specific instance of a system. | "Dev" | "Dev" |
 | `EventSource/Generator` | The thing that generated the event. | "vpnd" | "vpnd" |
 | `EventSource/Device/HostName` | The network host name of the device, e.g. someserver.somenet.org.uk. | `host`, or "unknown" when empty | "unknown"<br>"ws01" |
-| `EventSource/Client/IPAddress` | The network IP address of the device, e.g. 192.168.0.3. | `ip` (logoff) | (not in the sample) |
+| `EventSource/Client/IPAddress` | The network IP address of the device, e.g. 192.168.0.3. | `ip` (logoff) | (no sample record reaches this rule) |
 | `EventSource/User/Id` | An identifier for the object, e.g a document ID in a document management system. | `user` | "o'neil"<br>(logon events only) |
 
 ### Event types
