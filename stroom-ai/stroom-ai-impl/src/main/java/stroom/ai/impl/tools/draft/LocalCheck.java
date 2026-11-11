@@ -571,8 +571,19 @@ public final class LocalCheck {
     /// @return The values by name, or null when one can't be run here (an xpath source, a regex that doesn't
     /// compile).
     public static Map<String, String> extractedValues(final TranslationMapping mapping, final Object record) {
+        return extractedValues(mapping.extract(), record);
+    }
+
+    /// [#extractedValues(TranslationMapping, Object)] from the extractions alone, so a mapping still being drafted
+    /// (its time not chosen, its rules unfilled) can have them run.
+    ///
+    /// @param extractions The extract entries, in order.
+    /// @param record      A record.
+    /// @return The values by name, or null when one can't be run here (an xpath source, a regex that doesn't
+    /// compile).
+    public static Map<String, String> extractedValues(final List<Extraction> extractions, final Object record) {
         final Map<String, String> values = new LinkedHashMap<>();
-        for (final Extraction ex : mapping.extract()) {
+        for (final Extraction ex : extractions) {
             if (ex.xpath() != null || ex.field() == null || ex.field().isEmpty()) {
                 return null;
             }

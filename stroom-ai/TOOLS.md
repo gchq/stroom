@@ -2894,7 +2894,9 @@ kind's sample record kept from the listing, and its place among those of its con
 form) comes with status `needs_showing`: Stroom AI's chat shows it itself, after the call, and the agent is told not
 to repeat it; another client's agent is told to show it as it is: high-confidence ones as one table `# | Rule | Kind | Mapping` (product,
 title, and action element, Action and outcome, e.g. `Authenticate: Logon (Failure)`); medium- and low-confidence ones
-in detail, each a numbered heading `[product] title`, its record as the sample has it, whole (the sample's line
+in detail (a kind told by a value with rows `Told by` and `Reads`, the fields its records hold beyond those every
+record of its format has, as a split's kind has `Matches` and `Reads`: asked for by the user after chat 171),
+each a numbered heading `[product] title`, its record as the sample has it, whole (the sample's line
 holding most of its values; else its fields but its format and time), preformatted, and what the proposal says, a table of
 Element and Value (Schema action, the action element, then Action, Outcome, Type id, Who acted, Acted on, a row
 only where it has one). A listing takes 18 kinds a
@@ -4036,7 +4038,9 @@ generated without them.
   (`rcpt=a@x,b@x;c@x`, items without `=`) is the `listed` style, chosen over `equals` where any value is a list. A text
   whose pairs are all its record's fields already (the splitter's key=value body) isn't read again, and a key a line
   gives more than once gets `repeat: true` on its Data entry. A key after the header's ` : ` rather than a
-    dash (`Context`) isn't read.
+    dash (`Context`) isn't read. A `key = value` with spaces round the `=` (`spaced_equals`: `(cpu = 99, threshold =
+    90)`, NetScaler's SNMP traps) is read only in a text that holds pairs by its other styles, so SQL's `SET a = 1
+    WHERE id = 2` in a message isn't taken for pairs.
 
 ### `build_translation_xslt`
 
