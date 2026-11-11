@@ -163,6 +163,8 @@ public class StreamCaptureDriver {
                             final ElementFingerprints fingerprints,
                             final Set<String> stopAfter) {
         this.stopAfter = stopAfter;
+        // Only a backbone is truncated at the boundary, and only a backbone is held to a share of the cap.
+        controller.setBackbone(NullSafe.hasItems(stopAfter));
         this.taskContext = taskContext;
         this.request = request;
         this.captureFailure = null;
