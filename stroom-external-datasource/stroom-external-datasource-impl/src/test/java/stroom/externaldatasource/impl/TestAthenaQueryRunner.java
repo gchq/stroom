@@ -68,6 +68,8 @@ class TestAthenaQueryRunner {
     private final List<String> progress = new ArrayList<>();
     private final List<Val[]> received = new ArrayList<>();
     private final List<String> requestedTokens = new ArrayList<>();
+    // The data each poll reports scanned.
+    private long scannedBytes = 1_500_000L;
     private Runnable onSleep = () -> {
     };
     private boolean interruptSleep;
@@ -118,7 +120,7 @@ class TestAthenaQueryRunner {
                             .status(status -> status
                                     .state(state)
                                     .athenaError(error -> error.errorMessage("TABLE_NOT_FOUND: events")))
-                            .statistics(statistics -> statistics.dataScannedInBytes(1_500_000L)))
+                            .statistics(statistics -> statistics.dataScannedInBytes(scannedBytes)))
                     .build();
         });
         // The consumer overloads are default methods, which the mock does not run, so check they
@@ -440,6 +442,89 @@ class TestAthenaQueryRunner {
     @Test
     void textParameterCanOnlyEverBeOneLiteral() {
         assertThat(AthenaQueryRunner.toLiteral("x' or '1'='1")).isEqualTo("'x'' or ''1''=''1'");
+    }
+
+
+    private static ExternalDataSourceDoc docWithScanLimit(final int maxDataScannedMb) {
+        final ExternalDataSourceDoc doc = doc(100, 60);
+        return doc.copy()
+                .athena(doc.getAthena().copy()
+                        .maxDataScannedMb(maxDataScannedMb)
+                        .build())
+                .build();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void runningQueryOverTheScanLimitIsStoppedInAthena() {
+        // Each poll reports 1.5 MB scanned.
+        givenStates(StatementType.DML, QueryExecutionState.RUNNING);
+
+        assertThatThrownBy(() -> run(docWithScanLimit(1), "select * from events", new QueryCancellation()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("was stopped after scanning 1.5 MB")
+                .hasMessageContaining("more than the limit of 1 MB");
+        final ArgumentCaptorHolder captor = new ArgumentCaptorHolder();
+        Mockito.verify(client).stopQueryExecution(Mockito.argThat((Consumer<StopQueryExecutionRequest.Builder> c) -> {
+            final StopQueryExecutionRequest.Builder builder = StopQueryExecutionRequest.builder();
+            c.accept(builder);
+            captor.id = builder.build().queryExecutionId();
+            return true;
+        }));
+        assertThat(captor.id).isEqualTo(QUERY_ID);
+        Mockito.verify(client, Mockito.never()).getQueryResults(Mockito.any(Consumer.class));
+    }
+
+    @Test
+    void queryAtExactlyTheScanLimitRuns() {
+        scannedBytes = 1_000_000L;
+        givenStates(StatementType.DML, QueryExecutionState.RUNNING, QueryExecutionState.SUCCEEDED);
+        givenPages(List.of(rows("id", "name", "1", "Smith")));
+
+        final QueryRunSummary summary = run(docWithScanLimit(1), "select id, name from staff",
+                new QueryCancellation());
+
+        assertThat(summary.rowsRead()).isEqualTo(1);
+    }
+
+    @Test
+    void queryWithinTheScanLimitRuns() {
+        givenStates(StatementType.DML, QueryExecutionState.RUNNING, QueryExecutionState.SUCCEEDED);
+        givenPages(List.of(rows("id", "name", "1", "Smith")));
+
+        final QueryRunSummary summary = run(docWithScanLimit(2), "select id, name from staff",
+                new QueryCancellation());
+
+        assertThat(summary.rowsRead()).isEqualTo(1);
+    }
+
+    @Test
+    void finishedQueryOverTheScanLimitIsStillRead() {
+        // Its scan is already done and billed, so its rows are not thrown away.
+        givenStates(StatementType.DML, QueryExecutionState.SUCCEEDED);
+        givenPages(List.of(rows("id", "name", "1", "Smith")));
+
+        final QueryRunSummary summary = run(docWithScanLimit(1), "select id, name from staff",
+                new QueryCancellation());
+
+        assertThat(summary.rowsRead()).isEqualTo(1);
+        assertThat(summary.info()).contains("scanned 1.5M");
+    }
+
+    @Test
+    void scanLimitIsNoneUnlessSet() {
+        assertThat(AthenaQueryRunner.maxDataScannedMb(null)).isZero();
+        assertThat(AthenaQueryRunner.maxDataScannedMb(AthenaConnectionSettings.builder().build())).isZero();
+        assertThat(AthenaQueryRunner.maxDataScannedMb(AthenaConnectionSettings.builder()
+                .maxDataScannedMb(-5)
+                .build())).isZero();
+    }
+
+    @Test
+    void megabytesAreWrittenToOneDecimalPlace() {
+        assertThat(AthenaQueryRunner.megabytes(1_500_000L)).isEqualTo("1.5");
+        assertThat(AthenaQueryRunner.megabytes(2_000_000_000L)).isEqualTo("2000");
+        assertThat(AthenaQueryRunner.megabytes(49_999L)).isEqualTo("0");
     }
 
 

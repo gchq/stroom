@@ -154,7 +154,8 @@ class AthenaConnector implements Connector {
                 final Database database = client.getDatabase(builder -> builder
                         .catalogName(connection.catalog())
                         .databaseName(connection.database())).database();
-                return new ExternalDataSourceTestResponse(true, describe(connection, workGroup, database));
+                return new ExternalDataSourceTestResponse(true, describe(connection, workGroup, database,
+                        AthenaQueryRunner.maxDataScannedMb(doc.getAthena())));
             }
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("Connection test failed for {}", doc.getUuid()), e);
@@ -164,7 +165,8 @@ class AthenaConnector implements Connector {
 
     private static String describe(final ResolvedAthenaConnection connection,
                                    final WorkGroup workGroup,
-                                   final Database database) {
+                                   final Database database,
+                                   final int maxDataScannedMb) {
         final WorkGroupConfiguration configuration = workGroup.configuration();
         final Long scanLimit = NullSafe.get(configuration, WorkGroupConfiguration::bytesScannedCutoffPerQuery);
         final String outputLocation = NullSafe.get(
@@ -173,9 +175,12 @@ class AthenaConnector implements Connector {
                 ResultConfiguration::outputLocation);
         return "Connected to Amazon Athena in " + connection.region()
                + "\nWorkgroup: " + workGroup.name() + " (" + workGroup.stateAsString() + ")"
-               + "\nData scan limit per query: " + (scanLimit == null
+               + "\nWorkgroup data scan limit per query: " + (scanLimit == null
                        ? "none set"
                        : ModelStringUtil.formatMetricByteSizeString(scanLimit))
+               + "\nDocument data scan limit: " + (maxDataScannedMb == 0
+                       ? "none set"
+                       : maxDataScannedMb + " MB, checked while a query runs")
                + "\nWorkgroup result location: " + Objects.requireNonNullElse(outputLocation, "none set")
                + "\nWorkgroup enforces its settings: " + (NullSafe.isTrue(NullSafe.get(
                        configuration,

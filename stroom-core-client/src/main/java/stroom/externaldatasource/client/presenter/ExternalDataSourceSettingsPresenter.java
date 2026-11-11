@@ -180,6 +180,7 @@ public class ExternalDataSourceSettingsPresenter
         view.setAthenaMinRefreshMinutes(Objects.requireNonNullElse(
                 athena.getMinRefreshMinutes(),
                 AthenaConnectionSettings.DEFAULT_MIN_REFRESH_MINUTES));
+        view.setAthenaMaxDataScannedMb(Objects.requireNonNullElse(athena.getMaxDataScannedMb(), 0));
         showCredential(athena.getCredentialName(),
                 athenaCredential,
                 view.getAthenaCredentialSelectionBox(),
@@ -266,6 +267,7 @@ public class ExternalDataSourceSettingsPresenter
                 .credentialName(athenaCredential.getName())
                 .resultReuseMinutes(view.getResultReuseMinutes())
                 .minRefreshMinutes(view.getAthenaMinRefreshMinutes())
+                .maxDataScannedMb(maxDataScannedMb(doc))
                 .build();
         return doc.copy()
                 .sourceType(view.getSourceType())
@@ -372,6 +374,15 @@ public class ExternalDataSourceSettingsPresenter
             }
         }
         return true;
+    }
+
+    // No limit stays unset, so a document without one keeps the same JSON.
+    private Integer maxDataScannedMb(final ExternalDataSourceDoc doc) {
+        final int shown = getView().getAthenaMaxDataScannedMb();
+        final Integer stored = NullSafe.get(doc.getAthena(), AthenaConnectionSettings::getMaxDataScannedMb);
+        return shown == 0 && stored == null
+                ? null
+                : shown;
     }
 
     private static String blankToNull(final String value) {
@@ -612,6 +623,12 @@ public class ExternalDataSourceSettingsPresenter
 
         /// @param minutes The shortest automatic dashboard refresh of an Athena source to show.
         void setAthenaMinRefreshMinutes(int minutes);
+
+        /// @return The most data, in MB, an Athena query may scan before Stroom stops it; 0 for no limit.
+        int getAthenaMaxDataScannedMb();
+
+        /// @param megabytes The Athena data scan limit to show, in MB; 0 for none.
+        void setAthenaMaxDataScannedMb(int megabytes);
 
         /// @return The CSV delimiter chosen.
         String getCsvDelimiter();

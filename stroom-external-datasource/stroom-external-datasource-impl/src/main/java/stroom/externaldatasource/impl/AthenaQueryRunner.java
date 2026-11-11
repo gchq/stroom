@@ -16,6 +16,7 @@
 
 package stroom.externaldatasource.impl;
 
+import stroom.externaldatasource.shared.AthenaConnectionSettings;
 import stroom.externaldatasource.shared.ExternalDataSourceDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -39,6 +40,8 @@ import software.amazon.awssdk.services.athena.model.Row;
 import software.amazon.awssdk.services.athena.model.StartQueryExecutionRequest;
 import software.amazon.awssdk.services.athena.model.StatementType;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -89,6 +92,8 @@ public class AthenaQueryRunner {
 
     private static final long FIRST_POLL_INTERVAL_MS = 250;
     private static final long MAX_POLL_INTERVAL_MS = 2_000;
+    // Athena reports data in decimal units, as it bills.
+    private static final long BYTES_PER_MB = 1_000_000L;
     private static final DateTimeFormatter TIMESTAMP_LITERAL_FORMAT = DateTimeFormatter
             .ofPattern("uuuu-MM-dd HH:mm:ss.SSS", Locale.ROOT)
             .withZone(ZoneOffset.UTC);
@@ -157,6 +162,7 @@ public class AthenaQueryRunner {
         final ResolvedAthenaConnection connection = connectionResolver.resolve(doc.getAthena());
 
         final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(limits.timeoutSeconds());
+        final int maxDataScannedMb = maxDataScannedMb(doc.getAthena());
 
         try (final AthenaClient client = clientFactory.create(connection)) {
             final String id = client.startQueryExecution(startRequest(connection, parsedSql, values))
@@ -165,7 +171,7 @@ public class AthenaQueryRunner {
             cancellation.register(() -> client.stopQueryExecution(builder -> builder.queryExecutionId(id)));
             try {
                 final QueryExecution execution = awaitCompletion(
-                        client, id, limits, deadline, cancellation, progress);
+                        client, id, limits, deadline, maxDataScannedMb, cancellation, progress);
                 if (execution == null) {
                     return new QueryRunSummary(List.of(), List.of(), 0, 0, false, limits.maxRows(), null);
                 }
@@ -235,12 +241,28 @@ public class AthenaQueryRunner {
         return "TIMESTAMP '" + TIMESTAMP_LITERAL_FORMAT.format(instant) + "'";
     }
 
+    /// The most data a query of the settings may scan before Stroom stops it.
+    ///
+    /// @param settings Amazon Athena settings, or `null`.
+    /// @return The limit in MB, 0 for none.
+    static int maxDataScannedMb(final AthenaConnectionSettings settings) {
+        final Integer limit = NullSafe.get(settings, AthenaConnectionSettings::getMaxDataScannedMb);
+        return limit == null
+                ? 0
+                : Math.max(0, limit);
+    }
+
     // Polls until the query finishes. Returns null if the search was cancelled. Any exception
     // leads the caller to stop the query.
+    //
+    // A query still running that has scanned more than the document's limit is stopped. Athena reports
+    // the data scanned as it goes, so a query may pass the limit by what it scans between two polls;
+    // the workgroup's own per-query limit is the one Athena enforces exactly.
     private QueryExecution awaitCompletion(final AthenaClient client,
                                            final String id,
                                            final SqlQueryLimits limits,
                                            final long deadline,
+                                           final int maxDataScannedMb,
                                            final QueryCancellation cancellation,
                                            final Consumer<String> progress) {
         long interval = FIRST_POLL_INTERVAL_MS;
@@ -265,6 +287,14 @@ public class AthenaQueryRunner {
             } else if (System.nanoTime() > deadline) {
                 throw new IllegalStateException("Amazon Athena query " + id + " did not finish within "
                                                 + limits.timeoutSeconds() + " seconds, so it was stopped.");
+            } else if (isOverScanLimit(execution.statistics(), maxDataScannedMb)) {
+                throw new IllegalStateException(LogUtil.message(
+                        "Amazon Athena query {} was stopped after scanning {} MB, more than the limit of {} MB "
+                        + "set on the External Data Source. Narrow the query, for example with a shorter time "
+                        + "range or a filter on a partition column.",
+                        id,
+                        megabytes(NullSafe.get(execution.statistics(), QueryExecutionStatistics::dataScannedInBytes)),
+                        maxDataScannedMb));
             }
 
             try {
@@ -380,6 +410,24 @@ public class AthenaQueryRunner {
                 reused
                         ? ", reusing an earlier result"
                         : "");
+    }
+
+    /// Writes a number of bytes as decimal megabytes, as Athena bills, to one decimal place.
+    ///
+    /// @param bytes A number of bytes, or `null` for none.
+    /// @return The megabytes, e.g. `1.5`.
+    static String megabytes(final Long bytes) {
+        return BigDecimal.valueOf(bytes == null
+                        ? 0L
+                        : bytes)
+                .divide(BigDecimal.valueOf(BYTES_PER_MB), 1, RoundingMode.HALF_UP)
+                .stripTrailingZeros()
+                .toPlainString();
+    }
+
+    private static boolean isOverScanLimit(final QueryExecutionStatistics statistics, final int maxDataScannedMb) {
+        final Long bytes = NullSafe.get(statistics, QueryExecutionStatistics::dataScannedInBytes);
+        return maxDataScannedMb > 0 && bytes != null && bytes > maxDataScannedMb * BYTES_PER_MB;
     }
 
     private static String dataScanned(final QueryExecutionStatistics statistics) {

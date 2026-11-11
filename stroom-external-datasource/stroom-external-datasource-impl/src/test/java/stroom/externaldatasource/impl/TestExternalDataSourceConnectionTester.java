@@ -190,7 +190,8 @@ class TestExternalDataSourceConnectionTester {
                 .contains("Workgroup result location: s3://results/stroom/")
                 .contains("Database: AwsDataCatalog.events")
                 .contains("Stroom's own AWS identity")
-                .doesNotContain("none set")
+                .contains("Workgroup data scan limit per query: 1.0G")
+                .contains("Document data scan limit: none set")
                 .contains("Workgroup enforces its settings: no, so the document's output location is used")
                 .contains(AthenaConnector.ADVICE);
         Mockito.verify(athenaClient, Mockito.never()).startQueryExecution(Mockito.any(Consumer.class));
@@ -203,7 +204,24 @@ class TestExternalDataSourceConnectionTester {
 
         final ExternalDataSourceTestResponse response = tester(new MockSecurityContext()).test(athenaDoc("eu-west-2"));
 
-        assertThat(response.getMessage()).contains("Data scan limit per query: none set");
+        assertThat(response.getMessage())
+                .contains("Workgroup data scan limit per query: none set")
+                .contains("Document data scan limit: none set");
+    }
+
+    @Test
+    void athenaTestReportsTheDocumentsScanLimit() {
+        givenWorkGroup(null);
+        final ExternalDataSourceDoc doc = athenaDoc("eu-west-2");
+        final ExternalDataSourceDoc withLimit = doc.copy()
+                .athena(doc.getAthena().copy()
+                        .maxDataScannedMb(500)
+                        .build())
+                .build();
+
+        final ExternalDataSourceTestResponse response = tester(new MockSecurityContext()).test(withLimit);
+
+        assertThat(response.getMessage()).contains("Document data scan limit: 500 MB, checked while a query runs");
     }
 
     @Test

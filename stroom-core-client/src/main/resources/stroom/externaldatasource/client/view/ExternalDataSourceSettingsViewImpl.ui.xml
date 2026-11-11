@@ -90,6 +90,11 @@
                             helpText="The shortest interval at which a dashboard may rerun a query of this data source automatically. Every Athena run is billed by the data it scans, and result reuse rarely helps a dashboard, as its time range changes on every refresh. Many refreshes also use up the account's limit on Athena queries running at once. 0 sets no minimum beyond the dashboard's own 10 seconds. Default: 5">
                 <v:ValueSpinner ui:field="athenaMinRefreshMinutes" width="200px"/>
             </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceAthenaMaxDataScannedMb"
+                            label="Max Data Scanned (MB)"
+                            helpText="The most data, in MB, a query may scan in Athena before Stroom stops it; Athena bills by the data a query scans. Stroom checks while the query runs, so a query may pass the limit by what it scans between two checks. The workgroup's own per-query data scan limit is the one Athena enforces exactly, so set that too. 0 sets no limit beyond the workgroup's. Default: 0">
+                <v:ValueSpinner ui:field="athenaMaxDataScannedMb" width="200px"/>
+            </form:FormGroup>
         </g:FlowPanel>
 
         <g:FlowPanel ui:field="csvSettings">

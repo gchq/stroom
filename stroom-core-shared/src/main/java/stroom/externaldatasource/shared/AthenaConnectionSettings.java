@@ -37,7 +37,8 @@ import java.util.Objects;
         "outputLocation",
         "credentialName",
         "resultReuseMinutes",
-        "minRefreshMinutes"})
+        "minRefreshMinutes",
+        "maxDataScannedMb"})
 @JsonInclude(Include.NON_NULL)
 public class AthenaConnectionSettings {
 
@@ -67,6 +68,8 @@ public class AthenaConnectionSettings {
     private final Integer resultReuseMinutes;
     @JsonProperty
     private final Integer minRefreshMinutes;
+    @JsonProperty
+    private final Integer maxDataScannedMb;
 
     /// Creates Athena connection settings.
     ///
@@ -79,6 +82,8 @@ public class AthenaConnectionSettings {
     /// @param resultReuseMinutes How long Athena may reuse a previous result, or `null` to never reuse.
     /// @param minRefreshMinutes  The shortest automatic rerun interval of a dashboard in minutes, or
     ///                           `null` for [#DEFAULT_MIN_REFRESH_MINUTES].
+    /// @param maxDataScannedMb   The most data, in MB, a query may scan before Stroom stops it, or
+    ///                           `null` or 0 for no limit beyond the workgroup's.
     @JsonCreator
     public AthenaConnectionSettings(@JsonProperty("region") final String region,
                                     @JsonProperty("workGroup") final String workGroup,
@@ -87,7 +92,8 @@ public class AthenaConnectionSettings {
                                     @JsonProperty("outputLocation") final String outputLocation,
                                     @JsonProperty("credentialName") final String credentialName,
                                     @JsonProperty("resultReuseMinutes") final Integer resultReuseMinutes,
-                                    @JsonProperty("minRefreshMinutes") final Integer minRefreshMinutes) {
+                                    @JsonProperty("minRefreshMinutes") final Integer minRefreshMinutes,
+                                    @JsonProperty("maxDataScannedMb") final Integer maxDataScannedMb) {
         this.region = region;
         this.workGroup = workGroup;
         this.catalog = catalog;
@@ -96,6 +102,7 @@ public class AthenaConnectionSettings {
         this.credentialName = credentialName;
         this.resultReuseMinutes = resultReuseMinutes;
         this.minRefreshMinutes = minRefreshMinutes;
+        this.maxDataScannedMb = maxDataScannedMb;
     }
 
     /// @return The AWS region, or `null` if not set.
@@ -139,6 +146,12 @@ public class AthenaConnectionSettings {
         return minRefreshMinutes;
     }
 
+    /// @return The most data, in MB, a query may scan before Stroom stops it, or `null` or 0 for no
+    ///         limit beyond the workgroup's.
+    public Integer getMaxDataScannedMb() {
+        return maxDataScannedMb;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -155,7 +168,8 @@ public class AthenaConnectionSettings {
                Objects.equals(outputLocation, that.outputLocation) &&
                Objects.equals(credentialName, that.credentialName) &&
                Objects.equals(resultReuseMinutes, that.resultReuseMinutes) &&
-               Objects.equals(minRefreshMinutes, that.minRefreshMinutes);
+               Objects.equals(minRefreshMinutes, that.minRefreshMinutes) &&
+               Objects.equals(maxDataScannedMb, that.maxDataScannedMb);
     }
 
     @Override
@@ -167,7 +181,8 @@ public class AthenaConnectionSettings {
                 outputLocation,
                 credentialName,
                 resultReuseMinutes,
-                minRefreshMinutes);
+                minRefreshMinutes,
+                maxDataScannedMb);
     }
 
     @Override
@@ -181,6 +196,7 @@ public class AthenaConnectionSettings {
                ", credentialName='" + credentialName + '\'' +
                ", resultReuseMinutes=" + resultReuseMinutes +
                ", minRefreshMinutes=" + minRefreshMinutes +
+               ", maxDataScannedMb=" + maxDataScannedMb +
                '}';
     }
 
@@ -205,6 +221,7 @@ public class AthenaConnectionSettings {
         private String credentialName;
         private Integer resultReuseMinutes;
         private Integer minRefreshMinutes;
+        private Integer maxDataScannedMb;
 
         private Builder() {
         }
@@ -218,6 +235,7 @@ public class AthenaConnectionSettings {
             this.credentialName = settings.credentialName;
             this.resultReuseMinutes = settings.resultReuseMinutes;
             this.minRefreshMinutes = settings.minRefreshMinutes;
+            this.maxDataScannedMb = settings.maxDataScannedMb;
         }
 
         /// @param region The AWS region, e.g. `eu-west-2`.
@@ -277,6 +295,14 @@ public class AthenaConnectionSettings {
             return this;
         }
 
+        /// @param maxDataScannedMb The most data, in MB, a query may scan before Stroom stops it, or
+        ///                         `null` or 0 for no limit.
+        /// @return This builder.
+        public Builder maxDataScannedMb(final Integer maxDataScannedMb) {
+            this.maxDataScannedMb = maxDataScannedMb;
+            return this;
+        }
+
         /// @return New [AthenaConnectionSettings] holding the values set on this builder.
         public AthenaConnectionSettings build() {
             return new AthenaConnectionSettings(
@@ -287,7 +313,8 @@ public class AthenaConnectionSettings {
                     outputLocation,
                     credentialName,
                     resultReuseMinutes,
-                    minRefreshMinutes);
+                    minRefreshMinutes,
+                    maxDataScannedMb);
         }
     }
 }

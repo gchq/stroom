@@ -59,6 +59,8 @@ public class ExternalDataSourceSettingsViewImpl
     // Athena reuses a result for at most seven days.
     private static final int MAX_RESULT_REUSE_MINUTES = 10_080;
     private static final int MAX_MIN_REFRESH_MINUTES = 1_440;
+    // 10 TB, far beyond any lookup a dashboard should make.
+    private static final int MAX_DATA_SCANNED_MB = 10_000_000;
     // Well above the default stored data limit of 5 MiB: the server enforces the real limit, this only
     // stops a huge file hanging the browser on its way into the editor.
     private static final double MAX_FILE_BYTES = 50 * 1024 * 1024;
@@ -108,6 +110,8 @@ public class ExternalDataSourceSettingsViewImpl
     ValueSpinner resultReuseMinutes;
     @UiField
     ValueSpinner athenaMinRefreshMinutes;
+    @UiField
+    ValueSpinner athenaMaxDataScannedMb;
     @UiField
     FlowPanel csvSettings;
     @UiField
@@ -178,6 +182,7 @@ public class ExternalDataSourceSettingsViewImpl
         setLimits(resultReuseMinutes, 0, MAX_RESULT_REUSE_MINUTES);
         setLimits(jdbcMinRefreshMinutes, 0, MAX_MIN_REFRESH_MINUTES);
         setLimits(athenaMinRefreshMinutes, 0, MAX_MIN_REFRESH_MINUTES);
+        setLimits(athenaMaxDataScannedMb, 0, MAX_DATA_SCANNED_MB);
         setLimits(queryTimeoutSeconds, 1, MAX_TIMEOUT_SECONDS);
         setLimits(maxRows, 1, MAX_ROWS);
         testConnection.setIcon(SvgImage.OK);
@@ -373,6 +378,16 @@ public class ExternalDataSourceSettingsViewImpl
     }
 
     @Override
+    public int getAthenaMaxDataScannedMb() {
+        return athenaMaxDataScannedMb.getIntValue();
+    }
+
+    @Override
+    public void setAthenaMaxDataScannedMb(final int megabytes) {
+        athenaMaxDataScannedMb.setValue(megabytes);
+    }
+
+    @Override
     public String getCsvDelimiter() {
         return unlistedDelimiter != null
                 ? unlistedDelimiter
@@ -518,6 +533,7 @@ public class ExternalDataSourceSettingsViewImpl
         athenaCredential.setEnabled(enabled);
         resultReuseMinutes.setEnabled(enabled);
         athenaMinRefreshMinutes.setEnabled(enabled);
+        athenaMaxDataScannedMb.setEnabled(enabled);
         timeField.setEnabled(enabled);
         queryTimeoutSeconds.setEnabled(enabled);
         maxRows.setEnabled(enabled);
@@ -553,7 +569,7 @@ public class ExternalDataSourceSettingsViewImpl
     ///
     /// @param event The change.
     @UiHandler({"maxPoolSize", "fetchSize", "jdbcMinRefreshMinutes", "resultReuseMinutes",
-            "athenaMinRefreshMinutes", "queryTimeoutSeconds", "maxRows"})
+            "athenaMinRefreshMinutes", "athenaMaxDataScannedMb", "queryTimeoutSeconds", "maxRows"})
     public void onNumberChange(final ValueChangeEvent<Long> event) {
         fireChange();
     }
