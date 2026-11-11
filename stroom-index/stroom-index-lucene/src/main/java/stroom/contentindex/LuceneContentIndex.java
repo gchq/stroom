@@ -194,6 +194,7 @@ public class LuceneContentIndex implements ContentIndex, Handler {
     private final IndexDir indexDir;
     private final CountDownLatch indexInitialisedLatch = new CountDownLatch(1);
     private final AtomicBoolean isInitialising = new AtomicBoolean(false);
+    private final AtomicBoolean isQueueProcessorStarted = new AtomicBoolean(false);
     private final AtomicInteger updateProgress = new AtomicInteger();
     private final AtomicInteger updateTotal = new AtomicInteger();
     private final ClusterLockService clusterLockService;
@@ -201,13 +202,16 @@ public class LuceneContentIndex implements ContentIndex, Handler {
     private final ClusterNodeManager clusterNodeManager;
     private final Provider<ContentIndexConfig> contentIndexConfigProvider;
 
+    /// Document type to [ContentIndexable] map
+    private final Map<String, ContentIndexable> typeToIndexableMap;
+    private final Analyzer analyzer;
+    private final BlockingQueue<EntityEvent> eventQueue = new ArrayBlockingQueue<>(EVENT_QUEUE_SIZE);
+    // Held for all work that reads or writes the index files, which can take a long time,
+    // e.g. a re-build of the whole index. Kept separate from the monitor on this, so that
+    // handling entity events and searching never wait for that work.
+    private final Object indexLock = new Object();
+
     private volatile Throwable initialisationError = null;
-    /**
-     * Document type to {@link ContentIndexable} map
-     */
-    private volatile Map<String, ContentIndexable> typeToIndexableMap = null;
-    private volatile ArrayBlockingQueue<EntityEvent> eventQueue = null;
-    private volatile Analyzer analyzer = null;
     private volatile Directory directory = null;
     private volatile SearcherManager searcherManager = null;
 
@@ -233,6 +237,9 @@ public class LuceneContentIndex implements ContentIndex, Handler {
         this.clusterNodeManager = clusterNodeManager;
         this.contentIndexConfigProvider = contentIndexConfigProvider;
         this.indexDir = getIndexDirectory(contentIndexConfigProvider, tempDirProvider, pathCreator);
+        // Both are cheap to build, so build them now rather than lazily under a lock
+        this.typeToIndexableMap = buildTypeToIndexableMap();
+        this.analyzer = buildAnalyzer();
 
         // With a shared index we can get any single node (doesn't matter which) to eagerly init it
         if (indexDir.isShared()) {
@@ -361,14 +368,17 @@ public class LuceneContentIndex implements ContentIndex, Handler {
                 indexables);
     }
 
-    private synchronized void initIndex() {
+    private void initIndex() {
+        synchronized (indexLock) {
+            doInitIndex();
+        }
+    }
+
+    /// Caller must hold [#indexLock].
+    private void doInitIndex() {
         if (!isInitialising.get()) {
             isInitialising.set(true);
             boolean isSyncRebuildRequired = false;
-            final Map<String, ContentIndexable> typeToIndexableMap = Objects.requireNonNullElseGet(
-                    this.typeToIndexableMap,
-                    this::buildTypeToIndexableMap);
-            final Analyzer analyzer = Objects.requireNonNullElseGet(this.analyzer, this::buildAnalyzer);
             try {
                 final Path indexDirPath = indexDir.path;
                 LOGGER.info("{} - Initialising content index in {}", RE_INDEX_JOB_NAME, indexDirPath);
@@ -423,7 +433,7 @@ public class LuceneContentIndex implements ContentIndex, Handler {
                             RE_INDEX_JOB_NAME + " (Initialisation)",
                             TerminateHandlerFactory.NOOP_FACTORY,
                             ignored -> {
-                                doReindex(typeToIndexableMap);
+                                doReindex();
                             }));
 
             // Make sure we have a state file so other code can check it
@@ -461,24 +471,6 @@ public class LuceneContentIndex implements ContentIndex, Handler {
         }
     }
 
-    private void ensureAnalyzerAndIndexableMap() {
-        // init does not set these fields because a node doing an init may not be a UI node.
-        if (analyzer == null) {
-            synchronized (this) {
-                if (analyzer == null) {
-                    analyzer = buildAnalyzer();
-                }
-            }
-        }
-        if (typeToIndexableMap == null) {
-            synchronized (this) {
-                if (typeToIndexableMap == null) {
-                    typeToIndexableMap = buildTypeToIndexableMap();
-                }
-            }
-        }
-    }
-
     private Analyzer buildAnalyzer() {
         final Map<String, Analyzer> analyzerMap = Map.of(
                 TYPE, AnalyzerFactory.create(AnalyzerType.KEYWORD, false),
@@ -495,8 +487,7 @@ public class LuceneContentIndex implements ContentIndex, Handler {
         return new PerFieldAnalyzerWrapper(new KeywordAnalyzer(), analyzerMap);
     }
 
-    private synchronized void initQueueProcessorThread() {
-        eventQueue = new ArrayBlockingQueue<>(EVENT_QUEUE_SIZE);
+    private void startQueueProcessorThread() {
         CompletableFuture
                 .runAsync(() -> {
                     LOGGER.info("{} - Starting background thread to monitor change queue", RE_INDEX_JOB_NAME);
@@ -549,7 +540,6 @@ public class LuceneContentIndex implements ContentIndex, Handler {
     /// @param timeout The maximum time to wait.
     /// @return True if the index is initialised, false if it timed out.
     boolean awaitInitialisation(final Duration timeout) throws InterruptedException {
-        ensureAnalyzerAndIndexableMap();
         ensureIndexAsync();
         return indexInitialisedLatch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
     }
@@ -587,6 +577,13 @@ public class LuceneContentIndex implements ContentIndex, Handler {
 
     @Override
     public void onChange(final EntityEvent event) {
+        // This handler gets events of all types, e.g. nodes and volume groups, so drop anything
+        // that is not indexable content before doing any work
+        if (!isIndexableType(event)) {
+            LOGGER.debug("Ignoring event for non-indexable type {}", event);
+            return;
+        }
+
         if (!isIndexInitialised() && indexDir.isShared() && isThisMasterNode()) {
             LOGGER.info("Initializing content index for onChange events");
             initIndex();
@@ -608,19 +605,13 @@ public class LuceneContentIndex implements ContentIndex, Handler {
             //  as the one we got from ContentIndexable.
             //  For now it just means duplicated effort, which we would have if the index was on local storage
             //  anyway.
-            ensureAnalyzerAndIndexableMap();
-
-            NullSafe.consume(event, EntityEvent::getDocRef, DocRef::getType, type -> {
-                if (typeToIndexableMap.containsKey(type)) {
-                    try {
-                        LOGGER.info("onChange - Putting event {}", event);
-                        getEventQueue().put(event);
-                    } catch (final InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new UncheckedInterruptedException(e);
-                    }
-                }
-            });
+            try {
+                LOGGER.info("onChange - Putting event {}", event);
+                getEventQueue().put(event);
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new UncheckedInterruptedException(e);
+            }
         } else {
             LOGGER.debug("Ignoring event {}", event);
         }
@@ -644,8 +635,7 @@ public class LuceneContentIndex implements ContentIndex, Handler {
             // Unfortunately, each node has to get the exclusive lock, but only long enough to read the
             // index state file, so if lots of nodes call reindex in quick succession, only one
             // will re-index it.
-            runUnderLock(() ->
-                    doReindex(Objects.requireNonNullElseGet(typeToIndexableMap, this::buildTypeToIndexableMap)));
+            runUnderLock(this::doReindex);
         } else {
             LOGGER.debug("{} - Index not yet initialised, nothing to re-index", RE_INDEX_JOB_NAME);
         }
@@ -654,7 +644,14 @@ public class LuceneContentIndex implements ContentIndex, Handler {
     /**
      * This should be called under cluster lock (if shared)
      */
-    private synchronized void doReindex(final Map<String, ContentIndexable> typeToindexableMap) {
+    private void doReindex() {
+        synchronized (indexLock) {
+            doReindexUnderLock();
+        }
+    }
+
+    /// Caller must hold [#indexLock].
+    private void doReindexUnderLock() {
         try {
             final Path stateFile = ensureStateFile();
             final Duration minRebuildAge = contentIndexConfigProvider.get().getMinRebuildAge().getDuration();
@@ -670,7 +667,7 @@ public class LuceneContentIndex implements ContentIndex, Handler {
                     taskContextFactory.current().info(() -> "Gathering indexable items");
                     LOGGER.info("{} - Re-indexing all content", RE_INDEX_JOB_NAME);
                     securityContext.asProcessingUser(() -> {
-                        final List<EntityEvent> events = typeToindexableMap.values()
+                        final List<EntityEvent> events = typeToIndexableMap.values()
                                 .stream()
                                 .flatMap(contentIndexable ->
                                         contentIndexable.listDocuments().stream())
@@ -981,7 +978,14 @@ public class LuceneContentIndex implements ContentIndex, Handler {
     /**
      * Caller should ensure this is called under cluster lock (if shared storage)
      */
-    private synchronized void updateIndex(final List<EntityEvent> events) {
+    private void updateIndex(final List<EntityEvent> events) {
+        synchronized (indexLock) {
+            doUpdateIndex(events);
+        }
+    }
+
+    /// Caller must hold [#indexLock].
+    private void doUpdateIndex(final List<EntityEvent> events) {
         if (NullSafe.hasItems(events)) {
             final Map<EntityAction, Long> countsByAction = events.stream()
                     .collect(Collectors.groupingBy(EntityEvent::getAction, Collectors.counting()));
@@ -1004,11 +1008,8 @@ public class LuceneContentIndex implements ContentIndex, Handler {
     /**
      * Caller should ensure this is called under cluster lock (if shared storage)
      */
-    private synchronized void updateIndex(final List<EntityEvent> list,
-                                          final TaskContext taskContext) {
-        final Analyzer analyzer = Objects.requireNonNullElseGet(this.analyzer, this::buildAnalyzer);
-        final Map<String, ContentIndexable> typeToIndexableMap = Objects.requireNonNullElseGet(this.typeToIndexableMap,
-                this::buildTypeToIndexableMap);
+    private void updateIndex(final List<EntityEvent> list,
+                             final TaskContext taskContext) {
         final IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
         try (final IndexWriter writer = new IndexWriter(directory, indexWriterConfig)) {
             updateProgress.set(0);
@@ -1203,8 +1204,6 @@ public class LuceneContentIndex implements ContentIndex, Handler {
     }
 
     private void ensureIndexAndWait() {
-        ensureAnalyzerAndIndexableMap();
-
         boolean isInitialised = ensureIndexAsync();
         if (!isInitialised) {
             try {
@@ -1238,34 +1237,38 @@ public class LuceneContentIndex implements ContentIndex, Handler {
      * Run runnable under cluster lock (if on shared storage) only if not already locked.
      * If not on shared storage, runnable is run.
      */
-    private synchronized void runIfNotLocked(final Runnable runnable) {
-        if (indexDir.isShared()) {
-            final DurationTimer timer = DurationTimer.start();
-            clusterLockService.tryLock(LOCK_NAME, () -> {
-                LOGGER.debug("runIfNotLocked() - Acquired lock {}, duration: {}", LOCK_NAME, timer);
+    private void runIfNotLocked(final Runnable runnable) {
+        synchronized (indexLock) {
+            if (indexDir.isShared()) {
+                final DurationTimer timer = DurationTimer.start();
+                clusterLockService.tryLock(LOCK_NAME, () -> {
+                    LOGGER.debug("runIfNotLocked() - Acquired lock {}, duration: {}", LOCK_NAME, timer);
+                    runnable.run();
+                    LOGGER.debug("runIfNotLocked() - Releasing lock {}, duration: {}", LOCK_NAME, timer);
+                });
+            } else {
+                LOGGER.debug("runIfNotLocked() - Running with no cluster locking");
                 runnable.run();
-                LOGGER.debug("runIfNotLocked() - Releasing lock {}, duration: {}", LOCK_NAME, timer);
-            });
-        } else {
-            LOGGER.debug("runIfNotLocked() - Running with no cluster locking");
-            runnable.run();
+            }
         }
     }
 
     /**
      * Run with an exclusive cluster lock if the index is on shared storage
      */
-    private synchronized void runUnderLock(final Runnable runnable) {
-        if (indexDir.isShared()) {
-            final DurationTimer timer = DurationTimer.start();
-            clusterLockService.lock(LOCK_NAME, () -> {
-                LOGGER.debug("runUnderLock() - Acquired lock {}, duration: {}", LOCK_NAME, timer);
+    private void runUnderLock(final Runnable runnable) {
+        synchronized (indexLock) {
+            if (indexDir.isShared()) {
+                final DurationTimer timer = DurationTimer.start();
+                clusterLockService.lock(LOCK_NAME, () -> {
+                    LOGGER.debug("runUnderLock() - Acquired lock {}, duration: {}", LOCK_NAME, timer);
+                    runnable.run();
+                    LOGGER.debug("runUnderLock() - Releasing lock {}, duration: {}", LOCK_NAME, timer);
+                });
+            } else {
+                LOGGER.debug("runUnderLock() - Running with no cluster locking");
                 runnable.run();
-                LOGGER.debug("runUnderLock() - Releasing lock {}, duration: {}", LOCK_NAME, timer);
-            });
-        } else {
-            LOGGER.debug("runUnderLock() - Running with no cluster locking");
-            runnable.run();
+            }
         }
     }
 
@@ -1360,15 +1363,15 @@ public class LuceneContentIndex implements ContentIndex, Handler {
     private BlockingQueue<EntityEvent> getEventQueue() {
         // If on shared storage we only want the node that is handling events, i.e. the current master,
         // to spin up the consumer thread
-        if (eventQueue == null) {
-            synchronized (this) {
-                if (eventQueue == null) {
-                    // Create the queue to receive events
-                    initQueueProcessorThread();
-                }
-            }
+        if (isQueueProcessorStarted.compareAndSet(false, true)) {
+            startQueueProcessorThread();
         }
         return eventQueue;
+    }
+
+    private boolean isIndexableType(final EntityEvent event) {
+        final String type = NullSafe.get(event, EntityEvent::getDocRef, DocRef::getType);
+        return type != null && typeToIndexableMap.containsKey(type);
     }
 
 
