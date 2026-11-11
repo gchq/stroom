@@ -499,3 +499,13 @@
     height: 100%;
     padding: var(--input__padding--vertical) var(--input__padding--horizontal) var(--input__padding--vertical) var(--input__padding--horizontal);
 }
+/* In forced colours (e.g. Windows high contrast) a rule's colours are kept: whoever wrote the rule
+   chose them to mean something, and they were replaced, so formatted rows looked like any other.
+   That is a rule that fills (a colour, or a custom style, cfDynamicN), and the swatches that show
+   them; a text-only colour (cf-text) was chosen for the theme's background, not the system's, so
+   follows the system. A selected row still shows Highlight (data-grid.css) */
+@media (forced-colors: active) {
+    :is([class^="cf-"], [class*=" cf-"], [class*="cfDynamic"]):not(.cf-text) {
+        forced-color-adjust: none;
+    }
+}

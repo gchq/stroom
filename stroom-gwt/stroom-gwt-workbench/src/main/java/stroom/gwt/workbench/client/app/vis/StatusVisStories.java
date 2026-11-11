@@ -373,16 +373,22 @@ public final class StatusVisStories {
                     play.expect("the lights' statuses", () -> statuses.textContents().get())
                             .toEqual(List.of("Green", "Amber", "Red"));
                     if (StroomThemeDecorator.isForcedColours()) {
-                        // With a high contrast theme, the lit lamp is filled in the theme's text colour
+                        // With a high contrast theme, the lit lamp keeps its colour (the data's, as
+                        // other charts' series colours are) with an edge in the theme's text colour,
                         // and the unlit ones are its background, so which is lit still shows, and the
                         // housing is edged in the text colour
                         final Query vis = inFrame.querySelector(".vis");
-                        play.expect("the text's colour, the lit lamp's and the housing's edge's",
+                        play.expect("the text's colour, the lit lamp's edge's and the housing's edge's",
                                         () -> List.of(vis.computedStyle("color").get(),
-                                                lamps.nth(2).computedStyle("fill").get(),
+                                                lamps.nth(2).computedStyle("stroke").get(),
                                                 inFrame.querySelectorAll(".vis-traffic__housing").first()
                                                         .computedStyle("stroke").get()))
                                 .toSatisfy("the same", colours -> new HashSet<>((List<?>) colours).size() == 1);
+                        play.expect("the lit lamp's colour, the text's and the background's",
+                                        () -> List.of(lamps.nth(2).computedStyle("fill").get(),
+                                                vis.computedStyle("color").get(),
+                                                vis.computedStyle("background-color").get()))
+                                .toSatisfy("all different", colours -> new HashSet<>((List<?>) colours).size() == 3);
                         play.expect("the background's colour and an unlit lamp's",
                                         () -> List.of(vis.computedStyle("background-color").get(),
                                                 lamps.nth(0).computedStyle("fill").get()))
