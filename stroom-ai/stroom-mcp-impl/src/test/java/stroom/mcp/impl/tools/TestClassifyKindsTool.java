@@ -233,11 +233,11 @@ class TestClassifyKindsTool {
         final String dropPurge = "{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", \"value\": "
                                  + "\"purge\", \"from_user\": true, \"drop\": true}]}";
 
-        final Map<String, Object> refused = call(dropPurge, user.context());
+        final String refused = tool.execute(BuildToolCalls.call(ClassifyKindsTool.NAME, dropPurge), user.context())
+                .text();
 
-        assertThat(String.valueOf(refused)).contains("action=purge is proposed and waiting for the user's form",
-                "confirm=true");
-        assertThat(String.valueOf(refused)).doesNotContain("dropped=");
+        assertThat(refused).startsWith("Nothing recorded: proposals[0]: action=purge is proposed and waiting for "
+                                       + "the user's form").contains("confirm=true");
         // Without forms, the agent asks in the chat and sends what the user said.
         assertThat(call(dropPurge, BuildToolCalls.context())).containsKey("dropped");
     }
