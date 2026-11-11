@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.15-parallel-pathways] - 2026-11-11
+
 * Bug **#6017** : Fix Ask Stroom AI ignoring the timeouts in the OpenAI Model document's HTTP client configuration. Requests to chat and embedding models always used a 60 second read timeout and a 15 second connect timeout.
 
 * Bug **#5953** : Change BCrypt Data Feed Key hashing to always truncate input on hashing and verification.
@@ -2903,7 +2905,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.11-parallel-pathways...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.15-parallel-pathways...HEAD
+[v7.14-beta.15-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.11-parallel-pathways...v7.14-beta.15-parallel-pathways
 [v7.14-beta.11-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.10-parallel-pathways...v7.14-beta.11-parallel-pathways
 [v7.14-beta.10-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.9-parallel-pathways...v7.14-beta.10-parallel-pathways
 [v7.14-beta.9-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.9...v7.14-beta.9-parallel-pathways
