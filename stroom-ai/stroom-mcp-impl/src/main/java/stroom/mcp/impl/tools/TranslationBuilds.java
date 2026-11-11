@@ -490,7 +490,34 @@ class TranslationBuilds {
             LOGGER.debug(() -> LogUtil.message("No source notes read from build {}: {}", build, e.getMessage()));
             found.clear();
         }
-        return SourceNotes.merged(found);
+        final Map<String, Object> merged = SourceNotes.merged(found);
+        if (!merged.containsKey(SourceNotes.KIND_FIELDS)) {
+            surveyKindFields(build).ifPresent(fields -> merged.put(SourceNotes.KIND_FIELDS, fields));
+        }
+        return merged;
+    }
+
+    /// @param build A build.
+    /// @return The fields its survey tells the kinds of event apart by (chosen by the user, or by the survey where it
+    /// was sure), so the draft makes its rules by the kinds the survey counted; empty when no survey says.
+    Optional<List<String>> surveyKindFields(final String build) {
+        try {
+            for (final WriteGuard.BuildDoc doc : guard.folderContents(build)) {
+                if (DocumentationDoc.TYPE.equals(doc.type()) && doc.name().endsWith(StroomBuildFacts.SURVEY)) {
+                    final Optional<List<String>> fields = documentAccess.read(doc.docRef(), DocumentationDoc.class)
+                            .map(read -> SurveyDoc.readState(BuildRecords.bodyText(read)))
+                            .map(state -> JsonValues.strings(JsonValues.mapOrEmpty(state.get(SurveyDoc.KIND_FIELDS))
+                                    .get("fields")))
+                            .filter(list -> !list.isEmpty());
+                    if (fields.isPresent()) {
+                        return fields;
+                    }
+                }
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No survey read from build {}: {}", build, e.getMessage()));
+        }
+        return Optional.empty();
     }
 
     /// @param build A build, or null.

@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -342,5 +343,67 @@ class TestShapes {
         assertThat(counts(shapesOf(text)).keySet()).containsExactlyInAnyOrder(
                 "fields:message,ts > message: json:action,user | action=login",
                 "fields:message,ts > message: json:action,user | action=logout");
+    }
+
+    @Test
+    void kindFieldsChosenOnceSignEveryPartAlike() {
+        // Seen in testing: a CSV mail log's kind columns chosen afresh in each part (msg_act; then msg_act with
+        // direction; then none, past eight values), 16 kinds from 3, and the survey never covered.
+        final Shapes shapes = new Shapes(List.of(), 1);
+        shapes.useKindFields(List.of("msg_act"));
+        addAll(shapes, csv(i -> List.of("allow", "quarantine", "reject").get(i % 3), i -> "inbound"));
+        addAll(shapes, csv(i -> List.of("allow", "quarantine", "reject").get(i % 3),
+                i -> i % 2 == 0 ? "inbound" : "outbound"));
+        addAll(shapes, csv(i -> List.of("allow", "quarantine", "reject", "drop", "defer", "bounce", "encrypt",
+                "redirect", "tag").get(i % 9), i -> "inbound"));
+
+        assertThat(shapes.shapes().keySet()).containsExactlyInAnyOrder("row:msg_act=allow",
+                "row:msg_act=quarantine", "row:msg_act=reject", "row:msg_act=drop", "row:msg_act=defer",
+                "row:msg_act=bounce", "row:msg_act=encrypt", "row:msg_act=redirect", "row:msg_act=tag");
+    }
+
+    @Test
+    void oneKindChosenSignsEveryRecordAlike() {
+        final Shapes shapes = new Shapes(List.of(), 1);
+        shapes.useKindFields(List.of(KindFields.ONE_KIND));
+        addAll(shapes, csv(i -> List.of("allow", "quarantine").get(i % 2), i -> "inbound"));
+
+        assertThat(shapes.shapes().keySet()).containsExactly("row:all");
+    }
+
+    @Test
+    void aKindFieldChosenForJsonReplacesTheFieldsNamedLikeKinds() {
+        // A message id named like a kind field (msg_id), one a message: not a kind once the kind field is chosen.
+        final Shapes shapes = new Shapes(List.of(), 1);
+        shapes.useKindFields(List.of("verdict"));
+        final String text = json(
+                SampleProfiler.map("msg_id", "a1", "verdict", "allow"),
+                SampleProfiler.map("msg_id", "b2", "verdict", "allow"),
+                SampleProfiler.map("msg_id", "c3", "verdict", "block"));
+        final RecordSplitter.Chunk chunk = RecordSplitter.split(text);
+        for (int i = 0; i < chunk.records().size(); i++) {
+            shapes.add(chunk, i, 1L);
+        }
+
+        assertThat(shapes.shapes().keySet()).containsExactlyInAnyOrder("fields:msg_id,verdict | verdict=allow",
+                "fields:msg_id,verdict | verdict=block");
+    }
+
+    private static void addAll(final Shapes shapes, final String text) {
+        final RecordSplitter.Chunk chunk = RecordSplitter.split(text);
+        for (int i = 0; i < chunk.records().size(); i++) {
+            shapes.add(chunk, i, 1L);
+        }
+    }
+
+    // A CSV mail log of 54 rows: its kind in msg_act and a direction, each by the row's index.
+    private static String csv(final IntFunction<String> act,
+                              final IntFunction<String> direction) {
+        final List<String> lines = new ArrayList<>(List.of("timestamp,sender,subject,msg_act,direction"));
+        for (int i = 0; i < 54; i++) {
+            lines.add("2026-11-11T08:" + String.format("%02d", i) + ":04Z,u" + i + "@example.com,Subject " + i + ","
+                      + act.apply(i) + "," + direction.apply(i));
+        }
+        return String.join("\n", lines) + "\n";
     }
 }
