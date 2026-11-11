@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Bug **#6008** : Fix duplicate key error when replaying a report or rule execution.
+
 
 ## [v7.14-beta.11] - 2026-11-10
 
