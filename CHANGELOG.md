@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13.7] - 2026-11-11
+
+* Bug **#6008** : Fix duplicate key error when replaying a report or rule execution.
+
+
 ## [v7.13.6] - 2026-11-06
 
 * Bug **#5961** : Change error handling when a dashboard's config cannot be deserialised to include the dashboard's identity.
@@ -2659,7 +2664,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.7...HEAD
+[v7.13.7]: https://github.com/gchq/stroom/compare/v7.13.6...v7.13.7
 [v7.13.6]: https://github.com/gchq/stroom/compare/v7.13.5...v7.13.6
 [v7.13.5]: https://github.com/gchq/stroom/compare/v7.13.4...v7.13.5
 [v7.13.4]: https://github.com/gchq/stroom/compare/v7.13.3...v7.13.4
