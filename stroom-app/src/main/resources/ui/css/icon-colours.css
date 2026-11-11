@@ -167,5 +167,24 @@
     :is(.svg-image__warning, .svg-image__alert, .svg-image__fatal-dark) svg [style*="stroke:"] {
         stroke: currentColor !important;
     }
+
+    /* On a Highlight fill (a selected row, the current step, a pressed button), where the icon is
+       HighlightText, its white parts are Highlight, not Canvas: an error's cross on the current step
+       of the stepping path bar was lost, Canvas on HighlightText being the same in the dark palette */
+    :is([aria-selected="true"], [aria-current]:not([aria-current="false"]), [aria-pressed="true"]) {
+        --icon-colour__white: Highlight;
+        --icon-colour__white__on: Highlight;
+    }
+
+    :is([aria-selected="true"], [aria-current]:not([aria-current="false"]), [aria-pressed="true"])
+            :is(svg[aria-hidden="true"], [class*="svg-image"] svg)
+            :is([style="fill:#fff"], [style="fill:#ffffff"]) {
+        fill: Highlight !important;
+    }
+
+    :is([aria-selected="true"], [aria-current]:not([aria-current="false"]), [aria-pressed="true"])
+            :is(.svg-image__tick, .svg-image__stepping) svg [style="fill:#fff"] {
+        fill: currentColor !important;
+    }
 }
 
