@@ -14,9 +14,7 @@ jgit = "7.8.0.202609011348-r"
 jmh = "1.37"
 jooq = "3.21.9"
 junit-jupiter = "5.13.1"
-langchain4j = "1.17.1"
-langchain4j-cohere = "1.17.1-beta27"
-langchain4j-jina = "1.23.0-beta33"
+langchain4j = "1.23.0"
 kafka = "3.9.0"
 openai = "4.69.3"
 poi = "6.0.0"
@@ -169,10 +167,11 @@ mbknor-jackson-jsonSchema = { module = "com.kjetland:mbknor-jackson-jsonschema_2
 mockito-core = { module = "org.mockito:mockito-core" } # version controlled by dropwizard-dependencies
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter" } # version controlled by dropwizard-dependencies
 mysql-connector-java = { module = "com.mysql:mysql-connector-j", version = "9.4.0" }
-langchain4j = { module = "dev.langchain4j:langchain4j", version.ref = "langchain4j" }
-langchain4j-open-ai = { module = "dev.langchain4j:langchain4j-open-ai", version.ref = "langchain4j" }
-langchain4j-cohere = { module = "dev.langchain4j:langchain4j-cohere", version.ref = "langchain4j-cohere" }
-langchain4j-jina = { module = "dev.langchain4j:langchain4j-jina", version.ref = "langchain4j-jina" }
+langchain4j = { module = "dev.langchain4j:langchain4j" } # version controlled by langchain4j-bom
+langchain4j-bom = { module = "dev.langchain4j:langchain4j-bom", version.ref = "langchain4j" } # version controlled by langchain4j-bom
+langchain4j-open-ai = { module = "dev.langchain4j:langchain4j-open-ai" } # version controlled by langchain4j-bom
+langchain4j-cohere = { module = "dev.langchain4j:langchain4j-cohere" } # version controlled by langchain4j-bom
+langchain4j-jina = { module = "dev.langchain4j:langchain4j-jina" } # version controlled by langchain4j-bom
 openai = { module = "com.openai:openai-java", version.ref = "openai" }
 poi = { module = "org.apache.poi:poi", version.ref = "poi" }
 poi-ooxml = { module = "org.apache.poi:poi-ooxml", version.ref = "poi" }
