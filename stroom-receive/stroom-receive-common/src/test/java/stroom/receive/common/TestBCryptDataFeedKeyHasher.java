@@ -61,6 +61,22 @@ class TestBCryptDataFeedKeyHasher extends AbstractDataFeedKeyHasherTest {
                     "$2a$10$.kEie10cipXOP7vfvRtqAeTyaQz/l2.XkpsdykeJnaK4Dy67Pg8/S",
                     "$2a$10$.kEie10cipXOP7vfvRtqAe"));
 
+    /// Hash/salt generated in 7.14-beta.13 using spring-security lib (after truncation changes)
+    @SuppressWarnings("checkstyle:LineLength")
+    private static final List<HashState> HASHES_7_14_BETA_13 = List.of(
+            new HashState(
+                    "hello world",
+                    "$2a$10$bVplG9z1s4Hy.Ojw8Gany.aLlw6nxuUT/Shcsgl5.wEOQSfYXlP5C",
+                    "$2a$10$bVplG9z1s4Hy.Ojw8Gany."),
+            new HashState(
+                    "sdk_L8K8ttQc9Y7QtdrTX7PpYTXvDT5JJ9ZzR9pkTVHrAHbUaZXrDwmGMQfFW74o59L5dGSs5nnHunA8WboQ8Lbv4YENAYYM64p3P9zcZ5Xa5nfh8trqiyLWaFQ2gdQPinBL",
+                    "$2a$10$SmDwgPLLtPLvXLIhsum9/uIsPd/2Jwd2tmxVoNcD9VtCpsYqGetRO",
+                    "$2a$10$SmDwgPLLtPLvXLIhsum9/u"),
+            new HashState(
+                    "sdk_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "$2a$10$7OQAZMZat10N0yYe38STXeNPcv5HlJUfwUyKqaji2xW7Vlj9cYMm.",
+                    "$2a$10$7OQAZMZat10N0yYe38STXe"));
+
 
     @Override
     boolean isSaltEncodedInHash() {
@@ -109,6 +125,21 @@ class TestBCryptDataFeedKeyHasher extends AbstractDataFeedKeyHasherTest {
     void test_7_14_BETA_12() {
         final DataFeedKeyHasher hasher = getHasher();
         for (final HashState hashState : HASHES_7_14_BETA_12) {
+            final boolean isValid = hasher.verify(hashState.input, hashState.hash, hashState.salt);
+            assertThat(isValid)
+                    .isTrue();
+
+            // Also make sure that if we make a new hash/salt, we can verify that too
+            doHashTest(hashState.input);
+        }
+    }
+
+    /// Make sure we can verify hashed made in 7.14-beta.13 (using Spring Security lib,
+    /// with fixed input truncation)
+    @Test
+    void test_7_14_BETA_13() {
+        final DataFeedKeyHasher hasher = getHasher();
+        for (final HashState hashState : HASHES_7_14_BETA_13) {
             final boolean isValid = hasher.verify(hashState.input, hashState.hash, hashState.salt);
             assertThat(isValid)
                     .isTrue();
