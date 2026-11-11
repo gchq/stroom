@@ -59,6 +59,12 @@ public final class SurveyDoc {
     /// The state's key for the fields that tell the kinds of event apart: `fields` (a list; [KindFields#ONE_KIND]
     /// alone for one kind) and `by` (`user` or `tool`).
     public static final String KIND_FIELDS = "kind_fields";
+    /// The state's key for the streams read only in part that couldn't be read further in a call, which the user
+    /// chose to stop at: settled, as a part read deeper and stopped is.
+    public static final String STOPPED_STREAMS = "stopped_streams";
+    /// The state's key for the user's going ahead with the survey as it is (`at`, `streams_read`): covered as far
+    /// as they chose, until the survey reads on.
+    public static final String ACCEPTED = "accepted";
 
     private static final DateTimeFormatter AT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
             .withZone(ZoneOffset.UTC);
@@ -291,6 +297,16 @@ public final class SurveyDoc {
         // The fields that tell the feed's kinds of event apart, chosen once (KindFields): kept for later calls.
         if (result.get(KIND_FIELDS) != null) {
             merged.put(KIND_FIELDS, result.get(KIND_FIELDS));
+        }
+        if (result.get(STOPPED_STREAMS) instanceof final List<?> stopped && !stopped.isEmpty()) {
+            final List<Object> before = new ArrayList<>(JsonValues.listOrEmpty(merged.get(STOPPED_STREAMS)));
+            merged.put(STOPPED_STREAMS, sortedUnion(before, new ArrayList<>(stopped)));
+        }
+        if (result.get(ACCEPTED) != null) {
+            merged.put(ACCEPTED, result.get(ACCEPTED));
+        } else if (!resultStreams.isEmpty()) {
+            // Read on since: covered or not by what it reads now.
+            merged.remove(ACCEPTED);
         }
         // How far each part read only in part has been read, and what the user chose for it (survey_feed's
         // SurveyDepth), by stream:part: a later call reads on from there, or doesn't ask again.
