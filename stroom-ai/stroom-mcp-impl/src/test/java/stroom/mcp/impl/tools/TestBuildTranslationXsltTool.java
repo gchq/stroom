@@ -1,0 +1,1306 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.tools;
+
+import stroom.ai.impl.AiChatRunManager;
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.draft.DraftMapping;
+import stroom.ai.impl.tools.draft.SplitterXml;
+import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.SurveyDoc;
+import stroom.ai.impl.tools.sample.ToolJson;
+import stroom.ai.impl.tools.validation.EventSchema;
+import stroom.ai.impl.tools.validation.XsltCompileCheck;
+import stroom.docref.DocRef;
+import stroom.documentation.shared.DocumentationDoc;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.util.json.JsonUtil;
+import stroom.xmlschema.shared.XmlSchemaDoc;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+
+/// build_translation_xslt, the tool: generating and saving from a mapping, the feedback on a mapping that doesn't
+/// generate, changes= on a draft or a saved mapping, and the guards around them.
+class TestBuildTranslationXsltTool {
+
+    private static final String SAMPLE = """
+            time,action,user,result,sid,host,port
+            2026-09-28T10:00:00.000Z,login,alice,ok,s1,ws01,22
+            2026-09-28T10:01:00.000Z,status,,,,ws01,0
+            2026-09-28T10:02:00.000Z,status,,,,ws02,0
+            2026-09-28T10:03:00.000Z,login,bob,fail,s2,ws03,22
+            """;
+    // A JSON mapping that generates.
+    private static final String GOOD = """
+            {"input": "json", "common": [{"path": "EventTime/TimeCreated", "field": "ts"},
+                                         {"path": "EventSource/System/Name", "value": "Acme"},
+                                         {"path": "EventSource/System/Environment", "value": "Test"},
+                                         {"path": "EventSource/Generator", "value": "acme"},
+                                         {"path": "EventSource/Device/HostName", "field": "host"}],
+             "events": [{"name": "logon",
+                         "fields": [{"path": "EventDetail/TypeId", "value": "Logon"},
+                                    {"path": "EventDetail/Authenticate/Action", "value": "Logon"},
+                                    {"path": "EventDetail/Authenticate/User/Id", "field": "user"}]}]}""";
+    // A firewall's JSON lines, and the field inventory drafted from them.
+    private static final String FW_JSON = "{\"timestamp\":\"2026-10-01T09:00:12+10:00\",\"device\":\"FW-EDGE-01\","
+                                          + "\"event_type\":\"TRAFFIC\",\"severity\":\"INFO\","
+                                          + "\"src_ip\":\"192.0.2.10\","
+                                          + "\"src_port\":54321,\"dst_ip\":\"198.51.100.20\",\"dst_port\":443,"
+                                          + "\"protocol\":\"TCP\",\"action\":\"ALLOW\",\"rule_id\":1001,"
+                                          + "\"bytes_sent\":1520,\"bytes_received\":8450,\"username\":\"\","
+                                          + "\"message\":\"Outbound HTTPS connection allowed\"}\n"
+                                          + "{\"timestamp\":\"2026-10-01T09:01:00+10:00\",\"device\":\"FW-EDGE-01\","
+                                          + "\"event_type\":\"LOGIN\",\"severity\":\"INFO\","
+                                          + "\"src_ip\":\"192.0.2.11\","
+                                          + "\"src_port\":1,\"dst_ip\":\"198.51.100.1\",\"dst_port\":22,"
+                                          + "\"protocol\":\"TCP\",\"action\":\"ALLOW\",\"rule_id\":7,"
+                                          + "\"bytes_sent\":0,"
+                                          + "\"bytes_received\":0,\"username\":\"alice\","
+                                          + "\"message\":\"Admin login\"}\n";
+    private static final List<Map<String, Object>> SYSTEM = List.of(Map.of("path", "EventSource/System/Name",
+            "value", "FortiOS"));
+
+    private static final String FORK_NS = "file://xml/schema/test-fork/events";
+    private static final String FORK_SYSTEM_ID = "file://xml/schema/test-fork/events";
+
+    private final TranslationWorld world = new TranslationWorld();
+    private final BuildTranslationXsltTool tool = world.buildTool();
+
+    @Test
+    void noFieldMappingWithoutASample() {
+        final Map<String, Object> result = world.call(tool, Map.of("mapping", TranslationWorld.mapping()));
+
+        assertThat(result.get("ok")).isEqualTo(true);
+        assertThat((String) result.get("xslt")).startsWith("<?xml");
+        // A table from the mapping alone shows how values are computed; it used to be copied into docs as it was.
+        assertThat(result).doesNotContainKey("field_mapping");
+        assertThat((String) result.get("field_mapping_needs")).contains("pipeline_uuid and stream_ids");
+    }
+
+    @Test
+    void aSingleStreamIdIsTakenAsAListOfOne() {
+        // Clients send the model's arguments as they are; one sample stream often arrives as a bare number, which
+        // failed validation ("invalid input") and left the documentation to be written by hand.
+        Mockito.when(world.sampleStreamTexts.read(any())).thenReturn(new SampleStreamTexts.Texts(Map.of(), List.of()));
+        final SteppedPipeline pipeline = Mockito.mock(SteppedPipeline.class);
+        Mockito.when(pipeline.defaultOutputs()).thenReturn(List.of("translationFilter"));
+        Mockito.when(world.stepping.load("p-1")).thenReturn(pipeline);
+        Mockito.when(world.stepping.outputs(any(), any(), any(), anyString(), any(), anyInt()))
+                .thenReturn(new PipelineStepping.Outputs(Map.of(), false));
+
+        final Map<String, Object> result = world.call(tool, Map.of("mapping", TranslationWorld.mapping(),
+                "pipeline_uuid", "p-1", "stream_ids", 15783601, "field_mapping", true));
+
+        assertThat(result).doesNotContainKey("error");
+        Mockito.verify(world.stepping).outputs(any(), eq(pipeline), eq(List.of(15783601L)), eq("translationFilter"),
+                any(), eq(50));
+    }
+
+    @Test
+    void savingReturnsTheDocumentNotTheCode() {
+        // The XSLT need not pass through the model: generated, saved with its mapping, referred to by uuid.
+        final Map<String, Object> saved = world.call(tool, Map.of("mapping", TranslationWorld.mapping(),
+                "build", "acme-v1", "name", "ACME-Events"));
+
+        assertThat(saved).doesNotContainKey("xslt");
+        final Map<String, Object> doc = map(saved.get("saved"));
+        assertThat(doc).containsEntry("type", XsltDoc.TYPE).containsEntry("name", "ACME-Events");
+        final String uuid = String.valueOf(doc.get("uuid"));
+        assertThat((String) saved.get("hint")).contains("uuid='" + uuid + "'");
+        final XsltDoc xslt = world.xslt(uuid);
+        assertThat(xslt.getData()).startsWith("<?xml");
+        // Kept with its mapping, and tagged so a mapping deleted later is noticed.
+        assertThat(KeptMapping.readMapping(xslt.getDescription()).orElseThrow().kind()).isEqualTo("translation");
+        assertThat(world.world.tags(uuid)).contains(WriteGuard.KEPT_MAPPING);
+
+        final Map<String, Object> again = world.call(tool, Map.of("mapping", TranslationWorld.mapping(),
+                "uuid", uuid, "include_xslt", true));
+        assertThat((String) again.get("xslt")).startsWith("<?xml");
+        assertThat(map(again.get("saved")).get("version")).isNotEqualTo(doc.get("version"));
+
+        final Map<String, Object> broken = new LinkedHashMap<>(TranslationWorld.mapping());
+        broken.put("events", List.of(Map.of("name", "bare", "fields", List.of(Map.of("path", "EventDetail/Nope",
+                "value", "x")))));
+        final Map<String, Object> failed = world.call(tool, Map.of("mapping", broken, "build", "acme-v1",
+                "name", "Other"));
+        assertThat(failed.get("ok")).isEqualTo(false);
+        assertThat(failed).doesNotContainKey("saved");
+
+        assertThat(world.call(tool, Map.of("mapping", TranslationWorld.mapping(), "build", "acme-v1")).get("error"))
+                .asString().contains("give name");
+    }
+
+    @Test
+    void aSaveThatKeepsNoneOfTheCurrentTranslationsLookupsWarnsNamingThem() {
+        // Seen in testing: a next version written anew lost the lookups, and nothing said so. Unless the user chose
+        // to drop them, the save says what the current translation looks up.
+        Mockito.when(world.currentTranslations.current("acme-v1")).thenReturn(Optional.of(currentTranslation()));
+
+        final Map<String, Object> saved = world.call(tool, Map.of("mapping", TranslationWorld.mapping(),
+                "build", "acme-v1", "name", "ACME-Events"));
+
+        assertThat(saved).containsKey("saved");
+        assertThat(String.valueOf(saved.get("warnings")))
+                .contains("This mapping keeps none of the current translation's lookups. The feed is translated now "
+                          + "by 'FG-V1.2' (v12)");
+        // Nothing to keep: no warning.
+        Mockito.when(world.currentTranslations.current("acme-v1")).thenReturn(Optional.of(Map.of("pipeline",
+                Map.of("name", "FG-V1.2", "uuid", "v12"))));
+        assertThat(String.valueOf(world.call(tool, Map.of("mapping", TranslationWorld.mapping(),
+                "build", "acme-v1", "name", "ACME-Events-2")).get("warnings")))
+                .doesNotContain("keeps none of the current translation's lookups");
+    }
+
+    @Test
+    void anXsltThatDoesNotCompileIsNotSavedAndSaysWhy() {
+        // Seen: saved ok:true with an xpath of $kv, then every record failed at stepping ("Variable kv has not been
+        // declared"). Compiled here as Stroom compiles it.
+        Mockito.when(world.compileCheck.compile(anyString())).thenReturn(new XsltCompileCheck.Compiled(List.of(
+                "XPST0008 Variable $device_name has not been declared")));
+
+        final Map<String, Object> result = world.call(tool, Map.of("mapping", TranslationWorld.mapping(),
+                "build", "acme-v1", "name", "ACME-Events"));
+
+        assertThat(result.get("ok")).isEqualTo(false);
+        assertThat(result).doesNotContainKey("saved");
+        assertThat((List<?>) result.get("problems")).anySatisfy(p -> assertThat(String.valueOf(p))
+                .contains("doesn't compile").contains("XPST0008 Variable $device_name has not been declared"));
+    }
+
+    @Test
+    void toolsReadTheSampleFromItsStreamsInsteadOfItsText() {
+        // The text goes through the model once, to upload_sample; the tools after it take stream_ids.
+        final String csv = "time,user,action\n2026-10-01T10:00:00Z,alice,login\n2026-10-01T10:05:00Z,bob,logout\n";
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", csv), List.of()));
+        final Map<String, Object> typo = TranslationWorld.mapping();
+        final List<Object> common = new ArrayList<>(list(typo.get("common")));
+        common.set(0, Map.of("path", "EventTime/TimeCreated", "field", "tiem"));
+        typo.put("common", common);
+
+        final Map<String, Object> checked = world.call(tool, Map.of("mapping", typo, "stream_ids", List.of(7),
+                "splitter", Map.of("kind", "delimited", "header", true)));
+
+        // Checked against the stream's records: a near miss of a sample field is a problem, so nothing is generated.
+        assertThat(checked.get("ok")).isEqualTo(false);
+        assertThat((List<?>) checked.get("problems")).anySatisfy(p -> assertThat(String.valueOf(p))
+                .contains("'tiem'").contains("did you mean ['time']"));
+        Mockito.verify(world.sampleStreamTexts).read(List.of(7L));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void fieldsOnlyInRecordsTheSurveyFoundPastTheSamplesCutAreChecked() {
+        // Seen in testing: a sample read to its 4,004th record of 25,000; a file upload's name, only in records near
+        // the end, was refused as in none of the sample's records, so the agent read it through raw XPath.
+        final String head = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "alice"}
+                {"ts": "2026-09-28T10:01:00.000Z", "host": "ws02", "user": "bob"}
+                """;
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", head), List.of("stream 7 is read up to its first 172 characters"),
+                List.of(new SampleStreamTexts.Cut("stream 7", 7L, 0))));
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace(
+                "{\"path\": \"EventDetail/Authenticate/User/Id\", \"field\": \"user\"}",
+                "{\"path\": \"EventDetail/Authenticate/User/Id\", \"field\": \"user\"}, "
+                + "{\"path\": \"EventDetail/Authenticate/Data\", \"data_name\": \"fname\", \"field\": \"fname\"}"),
+                Map.class);
+        final Map<String, Object> arguments = Map.of("mapping", mapping, "stream_ids", List.of(7), "build",
+                "acme-v1", "name", "ACME-Events");
+
+        final Map<String, Object> unchecked = world.call(tool, arguments);
+        assertThat(findings(unchecked)).as("without the survey").anyMatch(p -> p.contains("'fname'"));
+
+        final String uuid = world.inBuild("acme-v1", DocumentationDoc.TYPE, SurveyDoc.docName("ACME"))
+                .getUuid();
+        final Map<String, Object> state = Map.of("feed", "ACME", "format", "json lines", "streams_read", List.of(7),
+                "surveys", List.of(), "shapes", Map.of("upload", Map.of("count", 1, "streams", List.of(7),
+                "examples", List.of(Map.of("text", "{\"ts\": \"2026-09-28T23:59:00.000Z\", \"host\": \"ws09\", "
+                                                   + "\"user\": \"erin\", \"fname\": \"report.pdf\"}",
+                        "location", Map.of("stream", 7, "part", 0, "record", 24_000))))));
+        world.world.docs.put(uuid, ((DocumentationDoc) world.world.docs.get(uuid)).copy()
+                .data(SurveyDoc.render(state)).build());
+        final Map<String, Object> checked = world.call(tool, Map.of("mapping", mapping, "stream_ids", List.of(7),
+                "build", "acme-v1", "name", "ACME-Events-2"));
+
+        assertThat(findings(checked)).noneMatch(p -> p.contains("'fname'"));
+        assertThat(list(checked.get("warnings"))).contains("sample: 1 record(s) the survey found further into "
+                                                           + "streams [7] than the sample is read to are checked "
+                                                           + "too");
+    }
+
+    // A result's problems and warnings, as text.
+    private static List<String> findings(final Map<String, Object> result) {
+        assertThat(result).as("a result, not a refusal").doesNotContainKey("error");
+        final List<String> out = new ArrayList<>();
+        JsonValues.listOrEmpty(result.get("problems")).forEach(p -> out.add(String.valueOf(p)));
+        JsonValues.listOrEmpty(result.get("warnings")).forEach(w -> out.add(String.valueOf(w)));
+        return out;
+    }
+
+    @Test
+    void theRuleForTheRestKeptUnknownIsPutAsTheRecordsNoOtherRuleMatches() {
+        final Map<String, Object> mapping = TranslationWorld.mapping();
+        final List<Object> events = new ArrayList<>(list(mapping.get("events")));
+        final Map<String, Object> rest = new LinkedHashMap<>(map(events.get(1)));
+        rest.put("allow_unknown", "status lines carry no activity");
+        events.set(1, rest);
+        mapping.put("events", events);
+        final String sample = "time,action,user,result,sid,host,port\n2026-09-28T10:00:00.000Z,login,alice,ok,s1,ws01,"
+                              + "22\n2026-09-28T10:01:00.000Z,status,,,,ws01,0\n";
+
+        final Map<String, Object> shown = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1", "name", "N",
+                "sample", sample));
+
+        assertThat(shown.get("status")).isEqualTo("needs_review");
+        assertThat((String) shown.get("show_user")).contains("**Records no other rule matches** (rule `other`)\n\n- 1 "
+                                                             + "of the 2 sample records\n");
+    }
+
+    @Test
+    void aKindTheUserConfirmedThatTheMappingTranslatesOtherwiseIsPutToThemBeforeSaving() {
+        // From the chat 163 review: logoffs the user confirmed went to Unknown, unsaid.
+        confirmedStatusAsLogoff();
+        final Map<String, Object> kept = keptAsUnknown();
+
+        // Saving, it's shown in the chat first, before the Unknown review.
+        final Map<String, Object> shown = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N",
+                "sample", SAMPLE));
+        assertThat(shown.get("status")).isEqualTo("needs_review");
+        assertThat((String) shown.get("show_user")).startsWith("**Kinds you confirmed that this mapping translates "
+                                                               + "otherwise**")
+                .contains("| status check (action=status) | Authenticate, Action Logoff | 2 | Unknown | status |");
+        world.forms = true;
+        world.answers.put("This mapping translates kinds you confirmed otherwise", "Keep the mapping's change");
+        world.answers.put("Translate these records", "yes");
+
+        // Kept: the Unknown review comes next, saying what the user confirmed of its records.
+        final Map<String, Object> unknown = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name",
+                "N", "sample", SAMPLE, "reviewed", shown.get("review_id")));
+        assertThat(unknown.get("status")).isEqualTo("needs_review");
+        assertThat((String) unknown.get("show_user")).contains("- Among them, kinds you confirmed:\n"
+                                                               + "  - status check (2 records), confirmed as "
+                                                               + "Authenticate, Action Logoff\n");
+
+        // Agreed to once, the change isn't asked about again on the way to saving, nor saved again.
+        final Map<String, Object> done = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N",
+                "sample", SAMPLE, "reviewed", unknown.get("review_id")));
+        assertThat(done).as(String.valueOf(done)).containsKey("saved");
+        assertThat(ToolJson.dumps(done.get("warnings"))).doesNotContain("confirmed kind");
+        final String uuid = String.valueOf(map(done.get("saved")).get("uuid"));
+        world.asked.clear();
+        assertThat(world.call(tool, Map.of("mapping", kept, "uuid", uuid, "build", "acme-v1", "sample", SAMPLE)))
+                .containsKey("saved");
+        assertThat(world.asked).isEmpty();
+    }
+
+    @Test
+    void withoutFormsAConfirmedKindTranslatedOtherwiseIsLeftAsAWarningForTheAgent() {
+        // The logins confirmed as Action Other; the mapping's logon rule writes Logon (as in the chat 163 review).
+        final String notes = world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes").getUuid();
+        world.world.docs.put(notes, DocumentationDoc.builder().uuid(notes).name("Acme source notes").version("v0")
+                .data("# Acme source notes\n\n<!-- stroom-mcp source notes\n{\"source\": \"Acme\", \"fields\": [], "
+                      + "\"events\": [{\"event\": \"new session\", \"description\": \"A session began\", "
+                      + "\"event_detail\": \"Authenticate\", \"field\": \"action\", \"value\": \"login\", "
+                      + "\"action\": \"Other\", \"basis\": \"user_confirmed\"}]}\n-->\n")
+                .build());
+        final String logins = SAMPLE.replace(",status,,,,", ",login,carol,ok,s3,");
+        final Map<String, Object> shown = world.call(tool, Map.of("mapping", TranslationWorld.mapping(), "build",
+                "acme-v1", "name", "N", "sample", logins));
+        assertThat(shown.get("status")).isEqualTo("needs_review");
+
+        final Map<String, Object> saved = world.call(tool, Map.of("mapping", TranslationWorld.mapping(), "build",
+                "acme-v1", "name", "N", "sample", logins, "reviewed", shown.get("review_id")));
+
+        assertThat(saved).containsKey("saved");
+        assertThat(JsonValues.strings(saved.get("warnings"))).anySatisfy(warning -> assertThat(warning)
+                .startsWith("confirmed kind new session (action=login, 4 sample records): the user confirmed "
+                            + "Authenticate, Action Other, but rule 'logon' makes it Authenticate, Action Logon."));
+    }
+
+    @Test
+    void theUserMayHaveWhatTheyConfirmedFollowedInstead() {
+        confirmedStatusAsLogoff();
+        final Map<String, Object> kept = keptAsUnknown();
+        final Map<String, Object> shown = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N",
+                "sample", SAMPLE));
+        world.forms = true;
+        world.answers.put("This mapping translates kinds you confirmed otherwise", "Follow what I confirmed");
+
+        final Map<String, Object> followed = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name",
+                "N", "sample", SAMPLE, "reviewed", shown.get("review_id")));
+
+        assertThat(followed).containsEntry("ok", false).doesNotContainKey("user_says");
+        assertThat(followed.get("saved")).isNull();
+        assertThat(JsonValues.strings(followed.get("confirmed"))).containsExactly("status check (action=status): "
+                                                                                  + "confirmed as Authenticate, "
+                                                                                  + "Action Logoff; now Unknown in "
+                                                                                  + "rule 'status'");
+        assertThat((String) followed.get("hint")).startsWith("Nothing saved. The user wants what they confirmed "
+                                                             + "followed");
+    }
+
+    @Test
+    void keepingUnknownNeedsTheUsersConfirmationBeforeSaving() {
+        final Map<String, Object> kept = keptAsUnknown();
+        // Seen in VS Code: asked with "no sample records checked", the user couldn't see what went to Unknown.
+        assertThat(world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N")).get("error")).asString()
+                .contains("call again with stream_ids");
+        // Seen in VS Code: "Keep rest as Unknown (what happened is not known) in the saved XSLT: rest:" was
+        // cryptic, and the detail too much tiny text in a form (asked for by the user): shown in the chat first,
+        // the form short.
+        final Map<String, Object> shown = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N",
+                "sample", SAMPLE));
+        assertThat(shown.get("status")).isEqualTo("needs_review");
+        final String reviewId = String.valueOf(shown.get("review_id"));
+        assertThat((String) shown.get("hint")).contains("reviewed='" + reviewId + "'");
+        // Not passed by saying it was reviewed: only by the id of what was shown (seen in promote_build).
+        final Map<String, Object> again = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N",
+                "sample", SAMPLE, "reviewed", true));
+        assertThat(again.get("status")).isEqualTo("needs_review");
+        assertThat((String) again.get("hint")).contains("true is not one");
+        final String md = String.valueOf(shown.get("show_user"));
+        assertThat(md).startsWith("**Records to translate as Unknown events**\n\nAn Unknown event says what happened "
+                                  + "isn't known: it has no Authenticate, Create or other action.\n\n**Records rule "
+                                  + "`status` matches**\n\n- 2 of the 4 sample records\n- What they hold:\n  - ")
+                .contains("  - action: status\n")
+                .endsWith("- Reason given: status lines carry no activity\n");
+        // Without a form the user can't agree: nothing is saved, and no id is given to pass back.
+        final Map<String, Object> refused = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N",
+                "sample", SAMPLE, "reviewed", reviewId));
+        assertThat(refused.get("error")).asString()
+                .startsWith("Not done: Translate these records as Unknown events")
+                .doesNotContain("confirmation_id");
+        world.forms = true;
+        world.answers.put("Translate these records", "yes");
+        final Map<String, Object> done = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N",
+                "sample", SAMPLE, "reviewed", reviewId));
+        // The form says in plain words which records, without the review id (seen in testing: "rule 'SEGOther':
+        // 1651 of 21503 sample records" and "as shown in the chat: e998d10dadc5" left the user unsure which).
+        assertThat(world.shown).singleElement().asString()
+                .startsWith("Translate these records as Unknown events")
+                .contains("- Rule 'status': 2 of 4 sample records, holding ", "action: status")
+                .doesNotContain(reviewId);
+        assertThat(done).as(String.valueOf(done)).containsKey("saved");
+        final String uuid = String.valueOf(map(done.get("saved")).get("uuid"));
+        assertThat(world.xslt(uuid)).isNotNull();
+        // Checking without saving asks nothing.
+        assertThat(world.call(tool, Map.of("mapping", kept))).doesNotContainKey("status");
+        // A rule keeping none of the sample Unknown holds nothing to agree to: saved without asking (seen: the user
+        // asked to keep 'other' as Unknown for "none of the 1000" records).
+        final String logins = SAMPLE.replace(",status,,,,", ",login,carol,ok,s3,");
+        assertThat(world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N2", "sample", logins)))
+                .containsKey("saved");
+
+        // Asked once per rule (seen in production: asked again on every save). Saved again with the same rule,
+        // nothing is asked; with its conditions or reason changed, it is.
+        final Map<String, Object> resaved = world.call(tool, Map.of("mapping", kept, "uuid", uuid, "sample",
+                SAMPLE));
+        assertThat(map(resaved.get("saved")).get("uuid")).isEqualTo(uuid);
+        // Not asked, but on the record: kept on the user's earlier answer.
+        Mockito.verify(world.auditLog).processed(any(), any(), eq("confirmation"), anyString(),
+                eq("granted (earlier): [status]"), eq(true));
+        final List<Object> events = new ArrayList<>(list(kept.get("events")));
+        final Map<String, Object> status = new LinkedHashMap<>(map(events.get(1)));
+        status.put("allow_unknown", "heartbeats only");
+        events.set(1, status);
+        final Map<String, Object> changed = new LinkedHashMap<>(kept);
+        changed.put("events", events);
+        assertThat(world.call(tool, Map.of("mapping", changed, "uuid", uuid, "sample", SAMPLE)).get("status"))
+                .isEqualTo("needs_review");
+    }
+
+    @Test
+    void theSampleIsReadWithTheBuildsDataSplitterWhenTheCallNamesOnlyTheXslt() {
+        // Seen in testing: a call naming only the XSLT's uuid, with no splitter, had its sample read with a spec
+        // guessed from it, and the Unknown gate had no records to show.
+        final DocRef converter = world.inBuild("acme-v1", TextConverterDoc.TYPE, "ACME-Splitter");
+        world.world.docs.put(converter.getUuid(), TextConverterDoc.builder().uuid(converter.getUuid())
+                .name("ACME-Splitter").version("v0").converterType(TextConverterDoc.TextConverterType.DATA_SPLITTER)
+                .data(SplitterXml.converter(SplitterSpec.fromMap(Map.of("kind", "key_value", "delimiter", " "))))
+                .build());
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("{\"input\": \"json\",",
+                "{\"input\": \"data_splitter\","), Map.class);
+        final String sample = """
+                ts=2026-09-28T10:00:00.000Z host=ws01 user=alice
+                ts=2026-09-28T10:01:00.000Z host=ws02 user=bob
+                """;
+        final Map<String, Object> saved = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "N", "sample", sample));
+        final String uuid = String.valueOf(map(saved.get("saved")).get("uuid"));
+
+        final Map<String, Object> again = world.call(tool, Map.of("uuid", uuid, "sample", sample, "changes",
+                Map.of("common", List.of(Map.of("path", "EventSource/Generator", "value", "acme2")))));
+
+        assertThat(list(again.get("warnings")))
+                .anyMatch(w -> String.valueOf(w).startsWith("sample: read with the build's Data Splitter "
+                                                            + "'ACME-Splitter'"));
+    }
+
+    @Test
+    void splittingTheDomainOffAUsersIdIsPutToTheUserBeforeSaving() {
+        // Asked for by the user: SecretServer's Ids kept their domain (domain.com\sam.lee), the warning to the
+        // agent never acted on.
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("{\"input\": \"json\",",
+                "{\"input\": \"json\", \"json_layout\": \"lines\","), Map.class);
+        final String sample = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "ACME\\\\alice"}
+                {"ts": "2026-09-28T10:01:00.000Z", "host": "ws02", "user": "bob"}
+                """;
+        final String warned = "sample: EventDetail/Authenticate/User/Id takes field 'user', whose values are "
+                              + "domain-qualified";
+
+        // Without forms the warning is the agent's, as before.
+        final Map<String, Object> unasked = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "N0", "sample", sample));
+        assertThat(unasked).containsKey("saved");
+        assertThat(list(unasked.get("warnings"))).anyMatch(w -> String.valueOf(w).startsWith(warned));
+
+        world.forms = true;
+        world.answers.put("Split the domain off", DomainSplits.SPLIT);
+        final Map<String, Object> split = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "N", "sample", sample));
+        assertThat(world.asked).singleElement().asString()
+                .isEqualTo("Split the domain off the users' Ids from 'user' (EventDetail/Authenticate/User/Id)? "
+                           + "E.g. ACME\\alice: the Id alice, the Domain ACME.");
+        assertThat(split).as(String.valueOf(split)).containsKey("saved");
+        assertThat(list(split.get("changes_applied"))).containsExactly("the domain split off 'user', as the user "
+                + "chose: EventDetail/Authenticate/User/Id: strip_domain, and EventDetail/Authenticate/User/Domain "
+                + "from 'user' (domain)");
+        assertThat(list(split.get("warnings"))).noneMatch(w -> String.valueOf(w).startsWith(warned));
+        final String uuid = String.valueOf(map(split.get("saved")).get("uuid"));
+        final String kept = JsonUtil.writeValueAsString(KeptMapping.readMapping(world.xslt(uuid).getDescription())
+                .orElseThrow().payload(), false);
+        assertThat(kept).contains("\"path\":\"EventDetail/Authenticate/User/Id\",\"field\":\"user\","
+                                  + "\"transform\":\"strip_domain\"",
+                "\"path\":\"EventDetail/Authenticate/User/Domain\",\"field\":\"user\",\"transform\":\"domain\"");
+
+        // Asked once: the whole mapping sent again unsplit is split again, as the user chose, without asking.
+        final Map<String, Object> again = world.call(tool, Map.of("mapping", mapping, "uuid", uuid, "sample",
+                sample));
+        assertThat(world.asked).hasSize(1);
+        assertThat(list(again.get("changes_applied"))).hasSize(1);
+
+        // Kept whole, as the user chose: nothing changed, no warning, and not asked again.
+        world.answers.put("Split the domain off", DomainSplits.KEEP);
+        final Map<String, Object> whole = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "N2", "sample", sample));
+        assertThat(world.asked).hasSize(2);
+        assertThat(whole).doesNotContainKey("changes_applied");
+        assertThat(list(whole.get("warnings"))).noneMatch(w -> String.valueOf(w).startsWith(warned));
+        final String wholeUuid = String.valueOf(map(whole.get("saved")).get("uuid"));
+        assertThat(world.call(tool, Map.of("mapping", mapping, "uuid", wholeUuid, "sample", sample)))
+                .doesNotContainKey("changes_applied");
+        assertThat(world.asked).hasSize(2);
+    }
+
+    @Test
+    void aSystemNameOrEnvironmentLeftAsAPlaceholderIsNotSaved() {
+        // Seen in testing: the source's name went in as the System/Name, and the user was never asked for either.
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("\"value\": \"Acme\"",
+                "\"value\": \"" + DraftMapping.SYSTEM_NAME_PLACEHOLDER + "\"").replace("\"value\": \"Test\"",
+                "\"value\": \"" + DraftMapping.ENVIRONMENT_PLACEHOLDER + "\""), Map.class);
+
+        final Map<String, Object> result = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "S", "sample", SAMPLE));
+
+        assertThat(result).containsEntry("ok", false).doesNotContainKey("saved");
+        assertThat(list(result.get("problems"))).anySatisfy(problem -> assertThat(String.valueOf(problem))
+                .contains("EventSource/System/Name ('TODO system name') and EventSource/System/Environment",
+                        "still a placeholder: ask the user"));
+    }
+
+    @Test
+    void loggingUnmappedFieldsTurnedOffInTheXsltStaysOff() {
+        // Asked for by the user: the switch is in the XSLT, so it can be turned off in Stroom's editor, and a save
+        // from the tools after keeps it off.
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("{\"input\": \"json\",",
+                "{\"input\": \"json\", \"json_layout\": \"lines\","), Map.class);
+        final String sample = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "alice"}
+                """;
+        final String on = "name=\"log_unmapped_fields\" as=\"xs:boolean\" select=\"true()\"";
+        final String off = "name=\"log_unmapped_fields\" as=\"xs:boolean\" select=\"false()\"";
+        final Map<String, Object> saved = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "L", "sample", sample));
+        final String uuid = String.valueOf(map(saved.get("saved")).get("uuid"));
+        assertThat(world.xslt(uuid).getData()).contains(on);
+
+        world.editByHand(uuid, code -> code.replace(on, off));
+        final Map<String, Object> again = world.call(tool, Map.of("mapping", mapping, "uuid", uuid,
+                "sample", sample));
+
+        assertThat(again).as(String.valueOf(again)).containsKey("saved");
+        assertThat(list(again.get("changes_applied")))
+                .contains("log_unmapped_fields kept false, as set in the saved XSLT");
+        assertThat(world.xslt(uuid).getData()).contains(off);
+        // Kept with the XSLT, so it is the mapping's from now on.
+        final Map<String, Object> kept = KeptMapping.readMapping(world.xslt(uuid).getDescription())
+                .orElseThrow().payload();
+        assertThat(map(kept.get("mapping")).get("log_unmapped_fields")).isEqualTo(false);
+    }
+
+    @Test
+    void answersGivenBeforeStillAnswerWhileTheSampleHasOtherProblems() {
+        // Seen in testing: the user was asked again about the same stand-ins on each round of fixing other problems,
+        // as the answers were only looked up once the sample check passed.
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("{\"input\": \"json\",",
+                "{\"input\": \"json\", \"json_layout\": \"lines\","), Map.class);
+        final String sample = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "alice"}
+                {"ts": "2026-09-28T10:01:00.000Z", "host": "-", "user": "bob"}
+                {"ts": "2026-09-28T10:02:00.000Z", "host": "-", "user": "carol"}
+                """;
+        world.forms = true;
+        world.answers.put("'-' in", PlaceholderChoices.KEEP);
+        final Map<String, Object> saved = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "R", "sample", sample));
+        assertThat(saved).as(String.valueOf(saved)).containsKey("saved");
+        assertThat(world.asked).hasSize(1);
+        final String uuid = String.valueOf(map(saved.get("saved")).get("uuid"));
+
+        // A time format no sample value fits: a problem, so not saved; the stand-in isn't asked about, nor warned of.
+        final Map<String, Object> broken = JsonUtil.readValue(JsonUtil.writeValueAsString(mapping, false)
+                .replace("\"field\":\"ts\"", "\"field\":\"ts\",\"time_format\":\"dd/MM/yyyy\""), Map.class);
+        final Map<String, Object> failing = world.call(tool, Map.of("mapping", broken, "uuid", uuid,
+                "sample", sample));
+
+        assertThat(failing).as(String.valueOf(failing)).containsEntry("ok", false);
+        assertThat(world.asked).hasSize(1);
+        assertThat(list(failing.get("warnings"))).noneMatch(w -> String.valueOf(w).startsWith("sample: placeholder"));
+    }
+
+    @Test
+    void standInsForNoneArePutToTheUserBeforeSaving() {
+        // Asked for by the user: W3C logs' '-' for a missing address went on into an Elasticsearch ip field.
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("{\"input\": \"json\",",
+                "{\"input\": \"json\", \"json_layout\": \"lines\","), Map.class);
+        final String sample = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "alice"}
+                {"ts": "2026-09-28T10:01:00.000Z", "host": "ws02", "user": "-"}
+                {"ts": "2026-09-28T10:02:00.000Z", "host": "ws03", "user": "-"}
+                {"ts": "2026-09-28T10:03:00.000Z", "host": "ws04", "user": "N/A"}
+                {"ts": "2026-09-28T10:04:00.000Z", "host": "ws05", "user": "N/A"}
+                """;
+        final String warned = "sample: placeholder '-' in user (2 values)";
+
+        // Without forms the warning is the agent's.
+        final Map<String, Object> unasked = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "P0", "sample", sample));
+        assertThat(unasked).containsKey("saved");
+        assertThat(list(unasked.get("warnings"))).anyMatch(w -> String.valueOf(w).startsWith(warned));
+
+        world.forms = true;
+        world.answers.put("'-' in", PlaceholderChoices.LEAVE_OUT);
+        world.answers.put("'N/A' in", PlaceholderChoices.KEEP);
+        final Map<String, Object> asked = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "P", "sample", sample));
+        assertThat(world.asked).containsExactly(PlaceholderChoices.INTRO);
+        assertThat(asked).as(String.valueOf(asked)).containsKey("saved");
+        assertThat(list(asked.get("changes_applied")))
+                .containsExactly("'-' left out where a field holds it (nil_values), as the user chose");
+        assertThat(list(asked.get("warnings"))).noneMatch(w -> String.valueOf(w).startsWith("sample: placeholder"));
+        final String uuid = String.valueOf(map(asked.get("saved")).get("uuid"));
+        final Map<String, Object> kept = KeptMapping.readMapping(world.xslt(uuid).getDescription())
+                .orElseThrow().payload();
+        assertThat(map(kept.get("mapping")).get("nil_values")).isEqualTo(List.of("-"));
+        assertThat(world.xslt(uuid).getData()).contains("[not(normalize-space(.) = ('-'))]");
+
+        // Asked once: sent again, '-' is left out and 'N/A' kept, as the user chose, without asking.
+        final Map<String, Object> again = world.call(tool, Map.of("mapping", mapping, "uuid", uuid, "sample",
+                sample));
+        assertThat(world.asked).hasSize(1);
+        assertThat(list(again.get("changes_applied"))).hasSize(1);
+        assertThat(list(again.get("warnings"))).noneMatch(w -> String.valueOf(w).startsWith("sample: placeholder"));
+    }
+
+    @Test
+    void aStandInInTheOnlyDeviceFieldIsNotLeftOutWithoutTheSenderStandingIn() {
+        // Seen in testing: '-' in the host field, EventSource/Device's only source, was put to the user with
+        // "Leave out" recommended, which would have left those events without the Device the schema requires.
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("{\"input\": \"json\",",
+                "{\"input\": \"json\", \"json_layout\": \"lines\","), Map.class);
+        final String sample = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "alice"}
+                {"ts": "2026-09-28T10:01:00.000Z", "host": "-", "user": "bob"}
+                {"ts": "2026-09-28T10:02:00.000Z", "host": "-", "user": "carol"}
+                """;
+        world.forms = true;
+        world.answers.put("'-' in", PlaceholderChoices.DEVICE_FALLBACK);
+        final Map<String, Object> saved = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "F", "sample", sample));
+
+        assertThat(saved).as(String.valueOf(saved)).containsKey("saved");
+        // Keep first (recommended), and no plain "Leave out".
+        final String form = String.valueOf(world.formsShown.getLast());
+        assertThat(form).contains("the only source of EventSource/Device", PlaceholderChoices.DEVICE_FALLBACK)
+                .doesNotContain("[" + PlaceholderChoices.LEAVE_OUT + ",", PlaceholderChoices.LEAVE_OUT + "]");
+        assertThat(form.indexOf(PlaceholderChoices.KEEP)).isLessThan(form.indexOf(
+                PlaceholderChoices.DEVICE_FALLBACK));
+        assertThat(list(saved.get("changes_applied")))
+                .contains("'-' left out where a field holds it (nil_values), as the user chose")
+                .anyMatch(change -> String.valueOf(change).startsWith("EventSource/Device written from the "
+                                                                      + "sender's name or address"));
+        final String uuid = String.valueOf(map(saved.get("saved")).get("uuid"));
+        final Map<String, Object> kept = map(KeptMapping.readMapping(world.xslt(uuid).getDescription())
+                .orElseThrow().payload().get("mapping"));
+        assertThat(kept.get("nil_values")).isEqualTo(List.of("-"));
+        assertThat(String.valueOf(kept.get("common"))).contains("meta_fallback=[RemoteHost, RemoteAddress]");
+        assertThat(world.xslt(uuid).getData()).contains("stroom:meta('RemoteHost')");
+    }
+
+    @Test
+    void aChoiceIsKeptWhenALaterFormFailsTheCallSoTheUserIsNotAskedAgain() {
+        // Seen in testing: the domain split answered, then the stand-ins' form couldn't be shown, so the call failed
+        // before saving, and each call after asked about the domain again; the user could never get past it.
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("{\"input\": \"json\",",
+                "{\"input\": \"json\", \"json_layout\": \"lines\","), Map.class);
+        final String sample = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "ACME\\\\alice"}
+                {"ts": "2026-09-28T10:01:00.000Z", "host": "-", "user": "bob"}
+                {"ts": "2026-09-28T10:02:00.000Z", "host": "-", "user": "carol"}
+                """;
+        final Map<String, Object> arguments = Map.of("mapping", mapping, "build", "acme-v1", "name", "D",
+                "sample", sample);
+        world.forms = true;
+        world.answers.put("Split the domain off", DomainSplits.SPLIT);
+        world.unshowable.add(PlaceholderChoices.INTRO);
+
+        final Map<String, Object> failed = world.call(tool, arguments);
+        assertThat(failed).as(String.valueOf(failed)).containsKey("error").doesNotContainKey("saved");
+        assertThat(world.asked).hasSize(2).last().isEqualTo(PlaceholderChoices.INTRO);
+
+        // Made again, once the form can be shown: only the stand-ins are asked about, and the domain is split as
+        // the user chose before.
+        world.unshowable.clear();
+        // '-' in the only host field: the sender stands in for the Device.
+        world.answers.put("'-' in", PlaceholderChoices.DEVICE_FALLBACK);
+        final Map<String, Object> saved = world.call(tool, arguments);
+        assertThat(saved).as(String.valueOf(saved)).containsKey("saved");
+        assertThat(world.asked).hasSize(3).last().isEqualTo(PlaceholderChoices.INTRO);
+        assertThat(list(saved.get("changes_applied"))).anyMatch(change -> String.valueOf(change)
+                        .startsWith("the domain split off 'user', as the user chose"))
+                .contains("'-' left out where a field holds it (nil_values), as the user chose");
+    }
+
+    @Test
+    void anIdWrittenFromTwoFieldsIsAskedAboutOnce() {
+        // Seen: Authenticate/User/Id from By User in some rules and Target User in others, two forms in a row.
+        final Map<String, Object> mapping = JsonUtil.readValue("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventTime/TimeCreated", "field": "ts"},
+                            {"path": "EventSource/System/Name", "value": "Acme"},
+                            {"path": "EventSource/System/Environment", "value": "Test"},
+                            {"path": "EventSource/Generator", "value": "acme"},
+                            {"path": "EventSource/Device/HostName", "field": "host"}],
+                 "events": [{"name": "reset", "when": [{"field": "kind", "equals": "reset"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Reset"},
+                                        {"path": "EventDetail/Authenticate/Action", "value": "ResetPassword"},
+                                        {"path": "EventDetail/Authenticate/User/Id", "field": "target"}]},
+                            {"name": "logon",
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Logon"},
+                                        {"path": "EventDetail/Authenticate/Action", "value": "Logon"},
+                                        {"path": "EventDetail/Authenticate/User/Id", "field": "user"}]}]}""",
+                Map.class);
+        final String sample = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "kind": "logon", "user": "ACME\\\\alice"}
+                {"ts": "2026-09-28T10:01:00.000Z", "host": "ws01", "kind": "reset", "target": "ACME\\\\bob"}
+                """;
+        world.forms = true;
+        world.answers.put("Split the domain off", DomainSplits.SPLIT);
+
+        final Map<String, Object> split = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "N", "sample", sample));
+
+        assertThat(world.asked).singleElement().asString()
+                .startsWith("Split the domain off the users' Ids from 'target' (EventDetail/Authenticate/User/Id), "
+                            + "'user' (EventDetail/Authenticate/User/Id)?");
+        assertThat(split).as(String.valueOf(split)).containsKey("saved");
+        assertThat(list(split.get("changes_applied"))).hasSize(2);
+    }
+
+    @Test
+    void changesAreMergedOnceWhenAFormStopsTheCall() {
+        // Seen in the chat: a form stops the call, which is made again with the answer; the changes merged into
+        // the mapping kept as sent on the first run were merged again on the second ("changes.common removes
+        // 'EventDetail/Purpose', which the mapping does not have"), and the answer was lost with the call.
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("{\"input\": \"json\",",
+                "{\"input\": \"json\", \"json_layout\": \"lines\",").replace(
+                "{\"path\": \"EventSource/Device/HostName\", \"field\": \"host\"}",
+                "{\"path\": \"EventSource/Device/HostName\", \"field\": \"host\"}, "
+                + "{\"path\": \"EventSource/Client/HostName\", \"field\": \"host\"}"), Map.class);
+        final String sample = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "ACME\\\\alice"}
+                """;
+        // Saved first, without forms: nothing asked.
+        final String uuid = String.valueOf(map(world.call(tool, Map.of("mapping", mapping, "sample", sample,
+                "build", "acme-v1", "name", "N")).get("saved")).get("uuid"));
+        world.forms = true;
+        world.waitsForUser = true;
+        world.answers.put("Split the domain off", DomainSplits.SPLIT);
+        final Map<String, Object> changes = Map.of("common", List.of(Map.of("path",
+                "EventSource/Client/HostName", "remove", true)));
+
+        // The first run stops at the form; the same call made again gets the answer.
+        final Map<String, Object> args = Map.of("changes", changes, "sample", sample, "uuid", uuid);
+        assertThatThrownBy(() -> world.call(tool, args)).isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        final Map<String, Object> again = world.call(tool, args);
+
+        assertThat(again).as(String.valueOf(again)).containsKey("saved");
+        assertThat(list(again.get("changes_applied"))).anyMatch(line -> String.valueOf(line).contains(
+                "EventSource/Client/HostName"));
+    }
+
+    @Test
+    void aFieldAnInferredSplitterLacksIsAWarningNotARefusal() {
+        // Seen: a hand-written syslog splitter names a field 'pwd'; the sample, read with the spec inferred from
+        // it, has 'pid' instead, and the mapping was refused though the build's converter does write 'pwd'.
+        final Map<String, Object> mapping = TranslationWorld.mapping();
+        final List<Object> common = new ArrayList<>(list(mapping.get("common")));
+        common.add(Map.of("path", "EventSource/Device/Name", "field", "hosts"));
+        mapping.put("common", common);
+        final String sample = "time,action,user,result,sid,host,port\n2026-09-28T10:00:00.000Z,login,alice,ok,s1,ws01,"
+                              + "22\n2026-09-28T10:03:00.000Z,login,bob,fail,s2,ws03,22\n";
+
+        final Map<String, Object> guessed = world.call(tool, Map.of("mapping", mapping, "sample", sample));
+        assertThat(guessed.get("ok")).isEqualTo(true);
+        assertThat((List<?>) guessed.get("warnings")).anySatisfy(w -> assertThat(String.valueOf(w))
+                .contains("field 'hosts'").contains("inferred Data Splitter"));
+
+        final Map<String, Object> given = world.call(tool, Map.of("mapping", mapping, "sample", sample,
+                "splitter", Map.of("kind", "delimited", "header", true)));
+        assertThat(given.get("ok")).isEqualTo(false);
+        assertThat((List<?>) given.get("problems")).anySatisfy(p -> assertThat(String.valueOf(p))
+                .contains("field 'hosts'"));
+    }
+
+    @Test
+    void aMappingRefusedForItsShapeSaysWhatIsMissingAndShowsAWholeOne() {
+        // Seen (a VS Code session): input left out, a rule without name, and an xpath run into its path's string
+        // ('EventDetail/View/User/Id**,xpath:'), answered with "Field required" and "give exactly one of".
+        final Map<String, Object> bad = Map.of("events", List.of(Map.of("name", "a"), Map.of("fields", List.of(
+                Map.of("path", "EventDetail/View/User/Id**,xpath: \"User\"")))));
+
+        final String text = String.valueOf(world.call(tool, Map.of("mapping", bad)).get("error"));
+
+        assertThat(text).contains("input: Field required (What the XSLT reads: data_splitter")
+                .contains("events[1].name: Field required (Short name for this kind of event, e.g. 'logon'.)")
+                .contains("holds more than a path")
+                .contains("{\"path\": \"EventDetail/View/User/Id\", \"xpath\": \"<the xpath>\"}")
+                .contains(ToolJson.dumps(MappingProblems.MAPPING_EXAMPLE));
+        // A value problem alone gets no example: the shape is right.
+        final Map<String, Object> value = new LinkedHashMap<>(MappingProblems.MAPPING_EXAMPLE);
+        value.put("common", List.of(Map.of("path", "EventSource/System/Name", "field", "a", "any_of",
+                List.of("b"))));
+        final String said = String.valueOf(world.call(tool, Map.of("mapping", value)).get("error"));
+        assertThat(said).contains("given field and any_of").contains("any_of alone")
+                .doesNotContain("A whole mapping looks like");
+    }
+
+    @Test
+    void theExampleMappingGenerates() {
+        assertThat(XsltGenerator.generate(TranslationMapping.parse(MappingProblems.MAPPING_EXAMPLE),
+                TranslationWorld.SCHEMA, TranslationWorld.VERSION).problems()).isEmpty();
+    }
+
+    // --- What is wrong and where, before any slow work. ---
+
+    @Test
+    void textThatIsNotJsonSaysWhereAndHowBackslashesTravel() {
+        final String message = String.valueOf(world.call(tool, Map.of("mapping",
+                "{\"input\": \"json\", \"extract\": [{\"regex\": \"\\[\\[AppServer\"}]}")).get("error"));
+
+        assertThat(message).contains("Invalid \\escape at character").contains("around `");
+        assertThat(message.toLowerCase()).contains("only the json of your call doubles each backslash");
+    }
+
+    @Test
+    void anInvalidMappingSaysWhereEachErrorIsWithTheValueGiven() {
+        final Map<String, Object> bad = good();
+        bad.put("rules", List.of());
+        bad.put("events", List.of(Map.of("fields", List.of(Map.of("path", "EventDetail/TypeId", "value", "Logon"))),
+                Map.of("name", "x", "fields", "all of them")));
+
+        final String message = String.valueOf(world.call(tool, Map.of("mapping", bad, "stream_ids", List.of(5)))
+                .get("error"));
+
+        assertThat(message).contains("events[0].name: Field required")
+                .contains("events[1].fields: Input should be a valid list (given \"all of them\")")
+                .contains("keys that are not part of a mapping: ['rules']");
+    }
+
+    @Test
+    void schemaProblemsComeBackBeforeTheSampleIsRead() {
+        final Map<String, Object> mapping = good();
+        final List<Object> common = new ArrayList<>(list(mapping.get("common")));
+        common.add(Map.of("path", "EventSource/Nope", "value", "x"));
+        mapping.put("common", common);
+
+        final Map<String, Object> result = world.call(tool, Map.of("mapping", mapping, "stream_ids", List.of(5)));
+
+        assertThat(result.get("ok")).isEqualTo(false);
+        assertThat(result.get("sample_check")).isEqualTo("not run: fix the problems first");
+        // Without each rule's summary, so the problems come back whole (seen: 20-70 KB results, read in parts).
+        assertThat(result).containsKey("problems").doesNotContainKey("events");
+        Mockito.verifyNoInteractions(world.sampleStreamTexts);
+    }
+
+    @Test
+    void thePipelineIsSteppedOnlyWhenTheFieldMappingPreviewIsAskedFor() {
+        jsonStream();
+        final SteppedPipeline pipeline = Mockito.mock(SteppedPipeline.class);
+        Mockito.when(pipeline.defaultOutputs()).thenReturn(List.of("translationFilter"));
+        Mockito.when(world.stepping.load("p")).thenReturn(pipeline);
+        Mockito.when(world.stepping.outputs(any(), any(), any(), anyString(), any(), anyInt()))
+                .thenReturn(new PipelineStepping.Outputs(Map.of(), false));
+
+        final Map<String, Object> result = world.call(tool, Map.of("mapping", good(), "stream_ids", List.of(5),
+                "pipeline_uuid", "p"));
+        assertThat(result.get("ok")).isEqualTo(true);
+        assertThat(result).doesNotContainKey("field_mapping");
+        assertThat((String) result.get("field_mapping_needs")).contains("write_documentation makes the section");
+        Mockito.verify(world.stepping, Mockito.never()).outputs(any(), any(), any(), anyString(), any(), anyInt());
+
+        world.call(tool, Map.of("mapping", good(), "stream_ids", List.of(5), "pipeline_uuid", "p", "field_mapping",
+                true));
+        // A preview: 50 records unless asked.
+        Mockito.verify(world.stepping).outputs(any(), any(), any(), anyString(), any(), eq(50));
+    }
+
+    @Test
+    void keysAMappingHasNoPlaceForAreReportedWhenItIsOtherwiseFine() {
+        jsonStream();
+        final Map<String, Object> mapping = good();
+        mapping.put("extracts", List.of());
+
+        final Map<String, Object> result = world.call(tool, Map.of("mapping", mapping, "stream_ids", List.of(5)));
+
+        assertThat((List<?>) result.get("warnings")).anySatisfy(w -> assertThat(String.valueOf(w))
+                .contains("mapping keys ignored, as a mapping has no such key: ['extracts']"));
+    }
+
+    // --- changes= on a first save, applied to the session's draft. ---
+
+    @Test
+    void aFirstSaveAppliesChangesToTheDraft() {
+        // Seen in testing: a Fortigate draft of 50 KB (60 extract entries, 10 rules with their data lists) had to
+        // be sent whole in the first build_translation_xslt call; the agent couldn't write it out in one call, and
+        // stopped twice to ask.
+        final Map<String, Object> draft = world.call(world.draftTool(), Map.of("samples", Map.of("fw.jsonl",
+                fortigate()), "source_name", "Fortigate", "build", "fg-v1"));
+        assertThat((String) draft.get("hint")).contains("changes= only the rules and entries you change");
+
+        final Map<String, Object> result = world.call(tool, Map.of("changes", Map.of("common", SYSTEM),
+                "build", "fg-v1", "name", "FG-Events", "sample", fortigate()));
+
+        assertThat(result.get("changes_applied_to")).isEqualTo("the draft draft_translation_mapping made");
+        final Map<String, Object> sent = sent("fg-v1/FG-Events");
+        assertThat(systemName(sent)).isEqualTo("FortiOS");
+        // The rest of the draft came with it: its key/value pairs and rules, not sent again.
+        final Map<String, Object> drafted = map(draft.get("mapping"));
+        assertThat((List<?>) drafted.get("pairs")).isNotEmpty();
+        assertThat(drafted).doesNotContainKey("extract");
+        assertThat(sent.get("pairs")).isEqualTo(drafted.get("pairs"));
+        assertThat(names(sent)).isEqualTo(names(drafted));
+    }
+
+    @Test
+    void whatWasSentOrSavedComesBeforeTheDraft() {
+        final Map<String, Object> saved = JsonUtil.readValue("{\"common\": [{\"path\": \"EventSource/System/Name\", "
+                                                             + "\"value\": \"Saved\"}], \"input\": \"json\", "
+                                                             + "\"json_layout\": \"lines\", \"events\": [{\"name\": "
+                                                             + "\"all\", \"fields\": [{\"path\": "
+                                                             + "\"EventDetail/TypeId\", \"value\": \"x\"}]}]}",
+                Map.class);
+        keptXslt("fg-v1", "FG-Events", saved, "4.1.0");
+        world.call(world.draftTool(), Map.of("samples", Map.of("fw.jsonl", fortigate()), "build", "fg-v1"));
+
+        // The build's XSLT of that name, saved (from another session, say): its mapping, not the draft.
+        Map<String, Object> result = world.call(tool, Map.of("changes", Map.of("description", "kept"),
+                "build", "fg-v1", "name", "FG-Events", "sample", fortigate()));
+        assertThat(result).doesNotContainKey("changes_applied_to");
+        assertThat(systemName(sent("fg-v1/FG-Events"))).isEqualTo("Saved");
+        // A new name: the draft.
+        result = world.call(tool, Map.of("changes", Map.of("common", SYSTEM), "build", "fg-v1", "name",
+                "FG-Events-V2", "sample", fortigate()));
+        assertThat(result).containsKey("changes_applied_to");
+        assertThat(systemName(sent("fg-v1/FG-Events-V2"))).isEqualTo("FortiOS");
+        // Sent since (the draft changed once): changes go to that, not the draft again.
+        result = world.call(tool, Map.of("changes", Map.of("description", "again"), "build", "fg-v1", "name",
+                "FG-Events-V2", "sample", fortigate()));
+        assertThat(result).doesNotContainKey("changes_applied_to");
+        assertThat(systemName(sent("fg-v1/FG-Events-V2"))).isEqualTo("FortiOS");
+    }
+
+    @Test
+    void aFailedBuildSaysWhatTheNextChangesStartFrom() {
+        // From the chat 163 review: after a failed build the agent couldn't tell which mapping changes= applied to.
+        final Map<String, Object> broken = TranslationWorld.mapping();
+        broken.put("common", List.of(Map.of("path", "EventSource/Nonsense", "value", "x")));
+
+        final Map<String, Object> named = world.call(tool, Map.of("mapping", broken, "build", "acme-v1", "name", "N",
+                "sample", SAMPLE));
+        final Map<String, Object> unnamed = world.call(tool, Map.of("mapping", broken, "sample", SAMPLE));
+
+        assertThat(named.get("ok")).isEqualTo(false);
+        assertThat((String) named.get("next_changes_apply_to")).isEqualTo("this call's mapping (with any changes it "
+                                                                          + "applied), kept for 'N' in build "
+                                                                          + "acme-v1: the next changes= with the "
+                                                                          + "same build and name start from it, not "
+                                                                          + "from the draft or the saved XSLT.");
+        assertThat((String) unnamed.get("next_changes_apply_to")).startsWith("nothing: without uuid");
+        final String logins = SAMPLE.replace(",status,,,,", ",login,carol,ok,s3,");
+        assertThat(world.call(tool, Map.of("mapping", TranslationWorld.mapping(), "sample", logins)))
+                .containsEntry("ok", true)
+                .doesNotContainKey("next_changes_apply_to");
+    }
+
+    @Test
+    void withNoDraftOrMappingTheRefusalSaysWhatToDo() {
+        assertThat(world.call(tool, Map.of("changes", Map.of("common", SYSTEM), "build", "fg-v1", "name",
+                "FG-Events", "sample", fortigate())).get("error")).asString()
+                .contains("draft one, or give the whole mapping");
+    }
+
+    // --- A fix sends only what changes. ---
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aFixSendsOnlyTheEntryItChanges() {
+        // Seen (Gemma 4 31B, VS Code): four failed builds, each resending the whole mapping at ~40 s of writing
+        // apiece. And a rule of ~140 entries resent whole to change one, then edited by hand.
+        final Map<String, Object> broken = TranslationWorld.mapping();
+        final List<Object> events = new ArrayList<>(list(broken.get("events")));
+        final Map<String, Object> logon = new LinkedHashMap<>((Map<String, Object>) events.getFirst());
+        final List<Object> fields = new ArrayList<>(list(logon.get("fields")));
+        fields.add(Map.of("path", "EventDetail/Nope", "value", "x"));
+        logon.put("fields", fields);
+        events.set(0, logon);
+        broken.put("events", events);
+
+        final Map<String, Object> failed = world.call(tool, Map.of("mapping", broken, "build", "acme-v1", "name",
+                "ACME-Events"));
+        assertThat(failed.get("ok")).isEqualTo(false);
+        assertThat((String) failed.get("hint")).contains("changes=").contains("same build and name");
+
+        final Map<String, Object> fixed = world.call(tool, Map.of("changes", Map.of("events", List.of(Map.of(
+                        "name", "logon", "fields", List.of(Map.of("path", "EventDetail/Nope", "remove", true))))),
+                "build", "acme-v1", "name", "ACME-Events", "include_xslt", false));
+        assertThat(fixed.get("changes_applied")).isEqualTo(List.of("rule 'logon' entry 'EventDetail/Nope' removed"));
+        assertThat(fixed.get("problems")).isEqualTo(List.of());
+        assertThat(fixed.get("ok")).isEqualTo(true);
+        final String uuid = String.valueOf(map(fixed.get("saved")).get("uuid"));
+        assertThat(keptMapping(uuid).events().stream().map(rule -> rule.name()).toList())
+                .containsExactly("logon", "other");
+        // And the next fix starts from what was saved, under its uuid.
+        assertThat(SentMappings.sent(world.context(), uuid)).isPresent();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void changesThatLeaveAMappingThatDoesntParseAreNotKeptAsTheNextBase() {
+        // Seen in testing: changes leaving an entry with no source were refused, yet kept as the mapping later
+        // changes merged into, so the next changes, written against the mapping before them, were refused too.
+        final Map<String, Object> broken = TranslationWorld.mapping();
+        final List<Object> events = new ArrayList<>(list(broken.get("events")));
+        final Map<String, Object> logon = new LinkedHashMap<>((Map<String, Object>) events.getFirst());
+        final List<Object> fields = new ArrayList<>(list(logon.get("fields")));
+        fields.add(Map.of("path", "EventDetail/Nope", "value", "x"));
+        logon.put("fields", fields);
+        events.set(0, logon);
+        broken.put("events", events);
+        assertThat(world.call(tool, Map.of("mapping", broken, "build", "acme-v1", "name", "ACME-Events"))
+                .get("ok")).isEqualTo(false);
+
+        final Map<String, Object> refused = world.call(tool, Map.of("changes", Map.of("events", List.of(Map.of(
+                        "name", "logon", "fields", List.of(Map.of("path", "EventDetail/Description"))))),
+                "build", "acme-v1", "name", "ACME-Events"));
+        assertThat(refused.get("error")).asString().contains("not a translation mapping",
+                "Nothing from this call is kept");
+
+        final Map<String, Object> fixed = world.call(tool, Map.of("changes", Map.of("events", List.of(Map.of(
+                        "name", "logon", "fields", List.of(Map.of("path", "EventDetail/Nope", "remove", true))))),
+                "build", "acme-v1", "name", "ACME-Events", "include_xslt", false));
+        assertThat(fixed.get("problems")).isEqualTo(List.of());
+        assertThat(fixed.get("ok")).isEqualTo(true);
+    }
+
+    @Test
+    void changesToASavedXsltStartFromTheMappingKeptWithIt() {
+        // Another node, or a new session: nothing remembered, so the mapping saved with the XSLT is changed.
+        final String uuid = keptXslt("acme-v1", "ACME-Events", TranslationWorld.mapping(), null);
+
+        final Map<String, Object> result = world.call(tool, Map.of("changes", Map.of("unmatched", "warn"),
+                "uuid", uuid));
+
+        assertThat(result.get("changes_applied")).isEqualTo(List.of("'unmatched' replaced"));
+        assertThat(result).containsKey("saved");
+        final TranslationMapping saved = keptMapping(uuid);
+        assertThat(saved.unmatched()).isEqualTo("warn");
+        assertThat(saved.events().stream().map(rule -> rule.name()).toList()).containsExactly("logon", "other");
+    }
+
+    @Test
+    void aForkTranslationChangedByUuidInANewSessionStaysInTheFork() {
+        // Seen in testing: a change by uuid alone, in a session that remembered no schema choice, fell back to
+        // event-logging's document of the version and moved the fork's translation into event-logging:3. The XML
+        // schema document kept with the XSLT says which it was generated against.
+        final XmlSchemaDoc fork = XmlSchemaDoc.builder().uuid("fork-1").name("Test fork")
+                .systemId(FORK_SYSTEM_ID).namespaceURI(FORK_NS).schemaGroup("EVENTS")
+                .data(TranslationWorld.resource("test-fork-events.xsd")).build();
+        final EventSchema forkSchema = EventSchema.parse(fork.getData()).withSystemId(FORK_SYSTEM_ID);
+        Mockito.when(world.heldSchemas.forks()).thenReturn(List.of(fork));
+        Mockito.when(world.heldSchemas.eventSchema(fork)).thenReturn(forkSchema);
+        Mockito.when(world.heldSchemas.eventSchema(TranslationWorld.VERSION, "fork-1")).thenReturn(forkSchema);
+        final String uuid = keptXslt("acme-v1", "ACME-Events", TranslationWorld.mapping(), TranslationWorld.VERSION,
+                "fork-1");
+
+        final Map<String, Object> result = world.call(tool, Map.of("changes", Map.of("unmatched", "warn"),
+                "uuid", uuid));
+
+        assertThat(result).containsKey("saved");
+        assertThat(world.xslt(uuid).getData()).contains("xmlns=\"" + FORK_NS + "\"")
+                .contains(FORK_NS + " " + FORK_SYSTEM_ID)
+                .doesNotContain("xmlns=\"event-logging:3\"");
+        assertThat(KeptMapping.readMapping(world.xslt(uuid).getDescription()).orElseThrow().payload())
+                .containsEntry(EventVersions.KEPT_SCHEMA_UUID, "fork-1");
+    }
+
+    @Test
+    void changesNeedAMappingToChange() {
+        assertThat(world.call(tool, Map.of("changes", Map.of("unmatched", "warn"), "build", "acme-v1", "name", "new"))
+                .get("error")).asString().contains("None was found for those: draft one, or give the whole mapping");
+        assertThat(world.call(tool, Map.of("mapping", TranslationWorld.mapping(), "changes", Map.of("unmatched",
+                "warn"))).get("error")).asString().contains("not both");
+        assertThat(world.call(tool, Map.of()).get("error")).asString().contains("Give mapping");
+    }
+
+    @Test
+    void aSavedXsltIsRegeneratedFromItsKeptMappingWithoutSendingIt() {
+        // Seen in production: asked to restyle an XSLT, an agent wrote a mapping from memory (refused), then sent
+        // the 1,400-line kept mapping back whole. uuid alone regenerates it, as the generator writes it now.
+        final String uuid = keptXslt("acme-v1", "ACME-Events", TranslationWorld.mapping(), "3.5.2");
+
+        final Map<String, Object> result = world.call(tool, Map.of("uuid", uuid));
+
+        assertThat(result.get("ok")).isEqualTo(true);
+        assertThat(result).containsKey("saved");
+        // The version it was saved for, not the newest installed.
+        Mockito.verify(world.heldSchemas, Mockito.atLeastOnce()).eventSchema("3.5.2");
+        final XsltDoc xslt = world.xslt(uuid);
+        assertThat(xslt.getDescription()).contains("Regenerated from its mapping");
+        assertThat(keptMapping(uuid).events().stream().map(rule -> rule.name()).toList())
+                .containsExactly("logon", "other");
+        // The style is today's defaults: interpolated values, variables just in time.
+        assertThat(xslt.getData()).contains("Value=\"{").doesNotContain("<xsl:attribute name=\"Value\"");
+        // Without a uuid (or build and name) there is nothing to regenerate.
+        assertThat(world.call(tool, Map.of()).get("error")).asString().contains("uuid= a saved XSLT alone");
+    }
+
+    // --- The parser setting a mapping needs, and a field inventory sent as the mapping. ---
+
+    @Test
+    void buildTranslationXsltTellsTheParserSetting() {
+        final Map<String, Object> mapping = TranslationWorld.mapping();
+        mapping.put("input", "json");
+        mapping.put("json_layout", "lines");
+
+        final Map<String, Object> result = world.call(tool, Map.of("mapping", mapping));
+
+        assertThat(result.get("set_properties")).isEqualTo(List.of(Map.of("element", "jsonParser", "name",
+                "addRootObject", "value", true)));
+    }
+
+    @Test
+    void aFieldInventorySentAsTheMappingGetsTheDraftBack() {
+        final List<Map<String, Object>> inventory = List.of(Map.of("field", "timestamp", "type", "timestamp"),
+                Map.of("field", "device", "type", "string"), Map.of("field", "src_ip", "type", "ip"));
+
+        final Map<String, Object> result = world.call(tool, Map.of("mapping", inventory, "sample", FW_JSON));
+
+        assertThat(result.get("status")).isEqualTo("needs_mapping");
+        assertThat(list(result.get("problems")).getFirst())
+                .isEqualTo("mapping is a list of fields, not a translation mapping");
+        assertThat(map(result.get("draft_mapping")).get("input")).isEqualTo("json");
+        assertThat((String) result.get("hint")).contains("Edit draft_mapping");
+        // The draft, sent back as the mapping, generates: every kind of this sample drafted with its action
+        // element.
+        // As it is, its system's name and environment are placeholders for the user's answer: refused for those
+        // alone.
+        final Map<String, Object> unnamed = world.call(tool, Map.of("mapping", result.get("draft_mapping"),
+                "sample", FW_JSON));
+        assertThat(list(unnamed.get("problems"))).singleElement().asString().contains("still a placeholder");
+        final Map<String, Object> named = JsonUtil.readValue(JsonUtil.writeValueAsString(result.get("draft_mapping"),
+                false).replace(DraftMapping.SYSTEM_NAME_PLACEHOLDER, "FortiOS")
+                .replace(DraftMapping.ENVIRONMENT_PLACEHOLDER, "Test"), Map.class);
+        final Map<String, Object> again = world.call(tool, Map.of("mapping", named, "sample", FW_JSON));
+        assertThat(again.get("ok")).as(String.valueOf(again.get("problems"))).isEqualTo(true);
+    }
+
+    // A mapping whose save is confirmed: logons, status lines kept as Unknown, the rest.
+    // The build's source notes: the status lines confirmed by the user as logoffs.
+    private void confirmedStatusAsLogoff() {
+        final String notes = world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes").getUuid();
+        world.world.docs.put(notes, DocumentationDoc.builder().uuid(notes).name("Acme source notes").version("v0")
+                .data("# Acme source notes\n\n<!-- stroom-mcp source notes\n{\"source\": \"Acme\", \"fields\": [], "
+                      + "\"events\": [{\"event\": \"status check\", \"description\": \"A user logged off\", "
+                      + "\"event_detail\": \"Authenticate\", \"field\": \"action\", \"value\": \"status\", "
+                      + "\"action\": \"Logoff\", \"basis\": \"user_confirmed\"}]}\n-->\n")
+                .build());
+    }
+
+    private static Map<String, Object> keptAsUnknown() {
+        final Map<String, Object> mapping = TranslationWorld.mapping();
+        final List<Object> events = list(mapping.get("events"));
+        mapping.put("events", List.of(events.get(0), JsonUtil.readValue("{\"name\": \"status\", \"when\": "
+                                                                        + "[{\"field\": \"action\", \"equals\": "
+                                                                        + "\"status\"}], \"allow_unknown\": "
+                                                                        + "\"status lines carry no activity\", "
+                                                                        + "\"fields\": [{\"path\": "
+                                                                        + "\"EventDetail/TypeId\", \"value\": "
+                                                                        + "\"status\"}, {\"path\": "
+                                                                        + "\"EventDetail/Unknown/Data\", "
+                                                                        + "\"data_name\": \"action\", \"field\": "
+                                                                        + "\"action\"}]}", Map.class),
+                events.get(1)));
+        return mapping;
+    }
+
+    // A Fortigate key=value body in JSON lines.
+    private static String fortigate() {
+        final List<String> lines = new ArrayList<>();
+        for (int i = 0; i < 400; i++) {
+            final Map<String, Object> pairs = new LinkedHashMap<>();
+            pairs.put("logid", String.format("\"%010d\"", i));
+            pairs.put("type", i % 3 != 0
+                    ? "\"traffic\""
+                    : "\"event\"");
+            pairs.put("action", "\"accept\"");
+            pairs.put("srcip", "10.0.0." + (i % 250));
+            pairs.put("dstip", "8.8.8.8");
+            pairs.put("user", "\"u" + i + "\"");
+            pairs.put("msg", "\"message " + i + "\"");
+            if (i % 7 == 0) {
+                pairs.remove("user");
+            }
+            final List<String> body = new ArrayList<>();
+            pairs.forEach((key, value) -> body.add(key + "=" + value));
+            final Map<String, Object> record = new LinkedHashMap<>();
+            record.put("time", "2026-10-01T10:00:00.000Z");
+            record.put("host", "fw1");
+            record.put("body", String.join(" ", body));
+            lines.add(ToolJson.dumps(record));
+        }
+        return String.join("\n", lines);
+    }
+
+    private void jsonStream() {
+        Mockito.when(world.sampleStreamTexts.read(any())).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 5", "{\"ts\": \"2026-10-01T00:00:00.000Z\"}\n"), List.of()));
+    }
+
+    // An XSLT the tools saved in the build with its mapping kept.
+    private String keptXslt(final String build,
+                            final String name,
+                            final Map<String, Object> mapping,
+                            final String version) {
+        return keptXslt(build, name, mapping, version, null);
+    }
+
+    private String keptXslt(final String build,
+                            final String name,
+                            final Map<String, Object> mapping,
+                            final String version,
+                            final String schemaUuid) {
+        final DocRef ref = world.inBuild(build, XsltDoc.TYPE, name);
+        final Map<String, Object> payload = new LinkedHashMap<>();
+        if (version != null) {
+            payload.put("schema_version", version);
+        }
+        if (schemaUuid != null) {
+            payload.put(EventVersions.KEPT_SCHEMA_UUID, schemaUuid);
+        }
+        payload.put("mapping", mapping);
+        world.world.docs.put(ref.getUuid(), world.xslt(ref.getUuid()).copy()
+                .description(KeptMapping.withMapping("Acme events", "translation", payload)).build());
+        return ref.getUuid();
+    }
+
+    private TranslationMapping keptMapping(final String uuid) {
+        return TranslationMapping.parse(KeptMapping.readMapping(world.xslt(uuid).getDescription()).orElseThrow()
+                .payload().get("mapping"));
+    }
+
+    private Map<String, Object> sent(final String target) {
+        return SentMappings.sent(world.context(), target).orElseThrow();
+    }
+
+    private static Object systemName(final Map<String, Object> mapping) {
+        return list(mapping.get("common")).stream()
+                .map(TestBuildTranslationXsltTool::map)
+                .filter(entry -> "EventSource/System/Name".equals(entry.get("path")))
+                .map(entry -> entry.get("value"))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private static List<Object> names(final Map<String, Object> mapping) {
+        return list(mapping.get("events")).stream().map(rule -> map(rule).get("name")).toList();
+    }
+
+    private static Map<String, Object> good() {
+        return JsonUtil.readValue(GOOD, Map.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> map(final Object value) {
+        return (Map<String, Object>) value;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Object> list(final Object value) {
+        return (List<Object>) value;
+    }
+
+    // A feed translated now by FG-V1.2, whose XSLT looks up GEOIP and loads its reference data.
+    private static Map<String, Object> currentTranslation() {
+        final Map<String, Object> current = new LinkedHashMap<>();
+        current.put("pipeline", Map.of("name", "FG-V1.2", "uuid", "v12"));
+        current.put("xslt", List.of(Map.of("name", "FG-Events-V1.2", "uuid", "x12")));
+        current.put("reference_data", List.of("GEO-IP via Reference Loader on translationFilter"));
+        current.put("lookup_maps", List.of("GEOIP"));
+        return current;
+    }
+}

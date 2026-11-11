@@ -1,0 +1,331 @@
+{
+ "lines": [
+  "CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|act=Logon cs3=a\\=b|c\\\\d\\nsecond line cs3Label=note cn1=6857 cn1Label=session_id outcome=failure duser=priya.patel dvchost=ss-web-02 rt=1790552890000 cs1=192.0.2.45 cs1Label=Client IPAddress suser=priya.patel dvc=10.1.2.3 cs2=Prod cs2Label=System Environment",
+  "CEF:0|Delinea|SecretServer|11.4|Secret-View|View|3|act=View cn1=10005 cn1Label=View Resource Id cs3=Firewall | Edge cs3Label=View Resource Name cs4=Secret cs4Label=View Resource Type dvchost=ss-web-01 rt=1790553375000 cs1=ss-client.domain.com cs1Label=Client IPAddress suser=riley.chen",
+  "CEF:0|Delinea|SecretServer||Net|Network|3|act=Deny dst=10.0.0.2 dpt=443 src=10.0.0.1 spt=5555 proto=TCP dvchost=fw1 rt=1790553666000"
+ ],
+ "examples": [
+  [
+   "Authenticate",
+   "act",
+   "Logon"
+  ],
+  [
+   "Authenticate",
+   "cs3",
+   "a=b|c\\d\nsecond line"
+  ],
+  [
+   "Authenticate",
+   "cs3Label",
+   "note"
+  ],
+  [
+   "Authenticate",
+   "cn1",
+   "6857"
+  ],
+  [
+   "Authenticate",
+   "cn1Label",
+   "session_id"
+  ],
+  [
+   "Authenticate",
+   "outcome",
+   "failure"
+  ],
+  [
+   "Authenticate",
+   "duser",
+   "priya.patel"
+  ],
+  [
+   "common",
+   "dvchost",
+   "ss-web-02"
+  ],
+  [
+   "common",
+   "rt",
+   "1790552890000"
+  ],
+  [
+   "common",
+   "cs1",
+   "192.0.2.45"
+  ],
+  [
+   "Authenticate",
+   "cs1Label",
+   "Client IPAddress"
+  ],
+  [
+   "common",
+   "suser",
+   "priya.patel"
+  ],
+  [
+   "common",
+   "dvc",
+   "10.1.2.3"
+  ],
+  [
+   "common",
+   "cs2",
+   "Prod"
+  ],
+  [
+   "Authenticate",
+   "cs2Label",
+   "System Environment"
+  ],
+  [
+   "header",
+   "vendor",
+   "Delinea"
+  ],
+  [
+   "header",
+   "product",
+   "SecretServer"
+  ],
+  [
+   "header",
+   "version",
+   "11.4"
+  ],
+  [
+   "header",
+   "signature",
+   "User-Login"
+  ],
+  [
+   "header",
+   "name",
+   "User logged in"
+  ],
+  [
+   "header",
+   "severity",
+   "3"
+  ],
+  [
+   "View",
+   "act",
+   "View"
+  ],
+  [
+   "View",
+   "cn1",
+   "10005"
+  ],
+  [
+   "View",
+   "cn1Label",
+   "View Resource Id"
+  ],
+  [
+   "View",
+   "cs3",
+   "Firewall | Edge"
+  ],
+  [
+   "View",
+   "cs3Label",
+   "View Resource Name"
+  ],
+  [
+   "View",
+   "cs4",
+   "Secret"
+  ],
+  [
+   "View",
+   "cs4Label",
+   "View Resource Type"
+  ],
+  [
+   "View",
+   "cs1Label",
+   "Client IPAddress"
+  ],
+  [
+   "Network",
+   "act",
+   "Deny"
+  ],
+  [
+   "Network",
+   "dst",
+   "10.0.0.2"
+  ],
+  [
+   "Network",
+   "dpt",
+   "443"
+  ],
+  [
+   "Network",
+   "src",
+   "10.0.0.1"
+  ],
+  [
+   "Network",
+   "spt",
+   "5555"
+  ],
+  [
+   "Network",
+   "proto",
+   "TCP"
+  ]
+ ],
+ "review": {
+  "lines": 3,
+  "problems": [],
+  "implied_mapping": {
+   "Authenticate": [
+    {
+     "path": "EventDetail/Authenticate/Action",
+     "key": "act",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='session_id']/@Value",
+     "key": "cn1",
+     "label": "session_id",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventSource/Client/IPAddress",
+     "key": "cs1",
+     "label": "Client IPAddress",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventSource/System/Environment",
+     "key": "cs2",
+     "label": "System Environment",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='note']/@Value",
+     "key": "cs3",
+     "label": "note",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventSource/User/Id",
+     "key": "duser",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventSource/Device/IPAddress",
+     "key": "dvc",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventSource/Device/HostName",
+     "key": "dvchost",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventTime/TimeCreated",
+     "key": "rt",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventSource/User/Id",
+     "key": "suser",
+     "seen": "1 of 1"
+    }
+   ],
+   "Network": [
+    {
+     "path": "EventDetail/Network/*/Destination/Port",
+     "key": "dpt",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventDetail/Network/*/Destination/Device/IPAddress",
+     "key": "dst",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventSource/Device/HostName",
+     "key": "dvchost",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventDetail/Network/*/TransportProtocol",
+     "key": "proto",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventTime/TimeCreated",
+     "key": "rt",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventDetail/Network/*/Source/Port",
+     "key": "spt",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventDetail/Network/*/Source/Device/IPAddress",
+     "key": "src",
+     "seen": "1 of 1"
+    }
+   ],
+   "View": [
+    {
+     "path": "EventDetail/View/Resource/Id",
+     "key": "cn1",
+     "label": "View Resource Id",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventSource/Client/IPAddress",
+     "key": "cs1",
+     "label": "Client IPAddress",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventDetail/View/Resource/Name",
+     "key": "cs3",
+     "label": "View Resource Name",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventDetail/View/Resource/Type",
+     "key": "cs4",
+     "label": "View Resource Type",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventSource/Device/HostName",
+     "key": "dvchost",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventTime/TimeCreated",
+     "key": "rt",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventSource/User/Id",
+     "key": "suser",
+     "seen": "1 of 1"
+    }
+   ]
+  },
+  "not_sent": [
+   {
+    "event_type": "Authenticate",
+    "path": "EventDetail/Authenticate/Outcome/Success",
+    "events": "1 of 1"
+   }
+  ]
+ }
+}

@@ -18,6 +18,8 @@ package stroom.index.impl;
 
 import stroom.docstore.api.DocumentStoreBinder;
 import stroom.index.api.IndexVolumeGroupService;
+import stroom.index.api.IndexVolumeStates;
+import stroom.index.shared.IndexResource;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
@@ -51,7 +53,10 @@ public class IndexModule extends AbstractModule {
         bind(IndexFieldCache.class).to(IndexFieldCacheImpl.class);
         bind(IndexVolumeService.class).to(IndexVolumeServiceImpl.class);
         bind(IndexVolumeGroupService.class).to(IndexVolumeGroupServiceImpl.class);
+        bind(IndexVolumeStates.class).to(IndexVolumeStatesImpl.class);
         bind(IndexShardService.class).to(IndexShardServiceImpl.class);
+        // For Stroom AI's processing tools, which delete a build's own index shards as the Shards tab does.
+        bind(IndexResource.class).to(IndexResourceImpl.class);
         bind(IndexShardCreator.class).to(IndexShardCreatorImpl.class);
         bind(IndexFieldService.class).to(IndexFieldServiceImpl.class);
         bind(Indexer.class).to(IndexerImpl.class);

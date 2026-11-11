@@ -31,6 +31,8 @@ public class DownloadChatViewImpl extends ViewImpl implements DownloadChatView {
 
     @UiField
     CustomCheckBox includeDataContexts;
+    @UiField
+    CustomCheckBox includeActivity;
 
     @Inject
     public DownloadChatViewImpl(final Binder binder) {
@@ -50,6 +52,11 @@ public class DownloadChatViewImpl extends ViewImpl implements DownloadChatView {
     @Override
     public boolean isIncludeDataContexts() {
         return includeDataContexts.getValue();
+    }
+
+    @Override
+    public boolean isIncludeActivity() {
+        return includeActivity.getValue();
     }
 
     public interface Binder extends UiBinder<Widget, DownloadChatViewImpl> {

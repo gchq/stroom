@@ -1,0 +1,206 @@
+{
+ "input": "json",
+ "xml_namespace": "",
+ "json_layout": "array",
+ "json_fields": [],
+ "xml_fields": [],
+ "pairs": [],
+ "extract": [
+  {
+   "field": "msg",
+   "regex": "^(\\S+) (\\S+)$",
+   "names": [
+    "who",
+    "what"
+   ],
+   "flags": ""
+  },
+  {
+   "xpath": "*[@key='a']/*[@key='b']",
+   "regex": "(.*)",
+   "names": [
+    "all"
+   ],
+   "flags": "",
+   "scope": "record"
+  }
+ ],
+ "for_each": "items",
+ "nil_values": [],
+ "drop_when": [
+  {
+   "when": [
+    {
+     "field": "host",
+     "matches": "^qa-",
+     "scope": "record"
+    }
+   ],
+   "reason": "QA traffic"
+  }
+ ],
+ "common": [
+  {
+   "path": "EventTime/TimeCreated",
+   "field": "ts",
+   "repeat": false,
+   "time_format": "yyyy-MM-dd HH:mm:ss",
+   "timezone": "UTC"
+  },
+  {
+   "path": "EventSource/System/Name",
+   "value": "App",
+   "repeat": false
+  },
+  {
+   "path": "EventSource/System/Environment",
+   "value": "Dev",
+   "repeat": false
+  },
+  {
+   "path": "EventSource/Generator",
+   "value": "app",
+   "repeat": false
+  },
+  {
+   "path": "EventSource/User/Id",
+   "any_of": [
+    "user",
+    "who"
+   ],
+   "transform": "lower",
+   "repeat": false,
+   "default": "nobody"
+  },
+  {
+   "path": "EventSource/User/Domain",
+   "field": "dom",
+   "repeat": false,
+   "scope": "record",
+   "timezone": "Europe/London"
+  }
+ ],
+ "events": [
+  {
+   "name": "logon",
+   "when": [
+    {
+     "field": "what",
+     "in_dictionary": "Logons"
+    },
+    {
+     "xpath": "*[@key='ok']",
+     "present": true
+    }
+   ],
+   "fields": [
+    {
+     "path": "EventDetail/TypeId",
+     "value": "Logon",
+     "repeat": false
+    },
+    {
+     "path": "EventDetail/Authenticate/Action",
+     "value": "Logon",
+     "repeat": false
+    },
+    {
+     "path": "EventDetail/Authenticate/User/Id",
+     "lookup": {
+      "map": "USERS",
+      "field": "user",
+      "path": "name"
+     },
+     "repeat": false
+    },
+    {
+     "path": "EventDetail/Authenticate/Outcome/Success",
+     "field": "ok",
+     "repeat": false,
+     "map": {
+      "yes": "true",
+      "no": "false"
+     },
+     "default": "false"
+    },
+    {
+     "path": "EventDetail/Authenticate/Outcome/Description",
+     "field": "why",
+     "dictionary": "Reasons",
+     "repeat": false
+    },
+    {
+     "path": "EventDetail/Authenticate/Data",
+     "field": "roles",
+     "repeat": true,
+     "data_name": "roles"
+    }
+   ],
+   "drop": false,
+   "keep_unknown": false,
+   "data": []
+  },
+  {
+   "name": "nothing",
+   "when": [
+    {
+     "field": "what",
+     "present": false
+    }
+   ],
+   "fields": [],
+   "drop": true,
+   "keep_unknown": false,
+   "data": []
+  },
+  {
+   "name": "rest",
+   "when": [],
+   "fields": [
+    {
+     "path": "EventDetail/TypeId",
+     "lookup": {
+      "map": "TYPES",
+      "xpath": "*[@key='t']"
+     },
+     "repeat": false
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "field": "what",
+     "repeat": false,
+     "data_name": "what"
+    }
+   ],
+   "drop": false,
+   "allow_unknown": "anything else",
+   "keep_unknown": false,
+   "data": []
+  }
+ ],
+ "unmatched": "skip",
+ "style": {
+  "naming": "snake_case",
+  "variable_min_reads": 3,
+  "inline_map_max_keys": 3,
+  "function_min_uses": 2,
+  "data_values": "interpolated",
+  "data_entries": "function",
+  "data_run_min": 4,
+  "variables": "just_in_time",
+  "data_names": "as_given",
+  "layout": "modes"
+ },
+ "imports": [],
+ "shared": [
+  {
+   "href": "Common-V1",
+   "template": "eventSource",
+   "at": "EventSource/Device",
+   "with_params": {
+    "ip": "*[@key='ip']"
+   }
+  }
+ ],
+ "functions": []
+}

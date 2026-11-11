@@ -1,0 +1,67 @@
+# mcp-form-too-long
+
+A form from an MCP server that Stroom can't show (its message is too long) is not shown: the user is warned, and the server is given an error rather than told the user declined.
+
+== What happened ==
+The user asks: Set up a processor filter for ACME.
+Run 1: answered: The server's confirmation form couldn't be shown, so no filter was created.
+
+== Stored messages ==
+#1 USER_MESSAGE (turn 1)
+    Set up a processor filter for ACME.
+#2 TOOL_CALL (turn 1)
+    {
+      "callId" : "call-1",
+      "tool" : "create_filter",
+      "arguments" : "{\"feed\":\"ACME\"}"
+    }
+#3 WARNING (turn 1)
+    MCP tool server 'stroom' sent a form that Stroom can't show, as its message is too long. This is a problem with the MCP server, not something you did. Stroom has told the server so, rather than that you declined. Ask an administrator to report it to whoever looks after the server.
+#4 TOOL_RESULT (turn 1)
+    {
+      "callId" : "call-1",
+      "tool" : "create_filter",
+      "error" : true,
+      "text" : "Error: The user could not be asked to confirm: The form can't be shown to the user, as its message is too long (at most 2000 characters of message, 20 fields). The user has not answered it.",
+      "chars" : 189,
+      "durationMs" : "<time>"
+    }
+
+== Workspace files made ==
+(none)
+
+== Run flags ==
+Read content that could hold planted instructions: true
+Read an untrusted MCP server's output: false
+
+== MCP tools offered ==
+create_filter
+    Description: Does create filter.
+    Parameters: {
+      "type" : "object",
+      "properties" : {
+        "query" : {
+          "type" : "string"
+        }
+      },
+      "required" : [ ]
+    }
+
+== Requests to the model ==
+(Built-in tools are listed by name in name order; their definitions have their own reference file.)
+--- Request 1 ---
+Tools offered: ask_user, memory, propose_query, read_turn, create_filter
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    Set up a processor filter for ACME.
+--- Request 2 ---
+Tools offered: ask_user, memory, propose_query, read_turn, create_filter
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    Set up a processor filter for ACME.
+[2] AI
+    Calls create_filter as call-1 with {"feed":"ACME"}
+[3] TOOL RESULT for call-1 (create_filter)
+    Error: The user could not be asked to confirm: The form can't be shown to the user, as its message is too long (at most 2000 characters of message, 20 fields). The user has not answered it.

@@ -1,0 +1,45 @@
+name: JSON lines with the event in a message string
+template: Event Data (JSON)
+capabilities: [mixed_formats, field_variability]
+request: >
+  Onboard these application audit logs (JSON lines, one object per line). The shipper adds the host and the time
+  it received the line; the event itself is the message string: its own timestamp, the user, the action (LOGIN or
+  LOGOUT) and a description, which for logins says whether it succeeded and the client address. Index the events.
+expected:
+  records: 3
+  event_types: [Authenticate]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/Description, EventDetail/Authenticate/Action]
+sample: |
+  {"host": "app01", "received": "2026-10-01T10:00:02Z", "message": "2026-10-01 10:00:00 alice LOGIN Successful login from 10.0.0.1"}
+  {"host": "app01", "received": "2026-10-01T10:05:02Z", "message": "2026-10-01 10:05:00 bob LOGIN Failed login from 10.0.0.9"}
+  {"host": "app02", "received": "2026-10-01T10:30:01Z", "message": "2026-10-01 10:30:00 alice LOGOUT Session ended"}
+reference:
+  mapping:
+    input: json
+    json_layout: lines
+    extract:
+      - {field: message, regex: '^(\S+ \S+) (\S+) (\S+) (.*)$', names: [ts, user, action, desc]}
+      - {field: desc, regex: '^(Successful|Failed)', names: [result]}
+      - {field: desc, regex: ' from (\S+)$', names: [client_ip]}
+    common:
+      - {path: EventTime/TimeCreated, field: ts, time_format: "yyyy-MM-dd HH:mm:ss", timezone: UTC}
+      - {path: EventSource/System/Name, value: App}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: audit}
+      - {path: EventSource/Device/HostName, field: host}
+      - {path: EventSource/Client/IPAddress, field: client_ip}
+      - {path: EventSource/User/Id, field: user}
+      - {path: EventDetail/TypeId, field: action}
+      - {path: EventDetail/Description, field: desc}
+    events:
+      - name: logon
+        when: [{field: action, equals: LOGIN}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: user}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: result, map: {Successful: "true", Failed: "false"}}
+      - name: logoff
+        when: [{field: action, equals: LOGOUT}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+          - {path: EventDetail/Authenticate/User/Id, field: user}

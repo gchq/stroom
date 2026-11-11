@@ -1,0 +1,742 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl.tools;
+
+import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.tools.AgentInstructions.Ignored;
+import stroom.ai.impl.tools.AgentInstructions.Standing;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.shared.AiToolCategory;
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.explorer.api.ExplorerService;
+import stroom.explorer.shared.DocumentFindRequest;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerTreeFilter;
+import stroom.explorer.shared.FindResult;
+import stroom.meta.api.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaExpressionUtil;
+import stroom.meta.shared.MetaFields;
+import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.SelectionSummary;
+import stroom.meta.shared.Status;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorTaskService;
+import stroom.processor.shared.FetchProcessorRequest;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterExpressionUtil;
+import stroom.processor.shared.ProcessorFilterRow;
+import stroom.processor.shared.ProcessorListRow;
+import stroom.processor.shared.ProcessorTaskExpressionUtil;
+import stroom.processor.shared.ProcessorTaskSummary;
+import stroom.query.api.ExpressionOperator;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
+import stroom.util.date.DateUtil;
+import stroom.util.json.JsonUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
+
+/// `folder_contents` - what is in an Explorer folder, as the folder's own tabs show it: the documents in it (and
+/// optionally the folders below it), the streams of its feeds and pipelines (the Data tab), the processor filters
+/// of its pipelines and analytic rules (the Processors tab), and their tasks (the Active Tasks tab). Given a name,
+/// it finds documents by name and type in the folder and below instead, through the Explorer's quick filter
+/// (`ExplorerService.find`).
+///
+/// Read as the user. A folder the user can't view is refused without saying whether it exists, and only the
+/// documents in it they can view are listed, without looking inside folders they can't view. Streams are found
+/// through [MetaService], which only finds those of feeds the user may view. Processor filters and tasks need the
+/// Manage Processors permission, as their tabs do, and of those only the filters [ProcessorFilterService] lets the
+/// user see are listed, and only those (and tasks) whose pipeline or analytic rule, and for tasks whose feed, the
+/// user can view. Every check fails closed.
+class FolderContentsTool extends AbstractBuiltInTool {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FolderContentsTool.class);
+
+    static final String NAME = "folder_contents";
+    static final String FOLDER_ARG = "folder";
+    static final String SHOW_ARG = "show";
+    static final String DEPTH_ARG = "depth";
+    static final String TYPES_ARG = "types";
+    static final String INCLUDE_IGNORED_ARG = "includeIgnored";
+    static final String NAME_ARG = "name";
+    static final String LIMIT_ARG = "limit";
+
+    static final String DOCUMENTS = "documents";
+    static final String STREAMS = "streams";
+    static final String PROCESSORS = "processors";
+    static final String TASKS = "tasks";
+    static final List<String> SECTIONS = List.of(DOCUMENTS, STREAMS, PROCESSORS, TASKS);
+
+    static final int DEFAULT_DEPTH = 1;
+    static final int MAX_DEPTH = 5;
+    /// The most documents listed.
+    static final int MAX_DOCUMENTS = 200;
+    /// The most recent streams listed.
+    static final int MAX_STREAMS = 20;
+    /// The most processor filters listed.
+    static final int MAX_FILTERS = 100;
+    /// The most rows of task counts read.
+    static final int MAX_TASK_ROWS = 500;
+    /// The most documents found by name returned, by default.
+    static final int DEFAULT_FIND_LIMIT = 100;
+    /// The most documents found by name returned.
+    static final int MAX_FIND_LIMIT = 500;
+    /// The most documents the explorer search is asked for, before they are filtered.
+    static final int MAX_FIND_RESULTS = 5_000;
+    /// What the caller is told when more documents match than are returned.
+    static final String MORE_MATCH = "More documents match; narrow the name or types, or raise the limit.";
+
+    private final DocumentAccess documentAccess;
+    private final ProcessorFilterAccess processorFilterAccess;
+    private final Provider<MetaService> metaServiceProvider;
+    private final Provider<ProcessorFilterService> processorFilterServiceProvider;
+    private final Provider<ProcessorTaskService> processorTaskServiceProvider;
+    private final FeedAccess feedAccess;
+    private final AgentInstructions agentInstructions;
+    private final AiAuditLog auditLog;
+    private final Provider<ExplorerService> explorerServiceProvider;
+
+    @Inject
+    FolderContentsTool(final DocumentAccess documentAccess,
+                       final ProcessorFilterAccess processorFilterAccess,
+                       final Provider<MetaService> metaServiceProvider,
+                       final Provider<ProcessorFilterService> processorFilterServiceProvider,
+                       final Provider<ProcessorTaskService> processorTaskServiceProvider,
+                       final Provider<DocFinder> docFinderProvider,
+                       final AgentInstructions agentInstructions,
+                       final AiAuditLog auditLog,
+                       final Provider<ExplorerService> explorerServiceProvider) {
+        this.documentAccess = documentAccess;
+        this.processorFilterAccess = processorFilterAccess;
+        this.metaServiceProvider = metaServiceProvider;
+        this.processorFilterServiceProvider = processorFilterServiceProvider;
+        this.processorTaskServiceProvider = processorTaskServiceProvider;
+        this.feedAccess = new FeedAccess(docFinderProvider, documentAccess);
+        this.agentInstructions = agentInstructions;
+        this.auditLog = auditLog;
+        this.explorerServiceProvider = explorerServiceProvider;
+    }
+
+    @Override
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .unlockedBy(AppPermission.MANAGE_PROCESSORS_PERMISSION)
+                .checksDocuments(DocumentPermission.VIEW)
+                .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CORE;
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
+                .name(NAME)
+                .description(ToolDescription.builder()
+                        .general("Lists what is in an Explorer folder, as its tabs show it, e.g. for 'what's in this "
+                                 + "folder?'. Give show with any of: 'documents' (the default: the documents and "
+                                 + "folders in it, each as a link; give depth to look in the folders below too), "
+                                 + "'streams' (how many streams its feeds received and its pipelines produced, and "
+                                 + "the most recent")
+                        .chatOnly("; use stream_meta with folder for more")
+                        .general("), 'processors' (the processor filters of its pipelines and analytic rules: what "
+                                 + "streams each selects, enabled, priority, progress) and 'tasks' (counts of their "
+                                 + "processing tasks by status). Ask for the streams, processors or tasks when the "
+                                 + "user mentions data, processing or tasks. Folders an AGENTS doc says to ignore "
+                                 + "(e.g. an Archive) are shown but not looked in, and the AGENTS docs that apply to "
+                                 + "the folder are given. Give name to find documents by name (and types) in the "
+                                 + "folder and every folder below it, the whole tree when no folder is given, as the "
+                                 + "Explorer's quick filter does: each one's type, UUID, name and folder path "
+                                 + "(/Feeds/Events/Acme, the System root left out, as the folder argument takes it). "
+                                 + "Start there to locate feeds, pipelines, XSLTs, template pipelines or existing "
+                                 + "Elastic indices")
+                        .chatOnly("; find_in_content finds documents by text in their content")
+                        .general(".")
+                        .build())
+                .parameters(ObjectSchema.builder()
+                        .addStringProperty(FOLDER_ARG, "The folder's UUID, or its Explorer path, e.g. "
+                                                       + "'/Security/Lookups'. Omit, or give '/', for the top of "
+                                                       + "the tree.")
+                        .addProperty(SHOW_ARG, stringArraySchema("What to list, any of: "
+                                                                 + String.join(", ", SECTIONS) + " (default "
+                                                                 + DOCUMENTS + ")."))
+                        .addIntegerProperty(DEPTH_ARG, "For documents, how many levels of folders to list: 1 "
+                                                       + "(the default) for what is directly in the folder, up "
+                                                       + "to " + MAX_DEPTH + ".")
+                        .addProperty(TYPES_ARG, stringArraySchema("For documents, only these types, e.g. "
+                                                                  + "['Feed', 'Pipeline', 'XSLT']. Folders are "
+                                                                  + "still followed."))
+                        .addBooleanProperty(INCLUDE_IGNORED_ARG, "Optional. True to look in ignored folders too, "
+                                                                 + "only when the user asks for them.")
+                        .addStringProperty(NAME_ARG, "Optional. Name to match, as in the Stroom explorer quick "
+                                                     + "filter, e.g. 'Acme'. Use '*' to match everything of the "
+                                                     + "given types. Finds documents rather than listing the "
+                                                     + "folder.")
+                        .addIntegerProperty(LIMIT_ARG, "With name, the most documents to return (default "
+                                                       + DEFAULT_FIND_LIMIT + ", at most " + MAX_FIND_LIMIT + ").")
+                        .build())
+                .build();
+    }
+
+    @Override
+    public ToolResult execute(final ToolCall request, final ToolCallContext context) {
+        final DocRef folder = documentAccess.findFolder(stringArg(request, FOLDER_ARG)).orElse(null);
+        if (folder == null) {
+            return ToolResult.text(
+                    "No folder was found with that UUID or path, or you don't have permission to view it.");
+        }
+        final List<String> show;
+        final Set<String> types;
+        try {
+            show = show(request);
+            types = Set.copyOf(stringListArg(request, TYPES_ARG));
+        } catch (final IllegalArgumentException e) {
+            return ToolResult.text("Error: " + e.getMessage());
+        }
+        final Integer depthArg = intArg(request, DEPTH_ARG);
+        final int depth = depthArg == null
+                ? DEFAULT_DEPTH
+                : Math.max(1, Math.min(depthArg, MAX_DEPTH));
+
+        final boolean root = ExplorerConstants.SYSTEM_DOC_REF.equals(folder);
+        final String path = root
+                ? "/"
+                : joinPath(documentAccess.path(folder), folder.getName());
+        final Listing listing = new Listing();
+        final Standing standing = agentInstructions.load(context.session(), "Standing instructions read by the " + NAME
+                                                                 + " tool");
+        final String name = stringArg(request, NAME_ARG);
+        if (name != null) {
+            return findDocuments(request, context, name, types, path, standing);
+        }
+        final Optional<Ignored> folderIgnored = standing.ignored(path);
+        // A folder the user asks about is listed in full, even if an AGENTS doc says to ignore it.
+        final Scan scan = new Scan(standing, "true".equalsIgnoreCase(stringArg(request, INCLUDE_IGNORED_ARG))
+                                             || folderIgnored.isPresent());
+        final StroomLinks links = context.links();
+        final StringBuilder sb = new StringBuilder();
+        sb.append(root
+                ? "The top of the Explorer tree (/)"
+                : "Folder '" + folder.getName() + "' (" + path + ", uuid " + folder.getUuid() + ", "
+                  + links.document(folder) + ")").append('\n');
+        folderIgnored.ifPresent(ignored -> sb.append("It is in ").append(ignored.describe())
+                .append(", so searches leave it out; it is listed as it was asked for.\n"));
+        if (show.contains(DOCUMENTS)) {
+            appendDocuments(sb, links, folder, path, depth, types, scan, listing);
+        }
+        if (show.contains(STREAMS)) {
+            appendStreams(sb, links, folder, root, listing);
+        }
+        if (show.contains(PROCESSORS)) {
+            appendProcessors(sb, links, folder, root, listing);
+        }
+        if (show.contains(TASKS)) {
+            appendTasks(sb, links, folder, root, listing);
+        }
+
+        final Map<String, String> data = new LinkedHashMap<>();
+        data.put("Shown", String.join(", ", show));
+        data.put("Documents", String.valueOf(listing.documents.size()));
+        data.put("ProcessorFilters", String.valueOf(listing.filters));
+        auditLog.documentsSearched(context.session(), "contents of " + (root
+                        ? "the top of the Explorer tree"
+                        : "Folder '" + path + "'") + ", showing " + String.join(", ", show)
+                                          + (show.contains(DOCUMENTS)
+                        ? ", depth " + depth
+                        : ""),
+                listing.documents, data, "Folder contents listed by the " + NAME + " tool");
+        sb.append(standing.note(links, List.of(path)));
+        if (!listing.streams.isEmpty()) {
+            auditLog.streamsSearched(context.session(), "streams of the feeds and pipelines in " + path,
+                    listing.streams,
+                    Map.of(), "Folder streams listed by the " + NAME + " tool");
+        }
+        return ToolResult.text(sb.toString().stripTrailing());
+    }
+
+    /// Finds documents by name (and types) in the folder and below, through the Explorer's quick filter, which only
+    /// finds what the user can view. Each is checked for View again, and those in folders an AGENTS doc says to
+    /// ignore are left out unless asked for.
+    ///
+    /// @return JSON: `total`, `returned`, `documents` (each `type`, `uuid`, `name`, `path`), and a
+    /// `hint` when more match than are returned.
+    private ToolResult findDocuments(final ToolCall request,
+                                     final ToolCallContext context,
+                                     final String name,
+                                     final Set<String> types,
+                                     final String folderPath,
+                                     final Standing standing) {
+        final Integer limitArg = intArg(request, LIMIT_ARG);
+        final int limit = limitArg == null
+                ? DEFAULT_FIND_LIMIT
+                : Math.max(1, Math.min(limitArg, MAX_FIND_LIMIT));
+        final boolean includeIgnored = "true".equalsIgnoreCase(stringArg(request, INCLUDE_IGNORED_ARG));
+        final ExplorerTreeFilter filter = new ExplorerTreeFilter(types.isEmpty()
+                ? null
+                : types, null, null, null, Set.of(DocumentPermission.VIEW), name, false, null);
+        final List<FindResult> found;
+        try {
+            final DocumentFindRequest findRequest = new DocumentFindRequest(new PageRequest(0, MAX_FIND_RESULTS),
+                    null, filter);
+            found = NullSafe.list(NullSafe.get(explorerServiceProvider.get().find(findRequest),
+                    ResultPage::getValues));
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to find documents named '{}'", name, e);
+            return ToolResult.text("Error: the documents couldn't be searched: "
+                                   + NullSafe.nonBlankStringElse(e.getMessage(), e.toString()));
+        }
+        final List<Map<String, Object>> documents = new ArrayList<>();
+        final List<DocRef> docRefs = new ArrayList<>();
+        final Set<String> ignoredBy = new LinkedHashSet<>();
+        int ignored = 0;
+        int total = 0;
+        for (final FindResult result : found) {
+            final DocRef docRef = result.getDocRef();
+            final String path = AgentInstructions.normalise(DocumentAccess.withoutSystemRoot(result.getPath()));
+            // Stroom also returns the folders that contain a match; keep only what was asked for.
+            if (docRef == null || (!types.isEmpty() && !types.contains(docRef.getType()))
+                || !AgentInstructions.isWithin(path, folderPath) || !documentAccess.canView(docRef)) {
+                continue;
+            }
+            final Optional<Ignored> ignoring = includeIgnored
+                    ? Optional.empty()
+                    : standing.ignored(joinPath(path, docRef.getName()));
+            if (ignoring.isPresent()) {
+                ignored++;
+                ignoredBy.add(ignoring.get().describe());
+                continue;
+            }
+            total++;
+            if (documents.size() < limit) {
+                final Map<String, Object> document = new LinkedHashMap<>();
+                document.put("type", docRef.getType());
+                document.put("uuid", docRef.getUuid());
+                document.put("name", docRef.getName());
+                document.put("path", path);
+                documents.add(document);
+                docRefs.add(docRef);
+            }
+        }
+        final Map<String, Object> json = new LinkedHashMap<>();
+        json.put("total", total);
+        json.put("returned", documents.size());
+        json.put("documents", documents);
+        if (total > documents.size()) {
+            json.put("hint", MORE_MATCH);
+        }
+        if (ignored > 0) {
+            json.put("left_out", ignored + " document(s) in folders an " + AgentInstructions.DOC_NAME + " doc says "
+                                 + "to ignore: " + String.join(", ", ignoredBy) + "; pass " + INCLUDE_IGNORED_ARG
+                                 + " only if the user asks for them.");
+        }
+        final Map<String, String> data = new LinkedHashMap<>();
+        data.put("Found", String.valueOf(total));
+        auditLog.documentsSearched(context.session(), "documents named '" + name + "'" + (types.isEmpty()
+                        ? ""
+                        : " of type " + String.join(", ", types.stream().sorted().toList())) + " in " + folderPath,
+                docRefs, data, "Documents found by name by the " + NAME + " tool");
+        return ToolResult.text(JsonUtil.writeValueAsString(json, false)).withStructuredContent(json);
+    }
+
+    private static List<String> show(final ToolCall request) {
+        final List<String> show = new ArrayList<>();
+        for (final String item : stringListArg(request, SHOW_ARG)) {
+            final String lower = item.toLowerCase(Locale.ROOT);
+            if (!SECTIONS.contains(lower)) {
+                throw new IllegalArgumentException("can't show '" + item + "'. Show any of: "
+                                                   + String.join(", ", SECTIONS) + ".");
+            }
+            if (!show.contains(lower)) {
+                show.add(lower);
+            }
+        }
+        if (show.isEmpty()) {
+            show.add(DOCUMENTS);
+        }
+        return show;
+    }
+
+    // Lists the documents in the folder, and in the folders below it to the depth asked for, each as a link.
+    private void appendDocuments(final StringBuilder sb,
+                                 final StroomLinks links,
+                                 final DocRef folder,
+                                 final String path,
+                                 final int depth,
+                                 final Set<String> types,
+                                 final Scan scan,
+                                 final Listing listing) {
+        final List<Entry> entries = new ArrayList<>();
+        final boolean cut = collect(folder, path, 1, depth, types, scan, entries);
+        final Map<String, Integer> byType = new TreeMap<>();
+        entries.stream()
+                .filter(entry -> !entry.onlyFollowed())
+                .forEach(entry -> byType.merge(entry.node().getDocRef().getType(), 1, Integer::sum));
+
+        sb.append("\nDocuments");
+        if (depth > 1) {
+            sb.append(" (").append(depth).append(" levels down)");
+        }
+        sb.append(": ");
+        if (entries.isEmpty()) {
+            sb.append("none you can see").append(types.isEmpty()
+                    ? ""
+                    : " of type " + String.join(", ", types.stream().sorted().toList())).append(".\n");
+            return;
+        }
+        final int documents = byType.values().stream().mapToInt(Integer::intValue).sum();
+        sb.append(documents).append(cut
+                ? " (it stopped after " + MAX_DOCUMENTS + " entries, so there are more: narrow it with types or a "
+                  + "lower depth)"
+                : "").append(" — ");
+        final List<String> counts = new ArrayList<>();
+        byType.forEach((type, count) -> counts.add(count + " " + type));
+        sb.append(String.join(", ", counts)).append('\n');
+        for (final Entry entry : entries) {
+            final ExplorerNode node = entry.node();
+            final DocRef docRef = node.getDocRef();
+            sb.append("  ".repeat(entry.level() - 1)).append("- ").append(links.document(docRef))
+                    .append(" (").append(docRef.getType()).append(", uuid ").append(docRef.getUuid()).append(')');
+            if (NullSafe.hasItems(node.getTags())) {
+                sb.append(" tags: ").append(String.join(", ", node.getTags().stream().sorted().toList()));
+            }
+            if (entry.ignored() != null) {
+                sb.append(" — not looked in: ").append(entry.ignored().describe());
+            }
+            sb.append('\n');
+            listing.documents.add(docRef);
+        }
+        sb.append("Documents in folders you can't view aren't listed.");
+        if (scan.ignoredFolders > 0 || scan.ignoredDocuments > 0) {
+            sb.append(" Folders an ").append(AgentInstructions.DOC_NAME).append(" doc says to ignore weren't "
+                                                                                  + "looked in");
+            if (scan.ignoredDocuments > 0) {
+                sb.append(", and ").append(scan.ignoredDocuments).append(" document(s) it names were left out");
+            }
+            sb.append("; pass ").append(INCLUDE_IGNORED_ARG).append(" only if the user asks for them.");
+        }
+        sb.append('\n');
+    }
+
+    /// Adds the folder's children, then those of each folder among them, to the depth asked for.
+    ///
+    /// @return True if it stopped at [#MAX_DOCUMENTS].
+    private boolean collect(final DocRef folder,
+                            final String path,
+                            final int level,
+                            final int depth,
+                            final Set<String> types,
+                            final Scan scan,
+                            final List<Entry> entries) {
+        final List<ExplorerNode> children = new ArrayList<>(documentAccess.children(folder));
+        // Folders first, then by type and name, as the Explorer tree sorts them.
+        children.sort(Comparator.comparing((ExplorerNode node) -> !ExplorerConstants.isFolder(node))
+                .thenComparing(node -> NullSafe.string(node.getDocRef().getType()))
+                .thenComparing(node -> NullSafe.string(node.getDocRef().getName())));
+        for (final ExplorerNode child : children) {
+            final boolean isFolder = ExplorerConstants.isFolder(child);
+            final String childPath = joinPath(path, child.getDocRef().getName());
+            final Ignored ignored = scan.ignored(childPath);
+            if (ignored != null && !isFolder) {
+                scan.ignoredDocuments++;
+                continue;
+            }
+            final boolean wanted = types.isEmpty() || types.contains(child.getDocRef().getType());
+            final boolean descend = isFolder && level < depth && ignored == null;
+            if (ignored != null) {
+                scan.ignoredFolders++;
+                if (!types.isEmpty()) {
+                    continue;
+                }
+            } else if (!wanted && !descend) {
+                continue;
+            }
+            if (entries.size() >= MAX_DOCUMENTS) {
+                return true;
+            }
+            final int index = entries.size();
+            entries.add(new Entry(child, level, !wanted, ignored));
+            if (descend && collect(child.getDocRef(), childPath, level + 1, depth, types, scan, entries)) {
+                return true;
+            }
+            // A folder only listed to show where the documents below it are, with none of them below it.
+            if (!wanted && entries.size() == index + 1) {
+                entries.remove(index);
+            }
+        }
+        return false;
+    }
+
+    // Counts the streams of the folder's feeds and pipelines, and lists the most recent, as its Data tab does.
+    private void appendStreams(final StringBuilder sb,
+                               final StroomLinks links,
+                               final DocRef folder,
+                               final boolean root,
+                               final Listing listing) {
+        sb.append("\nStreams (Unlocked, of feeds in the folder or produced by its pipelines): ");
+        final ExpressionOperator expression = root
+                ? MetaExpressionUtil.createStatusExpression(Status.UNLOCKED)
+                : MetaExpressionUtil.createFolderExpression(folder);
+        try {
+            final MetaService metaService = metaServiceProvider.get();
+            final SelectionSummary summary = metaService.getSelectionSummary(new FindMetaCriteria(expression));
+            if (summary == null || summary.getItemCount() == 0) {
+                sb.append("none you can see.\n");
+                return;
+            }
+            sb.append(summary.getItemCount()).append(" in ").append(summary.getFeedCount()).append(" feed(s)");
+            if (NullSafe.hasItems(summary.getDistinctFeeds())) {
+                sb.append(" (").append(String.join(", ", summary.getDistinctFeeds().stream().sorted().toList()))
+                        .append(summary.getDistinctFeeds().size() < summary.getFeedCount()
+                                ? ", …"
+                                : "")
+                        .append(')');
+            }
+            sb.append(", of ").append(summary.getTypeCount()).append(" type(s)");
+            if (NullSafe.hasItems(summary.getDistinctTypes())) {
+                sb.append(" (").append(String.join(", ", summary.getDistinctTypes().stream().sorted().toList()))
+                        .append(')');
+            }
+            if (summary.getAgeRange() != null && summary.getAgeRange().getFrom() != null
+                && summary.getAgeRange().getTo() != null) {
+                sb.append(", created ").append(DateUtil.createNormalDateTimeString(summary.getAgeRange().getFrom()))
+                        .append(" to ").append(DateUtil.createNormalDateTimeString(summary.getAgeRange().getTo()));
+            }
+            sb.append(".\n");
+
+            final FindMetaCriteria recent = new FindMetaCriteria(expression);
+            recent.setPageRequest(new PageRequest(0, MAX_STREAMS));
+            recent.setSort(MetaFields.ID.getFldName(), true, false);
+            final List<MetaRow> rows = NullSafe.list(NullSafe.get(metaService.findRows(recent),
+                    ResultPage::getValues));
+            if (!rows.isEmpty()) {
+                sb.append("The most recent ").append(rows.size()).append(":\n");
+                for (final MetaRow row : rows) {
+                    final Meta meta = row.getMeta();
+                    sb.append("- ").append(links.stream(meta.getId())).append(' ').append(meta.getFeedName())
+                            .append(", ").append(meta.getTypeName()).append(", created ")
+                            .append(DateUtil.createNormalDateTimeString(meta.getCreateMs()));
+                    final String pipeline = NullSafe.get(row.getPipeline(), DocRef::getName);
+                    if (NullSafe.isNonBlankString(pipeline)) {
+                        sb.append(", produced by pipeline '").append(pipeline).append('\'');
+                    }
+                    sb.append('\n');
+                    listing.streams.add(meta.getId());
+                }
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to find the streams of " + folder, e);
+            sb.append("couldn't be found.\n");
+        }
+    }
+
+    // Lists the processor filters of the folder's pipelines and analytic rules, as its Processors tab does.
+    private void appendProcessors(final StringBuilder sb,
+                                  final StroomLinks links,
+                                  final DocRef folder,
+                                  final boolean root,
+                                  final Listing listing) {
+        sb.append("\nProcessor filters: ");
+        if (!processorFilterAccess.canManageProcessors()) {
+            sb.append("you need the Manage Processors permission to see them, as the Processors tab does.\n");
+            return;
+        }
+        final List<ProcessorFilter> filters = new ArrayList<>();
+        try {
+            final ExpressionOperator expression = root
+                    ? ProcessorFilterExpressionUtil.createBasicExpression()
+                    : ProcessorFilterExpressionUtil.createFolderExpression(folder);
+            final ResultPage<ProcessorListRow> rows = processorFilterServiceProvider.get()
+                    .find(new FetchProcessorRequest(expression));
+            for (final ProcessorListRow row : NullSafe.list(NullSafe.get(rows, ResultPage::getValues))) {
+                if (row instanceof final ProcessorFilterRow filterRow
+                    && filterRow.getProcessorFilter() != null
+                    && !filterRow.getProcessorFilter().isDeleted()
+                    && documentAccess.canView(filterRow.getProcessorFilter().getPipeline())) {
+                    filters.add(filterRow.getProcessorFilter());
+                }
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to find the processor filters of " + folder, e);
+            sb.append("couldn't be found.\n");
+            return;
+        }
+        if (filters.isEmpty()) {
+            sb.append("none you can see.\n");
+            return;
+        }
+        filters.sort(Comparator.comparing((ProcessorFilter filter) -> NullSafe.string(filter.getPipelineName()))
+                .thenComparing(ProcessorFilter::getId, Comparator.nullsLast(Comparator.naturalOrder())));
+        sb.append(filters.size()).append(filters.size() > MAX_FILTERS
+                ? " (the first " + MAX_FILTERS + " are listed)"
+                : "").append('\n');
+        for (final ProcessorFilter filter : filters.subList(0, Math.min(filters.size(), MAX_FILTERS))) {
+            final DocRef pipeline = ProcessorFilterAccess.pipelineOf(filter);
+            sb.append("- Filter ").append(filter.getId()).append(" (uuid ").append(filter.getUuid()).append(") of ")
+                    .append(pipeline.getType()).append(' ').append(links.document(pipeline))
+                    .append(": selects ").append(ProcessorFilterAccess.selection(filter))
+                    .append("; ").append(ProcessorFilterAccess.status(filter)).append('\n');
+            listing.documents.add(new DocRef(ProcessorFilter.ENTITY_TYPE, filter.getUuid()));
+            listing.filters++;
+        }
+    }
+
+    // Counts the processing tasks of the folder's pipelines and feeds by status, as its Active Tasks tab does.
+    private void appendTasks(final StringBuilder sb,
+                             final StroomLinks links,
+                             final DocRef folder,
+                             final boolean root,
+                             final Listing listing) {
+        sb.append("\nProcessing tasks: ");
+        if (!processorFilterAccess.canManageProcessors()) {
+            sb.append("you need the Manage Processors permission to see them, as the Active Tasks tab does.\n");
+            return;
+        }
+        final List<ProcessorTaskSummary> summaries = new ArrayList<>();
+        final boolean cut;
+        try {
+            final ExpressionCriteria criteria = new ExpressionCriteria(root
+                    ? ExpressionOperator.builder().build()
+                    : ProcessorTaskExpressionUtil.createFolderExpression(folder));
+            // One more than the most, to tell if there are more.
+            criteria.setPageRequest(new PageRequest(0, MAX_TASK_ROWS + 1));
+            final List<ProcessorTaskSummary> found = NullSafe.list(NullSafe.get(
+                    processorTaskServiceProvider.get().findSummary(criteria), ResultPage::getValues));
+            cut = found.size() > MAX_TASK_ROWS;
+            final Map<String, Boolean> feeds = new HashMap<>();
+            for (final ProcessorTaskSummary summary : found.subList(0, Math.min(found.size(), MAX_TASK_ROWS))) {
+                if (documentAccess.canView(summary.getPipeline())
+                    && feeds.computeIfAbsent(NullSafe.string(summary.getFeed()), feedAccess::canView)) {
+                    summaries.add(summary);
+                }
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to find the processing tasks of " + folder, e);
+            sb.append("couldn't be found.\n");
+            return;
+        }
+        if (summaries.isEmpty()) {
+            sb.append("none you can see.\n");
+            return;
+        }
+        // By pipeline and feed, with the count of each status.
+        final Map<String, Map<String, Long>> byPipelineAndFeed = new TreeMap<>();
+        for (final ProcessorTaskSummary summary : summaries) {
+            final String key = summary.getPipeline().getType() + " "
+                               + links.document(summary.getPipeline()) + ", feed "
+                               + NullSafe.nonBlankStringElse(summary.getFeed(), "?");
+            byPipelineAndFeed.computeIfAbsent(key, k -> new TreeMap<>())
+                    .merge(summary.getStatus() == null
+                            ? "Unknown"
+                            : summary.getStatus().getDisplayValue(), summary.getCount(), Long::sum);
+        }
+        sb.append(cut
+                ? "the first " + MAX_TASK_ROWS + " rows of counts (there are more)"
+                : "counts by status").append('\n');
+        byPipelineAndFeed.forEach((key, counts) -> {
+            final List<String> parts = new ArrayList<>();
+            counts.forEach((status, count) -> parts.add(count + " " + status));
+            sb.append("- ").append(key).append(": ").append(String.join(", ", parts)).append('\n');
+        });
+    }
+
+    private static String joinPath(final String parent, final String name) {
+        return ("/".equals(parent)
+                ? ""
+                : NullSafe.string(parent)) + "/" + name;
+    }
+
+    @Override
+    public boolean readsUntrustedContent() {
+        // Names, tags and processor filter messages are given by other users.
+        return true;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A document listed, at its level below the folder (1 for one directly in it).
+    ///
+    /// @param onlyFollowed True for a folder listed only to show where the documents below it are.
+    /// @param ignored The ignored folder it is (or is in), if an AGENTS doc says to ignore it, else null.
+    private record Entry(ExplorerNode node, int level, boolean onlyFollowed, Ignored ignored) {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// How the documents are looked through: which folders the AGENTS docs ignore, and what was left out.
+    private static final class Scan {
+
+        private final Standing standing;
+        private final boolean includeIgnored;
+        private int ignoredFolders;
+        private int ignoredDocuments;
+
+        private Scan(final Standing standing, final boolean includeIgnored) {
+            this.standing = standing;
+            this.includeIgnored = includeIgnored;
+        }
+
+        /// @return The ignored folder the path is (or is in), or null if it isn't ignored or ignoring is off.
+        private Ignored ignored(final String path) {
+            if (includeIgnored || !standing.ignoresAny()) {
+                return null;
+            }
+            return standing.ignored(path).orElse(null);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// What was listed, for the audit log.
+    private static final class Listing {
+
+        private final List<DocRef> documents = new ArrayList<>();
+        private final List<Long> streams = new ArrayList<>();
+        private int filters;
+    }
+}

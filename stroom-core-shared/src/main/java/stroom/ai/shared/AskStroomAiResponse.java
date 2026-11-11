@@ -26,13 +26,30 @@ public class AskStroomAiResponse {
 
     @JsonProperty
     private final String message;
+    @JsonProperty
+    private final boolean tabSnapshotNeeded;
 
+    public AskStroomAiResponse(final String message) {
+        this(message, false);
+    }
+
+    /// @param message           A message, or null.
+    /// @param tabSnapshotNeeded True if only the attached tab's hash was sent, but the server doesn't hold a copy with
+    ///                          it, so the next question should send the tab in full.
     @JsonCreator
-    public AskStroomAiResponse(@JsonProperty("message") final String message) {
+    public AskStroomAiResponse(@JsonProperty("message") final String message,
+                               @JsonProperty("tabSnapshotNeeded") final Boolean tabSnapshotNeeded) {
         this.message = message;
+        this.tabSnapshotNeeded = tabSnapshotNeeded != null && tabSnapshotNeeded;
     }
 
     public String getMessage() {
         return message;
+    }
+
+    /// @return True if the next question should send the attached tab in full, as the server doesn't hold the copy
+    /// whose hash was sent.
+    public boolean isTabSnapshotNeeded() {
+        return tabSnapshotNeeded;
     }
 }

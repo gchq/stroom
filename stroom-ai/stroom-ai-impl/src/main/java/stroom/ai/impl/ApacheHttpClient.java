@@ -57,11 +57,21 @@ public class ApacheHttpClient implements HttpClient {
 
     private final HttpClientProviderCache httpClientProviderCache;
     private final HttpClientConfiguration httpClientConfiguration;
+    private final Map<String, String> headers;
 
     public ApacheHttpClient(final HttpClientProviderCache httpClientProviderCache,
                             final HttpClientConfiguration httpClientConfiguration) {
+        this(httpClientProviderCache, httpClientConfiguration, Map.of());
+    }
+
+    /// @param headers Headers to send with every request (see [stroom.util.shared.http.HttpClientConfig]),
+    ///                unless the request sets them itself.
+    public ApacheHttpClient(final HttpClientProviderCache httpClientProviderCache,
+                            final HttpClientConfiguration httpClientConfiguration,
+                            final Map<String, String> headers) {
         this.httpClientProviderCache = httpClientProviderCache;
         this.httpClientConfiguration = httpClientConfiguration;
+        this.headers = Map.copyOf(headers);
     }
 
     @Override
@@ -115,10 +125,27 @@ public class ApacheHttpClient implements HttpClient {
             listener.onError(new HttpException(statusCode, body));
             return;
         }
+        // As langchain4j's own clients do: the listener is told the stream has opened, given its events, and
+        // then told it has closed. The OpenAI streaming model only completes its answer on close, so without
+        // that a streamed answer never finishes.
+        listener.onOpen(SuccessfulHttpResponse.builder()
+                .statusCode(statusCode)
+                .headers(headersOf(response))
+                .build());
         parser.parse(response.getEntity().getContent(), listener);
+        listener.onClose();
     }
 
-    private ClassicHttpRequest createApacheRequest(final HttpRequest request) {
+    private static Map<String, List<String>> headersOf(final ClassicHttpResponse response) {
+        final Map<String, List<String>> headers = new HashMap<>();
+        for (final Header header : response.getHeaders()) {
+            headers.computeIfAbsent(header.getName(), ignored -> new ArrayList<>())
+                    .add(header.getValue());
+        }
+        return headers;
+    }
+
+    ClassicHttpRequest createApacheRequest(final HttpRequest request) {
         final String method = request.method().name();
         final String url = request.url();
 
@@ -157,6 +184,12 @@ public class ApacheHttpClient implements HttpClient {
                     values.forEach(value ->
                             apacheRequest.addHeader(key, value)));
         }
+        // The configured headers, unless the request sets them itself (e.g. its authorisation).
+        headers.forEach((name, value) -> {
+            if (!apacheRequest.containsHeader(name)) {
+                apacheRequest.addHeader(name, value);
+            }
+        });
 
         LOGGER.debug("createApacheRequest() - method: {}, url: {}, returning: {}", method, url, apacheRequest);
         return apacheRequest;
@@ -165,12 +198,7 @@ public class ApacheHttpClient implements HttpClient {
     private SuccessfulHttpResponse convertResponse(final ClassicHttpResponse response) {
         try {
             final int statusCode = response.getCode();
-
-            final Map<String, List<String>> headers = new HashMap<>();
-            for (final Header header : response.getHeaders()) {
-                headers.computeIfAbsent(header.getName(), ignored -> new ArrayList<>())
-                        .add(header.getValue());
-            }
+            final Map<String, List<String>> headers = headersOf(response);
 
             String body = null;
             if (response.getEntity() != null) {

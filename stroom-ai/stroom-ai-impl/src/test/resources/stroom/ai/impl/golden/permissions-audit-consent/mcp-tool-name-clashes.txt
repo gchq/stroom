@@ -1,0 +1,23 @@
+# How MCP tools with clashing names are offered, and what each offered name runs.
+# Server 'Stroom' (prefix 'stroom') lists: [read_document, Read_Document, read document, read.document, read_document_v2, read, stroom__read_document, ls, find_docs, list_resources]
+# Server 'other' (prefix 'other') lists: [find_docs, read_document, stroom__read_document]
+# Server 'stroom' (prefix 'stroom') lists: [find_docs, read_document]
+
+## The MCP tools offered, in order, and what each name runs
+- stroom__read_document -> MCP: Stroom/read_document
+- Read_Document -> MCP: Stroom/Read_Document
+- stroom__read_document_2 -> MCP: Stroom/read document
+- stroom__read_document_3 -> MCP: Stroom/read.document
+- read_document_v2 -> MCP: Stroom/read_document_v2
+- read -> MCP: Stroom/read
+- stroom__stroom__read_document -> MCP: Stroom/stroom__read_document
+- stroom__ls -> MCP: Stroom/ls
+- find_docs -> MCP: Stroom/find_docs
+- list_resources -> MCP: Stroom/list_resources
+- other__find_docs -> MCP: other/find_docs
+- other__read_document -> MCP: other/read_document
+- other__stroom__read_document -> MCP: other/stroom__read_document
+- stroom__find_docs -> MCP: stroom/find_docs
+- stroom__read_document_4 -> MCP: stroom/read_document
+- read_document -> built-in: XSLT 'Test XSLT' has no text content to read. Use document_info to see what it is.
+- ls -> built-in: /outputs/a.txt  2 B

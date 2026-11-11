@@ -116,6 +116,13 @@ public class DocumentationPresenter
         return DocumentationDoc.TYPE;
     }
 
+    /// A Documentation document's text is its content, edited on its own Documentation tab: the editor a
+    /// proposed change to it (e.g. Stroom AI's to an AGENTS doc) is applied to.
+    @Override
+    protected TabData documentationTab() {
+        return DOCUMENTATION;
+    }
+
     @Override
     protected TabData getPermissionsTab() {
         return PERMISSIONS;

@@ -18,13 +18,14 @@ import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.Select;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableLike;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -58,7 +59,7 @@ public class AiChatAttachment extends TableImpl<AiChatAttachmentRecord> {
     /**
      * The column <code>stroom.ai_chat_attachment.id</code>.
      */
-    public final TableField<AiChatAttachmentRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<AiChatAttachmentRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).generatedByDefaultAsIdentity(), this, "");
 
     /**
      * The column <code>stroom.ai_chat_attachment.fk_ai_chat_id</code>.
@@ -110,6 +111,31 @@ public class AiChatAttachment extends TableImpl<AiChatAttachmentRecord> {
      */
     public final TableField<AiChatAttachmentRecord, String> ERROR_MESSAGE = createField(DSL.name("error_message"), SQLDataType.VARCHAR(1024), this, "");
 
+    /**
+     * The column <code>stroom.ai_chat_attachment.path</code>.
+     */
+    public final TableField<AiChatAttachmentRecord, String> PATH = createField(DSL.name("path"), SQLDataType.VARCHAR(512), this, "");
+
+    /**
+     * The column <code>stroom.ai_chat_attachment.size_bytes</code>.
+     */
+    public final TableField<AiChatAttachmentRecord, Long> SIZE_BYTES = createField(DSL.name("size_bytes"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>stroom.ai_chat_attachment.fk_source_message_id</code>.
+     */
+    public final TableField<AiChatAttachmentRecord, Integer> FK_SOURCE_MESSAGE_ID = createField(DSL.name("fk_source_message_id"), SQLDataType.INTEGER, this, "");
+
+    /**
+     * The column <code>stroom.ai_chat_attachment.source_doc_uuid</code>.
+     */
+    public final TableField<AiChatAttachmentRecord, String> SOURCE_DOC_UUID = createField(DSL.name("source_doc_uuid"), SQLDataType.VARCHAR(255), this, "");
+
+    /**
+     * The column <code>stroom.ai_chat_attachment.expire_time_ms</code>.
+     */
+    public final TableField<AiChatAttachmentRecord, Long> EXPIRE_TIME_MS = createField(DSL.name("expire_time_ms"), SQLDataType.BIGINT, this, "");
+
     private AiChatAttachment(Name alias, Table<AiChatAttachmentRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -146,7 +172,7 @@ public class AiChatAttachment extends TableImpl<AiChatAttachmentRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.AI_CHAT_ATTACHMENT_IDX_AI_CHAT_ATTACHMENT_CHAT_ID);
+        return Arrays.asList(Indexes.AI_CHAT_ATTACHMENT_IDX_AI_CHAT_ATTACHMENT_CHAT_ID, Indexes.AI_CHAT_ATTACHMENT_IDX_AI_CHAT_ATTACHMENT_EXPIRE_TIME);
     }
 
     @Override
@@ -208,7 +234,7 @@ public class AiChatAttachment extends TableImpl<AiChatAttachmentRecord> {
      */
     @Override
     public AiChatAttachment where(Condition condition) {
-        return new AiChatAttachment(getQualifiedName(), aliased() ? this : null, null, condition);
+        return new AiChatAttachment(getQualifiedName(), aliased() ? this : null, null, Internal.condition(this, condition));
     }
 
     /**
@@ -275,7 +301,7 @@ public class AiChatAttachment extends TableImpl<AiChatAttachmentRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public AiChatAttachment whereExists(Select<?> select) {
+    public AiChatAttachment whereExists(TableLike<?> select) {
         return where(DSL.exists(select));
     }
 
@@ -283,7 +309,7 @@ public class AiChatAttachment extends TableImpl<AiChatAttachmentRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public AiChatAttachment whereNotExists(Select<?> select) {
+    public AiChatAttachment whereNotExists(TableLike<?> select) {
         return where(DSL.notExists(select));
     }
 }

@@ -1,0 +1,50 @@
+{
+ "EventDetail/(Authenticate|Process)/Action": {
+  "field": "EventDetail/(Authenticate|Process)/Action",
+  "from": "\"Logon\" (login)\n\"Access\" (checkout)",
+  "values": [],
+  "schemas_say": {
+   "event-logging": "The authentication action that was performed, e.g. Logon, Logoff."
+  }
+ },
+ "EventDetail/(Authenticate|Process)/User/Id": {
+  "field": "EventDetail/(Authenticate|Process)/User/Id",
+  "from": "`user`",
+  "values": [],
+  "schemas_say": {
+   "event-logging": "An identifier for the user."
+  }
+ },
+ "EventDetail/View/Object/Id": {
+  "field": "EventDetail/View/Object/Id",
+  "from": "`id`",
+  "values": [],
+  "schemas_say": {
+   "event-logging": "An identifier for the object, e.g a document ID in a document management system."
+  }
+ },
+ "EventDetail/*/Data[@Name='Folder']/@Value": {
+  "field": "EventDetail/*/Data[@Name='Folder']/@Value",
+  "from": "`folder`",
+  "values": [],
+  "schemas_say": {
+   "event-logging": "The `Folder` value recorded in a Data element of the event's action element."
+  }
+ },
+ "EventDetail/(Authenticate|Process)/Data[@Name='Result']/@Value": {
+  "field": "EventDetail/(Authenticate|Process)/Data[@Name='Result']/@Value",
+  "from": "`result`",
+  "values": [],
+  "schemas_say": {
+   "event-logging": "The `Result` value recorded in a Data element of Authenticate."
+  }
+ },
+ "EventDetail/View/Data[@Name='Result']/@Value": {
+  "field": "EventDetail/View/Data[@Name='Result']/@Value",
+  "from": "`outcome`",
+  "values": [],
+  "schemas_say": {
+   "event-logging": "The `Result` value recorded in a Data element of View."
+  }
+ }
+}

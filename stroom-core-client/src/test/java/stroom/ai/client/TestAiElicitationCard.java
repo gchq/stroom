@@ -1,0 +1,160 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.client;
+
+import stroom.widget.util.client.HtmlBuilder;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestAiElicitationCard {
+
+    @Test
+    void theTitleIsTheQuestionsFirstLine() {
+        assertThat(AiElicitationCard.firstLine("""
+                **Records to translate as Unknown events**
+
+                An Unknown event says what happened isn't known.""", "A form"))
+                .isEqualTo("Records to translate as Unknown events");
+        assertThat(AiElicitationCard.firstLine("\n## Create the feed?\nIt will receive data.", "A form"))
+                .isEqualTo("Create the feed?");
+        assertThat(AiElicitationCard.firstLine("Which pipeline name?", "A form")).isEqualTo("Which pipeline name?");
+        // A link's text alone, as the title is plain text.
+        assertThat(AiElicitationCard.firstLine("Reprocess with '[Twitter-Events-V1.1](?action=open-doc&docType="
+                                               + "Pipeline&docUuid=p)'\n- streams: 1", "A form"))
+                .isEqualTo("Reprocess with 'Twitter-Events-V1.1'");
+    }
+
+    @Test
+    void aFieldThatAsksWhatTheCardsTitleAsksIsNotRepeated() {
+        final String title = AiElicitationCard.firstLine("""
+                **How should the new index's fields be named?**
+
+                Choose a convention.""", "A form");
+        assertThat(AiElicitationCard.isCardTitle("How should the new index's fields be named?", title)).isTrue();
+        assertThat(AiElicitationCard.isCardTitle("**How should the new index's fields be named?** ", title))
+                .isTrue();
+        assertThat(AiElicitationCard.isCardTitle("Which cluster?", title)).isFalse();
+        assertThat(AiElicitationCard.isCardTitle("Which cluster?", null)).isFalse();
+        assertThat(AiElicitationCard.isCardTitle(null, title)).isFalse();
+    }
+
+    @Test
+    void theMessageKeepsItsLineBreaksAsMarkdown() {
+        assertThat(AiElicitationCard.messageMarkdown("Line one\nLine two")).isEqualTo("Line one  \nLine two");
+        assertThat(AiElicitationCard.messageMarkdown("Line one\r\nLine two")).isEqualTo("Line one  \nLine two");
+        assertThat(AiElicitationCard.messageMarkdown(null)).isEmpty();
+        assertThat(AiElicitationCard.messageMarkdown("")).isEmpty();
+    }
+
+    @Test
+    void theMessagesListsCodeAndTablesAreLeftAsTheyAre() {
+        // As the Stroom MCP server writes a confirmation: a summary, then its details as a list.
+        final String confirmation = """
+                Use Elasticsearch index template 'ecs-acme-v2'
+
+                - index template: ecs-acme-v2
+                - applies to: ecs-acme-* (priority 200)
+                1. first
+                2) second
+                * starred
+                + plus""";
+        assertThat(AiElicitationCard.messageMarkdown(confirmation)).isEqualTo(confirmation);
+
+        final String code = """
+                The template:
+                ```json
+                {
+                  "index_patterns": ["ecs-acme-*"]
+                }
+                ```
+                ~~~
+                a
+                b
+                ~~~
+                | a | b |
+                | --- | --- |
+                | 1 | 2 |
+                > quoted
+                # Heading
+                Title
+                ---""";
+        assertThat(AiElicitationCard.messageMarkdown(code)).isEqualTo(code);
+    }
+
+    @Test
+    void aParagraphInsideAListKeepsItsBreaks() {
+        assertThat(AiElicitationCard.messageMarkdown("- notes: one\n  two\n- next"))
+                .isEqualTo("- notes: one  \n  two\n- next");
+        // Text straight after code keeps its break.
+        assertThat(AiElicitationCard.messageMarkdown("```\nx\n```\nAfter\nmore"))
+                .isEqualTo("```\nx\n```\nAfter  \nmore");
+    }
+
+    @Test
+    void withoutAQuestionTheFallbackIsUsed() {
+        assertThat(AiElicitationCard.firstLine(null, "A form from fastmcp")).isEqualTo("A form from fastmcp");
+        assertThat(AiElicitationCard.firstLine(" \n** **\n", "A form from fastmcp")).isEqualTo("A form from fastmcp");
+    }
+
+    @Test
+    void aFormWhoseEveryFieldSuggestsItsAnswersIsAskedAsQuestions() {
+        // Seen: classify_kinds' accept-or-amend question shown as a bare text box, with no button to accept.
+        final AiElicitationForm.Field suggested = AiElicitationForm.Field.text("answer", "Accept all 3, or type your "
+                                                                                         + "amendments", null, true);
+        final AiElicitationForm.Field plain = AiElicitationForm.Field.text("text", "Notes", null, false);
+        assertThat(AiElicitationCard.asQuestions(List.of(suggested))).isTrue();
+        assertThat(AiElicitationCard.asQuestions(List.of(suggested, suggested))).isTrue();
+        // A form with a plain field is a form of fields, as before; and no fields, no questions.
+        assertThat(AiElicitationCard.asQuestions(List.of(suggested, plain))).isFalse();
+        assertThat(AiElicitationCard.asQuestions(List.of(plain))).isFalse();
+        assertThat(AiElicitationCard.asQuestions(List.of())).isFalse();
+    }
+
+    @Test
+    void theRecommendedOptionsComeFirst() {
+        final List<String> values = List.of("3.x", "4.0.2", "4.1.0", "5.0");
+
+        assertThat(AiElicitationCard.recommendedFirst(values, List.of("4.1.0"))).containsExactly(2, 0, 1, 3);
+        // Several, as for a choice of several: in the order given.
+        assertThat(AiElicitationCard.recommendedFirst(values, List.of("5.0", "4.0.2"))).containsExactly(1, 3, 0, 2);
+        // None recommended, or one that isn't an option: as given.
+        assertThat(AiElicitationCard.recommendedFirst(values, List.of())).containsExactly(0, 1, 2, 3);
+        assertThat(AiElicitationCard.recommendedFirst(values, List.of("6"))).containsExactly(0, 1, 2, 3);
+    }
+
+    @Test
+    void aBoxForFreeTextGrowsWithItsLinesAndAFormattedOneStaysOneLine() {
+        // Asked for by the user: a free-text answer may run to several lines (Shift+Enter), starting one line high.
+        final HtmlBuilder fields = new HtmlBuilder();
+        AiElicitationCard.appendFields(fields, List.of(
+                AiElicitationForm.Field.text("text", "Corrections, if any", null, false),
+                AiElicitationForm.Field.text("when", "When", "date", false)));
+        final String html = fields.toSafeHtml().asString();
+        assertThat(html).contains("<textarea class=\"allow-focus ai-elicitation-input ai-textarea-grow\" rows=\"1\"")
+                .contains("<input class=\"allow-focus ai-elicitation-input\" type=\"text\"");
+
+        final HtmlBuilder questions = new HtmlBuilder();
+        AiElicitationCard.appendQuestions(questions, List.of(AiElicitationForm.Field.text("q1", "Which zone?", null,
+                true)));
+        assertThat(questions.toSafeHtml().asString())
+                .contains("ai-question-custom ai-textarea-grow\" rows=\"1\" placeholder=\"Type your answer\"");
+    }
+}

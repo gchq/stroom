@@ -18,7 +18,10 @@ package stroom.security.impl;
 
 import stroom.config.common.UriFactory;
 import stroom.security.mock.MockSecurityContext;
+import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.shared.AuthenticationBypassChecker;
+import stroom.util.shared.ResourcePaths;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,6 +36,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.URI;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
@@ -71,7 +75,7 @@ class TestSecurityFilter {
                 .thenReturn(new EdgeAuthenticationConfig(edgeEnabled, null));
         lenient().when(authenticationConfig.getCsrfConfig())
                 .thenReturn(new CsrfConfig(protectBrowserOriginated));
-        return new SecurityFilter(null, null, null, () -> uriFactory, () -> authenticationConfig);
+        return new SecurityFilter(null, null, null, () -> uriFactory, () -> authenticationConfig, () -> null);
     }
 
     private void setUpAllowedOrigins() {
@@ -406,7 +410,51 @@ class TestSecurityFilter {
         when(bypassChecker.isUnauthenticated(any(), any(), any())).thenReturn(true);
         final AuthenticationConfig authenticationConfig = mock(AuthenticationConfig.class);
         return new SecurityFilter(new MockSecurityContext(), null, bypassChecker, () -> uriFactory,
-                () -> authenticationConfig);
+                () -> authenticationConfig, () -> null);
+    }
+
+    @Test
+    void testAnUnauthenticatedMcpRequestIsToldWhereToSignIn() throws Exception {
+        final HttpServletResponse response = mock(HttpServletResponse.class);
+        when(uriFactory.publicUri(ResourcePaths.OAUTH_PROTECTED_RESOURCE_PATH))
+                .thenReturn(URI.create(PUBLIC_URI + ResourcePaths.OAUTH_PROTECTED_RESOURCE_PATH));
+
+        mcpFilter(IdpType.EXTERNAL_IDP).doFilter(mcpRequest(), response, mock(FilterChain.class));
+
+        // As MCP's sign-in discovery expects (RFC 9728).
+        verify(response).setHeader("WWW-Authenticate", "Bearer resource_metadata=\"" + PUBLIC_URI
+                                                       + "/.well-known/oauth-protected-resource\"");
+        verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    }
+
+    @Test
+    void testWithStroomsOwnIdentityProviderAnMcpClientIsNotToldToSignInThere() throws Exception {
+        // Stroom's own provider can't sign an outside client in: it sends an API key instead.
+        final HttpServletResponse response = mock(HttpServletResponse.class);
+
+        mcpFilter(IdpType.INTERNAL_IDP).doFilter(mcpRequest(), response, mock(FilterChain.class));
+
+        verify(response, never()).setHeader(org.mockito.ArgumentMatchers.eq("WWW-Authenticate"), any());
+        verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    }
+
+    private SecurityFilter mcpFilter(final IdpType idpType) {
+        final AuthenticationBypassChecker bypassChecker = mock(AuthenticationBypassChecker.class);
+        final OpenIdManager openIdManager = mock(OpenIdManager.class);
+        when(openIdManager.loginWithRequestCredential(any())).thenReturn(Optional.empty());
+        final OpenIdConfiguration openIdConfiguration = mock(OpenIdConfiguration.class);
+        when(openIdConfiguration.getIdentityProviderType()).thenReturn(idpType);
+        return new SecurityFilter(new MockSecurityContext(), openIdManager, bypassChecker, () -> uriFactory,
+                () -> mock(AuthenticationConfig.class), () -> openIdConfiguration);
+    }
+
+    private HttpServletRequest mcpRequest() {
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getServletPath()).thenReturn(ResourcePaths.MCP_PATH);
+        lenient().when(request.getRequestURI()).thenReturn(ResourcePaths.MCP_PATH);
+        lenient().when(request.getHttpServletMapping()).thenReturn(null);
+        lenient().when(request.getHeaderNames()).thenReturn(java.util.Collections.emptyEnumeration());
+        return request;
     }
 
     private void givenUnauthenticatedRequest(final String method) {

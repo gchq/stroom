@@ -16,6 +16,8 @@
 
 package stroom.ai.shared;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -56,6 +58,25 @@ public class AiChatAttachment {
     private final boolean truncated;
     @JsonProperty
     private final String errorMessage;
+    @JsonProperty
+    private final DocRef docRef;
+    @JsonProperty
+    private final String docPath;
+
+    /// An attachment that holds data of its own, e.g. a table, rather than referring to a document.
+    public AiChatAttachment(final Integer id,
+                            final Integer chatId,
+                            final Long createTimeMs,
+                            final Long updateTimeMs,
+                            final AiAttachmentStatus status,
+                            final AiAttachmentType attachmentType,
+                            final String description,
+                            final Integer rowCount,
+                            final Boolean truncated,
+                            final String errorMessage) {
+        this(id, chatId, createTimeMs, updateTimeMs, status, attachmentType, description, rowCount, truncated,
+                errorMessage, null, null);
+    }
 
     @JsonCreator
     public AiChatAttachment(@JsonProperty("id") final Integer id,
@@ -67,7 +88,9 @@ public class AiChatAttachment {
                             @JsonProperty("description") final String description,
                             @JsonProperty("rowCount") final Integer rowCount,
                             @JsonProperty("truncated") final Boolean truncated,
-                            @JsonProperty("errorMessage") final String errorMessage) {
+                            @JsonProperty("errorMessage") final String errorMessage,
+                            @JsonProperty("docRef") final DocRef docRef,
+                            @JsonProperty("docPath") final String docPath) {
         this.id = Objects.requireNonNullElse(id, 0);
         this.chatId = Objects.requireNonNullElse(chatId, 0);
         this.createTimeMs = Objects.requireNonNullElse(createTimeMs, 0L);
@@ -78,6 +101,8 @@ public class AiChatAttachment {
         this.rowCount = rowCount;
         this.truncated = Objects.requireNonNullElse(truncated, false);
         this.errorMessage = errorMessage;
+        this.docRef = docRef;
+        this.docPath = docPath;
     }
 
     public int getId() {
@@ -120,6 +145,17 @@ public class AiChatAttachment {
         return errorMessage;
     }
 
+    /// @return The document a [AiAttachmentType#DOCUMENT] attachment refers to, or null for any other kind.
+    public DocRef getDocRef() {
+        return docRef;
+    }
+
+    /// @return The Explorer path of the folder holding the document a [AiAttachmentType#DOCUMENT] attachment
+    /// refers to, as it was when attached, or null if not known.
+    public String getDocPath() {
+        return docPath;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {
@@ -135,13 +171,15 @@ public class AiChatAttachment {
                && attachmentType == that.attachmentType
                && Objects.equals(description, that.description)
                && Objects.equals(rowCount, that.rowCount)
-               && Objects.equals(errorMessage, that.errorMessage);
+               && Objects.equals(errorMessage, that.errorMessage)
+               && Objects.equals(docRef, that.docRef)
+               && Objects.equals(docPath, that.docPath);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(id, chatId, createTimeMs, updateTimeMs, status,
-                attachmentType, description, rowCount, truncated, errorMessage);
+                attachmentType, description, rowCount, truncated, errorMessage, docRef, docPath);
     }
 
     @Override
@@ -154,6 +192,7 @@ public class AiChatAttachment {
                ", description='" + description + '\'' +
                ", rowCount=" + rowCount +
                ", truncated=" + truncated +
+               ", docRef=" + docRef +
                '}';
     }
 }

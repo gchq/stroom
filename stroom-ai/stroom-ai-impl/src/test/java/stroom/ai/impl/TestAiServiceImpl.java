@@ -17,32 +17,74 @@
 package stroom.ai.impl;
 
 import stroom.cache.api.CacheManager;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.http.HttpClientConfig;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.SimpleDurationUtil;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.Mockito;
+import tools.jackson.databind.JsonNode;
 
 import java.time.Duration;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ExtendWith(MockitoExtension.class)
+/// What testing a model checks of its endpoint's answers: the model must be one the endpoint serves, and what is
+/// shown is that model's own entry, not the whole list.
 class TestAiServiceImpl {
 
-    @Mock
-    private CacheManager cacheManager;
+    private static final String LISTED = """
+            {"object": "list", "data": [
+              {"id": "gpt-4o", "object": "model", "created": 1715367049, "owned_by": "system"},
+              {"id": "qwen3:32b", "object": "model", "created": 1730000000, "owned_by": "library",
+               "context_length": 40960}
+            ]}""";
+
+    @Test
+    void aListedModelIsFoundAndOnlyItsEntryIsGiven() {
+        final Optional<JsonNode> entry = AiServiceImpl.modelEntry(LISTED, "qwen3:32b");
+
+        assertThat(entry).isPresent();
+        assertThat(entry.get().path("context_length").asInt()).isEqualTo(40960);
+        final String shown = JsonUtil.getMapper(true).writeValueAsString(entry.get());
+        assertThat(shown).as("the model's parameters, not every model")
+                .contains("\"owned_by\" : \"library\"")
+                .doesNotContain("gpt-4o");
+    }
+
+    @Test
+    void aModelTheEndpointDoesNotListIsNotFound() {
+        // The endpoint was reached, but chats with this model would all fail.
+        assertThat(AiServiceImpl.modelEntry(LISTED, "gpt-5")).isEmpty();
+        assertThat(AiServiceImpl.modelEntry(LISTED, "GPT-4O")).as("IDs are compared exactly").isEmpty();
+        assertThat(AiServiceImpl.modelIds(LISTED)).containsExactly("gpt-4o", "qwen3:32b");
+    }
+
+    @Test
+    void aBodyThatIsNotAModelListListsNothing() {
+        assertThat(AiServiceImpl.modelIds("<html>Not found</html>")).isEmpty();
+        assertThat(AiServiceImpl.modelIds("{\"error\": \"no\"}")).isEmpty();
+        assertThat(AiServiceImpl.modelIds("")).isEmpty();
+        assertThat(AiServiceImpl.modelIds(null)).isEmpty();
+        assertThat(AiServiceImpl.modelEntry("[1, 2]", "gpt-4o")).isEmpty();
+    }
+
+    @Test
+    void aModelFoundByItsIdIsDescribedByWhatTheEndpointSaid() {
+        assertThat(AiServiceImpl.modelDescription("{\"id\": \"router/any\", \"owned_by\": \"gateway\"}",
+                "router/any")).contains("\"owned_by\" : \"gateway\"");
+        assertThat(AiServiceImpl.modelDescription("OK", "router/any")).isEqualTo("Model 'router/any' was found.");
+    }
 
     @Test
     void testDefaultHttpClientConfigTimeouts() {
-        // Regression test for gh-6017. Now that the model document's timeouts are honoured, the
-        // default connection timeout must stay short so an unreachable model server is reported
-        // promptly, while the response timeout stays long enough for slow models.
+        // From upstream (gh-6017). Now that the model document's timeouts are honoured, the default connection
+        // timeout must stay short so an unreachable model server is reported promptly, while the response timeout
+        // stays long enough for slow models.
         final AiServiceImpl aiService = new AiServiceImpl(
-                null, null, null, null, null, null, null, cacheManager, null);
+                null, null, null, null, null, null, null, Mockito.mock(CacheManager.class), null);
 
         final HttpClientConfig config = aiService.getDefaultHttpClientConfig();
 
@@ -55,13 +97,13 @@ class TestAiServiceImpl {
     @Test
     void testDefaultHttpClientConfigIsReused() {
         final AiServiceImpl aiService = new AiServiceImpl(
-                null, null, null, null, null, null, null, cacheManager, null);
+                null, null, null, null, null, null, null, Mockito.mock(CacheManager.class), null);
 
         assertThat(aiService.getDefaultHttpClientConfig())
                 .isSameAs(aiService.getDefaultHttpClientConfig());
     }
 
-    private Duration toDuration(final SimpleDuration simpleDuration) {
+    private static Duration toDuration(final SimpleDuration simpleDuration) {
         return SimpleDurationUtil.convertToStroomDuration(simpleDuration).getDuration();
     }
 }

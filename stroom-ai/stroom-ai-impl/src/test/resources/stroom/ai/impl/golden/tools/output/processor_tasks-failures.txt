@@ -1,0 +1,47 @@
+Arguments: {"since":"2026-10-01T00:00:00Z","until":"2026-10-01T13:00:00Z"}
+
+=== Output ===
+Processing across the cluster (status changed from 2026-10-01T00:00:00.000Z, status changed before 2026-10-01T13:00:00.000Z).
+
+## Tasks whose status changed in the window
+9 task(s): 1 Queued, 1 Processing, 3 Complete, 4 Failed.
+
+By pipeline (most failures first):
+- Pipeline [Firewall pipeline](?action=open-doc&docType=Pipeline&docUuid=pipe-uuid): 7 task(s), 3 Failed (42.9%)
+- Pipeline [DNS pipeline](?action=open-doc&docType=Pipeline&docUuid=other-pipe-uuid): 2 task(s), 1 Failed (50.0%)
+
+By feed (most failures first):
+- FIREWALL-EVENTS: 7 task(s), 3 Failed (42.9%)
+- DNS-EVENTS: 2 task(s), 1 Failed (50.0%)
+
+By node:
+- node node1: 4 task(s), 3 Failed (75.0%), 75.0% of all the failed tasks
+- node node2: 3 task(s), 1 Failed (33.3%), 25.0% of all the failed tasks
+- no node yet: 1 task(s), 0 Failed (0.0%)
+- node node3: 1 task(s), 0 Failed (0.0%)
+Most of the failed tasks (75.0%) were on node node1: a strong sign the problem is with that node rather than the data, so look at its application log first.
+
+## Failed tasks
+4 failed task(s). Stroom doesn't record why a task failed; look in that node's application log (in your log system) around these times.
+- Pipeline [Firewall pipeline](?action=open-doc&docType=Pipeline&docUuid=pipe-uuid), feed FIREWALL-EVENTS, node node1: 3 failed, first 2026-10-01T09:00:00.000Z, last 2026-10-01T11:00:00.000Z. E.g. task 3 ([stream 102](?action=open-stream&id=102), started 2026-10-01T10:59:30.000Z, ended 2026-10-01T11:00:00.000Z; no Error stream (a Failed task's run threw, so it usually writes none; that doesn't mean nothing went wrong)); task 2 ([stream 101](?action=open-stream&id=101), started 2026-10-01T09:59:30.000Z, ended 2026-10-01T10:00:00.000Z; no Error stream (a Failed task's run threw, so it usually writes none; that doesn't mean nothing went wrong)); task 1 ([stream 100](?action=open-stream&id=100), started 2026-10-01T08:59:30.000Z, ended 2026-10-01T09:00:00.000Z; no Error stream (a Failed task's run threw, so it usually writes none; that doesn't mean nothing went wrong)).
+- Pipeline [DNS pipeline](?action=open-doc&docType=Pipeline&docUuid=other-pipe-uuid), feed DNS-EVENTS, node node2: 1 failed, first 2026-10-01T11:00:00.000Z, last 2026-10-01T11:00:00.000Z. E.g. task 4 ([stream 103](?action=open-stream&id=103), started 2026-10-01T10:59:30.000Z, ended 2026-10-01T11:00:00.000Z; no Error stream (a Failed task's run threw, so it usually writes none; that doesn't mean nothing went wrong)).
+
+## Possibly stuck tasks
+Tasks still Assigned or Processing whose status hasn't changed for over 1h (a node renews a running task's status time as it goes, so these are often on a node that has stopped, or lost the database): 1
+- node node3: 1 task(s), oldest status time 2026-10-01T09:00:00.000Z. E.g. task 9 ([stream 108](?action=open-stream&id=108), Pipeline [Firewall pipeline](?action=open-doc&docType=Pipeline&docUuid=pipe-uuid), Processing)
+
+## Errors inside processing that completed
+Most problems don't fail a task: the pipeline carries on and writes the errors to an Error stream, a child of the stream it was processing. Error streams created in the window: 4, by pipeline and feed (newest first; the counts are from the meta of the streams sampled):
+- Pipeline [DNS pipeline](?action=open-doc&docType=Pipeline&docUuid=other-pipe-uuid), feed DNS-EVENTS: 2 stream(s); of the 2 sampled: 0 fatal, 1 error(s), 0 warning(s); counts unavailable for 1 (their meta values have aged off; their content still holds the markers)
+- Pipeline [Firewall pipeline](?action=open-doc&docType=Pipeline&docUuid=pipe-uuid), feed FIREWALL-EVENTS: 2 stream(s); of the 2 sampled: 1 fatal, 3 error(s), 0 warning(s)
+
+Failure modes, from the markers in the Error streams read (most severe first, then the most often met):
+1. FATAL in element 'splitter': `Unexpected end of file` — 1 marker(s) in 1 stream(s); Pipeline [Firewall pipeline](?action=open-doc&docType=Pipeline&docUuid=pipe-uuid); feed(s) FIREWALL-EVENTS; node(s) node2; first 2026-10-01T11:00:00.000Z, last 2026-10-01T11:00:00.000Z
+   e.g. "Unexpected end of file" ([Error stream 901](?action=open-stream&id=901) at line 1, column 1)
+2. ERROR in element 'xsltFilter': `Value '<value>' is not a number` — 3 marker(s) in 2 stream(s); Pipeline [Firewall pipeline](?action=open-doc&docType=Pipeline&docUuid=pipe-uuid); feed(s) FIREWALL-EVENTS; node(s) node1, node2; first 2026-10-01T11:00:00.000Z, last 2026-10-01T11:00:00.000Z
+   e.g. "Value 'x y' is not a number" ([Error stream 901](?action=open-stream&id=901) at line 5, column 1)
+   e.g. "Value '12' is not a number" ([Error stream 900](?action=open-stream&id=900), in [stream 106](?action=open-stream&id=106) at line 2, column 14)
+3. WARN in element 'xslt': `Odd` — 1 marker(s) in 1 stream(s); Pipeline [DNS pipeline](?action=open-doc&docType=Pipeline&docUuid=other-pipe-uuid); feed(s) DNS-EVENTS; node(s) node2; first 2026-10-01T11:00:00.000Z, last 2026-10-01T11:00:00.000Z
+   e.g. "Odd" ([Error stream 902](?action=open-stream&id=902) at line 1, column 1)
+
+Coverage: read 3 of the 4 Error stream(s) found (a sample of up to 30, spread across the pipelines and feeds, newest first, up to 256.0 KB of each), and parsed 5 marker(s) into 3 mode(s). 1 stream(s) couldn't be read (they may have been deleted). The counts are of the markers read, not of all the errors. Each stream's own markers are in the data viewer: open its Error stream.

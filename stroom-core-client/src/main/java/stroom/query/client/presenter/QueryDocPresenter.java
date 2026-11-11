@@ -16,6 +16,8 @@
 
 package stroom.query.client.presenter;
 
+import stroom.ai.shared.AiTabSearch;
+import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
@@ -33,6 +35,7 @@ import stroom.widget.util.client.KeyBinding.Action;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.List;
 import java.util.Objects;
 import javax.inject.Provider;
 
@@ -122,6 +125,19 @@ public class QueryDocPresenter
 
     public void setSaveInterceptor(final Runnable saveInterceptor) {
         this.saveInterceptor = saveInterceptor;
+    }
+
+    /// Shares the query's StroomQL as in its editor, and the search requests behind its results, so a tool can take
+    /// a snapshot of them.
+    @Override
+    protected String addAiSnapshotParts(final QueryDoc edited,
+                                        final List<AiTabSnapshotPart> parts,
+                                        final List<AiTabSearch> searches) {
+        final QueryEditPresenter queryEditPresenter = queryDocEditPresenter.getQueryEditPresenter();
+        parts.add(new AiTabSnapshotPart(AiTabSnapshotPart.QUERY, "application/x-stroomql",
+                queryEditPresenter.getQuery()));
+        searches.add(queryEditPresenter.aiTabSearch(getDocRef().getName()));
+        return null;
     }
 
     @Override

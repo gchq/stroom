@@ -105,7 +105,7 @@ class TestElasticSuggestionsQueryHandlerImpl {
 
         final ElasticClusterDoc cluster = ElasticClusterDoc.builder()
                 .uuid(CLUSTER_REF.getUuid())
-                .connection(new ElasticConnectionConfig(List.of(ELASTIC.baseUrl()), null, null))
+                .connection(new ElasticConnectionConfig(List.of(ELASTIC.baseUrl()), null, null, null))
                 .build();
         when(elasticClusterStore.readDocument(CLUSTER_REF)).thenReturn(cluster);
         when(elasticClientCache.contextResult(eq(cluster.getConnection()), any()))

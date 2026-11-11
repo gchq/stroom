@@ -1,0 +1,19 @@
+Arguments: {"feeds":["WINDOWS-EVENTS"],"parts":true,"attributes":["RemoteHost"]}
+
+=== Output ===
+Found 3 stream(s). Wrote 4 row(s) to /outputs/stream_meta.csv; use the table tool on it to filter, group or sort. Attribute values: 0 from the database, 4 from the stream store (3 stream(s) read). The first rows:
+
+| Id | Feed | Type | Pipeline | Status | Create Time | Parent Id | Part | RemoteHost |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | WINDOWS-EVENTS | Raw Events |  | Unlocked | 2026-10-01T10:00:00.000Z |  | 1 | fw1 |
+| 1 | WINDOWS-EVENTS | Raw Events |  | Unlocked | 2026-10-01T10:00:00.000Z |  | 2 | fw2 |
+| 2 | WINDOWS-EVENTS | Raw Events |  | Unlocked | 2026-10-01T10:00:00.000Z |  | 1 | fw3 |
+| 3 | WINDOWS-EVENTS | Raw Events |  | Unlocked | 2026-10-02T11:00:00.000Z |  | 1 | fw1 |
+
+=== Workspace file /outputs/stream_meta.csv ===
+Id,Feed,Type,Pipeline,Status,Create Time,Parent Id,Part,RemoteHost
+1,WINDOWS-EVENTS,Raw Events,,Unlocked,2026-10-01T10:00:00.000Z,,1,fw1
+1,WINDOWS-EVENTS,Raw Events,,Unlocked,2026-10-01T10:00:00.000Z,,2,fw2
+2,WINDOWS-EVENTS,Raw Events,,Unlocked,2026-10-01T10:00:00.000Z,,1,fw3
+3,WINDOWS-EVENTS,Raw Events,,Unlocked,2026-10-02T11:00:00.000Z,,1,fw1
+

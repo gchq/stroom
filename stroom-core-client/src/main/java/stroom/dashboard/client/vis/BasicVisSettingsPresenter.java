@@ -25,6 +25,7 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.Column;
@@ -39,6 +40,7 @@ import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
@@ -58,22 +60,32 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     private final DocSelectionBoxPresenter visualisationPresenter;
     private final RestFactory restFactory;
     private final UserPreferencesManager userPreferencesManager;
+    private final Provider<EditorPresenter> editorPresenterProvider;
     private final Map<TabData, DynamicSettingsPane> dynamicSettingsMap = new HashMap<>();
     private SettingsPresenter settingsPresenter;
     private DocRef currentVisualisation;
     private JSONObject dynamicSettings;
     private List<String> fieldNames;
+    // Which load of the Visualisation's controls is the latest (an earlier one answering late is ignored), and
+    // whether the controls shown are its. Until they are, the controls shown are another Visualisation's (or none),
+    // with values from before, so writing them would put those back over the settings just read. Seen in testing:
+    // a chart replaced by the AI chat, whose Settings dialog had been opened before, was put back to the old chart's
+    // kind and field order when the dashboard was next written, so it couldn't draw.
+    private int loadCount;
+    private boolean loaded = true;
 
     @Inject
     public BasicVisSettingsPresenter(final EventBus eventBus,
                                      final BasicVisSettingsView view,
                                      final DocSelectionBoxPresenter visualisationPresenter,
                                      final RestFactory restFactory,
-                                     final UserPreferencesManager userPreferencesManager) {
+                                     final UserPreferencesManager userPreferencesManager,
+                                     final Provider<EditorPresenter> editorPresenterProvider) {
         super(eventBus, view);
         this.visualisationPresenter = visualisationPresenter;
         this.restFactory = restFactory;
         this.userPreferencesManager = userPreferencesManager;
+        this.editorPresenterProvider = editorPresenterProvider;
         view.setUiHandlers(this);
 
         visualisationPresenter.setIncludedTypes(VisualisationDoc.TYPE);
@@ -124,17 +136,24 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
 
     private void loadVisualisation(final DocRef docRef, final JSONObject dynamicSettings) {
         currentVisualisation = docRef;
+        final int load = ++loadCount;
+        loaded = docRef == null;
         if (docRef != null) {
             restFactory
                     .create(VISUALISATION_RESOURCE)
                     .method(res -> res.fetch(docRef.getUuid()))
                     .onSuccess(result -> {
+                        if (load != loadCount) {
+                            // A later load is under way.
+                            return;
+                        }
                         String jsonString = "";
                         if (result != null && result.getSettings() != null) {
                             jsonString = result.getSettings();
                         }
                         final JSONObject settings = JSONUtil.getObject(JSONUtil.parse(jsonString));
                         readSettings(settings, dynamicSettings);
+                        loaded = true;
                     })
                     .taskMonitorFactory(this)
                     .exec();
@@ -162,7 +181,8 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
             final String name = JSONUtil.getString(tab.get("name"));
             final JSONArray controls = JSONUtil.getArray(tab.get("controls"));
             if (controls != null) {
-                final DynamicSettingsPane dynamicSettingsPane = new DynamicSettingsPane(userPreferencesManager.isUtc());
+                final DynamicSettingsPane dynamicSettingsPane = new DynamicSettingsPane(userPreferencesManager.isUtc(),
+                        editorPresenterProvider::get);
                 final TabData t = settingsPresenter.addTab(name, dynamicSettingsPane);
                 dynamicSettingsMap.put(t, dynamicSettingsPane);
 
@@ -215,6 +235,10 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     }
 
     private VisComponentSettings writeSettings(final VisComponentSettings settings) {
+        if (!loaded) {
+            // The controls shown aren't yet those of the settings last read: they are left as they are.
+            return settings;
+        }
         return settings
                 .copy()
                 .tableId(getTableId())

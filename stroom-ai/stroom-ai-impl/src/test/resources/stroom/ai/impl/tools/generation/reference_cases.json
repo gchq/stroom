@@ -1,0 +1,2113 @@
+[
+ {
+  "source": "test tests/test_multi.py::test_reference_data_and_indexing_xslts_can_leave_records_out",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "USERS",
+     "key": "user",
+     "values": [
+      {
+       "field": "name"
+      }
+     ]
+    }
+   ],
+   "drop_when": [
+    {
+     "when": [
+      {
+       "field": "status",
+       "equals": "disabled"
+      }
+     ],
+     "reason": "disabled accounts"
+    }
+   ]
+  },
+  "compact": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "USERS",
+     "key": "user",
+     "values": [
+      {
+       "field": "name"
+      }
+     ]
+    }
+   ],
+   "drop_when": [
+    {
+     "when": [
+      {
+       "field": "status",
+       "equals": "disabled"
+      }
+     ],
+     "reason": "disabled accounts"
+    }
+   ]
+  },
+  "all": {
+   "input": "data_splitter",
+   "json_layout": "array",
+   "root": null,
+   "record": null,
+   "maps": [
+    {
+     "name": "USERS",
+     "key": "user",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "",
+       "field": "name",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    }
+   ],
+   "imports": [],
+   "drop_when": [
+    {
+     "when": [
+      {
+       "field": "status",
+       "xpath": null,
+       "equals": "disabled",
+       "one_of": null,
+       "matches": null,
+       "present": null,
+       "in_dictionary": null,
+       "scope": null
+      }
+     ],
+     "reason": "disabled accounts"
+    }
+   ]
+  },
+  "results": {
+   "2.0.1": {
+    "ok": true,
+    "problems": [],
+    "xslt": "<?xml version='1.0' encoding='UTF-8'?>\n<xsl:stylesheet xmlns=\"reference-data:2\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" version=\"3.0\" xpath-default-namespace=\"records:2\" exclude-result-prefixes=\"stroom\">\n  <xsl:template match=\"records\">\n    <referenceData version=\"2.0.1\" xsi:schemaLocation=\"reference-data:2 file://reference-data-v2.0.1.xsd\">\n      <xsl:apply-templates select=\"record\"/>\n    </referenceData>\n  </xsl:template>\n  <xsl:template match=\"*\">\n    <!-- left out: disabled accounts -->\n    <xsl:if test=\"not((data[@name='status']/@value = 'disabled'))\">\n      <xsl:if test=\"normalize-space(data[@name='user']/@value)\">\n        <reference>\n          <map>USERS</map>\n          <key>\n            <xsl:value-of select=\"data[@name='user']/@value\"/>\n          </key>\n          <value>\n            <xsl:value-of select=\"data[@name='name']/@value\"/>\n          </value>\n        </reference>\n      </xsl:if>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+    "maps": [
+     "USERS"
+    ]
+   }
+  }
+ },
+ {
+  "source": "test tests/test_required_imports.py::test_cef_and_reference_xslts_write_their_imports_first",
+  "input": {
+   "input": "json",
+   "maps": [
+    {
+     "name": "HOSTS",
+     "key": "host",
+     "values": [
+      {
+       "field": "ip"
+      }
+     ]
+    }
+   ],
+   "imports": [
+    "Ref-Common-V1"
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "maps": [
+    {
+     "name": "HOSTS",
+     "key": "host",
+     "values": [
+      {
+       "field": "ip"
+      }
+     ]
+    }
+   ],
+   "imports": [
+    "Ref-Common-V1"
+   ]
+  },
+  "all": {
+   "input": "json",
+   "json_layout": "array",
+   "root": null,
+   "record": null,
+   "maps": [
+    {
+     "name": "HOSTS",
+     "key": "host",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "",
+       "field": "ip",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    }
+   ],
+   "imports": [
+    "Ref-Common-V1"
+   ],
+   "drop_when": []
+  },
+  "results": {
+   "2.0.1": {
+    "ok": true,
+    "problems": [],
+    "xslt": "<?xml version='1.0' encoding='UTF-8'?>\n<xsl:stylesheet xmlns=\"reference-data:2\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" version=\"3.0\" xpath-default-namespace=\"http://www.w3.org/2013/XSL/json\" exclude-result-prefixes=\"stroom\">\n  <xsl:import href=\"Ref-Common-V1\"/>\n  <xsl:template match=\"/\">\n    <referenceData version=\"2.0.1\" xsi:schemaLocation=\"reference-data:2 file://reference-data-v2.0.1.xsd\">\n      <xsl:apply-templates select=\"/array/map | /map/array/map\"/>\n    </referenceData>\n  </xsl:template>\n  <xsl:template match=\"*\">\n    <xsl:if test=\"normalize-space(*[@key='host'])\">\n      <reference>\n        <map>HOSTS</map>\n        <key>\n          <xsl:value-of select=\"*[@key='host']\"/>\n        </key>\n        <value>\n          <xsl:value-of select=\"*[@key='ip']\"/>\n        </value>\n      </reference>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+    "maps": [
+     "HOSTS"
+    ]
+   }
+  }
+ },
+ {
+  "source": "test tests/test_sources.py::test_reference_xslt_writes_maps_and_is_read_back_by_find_reference_data",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "USER_TO_ORG",
+     "key": "user",
+     "values": [
+      {
+       "element": "org",
+       "field": "org"
+      },
+      {
+       "element": "name",
+       "field": "name"
+      }
+     ]
+    },
+    {
+     "name": "USER_TO_NAME",
+     "key_xpath": "lower-case(data[@name='user']/@value)",
+     "values": [
+      {
+       "field": "name"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "USER_TO_ORG",
+     "key": "user",
+     "values": [
+      {
+       "element": "org",
+       "field": "org"
+      },
+      {
+       "element": "name",
+       "field": "name"
+      }
+     ]
+    },
+    {
+     "name": "USER_TO_NAME",
+     "key_xpath": "lower-case(data[@name='user']/@value)",
+     "values": [
+      {
+       "field": "name"
+      }
+     ]
+    }
+   ]
+  },
+  "all": {
+   "input": "data_splitter",
+   "json_layout": "array",
+   "root": null,
+   "record": null,
+   "maps": [
+    {
+     "name": "USER_TO_ORG",
+     "key": "user",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "org",
+       "field": "org",
+       "value": null,
+       "xpath": null
+      },
+      {
+       "element": "name",
+       "field": "name",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    },
+    {
+     "name": "USER_TO_NAME",
+     "key": null,
+     "key_xpath": "lower-case(data[@name='user']/@value)",
+     "values": [
+      {
+       "element": "",
+       "field": "name",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    }
+   ],
+   "imports": [],
+   "drop_when": []
+  },
+  "results": {
+   "2.0.1": {
+    "ok": true,
+    "problems": [],
+    "xslt": "<?xml version='1.0' encoding='UTF-8'?>\n<xsl:stylesheet xmlns=\"reference-data:2\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" version=\"3.0\" xpath-default-namespace=\"records:2\" exclude-result-prefixes=\"stroom\">\n  <xsl:template match=\"records\">\n    <referenceData version=\"2.0.1\" xsi:schemaLocation=\"reference-data:2 file://reference-data-v2.0.1.xsd\">\n      <xsl:apply-templates select=\"record\"/>\n    </referenceData>\n  </xsl:template>\n  <xsl:template match=\"*\">\n    <xsl:if test=\"normalize-space(data[@name='user']/@value)\">\n      <reference>\n        <map>USER_TO_ORG</map>\n        <key>\n          <xsl:value-of select=\"data[@name='user']/@value\"/>\n        </key>\n        <value>\n          <xsl:element name=\"details\" namespace=\"\">\n            <xsl:element name=\"org\" namespace=\"\">\n              <xsl:value-of select=\"data[@name='org']/@value\"/>\n            </xsl:element>\n            <xsl:element name=\"name\" namespace=\"\">\n              <xsl:value-of select=\"data[@name='name']/@value\"/>\n            </xsl:element>\n          </xsl:element>\n        </value>\n      </reference>\n    </xsl:if>\n    <xsl:if test=\"normalize-space(lower-case(data[@name='user']/@value))\">\n      <reference>\n        <map>USER_TO_NAME</map>\n        <key>\n          <xsl:value-of select=\"lower-case(data[@name='user']/@value)\"/>\n        </key>\n        <value>\n          <xsl:value-of select=\"data[@name='name']/@value\"/>\n        </value>\n      </reference>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+    "maps": [
+     "USER_TO_ORG",
+     "USER_TO_NAME"
+    ]
+   }
+  }
+ },
+ {
+  "source": "test tests/test_sources.py::test_reference_xslt_writes_maps_and_is_read_back_by_find_reference_data",
+  "input": {
+   "input": "json",
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    },
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    },
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   ]
+  },
+  "all": {
+   "input": "json",
+   "json_layout": "array",
+   "root": null,
+   "record": null,
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "",
+       "field": "v",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    },
+    {
+     "name": "A",
+     "key": "k",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "",
+       "field": "v",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    }
+   ],
+   "imports": [],
+   "drop_when": []
+  },
+  "results": {
+   "2.0.1": {
+    "ok": false,
+    "problems": [
+     "map 'A' is defined twice"
+    ],
+    "xslt": null,
+    "maps": [
+     "A"
+    ]
+   }
+  }
+ },
+ {
+  "source": "case 15_csv_lookup_reference_data",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "USER_DIRECTORY",
+     "key": "user",
+     "values": [
+      {
+       "element": "name",
+       "field": "name"
+      },
+      {
+       "element": "department",
+       "field": "department"
+      },
+      {
+       "element": "site",
+       "field": "site"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "USER_DIRECTORY",
+     "key": "user",
+     "values": [
+      {
+       "element": "name",
+       "field": "name"
+      },
+      {
+       "element": "department",
+       "field": "department"
+      },
+      {
+       "element": "site",
+       "field": "site"
+      }
+     ]
+    }
+   ]
+  },
+  "all": {
+   "input": "data_splitter",
+   "json_layout": "array",
+   "root": null,
+   "record": null,
+   "maps": [
+    {
+     "name": "USER_DIRECTORY",
+     "key": "user",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "name",
+       "field": "name",
+       "value": null,
+       "xpath": null
+      },
+      {
+       "element": "department",
+       "field": "department",
+       "value": null,
+       "xpath": null
+      },
+      {
+       "element": "site",
+       "field": "site",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    }
+   ],
+   "imports": [],
+   "drop_when": []
+  },
+  "results": {
+   "2.0.1": {
+    "ok": true,
+    "problems": [],
+    "xslt": "<?xml version='1.0' encoding='UTF-8'?>\n<xsl:stylesheet xmlns=\"reference-data:2\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" version=\"3.0\" xpath-default-namespace=\"records:2\" exclude-result-prefixes=\"stroom\">\n  <xsl:template match=\"records\">\n    <referenceData version=\"2.0.1\" xsi:schemaLocation=\"reference-data:2 file://reference-data-v2.0.1.xsd\">\n      <xsl:apply-templates select=\"record\"/>\n    </referenceData>\n  </xsl:template>\n  <xsl:template match=\"*\">\n    <xsl:if test=\"normalize-space(data[@name='user']/@value)\">\n      <reference>\n        <map>USER_DIRECTORY</map>\n        <key>\n          <xsl:value-of select=\"data[@name='user']/@value\"/>\n        </key>\n        <value>\n          <xsl:element name=\"details\" namespace=\"\">\n            <xsl:element name=\"name\" namespace=\"\">\n              <xsl:value-of select=\"data[@name='name']/@value\"/>\n            </xsl:element>\n            <xsl:element name=\"department\" namespace=\"\">\n              <xsl:value-of select=\"data[@name='department']/@value\"/>\n            </xsl:element>\n            <xsl:element name=\"site\" namespace=\"\">\n              <xsl:value-of select=\"data[@name='site']/@value\"/>\n            </xsl:element>\n          </xsl:element>\n        </value>\n      </reference>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+    "maps": [
+     "USER_DIRECTORY"
+    ]
+   }
+  }
+ },
+ {
+  "source": "e2e_stream_types",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "USER_DIRECTORY",
+     "key": "user",
+     "values": [
+      {
+       "element": "name",
+       "field": "name"
+      },
+      {
+       "element": "department",
+       "field": "department"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "USER_DIRECTORY",
+     "key": "user",
+     "values": [
+      {
+       "element": "name",
+       "field": "name"
+      },
+      {
+       "element": "department",
+       "field": "department"
+      }
+     ]
+    }
+   ]
+  },
+  "all": {
+   "input": "data_splitter",
+   "json_layout": "array",
+   "root": null,
+   "record": null,
+   "maps": [
+    {
+     "name": "USER_DIRECTORY",
+     "key": "user",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "name",
+       "field": "name",
+       "value": null,
+       "xpath": null
+      },
+      {
+       "element": "department",
+       "field": "department",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    }
+   ],
+   "imports": [],
+   "drop_when": []
+  },
+  "results": {
+   "2.0.1": {
+    "ok": true,
+    "problems": [],
+    "xslt": "<?xml version='1.0' encoding='UTF-8'?>\n<xsl:stylesheet xmlns=\"reference-data:2\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" version=\"3.0\" xpath-default-namespace=\"records:2\" exclude-result-prefixes=\"stroom\">\n  <xsl:template match=\"records\">\n    <referenceData version=\"2.0.1\" xsi:schemaLocation=\"reference-data:2 file://reference-data-v2.0.1.xsd\">\n      <xsl:apply-templates select=\"record\"/>\n    </referenceData>\n  </xsl:template>\n  <xsl:template match=\"*\">\n    <xsl:if test=\"normalize-space(data[@name='user']/@value)\">\n      <reference>\n        <map>USER_DIRECTORY</map>\n        <key>\n          <xsl:value-of select=\"data[@name='user']/@value\"/>\n        </key>\n        <value>\n          <xsl:element name=\"details\" namespace=\"\">\n            <xsl:element name=\"name\" namespace=\"\">\n              <xsl:value-of select=\"data[@name='name']/@value\"/>\n            </xsl:element>\n            <xsl:element name=\"department\" namespace=\"\">\n              <xsl:value-of select=\"data[@name='department']/@value\"/>\n            </xsl:element>\n          </xsl:element>\n        </value>\n      </reference>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+    "maps": [
+     "USER_DIRECTORY"
+    ]
+   }
+  }
+ },
+ {
+  "source": "more 0",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "USERS",
+     "key": "user",
+     "values": [
+      {
+       "field": "name"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "USERS",
+     "key": "user",
+     "values": [
+      {
+       "field": "name"
+      }
+     ]
+    }
+   ]
+  },
+  "all": {
+   "input": "data_splitter",
+   "json_layout": "array",
+   "root": null,
+   "record": null,
+   "maps": [
+    {
+     "name": "USERS",
+     "key": "user",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "",
+       "field": "name",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    }
+   ],
+   "imports": [],
+   "drop_when": []
+  },
+  "results": {
+   "2.0.1": {
+    "ok": true,
+    "problems": [],
+    "xslt": "<?xml version='1.0' encoding='UTF-8'?>\n<xsl:stylesheet xmlns=\"reference-data:2\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" version=\"3.0\" xpath-default-namespace=\"records:2\" exclude-result-prefixes=\"stroom\">\n  <xsl:template match=\"records\">\n    <referenceData version=\"2.0.1\" xsi:schemaLocation=\"reference-data:2 file://reference-data-v2.0.1.xsd\">\n      <xsl:apply-templates select=\"record\"/>\n    </referenceData>\n  </xsl:template>\n  <xsl:template match=\"*\">\n    <xsl:if test=\"normalize-space(data[@name='user']/@value)\">\n      <reference>\n        <map>USERS</map>\n        <key>\n          <xsl:value-of select=\"data[@name='user']/@value\"/>\n        </key>\n        <value>\n          <xsl:value-of select=\"data[@name='name']/@value\"/>\n        </value>\n      </reference>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+    "maps": [
+     "USERS"
+    ]
+   },
+   "2.0.0": {
+    "ok": true,
+    "problems": [],
+    "xslt": "<?xml version='1.0' encoding='UTF-8'?>\n<xsl:stylesheet xmlns=\"reference-data:2\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" version=\"3.0\" xpath-default-namespace=\"records:2\" exclude-result-prefixes=\"stroom\">\n  <xsl:template match=\"records\">\n    <referenceData version=\"2.0.0\" xsi:schemaLocation=\"reference-data:2 file://reference-data-v2.0.0.xsd\">\n      <xsl:apply-templates select=\"record\"/>\n    </referenceData>\n  </xsl:template>\n  <xsl:template match=\"*\">\n    <xsl:if test=\"normalize-space(data[@name='user']/@value)\">\n      <reference>\n        <map>USERS</map>\n        <key>\n          <xsl:value-of select=\"data[@name='user']/@value\"/>\n        </key>\n        <value>\n          <xsl:value-of select=\"data[@name='name']/@value\"/>\n        </value>\n      </reference>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+    "maps": [
+     "USERS"
+    ]
+   }
+  }
+ },
+ {
+  "source": "more 1",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "USERS",
+     "key": "org/user",
+     "values": [
+      {
+       "element": "dept",
+       "field": "org/dept"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "USERS",
+     "key": "org/user",
+     "values": [
+      {
+       "element": "dept",
+       "field": "org/dept"
+      }
+     ]
+    }
+   ]
+  },
+  "all": {
+   "input": "data_splitter",
+   "json_layout": "array",
+   "root": null,
+   "record": null,
+   "maps": [
+    {
+     "name": "USERS",
+     "key": "org/user",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "dept",
+       "field": "org/dept",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    }
+   ],
+   "imports": [],
+   "drop_when": []
+  },
+  "results": {
+   "2.0.1": {
+    "ok": true,
+    "problems": [],
+    "xslt": "<?xml version='1.0' encoding='UTF-8'?>\n<xsl:stylesheet xmlns=\"reference-data:2\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" version=\"3.0\" xpath-default-namespace=\"records:2\" exclude-result-prefixes=\"stroom\">\n  <xsl:template match=\"records\">\n    <referenceData version=\"2.0.1\" xsi:schemaLocation=\"reference-data:2 file://reference-data-v2.0.1.xsd\">\n      <xsl:apply-templates select=\"record\"/>\n    </referenceData>\n  </xsl:template>\n  <xsl:template match=\"*\">\n    <xsl:if test=\"normalize-space(data[@name='org']/data[@name='user']/@value)\">\n      <reference>\n        <map>USERS</map>\n        <key>\n          <xsl:value-of select=\"data[@name='org']/data[@name='user']/@value\"/>\n        </key>\n        <value>\n          <xsl:element name=\"dept\" namespace=\"\">\n            <xsl:value-of select=\"data[@name='org']/data[@name='dept']/@value\"/>\n          </xsl:element>\n        </value>\n      </reference>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+    "maps": [
+     "USERS"
+    ]
+   }
+  }
+ },
+ {
+  "source": "more 2",
+  "input": {
+   "input": "json",
+   "maps": [
+    {
+     "name": "HOSTS",
+     "key": "host.name",
+     "values": [
+      {
+       "element": "ip",
+       "field": "net.ip"
+      },
+      {
+       "element": "site",
+       "value": "HQ"
+      },
+      {
+       "xpath": "upper-case(*[@key='os'])"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "maps": [
+    {
+     "name": "HOSTS",
+     "key": "host.name",
+     "values": [
+      {
+       "element": "ip",
+       "field": "net.ip"
+      },
+      {
+       "element": "site",
+       "value": "HQ"
+      },
+      {
+       "xpath": "upper-case(*[@key='os'])"
+      }
+     ]
+    }
+   ]
+  },
+  "all": {
+   "input": "json",
+   "json_layout": "array",
+   "root": null,
+   "record": null,
+   "maps": [
+    {
+     "name": "HOSTS",
+     "key": "host.name",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "ip",
+       "field": "net.ip",
+       "value": null,
+       "xpath": null
+      },
+      {
+       "element": "site",
+       "field": null,
+       "value": "HQ",
+       "xpath": null
+      },
+      {
+       "element": "",
+       "field": null,
+       "value": null,
+       "xpath": "upper-case(*[@key='os'])"
+      }
+     ]
+    }
+   ],
+   "imports": [],
+   "drop_when": []
+  },
+  "results": {
+   "2.0.1": {
+    "ok": true,
+    "problems": [],
+    "xslt": "<?xml version='1.0' encoding='UTF-8'?>\n<xsl:stylesheet xmlns=\"reference-data:2\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" version=\"3.0\" xpath-default-namespace=\"http://www.w3.org/2013/XSL/json\" exclude-result-prefixes=\"stroom\">\n  <xsl:template match=\"/\">\n    <referenceData version=\"2.0.1\" xsi:schemaLocation=\"reference-data:2 file://reference-data-v2.0.1.xsd\">\n      <xsl:apply-templates select=\"/array/map | /map/array/map\"/>\n    </referenceData>\n  </xsl:template>\n  <xsl:template match=\"*\">\n    <xsl:if test=\"normalize-space(*[@key='host']/*[@key='name'])\">\n      <reference>\n        <map>HOSTS</map>\n        <key>\n          <xsl:value-of select=\"*[@key='host']/*[@key='name']\"/>\n        </key>\n        <value>\n          <xsl:element name=\"details\" namespace=\"\">\n            <xsl:element name=\"ip\" namespace=\"\">\n              <xsl:value-of select=\"*[@key='net']/*[@key='ip']\"/>\n            </xsl:element>\n            <xsl:element name=\"site\" namespace=\"\">HQ</xsl:element>\n            <xsl:value-of select=\"upper-case(*[@key='os'])\"/>\n          </xsl:element>\n        </value>\n      </reference>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+    "maps": [
+     "HOSTS"
+    ]
+   }
+  }
+ },
+ {
+  "source": "more 3",
+  "input": {
+   "input": "json",
+   "json_layout": "lines",
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "value": "it's <x> & y"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "json_layout": "lines",
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "value": "it's <x> & y"
+      }
+     ]
+    }
+   ]
+  },
+  "all": {
+   "input": "json",
+   "json_layout": "lines",
+   "root": null,
+   "record": null,
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "",
+       "field": null,
+       "value": "it's <x> & y",
+       "xpath": null
+      }
+     ]
+    }
+   ],
+   "imports": [],
+   "drop_when": []
+  },
+  "results": {
+   "2.0.1": {
+    "ok": true,
+    "problems": [],
+    "xslt": "<?xml version='1.0' encoding='UTF-8'?>\n<xsl:stylesheet xmlns=\"reference-data:2\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" version=\"3.0\" xpath-default-namespace=\"http://www.w3.org/2013/XSL/json\" exclude-result-prefixes=\"stroom\">\n  <xsl:template match=\"/\">\n    <referenceData version=\"2.0.1\" xsi:schemaLocation=\"reference-data:2 file://reference-data-v2.0.1.xsd\">\n      <xsl:apply-templates select=\"/map/map\"/>\n    </referenceData>\n  </xsl:template>\n  <xsl:template match=\"*\">\n    <xsl:if test=\"normalize-space(*[@key='k'])\">\n      <reference>\n        <map>A</map>\n        <key>\n          <xsl:value-of select=\"*[@key='k']\"/>\n        </key>\n        <value>it's &lt;x&gt; &amp; y</value>\n      </reference>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+    "maps": [
+     "A"
+    ]
+   }
+  }
+ },
+ {
+  "source": "more 4",
+  "input": {
+   "input": "json",
+   "root": "/map",
+   "record": "map/array/map",
+   "maps": [
+    {
+     "name": "A",
+     "key_xpath": "*[@key='k']",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "root": "/map",
+   "record": "map/array/map",
+   "maps": [
+    {
+     "name": "A",
+     "key_xpath": "*[@key='k']",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   ]
+  },
+  "all": {
+   "input": "json",
+   "json_layout": "array",
+   "root": "/map",
+   "record": "map/array/map",
+   "maps": [
+    {
+     "name": "A",
+     "key": null,
+     "key_xpath": "*[@key='k']",
+     "values": [
+      {
+       "element": "",
+       "field": "v",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    }
+   ],
+   "imports": [],
+   "drop_when": []
+  },
+  "results": {
+   "2.0.1": {
+    "ok": true,
+    "problems": [],
+    "xslt": "<?xml version='1.0' encoding='UTF-8'?>\n<xsl:stylesheet xmlns=\"reference-data:2\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" version=\"3.0\" xpath-default-namespace=\"http://www.w3.org/2013/XSL/json\" exclude-result-prefixes=\"stroom\">\n  <xsl:template match=\"/map\">\n    <referenceData version=\"2.0.1\" xsi:schemaLocation=\"reference-data:2 file://reference-data-v2.0.1.xsd\">\n      <xsl:apply-templates select=\"map/array/map\"/>\n    </referenceData>\n  </xsl:template>\n  <xsl:template match=\"*\">\n    <xsl:if test=\"normalize-space(*[@key='k'])\">\n      <reference>\n        <map>A</map>\n        <key>\n          <xsl:value-of select=\"*[@key='k']\"/>\n        </key>\n        <value>\n          <xsl:value-of select=\"*[@key='v']\"/>\n        </value>\n      </reference>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+    "maps": [
+     "A"
+    ]
+   }
+  }
+ },
+ {
+  "source": "more 5",
+  "input": {
+   "input": "data_splitter",
+   "imports": [
+    "Ref-Common-V1",
+    "Ref-Common-V1",
+    "Other"
+   ],
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   ],
+   "imports": [
+    "Ref-Common-V1",
+    "Ref-Common-V1",
+    "Other"
+   ]
+  },
+  "all": {
+   "input": "data_splitter",
+   "json_layout": "array",
+   "root": null,
+   "record": null,
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "",
+       "field": "v",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    }
+   ],
+   "imports": [
+    "Ref-Common-V1",
+    "Ref-Common-V1",
+    "Other"
+   ],
+   "drop_when": []
+  },
+  "results": {
+   "2.0.1": {
+    "ok": true,
+    "problems": [],
+    "xslt": "<?xml version='1.0' encoding='UTF-8'?>\n<xsl:stylesheet xmlns=\"reference-data:2\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" version=\"3.0\" xpath-default-namespace=\"records:2\" exclude-result-prefixes=\"stroom\">\n  <xsl:import href=\"Ref-Common-V1\"/>\n  <xsl:import href=\"Other\"/>\n  <xsl:template match=\"records\">\n    <referenceData version=\"2.0.1\" xsi:schemaLocation=\"reference-data:2 file://reference-data-v2.0.1.xsd\">\n      <xsl:apply-templates select=\"record\"/>\n    </referenceData>\n  </xsl:template>\n  <xsl:template match=\"*\">\n    <xsl:if test=\"normalize-space(data[@name='k']/@value)\">\n      <reference>\n        <map>A</map>\n        <key>\n          <xsl:value-of select=\"data[@name='k']/@value\"/>\n        </key>\n        <value>\n          <xsl:value-of select=\"data[@name='v']/@value\"/>\n        </value>\n      </reference>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+    "maps": [
+     "A"
+    ]
+   }
+  }
+ },
+ {
+  "source": "more 6",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   ],
+   "drop_when": [
+    {
+     "when": [
+      {
+       "field": "status",
+       "one_of": [
+        "disabled",
+        "it's"
+       ]
+      },
+      {
+       "field": "x",
+       "present": true
+      }
+     ],
+     "reason": "disabled"
+    },
+    {
+     "when": [
+      {
+       "xpath": "data[@name=\"y\"]/@value",
+       "matches": "^t.*"
+      }
+     ],
+     "reason": "tests"
+    },
+    {
+     "when": [
+      {
+       "field": "z",
+       "present": false
+      }
+     ],
+     "reason": "no z"
+    }
+   ]
+  },
+  "compact": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   ],
+   "drop_when": [
+    {
+     "when": [
+      {
+       "field": "status",
+       "one_of": [
+        "disabled",
+        "it's"
+       ]
+      },
+      {
+       "field": "x",
+       "present": true
+      }
+     ],
+     "reason": "disabled"
+    },
+    {
+     "when": [
+      {
+       "xpath": "data[@name=\"y\"]/@value",
+       "matches": "^t.*"
+      }
+     ],
+     "reason": "tests"
+    },
+    {
+     "when": [
+      {
+       "field": "z",
+       "present": false
+      }
+     ],
+     "reason": "no z"
+    }
+   ]
+  },
+  "all": {
+   "input": "data_splitter",
+   "json_layout": "array",
+   "root": null,
+   "record": null,
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "",
+       "field": "v",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    }
+   ],
+   "imports": [],
+   "drop_when": [
+    {
+     "when": [
+      {
+       "field": "status",
+       "xpath": null,
+       "equals": null,
+       "one_of": [
+        "disabled",
+        "it's"
+       ],
+       "matches": null,
+       "present": null,
+       "in_dictionary": null,
+       "scope": null
+      },
+      {
+       "field": "x",
+       "xpath": null,
+       "equals": null,
+       "one_of": null,
+       "matches": null,
+       "present": true,
+       "in_dictionary": null,
+       "scope": null
+      }
+     ],
+     "reason": "disabled"
+    },
+    {
+     "when": [
+      {
+       "field": null,
+       "xpath": "data[@name=\"y\"]/@value",
+       "equals": null,
+       "one_of": null,
+       "matches": "^t.*",
+       "present": null,
+       "in_dictionary": null,
+       "scope": null
+      }
+     ],
+     "reason": "tests"
+    },
+    {
+     "when": [
+      {
+       "field": "z",
+       "xpath": null,
+       "equals": null,
+       "one_of": null,
+       "matches": null,
+       "present": false,
+       "in_dictionary": null,
+       "scope": null
+      }
+     ],
+     "reason": "no z"
+    }
+   ]
+  },
+  "results": {
+   "2.0.1": {
+    "ok": true,
+    "problems": [],
+    "xslt": "<?xml version='1.0' encoding='UTF-8'?>\n<xsl:stylesheet xmlns=\"reference-data:2\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" version=\"3.0\" xpath-default-namespace=\"records:2\" exclude-result-prefixes=\"stroom\">\n  <xsl:template match=\"records\">\n    <referenceData version=\"2.0.1\" xsi:schemaLocation=\"reference-data:2 file://reference-data-v2.0.1.xsd\">\n      <xsl:apply-templates select=\"record\"/>\n    </referenceData>\n  </xsl:template>\n  <xsl:template match=\"*\">\n    <!-- left out: disabled; tests; no z -->\n    <xsl:if test=\"not((data[@name='status']/@value = ('disabled', 'it''s') and exists(data[@name='x']/@value[normalize-space(.)])) or (exists(data[@name=&quot;y&quot;]/@value[matches(., '^t.*')])) or (not(exists(data[@name='z']/@value[normalize-space(.)]))))\">\n      <xsl:if test=\"normalize-space(data[@name='k']/@value)\">\n        <reference>\n          <map>A</map>\n          <key>\n            <xsl:value-of select=\"data[@name='k']/@value\"/>\n          </key>\n          <value>\n            <xsl:value-of select=\"data[@name='v']/@value\"/>\n          </value>\n        </reference>\n      </xsl:if>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+    "maps": [
+     "A"
+    ]
+   }
+  }
+ },
+ {
+  "source": "more 7",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   ],
+   "drop_when": [
+    {
+     "when": [
+      {
+       "field": "status",
+       "in_dictionary": "Disabled"
+      },
+      {
+       "field": "b",
+       "in_dictionary": "X"
+      }
+     ],
+     "reason": "listed"
+    }
+   ]
+  },
+  "compact": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   ],
+   "drop_when": [
+    {
+     "when": [
+      {
+       "field": "status",
+       "in_dictionary": "Disabled"
+      },
+      {
+       "field": "b",
+       "in_dictionary": "X"
+      }
+     ],
+     "reason": "listed"
+    }
+   ]
+  },
+  "all": {
+   "input": "data_splitter",
+   "json_layout": "array",
+   "root": null,
+   "record": null,
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "",
+       "field": "v",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    }
+   ],
+   "imports": [],
+   "drop_when": [
+    {
+     "when": [
+      {
+       "field": "status",
+       "xpath": null,
+       "equals": null,
+       "one_of": null,
+       "matches": null,
+       "present": null,
+       "in_dictionary": "Disabled",
+       "scope": null
+      },
+      {
+       "field": "b",
+       "xpath": null,
+       "equals": null,
+       "one_of": null,
+       "matches": null,
+       "present": null,
+       "in_dictionary": "X",
+       "scope": null
+      }
+     ],
+     "reason": "listed"
+    }
+   ]
+  },
+  "results": {
+   "2.0.1": {
+    "ok": false,
+    "problems": [
+     "drop_when: a reference mapping's conditions take equals, one_of, matches or present, not in_dictionary",
+     "drop_when: a reference mapping's conditions take equals, one_of, matches or present, not in_dictionary"
+    ],
+    "xslt": null,
+    "maps": [
+     "A"
+    ]
+   }
+  }
+ },
+ {
+  "source": "more 8",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "B",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    },
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    },
+    {
+     "name": "B",
+     "key": "j",
+     "values": [
+      {
+       "field": "w"
+      }
+     ]
+    },
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "B",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    },
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    },
+    {
+     "name": "B",
+     "key": "j",
+     "values": [
+      {
+       "field": "w"
+      }
+     ]
+    },
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   ]
+  },
+  "all": {
+   "input": "data_splitter",
+   "json_layout": "array",
+   "root": null,
+   "record": null,
+   "maps": [
+    {
+     "name": "B",
+     "key": "k",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "",
+       "field": "v",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    },
+    {
+     "name": "A",
+     "key": "k",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "",
+       "field": "v",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    },
+    {
+     "name": "B",
+     "key": "j",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "",
+       "field": "w",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    },
+    {
+     "name": "A",
+     "key": "k",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "",
+       "field": "v",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    }
+   ],
+   "imports": [],
+   "drop_when": []
+  },
+  "results": {
+   "2.0.1": {
+    "ok": false,
+    "problems": [
+     "map 'B' is defined twice",
+     "map 'A' is defined twice"
+    ],
+    "xslt": null,
+    "maps": [
+     "A",
+     "B"
+    ]
+   }
+  }
+ },
+ {
+  "source": "more 9",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "M1",
+     "key": "a",
+     "values": [
+      {
+       "element": "one",
+       "field": "x"
+      }
+     ]
+    },
+    {
+     "name": "M2",
+     "key": "a",
+     "values": [
+      {
+       "field": "x"
+      },
+      {
+       "element": "two",
+       "field": "y"
+      }
+     ]
+    },
+    {
+     "name": "M3",
+     "key": "a",
+     "values": [
+      {
+       "element": "p",
+       "field": "x"
+      },
+      {
+       "element": "q",
+       "field": "y"
+      },
+      {
+       "field": "z"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "M1",
+     "key": "a",
+     "values": [
+      {
+       "element": "one",
+       "field": "x"
+      }
+     ]
+    },
+    {
+     "name": "M2",
+     "key": "a",
+     "values": [
+      {
+       "field": "x"
+      },
+      {
+       "element": "two",
+       "field": "y"
+      }
+     ]
+    },
+    {
+     "name": "M3",
+     "key": "a",
+     "values": [
+      {
+       "element": "p",
+       "field": "x"
+      },
+      {
+       "element": "q",
+       "field": "y"
+      },
+      {
+       "field": "z"
+      }
+     ]
+    }
+   ]
+  },
+  "all": {
+   "input": "data_splitter",
+   "json_layout": "array",
+   "root": null,
+   "record": null,
+   "maps": [
+    {
+     "name": "M1",
+     "key": "a",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "one",
+       "field": "x",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    },
+    {
+     "name": "M2",
+     "key": "a",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "",
+       "field": "x",
+       "value": null,
+       "xpath": null
+      },
+      {
+       "element": "two",
+       "field": "y",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    },
+    {
+     "name": "M3",
+     "key": "a",
+     "key_xpath": null,
+     "values": [
+      {
+       "element": "p",
+       "field": "x",
+       "value": null,
+       "xpath": null
+      },
+      {
+       "element": "q",
+       "field": "y",
+       "value": null,
+       "xpath": null
+      },
+      {
+       "element": "",
+       "field": "z",
+       "value": null,
+       "xpath": null
+      }
+     ]
+    }
+   ],
+   "imports": [],
+   "drop_when": []
+  },
+  "results": {
+   "2.0.1": {
+    "ok": true,
+    "problems": [],
+    "xslt": "<?xml version='1.0' encoding='UTF-8'?>\n<xsl:stylesheet xmlns=\"reference-data:2\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" version=\"3.0\" xpath-default-namespace=\"records:2\" exclude-result-prefixes=\"stroom\">\n  <xsl:template match=\"records\">\n    <referenceData version=\"2.0.1\" xsi:schemaLocation=\"reference-data:2 file://reference-data-v2.0.1.xsd\">\n      <xsl:apply-templates select=\"record\"/>\n    </referenceData>\n  </xsl:template>\n  <xsl:template match=\"*\">\n    <xsl:if test=\"normalize-space(data[@name='a']/@value)\">\n      <reference>\n        <map>M1</map>\n        <key>\n          <xsl:value-of select=\"data[@name='a']/@value\"/>\n        </key>\n        <value>\n          <xsl:element name=\"one\" namespace=\"\">\n            <xsl:value-of select=\"data[@name='x']/@value\"/>\n          </xsl:element>\n        </value>\n      </reference>\n    </xsl:if>\n    <xsl:if test=\"normalize-space(data[@name='a']/@value)\">\n      <reference>\n        <map>M2</map>\n        <key>\n          <xsl:value-of select=\"data[@name='a']/@value\"/>\n        </key>\n        <value>\n          <xsl:value-of select=\"data[@name='x']/@value\"/>\n          <xsl:element name=\"two\" namespace=\"\">\n            <xsl:value-of select=\"data[@name='y']/@value\"/>\n          </xsl:element>\n        </value>\n      </reference>\n    </xsl:if>\n    <xsl:if test=\"normalize-space(data[@name='a']/@value)\">\n      <reference>\n        <map>M3</map>\n        <key>\n          <xsl:value-of select=\"data[@name='a']/@value\"/>\n        </key>\n        <value>\n          <xsl:element name=\"details\" namespace=\"\">\n            <xsl:element name=\"p\" namespace=\"\">\n              <xsl:value-of select=\"data[@name='x']/@value\"/>\n            </xsl:element>\n            <xsl:element name=\"q\" namespace=\"\">\n              <xsl:value-of select=\"data[@name='y']/@value\"/>\n            </xsl:element>\n            <xsl:value-of select=\"data[@name='z']/@value\"/>\n          </xsl:element>\n        </value>\n      </reference>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+    "maps": [
+     "M1",
+     "M2",
+     "M3"
+    ]
+   }
+  }
+ },
+ {
+  "source": "more 10",
+  "input": {},
+  "errors": [
+   {
+    "loc": [
+     "input"
+    ],
+    "type": "missing",
+    "msg": "Field required",
+    "input": {}
+   },
+   {
+    "loc": [
+     "maps"
+    ],
+    "type": "missing",
+    "msg": "Field required",
+    "input": {}
+   }
+  ]
+ },
+ {
+  "source": "more 11",
+  "input": [
+   1
+  ],
+  "errors": [
+   {
+    "loc": [],
+    "type": "model_type",
+    "msg": "Input should be a valid dictionary or instance of ReferenceMapping",
+    "input": [
+     1
+    ]
+   }
+  ]
+ },
+ {
+  "source": "more 12",
+  "input": {
+   "input": "csv",
+   "maps": []
+  },
+  "errors": [
+   {
+    "loc": [
+     "input"
+    ],
+    "type": "literal_error",
+    "msg": "Input should be 'data_splitter' or 'json'",
+    "input": "csv"
+   },
+   {
+    "loc": [
+     "maps"
+    ],
+    "type": "too_short",
+    "msg": "List should have at least 1 item after validation, not 0",
+    "input": []
+   }
+  ]
+ },
+ {
+  "source": "more 13",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "A",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "maps",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, map 'A': give exactly one of key or key_xpath",
+    "input": {
+     "name": "A",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "source": "more 14",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "key_xpath": "x",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "maps",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, map 'A': give exactly one of key or key_xpath",
+    "input": {
+     "name": "A",
+     "key": "k",
+     "key_xpath": "x",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "source": "more 15",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      },
+      {
+       "value": "w"
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "maps",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, map 'A': at most one text value; name the others as elements",
+    "input": {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      },
+      {
+       "value": "w"
+      }
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "source": "more 16",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v",
+       "value": "w"
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "maps",
+     0,
+     "values",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, value 'text': give exactly one of field, value or xpath",
+    "input": {
+     "field": "v",
+     "value": "w"
+    }
+   }
+  ]
+ },
+ {
+  "source": "more 17",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "element": "e"
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "maps",
+     0,
+     "values",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, value 'e': give exactly one of field, value or xpath",
+    "input": {
+     "element": "e"
+    }
+   }
+  ]
+ },
+ {
+  "source": "more 18",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "values": []
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "maps",
+     0,
+     "values"
+    ],
+    "type": "too_short",
+    "msg": "List should have at least 1 item after validation, not 0",
+    "input": []
+   }
+  ]
+ },
+ {
+  "source": "more 19",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "key": "k",
+     "values": [
+      {
+       "field": 1
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "maps",
+     0,
+     "name"
+    ],
+    "type": "missing",
+    "msg": "Field required",
+    "input": {
+     "key": "k",
+     "values": [
+      {
+       "field": 1
+      }
+     ]
+    }
+   },
+   {
+    "loc": [
+     "maps",
+     0,
+     "values",
+     0,
+     "field"
+    ],
+    "type": "string_type",
+    "msg": "Input should be a valid string",
+    "input": 1
+   }
+  ]
+ },
+ {
+  "source": "more 20",
+  "input": {
+   "input": "data_splitter",
+   "json_layout": "tree",
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   ],
+   "imports": "x"
+  },
+  "errors": [
+   {
+    "loc": [
+     "json_layout"
+    ],
+    "type": "literal_error",
+    "msg": "Input should be 'array' or 'lines'",
+    "input": "tree"
+   },
+   {
+    "loc": [
+     "imports"
+    ],
+    "type": "list_type",
+    "msg": "Input should be a valid list",
+    "input": "x"
+   }
+  ]
+ },
+ {
+  "source": "more 21",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   ],
+   "drop_when": [
+    {
+     "when": [],
+     "reason": "r"
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "drop_when",
+     0,
+     "when"
+    ],
+    "type": "too_short",
+    "msg": "List should have at least 1 item after validation, not 0",
+    "input": []
+   }
+  ]
+ },
+ {
+  "source": "more 22",
+  "input": {
+   "input": "data_splitter",
+   "maps": [
+    {
+     "name": "A",
+     "key": "k",
+     "values": [
+      {
+       "field": "v"
+      }
+     ]
+    }
+   ],
+   "drop_when": [
+    {
+     "when": [
+      {
+       "field": "a"
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "drop_when",
+     0,
+     "when",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, A condition needs exactly one of equals, one_of, matches, present or in_dictionary",
+    "input": {
+     "field": "a"
+    }
+   },
+   {
+    "loc": [
+     "drop_when",
+     0,
+     "reason"
+    ],
+    "type": "missing",
+    "msg": "Field required",
+    "input": {
+     "when": [
+      {
+       "field": "a"
+      }
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "source": "more 23",
+  "input": {
+   "input": "data_splitter",
+   "maps": "x"
+  },
+  "errors": [
+   {
+    "loc": [
+     "maps"
+    ],
+    "type": "list_type",
+    "msg": "Input should be a valid list",
+    "input": "x"
+   }
+  ]
+ }
+]

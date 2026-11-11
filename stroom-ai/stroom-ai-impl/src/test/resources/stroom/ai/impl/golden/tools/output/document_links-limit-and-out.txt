@@ -1,0 +1,13 @@
+Arguments: {"uuids":["feed"],"depth":3,"limit":1,"out":"/outputs/links.txt"}
+
+=== Output ===
+Followed the dependants of Feed 'WINDOWS-EVENTS', up to 3 link(s): 3 document(s) found. Wrote them all to /outputs/links.txt.
+
+- Processor filter (filter) of pipeline 'Windows pipeline' (pipeline): 1 link(s) away, via Feed 'WINDOWS-EVENTS' → used by Processor filter. It selects streams where Feed is 'WINDOWS-EVENTS' and Type is 'Raw Events'; enabled.
+(2 more not shown; give a larger limit, types, or out.)
+
+=== Workspace file /outputs/links.txt ===
+- Processor filter (filter) of pipeline 'Windows pipeline' (pipeline): 1 link(s) away, via Feed 'WINDOWS-EVENTS' → used by Processor filter. It selects streams where Feed is 'WINDOWS-EVENTS' and Type is 'Raw Events'; enabled.
+- Pipeline 'Windows pipeline' (pipeline) in /Windows/Pipelines: 2 link(s) away, via Feed 'WINDOWS-EVENTS' → used by Processor filter → runs Pipeline 'Windows pipeline'
+- XSLT 'Windows XSLT' (xslt) in /Lookups: 3 link(s) away, via Feed 'WINDOWS-EVENTS' → used by Processor filter → runs Pipeline 'Windows pipeline' → uses XSLT 'Windows XSLT'
+

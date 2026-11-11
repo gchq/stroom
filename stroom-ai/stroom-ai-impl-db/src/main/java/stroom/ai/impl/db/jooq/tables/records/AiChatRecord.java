@@ -130,6 +130,174 @@ public class AiChatRecord extends UpdatableRecordImpl<AiChatRecord> {
         return (String) get(7);
     }
 
+    /**
+     * Setter for <code>stroom.ai_chat.model_doc_uuid</code>.
+     */
+    public void setModelDocUuid(String value) {
+        set(8, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat.model_doc_uuid</code>.
+     */
+    public String getModelDocUuid() {
+        return (String) get(8);
+    }
+
+    /**
+     * Setter for <code>stroom.ai_chat.context_window_tokens</code>.
+     */
+    public void setContextWindowTokens(Integer value) {
+        set(9, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat.context_window_tokens</code>.
+     */
+    public Integer getContextWindowTokens() {
+        return (Integer) get(9);
+    }
+
+    /**
+     * Setter for <code>stroom.ai_chat.last_input_tokens</code>.
+     */
+    public void setLastInputTokens(Integer value) {
+        set(10, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat.last_input_tokens</code>.
+     */
+    public Integer getLastInputTokens() {
+        return (Integer) get(10);
+    }
+
+    /**
+     * Setter for <code>stroom.ai_chat.total_input_tokens</code>.
+     */
+    public void setTotalInputTokens(Long value) {
+        set(11, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat.total_input_tokens</code>.
+     */
+    public Long getTotalInputTokens() {
+        return (Long) get(11);
+    }
+
+    /**
+     * Setter for <code>stroom.ai_chat.total_output_tokens</code>.
+     */
+    public void setTotalOutputTokens(Long value) {
+        set(12, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat.total_output_tokens</code>.
+     */
+    public Long getTotalOutputTokens() {
+        return (Long) get(12);
+    }
+
+    /**
+     * Setter for <code>stroom.ai_chat.last_opened_ms</code>.
+     */
+    public void setLastOpenedMs(Long value) {
+        set(13, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat.last_opened_ms</code>.
+     */
+    public Long getLastOpenedMs() {
+        return (Long) get(13);
+    }
+
+    /**
+     * Setter for <code>stroom.ai_chat.last_read_message_id</code>.
+     */
+    public void setLastReadMessageId(Integer value) {
+        set(14, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat.last_read_message_id</code>.
+     */
+    public Integer getLastReadMessageId() {
+        return (Integer) get(14);
+    }
+
+    /**
+     * Setter for <code>stroom.ai_chat.last_poll_ms</code>.
+     */
+    public void setLastPollMs(Long value) {
+        set(15, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat.last_poll_ms</code>.
+     */
+    public Long getLastPollMs() {
+        return (Long) get(15);
+    }
+
+    /**
+     * Setter for <code>stroom.ai_chat.auto_approve</code>.
+     */
+    public void setAutoApprove(Boolean value) {
+        set(16, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat.auto_approve</code>.
+     */
+    public Boolean getAutoApprove() {
+        return (Boolean) get(16);
+    }
+
+    /**
+     * Setter for <code>stroom.ai_chat.agent_mode</code>.
+     */
+    public void setAgentMode(Byte value) {
+        set(17, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat.agent_mode</code>.
+     */
+    public Byte getAgentMode() {
+        return (Byte) get(17);
+    }
+
+    /**
+     * Setter for <code>stroom.ai_chat.title_set_by_user</code>.
+     */
+    public void setTitleSetByUser(Byte value) {
+        set(18, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat.title_set_by_user</code>.
+     */
+    public Byte getTitleSetByUser() {
+        return (Byte) get(18);
+    }
+
+    /**
+     * Setter for <code>stroom.ai_chat.mcp_session_id</code>.
+     */
+    public void setMcpSessionId(String value) {
+        set(19, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat.mcp_session_id</code>.
+     */
+    public String getMcpSessionId() {
+        return (String) get(19);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -153,7 +321,7 @@ public class AiChatRecord extends UpdatableRecordImpl<AiChatRecord> {
     /**
      * Create a detached, initialised AiChatRecord
      */
-    public AiChatRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String userUuid, String title) {
+    public AiChatRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String userUuid, String title, String modelDocUuid, Integer contextWindowTokens, Integer lastInputTokens, Long totalInputTokens, Long totalOutputTokens, Long lastOpenedMs, Integer lastReadMessageId, Long lastPollMs, Boolean autoApprove, Byte agentMode, Byte titleSetByUser, String mcpSessionId) {
         super(AiChat.AI_CHAT);
 
         setId(id);
@@ -164,6 +332,18 @@ public class AiChatRecord extends UpdatableRecordImpl<AiChatRecord> {
         setUpdateUser(updateUser);
         setUserUuid(userUuid);
         setTitle(title);
+        setModelDocUuid(modelDocUuid);
+        setContextWindowTokens(contextWindowTokens);
+        setLastInputTokens(lastInputTokens);
+        setTotalInputTokens(totalInputTokens);
+        setTotalOutputTokens(totalOutputTokens);
+        setLastOpenedMs(lastOpenedMs);
+        setLastReadMessageId(lastReadMessageId);
+        setLastPollMs(lastPollMs);
+        setAutoApprove(autoApprove);
+        setAgentMode(agentMode);
+        setTitleSetByUser(titleSetByUser);
+        setMcpSessionId(mcpSessionId);
         resetTouchedOnNotNull();
     }
 }

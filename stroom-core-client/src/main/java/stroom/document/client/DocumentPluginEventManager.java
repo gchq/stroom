@@ -16,6 +16,8 @@
 
 package stroom.document.client;
 
+import stroom.ai.client.AiDocumentReferences;
+import stroom.ai.shared.DocumentReferenceContext;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmCallback;
 import stroom.alert.client.event.ConfirmEvent;
@@ -26,6 +28,7 @@ import stroom.core.client.HasSaveRegistry;
 import stroom.core.client.TabPlugin;
 import stroom.core.client.UrlParameters;
 import stroom.core.client.presenter.Plugin;
+import stroom.data.client.event.AskStroomAiEvent;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
@@ -1377,6 +1380,10 @@ public class DocumentPluginEventManager extends Plugin {
         }
 
         menuItems.add(createInfoMenuItem(singleReadableItem, 20, isInfoEnabled, explorerListener));
+        final DocumentReferenceContext attachable = AiDocumentReferences.context(readableItems);
+        if (attachable != null) {
+            menuItems.add(createAttachToChatMenuItem(attachable, 20));
+        }
         menuItems.add(createEditOrAddTagsMenuItem(updatableItems, 21, allowUpdate));
         if (updatableItems.size() > 1) {
             menuItems.add(createRemoveTagsMenuItem(updatableItems, 22, isRemoveTagsEnabled));
@@ -1633,6 +1640,19 @@ public class DocumentPluginEventManager extends Plugin {
                 .text("Info")
                 .enabled(enabled && explorerNode != null)
                 .command(command)
+                .build();
+    }
+
+    /// @param attachable The documents to attach.
+    /// @param priority   Where the item goes in the menu.
+    /// @return The item that attaches the selected documents to the chat, as references the chat's agent can read
+    /// with its document tools.
+    private MenuItem createAttachToChatMenuItem(final DocumentReferenceContext attachable, final int priority) {
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.AI)
+                .text("Attach to Chat")
+                .command(() -> AskStroomAiEvent.fire(DocumentPluginEventManager.this, attachable))
                 .build();
     }
 

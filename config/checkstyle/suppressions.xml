@@ -16,6 +16,7 @@
     <suppress files="[\\/]stroom[\\/].*[\\/]MetaDaoImpl.java" checks="FileLength"/>
     <suppress files="[\\/]stroom[\\/].*[\\/]AnnotationDaoImpl.java" checks="FileLength"/>
     <suppress files="[\\/]stroom[\\/].*[\\/](Test)?NullSafe.java" checks="FileLength"/>
+    <suppress files="[\\/]stroom[\\/].*[\\/]AskStroomAIService.java" checks="FileLength"/>
 
     <!-- Long file and lines -->
     <suppress files="[\\/]stroom[\\/].*[\\/]TestExpressionParser.java" checks="FileLength|LineLength"/>

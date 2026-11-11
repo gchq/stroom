@@ -1,0 +1,77 @@
+=== Stub given to the model ===
+The result was too large to show in full (10780 characters, 400 lines), so it has been saved to the workspace file /outputs/turn-3/call-42.txt. It starts with these 30 line(s):
+
+row 0: host fw0, user u0
+row 1: host fw1, user u1
+row 2: host fw2, user u2
+row 3: host fw3, user u3
+row 4: host fw4, user u4
+row 5: host fw5, user u5
+row 6: host fw6, user u6
+row 7: host fw0, user u7
+row 8: host fw1, user u8
+row 9: host fw2, user u9
+row 10: host fw3, user u10
+row 11: host fw4, user u11
+row 12: host fw5, user u12
+row 13: host fw6, user u0
+row 14: host fw0, user u1
+row 15: host fw1, user u2
+row 16: host fw2, user u3
+row 17: host fw3, user u4
+row 18: host fw4, user u5
+row 19: host fw5, user u6
+row 20: host fw6, user u7
+row 21: host fw0, user u8
+row 22: host fw1, user u9
+row 23: host fw2, user u10
+row 24: host fw3, user u11
+row 25: host fw4, user u12
+row 26: host fw5, user u0
+row 27: host fw6, user u1
+row 28: host fw0, user u2
+row 29: host fw1, user u3
+
+If you need more of it, read it from the workspace file with the workspace tools, if you have them.
+
+=== Saved to /outputs/turn-3/call-42.txt (10780 characters, 400 lines; the first 40) ===
+row 0: host fw0, user u0
+row 1: host fw1, user u1
+row 2: host fw2, user u2
+row 3: host fw3, user u3
+row 4: host fw4, user u4
+row 5: host fw5, user u5
+row 6: host fw6, user u6
+row 7: host fw0, user u7
+row 8: host fw1, user u8
+row 9: host fw2, user u9
+row 10: host fw3, user u10
+row 11: host fw4, user u11
+row 12: host fw5, user u12
+row 13: host fw6, user u0
+row 14: host fw0, user u1
+row 15: host fw1, user u2
+row 16: host fw2, user u3
+row 17: host fw3, user u4
+row 18: host fw4, user u5
+row 19: host fw5, user u6
+row 20: host fw6, user u7
+row 21: host fw0, user u8
+row 22: host fw1, user u9
+row 23: host fw2, user u10
+row 24: host fw3, user u11
+row 25: host fw4, user u12
+row 26: host fw5, user u0
+row 27: host fw6, user u1
+row 28: host fw0, user u2
+row 29: host fw1, user u3
+row 30: host fw2, user u4
+row 31: host fw3, user u5
+row 32: host fw4, user u6
+row 33: host fw5, user u7
+row 34: host fw6, user u8
+row 35: host fw0, user u9
+row 36: host fw1, user u10
+row 37: host fw2, user u11
+row 38: host fw3, user u12
+row 39: host fw4, user u0

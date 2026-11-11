@@ -37,6 +37,7 @@ import java.util.Objects;
 @JsonPropertyOrder({
         "connectionUrls",
         "apiKeyName",
+        "compressRequests",
         "httpClientConfiguration"})
 @JsonInclude(Include.NON_NULL)
 public class ElasticConnectionConfig implements Serializable {
@@ -48,6 +49,10 @@ public class ElasticConnectionConfig implements Serializable {
     @JsonProperty
     private String apiKeyName;
 
+    // Whether to gzip request bodies. Null, as in documents saved before this existed, means false.
+    @JsonProperty
+    private Boolean compressRequests;
+
     // HTTP client settings, including TLS (key/trust store credential names) and proxy configuration
     @JsonProperty
     private HttpClientConfig httpClientConfiguration;
@@ -58,10 +63,12 @@ public class ElasticConnectionConfig implements Serializable {
     @JsonCreator
     public ElasticConnectionConfig(@JsonProperty("connectionUrls") final List<String> connectionUrls,
                                    @JsonProperty("apiKeyName") final String apiKeyName,
+                                   @JsonProperty("compressRequests") final Boolean compressRequests,
                                    @JsonProperty("httpClientConfiguration")
                                    final HttpClientConfig httpClientConfiguration) {
         this.connectionUrls = connectionUrls;
         this.apiKeyName = apiKeyName;
+        this.compressRequests = compressRequests;
         this.httpClientConfiguration = httpClientConfiguration;
     }
 
@@ -85,6 +92,18 @@ public class ElasticConnectionConfig implements Serializable {
         this.apiKeyName = apiKeyName;
     }
 
+    /// @return `true` if the body of each request to the cluster is compressed with gzip, and compressed
+    /// responses are accepted. `null` means `false`.
+    public Boolean getCompressRequests() {
+        return compressRequests;
+    }
+
+    /// @param compressRequests `true` to compress the body of each request to the cluster with gzip, and
+    ///                         accept compressed responses. `null` means `false`.
+    public void setCompressRequests(final Boolean compressRequests) {
+        this.compressRequests = compressRequests;
+    }
+
     /// @return The HTTP client settings to connect with, or `null` to use the defaults.
     public HttpClientConfig getHttpClientConfiguration() {
         return httpClientConfiguration;
@@ -105,12 +124,13 @@ public class ElasticConnectionConfig implements Serializable {
         }
         return Objects.equals(connectionUrls, that.connectionUrls) &&
                Objects.equals(apiKeyName, that.apiKeyName) &&
+               Objects.equals(compressRequests, that.compressRequests) &&
                Objects.equals(httpClientConfiguration, that.httpClientConfiguration);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(connectionUrls, apiKeyName, httpClientConfiguration);
+        return Objects.hash(connectionUrls, apiKeyName, compressRequests, httpClientConfiguration);
     }
 
     @Override
@@ -118,6 +138,7 @@ public class ElasticConnectionConfig implements Serializable {
         return "ElasticConnectionConfig{" +
                "connectionUrls=" + connectionUrls +
                ", apiKeyName='" + apiKeyName + '\'' +
+               ", compressRequests=" + compressRequests +
                ", httpClientConfiguration=" + httpClientConfiguration +
                '}';
     }

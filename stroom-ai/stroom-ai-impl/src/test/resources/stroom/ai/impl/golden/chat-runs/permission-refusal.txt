@@ -1,0 +1,55 @@
+# permission-refusal
+
+propose_query refuses a data source the user can't use, as if it did not exist, and the model explains.
+
+== What happened ==
+The user asks: Write me a query of the secret events.
+Run 1: answered: You don't have permission to use 'Secret events', so I can't offer a query of it.
+
+== Stored messages ==
+#1 USER_MESSAGE (turn 1)
+    Write me a query of the secret events.
+#2 TOOL_CALL (turn 1)
+    {
+      "callId" : "call-1",
+      "tool" : "propose_query",
+      "arguments" : "{\"name\":\"Secrets\",\"query\":\"from \\\"Secret events\\\" select User\"}"
+    }
+#3 TOOL_RESULT (turn 1)
+    {
+      "callId" : "call-1",
+      "tool" : "propose_query",
+      "error" : false,
+      "text" : "The query doesn't name a data source you can use: check its 'from' clause against list_data_sources.",
+      "chars" : 100,
+      "durationMs" : "<time>"
+    }
+
+== Workspace files made ==
+(none)
+
+== Run flags ==
+Read content that could hold planted instructions: true
+Read an untrusted MCP server's output: false
+
+== MCP tools offered ==
+(none)
+
+== Requests to the model ==
+(Built-in tools are listed by name in name order; their definitions have their own reference file.)
+--- Request 1 ---
+Tools offered: ask_user, memory, propose_query, read_turn
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    Write me a query of the secret events.
+--- Request 2 ---
+Tools offered: ask_user, memory, propose_query, read_turn
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    Write me a query of the secret events.
+[2] AI
+    Calls propose_query as call-1 with {"name":"Secrets","query":"from \"Secret events\" select User"}
+[3] TOOL RESULT for call-1 (propose_query)
+    The query doesn't name a data source you can use: check its 'from' clause against list_data_sources.

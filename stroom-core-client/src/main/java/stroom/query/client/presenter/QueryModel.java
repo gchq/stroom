@@ -166,23 +166,17 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
         currentHighlights = null;
     }
 
-    /**
-     * Begin executing a new search using the supplied query expression.
-     */
-    public void startNewSearch(final String componentId,
-                               final String componentName,
-                               final String query,
-                               final List<Param> params,
-                               final TimeRange timeRange,
-                               final boolean incremental,
-                               final boolean storeHistory,
-                               final String queryInfo,
-                               final ExpressionOperator additionalQueryExpression) {
-        GWT.log("SearchModel - startNewSearch()");
-
-        // Destroy the previous search and ready all components for a new search to begin.
-        reset(DestroyReason.NO_LONGER_NEEDED);
-
+    /// Builds the request a new search would be started with, without starting it.
+    ///
+    /// @return The request, with no query key.
+    public QuerySearchRequest buildSearchRequest(final String componentId,
+                                                 final String componentName,
+                                                 final String query,
+                                                 final List<Param> params,
+                                                 final TimeRange timeRange,
+                                                 final boolean incremental,
+                                                 final String queryInfo,
+                                                 final ExpressionOperator additionalQueryExpression) {
         final QueryContext currentQueryContext = QueryContext
                 .builder()
                 .params(params)
@@ -212,7 +206,28 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
             searchBuilder.timeout(timeout);
         }
 
-        currentSearch = searchBuilder.build();
+        return searchBuilder.build();
+    }
+
+    /**
+     * Begin executing a new search using the supplied query expression.
+     */
+    public void startNewSearch(final String componentId,
+                               final String componentName,
+                               final String query,
+                               final List<Param> params,
+                               final TimeRange timeRange,
+                               final boolean incremental,
+                               final boolean storeHistory,
+                               final String queryInfo,
+                               final ExpressionOperator additionalQueryExpression) {
+        GWT.log("SearchModel - startNewSearch()");
+
+        // Destroy the previous search and ready all components for a new search to begin.
+        reset(DestroyReason.NO_LONGER_NEEDED);
+
+        currentSearch = buildSearchRequest(componentId, componentName, query, params, timeRange, incremental,
+                queryInfo, additionalQueryExpression);
 //            }
 //        }
 //

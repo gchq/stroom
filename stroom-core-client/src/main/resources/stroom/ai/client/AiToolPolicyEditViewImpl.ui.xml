@@ -1,0 +1,28 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+    <g:FlowPanel styleName="max scrollable form-padding form">
+        <form:FormGroup helpText="A disabled policy is kept, but grants nothing.">
+            <tickbox:CustomCheckBox ui:field="enabled"
+                                    identity="aiToolPolicyEnabled"
+                                    label="Enabled"/>
+        </form:FormGroup>
+        <form:FormGroup identity="aiToolPolicyName"
+                        label="Name"
+                        helpText="A name for the policy, unique among tool policies.">
+            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="aiToolPolicyDescription"
+                        label="Description"
+                        helpText="What the policy is for.">
+            <g:TextArea ui:field="description" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="aiToolPolicyCategories"
+                        label="Categories"
+                        helpText="The categories of Stroom's tools the policy grants, in the 'Ask Stroom AI' chat and over MCP, each either Read-only (only the tools and calls that cannot change anything) or Read and write. A user gets the tools of every enabled policy that covers them; with none, they get no tools. A policy only narrows: each tool still checks the user's other permissions.">
+            <g:Grid ui:field="categories" styleName="aiToolPolicyEdit-categories"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

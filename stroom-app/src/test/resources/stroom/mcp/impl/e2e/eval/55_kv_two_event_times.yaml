@@ -1,0 +1,56 @@
+name: Application audit with a collector's time
+template: Event Data (Text)
+capabilities: [format_recognition, delimiters, timestamps, event_time_choice]
+request: >
+  Onboard this application's audit log (key=value pairs, one line an action). The application writes ts when the
+  user acted; our log collector adds logged_at when it wrote the line, a few seconds later. Index the events by user.
+expected:
+  records: 4
+  event_types: []
+  paths: [EventTime/TimeCreated, EventSource/User/Id]
+  # The event's time is ts, the application's, not the collector's logged_at (work package T9).
+  values:
+    EventTime/TimeCreated: ["2026-11-06T09:00:05.000Z", "2026-11-06T09:01:10.000Z", "2026-11-06T09:02:40.000Z",
+                            "2026-11-06T09:03:20.000Z"]
+  forbidden_values:
+    EventTime/TimeCreated: ["2026-11-06T09:00:08.000Z", "2026-11-06T09:01:12.000Z", "2026-11-06T09:02:44.000Z",
+                            "2026-11-06T09:03:21.000Z"]
+sample: |
+  ts=2026-11-06T09:00:05Z logged_at=2026-11-06T09:00:08Z user=alice action=read record=1042
+  ts=2026-11-06T09:01:10Z logged_at=2026-11-06T09:01:12Z user=bob action=write record=88
+  ts=2026-11-06T09:02:40Z logged_at=2026-11-06T09:02:44Z user=carol action=read record=7
+  ts=2026-11-06T09:03:20Z logged_at=2026-11-06T09:03:21Z user=alice action=write record=1042
+reference:
+  converter: |
+    <?xml version="1.1" encoding="UTF-8"?>
+    <dataSplitter xmlns="data-splitter:3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd" version="3.0">
+      <split delimiter="\n">
+        <group>
+          <split delimiter=" ">
+            <group>
+              <regex pattern="^([^=]+)=(.*)$"><data name="$1" value="$2" /></regex>
+            </group>
+          </split>
+        </group>
+      </split>
+    </dataSplitter>
+  mapping:
+    input: data_splitter
+    common:
+      - {path: EventTime/TimeCreated, field: ts, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: Records App}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: records-app}
+      - {path: EventSource/Device/HostName, value: app01}
+      - {path: EventSource/User/Id, field: user}
+      - {path: EventDetail/TypeId, field: action}
+    events:
+      - name: read
+        when: [{field: action, equals: read}]
+        fields:
+          - {path: EventDetail/View/Document/Id, field: record}
+      - name: write
+        when: [{field: action, equals: write}]
+        fields:
+          - {path: EventDetail/Update/After/Document/Id, field: record}

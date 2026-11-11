@@ -19,12 +19,21 @@ package stroom.ai.impl;
 import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
 import stroom.ai.api.TableSummariser;
+import stroom.ai.impl.tools.BuiltInToolsModule;
+import stroom.ai.impl.vis.AdapterScripts;
+import stroom.dashboard.impl.script.ScriptContentProvider;
 import stroom.docstore.api.DocumentStoreBinder;
+import stroom.job.api.ScheduledJobsBinder;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.language.functions.AiProvider;
+import stroom.util.RunnableWrapper;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpSessionListener;
 
 public class AiModule extends AbstractModule {
 
@@ -37,6 +46,13 @@ public class AiModule extends AbstractModule {
 
         // Backs the ai() StroomQL function, see ExpressionContextFactory.
         bind(AiProvider.class).to(AiProviderImpl.class);
+        bind(UserActionLookup.class).to(UserActionLookupImpl.class);
+        // How a chat asks whether a tool call or change may go ahead, and asks the user to approve it.
+        bind(ToolConsentGate.class).to(ChatConsentGate.class);
+        bind(CurrentToolGrants.class).to(AiToolPolicyService.class);
+
+        // Built-in chat tools (get_current_date, ...).
+        install(new BuiltInToolsModule());
 
         // OpenAI Model
         DocumentStoreBinder.create(binder())
@@ -44,6 +60,35 @@ public class AiModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(OpenAIModelResourceImpl.class)
-                .bind(AskStroomAiResourceImpl.class);
+                .bind(AskStroomAiResourceImpl.class)
+                .bind(AiToolPolicyResourceImpl.class);
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(AiRetentionJob.class, builder -> builder
+                        .name(AiRetention.JOB_NAME)
+                        .description("Removes 'Ask Stroom AI' workspace files and chats that are past their "
+                                     + "retention age, sample upload commands that have run out, and the "
+                                     + "chats, memory and sample upload commands of deleted users")
+                        .cronSchedule(CronExpressions.EVERY_HOUR.getExpression()));
+
+        // Serves this release's chart adapters for the adapter Script docs, whatever they hold.
+        GuiceUtil.buildMultiBinder(binder(), ScriptContentProvider.class)
+                .addBinding(AdapterScripts.class);
+
+        // Stops agent runs when the session that started them ends.
+        GuiceUtil.buildMultiBinder(binder(), HttpSessionListener.class)
+                .addBinding(AiChatRunSessionListener.class);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class AiRetentionJob extends RunnableWrapper {
+
+        @Inject
+        AiRetentionJob(final AiRetention aiRetention) {
+            super(aiRetention::exec);
+        }
     }
 }
