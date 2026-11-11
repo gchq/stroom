@@ -2009,10 +2009,17 @@ public final class DraftMapping {
         // The kinds: by the kind fields the user chose (given: classify_kinds and survey_feed put the fields that could
         // be to them, where none is named like one), else by the fields named like kind fields.
         private Kinds kinds(final List<String> given) {
-            if (!given.isEmpty()) {
-                return kindsBy(KindFields.oneKind(given)
-                        ? List.of()
-                        : given.stream().filter(n -> names.contains(n) && !taken.contains(n)).toList());
+            if (KindFields.oneKind(given)) {
+                return kindsBy(List.of());
+            }
+            // The user's fields as the records spell them; none of them here (a variant without them, a name
+            // mistyped), the kinds are chosen by name as before rather than none.
+            final List<String> present = given.stream()
+                    .flatMap(g -> names.stream().filter(n -> n.equalsIgnoreCase(g) && !taken.contains(n)).limit(1))
+                    .distinct()
+                    .toList();
+            if (!present.isEmpty()) {
+                return kindsBy(present);
             }
             String naming = headerKinds();
             if (naming == null) {

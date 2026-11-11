@@ -1220,9 +1220,10 @@ class TestDraftMapping extends DraftFixtures {
         for (int i = 0; i < 6; i++) {
             csv.append("2026-11-06T09:00:0%dZ,Gate,u%d,10.0.0.%d\n".formatted(i, i, i));
         }
-        final Map<String, Object> notes = Map.of("fields", List.of(), "events", List.of(Map.of("event", "Door opened",
-                "field", "product", "value", "Gate", "event_detail", "Authenticate", "action", "Logon",
-                "type_id", "Badge")));
+        final Map<String, Object> event = Map.of("event", "Door opened", "field", "product", "value", "Gate",
+                "event_detail", "Authenticate", "action", "Logon", "type_id", "Badge");
+        final Map<String, Object> notes = Map.of("fields", List.of(), "events", List.of(event),
+                SourceNotes.WHOLE_KIND, List.of("product=Gate"));
 
         final Map<String, Object> drafted = DraftMapping.draft(List.of(csv.toString()), "Gate", null, null, notes,
                 null, null);
@@ -1232,6 +1233,24 @@ class TestDraftMapping extends DraftFixtures {
             assertThat(rule).doesNotContainKey("when");
             assertThat(String.valueOf(rule)).contains("Authenticate");
         });
+        // A single event from the user's documentation isn't the records as one kind: its rule keeps its condition,
+        // and the rule for the rest stays (found in review: other values would have been taken as that event).
+        final Map<String, Object> documented = DraftMapping.draft(List.of(csv.toString()), "Gate", null, null,
+                Map.of("fields", List.of(), "events", List.of(event)), null, null);
+        assertThat(JsonValues.maps(mappingOf(documented).get("events"))).hasSize(2)
+                .anySatisfy(rule -> assertThat(rule).containsKey("when"));
+    }
+
+    @Test
+    void aKindFieldTheUserNamedIsMatchedAsTheRecordsSpellItAndOneTheyLackIsPassedOver() {
+        final Map<String, Object> cased = DraftMapping.draft(List.of(msgActCsv()), "SEG", null, null,
+                Map.of(SourceNotes.KIND_FIELDS, List.of("Msg_Act")), null, null);
+        final Map<String, Object> absent = DraftMapping.draft(List.of(msgActCsv()), "SEG", null, null,
+                Map.of(SourceNotes.KIND_FIELDS, List.of("verdict")), null, null);
+
+        assertThat(rules(cased).keySet()).contains("allow", "quarantine", "reject");
+        // Not every kind lost: chosen by name as without a choice.
+        assertThat(rules(absent).keySet()).containsExactly("other");
     }
 
     private static String msgActCsv() {

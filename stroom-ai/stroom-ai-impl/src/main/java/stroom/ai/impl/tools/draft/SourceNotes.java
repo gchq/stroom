@@ -96,6 +96,9 @@ public final class SourceNotes {
     /// The fields that tell the kinds of event apart, as the user chose them (classify_kinds, survey_feed), or
     /// [stroom.ai.impl.tools.sample.KindFields#ONE_KIND] alone: the draft makes its rules by them.
     public static final String KIND_FIELDS = "kind_fields";
+    /// The key (`field=value`) of the kind classify_kinds listed for records it told no kinds apart in, by a field
+    /// every sample record shares: the draft makes that kind's rule the rule for every record.
+    public static final String WHOLE_KIND = "whole_kind";
     /// The reason a dropped kind's drop rule gives.
     public static final String DROPPED_REASON = "the user said to leave these untranslated";
     // A split's key: the kind it is within, the field, and its value or pattern.
@@ -469,6 +472,7 @@ public final class SourceNotes {
             JsonValues.strings(event.get(NAMES)).stream().filter(name -> !ownRest.contains(name)).forEach(ownRest::add);
             rules.add(rule(event, key, detail, common, detailFields, sampled, ownRest, known));
             if (sampled.isEmpty() && events.size() == 1 && !isPattern(event) && !isSplit(event)
+                && JsonValues.strings(notes.get(WHOLE_KIND)).contains(key.get(0) + "=" + key.get(1))
                 && Set.of(key.get(1)).equals(new LinkedHashSet<>(NullSafe.list(values.get(key.get(0)))))) {
                 whole = rules.getLast();
                 whole.remove("when");
@@ -544,10 +548,12 @@ public final class SourceNotes {
         final List<Map<String, Object>> proposed = new ArrayList<>();
         final Set<String> dropped = new LinkedHashSet<>();
         List<String> kindFields = List.of();
+        final Set<String> wholeKinds = new LinkedHashSet<>();
         for (final Map<String, Object> note : NullSafe.list(notes)) {
             if (kindFields.isEmpty()) {
                 kindFields = JsonValues.strings(note.get(KIND_FIELDS));
             }
+            wholeKinds.addAll(JsonValues.strings(note.get(WHOLE_KIND)));
             JsonValues.maps(note.get("fields")).forEach(field -> fields.putIfAbsent(text(field.get("field")), field));
             events.addAll(JsonValues.maps(note.get("events")));
             proposed.addAll(JsonValues.maps(note.get(PROPOSED)));
@@ -566,6 +572,9 @@ public final class SourceNotes {
         }
         if (!kindFields.isEmpty()) {
             out.put(KIND_FIELDS, kindFields);
+        }
+        if (!wholeKinds.isEmpty()) {
+            out.put(WHOLE_KIND, new ArrayList<>(wholeKinds));
         }
         return out;
     }

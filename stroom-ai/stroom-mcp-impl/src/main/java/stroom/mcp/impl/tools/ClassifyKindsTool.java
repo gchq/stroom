@@ -54,6 +54,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.LongSupplier;
 import java.util.regex.Pattern;
 
@@ -496,8 +497,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 .toList();
         // Proposals still to confirm are kept: listing again doesn't take them back from the user.
         result.put(SOURCE_NOTES, notes.recordClassified(context, build, source, List.of(),
-                todo.stream().map(Kind::key).toList(), withKindFields(read, Map.of(RecordSourceNotesTool.RECORD_FIELDS,
-                        recordFields, SAMPLES, kindSamples))));
+                todo.stream().map(Kind::key).toList(), withWholeKind(single, withKindFields(read,
+                        Map.of(RecordSourceNotesTool.RECORD_FIELDS, recordFields, SAMPLES, kindSamples)))));
         result.put(TO_CLASSIFY, batch.stream().map(Kind::shown).toList());
         if (todo.size() > batch.size()) {
             result.put("round", batch.size() + " of the " + todo.size() + " kinds still to classify; the next round "
@@ -583,7 +584,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final List<Map<String, Object>> records = unpacked(DraftMapping.records(samples, splitter).records(),
                 mapping);
         return new Sampled(samples, readWith, records, kinds(draft, records), variantField(draft, records), null,
-                chosen.fields());
+                chosen.fromUser()
+                        ? chosen.fields()
+                        : List.of());
     }
 
     // What a listing keeps in the source notes, with the kind fields the kinds were told apart by (the user's), so the
@@ -597,6 +600,17 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         return out;
     }
 
+    // What a listing of the records as one kind keeps: the kind's key, so the draft makes its rule the rule for
+    // every record (SourceNotes.WHOLE_KIND).
+    private static Map<String, Object> withWholeKind(final Optional<Kind> single, final Map<String, Object> kept) {
+        if (single.isEmpty()) {
+            return kept;
+        }
+        final Map<String, Object> out = new LinkedHashMap<>(kept);
+        out.put(SourceNotes.WHOLE_KIND, List.of(single.get().key()));
+        return out;
+    }
+
     // The kind fields: given now (kept in the source notes as the user's), kept in the notes, kept by the survey, or,
     // where the records have no field named like one and their values leave it unsure, asked for (asked for by the
     // user: seen in testing, a CSV mail log's msg_act unknown by name, every record one kind, and no form put to the
@@ -607,21 +621,28 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                    final Map<String, Object> notesNow,
                                    final List<Map<String, Object>> records,
                                    final boolean mayAsk) {
+        final KindFields.Choice choice = KindFields.choose(records);
         final List<String> given = KindFields.parse(stringArg(call, KIND_FIELD_ARG));
         if (given != null) {
-            return new KindsChosen(given, null);
+            final List<String> spelt = KindFields.asRecordsSpellThem(given, choice.recordFields());
+            if (spelt.isEmpty()) {
+                throw new ToolRefusal(KIND_FIELD_ARG + " " + given + " names no field of the sample's records: they "
+                                      + "have " + new TreeSet<>(choice.recordFields()) + ". Ask the user which one "
+                                      + "they meant.");
+            }
+            return new KindsChosen(spelt, null, true);
         }
         final List<String> kept = JsonValues.strings(notesNow.get(SourceNotes.KIND_FIELDS));
         if (!kept.isEmpty()) {
-            return new KindsChosen(kept, null);
+            return new KindsChosen(kept, null, false);
         }
+        // The survey's, when it has one: not written into the notes, so a later change in the survey is followed.
         final Optional<List<String>> surveyed = builds.surveyKindFields(build);
         if (surveyed.isPresent()) {
-            return new KindsChosen(surveyed.get(), null);
+            return new KindsChosen(surveyed.get(), null, false);
         }
-        final KindFields.Choice choice = KindFields.choose(records);
         if (choice.certain() || !mayAsk) {
-            return new KindsChosen(List.of(), null);
+            return new KindsChosen(List.of(), null, false);
         }
         final Optional<String> answer = consent.answer(call, context, NAME, "No field of the sample is named like a "
                                                                             + "kind of event (type, action...), but "
@@ -639,7 +660,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                              + "user in the chat which one does (show them the candidates and their values), or "
                              + "whether the records are all one kind, then call " + NAME + " again with "
                              + KIND_FIELD_ARG + " as they said. Don't choose for them.");
-            return new KindsChosen(List.of(), result);
+            return new KindsChosen(List.of(), result, false);
         }
         final List<String> said = KindFields.fromAnswer(answer.get(), choice);
         if (said.isEmpty()) {
@@ -647,7 +668,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                   + "ask them in the chat which field tells the kinds of event apart, and call again "
                                   + "with " + KIND_FIELD_ARG + ".");
         }
-        return new KindsChosen(said, null);
+        return new KindsChosen(said, null, true);
     }
 
     // The records as one kind, told by the first field every record has the same short value of (a product, a
@@ -1961,7 +1982,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     }
 
     // The kind fields chosen (empty for the draft to choose by name), or what to return while the user is asked.
-    private record KindsChosen(List<String> fields, Map<String, Object> asking) {
+    private record KindsChosen(List<String> fields, Map<String, Object> asking, boolean fromUser) {
 
     }
 
