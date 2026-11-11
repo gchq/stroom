@@ -35,6 +35,7 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.IsButton;
 import stroom.widget.menu.client.Item;
 import stroom.widget.menu.client.MenuBuilder;
+import stroom.widget.util.client.ListSelection;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;
@@ -396,18 +397,18 @@ public class ContentTemplateTabController extends ContentTabController
                     + nameStr + "?",
                     ok -> {
                         if (ok) {
+                            final int index = contentTemplates.indexOf(rule);
                             contentTemplates.remove(rule);
 
                             update();
                             setDirty(true);
 
-                            // Select the next rule.
-                            int index = contentTemplates.indexOf(rule);
-                            if (index > 0) {
-                                index--;
-                            }
-                            if (index < getTemplateCount()) {
-                                setSelected(contentTemplates.get(index));
+                            // The template now in its place (UI-GUIDE.md, "What a list selects").
+                            // The templates are renumbered, so it is found by position; it was once
+                            // looked up by the deleted template, which threw
+                            final ContentTemplate next = ListSelection.rowAt(contentTemplates, index);
+                            if (next != null) {
+                                setSelected(next);
                             } else {
                                 getSelectionModel().clear();
                             }
@@ -510,7 +511,8 @@ public class ContentTemplateTabController extends ContentTabController
             contentTemplates.add(idx, rule);
             update();
             setDirty(true);
-            setSelected(contentTemplates.get(0));
+            // The new template, where it was added
+            setSelected(contentTemplates.get(idx));
             return true;
         });
     }
@@ -562,12 +564,13 @@ public class ContentTemplateTabController extends ContentTabController
                 contentTemplates.set(index, contentTemplate);
 
                 update();
+                // The template edited, even if another was selected while its (non-modal) editor
+                // was open (UI-GUIDE.md, "What a list selects")
+                setSelected(contentTemplates.get(index));
                 // Only mark the policies as dirty if the rule was actually changed.
                 if (!existingRule.equals(contentTemplate)) {
                     setDirty(true);
                 }
-
-                setSelected(contentTemplates.get(index));
             }
             return true;
         });

@@ -26,6 +26,7 @@ import stroom.query.client.UniqueUtil;
 import stroom.query.client.cell.ColumnHeaderHtmlUtil;
 import stroom.query.client.result.component.ColumnFormatController;
 import stroom.query.client.result.component.ColumnValuesFilterController;
+import stroom.query.client.result.component.ColumnWidthController;
 import stroom.query.client.result.table.ColumnValuesDataSupplier;
 import stroom.query.client.result.table.FilterCellManager;
 import stroom.svg.shared.SvgImage;
@@ -41,6 +42,7 @@ import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.PopupPosition.PopupLocation;
 import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.ListMoves;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
@@ -68,6 +70,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     private final Provider<RenameColumnController> renameColumnControllerProvider;
     private final Provider<ColumnFunctionEditorController> expressionProvider;
     private final Provider<ColumnFormatController> columnFormatProvider;
+    private final Provider<ColumnWidthController> columnWidthProvider;
     private final ColumnFilterTabsController columnFilterTabs;
     private final ColumnValuesFilterController columnValuesFilter;
     private int columnsStartIndex;
@@ -82,6 +85,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                           final Provider<RenameColumnController> renameColumnControllerProvider,
                           final Provider<ColumnFunctionEditorController> expressionProvider,
                           final Provider<ColumnFormatController> columnFormatProvider,
+                          final Provider<ColumnWidthController> columnWidthProvider,
                           final ColumnFilterTabsController columnFilterTabs,
                           final ColumnValuesFilterController columnValuesFilter) {
         this.eventBus = eventBus;
@@ -89,6 +93,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         this.renameColumnControllerProvider = renameColumnControllerProvider;
         this.expressionProvider = expressionProvider;
         this.columnFormatProvider = columnFormatProvider;
+        this.columnWidthProvider = columnWidthProvider;
         this.columnFilterTabs = columnFilterTabs;
         this.columnValuesFilter = columnValuesFilter;
     }
@@ -424,6 +429,25 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         tableController.updateColumns();
     }
 
+    // One place among the columns shown, past any hidden: as dragging its header one place does
+    private void moveOnePlace(final Column column, final boolean left) {
+        final List<Column> columns = getColumns();
+        if (ListMoves.moveOnePlace(columns, column, left, Column::isVisible)) {
+            updateColumns(columns);
+            tableController.onChange();
+            tableController.updateColumns();
+        }
+    }
+
+    // The width typed in the Column Width dialog, as dragging the header's edge sets it
+    private void resize(final Column column, final Element th) {
+        columnWidthProvider.get().show(tableController, th.getOffsetWidth(), width -> {
+            replaceColumn(column, column.copy().width(width).build());
+            tableController.onChange();
+            tableController.updateColumns();
+        });
+    }
+
     private String makeUniqueColumnName(final String columnName) {
         final Set<String> currentColumns = getColumns().stream().map(Column::getName).collect(
                 Collectors.toSet());
@@ -571,9 +595,13 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         // The values filter, as the header's filter icon opens it, for the keyboard
         menuItems.add(createValuesFilterMenu(column, colIndex, th));
 
-        // Create move menu.
+        // Create move menu: to the start, one place either way, to the end; and the width, so the
+        // keyboard can do what dragging a header does
         menuItems.add(createMoveFirstMenu(column));
+        menuItems.add(createMoveOneMenu(column, true));
+        menuItems.add(createMoveOneMenu(column, false));
         menuItems.add(createMoveLastMenu(column));
+        menuItems.add(createResizeMenu(column, th));
 
         // Create duplicate menu.
         menuItems.add(createDuplicateMenu(column));
@@ -806,18 +834,43 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                 .build();
     }
 
+    private Item createMoveOneMenu(final Column column, final boolean left) {
+        return new IconMenuItem.Builder()
+                .priority(left
+                        ? 7
+                        : 8)
+                .icon(left
+                        ? SvgImage.ARROW_LEFT
+                        : SvgImage.ARROW_RIGHT)
+                .text(left
+                        ? "Move Column Left"
+                        : "Move Column Right")
+                .enabled(ListMoves.canMoveOnePlace(getColumns(), column, left, Column::isVisible))
+                .command(() -> moveOnePlace(column, left))
+                .build();
+    }
+
     private Item createMoveLastMenu(final Column column) {
         return new IconMenuItem.Builder()
-                .priority(7)
+                .priority(9)
                 .icon(SvgImage.STEP_FORWARD)
                 .text("Move Column to End")
                 .command(() -> moveLast(column))
                 .build();
     }
 
+    private Item createResizeMenu(final Column column, final Element th) {
+        return new IconMenuItem.Builder()
+                .priority(10)
+                .icon(SvgImage.RESIZE)
+                .text("Resize Column")
+                .command(() -> resize(column, th))
+                .build();
+    }
+
     private Item createDuplicateMenu(final Column column) {
         return new IconMenuItem.Builder()
-                .priority(8)
+                .priority(11)
                 .icon(SvgImage.COPY)
                 .text("Duplicate")
                 .command(() -> duplicateColumn(column))
@@ -826,7 +879,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
     private Item createHideMenu(final Column column) {
         return new IconMenuItem.Builder()
-                .priority(9)
+                .priority(12)
                 .icon(SvgImage.HIDE)
                 .text("Hide Column")
                 .command(() -> hideColumn(column))
@@ -854,7 +907,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         }
 
         return new IconParentMenuItem.Builder()
-                .priority(10)
+                .priority(13)
                 .icon(SvgImage.SHOW)
                 .text("Show Hidden Column")
                 .children(menuItems)
@@ -863,7 +916,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
     private Item createRemoveMenu(final Column column) {
         return new IconMenuItem.Builder()
-                .priority(11)
+                .priority(14)
                 .icon(SvgImage.DELETE)
                 .text("Remove")
                 .command(() -> deleteColumn(column))

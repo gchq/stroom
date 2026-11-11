@@ -39,6 +39,7 @@ import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
+import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -571,6 +572,43 @@ public final class QueryEditorStories {
                     play.click(play.getByRole("button", "Execute Query"));
                     expectSearchWith(play, "{\"queryTablePreferences\": {\"columns\": "
                                            + "[{}, {\"name\": \"Count\", \"visible\": false}, {}, {}]}}");
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // The column menu moves a column one place and sets its width, as dragging its header
+                // and its edge do, so the keyboard can; both are kept in the table's preferences
+                .story("ColumnMoveAndResize", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    execute(play);
+                    play.findByText("alpha");
+                    final Query labels = play.querySelectorAll(".column-header__label");
+                    final Value<List<String>> before = play.capture("the columns", labels.textContents());
+                    StroomDom.clickHeader(play, header(play, "Count"));
+                    play.click(screen.findByText("Move Column Right", StroomDom.MENU_ITEM_TEXT));
+                    play.waitFor(() -> play.expect("Count moved one place right",
+                            () -> labels.textContents().get().indexOf("Count")
+                                  == before.get().indexOf("Count") + 1).toBe(true));
+                    play.expect(play.getByRole("button", "Save")).not().toHaveAttribute("aria-disabled");
+
+                    StroomDom.clickHeader(play, header(play, "Count"));
+                    play.click(screen.findByText("Move Column Left", StroomDom.MENU_ITEM_TEXT));
+                    play.waitFor(() -> play.expect("Count moved back",
+                            () -> labels.textContents().get().equals(before.get())).toBe(true));
+
+                    StroomDom.clickHeader(play, header(play, "Count"));
+                    play.click(screen.findByText("Resize Column", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = dialog(screen, "Column Width");
+                    final Query width = dialog.getByRole("spinbutton", "Width (pixels)");
+                    play.waitFor(() -> play.expect(width).toHaveFocus());
+                    play.clear(width);
+                    play.type(width, "180");
+                    play.keyboard("{Enter}");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(header(play, "Count").closest(StroomDom.GRID_HEADER_CELL).width())
+                            .toSatisfy("180 pixels wide", w -> Math.abs((Double) w - 180) <= 1));
+                    play.click(play.getByRole("button", "Execute Query"));
+                    expectSearchWith(play, "{\"queryTablePreferences\": {\"columns\": "
+                                           + "[{}, {\"name\": \"Count\", \"width\": 180}, {}, {}]}}");
                     DocumentEditors.expectNoProblems(play);
                 })
                 // The column menu's Filter sets the column's filter

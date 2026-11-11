@@ -17,12 +17,17 @@
 package stroom.gwt.workbench.client.app.nodes;
 
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
+import stroom.gwt.workbench.client.app.rest.FakeRows;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -31,6 +36,8 @@ import stroom.node.client.component.NodeGroupsController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
+
+import java.util.List;
 
 /// Stories of `App/Main/NodeGroupsScreen`, showing Stroom's real [NodeGroupsController] (the 'Node
 /// Groups' tab, as `NodeGroupsPlugin` opens it) with fake REST replies, for Stroom's
@@ -116,6 +123,65 @@ public final class NodeGroupsScreenStories {
         registry.component("App/Main/NodeGroupsScreen", NodeGroupsScreenStories.class)
                 .layout(StoryLayout.FULLSCREEN)
                 // Toggling Enabled updates the group; New creates one via the name dialog
+                // Moving to another page deselects the group, so Edit and Delete can't act on a group
+                // that can't be seen (UI-GUIDE.md, "What a list selects"); it once stayed selected,
+                // out of sight
+                .story("PageChangeDropsSelection", context -> render(context, pagedFixtures(150)))
+                .withPlay(play -> {
+                    play.click(play.findByText("Group 001"));
+                    expectSelected(play, "Group 001", "true");
+                    final Query edit = play.getByRole("button", TextMatch.containing("Edit Selected Node Group"));
+                    play.waitFor(() -> play.expect(edit).not().toHaveAttribute("aria-disabled"));
+                    play.click(play.getByTitle("Forward"));
+                    play.findByText("Group 150");
+                    play.waitFor(() -> play.expect(edit).toHaveAttribute("aria-disabled", "true"));
+                    play.click(play.getByTitle("First"));
+                    play.findByText("Group 001");
+                    expectSelected(play, "Group 001", "false");
+                    play.expect(edit).toHaveAttribute("aria-disabled", "true");
+                })
+                // Deleting the last group, on the last page: the pager shows a full last page, so the
+                // page moves back a row and is fetched again, and the new last group is selected. The
+                // fetch of the moved page was once dropped (the fetch the rows came in still counted
+                // as running), leaving a placeholder row and the deleted group selected
+                .story("DeleteOnTheLastPageSelectsPrevious", context -> render(context, pagedFixtures(150)))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Group 001");
+                    play.click(play.getByTitle("Last"));
+                    play.click(play.findByText("Group 150"));
+                    expectSelected(play, "Group 150", "true");
+                    play.click(play.getByRole("button", TextMatch.containing("Delete Selected Node Group")));
+                    screen.findByText("Are you sure you want to delete the selected node group?");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.queryByText("Group 150")).toBeNull());
+                    expectSelected(play, "Group 149", "true");
+                    play.expect(play.querySelectorAll("." + StroomDom.SELECTED_ROW)).toHaveLength(1);
+                    play.expect(play.getByText("Group 050")).toBeInTheDocument();
+                })
+                // Edit edits one group, so it is dead with two selected; Delete deletes both, then the
+                // group in place of the first is selected, once both are answered (each delete once
+                // fetched the list again, and edited the last selected of several)
+                .story("MultiDeleteSelectsNext", context -> render(context, pagedFixtures(6)))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("Group 002"));
+                    play.fireEvent().mouseDown(play.getByText("Group 004"), EventInit.create().ctrlKey());
+                    expectSelected(play, "Group 004", "true");
+                    expectSelected(play, "Group 002", "true");
+                    final Query edit = play.getByRole("button", TextMatch.containing("Edit Selected Node Group"));
+                    final Query delete = play.getByRole("button", TextMatch.containing("Delete Selected Node Group"));
+                    play.waitFor(() -> play.expect(edit).toHaveAttribute("aria-disabled", "true"));
+                    play.expect(delete).not().toHaveAttribute("aria-disabled");
+                    play.click(delete);
+                    screen.findByText("Are you sure you want to delete the selected node groups?");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.queryByText("Group 004")).toBeNull());
+                    play.expect(play.queryByText("Group 002")).toBeNull();
+                    // Group 003 is now where Group 002 was
+                    expectSelected(play, "Group 003", "true");
+                    play.expect(edit).not().toHaveAttribute("aria-disabled");
+                })
                 .story("CrudFlow", NodeGroupsScreenStories::render)
                 .withPlay(play -> {
                     final Play screen = play.screen();
@@ -142,6 +208,33 @@ public final class NodeGroupsScreenStories {
                     play.findByText("Reporting");
                     // GWT then opens the new group's members dialog
                     screen.findByText("Edit Node Group - Reporting");
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // Ticking a selected group's Enabled updates it and fetches the groups again, with
+                // the group changed (enabled, a new version): its row stays selected. It once showed
+                // unselected, as the fetched group wasn't equal to the one selected
+                .story("EnabledKeepsSelection", NodeGroupsScreenStories::render)
+                .withPlay(play -> {
+                    play.findByText("All Nodes");
+                    play.click(play.findByText("Processing"));
+                    play.waitFor(() -> play.expect(processingRow(play)).toHaveAttribute("aria-selected", "true"));
+                    play.click(play.within(processingRow(play)).querySelector(".tick-box"));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put("/node/nodeGroup/v2/2")
+                                    .withJsonBodyContaining("{\"id\": 2, \"enabled\": true}")
+                                    .toSpyMatcher()));
+                    // The groups are fetched after the update (GROUPS_ENABLED, the third reply). The
+                    // rows look as they did (the tick box showed the tick when clicked), so the play
+                    // gives the reply time to arrive and be drawn
+                    final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
+                    play.waitFor(() -> play.expect("find requests", () -> countRequests(requests, "POST " + FIND_PATH))
+                            .toBe(3));
+                    play.sleep(500);
+                    play.expect(play.within(processingRow(play)).getByRole("checkbox"))
+                            .toHaveAttribute("aria-checked", "true");
+                    play.expect(processingRow(play)).toHaveAttribute("aria-selected", "true");
+                    play.expect(play.querySelectorAll("." + StroomDom.SELECTED_ROW)).toHaveLength(1);
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
@@ -180,10 +273,65 @@ public final class NodeGroupsScreenStories {
                 });
     }
 
+    // The 'Processing' group's row
+    private static Query processingRow(final Play play) {
+        return play.getByText("Processing").closest(StroomDom.GRID_ROW);
+    }
+
+    // The number of requests the spy recorded with the method and path given
+    private static int countRequests(final Spy requests, final String methodAndPath) {
+        int count = 0;
+        for (final List<Object> call : requests.getCalls()) {
+            if (String.valueOf(call.get(0)).startsWith(methodAndPath)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    // A group as the server sends it
+    private static String group(final int id, final String name) {
+        return "{\"id\": " + id + ", \"version\": 1, \"name\": \"" + name
+               + "\", \"enabled\": true, \"invertSelection\": false}";
+    }
+
+    // Groups named "Group 001" up to the count, a page of 100 at a time, and a server that deletes
+    // groups 2, 4 and 150
+    private static RestFixtures pagedFixtures(final int count) {
+        final FakeRows groups = new FakeRows();
+        for (int i = 1; i <= count; i++) {
+            final String name = "Group " + (i < 10 ? "00" : i < 100 ? "0" : "") + i;
+            groups.put(String.valueOf(i), name, group(i, name));
+        }
+        return RestFixtures.builder()
+                .post(FIND_PATH, groups::page)
+                .delete("/node/nodeGroup/v2/2", groups.removing("2", RestReply.json("true")))
+                .delete("/node/nodeGroup/v2/4", groups.removing("4", RestReply.json("true")))
+                .delete("/node/nodeGroup/v2/150", groups.removing("150", RestReply.json("true")))
+                .build()
+                .followedBy(FIXTURES);
+    }
+
+    private static void expectSelected(final Play play, final String name, final String selected) {
+        play.waitFor(() -> play.expect(play.getByText(name).closest(StroomDom.GRID_ROW))
+                .toHaveAttribute("aria-selected", selected));
+    }
+
     private static Widget render(final StoryContext context) {
         final ProcessingScreenGinjector injector = GWT.create(ProcessingScreenGinjector.class);
         final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
                 .injector(injector)
+                .build();
+        harness.afterStartUp(() -> harness.show(injector.getNodeGroupsController()));
+        return harness.asWidget();
+    }
+
+    // With other fixtures, and the confirmations shown, for a play to answer
+    private static Widget render(final StoryContext context, final RestFixtures fixtures) {
+        final ProcessingScreenGinjector injector = GWT.create(ProcessingScreenGinjector.class);
+        final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
+                .injector(injector)
+                .realAlerts()
                 .build();
         harness.afterStartUp(() -> harness.show(injector.getNodeGroupsController()));
         return harness.asWidget();

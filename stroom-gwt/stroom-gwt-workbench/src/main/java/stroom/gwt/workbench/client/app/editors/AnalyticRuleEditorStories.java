@@ -29,6 +29,7 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -59,6 +60,9 @@ public final class AnalyticRuleEditorStories {
     // NewScheduleSeedsTheDefaultNode: the default node is node9
     private static final String NODE9_UI_CONFIG = QueryFixtures.uiConfigWith(
             "\"analyticUiDefaultConfig\": {\"defaultNode\": \"node9\"}, \"reportUiDefaultConfig\": {}");
+
+    // A data grid's rows' container, whatever the grid's role
+    private static final String GRID = "[role='grid'], [role='treegrid'], [role='listbox']";
 
     private static final DocRef DOC_REF = new DocRef(AnalyticRuleDoc.TYPE, "rule-1", "My Rule");
 
@@ -92,6 +96,12 @@ public final class AnalyticRuleEditorStories {
               "resultPage": {"values": [{"values": ["alpha", "bob"]}, {"values": ["beta", "carol"]}],
                 "pageResponse": {"offset": 0, "length": 2, "total": 2, "exact": true}}}""";
 
+    // The duplicate rows once alpha's has been deleted
+    private static final String DUPLICATES_WITHOUT_ALPHA = """
+            {"columnNames": ["host", "user"],
+              "resultPage": {"values": [{"values": ["beta", "carol"]}],
+                "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}}}""";
+
     private static final RestFixtures FIXTURES = fixtures(DOC.replace("PROCESS_TYPE", SCHEDULED));
 
     // The table builder's progress requests so far: the first is answered with TRACKER, the
@@ -118,11 +128,76 @@ public final class AnalyticRuleEditorStories {
     private static QueryResultTableController otherTable;
 
     private static final RestFixtures SHARD_FIXTURES = analyticRoutes(RestFixtures.builder()
-            .get("/analyticRule/v1/rule-1", RestReply.json(DOC.replace("PROCESS_TYPE", SCHEDULED)))
-            .route(RequestMatcher.post("/analyticDataShard/v1/getData"), request -> {
-                onShardData.run();
-                return RestReply.json(QueryEditorStories.TABLE);
-            })).build();
+            .get("/analyticRule/v1/rule-1", RestReply.json(DOC.replace("PROCESS_TYPE", SCHEDULED))))
+            .build();
+
+    // An email notification
+    private static final String NOTIFICATION = """
+            {"uuid": "n1", "enabled": true, "limitNotifications": false, "maxNotifications": 1,
+              "destinationType": "EMAIL",
+              "destination": {"type": "email", "to": "ops@example.com", "subjectTemplate": "Detection",
+                "bodyTemplate": "A detection occurred."}}""";
+
+    // EditNotificationTwice: a scheduled rule with one notification
+    private static final RestFixtures NOTIFICATION_FIXTURES = fixtures(DOC
+            .replace("PROCESS_TYPE", SCHEDULED)
+            .replace("\"notifications\": []", "\"notifications\": [" + NOTIFICATION + "]"));
+
+    private static final String SCHEDULE = """
+            {"uuid": "UUID", "name": "NAME", "enabled": true, "nodeName": "node1",
+              "schedule": {"type": "CRON", "expression": "EXPRESSION"},
+              "scheduleBounds": {"startTimeMs": 1700000000000},
+              "owningDoc": {"type": "AnalyticRule", "uuid": "rule-1", "name": "My Rule"}}""";
+    private static final String HOURLY_SCHEDULE = SCHEDULE
+            .replace("UUID", "sched-a")
+            .replace("NAME", "Hourly")
+            .replace("EXPRESSION", "0 0 * * * ?");
+    private static final String NIGHTLY_SCHEDULE = SCHEDULE
+            .replace("UUID", "sched-b")
+            .replace("NAME", "Nightly")
+            .replace("EXPRESSION", "0 0 0 * * ?");
+
+    // Whether the Nightly schedule has been deleted (the schedules then found are Hourly alone).
+    // Each rendering starts with it not deleted
+    private static boolean nightlyDeleted;
+
+    // Whether the alpha duplicate check row has been deleted. Each rendering starts with it not
+    // deleted
+    private static boolean alphaDeleted;
+
+    // DeleteScheduleSelectsNext: the schedules (Hourly and Nightly, then Hourly alone once Nightly is
+    // deleted) and each one's history. These routes come before the analytic routes, which have
+    // none
+    private static final RestFixtures SCHEDULE_FIXTURES = RestFixtures.builder()
+            .route(RequestMatcher.post("/executionSchedule/v1/fetchExecutionSchedule"), request ->
+                    RestReply.json(nightlyDeleted
+                            ? page(HOURLY_SCHEDULE)
+                            : page(HOURLY_SCHEDULE, NIGHTLY_SCHEDULE)))
+            .route(RequestMatcher.post("/executionSchedule/v1/deleteExecutionSchedule"), request -> {
+                nightlyDeleted = true;
+                return RestReply.json("true");
+            })
+            .route(RequestMatcher.post("/executionSchedule/v1/fetchExecutionHistory")
+                            .withJsonBodyContaining("{\"executionSchedule\": {\"uuid\": \"sched-a\"}}"),
+                    RestReply.json(history(HOURLY_SCHEDULE, "Hourly ran")))
+            .route(RequestMatcher.post("/executionSchedule/v1/fetchExecutionHistory")
+                            .withJsonBodyContaining("{\"executionSchedule\": {\"uuid\": \"sched-b\"}}"),
+                    RestReply.json(history(NIGHTLY_SCHEDULE, "Nightly ran")))
+            .build()
+            .followedBy(FIXTURES);
+
+    // DeleteDuplicatesSelectsNext: the duplicate check rows, without alpha's once it is deleted.
+    // These routes come before the analytic routes' duplicate checks
+    private static final RestFixtures DUPLICATE_FIXTURES = RestFixtures.builder()
+            .route(RequestMatcher.post("/duplicateCheck/v1/find"), request -> RestReply.json(alphaDeleted
+                    ? DUPLICATES_WITHOUT_ALPHA
+                    : DUPLICATES))
+            .route(RequestMatcher.post("/duplicateCheck/v1/delete"), request -> {
+                alphaDeleted = true;
+                return RestReply.json("true");
+            })
+            .build()
+            .followedBy(FIXTURES);
 
     private AnalyticRuleEditorStories() {
         // Static utility
@@ -196,13 +271,15 @@ public final class AnalyticRuleEditorStories {
                     play.click(screen.findByText("Table Builder", ".selection-popup *"));
                     play.waitFor(() -> play.expect(DocumentEditors.tab(play, "Shards")).toBeVisible());
                     openTab(play, "Shards");
-                    play.click(play.findByText("rule-1/2023-11-15"));
+                    // The first shard is selected when the list loads, so its data is fetched
                     play.waitFor(() -> play.expect(play.spy(SHARD_DATA)).toHaveBeenCalledTimes(1));
+                    play.click(play.findByText("rule-1/2023-11-15"));
+                    play.waitFor(() -> play.expect(play.spy(SHARD_DATA)).toHaveBeenCalledTimes(2));
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
                     expectNoProblems(play);
                     play.run("Another query's table asks to be refreshed", () -> otherTable.refresh());
                     play.sleep(200);
-                    play.expect(play.spy(SHARD_DATA)).toHaveBeenCalledTimes(1);
+                    play.expect(play.spy(SHARD_DATA)).toHaveBeenCalledTimes(2);
                     expectNoProblems(play);
                 })
                 // Duplicate Management shows the columns of the duplicate checks found
@@ -383,7 +460,111 @@ public final class AnalyticRuleEditorStories {
                     play.expect(play.getByText("carol")).toBeInTheDocument();
                     expectReadOnlyNote(play, true);
                     expectNoProblems(play);
+                })
+                // Editing a notification twice without selecting it again edits it as last edited, and
+                // it stays one row. The selection kept the notification as first read, so the second
+                // Edit showed its old values, and its OK added a second row, as the old notification
+                // was no longer listed
+                .story("EditNotificationTwice", context -> render(context, NOTIFICATION_FIXTURES, UI_CONFIG))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Notifications");
+                    play.click(play.findByText("ops@example.com", StroomDom.GRID_CELL_TEXT));
+                    final Query edit = play.getByTitle("Edit Selected Notification");
+                    play.waitFor(() -> play.expect(edit).not().toHaveAttribute("aria-disabled"));
+                    play.click(edit);
+                    final Play first = dialog(screen, "Edit Notification");
+                    play.waitFor(() -> play.expect(toField(first)).toHaveValue("ops@example.com"));
+                    play.clear(toField(first));
+                    play.type(toField(first), "sec@example.com");
+                    play.click(first.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Notification", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.findByText("sec@example.com", StroomDom.GRID_CELL_TEXT);
+                    // Edit again, the row still selected
+                    play.click(edit);
+                    final Play second = dialog(screen, "Edit Notification");
+                    play.waitFor(() -> play.expect(toField(second)).toHaveValue("sec@example.com"));
+                    play.clear(toField(second));
+                    play.type(toField(second), "soc@example.com");
+                    play.click(second.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Notification", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    final Query row = play.findByText("soc@example.com", StroomDom.GRID_CELL_TEXT)
+                            .closest(StroomDom.GRID_ROW);
+                    play.expect(row).toHaveClass(StroomDom.SELECTED_ROW);
+                    play.expect(play.queryByText("sec@example.com", StroomDom.GRID_CELL_TEXT)).toBeNull();
+                    play.expect(play.within(row.closest(GRID)).querySelectorAll(StroomDom.GRID_ROW))
+                            .toHaveLength(1);
+                    expectNoProblems(play);
+                })
+                // Deleting the selected execution schedule (the last) selects the one now last once
+                // the schedules are found again, and shows its history. The deleted one once stayed
+                // selected, and the history still showed the deleted schedule's
+                .story("DeleteScheduleSelectsNext", context -> render(context, SCHEDULE_FIXTURES, UI_CONFIG,
+                        DocumentPermission.EDIT, true))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Execution");
+                    // The first schedule is selected as the list loads
+                    play.waitFor(() -> play.expect(play.getByText("Hourly ran")).toBeInTheDocument());
+                    play.click(play.getByText("Nightly"));
+                    play.waitFor(() -> play.expect(play.getByText("Nightly ran")).toBeInTheDocument());
+                    final Query delete = play.getByTitle("Delete Selected Execution Schedule");
+                    play.waitFor(() -> play.expect(delete).not().toHaveAttribute("aria-disabled"));
+                    play.click(delete);
+                    play.click(screen.within(screen.findByText(TextMatch.containing(
+                                    "delete the execution schedule 'Nightly'?"))
+                            .closest(StroomDom.DIALOG)).getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.queryByText("Nightly")).toBeNull());
+                    play.waitFor(() -> play.expect(play.getByText("Hourly").closest(StroomDom.GRID_ROW))
+                            .toHaveClass(StroomDom.SELECTED_ROW));
+                    play.waitFor(() -> play.expect(play.getByText("Hourly ran")).toBeInTheDocument());
+                    play.expect(play.queryByText("Nightly ran")).toBeNull();
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/executionSchedule/v1/deleteExecutionSchedule")
+                                    .withJsonBodyContaining("{\"uuid\": \"sched-b\"}")
+                                    .toSpyMatcher());
+                    expectNoProblems(play);
+                })
+                // Deleting the selected duplicate check rows selects the row now in their place. The
+                // deleted rows once stayed selected, and Delete enabled for them
+                .story("DeleteDuplicatesSelectsNext", context -> render(context, DUPLICATE_FIXTURES,
+                        UI_CONFIG, DocumentPermission.EDIT, true))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Duplicate Management");
+                    play.click(play.findByText("alpha"));
+                    final Query delete = play.getByTitle("Delete Selected Duplicate Check Rows");
+                    play.waitFor(() -> play.expect(delete).not().toHaveAttribute("aria-disabled"));
+                    play.click(delete);
+                    play.click(screen.within(screen.findByText(TextMatch.containing("delete the selected row?"))
+                            .closest(StroomDom.DIALOG)).getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.queryByText("alpha")).toBeNull());
+                    // beta, now in alpha's place, is selected (UI-GUIDE.md, "What a list selects")
+                    play.waitFor(() -> play.expect(play.getByText("beta").closest(StroomDom.GRID_ROW))
+                            .toHaveClass(StroomDom.SELECTED_ROW));
+                    play.expect(play.querySelectorAll("." + StroomDom.SELECTED_ROW)).toHaveLength(1);
+                    play.expect(delete).not().toHaveAttribute("aria-disabled");
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/duplicateCheck/v1/delete").toSpyMatcher());
+                    expectNoProblems(play);
                 });
+    }
+
+    // A page of results
+    private static String page(final String... values) {
+        return "{\"values\": [" + String.join(", ", values) + "], \"pageResponse\": {\"offset\": 0, \"length\": "
+               + values.length + ", \"total\": " + values.length + ", \"exact\": true}}";
+    }
+
+    // A schedule's history: one execution, with the given message
+    private static String history(final String schedule, final String message) {
+        return page("""
+                {"id": 1, "executionTimeMs": 1700000000000, "effectiveExecutionTimeMs": 1699999000000,
+                  "status": "Complete", "message": "MESSAGE", "executionSchedule": SCHEDULE}"""
+                .replace("MESSAGE", message)
+                .replace("SCHEDULE", schedule));
     }
 
     /// Adds the routes of an analytic rule's or report's editor: the query pane's (a complete
@@ -399,6 +580,11 @@ public final class AnalyticRuleEditorStories {
                         RestReply.json(NODE1_SHARDS))
                 .route(RequestMatcher.post("/analyticDataShard/v1/find").withQuery("nodeName=node9"),
                         RestReply.json(NODE9_SHARDS))
+                // The selected shard's data (the first shard is selected, as the table shows it)
+                .route(RequestMatcher.post("/analyticDataShard/v1/getData"), request -> {
+                    onShardData.run();
+                    return RestReply.json(QueryEditorStories.TABLE);
+                })
                 .route(RequestMatcher.post("/duplicateCheck/v1/find"), RestReply.json(DUPLICATES))
                 .route(RequestMatcher.post("/analyticRule/v1/testTemplate"),
                         RestReply.json("{\"string\": \"Detection: My Rule\"}"))
@@ -540,13 +726,28 @@ public final class AnalyticRuleEditorStories {
                                  final RestFixtures fixtures,
                                  final String uiConfig,
                                  final DocumentPermission permission) {
-        // Each story's table builder progress starts again at its first reply
+        return render(context, fixtures, uiConfig, permission, false);
+    }
+
+    // With real alerts, for a story that answers a confirmation
+    private static Widget render(final StoryContext context,
+                                 final RestFixtures fixtures,
+                                 final String uiConfig,
+                                 final DocumentPermission permission,
+                                 final boolean realAlerts) {
+        // Each story's table builder progress starts again at its first reply, and nothing is
+        // deleted yet
         trackerRequests = 0;
+        nightlyDeleted = false;
+        alphaDeleted = false;
         final QueryScreenGinjector injector = GWT.create(QueryScreenGinjector.class);
-        final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
+        final ScreenHarness.Builder builder = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
-                .uiConfig(uiConfig)
-                .build();
+                .uiConfig(uiConfig);
+        if (realAlerts) {
+            builder.realAlerts();
+        }
+        final ScreenHarness harness = builder.build();
         harness.getSecurityContext().setDocumentPermission(permission);
         final AnalyticRuleResource resource = GWT.create(AnalyticRuleResource.class);
         // Opened once Stroom has started, as AnalyticsPlugin opens a document

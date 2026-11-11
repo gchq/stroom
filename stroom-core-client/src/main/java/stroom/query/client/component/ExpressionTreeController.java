@@ -24,6 +24,7 @@ import stroom.query.client.Operator;
 import stroom.query.client.Term;
 import stroom.query.client.model.ExpressionModel;
 import stroom.query.client.model.FieldSelectionListModel;
+import stroom.query.client.model.FieldValuesScope;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.Listeners;
@@ -44,6 +45,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /// An expression's tree of terms and operators ([ExpressionTree]): reads and writes the
 /// expression, keeps its selection, adds, copies, disables and deletes its items, and gives the
@@ -52,6 +54,7 @@ import java.util.function.Predicate;
 public class ExpressionTreeController extends Controller implements HasContextMenuHandlers {
 
     private final Provider<TermEditorController> termEditorControllerProvider;
+    private final List<TermEditorController> termEditorControllers = new ArrayList<>();
     private ExpressionTree view;
     private DefaultTreeForTreeLayout<Item> tree;
     private SingleItemSelectionModel<Item> selectionModel;
@@ -85,7 +88,7 @@ public class ExpressionTreeController extends Controller implements HasContextMe
         this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         for (final TermEditor termEditor : view.getTermEditors()) {
-            make(termEditorControllerProvider).attach(termEditor);
+            termEditorControllers.add(make(termEditorControllerProvider).attach(termEditor));
         }
         view.setSelectionModel(selectionModel);
         // The Delete key deletes the focused item, as the toolbar's Delete does the selected one
@@ -117,6 +120,14 @@ public class ExpressionTreeController extends Controller implements HasContextMe
     public void init(final DocRef dataSource,
                      final FieldSelectionListModel fieldSelectionListModel) {
         view.init(dataSource, fieldSelectionListModel);
+    }
+
+    /// Sets what the term editors' value picker counts a field's values across, e.g. a dashboard's
+    /// time range and its query's expression. Without it, values are counted across all time.
+    ///
+    /// @param valueScopeSupplier Gives the scope when the picker opens, or null.
+    public void setValueScopeSupplier(final Supplier<FieldValuesScope> valueScopeSupplier) {
+        termEditorControllers.forEach(controller -> controller.setValueScopeSupplier(valueScopeSupplier));
     }
 
     /// Offer only the conditions that pass `conditionFilter`, on top of each field's own
@@ -213,6 +224,7 @@ public class ExpressionTreeController extends Controller implements HasContextMe
             newTerm.setCondition(term.getCondition());
             newTerm.setValue(term.getValue());
             newTerm.setDocRef(term.getDocRef());
+            newTerm.setOptions(term.getOptions());
             newTerm.setEnabled(term.isEnabled());
             tree.addChild(parent, newTerm);
         }

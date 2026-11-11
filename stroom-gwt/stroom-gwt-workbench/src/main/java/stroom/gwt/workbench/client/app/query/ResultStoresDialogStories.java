@@ -20,6 +20,7 @@ package stroom.gwt.workbench.client.app.query;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
+import stroom.gwt.workbench.client.app.rest.RestHandler;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ContentStorySupport;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
@@ -61,6 +62,15 @@ public final class ResultStoresDialogStories {
     private static final String STORES = page(
             store("admin", "q-1", 5000000, false, "DASHBOARD_UI"),
             store("analyst", "q-2", 2000, true, "TABLE_BUILDER_ANALYTIC"));
+
+    // The stores once admin's search has completed
+    private static final String STORES_COMPLETE = page(
+            store("admin", "q-1", 5000000, true, "DASHBOARD_UI"),
+            store("analyst", "q-2", 2000, true, "TABLE_BUILDER_ANALYTIC"));
+
+    // Whether the server now finds admin's search complete (the stores found are then
+    // STORES_COMPLETE). Each rendering starts with it running
+    private static boolean adminComplete;
 
     private ResultStoresDialogStories() {
         // Static utility
@@ -144,6 +154,25 @@ public final class ResultStoresDialogStories {
                     screen.findByText("user-100");
                     play.expect(screen.queryByText("user-0")).toBeNull();
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // A store found complete by a refresh stays selected, and can no longer be terminated.
+                // The selection kept the store as first found, running, so Terminate stayed enabled
+                .story("RefreshFollowsSelectedStore", ResultStoresDialogStories::renderCompleting)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(screen.findByText("admin"));
+                    final Query terminate = screen.getByTitle("Terminate Search");
+                    play.waitFor(() -> play.expect(terminate).not().toHaveAttribute("aria-disabled"));
+                    play.run("The server now finds admin's search complete", () -> adminComplete = true);
+                    play.click(screen.getByRole("button", "Refresh"));
+                    // admin is the store's owner and its user: both in its row
+                    final Query admin = screen.getAllByText("admin").nth(0).closest(StroomDom.GRID_ROW);
+                    play.waitFor(() -> play.expect(admin).toHaveTextContent(TextMatch.containing("true")));
+                    play.expect(admin).toHaveClass(StroomDom.SELECTED_ROW);
+                    play.waitFor(() -> play.expect(terminate).toHaveAttribute("aria-disabled", "true"));
+                    play.expect(screen.getByTitle("Delete Selected Result Store"))
+                            .not().toHaveAttribute("aria-disabled");
+                    ContentStorySupport.expectNoProblems(play);
                 });
     }
 
@@ -173,9 +202,21 @@ public final class ResultStoresDialogStories {
     }
 
     private static Widget render(final StoryContext context, final String stores) {
+        return render(context, request -> RestReply.json(stores));
+    }
+
+    // STORES until the play says admin's search is complete, then STORES_COMPLETE
+    private static Widget renderCompleting(final StoryContext context) {
+        return render(context, request -> RestReply.json(adminComplete
+                ? STORES_COMPLETE
+                : STORES));
+    }
+
+    private static Widget render(final StoryContext context, final RestHandler find) {
+        adminComplete = false;
         final RestFixtures fixtures = RestFixtures.builder()
                 .get("/node/v1/all", RestReply.json("[\"node1\"]"))
-                .post(FIND_PATH, RestReply.json(stores))
+                .post(FIND_PATH, find)
                 .post("/result-store/v1/terminate/node1", RestReply.json("true"))
                 .post("/result-store/v1/destroy/node1", RestReply.json("true"))
                 .post("/result-store/v1/update/node1", RestReply.json("true"))

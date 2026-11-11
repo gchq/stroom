@@ -119,15 +119,6 @@ public class UserAccessListController extends Controller {
                             .exec();
                 }
 
-                @Override
-                protected void changeData(final ResultPage<UserAccessRow> data) {
-                    super.changeData(data);
-                    if (!data.isEmpty()) {
-                        view.getSelectionModel().setSelected(data.getFirst());
-                    } else {
-                        view.getSelectionModel().clear();
-                    }
-                }
             };
             view.setDataProvider(dataProvider);
         } else {

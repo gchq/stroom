@@ -33,6 +33,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.List;
+
 /// Shows the internal identity provider's signing keys, and revokes them.
 ///
 /// It exists so that a key believed to have been exposed can be withdrawn, which otherwise means
@@ -105,7 +107,11 @@ public class SigningKeysController extends ContentTabController implements HasRe
                 restFactory
                         .create(SIGNING_KEY_RESOURCE)
                         .method(res -> res.revoke(row.getId()))
-                        .onSuccess(revoked -> afterRevoke())
+                        .onSuccess(revoked -> {
+                            // Still listed, as revoked, it stays selected; else the key in its place
+                            getSelectionModel().selectNextAfterRemove(List.of(row));
+                            refresh();
+                        })
                         .onFailure(restError -> {
                             AlertEvent.fireError(this, restError.getMessage(), null);
                             refresh();
@@ -122,7 +128,7 @@ public class SigningKeysController extends ContentTabController implements HasRe
                 restFactory
                         .create(SIGNING_KEY_RESOURCE)
                         .method(SigningKeyResource::revokeAll)
-                        .onSuccess(revoked -> afterRevoke())
+                        .onSuccess(revoked -> refresh())
                         .onFailure(restError -> {
                             AlertEvent.fireError(this, restError.getMessage(), null);
                             refresh();
@@ -131,11 +137,6 @@ public class SigningKeysController extends ContentTabController implements HasRe
                         .exec();
             }
         });
-    }
-
-    private void afterRevoke() {
-        getSelectionModel().clear();
-        refresh();
     }
 
     // What this costs depends entirely on which key it is, and that is not obvious from looking at the row.

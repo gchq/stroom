@@ -157,6 +157,8 @@ public class ExplorerTree extends Component implements Focus {
         selectionEventManager.setTypedHandler(typedHandler);
         selectionEventManager.selectionFollowsFocus = selectionFollowsFocus;
         tree.setSelectionModel(selectionModel, selectionEventManager);
+        // The open document stays chosen under a closed folder
+        tree.setKeepHiddenSelection(true);
     }
 
     // An item's level, and whether it is a leaf or open

@@ -40,6 +40,7 @@ import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -87,6 +88,9 @@ public class ScheduledProcessListController extends Controller {
     public ScheduledProcessListController attach(final ScheduledProcessList view) {
         this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
+        // The history pane beside it shows the selected schedule's (UI-GUIDE.md, "What a list
+        // selects"), so a schedule is always selected while there are any
+        view.getSelectionModel().setSelectFirst(true);
         view.addColumns(dateTimeFormatter::format, refCells.configure(new UserRefCell.Builder<>()));
         view.setOnEnabledChange(this::updateEnabledState);
         view.setOnSortChange(this::refresh);
@@ -105,6 +109,8 @@ public class ScheduledProcessListController extends Controller {
         if (view.isReadOnly()) {
             return;
         }
+        // The row ticked is selected (UI-GUIDE.md, "What a list selects")
+        view.getSelectionModel().setSelected(row);
         restFactory
                 .create(EXECUTION_SCHEDULE_RESOURCE)
                 .method(resource ->
@@ -154,17 +160,7 @@ public class ScheduledProcessListController extends Controller {
                         restFactory
                                 .create(EXECUTION_SCHEDULE_RESOURCE)
                                 .method(res -> res.fetchExecutionSchedule(request))
-                                .onSuccess(results -> {
-                                    dataConsumer.accept(results);
-
-                                    // Select the first item if there are any, so that we populate the history pane
-                                    // to save the user having to click
-                                    if (results != null
-                                        && results.hasItems()
-                                        && view.getSelectionModel().getSelected() == null) {
-                                        view.getSelectionModel().setSelected(results.getFirst());
-                                    }
-                                })
+                                .onSuccess(dataConsumer)
                                 .onFailure(errorHandler)
                                 .owner(ScheduledProcessListController.this)
                                 .taskMonitorFactory(view.getTaskMonitor())
@@ -189,8 +185,15 @@ public class ScheduledProcessListController extends Controller {
         return view.getSelectionModel().getSelected();
     }
 
-    /// @param executionSchedule The schedule to select.
+    /// @param executionSchedule The schedule to select, or `null` for none.
     public void setSelected(final ExecutionSchedule executionSchedule) {
         view.getSelectionModel().setSelected(executionSchedule);
+    }
+
+    /// Selects the schedule in place of one deleted, once the list is fetched again.
+    ///
+    /// @param executionSchedule The schedule deleted.
+    public void selectNextAfterRemove(final ExecutionSchedule executionSchedule) {
+        view.getSelectionModel().selectNextAfterRemove(List.of(executionSchedule));
     }
 }

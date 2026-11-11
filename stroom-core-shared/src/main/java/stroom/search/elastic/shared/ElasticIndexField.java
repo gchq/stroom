@@ -21,6 +21,7 @@ import stroom.query.api.datasource.DenseVectorFieldConfig;
 import stroom.query.api.datasource.Field;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.IndexField;
+import stroom.query.api.datasource.QueryOptionSet;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -29,6 +30,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -45,7 +48,14 @@ import java.util.Objects;
         "fldType",
         "nativeType",
         "indexed",
-        "denseVectorFieldConfig"
+        "denseVectorFieldConfig",
+        "virtual",
+        "multiFieldParent",
+        "sourceIndices",
+        "conflictingTypes",
+        "mappingParameters",
+        "queryOptionSet",
+        "supportsTopValues"
 })
 @JsonInclude(Include.NON_NULL)
 public class ElasticIndexField implements IndexField {
@@ -70,6 +80,28 @@ public class ElasticIndexField implements IndexField {
     private final boolean indexed;
     @JsonProperty
     private final DenseVectorFieldConfig denseVectorFieldConfig;
+    /// Whether this is a virtual field, defined in the index doc's field settings rather than the index mapping
+    @JsonProperty
+    @JsonInclude(Include.NON_DEFAULT)
+    private final boolean virtual;
+    /// For a multi-field (e.g. `title.keyword`), the full name of the field it belongs to (e.g. `title`)
+    @JsonProperty
+    private final String multiFieldParent;
+    /// The concrete indices whose mappings hold this field
+    @JsonProperty
+    private final List<String> sourceIndices;
+    /// When source indices map this field to different types, the native type in each index, keyed by index name
+    @JsonProperty
+    private final Map<String, String> conflictingTypes;
+    /// The mapping parameters set for this field, other than its type and child fields, keyed by parameter name
+    @JsonProperty
+    private final Map<String, String> mappingParameters;
+    /// The query options the field's terms may set, or `null` if it has none
+    @JsonProperty
+    private final QueryOptionSet queryOptionSet;
+    /// Whether the value picker can list the field's most common values; `null` means it can't
+    @JsonProperty
+    private final Boolean supportsTopValues;
 
     @JsonCreator
     public ElasticIndexField(
@@ -81,12 +113,40 @@ public class ElasticIndexField implements IndexField {
             @JsonProperty("fldType") final FieldType fldType,
             @JsonProperty("nativeType") final String nativeType,
             @JsonProperty("indexed") final Boolean indexed,
-            @JsonProperty("denseVectorFieldConfig") final DenseVectorFieldConfig denseVectorFieldConfig) {
+            @JsonProperty("denseVectorFieldConfig") final DenseVectorFieldConfig denseVectorFieldConfig,
+            @JsonProperty("virtual") final Boolean virtual,
+            @JsonProperty("multiFieldParent") final String multiFieldParent,
+            @JsonProperty("sourceIndices") final List<String> sourceIndices,
+            @JsonProperty("conflictingTypes") final Map<String, String> conflictingTypes,
+            @JsonProperty("mappingParameters") final Map<String, String> mappingParameters,
+            @JsonProperty("queryOptionSet") final QueryOptionSet queryOptionSet,
+            @JsonProperty("supportsTopValues") final Boolean supportsTopValues) {
         this.fldName = convertLegacyName(fldName, fieldName);
         this.fldType = convertLegacyType(fldType, fieldUse);
         this.nativeType = convertLegacyNativeType(nativeType, fieldType);
         this.indexed = Objects.requireNonNullElse(indexed, false);
         this.denseVectorFieldConfig = denseVectorFieldConfig;
+        this.virtual = Boolean.TRUE.equals(virtual);
+        this.multiFieldParent = multiFieldParent;
+        this.sourceIndices = emptyToNull(sourceIndices);
+        this.conflictingTypes = emptyToNull(conflictingTypes);
+        this.mappingParameters = emptyToNull(mappingParameters);
+        this.queryOptionSet = queryOptionSet;
+        this.supportsTopValues = Boolean.TRUE.equals(supportsTopValues)
+                ? Boolean.TRUE
+                : null;
+    }
+
+    private static <T> List<T> emptyToNull(final List<T> list) {
+        return list == null || list.isEmpty()
+                ? null
+                : list;
+    }
+
+    private static <K, V> Map<K, V> emptyToNull(final Map<K, V> map) {
+        return map == null || map.isEmpty()
+                ? null
+                : map;
     }
 
     private static String convertLegacyName(final String name, final String fieldName) {
@@ -159,6 +219,47 @@ public class ElasticIndexField implements IndexField {
         return denseVectorFieldConfig;
     }
 
+    /// @return `true` if this is a virtual field defined in the index doc's field settings
+    public boolean isVirtual() {
+        return virtual;
+    }
+
+    /// @return for a multi-field, the full name of the field it belongs to, otherwise `null`
+    public String getMultiFieldParent() {
+        return multiFieldParent;
+    }
+
+    /// @return the concrete indices whose mappings hold this field, or `null` if not known
+    public List<String> getSourceIndices() {
+        return sourceIndices;
+    }
+
+    /// @return the native type of this field in each source index, keyed by index name, when the indices
+    /// disagree on its type; otherwise `null`
+    public Map<String, String> getConflictingTypes() {
+        return conflictingTypes;
+    }
+
+    /// @return `true` if source indices map this field to different types
+    public boolean hasTypeConflict() {
+        return conflictingTypes != null;
+    }
+
+    /// @return the mapping parameters set for this field, keyed by parameter name, or `null` if none
+    public Map<String, String> getMappingParameters() {
+        return mappingParameters;
+    }
+
+    /// @return the query options the field's terms may set, or `null` if it has none
+    public QueryOptionSet getQueryOptionSet() {
+        return queryOptionSet;
+    }
+
+    /// @return `Boolean.TRUE` if the value picker can list the field's most common values, otherwise `null`
+    public Boolean getSupportsTopValues() {
+        return supportsTopValues;
+    }
+
     @Override
     @JsonIgnore
     public String getDisplayValue() {
@@ -175,17 +276,26 @@ public class ElasticIndexField implements IndexField {
         }
         final ElasticIndexField that = (ElasticIndexField) o;
         return indexed == that.indexed &&
+               virtual == that.virtual &&
                fieldUse == that.fieldUse &&
                Objects.equals(fieldName, that.fieldName) &&
                Objects.equals(fieldType, that.fieldType) &&
                Objects.equals(fldName, that.fldName) &&
                fldType == that.fldType &&
-               Objects.equals(nativeType, that.nativeType);
+               Objects.equals(nativeType, that.nativeType) &&
+               Objects.equals(multiFieldParent, that.multiFieldParent) &&
+               Objects.equals(sourceIndices, that.sourceIndices) &&
+               Objects.equals(conflictingTypes, that.conflictingTypes) &&
+               Objects.equals(mappingParameters, that.mappingParameters) &&
+               Objects.equals(queryOptionSet, that.queryOptionSet) &&
+               Objects.equals(supportsTopValues, that.supportsTopValues);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(fieldUse, fieldName, fieldType, fldName, fldType, nativeType, indexed);
+        return Objects.hash(fieldUse, fieldName, fieldType, fldName, fldType, nativeType, indexed, virtual,
+                multiFieldParent, sourceIndices, conflictingTypes, mappingParameters, queryOptionSet,
+                supportsTopValues);
     }
 
     @Override
@@ -208,6 +318,13 @@ public class ElasticIndexField implements IndexField {
         private String nativeType;
         private boolean indexed = true;
         private DenseVectorFieldConfig denseVectorFieldConfig;
+        private boolean virtual;
+        private String multiFieldParent;
+        private List<String> sourceIndices;
+        private Map<String, String> conflictingTypes;
+        private Map<String, String> mappingParameters;
+        private QueryOptionSet queryOptionSet;
+        private Boolean supportsTopValues;
 
         private Builder() {
         }
@@ -218,6 +335,13 @@ public class ElasticIndexField implements IndexField {
             this.nativeType = indexField.nativeType;
             this.indexed = indexField.indexed;
             this.denseVectorFieldConfig = indexField.denseVectorFieldConfig;
+            this.virtual = indexField.virtual;
+            this.multiFieldParent = indexField.multiFieldParent;
+            this.sourceIndices = indexField.sourceIndices;
+            this.conflictingTypes = indexField.conflictingTypes;
+            this.mappingParameters = indexField.mappingParameters;
+            this.queryOptionSet = indexField.queryOptionSet;
+            this.supportsTopValues = indexField.supportsTopValues;
         }
 
         public Builder fldName(final String fldName) {
@@ -245,6 +369,55 @@ public class ElasticIndexField implements IndexField {
             return this;
         }
 
+        /// @param virtual `true` if this is a virtual field
+        /// @return this builder
+        public Builder virtual(final boolean virtual) {
+            this.virtual = virtual;
+            return this;
+        }
+
+        /// @param multiFieldParent for a multi-field, the full name of the field it belongs to
+        /// @return this builder
+        public Builder multiFieldParent(final String multiFieldParent) {
+            this.multiFieldParent = multiFieldParent;
+            return this;
+        }
+
+        /// @param sourceIndices the concrete indices whose mappings hold the field
+        /// @return this builder
+        public Builder sourceIndices(final List<String> sourceIndices) {
+            this.sourceIndices = sourceIndices;
+            return this;
+        }
+
+        /// @param conflictingTypes the native type in each source index, keyed by index name, when they differ
+        /// @return this builder
+        public Builder conflictingTypes(final Map<String, String> conflictingTypes) {
+            this.conflictingTypes = conflictingTypes;
+            return this;
+        }
+
+        /// @param mappingParameters the mapping parameters set for the field, keyed by parameter name
+        /// @return this builder
+        public Builder mappingParameters(final Map<String, String> mappingParameters) {
+            this.mappingParameters = mappingParameters;
+            return this;
+        }
+
+        /// @param queryOptionSet the query options the field's terms may set, or `null`
+        /// @return this builder
+        public Builder queryOptionSet(final QueryOptionSet queryOptionSet) {
+            this.queryOptionSet = queryOptionSet;
+            return this;
+        }
+
+        /// @param supportsTopValues `true` if the value picker can list the field's most common values
+        /// @return this builder
+        public Builder supportsTopValues(final Boolean supportsTopValues) {
+            this.supportsTopValues = supportsTopValues;
+            return this;
+        }
+
         public ElasticIndexField build() {
             return new ElasticIndexField(
                     null,
@@ -254,7 +427,14 @@ public class ElasticIndexField implements IndexField {
                     fldType,
                     nativeType,
                     indexed,
-                    denseVectorFieldConfig);
+                    denseVectorFieldConfig,
+                    virtual,
+                    multiFieldParent,
+                    sourceIndices,
+                    conflictingTypes,
+                    mappingParameters,
+                    queryOptionSet,
+                    supportsTopValues);
         }
     }
 }

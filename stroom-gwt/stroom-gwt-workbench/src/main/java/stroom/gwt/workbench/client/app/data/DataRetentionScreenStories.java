@@ -147,10 +147,8 @@ public final class DataRetentionScreenStories {
                     // The panel is the ExpressionTreeController's tree under the
                     // grid (DataRetentionPolicy's split panel), with no class of its own
                     final Play panel = play.within(play.querySelector(EXPRESSION_PANEL));
-                    // Nothing selected -> no term is shown
-                    play.expect(panel.queryByText(TextMatch.containingIgnoreCase("Feed"))).toBeNull();
-                    // Select the rule -> its expression shows, read only (labels, not editors)
-                    play.click(play.getByText("Keep 30 days"));
+                    // The first rule is selected, as the panel shows the selected rule -> its
+                    // expression shows, read only (labels, not editors)
                     play.waitFor(() -> play.expect(panel.getByText(TextMatch.regex("Feed\\s+contains\\s+TEST", "i")))
                             .toHaveClass("expression-item__label"));
                     play.expect(panel.queryByDisplayValue("TEST")).toBeNull();
@@ -288,6 +286,54 @@ public final class DataRetentionScreenStories {
                     play.findByText("TEST_FEED");
                     play.expect(play.queryByTitle("Clear Filter")).toBeNull();
                     expectNoProblems(play);
+                })
+                // A rule added above the second rule is selected, and its row is the one shown
+                // selected. Before, the first row was selected instead
+                .story("AddRuleSelectsIt", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("Keep 5 years"));
+                    play.waitFor(() -> play.expect(row(play, "Keep 5 years")).toHaveClass(StroomDom.SELECTED_ROW));
+                    play.click(play.getByTitle("Add Rule Above"));
+                    final Play dialog = dialog(screen, "Add New Rule");
+                    play.type(dialog.querySelector("#dataRetentionRuleRuleName"), "Keep a week");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Add New Rule", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    // The new rule, between the two, is the one selected
+                    play.waitFor(() -> play.expect(row(play, "Keep a week")).toHaveClass(StroomDom.SELECTED_ROW));
+                    play.expect(play.querySelectorAll("." + StroomDom.SELECTED_ROW)).toHaveLength(1);
+                    play.expect(row(play, "Keep 30 days")).not().toHaveClass(StroomDom.SELECTED_ROW);
+                    expectNoProblems(play);
+                })
+                // Deleting a rule selects the rule now in its place (UI-GUIDE.md, "What a list
+                // selects"). It once looked the deleted rule up after the rules were renumbered,
+                // found nothing and threw
+                .story("DeleteSelectsNext", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("Keep 30 days"));
+                    play.waitFor(() -> play.expect(row(play, "Keep 30 days")).toHaveClass(StroomDom.SELECTED_ROW));
+                    play.click(play.getByTitle("Delete Selected Rule"));
+                    screen.findByText(TextMatch.containing("delete rule 1 \"Keep 30 days\"?"));
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.queryByText("Keep 30 days")).toBeNull());
+                    play.waitFor(() -> play.expect(row(play, "Keep 5 years")).toHaveClass(StroomDom.SELECTED_ROW));
+                    play.expect(play.querySelectorAll("." + StroomDom.SELECTED_ROW)).toHaveLength(1);
+                    expectNoProblems(play);
+                })
+                // A rule moved stays selected
+                .story("MoveKeepsIt", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    play.click(play.findByText("Keep 5 years"));
+                    play.waitFor(() -> play.expect(row(play, "Keep 5 years")).toHaveClass(StroomDom.SELECTED_ROW));
+                    play.click(play.getByTitle("Move Rule Up"));
+                    // Rule 1 now
+                    play.waitFor(() -> play.expect(play.within(row(play, "Keep 5 years")).getByText("1"))
+                            .toBeInTheDocument());
+                    play.expect(row(play, "Keep 5 years")).toHaveClass(StroomDom.SELECTED_ROW);
+                    play.expect(play.querySelectorAll("." + StroomDom.SELECTED_ROW)).toHaveLength(1);
+                    expectNoProblems(play);
                 });
     }
 
@@ -385,6 +431,8 @@ public final class DataRetentionScreenStories {
         final ProcessingScreenGinjector injector = GWT.create(ProcessingScreenGinjector.class);
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
+                // Delete asks first
+                .realAlerts()
                 .build();
         harness.afterStartUp(() -> harness.show(injector.getDataRetentionController()));
         return harness.asWidget();

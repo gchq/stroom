@@ -137,7 +137,11 @@ public class JobNodeListController extends Controller {
                 this::setTaskLimit);
         actions.setList(view.getSelectionModel(), view.getTaskMonitor(), view::isNodeEnabled,
                 this::internalRefresh);
-        view.setOnEnabledChange(actions::setEnabled);
+        view.setOnEnabledChange((row, enabled) -> {
+            // The row ticked is selected (UI-GUIDE.md, "What a list selects")
+            view.getSelectionModel().setSelected(row);
+            actions.setEnabled(row, enabled);
+        });
         view.setOnEditSchedule(actions::showSchedule);
         view.setOnShowActionMenu(actions::showActionMenu);
         view.setOnShowEnabledChange(this::internalRefresh);
@@ -252,7 +256,13 @@ public class JobNodeListController extends Controller {
         if (dataProvider.getDataDisplays().isEmpty()) {
             view.setDataProvider(dataProvider);
         }
-        setJobNameCriteria(NullSafe.get(job, Job::getName));
+        final String jobName = NullSafe.get(job, Job::getName);
+        if (!Objects.equals(jobName, getJobNameCriteria())) {
+            // Another job's nodes: the rows selected were the last job's, so none is now (the batch
+            // schedule would otherwise change rows no longer shown)
+            view.getSelectionModel().clear();
+        }
+        setJobNameCriteria(jobName);
         internalRefresh();
     }
 

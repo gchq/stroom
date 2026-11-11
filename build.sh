@@ -87,8 +87,7 @@ main() {
     --scan \
     --stacktrace \
     "${GWT_ARGS[@]}" \
-    stroom-app-gwt:gwtCompile \
-    stroom-dashboard-gwt:gwtCompile
+    stroom-app-gwt:gwtCompile
 
   ## Compile the application GWT UI
   #echo -e "${GREEN}Do the GWT app compile${NC}"
@@ -98,15 +97,6 @@ main() {
   #  --stacktrace \
   #  "${GWT_ARGS[@]}" \
   #  stroom-app-gwt:gwtCompile
-  #
-  ## Compile the dashboard GWT UI
-  #echo -e "${GREEN}Do the GWT dashboard compile${NC}"
-  #./gradlew \
-  #  "${GRADLE_ARGS[@]}" \
-  #  --scan \
-  #  --stacktrace \
-  #  "${GWT_ARGS[@]}" \
-  #  stroom-dashboard-gwt:gwtCompile
 
   # Make the distribution.
   echo -e "${GREEN}Build the distribution${NC}"
@@ -121,8 +111,7 @@ main() {
     copyFilesForStroomDockerBuild \
     copyFilesForProxyDockerBuild \
     -x test \
-    -x stroom-app-gwt:gwtCompile \
-    -x stroom-dashboard-gwt:gwtCompile
+    -x stroom-app-gwt:gwtCompile
 
   echo -e "${GREEN}Done${NC}"
 }

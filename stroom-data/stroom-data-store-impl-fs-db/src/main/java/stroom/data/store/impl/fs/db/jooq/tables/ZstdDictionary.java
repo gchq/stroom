@@ -17,13 +17,14 @@ import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.Select;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableLike;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -57,7 +58,7 @@ public class ZstdDictionary extends TableImpl<ZstdDictionaryRecord> {
     /**
      * The column <code>stroom.zstd_dictionary.id</code>.
      */
-    public final TableField<ZstdDictionaryRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<ZstdDictionaryRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).generatedByDefaultAsIdentity(), this, "");
 
     /**
      * The column <code>stroom.zstd_dictionary.version</code>.
@@ -207,7 +208,7 @@ public class ZstdDictionary extends TableImpl<ZstdDictionaryRecord> {
      */
     @Override
     public ZstdDictionary where(Condition condition) {
-        return new ZstdDictionary(getQualifiedName(), aliased() ? this : null, null, condition);
+        return new ZstdDictionary(getQualifiedName(), aliased() ? this : null, null, Internal.condition(this, condition));
     }
 
     /**
@@ -274,7 +275,7 @@ public class ZstdDictionary extends TableImpl<ZstdDictionaryRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public ZstdDictionary whereExists(Select<?> select) {
+    public ZstdDictionary whereExists(TableLike<?> select) {
         return where(DSL.exists(select));
     }
 
@@ -282,7 +283,7 @@ public class ZstdDictionary extends TableImpl<ZstdDictionaryRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public ZstdDictionary whereNotExists(Select<?> select) {
+    public ZstdDictionary whereNotExists(TableLike<?> select) {
         return where(DSL.notExists(select));
     }
 }

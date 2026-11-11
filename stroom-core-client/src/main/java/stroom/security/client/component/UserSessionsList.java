@@ -62,7 +62,8 @@ public class UserSessionsList extends Component {
         initWidget(BINDER.createAndBindUi(this));
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(SessionDetails::getSessionHandle);
-        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        // One session at a time, as End Session ends one
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
         endSessionButton.setOnClick(() -> onEndSession.run());
         selectionModel.addSelectionHandler(e -> setButtonStates());
     }
@@ -75,14 +76,21 @@ public class UserSessionsList extends Component {
         addColumns();
     }
 
-    /// Shows sessions, none selected.
+    /// Shows sessions, the one selected still selected if it is among them.
     ///
     /// @param rows The sessions.
     public void setRows(final List<SessionDetails> rows) {
-        selectionModel.clear();
         dataGrid.setRowData(0, rows);
         dataGrid.setRowCount(rows.size(), true);
         setButtonStates();
+    }
+
+    /// Selects the session in place of one ended once the sessions are shown again (UI-GUIDE.md,
+    /// "What a list selects").
+    ///
+    /// @param session The session ended.
+    public void selectNextAfterEnd(final SessionDetails session) {
+        selectionModel.selectNextAfterRemove(List.of(session));
     }
 
     /// @return The session selected, or `null`.

@@ -62,9 +62,11 @@ public class AnnotationTagListController extends Controller {
         return view.getSelectionModel();
     }
 
-    /// @param enabled Whether Edit and Delete are enabled, for a selected tag.
-    public void setSelectionActionsEnabled(final boolean enabled) {
-        view.setSelectionActionsEnabled(enabled);
+    /// Enables Edit for one selected tag, and Delete for any.
+    ///
+    /// @param selectedCount How many tags are selected.
+    public void setSelectionActionsEnabled(final int selectedCount) {
+        view.setSelectionActionsEnabled(selectedCount);
     }
 
     /// Names the buttons after the kind of tag listed, e.g. "New Annotation Status".

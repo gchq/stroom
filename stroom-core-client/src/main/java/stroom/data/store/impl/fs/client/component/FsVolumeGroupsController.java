@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs.client.component;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.component.ContentTabController;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
@@ -24,6 +25,7 @@ import stroom.data.store.impl.fs.shared.FsVolumeGroupRow;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.util.client.CountDownAndRun;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.IsButton;
 
@@ -33,6 +35,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
+import java.util.Objects;
 
 /// Shows the data volume groups, and adds, edits and deletes them.
 public class FsVolumeGroupsController extends ContentTabController {
@@ -96,6 +99,9 @@ public class FsVolumeGroupsController extends ContentTabController {
 
     private void add() {
         newFsVolumeGroupControllerProvider.get().show(this, "", volumeGroup -> {
+            // The new group, if the page shows it (UI-GUIDE.md, "What a list selects")
+            fsVolumeGroupList.getSelectionModel().selectWhenShown(row ->
+                    Objects.equals(row.getGroup().getId(), volumeGroup.getId()));
             edit(volumeGroup);
             refresh();
         });
@@ -132,13 +138,21 @@ public class FsVolumeGroupsController extends ContentTabController {
             ConfirmEvent.fire(FsVolumeGroupsController.this, message,
                     result -> {
                         if (result) {
-                            fsVolumeGroupList.getSelectionModel().clear();
+                            // Once all are answered, the group in place of the first
+                            final CountDownAndRun countdown = new CountDownAndRun(list.size(), () -> {
+                                fsVolumeGroupList.getSelectionModel().selectNextAfterRemove(list);
+                                refresh();
+                            });
                             for (final FsVolumeGroupRow row : list) {
                                 final FsVolumeGroup volume = row.getGroup();
                                 restFactory
                                         .create(FS_VOLUME_GROUP_RESOURCE)
                                         .method(res -> res.delete(volume.getId()))
-                                        .onSuccess(response -> refresh())
+                                        .onSuccess(response -> countdown.countdown())
+                                        .onFailure(error -> {
+                                            AlertEvent.fireError(this, error.getMessage(), null);
+                                            countdown.countdown();
+                                        })
                                         .taskMonitorFactory(this)
                                         .exec();
                             }
@@ -148,9 +162,10 @@ public class FsVolumeGroupsController extends ContentTabController {
     }
 
     private void enableButtons() {
-        final boolean enabled = fsVolumeGroupList.getSelectionModel().getSelected() != null;
-        openButton.setEnabled(enabled);
-        deleteButton.setEnabled(enabled);
+        // Open edits one group; Delete deletes all selected
+        final int count = fsVolumeGroupList.getSelectionModel().getSelectedCount();
+        openButton.setEnabled(count == 1);
+        deleteButton.setEnabled(count > 0);
     }
 
     /// Fetches the volume groups again.

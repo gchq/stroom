@@ -86,14 +86,14 @@ public class UsersController extends ContentTabController {
         own(userList.getSelectionModel().addSelectionHandler(e -> {
             onSelection();
         }));
+        // Each page of users too: a selected user renamed arrives as a row equal to the old (users
+        // are equal by uuid), so no selection event fires, and the Delete title once kept the old
+        // name. The selection holds the new row by then (the grid follows it as the rows arrive)
+        this.userList.setResultPageConsumer(page -> onSelection());
     }
 
     private void onCreateUserOrGroup() {
         createUserProvider.get().show(this, UsersAndGroupsHelper.createAfterChangeConsumer(userList), false);
-    }
-
-    private void onEditUserOrGroup() {
-        actions.edit(userList);
     }
 
     private void onDelete() {

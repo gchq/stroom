@@ -1,7 +1,7 @@
 # Writing Stroom's GWT UI
 
 How to write a screen, dialog, tab or widget in Stroom's GWT user interface. It applies to the client
-code in `stroom-core-client`, `stroom-core-client-widget`, `stroom-dashboard-gwt`, `stroom-app-gwt`,
+code in `stroom-core-client`, `stroom-core-client-widget`, `stroom-app-gwt`,
 `stroom-statistics/stroom-statistics-client` and the workbench (`stroom-gwt/`).
 
 A screen, dialog or tab is a **component** and a **controller**; there are no presenters.
@@ -70,6 +70,21 @@ says.
   Don't take or pass on a `readOnly` argument: a document's opener calls `setReadOnly(...)` before `read(docRef, doc)`, and its parts follow it.
 
 * **REST calls.** `restFactory.create(resource).method(...).onSuccess(...).owner(this).exec()`: nothing runs if the controller is disposed before the reply.
+
+* **A list whose rows are replaced has a key.** A grid whose rows are fetched again, polled or replaced by an edited copy is given a key provider (`dataGrid.setKeyProvider(Row::getId)`), unless its rows are already equal by their id. The selection follows a selected row to its new object by that key, so `getSelected()` is the row as it now is. Find a row to replace by its id, never by `indexOf(selected)` of an object that may be stale, and never add the edited row when the old one can't be found: warn that it was removed meanwhile (R-S13 in `stroom-core-client-widget/DATA_GRID_DESIGN.md`).
+
+* **What a list selects.** After each action a list selects as every other does (R-S14 in `DATA_GRID_DESIGN.md`):
+
+  | Action | Selected afterwards |
+  |---|---|
+  | Add, New, Copy, Duplicate | the new item, if the page shows it; else nothing |
+  | Edit, rename, an Enabled tick | the edited item, if the page shows it; else nothing |
+  | Delete, Remove (one or many) | the row now at the first removed row's place; the last row if it was last; nothing if none is left |
+  | Move up or down | the moved item |
+  | Refresh, poll | unchanged (followed by key) |
+  | Another page, sort or filter | rows not shown are deselected |
+
+  So Edit and Delete never act on a row the user can't see. A list fetched from the server selects with `selectionModel.selectWhenShown(row -> id.equals(row.getId()))` before fetching again after an add or rename, and `selectionModel.selectNextAfterRemove(rows)` once its rows are deleted (one fetch for many deletes, with `CountDownAndRun`); a list held in the client does the same, or uses `ListSelection`. Set a pending choice only once the request has succeeded, never before a confirmation or a request that may fail. A tick in a row (Enabled) selects that row. A list with a pane beside it that shows the selected row also selects the first row when none is (`setSelectFirst(true)`), and only such a list: one whose selection only enables buttons starts with none. A picker whose selection is its value (a chooser, the activity chooser, the credentials picker, a tree) keeps rows it can't show selected (`dataGrid.setKeepHiddenSelection(true)`). Actions on one row (Edit, Open, Duplicate) are enabled only when exactly one is selected; a list whose actions are all on one row is single-select.
 
 * **Input that can't be kept is refused, never changed.** A field whose text must be a value of some kind is a `DateTimeBox`, or a `TextBox` given a check (`setInvalidReason(InputChecks.numberFrom(0, 1))`, or a function of its own giving the reason). While a field shown in a dialog or a document holds such text, OK and Save refuse: the field says why under it (in its `FormGroup`) and takes the focus, on whichever tab it is (`InvalidInputs`; content with tabs implements `RefusesInvalidInput`). Never drop, replace or default what was typed; keep the last value read until the user puts the field right. A duration whose meaning includes 0 says `zeroAllowed="true"`, and one that may be none names it (`noneText="Never"`).
   A client that takes a task monitor is given `taskMonitor()`: the one the controller's owners provide when the request starts (its tab's or dialog's), else Stroom's own busy indicator.

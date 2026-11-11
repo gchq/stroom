@@ -166,6 +166,8 @@ public class NodeStatusListController extends Controller implements HasRefresh {
                 result -> internalRefresh(),
                 view.getTaskMonitor()));
         view.setOnEnabledChange((row, enabled) -> {
+            // The row ticked is selected (UI-GUIDE.md, "What a list selects")
+            view.getSelectionModel().setSelected(row);
             final String nodeName = row.getNode().getName();
             nodeClient.setEnabled(
                     nodeName,

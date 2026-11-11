@@ -197,6 +197,10 @@ public final class ManageActivityDialogStories {
                             .toBeNull());
                     play.waitFor(() -> play.expect(screen.getByText(TextMatch.containing("CASE-2")))
                             .toBeInTheDocument());
+                    // The current activity (CASE-1) stays chosen while the filter hides it, as the
+                    // chooser's selection is its value: Close keeps it (UI-GUIDE.md, "What a list
+                    // selects"). It was once deselected, so Close went dead
+                    play.expect(screen.getByRole("button", StroomDom.button("Close"))).not().toBeDisabled();
                     ContentStorySupport.expectNoProblems(play);
                 });
     }

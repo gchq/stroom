@@ -41,6 +41,7 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.util.client.CountDownAndRun;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
@@ -67,7 +68,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /// Shows the execution schedules of analytic rules and reports ([ExecutionSchedules]), and edits,
@@ -364,7 +364,6 @@ public class ExecutionSchedulesController extends ContentTabController {
             dataProvider.refresh();
         }
         updateSelectionCountLabel();
-        flushNonexistentSelections();
     }
 
     private void setExpression(final ExpressionOperator expression) {
@@ -380,30 +379,6 @@ public class ExecutionSchedulesController extends ContentTabController {
                 request != null && request.getExpression() != null && request.getExpression().hasChildren());
     }
 
-    private void flushNonexistentSelections() {
-        restFactory
-            .create(EXECUTION_SCHEDULE_RESOURCE)
-            .method(res -> res.fetchExecutionSchedule(
-                    ExecutionScheduleRequest
-                            .builder()
-                            .pageRequest(PageRequest.unlimited())
-                            .build())
-            )
-            .onSuccess(executionScheduleResultPage -> {
-                final List<ExecutionSchedule> executionSchedules = executionScheduleResultPage.getValues();
-                for (final ExecutionSchedule selectedSchedule : selectionModel.getSelectedItems()) {
-                    if (!executionSchedules.contains(selectedSchedule)) {
-                        selectionModel.setSelected(selectedSchedule, false);
-                    }
-                }
-                updateSelectionCountLabel();
-            })
-            .onFailure(error -> AlertEvent.fireError(this, error.getMessage(), null))
-            .owner(ExecutionSchedulesController.this)
-            .taskMonitorFactory(view.getTaskMonitor())
-            .exec();
-    }
-
     private void updateSelectionCountLabel() {
         view.setSelectionCount(selectionModel.getSelectedCount());
     }
@@ -417,8 +392,9 @@ public class ExecutionSchedulesController extends ContentTabController {
                         .create(EXECUTION_SCHEDULE_RESOURCE)
                         .method(res -> res.updateExecutionSchedule(executionSchedule))
                         .onSuccess(updated -> {
-                            refresh();
+                            // The schedule, if the page still shows it
                             selectionModel.setSelected(updated);
+                            refresh();
                         })
                         .owner(ExecutionSchedulesController.this)
                         .taskMonitorFactory(this)
@@ -490,34 +466,31 @@ public class ExecutionSchedulesController extends ContentTabController {
     }
 
     private void doBatchEdit(final List<ExecutionSchedule> executionSchedules) {
-        final int scheduleCount = executionSchedules.size();
-        final AtomicInteger successCount = new AtomicInteger(0);
-        final ArrayList<ExecutionSchedule> newSchedules = new ArrayList<ExecutionSchedule>();
+        final int[] failures = {0};
+        // Once all are answered: the schedules selected stay selected, as the rows fetched again
+        // (UI-GUIDE.md, "What a list selects"). It once waited for every change to succeed, so one
+        // failure left the list as it was
+        final CountDownAndRun countdown = new CountDownAndRun(executionSchedules.size(), () -> {
+            refresh();
+            if (failures[0] == 0) {
+                AlertEvent.fireInfo(this, "Successfully changed.", null);
+            }
+        });
         executionSchedules.forEach(executionSchedule -> {
             restFactory
                     .create(EXECUTION_SCHEDULE_RESOURCE)
                     .method(res -> res.updateExecutionSchedule(
                             batchExecutionScheduleEditor.getUpdatedExecutionSchedule(executionSchedule)
                     ))
-                    .onSuccess(result -> {
-                        if (selectionModel.isSelected(executionSchedule)) {
-                            newSchedules.add(result);
-                        }
-                        if (successCount.incrementAndGet() == scheduleCount) {
-                            selectionModel.setSelectedItems(newSchedules);
-                            refresh();
-                            AlertEvent.fireInfo(
-                                    this,
-                                    "Successfully changed.",
-                                    null);
-                        }
-                    })
-                    .onFailure(cause ->
+                    .onSuccess(result -> countdown.countdown())
+                    .onFailure(cause -> {
+                        failures[0]++;
                         AlertEvent.fireError(
                                 this,
                                 "Failed to change. " + cause.getMessage(),
-                                null)
-                    )
+                                null);
+                        countdown.countdown();
+                    })
                     .owner(ExecutionSchedulesController.this)
                     .taskMonitorFactory(this)
                     .exec();
@@ -650,18 +623,21 @@ public class ExecutionSchedulesController extends ContentTabController {
     }
 
     private void doDelete() {
+        final List<ExecutionSchedule> deleted = selectionModel.getSelectedItems();
         restFactory.create(EXECUTION_SCHEDULE_RESOURCE)
-            .method(resource -> resource.deleteExecutionSchedules(selectionModel.getSelectedItems()))
+            .method(resource -> resource.deleteExecutionSchedules(deleted))
             .onSuccess(result -> {
                 AlertEvent.fireInfo(
                     this,
                     "Deleted "
-                    + selectionModel.getSelectedCount()
+                    + deleted.size()
                     + " schedule"
-                    + (selectionModel.getSelectedCount() > 1 ? "s" : "")
+                    + (deleted.size() > 1 ? "s" : "")
                     + " successfully.",
                     null
                 );
+                // The schedule in place of the first (UI-GUIDE.md, "What a list selects")
+                selectionModel.selectNextAfterRemove(deleted);
                 refresh();
             })
             .onFailure(cause -> AlertEvent.fireError(this, cause.getMessage(), null))

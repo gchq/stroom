@@ -709,6 +709,12 @@ dependencies {
     testImplementation libs.slf4j.api
 }
 
+// The workbench's JUnit tests are for developing the workbench, not Stroom, so the build doesn't run
+// them. Run them on purpose with -PworkbenchUnitTests, e.g. './gradlew :stroom-gwt:stroom-gwt-workbench:test -PworkbenchUnitTests'
+tasks.named('test') {
+    enabled = project.hasProperty('workbenchUnitTests')
+}
+
 def testRunnerDir = file('test-runner')
 def workbenchTestDir = layout.buildDirectory.dir('workbench-test').get().asFile
 // On Windows npm and npx are batch files, which ProcessBuilder only finds by their full names

@@ -31,6 +31,8 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.List;
+
 /// What the users and user groups screens do to the user or group chosen in their list: delete it,
 /// once confirmed, and rename a group in the Edit User Group dialog. Made by the screen that owns
 /// the list (`make(provider)`); its dialogs are its own.
@@ -78,7 +80,7 @@ public class UsersAndGroupsActionsController extends Controller {
                             .method(resource -> resource.delete(user.getUuid()))
                             .onSuccess(didDelete -> {
                                 if (didDelete) {
-                                    userList.getSelectionModel().clear(true);
+                                    userList.getSelectionModel().selectNextAfterRemove(List.of(user));
                                     userList.refresh();
                                 }
                             })

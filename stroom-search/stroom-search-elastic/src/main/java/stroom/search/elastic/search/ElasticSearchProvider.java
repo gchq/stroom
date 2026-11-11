@@ -43,8 +43,10 @@ import stroom.search.elastic.ElasticIndexStore;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.search.elastic.shared.ElasticIndexFieldSettings;
 import stroom.search.elastic.shared.ElasticNativeTypes;
 import stroom.search.elastic.shared.UnsupportedTypeException;
+import stroom.search.elastic.suggest.ElasticSuggestConfig;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
@@ -69,17 +71,25 @@ import co.elastic.clients.elasticsearch._types.mapping.TextProperty;
 import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch.indices.GetMappingRequest;
 import co.elastic.clients.elasticsearch.indices.GetMappingResponse;
+import co.elastic.clients.json.JsonpMapper;
+import co.elastic.clients.json.jackson.Jackson3JsonpMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.json.stream.JsonGenerator;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
 
@@ -89,6 +99,14 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     public static final String ENTITY_TYPE = ElasticIndexDoc.TYPE;
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchProvider.class);
     private static final String FIELD_PATH_SEPARATOR = ".";
+    private static final JsonpMapper JSONP_MAPPER = new Jackson3JsonpMapper();
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    // Mapping parameters not shown as a field's parameters: its type, and its child and multi-fields, which are
+    // fields in their own right
+    private static final Set<String> EXCLUDED_MAPPING_PARAMETERS = Set.of("type", "properties", "fields");
+    // Numeric types are queried alike, so a field mapped to different numeric types doesn't conflict
+    private static final Set<FieldType> NUMERIC_FIELD_TYPES = Set.of(
+            FieldType.ID, FieldType.INTEGER, FieldType.LONG, FieldType.FLOAT, FieldType.DOUBLE);
 
     private final ElasticIndexCache elasticIndexCache;
     private final SecurityContext securityContext;
@@ -100,6 +118,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     private final ElasticSearchExecutor elasticSearchExecutor;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
     private final DocFinder docFinder;
+    private final Provider<ElasticSuggestConfig> elasticSuggestConfigProvider;
 
     @Inject
     public ElasticSearchProvider(
@@ -115,7 +134,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
             final SecurityContext securityContext,
             final ElasticSearchExecutor elasticSearchExecutor,
             final FieldInfoResultPageFactory fieldInfoResultPageFactory,
-            final DocFinder docFinder) {
+            final DocFinder docFinder,
+            final Provider<ElasticSuggestConfig> elasticSuggestConfigProvider) {
         this.elasticIndexCache = elasticIndexCache;
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
@@ -126,6 +146,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         this.elasticSearchExecutor = elasticSearchExecutor;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
         this.docFinder = docFinder;
+        this.elasticSuggestConfigProvider = elasticSuggestConfigProvider;
     }
 
     @Override
@@ -194,14 +215,54 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         });
     }
 
+    /// Returns the named field, whether or not it is enabled, so query building can say why a field can't be used.
+    /// A mapped field takes precedence over a virtual field of the same name.
     @Override
     public IndexField getIndexField(final DocRef docRef, final String fieldName) {
         final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
         if (index != null) {
-            final Map<String, ElasticIndexField> indexFieldMap = getFieldsMap(index);
-            return indexFieldMap.get(fieldName);
+            // Reading the doc from the store has already read its fields from the index mapping
+            final List<ElasticIndexField> fields = NullSafe.isEmptyCollection(index.getFields())
+                    ? getFields(index)
+                    : index.getFields();
+            final ElasticIndexField mappedField = fields
+                    .stream()
+                    .filter(field -> field.getFldName().equals(fieldName))
+                    .findFirst()
+                    .orElse(null);
+            if (mappedField != null) {
+                return mappedField;
+            }
+            final ElasticIndexFieldSettings settings = index.findFieldSettings(fieldName);
+            if (settings != null && settings.isVirtual()) {
+                return createVirtualField(fieldName);
+            }
         }
         return null;
+    }
+
+    /// @param fieldName the name of a virtual field
+    /// @return a field representing the virtual field, whose values are the names of its groups
+    public static ElasticIndexField createVirtualField(final String fieldName) {
+        return ElasticIndexField.builder()
+                .fldName(fieldName)
+                .fldType(FieldType.KEYWORD)
+                .indexed(true)
+                .virtual(true)
+                .build();
+    }
+
+    /// A field is enabled unless it, or the field it is a multi-field of, has been disabled.
+    ///
+    /// @param index the index doc holding the field settings
+    /// @param field a field of the index
+    /// @return `true` if the field is enabled
+    public static boolean isFieldEnabled(final ElasticIndexDoc index, final ElasticIndexField field) {
+        if (!index.isFieldEnabled(field.getFldName())) {
+            return false;
+        }
+        final String parent = field.getMultiFieldParent();
+        return parent == null || index.isFieldEnabled(parent);
     }
 
     @Override
@@ -229,46 +290,46 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         });
     }
 
+    /// Returns the fields users can see and query: mapped fields that are enabled and have one type across all
+    /// source indices, plus enabled virtual fields whose names don't clash with a mapped field.
     @Override
     public List<QueryField> getDataSourceFields(final ElasticIndexDoc index) {
-        final Map<String, FieldMapping> fieldMappings = getFieldMappings(index);
-
-        return fieldMappings
-                .entrySet()
-                .stream()
-                .map(field -> {
-                    final String fieldName = field.getKey();
-                    final FieldMapping fieldMeta = field.getValue();
-                    final FieldMapping effectiveFieldMeta = resolveEffectiveFieldMapping(
-                            fieldName, fieldMeta, fieldMappings);
-                    if (effectiveFieldMeta == null) {
-                        // Alias whose target field could not be found, so ignore
-                        return null;
-                    }
-
-                    final String nativeType = getFieldTypeFromMapping(fieldName, effectiveFieldMeta);
-                    if (nativeType == null) {
-                        // If field type is null, this is a system field, so ignore
-                        return null;
-                    }
-
-                    try {
-                        final String fullName = fieldMeta.fullName();
-                        final FieldType elasticFieldType =
-                                ElasticNativeTypes.fromNativeType(fullName, nativeType);
-
-                        return toDataSourceField(
-                                elasticFieldType, nativeType, fieldName, fieldIsIndexed(effectiveFieldMeta));
-                    } catch (final UnsupportedTypeException e) {
-                        LOGGER.debug(e::getMessage, e);
-                        return null;
-                    } catch (final IllegalArgumentException e) {
-                        LOGGER.warn(e::getMessage, e);
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .toList();
+        final Map<String, ElasticIndexField> fieldsMap = getFieldsMap(index);
+        // The value picker is only offered when it is enabled
+        final boolean valuePickerEnabled = Boolean.TRUE.equals(elasticSuggestConfigProvider.get().getEnabled());
+        final List<QueryField> fields = new ArrayList<>();
+        for (final ElasticIndexField field : fieldsMap.values()) {
+            if (!field.hasTypeConflict() && isFieldEnabled(index, field)) {
+                try {
+                    fields.add(toDataSourceField(
+                            field.getFldType(),
+                            field.getNativeType(),
+                            field.getFldName(),
+                            field.isIndexed(),
+                            Boolean.TRUE.equals(field.getSupportsTopValues())));
+                } catch (final IllegalArgumentException e) {
+                    LOGGER.warn(e::getMessage, e);
+                }
+            }
+        }
+        for (final ElasticIndexFieldSettings settings : index.getFieldSettings()) {
+            final String fieldName = settings.getFieldName();
+            if (settings.isVirtual() && settings.isEnabled() && !fieldsMap.containsKey(fieldName)) {
+                // The value picker lists a virtual field's groups
+                fields.add(QueryField
+                        .builder()
+                        .fldName(fieldName)
+                        .fldType(FieldType.KEYWORD)
+                        .conditionSet(ConditionSet.ELASTIC_VIRTUAL)
+                        .queryable(true)
+                        .supportsTopValues(valuePickerEnabled
+                                ? Boolean.TRUE
+                                : null)
+                        .build());
+            }
+        }
+        fields.sort(Comparator.comparing(QueryField::getFldName, String.CASE_INSENSITIVE_ORDER));
+        return fields;
     }
 
     /**
@@ -277,7 +338,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     private QueryField toDataSourceField(final FieldType elasticIndexFieldType,
                                          final String nativeType,
                                          final String fieldName,
-                                         final Boolean isIndexed)
+                                         final Boolean isIndexed,
+                                         final boolean supportsTopValues)
             throws IllegalArgumentException {
         final ConditionSet conditionSet = getConditionSet(elasticIndexFieldType, nativeType);
         return QueryField
@@ -286,6 +348,10 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 .fldType(elasticIndexFieldType)
                 .conditionSet(conditionSet)
                 .queryable(isIndexed && !FieldType.NESTED.equals(elasticIndexFieldType))
+                .queryOptionSet(ElasticQueryOptionSets.get(nativeType))
+                .supportsTopValues(supportsTopValues
+                        ? Boolean.TRUE
+                        : null)
                 .build();
     }
 
@@ -362,7 +428,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
     @Override
     public Map<String, ElasticIndexField> getFieldsMap(final ElasticIndexDoc index) {
-        final Map<String, FieldMapping> fieldMappings = getFieldMappings(index);
+        final MappingDetails details = getMappingDetails(index);
+        final NavigableMap<String, FieldMapping> fieldMappings = details.mappings();
         final Map<String, ElasticIndexField> fieldsMap = new HashMap<>();
 
         fieldMappings.forEach((key, fieldMeta) -> {
@@ -388,6 +455,10 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                         .fldType(type)
                         .nativeType(nativeType)
                         .indexed(indexed)
+                        .multiFieldParent(details.multiFieldParents().get(fieldName))
+                        .sourceIndices(details.getSourceIndices(fieldName))
+                        .conflictingTypes(getConflictingTypes(fieldName, details))
+                        .mappingParameters(getMappingParameters(fieldMeta))
                         .build();
                 fieldsMap.put(fieldName, field);
             } catch (final UnsupportedTypeException e) {
@@ -397,7 +468,141 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
             }
         });
 
-        return fieldsMap;
+        return withValuePickerAndOptions(fieldsMap);
+    }
+
+    /// Adds to each field the query options its terms may set, and whether the value picker can list its values,
+    /// which can depend on another field, e.g. the `keyword` multi-field of a `text` field.
+    private Map<String, ElasticIndexField> withValuePickerAndOptions(final Map<String, ElasticIndexField> fieldsMap) {
+        final boolean valuePickerEnabled = Boolean.TRUE.equals(elasticSuggestConfigProvider.get().getEnabled());
+        final Map<String, ElasticIndexField> result = new HashMap<>();
+        fieldsMap.forEach((fieldName, field) -> {
+            final boolean supportsTopValues = valuePickerEnabled && ElasticTopValues.getAggregationField(
+                    fieldName,
+                    field.getNativeType(),
+                    name -> NullSafe.get(fieldsMap.get(name), ElasticIndexField::getNativeType)) != null;
+            result.put(fieldName, field.copy()
+                    .queryOptionSet(ElasticQueryOptionSets.get(field.getNativeType()))
+                    .supportsTopValues(supportsTopValues)
+                    .build());
+        });
+        return result;
+    }
+
+    /// @return the native type of the field in each index that holds it, keyed by index name, if the indices
+    /// disagree on its type; otherwise `null`
+    private Map<String, String> getConflictingTypes(final String fieldName, final MappingDetails details) {
+        final Map<String, String> typesByIndex = new TreeMap<>();
+        details.mappingsByIndex().forEach((indexName, indexMappings) -> {
+            final FieldMapping fieldMeta = indexMappings.get(fieldName);
+            if (fieldMeta != null) {
+                final FieldMapping effectiveFieldMeta = resolveEffectiveFieldMapping(
+                        fieldName, fieldMeta, indexMappings);
+                final String nativeType = effectiveFieldMeta == null
+                        ? null
+                        : getFieldTypeFromMapping(fieldName, effectiveFieldMeta);
+                if (nativeType != null) {
+                    typesByIndex.put(indexName, nativeType);
+                }
+            }
+        });
+        // Native types Stroom queries the same way, such as `integer` and `long` or `keyword` and `wildcard`,
+        // don't conflict
+        final long distinctTypes = typesByIndex.values()
+                .stream()
+                .map(nativeType -> getStroomFieldTypeName(fieldName, nativeType))
+                .distinct()
+                .count();
+        return distinctTypes > 1
+                ? typesByIndex
+                : null;
+    }
+
+    /// @return the name of the Stroom field type a native type is queried as, with all numeric types counted as one,
+    /// or the native type itself if Stroom doesn't support it
+    private static String getStroomFieldTypeName(final String fieldName, final String nativeType) {
+        try {
+            final FieldType fieldType = ElasticNativeTypes.fromNativeType(fieldName, nativeType);
+            return NUMERIC_FIELD_TYPES.contains(fieldType)
+                    ? "NUMBER"
+                    : fieldType.name();
+        } catch (final UnsupportedTypeException | IllegalArgumentException e) {
+            return nativeType;
+        }
+    }
+
+    /// Returns the parameters set in a field's mapping, other than its type and its child and multi-fields, which
+    /// are shown separately. The get-mapping API only returns parameters that were set, so these are the
+    /// parameters that differ from the defaults.
+    ///
+    /// @param fieldMeta the field's mapping
+    /// @return the parameter values keyed by parameter name, or `null` if they can't be read. A parameter whose
+    /// value is an object is listed as one entry per nested value, keyed by its dotted path, e.g.
+    /// `index_options.type`. See [#flattenMappingParameter(String, JsonNode, Map)].
+    static Map<String, String> getMappingParameters(final FieldMapping fieldMeta) {
+        final Optional<Property> property = fieldMeta.mapping().values().stream().findFirst();
+        if (property.isEmpty()) {
+            return null;
+        }
+        try {
+            return readMappingParameters(property.get());
+        } catch (final RuntimeException e) {
+            // The parameters are only informative, so a failure to read them must not lose the field
+            LOGGER.debug(() -> "Unable to read the mapping parameters of field " + fieldMeta.fullName(), e);
+            return null;
+        }
+    }
+
+    private static Map<String, String> readMappingParameters(final Property property) {
+        final StringWriter writer = new StringWriter();
+        try (final JsonGenerator generator = JSONP_MAPPER.jsonProvider().createGenerator(writer)) {
+            property.serialize(generator, JSONP_MAPPER);
+        }
+        final Map<String, String> parameters = new TreeMap<>();
+        for (final Map.Entry<String, JsonNode> entry : OBJECT_MAPPER.readTree(writer.toString()).properties()) {
+            final String name = entry.getKey();
+            final JsonNode value = entry.getValue();
+            if (!EXCLUDED_MAPPING_PARAMETERS.contains(name)) {
+                flattenMappingParameter(name, value, parameters);
+            }
+        }
+        return parameters;
+    }
+
+    /// Adds a mapping parameter to a map of key/value line items, so nested settings such as `index_options`
+    /// can be listed one option per line:
+    ///
+    /// - an object adds an entry per member, keyed `key.member`, recursively; an empty object adds `{}`
+    /// - an array adds an entry per element, keyed `key[index]`, recursively; an empty array adds `[]`
+    /// - a scalar adds its text, without quotes for a string
+    ///
+    /// @param key        the parameter's name or dotted path
+    /// @param value      the parameter's value
+    /// @param parameters the map to add the entries to
+    static void flattenMappingParameter(final String key,
+                                        final JsonNode value,
+                                        final Map<String, String> parameters) {
+        if (value.isObject()) {
+            if (value.isEmpty()) {
+                parameters.put(key, "{}");
+            } else {
+                for (final Map.Entry<String, JsonNode> member : value.properties()) {
+                    flattenMappingParameter(key + "." + member.getKey(), member.getValue(), parameters);
+                }
+            }
+        } else if (value.isArray()) {
+            if (value.isEmpty()) {
+                parameters.put(key, "[]");
+            } else {
+                for (int i = 0; i < value.size(); i++) {
+                    flattenMappingParameter(key + "[" + i + "]", value.get(i), parameters);
+                }
+            }
+        } else {
+            parameters.put(key, value.isString()
+                    ? value.stringValue()
+                    : value.toString());
+        }
     }
 
     /**
@@ -437,8 +642,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         return false;
     }
 
-    private Map<String, FieldMapping> getFieldMappings(final ElasticIndexDoc elasticIndex) {
-        Map<String, FieldMapping> result = new TreeMap<>();
+    private MappingDetails getMappingDetails(final ElasticIndexDoc elasticIndex) {
+        MappingDetails result = MappingDetails.empty();
 
         if (elasticIndex.getClusterRef() != null) {
             try {
@@ -463,20 +668,13 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
      * and their descendants can be recovered at every level of nesting - a prerequisite for building multi
      * level nested queries and for reading the grouped values back out of nested search hits.
      */
-    private static NavigableMap<String, FieldMapping> getFlattenedFieldMappings(
+    private static MappingDetails getFlattenedFieldMappings(
             final ElasticIndexDoc elasticIndex,
             final ElasticsearchClient elasticClient) {
         // De-duplicated map keyed by full field name, ordered case-insensitively.
-        final NavigableMap<String, FieldMapping> mappings = new TreeMap<>((o1, o2) -> {
-            if (Objects.equals(o1, o2)) {
-                return 0;
-            }
-            if (o2 == null) {
-                return 1;
-            }
-
-            return o1.compareToIgnoreCase(o2);
-        });
+        final NavigableMap<String, FieldMapping> mappings = createFieldMappingMap();
+        final Map<String, NavigableMap<String, FieldMapping>> mappingsByIndex = new TreeMap<>();
+        final Map<String, String> multiFieldParents = new HashMap<>();
 
         final String indexName = elasticIndex.getIndexName();
         final GetMappingRequest request = GetMappingRequest.of(r -> r
@@ -488,18 +686,36 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
             // The response is keyed by concrete index name (a wildcard or alias may resolve to several).
             // Flatten across all matched indices, keeping the first definition seen for any given field name.
-            response.mappings().values().forEach(indexMapping -> {
+            // Each index's own definitions are also kept, to find which indices hold a field and whether they
+            // disagree on its type.
+            response.mappings().forEach((concreteIndexName, indexMapping) -> {
+                final NavigableMap<String, FieldMapping> indexMappings = createFieldMappingMap();
                 final TypeMapping typeMapping = indexMapping.mappings();
                 if (typeMapping != null && typeMapping.properties() != null) {
                     typeMapping.properties().forEach((fieldName, property) ->
-                            registerField(fieldName, property, mappings));
+                            registerField(fieldName, property, indexMappings, multiFieldParents));
                 }
+                mappingsByIndex.put(concreteIndexName, indexMappings);
+                indexMappings.forEach(mappings::putIfAbsent);
             });
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
         }
 
-        return mappings;
+        return new MappingDetails(mappings, mappingsByIndex, multiFieldParents);
+    }
+
+    private static NavigableMap<String, FieldMapping> createFieldMappingMap() {
+        return new TreeMap<>((o1, o2) -> {
+            if (Objects.equals(o1, o2)) {
+                return 0;
+            }
+            if (o2 == null) {
+                return 1;
+            }
+
+            return o1.compareToIgnoreCase(o2);
+        });
     }
 
     /// Registers a field and, if it is an `object` or `nested` container, recursively registers
@@ -518,6 +734,19 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     static void registerField(final String fullName,
                               final Property property,
                               final NavigableMap<String, FieldMapping> out) {
+        registerField(fullName, property, out, new HashMap<>());
+    }
+
+    /// As [#registerField(String, Property, NavigableMap)], also recording the parent of each multi-field.
+    ///
+    /// @param fullName          the full (dot-delimited) name of the field
+    /// @param property          the field's mapping property
+    /// @param out               the accumulating map of field name to field mapping
+    /// @param multiFieldParents the accumulating map of multi-field name to the name of the field it belongs to
+    static void registerField(final String fullName,
+                              final Property property,
+                              final NavigableMap<String, FieldMapping> out,
+                              final Map<String, String> multiFieldParents) {
         // The synthesised FieldMapping only needs to carry the property; every downstream reader (type
         // resolution, alias lookup, indexed detection) reads the mapping value, not its key.
         out.putIfAbsent(fullName, FieldMapping.of(fm -> fm
@@ -526,13 +755,17 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
         // Recurse into the children of object / nested containers, expanding each to its full dotted path.
         getChildProperties(property).forEach((childLeafName, childProperty) ->
-                registerField(fullName + FIELD_PATH_SEPARATOR + childLeafName, childProperty, out));
+                registerField(fullName + FIELD_PATH_SEPARATOR + childLeafName, childProperty, out,
+                        multiFieldParents));
 
         // Register multi-fields (e.g. `title.keyword`). Although they are not part of `_source`, search
         // results are read via the `fields` API, which does return multi-field values, and they are
         // commonly used for exact-match queries against analysed `text` fields.
-        getMultiFieldProperties(property).forEach((multiFieldLeafName, multiFieldProperty) ->
-                registerField(fullName + FIELD_PATH_SEPARATOR + multiFieldLeafName, multiFieldProperty, out));
+        getMultiFieldProperties(property).forEach((multiFieldLeafName, multiFieldProperty) -> {
+            final String multiFieldName = fullName + FIELD_PATH_SEPARATOR + multiFieldLeafName;
+            multiFieldParents.putIfAbsent(multiFieldName, fullName);
+            registerField(multiFieldName, multiFieldProperty, out, multiFieldParents);
+        });
     }
 
     /**
@@ -586,5 +819,27 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     @Override
     public String getDataSourceType() {
         return ElasticIndexDoc.TYPE;
+    }
+
+    /// The flattened mappings of every concrete index behind an index doc's index name.
+    ///
+    /// @param mappings          the first definition seen of each field, keyed by full field name
+    /// @param mappingsByIndex   each concrete index's own definitions, keyed by index name then field name
+    /// @param multiFieldParents the name of the field each multi-field belongs to, keyed by multi-field name
+    private record MappingDetails(NavigableMap<String, FieldMapping> mappings,
+                                  Map<String, NavigableMap<String, FieldMapping>> mappingsByIndex,
+                                  Map<String, String> multiFieldParents) {
+
+        static MappingDetails empty() {
+            return new MappingDetails(new TreeMap<>(), Map.of(), Map.of());
+        }
+
+        List<String> getSourceIndices(final String fieldName) {
+            return mappingsByIndex.entrySet()
+                    .stream()
+                    .filter(entry -> entry.getValue().containsKey(fieldName))
+                    .map(Map.Entry::getKey)
+                    .toList();
+        }
     }
 }

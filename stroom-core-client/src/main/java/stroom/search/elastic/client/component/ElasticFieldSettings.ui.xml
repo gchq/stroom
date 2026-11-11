@@ -1,0 +1,87 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  The Settings panel of an Elastic index's Fields tab (elastic-field-settings.css): the field's name,
+  whether it is enabled with any reason it can't be changed, then a dense_vector field's vector
+  search settings or a virtual field's groups, which the Java shows for the field selected
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
+             xmlns:tx="urn:import:stroom.widget.text.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client">
+    <g:ScrollPanel styleName="max">
+        <g:FlowPanel styleName="form-padding form elastic-field-settings">
+            <g:HTMLPanel>
+                <h2 ui:field="fieldName" class="elastic-field-settings__field-name"></h2>
+            </g:HTMLPanel>
+
+            <form:FormGroup helpText="When unticked, the field is hidden from users and can't be used in queries. Existing queries that use it fail with an error. Disabling a field also disables its multi-fields.">
+                <tickbox:TickBox ui:field="enabled" label="Enabled"/>
+            </form:FormGroup>
+            <tx:Label ui:field="enabledNote" addStyleNames="elastic-field-settings__note" visible="false"/>
+
+            <g:FlowPanel ui:field="denseVectorSection" visible="false">
+                <tx:Html>
+                    <h2>Vector search</h2>
+                </tx:Html>
+                <form:FormGroup identity="elasticFieldSettingsEmbeddingModel" label="Embedding model"
+                                helpText="AI model that turns the query text into a vector for a nearest neighbour (kNN) search of this field.">
+                    <dd:DropDownBox ui:field="embeddingModel"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsNearestNeighbourCount" label="Nearest neighbour count"
+                                helpText="Number of nearest neighbours (k) the kNN search returns. 0 to 10,000; 0 uses the Elasticsearch default."
+                                screenReaderText="0 to 10,000. 0 uses the Elasticsearch default.">
+                    <v:ValueSpinner ui:field="nearestNeighbourCount" addStyleNames="value-spinner--wide"
+                                    minValue="0" maxValue="10000"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsRerankModel" label="Rerank model"
+                                helpText="Optional AI model that scores each hit's relevance to the query text. If left blank, hits are not reranked.">
+                    <dd:DropDownBox ui:field="rerankModel"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsRerankBatchSize" label="Rerank batch size"
+                                helpText="Most hits sent to the rerank model in one request. 1 to 100,000."
+                                screenReaderText="1 to 100,000.">
+                    <v:ValueSpinner ui:field="rerankBatchSize" addStyleNames="value-spinner--wide"
+                                    minValue="1" maxValue="100000"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsRerankTextField" label="Rerank text field"
+                                helpText="Text field whose values are sent to the rerank model.">
+                    <l:BaseSelectionBox ui:field="rerankTextField" addStyleNames="text-field--wide"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsRerankScoreField" label="Score field name"
+                                helpText="Name of the field that holds each hit's rerank score in search results, e.g. for use in dashboard expressions.">
+                    <form:TextBox ui:field="rerankScoreField" addStyleNames="text-field--wide"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsRerankScoreMinimum" label="Minimum rerank score"
+                                helpText="Hits with a rerank score below this are dropped. A number from 0.0 to 1.0."
+                                screenReaderText="0.0 to 1.0.">
+                    <form:TextBox ui:field="rerankScoreMinimum" addStyleNames="text-field--narrow"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+
+            <g:FlowPanel ui:field="virtualSection" visible="false">
+                <tx:Html>
+                    <h2>Virtual field</h2>
+                </tx:Html>
+                <form:FormGroup identity="elasticFieldSettingsVirtualGroups" label="Groups"
+                                helpText="Each group is a named query. Searching this field for a group runs that group's query. Double-click a group to edit it.">
+                    <g:SimplePanel styleName="control-box elastic-field-settings__groups">
+                        <dg:PagerPanel toolbarName="Group actions">
+                            <b:ToolbarButton ui:field="addGroup" svg="ADD" title="Add Group"/>
+                            <b:ToolbarButton ui:field="editGroup" svg="EDIT" title="Edit Selected Group" label="Edit"
+                                             enabled="false"/>
+                            <b:ToolbarButton ui:field="removeGroup" svg="DELETE" title="Remove Selected Group" label="Remove"
+                                             enabled="false"/>
+                            <dg:DataGrid ui:field="groups" tableName="Virtual Field Groups" hideHeader="true"/>
+                        </dg:PagerPanel>
+                    </g:SimplePanel>
+                </form:FormGroup>
+            </g:FlowPanel>
+        </g:FlowPanel>
+    </g:ScrollPanel>
+</ui:UiBinder>

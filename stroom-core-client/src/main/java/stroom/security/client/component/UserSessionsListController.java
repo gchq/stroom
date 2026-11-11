@@ -122,7 +122,10 @@ public class UserSessionsListController extends Controller {
                         .create(SESSION_RESOURCE)
                         .method(res -> res.terminateSession(
                                 session.getSessionHandle(), session.getNodeName()))
-                        .onSuccess(terminated -> refresh())
+                        .onSuccess(terminated -> {
+                            view.selectNextAfterEnd(session);
+                            refresh();
+                        })
                         .onFailure(restError -> {
                             AlertEvent.fireError(this, restError.getMessage(), null);
                             refresh();

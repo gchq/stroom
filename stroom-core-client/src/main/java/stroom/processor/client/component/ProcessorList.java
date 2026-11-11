@@ -121,6 +121,8 @@ public class ProcessorList extends Component {
     public ProcessorList() {
         initWidget(BINDER.createAndBindUi(this));
         selectionModel = dataGrid.addDefaultSelectionModel(true);
+        // The pane beside it shows the selected row (UI-GUIDE.md, "What a list selects")
+        selectionModel.setSelectFirst(true);
         buttons.put(ProcessorAction.NEW, newButton);
         buttons.put(ProcessorAction.EDIT, editButton);
         buttons.put(ProcessorAction.DUPLICATE, duplicateButton);

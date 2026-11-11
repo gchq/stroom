@@ -16,13 +16,14 @@ import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.Select;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableLike;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -55,7 +56,7 @@ public class FsMetaS3Location extends TableImpl<FsMetaS3LocationRecord> {
     /**
      * The column <code>stroom.fs_meta_s3_location.id</code>.
      */
-    public final TableField<FsMetaS3LocationRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<FsMetaS3LocationRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).generatedByDefaultAsIdentity(), this, "");
 
     /**
      * The column <code>stroom.fs_meta_s3_location.meta_id</code>.
@@ -128,7 +129,7 @@ public class FsMetaS3Location extends TableImpl<FsMetaS3LocationRecord> {
 
     @Override
     public List<UniqueKey<FsMetaS3LocationRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_FS_META_S3_LOCATION_FS_META_S3_LOCATION_META_S3_HASH_IDX);
+        return Arrays.asList(Keys.KEY_FS_META_S3_LOCATION_FS_META_S3_LOCATION_HASH_IDX, Keys.KEY_FS_META_S3_LOCATION_FS_META_S3_LOCATION_META_S3_HASH_IDX);
     }
 
     @Override
@@ -175,7 +176,7 @@ public class FsMetaS3Location extends TableImpl<FsMetaS3LocationRecord> {
      */
     @Override
     public FsMetaS3Location where(Condition condition) {
-        return new FsMetaS3Location(getQualifiedName(), aliased() ? this : null, null, condition);
+        return new FsMetaS3Location(getQualifiedName(), aliased() ? this : null, null, Internal.condition(this, condition));
     }
 
     /**
@@ -242,7 +243,7 @@ public class FsMetaS3Location extends TableImpl<FsMetaS3LocationRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public FsMetaS3Location whereExists(Select<?> select) {
+    public FsMetaS3Location whereExists(TableLike<?> select) {
         return where(DSL.exists(select));
     }
 
@@ -250,7 +251,7 @@ public class FsMetaS3Location extends TableImpl<FsMetaS3LocationRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public FsMetaS3Location whereNotExists(Select<?> select) {
+    public FsMetaS3Location whereNotExists(TableLike<?> select) {
         return where(DSL.notExists(select));
     }
 }

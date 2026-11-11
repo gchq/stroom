@@ -24,6 +24,7 @@ import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.FindCredentialRequest;
 import stroom.dispatch.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
+import stroom.docref.DocRef;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
@@ -37,6 +38,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -55,12 +57,12 @@ public class CredentialsListController extends Controller {
 
     /// Made by GIN; [#attach(CredentialsList)] gives it its list.
     ///
-    /// @param eventBus                        The application's event bus.
-    /// @param credentialClient                Finds, makes and deletes the credentials.
-    /// @param credentialEditProvider          Makes a credential's editor.
-    /// @param replaceSecretProvider           Makes the dialog that replaces a credential's secret.
-    /// @param securityContext                 Tells whether the user may see credentials.
-    /// @param expiryFormatter                 Formats when a credential expires.
+    /// @param eventBus               The application's event bus.
+    /// @param credentialClient       Finds, makes and deletes the credentials.
+    /// @param credentialEditProvider Makes a credential's editor.
+    /// @param replaceSecretProvider  Makes the dialog that replaces a credential's secret.
+    /// @param securityContext        Tells whether the user may see credentials.
+    /// @param expiryFormatter        Formats when a credential expires.
     @Inject
     public CredentialsListController(final EventBus eventBus,
                                      final CredentialClient credentialClient,
@@ -118,13 +120,10 @@ public class CredentialsListController extends Controller {
         };
     }
 
-    /// Lets clients turn off the selection of the first credential once they have loaded, if none is
-    /// selected. Unless this is called, the first is selected.
-    ///
-    /// @param defaultSelection True if the first is to be selected if none is, false if none is to
-    ///                         be selected then.
-    public void setDefaultSelection(final boolean defaultSelection) {
-        view.setSelectFirstWhenLoaded(defaultSelection);
+    /// @param picker Whether the list is a picker, whose credential chosen stays chosen while another
+    ///               page is shown (see [CredentialsList#setPicker(boolean)]).
+    public void setPicker(final boolean picker) {
+        view.setPicker(picker);
     }
 
     /// Finds the credentials again and selects one.
@@ -139,9 +138,17 @@ public class CredentialsListController extends Controller {
         }
     }
 
-    // Shows a credential as selected, or none
+    // Shows a credential as selected, or none. If it isn't shown yet (the list is still being fetched),
+    // it is selected with no permissions until its row arrives, which the selection then follows
     private void setSelectedCredential(final Credential credential) {
-        view.getSelectionModel().setSelected(new CredentialWithPerms(credential, true, true));
+        if (credential == null) {
+            view.getSelectionModel().clear();
+        } else {
+            final CredentialWithPerms shown = view.getShown(credential.getUuid());
+            view.getSelectionModel().setSelected(shown != null
+                    ? shown
+                    : new CredentialWithPerms(credential, false, false));
+        }
     }
 
     /// @return The name of the selected credential, or `null` if none is selected.
@@ -155,16 +162,18 @@ public class CredentialsListController extends Controller {
     }
 
     private void handleAddButtonClick() {
-        credentialClient.createDocRef(docRef -> {
-            credentialEditProvider.get()
-                    .show(this, docRef, null, CreationState.NEW_CREDENTIALS, this::afterEdit);
-        }, view.getTaskMonitor());
+        final DocRef newDocRef = Credential.buildDocRef()
+                .randomUuid()
+                .build();
+        credentialEditProvider.get()
+                .show(this, newDocRef, null, CreationState.NEW_CREDENTIALS, this::afterEdit);
     }
 
     private void afterEdit(final Credential credential) {
-        // Reload the list & select it
+        // The credential, once the page fetched again shows it (UI-GUIDE.md, "What a list selects")
+        view.getSelectionModel().selectWhenShown(row -> row.getCredential() != null
+                                                       && credential.getUuid().equals(row.getCredential().getUuid()));
         dataProvider.refresh();
-        setSelectedCredential(credential);
     }
 
     private void handleDeleteButtonClick() {
@@ -180,13 +189,12 @@ public class CredentialsListController extends Controller {
                 });
     }
 
-    // Deletes the credentials, then selects the first
+    // Deletes the credentials, then selects the credential in their place
     private void deleteCredentials(final CredentialWithPerms selectedCwp) {
         if (selectedCwp != null) {
             credentialClient.deleteCredentials(selectedCwp.getCredential().getUuid(), result -> {
-                // Reload the list & select the first item
+                view.getSelectionModel().selectNextAfterRemove(List.of(selectedCwp));
                 dataProvider.refresh();
-                view.selectFirst();
             }, view.getTaskMonitor());
         }
     }

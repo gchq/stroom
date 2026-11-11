@@ -70,7 +70,6 @@ public class UserListController extends Controller {
     private ExpressionTerm additionalTerm;
     private ExpressionTerm isGroupTerm;
     private String filter;
-    private ResultPage<User> currentData = null;
     private Consumer<ResultPage<User>> resultPageConsumer;
 
     private boolean showUniqueUserIdCol = false;
@@ -295,7 +294,6 @@ public class UserListController extends Controller {
 
             @Override
             protected void changeData(final ResultPage<User> data) {
-                currentData = data;
                 super.changeData(data);
                 if (resultPageConsumer != null) {
                     resultPageConsumer.accept(data);
@@ -336,11 +334,6 @@ public class UserListController extends Controller {
     ///         to a user listed.
     public TaskMonitorFactory getTaskMonitor() {
         return view.getTaskMonitor();
-    }
-
-    /// @return The page of users last fetched, or `null` before the first.
-    public ResultPage<User> getCurrentData() {
-        return currentData;
     }
 
     /// @param resultPageConsumer Given each page of users as it is fetched, or `null` for none.

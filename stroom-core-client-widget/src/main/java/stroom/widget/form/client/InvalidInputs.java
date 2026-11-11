@@ -17,6 +17,7 @@
 package stroom.widget.form.client;
 
 import stroom.widget.component.client.Component;
+import stroom.widget.component.client.LayerContainer;
 
 import com.google.gwt.user.client.ui.HasOneWidget;
 import com.google.gwt.user.client.ui.HasWidgets;
@@ -26,9 +27,9 @@ import com.google.gwt.user.client.ui.Widget;
 /// and a document's Save can refuse while one is shown, rather than keep something other than what
 /// was typed.
 ///
-/// A field is found by walking the widgets: panels' children, a [Component]'s own widget and a
-/// [FormGroup]'s control. Hidden widgets, and what they hold, are skipped, and so is a read-only
-/// component's.
+/// A field is found by walking the widgets: panels' children, a [Component]'s own widget, a
+/// [FormGroup]'s control and a [LayerContainer]'s layers (a tabbed screen's tabs, shown or not).
+/// Hidden widgets, and what they hold, are skipped, and so is a read-only component's.
 public final class InvalidInputs {
 
     private InvalidInputs() {
@@ -88,6 +89,16 @@ public final class InvalidInputs {
         if (widget instanceof final Component component) {
             // Its own widget is hidden from outside it
             return component.findInvalidInput();
+        }
+        if (widget instanceof final LayerContainer layerContainer) {
+            // Its layers are a tabbed screen's tabs, each still the screen's when not showing
+            for (final Widget child : layerContainer.getLayerWidgets()) {
+                final HasInvalidInput found = find(child, false);
+                if (found != null) {
+                    return found;
+                }
+            }
+            return null;
         }
         if (widget instanceof final HasWidgets hasWidgets) {
             for (final Widget child : hasWidgets) {

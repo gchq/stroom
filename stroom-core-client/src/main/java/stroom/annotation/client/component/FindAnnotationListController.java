@@ -37,6 +37,7 @@ import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -158,6 +159,22 @@ public class FindAnnotationListController extends Controller {
     /// @return The annotation with the focus, or `null`.
     public Annotation getSelected() {
         return view.getSelectionModel().getSelected();
+    }
+
+    /// Selects the annotation in place of one removed, once the list is fetched again (UI-GUIDE.md,
+    /// "What a list selects").
+    ///
+    /// @param annotation The annotation removed, e.g. unlinked.
+    public void selectNextAfterRemove(final Annotation annotation) {
+        view.getSelectionModel().selectNextAfterRemove(List.of(annotation));
+    }
+
+    /// Selects an annotation once the list fetched again shows it, else none (UI-GUIDE.md, "What a
+    /// list selects").
+    ///
+    /// @param annotation The annotation, e.g. one just linked.
+    public void selectWhenShown(final Annotation annotation) {
+        view.getSelectionModel().selectWhenShown(row -> row.getId() == annotation.getId());
     }
 
     /// Shows the toolbar of link actions, Add and Remove, for an annotation's links.

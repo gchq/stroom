@@ -193,13 +193,21 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .exec();
     }
 
-    public void deleteAnnotationGroup(final AnnotationTag annotationCollection,
+    /// Deletes an annotation tag (a status, label or collection).
+    ///
+    /// @param annotationTag      The tag.
+    /// @param consumer           Given whether it was deleted.
+    /// @param errorHandler       Told if the delete failed.
+    /// @param taskMonitorFactory Shows the request is running.
+    public void deleteAnnotationGroup(final AnnotationTag annotationTag,
                                       final Consumer<Boolean> consumer,
+                                      final RestErrorHandler errorHandler,
                                       final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANNOTATION_RESOURCE)
-                .method(res -> res.deleteAnnotationTag(annotationCollection))
+                .method(res -> res.deleteAnnotationTag(annotationTag))
                 .onSuccess(consumer)
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
