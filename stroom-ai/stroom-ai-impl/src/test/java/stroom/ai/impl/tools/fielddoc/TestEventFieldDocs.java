@@ -155,7 +155,7 @@ class TestEventFieldDocs {
                                     + "\"Acme VPN\" |", "| `host`, or \"unknown\" when empty | \"unknown\"<br>"
                                                         + "\"ws01\" |",
                 "| `user` | \"o'neil\"<br>(logon events only) |", "| `EventSource/Client/IPAddress` | ",
-                "| `ip` (logoff) | (not in the sample) |");
+                "| `ip` (logoff) | (no sample record reaches this rule) |");
         final List<List<String>> rows = text.lines()
                 .filter(l -> l.startsWith("| **"))
                 .map(l -> List.of(l.split(" \\| ", -1)).subList(0, 4))
@@ -194,8 +194,8 @@ class TestEventFieldDocs {
         assertThat(both.lines().filter(r -> r.startsWith("| `")).map(r -> r.split(" \\| ")[0]).limit(2).toList())
                 .containsExactly("| `EventDetail/TypeId`", "| `EventDetail/Description`");
         // Each one's source, where they differ; written by one of them: named.
-        assertThat(both).contains("| \"Logon\" (logon)<br>\"Logoff\" (logoff) |", "| `ip` (logoff) | (not in the "
-                                                                                  + "sample) |",
+        assertThat(both).contains("| \"Logon\" (logon)<br>\"Logoff\" (logoff) |", "| `ip` (logoff) | (no sample "
+                                                                                  + "record reaches this rule) |",
                 "| `EventDetail/Authenticate/Outcome/Success` |", "| \"false\" |");
         assertThat(other).contains("| `EventDetail/Unknown/Data[@Name='action']/@Value` | The `action` value recorded "
                                    + "in a Data element of Unknown. | `action` |");
@@ -581,5 +581,16 @@ class TestEventFieldDocs {
 
     private static TranslationMapping golden(final String name) {
         return TranslationMapping.fromJson(FieldDocFixtures.goldenJson("fielddoc/" + name));
+    }
+
+    @Test
+    void anEmptySampleValuesCellSaysWhetherNoRecordReachedTheRuleOrItsEventsHadNoValue() {
+        // Seen in chat 173: "(not in the sample)" alike for rules no sampled record reached and for fields the
+        // sampled events of a kind never hold.
+        assertThat(EventFieldDocs.orWhyNone("\"x\"", 3, 1)).isEqualTo("\"x\"");
+        assertThat(EventFieldDocs.orWhyNone("", 0, 1)).isEqualTo("(no sample record reaches this rule)");
+        assertThat(EventFieldDocs.orWhyNone("", 0, 3)).isEqualTo("(no sample record reaches these rules)");
+        assertThat(EventFieldDocs.orWhyNone("", 25, 2)).isEqualTo("(no value in the 25 sampled events)");
+        assertThat(EventFieldDocs.orWhyNone("", 1, 1)).isEqualTo("(no value in the 1 sampled event)");
     }
 }

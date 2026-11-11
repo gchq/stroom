@@ -473,10 +473,13 @@ public final class EventFieldDocs {
         final String source = FieldDocs.sourceText(entry);
         final List<String> found = new ArrayList<>();
         boolean several = false;
+        int sampled = 0;
         for (final Map.Entry<String, FieldKey> member : byRule.entrySet()) {
-            final Values got = valuesOf(c.sample().eventsOf(member.getKey()), member.getValue());
+            final List<XmlElement> events = c.sample().eventsOf(member.getKey());
+            final Values got = valuesOf(events, member.getValue());
             found.addAll(got.values());
             several = several || got.several();
+            sampled += events.size();
         }
         final List<String> values = new ArrayList<>(new LinkedHashSet<>(found));
         // The schema's words of the first rule's element, said of whichever the event has.
@@ -485,7 +488,7 @@ public final class EventFieldDocs {
         final List<String> cells = new ArrayList<>(List.of("`" + path + "`", c.described().of(path, source, values,
                 Descriptions.eventLogging(said), path, readFrom(entry), List.of(), null), source));
         if (c.sample().sampled()) {
-            cells.add(orNotSampled(FieldDocs.shown(values, true)) + (several
+            cells.add(orWhyNone(FieldDocs.shown(values, true), sampled, byRule.size()) + (several
                     ? "\n(several per event)"
                     : ""));
         }
@@ -502,7 +505,7 @@ public final class EventFieldDocs {
                 source, values.values(), Descriptions.eventLogging(described(c.schema(), key)), key.xpath(),
                 readFrom(entry), List.of(), null), source));
         if (c.sample().sampled()) {
-            cells.add(orNotSampled(FieldDocs.shown(values.values(), true)) + (values.several()
+            cells.add(orWhyNone(FieldDocs.shown(values.values(), true), events.size(), 1) + (values.several()
                     ? "\n(several per event)"
                     : ""));
         }
@@ -524,10 +527,13 @@ public final class EventFieldDocs {
                 : sources.stream().map(s -> s[1] + " (" + s[0] + ")").collect(Collectors.joining("\n"));
         final List<String> found = new ArrayList<>();
         boolean several = false;
+        int sampled = 0;
         for (final Member member : members) {
-            final Values got = valuesOf(c.sample().eventsOf(member.name()), member.key());
+            final List<XmlElement> events = c.sample().eventsOf(member.name());
+            final Values got = valuesOf(events, member.key());
             found.addAll(got.values());
             several = several || got.several();
+            sampled += events.size();
         }
         final List<String> values = new ArrayList<>(new LinkedHashSet<>(found));
         final List<String> paths = members.stream().map(m -> m.key().xpath()).toList();
@@ -541,7 +547,7 @@ public final class EventFieldDocs {
                         new ArrayList<>(new LinkedHashSet<>(paths)), sources.stream().map(s -> s[1]).toList()),
                 source));
         if (c.sample().sampled()) {
-            cells.add(orNotSampled(FieldDocs.shown(values, true)) + (several
+            cells.add(orWhyNone(FieldDocs.shown(values, true), sampled, members.size()) + (several
                     ? "\n(several per event)"
                     : ""));
         }
@@ -621,7 +627,13 @@ public final class EventFieldDocs {
             final List<String> kinds = new ArrayList<>(new LinkedHashSet<>(values.values().stream()
                     .flatMap(List::stream)
                     .toList()));
-            String shown = orNotSampled(FieldDocs.shown(new ArrayList<>(values.keySet()), true));
+            final int sampledEvents = froms.values().stream()
+                    .flatMap(List::stream)
+                    .distinct()
+                    .mapToInt(rule -> sample.eventsOf(rule).size())
+                    .sum();
+            String shown = orWhyNone(FieldDocs.shown(new ArrayList<>(values.keySet()), true), sampledEvents,
+                    (int) froms.values().stream().flatMap(List::stream).distinct().count());
             if (!values.isEmpty() && kinds.size() < rulesSampled.size()) {
                 shown += "\n(" + String.join(", ", kinds) + " events only)";
             }
@@ -801,6 +813,28 @@ public final class EventFieldDocs {
         return path.startsWith(below)
                 ? path.substring(below.length())
                 : path;
+    }
+
+    /// The Sample values cell: the values shown, or, where the events gave none, why (asked for by the user: seen
+    /// in chat 173, "(not in the sample)" in rows of rules no sample record reached and of fields the sampled
+    /// events of a kind never hold, alike).
+    ///
+    /// @param shown   The values, as shown, or "" for none.
+    /// @param sampled The sampled events of the rules the row is of.
+    /// @param rules   How many rules the row is of.
+    /// @return The cell.
+    static String orWhyNone(final String shown, final int sampled, final int rules) {
+        if (!shown.isEmpty()) {
+            return shown;
+        }
+        if (sampled == 0) {
+            return rules > 1
+                    ? "(no sample record reaches these rules)"
+                    : "(no sample record reaches this rule)";
+        }
+        return "(no value in the " + sampled + " sampled event" + (sampled == 1
+                ? ")"
+                : "s)");
     }
 
     static String orNotSampled(final String shown) {
