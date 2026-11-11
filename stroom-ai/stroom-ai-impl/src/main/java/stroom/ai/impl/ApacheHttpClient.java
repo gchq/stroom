@@ -35,7 +35,6 @@ import org.apache.hc.client5.http.classic.methods.HttpOptions;
 import org.apache.hc.client5.http.classic.methods.HttpPatch;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpPut;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
@@ -83,20 +82,13 @@ public class ApacheHttpClient implements HttpClient {
                         final ServerSentEventListener listener) {
         final ClassicHttpRequest apacheRequest = createApacheRequest(request);
         try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
+            // The client is shared via the cache, so it must not be closed here. The provider is
+            // released by the try-with-resources and the cache closes the client when it is evicted.
             final org.apache.hc.client5.http.classic.HttpClient httpClient = httpClientProvider.get();
-
-            if (httpClient instanceof final CloseableHttpClient closeableHttpClient) {
-                httpClient.execute(apacheRequest, response -> {
-                    handleServerSentEvents(response, parser, listener);
-                    closeableHttpClient.close();
-                    return null;
-                });
-            } else {
-                httpClient.execute(apacheRequest, response -> {
-                    handleServerSentEvents(response, parser, listener);
-                    return null;
-                });
-            }
+            httpClient.execute(apacheRequest, response -> {
+                handleServerSentEvents(response, parser, listener);
+                return null;
+            });
         } catch (final IOException e) {
             LOGGER.debug("execute() SSE - IOException: {}", e.getMessage(), e);
             listener.onError(e);
