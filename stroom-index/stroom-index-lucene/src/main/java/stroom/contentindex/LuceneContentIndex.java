@@ -46,6 +46,7 @@ import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.collections.CollectionUtil;
 import stroom.util.collections.CollectionUtil.DuplicateMode;
+import stroom.util.concurrent.LazyValue;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
@@ -203,8 +204,9 @@ public class LuceneContentIndex implements ContentIndex, Handler {
     private final Provider<ContentIndexConfig> contentIndexConfigProvider;
 
     /// Document type to [ContentIndexable] map
-    private final Map<String, ContentIndexable> typeToIndexableMap;
-    private final Analyzer analyzer;
+    // Built on first use, as most nodes are not UI nodes so never need them
+    private final LazyValue<Map<String, ContentIndexable>> typeToIndexableMap;
+    private final LazyValue<Analyzer> analyzer;
     private final BlockingQueue<EntityEvent> eventQueue = new ArrayBlockingQueue<>(EVENT_QUEUE_SIZE);
     // Held for all work that reads or writes the index files, which can take a long time,
     // e.g. a re-build of the whole index. Kept separate from the monitor on this, so that
@@ -237,9 +239,8 @@ public class LuceneContentIndex implements ContentIndex, Handler {
         this.clusterNodeManager = clusterNodeManager;
         this.contentIndexConfigProvider = contentIndexConfigProvider;
         this.indexDir = getIndexDirectory(contentIndexConfigProvider, tempDirProvider, pathCreator);
-        // Both are cheap to build, so build them now rather than lazily under a lock
-        this.typeToIndexableMap = buildTypeToIndexableMap();
-        this.analyzer = buildAnalyzer();
+        this.typeToIndexableMap = LazyValue.initialisedBy(this::buildTypeToIndexableMap);
+        this.analyzer = LazyValue.initialisedBy(this::buildAnalyzer);
 
         // With a shared index we can get any single node (doesn't matter which) to eagerly init it
         if (indexDir.isShared()) {
@@ -361,6 +362,16 @@ public class LuceneContentIndex implements ContentIndex, Handler {
         return isInitialised;
     }
 
+    // The lock is on the LazyValue, not indexLock, and is only held for the one cheap
+    // build on first use, so callers never wait behind index work.
+    private Map<String, ContentIndexable> getTypeToIndexableMap() {
+        return typeToIndexableMap.getValueWithLocks();
+    }
+
+    private Analyzer getAnalyzer() {
+        return analyzer.getValueWithLocks();
+    }
+
     private Map<String, ContentIndexable> buildTypeToIndexableMap() {
         return CollectionUtil.mapBy(
                 ContentIndexable::getType,
@@ -394,7 +405,7 @@ public class LuceneContentIndex implements ContentIndex, Handler {
                         isSyncRebuildRequired = true;
                     } else {
                         // Make sure what is on disk can be searched
-                        final boolean validIndex = isValidLuceneIndex(indexDirPath, analyzer);
+                        final boolean validIndex = isValidLuceneIndex(indexDirPath, getAnalyzer());
                         if (!validIndex) {
                             LOGGER.info("Found invalid content index in {}, deleting the contents of this directory " +
                                         "and indexing the from scratch. This may take some time.", indexDirPath);
@@ -667,7 +678,7 @@ public class LuceneContentIndex implements ContentIndex, Handler {
                     taskContextFactory.current().info(() -> "Gathering indexable items");
                     LOGGER.info("{} - Re-indexing all content", RE_INDEX_JOB_NAME);
                     securityContext.asProcessingUser(() -> {
-                        final List<EntityEvent> events = typeToIndexableMap.values()
+                        final List<EntityEvent> events = getTypeToIndexableMap().values()
                                 .stream()
                                 .flatMap(contentIndexable ->
                                         contentIndexable.listDocuments().stream())
@@ -901,7 +912,7 @@ public class LuceneContentIndex implements ContentIndex, Handler {
         } else {
             if (!text.isBlank()) {
                 final String nGramField = getNGramField(stringMatch);
-                final SimpleQueryParser simpleQueryParser = new SimpleQueryParser(analyzer, nGramField);
+                final SimpleQueryParser simpleQueryParser = new SimpleQueryParser(getAnalyzer(), nGramField);
                 final Query query = simpleQueryParser.createPhraseQuery(nGramField, text);
                 return addTagsQuery(query, tags);
             }
@@ -943,7 +954,7 @@ public class LuceneContentIndex implements ContentIndex, Handler {
             searcherManager.maybeRefresh();
             final IndexSearcher indexSearcher = searcherManager.acquire();
             try {
-                final Query docQuery = createDocQuery(request.getDocRef(), request.getExtension(), analyzer);
+                final Query docQuery = createDocQuery(request.getDocRef(), request.getExtension(), getAnalyzer());
                 final ScoreDoc[] hits = indexSearcher.search(docQuery, 1).scoreDocs;
                 if (hits.length > 0) {
                     final int docId = hits[0].doc;
@@ -1010,14 +1021,14 @@ public class LuceneContentIndex implements ContentIndex, Handler {
      */
     private void updateIndex(final List<EntityEvent> list,
                              final TaskContext taskContext) {
-        final IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
+        final IndexWriterConfig indexWriterConfig = new IndexWriterConfig(getAnalyzer());
         try (final IndexWriter writer = new IndexWriter(directory, indexWriterConfig)) {
             updateProgress.set(0);
             updateTotal.set(list.size());
             list.stream()
                     .takeWhile(createTaskTerminatedCheck(taskContext))
                     .forEach(event -> {
-                        updateDocInIndex(taskContext, event, writer, analyzer, typeToIndexableMap);
+                        updateDocInIndex(taskContext, event, writer, getAnalyzer(), getTypeToIndexableMap());
                     });
 
             taskContext.info(() -> LogUtil.message("Committing {} changes to the content index", list.size()));
@@ -1370,8 +1381,11 @@ public class LuceneContentIndex implements ContentIndex, Handler {
     }
 
     private boolean isIndexableType(final EntityEvent event) {
-        final String type = NullSafe.get(event, EntityEvent::getDocRef, DocRef::getType);
-        return type != null && typeToIndexableMap.containsKey(type);
+        return NullSafe.test(
+                event,
+                EntityEvent::getDocRef,
+                DocRef::getType,
+                type -> getTypeToIndexableMap().containsKey(type));
     }
 
 
