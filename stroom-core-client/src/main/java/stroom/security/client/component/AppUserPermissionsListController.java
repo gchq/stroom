@@ -61,7 +61,6 @@ public class AppUserPermissionsListController extends Controller {
     private AppUserPermissionsList view;
     private RestDataProvider<AppUserPermissions, ResultPage<AppUserPermissions>> dataProvider;
     private boolean isExternalIdp = false;
-    private boolean resetSelection = false;
     private String lastQuickFilter;
 
     /// Made by GIN; [#attach(AppUserPermissionsList)] gives it its list.
@@ -131,7 +130,6 @@ public class AppUserPermissionsListController extends Controller {
         // The filter text goes to the server verbatim - see FindUserCriteria.
         if (!Objects.equals(lastQuickFilter, text)) {
             lastQuickFilter = text;
-            resetSelection = true;
             requestBuilder.quickFilter(text);
             refresh();
         }
@@ -185,19 +183,6 @@ public class AppUserPermissionsListController extends Controller {
                                 .owner(AppUserPermissionsListController.this)
                                 .taskMonitorFactory(view.getTaskMonitor())
                                 .exec();
-                    }
-
-                    @Override
-                    protected void changeData(final ResultPage<AppUserPermissions> data) {
-                        super.changeData(data);
-                        if (!data.isEmpty()) {
-                            if (resetSelection) {
-                                view.getSelectionModel().setSelected(data.getFirst());
-                            }
-                            resetSelection = false;
-                        } else {
-                            view.getSelectionModel().clear();
-                        }
                     }
                 };
         view.setDataProvider(dataProvider);

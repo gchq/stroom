@@ -55,7 +55,7 @@ public class CredentialsPickerController extends Controller {
         this.markdownConverter = markdownConverter;
         initWidget(view);
         this.credentialsList = own(credentialsList).attach(view.getCredentialsList());
-        credentialsList.setDefaultSelection(false);
+        credentialsList.setPicker(true);
     }
 
     /// Shows the dialog, owned by `opener` until it is closed. OK with no credentials chosen says

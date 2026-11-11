@@ -25,6 +25,7 @@ import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ContentStorySupport;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -81,6 +82,17 @@ public final class ContentStoreScreenStories {
             .post("/credentials/findCredentialsWithPermissions", RestReply.json(
                     "{\"values\": [], \"pageResponse\": {\"offset\": 0, \"length\": 0, \"total\": 0, "
                             + "\"exact\": true}}"))
+            .build();
+
+    // The packs as fetched again, once 'Extra Pack' has been installed (e.g. by another user)
+    private static final String PACKS_EXTRA_INSTALLED = PACKS.replace(
+            "\"installationStatus\": \"NOT_INSTALLED\"",
+            "\"installationStatus\": \"INSTALLED\"");
+
+    // The packs, then (the pager's Refresh) the packs with 'Extra Pack' installed
+    private static final RestFixtures REFRESH_FIXTURES = RestFixtures.builder()
+            .post("/contentstore/list", RestReply.json(PACKS), RestReply.json(PACKS_EXTRA_INSTALLED))
+            .addAll(FIXTURES)
             .build();
 
     private ContentStoreScreenStories() {
@@ -161,6 +173,25 @@ public final class ContentStoreScreenStories {
                     play.expect(play.queryByText("Content upgradable")).toBeNull();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
+                // The pager's Refresh fetches the packs again, as new rows: the selected pack stays
+                // selected, and its details show it as fetched (now installed, so Install is no
+                // longer available). Nothing once showed selected after a refresh, and the details
+                // kept the pack as it was
+                .story("RefreshKeepsSelection", context -> render(context, REFRESH_FIXTURES))
+                .withPlay(play -> {
+                    play.click(play.findByText("Extra Pack"));
+                    play.findAllByText("Community");
+                    play.waitFor(() -> play.expect(extraPackRow(play)).toHaveAttribute("aria-selected", "true"));
+                    // Not installed, as first fetched
+                    final Query install = play.getByRole("button", StroomDom.button("Install"));
+                    play.waitFor(() -> play.expect(install).toBeEnabled());
+                    play.click(play.getByRole("button", "Refresh"));
+                    play.waitFor(() -> play.expect(install).toBeDisabled());
+                    play.expect(extraPackRow(play)).toHaveAttribute("aria-selected", "true");
+                    play.expect(play.querySelectorAll("." + StroomDom.SELECTED_ROW)).toHaveLength(1);
+                    play.expect(play.getAllByText("Community").count()).toBeGreaterThan(0);
+                    ContentStorySupport.expectNoProblems(play);
+                })
                 // A NOT_INSTALLED pack enables Install; clicking it installs the pack
                 .story("Install", ContentStoreScreenStories::render)
                 .withPlay(play -> {
@@ -180,9 +211,18 @@ public final class ContentStoreScreenStories {
                 });
     }
 
+    // The 'Extra Pack' row (the list comes before the details, which also name the selected pack)
+    private static Query extraPackRow(final Play play) {
+        return play.getAllByText("Extra Pack").nth(0).closest(StroomDom.GRID_ROW);
+    }
+
     private static Widget render(final StoryContext context) {
+        return render(context, FIXTURES);
+    }
+
+    private static Widget render(final StoryContext context, final RestFixtures fixtures) {
         final ContentScreenGinjector injector = GWT.create(ContentScreenGinjector.class);
-        final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
+        final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
                 .build();
         harness.afterStartUp(() -> harness.show(injector.getContentStoreTabController()));

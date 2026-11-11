@@ -261,6 +261,7 @@ public class ExpressionUtil {
                     .condition(term.getCondition())
                     .value(term.getValue())
                     .docRef(term.getDocRef())
+                    .options(term.getOptions())
                     .build();
         } else {
             return null;
@@ -323,6 +324,7 @@ public class ExpressionUtil {
                             .condition(term.getCondition())
                             .value(replaced)
                             .docRef(term.getDocRef())
+                            .options(term.getOptions())
                             .build());
                 }
             }

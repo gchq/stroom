@@ -23,8 +23,10 @@ import stroom.floormap.shared.FloorMapResource;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -137,6 +139,31 @@ public final class FloorMapSettingsStories {
                     play.waitFor(() -> play.expect(role).toHaveFocus());
                     DocEditors.expectNoProblems(play);
                 })
+                // An edit replaces the selected mapping with a new one, which stays selected, so
+                // Remove removes it, and only it. Remove once removed nothing after an edit, as it
+                // removed the mapping as first selected, no longer in the list
+                .story("RemoveAfterEdit", context -> render(context, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query role = screen.findByRole("combobox", TEMPERATURE_ROLE);
+                    // A press on the row's cell, beside its control, selects the row
+                    play.click(screen.getByRole("textbox", "Path for $.temp").closest("[data-col]"));
+                    play.waitFor(() -> play.expect(temperatureRow(screen)).toHaveAttribute("aria-selected", "true"));
+                    // Give the row the STATUS role
+                    play.run("focus the box", () -> role.element().get().focus());
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(screen.getByRole("listbox", TEMPERATURE_ROLE)).toBeVisible());
+                    play.click(screen.getByRole("option", "STATUS"));
+                    play.waitFor(() -> play.expect(screen.getByRole("combobox", TEMPERATURE_ROLE))
+                            .toHaveValue("STATUS"));
+                    play.expect(temperatureRow(screen)).toHaveAttribute("aria-selected", "true");
+                    play.click(screen.getByTitle("Remove Field Mapping"));
+                    play.waitFor(() -> play.expect(screen.queryByRole("combobox", TEMPERATURE_ROLE)).toBeNull());
+                    play.expect(screen.getByRole("combobox", "Role for $.type")).toHaveValue("TYPE");
+                    play.expect(screen.getByRole("combobox", "Role for $.label")).toHaveValue("LABEL");
+                    play.expect(screen.getAllByRole("combobox", TextMatch.startingWith("Role for "))).toHaveLength(2);
+                    DocEditors.expectNoProblems(play);
+                })
                 // A user who may only view the floor map can read every row and reach its controls,
                 // but no list opens and no field can be changed
                 .story("ReadOnly", context -> render(context, true))
@@ -151,6 +178,11 @@ public final class FloorMapSettingsStories {
                     play.expect(screen.queryByRole("listbox", TEMPERATURE_ROLE)).toBeNull();
                     DocEditors.expectNoProblems(play);
                 });
+    }
+
+    // The $.temp mapping's row
+    private static Query temperatureRow(final Play screen) {
+        return screen.getByRole("textbox", "Path for $.temp").closest(StroomDom.GRID_ROW);
     }
 
     // The grid column (data-col) of the cell holding the focus, or null

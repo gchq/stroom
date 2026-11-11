@@ -93,6 +93,8 @@ public class ProfilePeriodListController extends Controller implements Focus {
                 final int index = profilePeriods.indexOf(profilePeriod);
                 if (index == -1) {
                     profilePeriods.add(updated);
+                    // The new period (UI-GUIDE.md, "What a list selects")
+                    view.setSelected(updated);
                 } else {
                     profilePeriods.remove(index);
                     profilePeriods.add(index, updated);
@@ -104,6 +106,7 @@ public class ProfilePeriodListController extends Controller implements Focus {
 
     private void onRemove(final ProfilePeriod selected) {
         if (selected != null) {
+            view.selectNextAfterRemove(selected);
             profilePeriods.remove(selected);
             refresh();
         }

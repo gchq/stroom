@@ -72,6 +72,7 @@ public class ExpressionModel {
                 term.setCondition(expressionTerm.getCondition());
                 term.setValue(StringUtil.trimWhitespace(expressionTerm.getValue()));
                 term.setDocRef(expressionTerm.getDocRef());
+                term.setOptions(expressionTerm.getOptions());
                 term.setEnabled(expressionTerm.enabled());
 
                 return term;
@@ -121,6 +122,7 @@ public class ExpressionModel {
                             .condition(term.getCondition())
                             .value(termValue)
                             .docRef(term.getDocRef())
+                            .options(term.getOptions())
                             .build());
                 }
             }

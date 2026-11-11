@@ -121,6 +121,12 @@ public class SimpleSelectionListModel<T> implements SelectionListModel<T, Simple
         return items.size() > 100;
     }
 
+    /// @return The item named by [#setNonSelectString(String)], or null if there is none.
+    @Override
+    public SimpleSelectionItemWrapper<T> getNoValueItem() {
+        return nonSelectItem;
+    }
+
     @Override
     public SimpleSelectionItemWrapper<T> wrap(final T item) {
         if (item == null) {

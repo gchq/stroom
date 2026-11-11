@@ -182,9 +182,12 @@ public class IndexFieldList extends Component {
     private void enableButtons() {
         final boolean readOnly = isReadOnly();
         newButton.setEnabled(!readOnly);
-        final boolean enabled = !readOnly && selectionModel.getSelected() != null;
-        editButton.setEnabled(enabled);
-        removeButton.setEnabled(enabled);
+        // Edit edits one field; Remove removes all selected
+        final int count = readOnly
+                ? 0
+                : selectionModel.getSelectedCount();
+        editButton.setEnabled(count == 1);
+        removeButton.setEnabled(count > 0);
 
         // The names stay, with why the buttons are disabled for a read-only index
         final String suffix = readOnly

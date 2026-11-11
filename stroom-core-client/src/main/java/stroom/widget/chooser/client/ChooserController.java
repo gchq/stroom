@@ -89,6 +89,8 @@ public class ChooserController<T> extends Controller {
             onChoose.accept(value);
         });
         list.setSelectionModel(selectionModel, selectionEventManager);
+        // The value chosen stays chosen while a filter hides it
+        list.setKeepHiddenSelection(true);
         list.addColumn(new Column<T, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final T value) {

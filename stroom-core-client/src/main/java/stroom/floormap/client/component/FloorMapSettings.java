@@ -458,6 +458,8 @@ public class FloorMapSettings extends Component {
                 new FloorMapFieldMapping(".", Role.CUSTOM, "New Field", null);
         final List<FloorMapFieldMapping> list = schemaDataProvider.getList();
         list.add(newMapping);
+        // The new mapping (UI-GUIDE.md, "What a list selects")
+        schemaSelectionModel.setSelected(newMapping);
         refreshGrid();
         onChange.run();
     }
@@ -468,9 +470,16 @@ public class FloorMapSettings extends Component {
         final FloorMapFieldMapping selected = schemaSelectionModel.getSelected();
         if (selected != null) {
             final List<FloorMapFieldMapping> list = schemaDataProvider.getList();
-            list.remove(selected);
-            schemaSelectionModel.clear();
-            removeMapping.setEnabled(false);
+            // The mapping in its place (UI-GUIDE.md, "What a list selects")
+            schemaSelectionModel.selectNextAfterRemove(List.of(selected));
+            // The row itself, as rows are keyed by identity: two new mappings are equal, and
+            // remove(Object) took the first of them
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i) == selected) {
+                    list.remove(i);
+                    break;
+                }
+            }
             refreshGrid();
             onChange.run();
         }

@@ -125,7 +125,11 @@ public class NodeJobListController extends Controller {
         view.addColumns(dateTimeFormatter::formatWithDuration, this::openJobNodeAsCommandLink);
         actions.setList(view.getSelectionModel(), view.getTaskMonitor(), view::isNodeEnabled,
                 this::internalRefresh);
-        view.setOnEnabledChange(actions::setEnabled);
+        view.setOnEnabledChange((row, enabled) -> {
+            // The row ticked is selected (UI-GUIDE.md, "What a list selects")
+            view.getSelectionModel().setSelected(row);
+            actions.setEnabled(row, enabled);
+        });
         view.setOnEditSchedule(actions::showSchedule);
         view.setOnShowActionMenu(actions::showActionMenu);
         view.setOnShowEnabledChange(this::internalRefresh);
@@ -201,6 +205,10 @@ public class NodeJobListController extends Controller {
     public void read(final String nodeName) {
         if (dataProvider.getDataDisplays().isEmpty()) {
             view.setDataProvider(dataProvider);
+        }
+        if (!Objects.equals(nodeName, getNodeNameCriteria())) {
+            // Another node's jobs: the rows selected were the last node's, so none is now
+            view.getSelectionModel().clear();
         }
         setNodeNameCriteria(nodeName);
         // Named for the node whose jobs it shows

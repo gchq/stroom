@@ -232,15 +232,6 @@ public class ApiKeysListController extends Controller {
                         .exec();
             }
 
-            @Override
-            protected void changeData(final ResultPage<HashedApiKey> data) {
-                super.changeData(data);
-                if (!data.isEmpty()) {
-                    view.getSelectionModel().setSelected(data.getFirst());
-                } else {
-                    view.getSelectionModel().clear();
-                }
-            }
         };
         view.setDataProvider(dataProvider);
     }

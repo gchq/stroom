@@ -24,13 +24,22 @@ def resourcesDir = project(':stroom-app').file('src/main/resources')
 def warDir = "${resourcesDir}/ui"
 def outputDir = "${warDir}/stroom"
 
-// The GWT build directory, under this project's build directory rather than java.io.tmpdir: /tmp is
-// often a RAM-backed tmpfs, which the copied sources and the compile's scratch directories (tmp, work,
-// deploy, extra) fill. Override with -PgwtBuildDir=<dir>, which the app and dashboard compiles share,
-// each in its own directory under it.
-def gwtBuildDir = findProperty('gwtBuildDir')
-        ? "${findProperty('gwtBuildDir')}/app-gwt_build"
-        : layout.buildDirectory.dir('gwt').get().asFile.toString()
+// The GWT build directory, which holds the copied sources and the compile's scratch directories (tmp,
+// work, deploy, extra). By default it is under java.io.tmpdir, with the repo's path appended so builds
+// from different checkouts don't conflict. /tmp is often a RAM-backed tmpfs, which these can fill, so
+// to keep them on disk set the STROOM_GWT_BUILD_DIR env var to a directory, or 'project' to use this
+// project's build directory. -PgwtBuildDir=<dir> overrides both.
+def gwtBuildDir
+if (findProperty('gwtBuildDir')) {
+    gwtBuildDir = "${findProperty('gwtBuildDir')}/app-gwt_build"
+} else if (System.getenv('STROOM_GWT_BUILD_DIR') == 'project') {
+    gwtBuildDir = layout.buildDirectory.dir('gwt').get().asFile.toString()
+} else if (System.getenv('STROOM_GWT_BUILD_DIR')) {
+    gwtBuildDir = "${System.getenv('STROOM_GWT_BUILD_DIR')}/app-gwt_build"
+} else {
+    gwtBuildDir = "${System.getProperty('java.io.tmpdir')}/gwt/${rootDir.absolutePath}/app-gwt_build"
+            .replaceAll('/+', '/')
+}
 logger.info('gwtBuildDir: ' + gwtBuildDir)
 
 def gwtTmpDir = "${gwtBuildDir}/tmp"

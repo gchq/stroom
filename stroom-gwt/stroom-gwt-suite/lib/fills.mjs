@@ -289,9 +289,6 @@ export const FILLS = {
       ['Main date field', '@timestamp'],
       ['Number of slices', '1'],
       ['Scroll size', '1000'],
-      ['Rerank text field suffix', '_text'],
-      ['Rerank score field suffix', '_score'],
-      ['Minimum rerank score', '0.5'],
     ]);
     const cluster = await pickDocRef(page, 'Cluster configuration', 'Seed Elastic Cluster');
     await fillDocumentationTab(page, '# Seed Elastic Index\n\nIndex pattern `seed-index-*` on the seeded cluster.');

@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Stream;
@@ -42,7 +44,10 @@ public class BatchingIterator<T> implements Iterator<List<T>> {
      * @return a stream of batches taken sequentially from the original stream
      */
     public static <T> Stream<List<T>> batchedStreamOf(final Stream<T> originalStream, final int batchSize) {
-        return asStream(new BatchingIterator<>(originalStream.iterator(), batchSize));
+        Objects.requireNonNull(originalStream, "Null original stream");
+        validateBatchSize(batchSize);
+        return asStream(new BatchingIterator<>(originalStream.iterator(), batchSize))
+                .onClose(originalStream::close);
     }
 
     /**
@@ -55,6 +60,8 @@ public class BatchingIterator<T> implements Iterator<List<T>> {
      * @return a stream of batches taken sequentially from the original stream
      */
     public static <T> Stream<List<T>> batchedStreamOf(final Collection<T> originalCollection, final int batchSize) {
+        Objects.requireNonNull(originalCollection, "Null original collection");
+        validateBatchSize(batchSize);
         return asStream(new BatchingIterator<>(originalCollection.iterator(), batchSize));
     }
 
@@ -68,25 +75,43 @@ public class BatchingIterator<T> implements Iterator<List<T>> {
     private final Iterator<T> sourceIterator;
 
     private BatchingIterator(final Iterator<T> sourceIterator, final int batchSize) {
+        Objects.requireNonNull(sourceIterator, "Null source iterator");
+        validateBatchSize(batchSize);
         this.batchSize = batchSize;
         this.sourceIterator = sourceIterator;
     }
 
     @Override
     public boolean hasNext() {
-        prepareNextBatch();
+        if (currentBatch == null) {
+            prepareNextBatch();
+        }
         return currentBatch != null && !currentBatch.isEmpty();
     }
 
     @Override
     public List<T> next() {
-        return currentBatch;
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+        final List<T> nextBatch = currentBatch;
+        currentBatch = null;
+        return nextBatch;
     }
 
     private void prepareNextBatch() {
-        currentBatch = new ArrayList<>(batchSize);
-        while (sourceIterator.hasNext() && currentBatch.size() < batchSize) {
-            currentBatch.add(sourceIterator.next());
+        final List<T> nextBatch = new ArrayList<>();
+        while (sourceIterator.hasNext() && nextBatch.size() < batchSize) {
+            nextBatch.add(sourceIterator.next());
+        }
+        currentBatch = nextBatch.isEmpty()
+                ? null
+                : nextBatch;
+    }
+
+    private static void validateBatchSize(final int batchSize) {
+        if (batchSize < 1) {
+            throw new IllegalArgumentException("Batch size must be greater than zero");
         }
     }
 }

@@ -107,6 +107,8 @@ public class FindInContent extends Component {
                 result -> onOpen.accept(result),
                 this::focus);
         selectionModel.addSelectionChangeHandler(event -> onSelectionChange.accept(selectionModel.getSelected()));
+        // The preview beside it shows the selected result (UI-GUIDE.md, "What a list selects")
+        selectionModel.setSelectFirst(true);
 
         // The pattern keeps the focus while the user types, so a screen reader is told of the
         // feedback as it changes (a Label has no setter for it)

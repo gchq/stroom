@@ -177,24 +177,6 @@ public class ProcessorTaskSummaryListController extends Controller {
                             .exec();
                 }
 
-                @Override
-                protected void changeData(final ResultPage<ProcessorTaskSummary> data) {
-                    final MultiSelectionModel<ProcessorTaskSummary> selectionModel = view.getSelectionModel();
-                    final ProcessorTaskSummary selected = selectionModel.getSelected();
-                    if (selected != null) {
-                        // Reselect the task set: the row of the same group (its key), whose count
-                        // may have changed, so it isn't equal to the one selected
-                        selectionModel.clear();
-                        final Object key = view.getKeyProvider().getKey(selected);
-                        if (data != null) {
-                            data.getValues().stream()
-                                    .filter(row -> key.equals(view.getKeyProvider().getKey(row)))
-                                    .findFirst()
-                                    .ifPresent(selectionModel::setSelected);
-                        }
-                    }
-                    super.changeData(data);
-                }
             };
             view.setDataProvider(dataProvider);
         } else {

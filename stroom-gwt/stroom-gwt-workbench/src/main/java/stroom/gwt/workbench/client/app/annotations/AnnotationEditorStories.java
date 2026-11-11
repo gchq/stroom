@@ -54,6 +54,10 @@ import java.util.Map;
 public final class AnnotationEditorStories {
 
     private static final String CHANGE_PATH = "/annotation/v1/change";
+    private static final String FIND_ANNOTATIONS_PATH = "/annotation/v1/findAnnotations";
+    // An annotation found (to link to, or linked to), with who created it and when
+    private static final String RELATED_ALERT = "{\"type\": \"Annotation\", \"uuid\": \"ann-99\", \"id\": 99, "
+            + "\"name\": \"Related alert\", \"createUser\": \"admin\", \"createTimeMs\": 1700000000000}";
     // The comment entry's actions button, and the menu it opens
     private static final String COMMENT_ACTIONS = "Actions for history entry 'Comment' by Alice";
 
@@ -105,10 +109,7 @@ public final class AnnotationEditorStories {
                 // Link To tab: "Add Annotation Link" opens a chooser; OK links the chosen annotation.
                 // The annotation found has who created it and when, which Stroom's list cell shows
                 .story("LinkAnnotation", context -> render(context, AnnotationFixtures.editorRoutes(
-                        RestFixtures.builder(), ENTRIES, "[]", AnnotationFixtures.page(
-                                "{\"type\": \"Annotation\", \"uuid\": \"ann-99\", \"id\": 99, "
-                                        + "\"name\": \"Related alert\", \"createUser\": \"admin\", "
-                                        + "\"createTimeMs\": 1700000000000}")).build()))
+                        RestFixtures.builder(), ENTRIES, "[]", AnnotationFixtures.page(RELATED_ALERT)).build()))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByDisplayValue("Investigate alert");
@@ -131,6 +132,29 @@ public final class AnnotationEditorStories {
                             .toBeNull());
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // Link To tab: removing the link to the annotation selected (once confirmed) leaves
+                // nothing selected, so Remove is disabled. Before, the annotation stayed selected
+                // once it was no longer listed, with Remove enabled for it
+                .story("RemoveLink", context -> render(context, linkedFixtures()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Link To", "Add Annotation Link");
+                    final Query remove = play.getByTitle("Remove Annotation Link");
+                    play.click(play.findByText("Related alert"));
+                    play.waitFor(() -> play.expect(remove).not().toHaveAttribute("aria-disabled"));
+                    play.click(remove);
+                    play.click(screen.within(screen.findByText("Are you sure you want to remove this reference?")
+                            .closest(StroomDom.DIALOG)).getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post(CHANGE_PATH)
+                                    .withJsonBodyContaining("{\"change\": {\"type\": \"unlinkAnnotations\", "
+                                            + "\"annotations\": [99]}}")
+                                    .toSpyMatcher()));
+                    // Found again, without the annotation unlinked
+                    play.waitFor(() -> play.expect(play.queryByText("Related alert")).toBeNull());
+                    play.waitFor(() -> play.expect(remove).toHaveAttribute("aria-disabled", "true"));
+                    ContentStorySupport.expectNoProblems(play);
                 })
                 // Events tab: "Add Event Link" asks for streamId:eventId and links it
                 .story("AddEventLink", context -> render(context, fixtures(ENTRIES).build()))
@@ -562,6 +586,27 @@ public final class AnnotationEditorStories {
     // A sub-tab of the annotation (Stroom's LinkTabPanel has no tab role)
     private static Query tab(final Play play, final String name) {
         return play.getByText(name, StroomDom.LINK_TAB_LABEL);
+    }
+
+    // Annotation 42 links to annotation 99 until the link is removed (an unlinkAnnotations change
+    // is sent), as the server would find its links. Made with each rendering, so a rerun starts
+    // linked again
+    private static RestFixtures linkedFixtures() {
+        final boolean[] unlinked = {false};
+        return RestFixtures.builder()
+                .post(CHANGE_PATH, request -> {
+                    if (request.getBody() != null && request.getBody().contains("unlinkAnnotations")) {
+                        unlinked[0] = true;
+                    }
+                    return RestReply.json("true");
+                })
+                // The Link To tab's find (the annotations 42 links to)
+                .route(RequestMatcher.post(FIND_ANNOTATIONS_PATH).withJsonBodyContaining("{\"sourceId\": 42}"),
+                        request -> RestReply.json(unlinked[0]
+                                ? AnnotationFixtures.page()
+                                : AnnotationFixtures.page(RELATED_ALERT)))
+                .addAll(fixtures(ENTRIES).build())
+                .build();
     }
 
     private static RestFixtures.Builder fixtures(final String entries) {

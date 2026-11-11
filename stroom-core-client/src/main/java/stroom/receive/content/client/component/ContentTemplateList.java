@@ -66,6 +66,8 @@ public class ContentTemplateList extends Component {
         // Rows keyed by number (1 to n): a tick rebuilds the row
         dataGrid.setKeyProvider(ContentTemplate::getTemplateNumber);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
+        // The pane beside it shows the selected row (UI-GUIDE.md, "What a list selects")
+        selectionModel.setSelectFirst(true);
     }
 
     /// Puts the focus on the list.

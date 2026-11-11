@@ -107,6 +107,11 @@ public class ApiKeyEditorController extends Controller {
         reset();
     }
 
+    /// @return The key the dialog has made or saved, or `null` if none yet.
+    public HashedApiKey getApiKey() {
+        return apiKey;
+    }
+
     /// Shows the dialog that makes a key, owned by `opener` until it is closed.
     ///
     /// @param opener              What shows it.

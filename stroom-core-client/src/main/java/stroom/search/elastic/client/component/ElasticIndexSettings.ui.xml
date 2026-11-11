@@ -47,38 +47,6 @@
                         helpText="Pipeline used to extract field values from the original events at search time, when a dashboard or query does not specify its own extraction pipeline.">
             <dd:DropDownBox ui:field="defaultExtractionPipeline"/>
         </form:FormGroup>
-        <tx:Html>
-            <h2>Vector search</h2>
-        </tx:Html>
-        <form:FormGroup identity="elasticIndexSettingsVectorGenerationModel" label="Vector generation model"
-                        helpText="AI model used to create vector embeddings from query terms, so that dense_vector fields can be searched. Required to search dense_vector fields.">
-            <dd:DropDownBox ui:field="vectorGenerationModel"/>
-        </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsRerankModel" label="Rerank model"
-                        helpText="Optional AI model used to rerank vector search results by comparing each result's text with the search term. If left blank, results are not reranked.">
-            <dd:DropDownBox ui:field="rerankModel"/>
-        </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsRerankTextFieldSuffix" label="Rerank text field suffix"
-                        helpText="Suffix of the text field that holds the original text for each dense_vector field. The vector field suffix is replaced with this, e.g. Content.vector becomes Content.text. Default is .text."
-                        screenReaderText="E.g. Content.vector uses Content.text. Default is .text.">
-            <form:TextBox ui:field="rerankTextFieldSuffix"
-                       title="Suffix used to identify the text equivalent of dense_vector fields (e.g. `.text`).&#10;
-The original text field value is obtained by removing the vector field suffix (e.g. `.vector`) and replacing it with the supplied suffix (e.g. `.text`)."/>
-        </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsRerankScoreFieldSuffix" label="Rerank score field suffix"
-                        helpText="Suffix used to name the field that receives the rerank score. The vector field suffix is replaced with this, e.g. Content.vector gives Content.score, which can be used in dashboard expressions. Default is .score."
-                        screenReaderText="E.g. Content.vector gives Content.score. Default is .score.">
-            <form:TextBox ui:field="rerankScoreFieldSuffix"
-                       title="Suffix used to name the destination rerank score field, after removing the vector field suffix (e.g. `.vector`) and replacing it with the supplied suffix.&#10;
-This field is set to the relevance score when comparing the original text field against the user's search term.&#10;
-This field can be referenced in dashboard expressions, e.g. $\{BaseField.score\}."/>
-        </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsRerankScoreMinimum" label="Minimum Rerank Score"
-                        helpText="Only results with a rerank score greater than or equal to this value are included. A number from 0.0 to 1.0. Default is 0.8. If above 0, the score field must be included in the query's fields."
-                        screenReaderText="0.0 to 1.0. Default is 0.8.">
-            <form:TextBox ui:field="rerankScoreMinimum" addStyleNames="text-field--narrow"
-                       title="Only include results with a rerank score greater than or equal to this value (in the range 0.0 to 1.0)"/>
-        </form:FormGroup>
 
         <b:Button ui:field="testConnection" text="Test Connection" icon="OK" addStyleNames="allow-focus"/>
     </g:FlowPanel>

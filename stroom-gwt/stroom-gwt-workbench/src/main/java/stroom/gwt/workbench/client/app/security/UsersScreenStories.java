@@ -66,6 +66,12 @@ public final class UsersScreenStories {
                      {"id": 101, "uuid": "u-dave", "subjectId": "dave", "group": false, "enabled": true}]"""))
             .build();
 
+    // Alice is renamed between the first fetch and the next (e.g. by her identity provider)
+    private static final RestFixtures RENAMED_FIXTURES = RestFixtures.builder()
+            .post("/users/v1/find", RestReply.json(USERS), RestReply.json(USERS.replace(
+                    "\"displayName\": \"Alice Anderson\"", "\"displayName\": \"Alice Brown\"")))
+            .build();
+
     // carol was deleted (disabled), so creating her asks whether to restore her, and restoring fails
     private static final RestFixtures RESTORE_FAILS_FIXTURES = RestFixtures.builder()
             .post("/users/v1/find", RestReply.json(USERS))
@@ -109,6 +115,20 @@ public final class UsersScreenStories {
                             RequestMatcher.post("/users/v1/createUser")
                                     .withJsonBodyContaining("{\"subjectId\": \"bob\"}")
                                     .toSpyMatcher()));
+                    expectNoProblems(play);
+                })
+                // The selected user, renamed, stays selected, and the Delete button's title says
+                // the new name: it once kept the old, as the screen heard only explicit selections
+                .story("RenameUpdatesDeleteTitle", context -> render(context, RENAMED_FIXTURES, null, false))
+                .withPlay(play -> {
+                    play.click(play.findByText("Alice Anderson"));
+                    play.waitFor(() -> play.expect(play.getByRole("button",
+                            TextMatch.containing("Delete User 'Alice Anderson'"))).toBeInTheDocument());
+                    play.click(play.getByRole("button", "Refresh"));
+                    play.waitFor(() -> play.expect(play.getByText("Alice Brown").closest(StroomDom.GRID_ROW))
+                            .toHaveClass(StroomDom.SELECTED_ROW));
+                    play.waitFor(() -> play.expect(play.getByRole("button",
+                            TextMatch.containing("Delete User 'Alice Brown'"))).toBeInTheDocument());
                     expectNoProblems(play);
                 })
                 // OK with no unique identity says why under the field and keeps the dialog open, rather

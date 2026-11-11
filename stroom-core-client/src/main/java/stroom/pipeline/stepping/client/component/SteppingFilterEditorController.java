@@ -182,9 +182,10 @@ public class SteppingFilterEditorController extends Controller {
         // the display.
         final List<XPathFilter> list = xPathList.getSelectionModel().getSelectedItems();
         if (!list.isEmpty()) {
+            // The filter in place of the first (UI-GUIDE.md, "What a list selects")
+            xPathList.getSelectionModel().selectNextAfterRemove(list);
             xPathFilters.removeAll(list);
             xPathList.refresh();
-            xPathList.getSelectionModel().clear();
             updateLocalActiveFilterState();
         }
     }
@@ -213,6 +214,8 @@ public class SteppingFilterEditorController extends Controller {
         final String elementId = NullSafe.get(element, PipelineElement::getId);
         if (elementId != null && !elementId.equals(currentElementId)) {
             view.setName(element.getDisplayName());
+            // Another element's filters: none of the last element's is selected
+            xPathList.getSelectionModel().clear();
             xPathFilters = xPathList.getDataProvider().getList();
             xPathFilters.clear();
 

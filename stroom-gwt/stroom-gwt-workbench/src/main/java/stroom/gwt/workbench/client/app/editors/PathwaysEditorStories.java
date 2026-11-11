@@ -76,6 +76,18 @@ public final class PathwaysEditorStories {
                   "root": {"uuid": "c1", "name": "Cart", "targets": []}}],
               "pageResponse": {"offset": 0, "length": 2, "total": 2, "exact": true}}""";
 
+    // 'login-flow' with the same 'host' constraint on Start as on Auth
+    private static final String SHARED_CONSTRAINT = """
+            {"values": [
+                {"name": "login-flow", "createTime": {"seconds": 1700000000, "nanos": 0},
+                  "root": {"uuid": "n1", "name": "Start", "constraints": {
+                    "host": {"name": "host", "optional": false, "value": {"type": "anyValue"}}},
+                  "targets": [
+                    {"uuid": "s1", "nodes": [
+                      {"uuid": "n2", "name": "Auth", "targets": [], "constraints": {
+                        "host": {"name": "host", "optional": false, "value": {"type": "anyValue"}}}}]}]}}],
+              "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}}""";
+
     // A branching pathway: Start → [A, B]
     private static final String BRANCHING = """
             {"values": [
@@ -107,8 +119,9 @@ public final class PathwaysEditorStories {
                     }
                     play.waitFor(() -> play.expect(play.getByText("login-flow")).toBeInTheDocument());
                     play.expect(play.getByText("checkout")).toBeInTheDocument();
-                    // The graph pane shows no nodes until a pathway is selected
-                    play.expect(play.querySelector(".pathway-tree__node-name")).toBeNull();
+                    // The first pathway is selected, as the graph pane shows the selected one, so
+                    // its nodes show
+                    play.waitFor(() -> play.expect(play.querySelector(".pathway-tree__node-name")).not().toBeNull());
                     play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
@@ -251,6 +264,85 @@ public final class PathwaysEditorStories {
                     play.waitFor(() -> play.expect(dialog.getByText("New")).toBeInTheDocument());
                     DocEditors.expectNoUnhandledRequests(play);
                 })
+                // A constraint edited (keeping its name, which makes it the same constraint) and
+                // edited again without selecting it again opens as it now is. Before, the
+                // selection kept the constraint as it was, so the second Edit opened the old value
+                .story("EditConstraintTwice", context -> render(context, "pathways-1", PATHWAYS, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = editAuth(play);
+                    play.click(dialog.findByText("host"));
+                    final Query edit = dialog.getByRole("button", "Edit Selected Constraint");
+                    play.click(edit);
+                    final Play first = play.within(screen.findByText("Edit Constraint", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.click(first.within(first.getByText("Type", "label").closest(".form-group"))
+                            .querySelector(StroomDom.SELECTION_BOX));
+                    play.click(screen.findByText("Integer Range", ".selection-popup *"));
+                    play.type(first.getByLabelText("Value"), "80,443");
+                    play.click(first.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Constraint", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    // Edit again, without selecting the constraint again
+                    play.expect(edit).not().toHaveAttribute("aria-disabled");
+                    play.click(edit);
+                    final Play second = play.within(screen.findByText("Edit Constraint", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.expect(second.getByLabelText("Name")).toHaveValue("host");
+                    play.expect(second.getByLabelText("Value")).toHaveValue("80,443");
+                    play.click(second.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Constraint", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    DocEditors.expectNoProblems(play);
+                })
+                // A renamed constraint stays selected as it now is (UI-GUIDE.md, "What a list
+                // selects"): the old name was once left selected, out of sight, with Edit live for it
+                .story("RenameConstraintKeepsIt", context -> render(context, "pathways-1", PATHWAYS, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = editAuth(play);
+                    play.click(dialog.findByText("host"));
+                    final Query edit = dialog.getByRole("button", "Edit Selected Constraint");
+                    play.click(edit);
+                    final Play first = play.within(screen.findByText("Edit Constraint", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.clear(first.getByLabelText("Name"));
+                    play.type(first.getByLabelText("Name"), "hostname");
+                    play.click(first.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Constraint", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.waitFor(() -> play.expect(dialog.getByText("hostname").closest(StroomDom.GRID_ROW))
+                            .toHaveAttribute("aria-selected", "true"));
+                    play.expect(edit).not().toHaveAttribute("aria-disabled");
+                    play.click(edit);
+                    final Play second = play.within(screen.findByText("Edit Constraint", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.expect(second.getByLabelText("Name")).toHaveValue("hostname");
+                    play.click(second.getByRole("button", StroomDom.button("Cancel")));
+                    DocEditors.expectNoProblems(play);
+                })
+                // Choosing another node leaves none of its constraints selected, even one with the
+                // name (and value) of the constraint selected on the last node, so Edit and Delete
+                // are disabled. Before, the selection was kept: the other node's constraint of the
+                // same name showed selected, and Edit and Delete stayed enabled
+                .story("OtherNodeClearsConstraint", context -> render(context, "pathways-1", SHARED_CONSTRAINT,
+                        false))
+                .withPlay(play -> {
+                    final Play dialog = editAuth(play);
+                    play.click(dialog.findByText("host"));
+                    final Query edit = dialog.getByRole("button", "Edit Selected Constraint");
+                    play.waitFor(() -> play.expect(edit).not().toHaveAttribute("aria-disabled"));
+                    // Start has its own 'host' constraint, the same as Auth's
+                    play.click(dialog.getByText("Start"));
+                    play.waitFor(() -> play.expect(dialog.getByText("Start"))
+                            .toHaveClass("pathway-tree__node-name--selected"));
+                    play.waitFor(() -> play.expect(edit).toHaveAttribute("aria-disabled", "true"));
+                    play.expect(dialog.getByRole("button", "Delete Selected Constraints"))
+                            .toHaveAttribute("aria-disabled", "true");
+                    play.expect(dialog.getByText("host").closest(StroomDom.GRID_ROW))
+                            .not().toHaveClass(StroomDom.SELECTED_ROW);
+                    DocEditors.expectNoProblems(play);
+                })
                 // Settings: the document's configuration; an edit enables Save
                 .story("Settings", context -> render(context, "pathways-1", PATHWAYS, false))
                 .withPlay(play -> {
@@ -308,6 +400,19 @@ public final class PathwaysEditorStories {
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 });
+    }
+
+    // Opens 'login-flow' in the Edit Pathway dialog and chooses its Auth node, whose constraints
+    // the dialog then lists
+    private static Play editAuth(final Play play) {
+        final Play screen = play.screen();
+        play.click(play.findByText("login-flow"));
+        play.click(play.getByRole("button", "Edit Selected Pathway"));
+        final Play dialog = play.within(screen.findByText("Edit Pathway", StroomDom.DIALOG_TITLE)
+                .closest(StroomDom.DIALOG));
+        play.click(dialog.findByText("Auth"));
+        play.waitFor(() -> play.expect(dialog.getByText("host")).toBeInTheDocument());
+        return dialog;
     }
 
     private static Widget render(final StoryContext context,

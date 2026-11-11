@@ -81,6 +81,8 @@ public class FloorMapFactList extends Component {
         initWidget(BINDER.createAndBindUi(this));
         // Several can be selected: ctrl/shift-click extends the selection
         selectionModel = dataGrid.addDefaultSelectionModel(true);
+        // The selection follows the canvas, which may select facts the list doesn't show
+        dataGrid.setKeepHiddenSelection(true);
         dataGrid.getElement().setId(gridElementId);
         addColumns();
         dataProvider.addDataDisplay(dataGrid);
