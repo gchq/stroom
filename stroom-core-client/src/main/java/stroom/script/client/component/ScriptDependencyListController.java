@@ -77,6 +77,8 @@ public class ScriptDependencyListController extends Controller {
         scriptPicker.show(script -> {
             if (script != null) {
                 if (!scripts.contains(script) && scripts.add(script)) {
+                    // The script added (UI-GUIDE.md, "What a list selects")
+                    view.getSelectionModel().setSelected(script);
                     onChange.run();
                     refresh();
                 }
@@ -95,11 +97,12 @@ public class ScriptDependencyListController extends Controller {
 
             ConfirmEvent.fire(this, message, result -> {
                 if (result) {
+                    // The script in place of the first (UI-GUIDE.md, "What a list selects")
+                    view.getSelectionModel().selectNextAfterRemove(list);
                     for (final DocRef script : list) {
                         scripts.remove(script);
                     }
 
-                    view.getSelectionModel().clear();
                     onChange.run();
                     refresh();
                 }

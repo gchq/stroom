@@ -77,8 +77,12 @@ public class AppUserPermissionsList extends Component {
     /// Makes an empty list, with no columns until [#addColumns].
     public AppUserPermissionsList() {
         initWidget(BINDER.createAndBindUi(this));
+        // A user's permissions fetched again after a change are the same row
+        dataGrid.setKeyProvider(row -> row.getUserRef().getUuid());
         dataGrid.setSelectionModel(selectionModel,
                 new DataGridSelectionEventManager<>(dataGrid, selectionModel, false));
+        // The pane beside it shows the selected row (UI-GUIDE.md, "What a list selects")
+        selectionModel.setSelectFirst(true);
         dataGrid.addColumnSortHandler(event -> onSortChange.run());
     }
 

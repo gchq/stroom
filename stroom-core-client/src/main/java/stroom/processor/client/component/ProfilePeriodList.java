@@ -25,7 +25,6 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.util.client.MultiSelectionModelImpl;
-import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -34,7 +33,6 @@ import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /// A processor profile's periods, a row each (its days, start and end times, and node and cluster
@@ -99,8 +97,22 @@ public class ProfilePeriodList extends Component implements Focus {
     public void setData(final List<ProfilePeriod> profilePeriods) {
         dataGrid.setRowData(0, profilePeriods);
         dataGrid.setRowCount(profilePeriods.size());
-        reselect(profilePeriods);
         enableButtons();
+    }
+
+    /// Selects a period, e.g. one just added.
+    ///
+    /// @param profilePeriod The period.
+    public void setSelected(final ProfilePeriod profilePeriod) {
+        selectionModel.setSelected(profilePeriod);
+    }
+
+    /// Selects the period in place of one removed, once the periods are shown again (UI-GUIDE.md,
+    /// "What a list selects").
+    ///
+    /// @param profilePeriod The period removed.
+    public void selectNextAfterRemove(final ProfilePeriod profilePeriod) {
+        selectionModel.selectNextAfterRemove(List.of(profilePeriod));
     }
 
     /// @param onAdd Run when New is pressed.
@@ -159,22 +171,6 @@ public class ProfilePeriodList extends Component implements Focus {
                         .build(),
                 "Max Cluster Threads",
                 150);
-    }
-
-    // An edit replaces a period with an unequal copy, so the selection moves to the row with the
-    // selected period's uuid (or clears if it has gone); otherwise Edit and Remove would act on the
-    // old copy, which the list no longer holds
-    private void reselect(final List<ProfilePeriod> profilePeriods) {
-        final ProfilePeriod selected = selectionModel.getSelected();
-        if (selected != null) {
-            final ProfilePeriod current = profilePeriods.stream()
-                    .filter(profilePeriod -> Objects.equals(profilePeriod.getUuid(), selected.getUuid()))
-                    .findFirst()
-                    .orElse(null);
-            if (current != selected) {
-                selectionModel.setSelected(current, new SelectionType(), false);
-            }
-        }
     }
 
     private void enableButtons() {

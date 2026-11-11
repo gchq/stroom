@@ -106,13 +106,26 @@ public class AnnotationLinksController extends Controller {
     private void link(final Annotation annotation) {
         final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotationRef,
                 new LinkAnnotations(Collections.singletonList(annotation.getId())));
-        annotationResourceClient.change(request, guard(this::onChangeComplete), taskMonitor());
+        annotationResourceClient.change(request, guard(success -> {
+            if (success != null && success) {
+                // The annotation linked, once shown (UI-GUIDE.md, "What a list selects")
+                findAnnotationList.selectWhenShown(annotation);
+            }
+            onChangeComplete(success);
+        }), taskMonitor());
     }
 
     private void unlink(final Annotation annotation) {
         final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotationRef,
                 new UnlinkAnnotations(Collections.singletonList(annotation.getId())));
-        annotationResourceClient.change(request, guard(this::onChangeComplete), taskMonitor());
+        annotationResourceClient.change(request, guard(success -> {
+            if (success != null && success) {
+                // The annotation in place of the one unlinked (it was once left selected, with
+                // Remove enabled for it)
+                findAnnotationList.selectNextAfterRemove(annotation);
+            }
+            onChangeComplete(success);
+        }), taskMonitor());
     }
 
     private void onChangeComplete(final Boolean success) {

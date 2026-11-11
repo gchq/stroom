@@ -29,6 +29,7 @@ import stroom.gwt.workbench.client.app.screen.ContentStorySupport;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -43,19 +44,24 @@ import java.util.Map;
 /// replies.
 ///
 /// The stories answer Stroom's `AnnotationResource`: `POST /annotation/v1/findAnnotationTags` (a
-/// sequence where a tag is created), `POST /annotation/v1/createAnnotationTag` (replying with the
-/// new tag) and `PUT /annotation/v1/updateAnnotationTag` (an echo), checked on the request spy, and
-/// the permissions popup's `POST /permission/doc/v1/fetchDocumentUserPermissions` (no permissions).
+/// sequence where a tag is created, or a tag renamed once it is updated),
+/// `POST /annotation/v1/createAnnotationTag` (replying with the new tag) and
+/// `PUT /annotation/v1/updateAnnotationTag` (an echo), checked on the request spy, and the
+/// permissions popup's `POST /permission/doc/v1/fetchDocumentUserPermissions` (no permissions).
 /// The tab is opened as `AnnotationPlugin` does: label, tag type, `refresh()`.
 public final class AnnotationTagScreenStories {
 
     private static final String FIND_PATH = "/annotation/v1/findAnnotationTags";
     private static final String CREATE_PATH = "/annotation/v1/createAnnotationTag";
+    private static final String UPDATE_PATH = "/annotation/v1/updateAnnotationTag";
 
     private static final String BUG = """
             {"id": 1, "uuid": "u-1", "type": "LABEL", "name": "Bug", "style": "RED"}""";
     private static final String FEATURE = """
             {"id": 100, "uuid": "u-101", "type": "LABEL", "name": "Feature", "style": "NONE"}""";
+    // Bug as it is once renamed
+    private static final String DEFECT = """
+            {"id": 1, "uuid": "u-1", "type": "LABEL", "name": "Defect", "style": "RED"}""";
     private static final String OPEN = """
             {"id": 1, "uuid": "u-1", "type": "STATUS", "name": "Open"}""";
     private static final String TRIAGE = """
@@ -126,6 +132,37 @@ public final class AnnotationTagScreenStories {
                             .closest(StroomDom.DIALOG));
                     play.expect(create.getByLabelText("Comment")).toBeInTheDocument();
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // A label renamed and edited again without selecting it again opens as it now is
+                // (the tags are fetched again, the label with its new name). Before, the selection
+                // kept the label as it was fetched first, so the second Edit opened the old name
+                .story("EditLabelTwice", AnnotationTagScreenStories::renderRenaming)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("Bug"));
+                    final Query edit = play.getByTitle("Edit Selected Annotation Label");
+                    play.waitFor(() -> play.expect(edit).not().toHaveAttribute("aria-disabled"));
+                    play.click(edit);
+                    final Play first = screen.within(screen.findByText("Edit Label - Bug").closest(StroomDom.DIALOG));
+                    final Query name = first.getByLabelText("Name");
+                    play.clear(name);
+                    play.type(name, "Defect");
+                    play.click(first.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.getByText("Defect")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Label - Bug")).toBeNull());
+                    // Edit again, without selecting the label again
+                    play.expect(edit).not().toHaveAttribute("aria-disabled");
+                    play.click(edit);
+                    final Play second = screen.within(screen.findByText("Edit Label - Defect")
+                            .closest(StroomDom.DIALOG));
+                    play.expect(second.getByLabelText("Name")).toHaveValue("Defect");
+                    play.click(second.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Label - Defect")).toBeNull());
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put(UPDATE_PATH)
+                                    .withJsonBodyContaining("{\"id\": 1, \"name\": \"Defect\"}")
+                                    .toSpyMatcher());
+                    ContentStorySupport.expectNoProblems(play);
                 });
     }
 
@@ -146,14 +183,39 @@ public final class AnnotationTagScreenStories {
                                  final String label,
                                  final RestReply tags,
                                  final RestReply... more) {
-        final RestFixtures fixtures = RestFixtures.builder()
+        return render(context, type, label, otherRoutes(RestFixtures.builder()
                 .post(FIND_PATH, tags, more)
+                .put(UPDATE_PATH, request -> RestReply.json(request.getBody()))));
+    }
+
+    // The tags are Bug until it is renamed (an update is sent), then Defect, as the server would
+    // find them. Made with each rendering, so a rerun starts with Bug again
+    private static Widget renderRenaming(final StoryContext context) {
+        final boolean[] renamed = {false};
+        return render(context, AnnotationTagType.LABEL, "Annotation Labels", otherRoutes(RestFixtures.builder()
+                .post(FIND_PATH, request -> RestReply.json(page(renamed[0]
+                        ? DEFECT
+                        : BUG)))
+                .put(UPDATE_PATH, request -> {
+                    renamed[0] = true;
+                    return RestReply.json(request.getBody());
+                })));
+    }
+
+    // The routes every story answers alike: creating a tag and its permissions
+    private static RestFixtures otherRoutes(final RestFixtures.Builder builder) {
+        return builder
                 .post(CREATE_PATH, AnnotationTagScreenStories::create)
-                .put("/annotation/v1/updateAnnotationTag", request -> RestReply.json(request.getBody()))
                 .post("/permission/doc/v1/fetchDocumentUserPermissions", RestReply.json(
                         "{\"values\": [], \"pageResponse\": {\"offset\": 0, \"length\": 0, \"total\": 0, "
                                 + "\"exact\": true}}"))
                 .build();
+    }
+
+    private static Widget render(final StoryContext context,
+                                 final AnnotationTagType type,
+                                 final String label,
+                                 final RestFixtures fixtures) {
         final ContentScreenGinjector injector = GWT.create(ContentScreenGinjector.class);
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)

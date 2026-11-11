@@ -529,6 +529,26 @@ RestFixtures.builder()
   messages again).
 * Debounced inputs (the quick filters, 300-400ms) need a `play.waitFor(3000, ...)` after typing.
 
+### A server's list that pages, gains and loses rows
+
+`FakeRows` (in `app/rest`) holds a list as the server does, for a play that pages, adds or deletes:
+its `page` handler answers a search with the page its `pageRequest` asks for, in the rows' sort
+order, and `adding`/`removing` handlers change it before they reply. Make one per render (plays
+change it). A list's default page is 100 rows, so give it 150 to page (some lists show 1000 a page,
+e.g. accounts):
+
+```java
+final FakeRows groups = new FakeRows();
+groups.put("1", "Group 001", group(1, "Group 001"));
+RestFixtures.builder()
+        .post(FIND_PATH, groups::page)
+        .delete("/node/nodeGroup/v2/2", groups.removing("2", RestReply.json("true")))
+```
+
+A play of what a list selects after an action (UI-GUIDE.md, "What a list selects") is named for the
+rule, e.g. `DeleteSelectsNext`, `AddSelectsIt`, `PageChangeDropsSelection`; a confirmation it
+answers needs `realAlerts()` on the harness.
+
 ## Support by area
 
 Each area has its own ginjector in `client/app/gin/<area>` and helpers for its screens. Reuse them.

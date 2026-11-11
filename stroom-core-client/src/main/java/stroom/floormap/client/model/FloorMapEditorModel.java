@@ -844,11 +844,12 @@ public class FloorMapEditorModel {
                 : latestPerKey(entries, false);
     }
 
-    /// Stages the deletion of a single time entry and returns the rebuilt time
-    /// list with a suggested selection index (the entry above the deleted one).
+    /// Stages the deletion of a single time entry and returns the row to select afterwards: the
+    /// entry now in the deleted one's place (the next), else the new last entry, as every list
+    /// selects after a delete (UI-GUIDE.md, "What a list selects").
     ///
     /// @param entry the entry to delete
-    /// @return the suggested selection index after deletion, or -1
+    /// @return the row to select in the rebuilt time list, or -1 if it is empty
     public int stageTimeEntryDeletion(final TemporalEntry entry) {
         final TemporalEntryId id = new TemporalEntryId(
                 entry.getMap(), entry.getKey(), entry.getEffectiveTimeMs());
@@ -856,15 +857,14 @@ public class FloorMapEditorModel {
 
         final List<TemporalEntry> merged = buildMergedTimeList();
 
-        // Find where the deleted entry would have sat.
-        int deletedIndex = merged.size();
+        // Where the deleted entry sat: the first later entry is now there
         for (int i = 0; i < merged.size(); i++) {
             if (merged.get(i).getEffectiveTimeMs() > entry.getEffectiveTimeMs()) {
-                deletedIndex = i;
-                break;
+                return i;
             }
         }
-        return deletedIndex - 1;
+        // It was the last: the new last, if any
+        return merged.size() - 1;
     }
 
     // -----------------------------------------------------------------------

@@ -1,0 +1,64 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  The Info panel of an Elastic index's Fields tab (elastic-field-info.css): how the selected field is
+  mapped, then statistics of its values, from a random sample or exact for a time range. The
+  statistics' blocks (coverage, values, the most common values and their distribution) are made by
+  the Java from what the server returns
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dt="urn:import:stroom.widget.datepicker.client.component"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:spinner="urn:import:stroom.widget.spinner.client"
+             xmlns:tx="urn:import:stroom.widget.text.client">
+    <g:ScrollPanel styleName="max">
+        <g:FlowPanel styleName="form-padding form elastic-field-info">
+            <form:FormGroup label="Field mapping"
+                            helpText="How Elasticsearch maps this field. The parameters shown are those set in the index mapping; change them in Elasticsearch, not Stroom.">
+                <g:FlowPanel>
+                    <tx:Label ui:field="mappingMessage" visible="false"/>
+                    <g:FlowPanel ui:field="mappingEntries" styleName="elastic-field-info__entries"/>
+                </g:FlowPanel>
+            </form:FormGroup>
+
+            <g:FlowPanel styleName="elastic-field-info__heading">
+                <tx:Html>
+                    <h2>Statistics</h2>
+                </tx:Html>
+                <b:Toolbar name="Statistics actions">
+                    <b:ToolbarButton ui:field="refreshStats" svg="REFRESH" title="Refresh Statistics" label="Refresh"/>
+                </b:Toolbar>
+                <spinner:SmallBusySpinner ui:field="spinner"/>
+                <tx:Label ui:field="loading" text="Loading statistics..." visible="false"/>
+            </g:FlowPanel>
+            <form:FormGroup identity="elasticFieldStatsMode" label="Mode"
+                            helpText="Random sample estimates the statistics from a random sample of all the documents, which is fast. Exact counts every document in a time range, which is slower on large indices.">
+                <l:SelectionBox ui:field="mode" addStyleNames="elastic-field-info__mode"/>
+            </form:FormGroup>
+            <g:FlowPanel ui:field="randomControls">
+                <form:FormGroup identity="elasticFieldStatsSampleSize" label="Sample size"
+                                helpText="About how many documents are sampled at random. Larger samples are more accurate but slower.">
+                    <l:SelectionBox ui:field="sampleSize" addStyleNames="elastic-field-info__sample-size"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+            <g:FlowPanel ui:field="exactControls" styleName="elastic-field-info__controls" visible="false">
+                <form:FormGroup identity="elasticFieldStatsFrom" label="From"
+                                helpText="The start of the time range, or blank for no start.">
+                    <dt:DateTimeBox ui:field="fromTime" addStyleNames="elastic-field-info__date"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldStatsTo" label="To"
+                                helpText="The end of the time range, or blank for no end.">
+                    <dt:DateTimeBox ui:field="toTime" addStyleNames="elastic-field-info__date"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+            <tx:Label ui:field="statsMessage" visible="false"/>
+            <g:FlowPanel ui:field="errorPanel" styleName="elastic-field-info__error-panel" visible="false">
+                <tx:Label ui:field="errorText" addStyleNames="elastic-field-info__error"/>
+                <b:Button ui:field="retry" text="Retry" icon="REFRESH"/>
+            </g:FlowPanel>
+            <g:FlowPanel ui:field="statsContent" styleName="elastic-field-info__stats"/>
+        </g:FlowPanel>
+    </g:ScrollPanel>
+</ui:UiBinder>

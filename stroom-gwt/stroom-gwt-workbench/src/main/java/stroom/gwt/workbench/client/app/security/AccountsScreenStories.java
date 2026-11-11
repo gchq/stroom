@@ -17,6 +17,7 @@
 package stroom.gwt.workbench.client.app.security;
 
 import stroom.gwt.workbench.client.app.gin.security.SecurityScreenGinjector;
+import stroom.gwt.workbench.client.app.rest.FakeRows;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -72,6 +73,10 @@ public final class AccountsScreenStories {
             .replace("ADMIN", ADMIN)
             .replace("LOCKED", LOCKED);
 
+    // The accounts once admin's first name has been changed to 'Administrator'
+    private static final String ACCOUNTS_EDITED = ACCOUNTS
+            .replace("\"firstName\": \"Admin\"", "\"firstName\": \"Administrator\"");
+
     private static final RestFixtures FIXTURES = RestFixtures.builder()
             .post("/account/v1/search", RestReply.json(ACCOUNTS))
             .put("/account/v1/1", RestReply.json("true"))
@@ -79,6 +84,14 @@ public final class AccountsScreenStories {
                     {"id": 1, "uuid": "u-1", "subjectId": "admin", "displayName": "Admin User",
                       "group": false, "enabled": true}"""))
             .build();
+
+    // The fixtures whose second search (after an edit) finds admin with the first name changed
+    private static final RestFixtures EDITED_FIXTURES = RestFixtures.builder()
+            .post("/account/v1/search", RestReply.json(ACCOUNTS), RestReply.json(ACCOUNTS_EDITED))
+            .build()
+            .followedBy(FIXTURES);
+
+    private static final String EDIT_TITLE = "Edit Selected Account";
 
     private AccountsScreenStories() {
         // Static utility
@@ -144,6 +157,35 @@ public final class AccountsScreenStories {
                                     .toSpyMatcher()));
                     expectNoProblems(play);
                 })
+                // Editing an account and then pressing Edit again (without clicking the row again)
+                // shows the account as it was fetched after the edit. The selection once kept the old
+                // account (an Account is equal only to itself), so the row showed unselected and the
+                // second Edit opened the old values
+                .story("EditTwiceShowsTheEdit", context -> render(context, EDITED_FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("admin@example.com"));
+                    final Query edit = play.getByRole("button", "Edit Selected Account");
+                    play.waitFor(() -> play.expect(edit).not().toHaveAttribute("aria-disabled"));
+                    play.click(edit);
+                    final Play dialog = screen.within(screen.findByText("Edit Account").closest(StroomDom.DIALOG));
+                    final Query first = dialog.getByLabelText("First Name");
+                    play.expect(first).toHaveValue("Admin");
+                    play.clear(first);
+                    play.type(first, "Administrator");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Account")).toBeNull());
+                    // The list is fetched again, with the new name, and the row is still selected
+                    play.waitFor(() -> play.expect(play.getByText("Administrator")).toBeInTheDocument());
+                    play.expect(play.getByText("admin@example.com").closest(StroomDom.GRID_ROW))
+                            .toHaveAttribute("aria-selected", "true");
+                    // Edit again: the dialog shows the new name
+                    play.expect(edit).not().toHaveAttribute("aria-disabled");
+                    play.click(edit);
+                    final Play again = screen.within(screen.findByText("Edit Account").closest(StroomDom.DIALOG));
+                    play.expect(again.getByLabelText("First Name")).toHaveValue("Administrator");
+                    expectNoProblems(play);
+                })
                 // A locked account shows 'Locked until <time>'
                 .story("LockedAccount", AccountsScreenStories::render)
                 .withPlay(play -> {
@@ -158,6 +200,39 @@ public final class AccountsScreenStories {
                     // The unlocked account's Locked cell stays blank
                     final Play adminRow = play.within(play.getByText("admin").closest(StroomDom.GRID_ROW));
                     play.expect(adminRow.queryByText(TextMatch.startingWith("Locked"))).toBeNull();
+                    expectNoProblems(play);
+                })
+                // Deleting an account selects the one now in its place (UI-GUIDE.md, "What a list
+                // selects"); it once selected none
+                .story("DeleteSelectsNext", context -> render(context, crudFixtures()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("bob"));
+                    expectSelected(play, "bob");
+                    play.click(play.getByRole("button", "Delete Selected Account"));
+                    final Play confirm = screen.within(screen.findByText(
+                            "Are you sure you want to delete account 'bob'?").closest(StroomDom.DIALOG));
+                    play.click(confirm.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.queryByText("bob")).toBeNull());
+                    expectSelected(play, "locked.user");
+                    play.expect(play.getByRole("button", EDIT_TITLE)).not().toHaveAttribute("aria-disabled");
+                    expectNoProblems(play);
+                })
+                // A new account is selected once the list shows it; it once kept the old selection
+                .story("AddSelectsIt", context -> render(context, crudFixtures()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("admin"));
+                    expectSelected(play, "admin");
+                    play.click(play.getByRole("button", "New Account"));
+                    final Play dialog = screen.within(screen.findByText("Create Account").closest(StroomDom.DIALOG));
+                    play.type(dialog.getByLabelText("User ID"), "carol");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Create Account")).toBeNull());
+                    play.findByText("carol");
+                    expectSelected(play, "carol");
+                    play.expect(play.getByText("admin").closest(StroomDom.GRID_ROW))
+                            .toHaveAttribute("aria-selected", "false");
                     expectNoProblems(play);
                 })
                 // The initial sort (User Id, ascending) is sent with the first fetch
@@ -178,16 +253,49 @@ public final class AccountsScreenStories {
                 });
     }
 
+    private static void expectSelected(final Play play, final String userId) {
+        play.waitFor(() -> play.expect(play.getByText(userId).closest(StroomDom.GRID_ROW))
+                .toHaveAttribute("aria-selected", "true"));
+    }
+
+    // An account as the server sends it
+    private static String account(final int id, final String userId) {
+        return "{\"id\": " + id + ", \"userId\": \"" + userId + "\", \"firstName\": \"\", \"lastName\": \"\", "
+               + "\"email\": \"\", \"enabled\": true, \"inactive\": false, \"neverExpires\": false, "
+               + "\"failureCount\": 0, \"comments\": \"\"}";
+    }
+
+    // Three accounts, a server that deletes bob (3) and creates carol (4)
+    private static RestFixtures crudFixtures() {
+        final FakeRows accounts = new FakeRows()
+                .put("1", "admin", ADMIN)
+                .put("3", "bob", account(3, "bob"))
+                .put("2", "locked.user", LOCKED);
+        return RestFixtures.builder()
+                .post("/account/v1/search", accounts::page)
+                .delete("/account/v1/3", accounts.removing("3", RestReply.json("true")))
+                .post("/account/v1", accounts.adding("4", "carol", account(4, "carol"), RestReply.json("4")))
+                .build()
+                .followedBy(FIXTURES);
+    }
+
     private static void expectNoProblems(final Play play) {
         play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
         play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
     }
 
     private static Widget render(final StoryContext context) {
+        return render(context, FIXTURES);
+    }
+
+    /// @param fixtures The story's fixtures.
+    private static Widget render(final StoryContext context, final RestFixtures fixtures) {
         final SecurityScreenGinjector injector = GWT.create(SecurityScreenGinjector.class);
-        final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
+        final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
                 .appPermissions(AppPermission.MANAGE_USERS_PERMISSION)
+                // Delete asks first
+                .realAlerts()
                 .build();
         harness.fn(OPEN_SCREEN);
         harness.getEventBus().addHandler(OpenUsersAndGroupsScreenEvent.getType(), event ->

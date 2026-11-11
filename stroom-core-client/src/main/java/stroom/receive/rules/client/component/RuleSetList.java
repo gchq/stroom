@@ -55,6 +55,8 @@ public class RuleSetList extends Component {
         // A rule has no id: its number is its position, which an edit keeps but a move changes
         dataGrid.setKeyProvider(ReceiveDataRule::getRuleNumber);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
+        // The pane beside it shows the selected row (UI-GUIDE.md, "What a list selects")
+        selectionModel.setSelectFirst(true);
         addColumns();
     }
 

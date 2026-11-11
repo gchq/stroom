@@ -238,7 +238,8 @@ public class ProcessorsController extends Controller {
 
         processorList.setActionEnabled(ProcessorAction.NEW, allowUpdate);
         processorList.setActionEnabled(ProcessorAction.EDIT, allowUpdate && enabled && onlyOneRowSelected);
-        processorList.setActionEnabled(ProcessorAction.DUPLICATE, allowUpdate && enabled);
+        // Duplicate copies one filter
+        processorList.setActionEnabled(ProcessorAction.DUPLICATE, allowUpdate && enabled && onlyOneRowSelected);
         processorList.setActionEnabled(ProcessorAction.DELETE, allowUpdate && enabled);
         processorList.setActionEnabled(ProcessorAction.SHOW_TASKS, enabled && onlyOneRowSelected);
     }
@@ -395,8 +396,12 @@ public class ProcessorsController extends Controller {
                 }
                 ConfirmEvent.fire(this, message, result -> {
                     if (result) {
-                        final CountDownAndRun countDownAndRun = new CountDownAndRun(
-                                rows.size(), processorList::refresh);
+                        // Once all are answered, the row in place of the first (it once left the
+                        // other deleted filters selected)
+                        final CountDownAndRun countDownAndRun = new CountDownAndRun(rows.size(), () -> {
+                            processorList.getSelectionModel().selectNextAfterRemove(rows);
+                            processorList.refresh();
+                        });
                         for (final ProcessorFilterRow row : rows) {
                             restFactory
                                     .create(PROCESSOR_FILTER_RESOURCE)
@@ -414,9 +419,11 @@ public class ProcessorsController extends Controller {
         }
     }
 
-    /// Lists the processors again, keeping the selected one selected.
+    /// Lists the processors again; the rows selected stay selected while they are listed. (It once
+    /// selected the most recent alone, losing the others, and a pending choice.)
     public void refresh() {
-        refresh(processorList.getSelectionModel().getSelected());
+        processorList.refresh();
+        updateData();
     }
 
     /// Lists the processors again, selecting a filter.
@@ -426,18 +433,15 @@ public class ProcessorsController extends Controller {
         refresh(NullSafe.get(processorFilter, ProcessorFilterRow::new));
     }
 
-    /// Lists the processors again, selecting a row.
+    /// Lists the processors again, selecting a row, which stays selected if the list shows it
+    /// (UI-GUIDE.md, "What a list selects").
     ///
     /// @param row The row to select, or `null` for none.
     public void refresh(final ProcessorListRow row) {
-        processorList.setNextSelection(row);
-        processorList.refresh();
-
         if (row != null) {
-            processorList.getSelectionModel().clear();
-            processorList.getSelectionModel().setSelected(row, true);
+            processorList.getSelectionModel().setSelected(row);
         }
-
+        processorList.refresh();
         updateData();
     }
 

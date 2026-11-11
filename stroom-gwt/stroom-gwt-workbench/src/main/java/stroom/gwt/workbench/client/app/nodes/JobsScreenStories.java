@@ -139,8 +139,32 @@ public final class JobsScreenStories {
     private static final String NO_JOB_NODES = """
             {"values": [], "pageResponse": {"offset": 0, "length": 0, "total": 0, "exact": true}}""";
 
+    private static final String PROPERTY_CACHE_RELOAD = """
+            {"id": 3, "name": "Property Cache Reload", "enabled": true, "description": "Advanced",
+              "advanced": true}""";
+
+    // JobNodeResource.find() for 'Property Cache Reload': two CRON nodes, on the nodes Data
+    // Retention's are on
+    private static final String PROPERTY_CACHE_RELOAD_NODES = """
+            {
+              "values": [
+                {
+                  "jobNode": {"id": 31, "job": JOB, "jobType": "CRON", "nodeName": "node1", "enabled": true,
+                    "schedule": "0 /30 * * * ?"},
+                  "jobNodeInfo": {"currentTaskCount": 0}
+                },
+                {
+                  "jobNode": {"id": 33, "job": JOB, "jobType": "CRON", "nodeName": "node3", "enabled": true,
+                    "schedule": "0 /30 * * * ?"},
+                  "jobNodeInfo": {"currentTaskCount": 0}
+                }
+              ],
+              "pageResponse": {"offset": 0, "length": 2, "total": 2, "exact": true}
+            }""".replace("JOB", PROPERTY_CACHE_RELOAD);
+
     private static final RestFixtures FIXTURES = fixtures(JOB_NODES);
     private static final RestFixtures CRON_FIXTURES = fixtures(CRON_JOB_NODES);
+    private static final RestFixtures TWO_CRON_JOBS_FIXTURES = fixtures(CRON_JOB_NODES, PROPERTY_CACHE_RELOAD_NODES);
 
     private JobsScreenStories() {
         // Static utility
@@ -331,12 +355,57 @@ public final class JobsScreenStories {
                     play.click(screen.getByRole("button", StroomDom.button("Cancel")));
                     play.waitFor(() -> play.expect(screen.queryByText("Change Schedule")).toBeNull());
                     expectNoProblems(play);
+                })
+                // Selecting another job leaves none of its nodes selected, so a batch schedule change
+                // made with its nodes changes those alone. The last job's selected nodes stayed
+                // selected, hidden, and the batch changed them too
+                .story("SwitchJobClearsNodeSelection", context -> render(context, TWO_CRON_JOBS_FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final String job = "Property Cache Reload";
+                    showDataRetentionNodes(play);
+                    play.fireEvent().mouseDown(play.getByText("node1"));
+                    play.waitFor(() -> play.expect(row(play, "node1")).toHaveClass(StroomDom.SELECTED_ROW));
+                    // Another job's nodes
+                    play.click(play.getByText(job));
+                    play.waitFor(() -> play.expect(play.getByRole("button", editSchedule(job, "node3")))
+                            .toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.within(row(play, "node1")).getByText("Enabled"))
+                            .toBeInTheDocument());
+                    play.expect(row(play, "node1")).not().toHaveClass(StroomDom.SELECTED_ROW);
+                    play.expect(row(play, "node3")).not().toHaveClass(StroomDom.SELECTED_ROW);
+                    // Select both its nodes with Ctrl, and change their schedule
+                    play.fireEvent().mouseDown(play.getByText("node1"), EventInit.create().ctrlKey());
+                    play.waitFor(() -> play.expect(row(play, "node1")).toHaveClass(StroomDom.SELECTED_ROW));
+                    play.fireEvent().mouseDown(play.getByText("node3"), EventInit.create().ctrlKey());
+                    play.waitFor(() -> play.expect(row(play, "node3")).toHaveClass(StroomDom.SELECTED_ROW));
+                    play.fireEvent().mouseDown(play.getByRole("button", editSchedule(job, "node1")));
+                    // Two nodes, not three
+                    play.waitFor(() -> play.expect(screen.getByText(TextMatch.containing(
+                                    "change the schedule of job 'Property Cache Reload' for 2 nodes?")))
+                            .toBeInTheDocument());
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.getByText("Change Schedule")).toBeInTheDocument());
+                    final Query expression = screen.querySelector(EXPRESSION_INPUT);
+                    play.clear(expression);
+                    play.type(expression, "0 /10 * * * ?");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put("/jobNode/v1/schedule")
+                                    .withBody("jobNodeIds are 31 and 33", body -> hasIds(body, 31, 33))
+                                    .toSpyMatcher()));
+                    expectNoProblems(play);
                 });
     }
 
     // The name of a schedule link's 'open' button, which says which job and node it edits
     private static String editSchedule(final String nodeName) {
-        return "Edit schedule for job 'Data Retention' on node '" + nodeName + "'";
+        return editSchedule("Data Retention", nodeName);
+    }
+
+    // As above, for another job's node
+    private static String editSchedule(final String jobName, final String nodeName) {
+        return "Edit schedule for job '" + jobName + "' on node '" + nodeName + "'";
     }
 
     // GWT's grid rows are <tr> elements with no role attribute (their role is
@@ -389,6 +458,11 @@ public final class JobsScreenStories {
     }
 
     private static boolean hasIds11And13(final String body) {
+        return hasIds(body, 11, 13);
+    }
+
+    // Whether a batch schedule request's jobNodeIds are the two given, in any order
+    private static boolean hasIds(final String body, final int first, final int second) {
         if (body == null) {
             return false;
         }
@@ -396,7 +470,8 @@ public final class JobsScreenStories {
         if (!(ids instanceof List)) {
             return false;
         }
-        final Set<Object> expected = new HashSet<>(Arrays.asList(BigDecimal.valueOf(11), BigDecimal.valueOf(13)));
+        final Set<Object> expected = new HashSet<>(Arrays.asList(BigDecimal.valueOf(first),
+                BigDecimal.valueOf(second)));
         return ((List<?>) ids).size() == 2 && expected.equals(new HashSet<>((List<?>) ids));
     }
 
@@ -406,11 +481,19 @@ public final class JobsScreenStories {
     }
 
     private static RestFixtures fixtures(final String dataRetentionNodes) {
+        return fixtures(dataRetentionNodes, NO_JOB_NODES);
+    }
+
+    // With Property Cache Reload's nodes too
+    private static RestFixtures fixtures(final String dataRetentionNodes, final String propertyCacheReloadNodes) {
         return RestFixtures.builder()
                 .get("/job/v1", RestReply.json(JOBS))
                 .route(RequestMatcher.post(JOB_NODE_FIND_PATH)
                                 .withJsonBodyContaining("{\"jobName\": {\"string\": \"Data Retention\"}}"),
                         RestReply.json(dataRetentionNodes))
+                .route(RequestMatcher.post(JOB_NODE_FIND_PATH)
+                                .withJsonBodyContaining("{\"jobName\": {\"string\": \"Property Cache Reload\"}}"),
+                        RestReply.json(propertyCacheReloadNodes))
                 .post(JOB_NODE_FIND_PATH, RestReply.json(NO_JOB_NODES))
                 .get("/jobNode/v1/info", RestReply.json(
                         "{\"lastExecutedTime\": 1700000000000, \"nextScheduledTime\": 1700003600000, "

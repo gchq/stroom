@@ -25,6 +25,7 @@ import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.KeyShortcut;
+import stroom.widget.util.client.ListSelection;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -188,8 +189,11 @@ public final class KeyBindingPreferencesController extends Controller {
     private void onRemove() {
         final KeyBindingRow row = view.getSelected();
         if (row != null && !row.isFixed() && row.getShortcut() != null) {
+            final List<KeyBindingRow> before = rows(bindings, filter);
             bindings.get(row.getAction()).remove(row.getShortcut());
-            onBindingsChange(new KeyBindingRow(row.getAction(), null, false));
+            // The row now in its place (UI-GUIDE.md, "What a list selects"); it was once the
+            // action's first shortcut
+            onBindingsChange(ListSelection.nextAfterRemove(before, List.of(row), rows(bindings, filter)));
         }
     }
 

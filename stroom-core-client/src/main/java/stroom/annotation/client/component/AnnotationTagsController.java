@@ -16,6 +16,7 @@
 
 package stroom.annotation.client.component;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationResourceClient;
 import stroom.annotation.client.event.AnnotationTagNameChangeEvent;
@@ -24,6 +25,7 @@ import stroom.annotation.shared.AnnotationTagType;
 import stroom.content.client.component.ContentTabController;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.util.client.CountDownAndRun;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -86,7 +88,13 @@ public class AnnotationTagsController extends ContentTabController {
     }
 
     private void add() {
-        createProvider.get().open(this, annotationTagType, annotationTag -> refresh());
+        createProvider.get().open(this, annotationTagType, annotationTag -> {
+            // The new tag, if the page shows it (UI-GUIDE.md, "What a list selects")
+            if (annotationTag != null) {
+                annotationTagList.getSelectionModel().selectWhenShown(row -> row.getId() == annotationTag.getId());
+            }
+            refresh();
+        });
     }
 
     private void edit() {
@@ -117,13 +125,19 @@ public class AnnotationTagsController extends ContentTabController {
             ConfirmEvent.fire(AnnotationTagsController.this, message,
                     result -> {
                         if (result) {
-                            annotationTagList.getSelectionModel().clear();
+                            // Once all are answered, the tag in place of the first
+                            final CountDownAndRun countdown = new CountDownAndRun(list.size(), () -> {
+                                AnnotationTagNameChangeEvent.fire(this);
+                                annotationTagList.getSelectionModel().selectNextAfterRemove(list);
+                                refresh();
+                            });
                             for (final AnnotationTag group : list) {
                                 annotationResourceClient.deleteAnnotationGroup(
                                         group,
-                                        ignored -> {
-                                            AnnotationTagNameChangeEvent.fire(this);
-                                            refresh();
+                                        ignored -> countdown.countdown(),
+                                        error -> {
+                                            AlertEvent.fireError(this, error.getMessage(), null);
+                                            countdown.countdown();
                                         },
                                         this);
                             }
@@ -133,8 +147,7 @@ public class AnnotationTagsController extends ContentTabController {
     }
 
     private void enableButtons() {
-        annotationTagList.setSelectionActionsEnabled(
-                annotationTagList.getSelectionModel().getSelected() != null);
+        annotationTagList.setSelectionActionsEnabled(annotationTagList.getSelectionModel().getSelectedCount());
     }
 
     /// Fetches the tags again.

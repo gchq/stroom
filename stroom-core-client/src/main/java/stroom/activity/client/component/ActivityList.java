@@ -54,7 +54,11 @@ public class ActivityList extends Component {
         initWidget(BINDER.createAndBindUi(this));
         // Rows keyed by id: each refresh fetches new rows
         dataGrid.setKeyProvider(Activity::getId);
-        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        // One activity at a time, as every action is on one
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        // A chooser: the activity chosen (to start with, the current one) stays chosen while a
+        // filter hides it, so Close keeps it
+        dataGrid.setKeepHiddenSelection(true);
 
         dataGrid.addResizableColumn(new Column<Activity, SafeHtml>(new SafeHtmlCell()) {
             @Override

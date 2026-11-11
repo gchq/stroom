@@ -59,6 +59,7 @@ import stroom.query.api.ExpressionTerm;
 import stroom.query.api.GroupSelection;
 import stroom.query.api.IncludeExcludeFilter;
 import stroom.query.api.OffsetRange;
+import stroom.query.api.Param;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
@@ -76,6 +77,7 @@ import stroom.query.client.model.DynamicColumnSelectionListModel;
 import stroom.query.client.model.DynamicColumnSelectionListModel.ColumnSelectionItem;
 import stroom.query.client.result.component.ColumnFormatController;
 import stroom.query.client.result.component.ColumnValuesFilterController;
+import stroom.query.client.result.component.ColumnWidthController;
 import stroom.query.client.result.component.DownloadSearchResultsController;
 import stroom.query.client.result.component.ResultTable;
 import stroom.query.client.result.table.ColumnValuesDataSupplier;
@@ -201,6 +203,7 @@ public class TableController extends DashboardPaneController
     /// @param renameColumnControllerProvider Makes the rename column controller.
     /// @param expressionProvider             Makes the expression.
     /// @param columnFormatProvider           Makes the column format.
+    /// @param columnWidthProvider            Makes a column's Column Width dialog.
     /// @param columnFilterTabs             The column filter dialog.
     /// @param settingsControllerProvider     Makes the settings controller.
     /// @param downloadOptions                The download options.
@@ -221,6 +224,7 @@ public class TableController extends DashboardPaneController
                            final Provider<RenameColumnController> renameColumnControllerProvider,
                            final Provider<ColumnFunctionEditorController> expressionProvider,
                            final Provider<ColumnFormatController> columnFormatProvider,
+                           final Provider<ColumnWidthController> columnWidthProvider,
                            final ColumnFilterTabsController columnFilterTabs,
                            final Provider<TableSettingsController> settingsControllerProvider,
                            final DownloadSearchResultsController downloadOptions,
@@ -291,6 +295,7 @@ public class TableController extends DashboardPaneController
                 renameColumnControllerProvider,
                 expressionProvider,
                 columnFormatProvider,
+                columnWidthProvider,
                 columnFilterTabs,
                 columnValuesFilter);
         dataGrid.setHeadingListener(columnsManager);
@@ -761,8 +766,15 @@ public class TableController extends DashboardPaneController
                 if (valuesRange.getOffset() == 0 || !values.isEmpty()) {
                     rowStyles.setConditionalFormattingRules(getTableComponentSettings()
                             .getConditionalFormattingRules());
+                    final List<List<Param>> selectedBefore = getSelectedParams();
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
+                    // The selection follows its rows to their new values, but rows are equal by their
+                    // group, so nothing fires: tell the components linked to the selection if the
+                    // selected rows' values have changed (e.g. as a search runs)
+                    if (!getSelectedParams().equals(selectedBefore)) {
+                        getDashboardContext().fireComponentChangeEvent(this);
+                    }
                 }
 
                 // Enable download of current results.
@@ -1354,6 +1366,13 @@ public class TableController extends DashboardPaneController
         return NullSafe.list(getTableComponentSettings().getColumns())
                 .stream()
                 .map(col -> new ColumnRef(col.getId(), col.getName()))
+                .collect(Collectors.toList());
+    }
+
+    // The selected rows' values, to tell whether they have changed
+    private List<List<Param>> getSelectedParams() {
+        return getSelection().stream()
+                .map(ComponentSelection::getParams)
                 .collect(Collectors.toList());
     }
 

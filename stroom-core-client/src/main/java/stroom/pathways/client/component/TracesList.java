@@ -86,6 +86,8 @@ public class TracesList extends Component {
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(TraceRoot::getTraceId);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
+        // The chart beside it shows the selected trace (UI-GUIDE.md, "What a list selects")
+        selectionModel.setSelectFirst(true);
         dataGrid.setRowStyles(errorRowStyles());
         dataGrid.addColumnSortHandler(event -> onSortChange.run());
     }

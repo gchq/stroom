@@ -72,11 +72,15 @@ public class NodeGroupListController extends Controller {
         };
         view.setDataProvider(dataProvider);
         view.setOnSortChange(this::refresh);
-        view.setOnEnabledChange((nodeGroup, enabled) -> nodeGroupClient.update(
-                nodeGroup.copy().enabled(enabled).build(),
-                result -> refresh(),
-                new DefaultErrorHandler(this, null),
-                view.getTaskMonitor()));
+        view.setOnEnabledChange((nodeGroup, enabled) -> {
+            // The row ticked is selected (UI-GUIDE.md, "What a list selects")
+            view.getSelectionModel().setSelected(nodeGroup);
+            nodeGroupClient.update(
+                    nodeGroup.copy().enabled(enabled).build(),
+                    result -> refresh(),
+                    new DefaultErrorHandler(this, null),
+                    view.getTaskMonitor());
+        });
     }
 
     /// @return The selection.

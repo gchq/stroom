@@ -137,13 +137,21 @@ public class QueryFavouritesController extends Controller {
                 .name("")
                 .favourite(true)
                 .build();
-        favouriteNameProvider.get().show(this, queryEntity, result -> refresh(false));
+        favouriteNameProvider.get().show(this, queryEntity, result -> {
+            // The new favourite (it once left none chosen)
+            view.selectWhenShown(result);
+            refresh(false);
+        });
     }
 
     private void onEdit() {
         final StoredQuery query = view.getSelected();
         if (query != null) {
-            favouriteNameProvider.get().show(this, query, result -> refresh(false));
+            favouriteNameProvider.get().show(this, query, result -> {
+                // The renamed favourite, wherever its new name sorts
+                view.selectWhenShown(result);
+                refresh(false);
+            });
         }
     }
 
@@ -164,7 +172,8 @@ public class QueryFavouritesController extends Controller {
         criteria.setComponentId(componentId);
         criteria.setSort(FindStoredQueryCriteria.FIELD_NAME, false, true);
         criteria.setFavourite(true);
-        criteria.setPageRequest(PageRequest.createDefault());
+        // Every favourite: the list has no pager, so a default page (100) hid the rest
+        criteria.setPageRequest(PageRequest.unlimited());
 
         restFactory
                 .create(STORED_QUERY_RESOURCE)
@@ -203,7 +212,10 @@ public class QueryFavouritesController extends Controller {
         restFactory
                 .create(STORED_QUERY_RESOURCE)
                 .method(res -> res.delete(query))
-                .onSuccess(result -> refresh(false))
+                .onSuccess(result -> {
+                    view.selectNextAfterRemove(query);
+                    refresh(false);
+                })
                 .owner(this)
                 .taskMonitorFactory(taskMonitor())
                 .exec();

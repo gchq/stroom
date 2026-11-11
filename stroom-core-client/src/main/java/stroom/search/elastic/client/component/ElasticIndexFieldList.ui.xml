@@ -1,19 +1,52 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<!-- An Elastic index's fields, with a pager, and when they were last read -->
+<!--
+  An Elastic index's Fields tab (elastic-index-field-list.css): filters by name and type above a tree
+  of the index's fields and virtual fields, with their actions; below it, the selected field's Info
+  and Settings panels, or a prompt to select a field
+-->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:layout="urn:import:stroom.widget.layout.client"
-             xmlns:dg="urn:import:stroom.widget.datagrid.client">
-    <g:FlowPanel styleName="dock-container-vertical">
-        <g:SimplePanel styleName="dock-max">
-            <dg:PagerPanel>
-                <dg:DataGrid ui:field="dataGrid" tableName="Elastic Index Fields"/>
-            </dg:PagerPanel>
-        </g:SimplePanel>
-        <layout:ScrollPane fitContent="true" addStyleNames="dock-min" role="region" ariaLabel="Field list status">
-            <g:HTMLPanel styleName="elastic-index-field-list__status-message">
-                <span ui:field="status">Field list updated at: <span ui:field="updatedAt"/></span>
-            </g:HTMLPanel>
-        </layout:ScrollPane>
-    </g:FlowPanel>
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:c="urn:import:stroom.widget.component.client"
+             xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client"
+             xmlns:split="urn:import:stroom.widget.layout.client"
+             xmlns:spinner="urn:import:stroom.widget.spinner.client"
+             xmlns:tab="urn:import:stroom.widget.tab.client"
+             xmlns:tx="urn:import:stroom.widget.text.client"
+             xmlns:v="urn:import:stroom.widget.quickfilter.client">
+    <split:SplitPane vertical="true" thin="true" sizes="60%, *" names="Fields, Field details" addStyleNames="max">
+        <g:FlowPanel styleName="max dock-container-vertical">
+            <g:FlowPanel styleName="dock-min elastic-index-field-list__filters">
+                <v:QuickFilter ui:field="nameFilter" accessibleName="Filter fields by name"
+                               addStyleNames="elastic-index-field-list__filter"/>
+                <dd:DropDownBox ui:field="typeFilter" ariaLabel="Field types"
+                                addStyleNames="elastic-index-field-list__filter"
+                                title="Show only fields of the ticked types. Tick none to show all types."/>
+                <spinner:SmallBusySpinner ui:field="spinner"/>
+            </g:FlowPanel>
+            <g:SimplePanel styleName="dock-max">
+                <dg:PagerPanel ui:field="pager" toolbarName="Field actions">
+                    <b:ToolbarButton ui:field="addVirtualField" svg="ADD" title="Add Virtual Field"/>
+                    <b:ToolbarButton ui:field="rename" svg="EDIT" title="Rename Selected Virtual Field" label="Rename"
+                                     enabled="false"/>
+                    <b:ToolbarButton ui:field="remove" svg="DELETE" title="Remove Settings Of Selected Field"
+                                     label="Remove" enabled="false"/>
+                    <b:ToolbarButton ui:field="refresh" svg="REFRESH" title="Refresh Fields From Index Mapping"
+                                     label="Refresh"/>
+                    <b:ToolbarButton ui:field="expandAll" svg="EXPAND_ALL" title="Expand All"/>
+                    <b:ToolbarButton ui:field="collapseAll" svg="COLLAPSE_ALL" title="Collapse All"/>
+                    <dg:DataGrid ui:field="dataGrid" tableName="Elastic Index Fields"/>
+                </dg:PagerPanel>
+            </g:SimplePanel>
+        </g:FlowPanel>
+        <g:FlowPanel styleName="max">
+            <g:FlowPanel ui:field="details" styleName="max dock-container-vertical" visible="false">
+                <tab:LinkTabBar ui:field="tabBar" accessibleName="Field details" addStyleNames="dock-min"/>
+                <c:LayerContainer ui:field="layerContainer" addStyleNames="dock-max elastic-index-field-list__details"/>
+            </g:FlowPanel>
+            <tx:Label ui:field="noSelection" addStyleNames="elastic-index-field-list__no-selection"
+                      text="Select a field to see how it is mapped and change its settings."/>
+        </g:FlowPanel>
+    </split:SplitPane>
 </ui:UiBinder>

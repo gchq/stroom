@@ -22,7 +22,6 @@ import stroom.gwt.workbench.client.app.rest.RestHandler;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ContentStorySupport;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
-import stroom.gwt.workbench.client.widgets.dateandtime.DateTimeWidgets;
 import stroom.gwt.workbench.client.widgets.selectors.SelectorWidgets;
 import stroom.gwt.workbench.client.widgets.selectors.UserFixture;
 import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
@@ -46,7 +45,6 @@ import stroom.query.client.component.ExpressionEditor;
 import stroom.query.client.component.ExpressionEditorController;
 import stroom.query.client.component.ExpressionTree;
 import stroom.query.client.component.ExpressionTreeController;
-import stroom.query.client.component.TermEditorController;
 import stroom.query.client.model.DynamicFieldSelectionListModel;
 import stroom.query.client.model.FieldSelectionListModel;
 import stroom.query.client.model.SimpleFieldSelectionListModel;
@@ -987,12 +985,7 @@ public final class ExpressionEditorStories {
 
     private static ExpressionTreeController treeController(final ScreenHarness harness) {
         return new ExpressionTreeController(harness.getEventBus(), () ->
-                new TermEditorController(harness.getEventBus(),
-                        harness.getRestFactory(),
-                        harness.getUiConfigCache(),
-                        SelectorWidgets.docSelectionControllerProvider(harness),
-                        SelectorWidgets.userRefSelectionControllerProvider(harness),
-                        DateTimeWidgets.dateTimeBoxControllers(harness)));
+                QueryWidgets.termEditorController(harness));
     }
 
     private static FieldSelectionListModel fieldModel(final ScreenHarness harness, final boolean dynamic) {

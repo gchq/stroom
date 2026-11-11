@@ -30,6 +30,7 @@ import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.UpdateField;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
+import stroom.util.client.CountDownAndRun;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
@@ -44,6 +45,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// The Fields tab of a Lucene index ([IndexFieldList]): its fields, a page at a time, found by the
@@ -100,7 +102,8 @@ public class IndexFieldListController extends Controller {
                         .create(INDEX_RESOURCE)
                         .method(res -> res.addField(new AddField(docRef, indexField)))
                         .onSuccess(response -> {
-                            view.getSelectionModel().setSelected(indexField);
+                            // The field, if the page shows it (UI-GUIDE.md, "What a list selects")
+                            selectWhenShown(indexField);
                             refresh();
                             e.hide();
                         })
@@ -120,7 +123,8 @@ public class IndexFieldListController extends Controller {
                             existingField.getFldName(),
                             indexField)))
                     .onSuccess(response -> {
-                        view.getSelectionModel().setSelected(indexField);
+                        // The field, renamed or not, if the page shows it
+                        selectWhenShown(indexField);
                         refresh();
                         e.hide();
                     })
@@ -141,14 +145,17 @@ public class IndexFieldListController extends Controller {
 
             ConfirmEvent.fire(this, message, result -> {
                 if (result) {
+                    // Once all are answered, the field in place of the first
+                    final CountDownAndRun countdown = new CountDownAndRun(list.size(), () -> {
+                        view.getSelectionModel().selectNextAfterRemove(list);
+                        refresh();
+                    });
                     for (final IndexFieldImpl indexField : list) {
                         restFactory
                                 .create(INDEX_RESOURCE)
                                 .method(res -> res.deleteField(new DeleteField(docRef, indexField.getFldName())))
-                                .onSuccess(response -> {
-                                    view.getSelectionModel().clear();
-                                    refresh();
-                                })
+                                .onSuccess(response -> countdown.countdown())
+                                .onFailure(new DefaultErrorHandler(this, countdown::countdown))
                                 .owner(this)
                                 .taskMonitorFactory(view.getTaskMonitor())
                                 .exec();
@@ -156,6 +163,10 @@ public class IndexFieldListController extends Controller {
                 }
             });
         }
+    }
+
+    private void selectWhenShown(final IndexFieldImpl indexField) {
+        view.getSelectionModel().selectWhenShown(row -> Objects.equals(row.getFldName(), indexField.getFldName()));
     }
 
     /// Shows an index's fields.

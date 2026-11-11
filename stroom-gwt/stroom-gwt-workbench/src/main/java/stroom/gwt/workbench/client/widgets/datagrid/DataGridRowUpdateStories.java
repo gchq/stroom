@@ -30,6 +30,7 @@ import stroom.widget.selection.client.SelectionBoxCell;
 import stroom.widget.selection.client.SimpleSelectionItemWrapper;
 import stroom.widget.selection.client.SimpleSelectionListModel;
 import stroom.widget.text.client.Label;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
@@ -72,6 +73,12 @@ public final class DataGridRowUpdateStories {
     private static Runnable addColumn;
     // A poll that adds one to a row's count, in the selection box story
     private static Consumer<String> pollCount;
+    // In the selection story: a poll that changes a row, and one that leaves a row out (or, given
+    // null, brings every row back)
+    private static Consumer<String> pollSelected;
+    private static Consumer<String> pollWithout;
+    private static final String SELECTED = "selected";
+    private static final String SELECTED_PREFIX = "Selected: ";
 
     private DataGridRowUpdateStories() {
         // Static utility
@@ -90,7 +97,9 @@ public final class DataGridRowUpdateStories {
                 .story("ColumnAddedWhileAFieldHasTheFocus", context -> render())
                 .withPlay(DataGridRowUpdateStories::playColumnAddedWhileFocused)
                 .story("SelectionBoxOpenThroughPolls", context -> renderSelectionBox())
-                .withPlay(DataGridRowUpdateStories::playSelectionBoxOpenThroughPolls);
+                .withPlay(DataGridRowUpdateStories::playSelectionBoxOpenThroughPolls)
+                .story("SelectionFollowsTheRow", context -> renderSelection())
+                .withPlay(DataGridRowUpdateStories::playSelectionFollowsTheRow);
     }
 
     // --------------------------------------------------------------------------------
@@ -203,6 +212,40 @@ public final class DataGridRowUpdateStories {
         play.click(play.within(grid).getByText("Alpha"));
         play.waitFor(() -> play.expect(play.within(grid).getByRole("combobox", "Kind for Bravo"))
                 .toHaveValue("Status"));
+    }
+
+    // A selected row that a poll replaces with a new object (not equal to it) stays selected, as that
+    // object, and the change fires one selection event (as selecting it again would), so what shows
+    // the selected row shows it as it now is; a poll that changes another row fires none. A row the
+    // rows leave out (e.g. on another page) is deselected.
+    private static void playSelectionFollowsTheRow(final Play play) {
+        final Query bravo = play.within(play.getByTestId(GRID)).getByText("Bravo").closest("[role='row']");
+        play.click(play.within(play.getByTestId(GRID)).getByText("Bravo"));
+        expectSelected(play, "/bravo", 1);
+
+        play.run("poll, Alpha changed", () -> pollSelected.accept("Alpha"));
+        play.waitFor(() -> play.expect(play.within(play.getByTestId(GRID)).getByText("/alpha/polled"))
+                .toBeInTheDocument());
+        expectSelected(play, "/bravo", 1);
+
+        play.run("poll, Bravo changed", () -> pollSelected.accept("Bravo"));
+        expectSelected(play, "/bravo/polled", 2);
+        play.expect(bravo).toHaveAttribute("aria-selected", "true");
+
+        // A row the list no longer shows is deselected, with one event, so nothing acts on it
+        play.run("poll, Bravo left out", () -> pollWithout.accept("Bravo"));
+        play.waitFor(() -> play.expect(play.within(play.getByTestId(GRID)).queryByText("Bravo")).toBeNull());
+        expectSelected(play, "none", 3);
+        play.run("poll, Bravo back", () -> pollWithout.accept(null));
+        play.waitFor(() -> play.expect(play.within(play.getByTestId(GRID)).getByText("Bravo")).toBeInTheDocument());
+        expectSelected(play, "none", 3);
+        play.expect(play.within(play.getByTestId(GRID)).getByText("Bravo").closest("[role='row']"))
+                .toHaveAttribute("aria-selected", "false");
+    }
+
+    private static void expectSelected(final Play play, final String path, final int events) {
+        play.waitFor(() -> play.expect(play.getByTestId(SELECTED))
+                .toHaveTextContent(SELECTED_PREFIX + path + ", selection events: " + events));
     }
 
     private static void expectRedrawn(final Play play, final String names) {
@@ -364,6 +407,71 @@ public final class DataGridRowUpdateStories {
         frame.getElement().getStyle().setProperty("height", "160px");
         frame.getElement().getStyle().setProperty("width", "320px");
         return frame;
+    }
+
+    // A grid keyed by name whose polls give new objects, with a note of the selected row's path (as
+    // the selection model has it) and the selection events fired
+    private static Widget renderSelection() {
+        final List<Row> rows = new ArrayList<>();
+        for (final String name : NAMES.subList(0, 4)) {
+            rows.add(new Row(name, true, "/" + name.toLowerCase()));
+        }
+        final DataGrid<Row> grid = new DataGrid<>();
+        grid.setKeyProvider(row -> row.name);
+        grid.addColumn(DataGridUtil.textColumnBuilder((Row row) -> row.name).build(), "Name", 100);
+        grid.addColumn(DataGridUtil.textColumnBuilder((Row row) -> row.path).build(), "Path", 200);
+        final MultiSelectionModelImpl<Row> selectionModel = grid.addDefaultSelectionModel(false);
+
+        final Label selected = new Label(SELECTED_PREFIX);
+        selected.getElement().setAttribute("data-testid", SELECTED);
+        final int[] events = {0};
+        final Runnable note = () -> Scheduler.get().scheduleDeferred(() -> {
+            final Row row = selectionModel.getSelected();
+            selected.setText(SELECTED_PREFIX + (row == null
+                    ? "none"
+                    : row.path) + ", selection events: " + events[0]);
+        });
+        selectionModel.addSelectionHandler(event -> {
+            events[0]++;
+            note.run();
+        });
+
+        final List<String> leftOut = new ArrayList<>();
+        final Runnable refresh = () -> {
+            final List<Row> copies = new ArrayList<>();
+            for (final Row row : rows) {
+                if (!leftOut.contains(row.name)) {
+                    copies.add(row.copy());
+                }
+            }
+            grid.setRowData(0, copies);
+            grid.setRowCount(copies.size());
+            note.run();
+        };
+        pollSelected = changed -> {
+            for (int i = 0; i < rows.size(); i++) {
+                if (rows.get(i).name.equals(changed)) {
+                    rows.set(i, new Row(changed, rows.get(i).enabled, rows.get(i).path + "/polled"));
+                }
+            }
+            refresh.run();
+        };
+        pollWithout = name -> {
+            leftOut.clear();
+            if (name != null) {
+                leftOut.add(name);
+            }
+            refresh.run();
+        };
+        refresh.run();
+
+        grid.setWidth("100%");
+        grid.setHeight("100%");
+        final SimplePanel frame = new SimplePanel(grid);
+        frame.getElement().setAttribute("data-testid", GRID);
+        frame.getElement().getStyle().setProperty("height", "180px");
+        frame.getElement().getStyle().setProperty("width", "320px");
+        return StoryPanels.column(12, frame, selected);
     }
 
     // --------------------------------------------------------------------------------

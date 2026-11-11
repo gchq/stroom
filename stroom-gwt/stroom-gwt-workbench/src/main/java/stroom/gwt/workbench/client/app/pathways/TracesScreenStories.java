@@ -92,19 +92,18 @@ public final class TracesScreenStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("App/Main/TracesScreen", TracesScreenStories.class)
                 .layout(StoryLayout.FULLSCREEN)
-                // With a data source, the traces list; selecting one shows its spans
+                // With a data source, the traces list; the first trace is selected, as the
+                // waterfall shows the selected trace, so its spans show
                 .story("Traces", TracesScreenStories::render)
                 .withPlay(play -> {
-                    play.findByText("GET /api/things");
-                    play.expect(play.getByText("Total Spans")).toBeInTheDocument();
+                    play.findByText("Total Spans");
                     // Shown without a store's document, so only the Traces tab: the others had
                     // nothing to read
                     play.expect(play.getByText("Traces", StroomDom.LINK_TAB_LABEL)).toBeVisible();
                     for (final String other : new String[]{"Settings", "Documentation", "Permissions"}) {
                         play.expect(play.getByText(other, StroomDom.LINK_TAB_LABEL)).not().toBeVisible();
                     }
-                    // Select the trace row: its spans load into the waterfall
-                    play.click(play.getByText("GET /api/things"));
+                    // The selected trace's spans load into the waterfall
                     play.findByText("db query");
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/traces/v2/getSpans")
@@ -116,7 +115,7 @@ public final class TracesScreenStories {
                 // panel's starting width, and a secondary click on its name shows the Copy menu
                 .story("SpanInfo", TracesScreenStories::render)
                 .withPlay(play -> {
-                    play.click(play.findByText("GET /api/things"));
+                    // The first trace is selected when the list loads, so its spans show
                     final Query child = play.findByText("db query", OPERATION_NAME);
                     play.expect(play.getByText("GET /api/things", OPERATION_NAME).closest(OPERATION_CONTENT))
                             .toHaveStyle("padding-left", "0px");

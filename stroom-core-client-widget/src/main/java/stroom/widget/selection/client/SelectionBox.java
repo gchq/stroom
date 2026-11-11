@@ -64,11 +64,6 @@ public class SelectionBox<T> extends BaseSelectionBox<T, SimpleSelectionItemWrap
         model.setNonSelectString(nonSelectString);
     }
 
-    @Override
-    protected SelectionItem getNoValueItem() {
-        return model.wrap(null);
-    }
-
     public void addItems(final Collection<T> items) {
         model.addItems(items);
     }

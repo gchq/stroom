@@ -54,6 +54,7 @@ import stroom.query.client.SearchStateListener;
 import stroom.query.client.component.ExpressionTreeController;
 import stroom.query.client.component.QueryInfo;
 import stroom.query.client.model.DynamicFieldSelectionListModel;
+import stroom.query.client.model.FieldValuesScope;
 import stroom.query.client.model.ResultStoreModel;
 import stroom.query.shared.ResultStoreResource;
 import stroom.security.client.api.ClientSecurityContext;
@@ -306,6 +307,7 @@ public class QueryPaneController
         // We only want queryable fields.
         fieldSelectionBoxModel.setQueryable(true);
         expressionTree.init(dataSourceRef, fieldSelectionBoxModel);
+        expressionTree.setValueScopeSupplier(this::getValueScope);
 
         if (!Objects.equals(getQuerySettings().getDataSource(), dataSourceRef)) {
             setSettings(getQuerySettings()
@@ -327,6 +329,19 @@ public class QueryPaneController
                 init();
             }
         });
+    }
+
+    // The value picker counts values within the dashboard's time range. The query's expression,
+    // resolved as for a search, is passed too, so the data source can also apply the query's own
+    // conditions, e.g. on its time field.
+    private FieldValuesScope getValueScope() {
+        final DashboardContext dashboardContext = getDashboardContext();
+        if (dashboardContext == null) {
+            return null;
+        }
+        return new FieldValuesScope(
+                dashboardContext.getResolvedTimeRange(),
+                dashboardContext.replaceExpression(expressionTree.write(), true));
     }
 
     private void addOperator() {
