@@ -282,6 +282,24 @@ class TestStreamSummaries {
         assertThat(summaries.summariseEvents(List.of(8L), 200).get("events")).isEqualTo(2);
     }
 
+    @Test
+    void eventRecordsAlreadyReadAreProfiledAsAStreamOfThemIs() {
+        // An indexing pipeline's documentation counts the Events its XSLT got for the records stepped, so the
+        // share and the values are of the same records.
+        world.addSegmented(8, StreamTypeNames.EVENTS, null, null, List.of(EVENTS));
+        final Map<String, Object> fromStream = summaries.summariseEvents(List.of(8L), 200);
+
+        final List<String> records = new ArrayList<>(List.of(EVENTS, "<Events><Event>cut"));
+        records.add(null);
+        final Map<String, Object> fromRecords = StreamSummaries.summariseEventRecords(records, 200);
+
+        // Nulls and records that aren't XML passed over.
+        assertThat(fromRecords).isEqualTo(fromStream);
+        assertThat(StreamSummaries.summariseEventRecords(null, 200).get("events")).isEqualTo(0);
+        assertThat((String) StreamSummaries.summariseEventRecords(List.of(EVENTS), 2).get("hint"))
+                .contains("raise max_events");
+    }
+
     private PipelineDoc pipeline(final String uuid, final String name, final String element) {
         final PipelineDataBuilder data = new PipelineDataBuilder();
         data.addElement(new PipelineElement(element, "XSLTFilter"));

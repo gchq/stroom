@@ -57,6 +57,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.IntFunction;
 import java.util.regex.Pattern;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -319,6 +320,27 @@ public class StreamSummaries {
     /// [#POPULATION_BY_ACTION] and [#TYPE_IDS_BY_ACTION].
     /// @throws StreamReadException if a stream can't be read.
     public Map<String, Object> summariseEvents(final List<Long> streamIds, final int maxEvents) {
+        final List<IntFunction<List<String>>> sources = streamIds.stream()
+                .<IntFunction<List<String>>>map(streamId -> want -> spreadRecords(streamId, want))
+                .toList();
+        return summarise(sources, maxEvents);
+    }
+
+    /// [#summariseEvents(List, int)] of Events records already read, e.g. the input an indexing pipeline's XSLT got
+    /// for each record stepped, so the profile is of the same records as what the pipeline wrote from them.
+    ///
+    /// @param records   Events records, each an `<Events>` or `<Event>` document; one that is null or isn't XML is
+    ///                  passed over.
+    /// @param maxEvents The count at which the profile's `hint` says it is of a sample.
+    /// @return As [#summariseEvents(List, int)] gives.
+    public static Map<String, Object> summariseEventRecords(final List<String> records, final int maxEvents) {
+        return summarise(List.of(want -> NullSafe.list(records)), maxEvents);
+    }
+
+    // The profile of the records each source gives, read in turn until maxEvents events are counted: each source is
+    // given how many more events are wanted.
+    private static Map<String, Object> summarise(final List<IntFunction<List<String>>> sources,
+                                                 final int maxEvents) {
         final Map<String, Integer> types = new LinkedHashMap<>();
         final Map<String, Integer> typeIds = new LinkedHashMap<>();
         final Map<String, Integer> actions = new LinkedHashMap<>();
@@ -332,9 +354,12 @@ public class StreamSummaries {
         final Set<String> namespaces = new LinkedHashSet<>();
         int count = 0;
         final DocumentBuilder builder = documentBuilder();
-        for (final long streamId : streamIds) {
-            final List<String> records = spreadRecords(streamId, maxEvents - count);
+        for (final IntFunction<List<String>> source : sources) {
+            final List<String> records = source.apply(maxEvents - count);
             for (final String record : records) {
+                if (record == null) {
+                    continue;
+                }
                 final Document document;
                 try {
                     document = builder.parse(new InputSource(new StringReader(record)));

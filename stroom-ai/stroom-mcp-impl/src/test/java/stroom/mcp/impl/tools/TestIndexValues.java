@@ -65,10 +65,15 @@ class TestIndexValues {
     }
 
     @Test
-    void theFieldsNotInTheSampleAreThoseNoSampledEventHas() {
-        assertThat(IndexValues.notInSample(LUCENE, Map.of("EventSource/User/Id", 100.0,
-                "EventDetail/Authenticate/Outcome/Description", 0.0)))
-                .containsExactly("SourceIp", "Count", "Message");
+    void theFieldsAskedOfTheIndexAreThoseNoDocumentSteppedHasAValueOf() {
+        // Seen: a field in 2.5% of the events, in none of the documents stepped, was never looked up, as only fields
+        // in no event were. Now any field the documents lack is, whatever its share; the ids never are.
+        final List<Map<String, List<String>>> documents = List.of(
+                Map.of("StreamId", List.of("7"), "UserName", List.of("alice"), "Message", List.of("")),
+                Map.of("StreamId", List.of("7"), "UserName", List.of("bob")));
+        assertThat(IndexValues.withoutValues(LUCENE, documents)).containsExactly("SourceIp", "Count", "Message");
+        assertThat(IndexValues.withoutValues(LUCENE, List.of()))
+                .containsExactly("UserName", "SourceIp", "Count", "Message");
     }
 
     @Test
@@ -111,11 +116,24 @@ class TestIndexValues {
 
     @Test
     void nothingIsGivenWhereTheIndexCantBeSearched() {
+        // Null, not empty: the documentation then says the index wasn't searched, not that it holds no values.
         Mockito.when(indexDocs.written(merged)).thenReturn(List.of());
-        assertThat(values.examples(context, merged, LUCENE, FIELDS)).isEmpty();
+        assertThat(values.examples(context, merged, LUCENE, FIELDS)).isNull();
         Mockito.when(indexDocs.written(merged)).thenThrow(new IllegalStateException("gone"));
-        assertThat(values.examples(context, merged, LUCENE, FIELDS)).isEmpty();
+        assertThat(values.examples(context, merged, LUCENE, FIELDS)).isNull();
         assertThat(values.examples(context, merged, LUCENE, List.of())).isEmpty();
+    }
+
+    @Test
+    void aSearchThatReadsNothingAndErrsIsNotSearchedButOneThatFindsNothingIs() {
+        Mockito.when(indexDocs.written(merged)).thenReturn(List.of(new IndexDocs.Index(
+                new DocRef(ElasticIndexDoc.TYPE, "e1", "ACME"), "acme-v1", null)));
+        Mockito.when(searches.search(any(), any(), anyInt(), anyString(), any(Duration.class)))
+                .thenReturn(new IndexSearches.Found(List.of(), List.of("No such index"), true))
+                .thenReturn(new IndexSearches.Found(List.of(), List.of(), true));
+
+        assertThat(values.examples(context, merged, ELASTIC, List.of("Message"))).isNull();
+        assertThat(values.examples(context, merged, ELASTIC, List.of("Message"))).isEmpty();
     }
 
     private static FieldPlan plan(final String backend) {

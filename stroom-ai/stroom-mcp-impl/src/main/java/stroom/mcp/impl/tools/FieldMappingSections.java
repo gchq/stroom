@@ -93,7 +93,7 @@ class FieldMappingSections {
     /// @param mappingDrift    Says whether the XSLT is still what its mapping generates.
     /// @param streamReader    Reads the streams' meta.
     /// @param streamSummaries Reads how populated each path of the sample Events is.
-    /// @param indexValues     Reads example values from the index for fields the sample has none of.
+    /// @param indexValues     Reads example values from the index for fields the documents stepped have none of.
     /// @param referenceEvaluation Reads a reference data pipeline's maps, feeds and the pipelines that look them up.
     /// @param documentAccessProvider Reads an XSLT written by hand, as the user.
     @Inject
@@ -496,9 +496,20 @@ class FieldMappingSections {
                                 final List<Long> streamIds,
                                 final String layout,
                                 final Descriptions described) {
-        final Map<String, Object> summary = streamIds.isEmpty()
-                ? null
-                : streamSummaries.summariseEvents(streamIds, RECORDS);
+        PipelineStepping.Outputs stepped = null;
+        Map<String, Object> summary = null;
+        if (!streamIds.isEmpty()) {
+            // What the index gets: the indexing pipeline stepped over its Events streams, its XSLT's documents read.
+            stepped = steppedOutputs(context, load(pipeline.getUuid()), streamIds, kept.element(), null);
+            // The population is of the Events the XSLT got for those same records, so a field some of them have
+            // isn't shown with no values only because the two columns read different records (seen: one in 2.5%
+            // of events, from records read spread through the first stream, with none in the records stepped).
+            summary = StreamSummaries.summariseEventRecords(new ArrayList<>(stepped.inputs().values()), RECORDS);
+            if (NullSafe.isEmptyMap(IndexingInputs.populationWithDataNames(summary))) {
+                // No input to read (none stepped, or the steps gave none): the streams themselves.
+                summary = streamSummaries.summariseEvents(streamIds, RECORDS);
+            }
+        }
         final Map<String, Double> population = summary == null
                 ? null
                 : IndexingInputs.populationWithDataNames(summary);
@@ -512,12 +523,9 @@ class FieldMappingSections {
                                   + "no events to document. An indexing pipeline's stream_ids are the Events streams "
                                   + "it indexes (wait_for_processing on the events pipeline lists them).");
         }
-        List<Map<String, List<String>>> documents = null;
-        if (!streamIds.isEmpty()) {
-            // What the index gets: the indexing pipeline stepped over its Events streams, its XSLT's documents read.
-            documents = IndexFieldDocs.indexDocuments(outputs(context, load(pipeline.getUuid()), streamIds,
-                    kept.element(), null));
-        }
+        final List<Map<String, List<String>>> documents = stepped == null
+                ? null
+                : IndexFieldDocs.indexDocuments(new ArrayList<>(stepped.outputs().values()));
         EventSchema schema;
         try {
             schema = eventVersions.eventSchema(context, build, eventVersions.chosenOrLatest(context, build));
@@ -528,10 +536,11 @@ class FieldMappingSections {
                     e.getMessage()));
             schema = null;
         }
-        // Example values from the index for the fields the sample has none of (asked for by the user).
-        final List<String> missing = population == null
+        // Example values from the index for the fields the documents stepped have none of, whatever their share of
+        // the events (asked for by the user).
+        final List<String> missing = documents == null
                 ? List.of()
-                : IndexValues.notInSample(plan, population);
+                : IndexValues.withoutValues(plan, documents);
         final Map<String, List<String>> fromIndex = missing.isEmpty()
                 ? null
                 : examplesFromIndex(context, pipeline, plan, missing);
@@ -539,6 +548,9 @@ class FieldMappingSections {
                 ? null
                 : IndexingInputs.byAction(summary), documents, fromIndex, schema, layout, described)
                          + agreedLine(pipeline);
+        if (stepped != null && stepped.stopped()) {
+            section = section.stripTrailing() + "\n\n" + stoppedNote(stepped.outputs().size()) + "\n";
+        }
         final Optional<String> drift = mappingDrift.planDrift(kept);
         if (drift.isPresent()) {
             section = section.stripTrailing() + "\n\nNote: " + capitalised(beforeDiffers(drift.get())) + "\n";
@@ -554,10 +566,20 @@ class FieldMappingSections {
         try {
             return indexValues.examples(context, pipelineShapes.merged(pipeline.getUuid()), plan, fields);
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> LogUtil.message("No example values from the index of {}: {}", pipeline.getName(),
-                    e.getMessage()));
+            LOGGER.info(() -> LogUtil.message("No example values from the index of {}: {}", pipeline.getName(),
+                    e.getMessage()), e);
             return null;
         }
+    }
+
+    /// The line saying the values come from fewer records than usual, when stepping stopped at the call's time
+    /// limit.
+    ///
+    /// @param records How many records were stepped.
+    /// @return The line.
+    static String stoppedNote(final int records) {
+        return "Note: Stepping stopped at this session's time limit for a call, so the shares and values above come "
+               + "from " + records + " records rather than the usual " + RECORDS + ".";
     }
 
     // Which records the counts are of: seen in VS Code, counts from a different sample (the first records of one
@@ -608,9 +630,19 @@ class FieldMappingSections {
                                           final List<Long> streamIds,
                                           final String element,
                                           final Map<String, String> code) {
+        return steppedOutputs(context, pipeline, streamIds, element, code).outputs();
+    }
+
+    // Each record's output and input at the element, up to RECORDS spread over the streams, within the call's time
+    // limit, and whether that ran out first.
+    private PipelineStepping.Outputs steppedOutputs(final ToolCallContext context,
+                                                    final SteppedPipeline pipeline,
+                                                    final List<Long> streamIds,
+                                                    final String element,
+                                                    final Map<String, String> code) {
         try {
             return PipelineStepping.withinTimeLimit(context, () -> stepping.outputs(context, pipeline, streamIds,
-                    element, code, RECORDS)).outputs();
+                    element, code, RECORDS));
         } finally {
             stepping.audit(context, streamIds, "Stepped stream(s) through " + pipeline.name() + " with the "
                                                + WriteDocumentationTool.NAME + " tool");

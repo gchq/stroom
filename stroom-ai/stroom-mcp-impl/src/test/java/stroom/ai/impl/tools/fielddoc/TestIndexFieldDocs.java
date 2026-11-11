@@ -150,6 +150,35 @@ class TestIndexFieldDocs {
     }
 
     @Test
+    void aFieldSomeEventsHaveButNoValueWasFoundForSaysWhy() {
+        // Seen: a field in 2.5% of events shown with "(none in the sample)", which read as a contradiction.
+        final FieldPlan plan = FieldPlan.of("elasticsearch", "ecs-acme-v2", "@timestamp", List.of(
+                PlannedField.of("user.name", "keyword", "EventSource/User/Id"),
+                PlannedField.of("source.ip", "ip", "EventSource/Client/IPAddress"),
+                PlannedField.of("host.ip", "ip", "EventSource/Device/IPAddress")));
+        final Map<String, Double> population = Map.of("EventSource/User/Id", 100.0,
+                "EventSource/Client/IPAddress", 2.5);
+        final List<Map<String, List<String>>> documents = json("""
+                [{"user.name": ["alice"]}, {"user.name": ["bob"]}]""");
+
+        // The index searched, and nothing found for it.
+        assertThat(IndexFieldDocs.indexFieldMappingMarkdown(plan, population, null, documents, Map.of(), null,
+                FieldDocs.COMPACT, null))
+                .contains("| `source.ip` | IP address of the source. | ip | `EventSource/Client/IPAddress` | 2.5% of "
+                          + "events | (none in the 2 documents stepped; not found in the index) |")
+                // A field no event has keeps its wording.
+                .contains("| not in the sample | (none in the sample) |");
+        // No index read.
+        assertThat(IndexFieldDocs.indexFieldMappingMarkdown(plan, population, null, documents, null, null,
+                FieldDocs.COMPACT, null))
+                .contains("| 2.5% of events | (none in the 2 documents stepped; index not searched) |");
+        // Found in the index.
+        assertThat(IndexFieldDocs.indexFieldMappingMarkdown(plan, population, null, documents,
+                Map.of("source.ip", List.of("10.0.0.9")), null, FieldDocs.COMPACT, null))
+                .contains("| 2.5% of events | `10.0.0.9` (from the index) |");
+    }
+
+    @Test
     void anExistingIndexIsDocumentedFromItsSurvey() {
         final String text = IndexFieldDocs.existingIndexMarkdown(survey(List.of(), true), Map.of(), null,
                 FieldDocs.BY_EVENT_TYPE, null);
