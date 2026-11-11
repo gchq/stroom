@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.14] - 2026-11-11
+
+* Bug **#5953** : Change BCrypt Data Feed Key hashing to always truncate input on hashing and verification.
+
+
 ## [v7.14-beta.13] - 2026-11-11
 
 * Bug **#5986** : Fix stepping a large stream failing with the stepping store byte limit before the first record is shown. The background capture of the stream now leaves 10% of `stroom.pipeline.stepping.maxBytesPerStream` free for the records being stepped to.
@@ -2876,7 +2881,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.13...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.14...HEAD
+[v7.14-beta.14]: https://github.com/gchq/stroom/compare/v7.14-beta.13...v7.14-beta.14
 [v7.14-beta.13]: https://github.com/gchq/stroom/compare/v7.14-beta.12...v7.14-beta.13
 [v7.14-beta.12]: https://github.com/gchq/stroom/compare/v7.14-beta.11...v7.14-beta.12
 [v7.14-beta.11]: https://github.com/gchq/stroom/compare/v7.14-beta.10...v7.14-beta.11
