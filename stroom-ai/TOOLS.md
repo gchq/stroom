@@ -2869,8 +2869,12 @@ name their event. The build keeps one notes doc: the one named for the source, e
 one it has. Records not told apart into kinds whose text says what happened (a field of varied free text) aren't "nothing to
 classify": the agent is told to refine the splitter so a field names each event, and nothing is recorded, so the
 plan's step stays to do; with `one_kind: true` the user confirms in a form that they are one kind of event (or
-says what kinds they hold). One kind (or none told apart), or none left, records nothing pending: the plan's
-`classify` step is done. Called with `proposals` (one catalogue entry a pending kind: `field`, `value`,
+says what kinds they hold). One kind is listed and classified like any other (asked for by the user: one kind was
+"nothing to classify", and its events were left Unknown); none told apart, the records are listed as one kind told
+by the first field every record has the same short value of (`singleKind`), and when that is the only
+classification and the draft has no rule of its own, the draft makes its rule the rule for every record (no
+condition: `SourceNotes.applyToDraft`), so another value of that field isn't left out. With no such field, or
+none left, nothing is pending and the plan's `classify` step is done. Called with `proposals` (one catalogue entry a pending kind: `field`, `value`,
 `description`, `event_detail`, `action`, `success`, `type_id`, `actor`, `affected`, `affected_as`, `confidence`), each
 is checked as a catalogue event and kept in the notes block (`proposed`, with its `title` and `product` and the
 kind's sample record kept from the listing, and its place among those of its confidence); the reply's `table`

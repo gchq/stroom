@@ -422,7 +422,15 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         // Nor those the user said to leave untranslated (seen in chat 163: a kind the user said to drop put to them
         // four times).
         final List<String> dropped = JsonValues.strings(notesNow.get(RecordSourceNotesTool.DROPPED));
-        final List<Kind> todo = kinds.stream()
+        // No kind told apart: the records are one kind, classified like any other (asked for by the user: seen in
+        // testing, every record one 'other' event, nothing put to the user, and the events left Unknown), told by a
+        // field every record has the same value of, which the draft's rule for it can read.
+        final Optional<Kind> single = kinds.isEmpty()
+                ? singleKind(records, variantField)
+                : Optional.empty();
+        final List<Kind> todo = (single.isPresent()
+                ? List.of(single.get())
+                : kinds).stream()
                 .filter(kind -> !settled.contains(kind.key()) && !rejected.contains(kind.key())
                                 && !dropped.contains(kind.key()))
                 .toList();
@@ -435,7 +443,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         result.put("already_settled", kinds.stream().map(Kind::key).filter(settled::contains).toList());
         // Counted against every kind's records, those confirmed splits cover too (seen in chat 169: "1753 of the 2000
         // records are in no kind listed" once the splits had covered them).
-        final String unlisted = unlisted(read.kinds(), records);
+        final String unlisted = single.isPresent()
+                ? ""
+                : unlisted(read.kinds(), records);
         if (!unlisted.isEmpty()) {
             result.put("unlisted_records", unlisted);
         }
@@ -464,15 +474,17 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 return notTold.get();
             }
         }
-        if (kinds.size() <= 1 || todo.isEmpty()) {
-            // Nothing for the user to decide: one kind (the draft's own rule, confirmed by the user when its records
-            // are free text), or every kind settled already.
+        if (todo.isEmpty()) {
+            // Nothing for the user to decide: every kind settled already, or none told apart and no field to tell
+            // the one kind by.
             result.put(SOURCE_NOTES, notes.recordClassified(context, build, source, List.of(), List.of(),
                     withKindFields(read, Map.of(RecordSourceNotesTool.RECORD_FIELDS, recordFields,
                             RecordSourceNotesTool.PROPOSED, List.of()))));
             result.put(TO_CLASSIFY, List.of());
-            result.put(HINT, (kinds.size() <= 1
-                    ? "One kind of event (or none told apart): nothing to classify. Go on to the draft."
+            result.put(HINT, (kinds.isEmpty() && single.isEmpty()
+                    ? "No kinds told apart, and no field every record has the same value of to classify them by as "
+                      + "one kind: nothing to classify. Go on to the draft, and give its rule the action element the "
+                      + "records describe."
                     : "Every kind is settled by the documentation or the user: go on to the draft.") + unlisted);
             return result;
         }
@@ -636,6 +648,29 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                   + "with " + KIND_FIELD_ARG + ".");
         }
         return new KindsChosen(said, null);
+    }
+
+    // The records as one kind, told by the first field every record has the same short value of (a product, a
+    // version, a log's name): empty when none has.
+    private static Optional<Kind> singleKind(final List<Map<String, Object>> records, final String variantField) {
+        if (records.isEmpty()) {
+            return Optional.empty();
+        }
+        for (final String field : recordFields(records)) {
+            if (field.equals(variantField) || TIME_LIKE.matcher(field).find()) {
+                continue;
+            }
+            final Set<String> values = new LinkedHashSet<>();
+            for (final Map<String, Object> record : records) {
+                values.add(valueText(record.get(field)).strip());
+            }
+            final String value = values.iterator().next();
+            if (values.size() == 1 && !value.isEmpty() && value.length() <= 60 && !"-".equals(value)) {
+                return Optional.of(new Kind(field, value, "other", records.size(), examples(records), false,
+                        records.getFirst(), records));
+            }
+        }
+        return Optional.empty();
     }
 
     // A pattern proposal's key: the kind it is within, its field and its pattern.

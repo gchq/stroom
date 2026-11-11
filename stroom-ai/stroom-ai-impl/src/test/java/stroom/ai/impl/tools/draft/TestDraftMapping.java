@@ -1212,6 +1212,28 @@ class TestDraftMapping extends DraftFixtures {
         assertThat(rules(oneKind).keySet()).containsExactly("other");
     }
 
+    @Test
+    void recordsClassifiedAsOneKindAreAllTakenByItsRule() {
+        // Asked for by the user: one kind classified like any other. Told by a field every sample record shares
+        // (product=Gate), its rule is the rule for every record, so another product value isn't left to Unknown.
+        final StringBuilder csv = new StringBuilder("time,product,user,src\n");
+        for (int i = 0; i < 6; i++) {
+            csv.append("2026-11-06T09:00:0%dZ,Gate,u%d,10.0.0.%d\n".formatted(i, i, i));
+        }
+        final Map<String, Object> notes = Map.of("fields", List.of(), "events", List.of(Map.of("event", "Door opened",
+                "field", "product", "value", "Gate", "event_detail", "Authenticate", "action", "Logon",
+                "type_id", "Badge")));
+
+        final Map<String, Object> drafted = DraftMapping.draft(List.of(csv.toString()), "Gate", null, null, notes,
+                null, null);
+
+        final List<Map<String, Object>> rules = JsonValues.maps(mappingOf(drafted).get("events"));
+        assertThat(rules).singleElement().satisfies(rule -> {
+            assertThat(rule).doesNotContainKey("when");
+            assertThat(String.valueOf(rule)).contains("Authenticate");
+        });
+    }
+
     private static String msgActCsv() {
         final List<String> lines = new ArrayList<>(List.of("timestamp,sender,recipient,subject,msg_act,direction"));
         for (int i = 0; i < 60; i++) {
