@@ -1676,7 +1676,8 @@ its time field, and each field's name, type and source in the Event.
 
 * `draft_index_mapping` drafts the plan from the Events, following a convention (ECS, or the user's example index or
   template). `get_field_conventions` serves the bundled ECS conventions. `IndexValues` gives example values from the
-  live index for fields the sample lacks (asked for by the user).
+  live index for fields the documents stepped for the documentation lack, whatever their share of the events (asked
+  for by the user); the shares are counted from the Events behind those same documents.
 * Required fields (StreamId, EventId, the time field; `@timestamp` for a data stream) are checked on the plan.
 * Dotted names become nested objects, unless the example sets `subobjects: false`.
 * `drop_when` (XPath tests on Events) leaves events such as heartbeats out of the index.

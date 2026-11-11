@@ -440,7 +440,8 @@ class PipelineStepping {
 
     /// Each record's output at the element, up to `cap` records spread over the streams ([#stepSpread]).
     ///
-    /// @return The outputs by record key, and whether the call's time ran out first.
+    /// @return The outputs (and the inputs the element got) by record key, and whether the call's time ran out
+    /// first.
     Outputs outputs(final ToolCallContext context,
                     final SteppedPipeline pipeline,
                     final List<Long> streamIds,
@@ -449,11 +450,13 @@ class PipelineStepping {
                     final int cap) {
         final Spread spread = stepSpread(context, pipeline, streamIds, code, cap);
         final Map<String, String> outputs = new LinkedHashMap<>();
+        final Map<String, String> inputs = new LinkedHashMap<>();
         for (final Spread.Step step : spread.steps()) {
-            outputs.put(SteppingWalks.recordKey(step.streamId(), step.location()),
-                    SteppingWalks.output(step.result(), element));
+            final String key = SteppingWalks.recordKey(step.streamId(), step.location());
+            outputs.put(key, SteppingWalks.output(step.result(), element));
+            inputs.put(key, SteppingWalks.input(step.result(), element));
         }
-        return new Outputs(outputs, spread.stopped());
+        return new Outputs(outputs, inputs, spread.stopped());
     }
 
     // --------------------------------------------------------------------------------
@@ -743,9 +746,17 @@ class PipelineStepping {
     /// Records' outputs at an element.
     ///
     /// @param outputs Each record's output, by record key.
+    /// @param inputs  Each record's input at the element (null where the step gave none), by record key.
     /// @param stopped True if the call's time ran out before every record was stepped.
-    record Outputs(Map<String, String> outputs, boolean stopped) {
+    record Outputs(Map<String, String> outputs, Map<String, String> inputs, boolean stopped) {
 
+        /// Outputs whose inputs aren't known.
+        ///
+        /// @param outputs Each record's output, by record key.
+        /// @param stopped True if the call's time ran out before every record was stepped.
+        Outputs(final Map<String, String> outputs, final boolean stopped) {
+            this(outputs, Map.of(), stopped);
+        }
     }
 
     // Where one stream's walk is.

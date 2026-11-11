@@ -35,6 +35,7 @@ import stroom.util.json.JsonUtil;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -57,9 +58,10 @@ class TestFieldMappingSections {
     private final PipelineShapes pipelineShapes = Mockito.mock(PipelineShapes.class);
     private final GeneratedDrift drift = Mockito.mock(GeneratedDrift.class);
     private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
+    private final IndexValues indexValues = Mockito.mock(IndexValues.class);
     private final FieldMappingSections sections = new FieldMappingSections(stepping,
             Mockito.mock(DraftCefMappingTool.class), pipelineShapes, world.eventVersions,
-            drift, world.streamReader, streamSummaries, Mockito.mock(IndexValues.class),
+            drift, world.streamReader, streamSummaries, indexValues,
             Mockito.mock(ReferenceEvaluation.class), () -> documentAccess);
     private final PipelineDoc pipeline = PipelineDoc.builder().uuid("p").name("ACME-Events").build();
 
@@ -200,6 +202,59 @@ class TestFieldMappingSections {
     }
 
     @Test
+    void theIndexSectionCountsTheEventsSteppedAndAsksTheIndexForAFieldTheirDocumentsLack() {
+        // Seen: a field shown in 2.5% of events with "(none in the sample)" for its values: the share was of records
+        // read spread through the first stream, the values of other records stepped, and only fields in no event
+        // were looked up in the index.
+        final SteppedPipeline loaded = Mockito.mock(SteppedPipeline.class);
+        Mockito.when(loaded.name()).thenReturn("ACME-Index");
+        Mockito.when(stepping.load("p")).thenReturn(loaded);
+        final Map<String, String> outputs = new LinkedHashMap<>();
+        outputs.put("5:0", luceneRecord("alice"));
+        outputs.put("5:1", luceneRecord("bob"));
+        final Map<String, String> inputs = new LinkedHashMap<>();
+        inputs.put("5:0", indexInput("alice", "10.0.0.9"));
+        inputs.put("5:1", indexInput("bob", null));
+        Mockito.when(stepping.outputs(any(), any(), any(), anyString(), any(), anyInt()))
+                .thenReturn(new PipelineStepping.Outputs(outputs, inputs, true));
+        Mockito.when(indexValues.examples(any(), any(), any(), eq(List.of("HostIp"))))
+                .thenReturn(Map.of("HostIp", List.of("10.0.0.7")));
+        final KeptMappings.KeptXslt kept = kept("index", lucenePlan());
+
+        final String section = sections.fieldMappingSection(BuildToolCalls.context(), "b", pipeline, kept,
+                List.of(5L, 6L), FieldDocs.COMPACT, new Descriptions());
+
+        // The share is of the Events behind the two documents, not of records read from the streams apart.
+        Mockito.verify(streamSummaries, Mockito.never()).summariseEvents(any(), anyInt());
+        assertThat(section).contains("| `EventSource/Device/IPAddress` | 50% of events | `10.0.0.7` (from the "
+                                     + "index) |",
+                        "| `EventSource/User/Id` | 100% of events | `alice`, `bob` |")
+                // Stepping stopped at the time limit: said, not passed over.
+                .contains(FieldMappingSections.stoppedNote(2));
+        assertThat(FieldMappingSections.stoppedNote(2)).isEqualTo("Note: Stepping stopped at this session's time "
+                                                                  + "limit for a call, so the shares and values "
+                                                                  + "above come from 2 records rather than the usual "
+                                                                  + "200.");
+    }
+
+    @Test
+    void aFieldTheIndexWasNotSearchedForSaysSo() {
+        final SteppedPipeline loaded = Mockito.mock(SteppedPipeline.class);
+        Mockito.when(stepping.load("p")).thenReturn(loaded);
+        Mockito.when(stepping.outputs(any(), any(), any(), anyString(), any(), anyInt()))
+                .thenReturn(new PipelineStepping.Outputs(Map.of("5:0", luceneRecord("alice")), Map.of("5:0",
+                        indexInput("alice", "10.0.0.9")), false));
+        // The pipeline writes to no index the user can read.
+        Mockito.when(indexValues.examples(any(), any(), any(), any())).thenReturn(null);
+
+        final String section = sections.fieldMappingSection(BuildToolCalls.context(), "b", pipeline,
+                kept("index", lucenePlan()), List.of(5L), FieldDocs.COMPACT, new Descriptions());
+
+        assertThat(section).contains("| 100% of events | (none in the 1 document stepped; index not searched) |")
+                .doesNotContain("Stepping stopped");
+    }
+
+    @Test
     void aTemplateTheUserCommittedThemselvesIsSaidAsTheirs() {
         final PipelineDoc theirs = pipeline.copy().description(KeptMapping.withAgreedTemplate("", Map.of(
                 "by_user", true, "agreed", "2026-10-05T09:00:00Z"))).build();
@@ -214,6 +269,29 @@ class TestFieldMappingSections {
         return "<Events xmlns=\"event-logging:3\"><Event><EventTime><TimeCreated>2026-11-04T01:00:00.000Z"
                + "</TimeCreated></EventTime><EventSource><System><Name>ACME</Name></System></EventSource>"
                + "<EventDetail>" + detail + "</EventDetail></Event></Events>";
+    }
+
+    // The Event an indexing XSLT gets for a record: the user's id, and the device's IP if given.
+    private static String indexInput(final String user, final String ip) {
+        return "<Events xmlns=\"event-logging:3\"><Event><EventTime><TimeCreated>2026-11-04T01:00:00.000Z"
+               + "</TimeCreated></EventTime><EventSource>" + (ip == null
+                ? ""
+                : "<Device><IPAddress>" + ip + "</IPAddress></Device>") + "<User><Id>" + user + "</Id></User>"
+               + "</EventSource><EventDetail><TypeId>login</TypeId></EventDetail></Event></Events>";
+    }
+
+    // A Lucene document of the user's id alone (an indexing XSLT that leaves the host's IP out).
+    private static String luceneRecord(final String user) {
+        return "<records xmlns=\"records:2\"><record><data name=\"UserId\" value=\"" + user + "\"/></record>"
+               + "</records>";
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> lucenePlan() {
+        return JsonUtil.readValue("{\"backend\": \"lucene\", \"index_name\": \"acme\", \"time_field\": "
+                                  + "\"EventTime\", \"fields\": [{\"name\": \"UserId\", \"type\": \"keyword\", "
+                                  + "\"source\": \"EventSource/User/Id\"}, {\"name\": \"HostIp\", \"type\": "
+                                  + "\"keyword\", \"source\": \"EventSource/Device/IPAddress\"}]}", Map.class);
     }
 
     private static KeptMappings.KeptXslt kept(final String kind, final Map<String, Object> payload) {
