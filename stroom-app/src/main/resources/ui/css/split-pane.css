@@ -225,6 +225,16 @@
         box-shadow: none;
     }
 
+    /* With the keyboard focus, as no ring is drawn either side of the line there, the line is as
+       wide as a held splitter's (3px) */
+    .split-pane__splitter:focus-visible::before {
+        inset: 0 calc(50% - 1.5px);
+    }
+
+    .split-pane--vertical > .split-pane__splitter:focus-visible::before {
+        inset: calc(50% - 1.5px) 0;
+    }
+
     /* Its line shows a splitter's focus, so not the outline base.css gives whatever has the keyboard
        focus there (important, to win over it) */
     .split-pane__splitter:focus-visible {

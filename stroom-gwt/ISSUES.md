@@ -210,7 +210,10 @@ out). Open from these runs:
 
 * `Widgets/Layout/SplitPane` `Keyboard` and `Widgets/Data Grid/DataGridKeyboard`
   `SingleSelection`: their screenshots are the same bytes in the normal and both forced-colours
-  runs, so forced colours didn't reach what was captured; not yet known why.
+  runs, so forced colours didn't reach what was captured. Fixed 11 November 2026: their real input
+  checks emulated forced colours for a check and then set them back to none, even in a
+  forced-colours run; they now put back what the run had (`lib/real-input/forced-colours.mjs`),
+  and the screenshots differ.
 * `Widgets/Tree/ExplorerTree` `Keys` and `Widgets/EntityCheckTree` `TriState` end blank or nearly
   blank in every run.
 * `App/Main/PropertiesScreen` `Properties` ended with a row selected in the normal run and none in

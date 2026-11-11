@@ -20,6 +20,7 @@ package stroom.gwt.workbench.client.app.dashboard;
 import stroom.gwt.workbench.client.FrameDocuments;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
+import stroom.gwt.workbench.client.a11y.ForcedColours;
 import stroom.gwt.workbench.client.app.ai.AiFixtures;
 import stroom.gwt.workbench.client.app.ai.AskStroomAiChat;
 import stroom.gwt.workbench.client.app.query.DocumentEditors;
@@ -557,12 +558,15 @@ public final class DashboardPaneStories {
                     // The first not in the table has the line above it
                     play.expect(valueRow(screen, "gamma")).toHaveClass(FIRST_UNAVAILABLE);
                     // A 9px gap with the line in its middle, in the tick boxes' border colour (the
-                    // dark theme's #696d77), which can be seen
+                    // dark theme's #696d77), which can be seen; in forced colours (e.g. Windows
+                    // high contrast), the text colour, CanvasText, as the tick boxes' borders are
                     play.expect(valueRow(screen, "gamma")).toHaveStyle("margin-top", "9px");
                     play.expect("the line is drawn in the tick boxes' border colour", () -> lineColour(
-                            valueRow(screen, "gamma").element().get())).toBe(StroomThemeDecorator.isDark()
-                                    ? "rgb(105, 109, 119)"
-                                    : "rgb(140, 144, 152)");
+                            valueRow(screen, "gamma").element().get())).toBe(ForcedColours.active()
+                                    ? ForcedColours.colour("CanvasText")
+                                    : StroomThemeDecorator.isDark()
+                                            ? "rgb(105, 109, 119)"
+                                            : "rgb(140, 144, 152)");
                     play.expect(valueRow(screen, "gamma")).toHaveAttribute("aria-description", NOT_IN_TABLE);
                     play.expect(valueText(screen, "gamma")).toHaveStyle("opacity", "0.6");
 

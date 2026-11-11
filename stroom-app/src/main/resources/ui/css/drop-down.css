@@ -105,3 +105,23 @@
     font-size: 80%;
     color: var(--feedback);
 }
+
+/* Forced colours (e.g. Windows high contrast) replace the colours that are all that show a field's
+   state, so a rejected value (a red border), a read-only value (greyed) and a disabled picker looked like any
+   other. There each state has a border of its own: a rejected value a thicker, dashed one (its message
+   says why), read only a dotted one; disabled, its value, icon and border in GrayText, as a disabled text box's are */
+@media (forced-colors: active) {
+    .drop-down[aria-invalid="true"] {
+        border-width: 2px !important;
+        border-style: dashed !important;
+    }
+
+    .drop-down--read-only:not([aria-invalid="true"]) {
+        border-style: dotted;
+    }
+
+    .drop-down[aria-disabled="true"]:not(.drop-down--read-only) {
+        border-color: GrayText;
+        color: GrayText;
+    }
+}

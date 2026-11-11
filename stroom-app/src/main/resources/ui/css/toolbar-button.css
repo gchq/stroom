@@ -113,6 +113,28 @@
     }
 }
 
+/* Forced colours drop a pressed button's fill, which left its icon (drawn in the page's colour to
+   sit on the fill) all but unseen, and "on" no different from hover and focus. There a pressed
+   button keeps its fill, in Highlight, with its icon and label in HighlightText, as a selected item
+   is; hover and focus are a border and an outline */
+@media (forced-colors: active) {
+    .toolbar-button[aria-pressed="true"] {
+        forced-color-adjust: none;
+        color: HighlightText;
+    }
+
+    .toolbar-button[aria-pressed="true"]::before {
+        forced-color-adjust: none;
+        background-color: Highlight;
+        background-image: none;
+        border-color: Highlight;
+    }
+
+    .toolbar-button[aria-pressed="true"] .toolbar-button__label {
+        color: HighlightText;
+    }
+}
+
 /* Out of sight but keeping its place, so the toolbar doesn't shift; visibility also takes it out of
    the tab order and away from screen readers (e.g. a query's errors button while it has none) */
 .toolbar-button--invisible {
