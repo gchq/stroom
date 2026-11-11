@@ -78,7 +78,6 @@ RUN apk add --no-cache \
       https://github.com/plantuml/plantuml/releases/download/v$PLANTUML_VERSION/plantuml-$PLANTUML_VERSION.jar \
       -o /builder/plantuml.jar \
     && alias ll='ls -l' \
-    && apk del curl \
     && echo "USER_ID: [$USER_ID]" \
     && echo "GROUP_ID: [$GROUP_ID]" \
     && echo "PLANTUML_VERSION: [$PLANTUML_VERSION]" \

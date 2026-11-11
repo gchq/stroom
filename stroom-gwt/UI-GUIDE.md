@@ -1,7 +1,7 @@
 # Writing Stroom's GWT UI
 
 How to write a screen, dialog, tab or widget in Stroom's GWT user interface. It applies to the client
-code in `stroom-core-client`, `stroom-core-client-widget`, `stroom-dashboard-gwt`, `stroom-app-gwt`,
+code in `stroom-core-client`, `stroom-core-client-widget`, `stroom-app-gwt`,
 `stroom-statistics/stroom-statistics-client` and the workbench (`stroom-gwt/`).
 
 A screen, dialog or tab is a **component** and a **controller**; there are no presenters.

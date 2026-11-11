@@ -42,7 +42,6 @@ class TestStroomWidgetsOnly {
     private static final List<String> MODULES = List.of(
             "stroom-core-client",
             "stroom-core-client-widget",
-            "stroom-dashboard-gwt",
             "stroom-app-gwt",
             "stroom-gwt/stroom-gwt-workbench",
             "stroom-statistics/stroom-statistics-client");
