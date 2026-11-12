@@ -68,6 +68,7 @@ class IndexDocumentation {
     private final IndexFields indexFields;
     private final EventVersions eventVersions;
     private final WriteGuard guard;
+    private final PendingDocumentation pendingDocs;
 
     /// @param docs           Where documentation is, and its version control.
     /// @param documentAccess Reads the index doc, checking View.
@@ -79,6 +80,7 @@ class IndexDocumentation {
     /// @param indexFields    Looks again for fields a feeding pipeline writes.
     /// @param eventVersions  The event-logging schema, for descriptions.
     /// @param guard          Makes the doc in the build.
+    /// @param pendingDocs    The descriptions given for a doc not written yet, kept across calls.
     @Inject
     IndexDocumentation(final BuildDocumentation docs,
                        final DocumentAccess documentAccess,
@@ -89,7 +91,8 @@ class IndexDocumentation {
                        final IndexSurveys indexSurveys,
                        final IndexFields indexFields,
                        final EventVersions eventVersions,
-                       final WriteGuard guard) {
+                       final WriteGuard guard,
+                       final PendingDocumentation pendingDocs) {
         this.docs = docs;
         this.documentAccess = documentAccess;
         this.places = places;
@@ -100,6 +103,7 @@ class IndexDocumentation {
         this.indexFields = indexFields;
         this.eventVersions = eventVersions;
         this.guard = guard;
+        this.pendingDocs = pendingDocs;
     }
 
     /// The documentation of an existing index.
@@ -186,9 +190,17 @@ class IndexDocumentation {
                 ? existing
                 : beside;
         final Map<String, String> descriptions = new LinkedHashMap<>(docs.keptDescriptions(previous));
+        // And those given by earlier calls that wrote nothing, as for a pipeline's doc (seen in testing: given in
+        // batches, each batch was lost with the call that gave it).
+        final Map<String, String> pending = pendingDocs.of(context.session(), ref.getUuid())
+                .map(PendingDocumentation.Pending::descriptions)
+                .orElse(Map.of());
+        descriptions.putAll(pending);
         descriptions.putAll(request.fieldDescriptions());
-        // As for an events pipeline's: one whose field comes from elsewhere now is asked for again.
+        // As for an events pipeline's: one whose field comes from elsewhere now is asked for again; those given in
+        // this call or an earlier one are of the fields as they are.
         final Map<String, String> givenFrom = new LinkedHashMap<>(docs.keptDescriptionSources(previous));
+        givenFrom.keySet().removeAll(pending.keySet());
         givenFrom.keySet().removeAll(request.fieldDescriptions().keySet());
         final Descriptions described = new Descriptions(descriptions, givenFrom, true,
                 docs.vendorNotes(request.build()));
@@ -196,8 +208,14 @@ class IndexDocumentation {
         String section = IndexFieldDocs.existingIndexMarkdown(survey, planned, schema, layout, described);
         if (!described.wanted().isEmpty()) {
             // Nothing is written yet: the call made again with the descriptions asks the user again, as no id that
-            // would let it skip the form is given to the agent.
-            return BuildDocumentation.needsDescriptions(described, List.of());
+            // would let it skip the form is given to the agent. What was given is kept till it is written.
+            final Map<String, String> sofar = new LinkedHashMap<>(pending);
+            sofar.putAll(request.fieldDescriptions());
+            pendingDocs.rememberIndex(context.session(), ref.getUuid(), ref.getName(), request.body(), sofar);
+            final List<String> unmatched = request.fieldDescriptions().keySet().stream()
+                    .filter(key -> !described.matched().contains(key))
+                    .toList();
+            return BuildDocumentation.needsDescriptions(described, unmatched);
         }
         if (!described.given().isEmpty()) {
             section = section.stripTrailing() + "\n\n" + FieldDocs.descriptionsBlock(described.given());
@@ -209,6 +227,7 @@ class IndexDocumentation {
         final String text = DocumentationText.belowSection(KeptMapping.replaceSection(request.body(), "Field mapping",
                 section, false), "Purpose and data", summary);
         final DocumentationDoc doc = write(context, request, ref, text, existing, beside);
+        pendingDocs.written(context.session(), ref.getUuid());
         final String destination = beside != null
                 ? "written back into the existing doc beside the index doc (" + folder + "), after a backup"
                 : "beside the index doc (" + folder + ") unless they choose another folder "
