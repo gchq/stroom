@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.generation.CodeDiff;
+import stroom.ai.impl.tools.generation.ModuleChecks;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SurveyDoc;
@@ -53,6 +54,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -113,6 +115,10 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     private final XsltHistory history;
     private final PendingDocumentation pendingDocs;
     private final SurveyDocuments surveyDocuments;
+    // An aggregated feed's modules and the reference data its pipelines load; none in tests that make the tool
+    // themselves.
+    private Provider<SourceTypeGroups> groupsProvider;
+    private Provider<DispatcherReferences> referencesProvider;
 
     @Inject
     PromoteBuildTool(final BuildFacts facts,
@@ -143,6 +149,17 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         this.history = history;
         this.pendingDocs = pendingDocs;
         this.surveyDocuments = surveyDocuments;
+    }
+
+    /// An aggregated feed's modules, put beside the feed and pointed at the originals of their working copies, and
+    /// the reference data its pipelines load (set by injection; none in tests that make the tool themselves).
+    ///
+    /// @param groups     The feed's source type groups.
+    /// @param references The reference data its pipelines load.
+    @Inject
+    void setAggregated(final Provider<SourceTypeGroups> groups, final Provider<DispatcherReferences> references) {
+        this.groupsProvider = groups;
+        this.referencesProvider = references;
     }
 
     @Override
@@ -191,7 +208,13 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                              + "documentation and dashboard; destination folders that don't exist yet are created "
                              + "first. A working copy is written back over its original after the original is "
                              + "backed up to <workspace>/backups, then the copy is deleted. The build's workspace "
-                             + "folder is removed afterwards if nothing is left in it. What build_status says is "
+                             + "folder is removed afterwards if nothing is left in it. An aggregated feed's modules "
+                             + "(helpers, common module, source type groups, dispatchers) and a group's output feed "
+                             + "go beside the feed, with its registry; working copies of modules are written back "
+                             + "with every module importing the originals again (the dispatchers regenerated against "
+                             + "the originals' UUIDs), and each pipeline running a dispatcher gains the reference "
+                             + "data its groups look up (a pipeline change, in the approval). What build_status says "
+                             + "is "
                              + "missing goes in the approval, except documentation the build's own change left "
                              + "behind: write_documentation again first (once promoted, documentation only changes "
                              + "through a working copy).")
@@ -258,6 +281,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         final List<String> sources = facts.sourceFeeds(build, docs);
         // A feed's survey doc and source type registry: beside the feed, or kept in the build, as the user chose.
         final Map<String, String> besideFeeds = besideFeeds(call, context, build, docs, destinations);
+        // An aggregated feed's modules and a group's output feed of its own: beside the feed.
+        modulesBeside(build, docs, destinations, versions.proposed()).forEach(besideFeeds::putIfAbsent);
         final List<PromotionLayout.Step> plan = plan(docs, destinations, versions.proposed(), joins, sources,
                 besideFeeds);
         // Before the layout is shown, so it shows what the user chose (found reviewing the change: asked after
@@ -310,11 +335,22 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                   + "change through a working copy.");
         }
         final List<String> processed = processingSaid(processing);
+        // The reference data an aggregated feed's pipelines gain for their groups' lookups: a pipeline change.
+        final List<DispatcherReferences.Change> referenceChanges = referencesProvider == null
+                ? List.of()
+                : referencesProvider.get().changes(build, docs);
+        final List<String> pipelineChanges = referenceChanges.stream().map(DispatcherReferences.Change::said).toList();
         final String tree = layout.promotionTree(plan, creating);
         // The question applies: documents of several roles.
         final boolean roles = rolesMoved.size() > 1;
         if (!Consent.wasReviewed(reviewed, tree)) {
-            return review(build, tree, warnings, processed, roles, reviewed);
+            final Map<String, Object> review = review(build, tree, warnings, processed, roles, reviewed);
+            if (!pipelineChanges.isEmpty()) {
+                review.put("pipeline_changes", pipelineChanges);
+                review.put("hint", review.get("hint") + " Say the pipeline_changes too: the reference data each "
+                                   + "pipeline gains for its source type groups' lookups.");
+            }
+            return review;
         }
         // The form stays short; the approval is bound to the exact layout shown, by its review id, which the form
         // doesn't show (it meant nothing to the user).
@@ -336,10 +372,28 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (!processing.isEmpty()) {
             shortForm.put("processing after promotion", processed);
         }
+        if (!pipelineChanges.isEmpty()) {
+            shortForm.put("pipeline changes", pipelineChanges);
+        }
         consent.require(call, context, Consent.Request.approval(NAME,
                 "Promote build '" + build + "' as shown in the chat", shortForm).boundTo(tree));
         final List<String> done = new ArrayList<>();
+        if (groupsProvider != null) {
+            // An aggregated feed's modules import the originals their working copies are written back over.
+            try {
+                done.addAll(groupsProvider.get().toOriginals(context, build, docs));
+            } catch (final RuntimeException e) {
+                throw new ToolRefusal("Not promoted: the build's modules couldn't be pointed at the originals of "
+                                      + "their working copies: " + e.getMessage() + ". Done before it: "
+                                      + (done.isEmpty()
+                        ? "nothing"
+                        : String.join("; ", done)));
+            }
+        }
         carryOut(build, docs, plan, folders, creating, done);
+        if (!referenceChanges.isEmpty()) {
+            done.addAll(referencesProvider.get().apply(referenceChanges));
+        }
         // A choice about a changed original holds for this promotion only: promoted again, it is asked again.
         plan.stream()
                 .filter(p -> PromotionLayout.KEEP.equals(p.action())
@@ -460,6 +514,46 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             }
         }
         return out;
+    }
+
+    // An aggregated feed's modules (its helpers, common module, groups and dispatchers, by the marker the generator
+    // writes in each) and its groups' output feeds of their own: beside the feed, where a later build finds them
+    // through the registry. Not working copies (written back where their originals are), nor a new version's
+    // documents (in its version folder), nor any given a destination.
+    private Map<String, String> modulesBeside(final String build,
+                                              final List<Map<String, Object>> docs,
+                                              final Map<String, String> destinations,
+                                              final Map<String, String> proposed) {
+        final Optional<String> feed = docs.stream()
+                .filter(doc -> DocumentationDoc.TYPE.equals(doc.get("type")))
+                .map(doc -> String.valueOf(doc.get("name")))
+                .filter(name -> name.endsWith(SourceTypeRegistry.SUFFIX))
+                .map(name -> name.substring(0, name.length() - SourceTypeRegistry.SUFFIX.length()))
+                .findFirst();
+        final Optional<String> folder = feed.flatMap(name -> feedFolder(name, docs, destinations));
+        if (folder.isEmpty()) {
+            return Map.of();
+        }
+        final Map<String, String> out = new LinkedHashMap<>();
+        for (final Map<String, Object> doc : docs) {
+            final String uuid = String.valueOf(doc.get("uuid"));
+            if (destinations.containsKey(uuid) || proposed.containsKey(uuid) || doc.get("working_copy_of") != null) {
+                continue;
+            }
+            final boolean module = XsltDoc.TYPE.equals(doc.get("type"))
+                                   && documentAccess.read(ref(doc), XsltDoc.class)
+                                           .flatMap(xslt -> ModuleChecks.marker(NullSafe.string(xslt.getData())))
+                                           .isPresent();
+            if (module || (FeedDoc.TYPE.equals(doc.get("type")) && groupOutput(build, doc))) {
+                out.put(uuid, folder.get());
+            }
+        }
+        return out;
+    }
+
+    // A feed made in the build as a source type group's output feed of its own.
+    private boolean groupOutput(final String build, final Map<String, Object> feed) {
+        return buildRecords.entry(build, String.valueOf(feed.get("uuid"))).get(BuildFeeds.GROUP_OUTPUT) != null;
     }
 
     // The user's choice for a feed's survey doc (beside, keep, or empty when none was made), asked now in a form if
@@ -733,7 +827,10 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             }
             done.addAll(versioned);
             final Set<String> buildFeeds = new LinkedHashSet<>();
-            ofType(docs, FeedDoc.TYPE).forEach(feed -> buildFeeds.add(String.valueOf(feed.get("uuid"))));
+            // Not a group's output feed of its own: promoted with the build, its pipeline goes on writing there.
+            ofType(docs, FeedDoc.TYPE).stream()
+                    .filter(feed -> !groupOutput(build, feed))
+                    .forEach(feed -> buildFeeds.add(String.valueOf(feed.get("uuid"))));
             for (final PromotionLayout.Step step : plan) {
                 final String name = String.valueOf(step.doc().get("name"));
                 doing = "restoring production settings on '" + name + "'";

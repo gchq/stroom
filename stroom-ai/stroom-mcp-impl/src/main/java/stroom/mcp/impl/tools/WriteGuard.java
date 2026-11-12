@@ -210,6 +210,18 @@ public class WriteGuard {
         return new ResolvedFolder(folder, List.of());
     }
 
+    /// @return The names of the builds in the workspace, each a folder the user can view below it (the workspace's
+    /// backups among them); none when there is no workspace yet.
+    public List<String> builds() {
+        return findChildFolder(systemFolder(), workspaceFolder())
+                .map(workspace -> documentAccess.children(workspace.docRef()).stream()
+                        .filter(ExplorerConstants::isFolder)
+                        .map(ExplorerNode::getName)
+                        .filter(name -> name != null && BUILD.matcher(name).matches())
+                        .toList())
+                .orElse(List.of());
+    }
+
     /// @param build A build's name.
     /// @return The build's folder, the workspace and build folders made if needed.
     /// @throws ToolRefusal if the name isn't a build name.

@@ -125,7 +125,7 @@ final class TranslationWorld {
     // The feeds' source type registries: none unless a test says.
     final SourceTypeRegistries registries = Mockito.mock(SourceTypeRegistries.class);
     final SourceTypeGroups groups = new SourceTypeGroups(world.guard(), world.documentAccess, registries, docs,
-            builds);
+            builds, world.records());
     final SampleProfiling sampleProfiling = new SampleProfiling.Profiled();
     // No feed translated now, unless a test says what is.
     final CurrentTranslations currentTranslations = Mockito.mock(CurrentTranslations.class);

@@ -67,7 +67,11 @@ class TestSourceTypeGroups {
 
     @BeforeEach
     void setUp() {
-        Mockito.when(world.registries.registry(eq(BUILD), eq("PEGA"))).thenAnswer(inv -> Optional.of(registry()));
+        // The registry as last written, as the build holds it.
+        Mockito.when(world.registries.registry(eq(BUILD), eq("PEGA"))).thenAnswer(inv -> Optional.of(written.isEmpty()
+                ? registry()
+                : new SourceTypeRegistries.Found(new SurveyRecord("r", "PEGA source types", written.getLast()), false,
+                        SourceTypeRegistry.read(written.getLast()))));
         Mockito.when(world.registries.writeRegistry(any(), eq(BUILD), eq("PEGA"), any(), anyString()))
                 .thenAnswer(inv -> {
                     written.add(inv.getArgument(4));
@@ -149,6 +153,102 @@ class TestSourceTypeGroups {
     }
 
     @Test
+    void aGroupWithAPipelineOfItsOwnHasItsOwnDispatcherAndTheFeedsPassesItsRecordsOver() {
+        world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
+        final Map<String, Object> own = new LinkedHashMap<>(args(integration(), "PEGA integration",
+                List.of("PegaIntegration")));
+        own.put("pipeline", "own");
+        own.put("own_output_feed", true);
+        own.put("references", List.of(Map.of("feed", "PEGA-HOSTS", "loader_pipeline", "Reference Loader")));
+
+        final Map<String, Object> saved = world.call(tool, own);
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        final Map<String, Object> group = JsonValues.mapOrEmpty(saved.get("group"));
+        assertThat(String.valueOf(group.get("group_next"))).contains("create_feed", "group='PEGA integration'",
+                "create_pipeline");
+        final Map<String, String> docs = xsltsInBuild();
+        assertThat(docs).containsKeys("PEGA dispatcher", "PEGA PEGA integration dispatcher");
+        assertThat(JsonValues.mapOrEmpty(group.get("dispatcher"))).containsEntry("uuid",
+                docs.get("PEGA PEGA integration dispatcher"));
+        // The feed's pipeline routes the security group alone, and passes the other over as handled elsewhere.
+        final DispatcherSpec main = spec(docs.get("PEGA dispatcher"));
+        assertThat(main.groups()).extracting(DispatcherSpec.Group::name).containsExactly("PEGA security");
+        assertThat(main.rows()).filteredOn(row -> "PegaIntegration".equals(row.name())).singleElement()
+                .satisfies(row -> assertThat(row.handledBy()).contains("PEGA PEGA integration dispatcher"));
+        // The group's own pipeline routes it alone.
+        final DispatcherSpec ownSpec = spec(docs.get("PEGA PEGA integration dispatcher"));
+        assertThat(ownSpec.mode()).isEqualTo("pega_pega_integration_dispatch");
+        assertThat(ownSpec.groups()).extracting(DispatcherSpec.Group::name).containsExactly("PEGA integration");
+        assertThat(ownSpec.rows()).filteredOn(row -> "PegaSecurityEvent".equals(row.name())).singleElement()
+                .satisfies(row -> assertThat(row.handledBy()).contains("PEGA dispatcher"));
+        // The registry says where each is translated: the group in a pipeline of its own, its output feed to make,
+        // its reference data kept.
+        final Map<String, Object> row = rowNamed(written.getLast(), "PegaIntegration");
+        assertThat(JsonValues.mapOrEmpty(row.get("pipeline"))).containsEntry("own", true);
+        assertThat(row).containsEntry("output_feed", "");
+        assertThat(JsonValues.maps(row.get("references"))).singleElement()
+                .satisfies(reference -> assertThat(reference).containsEntry("feed", "PEGA-HOSTS"));
+        assertThat(written.getLast()).contains("a pipeline of its own (to be made)");
+        assertThat(JsonValues.mapOrEmpty(rowNamed(written.getLast(), "PegaSecurityEvent").get("pipeline")))
+                .containsEntry("own", false);
+
+        // Its pipeline made: the registry names it, and the feed's dispatcher says its records are handled by it.
+        final List<String> named = world.groups.runBy(world.context(), BUILD, docs.get(
+                "PEGA PEGA integration dispatcher"), "PEGA-Integration-Events");
+        assertThat(named).containsExactly("PegaIntegration");
+        assertThat(world.xslt(docs.get("PEGA dispatcher")).getData())
+                .contains(DispatcherXslt.HANDLED_BY.strip() + " pipeline 'PEGA-Integration-Events'");
+        final Optional<SourceTypeGroups.Routed> routed = world.groups.routedBy(BUILD,
+                docs.get("PEGA PEGA integration dispatcher"));
+        assertThat(routed).hasValueSatisfying(found -> {
+            assertThat(found.groups()).containsExactly("PEGA integration");
+            assertThat(found.outputFeed()).hasValue("");
+            assertThat(found.references()).hasSize(1);
+        });
+    }
+
+    @Test
+    void aNewGroupIsPlacedOnlyAsTheUserChose() {
+        final Map<String, Object> unasked = new LinkedHashMap<>(args(security(), "PEGA security",
+                List.of("PegaSecurityEvent")));
+        unasked.remove("pipeline");
+
+        final Map<String, Object> refused = world.call(tool, unasked);
+
+        assertThat(String.valueOf(refused.get("error"))).contains("ask the user which pipeline handles it",
+                "Nothing was saved");
+        assertThat(xsltsInBuild()).isEmpty();
+        // A new version only of a pipeline in production: the feed has none yet.
+        unasked.put("pipeline", "new_version");
+        assertThat(String.valueOf(world.call(tool, unasked).get("error"))).contains("isn't a choice",
+                "no pipeline in production");
+    }
+
+    @Test
+    void promotionPointsTheBuildsModulesAtTheOriginalsOfItsWorkingCopies() {
+        world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
+        final Map<String, String> docs = xsltsInBuild();
+        final List<Map<String, Object>> listed = List.of(
+                doc(docs.get("PEGA security"), "PEGA security", "o-security"),
+                doc(docs.get("PEGA helpers"), "PEGA helpers", "o-helpers"),
+                doc(docs.get("PEGA common"), "PEGA common", null),
+                doc(docs.get("PEGA dispatcher"), "PEGA dispatcher", null));
+
+        final List<String> done = world.groups.toOriginals(world.context(), BUILD, listed);
+
+        assertThat(done).anySatisfy(line -> assertThat(line).contains("regenerated dispatcher 'PEGA dispatcher'"));
+        final XsltDoc dispatcher = world.xslt(docs.get("PEGA dispatcher"));
+        assertThat(dispatcher.getData()).contains("uuid='o-security'", "uuid='o-helpers'")
+                .doesNotContain("uuid='" + docs.get("PEGA security") + "'");
+        assertThat(spec(docs.get("PEGA dispatcher")).groups()).singleElement()
+                .satisfies(group -> assertThat(group.href()).contains("o-security"));
+        // The common module (new) imports the helpers' original; the group's kept mapping names them too.
+        assertThat(world.xslt(docs.get("PEGA common")).getData()).contains("uuid='o-helpers'");
+        assertThat(keptMapping(world.xslt(docs.get("PEGA security"))).module().helpers()).contains("o-helpers");
+    }
+
+    @Test
     void sourceTypesTheRegistryLacksAreRefused() {
         final Map<String, Object> refused = world.call(tool, args(security(), "PEGA security",
                 List.of("NoSuchType")));
@@ -194,6 +294,22 @@ class TestSourceTypeGroups {
 
     // --- fixtures ---
 
+    // The spec kept with a dispatcher.
+    private DispatcherSpec spec(final String uuid) {
+        return DispatcherSpec.fromJson(KeptMapping.readBlock(world.xslt(uuid).getDescription(),
+                DispatcherXslt.SPEC_BLOCK).orElseThrow()).orElseThrow();
+    }
+
+    // A build document as promotion lists it.
+    private static Map<String, Object> doc(final String uuid, final String name, final String copyOf) {
+        final Map<String, Object> doc = new LinkedHashMap<>();
+        doc.put("type", XsltDoc.TYPE);
+        doc.put("uuid", uuid);
+        doc.put("name", name);
+        doc.put("working_copy_of", copyOf);
+        return doc;
+    }
+
     private static Map<String, Object> args(final Map<String, Object> mapping,
                                             final String group,
                                             final List<String> sourceTypes) {
@@ -204,6 +320,8 @@ class TestSourceTypeGroups {
         args.put("feeds", List.of("PEGA"));
         args.put("group", group);
         args.put("source_types", sourceTypes);
+        // No form can be shown here: the user's choice, as the agent passes it.
+        args.put("pipeline", "shared");
         return args;
     }
 

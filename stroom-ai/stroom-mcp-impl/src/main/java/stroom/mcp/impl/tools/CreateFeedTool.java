@@ -41,6 +41,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -61,6 +62,7 @@ class CreateFeedTool extends AbstractBuiltInTool {
     static final String DESCRIPTION_ARG = "description";
     static final String USER_SAMPLES_ARG = "user_samples";
     static final String TEST_FEED_ARG = "test_feed";
+    static final String GROUP_ARG = "group";
     /// The build's argument, as every build tool describes it.
     static final String BUILD_DESCRIPTION = "Build name; its workspace folder is created if needed.";
 
@@ -73,6 +75,8 @@ class CreateFeedTool extends AbstractBuiltInTool {
     private final Consent consent;
     private final BuildPlan plan;
     private final StreamReader streamReader;
+    // An aggregated feed's source type groups; none in tests that make the tool themselves.
+    private Provider<SourceTypeGroups> groupsProvider;
 
     @Inject
     CreateFeedTool(final BuildFeeds buildFeeds,
@@ -87,6 +91,15 @@ class CreateFeedTool extends AbstractBuiltInTool {
         this.consent = consent;
         this.plan = plan;
         this.streamReader = streamReader;
+    }
+
+    /// Where an aggregated feed's groups are placed (set by injection; none in tests that make the tool
+    /// themselves).
+    ///
+    /// @param groups The feed's source type groups.
+    @Inject
+    void setGroups(final Provider<SourceTypeGroups> groups) {
+        this.groupsProvider = groups;
     }
 
     @Override
@@ -128,7 +141,10 @@ class CreateFeedTool extends AbstractBuiltInTool {
                              + "saying where it is; one already in this build is returned as it is (existing: "
                              + "true). A build on an existing feed's data creates no feed, unless the user chooses "
                              + "sample files of their own instead (user_samples): then it is a test feed for those; "
-                             + "or names the test feed its Events are written to (test_feed).")
+                             + "or names the test feed its Events are written to (test_feed). An aggregated feed's "
+                             + "source type group with a pipeline of its own and an output feed of its own: group= "
+                             + "makes that Events feed, promoted with the build, and create_pipeline then sets the "
+                             + "group's pipeline's stream appender to it.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(BUILD_ARG, BUILD_DESCRIPTION)
                         .addStringProperty(NAME_ARG, "Feed name following the environment's convention, e.g. "
@@ -142,6 +158,9 @@ class CreateFeedTool extends AbstractBuiltInTool {
                                                                          + "named them. Files you found in the "
                                                                          + "workspace aren't their choice: ask "
                                                                          + "them."))
+                        .addStringProperty(GROUP_ARG, "An aggregated feed's source type group whose Events go to "
+                                                      + "an output feed of its own (the user chose it when the "
+                                                      + "group was saved): this feed, of Events.")
                         .addBooleanProperty(TEST_FEED_ARG, "Only in a build on an existing feed's data: true for "
                                                            + "the build's test feed, where processing writes the "
                                                            + "Events made from that feed's streams, under the name "
@@ -173,6 +192,10 @@ class CreateFeedTool extends AbstractBuiltInTool {
         final Optional<Map<String, Object>> existing = buildFeeds.existingFeed(proposed, build);
         if (existing.isPresent()) {
             return plan.withNext(context, build, existing.get());
+        }
+        final String group = stringArg(call, GROUP_ARG);
+        if (group != null) {
+            return groupOutputFeed(call, context, build, proposed, encoding, description, group);
         }
         buildFeeds.refuseCaseTwin(proposed);
         final List<String> chosen = stringListArg(call, USER_SAMPLES_ARG);
@@ -254,6 +277,55 @@ class CreateFeedTool extends AbstractBuiltInTool {
                 "upload sample files on its Data tab, each as its own stream")));
         result.put("large_files", UploadSampleTool.sentByUser(context.links(), saved));
         earlierStreamsNote(doc).ifPresent(note -> result.put("note", note));
+        return plan.withNext(context, build, result);
+    }
+
+    // An aggregated feed's group's output feed of its own: an Events feed in the build, promoted with it (not a
+    // test feed), named in the registry's rows for the group.
+    private Map<String, Object> groupOutputFeed(final ToolCall call,
+                                                final ToolCallContext context,
+                                                final String build,
+                                                final String proposed,
+                                                final String encoding,
+                                                final String description,
+                                                final String group) {
+        if (groupsProvider == null) {
+            throw new ToolRefusal("group= is an aggregated feed's: this server has no source type groups");
+        }
+        groupsProvider.get().checkOwnOutputFeed(build, group);
+        buildFeeds.refuseCaseTwin(proposed);
+        final Map<String, Object> details = new LinkedHashMap<>();
+        details.put("build", build);
+        details.put("feed name", proposed);
+        details.put("stream type", "Events");
+        details.put("holds", "the Events of source type group '" + group + "', from its pipeline of its own");
+        consent.require(call, context, Consent.Request.confirmation(NAME, "Create feed '" + proposed + "' for the "
+                                                                          + "Events of group '" + group + "'", details)
+                .withEditable(NAME_ARG, "Feed name", proposed));
+        final String name = consent.edited(context, NAME_ARG, proposed);
+        if (!name.equals(proposed)) {
+            buildFeeds.refuseCaseTwin(name);
+        }
+        final DocRef ref = createFeed(name, build);
+        final FeedDoc doc = buildFeeds.write(buildFeeds.read(ref).copy()
+                .encoding(encoding)
+                .streamType("Events")
+                .description(description)
+                .build());
+        final DocRef saved = new DocRef(FeedDoc.TYPE, doc.getUuid(), doc.getName());
+        records.update(build, saved, entry -> entry.put(BuildFeeds.GROUP_OUTPUT, group));
+        final List<String> types = groupsProvider.get().outputFeed(context, build, group, doc.getName());
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("type", FeedDoc.TYPE);
+        result.put("uuid", doc.getUuid());
+        result.put("name", doc.getName());
+        result.put("stream_type", doc.getStreamType());
+        result.put("group", group);
+        result.put("source_types", types);
+        result.put("link", context.links().documentTarget(saved));
+        result.put("hint", "The output feed of group '" + group + "': create_pipeline for the group's pipeline of "
+                           + "its own (translationFilter.xslt its dispatcher) sets its stream appender's feed to "
+                           + "it.");
         return plan.withNext(context, build, result);
     }
 

@@ -16,12 +16,17 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema;
+import stroom.ai.impl.tools.generation.DispatcherSpec;
+import stroom.ai.impl.tools.generation.DispatcherXslt;
+import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineLink;
@@ -32,6 +37,7 @@ import stroom.pipeline.shared.data.PipelineReference;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -239,6 +245,70 @@ class TestCreatePipelineTool {
         assertThat(made.get("reference_data")).isEqualTo(List.of("ACME-USERS via Reference Loader"));
         assertThat(pipelines.pipelineNamed("P").getPipelineData().getAddedPipelineReferences()).singleElement()
                 .satisfies(reference -> assertThat(reference.getElement()).isEqualTo("translationFilter"));
+    }
+
+    @Test
+    void anAggregatedFeedsPipelineRunsItsDispatcherWritingToItsGroupsFeedAndLoadingItsReferenceData() {
+        textTemplate();
+        pipelines.textConverter("tc", "Acme-Splitter");
+        // A group (a mapping kept with it) and the dispatcher of its pipeline of its own, as the generator marks them.
+        pipelines.xslt("g1", "ACME mail", Map.of());
+        pipelines.world.docs.put("g1", ((XsltDoc) pipelines.world.docs.get("g1")).copy()
+                .data(module("group", "acme_mail")).build());
+        pipelines.xslt("d1", "ACME ACME mail dispatcher", null);
+        final DispatcherSpec spec = new DispatcherSpec("ACME", "acme_mail_dispatch", Map.of("input", "json"),
+                "kind", null, List.of(), List.of(), Map.of());
+        pipelines.world.docs.put("d1", ((XsltDoc) pipelines.world.docs.get("d1")).copy()
+                .data(module("dispatcher", "acme_mail_dispatch"))
+                .description(KeptMapping.withBlock("", DispatcherXslt.SPEC_BLOCK, spec.toJson())).build());
+        pipelines.feeds.feedAt("System/Feeds", "ACME-MAIL-EVENTS", "f-mail");
+        pipelines.feeds.feedAt("System/Feeds", "ACME-USERS", "f-users");
+        pipelines.productionPipeline(PipelineWorld.LOADER, "Reference Loader", null,
+                PipelineLayers.layer(PipelineWorld.LOADER));
+        Mockito.when(pipelines.referenceData.resolveLoader("ACME-USERS")).thenReturn(PipelineWorld.LOADER);
+        final SourceTypeGroups groups = Mockito.mock(SourceTypeGroups.class);
+        final Map<String, Object> row = new LinkedHashMap<>();
+        row.put("name", "Mail");
+        row.put("group", "ACME mail");
+        row.put("output_feed", "ACME-MAIL-EVENTS");
+        row.put("references", List.of(Map.of("feed", "ACME-USERS")));
+        Mockito.when(groups.routedBy(BUILD, "d1")).thenReturn(Optional.of(new SourceTypeGroups.Routed("ACME",
+                List.of(row))));
+        Mockito.when(groups.runBy(Mockito.any(), Mockito.eq(BUILD), Mockito.eq("d1"), Mockito.eq("P")))
+                .thenReturn(List.of("Mail"));
+        tool.setGroups(() -> groups);
+
+        // A group's module is imported by the dispatcher, never the pipeline's XSLT.
+        final ToolResult refused = call("{\"build\": \"acme-v1\", \"name\": \"P\", \"template_uuid\": \""
+                                        + TEMPLATE + "\", \"set_properties\": [{\"element\": "
+                                        + "\"translationFilter\", \"name\": \"xslt\", \"doc_uuid\": \"g1\", "
+                                        + "\"doc_type\": \"XSLT\"}]}", BuildToolCalls.answering(Map.of()));
+        assertThat(refused.text()).contains("group module, which the feed's dispatcher imports");
+
+        // Left unset, the build's dispatcher is filled in (not the group, though it keeps a mapping).
+        final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": \"P\", "
+                                                                 + "\"template_uuid\": \"" + TEMPLATE + "\"}",
+                BuildToolCalls.answering(Map.of())));
+
+        assertThat(made).containsEntry("dispatcher", "d1").containsEntry("source_types", List.of("Mail"));
+        assertThat(String.valueOf(made.get("filled_from_build"))).contains(
+                "translationFilter.xslt = ACME ACME mail dispatcher",
+                "streamAppender.feed = ACME-MAIL-EVENTS (the output feed of group(s) ACME mail)");
+        assertThat(made.get("reference_data")).isEqualTo(List.of("ACME-USERS via Reference Loader"));
+        final PipelineDoc doc = pipelines.pipelineNamed("P");
+        assertThat(PipelineDocs.addedProperties(doc)).anySatisfy(property -> {
+            assertThat(property.getElement()).isEqualTo("streamAppender");
+            assertThat(property.getName()).isEqualTo("feed");
+            assertThat(property.getValue().getEntity().getUuid()).isEqualTo("f-mail");
+        });
+        Mockito.verify(groups).runBy(Mockito.any(), Mockito.eq(BUILD), Mockito.eq("d1"), Mockito.eq("P"));
+    }
+
+    // An XSLT as the generator writes an aggregated feed's module: its marker.
+    private static String module(final String kind, final String mode) {
+        return "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+               + "xmlns:mcp=\"" + MappingFacts.MCP_NS + "\" version=\"3.0\"><mcp:module kind=\"" + kind
+               + "\" name=\"ACME\" mode=\"" + mode + "\"/></xsl:stylesheet>";
     }
 
     @Test
