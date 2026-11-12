@@ -45,6 +45,7 @@ import { judgeA11y, measureA11y, readBaseline, updateBaseline, writeBaseline } f
 import { REAL_INPUT_CHECKS, unknownCheckIds } from './lib/real-input/index.mjs';
 import { judgeContentFocus, measureContentFocus } from './lib/focus-check.mjs';
 import { screenshotFile } from './lib/screenshots.mjs';
+import { collectTextSizes, fontSize, fontSizeScript, writeTextSizes } from './lib/text-sizes.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_URL = process.env.WORKBENCH_URL ?? 'http://localhost:6008';
@@ -104,6 +105,9 @@ const SEEDED_RANDOM_SCRIPT = `(() => {
 // The class census (--class-census): class name -> the ids of the stories that set it
 const CLASS_CENSUS = new Map();
 
+// The text sizes (--text-sizes): story id -> the texts it shows and their sizes
+const TEXT_SIZES = new Map();
+
 // The signal that cancelled the run (e.g. Ctrl-C, or Gradle stopping it), or null
 let cancelledBy = null;
 
@@ -139,6 +143,13 @@ Options:
                            The colour scheme the browser asks for (CSS's prefers-color-scheme;
                            default: light). With --forced-colours it chooses the high contrast
                            palette: dark text on light, or light text on dark
+  --font-size <small|medium|large>
+                           Show the stories at this Stroom text size preference (the page's
+                           stroom-font-size-* class; default: the workbench's, medium)
+  --text-sizes <file>      Write every text each story that passes shows (in any frame), with its
+                           computed font size and line height, to the file as JSON. Compare two
+                           runs at different --font-size with text-size-diff.mjs, to find the text
+                           that doesn't follow the preference
   --fixed-time <iso>       Fix the stories' clock (Date) at this time, e.g. 2026-01-01T12:00:00Z,
                            and make Math.random the same sequence every run, so that times and
                            random layouts are the same every run (for comparing screenshots).
@@ -220,6 +231,8 @@ function parseOptions() {
       theme: { type: 'string' },
       'forced-colours': { type: 'boolean', default: false },
       'colour-scheme': { type: 'string' },
+      'font-size': { type: 'string' },
+      'text-sizes': { type: 'string' },
       'leak-check': { type: 'boolean', default: false },
       'leak-cycles': { type: 'string', default: String(DEFAULT_LEAK_CYCLES) },
       'skip-a11y': { type: 'boolean', default: false },
@@ -259,6 +272,8 @@ function parseOptions() {
     theme: theme(values.theme),
     forcedColours: values['forced-colours'],
     colourScheme: colourScheme(values['colour-scheme']),
+    fontSize: fontSize(values['font-size']),
+    textSizes: values['text-sizes'] ? path.resolve(values['text-sizes']) : null,
     leakCheck: values['leak-check'],
     leakCycles: integer('leak-cycles', values['leak-cycles'], 2),
     a11y: !values['skip-a11y'],
@@ -386,6 +401,9 @@ async function runStoryOnce(browser, story, options, attempt) {
     if (options.classCensus) {
       await context.addInitScript(CLASS_CENSUS_SCRIPT);
     }
+    if (options.fontSize) {
+      await context.addInitScript(fontSizeScript(options.fontSize));
+    }
     if (options.fixedTime) {
       await context.clock.setFixedTime(options.fixedTime);
       await context.addInitScript(SEEDED_RANDOM_SCRIPT);
@@ -425,6 +443,10 @@ async function runStoryOnce(browser, story, options, attempt) {
     // Before the checks below, which don't add to what the story shows
     if (options.classCensus && !unresponsive && !seen.crashed) {
       addToCensus(CLASS_CENSUS, story.id, await collectClasses(page));
+    }
+    // What the story shows when it has finished, before the checks below change it
+    if (options.textSizes && result.status === 'PASS' && !unresponsive && !seen.crashed) {
+      TEXT_SIZES.set(story.id, await collectTextSizes(page));
     }
     if (options.realInput && REAL_INPUT_CHECKS[story.id] && result.status === 'PASS'
         && !unresponsive && !seen.crashed) {
@@ -971,6 +993,10 @@ async function main() {
     if (options.classCensus) {
       await writeCensus(options.classCensus, CLASS_CENSUS);
       console.log(`Class census: ${CLASS_CENSUS.size} class names, in ${options.classCensus}`);
+    }
+    if (options.textSizes) {
+      await writeTextSizes(options.textSizes, options.fontSize, TEXT_SIZES);
+      console.log(`Text sizes: ${TEXT_SIZES.size} stories, in ${options.textSizes}`);
     }
     if (runError) {
       console.error(cancelledBy ? `\n${runError}` : `\nThe test run failed: ${runError}`);
