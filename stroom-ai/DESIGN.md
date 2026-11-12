@@ -1736,8 +1736,12 @@ The same shape with or without a wrapper: without one (Azure's audit log), the d
 field (`Workload`) and each group reads the fields its source types have (`event.*` for one workload, others for
 another).
 
-A group in a pipeline of its own, at the user's request only (decided, 2026-11-12: the agent never suggests it), for
-example "a pipeline for ExchangeOnline and SharePoint", optionally writing to an output feed of its own:
+Which pipeline handles a group is always the user's choice, asked in a form whenever a scoped build makes a group
+(decided, 2026-11-12): the feed's existing pipeline, a pipeline of its own (optionally writing to an output feed of its
+own: "a pipeline for ExchangeOnline and SharePoint"), or a new version of the existing pipeline (`copy_pipeline`,
+below). The form says each one's cost; the existing pipeline is the default where there is one, and the first build
+of a feed, with no pipeline yet, asks only whether the group shares the feed's pipeline or has its own. A group in a
+pipeline of its own:
 
 * **Its pipeline** has the same one-filter shape, its dispatcher handling only its group. Its Events go to its own
   feed through the stream appender's `feed` property (Stroom writes to the input stream's feed when it isn't set);
@@ -1842,7 +1846,8 @@ surveys of the feed through a working copy, like any promoted document.
 * One XSLT filter, the dispatcher importing each source type group's XSLT; each group parses its own messages, so only
   in-scope messages are parsed. No unwrap step.
 * One index per output feed: groups writing to the same Events feed share its index.
-* A group gets a pipeline of its own, optionally with its own output feed, only when the user asks.
+* Which pipeline handles a group is always asked in a form: the existing pipeline (the default), a pipeline of its own
+  (optionally with its own output feed), or a new version of the existing pipeline.
 * The source type field is one field, at any depth; a source type matches a value exactly or by a pattern on it,
   rows tried in order.
 * Profiles show the agent's suggested category for each source type by default, beside the signals it rests on.
@@ -1881,8 +1886,8 @@ streams, which translates and indexes every group's records in it again, and lea
 in the index (above). Reprocessing and any index clean-up are the user's to do, outside the tools; the agent says what
 Stroom does, as above, if they ask.
 
-Two ways to have the history without disturbing what is there, both the user's choice, the agent naming them when the
-user asks how to get it (the agent doesn't suggest them otherwise, as it doesn't suggest a pipeline of its own):
+Two ways to have the history without disturbing what is there, both among the choices the pipeline form offers when
+a source type moves out of parked (with the history's cost said beside each):
 
 * **A pipeline of its own for the new source types** (the separate-pipeline route above), optionally with its own
   output feed and index: its processor filter can take the feed's earlier streams as well as new ones, and nothing it
