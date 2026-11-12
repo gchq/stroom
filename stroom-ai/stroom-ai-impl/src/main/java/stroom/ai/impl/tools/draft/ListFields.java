@@ -128,8 +128,52 @@ final class ListFields {
         }
         if (!arrays.isEmpty()) {
             notes.add(arrayNote(arrays));
+            // Lists inside the objects are left out of the groups: said, so they aren't lost unsaid.
+            arrays.keySet().forEach(field -> {
+                final List<String> inner = nestedListKeys(values.getOrDefault(field, List.of()));
+                if (!inner.isEmpty()) {
+                    notes.add("Not drafted: " + String.join(", ", inner.stream().map(key -> ToolText.repr(key))
+                            .toList()) + " in each object of " + ToolText.repr(field) + " (a list inside each "
+                              + "object, whose values would run together read whole). If wanted, map each as a "
+                              + "group inside this one, e.g. {\"path\": \"Data\", \"data_name\": \"" + inner.getFirst()
+                              + "\", \"for_each\": {\"array\": \"" + inner.getFirst() + "\"}, \"as\": \"...\", "
+                              + "\"fields\": [...]}.");
+                }
+            });
         }
         return notes;
+    }
+
+    /// The keys of the objects in a field's JSON arrays whose values are lists (left out of the array's group).
+    ///
+    /// @param values The field's values, as JSON text.
+    /// @return The keys holding lists, dotted for an object inside an item, in the order first seen, at most
+    /// [#MAX_KEYS].
+    static List<String> nestedListKeys(final List<String> values) {
+        final Set<String> keys = new LinkedHashSet<>();
+        int examined = 0;
+        for (final String value : values) {
+            if (value == null || value.isBlank()) {
+                continue;
+            }
+            if (examined++ >= MAX_VALUES) {
+                break;
+            }
+            final Object parsed;
+            try {
+                parsed = ToolJson.loads(value.strip());
+            } catch (final ToolJson.JsonDecodeException e) {
+                continue;
+            }
+            if (parsed instanceof final List<?> items) {
+                items.stream().limit(MAX_PIECES).forEach(item -> SampleProfiler.flatten(item).forEach((key, inner) -> {
+                    if (inner instanceof List) {
+                        keys.add(key);
+                    }
+                }));
+            }
+        }
+        return keys.stream().limit(MAX_KEYS).toList();
     }
 
     /// Whether a field's values are lists: most of them (nine in ten) a list or one value of one kind, a quarter or

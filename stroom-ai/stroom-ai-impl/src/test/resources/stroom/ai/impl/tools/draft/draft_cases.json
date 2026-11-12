@@ -2192,7 +2192,8 @@
     "No timestamp field was recognised: map EventTime/TimeCreated yourself (time_format from the profile).",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart.",
-    "'events' (keys ts, user, action) holds an array of objects: drafted as a Data group (for_each array), a Data per object holding a Data per key. If each object is one thing the schema has an element for (a user, a file, a host), move the group there, its fields the element's (paths relative to it, each reading a key of the object with field)."
+    "'events' (keys ts, user, action) holds an array of objects: drafted as a Data group (for_each array), a Data per object holding a Data per key. If each object is one thing the schema has an element for (a user, a file, a host), move the group there, its fields the element's (paths relative to it, each reading a key of the object with field).",
+    "Not drafted: 'roles' in each object of 'events' (a list inside each object, whose values would run together read whole). If wanted, map each as a group inside this one, e.g. {\"path\": \"Data\", \"data_name\": \"roles\", \"for_each\": {\"array\": \"roles\"}, \"as\": \"...\", \"fields\": [...]}."
    ],
    "unmapped_fields": [
     "batch",
