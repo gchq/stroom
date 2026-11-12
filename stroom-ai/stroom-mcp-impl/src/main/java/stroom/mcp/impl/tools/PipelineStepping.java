@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.AcceptedErrors;
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ErrorTriage;
+import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.SteppingWalks.Walk;
@@ -32,6 +33,10 @@ import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.generation.DispatcherSpec;
+import stroom.ai.impl.tools.generation.DispatcherXslt;
+import stroom.ai.impl.tools.generation.ModuleChecks;
+import stroom.ai.impl.tools.generation.SourceTypeModule;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.validation.OutputSchemas;
 import stroom.ai.impl.tools.validation.XmlTrees;
@@ -266,6 +271,90 @@ class PipelineStepping {
         lookups.require(call, context, document, "Step draft XSLT for element '" + element + "'",
                 "draft_code[" + ToolText.repr(element) + "] is not stepped", xslt, saved.map(XsltDoc::getData)
                         .orElse(null));
+    }
+
+    /// An aggregated feed's source type group given as draft code (its module, marked `kind="group"`) is stepped
+    /// through the feed's dispatcher, which the element runs: a temporary dispatcher, generated from the spec kept
+    /// with the saved one, the draft inlined in place of the group's import (its own imports hoisted first) and its
+    /// source types routed to it, a new group's too. Other draft code is stepped as given.
+    ///
+    /// @param pipelineUuid The pipeline stepped.
+    /// @param draftCode    Draft code by element, or null.
+    /// @return The draft code to step, a group's replaced by the temporary dispatcher; null for none.
+    /// @throws ToolRefusal if a group's element doesn't run a dispatcher the tools generated, or the temporary
+    ///                     dispatcher can't be generated.
+    Map<String, String> withGroupsInlined(final String pipelineUuid, final Map<String, String> draftCode) {
+        if (draftCode == null) {
+            return null;
+        }
+        final Map<String, String> out = new LinkedHashMap<>();
+        draftCode.forEach((element, code) -> out.put(element, temporaryDispatcher(pipelineUuid, element, code,
+                false).orElse(code)));
+        return out;
+    }
+
+    /// A source type group's code as the pipeline's dispatcher runs it, with no other group: a temporary dispatcher
+    /// routing only the group's source types to it (inlined), every other record passed over. What the
+    /// documentation of one group steps, so its events are its own.
+    ///
+    /// @param pipelineUuid The pipeline whose element runs the feed's dispatcher.
+    /// @param element      The element.
+    /// @param code         The group's code (its module).
+    /// @return The temporary dispatcher.
+    /// @throws ToolRefusal if the code isn't a group's, or the element doesn't run a dispatcher the tools generated.
+    String groupAlone(final String pipelineUuid, final String element, final String code) {
+        return temporaryDispatcher(pipelineUuid, element, code, true)
+                .orElseThrow(() -> new ToolRefusal("The code for element '" + element + "' is not a source type "
+                                                   + "group's"));
+    }
+
+    // A group's code inlined into a temporary dispatcher, generated from the spec kept with the element's saved one;
+    // empty for code that isn't a group's.
+    private Optional<String> temporaryDispatcher(final String pipelineUuid,
+                                                 final String element,
+                                                 final String code,
+                                                 final boolean alone) {
+        final String text = code == null
+                ? null
+                : XsltChecks.unescaped(code).text();
+        final Optional<ModuleChecks.Marker> marker = text == null
+                ? Optional.empty()
+                : ModuleChecks.marker(text);
+        if (marker.isEmpty() || !SourceTypeModule.GROUP.equals(marker.get().kind())) {
+            return Optional.empty();
+        }
+        final ModuleChecks.Marker group = marker.get();
+        final Optional<XsltDoc> saved = savedXslt(pipelineUuid, element);
+        final DispatcherSpec spec = saved
+                .flatMap(doc -> KeptMapping.readBlock(doc.getDescription(), DispatcherXslt.SPEC_BLOCK))
+                .flatMap(DispatcherSpec::fromJson)
+                .orElseThrow(() -> new ToolRefusal("draft_code[" + ToolText.repr(element) + "] is source type "
+                                                   + "group '" + group.name() + "', stepped through its feed's "
+                                                   + "dispatcher, but element '" + element + "' runs "
+                                                   + saved.map(doc -> "'" + doc.getName() + "', not a "
+                                                                      + "dispatcher the tools generated")
+                                                           .orElse("no XSLT") + ": give the group's code for "
+                                                   + "the pipeline's dispatcher element"));
+        final Optional<DispatcherSpec.Group> known = spec.groups().stream()
+                .filter(one -> one.mode().equals(group.mode()))
+                .findFirst();
+        final List<String> types = group.sourceTypes().isEmpty()
+                ? known.map(DispatcherSpec.Group::sourceTypes).orElse(List.of())
+                : group.sourceTypes();
+        final DispatcherSpec.Group inlined = new DispatcherSpec.Group(NullSafe.nonBlankStringElse(group.name(),
+                group.mode()), group.mode(), known.map(DispatcherSpec.Group::href).orElse(null), types);
+        final DispatcherSpec used = alone
+                ? new DispatcherSpec(spec.feed(), spec.mode(), spec.input(), spec.field(), spec.helpers(),
+                spec.rows(), List.of(inlined), spec.events())
+                : spec.withGroup(inlined);
+        final DispatcherXslt.Generated temporary = DispatcherXslt.generate(used, null, null,
+                Map.of(group.mode(), text));
+        if (!temporary.ok()) {
+            throw new ToolRefusal("draft_code[" + ToolText.repr(element) + "] (source type group '" + group.name()
+                                  + "') can't be stepped through the feed's dispatcher: "
+                                  + String.join("; ", temporary.problems()));
+        }
+        return Optional.of(temporary.xslt());
     }
 
     // The XSLT the pipeline's element runs now; empty if it has none or it can't be read.
@@ -553,8 +642,10 @@ class PipelineStepping {
                 // Not the build's own new pipeline: someone else's design.
                 return null;
             }
-            if (keptMappings.keptMapping(ref.getUuid()).isPresent()) {
-                // Saved from a mapping, where Unknown was checked and agreed.
+            if (keptMappings.keptMapping(ref.getUuid()).isPresent()
+                || !keptMappings.groupXslts(ref.getUuid()).isEmpty()) {
+                // Saved from a mapping (a dispatcher's groups each from their own), where Unknown was checked and
+                // agreed.
                 return null;
             }
         } catch (final RuntimeException e) {

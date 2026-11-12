@@ -83,6 +83,10 @@
   "functions": {
    "description": "Shared XSLTs whose xsl:functions the xpaths (fields, conditions, extractions, with_params) call, as the environment's other XSLTs do (describe_template's shared_xslt lists them): the XSLT imports each and binds its prefix. E.g. {'href': 'IP Lookup', 'prefix': 'gs', 'namespace': '...'}, then a field's \"xpath\": \"gs:parseTimestamp(data[@name='eventtime']/@value)\". Conditions compare strings: test a boolean function as string(gs:isLocalIpAddress(...)) with equals 'true'. Stroom steps the XSLT with the import; the local checks don't run these xpaths.",
    "model": "SharedFunctions"
+  },
+  "module": {
+   "description": "Set by build_translation_xslt (group=), never by hand: what makes the mapping one module of an aggregated feed's translation, a source type group's (its mode, its source types, the feed's common and helpers modules it imports and the common parts it calls) or the feed's common module.",
+   "model": null
   }
  },
  "SharedFunctions": {

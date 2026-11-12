@@ -199,9 +199,27 @@ class TranslationBuilds {
     /// @param version Its version.
     /// @return The generator's result as a map, its lists open to more.
     Map<String, Object> generated(final TranslationMapping mapping, final EventSchema schema, final String version) {
+        return generated(mapping, schema, version, Map.of());
+    }
+
+    /// As [#generated(TranslationMapping, EventSchema, String)], compiled with documents not saved yet standing in
+    /// for the imports that name them (a source type group's common and helpers modules, saved with it).
+    ///
+    /// @param mapping The mapping.
+    /// @param schema  The event-logging schema.
+    /// @param version Its version.
+    /// @param unsaved The code of documents not saved yet, by the href importing them.
+    /// @return The generator's result as a map, its lists open to more.
+    Map<String, Object> generated(final TranslationMapping mapping,
+                                  final EventSchema schema,
+                                  final String version,
+                                  final Map<String, String> unsaved) {
         final Map<String, Object> result = open(XsltGenerator.generate(mapping, schema, version).toMap());
         if (Boolean.TRUE.equals(result.get("ok"))) {
-            final List<String> errors = compileCheck.compile(String.valueOf(result.get("xslt"))).errors();
+            final String xslt = String.valueOf(result.get("xslt"));
+            final List<String> errors = (unsaved.isEmpty()
+                    ? compileCheck.compile(xslt)
+                    : compileCheck.compile(xslt, unsaved)).errors();
             if (!errors.isEmpty()) {
                 final List<String> problems = problems(result);
                 errors.forEach(error -> problems.add("The XSLT doesn't compile, so it would fail every record: "
@@ -563,7 +581,7 @@ class TranslationBuilds {
                 mapping.forEach(), mapping.nilValues(), mapping.dropWhen(), mapping.common(), mapping.events(),
                 mapping.unmatched(), mapping.ignoredFields(), mapping.logUnmappedFields(), mapping.style(), imports,
                 mapping.shared(),
-                mapping.functions());
+                mapping.functions(), mapping.module());
     }
 
     /// @param result A generator's result ([#generated]).

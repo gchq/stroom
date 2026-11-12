@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.sample;
 
+import stroom.ai.impl.tools.generation.XPathRegex;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -141,7 +143,8 @@ public final class SourceTypeRows {
                 out.add("two rows are named '" + row.name() + "'");
             }
             if (PATTERN.equals(row.match())) {
-                final Optional<String> bad = patternProblem(row.value());
+                final Optional<String> bad = patternProblem(row.value())
+                        .or(() -> dialectProblem(row.value(), values));
                 if (bad.isPresent()) {
                     out.add("'" + row.name() + "': " + bad.get());
                     continue;
@@ -212,6 +215,45 @@ public final class SourceTypeRows {
             compiled(regex);
         } catch (final PatternSyntaxException e) {
             return Optional.of("its pattern is not a regular expression: " + e.getDescription());
+        }
+        // The dispatcher matches it with XPath's matches() (Saxon), the tools with Java's: it must compile in both.
+        return XPathRegex.problem(regex)
+                .map(why -> "its pattern isn't one XPath reads as the tools do, and the dispatcher matches it with "
+                            + "XPath's matches(): " + why);
+    }
+
+    /// A pattern is matched by the tools in Java's dialect and by the dispatcher in XPath's (Saxon's): where the two
+    /// differ on a value seen, the survey's counts and processing would disagree, so it is refused.
+    ///
+    /// @param regex  An anchored pattern, one both dialects compile.
+    /// @param values The values seen.
+    /// @return Why it is refused (the first value the dialects disagree on); empty when they agree on every one.
+    public static Optional<String> dialectProblem(final String regex, final Collection<String> values) {
+        if (regex == null) {
+            return Optional.empty();
+        }
+        for (final String value : values) {
+            if (value == null) {
+                continue;
+            }
+            final boolean java;
+            final boolean xpath;
+            try {
+                java = compiled(regex).matcher(value).find();
+                xpath = XPathRegex.finds(regex, value);
+            } catch (final PatternSyntaxException | XPathRegex.XPathRegexException e) {
+                return Optional.of("its pattern doesn't compile in both Java's and XPath's dialects: "
+                                   + e.getMessage());
+            }
+            if (java != xpath) {
+                return Optional.of("its pattern " + (java
+                        ? "matches"
+                        : "doesn't match") + " '" + value + "' in the tools' (Java's) dialect but "
+                                   + (xpath
+                        ? "matches"
+                        : "doesn't match") + " it in XPath's, which the dispatcher runs: write one both read "
+                                   + "alike (plain characters, classes and anchors)");
+            }
         }
         return Optional.empty();
     }

@@ -34,7 +34,8 @@ import java.util.regex.Pattern;
 /// feed's, the default for each row), `updated`, `scope` (the build that chose it, `source_types`, `by`, `at`), and
 /// `rows` in the order they are tried, each `name`, `match` (`value` or `pattern`), `value` (the value, or the
 /// pattern), `system_name`, `status` (`translated`, `parked`, `dropped` or `new`), `decided` (`by`, `at`, `reason`),
-/// `group`, `pipeline` and `output_feed` (empty until a source type group handles it) and `profile`.
+/// `group`, `pipeline` and `output_feed` (empty until a source type group handles it; `group_xslt` names the group's
+/// XSLT, `uuid` and `name`, once build_translation_xslt saves it) and `profile`.
 public final class SourceTypeRegistry {
 
     /// What a feed's registry is named after.
@@ -125,7 +126,7 @@ public final class SourceTypeRegistry {
                       + " | " + cell(profile.get("suggested_category") == null
                     ? "-"
                     : profile.get("suggested_category") + " (" + profile.get("confidence") + ")") + " | "
-                      + cell(row.get("status")) + " | " + cell(examples(profile)) + " | "
+                      + cell(status(row)) + " | " + cell(examples(profile)) + " | "
                       + cell(decided.isEmpty()
                     ? "-"
                     : JsonValues.text(decided.get("by")) + ", " + JsonValues.text(decided.get("at"))
@@ -171,6 +172,17 @@ public final class SourceTypeRegistry {
                 .distinct()
                 .forEach(reason -> out.append(" Why: ").append(reason).append('.'));
         return out.toString();
+    }
+
+    // A row's status, with the source type group translating it where one does.
+    private static String status(final Map<String, Object> row) {
+        final Object group = row.get("group");
+        if (row.get("status") == null) {
+            return null;
+        }
+        return JsonValues.text(row.get("status")) + (group == null || JsonValues.text(group).isBlank()
+                ? ""
+                : " by group " + JsonValues.text(group));
     }
 
     private static String records(final Map<String, Object> profile) {

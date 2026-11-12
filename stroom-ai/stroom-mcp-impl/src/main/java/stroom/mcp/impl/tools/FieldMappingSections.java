@@ -36,12 +36,17 @@ import stroom.ai.impl.tools.fielddoc.EventFieldDocs;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.fielddoc.IndexFieldDocs;
 import stroom.ai.impl.tools.fielddoc.WrittenEventDocs;
+import stroom.ai.impl.tools.generation.FieldMapping;
+import stroom.ai.impl.tools.generation.SharedTemplate;
+import stroom.ai.impl.tools.generation.SourceTypeModule;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.indexing.FieldPlan;
+import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.workspace.ToolTimeoutException;
+import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
@@ -63,6 +68,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /// The Field mapping section of a pipeline's documentation: generated from the mapping (or index or CEF plan) kept with
@@ -71,6 +78,8 @@ import java.util.stream.Collectors;
 class FieldMappingSections {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FieldMappingSections.class);
+    // The UUID in an import's href, `uuid='…', name='…'`.
+    private static final Pattern UUID_PART = Pattern.compile("uuid='([^']+)'");
 
     /// The most records stepped for a section.
     static final int RECORDS = 200;
@@ -146,7 +155,7 @@ class FieldMappingSections {
         final String kind = kept.kept().kind();
         final String section;
         if (KeptMapping.TRANSLATION.equals(kind)) {
-            section = translationSection(context, build, pipeline, kept, streamIds, layout, described);
+            section = translationSection(context, build, pipeline, kept, streamIds, layout, described, false);
         } else if ("cef".equals(kind)) {
             section = cefSection(context, pipeline, kept, streamIds, layout, described);
         } else {
@@ -399,13 +408,112 @@ class FieldMappingSections {
                + " not stepped: the time for stepping ran out";
     }
 
+    /// The Field mapping section of an aggregated feed's pipeline, whose one XSLT is its dispatcher: a list of its
+    /// source type groups, the feed's registry named for what becomes of every source type, then each group's own
+    /// Field mapping, generated as a translation's is from the mapping kept with the group's XSLT, stepped through a
+    /// temporary dispatcher handing it its records alone.
+    ///
+    /// @param context   The call's context.
+    /// @param build     The build.
+    /// @param pipeline  The pipeline documented.
+    /// @param groups    The mappings kept with its source type groups' XSLTs.
+    /// @param streamIds The sample streams.
+    /// @param layout    [FieldDocs#BY_EVENT_TYPE] or [FieldDocs#COMPACT].
+    /// @param described The field descriptions, given and asked for.
+    /// @return The section.
+    /// @throws ToolRefusal if a group's can't be generated, saying why.
+    String groupsSection(final ToolCallContext context,
+                         final String build,
+                         final PipelineDoc pipeline,
+                         final List<KeptMappings.KeptXslt> groups,
+                         final List<Long> streamIds,
+                         final String layout,
+                         final Descriptions described) {
+        final List<String> parts = new ArrayList<>();
+        final List<String> rows = new ArrayList<>(List.of("| Source type group | Source types | XSLT |",
+                "| --- | --- | --- |"));
+        String feed = null;
+        for (final KeptMappings.KeptXslt group : groups) {
+            final SourceTypeModule module = TranslationMapping.parse(group.kept().payload().get("mapping"))
+                    .module();
+            if (module == null || !module.isGroup()) {
+                continue;
+            }
+            rows.add("| " + module.name() + " | " + String.join(", ", module.sourceTypes()) + " | "
+                     + group.xslt().getName() + " |");
+            if (module.common() != null && module.common().contains(SourceTypeGroups.COMMON_SUFFIX)) {
+                final String name = module.common().replaceFirst(".*name='(.*)'.*", "$1");
+                feed = name.endsWith(SourceTypeGroups.COMMON_SUFFIX)
+                        ? name.substring(0, name.length() - SourceTypeGroups.COMMON_SUFFIX.length())
+                        : feed;
+            }
+        }
+        parts.add("This pipeline's one XSLT is its feed's dispatcher: it hands each record to the source type group "
+                  + "translating its source type, and passes the rest over, counting them. What becomes of every "
+                  + "source type is in the feed's registry" + (feed == null
+                ? ""
+                : ", '" + SourceTypeRegistry.docName(feed) + "'") + ".");
+        parts.add(String.join("\n", rows));
+        for (final KeptMappings.KeptXslt group : groups) {
+            final SourceTypeModule module = TranslationMapping.parse(group.kept().payload().get("mapping"))
+                    .module();
+            parts.add("### Source type group: " + group.xslt().getName() + (module == null
+                    ? ""
+                    : " (" + String.join(", ", module.sourceTypes()) + ")"));
+            parts.add(translationSection(context, build, pipeline, group, streamIds, layout, described, true)
+                    .stripTrailing() + "\n\n" + docMark(group));
+        }
+        return String.join("\n\n", parts);
+    }
+
+    // A group's mapping as one translation reads, for its field tables: the common module's parts it calls are
+    // named, as the common module writes them, where a rule doesn't write its own.
+    private TranslationMapping withCommonParts(final TranslationMapping group) {
+        final SourceTypeModule module = group.module();
+        if (module == null || module.common() == null) {
+            return group.withModule(null);
+        }
+        final Optional<TranslationMapping> common = commonMapping(module.common());
+        if (common.isEmpty()) {
+            return group.withModule(null);
+        }
+        final List<FieldMapping> entries = new ArrayList<>();
+        for (final FieldMapping entry : common.get().common()) {
+            final String part = SourceTypeModule.partOf(entry.strippedPath());
+            if (group.common().stream().noneMatch(own -> Objects.equals(part,
+                    SourceTypeModule.partOf(own.strippedPath())))) {
+                entries.add(entry);
+            }
+        }
+        entries.addAll(group.common());
+        final List<SharedTemplate> shared = new ArrayList<>(common.get().shared());
+        shared.addAll(group.shared());
+        return group.withCommonAndShared(entries, shared).withModule(null);
+    }
+
+    // The mapping kept with the common module an href imports by UUID.
+    private Optional<TranslationMapping> commonMapping(final String href) {
+        final Matcher uuid = UUID_PART.matcher(href);
+        if (!uuid.find()) {
+            return Optional.empty();
+        }
+        try {
+            return documentAccessProvider.get().read(new DocRef(XsltDoc.TYPE, uuid.group(1)), XsltDoc.class)
+                    .flatMap(doc -> KeptMapping.readMapping(doc.getDescription()))
+                    .map(kept -> TranslationMapping.parse(kept.payload().get("mapping")));
+        } catch (final RuntimeException e) {
+            return Optional.empty();
+        }
+    }
+
     private String translationSection(final ToolCallContext context,
                                       final String build,
                                       final PipelineDoc pipeline,
                                       final KeptMappings.KeptXslt kept,
                                       final List<Long> streamIds,
                                       final String layout,
-                                      final Descriptions described) {
+                                      final Descriptions described,
+                                      final boolean group) {
         final Map<String, Object> payload = kept.kept().payload();
         final String version = eventVersions.translationVersion(KeptCode.keptVersion(payload),
                 kept.xslt().getData());
@@ -417,16 +525,24 @@ class FieldMappingSections {
                     marked.problems().subList(0, Math.min(3, marked.problems().size()))));
         }
         final SteppedPipeline loaded = load(pipeline.getUuid());
+        // A source type group's, through a temporary dispatcher handing it its records alone: its events its own.
+        final Map<String, String> markedCode = Map.of(kept.element(), group
+                ? stepping.groupAlone(pipeline.getUuid(), kept.element(), marked.xslt())
+                : marked.xslt());
+        final Map<String, String> savedCode = group
+                ? Map.of(kept.element(), stepping.groupAlone(pipeline.getUuid(), kept.element(),
+                kept.xslt().getData()))
+                : null;
         // The streams' first records and the build's survey examples beyond them (asked for by the user: seen in
         // chat 173, a stream's rarer kinds documented "(not in the sample)" from its first 200 records alone).
         final Map<String, String> outputs = steppedOutputs(context, loaded, streamIds, kept.element(),
-                Map.of(kept.element(), marked.xslt()), build).outputs();
+                markedCode, build).outputs();
         final Optional<String> drift = mappingDrift.drift(kept);
         // An XSLT that isn't what its mapping generates (edited by hand) is documented as it runs: its own events,
         // each given the rule the mapping's marked XSLT gave the same record's event. Seen: a hand edit making
         // users distinct documented from what the mapping generates, duplicates and all.
         final List<XmlElement> events = drift.isPresent()
-                ? EventFieldDocs.runningEvents(steppedOutputs(context, loaded, streamIds, kept.element(), null,
+                ? EventFieldDocs.runningEvents(steppedOutputs(context, loaded, streamIds, kept.element(), savedCode,
                         build).outputs(), outputs)
                 : EventFieldDocs.sampledEvents(new ArrayList<>(outputs.values()));
         if (events.isEmpty()) {
@@ -439,7 +555,9 @@ class FieldMappingSections {
         final long unmarked = events.stream().filter(event -> EventFieldDocs.ruleOf(event) == null).count();
         String section = countsLine(outputs) + (drift.isPresent() && unmarked * 2 > events.size()
                 ? WrittenEventDocs.writtenEventsMarkdown(schema, events, layout, described)
-                : EventFieldDocs.fieldMappingMarkdown(mapping, schema, events, layout, described));
+                : EventFieldDocs.fieldMappingMarkdown(group
+                        ? withCommonParts(mapping)
+                        : mapping, schema, events, layout, described));
         if (drift.isPresent()) {
             final List<String> unexpressible = HandEditGate.unexpressible(kept.xslt().getData());
             section += "\nNote: " + (unexpressible.isEmpty()

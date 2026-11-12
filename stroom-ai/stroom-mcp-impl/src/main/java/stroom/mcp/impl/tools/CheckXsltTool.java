@@ -25,6 +25,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.generation.ModuleChecks;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.EventsNamespaces;
 import stroom.ai.impl.tools.validation.HeldSchemas;
@@ -115,7 +116,12 @@ class CheckXsltTool extends AbstractBuiltInTool {
                              + "and stroom:host-address() (DNS lookups) only warn: saving or stepping the XSLT asks "
                              + "the user to agree to them. When all that passes, it is compiled as Stroom compiles "
                              + "it, with Stroom's own functions and its imports, so an undeclared variable or a "
-                             + "wrong call is found before stepping.")
+                             + "wrong call is found before stepping. An aggregated feed's source type group (marked "
+                             + "<mcp:module kind=\"group\">) holds nothing stylesheet-level (xsl:output, keys, global "
+                             + "params: the dispatcher's) and no template matching outside its mode, its own names "
+                             + "prefixed with its mode; imports (by name, or uuid='…', name='…') must not cycle (a "
+                             + "group importing the dispatcher) or nest more than "
+                             + ModuleChecks.MAX_IMPORT_DEPTH + " deep.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(XSLT_ARG, "Full XSLT document text.")
                         .addStringProperty(SCHEMA_VERSION_ARG, "Event-logging version the output must follow, "
@@ -229,6 +235,14 @@ class CheckXsltTool extends AbstractBuiltInTool {
             errors.add("xsl:import/include targets not found as XSLT documents: " + String.join(", ", missing));
         }
         errors.addAll(importNamespaceProblems(xslt, imports));
+        // An aggregated feed's source type group: nothing stylesheet-level, nothing outside its mode; and any XSLT's
+        // imports don't cycle (a group importing the dispatcher) or nest too deep.
+        errors.addAll(ModuleChecks.groupProblems(xslt));
+        if (missing.isEmpty()) {
+            errors.addAll(ModuleChecks.importProblems(xslt, null, href -> resolved(href)
+                    .map(doc -> new ModuleChecks.Imported(doc.getUuid(), doc.getName(), NullSafe.string(
+                            doc.getData())))));
+        }
         // Compiled only once the rest passes, so a fault isn't reported twice (e.g. a missing import), and only
         // with imports the user can view.
         if (errors.isEmpty()) {
@@ -328,19 +342,16 @@ class CheckXsltTool extends AbstractBuiltInTool {
         return problems;
     }
 
-    // The text of the XSLT document of exactly that name the user may view, if there is one.
-    private Optional<String> importedXslt(final String name) {
-        try {
-            return NullSafe.list(docFinderProvider.get().findByName(XsltDoc.TYPE, name, false)).stream()
-                    .filter(docRef -> name.equals(docRef.getName()))
-                    .map(docRef -> documentAccess.read(docRef, XsltDoc.class))
-                    .flatMap(Optional::stream)
-                    .map(XsltDoc::getData)
-                    .findFirst();
-        } catch (final RuntimeException e) {
-            LOGGER.debug("Unable to read the XSLT {}", name, e);
-            return Optional.empty();
-        }
+    // The text of the XSLT an href names, as Stroom resolves it (by name, else the UUID in it), if the user may view
+    // it.
+    private Optional<String> importedXslt(final String href) {
+        return resolved(href).map(XsltDoc::getData);
+    }
+
+    // The XSLT an href names, as Stroom resolves it: the one of that name, else the one whose UUID it holds
+    // (`uuid='…', name='…'`, as an aggregated feed's modules import each other); read as the user.
+    private Optional<XsltDoc> resolved(final String href) {
+        return XsltImports.resolve(docFinderProvider.get(), documentAccess, href);
     }
 
     // The xsl:import and xsl:include hrefs, in document order.
@@ -352,14 +363,17 @@ class CheckXsltTool extends AbstractBuiltInTool {
                 .toList();
     }
 
-    // Whether an XSLT document of exactly that name exists that the user may view: Stroom imports by name.
-    private boolean isXsltDocument(final String name) {
+    // Whether the XSLT an href names exists and the user may view it: Stroom imports by name, else by the UUID in
+    // the href.
+    private boolean isXsltDocument(final String href) {
         try {
-            return NullSafe.list(docFinderProvider.get().findByName(XsltDoc.TYPE, name, false)).stream()
-                    .filter(docRef -> name.equals(docRef.getName()))
+            final boolean named = NullSafe.list(docFinderProvider.get().findByName(XsltDoc.TYPE, href, false))
+                    .stream()
+                    .filter(docRef -> href.equals(docRef.getName()))
                     .anyMatch(documentAccess::canView);
+            return named || resolved(href).isPresent();
         } catch (final RuntimeException e) {
-            LOGGER.debug("Unable to find the XSLT {}", name, e);
+            LOGGER.debug("Unable to find the XSLT {}", href, e);
             return false;
         }
     }
