@@ -139,11 +139,14 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
         assertThat(placements.getFirst().message()).contains("'PEGA security' (PegaSecurityEvent)")
                 .doesNotContain("**", "|");
         final Map<?, ?> question = (Map<?, ?>) ((Map<?, ?>) placements.getFirst().requestedSchema()
-                .get("properties")).get("q1");
+                .get("properties")).get("choice");
         assertThat((List<?>) question.get("enum")).hasSize(2);
         assertThat(String.valueOf(question.get("enum"))).contains("The feed's pipeline", "A pipeline of its own")
                 .doesNotContain("new version");
         assertThat(map(first, "pipeline")).containsEntry("own", false);
+        // Where the Events go is asked only for a pipeline of its own: neither group has one.
+        assertThat(client.forms()).noneSatisfy(form -> assertThat(form.message()).contains("runs in a pipeline of "
+                                                                                          + "its own"));
 
         // The pipeline, made by the tools: its one XSLT the build's dispatcher (filled from the build), Stroom
         // resolving the imports by UUID.

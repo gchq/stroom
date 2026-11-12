@@ -160,6 +160,10 @@ class SourceTypeGroups {
         for (final String feed : candidates) {
             final Optional<SourceTypeRegistries.Found> found = registries.registry(build, feed);
             if (found.isPresent()) {
+                if (found.get().promoted()) {
+                    // The build starts work on the feed from the registry beside it: one open build per feed.
+                    registries.refuseOpenBuild(feed, build, true);
+                }
                 return new Registry(feed, found.get());
             }
         }
@@ -199,7 +203,7 @@ class SourceTypeGroups {
         final Map<String, Object> state = registry.found().state();
         final String feed = registry.feed();
         final String field = JsonValues.text(state.get("field"));
-        final List<String> types = sourceTypes(build, state, sourceTypes);
+        final List<String> types = sourceTypes(build, state, group, sourceTypes);
         final String naming = given.style().naming();
         final String mode = XsltNames.styleName(group, naming);
         if (mode.equals(XsltNames.styleName(feed + "-common", naming))
@@ -207,6 +211,7 @@ class SourceTypeGroups {
             throw new ToolRefusal("The group's name '" + group + "' makes the mode of the feed's common module or "
                                   + "dispatcher: name it for its source types");
         }
+        refuseMeetingModes(state, group, mode, naming);
         final Module helpersDoc = module(build, state, "helpers", HelpersXslt.docName(feed));
         final Module commonDoc = module(build, state, "common", commonName(feed));
         final String helpersHref = helpersDoc == null
@@ -330,14 +335,37 @@ class SourceTypeGroups {
         return Optional.empty();
     }
 
+    /// Whether the user chooses where the group runs ([Placement]): for a new group, none of whose rows is placed
+    /// or translated; and for a row with no pipeline that can neither join its group's (a source type added to a
+    /// group already placed takes the group's pipeline, dispatcher and output feed) nor, translated before pipelines
+    /// were placed, the feed's pipeline, where the feed has none (no dispatcher is made up for it).
+    ///
     /// @param plan A group's plan.
-    /// @return True if none of its source types is placed in a pipeline yet: a new group, whose pipeline the user
-    /// chooses ([Placement]).
+    /// @return True if the user is asked where the group runs.
     static boolean needsPlacement(final Plan plan) {
-        return JsonValues.maps(plan.registry().found().state().get("rows")).stream()
+        final Map<String, Object> state = plan.registry().found().state();
+        final List<Map<String, Object>> rows = JsonValues.maps(state.get("rows")).stream()
                 .filter(row -> plan.sourceTypes().contains(JsonValues.text(row.get("name"))))
-                .noneMatch(row -> row.get(PIPELINE) != null
-                                  || SourceTypeRegistry.TRANSLATED.equals(row.get("status")));
+                .toList();
+        final boolean known = rows.stream().anyMatch(row -> row.get(PIPELINE) != null
+                                                            || SourceTypeRegistry.TRANSLATED.equals(row.get("status")));
+        if (!known) {
+            return true;
+        }
+        if (groupPlacement(state, plan.group()).isPresent()) {
+            return false;
+        }
+        return rows.stream().anyMatch(row -> JsonValues.mapOrEmpty(row.get(PIPELINE)).isEmpty())
+               && existingMainPipeline(state).isEmpty();
+    }
+
+    // Where a group's rows already run: the pipeline (its dispatcher, own, name) and output feed of the first of its
+    // rows placed; empty for a group none of whose rows is placed.
+    private static Optional<Map<String, Object>> groupPlacement(final Map<String, Object> state, final String group) {
+        return JsonValues.maps(state.get("rows")).stream()
+                .filter(row -> group.equals(JsonValues.text(row.get("group")))
+                               && !JsonValues.mapOrEmpty(row.get(PIPELINE)).isEmpty())
+                .findFirst();
     }
 
     /// @param build A build.
@@ -399,6 +427,11 @@ class SourceTypeGroups {
         final Map<String, Object> placed = placement == null
                 ? null
                 : placed(state, plan, placement);
+        // A group placed already: the source types added to it join its pipeline, dispatcher and output feed.
+        final Optional<Map<String, Object>> joined = placed == null
+                ? groupPlacement(state, plan.group()).map(JsonValues::deepCopy)
+                : Optional.empty();
+        final List<String> joining = new ArrayList<>();
         final List<Map<String, Object>> rows = new ArrayList<>();
         for (final Map<String, Object> given : JsonValues.maps(state.get("rows"))) {
             final Map<String, Object> row = new LinkedHashMap<>(given);
@@ -413,6 +446,14 @@ class SourceTypeGroups {
                     } else {
                         row.remove(OUTPUT_FEED);
                     }
+                } else if (joined.isPresent() && JsonValues.mapOrEmpty(row.get(PIPELINE)).isEmpty()) {
+                    row.put(PIPELINE, JsonValues.deepCopy(joined.get().get(PIPELINE)));
+                    if (joined.get().containsKey(OUTPUT_FEED)) {
+                        row.put(OUTPUT_FEED, joined.get().get(OUTPUT_FEED));
+                    } else {
+                        row.remove(OUTPUT_FEED);
+                    }
+                    joining.add(JsonValues.text(row.get("name")));
                 }
                 if (references != null) {
                     row.put(REFERENCES, JsonValues.deepCopy(references));
@@ -447,6 +488,22 @@ class SourceTypeGroups {
                 .ifPresent(saved -> out.put(DISPATCHER, saved));
         out.put("dispatchers", dispatchers);
         out.put("pipeline", pipeline);
+        if (!joining.isEmpty()) {
+            final Map<String, Object> joinedPipeline = JsonValues.mapOrEmpty(joined.get().get(PIPELINE));
+            final String dispatcher = JsonValues.text(JsonValues.mapOrEmpty(pipeline.get(DISPATCHER)).get("name"));
+            final String outputFeed = JsonValues.text(joined.get().get(OUTPUT_FEED));
+            out.put("notes", List.of("Source type(s) " + ToolText.list(joining) + " joined group '" + plan.group()
+                                     + "' where it runs: " + (JsonValues.truthy(joinedPipeline.get(OWN))
+                    ? "its pipeline of its own"
+                    : "the feed's pipeline") + (JsonValues.text(joinedPipeline.get("name")).isEmpty()
+                    ? ""
+                    : " '" + joinedPipeline.get("name") + "'") + ", dispatcher '" + dispatcher + "'"
+                                     + (joined.get().containsKey(OUTPUT_FEED)
+                    ? ", output feed " + (outputFeed.isEmpty()
+                            ? "(still to be made)"
+                            : "'" + outputFeed + "'")
+                    : ", into the feed's Events") + ". No placement was asked: the group's is theirs."));
+        }
         final Map<String, Object> registry = new LinkedHashMap<>();
         registry.put("uuid", written.uuid());
         registry.put("name", written.name());
@@ -478,9 +535,19 @@ class SourceTypeGroups {
         return pipeline;
     }
 
-    // The pipeline of the feed's translated rows not in a pipeline of their own: its dispatcher and name; the
-    // feed's dispatcher by name where none is placed yet (a registry from before pipelines were placed, too).
+    // The pipeline of the feed's translated rows not in a pipeline of their own, for a group the user placed in it:
+    // its dispatcher and name; the feed's dispatcher by name where none is placed yet (its first shared group).
     private static Map<String, Object> mainPipeline(final Map<String, Object> state, final String feed) {
+        return existingMainPipeline(state).orElseGet(() -> {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put(DISPATCHER, Map.of("name", DispatcherXslt.docName(feed)));
+            return out;
+        });
+    }
+
+    // The pipeline of the feed's translated rows not in a pipeline of their own, where a row is placed in it: its
+    // dispatcher and name; empty where none is.
+    private static Optional<Map<String, Object>> existingMainPipeline(final Map<String, Object> state) {
         for (final Map<String, Object> row : JsonValues.maps(state.get("rows"))) {
             final Map<String, Object> pipeline = JsonValues.mapOrEmpty(row.get(PIPELINE));
             if (!pipeline.isEmpty() && !JsonValues.truthy(pipeline.get(OWN)) && pipeline.get(DISPATCHER) != null) {
@@ -489,12 +556,10 @@ class SourceTypeGroups {
                 if (pipeline.get("name") != null) {
                     out.put("name", pipeline.get("name"));
                 }
-                return out;
+                return Optional.of(out);
             }
         }
-        final Map<String, Object> out = new LinkedHashMap<>();
-        out.put(DISPATCHER, Map.of("name", DispatcherXslt.docName(feed)));
-        return out;
+        return Optional.empty();
     }
 
     /// @param feed  A feed's name.
@@ -535,8 +600,19 @@ class SourceTypeGroups {
             }
             Map<String, Object> pipeline = JsonValues.mapOrEmpty(row.get(PIPELINE));
             if (pipeline.isEmpty()) {
-                pipeline = new LinkedHashMap<>(mainPipeline(state, feed));
-                pipeline.put(OWN, false);
+                // Translated before pipelines were placed: its group's pipeline, else the feed's; never a
+                // dispatcher no pipeline runs.
+                final String group = JsonValues.text(row.get("group"));
+                final Optional<Map<String, Object>> joined = groupPlacement(state, group)
+                        .map(placed -> JsonValues.mapOrEmpty(placed.get(PIPELINE)));
+                pipeline = new LinkedHashMap<>(joined.or(() -> existingMainPipeline(state))
+                        .orElseThrow(() -> new ToolRefusal("Source type '" + row.get("name") + "' of group '"
+                                                           + group + "' is translated in no pipeline, and the "
+                                                           + "feed has none of its own: build_translation_xslt "
+                                                           + "group='" + group + "' asks the user where it runs")));
+                if (joined.isEmpty()) {
+                    pipeline.put(OWN, false);
+                }
                 row.put(PIPELINE, pipeline);
             }
             final Map<String, Object> dispatcher = JsonValues.mapOrEmpty(pipeline.get(DISPATCHER));
@@ -802,15 +878,19 @@ class SourceTypeGroups {
     /// Before a build's working copies are written back at promotion: every module of the build imports the
     /// originals again (each working copy's UUID replaced by its original's, in its code and in the mapping or spec
     /// kept with it), each dispatcher regenerated from its spec against the originals' UUIDs, and the registry names
-    /// the originals.
+    /// the originals. A working copy the user kept in the build (its original changed in production since it was
+    /// copied) is left as it is: the modules promoted import its original, as production has it ([#keptProblems]
+    /// says when that original lacks what they need of it).
     ///
     /// @param context The call's context.
     /// @param build   The build.
     /// @param docs    The build's documents, as the plan lists them (`working_copy_of`).
+    /// @param kept    The UUIDs of the working copies the user kept in the build.
     /// @return What was done, said for the promotion's result; none for a build with no working copy of a module.
     List<String> toOriginals(final ToolCallContext context,
                              final String build,
-                             final List<Map<String, Object>> docs) {
+                             final List<Map<String, Object>> docs,
+                             final Set<String> kept) {
         final Map<String, String> back = new LinkedHashMap<>();
         for (final Map<String, Object> doc : docs) {
             if (XsltDoc.TYPE.equals(doc.get("type")) && doc.get("working_copy_of") != null) {
@@ -824,7 +904,7 @@ class SourceTypeGroups {
         final String change = "Imports the originals its build's working copies are written back over";
         for (final Map<String, Object> doc : docs) {
             final String uuid = String.valueOf(doc.get("uuid"));
-            if (!XsltDoc.TYPE.equals(doc.get("type"))) {
+            if (!XsltDoc.TYPE.equals(doc.get("type")) || kept.contains(uuid)) {
                 continue;
             }
             final Optional<DispatcherSpec> spec = keptSpec(uuid);
@@ -855,6 +935,50 @@ class SourceTypeGroups {
             }
         }
         return done;
+    }
+
+    /// What stops a promotion that keeps working copies in the build: each module promoted that imports a kept copy
+    /// imports its original instead, as production has it, and the names it uses of the copy (templates, functions,
+    /// variables, modes) must be the original's too.
+    ///
+    /// @param build The build.
+    /// @param docs  The build's documents, as the plan lists them (`working_copy_of`).
+    /// @param kept  The UUIDs of the working copies the user kept in the build.
+    /// @return Each module promoted that would import an original lacking what it uses, saying which; none when
+    /// every original has it.
+    List<String> keptProblems(final String build, final List<Map<String, Object>> docs, final Set<String> kept) {
+        final List<String> out = new ArrayList<>();
+        for (final Map<String, Object> copy : docs) {
+            final String copyUuid = String.valueOf(copy.get("uuid"));
+            if (!XsltDoc.TYPE.equals(copy.get("type")) || !kept.contains(copyUuid)
+                || copy.get("working_copy_of") == null) {
+                continue;
+            }
+            final String original = String.valueOf(copy.get("working_copy_of"));
+            final Set<String> lacking = new LinkedHashSet<>(ModuleChecks.declaredNames(readXsltData(copyUuid)));
+            lacking.removeAll(ModuleChecks.declaredNames(readXsltData(original)));
+            if (lacking.isEmpty()) {
+                continue;
+            }
+            for (final Map<String, Object> importer : docs) {
+                final String uuid = String.valueOf(importer.get("uuid"));
+                if (!XsltDoc.TYPE.equals(importer.get("type")) || kept.contains(uuid)) {
+                    continue;
+                }
+                // Importing the copy, or its original already (pointed back at it).
+                final String code = readXsltData(uuid);
+                if (!code.contains("uuid='" + copyUuid + "'") && !code.contains("uuid='" + original + "'")) {
+                    continue;
+                }
+                final List<String> used = lacking.stream().filter(name -> ModuleChecks.uses(code, name)).toList();
+                if (!used.isEmpty()) {
+                    out.add("'" + importer.get("name") + "' imports '" + copy.get("name") + "', kept in the build: "
+                            + "promoted, it imports production's '" + copy.get("name") + "' (" + original + "), "
+                            + "which lacks " + ToolText.list(used) + " that it uses");
+                }
+            }
+        }
+        return out;
     }
 
     // A dispatcher regenerated from its spec, its imports the originals'.
@@ -1136,10 +1260,40 @@ class SourceTypeGroups {
         return out;
     }
 
+    // Another group of the feed whose mode meets this one's (the same, or one starting with the other and a
+    // separator): their names could meet in the dispatcher's stylesheet, so the group is refused, naming both.
+    private void refuseMeetingModes(final Map<String, Object> state,
+                                    final String group,
+                                    final String mode,
+                                    final String naming) {
+        final Map<String, String> others = new LinkedHashMap<>();
+        for (final Map<String, Object> row : JsonValues.maps(state.get("rows"))) {
+            final String other = JsonValues.text(row.get("group"));
+            if (!other.isEmpty() && !other.equals(group)) {
+                others.putIfAbsent(other, JsonValues.text(JsonValues.mapOrEmpty(row.get(GROUP_XSLT)).get("uuid")));
+            }
+        }
+        others.forEach((other, uuid) -> {
+            final String theirs = (uuid.isEmpty()
+                    ? Optional.<XsltDoc>empty()
+                    : documentAccess.read(new DocRef(XsltDoc.TYPE, uuid), XsltDoc.class))
+                    .flatMap(xslt -> ModuleChecks.marker(NullSafe.string(xslt.getData())))
+                    .map(ModuleChecks.Marker::mode)
+                    .orElseGet(() -> XsltNames.styleName(other, naming));
+            if (ModuleChecks.modesMeet(mode, theirs)) {
+                throw new ToolRefusal("Group '" + group + "' (mode " + mode + ") and the feed's group '" + other
+                                      + "' (mode " + theirs + ") have modes that meet: the names one declares could "
+                                      + "be the other's in the dispatcher's stylesheet. Name group '" + group
+                                      + "' otherwise. Nothing was saved.");
+            }
+        });
+    }
+
     // The group's source types: those given, else the build's scope's; each a row of the registry, and translated by
     // no other group.
     private List<String> sourceTypes(final String build,
                                      final Map<String, Object> state,
+                                     final String group,
                                      final List<String> given) {
         final List<String> names = JsonValues.maps(state.get("rows")).stream()
                 .map(row -> JsonValues.text(row.get("name")))
@@ -1156,6 +1310,20 @@ class SourceTypeGroups {
         if (!unknown.isEmpty()) {
             throw new ToolRefusal("source_types " + ToolText.list(unknown) + " are not the registry's: it has "
                                   + ToolText.list(names));
+        }
+        final List<String> theirs = new ArrayList<>();
+        for (final Map<String, Object> row : JsonValues.maps(state.get("rows"))) {
+            final String other = JsonValues.text(row.get("group"));
+            if (types.contains(JsonValues.text(row.get("name")))
+                && SourceTypeRegistry.TRANSLATED.equals(row.get("status")) && !other.isEmpty()
+                && !other.equals(group)) {
+                theirs.add("'" + row.get("name") + "' (group '" + other + "')");
+            }
+        }
+        if (!theirs.isEmpty()) {
+            throw new ToolRefusal("Source type(s) " + String.join(", ", theirs) + " are translated by another group "
+                                  + "already: a source type belongs to one group. Leave them out of source_types, or "
+                                  + "change that group first. Nothing was saved.");
         }
         return List.copyOf(new LinkedHashSet<>(types));
     }

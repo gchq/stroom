@@ -18,8 +18,10 @@ package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.validation.XmlTrees;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -133,7 +135,7 @@ public final class ModuleChecks {
                 final String local = name.contains(":")
                         ? name.substring(name.indexOf(':') + 1)
                         : name;
-                if (!local.startsWith(mode)) {
+                if (!ownName(local, mode)) {
                     out.add(group + " declares xsl:" + what + " " + name + ", not prefixed with its mode: another "
                             + "group's of the same name would meet it in the dispatcher's stylesheet, and the one "
                             + "imported last would be used by both. Name it " + mode + "_...");
@@ -155,7 +157,7 @@ public final class ModuleChecks {
                                    + " (or a mode named " + mode + "_...)");
             }
             for (final String one : ToolText.split(modes.strip(), " ")) {
-                if (!one.isEmpty() && !one.startsWith(mode)) {
+                if (!one.isEmpty() && !ownName(one, mode)) {
                     return Optional.of(group + " has a template in mode " + one + ", not its own: modes "
                                        + "#all, #default and another group's take other groups' records. Use "
                                        + mode + " or a mode named " + mode + "_...");
@@ -170,7 +172,7 @@ public final class ModuleChecks {
             final String local = name.contains(":")
                     ? name.substring(name.indexOf(':') + 1)
                     : name;
-            if (!local.startsWith(mode)) {
+            if (!ownName(local, mode)) {
                 return Optional.of(group + " has a named template " + name + ", not prefixed with its mode: "
                                    + "another group's of the same name would meet it in the dispatcher's "
                                    + "stylesheet, and the one imported last would run for both. Name it " + mode
@@ -178,6 +180,68 @@ public final class ModuleChecks {
             }
         }
         return Optional.empty();
+    }
+
+    /// @param name A name a group declares (a template's, a function's, a variable's, or a mode).
+    /// @param mode The group's mode.
+    /// @return True if the name is the group's own: its mode, or its mode followed by a separator (`_`, `-`, or the
+    /// capital letter or digit a camelCase or PascalCase name starts its next word with), so mode `pega` can't claim
+    /// `pegamail`'s names.
+    public static boolean ownName(final String name, final String mode) {
+        if (name == null || mode == null || mode.isEmpty() || !name.startsWith(mode)) {
+            return false;
+        }
+        if (name.length() == mode.length()) {
+            return true;
+        }
+        final char next = name.charAt(mode.length());
+        return next == '_' || next == '-' || Character.isUpperCase(next) || Character.isDigit(next);
+    }
+
+    /// Two groups' modes meet when they are the same, or one is the other followed by a separator (`pega` and
+    /// `pega_mail`): the names one declares could then be the other's, and the one imported last would be used by
+    /// both.
+    ///
+    /// @param one   A group's mode.
+    /// @param other Another group's mode.
+    /// @return True if they meet.
+    public static boolean modesMeet(final String one, final String other) {
+        return ownName(one, other) || ownName(other, one);
+    }
+
+    /// @param xslt An XSLT's text, or null.
+    /// @return The names it declares for importers to use: its named templates', functions' and global variables',
+    /// and the modes of its templates (`#all` and the like aside); none for text that isn't XML.
+    public static Set<String> declaredNames(final String xslt) {
+        final Set<String> out = new LinkedHashSet<>();
+        final XmlElement root;
+        try {
+            root = XmlParser.parse(NullSafe.string(xslt));
+        } catch (final RuntimeException e) {
+            return out;
+        }
+        for (final XmlElement child : root.childElements()) {
+            if (!XmlTrees.XSL.equals(child.namespace())) {
+                continue;
+            }
+            if (Set.of("template", "function", "variable").contains(child.localName()) && child.get("name") != null) {
+                out.add(child.get("name"));
+            }
+            if ("template".equals(child.localName()) && child.get("mode") != null) {
+                ToolText.split(child.get("mode").strip(), " ").stream()
+                        .filter(mode -> !mode.isEmpty() && !mode.startsWith("#"))
+                        .forEach(out::add);
+            }
+        }
+        return out;
+    }
+
+    /// @param code An XSLT's text.
+    /// @param name A name another XSLT declares ([#declaredNames]).
+    /// @return True if the code names it: as a whole name, not part of a longer one.
+    public static boolean uses(final String code, final String name) {
+        return Pattern.compile("(?<![\\w.:-])" + Pattern.quote(name) + "(?![\\w.-])").matcher(NullSafe.string(code))
+                .find();
     }
 
     /// @param xslt An XSLT's text.

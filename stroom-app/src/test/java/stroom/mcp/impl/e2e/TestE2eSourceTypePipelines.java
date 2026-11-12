@@ -215,7 +215,7 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
                 .findFirst()
                 .orElseThrow();
         final List<?> options = (List<?>) ((Map<?, ?>) ((Map<?, ?>) asked.requestedSchema().get("properties"))
-                .get("q1")).get("enum");
+                .get("choice")).get("enum");
         assertThat(options).hasSize(3);
         assertThat(String.valueOf(options.getFirst())).contains("The feed's pipeline, " + pipelineName);
         assertThat(String.valueOf(options.getLast())).contains("A new version of " + pipelineName);
@@ -344,8 +344,9 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
                 return scoping.apply(form);
             }
             final ElicitResult agreed = McpTestClient.agree(form);
+            // The pipeline asked for a new group, then where a pipeline of its own writes its Events.
             if (ownGroup == null || !form.message().contains("'" + ownGroup + "'")
-                || !form.message().contains("is new")) {
+                || !(form.message().contains("is new") || form.message().contains("runs in a pipeline of its own"))) {
                 return agreed;
             }
             final Map<String, Object> content = new LinkedHashMap<>(agreed.content());
