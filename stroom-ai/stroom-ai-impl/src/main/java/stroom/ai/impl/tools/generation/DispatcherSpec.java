@@ -93,7 +93,7 @@ public record DispatcherSpec(String feed,
         final List<Row> rows = new ArrayList<>();
         JsonValues.maps(map.get("rows")).forEach(row -> rows.add(new Row(JsonValues.text(row.get("name")),
                 JsonValues.text(row.get("match")), JsonValues.text(row.get("value")),
-                JsonValues.text(row.get("status")))));
+                JsonValues.text(row.get("status")), (String) row.get("handled_by"))));
         final List<Group> groups = new ArrayList<>();
         JsonValues.maps(map.get("groups")).forEach(group -> groups.add(new Group(JsonValues.text(group.get("name")),
                 JsonValues.text(group.get("mode")), (String) group.get("href"),
@@ -171,11 +171,23 @@ public record DispatcherSpec(String feed,
 
     /// A registry row, as the dispatcher tries it.
     ///
-    /// @param name   The source type's name.
-    /// @param match  `value` or `pattern`.
-    /// @param value  The value matched exactly, or the anchored pattern.
-    /// @param status Its status in the registry (`translated`, `parked`, ...), for the dispatcher's comments.
-    public record Row(String name, String match, String value, String status) {
+    /// @param name      The source type's name.
+    /// @param match     `value` or `pattern`.
+    /// @param value     The value matched exactly, or the anchored pattern.
+    /// @param status    Its status in the registry (`translated`, `parked`, ...), for the dispatcher's comments.
+    /// @param handledBy The pipeline that translates it when another pipeline's dispatcher does (`pipeline
+    ///                  'PEGA-Mail-Events'`), or null: its records are passed over here, counted as handled there.
+    public record Row(String name, String match, String value, String status, String handledBy) {
+
+        /// A row no other pipeline handles.
+        ///
+        /// @param name   The source type's name.
+        /// @param match  `value` or `pattern`.
+        /// @param value  The value matched exactly, or the anchored pattern.
+        /// @param status Its status in the registry.
+        public Row(final String name, final String match, final String value, final String status) {
+            this(name, match, value, status, null);
+        }
 
         /// @return It as JSON.
         Map<String, Object> toJson() {
@@ -184,6 +196,9 @@ public record DispatcherSpec(String feed,
             out.put("match", match);
             out.put("value", value);
             out.put("status", status);
+            if (handledBy != null) {
+                out.put("handled_by", handledBy);
+            }
             return out;
         }
     }

@@ -198,6 +198,8 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
         if (feed == null) {
             throw new ToolRefusal("Give feed: the surveyed feed.");
         }
+        // One open build per aggregated feed: a registry is made or changed by one build at a time.
+        registries.refuseOpenBuild(feed, build, true);
         final Optional<SurveyRecord> surveyDoc = surveyDocuments.load(build, feed);
         final Map<String, Object> survey = surveyDoc.map(doc -> SurveyDoc.readState(doc.text())).orElse(null);
         final Map<String, Object> sources = survey == null
@@ -473,6 +475,10 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                         ? single
                         : null));
         registry.put("updated", SurveyDoc.at(Instant.now()));
+        if (before.get("modules") != null) {
+            // The feed's helpers and common module, as its source type groups import them.
+            registry.put("modules", before.get("modules"));
+        }
         final List<Map<String, Object>> out = new ArrayList<>();
         final boolean first = before.isEmpty();
         final String now = SurveyDoc.at(Instant.now());
@@ -490,8 +496,16 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                 decide(entry, SourceTypeRegistry.NEW, "survey", now, "seen after the registry was made");
             }
             entry.put("group", was.get("group"));
+            // Where its group's XSLT is, the pipeline that runs it, and what it looks up: the feed's dispatchers are
+            // generated from them.
+            if (was.get("group_xslt") != null) {
+                entry.put("group_xslt", was.get("group_xslt"));
+            }
             entry.put("pipeline", was.get("pipeline"));
             entry.put("output_feed", was.get("output_feed"));
+            if (was.get("references") != null) {
+                entry.put("references", was.get("references"));
+            }
             entry.put("profile", profiles.getOrDefault(row.name(), Map.of()));
             out.add(entry);
         }

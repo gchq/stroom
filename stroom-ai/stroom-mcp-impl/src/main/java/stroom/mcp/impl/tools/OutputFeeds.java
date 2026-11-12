@@ -121,6 +121,20 @@ class OutputFeeds {
         guard.folderContents(build).stream()
                 .filter(doc -> FeedDoc.TYPE.equals(doc.type()))
                 .forEach(doc -> feeds.put(doc.uuid(), doc));
+        // An aggregated feed's group with an output feed of its own writes there, in the build as in production.
+        final Map<String, Object> kept = BuildRecords.docs(records.load(build));
+        final Optional<WriteGuard.BuildDoc> own = PipelineDocs.addedProperties(pipelineDocs.read(pipeline.getUuid()))
+                .stream()
+                .filter(property -> FEED.equals(property.getName()) && appenders.contains(property.getElement()))
+                .map(property -> NullSafe.get(property.getValue(), PipelinePropertyValue::getEntity, DocRef::getUuid))
+                .filter(uuid -> uuid != null && feeds.containsKey(uuid)
+                                && kept.get(uuid) instanceof final Map<?, ?> entry
+                                && entry.get(BuildFeeds.GROUP_OUTPUT) != null)
+                .map(feeds::get)
+                .findFirst();
+        if (own.isPresent()) {
+            return Optional.of(new OutputFeed(own.get().name(), own.get().uuid(), false, List.copyOf(sources)));
+        }
         // The build's newest test feed: one the user named (create_feed test_feed=true) is made after the server's
         // own.
         final List<WriteGuard.BuildDoc> named = new ArrayList<>();

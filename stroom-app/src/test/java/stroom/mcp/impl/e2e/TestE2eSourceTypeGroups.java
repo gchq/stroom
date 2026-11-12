@@ -50,8 +50,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// to PegaSecurityEvent (a JSON message) and PegaIntegration (SOAP, some bodies truncated) builds a source type group
 /// for each with build_translation_xslt; the first makes the feed's common module and helpers from its wrapper
 /// entries, each save regenerates the feed's dispatcher from the registry and sets the registry's rows translated.
-/// A pipeline with the dispatcher as its one XSLT (made by hand: phase 4's pipeline tools aren't there yet) steps
-/// with Stroom resolving the imports by UUID: valid Events for the scope's records only, the rest passed over and
+/// Each new group's pipeline is asked in a form (shared or its own only: the feed has no pipeline yet).
+/// create_pipeline makes the one-filter pipeline, its XSLT the dispatcher filled from the build; it steps with
+/// Stroom resolving the imports by UUID: valid Events for the scope's records only, the rest passed over and
 /// counted; an unsaved group stepped through a temporary dispatcher; processing logs the counts and the truncated
 /// SOAP bodies, and doesn't stop. The samples are the synthetic slices of `.ai/data` TestE2eSourceTypes reads; the test
 /// is skipped where they are absent.
@@ -59,7 +60,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestE2eSourceTypeGroups extends AbstractE2eTest {
 
     private static final Path DATA = Path.of("..", ".ai", "data");
-    private static final String SCOPE_FORM = "source types does this build cover";
+    static final String SCOPE_FORM = "source types does this build cover";
     private static final String FEED = "E2E-PEGA-GROUPS";
     private static final String BUILD = "pega-groups";
     private static final List<String> SCOPE = List.of("PegaSecurityEvent", "PegaIntegration");
@@ -130,10 +131,36 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
                 .containsEntry("group", "PEGA integration");
         assertThat(rows.get("PegaDB")).containsEntry("status", "parked");
 
-        // The pipeline: its one XSLT the dispatcher, Stroom resolving the imports by UUID.
-        final String pipeline = uuidOf(agreed("create_pipeline", args("build", BUILD, "name", FEED + "-Events",
-                "template_uuid", templateUuid("translation", "Event Data (JSON)"), "set_properties",
-                List.of(docProperty("translationFilter", "xslt", dispatcherUuid, "XSLT")))));
+        // Each new group's pipeline was asked in a form: the feed has none yet, so shared or its own only.
+        final List<ElicitFormRequest> placements = client.forms().stream()
+                .filter(form -> form.message().contains("is new: choose the pipeline that handles it"))
+                .toList();
+        assertThat(placements).hasSize(2);
+        assertThat(placements.getFirst().message()).contains("'PEGA security' (PegaSecurityEvent)")
+                .doesNotContain("**", "|");
+        final Map<?, ?> question = (Map<?, ?>) ((Map<?, ?>) placements.getFirst().requestedSchema()
+                .get("properties")).get("q1");
+        assertThat((List<?>) question.get("enum")).hasSize(2);
+        assertThat(String.valueOf(question.get("enum"))).contains("The feed's pipeline", "A pipeline of its own")
+                .doesNotContain("new version");
+        assertThat(map(first, "pipeline")).containsEntry("own", false);
+
+        // The pipeline, made by the tools: its one XSLT the build's dispatcher (filled from the build), Stroom
+        // resolving the imports by UUID.
+        final Map<String, Object> made = agreed("create_pipeline", args("build", BUILD, "name", FEED + "-Events",
+                "template_uuid", templateUuid("translation", "Event Data (JSON)")));
+        dump("create_pipeline", made);
+        assertThat(made).containsEntry("dispatcher", dispatcherUuid);
+        assertThat(String.valueOf(made.get("filled_from_build"))).contains("translationFilter.xslt = " + FEED
+                                                                            + " dispatcher");
+        assertThat(strings(made, "source_types")).containsExactlyInAnyOrder("PegaSecurityEvent", "PegaIntegration");
+        final String pipeline = uuidOf(made);
+        // The registry names the pipeline that runs each source type.
+        assertThat(list(SourceTypeRegistry.read(documentation(uuidOf(map(second, "registry")))), "rows"))
+                .filteredOn(row -> "PegaSecurityEvent".equals(row.get("name")))
+                .singleElement()
+                .satisfies(row -> assertThat((Map<String, Object>) row.get("pipeline"))
+                        .containsEntry("name", FEED + "-Events"));
         final List<String> records = text.lines().toList();
         final int securityAt = indexOf(records, "\"PegaSecurityEvent\"", null);
         final int soapAt = indexOf(records, "\"PegaIntegration\"", "Envelope>\"}");
@@ -212,7 +239,7 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
 
     // --- the mappings an agent would send for each group ---
 
-    private static Map<String, Object> securityMapping() {
+    static Map<String, Object> securityMapping() {
         return jsonValue("""
                 {"input": "json", "json_layout": "lines", "json_fields": ["message"],
                  "common": %s,
@@ -235,7 +262,7 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
                                          "field": "message.outcome"}]}]}""".formatted(WRAPPER));
     }
 
-    private static Map<String, Object> integrationMapping() {
+    static Map<String, Object> integrationMapping() {
         return jsonValue("""
                 {"input": "json", "json_layout": "lines", "xml_fields": ["soap"],
                  "extract": [{"field": "message", "regex": "^(Request|Response): (.*)$", "names": ["direction", "soap"],
@@ -248,13 +275,13 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
                                          "field": "soap/Envelope/Header/CorrelationId"}]}]}""".formatted(WRAPPER));
     }
 
-    private static Map<String, Object> jsonValue(final String text) {
+    static Map<String, Object> jsonValue(final String text) {
         return (Map<String, Object>) ToolJson.loads(text);
     }
 
     // --- the sample ---
 
-    private static int indexOf(final List<String> records, final String part, final String alsoEndingWith) {
+    static int indexOf(final List<String> records, final String part, final String alsoEndingWith) {
         for (int i = 0; i < records.size(); i++) {
             if (records.get(i).contains(part) && (alsoEndingWith == null || records.get(i).endsWith(alsoEndingWith))) {
                 return i;
@@ -272,12 +299,12 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
         throw new IllegalStateException("No truncated SOAP body");
     }
 
-    private static boolean isTruncatedSoap(final String line) {
+    static boolean isTruncatedSoap(final String line) {
         return line.contains("\"sourcetype\": \"PegaIntegration\"") && !line.endsWith("Envelope>\"}");
     }
 
     // The records of a source type the dispatcher's lines say it passed over, added up.
-    private static long passedOver(final String logged, final String sourceType) {
+    static long passedOver(final String logged, final String sourceType) {
         final Matcher matcher = Pattern.compile(Pattern.quote(DispatcherXslt.PASSED_OVER) + "(\\d+)"
                                                 + Pattern.quote(DispatcherXslt.PASSED_OVER_OF + sourceType) + "$",
                 Pattern.MULTILINE).matcher(logged);
@@ -288,7 +315,7 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
         return total;
     }
 
-    private static long count(final String text, final String part) {
+    static long count(final String text, final String part) {
         long n = 0;
         for (int at = text.indexOf(part); at >= 0; at = text.indexOf(part, at + part.length())) {
             n++;
@@ -308,7 +335,7 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
     }
 
     // A slice of a sample file, its first lines; the test is skipped where the samples are absent.
-    private static String lines(final String file, final int count) {
+    static String lines(final String file, final int count) {
         final Path path = DATA.resolve(file);
         Assumptions.assumeTrue(Files.isRegularFile(path), "no sample at " + path.toAbsolutePath());
         try (Stream<String> stream = Files.lines(path)) {
@@ -320,7 +347,7 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
 
     // A user who chooses these source types for the build's scope, giving their reason for the rest, and agrees to
     // everything else.
-    private static Function<ElicitFormRequest, ElicitResult> scopeOf(final List<String> chosen,
+    static Function<ElicitFormRequest, ElicitResult> scopeOf(final List<String> chosen,
                                                                      final String reason) {
         return form -> {
             final ElicitResult agreed = McpTestClient.agree(form);

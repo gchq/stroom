@@ -41,12 +41,14 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -72,6 +74,8 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     private final BuildRecords records;
     private final Consent consent;
     private final BuildPlan plan;
+    // An aggregated feed's source type groups; none in tests that make the tool themselves.
+    private Provider<SourceTypeGroups> groupsProvider;
 
     @Inject
     CopyPipelineTool(final PipelineWrites writes,
@@ -92,6 +96,15 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         this.records = records;
         this.consent = consent;
         this.plan = plan;
+    }
+
+    /// Where an aggregated feed's dispatchers are regenerated (set by injection; none in tests that make the tool
+    /// themselves).
+    ///
+    /// @param groups The feed's source type groups.
+    @Inject
+    void setGroups(final Provider<SourceTypeGroups> groups) {
+        this.groupsProvider = groups;
     }
 
     @Override
@@ -130,8 +143,11 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                              + "settings: same parent template, same element changes (removed or re-linked steps, "
                              + "extra XSLT steps), reference loaders and property values. The XSLTs and text "
                              + "converters it owns are copied too and the copy is rewired to them; other documents "
-                             + "(shared libraries, indexes, clusters) stay shared. The user confirms the names "
-                             + "first.")
+                             + "(shared libraries, indexes, clusters) stay shared; one the build has copied already "
+                             + "(an aggregated feed's dispatcher, copied when a group was saved) is used, not copied "
+                             + "again. A new version of an aggregated feed's pipeline: its copy of the dispatcher is "
+                             + "regenerated to route the groups placed in the new version. The user confirms the "
+                             + "names first.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(BUILD_ARG, CreateFeedTool.BUILD_DESCRIPTION)
                         .addStringProperty(SOURCE_UUID_ARG, "Pipeline to copy.")
@@ -208,8 +224,11 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         final Map<String, DocRef> copies = new LinkedHashMap<>();
         for (final DocRef entity : owned) {
             if (!copies.containsKey(entity.getUuid())) {
-                copies.put(entity.getUuid(), copyDocument(entity, names.get(entity.getUuid()), build, workingCopy,
-                        role));
+                // One the build copied already (an aggregated feed's dispatcher, copied when a group was saved) is
+                // run, not copied again.
+                copies.put(entity.getUuid(), alreadyCopied(build, entity, workingCopy)
+                        .orElseGet(() -> copyDocument(entity, names.get(entity.getUuid()), build, workingCopy,
+                                role)));
             }
         }
         final List<PipelineProperty> rewired = new ArrayList<>();
@@ -238,6 +257,20 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                 .pipelineData(changed.getPipelineData())
                 .build());
         final Map<String, Object> result = new LinkedHashMap<>();
+        if (groupsProvider != null) {
+            // An aggregated feed's dispatcher copied: a new version's routes the groups placed in it, and the
+            // registry says which pipeline runs each source type.
+            copies.forEach((original, copy) -> {
+                if (XsltDoc.TYPE.equals(copy.getType()) && writes.isDispatcher(copy.getUuid())) {
+                    if (workingCopy) {
+                        groupsProvider.get().runBy(context, build, copy.getUuid(), source.getName());
+                    } else {
+                        result.put("dispatchers", groupsProvider.get().newVersion(context, build, original,
+                                copy.getUuid(), doc.getName()));
+                    }
+                }
+            });
+        }
         result.put("type", PipelineDoc.TYPE);
         result.put("uuid", doc.getUuid());
         result.put("name", doc.getName());
@@ -258,6 +291,20 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                 .map(property -> NullSafe.get(property.getValue(), PipelinePropertyValue::getEntity))
                 .filter(entity -> entity != null && PipelineWrites.OWNED_TYPES.contains(entity.getType()))
                 .toList();
+    }
+
+    // The build's copy of a document already made (a working copy, or a new version's), if it has one.
+    private Optional<DocRef> alreadyCopied(final String build, final DocRef original, final boolean workingCopy) {
+        final String key = workingCopy
+                ? "copy_of"
+                : "version_of";
+        final Map<String, Object> kept = BuildRecords.docs(records.load(build));
+        return guard.folderContents(build).stream()
+                .filter(doc -> doc.type().equals(original.getType()))
+                .filter(doc -> kept.get(doc.uuid()) instanceof final Map<?, ?> entry
+                               && original.getUuid().equals(entry.get(key)))
+                .findFirst()
+                .map(WriteGuard.BuildDoc::docRef);
     }
 
     // The property, naming the copy of its document.
