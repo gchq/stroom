@@ -22,6 +22,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.SessionUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.UserRef;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -33,6 +34,9 @@ public final class UserIdentitySessionUtil {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserIdentitySessionUtil.class);
 
     private static final String SESSION_USER_IDENTITY = "SESSION_USER_IDENTITY";
+    // Who is using a session that an authenticating edge proxy (e.g. an AWS ALB) authenticates.
+    // Informational only: it must never be used to authenticate a request.
+    private static final String SESSION_EDGE_USER_REF = "SESSION_EDGE_USER_REF";
 
     private UserIdentitySessionUtil() {
     }
@@ -65,5 +69,33 @@ public final class UserIdentitySessionUtil {
                             LogUtil.message("No userIdentity in session {}", SessionUtil.getSessionId(session))));
         }
         return optUserIdentity;
+    }
+
+    /// Record the user of a session whose requests are authenticated by an authenticating edge
+    /// proxy rather than by a [UserIdentity] held in the session.
+    ///
+    /// This exists only so the user can be shown in the session list. It is deliberately held
+    /// apart from the identity set by [#setUserInSession(HttpSession, UserIdentity)], because
+    /// the identity in the session authenticates later requests and this must not.
+    ///
+    /// @param session The session to record the user against. Must not be null.
+    /// @param userRef The user making requests on the session, or null to clear it.
+    public static void setEdgeUserInSession(final HttpSession session, final UserRef userRef) {
+        Objects.requireNonNull(session);
+        LOGGER.debug(() -> LogUtil.message("Setting edge userRef {} in session {}",
+                userRef,
+                NullSafe.get(session, HttpSession::getId)));
+        session.setAttribute(SESSION_EDGE_USER_REF, userRef);
+    }
+
+    /// Get the user recorded against a session by [#setEdgeUserInSession(HttpSession, UserRef)].
+    ///
+    /// For display only. Never use the result to authenticate a request.
+    ///
+    /// @param session The session to read, may be null.
+    /// @return The recorded user, or empty if the session is null or has no recorded user.
+    public static Optional<UserRef> getEdgeUserFromSession(final HttpSession session) {
+        return Optional.ofNullable(session)
+                .map(session2 -> (UserRef) session2.getAttribute(SESSION_EDGE_USER_REF));
     }
 }

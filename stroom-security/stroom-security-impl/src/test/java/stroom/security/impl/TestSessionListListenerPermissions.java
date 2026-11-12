@@ -230,6 +230,63 @@ class TestSessionListListenerPermissions {
     }
 
     @Test
+    void sessionAuthenticatedByAnEdgeProxyIsListedWithItsUser() {
+        // gh-6022: behind an authenticating edge proxy (e.g. an AWS ALB) the identity comes from the proxy's
+        // headers on every request and is never held in the session, so only the recorded edge user can say
+        // whose session it is. Without it the session is listed with no user and the User Access screen
+        // shows nobody.
+        registerEdgeSession("edge-session", userRef("alice"));
+        stubSecureResultToRun();
+
+        final SessionListResponse response = listener.listSessions(THIS_NODE);
+
+        assertThat(response.getValues())
+                .hasSize(1);
+        assertThat(response.getValues().getFirst().getUserRef())
+                .isNotNull()
+                .extracting(UserRef::getSubjectId)
+                .isEqualTo("alice");
+    }
+
+    @Test
+    void theSessionIdentityTakesPrecedenceOverARecordedEdgeUser() {
+        final HttpSession session = registerSession("sess1", userRef("alice"));
+        lenient().when(session.getAttribute("SESSION_EDGE_USER_REF")).thenReturn(userRef("bob"));
+        stubSecureResultToRun();
+
+        final SessionListResponse response = listener.listSessions(THIS_NODE);
+
+        assertThat(response.getValues())
+                .singleElement()
+                .extracting(details -> details.getUserRef().getSubjectId())
+                .isEqualTo("alice");
+    }
+
+    @Test
+    void sessionWithNoUserOfAnyKindIsListedWithNoUser() {
+        registerSession("anon-session", null);
+        stubSecureResultToRun();
+
+        final SessionListResponse response = listener.listSessions(THIS_NODE);
+
+        assertThat(response.getValues())
+                .singleElement()
+                .extracting(details -> details.getUserRef())
+                .isNull();
+    }
+
+    @Test
+    void anEdgeUserCanTerminateTheirOwnSessionWithoutManageUsers() {
+        registerEdgeSession("edge-session", userRef("alice"));
+        when(securityContext.getUserRef()).thenReturn(userRef("alice"));
+
+        assertThat(listener.evictSessionOnNode(SessionListListener.sessionHandle("edge-session"), THIS_NODE))
+                .isTrue();
+
+        verify(securityContext, never()).secureResult(any(AppPermission.class), any());
+    }
+
+    @Test
     void anInvalidatedSessionDoesNotBreakEvictingAnotherUsersSessions() {
         registerSession("live-session", userRef("alice"));
         final HttpSession dead = registerSession("dead-session", userRef("bob"));
@@ -251,6 +308,16 @@ class TestSessionListListenerPermissions {
             lenient().when(identity.getUserRef()).thenReturn(userRef);
             lenient().when(session.getAttribute("SESSION_USER_IDENTITY")).thenReturn(identity);
         }
+        listener.sessionCreated(sessionEvent(session));
+        return session;
+    }
+
+    // Put a session into the listener's map as an authenticating edge proxy deployment would leave it:
+    // no identity held in the session, only the recorded edge user.
+    private HttpSession registerEdgeSession(final String sessionId, final UserRef userRef) {
+        final HttpSession session = Mockito.mock(HttpSession.class);
+        lenient().when(session.getId()).thenReturn(sessionId);
+        lenient().when(session.getAttribute("SESSION_EDGE_USER_REF")).thenReturn(userRef);
         listener.sessionCreated(sessionEvent(session));
         return session;
     }

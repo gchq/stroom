@@ -21,6 +21,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.UserIdentitySessionUtil;
+import stroom.security.shared.HasUserRef;
 import stroom.util.authentication.HasExpiry;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -44,6 +45,7 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletMapping;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
 
@@ -210,6 +212,8 @@ class SecurityFilter implements Filter {
                     return;
                 }
 
+                recordEdgeSessionUser(request, credential);
+
                 // Now handle the request as this user
                 securityContext.asUser(credential.identity(), () ->
                         process(request, response, chain));
@@ -349,6 +353,33 @@ class SecurityFilter implements Filter {
         return request.getHeader(ORIGIN_HEADER) != null
                || request.getHeader(REFERER_HEADER) != null
                || request.getHeader(SEC_FETCH_SITE_HEADER) != null;
+    }
+
+    /// Record who is using the browser's session when an authenticating edge proxy (e.g. an AWS
+    /// ALB) authenticated the request.
+    ///
+    /// In edge mode the identity comes from the proxy's headers on every request and is never
+    /// held in the session, so without this the session list (and so the User Access screen)
+    /// cannot tell whose session it is. Only the [UserRef] is recorded, and in an attribute
+    /// that is never used to authenticate a request.
+    ///
+    /// Only requests issued by a browser are recorded, so that machine clients sending bearer
+    /// tokens through the proxy do not each create a session.
+    ///
+    /// @param request    The authenticated request.
+    /// @param credential The credential that authenticated the request.
+    // Pkg private for testing
+    void recordEdgeSessionUser(final HttpServletRequest request, final AuthenticatedCredential credential) {
+        if (CredentialSource.REQUEST_TOKEN.equals(credential.source())
+            && isEdgeAuthenticationEnabled()
+            && hasBrowserProvenance(request)
+            && credential.identity() instanceof final HasUserRef hasUserRef) {
+
+            final HttpSession session = SessionUtil.getOrCreateSession(request, null);
+            UserIdentitySessionUtil.setEdgeUserInSession(session, hasUserRef.getUserRef());
+            // A newly created session has not had the user agent set on it yet.
+            UserAgentSessionUtil.setUserAgentInSession(request, session);
+        }
     }
 
     private boolean isEdgeAuthenticationEnabled() {

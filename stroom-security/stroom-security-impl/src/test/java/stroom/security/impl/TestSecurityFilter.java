@@ -17,17 +17,22 @@
 package stroom.security.impl;
 
 import stroom.config.common.UriFactory;
+import stroom.security.api.UserIdentity;
 import stroom.security.mock.MockSecurityContext;
+import stroom.security.shared.HasUserRef;
 import stroom.util.shared.AuthenticationBypassChecker;
+import stroom.util.shared.UserRef;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -36,6 +41,7 @@ import java.net.URI;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -47,6 +53,7 @@ class TestSecurityFilter {
 
     private static final String PUBLIC_URI = "https://stroom.example.com";
     private static final String UI_URI = "https://ui.example.com";
+    private static final UserRef EDGE_USER = UserRef.builder().uuid("alice-uuid").subjectId("alice").build();
 
     @Mock
     private HttpServletRequest request;
@@ -401,6 +408,68 @@ class TestSecurityFilter {
         verify(chain).doFilter(request, response);
     }
 
+    // --- recording the edge user against the session (gh-6022) ---
+
+    @Test
+    void edgeBrowserRequestRecordsTheUserInANewSession() {
+        final HttpSession session = mock(HttpSession.class);
+        lenient().when(request.getHeader("Sec-Fetch-Site")).thenReturn("same-origin");
+        when(request.getSession(false)).thenReturn(null);
+        when(request.getSession(true)).thenReturn(session);
+
+        filterWith(true, true).recordEdgeSessionUser(request, edgeCredential(EDGE_USER));
+
+        verify(session).setAttribute("SESSION_EDGE_USER_REF", EDGE_USER);
+    }
+
+    @Test
+    void edgeBrowserRequestRecordsTheUserInTheExistingSession() {
+        final HttpSession session = mock(HttpSession.class);
+        lenient().when(request.getHeader("Origin")).thenReturn(PUBLIC_URI);
+        when(request.getSession(false)).thenReturn(session);
+
+        filterWith(true, true).recordEdgeSessionUser(request, edgeCredential(EDGE_USER));
+
+        verify(session).setAttribute("SESSION_EDGE_USER_REF", EDGE_USER);
+        verify(request, never()).getSession(true);
+    }
+
+    @Test
+    void edgeRequestWithoutBrowserProvenanceCreatesNoSession() {
+        // A script or other machine client sending a bearer token through the proxy must not get a
+        // session per call.
+        filterWith(true, true).recordEdgeSessionUser(request, edgeCredential(EDGE_USER));
+
+        verify(request, never()).getSession(anyBoolean());
+    }
+
+    @Test
+    void browserRequestTokenIsNotRecordedWhenEdgeAuthenticationIsDisabled() {
+        lenient().when(request.getHeader("Sec-Fetch-Site")).thenReturn("same-origin");
+
+        filterWith(false, true).recordEdgeSessionUser(request, edgeCredential(EDGE_USER));
+
+        verify(request, never()).getSession(anyBoolean());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CredentialSource.class, mode = EnumSource.Mode.EXCLUDE, names = "REQUEST_TOKEN")
+    void otherCredentialSourcesAreNotRecorded(final CredentialSource source) {
+        lenient().when(request.getHeader("Sec-Fetch-Site")).thenReturn("same-origin");
+        final AuthenticatedCredential credential = new AuthenticatedCredential(
+                edgeCredential(EDGE_USER).identity(), source);
+
+        filterWith(true, true).recordEdgeSessionUser(request, credential);
+
+        verify(request, never()).getSession(anyBoolean());
+    }
+
+    private static AuthenticatedCredential edgeCredential(final UserRef userRef) {
+        final UserIdentityWithUserRef identity = mock(UserIdentityWithUserRef.class);
+        lenient().when(identity.getUserRef()).thenReturn(userRef);
+        return new AuthenticatedCredential(identity, CredentialSource.REQUEST_TOKEN);
+    }
+
     private SecurityFilter bypassFilter() {
         final AuthenticationBypassChecker bypassChecker = mock(AuthenticationBypassChecker.class);
         when(bypassChecker.isUnauthenticated(any(), any(), any())).thenReturn(true);
@@ -417,5 +486,14 @@ class TestSecurityFilter {
         lenient().when(request.getHttpServletMapping()).thenReturn(null);
         // Request logging (header/cookie debug) iterates these, so give it something non-null to walk.
         lenient().when(request.getHeaderNames()).thenReturn(java.util.Collections.emptyEnumeration());
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // An identity that exposes its user, as ApiUserIdentity does for edge-authenticated requests.
+    private interface UserIdentityWithUserRef extends UserIdentity, HasUserRef {
+
     }
 }
