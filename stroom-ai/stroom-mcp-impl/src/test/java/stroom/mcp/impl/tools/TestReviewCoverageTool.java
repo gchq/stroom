@@ -277,14 +277,15 @@ class TestReviewCoverageTool {
                 new CoverageReads.Logged(4, 1_790_000_100_000L, 2, null, Map.of("action", "query"))), 2))
                 .when(reads).logged(any(), any());
         final SourceTypeScope scope = new SourceTypeScope("b", "sourcetype", List.of(), List.of("Security"));
-        Mockito.when(sourceTypes.judge(any(), any(), any())).thenAnswer(inv -> {
+        Mockito.when(sourceTypes.judge(any(), any(), any(), any())).thenAnswer(inv -> {
             final List<Map<String, Object>> groups = inv.getArgument(2);
             final List<Map<String, Object>> missed = groups.stream()
                     .filter(group -> String.valueOf(group.get("kind")).contains("login"))
                     .toList();
             final List<Map<String, Object>> passed = groups.stream().filter(group -> !missed.contains(group))
                     .toList();
-            return Optional.of(new SourceTypeCoverage.Judged(missed, passed, scope, Map.of("field", "sourcetype",
+            return Optional.of(new SourceTypeCoverage.Judged(missed, passed, List.of(), scope, Map.of("field",
+                    "sourcetype",
                     "scope", Map.of("share_percent", 12.5), "passed_over", Map.of("Database", 2))));
         });
 
@@ -321,6 +322,32 @@ class TestReviewCoverageTool {
         assertThat((List<?>) result.get("next")).singleElement().asString()
                 .startsWith("Show the user the kinds kept as Unknown");
         assertThat(result).doesNotContainKey("counts_capped");
+    }
+
+    @Test
+    void aDispatchersGroupsLogTheirOwnUnknownRecords() {
+        // Seen in the aggregated feed walks: a pipeline running a dispatcher (which keeps no mapping) was taken for
+        // one whose XSLT logs no Unknown records, so its newest Events were sampled and its Unknown kinds reported
+        // twice.
+        Mockito.when(reads.errorBatch(any(), anyLong(), anyInt())).thenReturn(new CoverageReads.ErrorBatch(
+                List.of(new CoverageReads.ErrorStream(11, 4L, 1_790_000_100_000L, Map.of())), null));
+        Mockito.doReturn(new CoverageReads.LoggedRecords(List.of(
+                new CoverageReads.Logged(4, 1_790_000_100_000L, 5, "other", Map.of("action", "export"))), 1))
+                .when(reads).logged(any(), any());
+        final Map<String, Object> mapping = Map.of("input", "json", "events", List.of(Map.of("name", "other",
+                "allow_unknown", "for later", "fields", List.of(Map.of("path", "EventDetail/TypeId", "value",
+                        "x")))));
+        Mockito.when(keptMappings.groupXslts("ev")).thenReturn(List.of(new KeptMappings.KeptXslt(
+                new KeptMapping.Kept("translation", Map.of("mapping", mapping)), "translationFilter",
+                XsltDoc.builder().uuid("g").name("Group").data("Kept as Unknown by rule 'other'").build())));
+
+        final Map<String, Object> result = tool.review(new SteppingWorld().context(), new ReviewCoverageTool.Request(
+                "ev", null, 500, List.of(), false, null, List.of()));
+
+        Mockito.verify(reads, Mockito.never()).sampledUnknown(any(), anyInt(), anyInt());
+        assertThat((List<?>) result.get("missed")).singleElement();
+        assertThat((String) result.get("tell_user")).endsWith("The kinds kept as Unknown were agreed with the user: "
+                                                              + "they need no rule.");
     }
 
     @Test

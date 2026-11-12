@@ -323,8 +323,42 @@ public class WriteGuard {
         if (ref == null || !documentAccess.canView(ref) || documentAccess.node(ref).isEmpty()) {
             return Optional.empty();
         }
-        // /<workspace>/<build>/... : the folder holding the document, below System.
-        final List<String> parts = Arrays.stream(NullSafe.string(documentAccess.path(ref)).split("/"))
+        return buildIn(documentAccess.path(ref));
+    }
+
+    /// A document's tags and build, as [#tags] and [#buildOf] give them, but telling a lookup that failed (the
+    /// permission check, the explorer node or its path) from a document that is simply not managed or not in a
+    /// build: a failure is logged (WARN, with its cause) and its reason kept, for a caller that refuses on it to say
+    /// why.
+    ///
+    /// @param ref A document.
+    /// @return Its tags and build (none for a document the user can't view or that doesn't exist), or the reason the
+    /// lookup failed.
+    public Placement placement(final DocRef ref) {
+        if (ref == null) {
+            return Placement.NONE;
+        }
+        try {
+            if (!documentAccess.canViewOrThrow(ref)) {
+                return Placement.NONE;
+            }
+            final Optional<ExplorerNode> node = documentAccess.nodeOrThrow(ref);
+            if (node.isEmpty()) {
+                return Placement.NONE;
+            }
+            final Set<String> tags = new LinkedHashSet<>(NullSafe.set(node.get().getTags()));
+            return new Placement(tags, buildIn(documentAccess.pathOrThrow(ref)).orElse(null), null);
+        } catch (final RuntimeException e) {
+            final String reason = NullSafe.nonBlankStringElse(e.getMessage(), e.getClass().getSimpleName());
+            LOGGER.warn(() -> LogUtil.message("Unable to look up the tags and build of {} {}: {}", ref.getType(),
+                    ref.getUuid(), reason), e);
+            return new Placement(Set.of(), null, reason);
+        }
+    }
+
+    // The build a folder path names: /<workspace>/<build>/... below System; empty outside the workspace.
+    private Optional<String> buildIn(final String path) {
+        final List<String> parts = Arrays.stream(NullSafe.string(path).split("/"))
                 .filter(part -> !part.isEmpty())
                 .toList();
         return parts.size() >= 2 && parts.getFirst().equals(workspaceFolder())
@@ -680,6 +714,27 @@ public class WriteGuard {
                 map.put("role", role);
             }
             return map;
+        }
+    }
+
+    /// A document's tags and build, or why they couldn't be looked up ([#placement]).
+    ///
+    /// @param tags    Its tags; none when it can't be viewed, doesn't exist, or the lookup failed.
+    /// @param build   The build it is in, or null outside one.
+    /// @param failure Why the lookup failed, or null when it didn't.
+    public record Placement(Set<String> tags, String build, String failure) {
+
+        /// A document with no tags and no build: one the user can't view, or that doesn't exist.
+        public static final Placement NONE = new Placement(Set.of(), null, null);
+
+        /// @return True if the lookup failed: the document's tags and build are unknown, not absent.
+        public boolean failed() {
+            return failure != null;
+        }
+
+        /// @return True if the tools manage it ([#MANAGED]).
+        public boolean managed() {
+            return tags.contains(MANAGED);
         }
     }
 }

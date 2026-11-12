@@ -414,10 +414,18 @@ public class BuildRecords {
                                          final Map<String, Object> extra) {
         final WriteGuard guard = guardProvider.get();
         try {
-            if (!guard.tags(pipeline).contains(WriteGuard.MANAGED)) {
+            final WriteGuard.Placement placed = guard.placement(pipeline);
+            if (placed.failed()) {
+                // Logged by the guard: said here, so a later refusal for want of the record isn't a mystery.
+                return Optional.of("Passed, but the record of it couldn't be saved: whether the pipeline is in a "
+                                   + "build couldn't be looked up (" + shorten(placed.failure(), 160) + "). "
+                                   + "Promotion and processing will report it as not done; step it again once "
+                                   + "Stroom can be read.");
+            }
+            if (!placed.managed()) {
                 return Optional.empty();
             }
-            final String build = guard.buildOf(pipeline).orElseThrow(() -> new ToolRefusal(
+            final String build = Optional.ofNullable(placed.build()).orElseThrow(() -> new ToolRefusal(
                     "it is managed by the server but not in a build folder (moved out of the workspace?)"));
             final String saved = fingerprintDigest(codeFingerprint(pipeline.getUuid(), null));
             final String digest = draftCode != null
@@ -449,19 +457,49 @@ public class BuildRecords {
     /// @param kind     One of [#KINDS].
     /// @return Whether the pipeline's saved code is code that passed (on any node).
     public boolean passed(final DocRef pipeline, final String kind) {
-        final WriteGuard guard = guardProvider.get();
-        final List<String> mine = JsonValues.strings(entry(guard.buildOf(pipeline).orElse(null), pipeline.getUuid())
-                .get(kind));
-        if (mine.isEmpty()) {
-            return false;
+        return passedCheck(pipeline, kind).passed();
+    }
+
+    /// Whether the pipeline's saved code is code that passed, telling a lookup that failed (its build, its record or
+    /// its code couldn't be read) from a pipeline outside a build or whose code never passed: a failure is logged
+    /// (WARN, with its cause) and its reason kept, for a refusal to say why.
+    ///
+    /// @param pipeline A pipeline.
+    /// @param kind     One of [#KINDS].
+    /// @return Whether it passed, and why it couldn't be told if the lookup failed (then not passed).
+    public Passed passedCheck(final DocRef pipeline, final String kind) {
+        final WriteGuard.Placement placed = guardProvider.get().placement(pipeline);
+        if (placed.failed()) {
+            // Logged by the guard.
+            return new Passed(false, "its build couldn't be looked up: " + placed.failure());
         }
-        return mine.contains(fingerprintDigest(codeFingerprint(pipeline.getUuid(), null)));
+        if (placed.build() == null) {
+            return Passed.NOT;
+        }
+        try {
+            final List<String> mine = JsonValues.strings(entry(placed.build(), pipeline.getUuid()).get(kind));
+            if (mine.isEmpty()) {
+                return Passed.NOT;
+            }
+            return new Passed(mine.contains(fingerprintDigest(codeFingerprint(pipeline.getUuid(), null))), null);
+        } catch (final RuntimeException e) {
+            final String reason = NullSafe.nonBlankStringElse(e.getMessage(), e.getClass().getSimpleName());
+            LOGGER.warn(() -> LogUtil.message("Unable to tell whether pipeline {} passed {}: {}", pipeline.getUuid(),
+                    kind, reason), e);
+            return new Passed(false, "its build record or code couldn't be read: " + reason);
+        }
     }
 
     /// @param pipeline A pipeline.
     /// @return Whether its saved code has stepped clean.
     public boolean steppedClean(final DocRef pipeline) {
         return passed(pipeline, STEPPED);
+    }
+
+    /// @param pipeline A pipeline.
+    /// @return Whether its saved code has stepped clean, and why it couldn't be told if the lookup failed.
+    public Passed steppedCleanCheck(final DocRef pipeline) {
+        return passedCheck(pipeline, STEPPED);
     }
 
     /// @param pipeline An indexing pipeline.
@@ -767,5 +805,26 @@ public class BuildRecords {
         map.put("mcp-sample-files", "sample_files");
         map.put("mcp-build-", null);
         return Collections.unmodifiableMap(map);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Whether a pipeline's saved code passed a check ([#passedCheck]).
+    ///
+    /// @param passed  True if it passed.
+    /// @param failure Why it couldn't be told (then not passed), or null when the lookup didn't fail.
+    public record Passed(boolean passed, String failure) {
+
+        /// Not passed, nothing failing: outside a build, or no passing record of its code.
+        public static final Passed NOT = new Passed(false, null);
+
+        /// @return The refusal's addition when the lookup failed (` The record couldn't be checked: ...`), else "".
+        public String said() {
+            return failure == null
+                    ? ""
+                    : " (The record couldn't be checked, so this is refused rather than assumed: " + failure + ".)";
+        }
     }
 }

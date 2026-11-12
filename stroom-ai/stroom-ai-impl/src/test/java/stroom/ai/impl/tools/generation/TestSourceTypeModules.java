@@ -164,6 +164,23 @@ class TestSourceTypeModules extends XsltRuns {
     }
 
     @Test
+    void aRecordPassedOverHasItsNumberReadAsAGroupReadsItsOwn() {
+        // Stroom moves to a record's location only when one is read: a record the dispatcher passed over without
+        // reading it left the groups' log lines naming earlier records (seen in the aggregated feed walks). Each
+        // record is read once: by its group, or by the dispatcher when no group takes it.
+        final Modules modules = modules();
+        final XmlElement sheet = XmlParser.parse(modules.dispatcher());
+        final XmlElement otherwise = sheet.iterElements(XSL, "otherwise").stream()
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(otherwise.childElements(XSL, "variable")).singleElement()
+                .satisfies(variable -> assertThat(variable.get("select")).isEqualTo("stroom:record-no()"));
+        assertThat(modules.dispatcher().split("stroom:record-no\\(\\)", -1)).hasSize(2);
+        assertThat(modules.security().split("stroom:record-no\\(\\)", -1)).hasSize(2);
+    }
+
+    @Test
     void theGeneratorTargetsWhicheverUuidsItIsGiven() {
         final Modules modules = modules();
         final TranslationMapping security = securityMapping(commonMapping());

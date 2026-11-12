@@ -36,6 +36,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mockito;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -71,6 +72,33 @@ class TestCreateProcessorFilterTool {
         assertThat(result.isError()).isTrue();
         assertThat(result.text()).contains("no clean step of its current code recorded").contains("step_sample");
         assertThat(w.created).isEmpty();
+    }
+
+    @Test
+    void aCleanStepThatCantBeCheckedIsRefusedSayingWhy() {
+        translationInBuild(true);
+        w.stream(6, "ACME", "Raw Events", null, null);
+        // The lookup of the pipeline's build fails: refused as before, but the reason said, not "not stepped".
+        Mockito.when(w.world.documentAccess.nodeOrThrow(Mockito.any())).thenThrow(new IllegalStateException(
+                "explorer unavailable"));
+
+        final ToolResult result = call(Map.of("stream_ids", List.of(6)));
+
+        assertThat(result.isError()).isTrue();
+        assertThat(result.text()).contains("no clean step of its current code recorded", "couldn't be checked",
+                "explorer unavailable");
+        assertThat(w.created).isEmpty();
+    }
+
+    @Test
+    void aCleanStepCheckThatThrowsIsNotClean() {
+        final BuildRecords records = Mockito.mock(BuildRecords.class);
+        Mockito.when(records.steppedCleanCheck(ProcessingWorld.P1)).thenThrow(new IllegalStateException("boom"));
+
+        final BuildRecords.Passed clean = CreateProcessorFilterTool.steppedClean(records, ProcessingWorld.P1);
+
+        assertThat(clean.passed()).isFalse();
+        assertThat(clean.failure()).isEqualTo("boom");
     }
 
     @ParameterizedTest

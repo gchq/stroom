@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.cef.CefEvents;
 import stroom.ai.impl.tools.draft.LocalCheck;
+import stroom.ai.impl.tools.generation.DispatcherXslt;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
@@ -48,11 +49,13 @@ import stroom.util.shared.ResultPage;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -71,10 +74,23 @@ class CoverageReads {
     /// The most markers of one severity Stroom writes to an Error stream (RecordErrorReceiver): past it, the rest
     /// are counted but not written.
     static final int MAX_WRITTEN_MARKERS = 1_000;
+    /// The most raw streams kept for each new source type the dispatcher logged.
+    static final int NEW_SOURCE_TYPE_STREAMS = 20;
     private static final Pattern LOGGED = Pattern.compile(
             "(?:No event mapping matched record |Kept as Unknown by rule '(.*)': record "
             + "|Caught by rule '(.*)': record )(\\d+)(?: \\((.*)\\))?\\s*$");
     private static final Pattern DATA_NAME = Pattern.compile("Data\\[@Name='([^']+)'\\]");
+    // A dispatcher's INFO line of records passed over: the count, the source type, and the pipeline that handles it
+    // when another pipeline does.
+    private static final Pattern PASSED_OVER = Pattern.compile(Pattern.quote(DispatcherXslt.PASSED_OVER) + "(\\d+)"
+                                                               + Pattern.quote(DispatcherXslt.PASSED_OVER_OF)
+                                                               + "(.+?)(?:" + Pattern.quote(DispatcherXslt.HANDLED_BY)
+                                                               + "(.+?))?\\s*$");
+    // A dispatcher's WARN line of a value no registry row matches: the field, then the value quoted (or no value).
+    private static final Pattern NEW_SOURCE_TYPE = Pattern.compile(Pattern.quote(DispatcherXslt.NEW_SOURCE_TYPE)
+                                                                   + "(\\S+) (?:'(.*)'|\\(no value\\))"
+                                                                   + Pattern.quote(
+            DispatcherXslt.NEW_SOURCE_TYPE_END));
     private static final List<String> COUNTS = List.of("Warning Count", "Error Count", "Fatal Error Count",
             "Info Count");
 
@@ -162,6 +178,7 @@ class CoverageReads {
     LoggedRecords logged(final CallProgress progress, final List<ErrorStream> errors) {
         final List<Logged> found = new ArrayList<>();
         final List<Long> capped = new ArrayList<>();
+        final Dispatched dispatched = new Dispatched();
         int read = 0;
         for (final ErrorStream meta : errors) {
             if (PipelineStepping.timeIsUp()) {
@@ -199,6 +216,8 @@ class CoverageReads {
                     loggedAt.add(NullSafe.string(marker.severity()));
                     found.add(new Logged(meta.parentId(), meta.createMs(), parsed.record(), parsed.rule(),
                             parsed.values(), parsed.caught()));
+                } else {
+                    dispatched.add(meta.parentId(), marker.message());
                 }
             }
             // Seen in the chat 163 review: an Error stream held exactly 1,000 "Kept as Unknown" lines for 2,003
@@ -207,7 +226,7 @@ class CoverageReads {
                 capped.add(meta.parentId());
             }
         }
-        return new LoggedRecords(found, read, capped);
+        return new LoggedRecords(found, read, capped, dispatched);
     }
 
     /// One raw record, as the mapping reads it, for an example.
@@ -495,16 +514,26 @@ class CoverageReads {
     /// @param read    How many of the Error streams were gone through.
     /// @param capped  The raw streams whose Error stream held as many log lines of a severity as Stroom writes
     ///                ([#MAX_WRITTEN_MARKERS]): their counts are short.
-    record LoggedRecords(List<Logged> records, int read, List<Long> capped) {
+    /// @param dispatched What an aggregated feed's dispatcher logged in them: records passed over by source type,
+    ///                   and values no registry row matches.
+    record LoggedRecords(List<Logged> records, int read, List<Long> capped, Dispatched dispatched) {
 
         /// Records logged, none of their Error streams capped.
         ///
         /// @param records The records logged.
         /// @param read    How many of the Error streams were gone through.
         LoggedRecords(final List<Logged> records, final int read) {
-            this(records, read, List.of());
+            this(records, read, List.of(), new Dispatched());
         }
 
+        /// Records logged, with the raw streams whose Error streams were capped; nothing dispatched.
+        ///
+        /// @param records The records logged.
+        /// @param read    How many of the Error streams were gone through.
+        /// @param capped  The raw streams whose Error stream was capped.
+        LoggedRecords(final List<Logged> records, final int read, final List<Long> capped) {
+            this(records, read, capped, new Dispatched());
+        }
     }
 
     /// A kind of Unknown event: its TypeId and the names of the Data it carries.
@@ -524,5 +553,80 @@ class CoverageReads {
                           Map<UnknownKind, Map<String, Object>> examples,
                           Set<Long> raws) {
 
+    }
+
+    /// What an aggregated feed's dispatcher ([DispatcherXslt]) logged in a pipeline's Error streams: the records it
+    /// passed over, by source type (summed over the documents and streams read), the pipeline that handles a source
+    /// type when another pipeline does, and each value of the source type field no registry row matched (a new source
+    /// type), with the raw streams it was met in.
+    static final class Dispatched {
+
+        private final Map<String, Long> passedOver = new TreeMap<>();
+        private final Map<String, String> handledBy = new TreeMap<>();
+        private final Map<String, Set<Long>> newSourceTypes = new LinkedHashMap<>();
+        private String field;
+
+        /// Reads one log line, if it is a dispatcher's; other lines are left alone.
+        ///
+        /// @param raw     The raw stream the line was logged for, or null.
+        /// @param message The line's message.
+        /// @return True if it was a dispatcher's line.
+        boolean add(final Long raw, final String message) {
+            final String text = NullSafe.string(message);
+            final Matcher passed = PASSED_OVER.matcher(text);
+            if (passed.find()) {
+                final String sourceType = passed.group(2).trim();
+                passedOver.merge(sourceType, Long.parseLong(passed.group(1)), Long::sum);
+                if (passed.group(3) != null) {
+                    handledBy.put(sourceType, passed.group(3).trim());
+                }
+                return true;
+            }
+            final Matcher found = NEW_SOURCE_TYPE.matcher(text);
+            if (found.find()) {
+                field = found.group(1);
+                final String value = NullSafe.string(found.group(2));
+                final Set<Long> streams = newSourceTypes.computeIfAbsent(value, ignored -> new TreeSet<>());
+                if (raw != null && streams.size() < NEW_SOURCE_TYPE_STREAMS) {
+                    streams.add(raw);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /// @return Records passed over by source type, those of [DispatcherXslt#PASSED_OVER_NONE] included, and
+        /// those another pipeline handles; sorted by source type.
+        Map<String, Long> passedOver() {
+            return Collections.unmodifiableMap(passedOver);
+        }
+
+        /// @return The pipeline said to handle each source type another pipeline translates (`pipeline 'X'`).
+        Map<String, String> handledBy() {
+            return Collections.unmodifiableMap(handledBy);
+        }
+
+        /// @return Each value no registry row matched ("" for a record with no value), with up to
+        /// [#NEW_SOURCE_TYPE_STREAMS] raw streams it was met in, in the order first met.
+        Map<String, Set<Long>> newSourceTypes() {
+            return Collections.unmodifiableMap(newSourceTypes);
+        }
+
+        /// @return The source type field the new source types' lines named, or null if none was logged.
+        String field() {
+            return field;
+        }
+
+        /// @return True if no dispatcher line was read.
+        boolean isEmpty() {
+            return passedOver.isEmpty() && newSourceTypes.isEmpty();
+        }
+
+        /// @return The raw streams the new source types were met in.
+        Set<Long> rawStreams() {
+            final Set<Long> out = new TreeSet<>();
+            newSourceTypes.values().forEach(out::addAll);
+            return out;
+        }
     }
 }

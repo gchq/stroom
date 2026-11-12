@@ -1959,6 +1959,21 @@ Built in phase 5 (where the design was silent):
 * A build's output feed is its Events stream's feed, or the registry's feed when the stream is in the build's test
   feed.
 
+Built in phase 6 (where the design was silent):
+
+* The agent's guidance is a guide of its own (`guides/aggregated-feeds.md`), with one paragraph in the server
+  instructions pointing to it.
+* `review_coverage` reads the dispatcher's processing lines: passed-over counts per source type (with the registry
+  status), source types handled by another pipeline (`handled_elsewhere`, never `missed`), and values no row matches,
+  which it adds to the build's registry as `new`. The next build does not read them itself.
+* The dispatcher's "New source type" warning is triaged benign, so a later build can step the feed's new data clean;
+  its reason tells the agent to tell the user. Saxon's "imported more than once" warning is exempt from the
+  every-record rule.
+* The dispatcher reads `stroom:record-no()` for each record it passes over, so groups' log lines name their own
+  records (Stroom moves the record location only when it is read).
+* The clean-step record and check say why a lookup failed (logged at WARN, and in the refusal) instead of taking a
+  failure for "not managed" or "not passed".
+
 #### Open decisions
 
 None at present.

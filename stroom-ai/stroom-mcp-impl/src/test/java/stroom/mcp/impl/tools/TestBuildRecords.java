@@ -25,6 +25,7 @@ import stroom.pipeline.shared.XsltDoc;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -109,6 +110,42 @@ class TestBuildRecords {
         // Not one of the build's documents: build_status and promotion don't list it.
         assertThat(world.guard().folderContents(BUILD)).extracting(WriteGuard.BuildDoc::name)
                 .doesNotContain(BuildRecords.NAME);
+    }
+
+    @Test
+    void aLookupThatFailsIsSaidNotTakenForNotInABuild() {
+        records.recordPassed(P, BuildRecords.STEPPED, null, null);
+        assertThat(records.steppedCleanCheck(P)).isEqualTo(new BuildRecords.Passed(true, null));
+        // Outside a build, or never stepped: not passed, and nothing failed.
+        final DocRef prod = world.add(PipelineDoc.TYPE, "Prod", world.folder("System/Feeds").uuid, "prod")
+                .docRef();
+        assertThat(records.steppedCleanCheck(prod)).isEqualTo(BuildRecords.Passed.NOT);
+        assertThat(records.steppedCleanCheck(new DocRef(PipelineDoc.TYPE, "q", "Other")))
+                .isEqualTo(BuildRecords.Passed.NOT);
+
+        // The explorer can't be read: not passed, and why said, rather than "not in a build".
+        Mockito.when(world.documentAccess.nodeOrThrow(Mockito.any())).thenThrow(new IllegalStateException(
+                "explorer unavailable"));
+        final BuildRecords.Passed failed = records.steppedCleanCheck(P);
+        assertThat(failed.passed()).isFalse();
+        assertThat(failed.failure()).contains("explorer unavailable");
+        assertThat(failed.said()).contains("couldn't be checked", "explorer unavailable");
+        assertThat(records.steppedClean(P)).isFalse();
+        assertThat(records.recordPassed(P, BuildRecords.STEPPED, null, null)).hasValueSatisfying(said ->
+                assertThat(said).contains("couldn't be looked up", "explorer unavailable"));
+        assertThat(world.guard().placement(P)).satisfies(placed -> {
+            assertThat(placed.failed()).isTrue();
+            assertThat(placed.tags()).isEmpty();
+        });
+    }
+
+    @Test
+    void aBuildRecordThatCantBeReadIsSaid() {
+        records.recordPassed(P, BuildRecords.STEPPED, null, null);
+        Mockito.when(world.documentAccess.read(Mockito.any(DocRef.class), Mockito.eq(DocumentationDoc.class)))
+                .thenThrow(new IllegalStateException("record unreadable"));
+
+        assertThat(records.steppedCleanCheck(P).failure()).contains("record unreadable");
     }
 
     @Test

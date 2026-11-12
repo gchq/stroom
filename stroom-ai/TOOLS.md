@@ -2421,7 +2421,7 @@ Content · write (makes the build's folder) · checks View; the build folder is 
 (`stroom.ai.builds.workspaceFolder`) as the user, who needs permission to create folders there; sample streams are
 read as the user (View Data, View on their feeds) · changes only its build · chat group build · Classes:
 `StartOnboardingTool`, `WriteGuard`, `BuildPlan`, `BuildRecords`, `SampleProfiling`, `SampleStreamTexts`,
-`SampleTexts`, `PipelineTemplates`, `AgentInstructions`
+`SampleTexts`, `PipelineTemplates`, `AgentInstructions`, `SourceTypeRegistries`
 
 Starts onboarding a new source: profiles every sample, creates (or finds) the build's folder, remembers the build for
 the session, and returns the plan with its first step and the standing instructions (AGENTS docs) for the folders
@@ -2444,25 +2444,43 @@ given. It has two paths:
 * **Arguments**: `source_name` (required; names the build), `samples` (pasted text only: a list, or a map by file
   name; about 10 records and at most 8,000 characters a file), `files` (paths on the user's disk), `stream_ids`,
   `build` (default `onboard-<source name, lower-case, non-alphanumerics as hyphens, up to 40 characters>`),
-  `folders` (promotion destinations, for the standing instructions), `kind` (`events`, `discovery` or `reference`;
-  kept in the build record so the plan's steps follow it from the start).
+  `folders` (promotion destinations, for the standing instructions), `kind` (`events`, `discovery`, `reference` or
+  `assessment`; kept in the build record so the plan's steps follow it from the start), `feed` (with
+  `kind=assessment`).
 * **Returns**: `build`, `folder`, `source`, `profile`, `parser`, `template`, `text_converter`, `plan` (the
   onboarding checklist, or the build's own steps once `kind` is given), `task_list`, `next`, `done: false`,
   `standing_instructions`, `hint`, `tools` (`BuildPlan.HIDDEN_TOOLS`), and `read` notes (a stream cut short, bytes
   its encoding couldn't decode) or `sample_note` (a pasted sample over 20,000 characters, for next time). The files
-  path gives `files` and `then` in place of the profile.
-* **Refuses**: no `source_name`; a `kind` outside the three; no sample at all (`ask the user for every file they
+  path gives `files` and `then` in place of the profile; an assessment gives `kind`, `feed` and the plan in its
+  place.
+* **Refuses**: no `source_name`; a `kind` outside the four; no sample at all (`ask the user for every file they
   have`); a sample that is a file path, an attachment reference, a file a reader cut short, or one text broken up by
   the tool call (`SampleTexts`); stream ids without View Data, or older than their feed (an earlier, deleted feed's
-  streams).
+  streams); an assessment without `feed`, or of a feed another build is open on (below).
 * **Notes**: never call `profile_sample` as well; the description says so. With `kind` or `stream_ids`, `next` comes
   from the build itself (`BuildPlan.nextStep`), as the feed and samples may already exist.
+
+**An assessment** (`kind=assessment feed=<an existing feed>`, no samples, stream ids or files): nothing is
+onboarded. The build records the feed as what it works from, and its plan is the survey (`survey_feed`, which finds
+and confirms a source type field), `source_types` (`record_source_types`, which writes the registry at once, every
+source type `parked`) and promotion, the survey and registry going beside the feed. The user may then onboard a
+scope of it in a build of its own. Given samples, stream ids or files, `kind=assessment` takes the paths above.
+
+**One open build per aggregated feed** (`SourceTypeRegistries.refuseOpenBuild`, decided 2026-11-12), checked by an
+assessment here, by `start_build` for each of its `feeds` and by `record_source_types`: a feed with a registry (beside
+it, or in another build; for `record_source_types`, any feed) is refused while another build is open on it: one
+whose folder holds the feed's registry, or that works from or holds the feed and holds an XSLT or pipeline (made
+and neither promoted nor abandoned; the workspace's `backups` aside). `Feed '<feed>' aggregates source types, and
+build '<other>' is open on it: one build at a time per feed ... Finish build '<other>' (promote_build) or abandon it
+(the user deletes its folder) first, or carry on in it.` So the registry, the dispatchers and the feed's documents
+change in one build at a time, and promotion needs no merging.
 
 ### `start_build`
 
 Content · write (makes the build's folder, records the feeds it works from) · checks View; folder made as the user in
 `stroom.ai.builds.workspaceFolder`; feeds are found among those the user can view · changes only its build · chat
-group build · Classes: `StartBuildTool`, `WriteGuard`, `BuildRecords`, `FeedNames`, `BuildPlan`, `AgentInstructions`
+group build · Classes: `StartBuildTool`, `WriteGuard`, `BuildRecords`, `FeedNames`, `BuildPlan`, `AgentInstructions`,
+`SourceTypeRegistries`
 
 Creates (or finds) the build's workspace folder, where every write tool creates documents, and returns the standing
 instructions that apply to the `feeds` and `folders` given. Any feed given that exists outside the build is recorded
@@ -2473,12 +2491,13 @@ The build is remembered for the session (`BuildPlan.rememberBuild`), as `start_o
 name no build work on it. Found reviewing the tools: it remembered none, so a build started here wasn't the one
 those calls fell back to.
 
-* **Arguments**: `build` (required), `feeds`, `folders`, `kind` (`events`, `discovery`, `reference`; given again it
-  changes the build's).
+* **Arguments**: `build` (required), `feeds`, `folders`, `kind` (`events`, `discovery`, `reference`, `assessment`;
+  given again it changes the build's).
 * **Returns**: `build`, `folder`, `uuid`, `works_from` (existing feeds), `not_found` (names not in this Stroom, "A feed
   this build is to create is fine"), `standing_instructions`, `kind`, `plan` (the onboarding checklist, or
   `BuildPlan.plannedSteps` once the kind is known), `task_list`, `next` (when the plan has one), `done: false`.
-* **Refuses**: no `build`; a `kind` outside the three.
+* **Refuses**: no `build`; a `kind` outside the four; a feed given that aggregates source types while another build
+  is open on it (see `start_onboarding`: one open build per aggregated feed).
 * **Notes**: asks nothing; over `/mcp` it isn't approved as a whole, as it changes only its build.
 
 ### `build_status`
@@ -2493,7 +2512,9 @@ Where a build stands: every step of its plan, each as `done`, `to do` or `not ne
 the steps and `next` are worked out. `before_promotion` lists what `BuildChecks.checks` finds still missing: a
 clean step of each pipeline's current code, documentation, an agreed Elasticsearch template and a verified index for
 indexing pipelines, a Field mapping section that matches the current mapping and XSLT, and an XSLT that is still what
-its mapping generates (`GeneratedDrift`). A check ending `(promotion waits for this)` blocks `promote_build`.
+its mapping generates (`GeneratedDrift`). For an aggregated feed's pipeline, whose dispatcher keeps no mapping,
+each source type group it imports is checked so (`BuildChecks.checkGroups`): its XSLT against its mapping, and the
+documentation's Field mapping section for it. A check ending `(promotion waits for this)` blocks `promote_build`.
 
 * **Arguments**: `build` (required), `full` (default false).
 * **Returns**: by default compact (`BuildStatusTool.compact`): `next`, `before_promotion` and `steps` first, each step
@@ -2513,7 +2534,8 @@ written back and deleted through Stroom's explorer and stores as the user, who a
 destinations; unlocked by Manage Processors (the promoted pipelines' filters are made as the user, only once they
 approve) · confirms itself · chat group build · Classes: `PromoteBuildTool`, `PromotionLayout`, `PromotionProcessing`,
 `DocumentPlaces`, `DocumentWrites`, `WriteGuard`, `BuildRecords`, `BuildChecks`, `Consent`, `IndexingRuns`,
-`OutputFeeds`, `XsltHistory`, `DocumentationVersions`
+`OutputFeeds`, `XsltHistory`, `DocumentationVersions`, `SurveyDocuments`, `SourceTypeGroups`, `DispatcherReferences`,
+`FeedIndexDecisions`
 
 An aggregated feed's indexes (`FeedIndexDecisions.changes`, `apply`): each indexing plan kept in the build is
 matched to its output feed (as `draft_index_mapping` recorded it in the build record's `output_feeds`, else by the
@@ -2524,6 +2546,20 @@ or replaced by a new version); once approved, the registry records each output f
 `backend`, `index_doc`, `fields`, `added_by`, `groups`) and the feed's shared backend and naming where none were
 recorded, and a Lucene index doc beside the feed gains the fields it lacks (`IndexFields.addPromotedLuceneFields`).
 An Elasticsearch index's fields come from its template, the cluster admin's to commit. Nothing is reindexed.
+
+A feed's survey doc and source type registry (`besideFeeds`) go beside the feed when the user chose so at the survey
+(a choice left until now is asked in a form, `Where does the survey doc of '<feed>' go?`, refused without forms
+until `destinations` gives it), or stay in the build (`keep`); a registry with no choice made goes beside the feed.
+An aggregated feed's modules (`modulesBeside`: helpers, common module, source type groups and dispatchers, by their
+`mcp:module` marker) and a group's output feed of its own go beside the feed too, unless given a destination, a
+working copy's (written back) or a new version's (its version folder). The reference data each promoted pipeline
+running a dispatcher lacks for its groups' lookups (`DispatcherReferences.changes`) is listed in the review and the
+approval form as `pipeline_changes` and added once approved, after the moves (forward only: none is removed). After
+approval and before anything is written back or moved (`SourceTypeGroups.toOriginals`), every module of the build
+imports the originals its working copies are written back over (imports rewritten by text, dispatchers regenerated
+from their spec) and the registry names the originals. Not covered: a pipeline made new in a later build running a
+dispatcher's working copy is not pointed back at the original (`copy_pipeline` the feed's pipeline instead), and a
+production pipeline not copied into the build gains no reference data.
 
 Promotes a build out of the workspace in two calls. The first works out the whole layout and returns it without
 changing anything (`status: needs_review`, a `layout` tree from `PromotionLayout.promotionTree`, and a `review_id`,
@@ -2586,19 +2622,21 @@ Every destination is resolved before approval (`WriteGuard.resolveFolder`), and 
 the tree, so a missing folder can't stop a promotion half way. On approval, in order: pending changes are consolidated
 (`consolidateVersions`: one new line in each XSLT's version history, one new row in each doc's version control);
 missing folders are created (one made since the review is used, never twinned; tagged `mcp-generated`, not
-`mcp-managed`); each promoted pipeline has its StreamAppender `feed` property removed where it named a build feed (`OutputFeeds.restoreOutputFeed`: in
-production its Events go into the input's feed); then write-backs, moves (untagged `mcp-managed`, so the agent may no
-longer change them directly), discards and keeps. The build's record entries go, the build folder is removed if empty,
+`mcp-managed`); each promoted pipeline has its StreamAppender `feed` property removed where it named a build feed
+other than a group's output feed of its own (`OutputFeeds.restoreOutputFeed`: in production its Events go into the
+input's feed); then write-backs, moves (untagged `mcp-managed`, so the agent may no longer change them directly),
+discards and keeps. The build's record entries go, the build folder is removed if empty,
 and `PromotionProcessing.createPromotionFilters` makes a feed-wide filter per promoted pipeline, **disabled**, with no
 minimum creation time.
 
 * **Arguments**: `build` (required), `destinations` (object, or JSON text: type or document UUID → explorer path, in
   any form `WriteGuard.folderParts` takes, or `keep`), `reviewed` (a `review_id`), `role_subfolders` (default true).
 * **Returns**: first call `{status: needs_review, build, layout, review_id, warnings?, processing_after_promotion?,
-  hint}`. After approval: `build`, `layout`, `folders` (each with a link to open it), `updated_in_place`, `promoted`
-  (what was done), `promoted_with_warnings`, `processing_filters` (each with `pipeline_link`, and `before_enabling`
-  for an index that must start fresh) with a `next` telling the user to review and enable them, and `user_actions`
-  (buttons: the filters, and disabling an earlier version's enabled filters "if you choose").
+  pipeline_changes?, index_changes?, hint}`. After approval: `build`, `layout`, `folders` (each with a link to open
+  it), `updated_in_place`, `promoted` (what was done), `promoted_with_warnings`, `processing_filters` (each with
+  `pipeline_link`, and `before_enabling` for an index that must start fresh) with a `next` telling the user to review
+  and enable them, and `user_actions` (buttons: the filters, and disabling an earlier version's enabled filters "if
+  you choose").
 * **Refuses**: no `build`; a build with no documents; `destinations` that isn't an object; every document without a
   destination, named in one refusal with the destinations already placed (seen: Delinea SecretServer, one failed call
   per type); a blocking check (`Not promoted: ... once promoted, the pipeline's documentation can only change through a
@@ -2606,8 +2644,10 @@ minimum creation time.
   it. A hand edit to an XSLT only warns, so a user's own edits never hold a promotion up. A working copy whose
   original changed since it was taken, over a client that can't show forms (or when the form would be too large to
   show): `Not promoted: <what changed, the difference and the choice> Promotion needs a client that can show forms to
-  ask the user.`; no choice made in the form: `The user made no choice: ...`. A failure part way
-  is refused with what was done before it and what is still in the build (each step is its own write).
+  ask the user.`; no choice made in the form: `The user made no choice: ...`. A survey doc's place left until
+  promotion, over a client that can't show forms. An aggregated feed's index clash still open (above). A failure part
+  way is refused with what was done before it and what is still in the build (each step is its own write),
+  pointing the modules at the originals or recording the indexes in the registry included (`Not promoted: ...`).
 * **Notes**: `PromotionProcessing.promotionProcessing` decides what each pipeline goes on processing: the feeds and
   stream types of its sample filters (the feed's own stream type, e.g. Raw Reference), or for a build on existing data
   its source feeds, never a test feed (seen in VS Code: the promoted filter selected the test feed). An indexing
@@ -2735,7 +2775,8 @@ kept still reads (see `SurveyDoc` under "Sample analysis").
   `max_parts_per_stream` (1 to 20; default every part, up to 20, for `stream_ids` and a feed's last streams, which
   are read whole, else 3: seen in testing, a feed's latest streams uploaded again as one stream of five parts was
   surveyed through three), `max_records_per_stream` (10 to 10,000), `examples_per_shape` (1 to 10,
-  default 2), `build`.
+  default 2), `build`; as the user said: `kind_field`, `read_deeper` and `promote_survey` (no forms), `accept_as_is`,
+  `source_type_field` (`none` for one source), `aggregated` (below).
 * **Returns**: `feed`, `format`, `time_range`, `streams_read`, `records_read`, `records_in` (an XML document's root
   with its namespace, which the examples inherit), `saturated`, `coverage`, `per_stream` (each stream's records,
   parts, `head_only`, `new_shapes`, `windows`, and any undecodable bytes), `quoted_newlines`, `kinds` (each field
@@ -2744,7 +2785,11 @@ kept still reads (see `SurveyDoc` under "Sample analysis").
   `signature`, `new`, `count`, `share_percent`, `streams`, `example` up to 500 characters, `more_examples` (up to
   two more records whose text differs, 300 characters each, for the first 20 shapes), `locations`), `new_shapes`,
   `locations` (stream, part, record, shape, for `step_records`; only new shapes once some are known), `hint`. With a
-  build, the survey doc's details too.
+  build, the survey doc's details too, and on an aggregated feed `source_types` (`field`, `by`,
+  `records_read_by_value` (the 20 commonest), `registry`: the call that writes it; or `aggregated: false`) and, with
+  a scope, `scope` (`build`, `source_types`, `share_percent`, `records_passed_over`, `note`) and `read_again`. Or
+  `status: needs_kind_field` or `needs_source_type_field` (no forms; nothing surveyed), or `needs_user`
+  (`accept_as_is` without forms).
 * **Refuses**: no View Data; neither `feed` nor `stream_ids`; an argument out of range (`<name> must be a whole number
   from <min> to <max>, not '<value>'`); a stream id that doesn't exist; no streams of the type in the feed; nothing
   readable in the streams picked; the fewer-streams form declined.
@@ -2821,18 +2866,27 @@ rows it was chosen by (`SourceTypeScope`), and the build's tools then read the f
 classify_kinds, draft_translation_mapping, build_translation_xslt's sample check, review_coverage). A scope that adds
 source types some stream the survey read wasn't read for makes the survey not covered again (`coverage_restarted`):
 survey_feed reads those streams again for them. An assessment writes the registry at once, every source type
-parked. The registry, `<feed> source types` (`SourceTypeRegistry`), has an account
+parked, with no review or form. The registry, `<feed> source types` (`SourceTypeRegistry`), has an account
 of the feed, a table a row a source type, and a machine block `<!-- stroom-mcp source types {...} -->` holding the
-field, the feed's Environment and default System Name, and each row's match, System Name, status, decision, group,
-pipeline, output feed and profile.
+field, the feed's Environment and default System Name (as given, else the registry's, else the build record's
+`system`), the feed's `modules` (helpers, common module), its shared `indexing` and `indexes` (`draft_index_mapping`,
+`promote_build`), the build's `scope`, and each row's match, System Name, status, decision, group, `group_xslt`,
+pipeline, output feed, `references` and profile. A registry recorded again (a later build) carries all of these
+over. The review is bound to the table (`Consent.wasReviewed`): other rows, or changed profiles, show it again.
 
-* **Arguments**: `feed` (required), `build`, `reviewed`, `rows`, `patterns` (no forms), `scope` and `reason` (no
-  forms), `dropped`, `drop_reason`, `system_name`, `system_names` (by source type), `environment`.
-* **Returns**: `needs_review` (`table`, `review_id`, `rows`), `needs_user` (the rows proposed, or the source types
-  offered), or `feed`, `field`, `registry`, `rows` (each `name`, `match`, `status`, `reason`, `records_read`,
-  `share_percent`, `suggested_category`, `confidence`), `table`, `scope`, `coverage_restarted`, `hint`, `next`.
-* **Refuses**: no source type field known (`survey_feed` first); no values counted; rows that can't be used; an
-  answer that is neither; a scope naming a source type not offered; `dropped` without `drop_reason`.
+* **Arguments**: `feed` (required), `build`, `reviewed`, `rows` (the `rows` a `needs_review` reply gave back, or as
+  the user says), `patterns` (no forms: `use` or `exact`), `scope` and `reason` (no forms), `dropped`, `drop_reason`,
+  `system_name`, `system_names` (by source type), `environment`.
+* **Returns**: `status: needs_review` (`feed`, `field`, `table`, `review_id`, `rows`, `hint`); `status: needs_user`
+  with `proposed_rows` (each `name`, `match`, `values`, `records`: the patterns, without forms) or `offered` (the
+  source types for the scope, without forms); or `feed`, `field`, `registry` (`type`, `uuid`, `name`), `rows` (each
+  `name`, `match`, `status`, `reason`, `records_read`, `share_percent`, `suggested_category`, `confidence`), `table`,
+  `scope`, `coverage_restarted`, `hint`, `next`.
+* **Refuses**: no `feed`; another build open on the feed (one open build per aggregated feed, under
+  `start_onboarding`); no source type field known (`survey_feed` first); no values counted; a row that is neither
+  `name = value` nor `name ~ ^pattern`; rows that can't be used (`These rows can't be used: ...`); a patterns answer
+  that is neither; a scope naming a source type not offered; `dropped` without `drop_reason`, or naming no source
+  type of the registry.
 
 ### `set_shape_handling`
 
@@ -2862,7 +2916,7 @@ record clean when it produces no Event (and flags it if it does). The mapping st
 
 Content · write · checks View and Edit; the feed is created in the build folder as the user, who needs Create there
 and Edit on the feed · confirms itself · chat group build · Classes: `CreateFeedTool`, `BuildFeeds`, `WriteGuard`,
-`BuildRecords`, `Consent`, `BuildPlan`, `OutputFeeds`
+`BuildRecords`, `Consent`, `BuildPlan`, `OutputFeeds`, `SourceTypeGroups`
 
 Creates a feed in the build folder under the name the agent proposes; the user confirms or corrects the name in the
 form itself (`Consent.Request.withEditable`), so the agent should call this rather than ask for the name in the chat.
@@ -2879,17 +2933,26 @@ sample files the user chose to use instead of that feed's data, kept in the buil
 samples for this feed only), or `test_feed=true` (or `stream_type` Events) for the test feed its Events are written
 to, under the user's name (`BuildFeeds.makeTestFeed`, the source feed's settings; nothing is uploaded to it).
 
+**A source type group's output feed** (`group`; `SourceTypeGroups.checkOwnOutputFeed`, `outputFeed`): for an
+aggregated feed's group the user placed in a pipeline of its own with an output feed of its own (asked when
+`build_translation_xslt group=` saved it), an Events feed (whatever `stream_type` says) made in the build under the
+name the user confirms in the form, in a build on existing feeds too. The build record marks it the group's output
+(`BuildFeeds.GROUP_OUTPUT`), and the registry's rows for the group name it as their `output_feed`. It is no test
+feed: `create_pipeline` sets the group's pipeline's stream appender to it, and promotion moves it beside the feed
+and leaves the appender pointing at it.
+
 * **Arguments**: `build`, `name` (required), `encoding` (default UTF-8), `stream_type` (default Raw Events),
-  `description`, `user_samples`, `test_feed`.
+  `description`, `user_samples`, `test_feed`, `group`.
 * **Returns**: `type`, `uuid`, `name`, `stream_type`, `encoding`, `link`, a button to open the feed (upload sample files
   on its Data tab), `large_files` (how sample files get there: `upload_sample files=`, or the Data tab's Upload when
   there's no terminal), `note` when Stroom still holds streams of an earlier, deleted feed of the name (the UI doesn't
   show them; they are never the build's samples), and `next`. A test feed gives `test_feed: true`, `works_from` and a
-  hint.
+  hint; a group's output feed `group`, `source_types` (the rows now naming it) and a hint.
 * **Refuses**: a missing `build` or `name`; a name taken elsewhere or a case twin; on existing data without
   `user_samples` or `test_feed` (`BuildFeeds.worksFromMessage`; asked for by the user after an agent onboarding an
-  existing feed uploaded workspace files instead); `test_feed` in a build that works from no existing feed; the form
-  declined.
+  existing feed uploaded workspace files instead); `test_feed` in a build that works from no existing feed; `group`
+  in a build with no source type registry, naming no group of it, or a group in the feed's pipeline (`only a group
+  with a pipeline of its own has an output feed of its own`); the form declined.
 * **Notes**: up to 50 of a name's earlier streams are looked at for the note.
 
 ### `upload_sample`
@@ -3011,7 +3074,8 @@ sample streams through it (`SampleStreamTexts.inScope`): each text split into it
 types left out as they are read (by the source type field and the scope's rows, the first match winning, never by a
 pattern over the text), the rest written back in the text's format; a text of none of the scope's records is left
 out, one that can't be read record by record (XML, text) kept whole and said so, and a sample of none refused. The
-result's `scope` says what was kept and left out. So the kinds listed and classified are the scope's.
+result's `scope` says what was kept and left out (`build`, `source_types`, `field`, `records_in_scope`,
+`records_left_out` by source type, `note`). So the kinds listed and classified are the scope's.
 
 * **Arguments**: `build` (required); `source` (the source's name; the notes' when the build has them); `stream_ids`
   (the build's newest five raw sample streams when left out); `splitter` (the build's saved Data Splitter when left
@@ -3367,6 +3431,13 @@ Shared behaviour:
   DNS lookup the saved XSLT doesn't call is put to the user first (`LookupAgreements`, see the safety rules below),
   because stepping runs the XSLT on Stroom and so makes the lookup. `compare_outputs` makes only the safety part of
   this check (`PipelineStepping.refuseUnsafeDrafts`).
+* **A source type group's draft** (`PipelineStepping.withGroupsInlined`, in `step_pipeline`, `step_sample`,
+  `step_records` and `build_translation_xslt`'s field-mapping preview): draft code marked as a group's module
+  (`<mcp:module kind="group">`), given for the element running an aggregated feed's dispatcher, is stepped through a
+  temporary dispatcher generated from the spec kept with the saved one: the draft inlined in place of the group's
+  import, its own imports hoisted first, and its source types routed to it, a new group's too. Refused when the
+  element's saved XSLT is no dispatcher the tools generated, or the temporary one doesn't generate. `compare_outputs`
+  and `summarise_fix` step a draft as given; `evaluate_pipeline` steps saved code only.
 * **Mistyped properties.** A pipeline with a property Stroom can't take as written is refused before any step,
   naming it (`SteppedPipeline.refuseMistyped`): a boolean or integer property is checked against the type Stroom's
   element registry declares (`ElementRegistryFactory`). `jsonParser.addRootObject` written as the string `'false'`
@@ -3453,14 +3524,11 @@ walked in one session, and returns one verdict for the whole sample: error group
 affect, and per-record counts. A blocking group means fix and step again. A clean run of saved code is recorded for
 promotion and returns the plan's `next`.
 
-* **Arguments**: `pipeline_uuid`, `stream_ids` (required, at least one); `draft_code` (a source type group's module
-  given for the element running the feed's dispatcher is stepped through a temporary dispatcher, generated from the
-  spec kept with the saved one: the draft inlined in place of the group's import, its own imports hoisted first, and
-  its source types routed to it, a new group's too; `PipelineStepping.withGroupsInlined`; so in step_records and
-  step_pipeline); `max_records` (at least 1; at most 500, the default); `records_per_stream` (at least 1). With neither `max_records` nor
-  `records_per_stream`, the first 50 records of each stream are stepped (`StepSampleTool.PER_STREAM`): sample files
-  of 985 records each were stepped a record per request on a remote Stroom, and the head of each stream already
-  says whether the translation is right; processing reads the rest.
+* **Arguments**: `pipeline_uuid`, `stream_ids` (required, at least one); `draft_code` (a source type group's draft
+  through a temporary dispatcher, above); `max_records` (at least 1; at most 500, the default); `records_per_stream`
+  (at least 1). With neither `max_records` nor `records_per_stream`, the first 50 records of each stream are stepped
+  (`StepSampleTool.PER_STREAM`): sample files of 985 records each were stepped a record per request on a remote
+  Stroom, and the head of each stream already says whether the translation is right; processing reads the rest.
 * **Returns**: `pipeline`, `records_stepped`, `records_with_errors`, `draft_code_used`, the triage (`verdict`,
   `groups_by_class`, `groups`, each group with up to 20 `records`, keys such as `7:3` or `7:1:3` past the first
   part), `first_record_output` (each default output element's output for the first record, up to 5,000
@@ -3816,7 +3884,7 @@ Shared behaviour:
 
 Content · write · checks View (or Use) on the template and the documents it names, Create in the build folder, Edit
 on the new pipeline · confirms itself · Classes: `CreatePipelineTool`, `PipelineWrites`, `PipelineShapes`,
-`PipelineTemplates`, `WriteGuard`, `Consent`, `BuildPlan`, `BuildRecords`
+`PipelineTemplates`, `WriteGuard`, `Consent`, `BuildPlan`, `BuildRecords`, `SourceTypeGroups`
 
 Creates a pipeline in the build as a child of a template, setting only what the child supplies (the translation
 XSLT, the parser's text converter, open properties). It keeps the template's structure and defaults, including
@@ -3847,9 +3915,10 @@ Making it, in order (`fromTemplate`):
    `accept_parser_mismatch=true` when the user insists.
 4. **Open slots filled from the build** (`PipelineWrites.openSlots`, `fillOpenSlots`): the parser's text converter
    (DSParser, XMLFragmentParser, CombinedParser) and the first XSLT step's `xslt`, where the template leaves them
-   unset. Each is filled with the build's only document of that type (XSLTs with a kept mapping preferred); several
-   candidates are refused (`pass the right one in set_properties`). A converter slot with none in the build is
-   refused (`build_data_splitter ... or save_text_converter`); an XSLT slot with none is left open, reported in
+   unset. Each is filled with the build's only document of that type (an aggregated feed's dispatchers first, then
+   XSLTs with a kept mapping); several candidates are refused, naming each (`pass the right one in set_properties`): a
+   build with two dispatchers (the feed's and a group's own) is never guessed. A converter slot with none in the build
+   is refused (`build_data_splitter ... or save_text_converter`); an XSLT slot with none is left open, reported in
    `still_to_set` with a hint to save the XSLT and `update_pipeline`.
 5. **The build's own documents** (`PipelineWrites.ownDocuments`): an XSLT or text converter set on the child must be
    one this build made (tagged managed, in this build). Another source's or a library's is refused: a new
@@ -3858,6 +3927,16 @@ Making it, in order (`fromTemplate`):
 6. References attached; the confirmation form; then `WriteGuard.createFilled` makes and fills the pipeline in one
    go, deleting it again if filling fails, so no empty pipeline is left in the build. The build's XSLT and text
    converter the pipeline runs are moved into its role subfolder (Events or Records) with it.
+
+**An aggregated feed's pipeline** (`CreatePipelineTool.aggregated`, `SourceTypeGroups.routedBy`, `runBy`): its one
+XSLT is a dispatcher the build generated (`<feed> dispatcher`, or `<feed> <group> dispatcher` for a group with a
+pipeline of its own; told by the spec kept in its description, `PipelineWrites.isDispatcher`). An XSLT property set
+to a group, common or helpers module (by its `mcp:module` marker) is refused: the dispatcher imports them. Where the
+groups the dispatcher routes have an output feed of their own, every StreamAppender's `feed` is set to it (said in
+`filled_from_build`); one not made yet is refused (`create_feed ... stream_type=Events group=<the group> first`).
+Without `references`, the reference data the groups look up (kept in the registry by `build_translation_xslt
+references=`) is loaded. Once made, the registry's rows the dispatcher routes name the pipeline, and every other
+dispatcher is regenerated to log their records as handled by it.
 
 **A production pipeline's next version** (`version_of`): a child of that pipeline's template (unless `template` is
 given), with the build's new XSLT (its translation written anew; to keep the XSLT and change only parts, use
@@ -3889,7 +3968,8 @@ inherits from no template is refused (copy it instead).
   session's current build); `set_properties`; `description` (kept on the pipeline doc); `replace_parser`;
   `references`; `reuse_existing_docs`; `accept_parser_mismatch`; `standalone` (`kafka` | `events`); `version_of`;
   `keep_references` (only with `version_of`).
-* **Returns**: `type`, `uuid`, `name`, `template`, `version_of`, `set_in_<previous>_not_here`, `sets`,
+* **Returns**: `type`, `uuid`, `name`, `template`, `source_types` and `dispatcher` (an aggregated feed's pipeline:
+  the rows now naming it, and the dispatcher's UUID), `version_of`, `set_in_<previous>_not_here`, `sets`,
   `filled_from_build`, `still_to_set` with `hint`, `reference_data`, and `next`; a standalone pipeline adds
   `note` (what to tell the user).
 * **Refuses**: no `name`; no template; the refusals in the steps above; `keep_references` without `version_of`;
@@ -3900,7 +3980,7 @@ inherits from no template is refused (copy it instead).
 
 Content · write · checks View on the pipeline and the XSLTs and text converters it owns, Create in the build
 folder, Edit on the copies · confirms itself · Classes: `CopyPipelineTool`, `PipelineWrites`, `PipelineTemplates`,
-`WriteGuard`, `BuildRecords`, `Consent`
+`WriteGuard`, `BuildRecords`, `Consent`, `SourceTypeGroups`
 
 Copies an existing source's pipeline into the build with exactly the original's structure and settings: the same
 parent template, the same element changes (removed or re-linked steps, extra XSLT steps), reference loaders and
@@ -3910,12 +3990,23 @@ them; other documents (shared libraries, indexes, clusters) stay shared. The use
 first. It is the route for a new version that keeps the XSLT and changes parts, and for a working copy of a
 production pipeline.
 
+An aggregated feed's pipeline (`SourceTypeGroups.runBy`, `newVersion`): an owned document the build has copied
+already (the feed's dispatcher, made a working copy when a group was saved over promoted modules; `copy_of`, or
+`version_of` for a new version) is run by the copy, not copied again. The groups, common and helpers modules the
+dispatcher imports aren't the pipeline's own, so stay shared (a group the build changes is a working copy of its own,
+made by `build_translation_xslt`). A working copy names the pipeline it copies in the registry's rows its dispatcher
+routes. A new version (`working_copy=false`; the placement `build_translation_xslt` calls `new_version`): the rows
+the predecessor's dispatcher routes, and a group placed in the new version, are the copy's dispatcher's, named for
+the new version, and every dispatcher is regenerated from the registry (`dispatchers` in the result); the current
+pipeline runs on unchanged until the user retires it.
+
 * **Arguments**: `build`, `source_uuid`, `new_name` (required); `rename` (text replacements for the copied
   documents' names, e.g. `{"V1.2": "V1.3"}`; JSON text or a single-quoted literal is read too:
   `PipelineArguments.textMap`); `set_properties` (changes on the copy, e.g. a new `indexName`); `working_copy` (true
   when promotion will write the copy back over the original; false, the default, for a new version promoted
   alongside it).
-* **Returns**: `type`, `uuid`, `name`, `copy_of`, `working_copy`, `copied_documents`, and `next`.
+* **Returns**: `type`, `uuid`, `name`, `copy_of`, `working_copy`, `copied_documents`, `dispatchers` (a new version
+  of an aggregated feed's pipeline: each saved, `uuid`, `name`, `changed`, `groups`), and `next`.
 * **Refuses**: a missing required argument; a template (`PipelineTemplates.templateReason`: `... is a template
   (...): templates are inherited, not copied ...`, pointing at `create_pipeline`); an owned document the user can't
   read; the user declining the form, or no form.
@@ -4093,7 +4184,8 @@ sample streams through it (`SampleStreamTexts.inScope`): each text split into it
 types left out as they are read (by the source type field and the scope's rows, the first match winning, never by a
 pattern over the text), the rest written back in the text's format; a text of none of the scope's records is left
 out, one that can't be read record by record (XML, text) kept whole and said so, and a sample of none refused. The
-result's `scope` says what was kept and left out. So the rules drafted are the scope's; the plan's call gives
+result's `scope` says what was kept and left out (`build`, `source_types`, `field`, `records_in_scope`,
+`records_left_out` by source type, `note`). So the rules drafted are the scope's; the plan's call gives
 `build` for such a build.
 
 The user chooses the event-logging version first (`EventVersions.target`), before anything is read. The draft is
@@ -4216,7 +4308,8 @@ sample streams through it (`SampleStreamTexts.inScope`): each text split into it
 types left out as they are read (by the source type field and the scope's rows, the first match winning, never by a
 pattern over the text), the rest written back in the text's format; a text of none of the scope's records is left
 out, one that can't be read record by record (XML, text) kept whole and said so, and a sample of none refused. The
-result's `scope` says what was kept and left out. So the sample check is of the scope's records, the survey's
+result's `scope` says what was kept and left out (`build`, `source_types`, `field`, `records_in_scope`,
+`records_left_out` by source type, `note`). So the sample check is of the scope's records, the survey's
 records further in too.
 
 **Source type groups** (`group`, `source_types`; `SourceTypeGroups`, `SourceTypeModule`, `DispatcherXslt`,
@@ -4232,19 +4325,47 @@ default System Name; the System part takes each group's System Name (its source 
 a parameter. A later group's entries the same as the common module's (its System Name and Environment aside) are
 left to it; others are its own, said in `group.notes`. Its source types are `source_types`, else the build's scope's;
 the sample check reads theirs alone. Saving: the helpers (made, or written again when this generator writes them
-otherwise) and common module first, then the group importing them by UUID, then the dispatcher (`<feed> dispatcher`,
-the pipeline's one XSLT, generated from the registry with every group of the build, its spec kept in its
-description), and the registry's rows for the group's source types set `translated` with `group` and `group_xslt`.
+otherwise) and common module first, then the group importing them by UUID, then every dispatcher regenerated from
+the registry (`<feed> dispatcher`, the feed's pipeline's one XSLT, and `<feed> <group> dispatcher` for a group in a
+pipeline of its own; each routing its groups, its spec kept in its description), and the registry's rows for the
+group's source types set `translated` with `group` and `group_xslt`.
 A group XSLT's `uuid` alone regenerates it as the group it is (its kept mapping holds `module`). The dispatcher reads
 the source type field once a record, tries the registry's rows in order (`=` a value, `matches()` an anchored
 pattern, checked in Java's and XPath's dialects alike), and applies the group's mode; any other record is passed over
-and counted: `Passed over N record(s) of source type X` (INFO) at the end of each document Stroom hands it (a stream
-may be several), `New source type: no registry row matches ...` (WARN, once a stream a value). A group's held message
-that doesn't parse (a truncated SOAP body) is logged (WARN) a record each, `<mode>: <field> did not parse as XML
-...`; its event is still written. All three are triaged benign or review, never blocking. `group` in the result:
-`name`, `mode`, `source_types`, `system_name`, `common_parts`, `notes`, and once saved `xslt`, `helpers`, `common`,
-`dispatcher` (each `uuid`, `name`, `changed`) and `registry`. Imports in the build resolve to the build's own
-documents; regenerating the dispatcher against promoted originals at promotion is not built yet.
+and counted (its record's number read, as a group reads it for its own records: Stroom moves to a record's location
+only when one is read, so without it the groups' log lines named earlier records): `Passed over N record(s) of source
+type X` (INFO) at the end of each document Stroom hands it (a stream may be several), `New source type: no registry
+row matches ...` (WARN, once a stream a value). A group's held message that doesn't parse (a truncated SOAP body) is
+logged (WARN) a record each, `<mode>: <field> did not parse as XML ...`; its event is still written. All three are
+triaged benign, never holding a clean step (a new source type is the user's to place, through review_coverage and a
+later build, not a fault of the pipeline); so is Saxon's warning that a module (the common or helpers) is imported
+more than once, though stepping attaches it to every record. Rows another pipeline's
+dispatcher routes are logged (INFO, never a warning) as handled by that pipeline, named once `create_pipeline` names
+it.
+
+**The group's pipeline** (`placement`, `SourceTypeGroups.dispatch`). Saving a new group (none of its rows placed or
+translated yet) asks the user in a form before anything is saved: "Which pipeline handles group 'x'?" (the feed's
+pipeline, shared by its groups, the default; a pipeline of its own; or, only where the feed's pipeline is in
+production, a new version of it) and "Where do its Events go?" (the feed's Events, or an output feed of its own:
+a pipeline of its own only). Without forms the call is refused, nothing saved, until `pipeline=shared|own|new_version`
+(and `own_output_feed`) says the user's answer. The rows record it (`pipeline`: `own`, its `dispatcher`, its `name`,
+`new_version`; `output_feed`, empty until `create_feed group=` makes it); `group.group_next` says what follows: for
+`own`, `create_feed group=` first where it has an output feed, then `create_pipeline` with its dispatcher (`<feed>
+<group> dispatcher`); for `new_version`, `copy_pipeline` of the feed's pipeline (the promoted dispatcher is
+regenerated in the copy, not before). `references` (as `create_pipeline` takes them) are kept on the group's rows: the
+pipeline running the group loads every routed group's (`create_pipeline`, and promotion).
+
+**A promoted feed** (`promotedGroupCopy`, `SourceTypeGroups.workingCopy`): a later build changing a promoted group,
+the helpers (when this generator writes them otherwise) or a dispatcher works on a working copy in the build's Events
+folder (the common module, once made, is kept as it is); every promoted module importing a copied one is copied too,
+and the build's modules import the copies, so stepping and processing in the build run them. Imports are rewritten
+by text and dispatchers regenerated from their spec, without `check_xslt`. At promotion the modules are pointed back
+at the originals before the copies are written back (`promote_build`).
+
+`group` in the result: `name`, `mode`, `source_types`, `system_name`, `common_parts`, `notes`, and once saved
+`xslt`, `helpers`, `common` (each `uuid`, `name`, `changed`, `promoted` for one beside the feed), `dispatcher` (the
+group's pipeline's, as saved), `dispatchers` (every one saved, each with the `groups` it routes), `pipeline` (the
+rows' placement), `registry` (`uuid`, `name`, `translated`) and `group_next`.
 
 * **Arguments**: `mapping` or `changes` (objects, or JSON text); `schema_version` (a version, or the UUID of the
   XML schema document the user chose where several hold it); `feeds` (for standing
@@ -4254,7 +4375,8 @@ documents; regenerating the dispatcher against promoted originals at promotion i
   `uuid`; `change` (the
   version history line); `include_xslt` (also return the code when saving); `reviewed` (a `review_id`);
   `field_mapping`, `pipeline_uuid`, `max_records` (1 to 1000, default 50); `discard_hand_edit`,
-  `hand_edit_choices`; `group` and `source_types` (a source type group, above).
+  `hand_edit_choices`; `group` and `source_types` (a source type group, above); with `group`, `pipeline` and
+  `own_output_feed` (no forms) and `references`.
 * **Returns**: the generator's result (`ok`, `xslt` unless saved, `problems`, `warnings` grouped, `events`),
   `schema_version` (and `schema_version_settled`), `required_imports`, `sample_check` (`records`, `problems`,
   `warnings`, `fields_seen`, `not_checked`, `kept_unknown`, `note`), `changes_applied`, `changes_applied_to`,
@@ -4267,7 +4389,10 @@ documents; regenerating the dispatcher against promoted originals at promotion i
   a mapping that doesn't validate (each error with where it is and the value given, a whole example mapping when
   its shape is wrong: `MappingProblems`); `max_records` out of range; a `splitter` that isn't a spec; saving with
   `build` but no `name`; keeping a rule Unknown with no sample records to show (see below); and every save
-  refusal of save_xslt.
+  refusal of save_xslt. With `group`: no source type registry in the build; `source_types` not the registry's, or
+  none and no scope; a name whose mode is the common module's or dispatcher's; a new group saved with no form and no
+  `pipeline`, or a `pipeline` that isn't a choice here (`new_version` with no pipeline in production); a module or
+  dispatcher that doesn't generate.
 * **Notes**:
   * **Confirmed kinds translated otherwise** (`agreeConfirmedChanged`, before the Unknown review; decided with the
     user after the chat 163 review, where confirmed logoffs went to Unknown and a confirmed Action Other became
@@ -4815,6 +4940,19 @@ a `new` source type: added to the build's registry as a `new` row (decided by `r
 copy when the registry is beside the feed, written back at promotion) for the user to place with
 record_source_types. Outside a build nothing is written (only a build changes the registry): they are said.
 
+A kind of a source type another pipeline translates (a translated row placed in a pipeline of another name, not
+waiting for a new version, or one the dispatcher logged as handled by another pipeline) is neither missed nor passed
+over: it is `handled_elsewhere`, with `handled_by`. The dispatcher's own lines in the Error streams are read as well
+(`CoverageReads.Dispatched`): the INFO `Passed over N record(s) of source type X` lines summed over every document
+and stream read (`, handled by pipeline '...'` marking another pipeline's), and the WARN `New source type: no
+registry row matches ...` lines with up to 20 raw streams each. They make `source_types.processing`: `passed_over`
+(by source type: `records`, and its registry `status`, `new` for records no row matched), `handled_elsewhere` (by
+source type: `pipeline`, `records` passed over here) and `new_source_types` (by value: `raw_streams`, and
+`now_in_registry_as` once a row matches it). Each warned value no row matches yet is added to the build's registry
+as `new`, as those met in the kinds are, so a second call adds nothing again; `tell_user` says the counts. With no
+survey state and no kind missed, the feed is told from the raw streams the dispatcher logged for, and the field from
+its warnings.
+
 A feed of hundreds of thousands of streams is read in bounded batches by Id (`max_streams` a call,
 `continue_from` carries on; clean streams skipped where Stroom counts them), and what is kept is bounded: counts
 per kind, two examples a kind, up to 50 raw streams a kind, the affected streams' count, Id range and time range.
@@ -4843,8 +4981,8 @@ is reported with its error, not allowed to hide the others.
   `counts_capped` (`raw_streams`, `count`, `note`) when an Error stream held as many log lines of a severity as
   Stroom writes (`CoverageReads.MAX_WRITTEN_MARKERS`, 1,000, from `RecordErrorReceiver`), so its counts are short;
   `follow_on` and `follow_on_events`; on an aggregated feed `source_types` (`field`, `scope` with its share,
-  `passed_over` records by source type, `new_source_types`, `registry`) and `passed_over` (the kinds outside the
-  scope). Examples (`holds`) are read with the pipeline's own Data Splitter
+  `passed_over` records by source type, `processing`, `new_source_types`, `registry`), `passed_over` (the kinds
+  outside the scope) and `handled_elsewhere` (another pipeline's kinds). Examples (`holds`) are read with the pipeline's own Data Splitter
   (`KeptMappings.dataSplitter`), as processing read them, else a spec inferred from the stream.
 * **Refuses**: no `pipeline_uuid`; a pipeline that can't be read; one that has processed nothing (no Error and no
   Events streams, on a first call); `max_streams` out of range; a cancelled call; no Stepping permission where it
@@ -4944,8 +5082,10 @@ asked again.
   `profile` (its YAML as JSON: description, structure, field_map, reference_index_docs), `reference_fields` (each
   reference index doc's fields and Stroom types, up to 500 each; one Stroom can't list says why), and for `ecs` the
   schema's `version` and `field_sets`, plus `ecs_fields` when asked.
-* **Refuses**: a `backend` other than the two (`backend is 'lucene' or 'elasticsearch', not '...'`); an unknown
-  profile (`No convention profile 'x'. Profiles: ...`).
+* **Refuses**: a `backend` other than the two (`backend is 'lucene' or 'elasticsearch', not '...'`); on an
+  aggregated feed, a `backend` other than the shared one without `change_shared=true` (`Feed '<feed>' indexes into
+  <backend>: a decision its scoped builds share ...`); an unknown profile (`No convention profile 'x'. Profiles:
+  ...`).
 * **Notes**: there is no configured default convention: without a name the choice is always the user's. The ECS
   files and profiles are bundled with the agent knowledge (`AgentKnowledge.conventionsFile`). `conventions(...)` is
   also called by `draft_index_mapping`, which puts the same choice to the user when asked to draft for
@@ -5030,7 +5170,9 @@ stream (records:2) must be drafted with `input: delimited`, which reads each dat
   `meta`, `drop`, `unpack_json`, `ignore_above` 1024, `total_fields_limit` 2000, `stand_ins`); `without_example`
   (Elasticsearch, user has no example); `replaces` (the old indexing XSLT's uuid, or its pipeline's);
   `custom_namespaces` (ECS); `changes` (amend instead of drafting); `pipeline_uuid` (with `changes`, the pipeline
-  whose kept plan to amend). `plan`, `discovery`, `extra_fields` and `shared` may be given as JSON text.
+  whose kept plan to amend); `change_shared` (only when the user asks: an aggregated feed's output feed in another
+  index or backend than the shared one, below). `plan`, `discovery`, `extra_fields` and `shared` may be given as JSON
+  text.
 * **Returns**: `status: needs_showing` and `table` first (`IndexPlans.withShownPlan`): the plan's fields as a
   Markdown table (`#`, field, type, source path; an object field's parts a row each), which Stroom AI's chat shows
   the user itself after the call (the model's copy says it was shown, `ToolOutputs.forModel`) and another client's
@@ -5095,10 +5237,11 @@ stream (records:2) must be drafted with `input: delimited`, which reads each dat
   otherwise (a field's meaning: its description where both have one, else what it reads), is a clash: all of them
   put to the user in one form of short plain text, each with its two answers (another type: rename this build's
   field to `<name>_<group>`, or a new index version `<index>-v2` with every group's fields; another meaning: one
-  field read from both paths, or renamed). Without forms they come back as `index_clashes` with how to apply them
-  by `changes=`. The reply's `feed_index` says the output feed, its groups, the index, `inherited_fields`,
-  `clashes_resolved` and where it is kept. Amending (`changes=`) is checked the same way. The `backend` is the
-  feed's shared one (refused otherwise, as `get_field_conventions` refuses it).
+  field read from both paths, or renamed). The reply's `feed_index` says the `output_feed`, its `groups`, the
+  `index`, `inherited_fields`, `clashes_resolved`, `new_version_of` (with `new_version_hint` when the user chose a
+  new version in the form) and where it is `kept`; without forms the clashes come back in it as `index_clashes`,
+  with `clash_hint` on how to apply them by `changes=`. Amending (`changes=`) is checked the same way. The
+  `backend` is the feed's shared one (refused otherwise, as `get_field_conventions` refuses it).
 
 ### `create_index_doc`
 
@@ -6112,7 +6255,8 @@ The tools' working knowledge is bundled with Stroom in `stroom-mcp-impl`
 `stroom.ai.impl.tools.AgentKnowledge`). Without that module there is none, and the tools that use it say so.
 
 * **Working guides** (`guides/<name>.md`): `agent-instructions`, `cef`, `data-splitter`, `documentation`,
-  `event-logging`, `indexing`, `json-input`, `mapping` (a compact reference of a translation mapping's keys, time
+  `aggregated-feeds` (source types, the registry, scopes, source type groups and their pipelines, indexes and
+  promotion), `event-logging`, `indexing`, `json-input`, `mapping` (a compact reference of a translation mapping's keys, time
   formats and how `changes=` merges, which the draft's hint names), `reference-data`, `visualisation` and `xslt`.
   Short, hand-written
   summaries of the Stroom documentation for the work the tools do. The chat reads them with `get_instructions

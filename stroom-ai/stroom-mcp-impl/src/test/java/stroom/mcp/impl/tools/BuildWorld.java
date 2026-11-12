@@ -242,13 +242,19 @@ final class BuildWorld {
             final DocRef ref = inv.getArgument(0);
             return ref != null && !hidden.contains(ref.getUuid());
         });
+        Mockito.when(documentAccess.canViewOrThrow(any())).thenAnswer(inv -> documentAccess.canView(
+                inv.getArgument(0)));
         Mockito.when(documentAccess.node(any())).thenAnswer(inv ->
+                explorerNodeService.getNode(inv.getArgument(0)));
+        Mockito.when(documentAccess.nodeOrThrow(any())).thenAnswer(inv ->
                 explorerNodeService.getNode(inv.getArgument(0)));
         Mockito.when(documentAccess.children(any())).thenAnswer(inv ->
                 children(((DocRef) inv.getArgument(0)).getUuid()).stream()
                         .filter(node -> !hidden.contains(node.getUuid()))
                         .toList());
         Mockito.when(documentAccess.path(any())).thenAnswer(inv -> path(((DocRef) inv.getArgument(0)).getUuid()));
+        Mockito.when(documentAccess.pathOrThrow(any())).thenAnswer(inv -> path(((DocRef) inv.getArgument(0))
+                .getUuid()));
         Mockito.when(documentAccess.parent(any())).thenAnswer(inv ->
                 Optional.ofNullable(nodes.get(((DocRef) inv.getArgument(0)).getUuid()))
                         .map(node -> nodes.get(node.parent))

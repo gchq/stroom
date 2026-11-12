@@ -36,6 +36,10 @@ import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
@@ -53,6 +57,8 @@ import java.util.Optional;
 /// through Stroom's processor filter service as the user (Manage Processors, and View on the pipeline), as the data
 /// browser's Process action makes one.
 class CreateProcessorFilterTool extends AbstractBuiltInTool {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CreateProcessorFilterTool.class);
 
     static final String NAME = "create_processor_filter";
     static final String PIPELINE_UUID_ARG = "pipeline_uuid";
@@ -236,11 +242,12 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
             throw new ToolRefusal("Give either stream_ids (the sample) or feed, not both");
         }
         final int priority = priority(call);
-        if (!steppedClean(ref)) {
+        final BuildRecords.Passed clean = steppedClean(buildRecords, ref);
+        if (!clean.passed()) {
             throw new ToolRefusal("Pipeline '" + pipeline.getName() + "' has no clean step of its current code "
                                   + "recorded: step_sample (or step_records) over the sample streams until the "
                                   + "verdict is clean, then process. A change to its XSLT or converter since the "
-                                  + "last clean step needs stepping again.");
+                                  + "last clean step needs stepping again." + clean.said());
         }
         final Optional<String> uncovered = plan.buildOf(ref).flatMap(build -> plan.uncovered(build, streamIds));
         if (uncovered.isPresent()) {
@@ -459,19 +466,18 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
         }
     }
 
-    private boolean steppedClean(final DocRef ref) {
-        return steppedClean(buildRecords, ref);
-    }
-
     /// @param buildRecords The builds' records.
     /// @param ref          A pipeline.
-    /// @return True if a clean step of its current code is recorded.
-    static boolean steppedClean(final BuildRecords buildRecords, final DocRef ref) {
+    /// @return Whether a clean step of its current code is recorded, and why it couldn't be told when a lookup
+    /// failed (then not clean: code that can't be read can't be known to have stepped clean).
+    static BuildRecords.Passed steppedClean(final BuildRecords buildRecords, final DocRef ref) {
         try {
-            return buildRecords.steppedClean(ref);
+            return buildRecords.steppedCleanCheck(ref);
         } catch (final RuntimeException e) {
-            // Code that can't be read can't be known to have stepped clean.
-            return false;
+            final String reason = NullSafe.nonBlankStringElse(e.getMessage(), e.getClass().getSimpleName());
+            LOGGER.warn(() -> LogUtil.message("Unable to tell whether pipeline {} stepped clean: {}", ref.getUuid(),
+                    reason), e);
+            return new BuildRecords.Passed(false, reason);
         }
     }
 

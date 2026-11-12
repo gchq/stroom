@@ -50,6 +50,9 @@ import stroom.meta.shared.MetaRow;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -86,12 +89,17 @@ import java.util.TreeSet;
 /// the cluster's admin has to do before those streams are indexed again.
 ///
 /// On an aggregated feed ([SourceTypeCoverage]) the kinds found are judged against the build's scope: those of
-/// source types outside it are passed over, not missed, and the scope's share of the feed is said. A source type met
-/// that the registry lacks is added to the build's registry as `new` (the one write, and only in a build).
+/// source types outside it are passed over, not missed, those another pipeline translates are handled elsewhere, and
+/// the scope's share of the feed is said. The dispatcher's own lines in the Error streams are read too: the records it
+/// passed over by source type, those it left to another pipeline, and the values it warned no registry row matches. A
+/// source type met that the registry lacks (in a kind missed, or warned of in processing) is added to the build's
+/// registry as `new` (the one write, and only in a build).
 ///
 /// Read as the user. It takes a run slot, says where it is, stops at once when its thread is interrupted, and
 /// stops reading Error streams before the session's time limit for a long call, saying where to carry on.
 class ReviewCoverageTool extends AbstractBuiltInTool {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReviewCoverageTool.class);
 
     static final String NAME = "review_coverage";
     static final String PIPELINE_UUID_ARG = "pipeline_uuid";
@@ -162,8 +170,10 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
                              + "what each lacks, what to change, its documentation, and for Elasticsearch what the "
                              + "cluster's admin must do before the streams are indexed again. On an aggregated "
                              + "feed it judges against the build's scope (other source types passed over, not "
-                             + "missed) and adds source types the registry lacks to the build's registry as new; "
-                             + "otherwise it reads only.")
+                             + "missed; another pipeline's handled elsewhere), reports the records the dispatcher "
+                             + "passed over by source type, and adds source types the registry lacks (in the kinds "
+                             + "missed, or warned of by the dispatcher in processing) to the build's registry as "
+                             + "new; otherwise it reads only.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(PIPELINE_UUID_ARG, "The events pipeline (Raw Events to Events), once it "
                                                               + "has processed its feed, or much of it.")
@@ -275,7 +285,9 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
 
     /// The review: `pipeline`, `progress`, `missed` (the kinds found, most records first, with examples),
     /// `affected_raw_streams` (and `affected_raw_stream_ids`), `tell_user`, `next`, and with `follow_on`, `follow_on`
-    /// (each pipeline reviewed) and `follow_on_events`.
+    /// (each pipeline reviewed) and `follow_on_events`. On an aggregated feed, `source_types` (with `processing`: what
+    /// the dispatcher logged), `passed_over` and `handled_elsewhere` (the kinds outside the scope, and another
+    /// pipeline's).
     ///
     /// @param context The call's context.
     /// @param request What is asked.
@@ -346,7 +358,8 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         final List<Map<String, Object>> found = new ArrayList<>(byKey.values());
         found.sort(Comparator.comparingInt(g -> -size(g)));
         // An aggregated feed: the kinds of source types outside the build's scope are passed over, not missed.
-        final Optional<SourceTypeCoverage.Judged> judged = sourceTypes.judge(context.session(), pipeline, found);
+        final Optional<SourceTypeCoverage.Judged> judged = sourceTypes.judge(context.session(), pipeline, found,
+                logged.dispatched());
         final List<Map<String, Object>> groups = judged.map(SourceTypeCoverage.Judged::missed).orElse(found);
         if (mapping != null) {
             // A few raw records for examples; the grouping itself needs none.
@@ -360,20 +373,34 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
                 }
             }
         }
-        final List<String> keptUnknown = mapping == null
-                ? List.of()
-                : NullSafe.list(mapping.events()).stream()
-                        .filter(rule -> NullSafe.isNonEmptyString(rule.allowUnknown()))
-                        .map(EventRule::name)
-                        .toList();
-        final boolean logsUnknown = kept.isPresent() && NullSafe.string(kept.get().xslt().getData())
-                .contains(XsltGenerator.KEPT_UNKNOWN.split("'")[0]);
+        // An aggregated feed's pipeline runs a dispatcher, which keeps no mapping: its groups keep theirs, and log
+        // their own Unknown records (seen in the aggregated feed walks: a dispatcher's pipeline was taken for one
+        // whose XSLT logs none, and its Unknown events sampled and reported twice).
+        final List<KeptMappings.KeptXslt> groupXslts = mapping == null
+                ? groupXslts(request.pipelineUuid())
+                : List.of();
+        final List<String> keptUnknown = new ArrayList<>();
+        final List<TranslationMapping> mappings = new ArrayList<>();
+        if (mapping != null) {
+            mappings.add(mapping);
+        }
+        groupXslts.forEach(group -> mappings.add(TranslationMapping.parse(group.kept().payload().get("mapping"))));
+        mappings.forEach(each -> NullSafe.list(each.events()).stream()
+                .filter(rule -> NullSafe.isNonEmptyString(rule.allowUnknown()))
+                .map(EventRule::name)
+                .forEach(keptUnknown::add));
+        final String loggedUnknown = XsltGenerator.KEPT_UNKNOWN.split("'")[0];
+        final boolean pipelineLogsUnknown = kept.isPresent() && NullSafe.string(kept.get().xslt().getData())
+                .contains(loggedUnknown);
+        final boolean groupsLogUnknown = !groupXslts.isEmpty() && groupXslts.stream()
+                .allMatch(group -> NullSafe.string(group.xslt().getData()).contains(loggedUnknown));
+        final boolean logsUnknown = pipelineLogsUnknown || groupsLogUnknown;
         final Set<Long> sampled = new TreeSet<>();
         if ((!keptUnknown.isEmpty() || mapping == null) && !logsUnknown && !continued) {
             sampled.addAll(sampledUnknown(pipeline, request.maxStreams(), groups));
         }
         final Set<Long> affectedIds = new TreeSet<>(raws.keySet());
-        if (judged.isPresent() && !judged.get().passedOver().isEmpty()) {
+        if (judged.isPresent() && (!judged.get().passedOver().isEmpty() || !judged.get().handled().isEmpty())) {
             // Only the raw streams of the kinds missed within the scope need processing again.
             affectedIds.clear();
             groups.forEach(group -> JsonValues.listOrEmpty(group.get("raw_streams")).forEach(id -> affectedIds.add(
@@ -449,12 +476,57 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
                     .append(JsonValues.mapOrEmpty(judged.said().get("passed_over")).keySet())
                     .append(" were passed over, not missed: the scope's translation isn't meant to take them.");
         }
+        if (!judged.handled().isEmpty()) {
+            result.put("handled_elsewhere", judged.handled());
+            said.append(" ").append(judged.handled().size()).append(" kind(s) of source types another pipeline "
+                                                                     + "translates were left to it.");
+        }
+        processingSaid(said, JsonValues.mapOrEmpty(judged.said().get("processing")));
         final List<String> found = JsonValues.strings(judged.said().get("new_source_types"));
         if (!found.isEmpty()) {
             said.append(" Source types the registry lacks were met: ").append(found).append(" (")
                     .append(judged.said().get("registry")).append(").");
         }
         result.put("tell_user", said.toString());
+    }
+
+    // What the dispatcher logged in processing, said: the records it passed over by source type and status, those
+    // another pipeline handles, and the values no registry row matched.
+    private static void processingSaid(final StringBuilder said, final Map<String, Object> processing) {
+        final List<String> passed = new ArrayList<>();
+        JsonValues.mapOrEmpty(processing.get("passed_over")).forEach((type, entry) -> {
+            final Map<String, Object> counted = JsonValues.mapOrEmpty(entry);
+            passed.add(type + " " + counted.get("records") + " (" + counted.get("status") + ")");
+        });
+        if (!passed.isEmpty()) {
+            said.append(" In processing the dispatcher passed over, by source type: ").append(String.join(", ",
+                    passed)).append(".");
+        }
+        final List<String> handled = new ArrayList<>();
+        JsonValues.mapOrEmpty(processing.get("handled_elsewhere")).forEach((type, entry) -> {
+            final Map<String, Object> counted = JsonValues.mapOrEmpty(entry);
+            handled.add(type + " by " + counted.get("pipeline") + " (" + counted.get("records") + " passed over "
+                        + "here)");
+        });
+        if (!handled.isEmpty()) {
+            said.append(" Handled elsewhere: ").append(String.join(", ", handled)).append(".");
+        }
+        final Map<String, Object> warned = JsonValues.mapOrEmpty(processing.get("new_source_types"));
+        if (!warned.isEmpty()) {
+            said.append(" The dispatcher warned of values no registry row matches: ").append(warned.keySet())
+                    .append(".");
+        }
+    }
+
+    // The groups an aggregated feed's dispatcher imports, each with its kept mapping; none for another pipeline, or
+    // one that can't be read (then its Unknown events are sampled, as before).
+    private List<KeptMappings.KeptXslt> groupXslts(final String pipelineUuid) {
+        try {
+            return keptMappings.groupXslts(pipelineUuid);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No groups read for pipeline {}: {}", pipelineUuid, e.getMessage()));
+            return List.of();
+        }
     }
 
     // Unknown events sampled from the pipeline's newest Events streams, added to the groups; the raw streams they

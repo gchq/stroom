@@ -237,11 +237,24 @@ public class DocumentAccess {
             return false;
         }
         try {
-            return securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW);
+            return canViewOrThrow(docRef);
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> "Unable to check View on " + docRef, e);
             return false;
         }
+    }
+
+    /// [#canView] for a caller that must tell a failed check from a document the user can't view (e.g. to say why
+    /// it refuses).
+    ///
+    /// @param docRef A document.
+    /// @return True if the user can view it; false if they can't, or it has no UUID.
+    /// @throws RuntimeException if the check itself fails.
+    public boolean canViewOrThrow(final DocRef docRef) {
+        if (docRef == null || docRef.getUuid() == null) {
+            return false;
+        }
+        return securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW);
     }
 
     /// @param docRef A document.
@@ -262,7 +275,7 @@ public class DocumentAccess {
     /// @return The node for it in the Explorer tree, if it is in the tree.
     public Optional<ExplorerNode> node(final DocRef docRef) {
         try {
-            return explorerNodeServiceProvider.get().getNode(docRef);
+            return nodeOrThrow(docRef);
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> "Unable to find the node of " + docRef, e);
             return Optional.empty();
@@ -274,11 +287,29 @@ public class DocumentAccess {
     /// at the top.
     public String path(final DocRef docRef) {
         try {
-            return explorerPath(explorerNodeServiceProvider.get().getPath(docRef));
+            return pathOrThrow(docRef);
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> "Unable to find the path of " + docRef, e);
             return "/";
         }
+    }
+
+    /// [#node] for a caller that must tell a failed lookup from a document with no node.
+    ///
+    /// @param docRef A document.
+    /// @return Its node in the Explorer tree, or empty if it has none.
+    /// @throws RuntimeException if the lookup itself fails.
+    public Optional<ExplorerNode> nodeOrThrow(final DocRef docRef) {
+        return explorerNodeServiceProvider.get().getNode(docRef);
+    }
+
+    /// [#path] for a caller that must tell a failed lookup from a document at the top of the tree.
+    ///
+    /// @param docRef A document the user can view.
+    /// @return The path of the folder holding it, as [#path] gives it.
+    /// @throws RuntimeException if the lookup itself fails.
+    public String pathOrThrow(final DocRef docRef) {
+        return explorerPath(explorerNodeServiceProvider.get().getPath(docRef));
     }
 
     /// @param ancestors The folders holding a document, from the top of the tree (the System root) down.

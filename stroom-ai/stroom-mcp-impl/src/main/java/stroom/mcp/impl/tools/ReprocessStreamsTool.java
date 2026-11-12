@@ -185,11 +185,12 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
         }
         // As create_processor_filter: reprocessing is of code proved first (asked for by the user; found reviewing
         // the tools: streams were reprocessed through code never stepped).
-        if (!CreateProcessorFilterTool.steppedClean(buildRecords, ref)) {
+        final BuildRecords.Passed clean = CreateProcessorFilterTool.steppedClean(buildRecords, ref);
+        if (!clean.passed()) {
             throw new ToolRefusal("Pipeline '" + pipeline.getName() + "' has no clean step of its current code "
                                   + "recorded: step_sample (or step_records) over the streams until the verdict is "
                                   + "clean, then reprocess. A change to its XSLT or converter since the last clean "
-                                  + "step needs stepping again.");
+                                  + "step needs stepping again." + clean.said());
         }
         sources.buildFeedsOnly(ref, streamIds, null);
         final ProcessingSources.EventsSource source = sources.eventsSource(call, context, pipeline,

@@ -289,9 +289,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                              + "optionally an output feed of its own: create_feed group=, then create_pipeline), or a "
                              + "new version of the feed's pipeline (copy_pipeline); group.group_next says what "
                              + "follows. A later build changing a promoted group, the common module or the helpers "
-                             + "works on working copies, imported by the build's own modules. step_sample/"
-                             + "step_records take a group's draft code for the dispatcher's element: it is inlined "
-                             + "into a temporary dispatcher.")
+                             + "works on working copies, imported by the build's own modules. step_sample, "
+                             + "step_records and step_pipeline take a group's draft code for the dispatcher's "
+                             + "element: it is inlined into a temporary dispatcher.")
                 .parameters(ObjectSchema.builder()
                         .addProperty(MAPPING_ARG, TranslationArgs.object(
                                 "The translation mapping: {input, common: [{path, field|value|...}], events: [{name, "

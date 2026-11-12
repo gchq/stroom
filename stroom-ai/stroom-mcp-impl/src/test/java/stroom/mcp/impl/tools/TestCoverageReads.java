@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.ErrorTriage;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
+import stroom.ai.impl.tools.generation.DispatcherXslt;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
@@ -38,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -105,6 +107,60 @@ class TestCoverageReads {
                 new CoverageReads.ErrorStream(12, null, null, Map.of())));
 
         assertThat(found.records()).extracting(CoverageReads.Logged::raw).containsExactly(2L);
+    }
+
+    @Test
+    void aDispatchersLinesGiveThePassedOverCountsAndTheNewSourceTypes() throws Exception {
+        // As an aggregated feed's dispatcher logs them: counts at the end of each document, a new value once a
+        // stream.
+        Mockito.when(streamSummaries.errorMarkers(Mockito.eq(10L), anyInt())).thenReturn(List.of(
+                info(DispatcherXslt.PASSED_OVER + "40" + DispatcherXslt.PASSED_OVER_OF + "PegaDB"),
+                info(DispatcherXslt.PASSED_OVER + "7" + DispatcherXslt.PASSED_OVER_OF + "PegaIntegration"
+                     + DispatcherXslt.HANDLED_BY + "pipeline 'PEGA-Integration-Events'"),
+                info(DispatcherXslt.PASSED_OVER + "3" + DispatcherXslt.PASSED_OVER_OF
+                     + DispatcherXslt.PASSED_OVER_NONE),
+                new ErrorTriage.Marker("WARNING", "translationFilter", DispatcherXslt.NEW_SOURCE_TYPE
+                                                                       + "sourcetype 'PegaBatch'"
+                                                                       + DispatcherXslt.NEW_SOURCE_TYPE_END,
+                        null, null, null),
+                new ErrorTriage.Marker("WARNING", "translationFilter", DispatcherXslt.NEW_SOURCE_TYPE
+                                                                       + "sourcetype (no value)"
+                                                                       + DispatcherXslt.NEW_SOURCE_TYPE_END,
+                        null, null, null),
+                new ErrorTriage.Marker("WARNING", "x", "No event mapping matched record 2 (a=b)", null, null,
+                        null)));
+        Mockito.when(streamSummaries.errorMarkers(Mockito.eq(11L), anyInt())).thenReturn(List.of(
+                info(DispatcherXslt.PASSED_OVER + "2" + DispatcherXslt.PASSED_OVER_OF + "PegaDB"),
+                new ErrorTriage.Marker("WARNING", "translationFilter", DispatcherXslt.NEW_SOURCE_TYPE
+                                                                       + "sourcetype 'PegaBatch'"
+                                                                       + DispatcherXslt.NEW_SOURCE_TYPE_END,
+                        null, null, null)));
+
+        final CoverageReads.LoggedRecords found = reads.logged(progress, List.of(
+                new CoverageReads.ErrorStream(10, 1L, null, Map.of()),
+                new CoverageReads.ErrorStream(11, 2L, null, Map.of())));
+
+        // The records the rules missed are read as before; the dispatcher's lines apart.
+        assertThat(found.records()).extracting(CoverageReads.Logged::raw).containsExactly(1L);
+        final CoverageReads.Dispatched dispatched = found.dispatched();
+        assertThat(dispatched.passedOver()).isEqualTo(Map.of(DispatcherXslt.PASSED_OVER_NONE, 3L, "PegaDB", 42L,
+                "PegaIntegration", 7L));
+        assertThat(dispatched.handledBy()).containsExactly(Map.entry("PegaIntegration",
+                "pipeline 'PEGA-Integration-Events'"));
+        assertThat(dispatched.newSourceTypes()).containsExactly(Map.entry("PegaBatch", Set.of(1L, 2L)),
+                Map.entry("", Set.of(1L)));
+        assertThat(dispatched.field()).isEqualTo("sourcetype");
+        assertThat(dispatched.rawStreams()).containsExactly(1L, 2L);
+    }
+
+    @Test
+    void otherLinesAreNotADispatchers() {
+        final CoverageReads.Dispatched dispatched = new CoverageReads.Dispatched();
+
+        assertThat(dispatched.add(1L, "Passed over the record")).isFalse();
+        assertThat(dispatched.add(1L, null)).isFalse();
+        assertThat(dispatched.add(1L, "New source type: no registry row matches")).isFalse();
+        assertThat(dispatched.isEmpty()).isTrue();
     }
 
     @Test
@@ -211,5 +267,9 @@ class TestCoverageReads {
             }
         }
         throw new IllegalStateException("No Id term");
+    }
+
+    private static ErrorTriage.Marker info(final String message) {
+        return new ErrorTriage.Marker("INFO", "translationFilter", message, null, null, null);
     }
 }
