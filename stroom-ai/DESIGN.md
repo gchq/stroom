@@ -1478,7 +1478,7 @@ beside the feed:
 `draft_translation_mapping` drafts from the notes; `build_translation_xslt` checks the mapping against the catalogue.
 Where the sample and the documentation disagree, the sample decides the format and the documentation the meaning.
 
-### Aggregated feeds: source types and source type groups (proposed, 2026-11-12)
+### Aggregated feeds: source types and source type groups (built, 2026-11-13)
 
 Not built. A design for feeds that aggregate several discrete sources: a JSON wrapper with fixed metadata (host,
 source type, time...) around a `message` whose format depends on the source type (seen: PEGA logs, whose messages are
