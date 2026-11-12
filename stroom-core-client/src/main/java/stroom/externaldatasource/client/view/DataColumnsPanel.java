@@ -41,6 +41,8 @@ import java.util.List;
 public class DataColumnsPanel extends Composite {
 
     private static final String DEFAULT_EMPTY_TEXT = "No columns yet. Add the data, then click Detect Columns.";
+    // Every LDAP entry has a dn field of its own.
+    private static final String DN_FIELD = "dn";
 
     private final FlowPanel panel = new FlowPanel();
     private final DescriptionHTML note = new DescriptionHTML();
@@ -166,12 +168,17 @@ public class DataColumnsPanel extends Composite {
         changeHandler.run();
     }
 
-    // A name already listed, whatever its case, is not added again, as LDAP names ignore case.
+    // A name already listed, whatever its case, is not added again, as LDAP names ignore case. Nor is
+    // dn, which is always the first field.
     private void addColumn() {
         final String name = newName.getValue() == null
                 ? ""
                 : newName.getValue().trim();
         if (name.isEmpty() || !enabled) {
+            return;
+        }
+        if (DN_FIELD.equalsIgnoreCase(name)) {
+            newName.setValue("");
             return;
         }
         for (final ColumnRow row : columnRows) {

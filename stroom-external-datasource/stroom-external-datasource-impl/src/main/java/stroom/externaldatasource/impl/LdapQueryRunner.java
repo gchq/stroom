@@ -47,6 +47,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -64,6 +65,8 @@ class LdapQueryRunner {
 
     /// The field holding each entry's DN, always the first.
     static final String DN_FIELD = "dn";
+    // The longest value shown in the warning about values not of their column's type.
+    private static final int MAX_EXAMPLE_LENGTH = 60;
 
     private final LdapConnectionFactory connectionFactory;
 
@@ -96,8 +99,9 @@ class LdapQueryRunner {
         final SqlRowConsumer rowConsumer = rowConsumerFactory.apply(columns);
         final Search search = new Search(attributes, limits, rowConsumer, cancellation);
         try (final LDAPConnection ldapConnection = connectionFactory.connect(connection, limits.timeoutSeconds())) {
-            // Closing the connection from the cancelling thread ends the search in the directory too.
-            cancellation.register(ldapConnection::close);
+            // Closing the connection ends the search in the directory too. It is closed in the background,
+            // as closing waits for the connection's reader, which may be waiting for this thread to read.
+            cancellation.register(() -> closeInBackground(ldapConnection));
             try {
                 ASN1OctetString cookie = null;
                 do {
@@ -126,6 +130,11 @@ class LdapQueryRunner {
                 limits.maxRows(),
                 null,
                 search.warnings());
+    }
+
+    // Closing a connection waits for its reader, which waits while the entry source's queue is full.
+    private static void closeInBackground(final LDAPConnection connection) {
+        CompletableFuture.runAsync(connection::close);
     }
 
     /// @param attributes The document's attributes, in field order.
@@ -212,6 +221,7 @@ class LdapQueryRunner {
         private SearchResult readPage(final LDAPConnection connection,
                                       final SearchRequest request) throws LDAPException, EntrySourceException {
             final LDAPEntrySource source = new LDAPEntrySource(connection, request, false);
+            boolean finished = false;
             try {
                 while (true) {
                     final Entry entry;
@@ -221,12 +231,14 @@ class LdapQueryRunner {
                         referrals++;
                         continue;
                     } catch (final EntrySourceException e) {
+                        finished = true;
                         if (endedByDirectoryLimit(e)) {
                             return null;
                         }
                         throw e;
                     }
                     if (entry == null) {
+                        finished = true;
                         return source.getSearchResult();
                     }
                     if (cancellation.isCancelled()) {
@@ -242,8 +254,30 @@ class LdapQueryRunner {
                     }
                 }
             } finally {
-                // Abandons the search in the directory if it has not finished.
+                if (!finished) {
+                    stopEarly(connection, source);
+                }
                 source.close();
+            }
+        }
+
+        // The entry source holds entries in a queue of 100 that the connection's reader fills. Closing the
+        // source, or the connection, while the queue is full waits for room that never comes, so a search
+        // stopped part way through a page would hang. So the connection is closed in the background, which
+        // ends the search in the directory, while this thread reads what is left, letting the reader and
+        // the source finish. A source is only ever stopped this way when the whole search is.
+        private static void stopEarly(final LDAPConnection connection, final LDAPEntrySource source) {
+            closeInBackground(connection);
+            while (true) {
+                try {
+                    if (source.nextEntry() == null) {
+                        return;
+                    }
+                } catch (final EntrySourceException e) {
+                    if (!e.mayContinueReading()) {
+                        return;
+                    }
+                }
             }
         }
 
@@ -264,9 +298,17 @@ class LdapQueryRunner {
             try {
                 return LdapValues.read(attribute, column.getType());
             } catch (final IllegalArgumentException e) {
-                badValues.add(String.join(LdapValues.VALUE_SEPARATOR, LdapValues.texts(attribute)), column);
+                badValues.add(example(attribute), column);
                 return ValNull.INSTANCE;
             }
+        }
+
+        // A value for a warning, cut short, as binary values in base64 can be long.
+        private static String example(final Attribute attribute) {
+            final String text = String.join(LdapValues.VALUE_SEPARATOR, LdapValues.texts(attribute));
+            return text.length() > MAX_EXAMPLE_LENGTH
+                    ? text.substring(0, MAX_EXAMPLE_LENGTH) + "..."
+                    : text;
         }
 
         // The directory's own size or time limit ends the search with the entries read so far.
@@ -280,7 +322,9 @@ class LdapQueryRunner {
                                             + "administrator to raise the limit for the bind account.";
                     return true;
                 }
-                if (ResultCode.TIME_LIMIT_EXCEEDED.equals(resultCode)) {
+                // The directory's own time limit, or Stroom's wait for a response, which is set a little
+                // longer but may still end first.
+                if (ResultCode.TIME_LIMIT_EXCEEDED.equals(resultCode) || ResultCode.TIMEOUT.equals(resultCode)) {
                     endedByDirectory = true;
                     directoryLimitWarning = "The search reached its time limit after " + rowsRead
                                             + " entries. Narrow the filter, or raise the query timeout.";

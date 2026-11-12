@@ -447,6 +447,11 @@ The work splits into ten stages; each ends with code that compiles, has tests an
   - A typed attribute with several values, or a binary one, is empty with the usual warning; as Text it is joined, or base64.
   - The filter's placeholders only start after =, \~=, >=, <= or \*, so extensible match filters such as (cn:caseExactMatch:=Fred) and values holding colons are left alone.
   - StroomQL's messages about a missing or misplaced sql clause now mention LDAP filters too.
+  - Committed 12 November 2026 (83ccce2523), then audited. The audit found a search that stopped part way through a page, at the row limit or on cancel, hung for good: the SDK's entry source holds 100 entries, and closing it, or the connection, waits for room in a full queue. Now the connection is closed in the background while the rest of the page is read. Regression tests on 300 entries in one page hang without the fix.
+  - Detect Attributes now keeps every attribute already listed, in its place and with its type, adding new ones after; before, it dropped attributes added by name or missing from the first 100 entries. Names are matched without regard to case.
+  - Stroom waits 5 seconds longer for a response than the directory's own time limit, and treats its own timeout as that limit, so a slow search ends with a warning and the entries read rather than an error.
+  - Smaller fixes: attribute names trimmed, dn refused as an attribute in the editor, long bad-value examples cut short, a clearer sql clause message, and a note that parameters are escaped as filter values, not DN values, so a DN-valued assertion should take the whole DN as one parameter.
+  - Left as is: once a URL is set, saving checks the base DN and credential too, as JDBC and Athena check all their settings once a URL or region is set.
 
 **Tests.** Unit tests mock `ResultSetMetaData` and `ResultSet` for type mapping, placeholder rewriting, the single-statement check and the URL allow and deny lists. Integration tests point a document at the test MySQL database from `stroomTestDb.yml` and query a table made by the test. A PostgreSQL test needs a driver Stroom does not ship today, so it waits on the driver decision. Athena unit tests mock \`AthenaClient\`; a manual test against a real workgroup with a small scan limit checks the end-to-end path.
 

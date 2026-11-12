@@ -193,11 +193,14 @@ class LdapConnector implements Connector {
         }
     }
 
-    /// Works out the attributes of the first [#DETECT_SAMPLE_ENTRIES] entries below the base DN, in the
-    /// order they are first seen: their user attributes, and `createTimestamp` and `modifyTimestamp`
-    /// where the directory keeps them. Binary attributes are left out. An attribute already in the table
-    /// keeps its type, so a type the user chose survives detecting the attributes again; others get the
-    /// type their values suggest.
+    /// Adds the attributes of the first [#DETECT_SAMPLE_ENTRIES] entries below the base DN to those
+    /// already in the table: their user attributes, and `createTimestamp` and `modifyTimestamp` where
+    /// the directory keeps them.
+    ///
+    /// Every attribute already in the table stays, in its place and with its type, even if none of the
+    /// sample entries has it, as the user may have added it by name or it may only be on later entries.
+    /// New attributes follow, in the order they are first seen, with the type their values suggest.
+    /// Binary attributes are not added. Names are matched without regard to case, as LDAP's are.
     ///
     /// @param doc The document, with its LDAP settings, which need not have been saved.
     /// @return The attributes.
@@ -218,7 +221,9 @@ class LdapConnector implements Connector {
             final SearchResult result = search(ldapConnection, request);
             for (final SearchResultEntry entry : result.getSearchEntries()) {
                 for (final Attribute attribute : entry.getAttributes()) {
-                    found.computeIfAbsent(attribute.getName(), name -> new ArrayList<>()).add(attribute);
+                    // Keyed without regard to case, with the name as first seen kept by the first value.
+                    found.computeIfAbsent(attribute.getName().toLowerCase(Locale.ROOT), key -> new ArrayList<>())
+                            .add(attribute);
                 }
             }
         } catch (final LDAPException | GeneralSecurityException e) {
@@ -227,20 +232,17 @@ class LdapConnector implements Connector {
         return detected(found, attributes(settings));
     }
 
+    // The existing attributes, then those found that are not among them. Found is keyed by lower case.
     private static List<DataColumn> detected(final Map<String, List<Attribute>> found,
                                              final List<DataColumn> existing) {
-        final Map<String, DataColumnType> existingTypes = new LinkedHashMap<>();
+        final List<DataColumn> columns = new ArrayList<>(existing);
+        final Set<String> listed = new HashSet<>();
         for (final DataColumn column : existing) {
-            existingTypes.put(column.getName().toLowerCase(Locale.ROOT), column.getType());
+            listed.add(column.getName().trim().toLowerCase(Locale.ROOT));
         }
-        final List<DataColumn> columns = new ArrayList<>();
-        found.forEach((name, attributes) -> {
-            if (attributes.stream().noneMatch(LdapValues::isBinary)) {
-                final String key = name.toLowerCase(Locale.ROOT);
-                final DataColumnType type = existingTypes.containsKey(key)
-                        ? existingTypes.get(key)
-                        : LdapValues.guessType(attributes);
-                columns.add(new DataColumn(name, type));
+        found.forEach((key, attributes) -> {
+            if (!listed.contains(key) && attributes.stream().noneMatch(LdapValues::isBinary)) {
+                columns.add(new DataColumn(attributes.getFirst().getName(), LdapValues.guessType(attributes)));
             }
         });
         return columns;
@@ -305,12 +307,14 @@ class LdapConnector implements Connector {
         return doc.getLdap();
     }
 
-    // The attributes with a name; the DN is always the first field, so an attribute named dn is left out.
+    // The attributes with a name, trimmed, as an imported document may not be; the DN is always the first
+    // field, so an attribute named dn is left out.
     private static List<DataColumn> attributes(final LdapSettings settings) {
         return NullSafe.list(settings.getAttributes())
                 .stream()
                 .filter(column -> !NullSafe.isBlankString(column.getName()))
-                .filter(column -> !LdapQueryRunner.DN_FIELD.equalsIgnoreCase(column.getName().trim()))
+                .map(column -> new DataColumn(column.getName().trim(), column.getType()))
+                .filter(column -> !LdapQueryRunner.DN_FIELD.equalsIgnoreCase(column.getName()))
                 .toList();
     }
 

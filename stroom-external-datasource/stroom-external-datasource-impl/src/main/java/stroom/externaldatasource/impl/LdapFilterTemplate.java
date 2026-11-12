@@ -42,6 +42,11 @@ import java.util.List;
 /// after a wildcard: straight after `=`, `~=`, `>=`, `<=` or `*`. Elsewhere it is part of the filter.
 /// A value that must start with a colon followed by a letter writes the colon as `\3a`.
 ///
+/// A value is escaped for the filter, not for a DN. So in a DN-valued assertion such as
+/// `(member=uid=:user,ou=People,dc=example,dc=org)` a parameter holding a comma could compare a
+/// different DN, though never change the filter. Give the whole DN as one parameter instead, as in
+/// `(member=:memberDn)`.
+///
 /// @param filter       The filter as the user wrote it, wrapped in brackets if they left them off.
 /// @param parts        The filter in order: literal text as [String] and placeholders as
 ///                     [SqlPlaceholder].

@@ -37,6 +37,7 @@ import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.shared.PermissionException;
 
 import com.unboundid.ldap.listener.InMemoryDirectoryServer;
@@ -52,6 +53,8 @@ import com.unboundid.util.ssl.cert.ManageCertificates;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.Timeout.ThreadMode;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 
@@ -64,6 +67,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -76,6 +81,9 @@ class TestLdapConnector {
     private static final String BASE = "dc=example,dc=org";
     private static final String PEOPLE = "ou=People," + BASE;
     private static final String PARTNERS = "ou=Partners," + BASE;
+    // More entries than the entry source's queue of 100 holds, in one page of the default 500.
+    private static final String MANY = "ou=Many," + BASE;
+    private static final int MANY_ENTRIES = 300;
     private static final String BIND_DN = "cn=Stroom Reader," + BASE;
     private static final String BIND_PASSWORD = "reader-password";
     private static final String CREDENTIAL_NAME = "directory-reader";
@@ -135,6 +143,10 @@ class TestLdapConnector {
                 "objectClass: extensibleObject",
                 "ou: Elsewhere",
                 "ref: ldap://other.example.org:389/ou=Elsewhere," + PARTNERS);
+        server.add("dn: " + MANY, "objectClass: organizationalUnit", "ou: Many");
+        for (int i = 0; i < MANY_ENTRIES; i++) {
+            server.add("dn: uid=user" + i + "," + MANY, "objectClass: account", "uid: user" + i);
+        }
         server.startListening();
     }
 
@@ -480,7 +492,7 @@ class TestLdapConnector {
         assertThat(run(connector().prepare(base, query("(objectClass=*)"), null), new ArrayList<>(), "dn"))
                 .extracting(row -> row[0].toString())
                 .as("the entries one level down, not the people below them")
-                .containsExactlyInAnyOrder(PEOPLE, PARTNERS);
+                .containsExactlyInAnyOrder(PEOPLE, PARTNERS, MANY);
     }
 
     @Test
@@ -492,6 +504,70 @@ class TestLdapConnector {
         assertThatThrownBy(() -> connector().prepare(doc, query("(cn=*)"), null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("more than once");
+    }
+
+    @Test
+    // In a thread of its own, so a hang fails the test rather than stopping the build.
+    @Timeout(value = 30, threadMode = ThreadMode.SEPARATE_THREAD)
+    void rowLimitPartWayThroughAFullPageDoesNotHang() throws Exception {
+        // Regression: closing the entry source with its queue full waited forever.
+        final ExternalDataSourceDoc many = doc(settings -> settings.baseDn(MANY).pageSize(null)
+                .attributes(List.of(new DataColumn("uid", DataColumnType.TEXT))))
+                .copy()
+                .maxRows(3)
+                .build();
+        final List<Val[]> rows = new ArrayList<>();
+
+        final QueryRunSummary summary = runSlowly(connector().prepare(many, query("(objectClass=account)"), null),
+                new QueryCancellation(), rows::add);
+
+        assertThat(rows).hasSize(3);
+        assertThat(summary.limitReached()).isTrue();
+    }
+
+    @Test
+    // In a thread of its own, so a hang fails the test rather than stopping the build.
+    @Timeout(value = 30, threadMode = ThreadMode.SEPARATE_THREAD)
+    void cancellingPartWayThroughAFullPageStopsTheSearch() throws Exception {
+        final ExternalDataSourceDoc many = doc(settings -> settings.baseDn(MANY).pageSize(null)
+                .attributes(List.of(new DataColumn("uid", DataColumnType.TEXT))));
+        final QueryCancellation cancellation = new QueryCancellation();
+        final List<Val[]> rows = new ArrayList<>();
+
+        final QueryRunSummary summary = runSlowly(connector().prepare(many, query("(objectClass=account)"), null),
+                cancellation, row -> {
+                    rows.add(row);
+                    cancellation.cancel();
+                });
+
+        assertThat(rows).hasSize(1);
+        assertThat(summary.rowsRead()).isEqualTo(1);
+    }
+
+    // Runs a query of uid, pausing on the first row so the directory fills the entry source's queue, as a
+    // slow consumer or a large directory would.
+    private static QueryRunSummary runSlowly(final PreparedQuery prepared,
+                                             final QueryCancellation cancellation,
+                                             final Consumer<Val[]> consumer) throws Exception {
+        final FieldIndex fieldIndex = new FieldIndex();
+        fieldIndex.create("uid");
+        final AtomicBoolean paused = new AtomicBoolean();
+        return prepared.run().run(
+                columns -> SqlRowConsumer.create(
+                        columns,
+                        fieldIndex,
+                        prepared.expression(),
+                        DateTimeSettings.builder().build(),
+                        new ExpressionPredicateFactory(),
+                        row -> {
+                            if (!paused.getAndSet(true)) {
+                                ThreadUtil.sleep(500);
+                            }
+                            consumer.accept(row);
+                        }),
+                cancellation,
+                message -> {
+                });
     }
 
     @Test
@@ -625,6 +701,27 @@ class TestLdapConnector {
                 .filteredOn(column -> column.getName().equals("mail"))
                 .extracting(DataColumn::getType)
                 .containsExactly(DataColumnType.TEXT);
+    }
+
+    @Test
+    void detectAttributesKeepsTheAttributesAlreadyListed() {
+        // pwdChangedTime is on no entry, as if added by name; CN differs in case from the entries' cn.
+        final ExternalDataSourceDoc doc = doc(settings -> settings.attributes(List.of(
+                new DataColumn("pwdChangedTime", DataColumnType.DATE),
+                new DataColumn("CN", DataColumnType.TEXT))));
+
+        final List<DataColumn> detected = connector().detectAttributes(doc);
+
+        assertThat(detected.subList(0, 2))
+                .as("the listed attributes stay first, in their order, with their types")
+                .containsExactly(
+                        new DataColumn("pwdChangedTime", DataColumnType.DATE),
+                        new DataColumn("CN", DataColumnType.TEXT));
+        assertThat(detected)
+                .extracting(column -> column.getName().toLowerCase())
+                .as("cn is not added again in another case")
+                .containsOnlyOnce("cn")
+                .contains("uid", "mail");
     }
 
     private static Query timeRangeQuery(final String filter, final String from) {

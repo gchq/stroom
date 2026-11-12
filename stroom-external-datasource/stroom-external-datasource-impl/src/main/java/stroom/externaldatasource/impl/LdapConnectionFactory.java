@@ -45,6 +45,9 @@ class LdapConnectionFactory {
 
     // The longest wait to connect, whatever the query timeout.
     private static final int MAX_CONNECT_TIMEOUT_SECONDS = 30;
+    // How much longer than the directory's own time limit Stroom waits for a response, so the directory
+    // ends a slow search itself, keeping the entries read, rather than Stroom giving up first.
+    private static final int RESPONSE_GRACE_SECONDS = 5;
 
     private final TrustManager trustManager;
 
@@ -74,7 +77,7 @@ class LdapConnectionFactory {
         options.setFollowReferrals(false);
         options.setConnectTimeoutMillis((int) TimeUnit.SECONDS.toMillis(
                 Math.min(timeoutSeconds, MAX_CONNECT_TIMEOUT_SECONDS)));
-        options.setResponseTimeoutMillis(TimeUnit.SECONDS.toMillis(timeoutSeconds));
+        options.setResponseTimeoutMillis(TimeUnit.SECONDS.toMillis((long) timeoutSeconds + RESPONSE_GRACE_SECONDS));
         options.setAbandonOnTimeout(true);
         options.setSSLSocketVerifier(new HostNameSSLSocketVerifier(true));
         final SSLUtil sslUtil = new SSLUtil(trustManager);
