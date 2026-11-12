@@ -63,6 +63,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
 /// The translation documents of a build, created and saved through Stroom's own stores as the user: text converters,
@@ -556,6 +557,68 @@ public class TranslationDocs {
         final Map<String, Object> result = summary(saved);
         result.put("changed", true);
         return result;
+    }
+
+    /// Points a build's XSLT at other documents: each `uuid='…'` of an import named in `uuids` replaced, in its code
+    /// and in its description (the mapping or dispatcher spec kept there), and the change recorded in its version
+    /// history as the tools' own. A mechanical change to code already checked, so not checked again: an aggregated
+    /// feed's modules made to import a build's working copies, or the originals again at promotion.
+    ///
+    /// @param context The call's context.
+    /// @param uuid    The XSLT, one of the build's.
+    /// @param uuids   The UUIDs to replace, each by the one to import instead.
+    /// @param change  What the change is, for the version history.
+    /// @return True if it changed.
+    /// @throws ToolRefusal if it isn't one the tools made.
+    public boolean rewriteImports(final ToolCallContext context,
+                                  final String uuid,
+                                  final Map<String, String> uuids,
+                                  final String change) {
+        final XsltDoc doc = readXslt(uuid);
+        return rewriteModule(context, uuid, rewritten(doc.getData(), uuids),
+                description -> rewritten(description, uuids), change);
+    }
+
+    /// Replaces a build's XSLT's code with code written from what was checked already (a dispatcher regenerated
+    /// against other UUIDs), its description changed as given, and the change recorded in its version history as the
+    /// tools' own. Not checked again.
+    ///
+    /// @param context    The call's context.
+    /// @param uuid       The XSLT, one of the build's.
+    /// @param data       The new code.
+    /// @param describing Its description changed: what is kept with the code.
+    /// @param change     What the change is, for the version history.
+    /// @return True if it changed.
+    /// @throws ToolRefusal if it isn't one the tools made.
+    public boolean rewriteModule(final ToolCallContext context,
+                                 final String uuid,
+                                 final String data,
+                                 final UnaryOperator<String> describing,
+                                 final String change) {
+        final XsltDoc doc = readXslt(uuid);
+        final String given = describing.apply(doc.getDescription());
+        if (Objects.equals(data, doc.getData()) && Objects.equals(given, doc.getDescription())) {
+            return false;
+        }
+        guard.checkManaged(context.session(), new DocRef(XsltDoc.TYPE, uuid, doc.getName()));
+        String description = XsltVersionHistory.adopt(given, doc.getData());
+        description = history.pending(context.session(), description, new XsltVersionHistory.Previous(doc.getData(),
+                doc.getUpdateUser(), doc.getUpdateTimeMs()), change, data, false);
+        description = history.previewed(description, data);
+        write(XsltDoc.TYPE, doc.copy().data(data).description(description).build());
+        return true;
+    }
+
+    // The text with each import's `uuid='…'` named replaced.
+    private static String rewritten(final String text, final Map<String, String> uuids) {
+        if (text == null) {
+            return null;
+        }
+        String out = text;
+        for (final Map.Entry<String, String> entry : uuids.entrySet()) {
+            out = out.replace("uuid='" + entry.getKey() + "'", "uuid='" + entry.getValue() + "'");
+        }
+        return out;
     }
 
     /// @param uuid An XSLT's UUID.

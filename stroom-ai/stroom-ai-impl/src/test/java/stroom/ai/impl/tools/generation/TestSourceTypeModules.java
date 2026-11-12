@@ -108,6 +108,37 @@ class TestSourceTypeModules extends XsltRuns {
     }
 
     @Test
+    void aGroupsOwnPipelinesDispatcherPassesTheOthersOverAsHandledByTheirPipeline() {
+        final Modules modules = modules();
+        final DispatcherSpec all = spec();
+        // The integration group's pipeline of its own: its dispatcher routes it alone; the security group's records
+        // are another pipeline's, said so, and the parked and unmatched ones are as before.
+        final List<DispatcherSpec.Row> rows = all.rows().stream()
+                .map(row -> "PegaSecurityEvent".equals(row.name())
+                        ? new DispatcherSpec.Row(row.name(), row.match(), row.value(), row.status(),
+                        "pipeline 'PEGA-Events'")
+                        : row)
+                .toList();
+        final DispatcherSpec own = new DispatcherSpec("PEGA", "pega_integration_dispatch", all.input(), all.field(),
+                all.helpers(), rows, List.of(all.groups().get(1)), Map.of());
+        final DispatcherXslt.Generated generated = DispatcherXslt.generate(own, SCHEMA, "4.1.0");
+        assertThat(generated.problems()).isEmpty();
+        assertThat(generated.xslt()).doesNotContain(SECURITY_HREF).contains(INTEGRATION_HREF,
+                "translated, handled by pipeline 'PEGA-Events'");
+        assertThat(DispatcherSpec.fromJson(own.toJson())).hasValue(own);
+
+        final List<String> logged = new ArrayList<>();
+        final XmlElement events = transform(generated.xslt(), records(), modules.imports(), logged);
+        assertThat(invalid(events, XSD)).isEmpty();
+        assertThat(children(events, "Event")).hasSize(2);
+        assertThat(logged).contains("INFO " + DispatcherXslt.PASSED_OVER + "2" + DispatcherXslt.PASSED_OVER_OF
+                                    + "PegaSecurityEvent" + DispatcherXslt.HANDLED_BY + "pipeline 'PEGA-Events'",
+                "INFO " + DispatcherXslt.PASSED_OVER + "1" + DispatcherXslt.PASSED_OVER_OF + "PegaDB");
+        // Another pipeline's records are counted, never warned about.
+        assertThat(logged).noneSatisfy(line -> assertThat(line).startsWith("WARN").contains("PegaSecurityEvent"));
+    }
+
+    @Test
     void anUnsavedGroupIsSteppedInlinedInPlaceOfItsImport() {
         final Modules modules = modules();
         final Map<String, String> imports = new LinkedHashMap<>(modules.imports());

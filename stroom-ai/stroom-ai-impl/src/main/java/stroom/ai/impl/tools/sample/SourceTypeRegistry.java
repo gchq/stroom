@@ -35,7 +35,15 @@ import java.util.regex.Pattern;
 /// `rows` in the order they are tried, each `name`, `match` (`value` or `pattern`), `value` (the value, or the
 /// pattern), `system_name`, `status` (`translated`, `parked`, `dropped` or `new`), `decided` (`by`, `at`, `reason`),
 /// `group`, `pipeline` and `output_feed` (empty until a source type group handles it; `group_xslt` names the group's
-/// XSLT, `uuid` and `name`, once build_translation_xslt saves it) and `profile`.
+/// XSLT, `uuid` and `name`, once build_translation_xslt saves it), `references` (the reference data its group looks
+/// up: `feed` and `loader_pipeline`) and `profile`.
+///
+/// A row's `pipeline` says which pipeline's dispatcher routes it: `own` (true for a group with a pipeline of its own),
+/// `dispatcher` (`uuid` and `name` of that dispatcher's XSLT), `name` (the pipeline's, once made) and `new_version`
+/// (true while the feed's pipeline's new version is still to be copied). `output_feed` is the feed its Events go to:
+/// absent for the raw feed's own, `""` while one of its own is still to be made. `modules` names the feed's `helpers`
+/// and `common` modules (`uuid`, `name`), so a later build finds them beside the feed. Every UUID is the build's
+/// document while a build changes it (a working copy), and the original's once promoted.
 public final class SourceTypeRegistry {
 
     /// What a feed's registry is named after.
@@ -174,15 +182,33 @@ public final class SourceTypeRegistry {
         return out.toString();
     }
 
-    // A row's status, with the source type group translating it where one does.
+    // A row's status, with the source type group translating it where one does, the pipeline that runs it and the
+    // feed its Events go to.
     private static String status(final Map<String, Object> row) {
         final Object group = row.get("group");
         if (row.get("status") == null) {
             return null;
         }
-        return JsonValues.text(row.get("status")) + (group == null || JsonValues.text(group).isBlank()
-                ? ""
-                : " by group " + JsonValues.text(group));
+        final StringBuilder out = new StringBuilder(JsonValues.text(row.get("status")));
+        if (group != null && !JsonValues.text(group).isBlank()) {
+            out.append(" by group ").append(JsonValues.text(group));
+        }
+        final Map<String, Object> pipeline = JsonValues.mapOrEmpty(row.get("pipeline"));
+        if (!pipeline.isEmpty()) {
+            final Object name = pipeline.get("name");
+            out.append(", in ").append(name == null || JsonValues.text(name).isBlank()
+                    ? (JsonValues.truthy(pipeline.get("own"))
+                            ? "a pipeline of its own (to be made)"
+                            : "the feed's pipeline")
+                    : "pipeline " + JsonValues.text(name));
+        }
+        final Object feed = row.get("output_feed");
+        if (feed != null) {
+            out.append(", to ").append(JsonValues.text(feed).isBlank()
+                    ? "an output feed of its own (to be made)"
+                    : "feed " + JsonValues.text(feed));
+        }
+        return out.toString();
     }
 
     private static String records(final Map<String, Object> profile) {

@@ -42,6 +42,8 @@ class BuildFeeds {
     static final String SAMPLE_FILES = "sample_files";
     /// The build record's key naming the existing feeds a test feed holds the Events of.
     static final String OUTPUT_FOR = "output_for";
+    /// The build record's key naming the source type group whose own output feed a feed is.
+    static final String GROUP_OUTPUT = "group_output_for";
 
     private final FeedNames feedNames;
     private final WriteGuard guard;

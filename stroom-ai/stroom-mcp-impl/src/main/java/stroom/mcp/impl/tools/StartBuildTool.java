@@ -32,6 +32,7 @@ import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermission;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -61,6 +62,9 @@ class StartBuildTool extends AbstractBuiltInTool {
     private final BuildPlan plan;
     private final Consent consent;
 
+    // The feeds' source type registries; none in tests that make the tool themselves.
+    private Provider<SourceTypeRegistries> registriesProvider;
+
     @Inject
     StartBuildTool(final WriteGuard guard,
                    final BuildRecords buildRecords,
@@ -74,6 +78,15 @@ class StartBuildTool extends AbstractBuiltInTool {
         this.agentInstructions = agentInstructions;
         this.plan = plan;
         this.consent = consent;
+    }
+
+    /// Where the feeds' registries and open builds are found (set by injection; none in tests that make the tool
+    /// themselves).
+    ///
+    /// @param registries The feeds' registries.
+    @Inject
+    void setRegistries(final Provider<SourceTypeRegistries> registries) {
+        this.registriesProvider = registries;
     }
 
     @Override
@@ -110,7 +123,8 @@ class StartBuildTool extends AbstractBuiltInTool {
                 .description(BuildPlan.onboardingLabel(NAME)
                              + "Create (or find) the build's workspace folder. Every write tool creates documents "
                              + "there. Returns the standing instructions (AGENTS docs) that apply, which the work "
-                             + "must follow.")
+                             + "must follow. A feed that aggregates source types (a source type registry) has one "
+                             + "open build at a time: a build on one with another open is refused, naming it.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(BUILD_ARG, "Build name, e.g. 'acme-door-v1.3'.")
                         .addProperty(FEEDS_ARG, stringArraySchema("Feeds the build is for, if known, so the standing "
@@ -209,6 +223,10 @@ class StartBuildTool extends AbstractBuiltInTool {
                                       final List<String> feeds,
                                       final List<String> folders,
                                       final String kind) {
+        if (registriesProvider != null) {
+            // One open build per aggregated feed (decided 2026-11-12).
+            feeds.forEach(feed -> registriesProvider.get().refuseOpenBuild(feed, build, false));
+        }
         final WriteGuard.Folder folder = guard.buildFolder(build);
         // The build later calls naming none work on, as start_onboarding's.
         plan.rememberBuild(context, build);

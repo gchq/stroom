@@ -36,6 +36,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -69,6 +70,9 @@ class StartOnboardingTool extends AbstractBuiltInTool {
     private final AgentInstructions agentInstructions;
     private final BuildRecords buildRecords;
 
+    // The feeds' source type registries; none in tests that make the tool themselves.
+    private Provider<SourceTypeRegistries> registriesProvider;
+
     @Inject
     StartOnboardingTool(final WriteGuard guard,
                         final BuildPlan plan,
@@ -84,6 +88,15 @@ class StartOnboardingTool extends AbstractBuiltInTool {
         this.pipelineTemplates = pipelineTemplates;
         this.agentInstructions = agentInstructions;
         this.buildRecords = buildRecords;
+    }
+
+    /// Where the feeds' registries and open builds are found (set by injection; none in tests that make the tool
+    /// themselves).
+    ///
+    /// @param registries The feeds' registries.
+    @Inject
+    void setRegistries(final Provider<SourceTypeRegistries> registries) {
+        this.registriesProvider = registries;
     }
 
     @Override
@@ -323,6 +336,10 @@ class StartOnboardingTool extends AbstractBuiltInTool {
         if (NullSafe.isBlankString(feed)) {
             throw new ToolRefusal("Give feed: the existing feed to assess (kind=assessment surveys a feed already "
                                   + "in Stroom; no samples).");
+        }
+        if (registriesProvider != null) {
+            // One open build per aggregated feed (decided 2026-11-12).
+            registriesProvider.get().refuseOpenBuild(feed.strip(), build, false);
         }
         final WriteGuard.Folder folder = guard.buildFolder(build);
         plan.rememberBuild(context, build);

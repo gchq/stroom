@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.generation.DispatcherXslt;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.feed.shared.FeedDoc;
@@ -346,12 +347,19 @@ class PipelineWrites {
                 final List<WriteGuard.BuildDoc> xslts = docs.stream()
                         .filter(doc -> XsltDoc.TYPE.equals(doc.type()))
                         .toList();
+                // An aggregated feed's pipeline runs a dispatcher, which imports the groups (each keeping a
+                // mapping), the common module and the helpers.
+                final List<WriteGuard.BuildDoc> dispatchers = xslts.stream()
+                        .filter(doc -> isDispatcher(doc.uuid()))
+                        .toList();
                 final List<WriteGuard.BuildDoc> withMapping = xslts.stream()
                         .filter(doc -> translationMapping(doc.uuid()).isPresent())
                         .toList();
-                candidates = withMapping.isEmpty()
-                        ? xslts
-                        : withMapping;
+                candidates = !dispatchers.isEmpty()
+                        ? dispatchers
+                        : withMapping.isEmpty()
+                                ? xslts
+                                : withMapping;
                 docType = XsltDoc.TYPE;
                 if (candidates.isEmpty()) {
                     stillOpen.add(slot.element() + ".xslt");
@@ -809,6 +817,33 @@ class PipelineWrites {
         return result;
     }
 
+    /// @param pipelineUuid A pipeline.
+    /// @param references   The reference data it should load.
+    /// @return Those it doesn't load yet, as entries for it.
+    /// @throws ToolRefusal if a reference can't be made.
+    List<PipelineReference> missingReferences(final String pipelineUuid, final List<ReferenceRequest> references) {
+        final Set<String> have = new HashSet<>();
+        NullSafe.list(NullSafe.get(pipelineDocs.read(pipelineUuid).getPipelineData(),
+                PipelineData::getAddedPipelineReferences)).forEach(reference -> have.add(referenceKey(reference)));
+        return referenceEntries(layout(pipelineUuid), references).stream()
+                .filter(reference -> !have.contains(referenceKey(reference)))
+                .toList();
+    }
+
+    /// Adds reference data to a pipeline, in production or in a build: promotion's, once the user approved it.
+    ///
+    /// @param pipelineUuid The pipeline.
+    /// @param references   The entries to add.
+    void addReferences(final String pipelineUuid, final List<PipelineReference> references) {
+        final PipelineDoc doc = pipelineDocs.read(pipelineUuid);
+        final PipelineData data = doc.getPipelineData();
+        final PipelineDataBuilder builder = data == null
+                ? new PipelineDataBuilder()
+                : new PipelineDataBuilder(data);
+        builder.addPipelineReferences(references);
+        pipelineDocs.write(doc.copy().pipelineData(builder.build()).build());
+    }
+
     /// The previous version's own plain settings (addRootObject false, say: not documents) on elements the new one
     /// has, that nothing sets already: a new version is configured as the one it follows.
     ///
@@ -906,6 +941,20 @@ class PipelineWrites {
     /// @return Them sorted, each once.
     static List<String> sorted(final Collection<String> values) {
         return List.copyOf(new TreeSet<>(values));
+    }
+
+    /// @param xsltUuid An XSLT's UUID.
+    /// @return Its code, if the user may read it.
+    Optional<String> xsltData(final String xsltUuid) {
+        return documentAccess.read(new DocRef(XsltDoc.TYPE, xsltUuid), XsltDoc.class).map(XsltDoc::getData);
+    }
+
+    /// @param xsltUuid An XSLT's UUID.
+    /// @return True if it is an aggregated feed's dispatcher the tools generated (its spec kept with it).
+    boolean isDispatcher(final String xsltUuid) {
+        return documentAccess.read(new DocRef(XsltDoc.TYPE, xsltUuid), XsltDoc.class)
+                .flatMap(xslt -> KeptMapping.readBlock(xslt.getDescription(), DispatcherXslt.SPEC_BLOCK))
+                .isPresent();
     }
 
     // The mapping a translation XSLT keeps in its description, if it is one the user may read.

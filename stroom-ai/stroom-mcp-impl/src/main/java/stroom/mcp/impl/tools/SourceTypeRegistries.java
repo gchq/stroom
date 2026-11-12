@@ -17,18 +17,25 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
+import stroom.feed.shared.FeedDoc;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -38,24 +45,83 @@ import java.util.Optional;
 class SourceTypeRegistries {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SourceTypeRegistries.class);
+    // The workspace's folder of backups promotion makes: not a build.
+    private static final String BACKUPS = "backups";
 
     private final WriteGuard guard;
     private final DocumentAccess documentAccess;
     private final DocumentWrites documentWrites;
     private final FeedNames feedNames;
     private final DocumentPlaces places;
+    private final Provider<BuildRecords> records;
 
     @Inject
     SourceTypeRegistries(final WriteGuard guard,
                          final DocumentAccess documentAccess,
                          final DocumentWrites documentWrites,
                          final FeedNames feedNames,
-                         final DocumentPlaces places) {
+                         final DocumentPlaces places,
+                         final Provider<BuildRecords> records) {
         this.guard = guard;
         this.documentAccess = documentAccess;
         this.documentWrites = documentWrites;
         this.feedNames = feedNames;
         this.places = places;
+        this.records = records;
+    }
+
+    /// One open build per aggregated feed (decided 2026-11-12): so the registry, the dispatchers and the feed's
+    /// documents are only ever changed by one build, and promotion needs no merging. A build is open on a feed while
+    /// its folder holds the feed's registry, or works from the feed (or holds it) and holds work (an XSLT or a
+    /// pipeline): made and not promoted or abandoned (its folder deleted). A build holding only the feed and its
+    /// samples, or only a test feed promotion left behind, is not.
+    ///
+    /// @param feed       A feed's name.
+    /// @param build      The build asking, left out.
+    /// @param aggregated True when the build asking makes the feed's registry (record_source_types); otherwise the
+    ///                   feed counts as aggregated only with a registry beside it or in another build.
+    /// @throws ToolRefusal naming the other open build, if there is one.
+    void refuseOpenBuild(final String feed, final String build, final boolean aggregated) {
+        if (feed == null || feed.isBlank()) {
+            return;
+        }
+        final String name = SourceTypeRegistry.docName(feed);
+        boolean isAggregated = aggregated || besideFeed(feed, name).isPresent();
+        String open = null;
+        for (final String other : guard.builds()) {
+            if (other.equals(build) || BACKUPS.equals(other)) {
+                continue;
+            }
+            final List<WriteGuard.BuildDoc> docs = guard.folderContents(other);
+            final boolean registry = docs.stream()
+                    .anyMatch(doc -> DocumentationDoc.TYPE.equals(doc.type()) && name.equals(doc.name()));
+            final boolean onFeed = registry
+                                   || docs.stream().anyMatch(doc -> FeedDoc.TYPE.equals(doc.type())
+                                                                    && feed.equalsIgnoreCase(doc.name()))
+                                   || worksFrom(other).stream().anyMatch(feed::equalsIgnoreCase);
+            final boolean work = registry || docs.stream().anyMatch(doc -> XsltDoc.TYPE.equals(doc.type())
+                                                                           || PipelineDoc.TYPE.equals(doc.type()));
+            isAggregated |= registry;
+            if (onFeed && work && open == null) {
+                open = other;
+            }
+        }
+        if (isAggregated && open != null) {
+            throw new ToolRefusal("Feed '" + feed + "' aggregates source types, and build '" + open + "' is open on "
+                                  + "it: one build at a time per feed, so its registry, dispatchers and documents "
+                                  + "change in one place. Finish build '" + open + "' (promote_build) or abandon it "
+                                  + "(the user deletes its folder) first, or carry on in it.");
+        }
+    }
+
+    // The existing feeds a build works from, as its record names them.
+    private List<String> worksFrom(final String build) {
+        try {
+            return JsonValues.strings(records.get().load(build).get(BuildRecords.SOURCE_FEEDS));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No record read for build {}: {}", build, e.getMessage()));
+            return List.of();
+        }
     }
 
     /// @param build A build.

@@ -36,8 +36,9 @@ import java.util.stream.Collectors;
 /// reads the source type field of each record once, tries the registry's rows in order (a value exactly with `=`, a
 /// pattern with XPath's `matches()`, anchored), and hands the record to its group's mode; a record of any other source
 /// type (parked, dropped, another pipeline's) is passed over: not written, counted. At the end of each document it
-/// logs (INFO) how many records of each source type it passed over, and (WARN, once a stream) each value no row
-/// matches, a new source type for the registry.
+/// logs (INFO) how many records of each source type it passed over (one another pipeline translates said as handled
+/// by that pipeline, never a warning), and (WARN, once a stream) each value no row matches, a new source type for the
+/// registry.
 ///
 /// With an unsaved group's code given, that group is inlined in place of its import (its own imports hoisted among
 /// the dispatcher's): a temporary dispatcher, for stepping a group before it is saved.
@@ -52,6 +53,9 @@ public final class DispatcherXslt {
     public static final String PASSED_OVER = "Passed over ";
     /// What follows the count in a [#PASSED_OVER] line, before the source type's name.
     public static final String PASSED_OVER_OF = " record(s) of source type ";
+    /// What follows the source type in a [#PASSED_OVER] line of a source type another pipeline translates, before
+    /// the pipeline (`pipeline 'PEGA-Mail-Events'`): counted as handled there, not as parked or new.
+    public static final String HANDLED_BY = ", handled by ";
     /// The source type said in a [#PASSED_OVER] line of records no row matches.
     public static final String PASSED_OVER_NONE = "(none: no registry row matches)";
     /// Logged (WARN) once a stream for each value of the source type field no row matches: this, the value, then
@@ -268,7 +272,10 @@ public final class DispatcherXslt {
                     : "$value = " + XPathText.literal(row.value());
             final XmlElement when = choose.addElement(XSL, "when", "test", test);
             if (row.status() != null && !row.status().isBlank()) {
-                when.append(new XmlComment(" " + row.status().replace("--", "-") + " "));
+                final String status = row.handledBy() == null
+                        ? row.status()
+                        : row.status() + ", handled by " + row.handledBy();
+                when.append(new XmlComment(" " + status.replace("--", "-") + " "));
             }
             when.addElement(XSL, "sequence", "select", XPathText.literal(row.name()));
         }
@@ -290,12 +297,23 @@ public final class DispatcherXslt {
         final XmlElement holder = routed.isEmpty()
                 ? each
                 : each.addElement(XSL, "if", "test", "not(current-grouping-key() = (" + literals(routed) + "))");
-        holder.addElement(XSL, "sequence", "select", "stroom:log('INFO', concat(" + XPathText.literal(PASSED_OVER)
-                                                     + ", count(current-group()), "
-                                                     + XPathText.literal(PASSED_OVER_OF)
-                                                     + ", if (current-grouping-key() = '') then "
-                                                     + XPathText.literal(PASSED_OVER_NONE)
-                                                     + " else current-grouping-key()))");
+        // Another pipeline's source types, said as handled by it, so they read neither as parked nor as new.
+        final Map<String, List<String>> handled = new LinkedHashMap<>();
+        spec.rows().stream()
+                .filter(row -> row.handledBy() != null && !row.handledBy().isBlank() && !routed.contains(row.name()))
+                .forEach(row -> handled.computeIfAbsent(row.handledBy(), ignored -> new ArrayList<>())
+                        .add(row.name()));
+        final XmlElement said = handled.isEmpty()
+                ? holder
+                : holder.addElement(XSL, "choose");
+        for (final Map.Entry<String, List<String>> by : handled.entrySet()) {
+            said.addElement(XSL, "when", "test", "current-grouping-key() = (" + literals(by.getValue()) + ")")
+                    .addElement(XSL, "sequence", "select", passedOverLog(XPathText.literal(HANDLED_BY
+                                                                                           + by.getKey())));
+        }
+        (handled.isEmpty()
+                ? said
+                : said.addElement(XSL, "otherwise")).addElement(XSL, "sequence", "select", passedOverLog(null));
         final XmlElement unmatched = template.addElement(XSL, "for-each-group", "select", "$records[" + function
                                                                                           + "(.) = '']",
                 "group-by", "string((" + fieldText(spec, input) + ")[1])");
@@ -306,6 +324,15 @@ public final class DispatcherXslt {
         first.addElement(XSL, "sequence", "select", "stroom:log('WARN', concat(" + XPathText.literal(NEW_SOURCE_TYPE
                 + spec.field() + " ") + ", if (current-grouping-key() = '') then '(no value)' else concat('''', "
                 + "current-grouping-key(), ''''), " + XPathText.literal(NEW_SOURCE_TYPE_END) + "))");
+    }
+
+    // The INFO line of a source type's count passed over, with what follows the source type (a literal), if any.
+    private static String passedOverLog(final String after) {
+        return "stroom:log('INFO', concat(" + XPathText.literal(PASSED_OVER) + ", count(current-group()), "
+               + XPathText.literal(PASSED_OVER_OF) + ", if (current-grouping-key() = '') then "
+               + XPathText.literal(PASSED_OVER_NONE) + " else current-grouping-key()" + (after == null
+                ? ""
+                : ", " + after) + "))";
     }
 
     // A group's templates, functions and variables put in the dispatcher in place of its import, each keeping the
