@@ -72,6 +72,20 @@ public final class XPathRegex {
         return countGroups(regex);
     }
 
+    /// @param regex A regular expression, compiled as XPath's `matches()` compiles it.
+    /// @param value A value.
+    /// @return True if the regex finds a match in it, as `matches($value, $regex)` does (anywhere in it, unless
+    /// anchored).
+    /// @throws XPathRegexException if it doesn't compile as XPath compiles it, with Saxon's reason.
+    public static boolean finds(final String regex, final String value) throws XPathRegexException {
+        try {
+            return new ARegularExpression(regex, "", HOST_LANGUAGE, new ArrayList<>(), CONFIGURATION)
+                    .containsMatch(value);
+        } catch (final XPathException e) {
+            throw new XPathRegexException(e.getMessage());
+        }
+    }
+
     // The capture groups of a regex Saxon compiled: `(` outside a character class, unescaped, and not `(?:`.
     private static int countGroups(final String regex) {
         int groups = 0;

@@ -93,12 +93,30 @@ class XsltRuns extends GenerationFixtures {
     /// @param imports The documents its imports name, by href, as Stroom resolves them by name.
     /// @return What it writes.
     static XmlElement transform(final String xslt, final String xml, final Map<String, String> imports) {
+        return transform(xslt, xml, imports, null);
+    }
+
+    /// @param xslt    An XSLT.
+    /// @param xml     The records.
+    /// @param imports The documents its imports name, by href, as Stroom resolves them by name.
+    /// @param logged  Where what it logs (stroom:log) goes, each `LEVEL message`; null to log nothing.
+    /// @return What it writes.
+    static XmlElement transform(final String xslt,
+                                final String xml,
+                                final Map<String, String> imports,
+                                final List<String> logged) {
         String code = xslt;
-        if (code.contains("stroom:log(") && !code.contains("name=\"stroom:log\"")) {
+        if (logged != null) {
+            code = code.replace("</xsl:stylesheet>", "<xsl:function name=\"stroom:record-no\"><xsl:sequence "
+                                                     + "select=\"0\"/></xsl:function></xsl:stylesheet>");
+        } else if (code.contains("stroom:log(") && !code.contains("name=\"stroom:log\"")) {
             code = code.replace("</xsl:stylesheet>", STROOM_STUBS + "</xsl:stylesheet>");
         }
         try {
             final Processor processor = new Processor(false);
+            if (logged != null) {
+                processor.registerExtensionFunction(new LogStub(logged));
+            }
             processor.registerExtensionFunction(new FormatDateStub());
             // One map for the run (the stream), as Stroom's TaskScopeMap holds put values for one pipeline process.
             final Map<String, String> kept = new HashMap<>();
@@ -226,6 +244,52 @@ class XsltRuns extends GenerationFixtures {
             n++;
         }
         return n;
+    }
+
+    // stroom:log(level, message), each line kept as `LEVEL message`.
+    private static final class LogStub extends ExtensionFunctionDefinition {
+
+        private final List<String> logged;
+
+        private LogStub(final List<String> logged) {
+            this.logged = logged;
+        }
+
+        @Override
+        public StructuredQName getFunctionQName() {
+            return new StructuredQName("stroom", "stroom", "log");
+        }
+
+        @Override
+        public int getMinimumNumberOfArguments() {
+            return 2;
+        }
+
+        @Override
+        public int getMaximumNumberOfArguments() {
+            return 2;
+        }
+
+        @Override
+        public SequenceType[] getArgumentTypes() {
+            return new SequenceType[]{SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_STRING};
+        }
+
+        @Override
+        public SequenceType getResultType(final SequenceType[] suppliedArgumentTypes) {
+            return SequenceType.EMPTY_SEQUENCE;
+        }
+
+        @Override
+        public ExtensionFunctionCall makeCallExpression() {
+            return new ExtensionFunctionCall() {
+                @Override
+                public Sequence call(final XPathContext context, final Sequence[] arguments) throws XPathException {
+                    logged.add(FormatDateStub.text(arguments, 0) + " " + FormatDateStub.text(arguments, 1));
+                    return EmptySequence.getInstance();
+                }
+            };
+        }
     }
 
     // stroom:put(key, value), giving an empty sequence, and stroom:get(key), giving the value or an empty sequence,

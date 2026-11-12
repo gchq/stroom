@@ -34,6 +34,7 @@ import org.xml.sax.InputSource;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.xml.transform.ErrorListener;
@@ -85,6 +86,16 @@ public class XsltCompileCheck {
     /// @param xslt An XSLT's text.
     /// @return The errors, each its code and message (e.g. `XPST0008 Variable kv has not been declared`).
     public Compiled compile(final String xslt) {
+        return compile(xslt, Map.of());
+    }
+
+    /// As [#compile(String)], with documents not saved yet standing in for the imports that name them: an aggregated
+    /// feed's source type group compiled before the feed's common and helpers modules it imports are saved with it.
+    ///
+    /// @param xslt    An XSLT's text.
+    /// @param unsaved The code of documents not saved yet, by the href that imports them.
+    /// @return The errors, each its code and message.
+    public Compiled compile(final String xslt, final Map<String, String> unsaved) {
         try {
             XmlTrees.parse(xslt);
         } catch (final NotWellFormedException e) {
@@ -104,7 +115,12 @@ public class XsltCompileCheck {
             functions.accept(processor.getUnderlyingConfiguration());
             final XsltCompiler compiler = processor.newXsltCompiler();
             compiler.setErrorListener(collected);
-            compiler.setURIResolver(uriResolver.get());
+            final URIResolver stroomResolver = uriResolver.get();
+            compiler.setURIResolver(unsaved.isEmpty()
+                    ? stroomResolver
+                    : (href, base) -> unsaved.containsKey(href)
+                            ? unsavedSource(href, unsaved.get(href))
+                            : stroomResolver.resolve(href, base));
             compiler.compile(new SAXSource(LockedSaxon.reader(), new InputSource(new StringReader(xslt))));
         } catch (final SaxonApiException | RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("XSLT did not compile: {}", e.getMessage()), e);
@@ -115,6 +131,14 @@ public class XsltCompileCheck {
             }
         }
         return new Compiled(List.copyOf(collected.errors));
+    }
+
+
+    // An unsaved document's code, with a system id of its own, so Saxon tells two unsaved modules apart.
+    private static SAXSource unsavedSource(final String href, final String code) {
+        final InputSource input = new InputSource(new StringReader(code));
+        input.setSystemId("urn:stroom-mcp:unsaved:" + Integer.toHexString(href.hashCode()));
+        return new SAXSource(LockedSaxon.reader(), input);
     }
 
 

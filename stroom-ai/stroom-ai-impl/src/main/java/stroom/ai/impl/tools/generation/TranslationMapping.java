@@ -58,6 +58,8 @@ import java.util.stream.Collectors;
 /// @param imports      Shared XSLTs imported (xsl:import).
 /// @param shared       Named templates from shared XSLTs, called in their element's place.
 /// @param functions    Shared XSLTs whose xsl:functions the xpaths call.
+/// @param module       What makes it one module of an aggregated feed's translation (a source type group's, or the
+///                     feed's common module), or null for a whole translation.
 public record TranslationMapping(String input,
                                  String root,
                                  String record,
@@ -78,7 +80,8 @@ public record TranslationMapping(String input,
                                  XsltStyle style,
                                  List<String> imports,
                                  List<SharedTemplate> shared,
-                                 List<SharedFunctions> functions) {
+                                 List<SharedFunctions> functions,
+                                 SourceTypeModule module) {
 
     /// The kinds of input.
     public static final List<String> INPUTS = List.of("data_splitter", "json", "xml", "xml_fragments");
@@ -151,7 +154,8 @@ public record TranslationMapping(String input,
                 fields.model("style", (value, at) -> XsltStyle.read(reader, value, at), XsltStyle.DEFAULT),
                 fields.strings("imports"),
                 fields.models("shared", (value, at) -> SharedTemplate.read(reader, value, at)),
-                fields.models("functions", (value, at) -> SharedFunctions.read(reader, value, at)));
+                fields.models("functions", (value, at) -> SharedFunctions.read(reader, value, at)),
+                fields.optionalModel("module", (value, at) -> SourceTypeModule.read(reader, value, at)));
         if (!fields.ok()) {
             return null;
         }
@@ -192,7 +196,7 @@ public record TranslationMapping(String input,
         return new TranslationMapping(input, root, record, xmlNamespace, jsonLayout, jsonFields, xmlFields, List.of(),
                 entries, forEach, nilValues, dropWhen, common, events, unmatched,
                 ignoredFields, logUnmappedFields, style, imports, shared,
-                functions);
+                functions, module);
     }
 
     // Applied to the mapping itself, so the XSLT, the documentation's tables and the sample checks all use the names
@@ -207,7 +211,7 @@ public record TranslationMapping(String input,
         return new TranslationMapping(input, root, record, xmlNamespace, jsonLayout, jsonFields, xmlFields, pairs,
                 extract, forEach, nilValues, dropWhen, namedInStyle(common), rules, unmatched,
                 ignoredFields, logUnmappedFields, style, imports,
-                shared, functions);
+                shared, functions, module);
     }
 
     private List<FieldMapping> namedInStyle(final List<FieldMapping> entries) {
@@ -239,7 +243,7 @@ public record TranslationMapping(String input,
         return new TranslationMapping(input, root, record, xmlNamespace, jsonLayout, jsonFields, xmlFields, pairs,
                 extract, forEach, nilValues, dropWhen, common, events, unmatched,
                 ignoredFields, logUnmappedFields, style, imports, shared,
-                functions);
+                functions, module);
     }
 
     /// @param log Whether fields no rule reads are logged.
@@ -247,7 +251,24 @@ public record TranslationMapping(String input,
     public TranslationMapping withLogUnmappedFields(final boolean log) {
         return new TranslationMapping(input, root, record, xmlNamespace, jsonLayout, jsonFields, xmlFields, pairs,
                 extract, forEach, nilValues, dropWhen, common, events, unmatched, ignoredFields, log, style, imports,
-                shared, functions);
+                shared, functions, module);
+    }
+
+    /// @param module The module it is of an aggregated feed's translation, or null for a whole translation.
+    /// @return This mapping as that module.
+    public TranslationMapping withModule(final SourceTypeModule module) {
+        return new TranslationMapping(input, root, record, xmlNamespace, jsonLayout, jsonFields, xmlFields, pairs,
+                extract, forEach, nilValues, dropWhen, common, events, unmatched, ignoredFields, logUnmappedFields,
+                style, imports, shared, functions, module);
+    }
+
+    /// @param common The fields every event gets.
+    /// @param shared The named templates of shared XSLTs called in their element's place.
+    /// @return This mapping with those.
+    public TranslationMapping withCommonAndShared(final List<FieldMapping> common, final List<SharedTemplate> shared) {
+        return new TranslationMapping(input, root, record, xmlNamespace, jsonLayout, jsonFields, xmlFields, pairs,
+                extract, forEach, nilValues, dropWhen, common, events, unmatched, ignoredFields, logUnmappedFields,
+                style, imports, shared, functions, module);
     }
 
     /// @return Every field mapping: the common ones, then each rule's.
@@ -289,6 +310,9 @@ public record TranslationMapping(String input,
                 .put("imports", imports, List.of())
                 .models("shared", shared, template -> template.toJson(mode))
                 .models("functions", functions, function -> function.toJson(mode))
+                .putIfSet("module", module == null
+                        ? null
+                        : module.toJson(mode))
                 .build();
     }
 

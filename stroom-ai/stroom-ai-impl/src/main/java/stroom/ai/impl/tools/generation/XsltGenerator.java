@@ -33,6 +33,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -101,6 +102,14 @@ public final class XsltGenerator {
     public static final String CAUGHT = "Caught by rule '{rule}': record ";
     /// The XSLT's variable that turns the logging of fields no rule reads on (true(), the default) or off.
     public static final String LOG_UNMAPPED = "log_unmapped_fields";
+    /// Logged (WARN) by a source type group for each record whose held field (xml_fields, json_fields) holds text
+    /// that doesn't parse (a truncated SOAP body, say), which would otherwise read as empty values, unsaid: the line
+    /// is `<group's mode>: <field>`, this, the format, then [#NOT_PARSED_END] and the record's number.
+    public static final String NOT_PARSED = " did not parse as ";
+    /// The end of a [#NOT_PARSED] line, before the record's number.
+    public static final String NOT_PARSED_END = " (truncated, or not that format): its values are left out: record ";
+    // The rule the common module's parts are written from: the wrapper's entries alone.
+    private static final String COMMON_RULE = "common";
     // The field names a template's xpaths read, Data Splitter's and JSON's: data[@name='x'], *[@key='x'].
     private static final Pattern DATA_NAME_READ = Pattern.compile("@name\\s*=\\s*(['\"])([^'\"]+)\\1");
     private static final Pattern JSON_KEY_READ = Pattern.compile("@key\\s*=\\s*(['\"])([^'\"]+)\\1");
@@ -219,9 +228,24 @@ public final class XsltGenerator {
     private final Map<String, String> groupInputs = new HashMap<>();
     // The namespace the Events are written in: the schema's, event-logging:3 or an environment's fork's.
     private final String ns;
+    // A source type group's or the common module's: what it is, the prefix of every name it declares, and the shared
+    // calls that are the common module's parts (a rule writing the element itself writes its own).
+    private final SourceTypeModule module;
+    private final String prefix;
+    private final Set<SharedTemplate> commonParts = Collections.newSetFromMap(new IdentityHashMap<>());
+    // The common module's default System Name, its System part's parameter's, or null.
+    private String systemDefault;
 
-    private XsltGenerator(final TranslationMapping mapping, final EventSchema schema, final boolean markRules) {
+    private XsltGenerator(final TranslationMapping mapping,
+                          final EventSchema schema,
+                          final boolean markRules,
+                          final List<SharedTemplate> commonCalls) {
         this.m = mapping;
+        this.module = mapping.module();
+        this.prefix = module == null
+                ? null
+                : XsltNames.styleName(module.mode(), mapping.style().naming());
+        this.commonParts.addAll(commonCalls);
         this.schema = schema;
         this.ns = schema == null
                 ? EVT
@@ -277,7 +301,7 @@ public final class XsltGenerator {
         final Set<String> taken = new HashSet<>(ownFunctions.values());
         taken.addAll(keyedFunctions.values());
         taken.add("json-to-xml");
-        this.dataFunction = XsltNames.uniqueName(XsltNames.styleName("data", naming), taken, naming);
+        this.dataFunction = XsltNames.uniqueName(own(XsltNames.styleName("data", naming)), taken, naming);
     }
 
     /// The XSLT for a mapping.
@@ -293,8 +317,32 @@ public final class XsltGenerator {
                                      final EventSchema schema,
                                      final String version,
                                      final boolean markRules) {
-        final XsltGenerator generator = new XsltGenerator(mapping, schema, markRules);
-        final String xslt = generator.stylesheet(version);
+        final SourceTypeModule module = mapping.module();
+        final XsltGenerator generator;
+        final String xslt;
+        if (module != null && module.isCommon()) {
+            final SystemParam system = SystemParam.of(mapping);
+            generator = new XsltGenerator(system.mapping(), schema, markRules, List.of());
+            generator.systemDefault = system.defaultName();
+            xslt = generator.commonStylesheet(SourceTypeModule.commonParts(mapping));
+        } else if (module != null && module.isGroup()) {
+            // The common module's parts called in their elements' place, after the group's own shared calls: a rule
+            // that writes one of those elements itself writes its own.
+            final List<SharedTemplate> parts = partCalls(module);
+            final List<SharedTemplate> shared = new ArrayList<>(mapping.shared());
+            shared.addAll(parts);
+            generator = new XsltGenerator(mapping.withCommonAndShared(mapping.common(), shared), schema, markRules,
+                    parts);
+            xslt = generator.stylesheet(version);
+            if (xslt != null && generator.problems.isEmpty()) {
+                // The generator's own check of what it wrote: a group holds nothing stylesheet-level, nothing outside
+                // its mode.
+                ModuleChecks.groupProblems(xslt).forEach(problem -> note(generator.problems, problem));
+            }
+        } else {
+            generator = new XsltGenerator(mapping, schema, markRules, List.of());
+            xslt = generator.stylesheet(version);
+        }
         final Set<String> dictionaries = new TreeSet<>();
         generator.dicts.keySet().forEach(key -> dictionaries.add(key.getFirst()));
         return new Generated(generator.problems.isEmpty(), List.copyOf(generator.problems),
@@ -312,6 +360,72 @@ public final class XsltGenerator {
     /// @return What was generated, without rule marks.
     public static Generated generate(final TranslationMapping mapping, final EventSchema schema, final String version) {
         return generate(mapping, schema, version, false);
+    }
+
+    // --- source type groups and the common module ---
+
+    /// @param use A shared template the mapping calls.
+    /// @return True if it is one of the feed's common module's parts a source type group calls: a rule mapping its
+    /// element itself writes its own instead.
+    boolean isCommonPart(final SharedTemplate use) {
+        return commonParts.contains(use);
+    }
+
+    // A name the module declares (a template, a mode, a function, a global variable): prefixed with its mode, so two
+    // groups imported into one stylesheet never meet; as it is for a whole translation.
+    private String own(final String name) {
+        return prefix == null
+                ? name
+                : XsltNames.styleName(prefix + "-" + name, style.naming());
+    }
+
+    // The common module's parts as calls of its named templates: the System part given the group's System Name where
+    // it takes one.
+    private static List<SharedTemplate> partCalls(final SourceTypeModule module) {
+        if (module.common() == null) {
+            return List.of();
+        }
+        final List<SharedTemplate> calls = new ArrayList<>();
+        for (final SourceTypeModule.CommonPart part : module.parts()) {
+            final Map<String, String> params = new LinkedHashMap<>();
+            if (part.params().contains(SourceTypeModule.SYSTEM_PARAM) && isSet(module.systemName())) {
+                params.put(SourceTypeModule.SYSTEM_PARAM, XPathText.literal(module.systemName()));
+            }
+            calls.add(new SharedTemplate(module.common(), part.template(), part.at(), params));
+        }
+        return calls;
+    }
+
+    // The mode the records are handed to: event, or a group's own.
+    private String recordMode() {
+        return prefix == null
+                ? "event"
+                : prefix;
+    }
+
+    // The mode with for_each the items are handed to.
+    private String itemModeName() {
+        return own("item");
+    }
+
+    // The named template logging fields no rule reads, the one logging kinds, and the variable switching the first.
+    private String unreadTemplate() {
+        return own(UNREAD_TEMPLATE);
+    }
+
+    private String logKindTemplate() {
+        return own(LOG_KIND_TEMPLATE);
+    }
+
+    private String logUnmapped() {
+        return own(LOG_UNMAPPED);
+    }
+
+    // The keys stroom:put keeps a stream's once-only log lines under: a group's apart from every other group's.
+    private String onceKey(final String kind) {
+        return "'mcp-" + kind + ":" + (prefix == null
+                ? ""
+                : prefix + ":") + "'";
     }
 
     // --- checks made before writing ---
@@ -353,7 +467,7 @@ public final class XsltGenerator {
                             : conversion.value();
                     final Set<String> taken = new HashSet<>(out.values());
                     taken.add("json-to-xml");
-                    out.put(conversion, XsltNames.uniqueName(XsltNames.styleName(base, naming), taken, naming));
+                    out.put(conversion, XsltNames.uniqueName(own(XsltNames.styleName(base, naming)), taken, naming));
                 });
         return out;
     }
@@ -403,7 +517,7 @@ public final class XsltGenerator {
                     : after.startsWith("=")
                             ? "value"
                             : "keyed-value";
-            final String name = XsltNames.uniqueName(XsltNames.styleName(base, naming), taken, naming);
+            final String name = XsltNames.uniqueName(own(XsltNames.styleName(base, naming)), taken, naming);
             taken.add(name);
             keyedFunctions.put(entry.getKey(), name);
             final List<Extraction> extractions = members.get(entry.getKey());
@@ -614,9 +728,9 @@ public final class XsltGenerator {
         final List<String> key = List.of(name, kind);
         if (!dicts.containsKey(key)) {
             final String naming = style.naming();
-            final String base = XsltNames.styleName(name + "-" + ("map".equals(kind)
+            final String base = own(XsltNames.styleName(name + "-" + ("map".equals(kind)
                     ? "map"
-                    : "list"), naming);
+                    : "list"), naming));
             final Set<String> taken = new HashSet<>(names.values());
             taken.addAll(maps.values());
             taken.addAll(keep);
@@ -820,9 +934,9 @@ public final class XsltGenerator {
         if (!maps.containsKey(items)) {
             final String naming = style.naming();
             final List<String> steps = ToolText.split(entry.strippedPath(), "/");
-            final String base = XsltNames.styleName((src.startsWith("$")
+            final String base = own(XsltNames.styleName((src.startsWith("$")
                     ? src.substring(1)
-                    : "item") + "-to-" + steps.getLast(), naming);
+                    : "item") + "-to-" + steps.getLast(), naming));
             final Set<String> taken = new HashSet<>(names.values());
             taken.addAll(maps.values());
             taken.addAll(keep);
@@ -1320,8 +1434,8 @@ public final class XsltGenerator {
                         ? "data"
                         : word);
             }
-            final String name = XsltNames.uniqueName(XsltNames.styleName("data-" + words.get(0) + "-to-"
-                                                                         + words.get(1), naming), taken, naming);
+            final String name = XsltNames.uniqueName(own(XsltNames.styleName("data-" + words.get(0) + "-to-"
+                                                                             + words.get(1), naming)), taken, naming);
             final XmlElement template = newTemplate(name);
             dataTemplates.put(run, name);
             final String key = "data run " + name;
@@ -1337,8 +1451,8 @@ public final class XsltGenerator {
         templates.values().forEach(template -> taken.add(template.name()));
         m.shared().forEach(use -> taken.add(use.template()));
         taken.addAll(ruleNames.values());
-        taken.add("event");
-        taken.add("item");
+        taken.add(recordMode());
+        taken.add(itemModeName());
         return taken;
     }
 
@@ -1967,8 +2081,8 @@ public final class XsltGenerator {
             final List<String> pathParts = steps.subList(1, steps.size());
             final List<String> candidates = new ArrayList<>();
             for (int n = 1; n <= pathParts.size(); n++) {
-                candidates.add(XsltNames.styleName(String.join("-", pathParts.subList(pathParts.size() - n,
-                        pathParts.size())), naming));
+                candidates.add(own(XsltNames.styleName(String.join("-", pathParts.subList(pathParts.size() - n,
+                        pathParts.size())), naming)));
             }
             final String name = candidates.stream().filter(candidate -> !taken.contains(candidate)).findFirst()
                     .orElseGet(() -> XsltNames.uniqueName(candidates.getLast(), taken, naming));
@@ -2012,12 +2126,12 @@ public final class XsltGenerator {
         if (!"inline".equals(style.layout())) {
             final Set<String> taken = new HashSet<>();
             m.shared().forEach(use -> taken.add(use.template()));
-            taken.add("event");
-            taken.add("item");
+            taken.add(recordMode());
+            taken.add(itemModeName());
             for (final EventRule rule : m.events()) {
                 if (!rule.drop()) {
-                    final String name = XsltNames.uniqueName(XsltNames.styleName("event-type-" + rule.name(),
-                            style.naming()), taken, style.naming());
+                    final String name = XsltNames.uniqueName(own(XsltNames.styleName("event-type-" + rule.name(),
+                            style.naming())), taken, style.naming());
                     ruleNames.put(rule.name(), name);
                     taken.add(name);
                 }
@@ -2046,14 +2160,19 @@ public final class XsltGenerator {
         final boolean callsJson = JSON_CALL.matcher(ToolJson.dumps(m.toJson(DumpMode.WITHOUT_NONE))).find();
         final boolean usesJson = !m.jsonFields().isEmpty() || !m.xmlFields().isEmpty() || callsJson
                                  || !ownFunctions.isEmpty() || !keyedFunctions.isEmpty() || zoneFunctionWanted
-                                 || dataFunctionWanted;     // the mcp prefix: its own functions
+                                 || dataFunctionWanted || module != null;     // the mcp prefix: its own functions
         final Map<String, String> bound = new LinkedHashMap<>();
         m.functions().forEach(functions -> bound.put(functions.prefix(), functions.namespace()));
         final XmlElement sheet = XmlElement.create(XSL, "stylesheet", namespaces(usesDictMap, usesJson, bound));
         sheet.set("version", "3.0");
         sheet.set("xpath-default-namespace", MappingFacts.inputNamespace(m));
-        // Imports come first in a stylesheet: one per document, for its named templates or its functions.
+        // Imports come first in a stylesheet: one per document, for its named templates or its functions. A group
+        // imports the feed's common module and its helpers first.
         final Set<String> hrefs = new LinkedHashSet<>();
+        if (module != null) {
+            Optional.ofNullable(module.common()).filter(XsltGenerator::isSet).ifPresent(hrefs::add);
+            Optional.ofNullable(module.helpers()).filter(XsltGenerator::isSet).ifPresent(hrefs::add);
+        }
         m.shared().forEach(use -> hrefs.add(use.href()));
         m.functions().forEach(functions -> hrefs.add(functions.href()));
         hrefs.addAll(m.imports());
@@ -2071,34 +2190,34 @@ public final class XsltGenerator {
         final List<String> excluded = new ArrayList<>(own);
         bound.keySet().stream().filter(prefix -> !own.contains(prefix)).forEach(excluded::add);
         sheet.set("exclude-result-prefixes", String.join(" ", excluded));
-        if (!m.jsonFields().isEmpty() || callsJson) {
-            sheet.append(XmlParser.parse(SAFE_JSON));
+        if (module != null) {
+            // A group's records come from the feed's dispatcher, which owns the document and Events; its generated
+            // helpers come from the feed's helpers module, never inline.
+            sheet.append(moduleMarker());
+        } else {
+            if (!m.jsonFields().isEmpty() || callsJson) {
+                sheet.append(XmlParser.parse(SAFE_JSON));
+            }
+            if (!m.xmlFields().isEmpty()) {
+                sheet.append(XmlParser.parse(SAFE_XML));
+            }
+            final XmlElement rootTemplate = sheet.addElement(XSL, "template", "match", rootMatch(m));
+            final XmlElement events = rootTemplate.addElement(ns, "Events", "Version", version);
+            // The schema's own system id where it is known (an environment's fork has one of its own), else
+            // event-logging's for the version.
+            events.set(MappingFacts.XSI, "schemaLocation", schemaLocation(schema, version));
+            events.addElement(XSL, "apply-templates", "select", recordsSelect(m), "mode", "event");
         }
-        if (!m.xmlFields().isEmpty()) {
-            sheet.append(XmlParser.parse(SAFE_XML));
-        }
-        final XmlElement rootTemplate = sheet.addElement(XSL, "template", "match", isSet(m.root())
-                ? m.root()
-                : DEFAULT_ROOT.getOrDefault(m.input(), ""));
-        final XmlElement events = rootTemplate.addElement(ns, "Events", "Version", version);
-        // The schema's own system id where it is known (an environment's fork has one of its own), else
-        // event-logging's for the version.
-        final String systemId = NullSafe.nonBlankStringElse(NullSafe.get(schema, EventSchema::systemId),
-                "file://event-logging-v" + version + ".xsd");
-        events.set(MappingFacts.XSI, "schemaLocation", ns + " " + systemId);
-        String records = isSet(m.record())
-                ? m.record()
-                : "json".equals(m.input())
-                        ? JSON_RECORDS.get(m.jsonLayout())
-                        : DEFAULT_RECORD.getOrDefault(m.input(), "");
-        if ("xml_fragments".equals(m.input()) && !isSet(m.root())) {
-            records = "*/" + m.record();   // the fragments sit under the wrapper's root, whatever its namespace
-        }
-        events.addElement(XSL, "apply-templates", "select", records, "mode", "event");
         final List<Rooted> written = trees.stream().filter(rooted -> rooted.root() != null).toList();
         chooseShared(written);
         chooseDataRuns(written);
-        XmlElement recordTemplate = sheet.addElement(XSL, "template", "match", "*", "mode", "event");
+        if (module != null) {
+            sheet.append(new XmlComment(XsltComments.comment("Source type group '" + module.name() + "' ("
+                                                             + String.join(", ", module.sourceTypes())
+                                                             + "): each record the feed's dispatcher hands to mode "
+                                                             + recordMode())));
+        }
+        XmlElement recordTemplate = sheet.addElement(XSL, "template", "match", "*", "mode", recordMode());
         final XmlElement eventTemplate = recordTemplate;
         XmlElement apply = null;
         if (itemMode) {
@@ -2106,12 +2225,17 @@ public final class XsltGenerator {
             final String select = FOR_EACH_XPATH.matcher(m.forEach()).find()
                     ? m.forEach()
                     : itemsOf(m.forEach(), null, null);
-            apply = recordTemplate.addElement(XSL, "apply-templates", "select", select, "mode", "item");
+            apply = recordTemplate.addElement(XSL, "apply-templates", "select", select, "mode", itemModeName());
             apply.addElement(XSL, "with-param", "name", "record", "select", ".", "tunnel", "yes");
-            recordTemplate = sheet.addElement(XSL, "template", "match", "*", "mode", "item");
+            recordTemplate = sheet.addElement(XSL, "template", "match", "*", "mode", itemModeName());
         }
         final XmlElement body = recordTemplate;
-        inScope(body, () -> writeRules(body, rules, trees));
+        inScope(body, () -> {
+            if (module != null && !itemMode) {
+                checkHeldFormats(body);
+            }
+            writeRules(body, rules, trees);
+        });
         tidyVariables(body);
         final List<XmlElement> others = new ArrayList<>();
         ruleTemplates.forEach(template -> others.add(template.template()));
@@ -2159,6 +2283,152 @@ public final class XsltGenerator {
         return XmlSerialiser.toPrettyDocument(sheet);
     }
 
+    /// @param mapping A mapping.
+    /// @return What its root template matches: the mapping's root, else its input's default.
+    static String rootMatch(final TranslationMapping mapping) {
+        return isSet(mapping.root())
+                ? mapping.root()
+                : DEFAULT_ROOT.getOrDefault(mapping.input(), "");
+    }
+
+    /// @param mapping A mapping.
+    /// @return The records below the root, as its root template selects them.
+    static String recordsSelect(final TranslationMapping mapping) {
+        String records = isSet(mapping.record())
+                ? mapping.record()
+                : "json".equals(mapping.input())
+                        ? JSON_RECORDS.get(mapping.jsonLayout())
+                        : DEFAULT_RECORD.getOrDefault(mapping.input(), "");
+        if ("xml_fragments".equals(mapping.input()) && !isSet(mapping.root())) {
+            records = "*/" + mapping.record();   // the fragments sit under the wrapper's root, whatever its namespace
+        }
+        return records;
+    }
+
+    /// @param schema  The event-logging schema, or null.
+    /// @param version Its version.
+    /// @return The Events' xsi:schemaLocation: the schema's namespace and its own system id where it is known (an
+    /// environment's fork has one of its own), else event-logging's for the version.
+    public static String schemaLocation(final EventSchema schema, final String version) {
+        final String namespace = schema == null
+                ? EVT
+                : schema.namespace();
+        return namespace + " " + NullSafe.nonBlankStringElse(NullSafe.get(schema, EventSchema::systemId),
+                "file://event-logging-v" + version + ".xsd");
+    }
+
+    // The module's mark, a user-defined data element Saxon ignores: what the module is, its mode and a group's
+    // source types, for the checks and the stepping tools.
+    private XmlElement moduleMarker() {
+        final XmlElement marker = XmlElement.create(MappingFacts.MCP_NS, ModuleChecks.MARKER, "kind", module.kind(),
+                "name", module.name(), "mode", prefix);
+        module.sourceTypes().forEach(type -> marker.addElement(MappingFacts.MCP_NS, ModuleChecks.SOURCE_TYPE)
+                .setText(type));
+        return marker;
+    }
+
+    // A group's held fields (xml_fields, json_fields) whose text doesn't parse, logged (WARN) a record each with the
+    // group, the field and the record's number: a truncated SOAP body read as empty values would otherwise go unsaid.
+    // Error triage counts the lines, so the processing checks say how many records of the group failed to parse.
+    private void checkHeldFormats(final XmlElement template) {
+        final Map<String, List<String>> held = new LinkedHashMap<>();
+        m.xmlFields().forEach(field -> held.put(field, List.of("XML", "mcp:parse-xml")));
+        m.jsonFields().forEach(field -> held.putIfAbsent(field, List.of("JSON", "mcp:json-to-xml")));
+        held.forEach((field, how) -> {
+            final String read = "(" + source(field, null, null) + ")[1]";
+            final XmlElement check = template.addElement(XSL, "if", "test", "normalize-space(" + read + ") and empty("
+                                                                            + how.get(1) + "(" + read + "))");
+            logsRecordNo = true;
+            check.addElement(XSL, "sequence", "select", "stroom:log('WARN', concat(" + XPathText.literal(prefix
+                    + ": " + field + NOT_PARSED + how.getFirst() + NOT_PARSED_END) + ", $" + RECORD_NO + "))");
+        });
+    }
+
+    // The feed's common module: a named template a part, each writing its element from the wrapper's entries (or
+    // calling the site's shared template for it), called by every group of the feed with the record as context.
+    private String commonStylesheet(final List<SourceTypeModule.CommonPart> parts) {
+        eventTrees.checkInput();
+        for (final FieldMapping entry : m.common()) {
+            if (SourceTypeModule.partOf(entry.strippedPath()) == null && m.shared().stream()
+                    .noneMatch(use -> entry.strippedPath().startsWith(ToolText.strip(use.at(), "/") + "/"))) {
+                note(problems, "common module: " + entry.strippedPath() + " is not in a part the common module "
+                               + "writes (" + String.join(", ", SourceTypeModule.PART_ROOTS) + ", or a shared call's "
+                               + "element): map it in the source type groups that write it");
+            }
+        }
+        // The wrapper's entries alone, as one rule's tree: what the schema says of the rest of the Event (an action
+        // element, a user) is the groups' to write, and not checked here.
+        final int before = problems.size();
+        final EventNode tree = eventTrees.tree(EventRule.of(COMMON_RULE, List.of(), false, List.of()));
+        final List<String> found = new ArrayList<>(problems.subList(before, problems.size()));
+        problems.subList(before, problems.size()).clear();
+        found.stream()
+                .filter(problem -> !problem.startsWith("[" + COMMON_RULE + "] ") || parts.stream()
+                        .anyMatch(part -> problem.contains("Event/" + part.at())))
+                .forEach(problem -> note(problems, problem));
+        final boolean usesDictMap = m.allEntries().stream().anyMatch(entry -> isSet(entry.dictionary()));
+        final Map<String, String> bound = new LinkedHashMap<>();
+        m.functions().forEach(functions -> bound.put(functions.prefix(), functions.namespace()));
+        final XmlElement sheet = XmlElement.create(XSL, "stylesheet", namespaces(usesDictMap, true, bound));
+        sheet.set("version", "3.0");
+        sheet.set("xpath-default-namespace", MappingFacts.inputNamespace(m));
+        final Set<String> hrefs = new LinkedHashSet<>();
+        Optional.ofNullable(module.helpers()).filter(XsltGenerator::isSet).ifPresent(hrefs::add);
+        m.shared().forEach(use -> hrefs.add(use.href()));
+        m.functions().forEach(functions -> hrefs.add(functions.href()));
+        hrefs.addAll(m.imports());
+        hrefs.forEach(href -> sheet.addElement(XSL, "import", "href", href));
+        final List<String> excluded = new ArrayList<>(List.of("stroom", "xs"));
+        if (!m.extract().isEmpty()) {
+            excluded.add("fn");
+        }
+        if (usesDictMap) {
+            excluded.add("map");
+        }
+        excluded.add("mcp");
+        bound.keySet().stream().filter(name -> !excluded.contains(name)).forEach(excluded::add);
+        sheet.set("exclude-result-prefixes", String.join(" ", excluded));
+        sheet.append(moduleMarker());
+        for (final SourceTypeModule.CommonPart part : parts) {
+            EventNode node = tree;
+            for (final String step : ToolText.split(part.at(), "/")) {
+                node = node == null
+                        ? null
+                        : node.kids.get(step);
+            }
+            if (node == null) {
+                continue;
+            }
+            final EventNode written = node;
+            final XmlElement template = XmlElement.create(XSL, "template", "name", part.template());
+            if (written.shared != null) {
+                // The site's shared template, made in this one place for every group.
+                final XmlElement call = template.addElement(XSL, "call-template", "name", written.shared.template());
+                written.shared.withParams().forEach((name, select) -> call.addElement(XSL, "with-param", "name", name,
+                        "select", select));
+            } else {
+                inScope(template, () -> emitElement(template, written, null, false));
+                tidyVariables(template);
+                if ("just_in_time".equals(style.variables())) {
+                    justInTime(template);
+                }
+            }
+            if (part.params().contains(SourceTypeModule.SYSTEM_PARAM)) {
+                template.insert(0, XmlElement.create(XSL, "param", "name", SourceTypeModule.SYSTEM_PARAM, "select",
+                        XPathText.literal(or(systemDefault, ""))));
+            }
+            sheet.append(new XmlComment(XsltComments.comment(part.template() + ": " + part.at() + ", as every "
+                                                             + "source type group of the feed writes it"
+                                                             + (part.params().isEmpty()
+                    ? ""
+                    : " (a group's System Name passed as " + SourceTypeModule.SYSTEM_PARAM + ")"))));
+            sheet.append(template);
+        }
+        declareMaps(sheet);
+        ownFunctions().forEach(sheet::append);
+        return XmlSerialiser.toPrettyDocument(sheet);
+    }
+
     private Map<String, String> namespaces(final boolean usesDictMap,
                                            final boolean usesJson,
                                            final Map<String, String> bound) {
@@ -2182,7 +2452,8 @@ public final class XsltGenerator {
     }
 
     private void declareMaps(final XmlElement sheet) {
-        int n = 0;
+        // After the imports, which come first in a stylesheet.
+        int n = leading(sheet, "import");
         for (final Map.Entry<List<List<String>>, String> map : maps.entrySet()) {
             final XmlElement variable = XmlElement.create(XSL, "variable", "name", map.getValue(), "as",
                     "map(xs:string, xs:string)");
@@ -2219,7 +2490,7 @@ public final class XsltGenerator {
         }
         if (itemMode) {
             // Its rules run on the items, the fields are the record's: checked once for the record.
-            eventTemplate.addElement(XSL, "call-template", "name", UNREAD_TEMPLATE);
+            eventTemplate.addElement(XSL, "call-template", "name", unreadTemplate());
         } else if (!unreadCalled) {
             // Every rule leaves its records untranslated.
             return;
@@ -2229,6 +2500,13 @@ public final class XsltGenerator {
                 ? DATA_NAME_READ
                 : JSON_KEY_READ;
         final Set<String> read = new TreeSet<>(m.ignoredFields());
+        if (module != null) {
+            // A group's records' fields the dispatcher (the source type field) and the common module's parts read.
+            Optional.ofNullable(module.field()).filter(XsltGenerator::isSet)
+                    .ifPresent(field -> read.add(ToolText.split(ToolText.split(field, ".").getFirst(), "/")
+                            .getFirst()));
+            module.parts().forEach(part -> read.addAll(part.reads()));
+        }
         final List<XmlElement> scanned = new ArrayList<>(templates);
         // With for_each, the record's own template reads the items' field.
         scanned.add(eventTemplate);
@@ -2256,26 +2534,27 @@ public final class XsltGenerator {
         // doesn't want the Error streams can stop them in Stroom's editor.
         final int top = leading(sheet, "import", "output", "strip-space", "preserve-space", "key", "param",
                 "variable");
-        sheet.insert(top, XmlElement.create(XSL, "variable", "name", LOG_UNMAPPED, "as", "xs:boolean", "select",
+        sheet.insert(top, XmlElement.create(XSL, "variable", "name", logUnmapped(), "as", "xs:boolean", "select",
                 m.logUnmappedFields()
                         ? "true()"
                         : "false()"));
         sheet.insert(top, new XmlComment(XsltComments.comment("Fields of the source no rule reads are logged (WARN, "
                                                               + "once a stream) to the Error stream: false() to "
                                                               + "stop it (the mapping's log_unmapped_fields)")));
-        final XmlElement template = XmlElement.create(XSL, "template", "name", UNREAD_TEMPLATE);
-        final XmlElement each = template.addElement(XSL, "if", "test", "$" + LOG_UNMAPPED)
+        final XmlElement template = XmlElement.create(XSL, "template", "name", unreadTemplate());
+        final XmlElement each = template.addElement(XSL, "if", "test", "$" + logUnmapped())
                 .addElement(XSL, "for-each", "select", (data
                 ? "data"
                 : "*") + "[" + attribute + "]" + known + "[normalize-space(string(" + value + "))]" + nils);
-        each.addElement(XSL, "variable", "name", "mcp_unread", "select", "concat('mcp-unread:', " + attribute + ")");
+        each.addElement(XSL, "variable", "name", "mcp_unread", "select", "concat(" + onceKey("unread") + ", "
+                                                                         + attribute + ")");
         final XmlElement first = each.addElement(XSL, "if", "test", "not(string(stroom:get($mcp_unread)))");
         first.addElement(XSL, "value-of", "select", "stroom:put($mcp_unread, 'y')");
         // Once a stream, by name: no record's number, which every record would then read (see READ_RECORD_NO).
         first.addElement(XSL, "sequence", "select", "stroom:log('WARN', concat(" + XPathText.literal(UNREAD_FIELD)
                                                     + ", " + attribute + ", " + XPathText.literal(UNREAD_FIELD_END)
                                                     + "))");
-        sheet.append(new XmlComment(XsltComments.comment(UNREAD_TEMPLATE + ": a field of the record no rule reads, "
+        sheet.append(new XmlComment(XsltComments.comment(unreadTemplate() + ": a field of the record no rule reads, "
                                                          + "logged once a stream (ignored_fields: left out on "
                                                          + "purpose); called by the rules that translate their "
                                                          + "records")));
@@ -2316,7 +2595,7 @@ public final class XsltGenerator {
     // rules test), the first record's line as it was, not the records run together on one line, so no line is longer
     // than a record's.
     private void logKind(final XmlElement holder, final EventRule rule, final String text, final List<String> tested) {
-        final XmlElement call = holder.addElement(XSL, "call-template", "name", LOG_KIND_TEMPLATE);
+        final XmlElement call = holder.addElement(XSL, "call-template", "name", logKindTemplate());
         call.addElement(XSL, "with-param", "name", "group", "select", "concat(" + XPathText.literal(rule.name()
                                                                                                 + "|") + ", "
                                                                           + testedValues(tested) + ")");
@@ -2331,14 +2610,14 @@ public final class XsltGenerator {
         if (!logKindCalled) {
             return;
         }
-        final XmlElement template = XmlElement.create(XSL, "template", "name", LOG_KIND_TEMPLATE);
+        final XmlElement template = XmlElement.create(XSL, "template", "name", logKindTemplate());
         template.addElement(XSL, "param", "name", "group");
         template.addElement(XSL, "param", "name", "line");
         final XmlElement first = template.addElement(XSL, "if", "test",
-                "not(string(stroom:get(concat('mcp-kind:', $group))))");
-        first.addElement(XSL, "value-of", "select", "stroom:put(concat('mcp-kind:', $group), 'y')");
+                "not(string(stroom:get(concat(" + onceKey("kind") + ", $group))))");
+        first.addElement(XSL, "value-of", "select", "stroom:put(concat(" + onceKey("kind") + ", $group), 'y')");
         first.addElement(XSL, "sequence", "select", "stroom:log('INFO', $line)");
-        sheet.append(new XmlComment(XsltComments.comment(LOG_KIND_TEMPLATE + ": a record a rule keeps as Unknown on "
+        sheet.append(new XmlComment(XsltComments.comment(logKindTemplate() + ": a record a rule keeps as Unknown on "
                                                          + "purpose, or a catch-all rule takes, logged once a "
                                                          + "stream for each kind (the rule and the values the rules "
                                                          + "test)")));
@@ -2410,7 +2689,7 @@ public final class XsltGenerator {
             if (!rule.drop() && checksUnreadFields() && !itemMode) {
                 unreadCalled = true;
                 if (!isConditional) {
-                    holder.addElement(XSL, "call-template", "name", UNREAD_TEMPLATE);
+                    holder.addElement(XSL, "call-template", "name", unreadTemplate());
                 }
             }
             final Object when = rule.when().isEmpty()
@@ -2468,7 +2747,7 @@ public final class XsltGenerator {
     // branch was unsightly, and a branch added by hand would miss it), for every record but those a rule leaves
     // untranslated on purpose (seen in the e2e suite: their fields reported as read by no rule). A drop rule takes a
     // record when its test holds and no translating rule before it does.
-    private static void unreadCheckBefore(final XmlElement recordTemplate,
+    private void unreadCheckBefore(final XmlElement recordTemplate,
                                           final XmlElement rules,
                                           final List<String> tests,
                                           final List<Boolean> drops) {
@@ -2487,7 +2766,7 @@ public final class XsltGenerator {
             }
         }
         final int at = recordTemplate.children().indexOf(rules);
-        final XmlElement call = XmlElement.create(XSL, "call-template", "name", UNREAD_TEMPLATE);
+        final XmlElement call = XmlElement.create(XSL, "call-template", "name", unreadTemplate());
         if (dropped.isEmpty()) {
             recordTemplate.insert(at, call);
         } else {
@@ -2496,7 +2775,7 @@ public final class XsltGenerator {
             recordTemplate.insert(at, guard);
         }
         recordTemplate.insert(at, new XmlComment(XsltComments.comment("Fields of the record no rule reads are "
-                                                                      + "logged (" + UNREAD_TEMPLATE + ")"
+                                                                      + "logged (" + unreadTemplate() + ")"
                                                                       + (dropped.isEmpty()
                 ? ""
                 : ", but for records left untranslated on purpose"))));
@@ -2567,32 +2846,9 @@ public final class XsltGenerator {
     // The XSLT's own functions, one per repeated conversion: a value in, the converted value out.
     private List<XmlElement> ownFunctions() {
         final List<XmlElement> out = new ArrayList<>();
-        if (zoneFunctionWanted) {
-            // As ZoneSource.asGiven writes a zone: an offset Stroom can't read but whose meaning is plain (+5, +5:30,
-            // +10.5, after any UTC/GMT/UT) as it reads it; blank, the default; anything else as it is.
-            final XmlElement function = XmlElement.create(XSL, "function", "name", "mcp:" + ZONE_FUNCTION, "as",
-                    "xs:string");
-            function.append(new XmlComment(XsltComments.comment("A record's time zone as Stroom reads one: the "
-                                                                + "default where the record gives none")));
-            function.addElement(XSL, "param", "name", "value", "as", "xs:string");
-            function.addElement(XSL, "param", "name", "default", "as", "xs:string");
-            // A UTC, GMT or UT prefix only before an offset (XPath's replace refuses a regex matching nothing).
-            function.addElement(XSL, "variable", "name", "prefix", "select",
-                    "if (matches($value, '^(UTC|GMT|UT)[+-]')) then replace($value, '^(UTC|GMT|UT)[+-].*$', '$1') "
-                    + "else ''");
-            function.addElement(XSL, "variable", "name", "offset", "select",
-                    "substring($value, string-length($prefix) + 1)");
-            function.addElement(XSL, "sequence", "select", "if ($value = '') then $default "
-                    + "else if (matches($offset, '^[+-]\\d(:\\d\\d)?$')) then concat($prefix, "
-                    + "substring($offset, 1, 1), '0', substring($offset, 2, 1), ':', "
-                    + "if (string-length($offset) gt 2) then substring($offset, 4, 2) else '00') "
-                    + "else if (matches($offset, '^[+-]\\d{1,2}\\.(5|25|75)$')) then concat($prefix, "
-                    + "substring($offset, 1, 1), format-number(xs:integer(substring-before(substring($offset, 2), "
-                    + "'.')), '00'), ':', "
-                    + "if (ends-with($offset, '.25')) then '15' else if (ends-with($offset, '.75')) then '45' else "
-                    + "'30') "
-                    + "else $value");
-            out.add(function);
+        if (zoneFunctionWanted && module == null) {
+            // A module's comes from the feed's helpers module.
+            out.add(zoneFunction());
         }
         if (dataFunctionUsed) {
             final XmlElement function = XmlElement.create(XSL, "function", "name", "mcp:" + dataFunction, "as",
@@ -2634,6 +2890,36 @@ public final class XsltGenerator {
             out.add(function);
         }
         return out;
+    }
+
+    /// @return The function writing a record's time zone as Stroom reads one (`mcp:zone(value, default)`): a whole
+    /// translation's own, or the feed's helpers module's for a source type group.
+    static XmlElement zoneFunction() {
+        // As ZoneSource.asGiven writes a zone: an offset Stroom can't read but whose meaning is plain (+5, +5:30,
+        // +10.5, after any UTC/GMT/UT) as it reads it; blank, the default; anything else as it is.
+        final XmlElement function = XmlElement.create(XSL, "function", "name", "mcp:" + ZONE_FUNCTION, "as",
+                "xs:string");
+        function.append(new XmlComment(XsltComments.comment("A record's time zone as Stroom reads one: the "
+                                                            + "default where the record gives none")));
+        function.addElement(XSL, "param", "name", "value", "as", "xs:string");
+        function.addElement(XSL, "param", "name", "default", "as", "xs:string");
+        // A UTC, GMT or UT prefix only before an offset (XPath's replace refuses a regex matching nothing).
+        function.addElement(XSL, "variable", "name", "prefix", "select",
+                "if (matches($value, '^(UTC|GMT|UT)[+-]')) then replace($value, '^(UTC|GMT|UT)[+-].*$', '$1') "
+                + "else ''");
+        function.addElement(XSL, "variable", "name", "offset", "select",
+                "substring($value, string-length($prefix) + 1)");
+        function.addElement(XSL, "sequence", "select", "if ($value = '') then $default "
+                + "else if (matches($offset, '^[+-]\\d(:\\d\\d)?$')) then concat($prefix, "
+                + "substring($offset, 1, 1), '0', substring($offset, 2, 1), ':', "
+                + "if (string-length($offset) gt 2) then substring($offset, 4, 2) else '00') "
+                + "else if (matches($offset, '^[+-]\\d{1,2}\\.(5|25|75)$')) then concat($prefix, "
+                + "substring($offset, 1, 1), format-number(xs:integer(substring-before(substring($offset, 2), "
+                + "'.')), '00'), ':', "
+                + "if (ends-with($offset, '.25')) then '15' else if (ends-with($offset, '.75')) then '45' else "
+                + "'30') "
+                + "else $value");
+        return function;
     }
 
     /// Each of the template's variables declared just before the first element that reads it, inside the innermost
@@ -2841,6 +3127,30 @@ public final class XsltGenerator {
     // (name -> the expression of the list), and its element's node (null for a Data group, or a check).
     private record Frame(FieldMapping group, String variable, Map<String, String> lists, EventNode node) {
 
+    }
+
+    // The common module's System Name made its System part's parameter: the value its mapping gives is the
+    // parameter's default, which each group's own replaces.
+    private record SystemParam(TranslationMapping mapping, String defaultName) {
+
+        static SystemParam of(final TranslationMapping common) {
+            final List<FieldMapping> entries = new ArrayList<>();
+            String found = null;
+            for (final FieldMapping entry : common.common()) {
+                if ("EventSource/System/Name".equals(entry.strippedPath()) && entry.value() != null) {
+                    found = entry.value();
+                    final Map<String, Object> json = new LinkedHashMap<>(entry.toJson(DumpMode.WITHOUT_NONE));
+                    json.remove("value");
+                    json.put("xpath", "$" + SourceTypeModule.SYSTEM_PARAM);
+                    entries.add(FieldMapping.fromJson(json));
+                } else {
+                    entries.add(entry);
+                }
+            }
+            return new SystemParam(found == null
+                    ? common
+                    : common.withCommonAndShared(entries, common.shared()), found);
+        }
     }
 
     // A conversion that could be a function of the XSLT's own: a transform, or a time format and zone.

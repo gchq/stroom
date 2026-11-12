@@ -37,6 +37,8 @@ final class XsltImports {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(XsltImports.class);
     private static final Pattern UUID_IN_HREF = Pattern.compile(
             "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
+    // A doc ref string's UUID, `uuid='…'` (or in double quotes), as Stroom's resolver reads it first.
+    private static final Pattern UUID_PART = Pattern.compile("uuid=(['\"])([^'\"]+)\\1");
 
     private XsltImports() {
         // Static only.
@@ -52,10 +54,13 @@ final class XsltImports {
         try {
             List<DocRef> found = NullSafe.list(docFinder.findByName(XsltDoc.TYPE, href, false));
             if (found.isEmpty()) {
+                final Matcher part = UUID_PART.matcher(href);
                 final Matcher matcher = UUID_IN_HREF.matcher(href);
-                found = matcher.find()
-                        ? List.of(new DocRef(XsltDoc.TYPE, matcher.group()))
-                        : List.of();
+                found = part.find()
+                        ? List.of(new DocRef(XsltDoc.TYPE, part.group(2)))
+                        : matcher.find()
+                                ? List.of(new DocRef(XsltDoc.TYPE, matcher.group()))
+                                : List.of();
             }
             // Stroom refuses a name more than one XSLT has: so does this.
             return found.size() == 1

@@ -316,6 +316,11 @@ final class EventTrees {
             if (node.leaf != null || !node.data.isEmpty()) {
                 mapped.add(node.path);
             }
+            if ((!mapped.isEmpty() || node.shared != null) && generator.isCommonPart(use)) {
+                // A source type group's rule writing the element itself (its own time, say): its own, in place of
+                // the feed's common module's part.
+                continue;
+            }
             if (!mapped.isEmpty() || node.shared != null) {
                 note(problems, "[" + rule.name() + "] " + use.at() + " is written by the shared template "
                                + use.template() + " (" + use.href() + "), so it must not be mapped as well: it would "

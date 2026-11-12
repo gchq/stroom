@@ -122,6 +122,10 @@ final class TranslationWorld {
             siblingSharedCalls, dataSplitterSchema);
     final TranslationBuilds builds = new TranslationBuilds(world.guard(), world.documentAccess, docs, compileCheck,
             streamReader);
+    // The feeds' source type registries: none unless a test says.
+    final SourceTypeRegistries registries = Mockito.mock(SourceTypeRegistries.class);
+    final SourceTypeGroups groups = new SourceTypeGroups(world.guard(), world.documentAccess, registries, docs,
+            builds);
     final SampleProfiling sampleProfiling = new SampleProfiling.Profiled();
     // No feed translated now, unless a test says what is.
     final CurrentTranslations currentTranslations = Mockito.mock(CurrentTranslations.class);
@@ -168,6 +172,8 @@ final class TranslationWorld {
         Mockito.when(streamReader.recordLengths(Mockito.anyLong(), any()))
                 .thenReturn(new StreamReader.PartLengths(List.of(), 0));
         Mockito.when(compileCheck.compile(anyString())).thenReturn(new XsltCompileCheck.Compiled(List.of()));
+        Mockito.when(compileCheck.compile(anyString(), Mockito.anyMap()))
+                .thenReturn(new XsltCompileCheck.Compiled(List.of()));
         Mockito.when(securityContext.getUserIdentityForAudit()).thenReturn("jane");
         Mockito.when(agentInstructions.importsRequired(any(), anyString(), any(), any())).thenReturn(List.of());
         Mockito.when(agentInstructions.applicableInstructions(any(), anyString(), any()))
@@ -179,7 +185,7 @@ final class TranslationWorld {
     /// @return build_translation_xslt, wired on the world.
     BuildTranslationXsltTool buildTool() {
         return new BuildTranslationXsltTool(docs, builds, eventVersions, requiredImports, consent,
-                sampleStreamTexts, stepping, agentInstructions, () -> auditLog, currentTranslations,
+                sampleStreamTexts, stepping, agentInstructions, () -> auditLog, currentTranslations, groups,
                 Clock.systemUTC());
     }
 
