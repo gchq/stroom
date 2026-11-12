@@ -1478,6 +1478,282 @@ beside the feed:
 `draft_translation_mapping` drafts from the notes; `build_translation_xslt` checks the mapping against the catalogue.
 Where the sample and the documentation disagree, the sample decides the format and the documentation the meaning.
 
+### Aggregated feeds: source types and components (proposed, 2026-11-12)
+
+Not built. A design for feeds that aggregate several discrete sources: a JSON wrapper with fixed metadata (host,
+source type, time...) around a `message` whose format depends on the source type (seen: PEGA logs, whose messages are
+plain text for most source types and SOAP envelopes, namespaces and all, for others). Today such a feed is one build
+and one translation: the draft unpacks a held format only where 80% of a field's values are in it, the survey never
+looks inside `message`, and the agent's context holds every source type at once. The user may also want only some of
+the source types translated now, and the rest later.
+
+The same holds without a wrapper, where a field of the record itself says which source it came from and so which
+fields it has (seen: Azure's unified audit log, whose `Workload`, ExchangeOnline, SharePoint, AzureActiveDirectory...,
+decides the fields under `event.*`). The user may want one workload, or a few, handled by a pipeline, the rest left
+for later or for another pipeline: their choice limits what the build surveys and translates.
+
+Terms:
+
+* **Source type**: a value of the field that says which source a record came from: the wrapper's (PEGA's source
+  type), or the record's own (Azure's `Workload`). Its field is the **source type field**; a source type's kinds of
+  event are told apart within it as now (Azure's `Operation` within a workload).
+* **Scope**: the source types a build covers. A build's survey, samples, classification and translation see only the
+  records in its scope; the rest are counted, by source type, for the registry, and nothing more.
+* **Component**: the source types one translation handles, e.g. a mail component for several mail source types. A
+  component is one mapping and one XSLT doc; its rules tell its source types (and the kinds within them) apart.
+* **Registry**: the feed's list of its source types and what became of each.
+
+#### The source type registry
+
+A Documentation doc, `<feed> source types`, made in the build and promoted beside the feed with the pipeline, so a
+later build finds it. A table for the user and, as the survey record does, a machine block (`<!-- stroom-mcp source
+types {...} -->`) the tools read. One row per source type:
+
+| Column | |
+| --- | --- |
+| Source type | the value, as the wrapper writes it |
+| Records | its share of the surveyed records, and how many |
+| Message | the formats its messages were seen in (XML with its root element, JSON, syslog, key=value, text), and how many of them failed to parse |
+| Component | the component that translates it, with its XSLT doc, or none |
+| Status | `translated`, `parked` (for a later build), `dropped` (the user chose never to translate it), or `new` (seen after the registry was made) |
+| Examples | survey locations (stream, part, record) to step |
+| Decided | who chose the status, and when; a reason for parked and dropped |
+
+How it is filled and kept:
+
+* The "source types" step ([How it starts](#how-it-starts)) surveys the feed by source type, and the user confirms
+  the source type field as they confirm a kind field (`KindFields`, [Samples and the text
+  converter](#samples-and-the-text-converter-built)): chosen by values, put to them when unsure.
+* The user chooses, in a form, the components to build now; every other source type is `parked`, with their reason.
+  `dropped` only on their word.
+* `review_coverage` and the processing checks add any source type the dispatcher meets that the registry lacks as
+  `new`, so new sources in an aggregated feed surface rather than vanishing into a catch-all.
+* A build started on a feed that has a registry (`start_onboarding` on an existing feed) shows its parked and new
+  source types, and the plan offers a scoped build for those the user picks.
+
+#### Profiling the source types
+
+To choose a scope, the user needs to know what each source type is: which hold the application's security audit,
+which are noisy database or health traffic. The "source types" step profiles every source type the survey counts,
+and the agent puts the profiles to the user before the scope form. A profile, kept in the registry row:
+
+* **Size**: records and bytes (a share of the feed each: a source type of few, huge records differs from one of
+  many small ones), per day over the streams read, and the streams it is in (all, or a few: a source that comes and
+  goes).
+* **Shape**: its message formats; its fields with fill rates (the wrapper's aside, as every record has them); how many
+  shapes it has, and how much of it its commonest shapes cover (one template for 99% of records is repetitive, a few
+  dozen varied ones isn't).
+* **Composition**: its kinds of event, by the kind-field rule within it (`KindFields`), the top ones with their
+  counts; its levels or severities, where a field holds them.
+* **Signals**, each said with what it rests on, never as a verdict:
+  * of an audit trail: an actor (a field with a user home, `FieldHomes`), a client address, an outcome (success,
+    failure, denied), an object acted on, kinds whose values name access, change or authentication (logon, delete,
+    grant, permission, password, policy...);
+  * of operational traffic: no actor; a few templates covering nearly all records; levels mostly debug or trace;
+    SQL, queries, timings, heartbeats or health checks in the messages; a large share of the feed's bytes.
+
+  Generic signals only, from field roles and words any product uses, as the draft's logic is; what the agent knows of
+  the product (Azure's workloads, PEGA's log categories) is added as its knowledge, marked so (`agent_knowledge`, as
+  source notes mark it), with a confidence.
+* **Examples**: two or three records each, from the survey's locations, steppable.
+
+How it is shown: a table in the chat, a row a source type (size, top kinds, signals in a few words, the agent's
+suggested group: security audit, operational, network, diagnostic noise, with its confidence), sorted by the agent's
+suggestion then size; a source type's detail on request. The scope form then lists the source types by name and share
+alone, referring to the table, as forms do (plain text, no Markdown). The agent suggests; the user chooses.
+
+What it costs: the source type field is read in every record the survey reads (cheap: a field of the parsed JSON),
+the profile's counts and samples kept per source type within the survey's own budget. Shares are estimates from the
+records read, said as such ("about"), scaled to the streams' sizes as the survey's depth estimates are now. A source
+type seen only in the survey's windows is still profiled, from fewer records, and says so.
+
+Where a discovery index exists for the feed (Stroom AI's discovery pipelines index raw JSON as it is), the profile
+can also come from it: counts by source type over time and by kind, as a dashboard the agent builds with the existing
+dashboard tools, for a feed too big to survey well. Optional; the survey's profile is the default.
+
+#### Scope
+
+The user chooses a build's scope in a form once the source type field is confirmed, from the source types the
+survey counted (each with its share of records and its message formats): all of them, a component's, or any subset.
+What it changes:
+
+* **Survey** (`survey_feed`): records outside the scope are counted by source type and not otherwise read, so they
+  never shape the survey: its shapes, kinds, saturation, depth and the gate are over the scope's records alone. A
+  scope of rare source types in a big feed is read deeper than a whole-feed survey would read it (seen: the user
+  asked to survey ten streams of a growing feed and was held to more; a scope makes "enough" mean enough of what they
+  asked for). The scope is kept in the survey state, as the kind fields are, and every part read is signed by it; a
+  changed scope starts the survey's coverage again for the source types it adds.
+* **Samples, classification and the draft**: read through the scope (records outside it left out as they are read,
+  located as the survey locates them), so the kinds listed and the rules drafted are the scope's.
+* **The translation**: a scope's component handles its source types; records outside it go to the dispatcher's
+  parked branch, never to a catch-all rule of the component's.
+* **Coverage and processing checks** (`review_coverage`): judged against the scope, saying what share of the feed the
+  scope is.
+
+#### The pipeline
+
+Options considered:
+
+1. **Dynamic XSLT naming** (`xsltNamePattern`). Stroom resolves the pattern once per stream, from `${feed}` and
+   `${pipeline}` only (`PipelineDocFinder`), so it can't choose an XSLT for each record of a stream that mixes source
+   types. Useful only where source types already arrive in feeds of their own. Rejected for mixed streams.
+2. **A pipeline per component**, each a child of a base pipeline (Stroom's pipeline inheritance) overriding its
+   translation XSLT, each translating its own source types and dropping the rest. Every pipeline reads every stream:
+   N components read the feed N times, write N Events streams for each raw stream, and each logs or hides the 90% of
+   records it skips. Kept for components that need what a pipeline gives on its own: another destination, another
+   owner, reprocessing on their own.
+3. **Chained filters**, one XSLT filter per component, each translating its records and passing the others through.
+   One pass over every stream per component, a document half Events and half records until the last filter, the
+   schema checked only at the end, and a component added by changing the pipeline's structure.
+4. **Unwrap, then dispatch (proposed)**: two XSLT filters in one pipeline, whatever the number of components.
+
+```text
+Parser (JSON) -> unwrap XSLT -> dispatch XSLT -> Schema filter -> Writer
+                 (the feed's)   (generated; imports each component's XSLT)
+```
+
+* **Unwrap** (one per feed, from the wrapper's mapping): each record becomes a normalised record, the wrapper's
+  fields as attributes and the message as it is; a message holding XML or JSON is parsed once here into a child
+  element (`parse-xml` in a `try`, as held XML is read now), so namespaces and escaping are dealt with in one place,
+  and a message that fails to parse is marked, its count said in the processing checks (a truncated SOAP body would
+  otherwise read as empty values, unsaid).
+
+  ```xml
+  <record source-type="IntegrationServices" host="pega01" time="2026-11-12T09:00:01Z">
+    <message>Request: &lt;soapenv:Envelope ...</message>
+    <parsed><soapenv:Envelope xmlns:soapenv="...">...</soapenv:Envelope></parsed>
+  </record>
+  ```
+
+* **Dispatch** (generated, small): it writes each Event's parts the wrapper gives (EventTime, EventSource's device
+  and system) and hands the record to its component, chosen by source type; the component writes the rest.
+
+  ```xml
+  <xsl:import href="uuid='...', name='PEGA-Mail'"/>
+  <xsl:import href="uuid='...', name='PEGA-Integration'"/>
+  ...
+  <xsl:template match="record">
+    <xsl:choose>
+      <xsl:when test="@source-type = ('MailIn', 'MailOut', 'MailQueue')">
+        <xsl:apply-templates select="." mode="pega-mail"/>
+      </xsl:when>
+      <xsl:when test="@source-type = 'IntegrationServices'">
+        <xsl:apply-templates select="." mode="pega-integration"/>
+      </xsl:when>
+      <xsl:otherwise><!-- parked, dropped or new: as the user chose, see below --></xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+  ```
+
+* **Components** are XSLT docs of templates in a mode of their own, each generated from its own mapping (kept with
+  the XSLT, as now), reading unwrapped records, not raw text. Imported by UUID: Stroom refuses an import whose name
+  matches two XSLTs (`CustomURIResolver`), and a rename doesn't break a UUID. Saving a component recompiles every
+  pooled XSLT that imports (gh-5968), so processing and stepping follow it.
+* **Parked, dropped and new records**: written as `EventDetail/Unknown` events holding the source type and the raw
+  message, so they are kept and indexed by the wrapper's fields until translated; or not written, with a count in the
+  processing checks. The user chooses one for the feed. A new source type is also logged once a stream (WARN, naming
+  it) and added to the registry.
+
+Without a wrapper there is no unwrap step: `Parser (JSON) -> dispatch XSLT -> Schema filter -> Writer`, the
+dispatcher choosing by the record's own field (`Workload`) and the components reading the records as they are, each
+the fields its source types have (`event.*` for one workload, others for another).
+
+Several pipelines on one feed, each with its own scope (the user's "this pipeline handles ExchangeOnline and
+SharePoint"): Stroom's processor filters choose streams, not records, so each such pipeline reads every stream and
+passes over the records outside its scope (option 2's cost). The plan offers that only when the user wants the
+pipelines apart (another destination, owner or reprocessing); otherwise a scope is a component of the feed's one
+pipeline, and "the pipeline for ExchangeOnline" is that component. Either way, records outside a pipeline's scope are
+passed over without a warning a record (counted once a stream), so the other pipelines' records aren't reported as
+errors.
+
+Why this shape: two passes over each record whatever the number of components; a component added or changed is a
+document change (its XSLT, the dispatcher regenerated, the registry row), never a change to the pipeline; stepping
+shows the unwrapped records, which are also the components' samples; the wrapper is mapped once.
+
+What it needs that isn't built:
+
+* the mapping's input as unwrapped records (an XML input whose record carries the wrapper's attributes and the
+  parsed message);
+* the generator writing a component (templates in a mode, no Events root, no wrapper parts) and the dispatcher (its
+  imports, its choose, the parked branch);
+* kept mappings, drift checks and documentation per component XSLT, and the pipeline's documentation listing its
+  components with a link to the registry;
+* index plans merged from the components' plans into the feed's one index, its conventions and backend chosen once.
+
+#### Scoped builds
+
+A feed with a registry is onboarded by **scoped builds**, each covering one or more of its source types: a component,
+or several. There is no build above them: the registry holds the feed's state, and what used to need a coordinating
+build is either recorded beside it or derived from it.
+
+* **One build at a time per feed.** A build is refused for a feed that has another open (made and not promoted or
+  abandoned), naming it: finish or abandon it first. So the registry, the dispatcher and the feed's documents are
+  only ever changed by one build, and promotion needs no merging.
+* **The feed's shared decisions**: System and Environment names, field conventions, the indexing backend and the
+  feed's index, recorded beside the registry (in its machine block). The first scoped build makes them with the user;
+  later builds inherit them, and the tools refuse a change the user hasn't asked for, saying where they are kept.
+* **Bootstrap**: the first scoped build makes what the feed needs whatever its scope: the pipeline, the unwrap XSLT
+  (with a wrapper), the dispatcher and the index. Nothing is assumed made until promoted: a build abandoned before
+  promotion leaves the next to make them.
+* **Its own work**: its sample is the scope's records (unwrapped, where there is a wrapper: a new tool steps the
+  unwrap XSLT over the feed's streams and keeps its source types' records, located as the survey locates them, so the
+  agent never re-uploads text); then the usual steps (classify, draft, build the component XSLT, document). One
+  format a source type, so held formats need no 80% threshold, and its kinds are those of its source types alone.
+* **Promotion**: its component XSLT; the dispatcher, generated from the registry as it will be (an import for every
+  `translated` component, the parked branch for the rest); the registry rows it changed; the index's new fields; the
+  feed's documentation, assembled from the registry and the components' docs. On a promoted feed, through working
+  copies, as promotion changes promoted documents now.
+* **The index across builds**: each build adds its component's fields to the feed's one index. A field another
+  component already has with another type can't be changed in an Elasticsearch index: the build says so before
+  promotion and the user chooses (a field of another name, or a new index version).
+* **Agents**: a scoped build is a build like any other, its context its own (the main gain over one long
+  onboarding of every source type), its record and the registry what it starts from. Builds are one after another,
+  in Ask Stroom AI and in other clients alike.
+
+#### How it starts
+
+One mechanism, entered three ways:
+
+1. **Within onboarding, on evidence.** When the survey's first batch finds a candidate source type field (several
+   values whose records differ in their fields or message formats, as Azure's `Workload` or PEGA's source type do),
+   or the user says the feed aggregates sources, the plan adds a "source types" step: the source type field
+   confirmed, the source types profiled, the registry written, the scope chosen. The rest of the survey runs within
+   the scope, so profiling costs no second survey. For JSON it comes after the survey's first batch; where the field
+   is only readable through the text converter (syslog, key=value), after the converter, as classification does. A
+   feed of one source never sees it.
+2. **On its own, as an assessment**: a build whose plan ends at the registry (`start_onboarding` with an assessment
+   goal), offering to onboard a scope once written. For a user who wants to know
+   what a feed holds before committing to it, or what an onboarded feed carries now. The same survey, profiling and
+   registry; only the plan's end differs. A user asking to survey a feed with no build open is offered this: a
+   survey without a build only reads (as `survey_feed` does now), so nothing, its registry included, would be kept;
+   declined, the survey is shown in the chat as now.
+3. **From the registry**: onboarding a feed that has one starts at the scope choice, its parked and new source types
+   offered, each with its profile.
+
+#### Keeping what a survey found
+
+Surveying a feed prompts the user to promote the survey doc (`<feed> - Survey`) beside the feed, with the registry
+where there is one (decided 2026-11-12): a form once the survey is covered or the user stops it, and again at the
+build's promotion if they deferred it. So what was learnt of a feed outlives the build that learnt it, whether or not
+anything is onboarded: an assessment's survey and registry are promoted on their own; a later build on the feed
+carries on from them (as a survey carries on from its doc now, its streams read skipped) rather than surveying
+afresh. Beside the feed, the survey's example records (the feed's own data) are as readable as the feed's folder
+lets them be, which the form says; the user may keep them in the build instead. A promoted survey is updated by later
+surveys of the feed through a working copy, like any promoted document.
+
+#### Open decisions
+
+* Parked records: Unknown events (kept, indexed by the wrapper's fields) or not written (counted)? Per feed, or per
+  source type?
+* The registry: a doc beside the feed (proposed), or only in the build's record?
+* Unwrap: parse every held XML and JSON message, or only those of the components built?
+* Option 2 (a pipeline per component): when is it offered, and who decides?
+* One index for the feed (proposed), or an index per component when the user asks?
+* A source type field nested below the record (`event.Workload`), or two of them together (`Workload` and
+  `RecordType`): one field (proposed), or a list as kind fields allow?
+* Profiles: suggested groups (security audit, operational, network, diagnostic noise) shown by default, or only
+  the signals unless the user asks?
+
 
 ## Translation
 
