@@ -124,7 +124,7 @@ public final class UserRefSelectionStories {
         final ScreenHarness harness = harness(context);
         final UserRefSelectionController box = box(context, harness);
         final InlineLabel echo = new InlineLabel();
-        echo.getElement().getStyle().setProperty("fontSize", "12px");
+        echo.getElement().getStyle().setProperty("fontSize", "var(--font-size-11)");
         if (selected != null) {
             box.setSelected(selected);
         }

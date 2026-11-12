@@ -487,7 +487,7 @@ public final class PopupContractStories {
         container.getElement().getStyle().setProperty("position", "relative");
         final Label caption = new Label(label);
         final Style style = caption.getElement().getStyle();
-        style.setProperty("fontSize", "11px");
+        style.setProperty("fontSize", "var(--font-size-9)");
         style.setProperty("opacity", "0.6");
         style.setProperty("marginBottom", "4px");
         container.add(caption);

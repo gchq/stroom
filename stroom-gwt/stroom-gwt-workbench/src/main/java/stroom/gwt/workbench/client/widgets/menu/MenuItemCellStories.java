@@ -64,7 +64,7 @@ public final class MenuItemCellStories {
                     final Label last = new Label("Last: —");
                     final Style style = last.getElement().getStyle();
                     style.setProperty("padding", "4px 12px");
-                    style.setProperty("fontSize", "12px");
+                    style.setProperty("fontSize", "var(--font-size-11)");
                     // No shortcuts are shown, as Stroom's EDIT action has no key binding and there
                     // is no copy action
                     final Widget menu = menu(context, Arrays.asList(

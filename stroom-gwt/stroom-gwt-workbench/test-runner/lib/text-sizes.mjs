@@ -53,11 +53,11 @@ export function fontSizeScript(size) {
     if (!html) {
       return;
     }
+    // Only switch a class Stroom gave the document: a frame without one (a visualisation's)
+    // doesn't follow the preference in the app, so it mustn't here either
     const others = [...html.classList].filter((name) => name.startsWith('stroom-font-size-') && name !== wanted);
     if (others.length > 0) {
       html.classList.remove(...others);
-    }
-    if (!html.classList.contains(wanted)) {
       html.classList.add(wanted);
     }
   };

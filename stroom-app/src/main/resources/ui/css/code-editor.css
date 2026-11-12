@@ -186,12 +186,12 @@
 }
 
 .code-editor__load-error p:first-of-type {
-    font-size: 14px;
+    font-size: var(--font-size-13);
     font-weight: bold;
 }
 
 .code-editor__load-error p:not(:first-child) {
-    font-size: 12px;
+    font-size: var(--font-size-11);
     font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
 }
 

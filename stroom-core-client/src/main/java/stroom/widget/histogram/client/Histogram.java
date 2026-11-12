@@ -16,6 +16,7 @@
 
 package stroom.widget.histogram.client;
 
+import stroom.util.shared.NullSafe;
 import stroom.widget.text.client.Label;
 import stroom.widget.util.client.CssProperties;
 
@@ -313,7 +314,12 @@ public class Histogram extends Composite {
             // A query has run but returned no events for this time range.
             // Draw a centred placeholder so the user knows what the space is for.
             ctx.save();
-            ctx.setFont("italic 11px sans-serif");
+            // The canvas's own font size (histogram.css), so the message follows the text size
+            // preference
+            final String fontSize = computedPropertyValue(canvas.getElement(), "font-size");
+            ctx.setFont("italic " + (NullSafe.isNonBlankString(fontSize)
+                    ? fontSize
+                    : "11px") + " sans-serif");
             ctx.setTextAlign(Context2d.TextAlign.CENTER);
             ctx.setTextBaseline(Context2d.TextBaseline.MIDDLE);
             ctx.setFillStyle("rgba(128,128,128,0.45)");

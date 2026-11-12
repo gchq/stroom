@@ -30,8 +30,33 @@ test('the font size option takes small, medium or large, or nothing', () => {
   assert.throws(() => fontSize('huge'), /--font-size must be one of small, medium, large, not 'huge'/);
 });
 
-test('the font size script sets the chosen class', () => {
-  assert.match(fontSizeScript('large'), /'stroom-font-size-large'/);
+// Runs the font size script against a document whose element has these classes, returning them after
+const runFontSizeScript = (size, classes) => {
+  const classList = new Set(classes);
+  const document = {
+    documentElement: {
+      classList: {
+        [Symbol.iterator]: () => classList[Symbol.iterator](),
+        contains: (name) => classList.has(name),
+        add: (...names) => names.forEach((name) => classList.add(name)),
+        remove: (...names) => names.forEach((name) => classList.delete(name)),
+      },
+    },
+  };
+  class MutationObserver {
+    observe() {}
+  }
+  new Function('document', 'MutationObserver', fontSizeScript(size))(document, MutationObserver);
+  return [...classList];
+};
+
+test('the font size script switches the text size class to the chosen one', () => {
+  assert.deepEqual(runFontSizeScript('large', ['stroom-theme-light', 'stroom-font-size-medium']),
+    ['stroom-theme-light', 'stroom-font-size-large']);
+});
+
+test('the font size script leaves a document without a text size class alone', () => {
+  assert.deepEqual(runFontSizeScript('large', ['vis-frame']), ['vis-frame']);
 });
 
 test('text that grew with the preference is not reported', () => {

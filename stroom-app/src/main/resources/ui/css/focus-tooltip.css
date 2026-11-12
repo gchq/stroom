@@ -32,7 +32,7 @@
     background-color: var(--tooltip__background-color);
     color: var(--tooltip__text-color);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    font-size: 12px;
+    font-size: var(--font-size-11);
     line-height: 1.4;
     /* Wrapped, at its own line breaks too, so a long text (e.g. a picker's problem) is all seen */
     white-space: pre-line;

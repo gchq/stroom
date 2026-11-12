@@ -412,7 +412,7 @@ public final class SelectionBoxStories {
     private static Widget withEcho(final SelectionBox<String> box) {
         final Html echo = new Html();
         echo.getElement().getStyle().setProperty("marginTop", "8px");
-        echo.getElement().getStyle().setProperty("fontSize", "12px");
+        echo.getElement().getStyle().setProperty("fontSize", "var(--font-size-11)");
         echo.setText("Selected: none");
         box.addValueChangeHandler(event -> echo.setText("Selected: " + (event.getValue() == null
                 ? "none"

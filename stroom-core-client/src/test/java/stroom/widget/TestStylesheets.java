@@ -133,6 +133,13 @@ class TestStylesheets {
     private static final Pattern STRING_LITERAL = Pattern.compile(
             "\"(?:\\\\.|[^\"\\\\\\n])*\"|'(?:\\\\.|[^'\\\\\\n])*'|=\"[^\"]*\"");
     private static final Pattern NAME = Pattern.compile("[a-z][a-z0-9_-]*");
+    // A rule: its selector (or, inside an at-rule, the inner rule's) and its declarations
+    private static final Pattern RULE = Pattern.compile("([^{}]+)\\{([^{}]*)}");
+    private static final Pattern FONT_SIZE = Pattern.compile("(?<![\\w-])font-size\\s*:\\s*([^;]+)");
+    // A size that doesn't follow the text size preference
+    private static final Pattern FIXED_SIZE = Pattern.compile("-?[0-9.]*[1-9][0-9.]*(px|pt|pc|cm|mm|in)\\b.*");
+    // The sheet that defines the text size variables for each preference
+    private static final String FONT_SIZES_SHEET = "font.css";
 
     private static Path root;
     private static Map<String, String> sheets;
@@ -323,6 +330,37 @@ class TestStylesheets {
         }
         assertThat(problems)
                 .as("bare state classes: give the block a modifier (`my-block--selected`) instead")
+                .isEmpty();
+    }
+
+    /// Every font size follows the text size preference (A11Y.md, "Text size and high contrast"):
+    /// a `--font-size-N` variable, or relative to one (`em`, `%`, `rem`, as the page's own size is
+    /// the preference's), never a fixed size such as `12px`. Only the variables' own definitions,
+    /// and rules for one preference (`.stroom-font-size-large ...`), may be fixed.
+    @Test
+    void testFontSizesFollowThePreference() {
+        final List<String> problems = new ArrayList<>();
+        for (final String sheet : new TreeSet<>(loaded)) {
+            if (!isOwnSheet(sheet) || FONT_SIZES_SHEET.equals(sheet)) {
+                continue;
+            }
+            final Matcher rules = RULE.matcher(QUOTED.matcher(withoutComments(sheets.get(sheet))).replaceAll("\"\""));
+            while (rules.find()) {
+                final String selector = rules.group(1).trim();
+                if (selector.contains("stroom-font-size-")) {
+                    continue;
+                }
+                final Matcher sizes = FONT_SIZE.matcher(rules.group(2));
+                while (sizes.find()) {
+                    final String value = sizes.group(1).trim();
+                    if (FIXED_SIZE.matcher(value).matches()) {
+                        problems.add(sheet + ": " + selector.replaceAll("\\s+", " ") + " { font-size: " + value + " }");
+                    }
+                }
+            }
+        }
+        assertThat(problems)
+                .as("fixed font sizes: use a --font-size-N variable (font.css) with the same size at Medium")
                 .isEmpty();
     }
 

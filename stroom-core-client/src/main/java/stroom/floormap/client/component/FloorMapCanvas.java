@@ -940,7 +940,6 @@ public class FloorMapCanvas extends Component implements RequiresResize {
                     new Attribute("y", String.valueOf((y0 + y1) / 2 - MEASURE_LABEL_GAP_PX)),
                     new Attribute("text-anchor", "middle"),
                     new Attribute("fill", ACCENT_BLUE),
-                    new Attribute("font-size", "12"),
                     new Attribute("font-family", "sans-serif"),
                     new Attribute("font-weight", "600"),
                     new Attribute("paint-order", "stroke"),

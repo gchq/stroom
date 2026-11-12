@@ -94,6 +94,7 @@
 /* The Set Scale line's running length: a halo in the page's colour keeps it legible over the map */
 .floor-map-canvas__measure-label {
     stroke: var(--page__background-color);
+    font-size: var(--font-size-11);
 }
 
 /* -----------------------------------------------------------------------
@@ -115,7 +116,7 @@
     transform: translateX(-50%);
     background-color: var(--page__background-color);
     color: var(--floormap-accent__color);
-    font-size: 12px;
+    font-size: var(--font-size-11);
     font-weight: 500;
     white-space: nowrap;
     padding: 4px 10px;
@@ -149,7 +150,7 @@
     top: var(--floor-map-canvas__gesture-readout-top, 0);
     background-color: var(--page__background-color);
     color: var(--floormap-accent__color);
-    font-size: 11px;
+    font-size: var(--font-size-9);
     font-weight: 500;
     white-space: nowrap;
     padding: 3px 7px;
@@ -185,7 +186,7 @@
     top: var(--floor-map-canvas__hover-tooltip-top, 0);
     background-color: var(--page__background-color);
     color: var(--text-color);
-    font-size: 11px;
+    font-size: var(--font-size-9);
     padding: 5px 9px;
     border: 1px solid var(--floormap-accent__color);
     border-radius: 4px;
@@ -240,7 +241,7 @@
     stroke: var(--page__background-color);
     stroke-width: 3px;
     paint-order: stroke;
-    font-size: 11px;
+    font-size: var(--font-size-9);
     font-weight: 500;
     font-family: sans-serif;
 }
@@ -282,7 +283,7 @@
     max-width: calc(100% - 20px);
     box-sizing: border-box;
     text-align: center;
-    font-size: 12px;
+    font-size: var(--font-size-11);
     color: var(--vis-text__color--faint);
     background-color: var(--page__background-color);
     padding: 3px 10px;
@@ -317,7 +318,7 @@
 
 .floor-map-canvas__scale-bar-label {
     color: var(--floormap-grid__highlight-color);
-    font-size: 11px;
+    font-size: var(--font-size-9);
     font-weight: 600;
     white-space: nowrap;
     margin-bottom: 2px;

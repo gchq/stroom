@@ -93,7 +93,7 @@
 .floor-map-group-edit__member-detail {
     flex: 0 0 auto;
     margin-left: auto;
-    font-size: 11px;
+    font-size: var(--font-size-9);
     color: var(--text-color--low-emphasis);
 }
 
@@ -110,6 +110,6 @@
 
 .floor-map-group-edit__summary {
     margin: 6px 8px 2px;
-    font-size: 11px;
+    font-size: var(--font-size-9);
     color: var(--text-color--low-emphasis);
 }
