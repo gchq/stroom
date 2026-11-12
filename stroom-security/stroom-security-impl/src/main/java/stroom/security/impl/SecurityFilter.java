@@ -382,8 +382,16 @@ class SecurityFilter implements Filter {
             && credential.identity() instanceof final HasUserRef hasUserRef) {
 
             final HttpSession session = SessionUtil.getExistingSession(request);
-            if (session != null && UserIdentitySessionUtil.getUserFromSession(session).isEmpty()) {
-                UserIdentitySessionUtil.setEdgeUserInSession(session, hasUserRef.getUserRef());
+            if (session != null) {
+                try {
+                    if (UserIdentitySessionUtil.getUserFromSession(session).isEmpty()) {
+                        UserIdentitySessionUtil.setEdgeUserInSession(session, hasUserRef.getUserRef());
+                    }
+                } catch (final IllegalStateException e) {
+                    // The session was invalidated concurrently, e.g. by a logout in another tab or by
+                    // expiring. There is nothing to record against, and this must not fail the request.
+                    LOGGER.debug(() -> "Not recording edge user as session was invalidated: " + e.getMessage(), e);
+                }
             }
         }
     }

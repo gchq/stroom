@@ -43,6 +43,7 @@ import java.net.URI;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.lenient;
@@ -462,6 +463,19 @@ class TestSecurityFilter {
                 .isEmpty();
         assertThat(UserIdentitySessionUtil.getUserFromSession(session))
                 .contains(identity);
+    }
+
+    @Test
+    void sessionInvalidatedConcurrentlyDoesNotFailTheRequest() {
+        // A logout in another tab, or the session expiring, can invalidate it between being fetched and
+        // being written to, and every accessor on an invalidated session throws.
+        final HttpSession session = mock(HttpSession.class);
+        when(session.getAttribute(any())).thenThrow(new IllegalStateException("invalidated"));
+        lenient().when(request.getHeader("Sec-Fetch-Site")).thenReturn("same-origin");
+        when(request.getSession(false)).thenReturn(session);
+
+        assertThatCode(() -> filterWith(true, true).recordEdgeSessionUser(request, edgeCredential(EDGE_USER)))
+                .doesNotThrowAnyException();
     }
 
     @Test
