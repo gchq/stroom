@@ -11,5 +11,9 @@ held in the document, queried with Stroom's own clauses.
     set-up steps are on the Data Connection's Documentation tab after import;
   * a CSV Data Connection, Teams, and an Excel one, Bank Holidays, each with a query of it. They
     need no set-up;
+  * a CSV Data Connection, People, and five "Join - ..." queries joining it to Teams and Bank
+    Holidays: a left join, a keep join with a condition on the joined source, a drop join, a join to
+    a bracketed grouped query, and a join on a date. They need no set-up either (see
+    [JOINS_DESIGN.md](../stroom-query/JOINS_DESIGN.md));
   * an LDAP Data Connection, Directory, with example queries. Its set-up steps are on its
     Documentation tab after import.

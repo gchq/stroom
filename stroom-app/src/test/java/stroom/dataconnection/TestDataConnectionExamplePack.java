@@ -365,7 +365,7 @@ class TestDataConnectionExamplePack extends AbstractCoreIntegrationTest {
 
     @Test
     void everyQueryIsValidStroomQl() {
-        assertThat(queries).hasSize(10);
+        assertThat(queries).hasSize(15);
         queries.forEach((name, queryDoc) ->
                 assertThatCode(() -> searchRequest(queryDoc.getQuery(), queryDoc.getTimeRange()))
                         .as(name)
@@ -378,6 +378,63 @@ class TestDataConnectionExamplePack extends AbstractCoreIntegrationTest {
                 List.of("Platform", "6"),
                 List.of("Security", "5"),
                 List.of("Support", "3"));
+    }
+
+    @Test
+    void leftJoinGivesEveryPersonWithTheirTeam() {
+        assertThat(blankForNull(run("Join - people with their team", 4))).containsExactly(
+                List.of("Alice", "Platform", "6", "true"),
+                List.of("Ben", "Data", "4", "false"),
+                List.of("Chloe", "Security", "5", "true"),
+                List.of("Dev", "Analysis", "8", "false"),
+                List.of("Ella", "Platform", "6", "true"),
+                List.of("Femi", "Design", "", ""),
+                List.of("Gus", "Support", "3", "true"));
+    }
+
+    @Test
+    void keepJoinGivesPeopleInOnCallTeams() {
+        assertThat(run("Join - people in on-call teams", 2)).containsExactly(
+                List.of("Alice", "Platform"),
+                List.of("Chloe", "Security"),
+                List.of("Ella", "Platform"),
+                List.of("Gus", "Support"));
+    }
+
+    @Test
+    void dropJoinGivesPeopleInNoKnownTeam() {
+        assertThat(run("Join - people in no known team", 2)).containsExactly(List.of("Femi", "Design"));
+    }
+
+    @Test
+    void joinToABracketedQueryComparesTeamSizesWithPeopleListed() {
+        assertThat(run("Join - team sizes against people listed", 3)).containsExactly(
+                List.of("Analysis", "8", "1"),
+                List.of("Data", "4", "1"),
+                List.of("Platform", "6", "2"),
+                List.of("Security", "5", "1"),
+                List.of("Support", "3", "1"));
+    }
+
+    @Test
+    void joinOnADateFindsPeopleWhoStartedOnABankHoliday() {
+        final List<List<String>> rows = run("Join - people who started on a bank holiday", 3);
+
+        assertThat(rows).extracting(row -> row.get(0)).containsExactly("Ben", "Dev");
+        assertThat(rows).extracting(row -> row.get(2)).containsExactly("Good Friday", "Spring bank holiday");
+        assertThat(rows.get(0).get(1)).startsWith("2026-04-03");
+        assertThat(rows.get(1).get(1)).startsWith("2026-05-25");
+    }
+
+    // The rows with each value that is missing as blank.
+    private static List<List<String>> blankForNull(final List<List<String>> rows) {
+        return rows.stream()
+                .map(row -> row.stream()
+                        .map(value -> value == null
+                                ? ""
+                                : value)
+                        .toList())
+                .toList();
     }
 
     @Test
