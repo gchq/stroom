@@ -47,7 +47,7 @@ class McpResources {
     /// The guide template's description, which names every guide.
     static final String GUIDE_DESCRIPTION = "Working guides: event-logging, xslt, mapping, data-splitter, "
                                             + "json-input, reference-data, indexing, cef, documentation, "
-                                            + "agent-instructions, visualisation.";
+                                            + "agent-instructions, visualisation, aggregated-feeds.";
     static final String GUIDES_DESCRIPTION = "Index of the working guides.";
     static final String CONVENTION_DESCRIPTION = "A field convention profile.";
 

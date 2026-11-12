@@ -682,7 +682,8 @@ class TestStroomMcpServer {
     void anUnknownResourceSaysWhatThereIs() {
         try (final McpSyncClient client = client(false, null)) {
             assertThatThrownBy(() -> client.readResource(new ReadResourceRequest("stroom://guide/nope")))
-                    .hasMessageContaining("No guide 'nope'. Guides: agent-instructions, cef, data-splitter");
+                    .hasMessageContaining("No guide 'nope'. Guides: agent-instructions, aggregated-feeds, cef, "
+                                          + "data-splitter");
             assertThatThrownBy(() -> client.readResource(new ReadResourceRequest("stroom://conventions/nope")))
                     .hasMessageContaining("No convention 'nope'");
         }

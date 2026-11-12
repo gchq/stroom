@@ -101,6 +101,10 @@ and read inside it as `<field>/<path>` from the document's root element down (`p
 name, so the document's namespaces need no declaring. A value that isn't XML gives nothing rather than an error.
 `draft_translation_mapping` does this itself for a field whose values are XML documents.
 
+A wrapper whose message format depends on a source field (some sources' messages text, others' JSON or SOAP) is an
+aggregated feed: each source type group reads only its own messages, in its own format, with no threshold
+(stroom://guide/aggregated-feeds).
+
 When the sample's records come in different shapes (one file flat, another with the event as JSON in a field), an
 element reads every shape's field in turn with `any_of`, e.g. `{"path": "EventDetail/TypeId", "any_of":
 ["event_type", "message.event_type"]}`, and each shape's kinds get rules.
