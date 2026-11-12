@@ -544,6 +544,35 @@ class TestSplitterDryRun {
     }
 
     @Test
+    void aSyslogBodysWordsBeforeItsPairsAreFieldsOfTheirOwn() {
+        // Seen in testing (2026-11-12): a mail gateway's `msw <date> <time> [pid] [level] [tag]` before its pairs,
+        // kept as one words field, so its kind of event ([SEGTrap]) was in no field of its own.
+        final String sample = IntStream.range(0, 6).mapToObj(i -> ("Nov  9 00:02:%02d svr01.example.com msw "
+                                                                    + "2026-11-09 00:01:%02d.240795 [10808%02d] "
+                                                                    + "[%s] [%s] id=\"q%d\"; subject=\"Test, "
+                                                                    + "email\"; sender=\"jane.doe@mail.com\"")
+                        .formatted(i, i, i, i % 2 == 0
+                                ? "required"
+                                : "info", List.of("SEGTrap", "SEGDeliver", "SEGQuarantine").get(i % 3), i))
+                .collect(Collectors.joining("\n")) + "\n";
+
+        final SplitterDryRun.DryRun run = SplitterDryRun.dryRun(SplitterDryRun.inferSpec(sample).spec(), sample);
+
+        assertThat(run.records()).hasSize(6);
+        final Map<String, String> first = run.records().getFirst();
+        // The header's time stays the header's; the message's own is message_time.
+        assertThat(first).containsEntry("time", "Nov  9 00:02:00")
+                .containsEntry("message_time", "2026-11-09 00:01:00.240795")
+                .containsEntry("prefix1", "msw")
+                .containsEntry("prefix3", "1080800")
+                .containsEntry("prefix4", "required")
+                .containsEntry("prefix5", "SEGTrap")
+                .containsEntry("id", "q0")
+                .containsEntry("subject", "Test, email");
+        assertThat(run.records().get(1)).containsEntry("prefix5", "SEGDeliver");
+    }
+
+    @Test
     void aNamePrefixIsForSyslogAndRoundTrips() {
         final SplitterSpec spec = SplitterSpec.builder("syslog").namePrefix("relay_")
                 .body(SplitterSpec.builder("syslog").build()).build();

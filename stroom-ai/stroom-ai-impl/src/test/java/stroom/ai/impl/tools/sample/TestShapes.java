@@ -81,6 +81,28 @@ class TestShapes {
     }
 
     @Test
+    void linesDifferingInABracketedLabelAreShapesOfTheirOwn() {
+        // Seen in testing (2026-11-12): a mail gateway's [SEGTrap], [SEGDeliver] and [SEGQuarantine] lines, 89% of
+        // its records, surveyed as one shape, the label a wildcard.
+        final String lines = String.join("\n",
+                "Nov  9 00:02:23 svr01.example.com msw 2026-11-09 00:01:23.1 [1080890] [required] [SEGTrap] "
+                + "id=\"q1\"; subject=\"Test\"; recipients=\"a@x.com\"",
+                "Nov  9 00:02:24 svr01.example.com msw 2026-11-09 00:01:24.1 [1080891] [required] [SEGDeliver] "
+                + "id=\"q2\"; subject=\"Test\"; recipients=\"a@x.com\"",
+                "Nov  9 00:02:25 svr01.example.com msw 2026-11-09 00:01:25.1 [1080892] [required] [SEGTrap] "
+                + "id=\"q3\"; subject=\"Other\"; recipients=\"b@x.com\"",
+                "Nov  9 00:02:26 svr01.example.com msw 2026-11-09 00:01:26.1 [1080893] [required] [SEGQuarantine] "
+                + "id=\"q4\"; subject=\"Test\"; recipients=\"a@x.com\"") + "\n";
+
+        final Map<String, Integer> counts = counts(shapesOf(lines));
+
+        assertThat(counts.keySet()).hasSize(3).noneMatch(signature -> signature.contains(Shapes.WILD + " id="));
+        assertThat(counts.keySet()).anyMatch(signature -> signature.contains("[SEGTrap]"))
+                .anyMatch(signature -> signature.contains("[SEGDeliver]"))
+                .anyMatch(signature -> signature.contains("[SEGQuarantine]"));
+    }
+
+    @Test
     void maskingHidesVariableParts() {
         assertThat(Shapes.mask("user \"Bob Smith\" from 10.1.2.3:443 took 250ms id 0x1f2e3d4c5b6a7980"))
                 .containsExactly("user", "<s>", "from", "<ip>", "took", "<n>", "id", "<hex>");

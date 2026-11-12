@@ -114,7 +114,11 @@ public final class SplitterDryRun {
     private static final String SECTION_FIELD = "text";
     // Words before a record's first pair (group 1), and the rest from that pair (group 2); the most taken as fields.
     private static final Pattern PREFIX_WORDS = Pattern.compile("((?:[^\\s=\"]+\\s+)+?)([^\\s=\"]+=.*)");
-    private static final int MOST_PREFIX_WORDS = 4;
+    // Seen in testing: a mail gateway's `msw 2026-11-09 00:01:23.240795 [1080890] [required] [SEGTrap]` before its
+    // pairs, six words, kept as one words field, so its kind of event ([SEGTrap]) was in no field of its own.
+    private static final int MOST_PREFIX_WORDS = 8;
+    // A prefix word in brackets, read without them.
+    private static final Pattern IN_BRACKETS = Pattern.compile("\\[[^\\]\\s]*\\]");
     private static final String TAB = "\t";
     // A LEEF record's start: any prefix (group 1), its version (2) and, for 2.0, the declared delimiter (3).
     private static final Pattern LEEF_HEAD = Pattern.compile(
@@ -861,16 +865,34 @@ public final class SplitterDryRun {
             return null;
         }
         final List<String> names = new ArrayList<>();
-        for (int n = 0; n < count; n++) {
+        final StringBuilder pattern = new StringBuilder("^");
+        int n = 0;
+        while (n < count) {
             final int at = n;
+            // A date and a time of day, two words: one time (`2026-11-09 00:01:23.240795`).
+            final boolean dateAndTime = n + 1 < count && !names.contains("time") && prefixes.stream()
+                    .allMatch(words -> TimePatterns.inferTimePattern(words.get(at) + " " + words.get(at + 1)) != null
+                                       && TimePatterns.inferTimePattern(words.get(at + 1)) == null);
+            if (dateAndTime) {
+                names.add("time");
+                pattern.append("(\\S+\\s+\\S+)\\s+");
+                n += 2;
+                continue;
+            }
             final boolean times = prefixes.stream()
                     .allMatch(words -> TimePatterns.inferTimePattern(words.get(at)) != null);
+            final boolean bracketed = prefixes.stream()
+                    .allMatch(words -> IN_BRACKETS.matcher(words.get(at)).matches());
             names.add(times && !names.contains("time")
                     ? "time"
-                    : "prefix" + (n + 1));
+                    : "prefix" + (names.size() + 1));
+            pattern.append(bracketed
+                    ? "\\[([^\\]\\s]*)\\]\\s+"
+                    : "(\\S+)\\s+");
+            n++;
         }
         names.add("message");
-        return SplitterSpec.builder("regex").pattern("^" + "(\\S+)\\s+".repeat(count) + "(.*)$").names(names)
+        return SplitterSpec.builder("regex").pattern(pattern.append("(.*)$").toString()).names(names)
                 .body(spec).bodyField("message").build();
     }
 
@@ -1065,7 +1087,23 @@ public final class SplitterDryRun {
         if (body == null) {
             body = mixedBody(messages);
         }
-        return SplitterSpec.builder("syslog").rfc(rfc).body(body);
+        return SplitterSpec.builder("syslog").rfc(rfc).body(withoutHeaderNames(body));
+    }
+
+    // A body's words named as the syslog header's fields are (its own time, after the header's): named as the
+    // message's, as a field of the same name would read the header's (seen in testing: a mail gateway's
+    // `msw 2026-11-09 00:01:23.240795 ...` after the header's `Nov  9 00:02:23`).
+    private static SplitterSpec withoutHeaderNames(final SplitterSpec body) {
+        if (body == null || !"regex".equals(body.kind()) || body.names() == null) {
+            return body;
+        }
+        final List<String> names = new ArrayList<>();
+        for (final String name : body.names()) {
+            names.add(SYSLOG_3164_NAMES.contains(name) && !"message".equals(name)
+                    ? "message_" + name
+                    : name);
+        }
+        return body.toBuilder().names(names).build();
     }
 
     // Syslog lines, some of them relayed (a relay's header before the source's own) and some not, in one stream (a
