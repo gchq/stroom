@@ -1852,11 +1852,42 @@ surveys of the feed through a working copy, like any promoted document.
 
 #### Open decisions
 
-* **Backfill**: a source type moved out of parked has no Events for the streams already processed (its records were
-  passed over). Translating its history means reprocessing those raw streams, which reruns every group on them and
-  would write their Events, and index documents, a second time. Forward only by default (the user told so), or
-  reprocessing that supersedes the earlier output and cleans up the index? To decide once Stroom's handling of
-  reprocessed output is checked.
+None at present.
+
+#### Backfill (decided, 2026-11-12)
+
+A source type moved out of parked has no Events for the streams already processed: its records were passed over.
+Translating its history means reprocessing those raw streams, which reruns every group on them.
+
+What Stroom does, checked in the code:
+
+* **Events streams are superseded.** After a task processes a raw stream, `AbstractProcessorTaskExecutor`
+  (`deleteDuplicateOutput`) logically deletes every other output stream of the same parent from the same pipeline whose
+  task has finished. So reprocessing writes one new Events stream per raw stream, every translated group in it, and no
+  duplicate Events. Per pipeline: a group in a pipeline of its own is reprocessed through that pipeline.
+* **The index is not cleaned up for this case.** The new Events stream has a new id, and the indexing pipeline indexes
+  it as new data; the superseded stream's documents stay, so every group already translated is in the index twice for
+  the period.
+  * Elasticsearch purges a stream's documents by `StreamId` only when the indexing pipeline itself runs under a
+    reprocess filter, for that same stream (`ElasticIndexingFilter.purgeDocumentsForStream`), which a translation
+    reprocess never triggers.
+  * Lucene has no per-document delete. A document lands in the shard of its own event time's partition (the index's
+    time field; else its Events stream's creation time), by month unless the index says otherwise; a shard holds every
+    document of its partition, per node and volume group, and is deleted whole (`IndexResource.deleteIndexShards`).
+
+The policy:
+
+* **Default: forward only.** The source type is translated from the next processing on; the user is told its history
+  isn't.
+* **Elasticsearch, on request**: reprocess the raw streams of the period through the pipeline (Events superseded),
+  delete the documents of the superseded Events streams' ids (known: Stroom has just marked those streams deleted; a
+  new tool step, behind a form), and let indexing take the new streams.
+* **Lucene, on request**: reprocess as above, delete the shards whose partitions cover the period, and index again
+  every live Events stream that may hold events in them (a reprocess filter on the indexing pipeline over streams
+  created in those partitions, with a margin for late data). The form says the cost (whole partitions: a month by
+  default, whatever the period), that searches of those partitions return nothing until indexing catches up, and that
+  events arriving late beyond the margin would be missed.
+* Either way the user is told the cost: every group's records in the period are translated and indexed again.
 
 
 ## Translation
