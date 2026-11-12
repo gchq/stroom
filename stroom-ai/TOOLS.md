@@ -2515,6 +2515,16 @@ approve) · confirms itself · chat group build · Classes: `PromoteBuildTool`, 
 `DocumentPlaces`, `DocumentWrites`, `WriteGuard`, `BuildRecords`, `BuildChecks`, `Consent`, `IndexingRuns`,
 `OutputFeeds`, `XsltHistory`, `DocumentationVersions`
 
+An aggregated feed's indexes (`FeedIndexDecisions.changes`, `apply`): each indexing plan kept in the build is
+matched to its output feed (as `draft_index_mapping` recorded it in the build record's `output_feeds`, else by the
+index the registry records). A plan with a field the output feed's index has otherwise (another type, or another
+meaning) holds the promotion, refused with each clash and to resolve them through `draft_index_mapping`'s form. The
+review and the approval form list `index_changes` (the fields each index gains, forward only, or an index recorded
+or replaced by a new version); once approved, the registry records each output feed's index (`indexes`: `index`,
+`backend`, `index_doc`, `fields`, `added_by`, `groups`) and the feed's shared backend and naming where none were
+recorded, and a Lucene index doc beside the feed gains the fields it lacks (`IndexFields.addPromotedLuceneFields`).
+An Elasticsearch index's fields come from its template, the cluster admin's to commit. Nothing is reindexed.
+
 Promotes a build out of the workspace in two calls. The first works out the whole layout and returns it without
 changing anything (`status: needs_review`, a `layout` tree from `PromotionLayout.promotionTree`, and a `review_id`,
 the first 12 hex characters of the tree's SHA-256). The agent shows the tree in the chat; once the user confirms it,
@@ -4915,7 +4925,16 @@ chosen in these forms are also recorded with the session's build (`indexing_choi
 with neither, after a compacted context or a restart, returns them as settled (`status: chosen`) instead of asking
 again. Following an existing index with several to choose from asks which in a second form.
 
+On an aggregated feed (a build holding its source type registry) the backend and naming are the feed's **shared
+decisions** (`FeedIndexDecisions`): what the first scoped build's forms choose is also written to the registry's
+machine block (`indexing`: `backend`, `naming`, `decided`); a later build with nothing recorded of its own inherits
+them (copied into its build record, `shared_from` naming the feed) and gets `status: chosen` with `settled` saying
+where they are kept, nothing asked. A `backend` other than the shared one is refused, naming the registry, unless
+`change_shared=true` (the user asked): then they confirm it in a form, it replaces the registry's, and the naming is
+asked again.
+
 * **Arguments**: `name` (profile: `ecs` or `stroom-flat` as bundled); `backend` (`lucene` or `elasticsearch`);
+  `change_shared` (only when the user asks to change an aggregated feed's shared backend);
   `ecs_fields` (with `name=ecs`: a field set or prefix, e.g. `process`, `user.target`, listing its fields with type
   and description, up to 200).
 * **Returns**: `status: not_yet` with `next` and `hint`; or `needs_guidance` with `options` (Elasticsearch) or
@@ -5065,6 +5084,22 @@ stream (records:2) must be drafted with `input: delimited`, which reads each dat
   * `replaces` exists because an agent comparing its draft with the old XSLT by reading it from a spilled file fell
     into a loop.
 
+* **Aggregated feeds** (`FeedIndexDecisions.forPlan`, `FeedIndexes`): for Events of an output feed of the build's
+  registry (the feed's own, its test feed standing in for it, or a group's own output feed), one index per output
+  feed, shared by every group writing to it. The plan is that index's: another `index_name` is refused (naming the
+  index and the registry) unless `change_shared=true` (the user asked: a new version, confirmed in a form), and an
+  index name another output feed's index has is refused. The paths each group routed to the output feed writes
+  (its mapping, kept with its XSLT) are planned whether or not the sample has them (`group_paths`), and the fields
+  the index has (recorded at earlier promotions) are added where the plan lacks them: the union of the groups'
+  fields. A field the index has with another type, or of the same type read from another path or described
+  otherwise (a field's meaning: its description where both have one, else what it reads), is a clash: all of them
+  put to the user in one form of short plain text, each with its two answers (another type: rename this build's
+  field to `<name>_<group>`, or a new index version `<index>-v2` with every group's fields; another meaning: one
+  field read from both paths, or renamed). Without forms they come back as `index_clashes` with how to apply them
+  by `changes=`. The reply's `feed_index` says the output feed, its groups, the index, `inherited_fields`,
+  `clashes_resolved` and where it is kept. Amending (`changes=`) is checked the same way. The `backend` is the
+  feed's shared one (refused otherwise, as `get_field_conventions` refuses it).
+
 ### `create_index_doc`
 
 Indexing · write · checks View and Edit; the user needs Create in the build folder; an Elastic Index doc's cluster
@@ -5092,7 +5127,9 @@ second index).
   `test` (`{"result": {"ok", "message"}}` or `{"error"}`) and `pipelines_renamed` when the user changed the index
   name; Lucene: `fields` (`{index, added, already_present}`, or a note that the index indexes nothing until it has
   the plan's fields). With the build's `next`.
-* **Refuses**: a bad `backend`; Elasticsearch with no index name (from `index_name` or the plan) or no cluster (none
+* **Refuses**: an aggregated feed's output feed's index an earlier build made (recorded in the registry with its
+  document beside the feed): promotion adds a later build's fields to it, so no second doc is made;
+  a bad `backend`; Elasticsearch with no index name (from `index_name` or the plan) or no cluster (none
   given, and the existing Elastic Index docs use more than one, or none); a `cluster_uuid` that is an Elastic Index
   doc (`... is the Elastic Index doc 'x', not an Elastic Cluster: its cluster is 'y' (cluster_uuid=...)`, seen when
   the index offered to follow was given as the cluster) or no cluster at all; while one of the build's indexing

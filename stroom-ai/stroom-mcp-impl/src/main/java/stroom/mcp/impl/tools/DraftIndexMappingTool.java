@@ -62,6 +62,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.w3c.dom.Element;
 
 import java.util.ArrayList;
@@ -123,6 +124,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
     private final PipelineShapes pipelineShapes;
     private final DocumentAccess documentAccess;
     private final SiblingSharedCalls siblingSharedCalls;
+    private Provider<FeedIndexDecisions> feedIndexes;
 
     @Inject
     DraftIndexMappingTool(final AgentKnowledge knowledge,
@@ -149,6 +151,15 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         this.pipelineShapes = pipelineShapes;
         this.documentAccess = documentAccess;
         this.siblingSharedCalls = siblingSharedCalls;
+    }
+
+    /// An aggregated feed's indexes: one per output feed, shared by the groups writing to it (set by injection;
+    /// none in tests that make the tool themselves).
+    ///
+    /// @param feedIndexes The feed's indexes.
+    @Inject
+    void setFeedIndexes(final Provider<FeedIndexDecisions> feedIndexes) {
+        this.feedIndexes = feedIndexes;
     }
 
     @Override
@@ -282,6 +293,13 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                                 .build())
                         .addStringProperty(PIPELINE_UUID_ARG, "With changes: the indexing pipeline whose kept plan to "
                                                               + "amend, when it wasn't drafted in this session.")
+                        .addBooleanProperty(FeedIndexDecisions.CHANGE_SHARED_ARG, "Only when the user asks for it: "
+                                                                                  + "an aggregated feed's output "
+                                                                                  + "feed indexed into another "
+                                                                                  + "index (a new version) or "
+                                                                                  + "backend than the one its "
+                                                                                  + "groups share. They confirm it "
+                                                                                  + "in a form.")
                         .required(BACKEND_ARG, INDEX_NAME_ARG)
                         .build())
                 .build();
@@ -312,7 +330,11 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         final String indexName = required(call, INDEX_NAME_ARG);
         final List<Long> streamIds = StartOnboardingTool.streamIds(call, EVENTS_STREAM_IDS_ARG);
         if (ToolArgs.raw(call, CHANGES_ARG) != null) {
-            return amend(call, indexName, streamIds);
+            return amend(call, context, indexName, streamIds);
+        }
+        if (feedIndexes != null && IndexingArgs.discovery(call, DISCOVERY_ARG) == null) {
+            // An aggregated feed's builds share one backend, kept in its registry.
+            feedIndexes.get().checkBackend(call, context, buildOf(context, streamIds), backend, NAME);
         }
         final Discovery discovery = IndexingArgs.discovery(call, DISCOVERY_ARG);
         if (discovery != null) {
@@ -508,6 +530,13 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         final Map<String, Object> profile = profiles.get(draft.convention);
         final Map<String, Object> events = inputs.summariseEvents(streamIds);
         final Map<String, Double> populated = IndexingInputs.population(events);
+        // An aggregated feed's output feed: its index is the union of the groups writing to it, so what each
+        // group's translation writes is planned, whether or not the sample's Events have it.
+        final String build = buildOf(context, streamIds);
+        final List<String> groupPaths = feedIndexes == null
+                ? List.of()
+                : feedIndexes.get().writtenByGroups(build, streamIds);
+        groupPaths.forEach(path -> populated.putIfAbsent(path, FeedIndexDecisions.WRITTEN_SHARE));
         final List<PlannedField> fields = new ArrayList<>(List.of(PlannedField.of("StreamId", "id", "@StreamId"),
                 PlannedField.of("EventId", "id", "@EventId")));
         final List<String> unused = new ArrayList<>();
@@ -613,13 +642,23 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         draftNotes.addAll(grouped.notes());
         final List<String> standInWarnings = new ArrayList<>();
         plan = eventStandIns(call, context, indexName, plan, events, standInWarnings);
+        // An aggregated feed's output feed has one index, which every group writing to it shares.
+        final Map<String, Object> feedIndex;
+        if (feedIndexes != null) {
+            final FeedIndexDecisions.ForPlan forFeed = feedIndexes.get().forPlan(call, context, build, streamIds,
+                    plan, NAME);
+            plan = forFeed.plan();
+            feedIndex = forFeed.said();
+        } else {
+            feedIndex = Map.of();
+        }
         final String replaces = stringArg(call, REPLACES_ARG);
         final Map<String, Object> replaced = replaces == null
                 ? null
                 : replaced(replaces, plan, populated);
         final Map<String, Double> withNames = IndexingInputs.populationWithDataNames(events);
-        memory.keepPlanPopulation(indexName, withNames);
-        memory.keepPlanStreams(indexName, streamIds);
+        memory.keepPlanPopulation(plan.indexName(), withNames);
+        memory.keepPlanStreams(plan.indexName(), streamIds);
         final Map<String, Object> reply = new LinkedHashMap<>(plans.reply(plan, withNames,
                 inputs.translationWrites(streamIds)));
         // No XSLT here: save_xslt index_plan= generates it, and half the reply was code the agent never reads.
@@ -643,6 +682,14 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         }
         if (!draftNotes.isEmpty()) {
             result.put("draft_notes", draftNotes);
+        }
+        if (!feedIndex.isEmpty()) {
+            result.put("feed_index", feedIndex);
+        }
+        if (!groupPaths.isEmpty()) {
+            result.put("group_paths", "The paths each source type group writing to this output feed writes are "
+                                      + "planned, as the index is the groups' together: a field none of the "
+                                      + "sample's Events have is one of another group's.");
         }
         if (!standInWarnings.isEmpty()) {
             final List<Object> warnings = result.get("warnings") instanceof final List<?> given
@@ -716,6 +763,16 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         final Map<String, String> all = new LinkedHashMap<>(remembered);
         all.putAll(chosen);
         return plan.withStandIns(all);
+    }
+
+    // The build the Events are from: the one whose pipeline wrote them, else the session's.
+    private String buildOf(final ToolCallContext context, final List<Long> streamIds) {
+        if (feedIndexes == null) {
+            return null;
+        }
+        return streamIds.isEmpty()
+                ? feedIndexes.get().currentBuild(context)
+                : inputs.buildOfStream(streamIds.getFirst()).orElseGet(() -> feedIndexes.get().currentBuild(context));
     }
 
     // The namespace the sample Events are written in where it is not event-logging:3 (an environment's fork of the
@@ -1227,7 +1284,10 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
     // --------------------------------------------------------------------------------
 
     // draft_index_mapping changes=: the kept plan with only what changes merged in.
-    private Map<String, Object> amend(final ToolCall call, final String indexName, final List<Long> streamIds) {
+    private Map<String, Object> amend(final ToolCall call,
+                                      final ToolCallContext context,
+                                      final String indexName,
+                                      final List<Long> streamIds) {
         final Object changes;
         changes = ToolArgs.object(call, CHANGES_ARG);
         final String pipelineUuid = stringArg(call, PIPELINE_UUID_ARG);
@@ -1248,11 +1308,22 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         }
         final MappingChanges.Applied applied;
         applied = MappingChanges.applyPlanChanges(base.toJson(), changes);
-        final FieldPlan plan;
+        FieldPlan plan;
         try {
             plan = FieldPlan.fromJson(applied.merged());
         } catch (final IllegalArgumentException e) {
             throw new ToolRefusal("The amended plan isn't valid: " + e.getMessage());
+        }
+        // An aggregated feed's output feed: checked against its index again, as a change may clash.
+        Map<String, Object> feedIndex = Map.of();
+        if (feedIndexes != null) {
+            final List<Long> planStreams = streamIds.isEmpty()
+                    ? memory.planStreams(indexName)
+                    : streamIds;
+            final FeedIndexDecisions.ForPlan forFeed = feedIndexes.get().forPlan(call, context,
+                    buildOf(context, planStreams), planStreams, plan, NAME);
+            plan = forFeed.plan();
+            feedIndex = forFeed.said();
         }
         // The streams given, else what the plan was last checked against (not read again).
         Map<String, Double> populated = memory.planPopulation(indexName);
@@ -1268,6 +1339,9 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                 inputs.translationWrites(streamIds.isEmpty()
                         ? memory.planStreams(indexName)
                         : streamIds)));
+        if (!feedIndex.isEmpty()) {
+            result.put("feed_index", feedIndex);
+        }
         return result;
     }
 

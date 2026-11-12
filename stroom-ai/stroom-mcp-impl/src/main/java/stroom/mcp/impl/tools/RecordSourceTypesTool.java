@@ -25,6 +25,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.indexing.FeedIndexes;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
@@ -478,6 +479,12 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
         if (before.get("modules") != null) {
             // The feed's helpers and common module, as its source type groups import them.
             registry.put("modules", before.get("modules"));
+        }
+        // The feed's shared indexing decisions and its output feeds' indexes, made by earlier builds.
+        for (final String key : List.of(FeedIndexes.INDEXING, FeedIndexes.INDEXES)) {
+            if (before.get(key) != null) {
+                registry.put(key, before.get(key));
+            }
         }
         final List<Map<String, Object>> out = new ArrayList<>();
         final boolean first = before.isEmpty();
