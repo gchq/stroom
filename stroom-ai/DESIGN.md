@@ -1854,7 +1854,7 @@ surveys of the feed through a working copy, like any promoted document.
 
 None at present.
 
-#### Backfill (decided, 2026-11-12)
+#### Backfill: forward only (decided, 2026-11-12)
 
 A source type moved out of parked has no Events for the streams already processed: its records were passed over.
 Translating its history means reprocessing those raw streams, which reruns every group on them.
@@ -1875,19 +1875,11 @@ What Stroom does, checked in the code:
     time field; else its Events stream's creation time), by month unless the index says otherwise; a shard holds every
     document of its partition, per node and volume group, and is deleted whole (`IndexResource.deleteIndexShards`).
 
-The policy:
-
-* **Default: forward only.** The source type is translated from the next processing on; the user is told its history
-  isn't.
-* **Elasticsearch, on request**: reprocess the raw streams of the period through the pipeline (Events superseded),
-  delete the documents of the superseded Events streams' ids (known: Stroom has just marked those streams deleted; a
-  new tool step, behind a form), and let indexing take the new streams.
-* **Lucene, on request**: reprocess as above, delete the shards whose partitions cover the period, and index again
-  every live Events stream that may hold events in them (a reprocess filter on the indexing pipeline over streams
-  created in those partitions, with a margin for late data). The form says the cost (whole partitions: a month by
-  default, whatever the period), that searches of those partitions return nothing until indexing catches up, and that
-  events arriving late beyond the margin would be missed.
-* Either way the user is told the cost: every group's records in the period are translated and indexed again.
+The policy (decided, 2026-11-12): **forward only.** A source type moved out of parked is translated from the next
+processing on, and the user is told its history isn't, and why: backfilling it means reprocessing the period's raw
+streams, which translates and indexes every group's records in it again, and leaves the superseded streams' documents
+in the index (above). Reprocessing and any index clean-up are the user's to do, outside the tools; the agent says what
+Stroom does, as above, if they ask.
 
 
 ## Translation
