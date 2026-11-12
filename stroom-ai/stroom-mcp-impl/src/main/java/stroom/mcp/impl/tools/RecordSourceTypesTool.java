@@ -29,6 +29,7 @@ import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.shared.AiToolCategory;
 import stroom.security.shared.DocumentPermission;
@@ -55,8 +56,10 @@ import java.util.Set;
 /// confirmed by the user; a registry beside the feed is carried on from (a working copy), its rows and statuses kept
 /// and values it lacks added as `new`.
 ///
-/// In this phase the scope is recorded (in the survey state and the registry) and the source types in it stay
-/// `parked` until a source type group translates them: the other tools don't read through the scope yet.
+/// The scope is recorded in the registry and in the survey state, with the rows it was chosen by
+/// ([SourceTypeScope]), and the build's tools read the feed through it (the survey, samples, classification, the
+/// draft, the sample checks and review_coverage). The source types in it stay `parked` until a source type group
+/// translates them. A scope that adds source types the survey's streams weren't read for starts its coverage again.
 class RecordSourceTypesTool extends AbstractBuiltInTool {
 
     static final String NAME = "record_source_types";
@@ -283,18 +286,48 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                 "at", now));
         final SurveyRecord written = registries.writeRegistry(context.session(), build, feed, existing,
                 SourceTypeRegistry.render(registry));
+        boolean restarted = false;
         if (surveyDoc.isPresent() && survey != null) {
-            // The scope is the survey's too: kept in its state, as the kind fields are (phase 2 reads through it).
+            // The scope is the survey's too: kept in its state, as the kind fields are, with the rows it was chosen
+            // by, so the tools reading through it match records as the registry does.
             final Map<String, Object> kept = new LinkedHashMap<>(sources);
-            kept.put(SourceTypeProfiles.SCOPE, registry.get("scope"));
+            final Map<String, Object> surveyScope = new LinkedHashMap<>(JsonValues.mapOrEmpty(registry.get("scope")));
+            surveyScope.put(SourceTypeScope.ROWS, SourceTypeScope.kept(rows.rows()));
+            kept.put(SourceTypeProfiles.SCOPE, surveyScope);
             survey.put(SourceTypeProfiles.STATE_KEY, kept);
+            restarted = restartsCoverage(survey, new SourceTypeScope(build, field, rows.rows(), scope.get().chosen()));
             surveyDocuments.write(context.session(), surveyDoc.get(), SurveyDoc.render(survey));
         }
         final Map<String, Object> result = written(feed, field, registry, written, table);
         result.put("scope", scope.get().chosen());
+        if (restarted) {
+            result.put("coverage_restarted", "The scope adds source types some streams the survey read weren't read "
+                                             + "for (a narrower scope read them): its coverage starts again, and "
+                                             + "survey_feed build='" + build + "' feed='" + feed + "' reads them "
+                                             + "again for those source types.");
+        }
         result.put("hint", "The registry is written and the build's scope recorded: " + scope.get().chosen()
                            + ". Carry on with the plan (next).");
         return plan.withNext(context, build, result);
+    }
+
+    /// Whether a scope adds source types some stream the survey read wasn't read for: if so the survey is no longer
+    /// covered (changed in place: not saturated, nor accepted as it is), and survey_feed reads those streams again
+    /// for them.
+    ///
+    /// @param survey The build's survey state, changed in place.
+    /// @param scope  The scope chosen.
+    /// @return True if the survey's coverage starts again.
+    static boolean restartsCoverage(final Map<String, Object> survey, final SourceTypeScope scope) {
+        final boolean uncovered = JsonValues.listOrEmpty(survey.get("streams_read")).stream()
+                .filter(Number.class::isInstance)
+                .map(id -> ((Number) id).longValue())
+                .anyMatch(stream -> !scope.covers(SurveyDoc.readFor(survey, stream)));
+        if (uncovered) {
+            survey.put("saturated", false);
+            survey.remove(SurveyDoc.ACCEPTED);
+        }
+        return uncovered;
     }
 
     // The registry's rows: as the user gave them, those of the registry beside the feed (values it lacks added),

@@ -1029,7 +1029,7 @@ public class BuildPlan {
                         : "<every location survey_feed gave>",
                 forwarding.isEmpty()
                         ? null
-                        : uuid(forwarding.getFirst()), edited, version, referenceArgs);
+                        : uuid(forwarding.getFirst()), edited, version, referenceArgs, scopeOf(surveyState));
         final NextCall call = nextCall(nextStep == null
                 ? "promoted"
                 : nextStep, args);
@@ -1132,7 +1132,10 @@ public class BuildPlan {
                     + "written");
             case "classify" -> call("classify_kinds", args("build", build, "stream_ids", raw),
                     "lists the kinds to classify; call again with a proposal for each, which the user confirms");
-            case "translation" -> call("draft_translation_mapping", args("stream_ids", raw),
+            // A build with a scope over an aggregated feed's source types drafts through it: the build says which.
+            case "translation" -> call("draft_translation_mapping", args.scope() == null
+                            ? args("stream_ids", raw)
+                            : args("stream_ids", raw, "build", build),
                     "decide what its notes ask, then build_translation_xslt with the mapping, stream_ids, the "
                     + "splitter, build and name: it saves the XSLT with the mapping");
             case "pipeline" -> call("find_pipeline_templates", args("stage", "translation"),
@@ -1157,7 +1160,8 @@ public class BuildPlan {
                             : args.sources().getFirst(), "build", build),
                     "it carries on from the survey doc. New kinds of event: add rules (build_translation_xslt "
                     + "changes=), then step_records over every location so far; again until its coverage says "
-                    + "covered. Kinds not worth translating: ask the user (set_shape_handling, a drop rule)");
+                    + "covered. Kinds not worth translating: ask the user (set_shape_handling, a drop rule)"
+                    + scopeSaid(args.scope()));
             case "processed" -> call("create_processor_filter", args("pipeline_uuid", tr, "stream_ids", raw),
                     APPROVE + "; then wait_for_processing with its filter_id, and check_events");
             case "processed:disabled" -> call("wait_for_processing", args("pipeline_uuid", tr, "stream_ids", raw),
@@ -1545,6 +1549,37 @@ public class BuildPlan {
         return skipped;
     }
 
+    // The build's scope over an aggregated feed's source types, as the survey keeps it with its share of the records
+    // read; null for a build without one.
+    private static Map<String, Object> scopeOf(final Map<String, Object> surveyState) {
+        final Map<String, Object> sources = surveyState == null
+                ? Map.of()
+                : JsonValues.mapOrEmpty(surveyState.get(SourceTypeProfiles.STATE_KEY));
+        final Map<String, Object> scope = JsonValues.mapOrEmpty(sources.get(SourceTypeProfiles.SCOPE));
+        if (scope.isEmpty()) {
+            return null;
+        }
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("build", scope.get("build"));
+        out.put("source_types", JsonValues.strings(scope.get("source_types")));
+        out.put("share_percent", JsonValues.mapOrEmpty(sources.get(StroomBuildFacts.SCOPE_SHARE))
+                .get("share_percent"));
+        return out;
+    }
+
+    // The coverage step's words for a build with a scope: what it covers, and its share of the feed.
+    private static String scopeSaid(final Map<String, Object> scope) {
+        if (scope == null) {
+            return "";
+        }
+        final Object share = scope.get("share_percent");
+        return ". Coverage is judged within the build's scope, " + String.join(", ",
+                JsonValues.strings(scope.get("source_types"))) + (share == null
+                ? ""
+                : " (about " + share + "% of the feed's records read)")
+               + ": the survey reads only its records, the other source types counted, not read";
+    }
+
     // The source types step: not needed (null) for a feed of one source, which never sees it; to do once the
     // survey's field is confirmed (or a registry is beside the feed) until the registry is written in the build and,
     // but for an assessment, the user has chosen the build's scope.
@@ -1893,6 +1928,8 @@ public class BuildPlan {
     /// @param reference   Its reference data: `pipeline` (the reference-data pipeline's UUID), `raw` (its Raw
     ///                    Reference streams) and `unloaded` (feeds the events pipeline looks values up in that hold
     ///                    no Reference stream yet); null for a build without.
+    /// @param scope       For an aggregated feed's build with a scope: its source types and their share of the
+    ///                    records the survey read ([StroomBuildFacts#SCOPE_SHARE]); null for a build without.
     public record CallArgs(String build,
                            List<String> feeds,
                            Object raw,
@@ -1907,7 +1944,8 @@ public class BuildPlan {
                            String cef,
                            String editedXslt,
                            Map<String, Object> version,
-                           Map<String, Object> reference) {
+                           Map<String, Object> reference,
+                           Map<String, Object> scope) {
 
         /// @param build       The build.
         /// @param feeds       Its feeds' names.
@@ -1923,7 +1961,7 @@ public class BuildPlan {
                                   final String translation,
                                   final String indexing) {
             return new CallArgs(build, feeds, raw, events, translation, indexing, null, null, List.of(), false,
-                    null, null, null, null, null);
+                    null, null, null, null, null, null);
         }
     }
 

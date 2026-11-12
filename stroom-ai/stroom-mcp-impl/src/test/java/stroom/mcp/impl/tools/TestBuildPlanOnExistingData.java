@@ -258,7 +258,8 @@ class TestBuildPlanOnExistingData {
         assertThat(next(result).get("step")).isEqualTo("index_template");
         // Raw streams: refused with one.
         final BuildPlan.NextCall call = BuildPlan.nextCall("indexed", new BuildPlan.CallArgs("b", List.of("RAW"),
-                List.of(1L), List.of(1L), null, "dp", null, null, List.of(), true, null, null, null, null, null));
+                List.of(1L), List.of(1L), null, "dp", null, null, List.of(), true, null, null, null, null, null,
+                null));
         assertThat(((Map<?, ?>) call.call().get("arguments")).containsKey("source_pipeline_uuid")).isFalse();
     }
 

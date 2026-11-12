@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamReader.RawText;
 import stroom.ai.impl.tools.StreamReader.StreamReadException;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -33,6 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 
 /// Sample streams' raw text, read in place of text sent by the client, so a sample passes through the model once
 /// (upload_sample) however many tools then read it.
@@ -117,6 +119,57 @@ class SampleStreamTexts {
         return new Texts(texts, notes, cut);
     }
 
+    /// The texts read through a build's scope over an aggregated feed: each split into its records, those of
+    /// source types outside the scope left out as they are read (by the source type field and the registry's rows,
+    /// the first match winning), the rest written back in the text's format. A text that holds none of the scope's
+    /// records is left out; one whose format can't be read record by record is kept whole, and said so.
+    ///
+    /// @param texts The texts read.
+    /// @param scope The build's scope.
+    /// @return The scope's texts, and what was left out, said for the agent.
+    /// @throws ToolRefusal if no text holds a record of the scope.
+    static Scoped inScope(final Texts texts, final SourceTypeScope scope) {
+        final Map<String, String> kept = new LinkedHashMap<>();
+        final List<String> notes = new ArrayList<>(texts.notes());
+        final Map<String, Integer> leftOut = new TreeMap<>();
+        final List<String> whole = new ArrayList<>();
+        int records = 0;
+        for (final Map.Entry<String, String> entry : texts.texts().entrySet()) {
+            final SourceTypeScope.Filtered filtered = scope.filter(entry.getValue());
+            if (!filtered.filtered()) {
+                whole.add(entry.getKey());
+                kept.put(entry.getKey(), entry.getValue());
+                continue;
+            }
+            filtered.passedOver().forEach((type, count) -> leftOut.merge(type, count, Integer::sum));
+            records += filtered.kept();
+            if (filtered.kept() > 0) {
+                kept.put(entry.getKey(), filtered.text());
+            }
+        }
+        if (kept.isEmpty()) {
+            throw new ToolRefusal("None of the sample's records is in build '" + scope.build() + "''s scope ("
+                                  + scope.said() + "): they are all of other source types " + leftOut.keySet()
+                                  + ". Give stream_ids of streams that hold the scope's records (the survey's "
+                                  + "locations say where they are).");
+        }
+        if (!whole.isEmpty()) {
+            notes.add(String.join(", ", whole) + " can't be read record by record (XML or text): read whole, not "
+                      + "through the build's scope");
+        }
+        final Map<String, Object> said = new LinkedHashMap<>();
+        said.put("build", scope.build());
+        said.put(SourceTypeScope.SOURCE_TYPES, scope.signature());
+        said.put("field", scope.field());
+        said.put("records_in_scope", records);
+        said.put("records_left_out", leftOut);
+        said.put("note", "Read through the build's scope: only records of " + scope.said() + " (by '"
+                         + scope.field() + "') are in the sample; the others were left out as they were read, so "
+                         + "the kinds and rules here are the scope's.");
+        final List<Cut> cut = texts.cut().stream().filter(part -> kept.containsKey(part.name())).toList();
+        return new Scoped(new Texts(kept, notes, cut), said);
+    }
+
     /// @param streamId A sample stream.
     /// @return Its receipt headers (what `stroom:meta()` reads, e.g. `RemoteFile`), or none when they can't be read.
     Map<String, String> receiptHeaders(final long streamId) {
@@ -150,6 +203,15 @@ class SampleStreamTexts {
         Texts(final Map<String, String> texts, final List<String> notes) {
             this(texts, notes, List.of());
         }
+    }
+
+
+    /// Texts read through a build's scope.
+    ///
+    /// @param texts The scope's texts.
+    /// @param said  What was kept and left out, for the tool's result.
+    record Scoped(Texts texts, Map<String, Object> said) {
+
     }
 
 

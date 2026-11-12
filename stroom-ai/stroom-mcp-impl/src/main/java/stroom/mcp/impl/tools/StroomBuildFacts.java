@@ -26,6 +26,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
@@ -81,6 +82,8 @@ class StroomBuildFacts implements BuildFacts {
     static final String SURVEY = " - Survey";
     /// The survey state's key for the streams it read whole (or the user stopped at): see [#combine].
     static final String READ_WHOLE = "read_whole";
+    /// The combined survey's `source_types` key for its scope's share of the records read ([SourceTypeScope#share]).
+    static final String SCOPE_SHARE = "scope_share";
     /// The most characters of an example a survey doc keeps: one this long was cut short.
     static final int MAX_EXAMPLE_CHARS = 4000;
     /// How much of a stream's head is read to profile it.
@@ -520,9 +523,12 @@ class StroomBuildFacts implements BuildFacts {
         }
         final List<Map<?, ?>> examples = new ArrayList<>();
         for (final Map<String, Object> state : states) {
+            // An aggregated feed's build with a scope: only the scope's kinds are stepped and make the sample.
+            final Optional<SourceTypeScope> scope = SourceTypeScope.ofSurvey(state, null, List.of());
             if (state.get("shapes") instanceof final Map<?, ?> shapes) {
                 for (final Object shape : shapes.values()) {
-                    if (shape instanceof final Map<?, ?> map && map.get("examples") instanceof final List<?> list) {
+                    if (shape instanceof final Map<?, ?> map && map.get("examples") instanceof final List<?> list
+                        && scope.map(found -> found.shapeInScope(map)).orElse(true)) {
                         list.stream()
                                 .filter(Map.class::isInstance)
                                 .map(Map.class::cast)
@@ -585,6 +591,9 @@ class StroomBuildFacts implements BuildFacts {
                             said.put(key, sources.get(key));
                         }
                     }
+                    // The scope's share of the records the survey read, for the plan's coverage step.
+                    SourceTypeScope.of(sources, null, List.of())
+                            .ifPresent(scope -> said.put(SCOPE_SHARE, scope.share(sources)));
                     survey.put(SourceTypeProfiles.STATE_KEY, said);
                 });
         survey.put("locations", !locations.isEmpty() && locations.size() <= 60

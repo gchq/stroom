@@ -245,9 +245,17 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
             return target.question();
         }
         final String version = target.version();
-        final Map<String, String> samples = given == null
-                ? sampleStreamTexts.read(streamIds).texts()
-                : SampleTexts.asNamedSamples(given, null);
+        // Sample streams of an aggregated feed's build with a scope: read through it, so the rules drafted are the
+        // scope's (records of other source types left out as they are read).
+        final SampleStreamTexts.Scoped scoped = given == null
+                ? builds.scope(build).map(scope -> SampleStreamTexts.inScope(sampleStreamTexts.read(streamIds), scope))
+                        .orElse(null)
+                : null;
+        final Map<String, String> samples = scoped != null
+                ? scoped.texts().texts()
+                : given == null
+                        ? sampleStreamTexts.read(streamIds).texts()
+                        : SampleTexts.asNamedSamples(given, null);
         if (samples.isEmpty()) {
             throw new ToolRefusal("Give the samples' text, or stream_ids of the uploaded sample streams");
         }
@@ -272,6 +280,9 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                 detailCheck(context, build, sourceNotes, version), splitter);
         if (readWith != null) {
             result.put("read_with", "the build's Data Splitter '" + readWith + "'");
+        }
+        if (scoped != null) {
+            result.put("scope", scoped.said());
         }
         @SuppressWarnings("unchecked") final Map<String, Object> mapping = MappingCompaction.compactPairs(
                 MappingCompaction.compactRules((Map<String, Object>) result.get("mapping")));
