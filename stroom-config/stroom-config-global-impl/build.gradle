@@ -75,7 +75,7 @@ dependencies {
     implementation project(':stroom-security:stroom-security-identity')
     implementation project(':stroom-security:stroom-security-impl')
     implementation project(':stroom-security:stroom-security-openid-api')
-    implementation project(':stroom-external-datasource:stroom-external-datasource-impl')
+    implementation project(':stroom-data-connection:stroom-data-connection-impl')
     implementation project(':stroom-sqlstore:stroom-sqlstore-impl')
     implementation project(':stroom-statistics:stroom-statistics-impl')
     implementation project(':stroom-statistics:stroom-statistics-impl-sql')

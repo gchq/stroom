@@ -101,7 +101,7 @@ dependencies {
     implementation project(':stroom-data:stroom-data-zip')
     implementation project(':stroom-datagen:stroom-datagen-impl')
     implementation project(':stroom-floormap:stroom-floormap-impl')
-    implementation project(':stroom-external-datasource:stroom-external-datasource-impl')
+    implementation project(':stroom-data-connection:stroom-data-connection-impl')
     implementation project(':stroom-db-util')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-dictionary:stroom-dictionary-impl')

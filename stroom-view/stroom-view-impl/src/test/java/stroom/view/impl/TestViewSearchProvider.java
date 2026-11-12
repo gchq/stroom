@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TestViewSearchProvider {
 
     private static final DocRef VIEW = new DocRef(ViewDoc.TYPE, "view-uuid", "HR view");
-    private static final DocRef EXTERNAL_SOURCE = new DocRef("ExternalDataSource", "external-uuid", "HR");
+    private static final DocRef DATA_CONNECTION = new DocRef("DataConnection", "data-connection-uuid", "HR");
     private static final DocRef OTHER_SQL_SOURCE = new DocRef("OtherSqlSource", "other-uuid", "Sales");
 
     private static void assertViewOfSourceIsRefused(final DocRef dataSource, final boolean takesSql) {
@@ -68,8 +68,8 @@ class TestViewSearchProvider {
     }
 
     @Test
-    void viewOfAnExternalDataSourceIsRefusedEvenWithoutSql() {
-        // A CSV External Data Source takes no SQL, but its rows have no use for a view's extraction.
-        assertViewOfSourceIsRefused(EXTERNAL_SOURCE, false);
+    void viewOfADataConnectionIsRefusedEvenWithoutSql() {
+        // A CSV Data Connection takes no SQL, but its rows have no use for a view's extraction.
+        assertViewOfSourceIsRefused(DATA_CONNECTION, false);
     }
 }

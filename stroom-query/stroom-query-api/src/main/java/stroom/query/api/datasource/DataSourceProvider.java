@@ -63,7 +63,7 @@ public interface DataSourceProvider {
     }
 
     /// Whether queries of a data source carry their own native query, such as the SQL of a JDBC
-    /// External Data Source, in `Query.nativeQuery`, given in StroomQL by a `sql` clause. Queries of
+    /// Data Connection, in `Query.nativeQuery`, given in StroomQL by a `sql` clause. Queries of
     /// other data sources may not have one.
     ///
     /// @param docRef The data source, as some types of data source take a native query and some do not.

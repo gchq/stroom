@@ -116,7 +116,7 @@ class TestQueryServiceImpl {
                 .build();
     }
 
-    // A query service whose data sources named sql_... run SQL, as an External Data Source does.
+    // A query service whose data sources named sql_... run SQL, as a Data Connection does.
     @SuppressWarnings("unchecked")
     private static QueryServiceImpl queryServiceWithSqlSources() {
         final SearchRequestFactory searchRequestFactory = Mockito.mock(SearchRequestFactory.class);

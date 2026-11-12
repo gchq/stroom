@@ -42,7 +42,7 @@ public abstract class AbstractRefreshableComponentPresenter<V extends View>
     }
 
     /// Sets the shortest interval at which the query's data source may be rerun automatically, as
-    /// reported by the server, e.g. for an Amazon Athena External Data Source.
+    /// reported by the server, e.g. for an Amazon Athena Data Connection.
     ///
     /// @param dataSourceMinRefreshInterval The minimum, or `null` for none beyond the dashboard's own.
     protected void setDataSourceMinRefreshInterval(final SimpleDuration dataSourceMinRefreshInterval) {

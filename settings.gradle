@@ -306,7 +306,7 @@ include 'stroom-sqlstore:stroom-sqlstore-shared'
 include 'stroom-sqlstore:stroom-sqlstore-impl'
 include 'stroom-sqlstore:stroom-sqlstore-impl-db'
 include 'stroom-sqlstore:stroom-sqlstore-impl-db-jooq'
-include 'stroom-external-datasource:stroom-external-datasource-impl'
+include 'stroom-data-connection:stroom-data-connection-impl'
 
 // SSL Tests
 include 'stroom-ssl-test'

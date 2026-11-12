@@ -73,7 +73,7 @@ public class FindFieldCriteria extends BaseCriteria {
     /// @param dataSourceRef The data source.
     /// @param filter        A filter on field names, or `null`.
     /// @param queryable     True for only fields that can be queried, or `null` for all.
-    /// @param nativeQuery   The query's native query, such as the SQL of an External Data Source, whose
+    /// @param nativeQuery   The query's native query, such as the SQL of a Data Connection, whose
     ///                      fields depend on it, or `null`.
     @JsonCreator
     public FindFieldCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
@@ -101,7 +101,7 @@ public class FindFieldCriteria extends BaseCriteria {
         return queryable;
     }
 
-    /// @return The query's native query, such as the SQL of an External Data Source, or `null`.
+    /// @return The query's native query, such as the SQL of a Data Connection, or `null`.
     public String getNativeQuery() {
         return nativeQuery;
     }

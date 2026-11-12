@@ -281,9 +281,9 @@ public class SearchRequestFactory {
                         // The SQL came with the request, not from a sql clause.
                         ? "The query has SQL, but SQL can only be run against a data source that runs SQL"
                         : "A sql clause can only be used with a data source that runs SQL";
-                throw new TokenException(sqlToken, what + ", such as a JDBC or Amazon Athena External Data "
-                                                   + "Source, or an LDAP one, which takes its search filter "
-                                                   + "there. '" + dataSource.getName() + "' does neither.");
+                throw new TokenException(sqlToken, what + ", such as a JDBC or Amazon Athena Data Connection, "
+                                                   + "or an LDAP one, which takes its search filter there. '"
+                                                   + dataSource.getName() + "' does neither.");
             } else if (takesNativeQuery && !hasNativeQuery) {
                 throw new TokenException(fromToken, "'" + dataSource.getName() + "' needs the SQL to run, in a sql "
                                                + "clause after from, e.g. from \"" + dataSource.getName()

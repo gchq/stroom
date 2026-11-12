@@ -16,10 +16,10 @@
 
 package stroom.view.impl;
 
+import stroom.dataconnection.shared.DataConnectionDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.externaldatasource.shared.ExternalDataSourceDoc;
 import stroom.query.api.Query;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.SearchRequest;
@@ -214,9 +214,9 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
         if (delegate.isEmpty()) {
             throw new RuntimeException("No data source provider found for " + dataSource);
         }
-        // An External Data Source, or any data source whose queries carry their own SQL, is queried
+        // A Data Connection, or any data source whose queries carry their own SQL, is queried
         // directly. A view adds extraction that its rows do not use, and has no way to pass SQL on.
-        if (ExternalDataSourceDoc.TYPE.equals(dataSource.getType())
+        if (DataConnectionDoc.TYPE.equals(dataSource.getType())
             || delegate.get().takesNativeQuery(dataSource)) {
             throw new RuntimeException("View " + DocRefUtil.create(viewDoc).getName() + " uses "
                                        + dataSource.getType() + " '" + dataSource.getName()

@@ -115,11 +115,11 @@ public class DocumentTypeRegistry {
             "SqlTemporalStore",
             "SQL Temporal Store",
             SvgImage.DOCUMENT_SQL_TEMPORAL_STORE);
-    public static final DocumentType EXTERNAL_DATA_SOURCE_DOCUMENT_TYPE = new DocumentType(
+    public static final DocumentType DATA_CONNECTION_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.INDEXING,
-            "ExternalDataSource",
-            "External Data Source",
-            SvgImage.DOCUMENT_EXTERNAL_DATA_SOURCE);
+            "DataConnection",
+            "Data Connection",
+            SvgImage.DOCUMENT_DATA_CONNECTION);
     public static final DocumentType DOCUMENTATION_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.CONFIGURATION,
             "Documentation",
@@ -315,7 +315,7 @@ public class DocumentTypeRegistry {
         put(TRACES_DOCUMENT_TYPE);
         put(FLOOR_MAP_EVENT_STORE_DOCUMENT_TYPE);
         put(SQL_TEMPORAL_STORE_DOCUMENT_TYPE);
-        put(EXTERNAL_DATA_SOURCE_DOCUMENT_TYPE);
+        put(DATA_CONNECTION_DOCUMENT_TYPE);
 
         // Searchables
         put(DUAL_DOCUMENT_TYPE);

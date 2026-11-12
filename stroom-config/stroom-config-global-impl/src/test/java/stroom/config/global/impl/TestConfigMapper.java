@@ -46,13 +46,13 @@ import stroom.core.receive.AutoContentCreationConfig;
 import stroom.credentials.impl.CredentialsConfig;
 import stroom.credentials.impl.KeyStoreFileCredentialConfig;
 import stroom.dashboard.impl.DashboardConfig;
+import stroom.dataconnection.impl.DataConnectionConfig;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.DocStoreConfig;
 import stroom.document.asset.impl.DocumentAssetConfig;
 import stroom.document.asset.impl.db.DocumentAssetDbConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
-import stroom.externaldatasource.impl.ExternalDataSourceConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.gitrepo.impl.GitRepoConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
@@ -1122,7 +1122,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
                 @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
                 @JsonProperty(PROP_NAME_SESSION) final SessionConfig sessionConfig,
-                @JsonProperty(PROP_NAME_EXTERNAL_DATA_SOURCE) final ExternalDataSourceConfig externalDataSourceConfig,
+                @JsonProperty(PROP_NAME_DATA_CONNECTION) final DataConnectionConfig dataConnectionConfig,
                 @JsonProperty(PROP_NAME_SQL_STORE) final SqlStoreConfig sqlStoreConfig,
                 @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
                 @JsonProperty(PROP_NAME_PLANB) final PlanBConfig planBConfig,
@@ -1195,7 +1195,7 @@ class TestConfigMapper {
                     sessionCookieConfig,
                     sessionConfig,
                     solrConfig,
-                    externalDataSourceConfig,
+                    dataConnectionConfig,
                     sqlStoreConfig,
                     planBConfig,
                     statisticsConfig,
