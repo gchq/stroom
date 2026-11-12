@@ -1885,6 +1885,35 @@ Built in phase 2 (where the design was silent):
 * `review_coverage` judges within the scope (out-of-scope kinds `passed_over`, not `missed`) and adds unmatched values
   to the build's registry as `new`; it is no longer read-only (it changes only its build, so asks no approval).
 
+Built in phase 3 (where the design was silent):
+
+* A group is a translation mapping with an optional `module` block (kind, name, mode, source types, imports), and
+  every generated module carries an `<mcp:module>` marker, so kept mappings, hand-edit checks, drift and docs work for
+  groups unchanged. Every name a group declares (templates, functions, variables, once-per-stream log keys) is
+  prefixed with its mode.
+* The first group of a feed makes `<feed> common` from the mapping's EventTime, System, Generator and Device entries
+  that read only the record's own fields or constants, plus its shared calls; the registry's Environment and default
+  System Name replace the mapping's. A later group drops entries matching the common module and keeps the ones that
+  differ as its own override (said in `group.notes`); a rule mapping anything under a common part writes the whole
+  part itself. A group's System Name is its rows' if they all agree, else its mapping's.
+* `<feed> helpers` holds `mcp:json-to-xml`, `mcp:parse-xml` and `mcp:zone`; group-specific functions stay in the group.
+  A group logs (WARN) each record whose held XML or JSON field doesn't parse, and still writes the event.
+* The dispatcher reads the source type field once a record through `mcp:<mode>_source_type` (the registry's rows in
+  order: `=` a value, `matches()` an anchored pattern), routes by group, and logs passed-over counts (INFO) per source
+  type at the end of each **document** (Stroom hands an XSLT a stream in several documents, so a stream's counts are
+  the sum of its lines) and each unmatched value once a stream (WARN). Its spec is kept in a `dispatcher` block of its
+  description, so it is regenerated, never edited.
+* Saving a group saves, in order: the helpers (made or rewritten if out of date), the common module (if new), the
+  group importing their real UUIDs, the dispatcher regenerated with every group, and the registry rows set
+  `translated` with `group` and `group_xslt`.
+* An unsaved group is stepped through a temporary dispatcher built from the saved one's spec, the draft inlined in place
+  of its import; `write_documentation` routes only that group, so its sections hold only its events.
+* Imports resolve by the UUID in a `uuid='…'` href as well as by name, are capped at 8 deep, and cycles or a module
+  importing the dispatcher are refused.
+* Stroom core: `CustomURIResolver` now gives each imported XSLT the system id `urn:stroom:xslt:<uuid>`. Without one,
+  Saxon refuses a stylesheet importing one module twice (XTSE0210), which every aggregated feed does (each group imports
+  the common and helpers modules). Errors inside an imported XSLT now name that id as their location.
+
 #### Open decisions
 
 None at present.

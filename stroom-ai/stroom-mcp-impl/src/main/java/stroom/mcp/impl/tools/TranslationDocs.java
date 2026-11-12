@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AgentKnowledge;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.InstructionRules;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -483,6 +484,78 @@ public class TranslationDocs {
         final Map<String, Object> result = summary(saved);
         result.putAll(extra);
         return planProvider.get().nextFor(context, ref, result);
+    }
+
+    /// Saves one of an aggregated feed's generated modules in a build (its helpers, its common module, its
+    /// dispatcher): made new, or written over the build's own. check_xslt first, as every save; not the imports the
+    /// standing instructions require of a translation (the source type groups import those), nor the hand-edit gate
+    /// (a module is regenerated, never edited: its own code says so). The version history records it as generated.
+    ///
+    /// @param context The call's context.
+    /// @param build   The build.
+    /// @param name    The module's name, for a new one.
+    /// @param uuid    The build's module to write over, or null for a new one.
+    /// @param code    The module's code.
+    /// @param source  The mapping it is generated from (the common module's), or [Source#NONE].
+    /// @param block   A block of the description to keep beside it (the dispatcher's spec), or null.
+    /// @param payload The block's payload.
+    /// @param change  What this change is, for the version history.
+    /// @return The document, and `changed` (false where its code and block were already as given).
+    /// @throws ToolRefusal if check_xslt refuses the code, or the module isn't the tools' own.
+    public Map<String, Object> saveModule(final ToolCallContext context,
+                                          final String build,
+                                          final String name,
+                                          final String uuid,
+                                          final String code,
+                                          final Source source,
+                                          final String block,
+                                          final Object payload,
+                                          final String change) {
+        checked(context, code, build, null);
+        if (uuid == null) {
+            final XsltDoc saved = guard.createFilled(XsltDoc.TYPE, name, build, ref -> {
+                final XsltDoc made = read(ref, XsltDoc.class);
+                String description = described(context, build, made.getDescription(), code, source,
+                        new LinkedHashMap<>());
+                if (block != null) {
+                    description = KeptMapping.withBlock(description, block, payload);
+                }
+                description = history.pending(context.session(), description, null,
+                        NullSafe.nonBlankStringElse(change, "Created"), code, false);
+                description = history.previewed(description, code);
+                return write(XsltDoc.TYPE, made.copy().data(code).description(description).build());
+            }, false, "Events");
+            tagKept(saved, source.keeps());
+            final Map<String, Object> result = summary(saved);
+            result.put("changed", true);
+            return result;
+        }
+        final XsltDoc doc = readXslt(uuid);
+        final DocRef ref = new DocRef(XsltDoc.TYPE, uuid, doc.getName());
+        guard.checkManaged(context.session(), ref);
+        final boolean sameBlock = block == null || KeptMapping.readBlock(doc.getDescription(), block)
+                .map(kept -> kept.equals(JsonValues.deepCopy(payload)))
+                .orElse(false);
+        if (sameBlock && XsltCode.normalise(NullSafe.string(doc.getData())).equals(XsltCode.normalise(code))) {
+            final Map<String, Object> result = summary(doc);
+            result.put("changed", false);
+            return result;
+        }
+        String description = XsltVersionHistory.adopt(doc.getDescription(), doc.getData());
+        final String data = XsltVersionHistory.strip(code);
+        description = described(context, build, description, code, source, new LinkedHashMap<>());
+        if (block != null) {
+            description = KeptMapping.withBlock(description, block, payload);
+        }
+        description = history.pending(context.session(), description, new XsltVersionHistory.Previous(doc.getData(),
+                doc.getUpdateUser(), doc.getUpdateTimeMs()), NullSafe.nonBlankStringElse(change, "Changed"), data,
+                false);
+        description = history.previewed(description, data);
+        final XsltDoc saved = write(XsltDoc.TYPE, doc.copy().data(data).description(description).build());
+        tagKept(saved, source.keeps());
+        final Map<String, Object> result = summary(saved);
+        result.put("changed", true);
+        return result;
     }
 
     /// @param uuid An XSLT's UUID.

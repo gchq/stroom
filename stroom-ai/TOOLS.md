@@ -3443,8 +3443,11 @@ walked in one session, and returns one verdict for the whole sample: error group
 affect, and per-record counts. A blocking group means fix and step again. A clean run of saved code is recorded for
 promotion and returns the plan's `next`.
 
-* **Arguments**: `pipeline_uuid`, `stream_ids` (required, at least one); `draft_code`; `max_records` (at least 1;
-  at most 500, the default); `records_per_stream` (at least 1). With neither `max_records` nor
+* **Arguments**: `pipeline_uuid`, `stream_ids` (required, at least one); `draft_code` (a source type group's module
+  given for the element running the feed's dispatcher is stepped through a temporary dispatcher, generated from the
+  spec kept with the saved one: the draft inlined in place of the group's import, its own imports hoisted first, and
+  its source types routed to it, a new group's too; `PipelineStepping.withGroupsInlined`; so in step_records and
+  step_pipeline); `max_records` (at least 1; at most 500, the default); `records_per_stream` (at least 1). With neither `max_records` nor
   `records_per_stream`, the first 50 records of each stream are stepped (`StepSampleTool.PER_STREAM`): sample files
   of 985 records each were stepped a record per request on a remote Stroom, and the head of each stream already
   says whether the translation is right; processing reads the rest.
@@ -3701,7 +3704,14 @@ before it is stepped (`PipelineStepping.checkDrafts`). In order:
    the version given, else the `Version` the XSLT writes on `Events`, else the newest held
    (`XsltChecks.eventElementProblems`, `EventSchema`). If no schema can be read, a warning.
 9. `xsl:import` / `xsl:include` targets: each must be an XSLT document of exactly that name that the user may view
-   (`DocFinder`), as Stroom imports by name.
+   (`DocFinder`), as Stroom imports by name, else the one whose UUID the href holds (`uuid='…', name='…'`, as an
+   aggregated feed's modules import each other; `XsltImports`).
+9a. An aggregated feed's modules (`ModuleChecks`): a source type group (marked `<mcp:module kind="group">`) holds
+   nothing stylesheet-level (`xsl:output`, `xsl:strip-space`, keys, global parameters, accumulators, includes:
+   the dispatcher's), no template matching the document or outside its mode, and only names prefixed with its mode
+   (templates, modes, functions, global variables); and any XSLT's imports, followed through the documents they
+   name, don't cycle (a module importing the dispatcher is refused, saying the dispatcher imports the groups, never
+   the other way) or nest more than 8 deep.
 10. Only when all of that passes: compiled as Stroom compiles it (`XsltCompileCheck`), with Stroom's own functions and
     its imports read through Stroom's resolver, so an undeclared variable, a wrong call, or XPath Stroom's Saxon
     can't run is found before stepping. Compiling last means a fault (a missing import, say) isn't reported twice.
@@ -4199,6 +4209,33 @@ out, one that can't be read record by record (XML, text) kept whole and said so,
 result's `scope` says what was kept and left out. So the sample check is of the scope's records, the survey's
 records further in too.
 
+**Source type groups** (`group`, `source_types`; `SourceTypeGroups`, `SourceTypeModule`, `DispatcherXslt`,
+`HelpersXslt`, `ModuleChecks`). With `group` (a name) in a build whose feed has a source type registry, the XSLT is
+that group's module of the feed's translation: its templates in a mode of its own (the name in the mapping's naming,
+`pega_security`), its own names prefixed with it, nothing stylesheet-level, no template matching the document; it
+writes its whole Event, calling the feed's common module's named templates for EventTime, System, Generator and
+Device, and importing the common module and the feed's helpers (`mcp:json-to-xml`, `mcp:parse-xml`, `mcp:zone`) by
+`uuid='…', name='…'`. A rule mapping one of the common parts' elements itself writes its own (its time, say). The
+first group's mapping makes the common module (`<feed> common`), kept with its own mapping: its common entries for
+those elements that read only the record's own fields or constants, its shared calls, the registry's Environment and
+default System Name; the System part takes each group's System Name (its source types' rows', else its mapping's) as
+a parameter. A later group's entries the same as the common module's (its System Name and Environment aside) are
+left to it; others are its own, said in `group.notes`. Its source types are `source_types`, else the build's scope's;
+the sample check reads theirs alone. Saving: the helpers (made, or written again when this generator writes them
+otherwise) and common module first, then the group importing them by UUID, then the dispatcher (`<feed> dispatcher`,
+the pipeline's one XSLT, generated from the registry with every group of the build, its spec kept in its
+description), and the registry's rows for the group's source types set `translated` with `group` and `group_xslt`.
+A group XSLT's `uuid` alone regenerates it as the group it is (its kept mapping holds `module`). The dispatcher reads
+the source type field once a record, tries the registry's rows in order (`=` a value, `matches()` an anchored
+pattern, checked in Java's and XPath's dialects alike), and applies the group's mode; any other record is passed over
+and counted: `Passed over N record(s) of source type X` (INFO) at the end of each document Stroom hands it (a stream
+may be several), `New source type: no registry row matches ...` (WARN, once a stream a value). A group's held message
+that doesn't parse (a truncated SOAP body) is logged (WARN) a record each, `<mode>: <field> did not parse as XML
+...`; its event is still written. All three are triaged benign or review, never blocking. `group` in the result:
+`name`, `mode`, `source_types`, `system_name`, `common_parts`, `notes`, and once saved `xslt`, `helpers`, `common`,
+`dispatcher` (each `uuid`, `name`, `changed`) and `registry`. Imports in the build resolve to the build's own
+documents; regenerating the dispatcher against promoted originals at promotion is not built yet.
+
 * **Arguments**: `mapping` or `changes` (objects, or JSON text); `schema_version` (a version, or the UUID of the
   XML schema document the user chose where several hold it); `feeds` (for standing
   instructions); `sample` (text or list) or `stream_ids`, every part of a stream read as its own text; `splitter`
@@ -4207,7 +4244,7 @@ records further in too.
   `uuid`; `change` (the
   version history line); `include_xslt` (also return the code when saving); `reviewed` (a `review_id`);
   `field_mapping`, `pipeline_uuid`, `max_records` (1 to 1000, default 50); `discard_hand_edit`,
-  `hand_edit_choices`.
+  `hand_edit_choices`; `group` and `source_types` (a source type group, above).
 * **Returns**: the generator's result (`ok`, `xslt` unless saved, `problems`, `warnings` grouped, `events`),
   `schema_version` (and `schema_version_settled`), `required_imports`, `sample_check` (`records`, `problems`,
   `warnings`, `fields_seen`, `not_checked`, `kept_unknown`, `note`), `changes_applied`, `changes_applied_to`,
@@ -4582,7 +4619,13 @@ tool generates two sections in it and keeps the version control:
   alike (`CefLines.linesIn` reads Kafka records' values, a text XSLT's lines, or the text of XML a TextWriter
   writes). A hand-written discovery
   pipeline (stage `discovery`, no plan) is documented the same way from the documents it writes from its raw
-  streams, with none of a planned discovery index's framing (its settings aren't known without the plan).
+  streams, with none of a planned discovery index's framing (its settings aren't known without the plan). An
+  aggregated feed's pipeline, whose one XSLT is its dispatcher (keeping no mapping of its own), is documented by its
+  source type groups (`KeptMappings.groupXslts`, `FieldMappingSections.groupsSection`): a table of its groups and
+  their source types, the feed's registry named for what becomes of the rest, then a section a group (`### Source
+  type group: <name> (<source types>)`), generated as a translation's from the mapping kept with the group's XSLT,
+  stepped through a temporary dispatcher handing the group its records alone (`PipelineStepping.groupAlone`), the
+  common module's parts it calls shown as common fields.
 * **Reference maps** is generated for a reference data pipeline (`PipelineShapes` stage `reference`; its XSLT, made
   by build_reference_xslt or by hand, keeps no mapping) in place of the agent's own section of that name
   (`FieldMappingSections.referenceMapsSection`): the pipeline is stepped over `stream_ids` (its Raw Reference

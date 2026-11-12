@@ -162,7 +162,9 @@ class StepRecordsTool extends AbstractBuiltInTool {
                 return JsonResults.refused("Give locations: the records to step, e.g. survey_feed's locations: "
                                            + "{stream, part, record}.");
             }
-            final Map<String, String> draftCode = PipelineStepping.draftCode(call, DRAFT_CODE_ARG);
+            // A source type group's draft is stepped through the feed's dispatcher, inlined in place of its import.
+            final Map<String, String> draftCode = stepping.withGroupsInlined(pipelineUuid,
+                    PipelineStepping.draftCode(call, DRAFT_CODE_ARG));
             return JsonResults.of(stepRecords(call, context, pipelineUuid, locations, draftCode));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
