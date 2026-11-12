@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.DropRule;
 import stroom.ai.impl.tools.generation.EventRule;
 import stroom.ai.impl.tools.generation.Extraction;
+import stroom.ai.impl.tools.generation.FieldGroup;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.SharedTemplate;
@@ -37,6 +38,7 @@ import stroom.util.shared.NullSafe;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -180,10 +182,24 @@ public final class EventFieldDocs {
         final Comparator<FieldMapping> order = order(schema);
         final List<EventRule> rules = mapping.events().stream().filter(r -> !r.drop()).toList();
         final Map<String, Map<FieldKey, FieldMapping>> effective = new LinkedHashMap<>();
+        // A group's fields are rows of their own, each with the groups it is in, which its source names.
+        final Map<FieldMapping, List<FieldMapping>> groups = new IdentityHashMap<>();
         for (final EventRule rule : rules) {
             final Map<FieldKey, FieldMapping> fields = new LinkedHashMap<>();
-            mapping.common().forEach(e -> fields.put(FieldKey.of(e), e));
-            rule.fields().forEach(e -> fields.put(FieldKey.of(e), e));
+            for (final List<FieldMapping> entries : List.of(mapping.common(), rule.fields())) {
+                for (final FieldGroup.Leaf leaf : FieldGroup.leaves(entries)) {
+                    final FieldMapping entry = leaf.grouped()
+                            ? leaf.entry()
+                            : entries.stream().filter(e -> e.strippedPath().equals(leaf.entry().path())
+                                                         && !e.isGroup()
+                                                         && Objects.equals(e.dataKey(), leaf.entry().dataKey()))
+                                    .findFirst().orElse(leaf.entry());
+                    fields.put(FieldKey.of(entry), entry);
+                    if (leaf.grouped()) {
+                        groups.put(entry, leaf.groups());
+                    }
+                }
+            }
             effective.put(rule.name(), fields);
         }
 
@@ -210,7 +226,8 @@ public final class EventFieldDocs {
         final Descriptions descriptions = described == null
                 ? new Descriptions()
                 : described;
-        final Context context = new Context(mapping, schema, rules, effective, sample, order, descriptions);
+        final Context context = new Context(mapping, schema, rules, effective, sample, order, descriptions,
+                groups);
         if (!FieldDocs.COMPACT.equals(layout)) {
             lines.addAll(byEventType(context));
             return String.join("\n", lines) + "\n";
@@ -288,7 +305,7 @@ public final class EventFieldDocs {
                 if (!"EventDetail".equals(ToolText.split(k.path(), "/").getFirst()) && c.rules().stream()
                         .allMatch(r -> {
                             final FieldMapping theirs = c.effective().get(r.name()).get(k);
-                            return theirs != null && FieldDocs.sourceText(theirs).equals(FieldDocs.sourceText(
+                            return theirs != null && c.source(theirs).equals(c.source(
                                     entry));
                         })) {
                     common.add(k);
@@ -452,7 +469,7 @@ public final class EventFieldDocs {
             for (final EventRule rule : c.rules()) {
                 c.effective().get(rule.name()).forEach((theirs, theirEntry) -> {
                     if (!byRule.containsKey(rule.name()) && anyAction.equals(FieldDocs.anyActionPath(theirs.xpath()))
-                        && FieldDocs.sourceText(theirEntry).equals(FieldDocs.sourceText(entry))) {
+                        && c.source(theirEntry).equals(c.source(entry))) {
                         byRule.put(rule.name(), theirs);
                     }
                 });
@@ -470,7 +487,7 @@ public final class EventFieldDocs {
         final FieldKey key = byRule.get(firstRule);
         final FieldMapping entry = c.effective().get(firstRule).get(key);
         final String path = FieldDocs.anyActionPath(key.xpath());
-        final String source = FieldDocs.sourceText(entry);
+        final String source = c.source(entry);
         final List<String> found = new ArrayList<>();
         boolean several = false;
         int sampled = 0;
@@ -498,7 +515,7 @@ public final class EventFieldDocs {
     private static String row(final Context c, final FieldKey key, final FieldMapping entry,
                               final List<XmlElement> events) {
         final String source = entry != null
-                ? FieldDocs.sourceText(entry)
+                ? c.source(entry)
                 : NOT_MAPPED;
         final Values values = valuesOf(events, key);
         final List<String> cells = new ArrayList<>(List.of("`" + key.xpath() + "`", c.described().of(key.xpath(),
@@ -518,7 +535,7 @@ public final class EventFieldDocs {
         final FieldKey first = members.getFirst().key();
         final List<String[]> sources = members.stream()
                 .map(m -> new String[]{m.name(), m.entry() != null
-                        ? FieldDocs.sourceText(m.entry())
+                        ? c.source(m.entry())
                         : "not in the mapping"})
                 .toList();
         final boolean same = sources.stream().map(s -> s[1]).distinct().count() == 1 && members.size() == grouped;
@@ -565,7 +582,7 @@ public final class EventFieldDocs {
                 final String section = ToolText.split(k.path(), "/").getFirst();
                 if ("EventSource".equals(section) || "EventTime".equals(section)) {
                     sources.computeIfAbsent(k, x -> new LinkedHashMap<>())
-                            .computeIfAbsent(FieldDocs.sourceText(entry), x -> new ArrayList<>())
+                            .computeIfAbsent(c.source(entry), x -> new ArrayList<>())
                             .add(rule.name());
                     entries.putIfAbsent(k, entry);
                 }
@@ -715,7 +732,7 @@ public final class EventFieldDocs {
         final List<String> detailLines = new ArrayList<>();
         for (final FieldMapping e : detail) {
             final FieldKey key = FieldKey.of(e);
-            String line = "`" + xpath(e, "EventDetail/") + "` <- " + FieldDocs.sourceText(e);
+            String line = "`" + xpath(e, "EventDetail/") + "` <- " + c.source(e);
             if (sample.sampled() && !events.isEmpty()) {
                 final List<String> values = first.getOrDefault(key, List.of());
                 line += values.isEmpty()
@@ -744,7 +761,7 @@ public final class EventFieldDocs {
     private static String fromAndValues(final Context c, final FieldMapping entry, final FieldKey key,
                                         final List<XmlElement> events) {
         String text = entry != null
-                ? FieldDocs.sourceText(entry)
+                ? c.source(entry)
                 : "";
         if (c.sample().sampled() && !events.isEmpty() && !(entry != null && entry.value() != null)) {
             final List<String> values = new ArrayList<>(new LinkedHashSet<>(events.stream()
@@ -986,7 +1003,12 @@ public final class EventFieldDocs {
     // What the tables are drawn from.
     private record Context(TranslationMapping mapping, EventSchema schema, List<EventRule> rules,
                            Map<String, Map<FieldKey, FieldMapping>> effective, Sample sample,
-                           Comparator<FieldMapping> order, Descriptions described) {
+                           Comparator<FieldMapping> order, Descriptions described,
+                           Map<FieldMapping, List<FieldMapping>> groups) {
 
+        // An entry's source: a group's field's names its items.
+        String source(final FieldMapping entry) {
+            return FieldDocs.sourceText(entry, groups.getOrDefault(entry, List.of()));
+        }
     }
 }

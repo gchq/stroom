@@ -25,6 +25,7 @@ import stroom.ai.impl.tools.indexing.Discovery;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.FieldPlans;
+import stroom.ai.impl.tools.indexing.GroupedFields;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.indexing.TemplateCheck;
 import stroom.ai.impl.tools.indexing.TemplateCheck.DocValue;
@@ -43,6 +44,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /// The Field mapping section of an indexing pipeline's documentation (from its index plan, or the documents it
@@ -573,11 +575,9 @@ public final class IndexFieldDocs {
                 says.put(Descriptions.EVENT_LOGGING, FieldDocs.schemaDescription(schema, f.source()));
             }
             says.put("ECS", ecsSays(f.name()));
-            final String what = JsonValues.truthy(f.description())
-                    ? f.description()
-                    : descriptions.of(f.name(), shared == null
-                            ? f.source()
-                            : "shared template " + shared.template(), sampledValues, says, f.source());
+            final String what = ownOr(f.description(), () -> descriptions.of(f.name(), shared == null
+                    ? f.source()
+                    : "shared template " + shared.template(), sampledValues, says, f.source()));
             final List<String> cells = new ArrayList<>(List.of("`" + f.name() + "`",
                     FieldDocs.fieldDescription(what, perDocument), shownType(plan, f.type()), shared != null
                             ? "shared template `" + shared.template() + "` of `" + shared.href() + "`"
@@ -799,14 +799,11 @@ public final class IndexFieldDocs {
                 final Map<String, String> says = new LinkedHashMap<>();
                 says.put(Descriptions.EVENT_LOGGING, hint);
                 says.put("ECS", ecsSays(f));
-                final String own = plan != null
+                final String what = ownOr(plan != null
                         ? plan.description()
-                        : "";
-                final String what = !own.isEmpty()
-                        ? own
-                        : descriptions.of(f, source, distinctNonEmpty(perDocument.stream()
-                                .flatMap(List::stream)
-                                .toList()), says, source);
+                        : "", () -> descriptions.of(f, source, distinctNonEmpty(perDocument.stream()
+                        .flatMap(List::stream)
+                        .toList()), says, source));
                 description = FieldDocs.fieldDescription(what, perDocument);
                 final long count = perDocument.stream().filter(vs -> vs.stream().anyMatch(v -> !v.isEmpty())).count();
                 held = percent((int) count, documents.size()) + " of documents";
@@ -821,11 +818,9 @@ public final class IndexFieldDocs {
         // when the user chose to (write_documentation refuses otherwise), and said as such rather than left out.
         for (final String name : notListed(survey, planned)) {
             final PlannedField plan = planned.get(name);
-            final String what = JsonValues.truthy(plan.description())
-                    ? plan.description()
-                    : JsonValues.truthy(plan.source())
-                            ? FieldDocs.schemaDescription(schema, plan.source())
-                            : "";
+            final String what = ownOr(plan.description(), () -> JsonValues.truthy(plan.source())
+                    ? FieldDocs.schemaDescription(schema, plan.source())
+                    : "");
             rows.add(new IndexRow(plan.source(), List.of("`" + name + "`",
                     orElse(FieldDocs.fieldDescription(what, null), "Written by the pipeline that feeds the index."),
                     Objects.requireNonNullElse(plan.type(), ""), JsonValues.truthy(plan.source())
@@ -969,15 +964,28 @@ public final class IndexFieldDocs {
 
     // What a planned field is (its description, else the schema's words for its source), with no sample.
     private static String planned(final PlannedField plan, final EventSchema schema, final String source) {
-        final String own = plan != null
+        return ownOr(plan != null
                 ? plan.description()
-                : "";
-        if (!own.isEmpty()) {
-            return own;
-        }
-        return !source.isEmpty()
+                : "", () -> !source.isEmpty()
                 ? FieldDocs.schemaDescription(schema, source)
-                : "";
+                : "");
+    }
+
+    // A planned field's own description, else what otherwise gives, either way with the note on the translation
+    // group it is read from ([GroupedFields#note(String)]): an item's values kept together as an object, or their
+    // pairing lost. The note alone is no description of the field, so the usual words come first.
+    private static String ownOr(final String description, final Supplier<String> otherwise) {
+        final String own = GroupedFields.withoutNote(description);
+        final String note = GroupedFields.note(description);
+        final String what = own.isEmpty()
+                ? otherwise.get()
+                : own;
+        if (note.isEmpty()) {
+            return what;
+        }
+        return what == null || what.isEmpty()
+                ? note
+                : what + " " + note;
     }
 
     private static void walkArrays(final Object value, final String path, final Set<String> found) {

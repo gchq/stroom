@@ -146,6 +146,10 @@ public final class XsltGenerator {
     private static final Pattern NOT_ALPHANUMERIC = Pattern.compile("[^A-Za-z0-9]+");
     private static final Pattern FOR_EACH_XPATH = Pattern.compile("[/\\[(*@$]");
     private static final Pattern EQUALS_AFTER = Pattern.compile("\\s*!?=", Pattern.UNICODE_CHARACTER_CLASS);
+    // The scope of an input read from a group's item: an expression of the loop's variables, read where it is.
+    private static final String ITEM_SCOPE = "mcp-group-item";
+    // A split's pieces, trimmed: a short regex over each piece, never one over the whole text.
+    private static final String TRIM = "replace(., '^\\s+|\\s+$', '')";
     // The XSLT's own function writing a record's time zone as Stroom reads one.
     private static final String ZONE_FUNCTION = "zone";
     private static final Map<String, String> EPOCH_FUNCTIONS = Map.of("epoch_ms", "from-epoch-ms",
@@ -207,6 +211,12 @@ public final class XsltGenerator {
     private final List<RuleTemplate> ruleTemplates = new ArrayList<>();
     private final List<Map<String, Object>> summary = new ArrayList<>();
     private int repeatTokens;
+    // The groups whose loops are being written (or checked), innermost last: what their fields' item reads read.
+    private final List<Frame> frames = new ArrayList<>();
+    // A group's item (and a zip's list) -> the variable holding it in the group's loop, one name for the stylesheet.
+    private final Map<String, String> loopNames = new HashMap<>();
+    // Record-level inputs a group's loop reads, held in variables declared outside the loop: selector -> name.
+    private final Map<String, String> groupInputs = new HashMap<>();
     // The namespace the Events are written in: the schema's, event-logging:3 or an environment's fork's.
     private final String ns;
 
@@ -261,7 +271,7 @@ public final class XsltGenerator {
         // and two reads of the value (seen: 135 of them, 31 KB of a 50 KB translation).
         this.zoneFunctionWanted = mapping.allEntries().stream().anyMatch(entry -> entry.zoneSource() != null);
         this.dataFunctionWanted = "function".equals(style.dataEntries()) && mapping.allEntries().stream()
-                .anyMatch(entry -> isSet(entry.dataName()) && entry.value() == null
+                .anyMatch(entry -> isSet(entry.dataName()) && entry.value() == null && !entry.isGroup()
                                    && !(entry.hasMap() || entry.defaultValue() != null || entry.transform() != null
                                         || isSet(entry.timeFormat()) || entry.repeat()));
         final Set<String> taken = new HashSet<>(ownFunctions.values());
@@ -517,6 +527,9 @@ public final class XsltGenerator {
     // The selector for an input, relative to the context node: the record, or with for_each the item, where scope
     // 'record' reads the record through $record instead.
     private String source(final String fieldName, final String xpath, final String inputScope) {
+        if (ITEM_SCOPE.equals(inputScope)) {
+            return xpath;
+        }
         if (fieldName != null && derived.containsKey(fieldName)) {
             final Derived found = derived.get(fieldName);
             final Extraction ex = found.extraction();
@@ -623,6 +636,12 @@ public final class XsltGenerator {
     /// @param entry A field mapping.
     /// @return Its input.
     Source sourceOf(final FieldMapping entry) {
+        if (!frames.isEmpty() && !"record".equals(entry.scope())) {
+            final Source item = itemSourceOf(entry);
+            if (item != null) {
+                return item;
+            }
+        }
         final String entryScope = entry.scope();
         if (entry.lookup() != null) {
             referenceMaps.add(entry.lookup().map());
@@ -685,6 +704,10 @@ public final class XsltGenerator {
     // A variable holding the input's non-blank values, declared at the top of the template being written, so each
     // selector appears once per template. Named after the field, or for an xpath after `label`.
     private String ref(final String fieldName, final String xpath, final String label, final String inputScope) {
+        if (ITEM_SCOPE.equals(inputScope)) {
+            // Read where it is, inside the group's loop: a variable declared at the template's top couldn't see it.
+            return "(" + xpath + ")[normalize-space(.)]" + nil();
+        }
         final String raw = source(fieldName, xpath, inputScope);
         if (!names.containsKey(raw)) {
             final String naming = style.naming();
@@ -699,6 +722,10 @@ public final class XsltGenerator {
         final String name = names.get(raw);
         if (xpath != null) {
             xpathNames.add(name);
+        }
+        if (!frames.isEmpty()) {
+            // Read in a group's loop, where the context is the item: kept a variable, never written back inline.
+            keep.add(name);
         }
         if (fieldName != null && derived.containsKey(fieldName)) {
             declareParts(derived.get(fieldName).extraction());
@@ -793,7 +820,9 @@ public final class XsltGenerator {
         if (!maps.containsKey(items)) {
             final String naming = style.naming();
             final List<String> steps = ToolText.split(entry.strippedPath(), "/");
-            final String base = XsltNames.styleName(src.substring(1) + "-to-" + steps.getLast(), naming);
+            final String base = XsltNames.styleName((src.startsWith("$")
+                    ? src.substring(1)
+                    : "item") + "-to-" + steps.getLast(), naming);
             final Set<String> taken = new HashSet<>(names.values());
             taken.addAll(maps.values());
             taken.addAll(keep);
@@ -808,6 +837,9 @@ public final class XsltGenerator {
     }
 
     private String leafTest(final FieldMapping entry) {
+        if (entry.isGroup()) {
+            return groupTest(entry);
+        }
         if (entry.value() != null || entry.defaultValue() != null) {
             return null;
         }
@@ -974,6 +1006,9 @@ public final class XsltGenerator {
         if (node.shared != null) {
             return null;     // the shared template decides; its parent is written whatever the record holds
         }
+        if (node.group != null && (frames.isEmpty() || frames.getLast().node() != node)) {
+            return groupTest(node.group);     // from outside: whether it has items
+        }
         if (node.leaf != null) {
             return leafTest(node.leaf);
         }
@@ -1002,8 +1037,11 @@ public final class XsltGenerator {
         }
         list.sort(Comparator.comparingInt(Item::index).thenComparingInt(Item::isData).thenComparingInt(Item::n));
         final Map<Integer, Run> runs = new HashMap<>();
-        for (final Run run : dataPlan(node)) {
-            runs.put(run.start(), run);
+        if (frames.isEmpty()) {
+            // A group's Data read its item: written in its loop, never as a template of their own.
+            for (final Run run : dataPlan(node)) {
+                runs.put(run.start(), run);
+            }
         }
         int dataAt = -1;
         int skip = 0;
@@ -1042,6 +1080,8 @@ public final class XsltGenerator {
                         item.node().shared.template());
                 item.node().shared.withParams().forEach((name, select) -> call.addElement(XSL, "with-param",
                         "name", name, "select", select));
+            } else if (item.node().group != null) {
+                emitGroup(parent, item.node());
             } else if (item.node().repeat != null) {
                 // One element per value: the loop stands in for the guard, and the leaf below reads the current
                 // value.
@@ -1099,6 +1139,10 @@ public final class XsltGenerator {
     // A Data entry: mcp:data(name, value) when its guard is only that the value is present, else an xsl:if around
     // the element (or a loop over repeated values).
     private void emitData(final XmlElement parent, final FieldMapping entry, final String enclosing) {
+        if (entry.isGroup()) {
+            emitDataGroup(parent, entry);
+            return;
+        }
         final XmlElement holder;
         if (entry.repeat()) {
             holder = parent.addElement(XSL, "for-each", "select", repeatItems(entry));
@@ -1143,7 +1187,7 @@ public final class XsltGenerator {
 
     // A Data entry written out in full, as a template would hold it: equal tokens write the same Data.
     private String dataToken(final FieldMapping entry) {
-        if (entry.repeat() || entry.dataParent() != null) {
+        if (entry.repeat() || entry.dataParent() != null || entry.isGroup()) {
             if (!tokenCache.containsKey(entry)) {
                 tokenCache.put(entry, "#repeat-" + repeatTokens++);     // a loop over values: never shared
             }
@@ -1236,6 +1280,9 @@ public final class XsltGenerator {
                              final List<List<String>> lists,
                              final List<List<String>> writers,
                              final Map<List<String>, Integer> index) {
+        if (node.group != null) {
+            return;     // its Data read its items: written in its loop
+        }
         for (final EventNode kid : node.kids.values()) {
             collectData(kid, rule, lists, writers, index);
         }
@@ -1333,11 +1380,341 @@ public final class XsltGenerator {
         }
     }
 
+    // --- groups: an element written once per item ---
+
+    // A group's element, once per item: a loop over the items (nested loops for nested groups, as deep as the mapping
+    // nests them, never a recursion following the input), the item held in the loop's variable, which its fields'
+    // reads read.
+    private void emitGroup(final XmlElement parent, final EventNode node) {
+        final XmlElement loop = openLoop(parent, node.group, node);
+        try {
+            emitElement(loop, node, null, true);
+        } finally {
+            frames.removeLast();
+        }
+    }
+
+    // A Data group: a Data element of its Name per item, holding its Data entries (written only when one has a
+    // value), as data_parent's container is.
+    private void emitDataGroup(final XmlElement parent, final FieldMapping entry) {
+        final XmlElement loop = openLoop(parent, entry, null);
+        try {
+            final List<String> tests = entry.group().fields().stream().map(this::leafTest).toList();
+            final String test = tests.contains(null)
+                    ? null
+                    : String.join(" or ", new LinkedHashSet<>(tests));
+            final XmlElement holder = isSet(test)
+                    ? loop.addElement(XSL, "if", "test", test)
+                    : loop;
+            final XmlElement container = holder.addElement(ns, "Data", "Name", entry.dataName());
+            for (final FieldMapping field : entry.group().fields()) {
+                emitData(container, field, test);
+            }
+        } finally {
+            frames.removeLast();
+        }
+    }
+
+    // The loop over a group's items, its item in a variable, the group pushed as the innermost frame (the caller
+    // pops it). A zip's lists are held in variables declared before the loop, which runs over their positions.
+    private XmlElement openLoop(final XmlElement parent, final FieldMapping entry, final EventNode node) {
+        final FieldGroup group = entry.group();
+        final ItemSource source = group.forEach();
+        final Map<String, String> lists = new LinkedHashMap<>();
+        final String items;
+        if (ItemSource.ZIP.equals(source.kind())) {
+            for (final Map.Entry<String, String> list : source.zip().entrySet()) {
+                final String variable = loopName(group.itemName() + "-" + list.getKey());
+                parent.addElement(XSL, "variable", "name", variable, "select", listOf(source, list.getValue()));
+                lists.put(list.getKey(), "$" + variable);
+            }
+            items = "1 to count(" + lists.values().iterator().next() + ")";
+        } else {
+            items = itemsOf(source);
+        }
+        final String variable = loopName(group.itemName());
+        final XmlElement loop = parent.addElement(XSL, "for-each", "select", items);
+        loop.addElement(XSL, "variable", "name", variable, "select", ".");
+        frames.add(new Frame(entry, variable, lists, node));
+        return loop;
+    }
+
+    // The variable a loop holds its item (or a zip one of its lists) in: one name for the stylesheet, taken by no
+    // field's variable.
+    private String loopName(final String base) {
+        return loopNames.computeIfAbsent(base, ignored -> {
+            final String naming = style.naming();
+            final Set<String> taken = new HashSet<>(names.values());
+            taken.addAll(maps.values());
+            taken.addAll(keep);
+            taken.addAll(dicts.values());
+            taken.addAll(loopNames.values());
+            final String name = XsltNames.uniqueName(XsltNames.styleName(base, naming), taken, naming);
+            keep.add(name);
+            return name;
+        });
+    }
+
+    // Whether a group has items: exists() over them, a zip's first list (they are as long as one another).
+    private String groupTest(final FieldMapping entry) {
+        final ItemSource source = entry.group().forEach();
+        if (ItemSource.ZIP.equals(source.kind())) {
+            return "exists(" + listOf(source, source.zip().values().iterator().next()) + ")";
+        }
+        return "exists(" + itemsOf(source) + ")";
+    }
+
+    // A group's items, read where the loop is: a split's pieces (trimmed, empty ones and nil values dropped), or an
+    // array's members (a JSON array's, one object as one item; an XML or Data Splitter element repeated).
+    private String itemsOf(final ItemSource source) {
+        if (ItemSource.SPLIT.equals(source.kind())) {
+            return "(" + pieces(base(source, source.split(), false), source.on()) + ")[normalize-space(.)]" + nil();
+        }
+        return members(base(source, source.array(), true));
+    }
+
+    // One of a zip's lists: its field split on 'on' (every piece kept, empty ones too, so positions pair), or its
+    // values.
+    private String listOf(final ItemSource source, final String field) {
+        if (source.on() != null) {
+            return "(" + pieces(base(source, field, false), source.on()) + ")";
+        }
+        return members(base(source, field, "json".equals(m.input())));
+    }
+
+    // Each value's text split on a literal separator (Saxon's q flag: no regex over the whole value), each piece
+    // trimmed.
+    private static String pieces(final String values, final String separator) {
+        return "(" + values + ") ! tokenize(string(.), " + XPathText.literal(separator) + ", 'q') ! " + TRIM;
+    }
+
+    // An array's members: a JSON array's (one object, not in an array, as one item), else the nodes as they are.
+    private String members(final String values) {
+        return "json".equals(m.input())
+                ? "(" + values + ")/(if (self::array) then * else .)"
+                : values;
+    }
+
+    // Where a source's field is read: the record (a group in none, or scope record) or an item. Elements: a Data
+    // Splitter's data elements rather than their values, which an array's members are.
+    private String base(final ItemSource source, final String field, final boolean elements) {
+        final boolean record = source.readsRecord() || (frames.isEmpty() && source.item() == null)
+                               || derived.containsKey(field);
+        if (!record) {
+            final String read = keyOf(frameOf(source.item()), field);
+            return elements
+                    ? withoutValue(read)
+                    : read;
+        }
+        final String read = source(field, null, source.readsRecord()
+                ? "record"
+                : null);
+        final String selector = elements && !derived.containsKey(field)
+                ? withoutValue(read)
+                : read;
+        if (frames.isEmpty()) {
+            return selector;     // read where the loop starts, with the record as context
+        }
+        if (!groupInputs.containsKey(selector)) {
+            final String naming = style.naming();
+            final Set<String> taken = new HashSet<>(names.values());
+            taken.addAll(maps.values());
+            taken.addAll(keep);
+            taken.addAll(dicts.values());
+            taken.addAll(groupInputs.values());
+            groupInputs.put(selector, XsltNames.uniqueName(XsltNames.styleName(field, naming), taken, naming));
+        }
+        final String name = groupInputs.get(selector);
+        keep.add(name);
+        scope.putIfAbsent(name, selector);
+        return "$" + name;
+    }
+
+    // A Data Splitter field's data elements, not their values.
+    private String withoutValue(final String read) {
+        return "data_splitter".equals(m.input()) && read.endsWith("/@value")
+                ? read.substring(0, read.length() - "/@value".length())
+                : read;
+    }
+
+    // The frame of the group whose item is named (null or "" for the innermost).
+    private Frame frameOf(final String item) {
+        if (item == null || item.isEmpty()) {
+            return frames.getLast();
+        }
+        for (int i = frames.size() - 1; i >= 0; i--) {
+            if (item.equals(frames.get(i).group().group().itemName())) {
+                return frames.get(i);
+            }
+        }
+        return frames.getLast();     // refused when the mapping is read
+    }
+
+    // The item itself: a split's piece, an array's member (a Data Splitter element's value).
+    private String selfOf(final Frame frame) {
+        final String variable = "$" + frame.variable();
+        return ItemSource.ARRAY.equals(frame.group().group().forEach().kind()) && "data_splitter".equals(m.input())
+                ? variable + "/@value"
+                : variable;
+    }
+
+    // A key of the item: a zip's value of that name at the item's position, or an array member's key (a dotted path
+    // of JSON keys, an XML path, a Data Splitter data name).
+    private String keyOf(final Frame frame, final String key) {
+        final String variable = "$" + frame.variable();
+        final ItemSource source = frame.group().group().forEach();
+        if (ItemSource.ZIP.equals(source.kind()) && frame.lists().containsKey(key)) {
+            return frame.lists().get(key) + "[" + variable + "]";
+        }
+        if (ItemSource.SPLIT.equals(source.kind())) {
+            return variable;     // refused when the mapping is read: a piece of text has no keys
+        }
+        return variable + "/" + XPathText.fieldText(m.input(), key);
+    }
+
+    // A field of a group read from its item (or an outer group's): its key, or the item itself.
+    private String itemField(final String item, final String key) {
+        if (key != null && derived.containsKey(key)) {
+            return source(key, null, null);     // an extraction is of the record
+        }
+        final Frame frame = frameOf(item);
+        return key == null
+                ? selfOf(frame)
+                : keyOf(frame, key);
+    }
+
+    // A group field's input, read from the item: as sourceOf gives one, its reads an expression of the loop's
+    // variables (ITEM_SCOPE), so it is read where it is. Null for a constant.
+    private Source itemSourceOf(final FieldMapping entry) {
+        final String item = entry.item();
+        if (entry.lookup() != null) {
+            final Lookup lookup = entry.lookup();
+            referenceMaps.add(lookup.map());
+            final String key = lookup.xpath() != null
+                    ? itemXpath(item, lookup.xpath())
+                    : itemField(item, lookup.field());
+            return new Source(null, XPathText.lookupText(lookup.map(), XPathText.keyText(key), lookup.path()),
+                    ITEM_SCOPE);
+        }
+        final String keySource = hasAnyOf(entry)
+                ? XPathText.anyOfText(entry.anyOf().stream().map(field -> itemField(item, field)).toList(), nil())
+                : null;
+        if (isSet(entry.dictionary())) {
+            final String key = XPathText.keyText(keySource != null
+                    ? keySource
+                    : itemField(item, entry.field()));
+            return new Source(null, XPathText.dictionaryLookupText(dictVariable(entry.dictionary(), "map"), key),
+                    ITEM_SCOPE);
+        }
+        if (keySource != null) {
+            return new Source(null, keySource, ITEM_SCOPE);
+        }
+        if (entry.join() != null) {
+            return new Source(null, XPathText.joinText(entry.join().stream().map(field -> itemField(item, field))
+                    .toList(), entry.joinSeparator(), nil()), ITEM_SCOPE);
+        }
+        if (entry.field() != null || item != null) {
+            return new Source(null, itemField(item, entry.field()), ITEM_SCOPE);
+        }
+        if (entry.xpath() != null) {
+            return new Source(null, itemXpath(item, entry.xpath()), ITEM_SCOPE);
+        }
+        return null;
+    }
+
+    // An xpath of a group's field, read with the item as its context.
+    private String itemXpath(final String item, final String xpath) {
+        return "$" + frameOf(item).variable() + " ! (" + JSON_CALL.matcher(xpath)
+                .replaceAll(Matcher.quoteReplacement("mcp:json-to-xml(")) + ")";
+    }
+
+    // Before the rule's Event, the check that each zip's lists are as long as one another: a record whose lists
+    // differ is logged (ERROR) with the lists' lengths and its number, and its event isn't written, as pairing them
+    // by position would pair the wrong values. Returns where the Event goes.
+    private XmlElement zipGuard(final XmlElement home, final EventNode tree) {
+        final List<String> checks = zipChecks(tree);
+        if (checks.isEmpty()) {
+            return home;
+        }
+        logsRecordNo = true;
+        final String found = "(" + String.join(", ", checks) + ")[1]";
+        final XmlElement choose = home.addElement(XSL, "choose");
+        choose.addElement(XSL, "when", "test", "exists(" + found + ")")
+                .addElement(XSL, "sequence", "select", "stroom:log('ERROR', concat(" + found + ", "
+                                                       + XPathText.literal(", so the event is not written: record ")
+                                                       + ", stroom:record-no()))");
+        return choose.addElement(XSL, "otherwise");
+    }
+
+    // The checks of the zips of the groups in the tree.
+    private List<String> zipChecks(final EventNode node) {
+        final List<String> out = new ArrayList<>();
+        if (node.group != null) {
+            out.addAll(zipChecks(node.group));
+            return out;
+        }
+        node.data.stream().filter(data -> data.entry().isGroup())
+                .forEach(data -> out.addAll(zipChecks(data.entry())));
+        node.kids.values().forEach(kid -> out.addAll(zipChecks(kid)));
+        return out;
+    }
+
+    // A group's zip check (the lists' lengths, as text, if they differ, else nothing), and those of the zips inside
+    // it, each for every item of the groups around it.
+    private List<String> zipChecks(final FieldMapping entry) {
+        final List<String> out = new ArrayList<>();
+        final ItemSource source = entry.group().forEach();
+        final boolean zip = ItemSource.ZIP.equals(source.kind());
+        if (zip) {
+            final List<String> counts = source.zip().values().stream()
+                    .map(field -> "count(" + listOf(source, field) + ")")
+                    .toList();
+            final List<String> said = new ArrayList<>();
+            final List<String> lists = List.copyOf(source.zip().values());
+            for (int i = 0; i < lists.size(); i++) {
+                said.add(XPathText.literal((i == 0
+                        ? ""
+                        : ", ") + lists.get(i) + " ") + ", " + counts.get(i));
+            }
+            out.add("if (count(distinct-values((" + String.join(", ", counts) + "))) gt 1) then concat("
+                    + XPathText.literal(entry.strippedPath() + ": the lists zipped by position differ in length (")
+                    + ", " + String.join(", ", said) + ", ')') else ()");
+        }
+        final List<FieldMapping> inner = entry.group().fields().stream().filter(FieldMapping::isGroup)
+                .filter(XsltGenerator::hasZip).toList();
+        if (inner.isEmpty()) {
+            return out;
+        }
+        final Map<String, String> lists = new LinkedHashMap<>();
+        if (zip) {
+            source.zip().forEach((name, field) -> lists.put(name, "(" + listOf(source, field) + ")"));
+        }
+        final String items = zip
+                ? "1 to count(" + lists.values().iterator().next() + ")"
+                : itemsOf(source);
+        final String variable = "mcp_i" + frames.size();
+        frames.add(new Frame(entry, variable, lists, null));
+        try {
+            final List<String> below = new ArrayList<>();
+            inner.forEach(group -> below.addAll(zipChecks(group)));
+            out.add("(for $" + variable + " in " + items + " return (" + String.join(", ", below) + "))");
+        } finally {
+            frames.removeLast();
+        }
+        return out;
+    }
+
+    private static boolean hasZip(final FieldMapping entry) {
+        return FieldGroup.everyEntry(List.of(entry)).stream()
+                .anyMatch(group -> group.isGroup() && ItemSource.ZIP.equals(group.group().forEach().kind()));
+    }
+
+
     // --- named templates for fragments that repeat ---
 
     // Elements with children, or leaves read from the record; constant leaves aren't worth a template.
     private static boolean shareable(final EventNode node) {
-        if (node.shared != null) {      // already a call: not wrapped in another template
+        if (node.shared != null || node.group != null) {      // already a call, or a group's loop
             return false;
         }
         return node.leaf == null || node.leaf.value() == null;
@@ -2052,9 +2429,10 @@ public final class XsltGenerator {
                 final Set<String> fields = new TreeSet<>();
                 final List<FieldMapping> entries = new ArrayList<>(m.common());
                 entries.addAll(rule.fields());
-                entries.forEach(e -> fields.add(e.strippedPath() + (isSet(e.dataName())
-                        ? "[" + e.dataKey() + "]"
-                        : "")));
+                FieldGroup.leaves(entries).stream().map(FieldGroup.Leaf::entry)
+                        .forEach(e -> fields.add(e.strippedPath() + (isSet(e.dataName())
+                                ? "[" + e.dataKey() + "]"
+                                : "")));
                 final Map<String, Object> entry = new LinkedHashMap<>();
                 entry.put("event", rule.name());
                 entry.put("when", when);
@@ -2154,17 +2532,20 @@ public final class XsltGenerator {
             // review_coverage finds the kinds it takes for the user to classify.
             logKind(holder, rule, CAUGHT, tested);
         }
-        final XmlElement event = home.addElement(ns, "Event");
-        if (markRules) {
-            // A processing instruction the output carries: a comment in the stylesheet is not copied to the output,
-            // and one written (xsl:comment) Stroom's stepping drops, so every event was left to the guess by its
-            // elements (seen in testing, an event with an element added by hand fitted no rule).
-            event.addElement(XSL, "processing-instruction", "name", RULE_INSTRUCTION).setText(rule.name());
-        }
-        if (name != null) {
-            inScope(home, () -> emit(event, tree, null, false));
-        } else {
+        final Runnable write = () -> {
+            final XmlElement event = zipGuard(home, tree).addElement(ns, "Event");
+            if (markRules) {
+                // A processing instruction the output carries: a comment in the stylesheet is not copied to the
+                // output, and one written (xsl:comment) Stroom's stepping drops, so every event was left to the guess
+                // by its elements (seen in testing, an event with an element added by hand fitted no rule).
+                event.addElement(XSL, "processing-instruction", "name", RULE_INSTRUCTION).setText(rule.name());
+            }
             emit(event, tree, null, false);
+        };
+        if (name != null) {
+            inScope(home, write);
+        } else {
+            write.run();
         }
     }
 
@@ -2306,12 +2687,30 @@ public final class XsltGenerator {
                 child = parent;
                 parent = parent.parent();
             }
+            // Never into a loop it isn't in already (a group's): there its value would be read from the loop's item.
+            final XmlElement origin = variable.parent();
+            for (XmlElement at = parent; at != null && at != template; at = at.parent()) {
+                if (at.is(XSL, "for-each") && !within(origin, at)) {
+                    child = at;
+                    parent = at.parent();
+                }
+            }
             if (parent == null) {
                 continue;
             }
             variable.parent().remove(variable);
             parent.insert(parent.indexOf(child), variable);
         }
+    }
+
+    // Whether the element is the ancestor or the element itself.
+    private static boolean within(final XmlElement element, final XmlElement ancestor) {
+        for (XmlElement at = element; at != null; at = at.parent()) {
+            if (at == ancestor) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static List<XmlElement> chain(final XmlElement element, final XmlElement template) {
@@ -2435,6 +2834,12 @@ public final class XsltGenerator {
     }
 
     private record Item(int index, int isData, int n, EventNode node, EventNode.DataEntry data) {
+
+    }
+
+    // A group whose loop is being written (or checked): its entry, the variable holding its item, a zip's lists
+    // (name -> the expression of the list), and its element's node (null for a Data group, or a check).
+    private record Frame(FieldMapping group, String variable, Map<String, String> lists, EventNode node) {
 
     }
 

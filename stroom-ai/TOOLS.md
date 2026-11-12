@@ -5609,7 +5609,7 @@ a word such as `yes` or `off`, an integer a whole number, or a string or float h
 ignored. A field added to a model after mappings were first kept (`data_parent`, `join`) is written only when set,
 whatever the dump mode, so a mapping that doesn't use it is written exactly as before and every kept mapping and
 fixture still reads and compares unchanged; the reader likewise gives `data_parent` in a leaf's reading only for a
-Data inside Data. `mapping-descriptions.json` (a resource of stroom-mcp-impl, beside `MappingProblems`) holds a
+Data inside Data. A group (`for_each`, `as`, `fields`; and `item` in its fields, see DESIGN.md, Repeated groups) is written the same way: only when set. `mapping-descriptions.json` (a resource of stroom-mcp-impl, beside `MappingProblems`) holds a
 description of every key of the mapping's models (`TranslationMapping`, `EventRule`, `FieldMapping` and the rest),
 from which `MappingProblems` says what a key left out is. Nothing generates it: a key added to a model, or changed,
 needs its description added or changed there by hand.
