@@ -150,6 +150,13 @@ public class FloorMapCanvas extends Component implements RequiresResize {
     private static final double DEFAULT_AREA_FILL_OPACITY = 0.3;
     /// On-screen radius (px) of an area's occupant-count badge.
     private static final double OCCUPANT_BADGE_RADIUS_PX = 10;
+    /// Gap (screen px) between an area's occupant badge and the edges of the
+    /// corner it sits in.
+    private static final double OCCUPANT_BADGE_GAP_PX = 4;
+    /// On-screen radius (px) of a cluster's count pill, on its glyph's corner:
+    /// smaller than an area's badge, which stands on its own, so it doesn't
+    /// swamp a cluster glyph (32 px for a pair).
+    private static final double CLUSTER_COUNT_PILL_RADIUS_PX = 8;
 
     /// Gap (screen px) between the bottom of a glyph and its caption, so the text
     /// does not touch the thing it names.
@@ -1418,7 +1425,9 @@ public class FloorMapCanvas extends Component implements RequiresResize {
                 : TypeStyle.colourForType(fact.getType(), typeStyles);
     }
 
-    /// Draws an area's occupant-count badge at the area's map-space centroid: a
+    /// Draws an area's occupant-count badge just inside the area's top-left corner
+    /// (see [FloorMapScreenGeometry#areaBadgePlacement]), so it reads as the
+    /// room's and isn't hidden under the people it counts: a
     /// filled disc in the area's own colour with the count in white, at a fixed
     /// screen size so it stays legible at any zoom.
     ///
@@ -1432,15 +1441,18 @@ public class FloorMapCanvas extends Component implements RequiresResize {
                                      final int occupantCount,
                                      final String colour,
                                      final double scale) {
-        final double[] centroid = fact.mapTestPoint();
+        // Inside the area's top-left corner (its centre if the area is too small on screen)
+        final double[] place = FloorMapScreenGeometry.areaBadgePlacement(
+                fact.toMapVertices(), fact.mapTestPoint(), scale,
+                OCCUPANT_BADGE_RADIUS_PX + OCCUPANT_BADGE_GAP_PX);
         appendCountPill(parent, occupantCount, colour,
-                centroid[0], centroid[1], 0, 0, scale);
+                place[0], place[1], place[2], place[3], OCCUPANT_BADGE_RADIUS_PX, scale);
     }
 
     /// Draws a count pill at fixed screen size, anchored at a map-space point and
     /// offset from it in screen pixels.
     ///
-    /// Shared by the area occupant badge (centred on the area) and the cluster
+    /// Shared by the area occupant badge (in the area's top-left corner) and the cluster
     /// count (offset to the glyph's corner), so the two read as the same kind of
     /// statement — a number this canvas is telling you about the thing underneath
     /// it.
@@ -1452,6 +1464,7 @@ public class FloorMapCanvas extends Component implements RequiresResize {
     /// @param mapY      the anchor point in map space
     /// @param offsetXPx screen-pixel offset from the anchor, positive right
     /// @param offsetYPx screen-pixel offset from the anchor, positive down
+    /// @param radius    the pill's radius in screen pixels (its text is sized to it)
     /// @param scale     the current zoom factor
     private void appendCountPill(final HtmlBuilder parent,
                                  final int count,
@@ -1460,14 +1473,15 @@ public class FloorMapCanvas extends Component implements RequiresResize {
                                  final double mapY,
                                  final double offsetXPx,
                                  final double offsetYPx,
+                                 final double radius,
                                  final double scale) {
         final String text = String.valueOf(count);
         // Widen the disc into a pill for 2+ digits so the text keeps clear of
-        // the edge.
-        final double radius = OCCUPANT_BADGE_RADIUS_PX;
+        // the edge; the text is sized to the disc (12px in a 10px radius)
         final double halfWidth = text.length() > 1
-                ? radius + (text.length() - 1) * 4.0
+                ? radius + (text.length() - 1) * radius * 0.4
                 : radius;
+        final String fontSize = Math.round(radius * 1.2) + "px";
 
         parent.elem(badgeGroup -> {
             badgeGroup.elem(SafeHtmlUtil.from("rect"),
@@ -1488,7 +1502,7 @@ public class FloorMapCanvas extends Component implements RequiresResize {
                     new Attribute("dy", "0.35em"),
                     new Attribute("text-anchor", "middle"),
                     new Attribute("fill", "#ffffff"),
-                    new Attribute("font-size", "12px"),
+                    new Attribute("font-size", fontSize),
                     new Attribute("font-weight", "bold"),
                     new Attribute("font-family", "sans-serif"),
                     new Attribute("pointer-events", "none"));
@@ -1576,7 +1590,7 @@ public class FloorMapCanvas extends Component implements RequiresResize {
         appendCountPill(parent, cluster.size(),
                 TypeStyle.colourForType(cluster.getType(), typeStyles),
                 cluster.getMapX(), cluster.getMapY(),
-                halfWidth, -halfHeight, scale);
+                halfWidth, -halfHeight, CLUSTER_COUNT_PILL_RADIUS_PX, scale);
 
         // The pill is drawn unconditionally — it is small, sits on the glyph's own
         // corner, and is the count that justifies the glyph. Only the caption

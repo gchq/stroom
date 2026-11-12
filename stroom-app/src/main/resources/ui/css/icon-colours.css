@@ -148,23 +148,30 @@
        (the tick in an error's circle, a help's question mark) are Canvas, like the white variables
        above. Where the white part is the whole icon (a tick, the stepping glyph), and for the status
        icons' coloured shapes (error, info, fatal, warning, alert), the text colour */
+    /* (Classes are listed, not grouped in :is(), as TestStylesheets reads a selector's commas as
+       separate selectors) */
     :is(svg[aria-hidden="true"], [class*="svg-image"] svg) :is([style="fill:#fff"], [style="fill:#ffffff"]) {
         fill: Canvas !important;
     }
 
-    :is(.svg-image__tick, .svg-image__stepping) svg [style="fill:#fff"],
+    .svg-image__tick svg [style="fill:#fff"],
+    .svg-image__stepping svg [style="fill:#fff"],
     .svg-image__error svg [style="fill:#d32f2e"],
     .svg-image__info svg [style="fill:#1976d3"],
-    :is(.svg-image__fatal, .svg-image__fatal-dark) svg [style^="fill:#000"],
+    .svg-image__fatal svg [style^="fill:#000"],
+    .svg-image__fatal-dark svg [style^="fill:#000"],
     .svg-image__warning svg [style="fill:#eed201"] {
         fill: currentColor !important;
     }
 
-    :is(.svg-image__warning, .svg-image__alert) svg [style="fill:#000"] {
+    .svg-image__warning svg [style="fill:#000"],
+    .svg-image__alert svg [style="fill:#000"] {
         fill: Canvas !important;
     }
 
-    :is(.svg-image__warning, .svg-image__alert, .svg-image__fatal-dark) svg [style*="stroke:"] {
+    .svg-image__warning svg [style*="stroke:"],
+    .svg-image__alert svg [style*="stroke:"],
+    .svg-image__fatal-dark svg [style*="stroke:"] {
         stroke: currentColor !important;
     }
 
@@ -183,7 +190,9 @@
     }
 
     :is([aria-selected="true"], [aria-current]:not([aria-current="false"]), [aria-pressed="true"])
-            :is(.svg-image__tick, .svg-image__stepping) svg [style="fill:#fff"] {
+            .svg-image__tick svg [style="fill:#fff"],
+    :is([aria-selected="true"], [aria-current]:not([aria-current="false"]), [aria-pressed="true"])
+            .svg-image__stepping svg [style="fill:#fff"] {
         fill: currentColor !important;
     }
 }

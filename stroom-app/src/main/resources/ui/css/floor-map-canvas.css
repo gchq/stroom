@@ -337,3 +337,19 @@
     border-bottom: 2px solid var(--floormap-grid__highlight-color);
     box-sizing: border-box;
 }
+
+/* In forced colours (Windows High Contrast) the map's own SVG text is in the system's colours, its
+   halo the page's: their theme colours (an SVG's fill and stroke) would otherwise stay, a dark
+   theme's dark halo behind the system's dark text in a light palette. Objects, areas, groups and
+   the selection marks keep their colours, as visualisations' data does */
+@media (forced-colors: active) {
+    .floor-map-canvas__glyph-caption {
+        fill: CanvasText;
+        stroke: Canvas;
+    }
+
+    .floor-map-canvas__measure-label {
+        fill: CanvasText;
+        stroke: Canvas;
+    }
+}
