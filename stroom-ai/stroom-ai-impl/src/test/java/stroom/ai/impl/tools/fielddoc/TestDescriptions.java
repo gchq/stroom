@@ -36,4 +36,30 @@ class TestDescriptions {
                 .isEqualTo("How the account logged on (the agent's knowledge, medium confidence).");
         assertThat(descriptions.vendor(List.of("IpAddress"), null)).isEqualTo("The client's address.");
     }
+
+    @Test
+    void aFieldDocumentedFromTheXsltAsItRunsKeepsItsDescriptionBothWays() {
+        // Seen in testing (2026-11-12): the translation edited by hand (documented as it runs, every field "written
+        // by the XSLT") and rebuilt from its mapping by turns; each turn asked for all ~150 descriptions again.
+        final Descriptions asRuns = new Descriptions(Map.of("subject", "Subject line."), Map.of("subject",
+                "`subject`"), true, List.of());
+        assertThat(asRuns.of("subject", WrittenEventDocs.WRITTEN, List.of("Hello"), "schema words"))
+                .isEqualTo("Subject line.");
+        assertThat(asRuns.wanted()).isEmpty();
+        // Kept with where it was known to come from.
+        assertThat(asRuns.sources()).containsEntry("subject", "`subject`");
+
+        // Given while documented as it runs, then rebuilt from the mapping: kept too.
+        final Descriptions rebuilt = new Descriptions(Map.of("subject", "Subject line."), Map.of("subject",
+                WrittenEventDocs.WRITTEN), true, List.of());
+        assertThat(rebuilt.of("subject", "`subject`", List.of("Hello"), "schema words")).isEqualTo("Subject line.");
+        assertThat(rebuilt.wanted()).isEmpty();
+        assertThat(rebuilt.sources()).containsEntry("subject", "`subject`");
+
+        // A field that really comes from elsewhere now is still asked for again.
+        final Descriptions moved = new Descriptions(Map.of("subject", "Subject line."), Map.of("subject",
+                "`subject`"), true, List.of());
+        moved.of("subject", "`title`", List.of("Hello"), "schema words");
+        assertThat(moved.wanted()).containsKey("subject");
+    }
 }

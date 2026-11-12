@@ -26,7 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/// A pipeline's documentation not yet written, for the session: write_documentation asked for field descriptions
+/// A pipeline's or an index's documentation not yet written, for the session: write_documentation asked for field
+/// descriptions
 /// (`needs_descriptions`) and wrote nothing. Seen in testing: descriptions given over several calls were lost, as
 /// they were kept only with a written doc, so each round asked for every field again; the markdown was sent whole in
 /// each of nine calls; and the agent, its reply moved to a file, said "Documentation is done" and went on to indexing
@@ -47,7 +48,7 @@ class PendingDocumentation {
                 }
             });
 
-    /// Remembers what a call gave for a doc that wasn't written.
+    /// Remembers what a call gave for a pipeline's doc that wasn't written.
     ///
     /// @param session      The session.
     /// @param pipelineUuid The pipeline documented.
@@ -59,23 +60,40 @@ class PendingDocumentation {
                   final String pipelineName,
                   final String markdown,
                   final Map<String, String> descriptions) {
-        pending.put(key(session, pipelineUuid), new Pending(pipelineUuid, pipelineName, markdown,
+        pending.put(key(session, pipelineUuid), new Pending(pipelineUuid, "pipeline '" + pipelineName + "'",
+                markdown, Map.copyOf(descriptions)));
+    }
+
+    /// Remembers what a call gave for an existing index's doc that wasn't written (seen in testing: its
+    /// descriptions, given in batches, were each lost with the call that gave them).
+    ///
+    /// @param session      The session.
+    /// @param indexUuid    The index documented.
+    /// @param indexName    Its name.
+    /// @param markdown     The markdown given.
+    /// @param descriptions Every description given so far.
+    void rememberIndex(final ToolSession session,
+                       final String indexUuid,
+                       final String indexName,
+                       final String markdown,
+                       final Map<String, String> descriptions) {
+        pending.put(key(session, indexUuid), new Pending(indexUuid, "index '" + indexName + "'", markdown,
                 Map.copyOf(descriptions)));
     }
 
-    /// @param session      The session.
-    /// @param pipelineUuid A pipeline.
+    /// @param session The session.
+    /// @param uuid    A pipeline or an index.
     /// @return What earlier calls gave for its doc, not yet written.
-    Optional<Pending> of(final ToolSession session, final String pipelineUuid) {
-        return Optional.ofNullable(pending.get(key(session, pipelineUuid)));
+    Optional<Pending> of(final ToolSession session, final String uuid) {
+        return Optional.ofNullable(pending.get(key(session, uuid)));
     }
 
     /// Forgets a doc once written.
     ///
-    /// @param session      The session.
-    /// @param pipelineUuid The pipeline documented.
-    void written(final ToolSession session, final String pipelineUuid) {
-        pending.remove(key(session, pipelineUuid));
+    /// @param session The session.
+    /// @param uuid    The pipeline or index documented.
+    void written(final ToolSession session, final String uuid) {
+        pending.remove(key(session, uuid));
     }
 
     /// @param session The session.
@@ -98,7 +116,7 @@ class PendingDocumentation {
             return Optional.empty();
         }
         return Optional.of("The documentation of " + String.join(", ", open.stream()
-                .map(doc -> "pipeline '" + doc.pipelineName() + "'")
+                .map(Pending::label)
                 .toList()) + " is not written yet: write_documentation asked for field descriptions and wrote "
                            + "nothing. Finish it first (write_documentation with field_descriptions; the markdown "
                            + "and the descriptions already given are kept), and don't tell the user it is done "
@@ -115,11 +133,11 @@ class PendingDocumentation {
 
     /// A doc not yet written.
     ///
-    /// @param pipelineUuid The pipeline.
-    /// @param pipelineName Its name.
+    /// @param uuid         The pipeline or index.
+    /// @param label        What it is, as the warning names it: `pipeline 'name'` or `index 'name'`.
     /// @param markdown     The markdown last given.
     /// @param descriptions The descriptions given so far.
-    record Pending(String pipelineUuid, String pipelineName, String markdown, Map<String, String> descriptions) {
+    record Pending(String uuid, String label, String markdown, Map<String, String> descriptions) {
 
     }
 }

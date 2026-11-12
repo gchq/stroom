@@ -407,6 +407,64 @@ class TestEventFieldDocs {
     }
 
     @Test
+    void aFieldReadAsBeforeIsNotAskedForAgainWhenOtherFieldsAreAdded() {
+        // Seen in testing (2026-11-12): after Device/Name and a Data 'Action' were added to a mail gateway's mapping,
+        // every one of ~150 descriptions was asked for again, though each field read what it read before.
+        final String before = """
+                {"input": "data_splitter", "unmatched": "skip", "common": [
+                  {"path": "EventSource/Device/HostName", "field": "host"}], "events": [
+                 {"name": "sent", "when": [{"field": "a", "equals": "sent"}], "fields": [
+                  {"path": "EventDetail/Send/Source/User/Id", "field": "from"},
+                  {"path": "EventDetail/Send/Data", "data_name": "subject", "field": "subject"},
+                  {"path": "EventDetail/Send/Data", "data_name": "size", "field": "size"}]},
+                 {"name": "received", "when": [{"field": "a", "equals": "received"}], "fields": [
+                  {"path": "EventDetail/Receive/Source/User/Id", "field": "from"},
+                  {"path": "EventDetail/Receive/Data", "data_name": "subject", "field": "subject"},
+                  {"path": "EventDetail/Receive/Data", "data_name": "size", "field": "size"}]},
+                 {"name": "rejected", "when": [{"field": "a", "equals": "rejected"}], "fields": [
+                  {"path": "EventDetail/Receive/Source/User/Id", "field": "from"},
+                  {"path": "EventDetail/Receive/Data", "data_name": "subject", "field": "subject"},
+                  {"path": "EventDetail/Receive/Data", "data_name": "reason", "field": "reason"}]}]}""";
+        final Descriptions first = Descriptions.asking(true);
+        EventFieldDocs.fieldMappingMarkdown(TranslationMapping.fromJson(FieldDocFixtures.json(before)), SCHEMA, null,
+                FieldDocs.BY_EVENT_TYPE, first);
+        final Map<String, String> descriptions = new LinkedHashMap<>();
+        first.wanted().keySet().forEach(field -> descriptions.put(field, "About " + field + "."));
+        final Descriptions described = new Descriptions(descriptions, true);
+        EventFieldDocs.fieldMappingMarkdown(TranslationMapping.fromJson(FieldDocFixtures.json(before)), SCHEMA, null,
+                FieldDocs.BY_EVENT_TYPE, described);
+        assertThat(described.wanted()).isEmpty();
+
+        // Device/Name added, and a Data 'Action' to the first rule alone.
+        final String after = before
+                .replace("{\"path\": \"EventSource/Device/HostName\", \"field\": \"host\"}",
+                        "{\"path\": \"EventSource/Device/HostName\", \"field\": \"host\"}, "
+                        + "{\"path\": \"EventSource/Device/Name\", \"field\": \"device\"}")
+                .replace("{\"path\": \"EventDetail/Send/Data\", \"data_name\": \"size\", \"field\": \"size\"}",
+                        "{\"path\": \"EventDetail/Send/Data\", \"data_name\": \"size\", \"field\": \"size\"}, "
+                        + "{\"path\": \"EventDetail/Send/Data\", \"data_name\": \"Action\", \"value\": \"sent\"}")
+                .replace("{\"path\": \"EventDetail/Receive/Data\", \"data_name\": \"subject\", \"field\": \"subject\"}",
+                        "{\"path\": \"EventDetail/Receive/Data\", \"data_name\": \"subject\", \"field\": \"subject\"}, "
+                        + "{\"path\": \"EventDetail/Receive/Data\", \"data_name\": \"Action\", \"field\": \"a\"}");
+        final String regrouped = after.replace(
+                "{\"path\": \"EventDetail/Send/Source/User/Id\", \"field\": \"from\"}",
+                "{\"path\": \"EventDetail/Send/Source/User/Id\", \"field\": \"from\"}, "
+                + "{\"path\": \"EventDetail/Send/Destination/User/Id\", \"field\": \"to\"}");
+        final Descriptions split = new Descriptions(descriptions, described.sources(), true, List.of());
+        EventFieldDocs.fieldMappingMarkdown(TranslationMapping.fromJson(FieldDocFixtures.json(regrouped)), SCHEMA,
+                null, FieldDocs.BY_EVENT_TYPE, split);
+        // Regrouped (the Send rule now has elements Receive's lacks): still only the new fields.
+        assertThat(split.wanted().keySet()).containsExactlyInAnyOrder("EventSource/Device/Name",
+                "EventDetail/Send/Destination/User/Id", "EventDetail/(Send|Receive)/Data[@Name='Action']/@Value");
+        final Descriptions again = new Descriptions(descriptions, described.sources(), true, List.of());
+        EventFieldDocs.fieldMappingMarkdown(TranslationMapping.fromJson(FieldDocFixtures.json(after)), SCHEMA, null,
+                FieldDocs.BY_EVENT_TYPE, again);
+
+        assertThat(again.wanted().keySet()).allSatisfy(field -> assertThat(field).containsAnyOf("Device/Name",
+                "'Action'"));
+    }
+
+    @Test
     void anyActionKeyNamesTheElementUnderWhicheverActionElement() {
         assertThat(Descriptions.anyActionKey("EventDetail/Network/Permit/Source/Port"))
                 .isEqualTo("EventDetail/*/Source/Port");

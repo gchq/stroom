@@ -283,8 +283,9 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                                   + "action element. Save the XSLT from its mapping there.");
         }
         String markdown = NullSafe.string(rawArg(call, MARKDOWN_ARG));
-        final String documented = stringArg(call, PIPELINE_UUID_ARG);
-        if (markdown.isBlank() && documented != null && stringArg(call, INDEX_UUID_ARG) == null) {
+        final String documented = NullSafe.nonBlankStringElse(stringArg(call, INDEX_UUID_ARG),
+                stringArg(call, PIPELINE_UUID_ARG));
+        if (markdown.isBlank() && documented != null) {
             // Only descriptions given: the markdown of the call that asked for them (seen: refused, then sent whole
             // again).
             markdown = pendingDocs.of(context.session(), documented)
@@ -356,13 +357,17 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                 : placed.beside();
         final Map<String, String> given = new LinkedHashMap<>(docs.keptDescriptions(previous));
         // And those given by earlier calls that wrote nothing (seen: lost, every field asked for again).
-        given.putAll(pendingDocs.of(context.session(), pipelineUuid)
+        final Map<String, String> pending = pendingDocs.of(context.session(), pipelineUuid)
                 .map(PendingDocumentation.Pending::descriptions)
-                .orElse(Map.of()));
+                .orElse(Map.of());
+        given.putAll(pending);
         given.putAll(request.descriptions());
-        // Where each kept one's field came from: one whose field comes from elsewhere now is asked for again (the
-        // ones given in this call are of the fields as they are).
+        // Where each kept one's field came from: one whose field comes from elsewhere now is asked for again. Those
+        // given in this call, or in an earlier one of this doc not yet written, are of the fields as they are (seen
+        // in testing: given ten at a time, each batch's call asked for the earlier batches' fields again, against
+        // their old sources, and the list never shortened).
         final Map<String, String> givenFrom = new LinkedHashMap<>(docs.keptDescriptionSources(previous));
+        givenFrom.keySet().removeAll(pending.keySet());
         givenFrom.keySet().removeAll(request.descriptions().keySet());
         final Descriptions described = new Descriptions(given, givenFrom, true, docs.vendorNotes(request.build()));
         // A translation XSLT keeping no mapping (written by hand): its section is generated from the Events it writes

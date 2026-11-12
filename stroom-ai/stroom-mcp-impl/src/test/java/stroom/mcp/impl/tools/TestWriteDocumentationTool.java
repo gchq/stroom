@@ -38,6 +38,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
@@ -394,6 +396,47 @@ class TestWriteDocumentationTool {
     }
 
     @Test
+    void fieldsDescribedAgainInEarlierBatchesAreNotAskedForAThirdTime() {
+        // Seen in testing (2026-11-12): every field's source changed, so all were asked for again; given ten at a
+        // time, the first batch counted, but each later batch's call asked for the earlier batches' fields again
+        // (their old sources still held against them), the count stuck and the list back at its top.
+        world.pipeline(BUILD, "Acme", "p");
+        world.documentation(BUILD, "Acme", "d", "## Field mapping\n\n<!-- stroom-mcp field descriptions\n"
+                                                + "{\"A\": \"Old a.\", \"B\": \"Old b.\", \"C\": \"Old c.\"}\n-->"
+                                                + "\n\n<!-- stroom-mcp field description sources\n"
+                                                + "{\"A\": \"a\", \"B\": \"b\", \"C\": \"c\"}\n-->");
+        Mockito.when(world.keptMappings.keptXslt("p")).thenReturn(Optional.of(kept("index", Map.of())));
+        Mockito.when(world.sections.fieldMappingSection(any(), anyString(), any(), any(), any(), anyString(), any()))
+                .thenAnswer(inv -> {
+                    final Descriptions described = inv.getArgument(6);
+                    for (final String field : List.of("A", "B", "C")) {
+                        described.of(field, "new_" + field.toLowerCase(), List.of("v"), "schema words");
+                    }
+                    return "section";
+                });
+        final String call = "{\"build\": \"bb\", \"pipeline_uuid\": \"p\", \"markdown\": \"## Purpose and data\\n"
+                            + "\\nx\\n\", \"change\": \"Changed\", \"stream_ids\": [5]";
+
+        final Map<String, Object> first = world.call(tool, context, call + "}");
+        assertThat(asked(first)).containsExactly("A", "B", "C");
+
+        final Map<String, Object> second = world.call(tool, context, call + ", \"field_descriptions\": {\"A\": "
+                                                                     + "\"New a.\"}}");
+        assertThat(asked(second)).containsExactly("B", "C");
+
+        final Map<String, Object> third = world.call(tool, context, call + ", \"field_descriptions\": {\"B\": "
+                                                                    + "\"New b.\"}}");
+        assertThat(asked(third)).containsExactly("C");
+    }
+
+    private static List<String> asked(final Map<String, Object> result) {
+        assertThat(result).containsEntry("status", "needs_descriptions");
+        return ((List<?>) result.get("fields")).stream()
+                .map(field -> String.valueOf(((Map<?, ?>) field).get("field")))
+                .toList();
+    }
+
+    @Test
     void aNewDocumentationDocSaysPlainlyItWasCreated() {
         // Seen (Delinea SecretServer): a doc just created came back as updated: false, and the agent spent two or
         // three calls checking it had been written.
@@ -488,6 +531,41 @@ class TestWriteDocumentationTool {
 
         assertThat(user.forms()).singleElement().satisfies(asked -> assertThat(asked.get("summary"))
                 .isEqualTo("Document the existing Elastic Index doc 'TWITTER-EVENTS' (System/MCP Workspace/bb)"));
+    }
+
+    @Test
+    void anIndexsDescriptionsGivenInBatchesAreKeptUntilItsDocIsWritten() {
+        // Seen in testing (2026-11-12): an existing index's doc kept no descriptions between calls, so each batch
+        // given was lost with the call that gave it.
+        world.world.inBuild(BUILD, ElasticIndexDoc.TYPE, "MAIL", "i");
+        world.world.docs.put("i", ElasticIndexDoc.builder().uuid("i").name("MAIL").version("v0")
+                .indexName("mail-v1").build());
+        final Map<String, Object> survey = new LinkedHashMap<>();
+        survey.put("index", Map.of("name", "MAIL"));
+        survey.put("backend", "elasticsearch");
+        survey.put("index_name", "mail-v1");
+        survey.put("time_field", "@timestamp");
+        survey.put("fields", List.of(Map.of("name", "sender", "type", "keyword"),
+                Map.of("name", "subject", "type", "text")));
+        survey.put("documents", List.of(Map.of("sender", List.of("jane.doe@mail.com"), "subject", List.of("Hi"))));
+        Mockito.when(world.indexSurveys.surveyIndex(any(), any(), anyInt(), anyBoolean())).thenReturn(survey);
+        final ToolCallContext agreeing = BuildToolCalls.answering(Map.of("value", true));
+        final String call = "{\"build\": \"bb\", \"index_uuid\": \"i\", \"index_itself\": true, "
+                            + "\"change\": \"Created\"";
+
+        final Map<String, Object> first = world.call(tool, agreeing, call + ", \"markdown\": \"## Purpose and "
+                                                                    + "data\\n\\nMail.\\n\", "
+                                                                    + "\"field_descriptions\": {\"sender\": "
+                                                                    + "\"Who sent it.\"}}");
+        assertThat(asked(first)).containsExactly("subject");
+
+        // Only the rest, no markdown: the first batch and the markdown are kept.
+        final Map<String, Object> written = world.call(tool, agreeing, call + ", \"field_descriptions\": "
+                                                                      + "{\"subject\": \"Its subject line.\"}}");
+        assertThat(written).containsKey("uuid").doesNotContainKey("status");
+        assertThat(world.world.body(String.valueOf(written.get("uuid")))).contains("Mail.", "Who sent it.",
+                "Its subject line.");
+        assertThat(world.pendingDocs.warning(agreeing.session())).isEmpty();
     }
 
     @Test
