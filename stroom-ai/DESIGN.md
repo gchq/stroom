@@ -1881,6 +1881,18 @@ streams, which translates and indexes every group's records in it again, and lea
 in the index (above). Reprocessing and any index clean-up are the user's to do, outside the tools; the agent says what
 Stroom does, as above, if they ask.
 
+Two ways to have the history without disturbing what is there, both the user's choice, the agent naming them when the
+user asks how to get it (the agent doesn't suggest them otherwise, as it doesn't suggest a pipeline of its own):
+
+* **A pipeline of its own for the new source types** (the separate-pipeline route above), optionally with its own
+  output feed and index: its processor filter can take the feed's earlier streams as well as new ones, and nothing it
+  writes meets the existing pipeline's output or index.
+* **A new version of the existing pipeline** (`copy_pipeline`, promoted in a version subfolder beside its
+  predecessor, with its own index, documentation and dashboard): its dispatcher and groups cover the new source types
+  too, and it processes the feed's history into its fresh index. Stroom supersedes output per pipeline, so the old
+  version's Events streams are untouched; the user retires the old version (its processor filter, index and Events)
+  when the new one has caught up.
+
 
 ## Translation
 
