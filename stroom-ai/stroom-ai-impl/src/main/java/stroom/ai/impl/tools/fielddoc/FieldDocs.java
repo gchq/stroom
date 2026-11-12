@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.cef.CefKeys;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.DumpMode;
+import stroom.ai.impl.tools.generation.FieldGroup;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.Lookup;
 import stroom.ai.impl.tools.generation.XsltGenerator;
@@ -144,6 +145,10 @@ public final class FieldDocs {
                    + entry.joinSeparator() + "'";
         } else if (entry.field() != null) {
             text = "`" + entry.field() + "`";
+        } else if (entry.item() != null && entry.xpath() == null) {
+            text = "the " + (entry.item().isEmpty()
+                    ? "item"
+                    : entry.item());
         } else {
             text = "`" + readable(entry.xpath()) + "`";
         }
@@ -177,6 +182,31 @@ public final class FieldDocs {
             text += ", one per value";
         }
         return text;
+    }
+
+    /// `source_text` of a field of a group: its source, the item it reads, and where the items come from, outermost
+    /// group last, e.g. `` the recipient (strip_domain); for each recipient (each of `recipients` split on ',') ``.
+    ///
+    /// @param entry  A field mapping.
+    /// @param groups The groups it is in, outermost first ([FieldGroup.Leaf#groups()]); empty for none.
+    /// @return Its source.
+    public static String sourceText(final FieldMapping entry, final List<FieldMapping> groups) {
+        if (groups.isEmpty()) {
+            return sourceText(entry);
+        }
+        final String innermost = groups.getLast().group().itemName();
+        String text = sourceText(entry);
+        if (entry.value() == null && !"record".equals(entry.scope())) {
+            final String item = entry.item() == null || entry.item().isEmpty()
+                    ? innermost
+                    : entry.item();
+            if (text.startsWith("the item")) {
+                text = "the " + item + text.substring("the item".length());
+            } else if (!text.startsWith("the " + item)) {
+                text += " (of the " + item + ")";
+            }
+        }
+        return text + "; for " + FieldGroup.itemsText(groups);
     }
 
     /// `any_action_path`: a path with its action element as `*`.

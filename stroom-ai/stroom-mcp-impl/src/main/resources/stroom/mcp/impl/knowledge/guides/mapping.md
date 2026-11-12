@@ -90,7 +90,7 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 | `default` | Written when the input is empty |
 | `transform` | `lower`, `upper`, `trim`, `strip_domain`, `domain`, `digits`, `unescape_quotes`, `strip_control` |
 | `dictionary` | The value a Dictionary of key=value lines gives |
-| `repeat: true` | One element per value of a field holding several; a delimited text list is one value, so split it with an `xpath` using `tokenize()` |
+| `repeat: true` | One element per value of a field holding several (a list of strings); for a delimited list, or several elements per item, use a group (below) |
 | `time_format`, `timezone` | Time parsing: see below |
 | `rollover: true` | A time of day on a date that doesn't move on by itself: see below |
 | `time_fallback` | A stream meta time written when the time won't parse: see below |
@@ -155,6 +155,31 @@ completion of a dateless time (it moves a time later than the stream's creation 
 A field no element means is carried as `Data`: a path ending `/Data` with `data_name`, under the element it describes
 (`EventDetail/Network/Permit/Source/Data`) or the action element. `data_parent` groups entries in a named Data. A
 rule's `"data": ["rule_id", "bytes"]` is short for Data entries of its action element, each named after its field.
+
+## Groups: arrays of objects
+
+An element written once per item, each holding its own fields, is a group: `path` (an element the schema lets repeat),
+`for_each` (where the items come from), `as` (the item's name) and `fields` (paths relative to the group's element,
+each read from the item). A mail gateway's `recipients="john.smith@mail.com,jack.sparrow@gmail.com"`, each recipient
+a User with its own Id and Domain:
+
+```json
+{"path": "EventDetail/Send/Destination/User", "for_each": {"split": "recipients", "on": ","}, "as": "recipient",
+ "fields": [{"path": "Id", "item": true, "transform": "strip_domain"},
+            {"path": "Domain", "item": true, "transform": "domain"}]}
+```
+
+- `for_each`: `{"split": "<field>", "on": ","}` (a literal separator, not a regex: no `tokenize()` needed; pieces
+  trimmed, empty ones dropped); `{"array": "<field>"}` (a JSON array, or an element repeated in XML); `{"zip":
+  {"recipient": "recipients", "status": "recipient_status"}, "on": ","}` (lists paired by position; a record whose
+  lists differ in length is logged as an error and its event isn't written). A source is read from the enclosing
+  item (the record at the top); `"scope": "record"` or `"item": "<as>"` in `for_each` reads elsewhere.
+- A field reads a key of its item (`"field": "status"`, `address.city` inside it; a zip's names), the item itself
+  (`"item": true`), an outer group's item (`"item": "recipient"`, with or without `field`), or the record (`"scope":
+  "record"`). Anything else an entry has works (transform, map, lookup, default...), but not `repeat`.
+- A group's fields may be groups (16 deep at most). Nothing else in the rule maps below a group's element.
+- A Data group: `path` ending `Data` with `data_name`, its fields Data entries (`"path": "Data"`), gives `<Data
+  Name="recipient"><Data Name="id" Value="..."/>...</Data>` per item.
 
 ## A rule
 

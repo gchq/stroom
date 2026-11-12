@@ -1526,6 +1526,51 @@ the common entries.
   writes, as it would be written twice.
 * **The compile check.** A generated XSLT is compiled as Stroom compiles it, before it is saved.
 
+### Repeated groups (built)
+
+An element written once per item, each holding its own fields, is a **group** (2026-11-12; asked for by the user
+from a SEG mail gateway's `recipients="a@x,b@y"`, each recipient wanted as one `Send/Destination/User` with its own
+`Id` and `Domain`, which `repeat` could not express). `repeat: true` stays as the shorthand for a list of strings.
+
+```json
+{"path": "EventDetail/Send/Destination/User", "for_each": {"split": "recipients", "on": ","}, "as": "recipient",
+ "fields": [{"path": "Id", "item": true, "transform": "strip_domain"},
+            {"path": "Domain", "item": true, "transform": "domain"}]}
+```
+
+* **Model:** a field entry with `for_each` (`FieldGroup`, `ItemSource`). Items come from `split` (a field's text on a
+  literal separator, pieces trimmed, empty ones dropped), `array` (a JSON array, one object read as one item; an XML
+  or Data Splitter element repeated) or `zip` (lists paired by position). A group field reads a key of its item
+  (`field`, dotted for objects inside it; a zip's names), the item itself (`item: true`), an outer group's item
+  (`item: "<as>"`) or the record (`scope: record`); anything else an entry does, but not `repeat`. Paths are relative
+  to the group (a path given from Event is taken back to relative). The new keys are written only when set, so kept
+  mappings, dumps and goldens are unchanged.
+* **Checks:** the group's element is one the schema lets repeat; nothing else in the rule maps below it; a field
+  given from Event outside it, a key of a split's piece, an item name no enclosing group has, and a zip read whole
+  are refused when the mapping is read. Groups nest **16 deep at most** (`FieldGroup.MAX_DEPTH`), which bounds every
+  walk of the mapping (parse, validation, leaves, docs).
+* **XSLT:** each group is an `xsl:for-each` over its items, the item held in a variable named after `as`; nested
+  groups are nested loops, as deep as the mapping nests them, never a template recursing over the input. A split is
+  `tokenize(..., 'q')` (literal, no regex over the whole value), each piece trimmed by a short regex. Item reads are
+  written in place; record reads inside a loop stay variables declared outside it (`justInTime` never moves a
+  variable into a loop it isn't in). A zip whose lists differ in length is logged (`stroom:log('ERROR', ...)`, the
+  lists' lengths and the record's number) and the rule's Event is not written. A Data group writes `<Data
+  Name="recipient">` per item, its Data inside, as `data_parent`'s container.
+* **Docs:** a row per field of a group (`FieldGroup.leaves`), its source naming the items (`the recipient (strip_domain);
+  for each recipient (each of `recipients` split on ',')`), nested groups the chain.
+* **Draft** (`ListFields`, first level only, format-level): a plain Data entry whose values are mostly lists (`,` or
+  `;`, found with `indexOf`; at most 50 pieces a value and 200 values looked at; each piece tested alone with short
+  anchored patterns: mail, IPv4, integer, name/id/host token, all one kind) becomes a Data group splitting it, an
+  inner Data per piece; a JSON key holding arrays of objects becomes an array Data group, a Data per scalar key (a key
+  holding an array is left out, as read whole its values would run together). Deeper levels stay as they were.
+* **Index plans** (`GroupedFields`, applied by `draft_index_mapping` from the mapping kept with the translation that
+  wrote the Events): two or more planned fields read from one group's element become, in Elasticsearch, one `object`
+  field (not `nested`) whose description says a query on two of an item's fields can match values from different
+  items; in Lucene (or Elasticsearch with flat names) fields of several values, saying the pairing is lost. Only the
+  outermost group is an object. Not applied on the `changes=` amend path.
+* **Not built:** `rebuild_mapping` (`XsltReader`) doesn't read a group's loop back into a group entry; it reports
+  that XSLT as not read, as it does other XSLT it can't read.
+
 ### Saxon limits (built)
 
 Stroom runs Saxon-HE 9.9.

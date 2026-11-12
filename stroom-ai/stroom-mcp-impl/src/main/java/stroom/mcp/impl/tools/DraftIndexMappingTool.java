@@ -42,6 +42,7 @@ import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.ExampleNames;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.FieldPlans;
+import stroom.ai.impl.tools.indexing.GroupedFields;
 import stroom.ai.impl.tools.indexing.IndexTemplates;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
 import stroom.ai.impl.tools.indexing.PlannedField;
@@ -605,6 +606,11 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             keepExample(draft, indexName, streamIds.getFirst(), pasted, exampleNotes);
         }
         plan = plans.withCardinality(plan);
+        // The fields a translation's repeated group writes (each recipient one User with its Id and Domain): one
+        // field of objects in Elasticsearch, so an item's values stay together; fields of values in Lucene.
+        final GroupedFields.Grouped grouped = GroupedFields.apply(plan, inputs.translationFields(streamIds));
+        plan = grouped.plan();
+        draftNotes.addAll(grouped.notes());
         final List<String> standInWarnings = new ArrayList<>();
         plan = eventStandIns(call, context, indexName, plan, events, standInWarnings);
         final String replaces = stringArg(call, REPLACES_ARG);

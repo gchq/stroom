@@ -16,10 +16,15 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.StreamSummaries;
+import stroom.ai.impl.tools.generation.FieldGroup;
+import stroom.ai.impl.tools.generation.FieldMapping;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,5 +55,29 @@ class TestIndexingInputs {
 
         assertThat(IndexingInputs.byAction(summary).typeIds()).isEqualTo(Map.of("View", Map.of("Secret-View", 9.2)));
         assertThat(IndexingInputs.byAction(Map.of()).typeIds()).isEmpty();
+    }
+
+    @Test
+    void theFieldsOfTheKeptTranslationMappingAreReadWithTheirGroups() {
+        final Object mapping = ToolJson.loads("""
+                {"input": "data_splitter",
+                 "common": [{"path": "EventTime/TimeCreated", "field": "time"}],
+                 "events": [{"name": "send", "fields": [
+                   {"path": "EventDetail/TypeId", "value": "Send"},
+                   {"path": "EventDetail/Send/Destination/User", "for_each": {"split": "recipients", "on": ","},
+                    "as": "recipient",
+                    "fields": [{"path": "Id", "item": true, "transform": "strip_domain"},
+                               {"path": "Domain", "item": true, "transform": "domain"}]}]}]}""");
+        final String description = KeptMapping.withMapping("Mail events", "translation", Map.of("mapping", mapping));
+
+        final List<FieldGroup.Leaf> leaves = IndexingInputs.mappingFields(List.of(description, "No mapping",
+                KeptMapping.withMapping("", "translation", Map.of("mapping", Map.of("input", "nonsense")))));
+
+        assertThat(leaves).extracting(leaf -> leaf.entry().path()).containsExactly("EventTime/TimeCreated",
+                "EventDetail/TypeId", "EventDetail/Send/Destination/User/Id",
+                "EventDetail/Send/Destination/User/Domain");
+        assertThat(leaves.get(2).groups()).extracting(FieldMapping::path)
+                .containsExactly("EventDetail/Send/Destination/User");
+        assertThat(IndexingInputs.mappingFields(List.of())).isEmpty();
     }
 }

@@ -36,6 +36,8 @@ final class EventNode {
     FieldMapping repeat;
     // written by a shared XSLT's named template, called here
     SharedTemplate shared;
+    // a group (for_each): this element is written once per item, its fields below it read from the item
+    FieldMapping group;
 
     /// @param child The element's schema child, or null for Event.
     /// @param path  Its path from Event, e.g. `Event/EventSource/User`.
