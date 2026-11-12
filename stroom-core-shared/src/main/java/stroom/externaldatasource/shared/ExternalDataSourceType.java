@@ -27,7 +27,10 @@ public enum ExternalDataSourceType implements HasDisplayValue {
     /// CSV held in the document, using the settings and data in [CsvSettings].
     CSV("CSV"),
     /// An Excel workbook held in the document, using the settings in [ExcelSettings].
-    EXCEL("Excel");
+    EXCEL("Excel"),
+    /// An LDAP directory, searched with the filter given in each query, using the settings in
+    /// [LdapSettings].
+    LDAP("LDAP");
 
     private final String displayValue;
 

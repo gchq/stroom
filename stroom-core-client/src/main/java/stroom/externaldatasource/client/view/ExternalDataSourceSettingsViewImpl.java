@@ -22,6 +22,8 @@ import stroom.externaldatasource.client.presenter.ExternalDataSourceSettingsPres
 import stroom.externaldatasource.client.presenter.ExternalDataSourceSettingsUiHandlers;
 import stroom.externaldatasource.shared.DataColumn;
 import stroom.externaldatasource.shared.ExternalDataSourceType;
+import stroom.externaldatasource.shared.LdapSearchScope;
+import stroom.externaldatasource.shared.LdapSettings;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
@@ -113,6 +115,28 @@ public class ExternalDataSourceSettingsViewImpl
     @UiField
     ValueSpinner athenaMaxDataScannedMb;
     @UiField
+    FlowPanel ldapSettings;
+    @UiField
+    TextBox ldapUrl;
+    @UiField
+    CustomCheckBox ldapStartTls;
+    @UiField
+    SelectionBox<Credential> ldapCredential;
+    @UiField
+    DescriptionHTML ldapCredentialNote;
+    @UiField
+    TextBox ldapBaseDn;
+    @UiField
+    SelectionBox<LdapSearchScope> ldapScope;
+    @UiField
+    ValueSpinner ldapPageSize;
+    @UiField
+    ValueSpinner ldapMinRefreshMinutes;
+    @UiField
+    Button detectLdapAttributes;
+    @UiField
+    DataColumnsPanel ldapAttributes;
+    @UiField
     FlowPanel csvSettings;
     @UiField
     SelectionBox<CsvDelimiter> csvDelimiter;
@@ -174,15 +198,22 @@ public class ExternalDataSourceSettingsViewImpl
         downloadExcel.setIcon(SvgImage.DOWNLOAD);
         removeExcel.setIcon(SvgImage.DELETE);
         excelColumns.setChangeHandler(this::fireChange);
+        ldapScope.addItems(LdapSearchScope.values());
+        ldapScope.setValue(LdapSearchScope.SUBTREE);
+        ldapAttributes.setNamesEditable(true, "No attributes yet. Click Detect Attributes, or add them by name.");
+        ldapAttributes.setChangeHandler(this::fireChange);
         setExcelFile(null, false);
         setJdbcCredentialNote(null);
         setAthenaCredentialNote(null);
+        setLdapCredentialNote(null);
         setLimits(maxPoolSize, 1, MAX_POOL_SIZE);
         setLimits(fetchSize, 0, MAX_FETCH_SIZE);
         setLimits(resultReuseMinutes, 0, MAX_RESULT_REUSE_MINUTES);
         setLimits(jdbcMinRefreshMinutes, 0, MAX_MIN_REFRESH_MINUTES);
         setLimits(athenaMinRefreshMinutes, 0, MAX_MIN_REFRESH_MINUTES);
         setLimits(athenaMaxDataScannedMb, 0, MAX_DATA_SCANNED_MB);
+        setLimits(ldapPageSize, 1, LdapSettings.MAX_PAGE_SIZE);
+        setLimits(ldapMinRefreshMinutes, 0, MAX_MIN_REFRESH_MINUTES);
         setLimits(queryTimeoutSeconds, 1, MAX_TIMEOUT_SECONDS);
         setLimits(maxRows, 1, MAX_ROWS);
         testConnection.setIcon(SvgImage.OK);
@@ -214,9 +245,11 @@ public class ExternalDataSourceSettingsViewImpl
         final boolean athena = ExternalDataSourceType.ATHENA.equals(sourceType);
         final boolean csv = ExternalDataSourceType.CSV.equals(sourceType);
         final boolean excel = ExternalDataSourceType.EXCEL.equals(sourceType);
-        final boolean jdbc = !athena && !csv && !excel;
+        final boolean ldap = ExternalDataSourceType.LDAP.equals(sourceType);
+        final boolean jdbc = !athena && !csv && !excel && !ldap;
         jdbcSettings.setVisible(jdbc);
         athenaSettings.setVisible(athena);
+        ldapSettings.setVisible(ldap);
         csvSettings.setVisible(csv);
         excelSettings.setVisible(excel);
         // Athena takes the time range in its SQL. CSV and Excel are read in Stroom, so they have no
@@ -474,6 +507,86 @@ public class ExternalDataSourceSettingsViewImpl
     }
 
     @Override
+    public String getLdapUrl() {
+        return ldapUrl.getValue();
+    }
+
+    @Override
+    public void setLdapUrl(final String url) {
+        ldapUrl.setValue(url);
+    }
+
+    @Override
+    public boolean isLdapStartTls() {
+        return ldapStartTls.getValue();
+    }
+
+    @Override
+    public void setLdapStartTls(final boolean startTls) {
+        ldapStartTls.setValue(startTls);
+    }
+
+    @Override
+    public SelectionBox<Credential> getLdapCredentialSelectionBox() {
+        return ldapCredential;
+    }
+
+    @Override
+    public void setLdapCredentialNote(final String note) {
+        showNote(ldapCredentialNote, note);
+    }
+
+    @Override
+    public String getLdapBaseDn() {
+        return ldapBaseDn.getValue();
+    }
+
+    @Override
+    public void setLdapBaseDn(final String baseDn) {
+        ldapBaseDn.setValue(baseDn);
+    }
+
+    @Override
+    public LdapSearchScope getLdapScope() {
+        return ldapScope.getValue();
+    }
+
+    @Override
+    public void setLdapScope(final LdapSearchScope scope) {
+        ldapScope.setValue(scope);
+    }
+
+    @Override
+    public int getLdapPageSize() {
+        return ldapPageSize.getIntValue();
+    }
+
+    @Override
+    public void setLdapPageSize(final int pageSize) {
+        ldapPageSize.setValue(pageSize);
+    }
+
+    @Override
+    public int getLdapMinRefreshMinutes() {
+        return ldapMinRefreshMinutes.getIntValue();
+    }
+
+    @Override
+    public void setLdapMinRefreshMinutes(final int minutes) {
+        ldapMinRefreshMinutes.setValue(minutes);
+    }
+
+    @Override
+    public List<DataColumn> getLdapAttributes() {
+        return ldapAttributes.getColumns();
+    }
+
+    @Override
+    public void setLdapAttributes(final List<DataColumn> attributes) {
+        ldapAttributes.setColumns(attributes);
+    }
+
+    @Override
     public String getTimeField() {
         return timeField.getValue();
     }
@@ -534,6 +647,15 @@ public class ExternalDataSourceSettingsViewImpl
         resultReuseMinutes.setEnabled(enabled);
         athenaMinRefreshMinutes.setEnabled(enabled);
         athenaMaxDataScannedMb.setEnabled(enabled);
+        ldapUrl.setEnabled(enabled);
+        ldapStartTls.setEnabled(enabled);
+        ldapCredential.setEnabled(enabled);
+        ldapBaseDn.setEnabled(enabled);
+        ldapScope.setEnabled(enabled);
+        ldapPageSize.setEnabled(enabled);
+        ldapMinRefreshMinutes.setEnabled(enabled);
+        detectLdapAttributes.setEnabled(enabled);
+        ldapAttributes.setEnabled(enabled);
         timeField.setEnabled(enabled);
         queryTimeoutSeconds.setEnabled(enabled);
         maxRows.setEnabled(enabled);
@@ -560,7 +682,7 @@ public class ExternalDataSourceSettingsViewImpl
     ///
     /// @param event The change.
     @UiHandler({"jdbcUrl", "connectionProperties", "region", "workGroup", "catalog", "database",
-            "outputLocation", "timeField"})
+            "outputLocation", "ldapUrl", "ldapBaseDn", "timeField"})
     public void onTextChange(final ValueChangeEvent<String> event) {
         fireChange();
     }
@@ -569,9 +691,36 @@ public class ExternalDataSourceSettingsViewImpl
     ///
     /// @param event The change.
     @UiHandler({"maxPoolSize", "fetchSize", "jdbcMinRefreshMinutes", "resultReuseMinutes",
-            "athenaMinRefreshMinutes", "athenaMaxDataScannedMb", "queryTimeoutSeconds", "maxRows"})
+            "athenaMinRefreshMinutes", "athenaMaxDataScannedMb", "ldapPageSize", "ldapMinRefreshMinutes",
+            "queryTimeoutSeconds", "maxRows"})
     public void onNumberChange(final ValueChangeEvent<Long> event) {
         fireChange();
+    }
+
+    /// Marks the document as changed when StartTLS is turned on or off.
+    ///
+    /// @param event The change.
+    @UiHandler("ldapStartTls")
+    public void onLdapStartTlsChange(final ValueChangeEvent<Boolean> event) {
+        fireChange();
+    }
+
+    /// Marks the document as changed when the LDAP scope changes.
+    ///
+    /// @param event The change.
+    @UiHandler("ldapScope")
+    public void onLdapScopeChange(final ValueChangeEvent<LdapSearchScope> event) {
+        fireChange();
+    }
+
+    /// Asks the presenter to detect the directory's attributes.
+    ///
+    /// @param event The click.
+    @UiHandler("detectLdapAttributes")
+    public void onDetectLdapAttributes(final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onDetectColumns(detectLdapAttributes);
+        }
     }
 
     /// Tells the presenter the CSV delimiter changed, as the columns may need detecting again.
@@ -685,7 +834,7 @@ public class ExternalDataSourceSettingsViewImpl
     /// Marks the document as changed when a credential is chosen.
     ///
     /// @param event The change.
-    @UiHandler({"jdbcCredential", "athenaCredential"})
+    @UiHandler({"jdbcCredential", "athenaCredential", "ldapCredential"})
     public void onCredentialChange(final ValueChangeEvent<Credential> event) {
         fireChange();
     }

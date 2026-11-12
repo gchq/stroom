@@ -40,7 +40,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -319,39 +318,6 @@ abstract class StoredDataConnector implements Connector {
             throw new IllegalArgumentException("The time range cannot be applied, as the time column '"
                                                + timeField + "' of External Data Source '" + doc.getName()
                                                + "' is not a Date column.");
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    // Counts the values that are not of their column's type, keeping the first as an example.
-    private static final class BadValues {
-
-        private long count;
-        private String example;
-
-        private void add(final String text, final DataColumn column) {
-            if (count == 0) {
-                example = "'" + text + "' in column '" + column.getName() + "' ("
-                          + Objects.requireNonNullElse(column.getType(), DataColumnType.TEXT).getDisplayValue()
-                          + ")";
-            }
-            count++;
-        }
-
-        private Optional<String> warning() {
-            if (count == 0) {
-                return Optional.empty();
-            }
-            return Optional.of(LogUtil.message(
-                    "{} {} not of {} column's type, so {} empty, e.g. {}.",
-                    count,
-                    count == 1 ? "value was" : "values were",
-                    count == 1 ? "its" : "their",
-                    count == 1 ? "it is" : "they are",
-                    example));
         }
     }
 }

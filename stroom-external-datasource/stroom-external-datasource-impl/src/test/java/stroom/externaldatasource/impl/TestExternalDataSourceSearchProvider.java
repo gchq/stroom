@@ -100,7 +100,8 @@ class TestExternalDataSourceSearchProvider {
                 new JdbcConnector(runner, resolver, null, fieldCache),
                 new AthenaConnector(athenaRunner, athenaResolver, null, fieldCache),
                 new CsvConnector(null, ExternalDataSourceConfig::new),
-                new ExcelConnector(null, ExternalDataSourceConfig::new));
+                new ExcelConnector(null, ExternalDataSourceConfig::new),
+                new LdapConnector(null, null, null, ExternalDataSourceConfig::new));
         provider = new ExternalDataSourceSearchProvider(
                 null, store, null, securityContext, null, null, null, null, null, fieldInfoResultPageFactory,
                 connectors);

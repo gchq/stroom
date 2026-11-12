@@ -37,11 +37,13 @@ class Connectors {
     Connectors(final JdbcConnector jdbcConnector,
                final AthenaConnector athenaConnector,
                final CsvConnector csvConnector,
-               final ExcelConnector excelConnector) {
+               final ExcelConnector excelConnector,
+               final LdapConnector ldapConnector) {
         add(jdbcConnector);
         add(athenaConnector);
         add(csvConnector);
         add(excelConnector);
+        add(ldapConnector);
         for (final ExternalDataSourceType type : ExternalDataSourceType.values()) {
             if (!connectors.containsKey(type)) {
                 throw new IllegalStateException("No connector for External Data Source type " + type);

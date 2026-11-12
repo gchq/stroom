@@ -25,6 +25,7 @@ import stroom.externaldatasource.shared.ExternalDataSourceDoc;
 import stroom.externaldatasource.shared.ExternalDataSourceTestResponse;
 import stroom.externaldatasource.shared.ExternalDataSourceType;
 import stroom.externaldatasource.shared.JdbcConnectionSettings;
+import stroom.externaldatasource.shared.LdapSettings;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.util.io.PathCreator;
@@ -80,16 +81,23 @@ class TestExternalDataSourceConnectionTester {
                 () -> config,
                 () -> storedSecrets);
         final SqlFieldCache fieldCache = Mockito.mock(SqlFieldCache.class);
+        final LdapConnector ldapConnector = new LdapConnector(
+                new LdapConnectionResolver(() -> config, () -> storedSecrets),
+                new LdapConnectionFactory(),
+                null,
+                () -> config);
         return new ExternalDataSourceConnectionTester(
                 () -> securityContext,
                 new Connectors(
                         new JdbcConnector(null, resolver, driverLoader, fieldCache),
                         new AthenaConnector(null, athenaResolver, connection -> athenaClient, fieldCache),
                         new CsvConnector(null, () -> config),
-                        new ExcelConnector(null, () -> config)),
+                        new ExcelConnector(null, () -> config),
+                        ldapConnector),
                 () -> config,
                 excelUploads,
-                () -> store);
+                () -> store,
+                ldapConnector);
     }
 
     private static ExternalDataSourceDoc athenaDoc(final String region) {
@@ -254,6 +262,45 @@ class TestExternalDataSourceConnectionTester {
         assertThatThrownBy(() -> tester(securityContext).test(doc(FakeJdbcDriver.URL)))
                 .isInstanceOf(PermissionException.class);
         assertThat(driver.getConnections()).isEmpty();
+    }
+
+    private static ExternalDataSourceDoc ldapDoc() {
+        return ExternalDataSourceDoc.builder()
+                .uuid("uuid-1")
+                .name("Staff")
+                .sourceType(ExternalDataSourceType.LDAP)
+                .ldap(LdapSettings.builder()
+                        .url("ldaps://directory.example.org:636")
+                        .credentialName("directory-reader")
+                        .baseDn("ou=People,dc=example,dc=org")
+                        .build())
+                .build();
+    }
+
+    @Test
+    void ldapAttributeDetectionNeedsEditPermission() {
+        // Detecting searches the directory with the credential the document names.
+        final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
+        Mockito.when(securityContext.hasDocumentPermission(Mockito.any(), Mockito.any())).thenReturn(false);
+
+        assertThatThrownBy(() -> tester(securityContext).detectColumns(ldapDoc()))
+                .isInstanceOf(PermissionException.class);
+    }
+
+    @Test
+    void ldapAttributeDetectionChecksTheSettingsFirst() {
+        // No LDAP URL is allowed by the configuration here, so nothing is contacted.
+        assertThatThrownBy(() -> tester(new MockSecurityContext()).detectColumns(ldapDoc()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("externalDataSource.allowedLdapUrlPatterns");
+    }
+
+    @Test
+    void ldapTestOfAUrlNotAllowedFails() {
+        final ExternalDataSourceTestResponse response = tester(new MockSecurityContext()).test(ldapDoc());
+
+        assertThat(response.isOk()).isFalse();
+        assertThat(response.getMessage()).contains("externalDataSource.allowedLdapUrlPatterns");
     }
 
     @Test

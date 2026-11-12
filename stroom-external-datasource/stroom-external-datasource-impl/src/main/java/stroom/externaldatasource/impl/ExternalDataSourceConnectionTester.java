@@ -37,7 +37,8 @@ import jakarta.inject.Singleton;
 import java.util.List;
 
 /// Tests and inspects the settings of an [ExternalDataSourceDoc] being edited, which need not have
-/// been saved: its connection, and the columns of its CSV or workbook.
+/// been saved: its connection, and the columns of its CSV or workbook, or the attributes of its LDAP
+/// directory.
 ///
 /// The editor never has an Excel document's workbook, so it is filled in here: from the upload the
 /// editor names, or else from the stored document.
@@ -49,6 +50,7 @@ public class ExternalDataSourceConnectionTester {
     private final Provider<ExternalDataSourceConfig> configProvider;
     private final ExcelUploads excelUploads;
     private final Provider<ExternalDataSourceStore> storeProvider;
+    private final LdapConnector ldapConnector;
 
     /// Creates the instance. Guice supplies every argument.
     @Inject
@@ -56,25 +58,32 @@ public class ExternalDataSourceConnectionTester {
                                        final Connectors connectors,
                                        final Provider<ExternalDataSourceConfig> configProvider,
                                        final ExcelUploads excelUploads,
-                                       final Provider<ExternalDataSourceStore> storeProvider) {
+                                       final Provider<ExternalDataSourceStore> storeProvider,
+                                       final LdapConnector ldapConnector) {
         this.securityContextProvider = securityContextProvider;
         this.connectors = connectors;
         this.configProvider = configProvider;
         this.excelUploads = excelUploads;
         this.storeProvider = storeProvider;
+        this.ldapConnector = ldapConnector;
     }
 
     /// Works out the columns of the document's CSV or workbook, with [ColumnDetector], from their first
-    /// [ColumnDetector#SAMPLE_ROWS] rows.
+    /// [ColumnDetector#SAMPLE_ROWS] rows; or for an LDAP directory, the attributes of its first
+    /// [LdapConnector#DETECT_SAMPLE_ENTRIES] entries, with the document's own credential.
     ///
-    /// @param doc The document, with its CSV settings and data, or its Excel settings.
-    /// @return The columns, in the order their values appear in each row.
+    /// @param doc The document, with its CSV settings and data, its Excel settings or its LDAP settings.
+    /// @return The columns, in the order their values appear in each row, or the attributes in the order
+    ///         they were first seen.
     /// @throws EntityServiceException   If no document is supplied, it has no data, or the data is over
     ///                                  the stored data limit.
     /// @throws PermissionException      If the current user may not edit the document.
     /// @throws IllegalArgumentException If the data cannot be read.
     public List<DataColumn> detectColumns(final ExternalDataSourceDoc doc) {
         checkEditPermission(doc);
+        if (ExternalDataSourceType.LDAP.equals(doc.getSourceType())) {
+            return ldapConnector.detectAttributes(doc);
+        }
         if (ExternalDataSourceType.EXCEL.equals(doc.getSourceType())) {
             final ExcelSettings excel = withWorkbook(doc).getExcel();
             if (excel == null || excel.getData() == null) {

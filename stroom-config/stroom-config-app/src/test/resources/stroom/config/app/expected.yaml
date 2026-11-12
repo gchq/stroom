@@ -573,8 +573,10 @@ appConfig:
     enabled: false
   externalDataSource:
     allowDefaultAwsCredentials: false
+    allowPlainLdap: false
     allowedAthenaOutputLocations: []
     allowedAthenaWorkGroups: []
+    allowedLdapUrlPatterns: []
     allowedUrlPatterns: []
     connectionPoolCache:
       expireAfterAccess: "PT10M"

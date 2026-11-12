@@ -46,6 +46,8 @@ dependencies {
     implementation libs.poi.ooxml
     implementation libs.restygwt
     implementation libs.slf4j.api
+    // The LDAP client. It has no dependencies and never resolves Java objects from a directory, as JNDI can.
+    implementation libs.unboundid.ldapsdk
 
     // The JDBC drivers Stroom ships. Others can be added through externalDataSource.driverDirectory.
     // They are compile dependencies because their URL parsers check the properties a URL sets.

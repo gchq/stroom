@@ -20,6 +20,7 @@ import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,6 +49,21 @@ class TestExternalDataSourceDoc {
                 .build();
     }
 
+    private static LdapSettings ldap() {
+        return LdapSettings.builder()
+                .url("ldaps://directory.example.org:636")
+                .startTls(false)
+                .credentialName("directory-reader")
+                .baseDn("ou=People,dc=example,dc=org")
+                .scope(LdapSearchScope.ONE_LEVEL)
+                .attributes(List.of(
+                        new DataColumn("cn", DataColumnType.TEXT),
+                        new DataColumn("whenCreated", DataColumnType.DATE)))
+                .pageSize(200)
+                .minRefreshMinutes(2)
+                .build();
+    }
+
     private static ExternalDataSourceDoc fullDoc() {
         return ExternalDataSourceDoc.builder()
                 .uuid("uuid-1")
@@ -57,6 +73,7 @@ class TestExternalDataSourceDoc {
                 .sourceType(ExternalDataSourceType.ATHENA)
                 .jdbc(jdbc())
                 .athena(athena())
+                .ldap(ldap())
                 .timeField("created_at")
                 .queryTimeoutSeconds(30)
                 .maxRows(5_000)
@@ -100,7 +117,7 @@ class TestExternalDataSourceDoc {
     void jsonOmitsUnsetValues() {
         final ExternalDataSourceDoc doc = new ExternalDataSourceDoc(
                 "uuid-1", "Bare", null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null);
 
         final String json = JsonUtil.writeValueAsString(doc);
 
@@ -109,6 +126,7 @@ class TestExternalDataSourceDoc {
                 .doesNotContain("jdbc")
                 .doesNotContain("athena")
                 .doesNotContain("csv")
+                .doesNotContain("ldap")
                 .doesNotContain("maxRows");
     }
 
@@ -143,6 +161,8 @@ class TestExternalDataSourceDoc {
         assertThat(doc.copy().jdbc(jdbc().copy().url("jdbc:postgresql://db/hr").build()).build())
                 .isNotEqualTo(doc);
         assertThat(doc.copy().athena(athena().copy().database("other").build()).build()).isNotEqualTo(doc);
+        assertThat(doc.copy().ldap(ldap().copy().baseDn("ou=Groups,dc=example,dc=org").build()).build())
+                .isNotEqualTo(doc);
         assertThat(doc.copy().timeField("updated_at").build()).isNotEqualTo(doc);
         assertThat(doc.copy().queryTimeoutSeconds(31).build()).isNotEqualTo(doc);
         assertThat(doc.copy().maxRows(5_001).build()).isNotEqualTo(doc);
@@ -162,8 +182,36 @@ class TestExternalDataSourceDoc {
     }
 
     @Test
+    void ldapSettingsTakePartInEquality() {
+        final LdapSettings settings = ldap();
+
+        assertThat(settings.copy().build()).isEqualTo(settings);
+        assertThat(settings.copy().url("ldaps://other:636").build()).isNotEqualTo(settings);
+        assertThat(settings.copy().startTls(true).build()).isNotEqualTo(settings);
+        assertThat(settings.copy().credentialName("other").build()).isNotEqualTo(settings);
+        assertThat(settings.copy().scope(LdapSearchScope.SUBTREE).build()).isNotEqualTo(settings);
+        assertThat(settings.copy().attributes(List.of()).build()).isNotEqualTo(settings);
+        assertThat(settings.copy().pageSize(201).build()).isNotEqualTo(settings);
+        assertThat(settings.copy().minRefreshMinutes(3).build()).isNotEqualTo(settings);
+    }
+
+    @Test
+    void jsonReadsLdapScopeByName() {
+        final String json = """
+                {"type":"ExternalDataSource","uuid":"uuid-1","name":"Staff","sourceType":"LDAP",
+                "ldap":{"url":"ldaps://dir:636","scope":"ONE_LEVEL"}}""";
+
+        final ExternalDataSourceDoc doc = JsonUtil.readValue(json, ExternalDataSourceDoc.class);
+
+        assertThat(doc.getSourceType()).isEqualTo(ExternalDataSourceType.LDAP);
+        assertThat(doc.getLdap().getScope()).isEqualTo(LdapSearchScope.ONE_LEVEL);
+        assertThat(doc.getLdap().getPageSize()).as("defaults are applied where used").isNull();
+    }
+
+    @Test
     void sourceTypesHaveDisplayValues() {
         assertThat(ExternalDataSourceType.JDBC.getDisplayValue()).isEqualTo("JDBC");
         assertThat(ExternalDataSourceType.ATHENA.getDisplayValue()).isEqualTo("Amazon Athena");
+        assertThat(ExternalDataSourceType.LDAP.getDisplayValue()).isEqualTo("LDAP");
     }
 }

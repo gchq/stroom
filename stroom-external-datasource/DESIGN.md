@@ -1,6 +1,6 @@
 # SQL Data Source Design
 
-Snapshot of the design document, last updated 2026-11-10
+Snapshot of the design document, last updated 2026-11-12
 
 ## Summary
 
@@ -123,7 +123,7 @@ A query runs once, on the node that received the search, as one task. There is n
 
 **Streaming.** Rows go straight to the coprocessors, so memory use is bounded by the result store, not the result set. MySQL needs `useCursorFetch=true` for the fetch size to take effect; the editor's help says so.
 
-**Analytics.** Scheduled-query rules and reports run their queries through the search providers, so they work. Streaming and table-builder rules run per event in a pipeline, so they cannot use a SQL data source. They already require a View as their data source, and Views refuse SQL Data Sources, so such a rule fails when it runs with "Rule needs to reference a view", as it would for an index. Scheduled rules resolve their time range against the run's execution time, so `:from` and `:to` take the run's window, catch-up runs included.
+**Analytics.** Scheduled-query rules and reports run their queries through the search providers, so they work. Streaming and table-builder rules run per event in a pipeline, so they cannot use a SQL data source. They already require a View as their data source, and Views refuse SQL Data Sources, so such a rule fails when it runs with "Rule needs to reference a view", as it would for an index. Scheduled rules resolve their time range against the run's execution time, so \`:from\` and \`:to\` take the run's window, catch-up runs included.
 
 ## Amazon Athena
 
@@ -212,9 +212,79 @@ Query timeout and maximum rows stay above the type panels and apply to every typ
 
 A new Athena setting, **Max data scanned (GB)**, empty for none. While polling `GetQueryExecution`, Stroom reads `DataScannedInBytes`. Once over the limit it stops the query with `StopQueryExecution` and reports how much was scanned. The statistics lag the scan, so a query can pass the limit by what it reads in one poll; the docs say so and point admins at the workgroup's `BytesScannedCutoffPerQuery`, the hard limit. Data scanned is shown after every run, in StroomQL and on dashboards.
 
+## LDAP (stage 10)
+
+An **LDAP** type fits the connector design without changing stages 1 to 9: an `LdapConnector` beside `JdbcConnector` and `AthenaConnector`, with the LDAP search filter in the query, the base DN and scope in the document, and directory attributes as fields. It is stage 10 of this issue, decided with decisions 20 to 28 on 12 November 2026.
+
+Searching, the row limit, the query timeout, the minimum refresh, permissions, dashboards and scheduled analytics all come from the existing `ExternalDataSourceSearchProvider` unchanged. Most of the new thought is in how attributes become fields and in security.
+
+### What a query looks like
+
+The filter goes in the existing `sql` clause (decision 21). Named parameters work as in SQL, escaped as LDAP filter values; Stroom's own clauses then work on the entries as rows.
+
+```
+from "Staff Directory"
+sql """
+(&(objectClass=person)(department=:dept))
+"""
+where title = "Engineer"
+sort by cn
+select cn, mail, department, whenCreated
+```
+
+### LDAP settings
+
+| Setting | Notes |
+| --- | --- |
+| URL | `ldaps://host:636`, or `ldap://` with StartTLS on. Must match the new `allowedLdapUrlPatterns` property, empty by default, so LDAP is off until an administrator allows a server. |
+| Use StartTLS | For `ldap://` URLs. Plain unencrypted LDAP is refused (decision 25). |
+| Credential | Username and password credential: the bind DN and its password. Required (decision 26). |
+| Base DN | Where searches start, e.g. `ou=People,dc=example,dc=org`. Set in the document only (decision 22). |
+| Scope | Base, one level or subtree. Default: subtree. |
+| Attributes | The columns table from CSV and Excel, one row per attribute with its type, filled by a Detect Attributes button (decision 23). |
+| Page size | Entries fetched per page with the paged results control. Default: 500. |
+| Time column, query timeout, max rows, minimum refresh | As for the other types. |
+
+### LDAP fields
+
+Each listed attribute is a field, read as its type; `dn` is always a field too. Entries in a directory need not share attributes, so an attribute an entry lacks is empty, with no warning.
+
+| Type | Read from |
+| --- | --- |
+| Text | Any attribute; the default. |
+| Long | Integer syntax, e.g. `uidNumber`. |
+| Date | GeneralizedTime syntax, e.g. `whenCreated`, `modifyTimestamp`. Active Directory's FILETIME integers (`lastLogonTimestamp`, `pwdLastSet`) are also read as dates when typed Date. |
+| Boolean | Boolean syntax, `TRUE` or `FALSE`. |
+
+An attribute with several values gives one field value with the values joined by ` ;  ` (decision 24). Binary attributes (`objectGUID`, `jpegPhoto`, any `;binary`) are left out of Detect Attributes and give base64 text if listed.
+
+### LDAP execution
+
+1. Connect to the URL, StartTLS if set, and bind with the credential. A connection per query, as Athena builds a client per query: binds are cheap and nothing is shared between users.
+2. Search the base DN and scope with the filter and only the listed attributes, using the paged results control (RFC 2696) and the server time limit set to the query timeout.
+3. Stop at max rows with the usual warning. A server's own size or time limit ends the search with a warning naming it, keeping the entries read so far.
+4. Referrals are not followed; each one is reported as a warning.
+5. Cancelling the search abandons the LDAP operation and closes the connection.
+
+`:from` and `:to` take the time range as GeneralizedTime, for filters such as `(modifyTimestamp>=:from)`. Without them, the time column filters entries in Stroom, as for JDBC (decision 27). Test Connection binds and reads the base DN entry, and reports the server's vendor and whether it supports paged results.
+
+### LDAP security
+
+- **No JNDI.** The UnboundID SDK (decision 20) never resolves Java objects from a directory, so the remote class loading behind Log4Shell cannot happen through it.
+- **Filter injection.** Parameter values are escaped as RFC 4515 filter values, so a value can only ever match. A test like the SQL one shows `*)(uid=*` matched as text.
+- **Allow list.** `allowedLdapUrlPatterns`, empty by default, as `allowedUrlPatterns` is for JDBC.
+- **TLS required.** `ldaps://` or StartTLS, trusting Stroom's JVM trust store. A new `allowPlainLdap` property, off by default, is the only way to use plain `ldap://`.
+- **Bind account.** Use permission on the credential is the per-user control, as for JDBC. The documentation tells administrators to use an account the directory lets read only the entries and attributes Stroom needs, as directories hold personal data.
+
+### LDAP decisions
+
+Decisions 20 to 28 in the Decisions table settle the client library, the filter, the base DN, fields, multi-valued attributes, TLS, anonymous bind, the time range and timing.
+
+Sources: [UnboundID LDAP SDK 5.0.0 under the Apache License](https://ldap.com/2020/02/27/unboundid-ldap-sdk-for-java-5-0-0-now-available-under-the-apache-license/), [SDK documentation](https://docs.ldap.com/ldap-sdk/docs).
+
 ## Work plan
 
-The work splits into nine stages; each ends with code that compiles, has tests and can be reviewed alone. Stages 1 to 4 give working StroomQL queries against JDBC and Athena from the API before any UI. If Athena is needed first, stage 4 can come before stage 3.
+The work splits into ten stages; each ends with code that compiles, has tests and can be reviewed alone. Stages 1 to 4 give working StroomQL queries against JDBC and Athena from the API before any UI. If Athena is needed first, stage 4 can come before stage 3.
 
 - [x] **1. Shared model.** `SqlDataSourceDoc`, `SqlConnectionType`, `JdbcConnectionSettings` and `AthenaConnectionSettings` in `stroom-core-shared` (`stroom.sqldatasource.shared`), where other document types live; the `SqlDataSource` document type, with a stand-in icon; `nativeQuery` on `Query`; `SqlDataSourceConfig` in the new `stroom-sql-datasource-impl` module, under `sqlDataSource` in `AppConfig`; `expected.yaml` regenerated.
 
@@ -367,11 +437,18 @@ The work splits into nine stages; each ends with code that compiles, has tests a
      **Audit of 8d, 11 November 2026.** One independent review found no bug: the limit is checked after the finished, failed and cancelled states, on the first poll too, a queued query cannot trip it, the limit cannot overflow, and the query is stopped in Athena by its own ID. Fixed after it (457 unit tests, checkstyle and the GWT draft compile clean): the message gives both amounts in MB, e.g. "stopped after scanning 1.5 MB, more than the limit of 1 MB"; a document with no limit keeps none rather than gaining a stored 0; the new tests moved above the test class's inner class, as AGENTS.md asks; new tests cover exactly the limit, the stop's query ID and the document's limit in Check Connection. Left to check by hand: that Athena fills in the data scanned while a query runs, which no test here can show; the workgroup limit covers it if not.
 - [ ] **9. Analytics, docs and changelog.** Integration tests for a scheduled rule and a report on an External Data Source (both already work through `SearchRequestFactory`; streaming and table-builder rules already fail at run time); the `stroom-docs` page; `./log_change.sh Feature 6010 "…"`; full build and Docker images; drop the test database's leftover `sqlds_test_reader` user and `stroom_sqlds_run` database.
 
-  Analytics tests done 11 November 2026, unstaged: `TestExternalDataSourceAnalytics` in stroom-app, 5 tests over a CSV of sign-in events whose times are relative to the run, beside the existing analytics tests, all 35 passing together. StroomQL counts the failures by user; a scheduled rule writes a detection for each failed sign-in; a scheduled rule with the time range "now() - 1h" to "now()" and the document's time column sees only the two failures in the last hour, so the range is worked out against the run time; a report groups the failures by user and writes the expected CSV; a streaming rule over the CSV is refused with "Rule needs to reference a view". No refusal on saving a streaming rule was added, as the run-time error is clear.
+  Analytics tests done 11 November 2026, committed as c9ba29625e: `TestExternalDataSourceAnalytics` in stroom-app, 5 tests over a CSV of sign-in events whose times are relative to the run, beside the existing analytics tests, all 35 passing together. StroomQL counts the failures by user; a scheduled rule writes a detection for each failed sign-in; a scheduled rule with the time range "now() - 1h" to "now()" and the document's time column sees only the two failures in the last hour, so the range is worked out against the run time; a report groups the failures by user and writes the expected CSV; a streaming rule over the CSV is refused with "Rule needs to reference a view". No refusal on saving a streaming rule was added, as the run-time error is clear.
 
   **Audit of the analytics tests, 11 November 2026.** One independent review found no flakiness: the schedule runs exactly once, and the windows hold unless a test takes over 20 minutes. It found two tests that did not fully prove their names, now fixed (6 tests, 36 with the other analytics tests, all passing): the time-range test runs the rule as if 90 minutes ago, so only bob's two-hour-old failure is in its last hour, proving the range is worked out against the run time rather than the clock, with a second test for the time column run now; the streaming test also checks the rule's data source resolved to the External Data Source, as a missing data source gives the same refusal. Each run now checks one stream was written before reading it; the CSV documents the class makes are deleted afterwards; the hooks have javadoc.
+- [ ] 10\. LDAP. LDAP type in ExternalDataSourceType with LdapSettings; LdapConnector on the UnboundID LDAP SDK (bind, StartTLS, paged search, server limits as warnings, referrals reported, abandon on cancel); RFC 4515 escaping of parameters; attribute types and joined multiple values; Detect Attributes; allowedLdapUrlPatterns and allowPlainLdap properties; the editor section; Test Connection; integration tests on UnboundID's in-memory directory, including filter injection and a refused plain URL. Built before stage 9 finishes, so stage 9's docs, changelog and build checks cover it.
+  - 10a (server) and 10b (editor) are built and not yet committed. UnboundID LDAP SDK 7.0.6 is a new dependency of the impl module, and a test dependency of stroom-app.
+  - The attributes table gains, for LDAP only, a Remove button on each attribute and a box to add one by name, as directories have many attributes and operational ones such as modifyTimestamp are only returned by name. Detect Attributes asks for every user attribute plus createTimestamp and modifyTimestamp.
+  - The certificate must be trusted by the JVM trust store and name the host; a test serves a certificate for another host and shows it refused.
+  - A typed attribute with several values, or a binary one, is empty with the usual warning; as Text it is joined, or base64.
+  - The filter's placeholders only start after =, \~=, >=, <= or \*, so extensible match filters such as (cn:caseExactMatch:=Fred) and values holding colons are left alone.
+  - StroomQL's messages about a missing or misplaced sql clause now mention LDAP filters too.
 
-**Tests.** Unit tests mock `ResultSetMetaData` and `ResultSet` for type mapping, placeholder rewriting, the single-statement check and the URL allow and deny lists. Integration tests point a document at the test MySQL database from `stroomTestDb.yml` and query a table made by the test. A PostgreSQL test needs a driver Stroom does not ship today, so it waits on the driver decision. Athena unit tests mock `AthenaClient`; a manual test against a real workgroup with a small scan limit checks the end-to-end path.
+**Tests.** Unit tests mock `ResultSetMetaData` and `ResultSet` for type mapping, placeholder rewriting, the single-statement check and the URL allow and deny lists. Integration tests point a document at the test MySQL database from `stroomTestDb.yml` and query a table made by the test. A PostgreSQL test needs a driver Stroom does not ship today, so it waits on the driver decision. Athena unit tests mock \`AthenaClient\`; a manual test against a real workgroup with a small scan limit checks the end-to-end path.
 
 **Test content pack.** `stroom-sql-datasource/StroomDB-SqlDataSource-Examples.zip` imports a folder, *SQL Data Source Examples*, with a SQL Data Source named *Stroom DB* pointed at Stroom's own MySQL database and five StroomQL queries: nodes; streams by feed and type; streams created per day, using the time range as `:from{epochMillis}`; the biggest feeds, grouped in the database; and processor tasks by status. The MySQL driver is already shipped, and the database always holds real data. The pack tests the JDBC path only; Athena still needs its own test. A dashboard is not included yet.
 
@@ -379,6 +456,7 @@ The work splits into nine stages; each ends with code that compiles, has tests a
 - **The URL differs by deployment.** In dev it is `jdbc:mysql://localhost:3307/stroom` (`dev.yml`); elsewhere the host or database name differs. The admin edits it, and it must match `allowedUrlPatterns`.
 - **Use a read-only MySQL user with `SELECT` on the example tables only.** `stroomuser` can write to every table, and the `credential`, `api_key` and user tables must not be readable. The data source's Documentation tab gives the `GRANT`s.
 - **Dev and test only.** Reading `meta` directly bypasses Stroom's feed permissions.
+- **LDAP examples.** A *Directory* source (LDAP, `inetOrgPerson` attributes, credential `Directory Reader`, time column `createTimestamp`) with set-up notes for any directory, including Active Directory's attribute names, and three queries: People in the directory, People by department, and People added recently, whose filter takes the time range. TestExternalDataSourceExamplePack runs all three against UnboundID's in-memory directory, set up as the notes say.
 
 ## Decisions
 
@@ -405,3 +483,12 @@ Decisions 1 to 10 were made on 10 November 2026; eight follow the recommendation
 | 17 | How CSV gets in | An Ace editor to paste into, with an Upload button | Paste only |
 | 18 | Staging | Stage 8 in this issue (8a to 8d); docs move to stage 9 | Rename now, CSV and Excel in a later issue |
 | 19 | Excel format | Keep the uploaded file, so it can be downloaded again | Convert to CSV and drop the file |
+| 20 | LDAP client | UnboundID LDAP SDK (Apache 2.0), also used for the in-memory test directory | The JDK's JNDI |
+| 21 | Where the LDAP filter goes | The existing sql clause; a generic clause name can come later | A new generic clause now; no filter, the where clause turned into one |
+| 22 | Where LDAP base DN and scope live | In the document only | Overridable in each query |
+| 23 | Where LDAP fields come from | An attributes table in the document, filled by Detect Attributes | Each query's returned attributes |
+| 24 | Attributes with several values | One value, joined by "; " | First value only; one row per value |
+| 25 | Plain ldap:// without TLS | Refused unless an administrator turns on allowPlainLdap | Always allowed; never allowed |
+| 26 | Anonymous LDAP bind | Not allowed: a credential is required | Allowed when no credential is chosen |
+| 27 | LDAP time range | :from/:to in the filter, or the time column filtered in Stroom, as for JDBC | Always added to the filter by Stroom |
+| 28 | When LDAP is built | Stage 10 of #6010, on this branch | A new issue after #6010 is merged |

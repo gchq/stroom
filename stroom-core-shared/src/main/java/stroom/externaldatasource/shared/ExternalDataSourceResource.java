@@ -83,18 +83,21 @@ public interface ExternalDataSourceResource
     ExternalDataSourceTestResponse testConnection(
             @Parameter(description = "externalDataSourceDoc", required = true) ExternalDataSourceDoc doc);
 
-    /// Works out the columns of a document's CSV, which need not be saved: their names from the header
-    /// row and their types from the values. A column of the same name already in the document keeps
-    /// its type.
+    /// Works out the columns of a document's CSV or Excel workbook, which need not be saved: their
+    /// names from the header row and their types from the values. For an LDAP directory, works out the
+    /// attributes of its first entries below the base DN, searching with the document's credential. A
+    /// column of the same name already in the document keeps its type.
     ///
     /// The caller must be able to edit the document.
     ///
-    /// @param doc The document, with its CSV settings and data.
-    /// @return The columns, in the order their values appear in each row.
+    /// @param doc The document, with its CSV settings and data, its Excel settings or its LDAP settings.
+    /// @return The columns, in the order their values appear in each row, or the attributes in the order
+    ///         they were first seen.
     @POST
     @Path("/detectColumns")
     @Operation(
-            summary = "Detect the columns of an external data source's CSV",
+            summary = "Detect the columns of an external data source's CSV or workbook, or the attributes of "
+                      + "its LDAP directory",
             operationId = "detectExternalDataSourceColumns")
     List<DataColumn> detectColumns(
             @Parameter(description = "externalDataSourceDoc", required = true) ExternalDataSourceDoc doc);

@@ -38,6 +38,8 @@ import stroom.externaldatasource.shared.ExternalDataSourceDoc;
 import stroom.externaldatasource.shared.ExternalDataSourceResource;
 import stroom.externaldatasource.shared.ExternalDataSourceType;
 import stroom.externaldatasource.shared.JdbcConnectionSettings;
+import stroom.externaldatasource.shared.LdapSearchScope;
+import stroom.externaldatasource.shared.LdapSettings;
 import stroom.importexport.client.presenter.ImportUtil;
 import stroom.item.client.SelectionBox;
 import stroom.task.client.TaskMonitorFactory;
@@ -60,8 +62,9 @@ import java.util.function.Consumer;
 
 /// The settings tab of an External Data Source: its type, the settings of that type, and its limits.
 ///
-/// JDBC and Amazon Athena each have their own credential picker, listing only the credentials they can
-/// use: usernames and passwords for JDBC, AWS access keys for Athena. CSV has an editor for the data,
+/// JDBC, Amazon Athena and LDAP each have their own credential picker, listing only the credentials they
+/// can use: usernames and passwords for JDBC and LDAP, AWS access keys for Athena. LDAP has a table of
+/// the attributes read from each entry, which can be detected or added by name. CSV has an editor for the data,
 /// which a file can be read into, and its columns. Excel has an upload for the workbook, which the editor
 /// never holds, and its columns. The settings of every type are kept, so switching
 /// type and back loses nothing.
@@ -76,6 +79,7 @@ public class ExternalDataSourceSettingsPresenter
     private final LocationManager locationManager;
     private final CredentialChoice jdbcCredential = new CredentialChoice();
     private final CredentialChoice athenaCredential = new CredentialChoice();
+    private final CredentialChoice ldapCredential = new CredentialChoice();
     private final EditorPresenter csvEditor;
     // Counts reads and column detections, so a detection reply that arrives after the document was
     // read again, or after a later detection, is ignored.
@@ -125,6 +129,8 @@ public class ExternalDataSourceSettingsPresenter
                 eventBus, credentialClient, CredentialType.USERNAME_PASSWORD));
         view.getAthenaCredentialSelectionBox().setModel(credentialModel(
                 eventBus, credentialClient, CredentialType.AWS_KEY));
+        view.getLdapCredentialSelectionBox().setModel(credentialModel(
+                eventBus, credentialClient, CredentialType.USERNAME_PASSWORD));
         registerHandler(view.getJdbcCredentialSelectionBox().addValueChangeHandler(event -> {
             jdbcCredential.pick(event.getValue());
             view.setJdbcCredentialNote(null);
@@ -132,6 +138,10 @@ public class ExternalDataSourceSettingsPresenter
         registerHandler(view.getAthenaCredentialSelectionBox().addValueChangeHandler(event -> {
             athenaCredential.pick(event.getValue());
             view.setAthenaCredentialNote(null);
+        }));
+        registerHandler(view.getLdapCredentialSelectionBox().addValueChangeHandler(event -> {
+            ldapCredential.pick(event.getValue());
+            view.setLdapCredentialNote(null);
         }));
         view.setUiHandlers(this);
     }
@@ -185,6 +195,19 @@ public class ExternalDataSourceSettingsPresenter
                 athenaCredential,
                 view.getAthenaCredentialSelectionBox(),
                 view::setAthenaCredentialNote);
+
+        final LdapSettings ldap = Objects.requireNonNullElse(doc.getLdap(), LdapSettings.builder().build());
+        view.setLdapUrl(ldap.getUrl());
+        view.setLdapStartTls(Boolean.TRUE.equals(ldap.getStartTls()));
+        view.setLdapBaseDn(ldap.getBaseDn());
+        view.setLdapScope(Objects.requireNonNullElse(ldap.getScope(), LdapSearchScope.SUBTREE));
+        view.setLdapPageSize(Objects.requireNonNullElse(ldap.getPageSize(), LdapSettings.DEFAULT_PAGE_SIZE));
+        view.setLdapMinRefreshMinutes(Objects.requireNonNullElse(ldap.getMinRefreshMinutes(), 0));
+        view.setLdapAttributes(NullSafe.list(ldap.getAttributes()));
+        showCredential(ldap.getCredentialName(),
+                ldapCredential,
+                view.getLdapCredentialSelectionBox(),
+                view::setLdapCredentialNote);
 
         final CsvSettings csv = Objects.requireNonNullElse(doc.getCsv(), CsvSettings.builder().build());
         view.setCsvDelimiter(csv.getDelimiter());
@@ -273,11 +296,54 @@ public class ExternalDataSourceSettingsPresenter
                 .sourceType(view.getSourceType())
                 .jdbc(jdbc)
                 .athena(athena)
+                .ldap(writeLdap(doc.getLdap()))
                 .csv(writeCsv(doc.getCsv()))
                 .excel(writeExcel(doc))
                 .timeField(blankToNull(view.getTimeField()))
                 .queryTimeoutSeconds(view.getQueryTimeoutSeconds())
                 .maxRows(view.getMaxRows())
+                .build();
+    }
+
+    // No LDAP settings for a document that has never had any, as for CSV. A value the document left
+    // unset is kept unset while the editor shows its default.
+    private LdapSettings writeLdap(final LdapSettings stored) {
+        final ExternalDataSourceSettingsView view = getView();
+        final String url = blankToNull(view.getLdapUrl());
+        final String baseDn = blankToNull(view.getLdapBaseDn());
+        final List<DataColumn> attributes = view.getLdapAttributes();
+        if (stored == null
+            && url == null
+            && baseDn == null
+            && ldapCredential.getName() == null
+            && attributes.isEmpty()
+            && view.getSourceType() != ExternalDataSourceType.LDAP) {
+            return null;
+        }
+        final LdapSettings previous = Objects.requireNonNullElse(stored, LdapSettings.builder().build());
+        final boolean startTls = view.isLdapStartTls();
+        final LdapSearchScope scope = view.getLdapScope();
+        final int pageSize = view.getLdapPageSize();
+        final int minRefreshMinutes = view.getLdapMinRefreshMinutes();
+        return LdapSettings.builder()
+                .url(url)
+                .startTls(previous.getStartTls() == null && !startTls
+                        ? null
+                        : startTls)
+                .credentialName(ldapCredential.getName())
+                .baseDn(baseDn)
+                .scope(previous.getScope() == null && scope == LdapSearchScope.SUBTREE
+                        ? null
+                        : scope)
+                .attributes(sameColumns(previous.getAttributes(), attributes)
+                        ? previous.getAttributes()
+                        : attributes)
+                .pageSize(previous.getPageSize() == null && pageSize == LdapSettings.DEFAULT_PAGE_SIZE
+                        ? null
+                        : pageSize)
+                .minRefreshMinutes(previous.getMinRefreshMinutes() == null && minRefreshMinutes == 0
+                        ? null
+                        : minRefreshMinutes)
                 .build();
     }
 
@@ -415,14 +481,16 @@ public class ExternalDataSourceSettingsPresenter
         // Send the CSV as edited, with the document's identity, as the server checks the user can
         // edit it.
         final ExternalDataSourceDoc doc = onWrite(getEntity());
-        final boolean excel = ExternalDataSourceType.EXCEL.equals(doc.getSourceType());
+        final ExternalDataSourceType type = doc.getSourceType();
         final int thisDetection = ++detection;
         restFactory
                 .create(EXTERNAL_DATA_SOURCE_RESOURCE)
                 .method(res -> res.detectColumns(doc))
                 .onSuccess(columns -> {
                     if (thisDetection == detection) {
-                        if (excel) {
+                        if (ExternalDataSourceType.LDAP.equals(type)) {
+                            getView().setLdapAttributes(columns);
+                        } else if (ExternalDataSourceType.EXCEL.equals(type)) {
                             getView().setExcelColumns(columns);
                         } else {
                             getView().setCsvColumns(columns);
@@ -432,7 +500,12 @@ public class ExternalDataSourceSettingsPresenter
                 })
                 .onFailure(error -> {
                     if (thisDetection == detection) {
-                        AlertEvent.fireError(this, "Unable to detect the columns", error.getMessage(), null);
+                        AlertEvent.fireError(this,
+                                ExternalDataSourceType.LDAP.equals(type)
+                                        ? "Unable to detect the attributes"
+                                        : "Unable to detect the columns",
+                                error.getMessage(),
+                                null);
                     }
                 })
                 .taskMonitorFactory(taskMonitorFactory)
@@ -629,6 +702,56 @@ public class ExternalDataSourceSettingsPresenter
 
         /// @param megabytes The Athena data scan limit to show, in MB; 0 for none.
         void setAthenaMaxDataScannedMb(int megabytes);
+
+        /// @return The LDAP URL as entered.
+        String getLdapUrl();
+
+        /// @param url The LDAP URL to show, or `null`.
+        void setLdapUrl(String url);
+
+        /// @return True if StartTLS is to be used on an `ldap://` connection.
+        boolean isLdapStartTls();
+
+        /// @param startTls True if StartTLS is to be used on an `ldap://` connection.
+        void setLdapStartTls(boolean startTls);
+
+        /// @return The picker of the LDAP bind credential.
+        SelectionBox<Credential> getLdapCredentialSelectionBox();
+
+        /// Shows or hides a note about the LDAP bind credential.
+        ///
+        /// @param note The note, or `null` to hide it.
+        void setLdapCredentialNote(String note);
+
+        /// @return The base DN as entered.
+        String getLdapBaseDn();
+
+        /// @param baseDn The base DN to show, or `null`.
+        void setLdapBaseDn(String baseDn);
+
+        /// @return The search scope chosen.
+        LdapSearchScope getLdapScope();
+
+        /// @param scope The search scope to show.
+        void setLdapScope(LdapSearchScope scope);
+
+        /// @return The entries fetched in each page.
+        int getLdapPageSize();
+
+        /// @param pageSize The page size to show.
+        void setLdapPageSize(int pageSize);
+
+        /// @return The shortest automatic dashboard refresh of an LDAP source, in minutes; 0 for none.
+        int getLdapMinRefreshMinutes();
+
+        /// @param minutes The shortest automatic dashboard refresh of an LDAP source to show.
+        void setLdapMinRefreshMinutes(int minutes);
+
+        /// @return The attributes read from each entry, with the types chosen.
+        List<DataColumn> getLdapAttributes();
+
+        /// @param attributes The attributes to show.
+        void setLdapAttributes(List<DataColumn> attributes);
 
         /// @return The CSV delimiter chosen.
         String getCsvDelimiter();

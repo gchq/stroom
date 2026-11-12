@@ -10,7 +10,7 @@
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="externalDataSourceType"
                         label="Type"
-                        helpText="Where the data comes from: a database reached by JDBC, Amazon Athena through the AWS SDK, or CSV or an Excel workbook held in this document. Queries of a JDBC or Athena source give their SQL in a sql clause; CSV and Excel are queried with Stroom's own clauses.">
+                        helpText="Where the data comes from: a database reached by JDBC, Amazon Athena through the AWS SDK, an LDAP directory, or CSV or an Excel workbook held in this document. Queries of a JDBC or Athena source give their SQL in a sql clause, and queries of an LDAP directory their search filter; CSV and Excel are queried with Stroom's own clauses.">
             <l:SelectionBox ui:field="sourceType" width="400px"/>
         </form:FormGroup>
 
@@ -97,6 +97,51 @@
             </form:FormGroup>
         </g:FlowPanel>
 
+        <g:FlowPanel ui:field="ldapSettings" styleName="form-section">
+            <form:FormGroup identity="externalDataSourceLdapUrl"
+                            label="LDAP URL"
+                            helpText="The directory's URL: its scheme, host and port only, e.g. ldaps://directory.example.org:636. It must match one of the patterns an administrator has allowed in the externalDataSource.allowedLdapUrlPatterns property. The certificate must be trusted by Stroom's Java trust store and name the host.">
+                <g:TextBox ui:field="ldapUrl" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup helpText="Whether to start TLS on an ldap:// connection before binding, so the password and results are encrypted. An ldaps:// connection is always encrypted. Plain ldap:// without StartTLS can only be used if an administrator turns on externalDataSource.allowPlainLdap. Default: off">
+                <tickbox:CustomCheckBox ui:field="ldapStartTls"
+                                        identity="externalDataSourceLdapStartTls"
+                                        label="Use StartTLS"/>
+            </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceLdapCredential"
+                            label="Credential"
+                            helpText="The username and password credential to bind with: its username is the bind DN, e.g. cn=stroom-reader,ou=Services,dc=example,dc=org. You need Use permission on it, as does anyone who queries this data source. Anonymous binds are not allowed. Use an account that can only read the entries and attributes Stroom needs, as directories hold personal data.">
+                <form:DescriptionHTML ui:field="ldapCredentialNote"/>
+                <l:SelectionBox ui:field="ldapCredential" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceLdapBaseDn"
+                            label="Base DN"
+                            helpText="Where searches start, e.g. ou=People,dc=example,dc=org. Queries cannot search outside it.">
+                <g:TextBox ui:field="ldapBaseDn" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceLdapScope"
+                            label="Scope"
+                            helpText="How far below the base DN searches reach: the base entry only, the entries directly below it, or the whole subtree. Default: the whole subtree">
+                <l:SelectionBox ui:field="ldapScope" width="400px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceLdapPageSize"
+                            label="Page Size"
+                            helpText="How many entries are fetched in each page of results. The directory's own size limit for the bind account still applies, and ends a search early with a warning. Default: 500">
+                <v:ValueSpinner ui:field="ldapPageSize" width="200px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="externalDataSourceLdapMinRefreshMinutes"
+                            label="Minimum Refresh (minutes)"
+                            helpText="The shortest interval at which a dashboard may rerun a query of this data source automatically, to limit the load on the directory. 0 sets no minimum beyond the dashboard's own 10 seconds. Default: 0">
+                <v:ValueSpinner ui:field="ldapMinRefreshMinutes" width="200px"/>
+            </form:FormGroup>
+            <b:Button ui:field="detectLdapAttributes" text="Detect Attributes" width="200px" addStyleNames="allow-focus"/>
+            <form:FormGroup identity="externalDataSourceLdapAttributes"
+                            label="Attributes"
+                            helpText="The attributes read from each entry. Each becomes a query field of the same name, after dn, which every entry has. An attribute an entry lacks is empty. Text joins several values with '; '; other types need a single value, and a value that is not of its type is empty, and the query warns. Date reads LDAP times and Active Directory's FILETIME numbers. Detect Attributes lists those of the first 100 entries, keeping a type you set here; add others, such as operational attributes, by name.">
+                <edv:DataColumnsPanel ui:field="ldapAttributes"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+
         <g:FlowPanel ui:field="csvSettings" styleName="form-section">
             <form:FormGroup identity="externalDataSourceCsvDelimiter"
                             label="Delimiter"
@@ -157,7 +202,7 @@
         <g:FlowPanel ui:field="timeFieldSettings" styleName="form-section">
             <form:FormGroup identity="externalDataSourceTimeField"
                             label="Time Column (optional)"
-                            helpText="A date column of the data. When a query has a time range, rows are filtered on this column in Stroom. For JDBC this is only done when the SQL has no :from or :to placeholder; for CSV and Excel it must be a Date column. With none, the time range is ignored and the query says so.">
+                            helpText="A date column of the data. When a query has a time range, rows are filtered on this column in Stroom. For JDBC and LDAP this is only done when the SQL or filter has no :from or :to placeholder; for LDAP, CSV and Excel it must be a Date column or attribute. With none, the time range is ignored and the query says so.">
                 <g:TextBox ui:field="timeField" width="400px"/>
             </form:FormGroup>
         </g:FlowPanel>

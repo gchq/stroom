@@ -33,6 +33,7 @@ class TestConnectors {
     private final AthenaConnector athenaConnector = connector(AthenaConnector.class, ExternalDataSourceType.ATHENA);
     private final CsvConnector csvConnector = connector(CsvConnector.class, ExternalDataSourceType.CSV);
     private final ExcelConnector excelConnector = connector(ExcelConnector.class, ExternalDataSourceType.EXCEL);
+    private final LdapConnector ldapConnector = connector(LdapConnector.class, ExternalDataSourceType.LDAP);
 
     private static <T extends Connector> T connector(final Class<T> type, final ExternalDataSourceType sourceType) {
         final T connector = Mockito.mock(type);
@@ -43,7 +44,8 @@ class TestConnectors {
     @ParameterizedTest
     @EnumSource(ExternalDataSourceType.class)
     void everyTypeHasItsConnector(final ExternalDataSourceType type) {
-        final Connectors connectors = new Connectors(jdbcConnector, athenaConnector, csvConnector, excelConnector);
+        final Connectors connectors = new Connectors(jdbcConnector, athenaConnector, csvConnector, excelConnector,
+                ldapConnector);
 
         assertThat(connectors.get(type).getType()).isEqualTo(type);
     }
@@ -51,7 +53,8 @@ class TestConnectors {
     @Test
     void documentWithNoTypeIsJdbc() {
         // Documents saved before there were other types have none.
-        final Connectors connectors = new Connectors(jdbcConnector, athenaConnector, csvConnector, excelConnector);
+        final Connectors connectors = new Connectors(jdbcConnector, athenaConnector, csvConnector, excelConnector,
+                ldapConnector);
         final ExternalDataSourceDoc doc = ExternalDataSourceDoc.builder()
                 .uuid("uuid-1")
                 .sourceType(null)
@@ -62,7 +65,8 @@ class TestConnectors {
 
     @Test
     void documentGetsTheConnectorForItsType() {
-        final Connectors connectors = new Connectors(jdbcConnector, athenaConnector, csvConnector, excelConnector);
+        final Connectors connectors = new Connectors(jdbcConnector, athenaConnector, csvConnector, excelConnector,
+                ldapConnector);
         final ExternalDataSourceDoc doc = ExternalDataSourceDoc.builder()
                 .uuid("uuid-1")
                 .sourceType(ExternalDataSourceType.ATHENA)
@@ -77,7 +81,7 @@ class TestConnectors {
         final JdbcConnector secondJdbc = connector(JdbcConnector.class, ExternalDataSourceType.JDBC);
         final AthenaConnector misnamed = connector(AthenaConnector.class, ExternalDataSourceType.JDBC);
 
-        assertThatThrownBy(() -> new Connectors(secondJdbc, misnamed, csvConnector, excelConnector))
+        assertThatThrownBy(() -> new Connectors(secondJdbc, misnamed, csvConnector, excelConnector, ldapConnector))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("ATHENA");
     }

@@ -261,6 +261,7 @@ dependencies {
     testImplementation libs.lmdbjava
     testImplementation libs.saxon.he
     testImplementation libs.swagger.annotations
+    testImplementation libs.unboundid.ldapsdk
     testImplementation libs.vavr
 
     testImplementation libs.dropwizard.testing

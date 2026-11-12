@@ -34,11 +34,13 @@ import java.util.Objects;
 ///
 /// For a JDBC database or Amazon Athena the document holds the connection but no SQL. Each query
 /// carries its own SQL in [stroom.query.api.Query#getNativeQuery()], and the columns of its result
-/// become the query's fields. For CSV and Excel the document holds the data itself, and its columns
-/// are the fields.
+/// become the query's fields. For an LDAP directory each query carries its own search filter there,
+/// and the attributes the document lists are the fields. For CSV and Excel the document holds the data
+/// itself, and its columns are the fields.
 @Description(
         "Defines data from outside Stroom that queries can use: a JDBC database or Amazon Athena, " +
-        "queried with SQL given in each query, or CSV or an Excel workbook held in this document.")
+        "queried with SQL given in each query, an LDAP directory, searched with a filter given in each " +
+        "query, or CSV or an Excel workbook held in this document.")
 @JsonPropertyOrder({
         "type",
         "uuid",
@@ -54,6 +56,7 @@ import java.util.Objects;
         "athena",
         "csv",
         "excel",
+        "ldap",
         "timeField",
         "queryTimeoutSeconds",
         "maxRows"})
@@ -81,6 +84,8 @@ public class ExternalDataSourceDoc extends AbstractDoc {
     @JsonProperty
     private final ExcelSettings excel;
     @JsonProperty
+    private final LdapSettings ldap;
+    @JsonProperty
     private final String timeField;
     @JsonProperty
     private final Integer queryTimeoutSeconds;
@@ -102,8 +107,9 @@ public class ExternalDataSourceDoc extends AbstractDoc {
     /// @param athena              The settings used when the type is Athena.
     /// @param csv                 The settings and data used when the type is CSV.
     /// @param excel               The settings used when the type is Excel.
-    /// @param timeField           The column used as the time field, or `null` for none. Used by JDBC
-    ///                            CSV and Excel.
+    /// @param ldap                The settings used when the type is LDAP.
+    /// @param timeField           The column used as the time field, or `null` for none. Used by JDBC,
+    ///                            LDAP, CSV and Excel.
     /// @param queryTimeoutSeconds The longest a query may run, or `null` for the default.
     /// @param maxRows             The most rows a query may return, or `null` for the default.
     @JsonCreator
@@ -121,6 +127,7 @@ public class ExternalDataSourceDoc extends AbstractDoc {
             @JsonProperty("athena") final AthenaConnectionSettings athena,
             @JsonProperty("csv") final CsvSettings csv,
             @JsonProperty("excel") final ExcelSettings excel,
+            @JsonProperty("ldap") final LdapSettings ldap,
             @JsonProperty("timeField") final String timeField,
             @JsonProperty("queryTimeoutSeconds") final Integer queryTimeoutSeconds,
             @JsonProperty("maxRows") final Integer maxRows) {
@@ -131,6 +138,7 @@ public class ExternalDataSourceDoc extends AbstractDoc {
         this.athena = athena;
         this.csv = csv;
         this.excel = excel;
+        this.ldap = ldap;
         this.timeField = timeField;
         this.queryTimeoutSeconds = queryTimeoutSeconds;
         this.maxRows = maxRows;
@@ -171,7 +179,12 @@ public class ExternalDataSourceDoc extends AbstractDoc {
         return excel;
     }
 
-    /// @return The column used as the time field, or `null` for none. Used by JDBC, CSV and Excel.
+    /// @return The settings used when the type is LDAP, or `null` if not set.
+    public LdapSettings getLdap() {
+        return ldap;
+    }
+
+    /// @return The column used as the time field, or `null` for none. Used by JDBC, LDAP, CSV and Excel.
     public String getTimeField() {
         return timeField;
     }
@@ -204,6 +217,7 @@ public class ExternalDataSourceDoc extends AbstractDoc {
                Objects.equals(athena, that.athena) &&
                Objects.equals(csv, that.csv) &&
                Objects.equals(excel, that.excel) &&
+               Objects.equals(ldap, that.ldap) &&
                Objects.equals(timeField, that.timeField) &&
                Objects.equals(queryTimeoutSeconds, that.queryTimeoutSeconds) &&
                Objects.equals(maxRows, that.maxRows);
@@ -218,6 +232,7 @@ public class ExternalDataSourceDoc extends AbstractDoc {
                 athena,
                 csv,
                 excel,
+                ldap,
                 timeField,
                 queryTimeoutSeconds,
                 maxRows);
@@ -232,6 +247,7 @@ public class ExternalDataSourceDoc extends AbstractDoc {
                ", athena=" + athena +
                ", csv=" + csv +
                ", excel=" + excel +
+               ", ldap=" + ldap +
                ", timeField='" + timeField + '\'' +
                ", queryTimeoutSeconds=" + queryTimeoutSeconds +
                ", maxRows=" + maxRows +
@@ -257,6 +273,7 @@ public class ExternalDataSourceDoc extends AbstractDoc {
         private AthenaConnectionSettings athena;
         private CsvSettings csv;
         private ExcelSettings excel;
+        private LdapSettings ldap;
         private String timeField;
         private Integer queryTimeoutSeconds = DEFAULT_QUERY_TIMEOUT_SECONDS;
         private Integer maxRows = DEFAULT_MAX_ROWS;
@@ -272,6 +289,7 @@ public class ExternalDataSourceDoc extends AbstractDoc {
             this.athena = doc.athena;
             this.csv = doc.csv;
             this.excel = doc.excel;
+            this.ldap = doc.ldap;
             this.timeField = doc.timeField;
             this.queryTimeoutSeconds = doc.queryTimeoutSeconds;
             this.maxRows = doc.maxRows;
@@ -319,6 +337,13 @@ public class ExternalDataSourceDoc extends AbstractDoc {
             return self();
         }
 
+        /// @param ldap The settings used when the type is LDAP.
+        /// @return This builder.
+        public Builder ldap(final LdapSettings ldap) {
+            this.ldap = ldap;
+            return self();
+        }
+
         /// @param timeField The column used as the time field, or `null` for none.
         /// @return This builder.
         public Builder timeField(final String timeField) {
@@ -361,6 +386,7 @@ public class ExternalDataSourceDoc extends AbstractDoc {
                     athena,
                     csv,
                     excel,
+                    ldap,
                     timeField,
                     queryTimeoutSeconds,
                     maxRows);

@@ -25,6 +25,7 @@ import stroom.externaldatasource.shared.ExcelSettings;
 import stroom.externaldatasource.shared.ExternalDataSourceDoc;
 import stroom.externaldatasource.shared.ExternalDataSourceType;
 import stroom.externaldatasource.shared.JdbcConnectionSettings;
+import stroom.externaldatasource.shared.LdapSettings;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.EntityServiceException;
@@ -42,7 +43,7 @@ import java.util.Objects;
 
 /// Stores [ExternalDataSourceDoc] documents.
 ///
-/// A JDBC URL, or an Amazon Athena region and workgroup, is checked against the administrator's
+/// A JDBC or LDAP URL, or an Amazon Athena region and workgroup, is checked against the administrator's
 /// controls when a user saves a document, so a mistake is reported at once. Imports are not checked,
 /// so a content pack can be imported and then edited; its settings are checked again whenever it
 /// connects.
@@ -75,7 +76,8 @@ public class ExternalDataSourceStoreImpl
     }
 
     /// Saves a document, refusing settings the administrator has not allowed: a JDBC URL or driver
-    /// property, an Athena region and workgroup, or CSV or a workbook larger than the stored data limit.
+    /// property, an Athena region and workgroup, an LDAP URL, plain LDAP, or CSV or a workbook larger
+    /// than the stored data limit.
     ///
     /// A document with no URL or region yet may be saved, so it can be built up over several saves.
     /// Only the connection settings of the document's type are checked, but held data is checked
@@ -190,6 +192,12 @@ public class ExternalDataSourceStoreImpl
                 ExternalDataSourceType.JDBC);
         if (sourceType == ExternalDataSourceType.CSV || sourceType == ExternalDataSourceType.EXCEL) {
             return List.of();
+        }
+        if (sourceType == ExternalDataSourceType.LDAP) {
+            final LdapSettings ldap = document.getLdap();
+            return NullSafe.isNonBlankString(NullSafe.get(ldap, LdapSettings::getUrl))
+                    ? LdapConnectionValidator.findProblems(ldap, configProvider.get())
+                    : List.of();
         }
         if (sourceType == ExternalDataSourceType.ATHENA) {
             final AthenaConnectionSettings athena = document.getAthena();

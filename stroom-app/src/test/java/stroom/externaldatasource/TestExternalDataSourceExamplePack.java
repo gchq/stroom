@@ -49,12 +49,20 @@ import stroom.test.common.ProjectPathUtil;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.json.JsonUtil;
 
+import com.unboundid.ldap.listener.InMemoryDirectoryServer;
+import com.unboundid.ldap.listener.InMemoryDirectoryServerConfig;
+import com.unboundid.ldap.listener.InMemoryListenerConfig;
+import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldif.LDIFException;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -81,6 +89,10 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 /// the grants the documentation lists, a credential named "Stroom DB Reader" for it, and its URL
 /// allowed. Its URL is then pointed at the test database, which is given a node record, two feeds of
 /// streams and a processor so the queries have rows.
+///
+/// The "Directory" source is set up the same way, with a credential named "Directory Reader" and its
+/// URL allowed, against UnboundID's in-memory directory of three people. Plain LDAP is allowed for it,
+/// as the notes say only a test directory should be.
 class TestExternalDataSourceExamplePack extends AbstractCoreIntegrationTest {
 
     private static final String PACK = "StroomDB-ExternalDataSource-Examples.zip";
@@ -94,6 +106,16 @@ class TestExternalDataSourceExamplePack extends AbstractCoreIntegrationTest {
     private static final String READER_PASSWORD = "pack_test_reader_pw";
     // A grant in the source's set-up notes, e.g. "GRANT SELECT ON stroom.meta TO ...".
     private static final Pattern DOCUMENTED_GRANT = Pattern.compile("GRANT SELECT ON stroom\\.(\\w+) TO");
+    private static final DocRef DIRECTORY = ExternalDataSourceDoc.buildDocRef()
+            .uuid("5d6f1d0e-2b0a-4c3e-9a51-6d2a0c0f6a05")
+            .build();
+    private static final String DIRECTORY_CREDENTIAL_NAME = "Directory Reader";
+    private static final String DIRECTORY_BASE = "dc=example,dc=org";
+    private static final String DIRECTORY_PEOPLE = "ou=People," + DIRECTORY_BASE;
+    private static final String BIND_DN = "cn=stroom-reader,ou=Services," + DIRECTORY_BASE;
+    private static final String BIND_PASSWORD = "reader-password";
+
+    private static InMemoryDirectoryServer directory;
 
     @Inject
     private ImportExportSerializer importExportSerializer;
@@ -121,6 +143,45 @@ class TestExternalDataSourceExamplePack extends AbstractCoreIntegrationTest {
 
     private Map<String, QueryDoc> queries;
 
+    /// Starts a directory of three people, two in Ops and one in Dev.
+    ///
+    /// @throws LDAPException If the directory cannot be started.
+    /// @throws LDIFException If an entry cannot be written.
+    @BeforeAll
+    static void startDirectory() throws LDAPException, LDIFException {
+        final InMemoryDirectoryServerConfig config = new InMemoryDirectoryServerConfig(DIRECTORY_BASE);
+        config.addAdditionalBindCredentials(BIND_DN, BIND_PASSWORD);
+        config.setListenerConfigs(InMemoryListenerConfig.createLDAPConfig(
+                "plain", InetAddress.getLoopbackAddress(), 0, null));
+        directory = new InMemoryDirectoryServer(config);
+        directory.add("dn: " + DIRECTORY_BASE, "objectClass: domain", "dc: example");
+        directory.add("dn: " + DIRECTORY_PEOPLE, "objectClass: organizationalUnit", "ou: People");
+        addPerson("asmith", "Alice Smith", "Ops");
+        addPerson("bjones", "Bob Jones", "Dev");
+        addPerson("cbrown", "Carol Brown", "Ops");
+        directory.startListening();
+    }
+
+    private static void addPerson(final String uid, final String name, final String department)
+            throws LDAPException, LDIFException {
+        directory.add("dn: uid=" + uid + "," + DIRECTORY_PEOPLE,
+                "objectClass: top",
+                "objectClass: person",
+                "objectClass: organizationalPerson",
+                "objectClass: inetOrgPerson",
+                "uid: " + uid,
+                "cn: " + name,
+                "sn: " + name.substring(name.indexOf(' ') + 1),
+                "mail: " + uid + "@example.org",
+                "departmentNumber: " + department);
+    }
+
+    /// Stops the directory.
+    @AfterAll
+    static void stopDirectory() {
+        directory.shutDown(true);
+    }
+
     /// Unpacks and imports the pack, sets up its "Stroom DB" source against the test database, and
     /// adds the streams and processor tasks the database queries count.
     ///
@@ -140,6 +201,7 @@ class TestExternalDataSourceExamplePack extends AbstractCoreIntegrationTest {
                 .build());
 
         setUpStroomDb();
+        setUpDirectory();
         addThisNode();
         addStreamsAndTasks();
     }
@@ -192,12 +254,46 @@ class TestExternalDataSourceExamplePack extends AbstractCoreIntegrationTest {
 
         credentialsService.storeCredentials(ExternalDataSourceTestDatabase.credential(
                 UUID.randomUUID().toString(), CREDENTIAL_NAME, READER_USER, READER_PASSWORD));
-        setConfigValueMapper(ExternalDataSourceConfig.class,
-                config -> ExternalDataSourceTestDatabase.allowingOnly(config, url));
+        setConfigValueMapper(ExternalDataSourceConfig.class, config -> allowing(config, url));
 
         assertThat(doc.getJdbc().getCredentialName()).isEqualTo(CREDENTIAL_NAME);
         externalDataSourceStore.writeDocument(doc.copy()
                 .jdbc(doc.getJdbc().copy().url(url).build())
+                .build());
+    }
+
+    // Allows only the test database's JDBC URL and the test directory, over plain LDAP.
+    private static ExternalDataSourceConfig allowing(final ExternalDataSourceConfig config, final String jdbcUrl) {
+        final ExternalDataSourceConfig jdbcAllowed = ExternalDataSourceTestDatabase.allowingOnly(config, jdbcUrl);
+        return new ExternalDataSourceConfig(
+                jdbcAllowed.getAllowedUrlPatterns(),
+                jdbcAllowed.getDeniedConnectionProperties(),
+                jdbcAllowed.getDriverDirectory(),
+                jdbcAllowed.getMaxQueryTimeout(),
+                jdbcAllowed.getMaxRowsLimit(),
+                jdbcAllowed.getMaxPoolSizeLimit(),
+                jdbcAllowed.getConnectionPoolCache(),
+                jdbcAllowed.getFieldCache(),
+                jdbcAllowed.getAllowedAthenaWorkGroups(),
+                jdbcAllowed.getAllowedAthenaOutputLocations(),
+                jdbcAllowed.isAllowDefaultAwsCredentials(),
+                jdbcAllowed.getMaxStoredDataSize(),
+                jdbcAllowed.getTableCache(),
+                List.of("^ldap://localhost:\\d+$"),
+                true);
+    }
+
+    // Follows the Directory source's set-up notes, with the test directory in place of the user's.
+    private void setUpDirectory() {
+        credentialsService.storeCredentials(ExternalDataSourceTestDatabase.credential(
+                UUID.randomUUID().toString(), DIRECTORY_CREDENTIAL_NAME, BIND_DN, BIND_PASSWORD));
+        final ExternalDataSourceDoc doc = externalDataSourceStore.readDocument(DIRECTORY);
+        assertThat(doc.getLdap().getCredentialName()).isEqualTo(DIRECTORY_CREDENTIAL_NAME);
+        assertThat(doc.getLdap().getBaseDn()).isEqualTo(DIRECTORY_PEOPLE);
+        externalDataSourceStore.writeDocument(doc.copy()
+                .ldap(doc.getLdap().copy()
+                        .url("ldap://localhost:" + directory.getListenPort("plain"))
+                        .build())
                 .build());
     }
 
@@ -269,7 +365,7 @@ class TestExternalDataSourceExamplePack extends AbstractCoreIntegrationTest {
 
     @Test
     void everyQueryIsValidStroomQl() {
-        assertThat(queries).hasSize(7);
+        assertThat(queries).hasSize(10);
         queries.forEach((name, queryDoc) ->
                 assertThatCode(() -> searchRequest(queryDoc.getQuery(), queryDoc.getTimeRange()))
                         .as(name)
@@ -332,6 +428,29 @@ class TestExternalDataSourceExamplePack extends AbstractCoreIntegrationTest {
         assertThat(rows).allSatisfy(row -> assertThat(row.subList(2, 4))
                 .as("first and last stream")
                 .allSatisfy(time -> assertThat(time).isNotBlank()));
+    }
+
+    @Test
+    void peopleQueryListsEveryoneInTheDirectory() {
+        assertThat(run("People in the directory", 4)).containsExactly(
+                List.of("Alice Smith", "asmith", "asmith@example.org", "Ops"),
+                List.of("Bob Jones", "bjones", "bjones@example.org", "Dev"),
+                List.of("Carol Brown", "cbrown", "cbrown@example.org", "Ops"));
+    }
+
+    @Test
+    void departmentQueryCountsThePeopleInEach() {
+        assertThat(run("People by department", 2)).containsExactly(
+                List.of("Ops", "2"),
+                List.of("Dev", "1"));
+    }
+
+    @Test
+    void recentQueryFindsPeopleAddedInItsTimeRange() {
+        assertThat(run("People added recently", 2))
+                .extracting(row -> row.get(1))
+                .as("everyone was added when the test started")
+                .containsExactlyInAnyOrder("Alice Smith", "Bob Jones", "Carol Brown");
     }
 
     @Test

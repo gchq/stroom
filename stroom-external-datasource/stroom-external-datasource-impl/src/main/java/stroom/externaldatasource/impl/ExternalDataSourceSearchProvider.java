@@ -80,7 +80,8 @@ public class ExternalDataSourceSearchProvider implements SearchProvider {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExternalDataSourceSearchProvider.class);
 
     static final String FIELDS_HINT = "The fields of this External Data Source are the columns returned by the "
-                                      + "query's SQL, so write the SQL first.";
+                                      + "query's SQL, or for an LDAP directory the attributes it lists, so write "
+                                      + "the SQL or the LDAP filter first.";
 
     private final Executor executor;
     private final ExternalDataSourceStore store;
