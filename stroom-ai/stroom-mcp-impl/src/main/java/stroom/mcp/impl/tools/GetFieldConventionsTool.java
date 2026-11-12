@@ -68,6 +68,8 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
     static final String BACKEND_ARG = "backend";
     // The indexing choice of how fields are named, as recorded for the build.
     private static final String NAMING = "naming";
+    // The aggregated feed whose shared decisions the build's choices were inherited from, as recorded for it.
+    private static final String SHARED_FROM = "shared_from";
     static final String ECS_FIELDS_ARG = "ecs_fields";
     /// What each convention profile is shown as.
     static final Map<String, String> PROFILE_LABELS = Map.of("ecs", "ECS (Elastic Common Schema)",
@@ -93,6 +95,7 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
     private final BuildPlan plan;
     private final PendingDocumentation pendingDocs;
     private final BuildRecords records;
+    private Provider<FeedIndexDecisions> feedIndexes;
 
     @Inject
     GetFieldConventionsTool(final AgentKnowledge knowledge,
@@ -115,6 +118,15 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
         this.plan = plan;
         this.pendingDocs = pendingDocs;
         this.records = records;
+    }
+
+    /// An aggregated feed's shared indexing decisions, kept in its registry (set by injection; none in tests that
+    /// make the tool themselves).
+    ///
+    /// @param feedIndexes The feed's shared decisions.
+    @Inject
+    void setFeedIndexes(final Provider<FeedIndexDecisions> feedIndexes) {
+        this.feedIndexes = feedIndexes;
     }
 
     @Override
@@ -150,6 +162,12 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
                                                                           + "first (an index template, or an existing "
                                                                           + "index in Stroom), a convention profile "
                                                                           + "only without one.")
+                        .addBooleanProperty(FeedIndexDecisions.CHANGE_SHARED_ARG, "Only when the user asks to "
+                                                                                  + "change an aggregated feed's "
+                                                                                  + "indexing backend, which its "
+                                                                                  + "scoped builds share (kept in "
+                                                                                  + "its registry): they confirm "
+                                                                                  + "it in a form.")
                         .addStringProperty(ECS_FIELDS_ARG, "With name=ecs: the ECS fields under a field set or prefix "
                                                            + "(e.g. 'process', 'user.target'), each with its type and "
                                                            + "what it holds, to name a field ECS's way.")
@@ -168,6 +186,14 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
             final String backend = stringArg(call, BACKEND_ARG);
             if (backend != null && !FieldPlans.BACKENDS.contains(backend)) {
                 return JsonResults.refused("backend is 'lucene' or 'elasticsearch', not '" + backend + "'");
+            }
+            if (backend != null && feedIndexes != null) {
+                final Optional<String> build = plan.currentBuild(context);
+                if (feedIndexes.get().checkBackend(call, context, build.orElse(null), backend, NAME)) {
+                    // The user changed the feed's backend: the naming follows from it, so it is asked again.
+                    remember(context, BACKEND_ARG, backend);
+                    remember(context, NAMING, null);
+                }
             }
             final String name = stringArg(call, NAME_ARG);
             if (name == null && backend == null) {
@@ -274,6 +300,7 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
                 chosenBackend = labels.get(picked.get());
                 asked = true;
                 remember(context, BACKEND_ARG, chosenBackend);
+                settleShared(context, chosenBackend, null);
                 // The chosen backend's templates come back with the naming, so they needn't be looked up.
                 final String kind = chosenBackend;
                 templates = found.stream()
@@ -381,6 +408,22 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
     private void chooseNaming(final ToolCallContext context, final Map<String, Object> naming) {
         memory.chooseNaming(naming);
         remember(context, NAMING, naming);
+        settleShared(context, null, naming);
+    }
+
+    // An aggregated feed's builds share the backend and naming: the first scoped build's choice is kept in the
+    // feed's registry for the builds after it.
+    private void settleShared(final ToolCallContext context, final String backend, final Map<String, Object> naming) {
+        if (feedIndexes == null) {
+            return;
+        }
+        plan.currentBuild(context).ifPresent(build -> {
+            try {
+                feedIndexes.get().settle(context, build, backend, naming);
+            } catch (final RuntimeException e) {
+                LOGGER.debug("Shared indexing choice not recorded for build {}", build, e);
+            }
+        });
     }
 
     // A choice recorded for the session's build, if it has one. A convenience: without it, the user is asked again.
@@ -394,10 +437,25 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
         });
     }
 
-    // The choices recorded for the session's build, or none.
+    // The choices recorded for the session's build, or none. An aggregated feed's later build inherits the backend
+    // and naming its first scoped build made with the user, kept in the feed's registry: copied into the build's
+    // record, with where they are kept.
     private Map<String, Object> recordedChoices(final ToolCallContext context) {
         return plan.currentBuild(context).map(build -> {
             try {
+                final Map<String, Object> recorded = records.indexingChoices(build);
+                if (recorded.get(BACKEND_ARG) != null || feedIndexes == null) {
+                    return recorded;
+                }
+                final Optional<Map<String, Object>> shared = feedIndexes.get().sharedIndexing(build);
+                if (shared.isEmpty()) {
+                    return recorded;
+                }
+                records.rememberIndexingChoice(build, BACKEND_ARG, shared.get().get(BACKEND_ARG));
+                records.rememberIndexingChoice(build, SHARED_FROM, shared.get().get("feed"));
+                if (shared.get().get(NAMING) instanceof final Map<?, ?> naming) {
+                    records.rememberIndexingChoice(build, NAMING, BuildRecords.asMap(naming));
+                }
                 return records.indexingChoices(build);
             } catch (final RuntimeException e) {
                 LOGGER.debug("Indexing choices not read for build {}", build, e);
@@ -418,10 +476,17 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
         final String how = naming.get("like_index") != null
                 ? "following the existing index " + naming.get("like_index")
                 : "the " + naming.get("convention") + " convention";
-        result.put("settled", "The user chose the backend (" + backend + ") and how fields are named (" + how
-                              + ") in forms earlier in this build (recorded with the build): don't ask about either "
-                              + "again, in a form, ask_user or the chat. Only if the user says to change them, call "
-                              + "again with backend= their answer.");
+        final Object sharedFrom = recordedChoices(context).get(SHARED_FROM);
+        result.put("settled", sharedFrom != null
+                ? "Feed '" + sharedFrom + "' aggregates source types, and its scoped builds share one indexing "
+                  + "backend (" + backend + ") and field naming (" + how + "), chosen with the user by its first "
+                  + "build and kept in " + FeedIndexDecisions.kept(String.valueOf(sharedFrom)) + ": don't ask about "
+                  + "either. Only if the user asks to change them, call again with backend= their answer and "
+                  + FeedIndexDecisions.CHANGE_SHARED_ARG + "=true."
+                : "The user chose the backend (" + backend + ") and how fields are named (" + how
+                  + ") in forms earlier in this build (recorded with the build): don't ask about either "
+                  + "again, in a form, ask_user or the chat. Only if the user says to change them, call "
+                  + "again with backend= their answer.");
         result.put("hint", naming.get("like_index") != null
                 ? "draft_index_mapping like_index=" + naming.get("like_index") + " (with the events streams)."
                 : "draft_index_mapping convention=" + naming.get("convention") + " (with the events streams).");

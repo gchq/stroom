@@ -25,6 +25,8 @@ import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.fielddoc.IndexFieldDocs;
+import stroom.ai.impl.tools.generation.DispatcherSpec;
+import stroom.ai.impl.tools.generation.DispatcherXslt;
 import stroom.ai.impl.tools.generation.FieldGroup;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.indexing.FieldPlan;
@@ -48,6 +50,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /// The streams the indexing tools index, and what they hold: an index holds the Events an events pipeline writes, never
 /// a source's own data, unless it is a discovery index, which indexes raw data as it is. create_indexing_pipeline
@@ -55,6 +59,9 @@ import java.util.function.Predicate;
 class IndexingInputs {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexingInputs.class);
+
+    // The UUID in a source type group's import href.
+    private static final Pattern UUID_PART = Pattern.compile("uuid='([^']+)'");
 
     /// How many events are read to see which paths a sample populates.
     static final int EVENTS_READ = 200;
@@ -226,12 +233,34 @@ class IndexingInputs {
                 pipelineShapes.merged(pipeline).translationDocs(pipeline).stream()
                         .map(MergedPipeline.TranslationDoc::doc)
                         .filter(doc -> XsltDoc.TYPE.equals(doc.getType()))
-                        .forEach(doc -> documentAccess.read(doc, XsltDoc.class).ifPresent(out::add));
+                        .forEach(doc -> documentAccess.read(doc, XsltDoc.class).ifPresent(xslt -> {
+                            out.add(xslt);
+                            // An aggregated feed's dispatcher keeps no mapping: each source type group it imports
+                            // keeps its own, so the fields the Events hold are its groups' together.
+                            groupUuids(xslt.getDescription()).forEach(uuid -> documentAccess.read(
+                                    new DocRef(XsltDoc.TYPE, uuid), XsltDoc.class).ifPresent(out::add));
+                        }));
             } catch (final RuntimeException e) {
                 LOGGER.debug(() -> LogUtil.message("No translation read for pipeline {}: {}", pipeline,
                         e.getMessage()));
             }
         }
+        return out;
+    }
+
+    /// @param description An XSLT's description.
+    /// @return The UUIDs of the source type groups it imports, when it is an aggregated feed's dispatcher (by the
+    /// spec kept with it), in its order; none for any other XSLT.
+    static List<String> groupUuids(final String description) {
+        final List<String> out = new ArrayList<>();
+        KeptMapping.readBlock(description, DispatcherXslt.SPEC_BLOCK)
+                .flatMap(DispatcherSpec::fromJson)
+                .ifPresent(spec -> spec.groups().forEach(group -> {
+                    final Matcher uuid = UUID_PART.matcher(NullSafe.string(group.href()));
+                    if (uuid.find()) {
+                        out.add(uuid.group(1));
+                    }
+                }));
         return out;
     }
 

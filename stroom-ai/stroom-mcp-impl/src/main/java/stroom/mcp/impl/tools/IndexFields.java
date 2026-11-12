@@ -413,6 +413,26 @@ class IndexFields {
                                                    + "or you don't have permission to view it"));
         final DocRef ref = new DocRef(LuceneIndexDoc.TYPE, doc.getUuid(), doc.getName());
         guard.checkInBuild(session, ref);
+        return addFields(ref, doc.getName(), plan);
+    }
+
+    /// Lucene, at promotion: adds the fields a promoted build's plan has that an output feed's index doc (one beside
+    /// the feed, outside any build) lacks, as the user approved in the promotion's form. Forward only: documents
+    /// indexed before keep what they have.
+    ///
+    /// @param index The Lucene Index doc.
+    /// @param plan  The field plan (backend lucene).
+    /// @return `{index, added, already_present}`.
+    /// @throws ToolRefusal for an index doc that can't be read.
+    Map<String, Object> addPromotedLuceneFields(final DocRef index, final FieldPlan plan) {
+        final LuceneIndexDoc doc = documentAccess.read(index, LuceneIndexDoc.class)
+                .orElseThrow(() -> new ToolRefusal("Index " + index.getUuid() + " can't be read: it doesn't exist, "
+                                                   + "or you don't have permission to view it"));
+        return addFields(new DocRef(LuceneIndexDoc.TYPE, doc.getUuid(), doc.getName()), doc.getName(), plan);
+    }
+
+    // The plan's fields the Lucene index doc lacks, added.
+    private Map<String, Object> addFields(final DocRef ref, final String indexName, final FieldPlan plan) {
         final Set<String> have = new TreeSet<>();
         luceneFields(ref).forEach(field -> have.add(field.getFldName()));
         final List<String> added = new ArrayList<>();
@@ -431,7 +451,7 @@ class IndexFields {
             }
         }
         final Map<String, Object> result = new LinkedHashMap<>();
-        result.put("index", doc.getName());
+        result.put("index", indexName);
         result.put("added", added);
         result.put("already_present", new ArrayList<>(have));
         return result;
