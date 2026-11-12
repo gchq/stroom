@@ -28,24 +28,40 @@ import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 
 /// Helpers shared by the join tests.
 final class JoinTestHelper {
 
+    private static final Path LIBRARY_EXTRACT_DIR = createLibraryExtractDir();
+
     private JoinTestHelper() {
         // Static methods only.
+    }
+
+    /// Creates a factory for LMDB environment directories under the given directory.
+    ///
+    /// The first LMDB library set up in a JVM decides where the native library is extracted, but it is
+    /// only extracted when the first environment opens. So every join test extracts it to one directory
+    /// kept for the whole run, rather than to a test's own directory, which is deleted when the test
+    /// ends, perhaps before any environment opened.
+    static LmdbEnvDirFactory createLmdbEnvDirFactory(final Path tempDir) {
+        final TempDirProvider tempDirProvider = () -> tempDir;
+        final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
+        final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig()
+                .withSystemLibraryExtractDir(LIBRARY_EXTRACT_DIR.toString());
+        return new LmdbEnvDirFactory(new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig),
+                pathCreator);
     }
 
     /// Creates a builder for an LMDB environment in its own directory under the given one.
     static LmdbEnv.Builder createLmdbEnvBuilder(final Path tempDir) {
         final SearchResultStoreConfig resultStoreConfig = new SearchResultStoreConfig();
-        final TempDirProvider tempDirProvider = () -> tempDir;
-        final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
-        final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
-        final LmdbEnvDirFactory lmdbEnvDirFactory = new LmdbEnvDirFactory(
-                new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig), pathCreator);
+        final LmdbEnvDirFactory lmdbEnvDirFactory = createLmdbEnvDirFactory(tempDir);
         final LmdbEnvDir lmdbEnvDir = lmdbEnvDirFactory
                 .builder()
                 .config(resultStoreConfig.getLmdbConfig())
@@ -55,6 +71,14 @@ final class JoinTestHelper {
                 .builder()
                 .config(resultStoreConfig.getLmdbConfig())
                 .lmdbEnvDir(lmdbEnvDir);
+    }
+
+    private static Path createLibraryExtractDir() {
+        try {
+            return Files.createTempDirectory("stroom-join-test-lmdb-library");
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     /// Makes a row of string values, where a `null` is a null value.

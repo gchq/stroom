@@ -29,8 +29,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -108,6 +110,21 @@ class TestJoinTable {
     }
 
     @Test
+    void everyRowIsReadOnceAcrossBatches() {
+        try (final JoinTable table = createTable(JoinLimits.DEFAULT)) {
+            for (int i = 0; i < 2_500; i++) {
+                table.add("k" + (i % 7), JoinTestHelper.row(String.valueOf(i)));
+            }
+            table.complete();
+
+            final List<String> values = new ArrayList<>();
+            table.forEachRow((key, row) -> values.add(row[0].toString()));
+
+            assertThat(values).hasSize(2_500).doesNotHaveDuplicates();
+        }
+    }
+
+    @Test
     void rowLimitIsEnforced() {
         try (final JoinTable table = createTable(new JoinLimits(2, Long.MAX_VALUE))) {
             table.add("a", JoinTestHelper.row("1"));
@@ -118,6 +135,45 @@ class TestJoinTable {
                     .hasMessageContaining("'hr' has more than 2 rows");
             // The refused row is not counted.
             assertThat(table.getRowCount()).isEqualTo(2);
+        }
+    }
+
+    @Test
+    void closingWaitsForLookupsUnderWayAndLaterOnesFail() throws Exception {
+        final JoinTable table = createTable(JoinLimits.DEFAULT);
+        table.add("a", JoinTestHelper.row("1"));
+        table.complete();
+        final CountDownLatch inLookup = new CountDownLatch(1);
+        final CountDownLatch carryOn = new CountDownLatch(1);
+        try (final ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            // A lookup whose consumer, like a probe's, does work while the table is being read.
+            final CompletableFuture<Integer> lookup = CompletableFuture.supplyAsync(() ->
+                    table.forEachMatch("a", row -> {
+                        inLookup.countDown();
+                        awaitQuietly(carryOn);
+                    }), executor);
+            assertThat(inLookup.await(10, TimeUnit.SECONDS)).isTrue();
+            final CompletableFuture<Void> close = CompletableFuture.runAsync(table::close, executor);
+
+            Thread.sleep(200);
+            assertThat(close).isNotDone();
+            carryOn.countDown();
+
+            assertThat(lookup.get(10, TimeUnit.SECONDS)).isEqualTo(1);
+            close.get(10, TimeUnit.SECONDS);
+        }
+        assertThatThrownBy(() -> table.hasMatch("a"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("is closed");
+        // Closing again does nothing.
+        table.close();
+    }
+
+    private static void awaitQuietly(final CountDownLatch latch) {
+        try {
+            latch.await(10, TimeUnit.SECONDS);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 

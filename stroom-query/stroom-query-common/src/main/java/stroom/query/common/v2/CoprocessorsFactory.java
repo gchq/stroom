@@ -131,17 +131,24 @@ public class CoprocessorsFactory {
             return;
         }
         final JoinTables joinTables = joinTablesProvider.get();
-        final Optional<Registration> optionalRegistration = joinTables.get(queryKey);
+        final Optional<Registration> optionalRegistration = joinTables.acquire(queryKey);
         if (optionalRegistration.isPresent()) {
-            final Query query = optionalRegistration.get().query();
-            final List<JoinPlan> plans = JoinPlan.createAll(
-                    query,
-                    coprocessors.getFieldIndex(),
-                    coprocessors.getExpressionContext(),
-                    ParamUtil.createParamMap(query.getParams()));
-            final JoiningCoprocessors joins = JoiningCoprocessors.create(
-                    coprocessors.getUnjoined(), query, plans, optionalRegistration.get().tables());
-            coprocessors.setJoins(joins, () -> joinTables.remove(queryKey));
+            final Registration registration = optionalRegistration.get();
+            try {
+                final Query query = registration.query();
+                final List<JoinPlan> plans = JoinPlan.createAll(
+                        query,
+                        coprocessors.getFieldIndex(),
+                        coprocessors.getExpressionContext(),
+                        ParamUtil.createParamMap(query.getParams()));
+                final JoiningCoprocessors joins = JoiningCoprocessors.create(
+                        coprocessors.getUnjoined(), query, plans, registration.tables());
+                // The tables are kept until every coprocessors using them are cleared.
+                coprocessors.setJoins(joins, () -> joinTables.release(queryKey, registration));
+            } catch (final RuntimeException e) {
+                joinTables.release(queryKey, registration);
+                throw e;
+            }
         }
     }
 

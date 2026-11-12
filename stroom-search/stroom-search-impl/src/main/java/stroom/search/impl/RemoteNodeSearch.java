@@ -70,7 +70,9 @@ public class RemoteNodeSearch implements NodeSearch {
         // Start remote cluster search execution.
         LOGGER.debug(() -> "Dispatching node search task to node: " + targetNode);
         try {
-            final boolean success = startRemoteSearch(targetNode, nodeSearchTask);
+            // The target node fetches the search's join tables, if it has any, from this node.
+            final boolean success = startRemoteSearch(
+                    targetNode, nodeSearchTask.withSourceNode(nodeInfo.getThisNodeName()));
             if (!success) {
                 LOGGER.debug(() -> "Failed to start remote search on node: " + targetNode);
                 final SearchException searchException = new SearchException(

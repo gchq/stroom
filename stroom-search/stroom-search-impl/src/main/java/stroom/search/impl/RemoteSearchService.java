@@ -17,9 +17,13 @@
 package stroom.search.impl;
 
 import stroom.query.api.Query;
+import stroom.query.api.QueryKey;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
+import stroom.query.common.v2.JoinTableTransfer;
+import stroom.query.common.v2.JoinTables;
+import stroom.query.common.v2.JoinTables.Registration;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
@@ -28,6 +32,7 @@ import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.Severity;
 import stroom.util.string.ExceptionStringUtil;
 
@@ -37,6 +42,8 @@ import jakarta.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collections;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -54,6 +61,8 @@ public class RemoteSearchService {
     private final NodeSearchTaskHandlers nodeSearchTaskHandlers;
     private final CoprocessorsFactory coprocessorsFactory;
     private final SecurityContext securityContext;
+    private final JoinTables joinTables;
+    private final JoinTableFetcher joinTableFetcher;
 
     private CoprocessorsImpl coprocessors;
 
@@ -64,7 +73,9 @@ public class RemoteSearchService {
                                final TaskContextFactory taskContextFactory,
                                final NodeSearchTaskHandlers nodeSearchTaskHandlers,
                                final CoprocessorsFactory coprocessorsFactory,
-                               final SecurityContext securityContext) {
+                               final SecurityContext securityContext,
+                               final JoinTables joinTables,
+                               final JoinTableFetcher joinTableFetcher) {
         this.remoteSearchResults = remoteSearchResults;
         this.taskManager = taskManager;
         this.executorProvider = executorProvider;
@@ -72,6 +83,8 @@ public class RemoteSearchService {
         this.nodeSearchTaskHandlers = nodeSearchTaskHandlers;
         this.coprocessorsFactory = coprocessorsFactory;
         this.securityContext = securityContext;
+        this.joinTables = joinTables;
+        this.joinTableFetcher = joinTableFetcher;
     }
 
     public Boolean start(final NodeSearchTask nodeSearchTask) {
@@ -82,6 +95,7 @@ public class RemoteSearchService {
 
         // Create coprocessors.
         securityContext.useAsRead(() -> {
+            Optional<Registration> heldJoinTables = Optional.empty();
             try {
                 final Query query = nodeSearchTask.getQuery();
 
@@ -89,6 +103,10 @@ public class RemoteSearchService {
                 if (query.getExpression() == null) {
                     throw new SearchException("Search expression has not been set");
                 }
+
+                // A search with joins applies them on every node, so this node needs its join tables
+                // before its coprocessors are created.
+                heldJoinTables = joinTableFetcher.fetchIfNeeded(nodeSearchTask);
 
                 coprocessors = coprocessorsFactory.create(
                         nodeSearchTask.getSearchRequestSource(),
@@ -161,6 +179,10 @@ public class RemoteSearchService {
                     }
 
                 } else {
+                    if (coprocessors != null) {
+                        // Releases any join tables they use.
+                        coprocessors.clear();
+                    }
                     remoteSearchResultFactory.setInitialisationError(
                             Collections.singletonList(new ErrorMessage(Severity.ERROR,
                                     "No coprocessors were created")));
@@ -170,10 +192,39 @@ public class RemoteSearchService {
                 remoteSearchResultFactory.setInitialisationError(
                         Collections.singletonList(new ErrorMessage(Severity.ERROR,
                                 ExceptionStringUtil.getMessage(e))));
+            } finally {
+                // The coprocessors use the join tables themselves, until cleared, so the fetch's hold
+                // ends here. Tables no coprocessors use are then removed.
+                heldJoinTables.ifPresent(registration ->
+                        joinTables.release(nodeSearchTask.getKey(), registration));
             }
         });
 
         return true;
+    }
+
+    /// Writes the join tables of a search this node runs, for another node that searches the search's
+    /// first source. Only the user who ran the search, or the processing user, may read them.
+    ///
+    /// @param queryKey     The key of the search.
+    /// @param outputStream The stream to write the tables to.
+    /// @throws IOException If the stream can't be written to.
+    public void writeJoinTables(final String queryKey, final OutputStream outputStream) throws IOException {
+        final QueryKey key = new QueryKey(queryKey);
+        // Used while written, so they aren't removed part way through.
+        final Registration registration = joinTables.acquire(key)
+                .orElseThrow(() -> new SearchException("This node holds no join tables for search " + queryKey));
+        try {
+            if (!securityContext.isProcessingUser()
+                && !Objects.equals(securityContext.getUserRef(), registration.owner())) {
+                throw new PermissionException(securityContext.getUserRef(),
+                        "Only the user who ran a search may read its join tables");
+            }
+            JoinTableTransfer.write(registration.tables(), outputStream);
+            outputStream.flush();
+        } finally {
+            joinTables.release(key, registration);
+        }
     }
 
     public void poll(final String queryKey, final OutputStream outputStream) throws IOException {

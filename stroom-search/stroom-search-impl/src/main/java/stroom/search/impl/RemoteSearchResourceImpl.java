@@ -51,4 +51,10 @@ public class RemoteSearchResourceImpl implements RemoteSearchResource {
     public Boolean destroy(final String queryKey) {
         return remoteSearchServiceProvider.get().destroy(queryKey);
     }
+
+    @Timed
+    @Override
+    public StreamingOutput joinTables(final String queryKey) {
+        return outputStream -> remoteSearchServiceProvider.get().writeJoinTables(queryKey, outputStream);
+    }
 }

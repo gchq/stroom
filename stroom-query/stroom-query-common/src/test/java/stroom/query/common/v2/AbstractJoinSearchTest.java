@@ -16,9 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.lmdb.LmdbLibrary;
-import stroom.lmdb.LmdbLibraryConfig;
-import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
@@ -43,9 +40,6 @@ import stroom.query.language.functions.ValString;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.util.io.ByteSize;
-import stroom.util.io.PathCreator;
-import stroom.util.io.SimplePathCreator;
-import stroom.util.io.TempDirProvider;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 
@@ -154,12 +148,7 @@ abstract class AbstractJoinSearchTest {
                 null,
                 joinMaxRows,
                 null);
-        final TempDirProvider tempDirProvider = () -> tempDir;
-        final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
-        final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
-        final LmdbEnvDirFactory lmdbEnvDirFactory = new LmdbEnvDirFactory(
-                new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig), pathCreator);
-        joinTables = new JoinTables(lmdbEnvDirFactory, () -> config);
+        joinTables = new JoinTables(JoinTestHelper.createLmdbEnvDirFactory(tempDir), () -> config);
         final MapDataStoreFactory dataStoreFactory = new MapDataStoreFactory(() -> config);
         final SizesProvider sizesProvider = () -> Sizes.create(1_000_000);
         coprocessorsFactory = new CoprocessorsFactory(

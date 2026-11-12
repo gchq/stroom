@@ -204,7 +204,7 @@ public class JoinSearchRunner {
                     tables.add(buildTable(plan));
                 }
 
-                joinTables.register(searchRequest.getKey(), query, tables);
+                joinTables.register(searchRequest.getKey(), query, tables, placeholder.getUserRef());
                 tablesRegistered = true;
                 checkNotTerminated();
                 if (query.getSourceTableSettings() == null) {

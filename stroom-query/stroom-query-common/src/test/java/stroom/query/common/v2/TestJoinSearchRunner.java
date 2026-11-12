@@ -22,14 +22,12 @@ import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchTaskProgress;
 import stroom.util.shared.ErrorMessage;
 
-import com.esotericsoftware.kryo.io.Input;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// Searches with joins run end to end: parsed from StroomQL, the joined sources searched as children,
 /// their join tables built, and the first source's rows joined into the store that replaces the
@@ -198,15 +196,21 @@ class TestJoinSearchRunner extends AbstractJoinSearchTest {
     }
 
     @Test
-    void payloadsFromOtherNodesAreRefusedOnce() throws InterruptedException {
+    void clearingTheSearchStoreTwiceReleasesItsTablesOnce() throws InterruptedException {
         final JoinSearchRunner runner = createRunner(1_000_000);
         final Run run = run(runner, "from events join hr on UserId = hr.Username select UserId", new FakeSources());
-        final CoprocessorsImpl coprocessors = (CoprocessorsImpl) run.awaitSearchStore().getCoprocessors();
+        final ResultStore searchStore = run.awaitSearchStore();
+        awaitComplete(searchStore);
+        // Another use of the same tables, as a fetch for another node holds them.
+        final JoinTables.Registration other = joinTables.acquire(run.request().getKey()).orElseThrow();
 
-        assertThatThrownBy(() -> coprocessors.readPayloads(new Input(new byte[0])))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("bracketed query");
-        coprocessors.readPayloads(new Input(new byte[0]));
+        final CoprocessorsImpl coprocessors = (CoprocessorsImpl) searchStore.getCoprocessors();
+        coprocessors.clear();
+        coprocessors.clear();
+
+        assertThat(joinTables.get(run.request().getKey())).as("the other use still holds them").isPresent();
+        joinTables.release(run.request().getKey(), other);
+        assertThat(joinTables.get(run.request().getKey())).isEmpty();
     }
 
     @Test

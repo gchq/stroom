@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 
@@ -50,10 +50,9 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
     private final ExpressionContext expressionContext;
     // The joins rows go through before the coprocessors, if the query has any.
     private volatile JoiningCoprocessors joins;
-    // Run when the coprocessors are cleared, to delete the joins' tables.
-    private volatile Runnable onClear;
-    // Whether payloads have been refused because of the joins.
-    private final AtomicBoolean payloadsRefused = new AtomicBoolean();
+    // Run once, when the coprocessors are first cleared, to release the joins' tables. Coprocessors
+    // can be cleared more than once, but the tables were only used once.
+    private final AtomicReference<Runnable> onClear = new AtomicReference<>();
 
     CoprocessorsImpl(final Map<Integer, Coprocessor> coprocessorMap,
                      final Map<String, TableCoprocessor> componentIdCoprocessorMap,
@@ -71,19 +70,8 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
 
     @Override
     public void readPayloads(final Input input) {
-        // TODO: Join the rows of searches that run on several nodes (StroomQL joins, stage 5). Until
-        //  then their payloads, which never pass through the joins, are refused rather than shown
-        //  unjoined.
-        if (joins != null) {
-            if (payloadsRefused.getAndSet(true)) {
-                // Refused once already, which is reported once.
-                return;
-            }
-            throw new IllegalStateException("Joins can't be run yet with a first source that is searched on "
-                                            + "every node, such as an index. Put it in a bracketed query, "
-                                            + "as in from (from MyIndex select ...) as x, which can be "
-                                            + "joined.");
-        }
+        // Payloads from other nodes are already joined: each node applies a search's joins to its own
+        // rows, with a copy of the join tables (see JoinTableTransfer).
         // If the remote node hasn't started yet it will return 0 results so by default we need to tell the calling
         // process that we still want to keep polling by returning true by default.
         final int length = input.readInt();
@@ -112,7 +100,7 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
     /// @param onClear Run when these coprocessors are cleared, e.g. to delete the joins' tables.
     void setJoins(final JoiningCoprocessors joins, final Runnable onClear) {
         this.joins = joins;
-        this.onClear = onClear;
+        this.onClear.set(onClear);
     }
 
     /// Gets a view of these coprocessors that takes rows straight to the coprocessors, without the
@@ -200,7 +188,7 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
                 LOGGER.error(() -> "Error clearing coprocessor: " + e.getMessage(), e);
             }
         }
-        final Runnable onClear = this.onClear;
+        final Runnable onClear = this.onClear.getAndSet(null);
         if (onClear != null) {
             try {
                 onClear.run();

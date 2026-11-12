@@ -23,6 +23,7 @@ import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -33,12 +34,20 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /// Creates the join tables of searches with joins, and holds them by the search's query key from when
-/// they are built until the search is destroyed.
+/// they are built until they are removed.
 ///
 /// The tables are created in the search result store's LMDB directory, which is emptied when Stroom
 /// starts, and hold at most the rows and bytes set in [SearchResultStoreConfig].
+///
+/// The coprocessors that apply a search's joins use its tables (see [#acquire(QueryKey)]), and the
+/// tables are removed once the last use ends. On the node that ran the search they are built from its
+/// joined sources' searches and removed by that search if no coprocessors ever use them. On any other
+/// node that searches its first source they are a copy fetched from that node, held by the fetch
+/// until that node's coprocessors use them (see [#registerAndAcquire(QueryKey, Query, List, UserRef)]).
 @Singleton
 public class JoinTables {
 
@@ -76,21 +85,57 @@ public class JoinTables {
         return new JoinTable(alias, fields, lmdbEnvBuilder, limits);
     }
 
-    /// Holds the query and complete join tables of a search, one table for each join line in order,
-    /// until the search is destroyed. From then on, coprocessors created for the search's key apply
-    /// the joins (see [CoprocessorsFactory]).
+    /// Holds the query and complete join tables of a search, one table for each join line in order.
+    /// From then on, coprocessors created for the search's key apply the joins (see
+    /// [CoprocessorsFactory]).
     ///
     /// @param queryKey The key of the search.
     /// @param query    The search's query.
     /// @param tables   The tables, which may be empty for a search with no join lines.
-    public void register(final QueryKey queryKey, final Query query, final List<JoinTable> tables) {
-        final Registration previous = registrations.put(queryKey, new Registration(query, List.copyOf(tables)));
+    /// @param owner    The user who ran the search, the only user other than the processing user who
+    ///                 may read its tables from another node.
+    public void register(final QueryKey queryKey,
+                         final Query query,
+                         final List<JoinTable> tables,
+                         final UserRef owner) {
+        final Registration previous = registrations.put(
+                queryKey, new Registration(query, List.copyOf(tables), owner, new AtomicInteger()));
         if (previous != null) {
             close(queryKey, previous.tables());
         }
     }
 
-    /// Gets the query and join tables of a search.
+    /// Holds the join tables of a search, unless some are already held for it, and uses them, in one
+    /// step. Two nodes' searches of the same search can then never close each other's tables.
+    ///
+    /// @param queryKey The key of the search.
+    /// @param query    The search's query.
+    /// @param tables   The tables to hold if none are held already. If some are, these are closed.
+    /// @param owner    The user who ran the search.
+    /// @return The registration now held and used, which the caller must release.
+    public Registration registerAndAcquire(final QueryKey queryKey,
+                                           final Query query,
+                                           final List<JoinTable> tables,
+                                           final UserRef owner) {
+        final AtomicBoolean alreadyHeld = new AtomicBoolean();
+        final Registration registration = registrations.compute(queryKey, (key, current) -> {
+            final Registration held;
+            if (current == null) {
+                held = new Registration(query, List.copyOf(tables), owner, new AtomicInteger());
+            } else {
+                alreadyHeld.set(true);
+                held = current;
+            }
+            held.users().incrementAndGet();
+            return held;
+        });
+        if (alreadyHeld.get()) {
+            close(queryKey, tables);
+        }
+        return registration;
+    }
+
+    /// Gets the query and join tables of a search, without using them.
     ///
     /// @param queryKey The key of the search.
     /// @return The search's registration, or empty if none is held for the search.
@@ -98,7 +143,40 @@ public class JoinTables {
         return Optional.ofNullable(registrations.get(queryKey));
     }
 
-    /// Closes and deletes the join tables of a search, if any are held.
+    /// Gets the query and join tables of a search for coprocessors that apply its joins. The tables
+    /// are kept until every caller has released them (see [#release(QueryKey, Registration)]).
+    ///
+    /// @param queryKey The key of the search.
+    /// @return The search's registration, or empty if none is held for the search.
+    public Optional<Registration> acquire(final QueryKey queryKey) {
+        final Registration registration = registrations.computeIfPresent(queryKey, (key, current) -> {
+            current.users().incrementAndGet();
+            return current;
+        });
+        return Optional.ofNullable(registration);
+    }
+
+    /// Ends a use of a search's tables. Once the last use ends, the tables are closed and deleted.
+    ///
+    /// @param queryKey     The key of the search.
+    /// @param registration The registration [#acquire(QueryKey)] gave.
+    public void release(final QueryKey queryKey, final Registration registration) {
+        // The count and the removal change together, so an acquire can't take tables about to close.
+        final AtomicBoolean removed = new AtomicBoolean();
+        registrations.compute(queryKey, (key, current) -> {
+            final int users = registration.users().decrementAndGet();
+            if (current == registration && users <= 0) {
+                removed.set(true);
+                return null;
+            }
+            return current;
+        });
+        if (removed.get()) {
+            close(queryKey, registration.tables());
+        }
+    }
+
+    /// Closes and deletes the join tables of a search, if any are held, whether or not they are in use.
     ///
     /// @param queryKey The key of the search.
     public void remove(final QueryKey queryKey) {
@@ -126,7 +204,9 @@ public class JoinTables {
     ///
     /// @param query  The search's query.
     /// @param tables The join tables, one for each join line in order.
-    public record Registration(Query query, List<JoinTable> tables) {
+    /// @param owner  The user who ran the search.
+    /// @param users  The number of coprocessors using the tables.
+    public record Registration(Query query, List<JoinTable> tables, UserRef owner, AtomicInteger users) {
 
     }
 }

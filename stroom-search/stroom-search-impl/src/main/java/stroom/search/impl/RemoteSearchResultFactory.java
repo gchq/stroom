@@ -90,13 +90,14 @@ class RemoteSearchResultFactory {
 
     public synchronized void destroy() {
         securityContext.asProcessingUser(() -> {
-            if (coprocessors != null) {
-                coprocessors.clear();
-            }
-
+            // Stop the search before clearing its coprocessors, which closes any join tables it reads.
             destroy = true;
             if (taskId != null) {
                 taskManager.terminate(taskId);
+            }
+
+            if (coprocessors != null) {
+                coprocessors.clear();
             }
         });
     }
