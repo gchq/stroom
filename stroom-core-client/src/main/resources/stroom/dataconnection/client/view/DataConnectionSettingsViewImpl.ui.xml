@@ -156,7 +156,7 @@
             <form:FormGroup identity="dataConnectionCsvData"
                             label="CSV"
                             helpText="The data, pasted here or read from a file on your computer with Load From File. It is held in this document and is queried as it stands when saved. An administrator sets the most it may hold with the dataConnection.maxStoredDataSize property, so keep it to lookup tables and reference lists; bulk data belongs in a feed.">
-                <g:SimplePanel ui:field="csvEditor" height="300px" width="100%"/>
+                <g:SimplePanel ui:field="csvEditor" styleName="form-control-border" height="300px" width="100%"/>
             </form:FormGroup>
             <g:FlowPanel styleName="button-group">
                 <b:Button ui:field="loadCsvFile" text="Load From File" width="200px" addStyleNames="allow-focus"/>
