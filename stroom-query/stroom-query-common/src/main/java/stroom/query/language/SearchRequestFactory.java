@@ -45,6 +45,7 @@ import stroom.query.api.datasource.QueryFieldProvider;
 import stroom.query.api.token.AbstractToken;
 import stroom.query.api.token.FunctionGroup;
 import stroom.query.api.token.KeywordGroup;
+import stroom.query.api.token.QuotedStringToken;
 import stroom.query.api.token.Token;
 import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenGroup;
@@ -62,6 +63,7 @@ import stroom.query.language.token.Tokeniser;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
@@ -115,6 +117,30 @@ public class SearchRequestFactory {
                 .extractDataSourceOnly(string, consumer);
     }
 
+    /// Finds the native query, such as SQL, in the `sql` clause of a query that may be incomplete, as
+    /// it is while being typed, for listing the fields it returns.
+    ///
+    /// @param string The query text.
+    /// @return The native query, or empty if there is no complete `sql` clause.
+    public Optional<String> extractNativeQuery(final String string) {
+        try {
+            final TokenGroup tokenGroup = StructureBuilder.create(Tokeniser.parse(string));
+            return tokenGroup.getChildren()
+                    .stream()
+                    .filter(token -> TokenType.SQL.equals(token.getTokenType()))
+                    .findFirst()
+                    .map(token -> ((KeywordGroup) token).getChildren())
+                    .filter(children -> !children.isEmpty())
+                    .map(List::getFirst)
+                    .filter(token -> token instanceof QuotedStringToken)
+                    .map(AbstractToken::getUnescapedText)
+                    .filter(sql -> !sql.isBlank());
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to find the native query in '{}'", string), e);
+            return Optional.empty();
+        }
+    }
+
     public SearchRequest create(final String string,
                                 final SearchRequest in,
                                 final ExpressionContext expressionContext) {
@@ -138,6 +164,9 @@ public class SearchRequestFactory {
         private Map<String, String> paramMap;
         private final Map<String, Expression> expressionMap;
         private final Set<String> addedFields = new HashSet<>();
+        // The from and sql clauses, if there are any, for pointing errors at.
+        private AbstractToken fromToken;
+        private AbstractToken sqlToken;
         private final List<AbstractToken> additionalFields = new ArrayList<>();
         private boolean inHaving;
         private Optional<CompiledWindow> optionalCompiledWindow = Optional.empty();
@@ -202,6 +231,8 @@ public class SearchRequestFactory {
                     paramMap = ParamUtil.createParamMap(in.getQuery().getParams());
                     queryBuilder.params(in.getQuery().getParams());
                     queryBuilder.timeRange(in.getQuery().getTimeRange());
+                    // A native query given by the caller is kept, unless the query has a sql clause.
+                    queryBuilder.nativeQuery(in.getQuery().getNativeQuery());
                 }
 
                 // Keep track of consumed tokens to check token order.
@@ -216,6 +247,7 @@ public class SearchRequestFactory {
                 if (query.getDataSource() == null) {
                     throw new TokenException(null, "No data source has been specified.");
                 }
+                checkNativeQuery(query);
 
                 // Make sure there is a non-null expression.
                 if (query.getExpression() == null) {
@@ -236,6 +268,28 @@ public class SearchRequestFactory {
             } catch (final Throwable e) {
                 LOGGER.debug(() -> "Error creating search request from '" + string + "'", e);
                 throw e;
+            }
+        }
+
+        // A data source that takes a native query must have one, and no other may.
+        private void checkNativeQuery(final Query query) {
+            final DocRef dataSource = query.getDataSource();
+            final boolean takesNativeQuery = dataSourceResolver.takesNativeQuery(dataSource);
+            final boolean hasNativeQuery = query.getNativeQuery() != null && !query.getNativeQuery().isBlank();
+            if (hasNativeQuery && !takesNativeQuery) {
+                final String what = sqlToken == null
+                        // The SQL came with the request, not from a sql clause.
+                        ? "The query has SQL, but SQL can only be run against a data source that runs SQL"
+                        : "A sql clause can only be used with a data source that runs SQL";
+                throw new TokenException(sqlToken, what + ", such as a JDBC or Amazon Athena Data Connection, "
+                                                   + "or an LDAP one, which takes its search filter there. '"
+                                                   + dataSource.getName() + "' does neither.");
+            } else if (takesNativeQuery && !hasNativeQuery) {
+                throw new TokenException(fromToken, "'" + dataSource.getName() + "' needs the SQL to run, in a sql "
+                                               + "clause after from, e.g. from \"" + dataSource.getName()
+                                               + "\" sql \"\"\"select * from my_table\"\"\", or for an LDAP "
+                                               + "directory its search filter, e.g. sql "
+                                               + "\"\"\"(objectClass=person)\"\"\"");
             }
         }
 
@@ -267,6 +321,7 @@ public class SearchRequestFactory {
                                 .collect(Collectors.joining(", ")));
             }
 
+            fromToken = keywordGroup;
             final AbstractToken dataSourceToken = keywordGroup.getChildren().get(0);
             final String dataSourceName = resolveDataSourceName(dataSourceToken);
             final DocRef dataSourceDocRef = securityContext.useAsReadResult(() ->
@@ -821,12 +876,17 @@ public class SearchRequestFactory {
                             checkTokenOrder(token, consumedTokens);
                             remaining = addDataSource(remaining, queryBuilder::dataSource, false);
                         }
+                        case SQL -> {
+                            checkTokenOrder(token, consumedTokens);
+                            processSql(keywordGroup, queryBuilder);
+                            remaining.removeFirst();
+                        }
                         case WHERE -> {
                             checkTokenOrder(token, consumedTokens);
                             remaining =
                                     addExpression(remaining,
                                             consumedTokens,
-                                            Set.of(TokenType.FROM),
+                                            Set.of(TokenType.FROM, TokenType.SQL),
                                             TokenType.WHERE,
                                             queryBuilder::expression);
                         }
@@ -849,6 +909,7 @@ public class SearchRequestFactory {
                                             consumedTokens,
                                             Set.of(
                                                     TokenType.FROM,
+                                                    TokenType.SQL,
                                                     TokenType.WHERE,
                                                     TokenType.EVAL,
                                                     TokenType.WINDOW),
@@ -1285,12 +1346,14 @@ public class SearchRequestFactory {
                     filter = "/" + filter;
                 }
 
+                // The fields of a data source that takes a native query depend on it.
                 final FindFieldCriteria criteria = new FindFieldCriteria(
                         PageRequest.createDefault(),
                         FindFieldCriteria.DEFAULT_SORT_LIST,
                         dataSource,
                         filter,
-                        null);
+                        null,
+                        queryBuilder.build().getNativeQuery());
                 final ResultPage<QueryField> resultPage = queryFieldProviderProvider.get().findFields(criteria);
                 final List<QueryField> fields = resultPage.getValues();
                 for (final QueryField field : fields) {
@@ -1376,6 +1439,26 @@ public class SearchRequestFactory {
                     .visible(true)
                     .special(false)
                     .build();
+        }
+
+        // The SQL is a single quoted string. A triple-quoted one is taken as written, so it can hold
+        // double quotes and backslashes without escaping.
+        private void processSql(final KeywordGroup keywordGroup, final Query.Builder queryBuilder) {
+            sqlToken = keywordGroup;
+            final List<AbstractToken> children = keywordGroup.getChildren();
+            if (children.isEmpty()) {
+                throw new TokenException(keywordGroup, "Expected the SQL to run after sql, as a quoted string, "
+                                                       + "e.g. sql \"\"\"select * from my_table\"\"\"");
+            }
+            final AbstractToken sql = children.getFirst();
+            if (!(sql instanceof QuotedStringToken)) {
+                throw new TokenException(sql, "The SQL must be a quoted string, e.g. "
+                                              + "sql \"\"\"select * from my_table\"\"\"");
+            }
+            if (children.size() > 1) {
+                throw new TokenException(children.get(1), "Unexpected token after the SQL");
+            }
+            queryBuilder.nativeQuery(sql.getUnescapedText());
         }
 
         private void processLimit(final KeywordGroup keywordGroup,

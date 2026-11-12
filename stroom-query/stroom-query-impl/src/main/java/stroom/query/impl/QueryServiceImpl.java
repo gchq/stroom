@@ -90,6 +90,7 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
+import stroom.util.shared.time.SimpleDuration;
 import stroom.util.string.ExceptionStringUtil;
 import stroom.util.string.StringUtil;
 
@@ -129,6 +130,8 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
     private static final ContextualQueryHelp EMPTY_QUERY_CONTEXT = new ContextualQueryHelp(
             EnumSet.of(QueryHelpType.STRUCTURE),
             Set.of(Structures.name(TokenType.FROM)));
+    // No help at all, as inside the SQL of a sql clause, where nothing StroomQL offers applies.
+    private static final ContextualQueryHelp NO_QUERY_HELP = new ContextualQueryHelp(Set.of(), Set.of());
     private static final Pattern NON_BASIC_CHARS = Pattern.compile("[^A-Za-z0-9-_ ]");
     private static final Pattern MULTIPLE_SPACE = Pattern.compile(" +");
 
@@ -647,6 +650,12 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
     }
 
     @Override
+    public Optional<SimpleDuration> fetchMinRefreshInterval(final DocRef dataSourceRef) {
+        return securityContext.useAsReadResult(() ->
+                dataSourceProviderRegistry.fetchMinRefreshInterval(dataSourceRef));
+    }
+
+    @Override
     public Optional<DocRef> getReferencedDataSource(final String query) {
         return securityContext.useAsReadResult(() -> {
             final AtomicReference<DocRef> ref = new AtomicReference<>();
@@ -660,6 +669,11 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
             }
             return Optional.ofNullable(ref.get());
         });
+    }
+
+    @Override
+    public Optional<String> getReferencedNativeQuery(final String query) {
+        return searchRequestFactory.extractNativeQuery(query);
     }
 
     @Override
@@ -688,6 +702,8 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
     ContextualQueryHelp getQueryHelpContext(final String partialQuery) {
         if (NullSafe.isBlankString(partialQuery)) {
             return EMPTY_QUERY_CONTEXT;
+        } else if (Tokeniser.endsInsideTripleQuotedString(partialQuery)) {
+            return NO_QUERY_HELP;
         } else {
             final Set<QueryHelpType> types = new HashSet<>();
             final Set<String> applicableStructureItems;
@@ -732,8 +748,14 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                     types.add(QueryHelpType.DATA_SOURCE);
                 }
 
+                // Only offer a sql clause for a data source that runs SQL.
+                final boolean offerSql = keywordsValidAfter.contains(TokenType.SQL)
+                                         && getReferencedDataSource(partialQuery)
+                                                 .map(docRef -> dataSourceProviderRegistry.takesNativeQuery(docRef))
+                                                 .orElse(false);
                 applicableStructureItems = keywordsValidAfter.stream()
                         .filter(tokenType -> TokenType.BY != tokenType)
+                        .filter(tokenType -> TokenType.SQL != tokenType || offerSql)
                         .map(tokenType -> {
                             if (TokenType.GROUP == tokenType) {
                                 return Structures.name(TokenType.GROUP, TokenType.BY);
@@ -771,6 +793,10 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
             queryHelpTypes = switch (lastKeyword) {
                 case FROM -> count >= 4
                         // 'from xxx '
+                        ? EnumSet.of(QueryHelpType.STRUCTURE)
+                        : QueryHelpType.NO_TYPES;
+                case SQL -> count > 3
+                        // 'sql """...""" ', after which only other clauses can follow
                         ? EnumSet.of(QueryHelpType.STRUCTURE)
                         : QueryHelpType.NO_TYPES;
                 case WHERE -> count > 2

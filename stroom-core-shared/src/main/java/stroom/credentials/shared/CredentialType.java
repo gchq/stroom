@@ -26,7 +26,8 @@ public enum CredentialType implements HasDisplayValue {
     ACCESS_TOKEN("Access Token"),
     SSH_KEY("SSH Key"),
     KEY_STORE("Key Store"),
-    KEY_STORE_FILE("Key Store File");
+    KEY_STORE_FILE("Key Store File"),
+    AWS_KEY("AWS Access Key");
 
     private final String displayValue;
 

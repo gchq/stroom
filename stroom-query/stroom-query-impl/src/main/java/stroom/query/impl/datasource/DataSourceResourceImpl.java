@@ -20,12 +20,14 @@ import stroom.datasource.shared.DataSourceResource;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Documentation;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.time.SimpleDuration;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -60,5 +62,13 @@ class DataSourceResourceImpl implements DataSourceResource {
             LOGGER.debug(e::getMessage, e);
         }
         return null;
+    }
+
+    // Called each time a dashboard query loads its data source, so too noisy to log and of
+    // limited benefit; running the query is logged.
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public SimpleDuration fetchMinRefreshInterval(final DocRef dataSourceRef) {
+        return queryServiceProvider.get().fetchMinRefreshInterval(dataSourceRef).orElse(null);
     }
 }

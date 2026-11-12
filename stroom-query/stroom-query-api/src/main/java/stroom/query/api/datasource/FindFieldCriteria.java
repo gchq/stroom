@@ -46,6 +46,8 @@ public class FindFieldCriteria extends BaseCriteria {
     private final String filter;
     @JsonProperty
     private final Boolean queryable;
+    @JsonProperty
+    private final String nativeQuery;
 
     public FindFieldCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                              @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
@@ -53,16 +55,38 @@ public class FindFieldCriteria extends BaseCriteria {
         this(pageRequest, sortList, dataSourceRef, null, null);
     }
 
+    /// @param pageRequest   The page of fields to return.
+    /// @param sortList      How to sort the fields.
+    /// @param dataSourceRef The data source.
+    /// @param filter        A filter on field names, or `null`.
+    /// @param queryable     True for only fields that can be queried, or `null` for all.
+    public FindFieldCriteria(final PageRequest pageRequest,
+                             final List<CriteriaFieldSort> sortList,
+                             final DocRef dataSourceRef,
+                             final String filter,
+                             final Boolean queryable) {
+        this(pageRequest, sortList, dataSourceRef, filter, queryable, null);
+    }
+
+    /// @param pageRequest   The page of fields to return.
+    /// @param sortList      How to sort the fields.
+    /// @param dataSourceRef The data source.
+    /// @param filter        A filter on field names, or `null`.
+    /// @param queryable     True for only fields that can be queried, or `null` for all.
+    /// @param nativeQuery   The query's native query, such as the SQL of a Data Connection, whose
+    ///                      fields depend on it, or `null`.
     @JsonCreator
     public FindFieldCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                              @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                              @JsonProperty("dataSourceRef") final DocRef dataSourceRef,
                              @JsonProperty("filter") final String filter,
-                             @JsonProperty("queryable") final Boolean queryable) {
+                             @JsonProperty("queryable") final Boolean queryable,
+                             @JsonProperty("nativeQuery") final String nativeQuery) {
         super(pageRequest, sortList);
         this.dataSourceRef = dataSourceRef;
         this.filter = filter;
         this.queryable = queryable;
+        this.nativeQuery = nativeQuery;
     }
 
     public DocRef getDataSourceRef() {
@@ -75,6 +99,11 @@ public class FindFieldCriteria extends BaseCriteria {
 
     public Boolean getQueryable() {
         return queryable;
+    }
+
+    /// @return The query's native query, such as the SQL of a Data Connection, or `null`.
+    public String getNativeQuery() {
+        return nativeQuery;
     }
 
     @Override
@@ -91,11 +120,12 @@ public class FindFieldCriteria extends BaseCriteria {
         final FindFieldCriteria that = (FindFieldCriteria) o;
         return Objects.equals(dataSourceRef, that.dataSourceRef) &&
                Objects.equals(filter, that.filter) &&
-               Objects.equals(queryable, that.queryable);
+               Objects.equals(queryable, that.queryable) &&
+               Objects.equals(nativeQuery, that.nativeQuery);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), dataSourceRef, filter, queryable);
+        return Objects.hash(super.hashCode(), dataSourceRef, filter, queryable, nativeQuery);
     }
 }
