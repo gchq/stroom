@@ -226,8 +226,9 @@ class CompareOutputsTool extends AbstractBuiltInTool {
                                         final Request request,
                                         final Sides sides,
                                         final List<Map<String, Object>> locations) {
+        // A source type group's draft is compared through the feed's dispatcher, inlined in place of its import.
         final Map<String, String> candidate = request.otherPipelineUuid() == null
-                ? request.draftCode()
+                ? stepping.withGroupsInlined(request.pipelineUuid(), request.draftCode())
                 : null;
         final Compared compared;
         try {

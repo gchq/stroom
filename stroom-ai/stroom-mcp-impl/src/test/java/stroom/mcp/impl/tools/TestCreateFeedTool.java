@@ -86,6 +86,43 @@ class TestCreateFeedTool {
     }
 
     @Test
+    void aGroupsOutputFeedAlreadyInTheBuildIsTakenAsItsOutputFeed() {
+        // Seen in review: the feed made before the group was named (or its first create_feed lost) was carried on
+        // with, never marked the group's, so create_pipeline refused forever for want of its output feed.
+        final SourceTypeGroups groups = Mockito.mock(SourceTypeGroups.class);
+        tool.setGroups(() -> groups);
+        Mockito.when(groups.outputFeed(any(), Mockito.eq("pega-v1"), Mockito.eq("PEGA integration"),
+                Mockito.eq("PEGA-INT-EVENTS"))).thenReturn(List.of("PegaIntegration"));
+        final DocRef feed = feeds.buildFeed("pega-v1", "PEGA-INT-EVENTS");
+        feeds.world.docs.put(feed.getUuid(), feeds.feed(feed.getUuid()).copy().streamType("Events").build());
+
+        final Map<String, Object> made = json(call("{\"build\": \"pega-v1\", \"name\": \"PEGA-INT-EVENTS\", "
+                                                   + "\"group\": \"PEGA integration\"}", BuildToolCalls.context()));
+
+        assertThat(made).containsEntry("uuid", feed.getUuid()).containsEntry("group", "PEGA integration")
+                .containsEntry("source_types", List.of("PegaIntegration"));
+        assertThat(feeds.world.records().entry("pega-v1", feed.getUuid()))
+                .containsEntry(BuildFeeds.GROUP_OUTPUT, "PEGA integration");
+        Mockito.verify(groups).checkOwnOutputFeed("pega-v1", "PEGA integration");
+    }
+
+    @Test
+    void aGroupsOutputFeedNameTheUserCorrectsIsCheckedAsAProposedOneIs() {
+        final SourceTypeGroups groups = Mockito.mock(SourceTypeGroups.class);
+        tool.setGroups(() -> groups);
+        feeds.feedAt("System/Feeds/PEGA", "PEGA-OTHER", "f9");
+
+        final ToolResult refused = call("{\"build\": \"pega-v1\", \"name\": \"PEGA-INT-EVENTS\", \"group\": "
+                                        + "\"PEGA integration\"}",
+                BuildToolCalls.answering(Map.of("name", "PEGA-OTHER")));
+
+        assertThat(refused.isError()).isTrue();
+        assertThat(refused.text()).contains("A feed named 'PEGA-OTHER' already exists");
+        assertThat(feeds.feedNamed("PEGA-INT-EVENTS")).isNull();
+        Mockito.verify(groups, Mockito.never()).outputFeed(any(), any(), any(), any());
+    }
+
+    @Test
     void aFeedDifferingFromAnotherOnlyInCaseIsRefused() {
         // Qwen in VS Code made DELINEA-SECRETSERVER-V1.0 beside an earlier Delinea-SecretServer-V1.0: Stroom filed
         // the new feed's streams under the earlier spelling, and processing refused them as another build's feed.

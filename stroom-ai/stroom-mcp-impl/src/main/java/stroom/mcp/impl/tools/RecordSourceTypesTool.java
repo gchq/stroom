@@ -25,6 +25,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.indexing.FeedIndexes;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
@@ -68,6 +69,7 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
     static final String FEED_ARG = "feed";
     static final String REVIEWED_ARG = "reviewed";
     static final String ROWS_ARG = "rows";
+    static final String REMOVE_ARG = "remove";
     static final String PATTERNS_ARG = "patterns";
     static final String SCOPE_ARG = "scope";
     static final String REASON_ARG = "reason";
@@ -148,7 +150,10 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                              + "to build now; the others are parked with their reason. Then it writes the feed's "
                              + "registry ('<feed> source types') in the build. An assessment build writes the "
                              + "registry without a scope. Where the field's values are many paths or names, it "
-                             + "proposes anchored patterns, confirmed by the user.")
+                             + "proposes anchored patterns, confirmed by the user. Rows given again keep the "
+                             + "registry's translated and placed rows they leave out; remove= drops a row, and "
+                             + "removing a translated or placed row, or changing a translated row's value or "
+                             + "pattern, is confirmed by the user in a form.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(BUILD_ARG, "The build.")
                         .addStringProperty(FEED_ARG, "The surveyed feed.")
@@ -161,7 +166,17 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                                                  + "expression on the field's value), e.g. 'mail "
                                                                  + "audit ~ ^/var/log/mail/audit/'. Narrower before "
                                                                  + "wider. Without it, rows are proposed from the "
-                                                                 + "values the survey saw."))
+                                                                 + "values the survey saw. A registry's translated "
+                                                                 + "or placed rows left out are kept (remove= "
+                                                                 + "drops one); a translated row's changed value or "
+                                                                 + "pattern is confirmed by the user in a form; a "
+                                                                 + "translated row can't be renamed (add the new "
+                                                                 + "row and remove the old one)."))
+                        .addProperty(REMOVE_ARG, stringArraySchema("Only on the user's word: rows of the registry "
+                                                                   + "to remove, by name. A translated or placed "
+                                                                   + "row's removal is confirmed by the user in a "
+                                                                   + "form (refused for a translated row where no "
+                                                                   + "form can be shown)."))
                         .addStringProperty(PATTERNS_ARG, "Only when the client shows no forms: the user's answer "
                                                          + "to the proposed patterns ('use' them, or 'exact': a "
                                                          + "source type per value).")
@@ -219,10 +234,13 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                   + "user (or source_type_field= as they said), then call " + NAME + " again.");
         }
         final Map<String, Long> values = SourceTypeProfiles.valueCounts(sources);
-        final Rows rows = rows(call, context, feed, field, values, before);
-        if (rows.early() != null) {
-            return rows.early();
+        final Rows proposed = rows(call, context, feed, field, values, before);
+        if (proposed.early() != null) {
+            return proposed.early();
         }
+        // The registry's translated and placed rows are kept unless removed; changing or removing one is the user's.
+        final Edits edits = edits(call, context, proposed.rows(), before);
+        final Rows rows = new Rows(edits.rows(), null);
         final List<String> problems = SourceTypeRows.problems(rows.rows(), values.keySet());
         if (!problems.isEmpty()) {
             throw new ToolRefusal("These rows can't be used: " + String.join("; ", problems) + ". Nothing was "
@@ -240,6 +258,7 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                     .filter(row -> row.get("status") == null)
                     .forEach(row -> decide(row, SourceTypeRegistry.PARKED, ASSESSED, now, "assessed: no build has "
                                                                                           + "taken it on yet"));
+            confirm(call, context, feed, edits);
             final SurveyRecord written = registries.writeRegistry(context.session(), build, feed, existing,
                     SourceTypeRegistry.render(registry));
             final Map<String, Object> result = written(feed, field, registry, written, table);
@@ -264,6 +283,9 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                     row.match())
                     ? " ~ "
                     : " = ") + row.value()).toList());
+            if (!edits.confirmations().isEmpty()) {
+                result.put("to_confirm", edits.confirmations());
+            }
             result.put("hint", (context.session().isChat()
                     ? "The chat shows the user this table itself, as it is: don't repeat or restyle it. "
                     : "Show the user this table in your reply, as it is, sorted by suggested category then size, "
@@ -285,6 +307,7 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                + "reviewed=<review_id>, " + SCOPE_ARG + "=[their names] and " + REASON_ARG + ".");
             return result;
         }
+        confirm(call, context, feed, edits);
         final String now = SurveyDoc.at(Instant.now());
         applyScope(registry, build, scope.get(), now);
         applyDropped(call, registry, now);
@@ -402,6 +425,128 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
         throw new ToolRefusal("The user's answer ('" + answer.get().strip() + "') is neither: ask them in the chat "
                               + "how to match the source types, and call " + NAME + " again with " + ROWS_ARG
                               + " as they say ('name = value' or 'name ~ ^pattern', in order).");
+    }
+
+    // The rows as they will be: those given (or proposed), with the registry's translated and placed rows they leave
+    // out kept in their place, and the rows remove= names taken out. A translated row renamed is refused; removing a
+    // translated or placed row, or changing a translated row's value or pattern, is for the user to confirm (refused
+    // for a translated row where no form can be shown).
+    private Edits edits(final ToolCall call,
+                        final ToolCallContext context,
+                        final List<SourceTypeRows.Row> given,
+                        final Map<String, Object> before) {
+        final List<String> remove = stringListArg(call, REMOVE_ARG).stream().map(String::strip).toList();
+        final List<Map<String, Object>> previous = JsonValues.maps(before.get("rows"));
+        final Map<String, Map<String, Object>> byName = new LinkedHashMap<>();
+        previous.forEach(row -> byName.put(JsonValues.text(row.get("name")), row));
+        final Set<String> givenNames = new LinkedHashSet<>();
+        given.forEach(row -> givenNames.add(row.name()));
+        for (final String name : remove) {
+            if (!byName.containsKey(name)) {
+                throw new ToolRefusal("remove names '" + name + "', which is no row of the registry: it has "
+                                      + ToolText.list(List.copyOf(byName.keySet())) + ". Nothing was written.");
+            }
+            if (givenNames.contains(name) && !stringListArg(call, ROWS_ARG).isEmpty()) {
+                throw new ToolRefusal("'" + name + "' is both in rows and in remove: give it in one. Nothing was "
+                                      + "written.");
+            }
+        }
+        // A translated row renamed: its records would leave its group unsaid.
+        for (final SourceTypeRows.Row row : given) {
+            if (byName.containsKey(row.name())) {
+                continue;
+            }
+            previous.stream()
+                    .filter(was -> translated(was) && !givenNames.contains(JsonValues.text(was.get("name")))
+                                   && !remove.contains(JsonValues.text(was.get("name")))
+                                   && row.match().equals(JsonValues.text(was.get("match")))
+                                   && row.value().equals(JsonValues.text(was.get("value"))))
+                    .findFirst()
+                    .ifPresent(was -> {
+                        throw new ToolRefusal("Row '" + row.name() + "' would rename translated row '"
+                                              + was.get("name") + "' (group '" + was.get("group") + "'): a translated "
+                                              + "row isn't renamed. Add the new row and remove the old one (remove=['"
+                                              + was.get("name") + "']), as the user confirms. Nothing was written.");
+                    });
+        }
+        final List<String> confirmations = new ArrayList<>();
+        final List<String> needForms = new ArrayList<>();
+        for (final SourceTypeRows.Row row : given) {
+            final Map<String, Object> was = byName.get(row.name());
+            if (was != null && translated(was) && (!row.match().equals(JsonValues.text(was.get("match")))
+                                                   || !row.value().equals(JsonValues.text(was.get("value"))))) {
+                confirmations.add("Change translated row '" + row.name() + "' (group '" + was.get("group") + "') from "
+                                  + said(was) + " to " + row.said());
+                needForms.add(row.name());
+            }
+        }
+        for (final String name : remove) {
+            final Map<String, Object> was = byName.get(name);
+            if (translated(was) || placed(was)) {
+                confirmations.add("Remove row '" + name + "'" + (translated(was)
+                        ? " (translated by group '" + was.get("group") + "': its records are passed over once its "
+                          + "group is built again)"
+                        : " (placed in a pipeline)"));
+                if (translated(was)) {
+                    needForms.add(name);
+                }
+            }
+        }
+        if (!needForms.isEmpty() && !context.userQuestions().canAsk()) {
+            throw new ToolRefusal("Changing or removing translated row(s) " + ToolText.list(needForms) + " is for "
+                                  + "the user to confirm in a form, and this client can't show one. Leave them as "
+                                  + "they are. Nothing was written.");
+        }
+        // Kept in their place: each after the row it followed, else first.
+        final List<SourceTypeRows.Row> out = new ArrayList<>(given.stream()
+                .filter(row -> !remove.contains(row.name()))
+                .toList());
+        String after = null;
+        for (final Map<String, Object> was : previous) {
+            final String name = JsonValues.text(was.get("name"));
+            final boolean present = out.stream().anyMatch(row -> row.name().equals(name));
+            if (!present && !remove.contains(name) && (translated(was) || placed(was))) {
+                final String follows = after;
+                final int at = follows == null
+                        ? 0
+                        : out.stream().map(SourceTypeRows.Row::name).toList().indexOf(follows) + 1;
+                out.add(at, new SourceTypeRows.Row(name, JsonValues.text(was.get("match")),
+                        JsonValues.text(was.get("value"))));
+            }
+            if (out.stream().anyMatch(row -> row.name().equals(name))) {
+                after = name;
+            }
+        }
+        return new Edits(out, confirmations);
+    }
+
+    // The user confirms the changes to translated or placed rows in a form (plain text), before anything is written.
+    // Where no form can be shown, only a placed row not translated is removed (on the user's word, as remove= is
+    // given): a translated row's change was refused before.
+    private void confirm(final ToolCall call, final ToolCallContext context, final String feed, final Edits edits) {
+        if (edits.confirmations().isEmpty() || !context.userQuestions().canAsk()) {
+            return;
+        }
+        final Map<String, Object> details = new LinkedHashMap<>();
+        details.put("feed", feed);
+        details.put("changes", edits.confirmations());
+        consent.require(call, context, Consent.Request.confirmation(NAME, "Change the source type registry of '"
+                                                                          + feed + "'", details));
+    }
+
+    private static boolean translated(final Map<String, Object> row) {
+        return row != null && SourceTypeRegistry.TRANSLATED.equals(row.get("status"));
+    }
+
+    private static boolean placed(final Map<String, Object> row) {
+        return row != null && (row.get("group") != null || row.get("pipeline") != null);
+    }
+
+    // A registry row's match, as the user gives one: `= value` or `~ pattern`.
+    private static String said(final Map<String, Object> row) {
+        return (SourceTypeRows.PATTERN.equals(row.get("match"))
+                ? "~ "
+                : "= ") + JsonValues.text(row.get("value"));
     }
 
     // The form's message: each pattern with the values and records it covers, in plain text.
@@ -720,6 +865,14 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
     /// @param rows  The rows, in order.
     /// @param early The result, or null.
     private record Rows(List<SourceTypeRows.Row> rows, Map<String, Object> early) {
+
+    }
+
+    /// The rows as they will be, and what of the registry's translated or placed rows the user is to confirm.
+    ///
+    /// @param rows          The rows, in order.
+    /// @param confirmations Each change or removal to confirm, said for the user.
+    private record Edits(List<SourceTypeRows.Row> rows, List<String> confirmations) {
 
     }
 

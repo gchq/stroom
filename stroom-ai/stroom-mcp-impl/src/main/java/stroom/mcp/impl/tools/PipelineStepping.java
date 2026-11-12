@@ -81,6 +81,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /// What the stepping tools (`step_pipeline`, `step_sample`, `step_records` and `compare_outputs`) share: reading the
 /// pipeline, refusing draft XSLT check_xslt rejects, a pipeline with a mistyped property or reference data not loaded
@@ -93,6 +95,8 @@ import java.util.function.Supplier;
 class PipelineStepping {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PipelineStepping.class);
+    // The UUID of an import's href by UUID: `uuid='…', name='…'`.
+    private static final Pattern HREF_UUID = Pattern.compile("uuid='([^']+)'");
 
     /// The most records one call steps.
     static final int MAX_SAMPLE_RECORDS = EventLocations.MAX_RECORDS;
@@ -306,6 +310,29 @@ class PipelineStepping {
         return temporaryDispatcher(pipelineUuid, element, code, true)
                 .orElseThrow(() -> new ToolRefusal("The code for element '" + element + "' is not a source type "
                                                    + "group's"));
+    }
+
+    /// @param pipelineUuid The pipeline whose element runs the feed's dispatcher.
+    /// @param element      The element.
+    /// @param code         Draft code for the element.
+    /// @return The saved XSLT of the source type group the code is a draft of, as the element's dispatcher imports it;
+    /// empty for code that isn't a group's, or a group the dispatcher doesn't import yet.
+    Optional<XsltDoc> savedGroup(final String pipelineUuid, final String element, final String code) {
+        final Optional<ModuleChecks.Marker> marker = code == null
+                ? Optional.empty()
+                : ModuleChecks.marker(XsltChecks.unescaped(code).text());
+        if (marker.isEmpty() || !SourceTypeModule.GROUP.equals(marker.get().kind())) {
+            return Optional.empty();
+        }
+        return savedXslt(pipelineUuid, element)
+                .flatMap(doc -> KeptMapping.readBlock(doc.getDescription(), DispatcherXslt.SPEC_BLOCK))
+                .flatMap(DispatcherSpec::fromJson)
+                .flatMap(spec -> spec.groups().stream()
+                        .filter(group -> group.mode().equals(marker.get().mode()) && group.href() != null)
+                        .findFirst())
+                .map(group -> HREF_UUID.matcher(group.href()))
+                .filter(Matcher::find)
+                .flatMap(found -> documentAccess.read(new DocRef(XsltDoc.TYPE, found.group(1)), XsltDoc.class));
     }
 
     // A group's code inlined into a temporary dispatcher, generated from the spec kept with the element's saved one;

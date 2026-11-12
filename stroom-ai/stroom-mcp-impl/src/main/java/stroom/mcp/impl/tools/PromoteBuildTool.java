@@ -293,6 +293,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         final List<String> sources = facts.sourceFeeds(build, docs);
         // A feed's survey doc and source type registry: beside the feed, or kept in the build, as the user chose.
         final Map<String, String> besideFeeds = besideFeeds(call, context, build, docs, destinations);
+        final List<String> registriesSaid = registriesBeside(docs, besideFeeds);
         // An aggregated feed's modules and a group's output feed of its own: beside the feed.
         modulesBeside(build, docs, destinations, versions.proposed()).forEach(besideFeeds::putIfAbsent);
         final List<PromotionLayout.Step> plan = plan(docs, destinations, versions.proposed(), joins, sources,
@@ -300,6 +301,17 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         // Before the layout is shown, so it shows what the user chose (found reviewing the change: asked after
         // the review, a copy kept still showed as written back).
         askAboutChangedOriginals(call, context, build, plan);
+        // A working copy the user kept stays in the build: the modules promoted import its original, which must
+        // have what they need of it.
+        final Set<String> keptCopies = keptCopies(plan);
+        if (groupsProvider != null && !keptCopies.isEmpty()) {
+            final List<String> lacking = groupsProvider.get().keptProblems(build, docs, keptCopies);
+            if (!lacking.isEmpty()) {
+                throw new ToolRefusal("Not promoted: " + String.join("; ", lacking) + ". Overwrite production with "
+                                      + "the working copy, or change the modules importing it, then promote_build "
+                                      + "again. Nothing was changed.");
+            }
+        }
         // The build's role subfolders kept in production (asked for by the user), unless they say otherwise: where
         // they tell stages apart, so only when it promotes documents of more than one role (an index documented,
         // or a new indexing version, is all Indexing: a subfolder there only adds a level).
@@ -362,6 +374,11 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         final boolean roles = rolesMoved.size() > 1;
         if (!Consent.wasReviewed(reviewed, tree)) {
             final Map<String, Object> review = review(build, tree, warnings, processed, roles, reviewed);
+            if (!registriesSaid.isEmpty()) {
+                review.put("registries", registriesSaid);
+                review.put("hint", review.get("hint") + " Say the registries note too: each registry goes beside "
+                                   + "its feed, though its survey doc stays in the build.");
+            }
             if (!pipelineChanges.isEmpty()) {
                 review.put("pipeline_changes", pipelineChanges);
                 review.put("hint", review.get("hint") + " Say the pipeline_changes too: the reference data each "
@@ -395,6 +412,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (!processing.isEmpty()) {
             shortForm.put("processing after promotion", processed);
         }
+        if (!registriesSaid.isEmpty()) {
+            shortForm.put("registries", registriesSaid);
+        }
         if (!pipelineChanges.isEmpty()) {
             shortForm.put("pipeline changes", pipelineChanges);
         }
@@ -407,7 +427,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (groupsProvider != null) {
             // An aggregated feed's modules import the originals their working copies are written back over.
             try {
-                done.addAll(groupsProvider.get().toOriginals(context, build, docs));
+                done.addAll(groupsProvider.get().toOriginals(context, build, docs, keptCopies));
             } catch (final RuntimeException e) {
                 throw new ToolRefusal("Not promoted: the build's modules couldn't be pointed at the originals of "
                                       + "their working copies: " + e.getMessage() + ". Done before it: "
@@ -431,12 +451,14 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (!referenceChanges.isEmpty()) {
             done.addAll(referencesProvider.get().apply(referenceChanges));
         }
-        // A choice about a changed original holds for this promotion only: promoted again, it is asked again.
+        // A choice about a changed original holds for this promotion only: promoted again, it is asked again. What
+        // was kept is marked so, so it doesn't hold the build open on its feed.
         plan.stream()
-                .filter(p -> PromotionLayout.KEEP.equals(p.action())
-                             && buildRecords.entry(build, String.valueOf(p.doc().get("uuid")))
-                                     .containsKey(ORIGINAL_CHOICE))
-                .forEach(p -> buildRecords.update(build, ref(p.doc()), entry -> entry.remove(ORIGINAL_CHOICE)));
+                .filter(p -> PromotionLayout.KEEP.equals(p.action()))
+                .forEach(p -> buildRecords.update(build, ref(p.doc()), entry -> {
+                    entry.remove(ORIGINAL_CHOICE);
+                    entry.put(BuildRecords.KEPT_AT_PROMOTION, true);
+                }));
         // What the record kept about the promoted docs only meant something inside the build; it goes once nothing
         // is left in the build.
         buildRecords.forget(build, plan.stream()
@@ -449,6 +471,16 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         final List<Map<String, Object>> filters = promotionProcessing.createPromotionFilters(context.links(),
                 processing);
         return promoted(context, build, plan, folders, tree, done, warnings, filters, predecessors);
+    }
+
+    // The working copies the plan keeps in the build, by UUID: their originals stay as they are in production.
+    private static Set<String> keptCopies(final List<PromotionLayout.Step> plan) {
+        final Set<String> out = new LinkedHashSet<>();
+        plan.stream()
+                .filter(step -> PromotionLayout.KEEP.equals(step.action())
+                                && step.doc().get("working_copy_of") != null)
+                .forEach(step -> out.add(String.valueOf(step.doc().get("uuid"))));
+        return out;
     }
 
     // Where each document goes.
@@ -522,8 +554,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
 
     // Where each new survey doc and source type registry goes, by uuid: the folder of its feed, or `keep`. A survey
     // doc goes where the user chose when the survey was covered (decided 2026-11-12), asked again now if they
-    // deferred it; a registry follows its feed's survey doc, and goes beside the feed when nothing was chosen.
-    // One with no choice, or whose feed has no folder yet, is placed as before.
+    // deferred it. A registry always goes beside the feed, whatever was chosen for the survey doc (decided
+    // 2026-11-13): the registry is a doc beside the feed, where later builds find it; kept in the build, it held the
+    // promoted build open on the feed for ever. One whose feed has no folder yet is placed as before.
     private Map<String, String> besideFeeds(final ToolCall call,
                                             final ToolCallContext context,
                                             final String build,
@@ -537,17 +570,53 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             final boolean survey = name.endsWith(" - Survey");
             final boolean registry = name.endsWith(SourceTypeRegistry.SUFFIX);
             if (!DocumentationDoc.TYPE.equals(doc.get("type")) || doc.get("working_copy_of") != null
-                || destinations.containsKey(uuid) || !(survey || registry)) {
+                || !(survey || registry)) {
+                continue;
+            }
+            if (registry && KEEP.equals(NullSafe.string(destinations.get(uuid)).strip().toLowerCase(Locale.ROOT))) {
+                throw new ToolRefusal("The source type registry '" + name + "' goes beside its feed, where later "
+                                      + "builds find it: it can't be kept in the workspace. Leave its uuid out of "
+                                      + "destinations. Nothing was changed.");
+            }
+            if (destinations.containsKey(uuid)) {
                 continue;
             }
             final String feed = name.substring(0, name.length() - (survey
                     ? " - Survey".length()
                     : SourceTypeRegistry.SUFFIX.length()));
+            if (registry) {
+                feedFolder(feed, docs, destinations).ifPresent(folder -> out.put(uuid, folder));
+                continue;
+            }
             final String choice = choices.computeIfAbsent(feed, ignored -> surveyChoice(call, context, build, feed));
             if (KEEP.equals(choice)) {
                 out.put(uuid, KEEP);
-            } else if (SurveyFeedTool.BESIDE.equals(choice) || (registry && choice.isEmpty())) {
+            } else if (SurveyFeedTool.BESIDE.equals(choice)) {
                 feedFolder(feed, docs, destinations).ifPresent(folder -> out.put(uuid, folder));
+            }
+        }
+        return out;
+    }
+
+    // Each registry going beside its feed while the feed's survey doc stays in the build, said for the user: the
+    // survey doc's choice is theirs, the registry's place is not.
+    private static List<String> registriesBeside(final List<Map<String, Object>> docs,
+                                                 final Map<String, String> besideFeeds) {
+        final List<String> out = new ArrayList<>();
+        for (final Map<String, Object> doc : docs) {
+            final String name = String.valueOf(doc.get("name"));
+            final String uuid = String.valueOf(doc.get("uuid"));
+            if (!DocumentationDoc.TYPE.equals(doc.get("type")) || !name.endsWith(SourceTypeRegistry.SUFFIX)
+                || besideFeeds.get(uuid) == null || KEEP.equals(besideFeeds.get(uuid))) {
+                continue;
+            }
+            final String feed = name.substring(0, name.length() - SourceTypeRegistry.SUFFIX.length());
+            final boolean surveyKept = docs.stream()
+                    .filter(other -> SurveyDoc.docName(feed).equals(other.get("name")))
+                    .anyMatch(other -> KEEP.equals(besideFeeds.get(String.valueOf(other.get("uuid")))));
+            if (surveyKept) {
+                out.add("'" + name + "' goes beside feed '" + feed + "', though its survey doc stays in the build: "
+                        + "a registry always goes beside its feed, where later builds find it");
             }
         }
         return out;

@@ -2460,17 +2460,22 @@ given. It has two paths:
 * **Notes**: never call `profile_sample` as well; the description says so. With `kind` or `stream_ids`, `next` comes
   from the build itself (`BuildPlan.nextStep`), as the feed and samples may already exist.
 
-**An assessment** (`kind=assessment feed=<an existing feed>`, no samples, stream ids or files): nothing is
-onboarded. The build records the feed as what it works from, and its plan is the survey (`survey_feed`, which finds
+**An assessment** (`kind=assessment feed=<an existing feed>`): nothing is onboarded. Given `stream_ids` and no
+`feed`, it assesses the one feed they are in; samples, stream ids or files given are not profiled (said in
+`samples`): the survey reads the feed itself. The build records the feed as what it works from, and its plan is the survey (`survey_feed`, which finds
 and confirms a source type field), `source_types` (`record_source_types`, which writes the registry at once, every
 source type `parked`) and promotion, the survey and registry going beside the feed. The user may then onboard a
-scope of it in a build of its own. Given samples, stream ids or files, `kind=assessment` takes the paths above.
+scope of it in a build of its own.
 
 **One open build per aggregated feed** (`SourceTypeRegistries.refuseOpenBuild`, decided 2026-11-12), checked by an
-assessment here, by `start_build` for each of its `feeds` and by `record_source_types`: a feed with a registry (beside
-it, or in another build; for `record_source_types`, any feed) is refused while another build is open on it: one
-whose folder holds the feed's registry, or that works from or holds the feed and holds an XSLT or pipeline (made
-and neither promoted nor abandoned; the workspace's `backups` aside). `Feed '<feed>' aggregates source types, and
+assessment here (given `feed`, or the one feed its `stream_ids` are in), by an onboarding given `stream_ids` (for
+their feeds), by `start_build` for each of its `feeds`, by `record_source_types`, by `build_translation_xslt group=`
+building from the registry beside the feed, and wherever a build makes a working copy of a feed's registry
+(`review_coverage` adding new source types, say): a feed with a registry (beside it, or in another build; for
+`record_source_types`, any feed) is refused while another build is open on it: one whose folder holds the feed's
+registry, or that works from or holds the feed and holds an XSLT or pipeline (made and neither promoted nor
+abandoned; the workspace's `backups` aside). What a build's promotion kept in the workspace (marked
+`kept_at_promotion` in its record: a test feed, a survey doc the user kept, a document given `keep`) doesn't count. `Feed '<feed>' aggregates source types, and
 build '<other>' is open on it: one build at a time per feed ... Finish build '<other>' (promote_build) or abandon it
 (the user deletes its folder) first, or carry on in it.` So the registry, the dispatchers and the feed's documents
 change in one build at a time, and promotion needs no merging.
@@ -2547,19 +2552,26 @@ or replaced by a new version); once approved, the registry records each output f
 recorded, and a Lucene index doc beside the feed gains the fields it lacks (`IndexFields.addPromotedLuceneFields`).
 An Elasticsearch index's fields come from its template, the cluster admin's to commit. Nothing is reindexed.
 
-A feed's survey doc and source type registry (`besideFeeds`) go beside the feed when the user chose so at the survey
-(a choice left until now is asked in a form, `Where does the survey doc of '<feed>' go?`, refused without forms
-until `destinations` gives it), or stay in the build (`keep`); a registry with no choice made goes beside the feed.
+A feed's survey doc (`besideFeeds`) goes beside the feed when the user chose so at the survey (a choice left until
+now is asked in a form, `Where does the survey doc of '<feed>' go?`, refused without forms until `destinations` gives
+it), or stays in the build (`keep`). Its source type registry always goes beside the feed, whatever was chosen for
+the survey doc (decided 2026-11-13; `keep` for it is refused): where the survey doc stays, the review and the approval
+say so (`registries`). Each document left in the workspace is marked `kept_at_promotion` in the build's record, so it
+doesn't hold the build open on its feed.
 An aggregated feed's modules (`modulesBeside`: helpers, common module, source type groups and dispatchers, by their
 `mcp:module` marker) and a group's output feed of its own go beside the feed too, unless given a destination, a
-working copy's (written back) or a new version's (its version folder). The reference data each promoted pipeline
-running a dispatcher lacks for its groups' lookups (`DispatcherReferences.changes`) is listed in the review and the
-approval form as `pipeline_changes` and added once approved, after the moves (forward only: none is removed). After
-approval and before anything is written back or moved (`SourceTypeGroups.toOriginals`), every module of the build
-imports the originals its working copies are written back over (imports rewritten by text, dispatchers regenerated
-from their spec) and the registry names the originals. Not covered: a pipeline made new in a later build running a
-dispatcher's working copy is not pointed back at the original (`copy_pipeline` the feed's pipeline instead), and a
-production pipeline not copied into the build gains no reference data.
+working copy's (written back) or a new version's (its version folder). The reference data each pipeline
+running one of the build's dispatchers lacks for its groups' lookups (`DispatcherReferences.changes`) is listed in the
+review and the approval form as `pipeline_changes` and added once approved, after the moves (forward only: none is
+removed): the build's pipelines (a working copy's original), and the production pipelines running a dispatcher the
+build changes through a working copy (found through the content index, `PipelineIndex.containing`). After approval
+and before anything is written back or moved (`SourceTypeGroups.toOriginals`), every module of the build imports the
+originals its working copies are written back over (imports rewritten by text, dispatchers regenerated from their
+spec) and the registry names the originals. A working copy the user kept (production changed since, below) is left
+as it is, and the modules promoted import its original; promotion is refused, before the review, when that original
+lacks a template, function, variable or mode they use of the copy (`keptProblems`). Not covered: a pipeline made new
+in a later build running a dispatcher's working copy is not pointed back at the original (`copy_pipeline` the feed's
+pipeline instead).
 
 Promotes a build out of the workspace in two calls. The first works out the whole layout and returns it without
 changing anything (`status: needs_review`, a `layout` tree from `PromotionLayout.promotionTree`, and a `review_id`,
@@ -2853,7 +2865,11 @@ container, narrower before wider, a common root's own values kept as rows of the
 (`Use these patterns` / `One source type per value`). Rows given (`name = value`, `name ~ ^pattern`) are checked:
 anchored, at most 200 characters, no repeated group of repeats, names once, and none that an earlier row always
 matches first. A registry already in the build, or beside the feed, is carried on from: its rows and statuses kept,
-values it lacks added as `new`. Each row's profile is the sum of its values' (`SourceTypeProfiles.summarise`):
+values it lacks added as `new`. Rows given again keep the registry's translated or placed rows (those with a group
+or pipeline) they leave out, each where it was in the order; `remove` drops rows by name. Removing a translated or
+placed row, or a changed value or pattern on a translated row, is confirmed by the user in one form (plain text,
+listed as `to_confirm` in the review), and refused for a translated row where no form can be shown; a translated row
+renamed (a new name with its match) is refused, saying to add the new row and remove the old one. Each row's profile is the sum of its values' (`SourceTypeProfiles.summarise`):
 records and bytes read and their shares, an estimate scaled to the streams read, per day, streams seen, formats and
 failures, fields (the wrapper's aside) with fill rates, shapes and the commonest's share, top kinds, levels, signals
 each with what it rests on, a suggested category (security audit, operational, network, diagnostic noise) with a
@@ -2875,9 +2891,10 @@ pipeline, output feed, `references` and profile. A registry recorded again (a la
 over. The review is bound to the table (`Consent.wasReviewed`): other rows, or changed profiles, show it again.
 
 * **Arguments**: `feed` (required), `build`, `reviewed`, `rows` (the `rows` a `needs_review` reply gave back, or as
-  the user says), `patterns` (no forms: `use` or `exact`), `scope` and `reason` (no forms), `dropped`, `drop_reason`,
-  `system_name`, `system_names` (by source type), `environment`.
-* **Returns**: `status: needs_review` (`feed`, `field`, `table`, `review_id`, `rows`, `hint`); `status: needs_user`
+  the user says), `remove` (rows to remove, by name, on the user's word), `patterns` (no forms: `use` or `exact`),
+  `scope` and `reason` (no forms), `dropped`, `drop_reason`, `system_name`, `system_names` (by source type),
+  `environment`.
+* **Returns**: `status: needs_review` (`feed`, `field`, `table`, `review_id`, `rows`, `to_confirm`, `hint`); `status: needs_user`
   with `proposed_rows` (each `name`, `match`, `values`, `records`: the patterns, without forms) or `offered` (the
   source types for the scope, without forms); or `feed`, `field`, `registry` (`type`, `uuid`, `name`), `rows` (each
   `name`, `match`, `status`, `reason`, `records_read`, `share_percent`, `suggested_category`, `confidence`), `table`,
@@ -2939,7 +2956,9 @@ aggregated feed's group the user placed in a pipeline of its own with an output 
 name the user confirms in the form, in a build on existing feeds too. The build record marks it the group's output
 (`BuildFeeds.GROUP_OUTPUT`), and the registry's rows for the group name it as their `output_feed`. It is no test
 feed: `create_pipeline` sets the group's pipeline's stream appender to it, and promotion moves it beside the feed
-and leaves the appender pointing at it.
+and leaves the appender pointing at it. A feed of the name (proposed, or as the user corrected it in the form) is
+checked as any other: elsewhere, refused; already in the build, it is taken as the group's output feed, marked and
+named in the registry, with nothing made (refused if it holds anything but Events).
 
 * **Arguments**: `build`, `name` (required), `encoding` (default UTF-8), `stream_type` (default Raw Events),
   `description`, `user_samples`, `test_feed`, `group`.
@@ -3437,7 +3456,9 @@ Shared behaviour:
   temporary dispatcher generated from the spec kept with the saved one: the draft inlined in place of the group's
   import, its own imports hoisted first, and its source types routed to it, a new group's too. Refused when the
   element's saved XSLT is no dispatcher the tools generated, or the temporary one doesn't generate. `compare_outputs`
-  and `summarise_fix` step a draft as given; `evaluate_pipeline` steps saved code only.
+  and `summarise_fix` compare and step a group's draft the same way; `summarise_fix` diffs it against the group's saved
+  XSLT (`PipelineStepping.savedGroup`) and names that XSLT in its manual steps. `evaluate_pipeline` steps saved code
+  only.
 * **Mistyped properties.** A pipeline with a property Stroom can't take as written is refused before any step,
   naming it (`SteppedPipeline.refuseMistyped`): a boolean or integer property is checked against the type Stroom's
   element registry declares (`ElementRegistryFactory`). `jsonParser.addRootObject` written as the string `'false'`
@@ -4328,7 +4349,12 @@ the sample check reads theirs alone. Saving: the helpers (made, or written again
 otherwise) and common module first, then the group importing them by UUID, then every dispatcher regenerated from
 the registry (`<feed> dispatcher`, the feed's pipeline's one XSLT, and `<feed> <group> dispatcher` for a group in a
 pipeline of its own; each routing its groups, its spec kept in its description), and the registry's rows for the
-group's source types set `translated` with `group` and `group_xslt`.
+group's source types set `translated` with `group` and `group_xslt`. A dispatcher reads a record's source type value
+as the tools do (`SourceTypeFields.valueOf`): stripped of the white space around it, and no value for `-`, `null`,
+`none` or `n/a` (any case), so processing and the survey count the same records as each source type. Its comments
+are written through `XsltComments.comment`, so a name holding `--` (or more) still makes a well-formed comment. A
+group's names are its own when they are its mode, or its mode followed by a separator (`_`, `-`, or a capital or
+digit starting a camelCase word): mode `pega` can't claim `pegamail`'s names.
 A group XSLT's `uuid` alone regenerates it as the group it is (its kept mapping holds `module`). The dispatcher reads
 the source type field once a record, tries the registry's rows in order (`=` a value, `matches()` an anchored
 pattern, checked in Java's and XPath's dialects alike), and applies the group's mode; any other record is passed over
@@ -4346,9 +4372,15 @@ it.
 **The group's pipeline** (`placement`, `SourceTypeGroups.dispatch`). Saving a new group (none of its rows placed or
 translated yet) asks the user in a form before anything is saved: "Which pipeline handles group 'x'?" (the feed's
 pipeline, shared by its groups, the default; a pipeline of its own; or, only where the feed's pipeline is in
-production, a new version of it) and "Where do its Events go?" (the feed's Events, or an output feed of its own:
-a pipeline of its own only). Without forms the call is refused, nothing saved, until `pipeline=shared|own|new_version`
-(and `own_output_feed`) says the user's answer. The rows record it (`pipeline`: `own`, its `dispatcher`, its `name`,
+production, a new version of it), then, for a pipeline of its own only, "Where do the Events of group 'x' go?" (the
+feed's Events, or an output feed of its own). Without forms the call is refused, nothing saved, until
+`pipeline=shared|own|new_version` (and `own_output_feed`) says the user's answer; `own_output_feed` given for another
+placement is ignored, said in `group.notes`. Source types added to a group already placed join its pipeline,
+dispatcher and output feed, said in `group.notes`, with no form. A row translated before pipelines were placed joins
+its group's pipeline, else the feed's; where the feed has none, the placement is asked rather than a dispatcher no
+pipeline runs being made. A source type another group translates is refused (a source type belongs to one group), as
+is a group whose mode meets another's (the same, or one is the other followed by a separator: `pega` and
+`pega_mail`), naming both. The rows record it (`pipeline`: `own`, its `dispatcher`, its `name`,
 `new_version`; `output_feed`, empty until `create_feed group=` makes it); `group.group_next` says what follows: for
 `own`, `create_feed group=` first where it has an output feed, then `create_pipeline` with its dispatcher (`<feed>
 <group> dispatcher`); for `new_version`, `copy_pipeline` of the feed's pipeline (the promoted dispatcher is

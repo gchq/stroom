@@ -295,6 +295,34 @@ class TestE2eSourceTypes extends AbstractE2eTest {
         assertThat(map(SourceTypeRegistry.read(documentation(registryUuid)), "scope")).containsEntry("build", build);
     }
 
+    @Test
+    void theRegistryGoesBesideTheFeedEvenWhenTheSurveyDocIsKeptInTheBuild() {
+        // Seen in review: kept with the survey doc, the registry left the promoted build open on the feed for ever,
+        // and no later build found it.
+        final String feed = "E2E-PEGA-KEPT";
+        final String folder = "E2E Feeds/PegaKept";
+        createFeed("pega-kept-src", feed);
+        upload(feed, lines("pega/pega-1.json", 1000));
+        promote("pega-kept-src", Map.of("Feed", folder));
+        client.answeringWith(form -> form.message().contains("can go beside the feed when the build is promoted")
+                ? new ElicitResult(ElicitResult.Action.ACCEPT, Map.of("answer", "Keep it in the build only"), null)
+                : McpTestClient.agree(form));
+        json("start_onboarding", args("source_name", "PEGA", "build", "pega-kept-assess", "kind", "assessment",
+                "feed", feed));
+        json("survey_feed", args("feed", feed, "build", "pega-kept-assess"));
+        json("record_source_types", args("build", "pega-kept-assess", "feed", feed));
+        client.answeringWith(McpTestClient::agree);
+
+        promote("pega-kept-assess", Map.of());
+
+        besideTheFeed(folder, feed + " source types");
+        assertThat(documentsIn("System/" + folder, "Documentation", feed + " - Survey")).isEmpty();
+        // The build holds only the survey doc its promotion kept: it is not open on the feed.
+        final Map<String, Object> started = json("start_build", args("build", "pega-kept-later", "feeds",
+                List.of(feed)));
+        assertThat(started).containsEntry("build", "pega-kept-later");
+    }
+
     // The text stored in the feed as Stroom's receiver stores data posted to its datafeed.
     private long send(final String feed, final String data) {
         return securityContext.asProcessingUserResult(() -> {

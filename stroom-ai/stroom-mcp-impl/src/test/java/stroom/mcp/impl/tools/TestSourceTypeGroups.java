@@ -18,6 +18,8 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.generation.DispatcherSpec;
 import stroom.ai.impl.tools.generation.DispatcherXslt;
 import stroom.ai.impl.tools.generation.DumpMode;
@@ -31,9 +33,11 @@ import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.HasData;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
@@ -41,6 +45,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -54,6 +60,8 @@ import static org.mockito.ArgumentMatchers.eq;
 class TestSourceTypeGroups {
 
     private static final String BUILD = "pega-v1";
+    // The saved security group a stepped pipeline's dispatcher imports.
+    private static final String STEPPED_GROUP = "g0000000-0000-0000-0000-000000000001";
     private static final String WRAPPER = """
             [{"path": "EventTime/TimeCreated", "field": "timestamp"},
              {"path": "EventSource/System/Name", "value": "PEGA"},
@@ -235,7 +243,7 @@ class TestSourceTypeGroups {
                 doc(docs.get("PEGA common"), "PEGA common", null),
                 doc(docs.get("PEGA dispatcher"), "PEGA dispatcher", null));
 
-        final List<String> done = world.groups.toOriginals(world.context(), BUILD, listed);
+        final List<String> done = world.groups.toOriginals(world.context(), BUILD, listed, Set.of());
 
         assertThat(done).anySatisfy(line -> assertThat(line).contains("regenerated dispatcher 'PEGA dispatcher'"));
         final XsltDoc dispatcher = world.xslt(docs.get("PEGA dispatcher"));
@@ -246,6 +254,176 @@ class TestSourceTypeGroups {
         // The common module (new) imports the helpers' original; the group's kept mapping names them too.
         assertThat(world.xslt(docs.get("PEGA common")).getData()).contains("uuid='o-helpers'");
         assertThat(keptMapping(world.xslt(docs.get("PEGA security"))).module().helpers()).contains("o-helpers");
+    }
+
+    @Test
+    void sourceTypesAddedToAGroupWithAPipelineOfItsOwnJoinItsPipeline() {
+        world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
+        final Map<String, Object> own = new LinkedHashMap<>(args(integration(), "PEGA integration",
+                List.of("PegaIntegration")));
+        own.put("pipeline", "own");
+        own.put("own_output_feed", true);
+        world.call(tool, own);
+        // Its output feed made (create_feed group=).
+        written.add(withRows(written.getLast(), row -> {
+            if ("PegaIntegration".equals(row.get("name"))) {
+                row.put("output_feed", "PEGA-INTEGRATION-EVENTS");
+            }
+        }));
+        final Map<String, String> docs = xsltsInBuild();
+        // The group grows: PegaDB added to it, with no placement asked (the group has its pipeline).
+        final Map<String, Object> grown = new LinkedHashMap<>(args(integration(), "PEGA integration",
+                List.of("PegaIntegration", "PegaDB")));
+        grown.remove("pipeline");
+
+        final Map<String, Object> saved = world.call(tool, grown);
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        final Map<String, Object> db = rowNamed(written.getLast(), "PegaDB");
+        assertThat(JsonValues.mapOrEmpty(db.get("pipeline"))).containsEntry("own", true);
+        assertThat(JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(db.get("pipeline")).get("dispatcher")))
+                .containsEntry("uuid", docs.get("PEGA PEGA integration dispatcher"));
+        assertThat(db).containsEntry("output_feed", "PEGA-INTEGRATION-EVENTS");
+        // Routed by the group's own dispatcher; the feed's passes it over as handled there.
+        assertThat(spec(docs.get("PEGA PEGA integration dispatcher")).groups()).singleElement()
+                .satisfies(group -> assertThat(group.sourceTypes()).containsExactly("PegaIntegration", "PegaDB"));
+        assertThat(spec(docs.get("PEGA dispatcher")).groups()).extracting(DispatcherSpec.Group::name)
+                .containsExactly("PEGA security");
+        assertThat(spec(docs.get("PEGA dispatcher")).rows()).filteredOn(row -> "PegaDB".equals(row.name()))
+                .singleElement().satisfies(row -> assertThat(row.handledBy()).contains("integration dispatcher"));
+        assertThat(JsonValues.strings(JsonValues.mapOrEmpty(saved.get("group")).get("notes")))
+                .anySatisfy(note -> assertThat(note).contains("PegaDB", "PEGA PEGA integration dispatcher",
+                        "PEGA-INTEGRATION-EVENTS"));
+    }
+
+    @Test
+    void aTranslatedRowWithNoPipelineToJoinIsPlacedNotGivenADispatcherNoPipelineRuns() {
+        final Map<String, Object> own = new LinkedHashMap<>(args(integration(), "PEGA integration",
+                List.of("PegaIntegration")));
+        own.put("pipeline", "own");
+        world.call(tool, own);
+        // A registry from before pipelines were placed: a translated row of another group, in no pipeline.
+        written.add(withRows(written.getLast(), row -> {
+            if ("PegaSecurityEvent".equals(row.get("name"))) {
+                row.put("status", SourceTypeRegistry.TRANSLATED);
+                row.put("group", "PEGA security");
+            }
+        }));
+        final Map<String, Object> unplaced = new LinkedHashMap<>(args(security(), "PEGA security",
+                List.of("PegaSecurityEvent")));
+        unplaced.remove("pipeline");
+
+        final Map<String, Object> refused = world.call(tool, unplaced);
+
+        assertThat(String.valueOf(refused.get("error"))).contains("ask the user which pipeline handles it");
+        assertThat(xsltsInBuild()).doesNotContainKey("PEGA dispatcher");
+    }
+
+    @Test
+    void aSourceTypeAnotherGroupTranslatesIsRefused() {
+        world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
+
+        final Map<String, Object> refused = world.call(tool, args(integration(), "PEGA integration",
+                List.of("PegaIntegration", "PegaSecurityEvent")));
+
+        assertThat(String.valueOf(refused.get("error"))).contains("PegaSecurityEvent", "'PEGA security'");
+        assertThat(rowNamed(written.getLast(), "PegaSecurityEvent")).containsEntry("group", "PEGA security");
+        assertThat(xsltsInBuild()).doesNotContainKey("PEGA integration");
+    }
+
+    @Test
+    void aGroupWhoseModeMeetsAnothersIsRefused() {
+        world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
+
+        // Styled to the same mode, and to one starting with it.
+        for (final String name : List.of("PEGA-Security", "PEGA security mail")) {
+            final Map<String, Object> refused = world.call(tool, args(integration(), name,
+                    List.of("PegaIntegration")));
+            assertThat(String.valueOf(refused.get("error"))).as(name).contains("'" + name + "'", "'PEGA security'");
+        }
+        assertThat(xsltsInBuild()).containsOnlyKeys("PEGA security", "PEGA common", "PEGA helpers",
+                "PEGA dispatcher");
+    }
+
+    @Test
+    void aGroupBuiltFromTheRegistryBesideTheFeedIsRefusedWhileAnotherBuildIsOpenOnIt() {
+        Mockito.when(world.registries.registry(eq(BUILD), eq("PEGA"))).thenReturn(Optional.of(
+                new SourceTypeRegistries.Found(registry().doc(), true, registry().state())));
+        Mockito.doThrow(new ToolRefusal("build 'other' is open on it"))
+                .when(world.registries).refuseOpenBuild("PEGA", BUILD, true);
+
+        final Map<String, Object> refused = world.call(tool, args(security(), "PEGA security",
+                List.of("PegaSecurityEvent")));
+
+        assertThat(String.valueOf(refused.get("error"))).contains("build 'other' is open on it");
+        assertThat(xsltsInBuild()).isEmpty();
+    }
+
+    @Test
+    void theEventsQuestionIsAskedOnlyForAPipelineOfItsOwn() {
+        world.forms = true;
+        final String shared = "The feed's pipeline, shared by its groups (reads each record once)";
+        world.answers.put("Which pipeline handles group", shared);
+        world.answers.put("Source type group 'PEGA security'", shared);
+        final Map<String, Object> asked = new LinkedHashMap<>(args(security(), "PEGA security",
+                List.of("PegaSecurityEvent")));
+        asked.remove("pipeline");
+
+        final Map<String, Object> saved = world.call(tool, asked);
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        assertThat(world.formsShown).noneSatisfy(form -> assertThat(String.valueOf(form))
+                .contains("Where do its Events go"));
+        assertThat(world.formsShown).anySatisfy(form -> assertThat(String.valueOf(form))
+                .contains("Which pipeline handles group"));
+    }
+
+    @Test
+    void anOwnOutputFeedGivenForASharedPipelineIsSaidToBeIgnored() {
+        final Map<String, Object> given = new LinkedHashMap<>(args(security(), "PEGA security",
+                List.of("PegaSecurityEvent")));
+        given.put("own_output_feed", true);
+
+        final Map<String, Object> saved = world.call(tool, given);
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        assertThat(rowNamed(written.getLast(), "PegaSecurityEvent")).doesNotContainKey("output_feed");
+        assertThat(JsonValues.strings(JsonValues.mapOrEmpty(saved.get("group")).get("notes")))
+                .anySatisfy(note -> assertThat(note).contains("own_output_feed", "ignored"));
+    }
+
+    @Test
+    void promotionLeavesAWorkingCopyTheUserKeptAsItIs() {
+        world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
+        final Map<String, String> docs = xsltsInBuild();
+        // The group's original, in production, as the kept copy's: it has the mode the dispatcher routes to.
+        final String groupCode = world.xslt(docs.get("PEGA security")).getData();
+        final String commonCode = world.xslt(docs.get("PEGA common")).getData();
+        world.world.add(XsltDoc.TYPE, "PEGA security", world.world.folder("System/Feeds/PEGA").uuid,
+                "o-security");
+        world.world.docs.put("o-security", XsltDoc.builder().uuid("o-security").name("PEGA security")
+                .data(groupCode).build());
+        final List<Map<String, Object>> listed = List.of(
+                doc(docs.get("PEGA security"), "PEGA security", "o-security"),
+                doc(docs.get("PEGA helpers"), "PEGA helpers", "o-helpers"),
+                doc(docs.get("PEGA common"), "PEGA common", null),
+                doc(docs.get("PEGA dispatcher"), "PEGA dispatcher", null));
+
+        assertThat(world.groups.keptProblems(BUILD, listed, Set.of(docs.get("PEGA security"))))
+                .isEmpty();
+        world.groups.toOriginals(world.context(), BUILD, listed, Set.of(docs.get("PEGA security")));
+
+        // The kept copy is as it was; the modules promoted import the originals.
+        assertThat(world.xslt(docs.get("PEGA security")).getData()).isEqualTo(groupCode);
+        assertThat(world.xslt(docs.get("PEGA common")).getData()).isNotEqualTo(commonCode).contains("o-helpers");
+        assertThat(world.xslt(docs.get("PEGA dispatcher")).getData()).contains("uuid='o-security'");
+
+        // An original lacking the mode the dispatcher routes to: promotion would break it, so it is refused.
+        world.world.docs.put("o-security", XsltDoc.builder().uuid("o-security").name("PEGA security")
+                .data(groupCode.replace("pega_security", "pega_old")).build());
+        assertThat(world.groups.keptProblems(BUILD, listed, Set.of(docs.get("PEGA security"))))
+                .singleElement().satisfies(problem -> assertThat(problem).contains("PEGA dispatcher",
+                        "PEGA security", "pega_security"));
     }
 
     @Test
@@ -292,12 +470,107 @@ class TestSourceTypeGroups {
                 .doesNotContain("kind=\"group\"");
     }
 
+    @Test
+    void aGroupsDraftIsComparedThroughTheFeedsDispatcher() {
+        final SteppingWorld stepping = steppingThroughADispatcher();
+        stepping.records(1, "<Events xmlns=\"event-logging:3\"><Event/></Events>");
+
+        new CompareOutputsTool(stepping.stepping(), Mockito.mock(EventLocations.class)).execute(
+                BuildToolCalls.call(CompareOutputsTool.NAME, JsonUtil.writeValueAsString(Map.of("pipeline_uuid",
+                        "p-1", "stream_ids", List.of(7), "draft_code", Map.of("translationFilter", securityDraft())),
+                        false)), stepping.context());
+
+        assertThat(stepping.opened).extracting(Map.Entry::getValue)
+                .anySatisfy(code -> assertThat(String.valueOf(code)).contains("<mcp:module kind=\"dispatcher\"",
+                        "<xsl:template match=\"*\" mode=\"pega_security\"").doesNotContain("kind=\"group\""));
+    }
+
+    @Test
+    void aGroupsFixIsProvenThroughTheFeedsDispatcherAndDiffedAgainstTheSavedGroup() {
+        final SteppingWorld stepping = steppingThroughADispatcher();
+        Mockito.when(stepping.documentAccess.read(any(DocRef.class), eq(HasData.class)))
+                .thenAnswer(inv -> Optional.of(XsltDoc.builder().uuid("any").name("any").data(
+                        STEPPED_GROUP.equals(((DocRef) inv.getArgument(0)).getUuid())
+                                ? "<old-group/>"
+                                : "<dispatcher/>").build()));
+        Mockito.when(stepping.documentAccess.read(eq(new DocRef(XsltDoc.TYPE, STEPPED_GROUP)), eq(XsltDoc.class)))
+                .thenReturn(Optional.of(XsltDoc.builder().uuid(STEPPED_GROUP).name("PEGA security")
+                        .data("<old-group/>").build()));
+        final CompareOutputsTool compare = Mockito.mock(CompareOutputsTool.class);
+        final Map<String, Object> compared = new LinkedHashMap<>();
+        compared.put("records_compared", 1);
+        compared.put("records_changed", 1);
+        compared.put("fields_changed", List.of(Map.of("path", "Event/X", "added", 1, "removed", 0, "changed", 0)));
+        Mockito.when(compare.compareLocated(any(), any(), any(), Mockito.anyList())).thenReturn(compared);
+        final StepSampleTool stepSample = Mockito.mock(StepSampleTool.class);
+        Mockito.when(stepSample.stepSample(any(), any(), any(), Mockito.anyList(), any(), any(), any()))
+                .thenReturn(Map.of("verdict", "clean", "groups", List.of()));
+        final SummariseFixTool fix = new SummariseFixTool(stepping.stepping(), Mockito.mock(EventLocations.class),
+                compare, stepSample, Mockito.mock(StepRecordsTool.class), stepping.documentAccess);
+
+        final ToolResult result = fix.execute(BuildToolCalls.call(SummariseFixTool.NAME,
+                JsonUtil.writeValueAsString(Map.of("pipeline_uuid", "p-1", "element", "translationFilter", "draft",
+                        securityDraft(), "stream_ids", List.of(7), "expected_paths", List.of("Event/X")), false)),
+                stepping.context());
+
+        assertThat(result.isError()).as(result.text()).isFalse();
+        final ArgumentCaptor<CompareOutputsTool.Request> request = ArgumentCaptor.forClass(
+                CompareOutputsTool.Request.class);
+        Mockito.verify(compare).compareLocated(any(), any(), request.capture(), Mockito.anyList());
+        assertThat(request.getValue().draftCode().get("translationFilter")).contains(
+                "<mcp:module kind=\"dispatcher\"", "mode=\"pega_security\"");
+        final Map<String, Object> said = BuildToolCalls.json(result.text());
+        assertThat(String.valueOf(said.get("diff"))).contains("-<old-group/>").doesNotContain("<dispatcher/>");
+    }
+
     // --- fixtures ---
+
+    // A stepping world whose pipeline p-1 runs the feed's dispatcher (x), routing the security group by UUID.
+    private static SteppingWorld steppingThroughADispatcher() {
+        final SteppingWorld stepping = new SteppingWorld();
+        final String groupHref = "uuid='" + STEPPED_GROUP + "', name='PEGA security'";
+        final List<DispatcherSpec.Row> rows = List.of(
+                new DispatcherSpec.Row("PegaSecurityEvent", "value", "PegaSecurityEvent", "translated"),
+                new DispatcherSpec.Row("PegaIntegration", "value", "PegaIntegration", "parked"));
+        final List<DispatcherSpec.Group> groups = List.of(new DispatcherSpec.Group("PEGA security", "pega_security",
+                groupHref, List.of("PegaSecurityEvent")));
+        final DispatcherSpec spec = new DispatcherSpec("PEGA", "pega_dispatch", Map.of("input", "json",
+                "json_layout", "lines"), "sourcetype", "PEGA helpers", rows, groups, Map.of())
+                .withEvents("4.1.0", "event-logging:3 file://event-logging-v4.1.0.xsd");
+        final String saved = DispatcherXslt.generate(spec, null, null).xslt();
+        Mockito.when(stepping.documentAccess.read(eq(new DocRef(XsltDoc.TYPE, "x")), eq(XsltDoc.class)))
+                .thenReturn(Optional.of(XsltDoc.builder().uuid("x").name("PEGA dispatcher").data(saved)
+                        .description(KeptMapping.withBlock("", DispatcherXslt.SPEC_BLOCK, spec.toJson())).build()));
+        Mockito.when(stepping.checkXslt.check(anyString(), any(), any())).thenReturn(Map.of("ok", true, "errors",
+                List.of()));
+        return stepping;
+    }
+
+    // The security group's draft, as build_translation_xslt writes it.
+    private static String securityDraft() {
+        return XsltGenerator.generate(TranslationMapping.parse(security()).withModule(
+                new SourceTypeModule(SourceTypeModule.GROUP, "PEGA security", "pega_security",
+                        List.of("PegaSecurityEvent"), null, "PEGA helpers", List.of(), null, "sourcetype")),
+                TranslationWorld.SCHEMA, TranslationWorld.VERSION).xslt();
+    }
 
     // The spec kept with a dispatcher.
     private DispatcherSpec spec(final String uuid) {
         return DispatcherSpec.fromJson(KeptMapping.readBlock(world.xslt(uuid).getDescription(),
                 DispatcherXslt.SPEC_BLOCK).orElseThrow()).orElseThrow();
+    }
+
+    // The registry's text with each row changed so.
+    private static String withRows(final String registry, final Consumer<Map<String, Object>> change) {
+        final Map<String, Object> state = SourceTypeRegistry.read(registry);
+        final List<Map<String, Object>> rows = new ArrayList<>();
+        for (final Map<String, Object> row : JsonValues.maps(state.get("rows"))) {
+            final Map<String, Object> copy = new LinkedHashMap<>(row);
+            change.accept(copy);
+            rows.add(copy);
+        }
+        state.put("rows", rows);
+        return SourceTypeRegistry.render(state);
     }
 
     // A build document as promotion lists it.

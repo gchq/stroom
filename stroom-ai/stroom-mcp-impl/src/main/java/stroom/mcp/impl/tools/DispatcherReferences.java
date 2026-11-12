@@ -27,40 +27,53 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /// The reference data an aggregated feed's pipelines load at promotion: a group whose mapping looks values up needs a
 /// reference loader on the dispatcher's XSLT filter, which is pipeline configuration, not a document. The registry
-/// records each group's reference data; each pipeline a build promotes that runs a dispatcher (a new one, a new
-/// version, or the original of a working copy, which is otherwise left as it is) loads the union of the reference
-/// data of the groups its dispatcher routes, the ones it lacks added once the user approves: the one part of adding
-/// a group that changes the pipeline, so said in the approval.
+/// records each group's reference data; each pipeline that runs one of the build's dispatchers loads the union of the
+/// reference data of the groups its dispatcher routes, the ones it lacks added once the user approves: the one part of
+/// adding a group that changes the pipeline, so said in the review and the approval. The pipelines are the build's
+/// (a new one, a new version, or the original of a working copy, which is otherwise left as it is) and the production
+/// pipelines that run a dispatcher the build changes (its working copy's original): a later build adding a group with
+/// lookups to the feed's pipeline holds only the dispatcher's working copy, not the pipeline.
 class DispatcherReferences {
 
     private final SourceTypeGroups groups;
     private final PipelineWrites writes;
     private final PipelineDocs pipelineDocs;
+    private final Provider<PipelineIndex> pipelineIndex;
 
-    /// @param groups       The feed's source type groups, read from its registry.
-    /// @param writes       Makes and adds the reference entries.
-    /// @param pipelineDocs Reads the pipelines.
+    /// @param groups        The feed's source type groups, read from its registry.
+    /// @param writes        Makes and adds the reference entries.
+    /// @param pipelineDocs  Reads the pipelines.
+    /// @param pipelineIndex Finds the production pipelines running a dispatcher.
     @Inject
-    DispatcherReferences(final SourceTypeGroups groups, final PipelineWrites writes, final PipelineDocs pipelineDocs) {
+    DispatcherReferences(final SourceTypeGroups groups,
+                         final PipelineWrites writes,
+                         final PipelineDocs pipelineDocs,
+                         final Provider<PipelineIndex> pipelineIndex) {
         this.groups = groups;
         this.writes = writes;
         this.pipelineDocs = pipelineDocs;
+        this.pipelineIndex = pipelineIndex;
     }
 
     /// @param build A build.
     /// @param docs  Its documents, as the plan lists them (`type`, `uuid`, `name`, `working_copy_of`).
-    /// @return For each pipeline promoted that runs one of the feed's dispatchers and lacks some of its groups'
-    /// reference data, what it gains; none for a build of no aggregated feed.
+    /// @return For each pipeline promoted, or in production running a dispatcher the build changes, that runs one of
+    /// the feed's dispatchers and lacks some of its groups' reference data, what it gains; none for a build of no
+    /// aggregated feed.
     List<Change> changes(final String build, final List<Map<String, Object>> docs) {
         final List<Change> out = new ArrayList<>();
+        final Set<String> seen = new HashSet<>();
         for (final Map<String, Object> doc : docs) {
             if (!PipelineDoc.TYPE.equals(doc.get("type"))) {
                 continue;
@@ -69,31 +82,73 @@ class DispatcherReferences {
             final String target = doc.get("working_copy_of") == null
                     ? uuid
                     : String.valueOf(doc.get("working_copy_of"));
-            final Optional<PipelineProperty> dispatcher = dispatcherProperty(uuid);
-            if (dispatcher.isEmpty()) {
+            seen.add(uuid);
+            seen.add(target);
+            dispatcherProperty(uuid).ifPresent(dispatcher -> change(build, target, dispatcher,
+                    dispatcher.getValue().getEntity().getUuid()).ifPresent(out::add));
+        }
+        // Production pipelines running a dispatcher the build changes through a working copy.
+        for (final Map<String, Object> doc : docs) {
+            if (!XsltDoc.TYPE.equals(doc.get("type")) || doc.get("working_copy_of") == null) {
                 continue;
             }
-            final String element = dispatcher.get().getElement();
-            final String dispatcherUuid = dispatcher.get().getValue().getEntity().getUuid();
-            final List<ReferenceRequest> wanted = groups.routedBy(build, dispatcherUuid)
-                    .map(SourceTypeGroups.Routed::references)
-                    .orElse(List.of())
-                    .stream()
-                    .map(reference -> new ReferenceRequest(JsonValues.text(reference.get("feed")),
-                            reference.get("loader_pipeline") == null
-                                    ? null
-                                    : JsonValues.text(reference.get("loader_pipeline")), element))
-                    .toList();
-            if (wanted.isEmpty()) {
+            final String copy = String.valueOf(doc.get("uuid"));
+            final String original = String.valueOf(doc.get("working_copy_of"));
+            if (!writes.isDispatcher(copy)) {
                 continue;
             }
-            final List<PipelineReference> missing = writes.missingReferences(target, wanted);
-            if (!missing.isEmpty()) {
-                final String name = pipelineDocs.read(target).getName();
-                out.add(new Change(new DocRef(PipelineDoc.TYPE, target, name), missing));
+            for (final DocRef pipeline : pipelineIndex.get().containing(PipelineDoc.TYPE, original)) {
+                if (!seen.add(pipeline.getUuid())) {
+                    continue;
+                }
+                runs(pipeline.getUuid(), Set.of(original, copy)).ifPresent(dispatcher -> change(build,
+                        pipeline.getUuid(), dispatcher, copy).ifPresent(out::add));
             }
         }
         return out;
+    }
+
+    // What a pipeline running a dispatcher gains: the reference data of the groups the dispatcher routes that it
+    // lacks.
+    private Optional<Change> change(final String build,
+                                    final String target,
+                                    final PipelineProperty dispatcher,
+                                    final String dispatcherUuid) {
+        final String element = dispatcher.getElement();
+        final List<ReferenceRequest> wanted = groups.routedBy(build, dispatcherUuid)
+                .map(SourceTypeGroups.Routed::references)
+                .orElse(List.of())
+                .stream()
+                .map(reference -> new ReferenceRequest(JsonValues.text(reference.get("feed")),
+                        reference.get("loader_pipeline") == null
+                                ? null
+                                : JsonValues.text(reference.get("loader_pipeline")), element))
+                .toList();
+        if (wanted.isEmpty()) {
+            return Optional.empty();
+        }
+        final List<PipelineReference> missing = writes.missingReferences(target, wanted);
+        if (missing.isEmpty()) {
+            return Optional.empty();
+        }
+        final String name = pipelineDocs.read(target).getName();
+        return Optional.of(new Change(new DocRef(PipelineDoc.TYPE, target, name), missing));
+    }
+
+    // The pipeline's own property setting one of these XSLTs, if it sets one.
+    private Optional<PipelineProperty> runs(final String pipelineUuid, final Set<String> xslts) {
+        try {
+            return PipelineDocs.addedProperties(pipelineDocs.read(pipelineUuid)).stream()
+                    .filter(property -> {
+                        final DocRef entity = NullSafe.get(property.getValue(), PipelinePropertyValue::getEntity);
+                        return entity != null && XsltDoc.TYPE.equals(entity.getType())
+                               && xslts.contains(entity.getUuid());
+                    })
+                    .findFirst();
+        } catch (final RuntimeException e) {
+            // A pipeline that can't be read is left as it is.
+            return Optional.empty();
+        }
     }
 
     /// Adds each change's reference data to its pipeline.

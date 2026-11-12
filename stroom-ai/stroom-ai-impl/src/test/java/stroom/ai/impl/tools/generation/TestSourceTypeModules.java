@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.sample.SourceTypeFields;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -264,6 +267,91 @@ class TestSourceTypeModules extends XsltRuns {
         // Plain characters, classes and anchors read alike.
         assertThat(SourceTypeRows.problems(List.of(new SourceTypeRows.Row("mail", SourceTypeRows.PATTERN,
                 "^/var/log/mail/[a-z]+")), List.of("/var/log/mail/in", "/var/log/other"))).isEmpty();
+    }
+
+    @Test
+    void theDispatchersCommentsAreWellFormedWhateverDashesTheNamesHold() {
+        // A comment can't hold "--": replacing each "--" with "-" once left one in "---".
+        final DispatcherSpec spec = spec();
+        final List<DispatcherSpec.Row> rows = spec.rows().stream()
+                .map(row -> "PegaDB".equals(row.name())
+                        ? new DispatcherSpec.Row(row.name(), row.match(), row.value(), "translated",
+                        "pipeline 'PEGA---DB'")
+                        : row)
+                .toList();
+        final List<DispatcherSpec.Group> groups = List.of(new DispatcherSpec.Group("PEGA---security",
+                "pega_security", SECURITY_HREF, List.of("PegaSecurityEvent")));
+        final DispatcherXslt.Generated generated = DispatcherXslt.generate(new DispatcherSpec(spec.feed(),
+                spec.mode(), spec.input(), spec.field(), spec.helpers(), rows, groups, spec.events()), SCHEMA,
+                "4.1.0");
+
+        assertThat(generated.problems()).isEmpty();
+        final Matcher comments = Pattern.compile("<!--(.*?)-->", Pattern.DOTALL).matcher(generated.xslt());
+        final List<String> found = new ArrayList<>();
+        while (comments.find()) {
+            found.add(comments.group(1));
+        }
+        assertThat(found).anySatisfy(comment -> assertThat(comment).contains("PEGA-security"))
+                .anySatisfy(comment -> assertThat(comment).contains("PEGA-DB"))
+                .allSatisfy(comment -> assertThat(comment).doesNotContain("--").doesNotEndWith("-"));
+    }
+
+    @Test
+    void theDispatcherReadsASourceTypesValueAsTheToolsDo() {
+        // The tools strip a value and take -, null, none and n/a for no value: the dispatcher reads it the same, so
+        // a padded value is its source type, not a new one, and a nil value is no source type.
+        final List<String> values = List.of(" PegaDB\t", "PegaDB", "N/A", "-", "none", "Null", "");
+        assertThat(values.stream().map(value -> SourceTypeFields.valueOf(Map.of("sourcetype", value),
+                "sourcetype")).toList()).containsExactly("PegaDB", "PegaDB", null, null, null, null, null);
+
+        final StringBuilder xml = new StringBuilder("<map xmlns=\"http://www.w3.org/2013/XSL/json\">");
+        values.forEach(value -> xml.append(record("2026-11-10T00:00:05.000Z", value, "select 1")));
+        final List<String> logged = new ArrayList<>();
+        final Modules modules = modules();
+        transform(modules.dispatcher(), xml.append("</map>").toString(), modules.imports(), logged);
+
+        assertThat(logged).contains("INFO " + DispatcherXslt.PASSED_OVER + "2" + DispatcherXslt.PASSED_OVER_OF
+                                    + "PegaDB", "INFO " + DispatcherXslt.PASSED_OVER + "5"
+                                                + DispatcherXslt.PASSED_OVER_OF + DispatcherXslt.PASSED_OVER_NONE);
+        assertThat(logged).filteredOn(line -> line.startsWith("WARN " + DispatcherXslt.NEW_SOURCE_TYPE))
+                .singleElement().satisfies(line -> assertThat(line).contains("(no value)"));
+    }
+
+    @Test
+    void twoGroupsWhoseModesMeetAreRefused() {
+        final DispatcherSpec spec = spec();
+        // The same mode, and one a word-prefix of the other: their names could meet in one stylesheet.
+        for (final String mode : List.of("pega_security", "pega", "pega_security_mail")) {
+            final List<DispatcherSpec.Group> groups = List.of(spec.groups().getFirst(),
+                    new DispatcherSpec.Group("PEGA other", mode, INTEGRATION_HREF, List.of("PegaIntegration")));
+            final DispatcherXslt.Generated refused = DispatcherXslt.generate(new DispatcherSpec(spec.feed(),
+                    spec.mode(), spec.input(), spec.field(), spec.helpers(), spec.rows(), groups, spec.events()),
+                    SCHEMA, "4.1.0");
+            assertThat(refused.ok()).as(mode).isFalse();
+            assertThat(refused.problems()).as(mode).anySatisfy(problem -> assertThat(problem).contains(
+                    "'PEGA security'", "'PEGA other'"));
+        }
+        assertThat(ModuleChecks.modesMeet("pega", "pega_mail")).isTrue();
+        assertThat(ModuleChecks.modesMeet("pega", "pegaMail")).isTrue();
+        assertThat(ModuleChecks.modesMeet("pega", "pegamail")).isFalse();
+        assertThat(ModuleChecks.modesMeet("pega_mail", "pega_web")).isFalse();
+    }
+
+    @Test
+    void aNameIsAGroupsOnlyWhenItsModeIsFollowedByASeparator() {
+        // Mode pega_security can't claim pega_securitymail's names, nor its mode.
+        final String security = modules().security();
+        final String edited = security.replace("<xsl:template match=\"*\" mode=\"pega_security\">",
+                "<xsl:template name=\"pega_securitymail_x\"/><xsl:variable name=\"pega_securitymail_v\"/>"
+                + "<xsl:template match=\"*\" mode=\"pega_securitymail\"/>"
+                + "<xsl:template match=\"*\" mode=\"pega_security\">");
+
+        final List<String> problems = ModuleChecks.groupProblems(edited);
+
+        assertThat(problems).anySatisfy(problem -> assertThat(problem).contains("pega_securitymail_x"))
+                .anySatisfy(problem -> assertThat(problem).contains("pega_securitymail_v"))
+                .anySatisfy(problem -> assertThat(problem).contains("mode pega_securitymail"));
+        assertThat(ModuleChecks.groupProblems(security)).isEmpty();
     }
 
     // --- the feed's modules ---
