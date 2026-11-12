@@ -146,6 +146,17 @@ public final class JoinPlan {
         return aliases;
     }
 
+    /// Finds whether a field of a query is named with an alias: a joined source's field, which the
+    /// joins fill in, or the first source's field written with its alias, which is given the value of
+    /// the field it names. A data source's search supplies neither, so it should not warn about them.
+    ///
+    /// @param query The query.
+    /// @param field The field name.
+    /// @return True if the field is named with one of the query's aliases.
+    public static boolean isAliasedField(final Query query, final String field) {
+        return query != null && JoinWhereSplitter.findAlias(field, getAliases(query)) != null;
+    }
+
     private static List<String> getLeftExpressions(final QueryJoin join) {
         return join.getKeys().stream().map(JoinKey::getLeft).toList();
     }

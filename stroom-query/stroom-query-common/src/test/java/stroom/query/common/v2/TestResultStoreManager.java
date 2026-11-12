@@ -20,11 +20,13 @@ import stroom.query.api.DestroyReason;
 import stroom.query.api.QueryKey;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchResponse;
+import stroom.query.api.TableResult;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.security.mock.MockSecurityContext;
 import stroom.security.user.api.UserRefLookup;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContextFactory;
+import stroom.util.shared.ErrorMessage;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -149,6 +151,67 @@ class TestResultStoreManager extends AbstractJoinSearchTest {
         sources.fail("hr");
         final RequestAndStore requestAndStore = resultStoreManager.getResultStore(
                 parse("from events join hr on UserId = hr.Username select UserId"));
+
+        assertThatThrownBy(() -> resultStoreManager.getSearchStore(requestAndStore))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("The search of 'hr' to join failed");
+    }
+
+    @Test
+    void nonIncrementalSearchWaitsForTheJoinedRows() {
+        final SearchResponse response = resultStoreManager.search(
+                parse("from events left join hr on UserId = hr.Username select UserId, hr.Department"));
+
+        assertThat(response.complete()).isTrue();
+        assertThat(response.getErrorMessages()).isNullOrEmpty();
+        assertThat(((TableResult) response.getResults().getFirst()).getRows()).hasSize(4);
+    }
+
+    @Test
+    void nonIncrementalSearchOfAFailedJoinShowsWhyItFailed() {
+        sources.fail("hr");
+
+        final SearchResponse response = resultStoreManager.search(
+                parse("from events join hr on UserId = hr.Username select UserId"));
+
+        assertThat(response.complete()).isTrue();
+        assertThat(response.getErrorMessages())
+                .extracting(ErrorMessage::getMessage)
+                .anySatisfy(message -> assertThat(message).contains("The search of 'hr' to join failed"));
+    }
+
+    @Test
+    void searchStoreIsFoundAfterTheHandOverHasHappened() throws InterruptedException {
+        final RequestAndStore requestAndStore = resultStoreManager.getResultStore(
+                parse("from events join hr on UserId = hr.Username select UserId"));
+        final ResultStore searchStore = resultStoreManager.getSearchStore(requestAndStore);
+
+        // Asked again, long after the hand-over, with the store the search started with.
+        assertThat(resultStoreManager.getSearchStore(requestAndStore)).isSameAs(searchStore);
+    }
+
+    @Test
+    void nonIncrementalJoinSearchKeepsToItsTimeout() {
+        sources.holdBack("hr");
+        final long start = System.currentTimeMillis();
+
+        final SearchResponse response = resultStoreManager.search(
+                parse("from events join hr on UserId = hr.Username select UserId").copy().timeout(500L).build());
+
+        assertThat(System.currentTimeMillis() - start).isLessThan(5_000);
+        assertThat(response.complete()).isFalse();
+        sources.release("hr");
+        resultStoreManager.destroy(response.getKey(), DestroyReason.MANUAL);
+    }
+
+    @Test
+    void failedJoinSearchIsStillAnErrorOnceDestroyed() throws InterruptedException {
+        sources.fail("hr");
+        final RequestAndStore requestAndStore = resultStoreManager.getResultStore(
+                parse("from events join hr on UserId = hr.Username select UserId"));
+        awaitComplete(requestAndStore.resultStore());
+
+        resultStoreManager.destroy(requestAndStore.searchRequest().getKey(), DestroyReason.MANUAL);
 
         assertThatThrownBy(() -> resultStoreManager.getSearchStore(requestAndStore))
                 .isInstanceOf(IllegalStateException.class)

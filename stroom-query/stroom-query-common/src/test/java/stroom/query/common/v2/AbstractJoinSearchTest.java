@@ -176,7 +176,8 @@ abstract class AbstractJoinSearchTest {
                 () -> executor);
         return new JoinSearchRunner(
                 coprocessorsFactory, resultStoreFactory, joinTables, new SimpleTaskContextFactory(), executor,
-                () -> config);
+                () -> config,
+                MockSecurityContext.getInstance());
     }
 
     static void awaitComplete(final ResultStore store) {

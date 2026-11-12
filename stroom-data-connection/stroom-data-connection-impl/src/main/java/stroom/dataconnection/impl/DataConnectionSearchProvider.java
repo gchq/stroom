@@ -31,6 +31,7 @@ import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
+import stroom.query.common.v2.JoinPlan;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProcess;
@@ -269,7 +270,7 @@ public class DataConnectionSearchProvider implements SearchProvider {
                             rowConsumerFactory,
                             cancellation,
                             message -> taskContext.info(() -> infoPrefix + message));
-                    addWarnings(summary, coprocessors);
+                    addWarnings(summary, query, coprocessors);
                     LOGGER.debug(() -> LogUtil.message("{} read {} rows, {} passed the where expression",
                             infoPrefix, summary.rowsRead(), summary.rowsPassed()));
                 }
@@ -320,7 +321,9 @@ public class DataConnectionSearchProvider implements SearchProvider {
         };
     }
 
-    private static void addWarnings(final QueryRunSummary summary, final CoprocessorsImpl coprocessors) {
+    private static void addWarnings(final QueryRunSummary summary,
+                                    final Query query,
+                                    final CoprocessorsImpl coprocessors) {
         if (summary.info() != null) {
             coprocessors.getErrorConsumer().add(Severity.INFO, summary::info);
         }
@@ -333,10 +336,15 @@ public class DataConnectionSearchProvider implements SearchProvider {
                     summary.maxRows(),
                     summary.maxRows()));
         }
-        if (!summary.unmatchedFields().isEmpty()) {
+        // A field named with one of a join query's aliases is filled in by the joins, not by a column.
+        final List<String> unmatchedFields = summary.unmatchedFields()
+                .stream()
+                .filter(field -> !JoinPlan.isAliasedField(query, field))
+                .toList();
+        if (!unmatchedFields.isEmpty()) {
             coprocessors.getErrorConsumer().add(Severity.WARNING, () ->
                     "These fields are not columns returned by the query, so they are empty: "
-                    + String.join(", ", summary.unmatchedFields()) + ".");
+                    + String.join(", ", unmatchedFields) + ".");
         }
     }
 

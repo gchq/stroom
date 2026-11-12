@@ -59,6 +59,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -66,13 +67,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -80,6 +81,9 @@ import java.util.stream.Collectors;
 public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ResultStoreManager.class);
+    // How long a non-incremental search with joins and no timeout waits, as SearchResponseCreator waits.
+    private static final Duration NON_INCREMENTAL_JOIN_TIMEOUT = Duration.ofMinutes(5);
+    private static final long HAND_OVER_WAIT_MS = 200;
 
     private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
@@ -88,8 +92,9 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
     private final SearchProviderRegistry searchProviderRegistry;
     private final UserRefLookup userRefLookup;
     private final Provider<JoinSearchRunner> joinSearchRunnerProvider;
-    // The placeholder stores of searches with joins that another store hasn't taken the place of yet.
-    private final Set<ResultStore> joinPlaceholders = ConcurrentHashMap.newKeySet();
+    // The searches with joins, by key, until destroyed: each one's placeholder store and the store that
+    // takes its place.
+    private final Map<QueryKey, JoinSearchHandOver> joinSearches = new ConcurrentHashMap<>();
 
     @Inject
     ResultStoreManager(final TaskContextFactory taskContextFactory,
@@ -142,7 +147,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
     }
 
     private void destroyAndRemove(final QueryKey queryKey, final ResultStore resultStore) {
-        joinPlaceholders.remove(resultStore);
+        joinSearches.remove(queryKey);
         try {
             securityContext.asProcessingUser(resultStore::destroy);
         } catch (final RuntimeException e) {
@@ -157,7 +162,10 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
     }
 
     public SearchResponse search(final SearchRequest searchRequest) {
-        final RequestAndStore requestAndStore = getResultStore(searchRequest);
+        RequestAndStore requestAndStore = getResultStore(searchRequest);
+        if (!requestAndStore.searchRequest().incremental()) {
+            requestAndStore = awaitSearchStoreForResponse(requestAndStore);
+        }
         final Map<String, ResultCreator> defaultResultCreators =
                 requestAndStore.resultStore.makeDefaultResultCreators(requestAndStore.searchRequest);
         return search(requestAndStore, defaultResultCreators);
@@ -269,7 +277,8 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
         final QueryKey queryKey = modifiedRequest.getKey();
         final JoinSearchRunner joinSearchRunner = joinSearchRunnerProvider.get();
         final ResultStore placeholder = joinSearchRunner.createPlaceholder(modifiedRequest);
-        joinPlaceholders.add(placeholder);
+        final JoinSearchHandOver handOver = new JoinSearchHandOver(placeholder, new CompletableFuture<>());
+        joinSearches.put(queryKey, handOver);
         resultStoreMap.put(queryKey, placeholder);
         LOGGER.debug(() -> "Starting join search for key: " + queryKey);
         joinSearchRunner.start(
@@ -277,11 +286,13 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
                 placeholder,
                 this::startSearchForJoin,
                 searchStore -> {
-                    if (!resultStoreMap.replace(queryKey, placeholder, searchStore)) {
-                        // The search was destroyed while its joined sources were searched.
-                        searchStore.destroy();
+                    if (resultStoreMap.replace(queryKey, placeholder, searchStore)) {
+                        handOver.searchStore().complete(searchStore);
+                    } else {
+                        // The search was destroyed while its joined sources were searched. Ending a
+                        // search needs the Manage Tasks permission, as for any store destroyed here.
+                        securityContext.asProcessingUser(searchStore::destroy);
                     }
-                    joinPlaceholders.remove(placeholder);
                 });
         return new RequestAndStore(modifiedRequest, placeholder);
     }
@@ -298,26 +309,77 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
     /// @throws IllegalStateException If the search with joins failed before its first source was
     ///                               searched, with the reasons it failed.
     public ResultStore getSearchStore(final RequestAndStore requestAndStore) throws InterruptedException {
-        final QueryKey queryKey = requestAndStore.searchRequest().getKey();
-        ResultStore store = requestAndStore.resultStore();
-        while (joinPlaceholders.contains(store)) {
-            store.awaitCompletion(1, TimeUnit.SECONDS);
-            final ResultStore current = resultStoreMap.get(queryKey);
-            if (current != null && current != store) {
-                store = current;
-            } else if (store.isComplete()) {
-                final String errors = store.getErrors()
-                        .stream()
-                        .filter(message -> message.getSeverity().greaterThanOrEqual(Severity.ERROR))
-                        .map(ErrorMessage::getMessage)
-                        .collect(Collectors.joining("; "));
-                if (!errors.isEmpty()) {
-                    throw new IllegalStateException("The search failed: " + errors);
-                }
-                break;
+        final ResultStore store = awaitSearchStore(requestAndStore, null);
+        if (isUnreplacedJoinPlaceholder(requestAndStore, store)) {
+            final String errors = store.getErrors()
+                    .stream()
+                    .filter(message -> message.getSeverity().greaterThanOrEqual(Severity.ERROR))
+                    .map(ErrorMessage::getMessage)
+                    .collect(Collectors.joining("; "));
+            if (!errors.isEmpty()) {
+                throw new IllegalStateException("The search failed: " + errors);
             }
         }
         return store;
+    }
+
+    // True if the store a search started with is a search with joins' placeholder that no store took
+    // the place of, as the search failed or was stopped or destroyed first.
+    private static boolean isUnreplacedJoinPlaceholder(final RequestAndStore requestAndStore,
+                                                       final ResultStore store) {
+        return store == requestAndStore.resultStore()
+               && requestAndStore.searchRequest().getQuery().needsJoinSupport();
+    }
+
+    // For a non-incremental search: waits, within the request's timeout, for the store that holds its
+    // results, and gives the response whatever is left of the timeout, so the whole wait is no longer
+    // than the request asked for.
+    private RequestAndStore awaitSearchStoreForResponse(final RequestAndStore requestAndStore) {
+        final SearchRequest request = requestAndStore.searchRequest();
+        if (!request.getQuery().needsJoinSupport()) {
+            return requestAndStore;
+        }
+        final Duration timeout = request.getTimeout() == null
+                ? NON_INCREMENTAL_JOIN_TIMEOUT
+                : Duration.ofMillis(request.getTimeout());
+        final Instant deadline = Instant.now().plus(timeout);
+        try {
+            final ResultStore store = awaitSearchStore(requestAndStore, deadline);
+            final long remainingMs = Math.max(0, Duration.between(Instant.now(), deadline).toMillis());
+            return new RequestAndStore(request.copy().timeout(remainingMs).build(), store);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Interrupted while waiting for the search", e);
+        }
+    }
+
+    // Waits through a search's placeholder store, if it has one, for the store that took its place,
+    // until the deadline if there is one. If the search with joins fails, is stopped or destroyed, or
+    // the deadline passes before another store takes the placeholder's place, the placeholder, which
+    // holds any errors, is returned.
+    private ResultStore awaitSearchStore(final RequestAndStore requestAndStore,
+                                         final Instant deadline) throws InterruptedException {
+        final ResultStore store = requestAndStore.resultStore();
+        final JoinSearchHandOver handOver = joinSearches.get(requestAndStore.searchRequest().getKey());
+        if (handOver == null || handOver.placeholder() != store) {
+            return store;
+        }
+        while (true) {
+            try {
+                return handOver.searchStore().get(HAND_OVER_WAIT_MS, TimeUnit.MILLISECONDS);
+            } catch (final TimeoutException e) {
+                // A placeholder completes once it is cleared after the hand-over, or when its search
+                // fails, stops or is destroyed, so a complete one with no hand-over won't get one.
+                if (store.isComplete() && !handOver.searchStore().isDone()) {
+                    return store;
+                }
+                if (deadline != null && Instant.now().isAfter(deadline)) {
+                    return store;
+                }
+            } catch (final ExecutionException e) {
+                return store;
+            }
+        }
     }
 
     // Starts the search of one data source of a search with joins: a joined source's child search,
@@ -693,6 +755,16 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
 
 
     public record RequestAndStore(SearchRequest searchRequest, ResultStore resultStore) {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // A search with joins: its placeholder store, and the store that takes the placeholder's place,
+    // once one has.
+    private record JoinSearchHandOver(ResultStore placeholder, CompletableFuture<ResultStore> searchStore) {
 
     }
 }

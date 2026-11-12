@@ -30,6 +30,7 @@ import stroom.query.api.SearchTaskProgress;
 import stroom.query.api.TableSettings;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -80,6 +81,7 @@ public class JoinSearchRunner {
     private final TaskContextFactory taskContextFactory;
     private final Executor executor;
     private final Provider<SearchResultStoreConfig> resultStoreConfigProvider;
+    private final SecurityContext securityContext;
 
     @Inject
     public JoinSearchRunner(final CoprocessorsFactory coprocessorsFactory,
@@ -87,13 +89,15 @@ public class JoinSearchRunner {
                             final JoinTables joinTables,
                             final TaskContextFactory taskContextFactory,
                             final Executor executor,
-                            final Provider<SearchResultStoreConfig> resultStoreConfigProvider) {
+                            final Provider<SearchResultStoreConfig> resultStoreConfigProvider,
+                            final SecurityContext securityContext) {
         this.coprocessorsFactory = coprocessorsFactory;
         this.resultStoreFactory = resultStoreFactory;
         this.joinTables = joinTables;
         this.taskContextFactory = taskContextFactory;
         this.executor = executor;
         this.resultStoreConfigProvider = resultStoreConfigProvider;
+        this.securityContext = securityContext;
     }
 
     /// Creates the placeholder result store of a search with joins. Put it where polls find it, then
@@ -222,13 +226,23 @@ public class JoinSearchRunner {
             }
         }
 
+        // Ending a search stops its tasks, which needs the Manage Tasks permission, so the result store
+        // manager ends searches as the processing user, as these do for this search's own searches.
+        private void terminate(final ResultStore store) {
+            securityContext.asProcessingUser(store::terminate);
+        }
+
+        private void destroy(final ResultStore store) {
+            securityContext.asProcessingUser(store::destroy);
+        }
+
         // Puts the store in the placeholder's place, then clears the placeholder. A terminate that came
         // while the store was being started, when it went to this search, terminates the store.
         private void handOver(final ResultStore searchStore) {
             synchronized (this) {
                 handedOverTo = searchStore;
                 if (terminated) {
-                    searchStore.terminate();
+                    terminate(searchStore);
                 }
             }
             onSearchStore.accept(searchStore);
@@ -246,7 +260,7 @@ public class JoinSearchRunner {
             if (handedOverTo == null) {
                 onTerminate();
             } else if (!placeholderRetired) {
-                handedOverTo.terminate();
+                terminate(handedOverTo);
             }
         }
 
@@ -394,7 +408,7 @@ public class JoinSearchRunner {
                 children.add(child);
             }
             if (terminated) {
-                child.terminate();
+                terminate(child);
             }
             awaitCompletion(child);
             copyMessages(child, placeholder, name);
@@ -503,7 +517,7 @@ public class JoinSearchRunner {
             synchronized (children) {
                 children.remove(child);
             }
-            child.destroy();
+            destroy(child);
         }
 
         private void destroyChildren() {
@@ -514,7 +528,7 @@ public class JoinSearchRunner {
             }
             remaining.forEach(child -> {
                 try {
-                    child.destroy();
+                    destroy(child);
                 } catch (final RuntimeException e) {
                     LOGGER.error(() -> "Error destroying a joined source's search: " + e.getMessage(), e);
                 }
@@ -540,7 +554,7 @@ public class JoinSearchRunner {
             synchronized (children) {
                 running = new ArrayList<>(children);
             }
-            running.forEach(ResultStore::terminate);
+            running.forEach(this::terminate);
         }
     }
 
