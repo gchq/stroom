@@ -596,9 +596,10 @@ public final class PopupContractStories {
 
         // RIGHT with room: flush against the anchor's right edge, top-aligned
         expectPosition(play, rect(100, 200, 140, 220), PopupLocation.RIGHT, 300, 100, 140, 200);
-        // RIGHT with no room to the right but room to the left: the popup's right edge is aligned
-        // with the anchor's right edge, so it overlaps the anchor
-        expectPosition(play, rect(vw - 100, 200, vw - 60, 220), PopupLocation.RIGHT, 300, 100, vw - 360, 200);
+        // RIGHT with no room to the right but room to the left: it goes to the anchor's left side,
+        // its right edge on the anchor's left edge, so it doesn't cover the anchor (a submenu beside
+        // its item; TestPositionUtil)
+        expectPosition(play, rect(vw - 100, 200, vw - 60, 220), PopupLocation.RIGHT, 300, 100, vw - 400, 200);
         // BELOW with room: aligned to the anchor's left edge, under its bottom
         expectPosition(play, rect(100, 200, 140, 220), PopupLocation.BELOW, 300, 100, 100, 220);
         // BELOW with no room below but room above: flips to sit on the anchor's top edge
