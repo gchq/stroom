@@ -2385,6 +2385,112 @@ paths:
       summary: List child types for a stream
       tags:
       - Data
+  /dataConnection/v1/detectColumns:
+    post:
+      operationId: detectDataConnectionColumns
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataConnectionDoc"
+        description: dataConnectionDoc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DataColumn"
+          description: default response
+      summary: "Detect the columns of a Data Connection's CSV or workbook, or the\
+        \ attributes of its LDAP directory"
+      tags:
+      - Data Connections
+  /dataConnection/v1/downloadExcelFile/{uuid}:
+    get:
+      operationId: downloadDataConnectionExcelFile
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceGeneration"
+          description: default response
+      summary: Download the workbook of an Excel Data Connection
+      tags:
+      - Data Connections
+  /dataConnection/v1/testConnection:
+    post:
+      operationId: testDataConnection
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataConnectionDoc"
+        description: dataConnectionDoc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataConnectionTestResponse"
+          description: default response
+      summary: Test a Data Connection
+      tags:
+      - Data Connections
+  /dataConnection/v1/{uuid}:
+    get:
+      operationId: fetchDataConnection
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataConnectionDoc"
+          description: default response
+      summary: Fetch a Data Connection doc by its UUID
+      tags:
+      - Data Connections
+    put:
+      operationId: updateDataConnection
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataConnectionDoc"
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataConnectionDoc"
+          description: default response
+      summary: Update a Data Connection doc
+      tags:
+      - Data Connections
   /dataDownload/v1/downloadZip:
     post:
       operationId: downloadZip
@@ -2510,6 +2616,26 @@ paths:
                 $ref: "#/components/schemas/Documentation"
           description: default response
       summary: Fetch documentation for a data source
+      tags:
+      - Data Sources
+  /dataSource/v1/fetchMinRefreshInterval:
+    post:
+      operationId: fetchMinRefreshInterval
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocRef"
+        description: dataSourceRef
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleDuration"
+          description: default response
+      summary: Fetch the minimum automatic refresh interval of a data source
       tags:
       - Data Sources
   /dataSource/v1/findFields:
@@ -5810,46 +5936,6 @@ paths:
       summary: Delete pathway
       tags:
       - Pathways
-  /pathways/v2/fetchPathway:
-    post:
-      operationId: fetchPathway
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/FetchPathwayRequest"
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Pathway"
-          description: default response
-      summary: Fetch one learnt pathway in full
-      tags:
-      - Pathways
-  /pathways/v2/findMutations:
-    post:
-      operationId: findPathwayMutations
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/FindPathwayMutationCriteria"
-        description: criteria
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PathwayMutationResultPage"
-          description: default response
-      summary: Find the changes made to one learnt pathway
-      tags:
-      - Pathways
   /pathways/v2/findPathways:
     post:
       operationId: findPathways
@@ -5868,29 +5954,6 @@ paths:
                 $ref: "#/components/schemas/PathwayResultPage"
           description: default response
       summary: Find pathways
-      tags:
-      - Pathways
-  /pathways/v2/findUsage:
-    post:
-      operationId: findPathwayUsage
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/FindPathwayMutationCriteria"
-        description: criteria
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/PathwayUsage"
-          description: default response
-      summary: Find how much each node of one learnt pathway had been used at each
-        point in its history
       tags:
       - Pathways
   /pathways/v2/updatePathway:
@@ -10451,7 +10514,6 @@ components:
         mapping:
           histogram: "#/components/schemas/HistogramSettings"
           metric: "#/components/schemas/MetricSettings"
-          pathways: "#/components/schemas/PathwaysSettings"
           rangeState: "#/components/schemas/RangeStateSettings"
           session: "#/components/schemas/SessionSettings"
           state: "#/components/schemas/StateSettings"
@@ -11516,6 +11578,30 @@ components:
           type: string
         sourceTaskId:
           $ref: "#/components/schemas/TaskId"
+    AthenaConnectionSettings:
+      type: object
+      properties:
+        catalog:
+          type: string
+        credentialName:
+          type: string
+        database:
+          type: string
+        maxDataScannedMb:
+          type: integer
+          format: int32
+        minRefreshMinutes:
+          type: integer
+          format: int32
+        outputLocation:
+          type: string
+        region:
+          type: string
+        resultReuseMinutes:
+          type: integer
+          format: int32
+        workGroup:
+          type: string
     AuthFlowResponse:
       type: object
       properties:
@@ -11640,6 +11726,16 @@ components:
           $ref: "#/components/schemas/AwsProxyConfig"
         trustAllCertificatesEnabled:
           type: boolean
+    AwsKeySecret:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Secret"
+      - type: object
+        properties:
+          accessKeyId:
+            type: string
+          secretAccessKey:
+            type: string
     AwsPolicyDescriptorType:
       type: object
       properties:
@@ -12320,15 +12416,10 @@ components:
     Constraint:
       type: object
       properties:
-        lastUsedTime:
-          $ref: "#/components/schemas/NanoTime"
         name:
           type: string
         optional:
           type: boolean
-        timesUsed:
-          type: integer
-          format: int64
         value:
           $ref: "#/components/schemas/ConstraintValue"
     ConstraintValue:
@@ -12661,6 +12752,7 @@ components:
           - SSH_KEY
           - KEY_STORE
           - KEY_STORE_FILE
+          - AWS_KEY
         expiryTimeMs:
           type: integer
           format: int64
@@ -12698,6 +12790,19 @@ components:
         id:
           type: string
         ignoreCase:
+          type: boolean
+    CsvSettings:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataColumn"
+        data:
+          type: string
+        delimiter:
+          type: string
+        header:
           type: boolean
     CustomConditionalFormattingStyle:
       type: object
@@ -12853,6 +12958,75 @@ components:
             type: string
           searchRequest:
             $ref: "#/components/schemas/DashboardSearchRequest"
+    DataColumn:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+          - TEXT
+          - LONG
+          - DOUBLE
+          - DATE
+          - BOOLEAN
+    DataConnectionDoc:
+      type: object
+      properties:
+        athena:
+          $ref: "#/components/schemas/AthenaConnectionSettings"
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        csv:
+          $ref: "#/components/schemas/CsvSettings"
+        description:
+          type: string
+        excel:
+          $ref: "#/components/schemas/ExcelSettings"
+        jdbc:
+          $ref: "#/components/schemas/JdbcConnectionSettings"
+        ldap:
+          $ref: "#/components/schemas/LdapSettings"
+        maxRows:
+          type: integer
+          format: int32
+        name:
+          type: string
+        queryTimeoutSeconds:
+          type: integer
+          format: int32
+        sourceType:
+          type: string
+          enum:
+          - JDBC
+          - ATHENA
+          - CSV
+          - EXCEL
+          - LDAP
+        timeField:
+          type: string
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
+    DataConnectionTestResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        ok:
+          type: boolean
     DataGenDoc:
       type: object
       properties:
@@ -13476,6 +13650,7 @@ components:
           - DOCUMENT_ANALYTIC_RULE
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
+          - DOCUMENT_DATA_CONNECTION
           - DOCUMENT_DATA_GEN
           - DOCUMENT_DICTIONARY
           - DOCUMENT_DOCUMENTATION
@@ -14339,6 +14514,23 @@ components:
         streamId:
           type: integer
           format: int64
+    ExcelSettings:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataColumn"
+        copyWorkbookFrom:
+          type: string
+        fileName:
+          type: string
+        header:
+          type: boolean
+        sheet:
+          type: string
+        uploadKey:
+          $ref: "#/components/schemas/ResourceKey"
     ExecutionHistory:
       type: object
       properties:
@@ -15083,13 +15275,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/NodeStatusResult"
-    FetchPathwayRequest:
-      type: object
-      properties:
-        name:
-          type: string
-        pathwaysDocRef:
-          $ref: "#/components/schemas/DocRef"
     FetchPipelineJsonResponse:
       type: object
       properties:
@@ -15262,6 +15447,7 @@ components:
             - SSH_KEY
             - KEY_STORE
             - KEY_STORE_FILE
+            - AWS_KEY
           uniqueItems: true
         filter:
           type: string
@@ -15343,6 +15529,8 @@ components:
         dataSourceRef:
           $ref: "#/components/schemas/DocRef"
         filter:
+          type: string
+        nativeQuery:
           type: string
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
@@ -15500,22 +15688,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaFieldSort"
-    FindPathwayMutationCriteria:
-      type: object
-      properties:
-        pageRequest:
-          $ref: "#/components/schemas/PageRequest"
-        pathwayName:
-          type: string
-        pathwaysDocRef:
-          $ref: "#/components/schemas/DocRef"
-        sort:
-          type: string
-          writeOnly: true
-        sortList:
-          type: array
-          items:
-            $ref: "#/components/schemas/CriteriaFieldSort"
     FindProcessorProfileRequest:
       type: object
       properties:
@@ -15630,10 +15802,6 @@ components:
           $ref: "#/components/schemas/DocRef"
         filter:
           type: string
-        ignoredSpanNames:
-          type: array
-          items:
-            type: string
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
         pathway:
@@ -15827,7 +15995,6 @@ components:
           - HISTOGRAM
           - METRIC
           - TRACE
-          - PATHWAYS
         type:
           type: string
         updateTimeMs:
@@ -16905,6 +17072,26 @@ components:
       required:
       - minimumPasswordLength
       - minimumPasswordStrength
+    JdbcConnectionSettings:
+      type: object
+      properties:
+        connectionProperties:
+          type: object
+          additionalProperties:
+            type: string
+        credentialName:
+          type: string
+        fetchSize:
+          type: integer
+          format: int32
+        maxPoolSize:
+          type: integer
+          format: int32
+        minRefreshMinutes:
+          type: integer
+          format: int32
+        url:
+          type: string
     Job:
       type: object
       properties:
@@ -17123,6 +17310,33 @@ components:
           type: boolean
         fitWidth:
           type: boolean
+    LdapSettings:
+      type: object
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataColumn"
+        baseDn:
+          type: string
+        credentialName:
+          type: string
+        minRefreshMinutes:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        scope:
+          type: string
+          enum:
+          - BASE
+          - ONE_LEVEL
+          - SUBTREE
+        startTls:
+          type: boolean
+        url:
+          type: string
     LifespanInfo:
       type: object
       properties:
@@ -17759,16 +17973,6 @@ components:
           type: boolean
         node:
           $ref: "#/components/schemas/Node"
-    NodeUsage:
-      type: object
-      properties:
-        lastUsedTime:
-          $ref: "#/components/schemas/NanoTime"
-        nodeUuid:
-          type: string
-        timesUsed:
-          type: integer
-          format: int64
     NotificationConfig:
       type: object
       properties:
@@ -17978,81 +18182,33 @@ components:
     PathNode:
       type: object
       properties:
-        children:
-          type: array
-          items:
-            $ref: "#/components/schemas/PathNode"
         constraints:
           type: object
           additionalProperties:
             $ref: "#/components/schemas/Constraint"
-        lastUsedTime:
-          $ref: "#/components/schemas/NanoTime"
         name:
           type: string
-        nodePath:
+        path:
           type: array
           items:
             type: string
-        retiredTime:
-          $ref: "#/components/schemas/NanoTime"
-        timesUsed:
-          type: integer
-          format: int64
-        uuid:
-          type: string
-    PathStep:
-      type: object
-      properties:
-        node:
-          type: integer
-          format: int32
-        steps:
+        targets:
           type: array
           items:
-            type: integer
-            format: int32
-    PathUse:
-      type: object
-      properties:
-        createdByTraceId:
+            $ref: "#/components/schemas/PathNodeSequence"
+        uuid:
           type: string
-        firstUsedTime:
-          $ref: "#/components/schemas/NanoTime"
-        lastTraceTime:
-          $ref: "#/components/schemas/NanoTime"
-        lastUsedTime:
-          $ref: "#/components/schemas/NanoTime"
-        root:
-          type: integer
-          format: int32
-        source:
-          type: integer
-          format: int32
-        timesUsed:
-          type: integer
-          format: int64
-        traceTime:
-          $ref: "#/components/schemas/NanoTime"
-    Paths:
+    PathNodeSequence:
       type: object
       properties:
         nodes:
           type: array
           items:
-            type: string
-        paths:
-          type: array
-          items:
-            $ref: "#/components/schemas/PathUse"
-        sources:
-          type: array
-          items:
-            type: string
-        steps:
-          type: array
-          items:
-            $ref: "#/components/schemas/PathStep"
+            $ref: "#/components/schemas/PathNode"
+        pathKey:
+          $ref: "#/components/schemas/PathKey"
+        uuid:
+          type: string
     Pathway:
       type: object
       properties:
@@ -18064,79 +18220,10 @@ components:
           type: string
         pathKey:
           $ref: "#/components/schemas/PathKey"
-        paths:
-          $ref: "#/components/schemas/Paths"
         root:
           $ref: "#/components/schemas/PathNode"
-        timesUpdated:
-          type: integer
-          format: int64
-        timesUsed:
-          type: integer
-          format: int64
         updateTime:
           $ref: "#/components/schemas/NanoTime"
-    PathwayMutation:
-      type: object
-      properties:
-        constraint:
-          type: string
-        newValue:
-          $ref: "#/components/schemas/ConstraintValue"
-        nodePath:
-          type: array
-          items:
-            type: string
-        nodeUuid:
-          type: string
-        oldValue:
-          $ref: "#/components/schemas/ConstraintValue"
-        optional:
-          type: boolean
-        sequence:
-          type: integer
-          format: int64
-        source:
-          type: integer
-          format: int32
-        spanId:
-          type: string
-        time:
-          $ref: "#/components/schemas/NanoTime"
-        traceId:
-          type: string
-        traceTime:
-          $ref: "#/components/schemas/NanoTime"
-        type:
-          type: string
-          enum:
-          - PATHWAY_ADDED
-          - NODE_ADDED
-          - CONSTRAINT_ADDED
-          - CONSTRAINT_CHANGED
-          - CONSTRAINT_OPTIONAL
-          - CONSTRAINT_MIN_EXPANDED
-          - CONSTRAINT_MAX_EXPANDED
-          - CONSTRAINT_SET_EXPANDED
-          - CONSTRAINT_GENERALISED
-          - CONSTRAINT_RANGED
-          - CONSTRAINT_TYPE_CONFLICT
-          - CONSTRAINT_IGNORED
-          - NODE_ABSENT
-          - CONSTRAINT_BOUND_OPENED
-          - CONSTRAINT_NARROWED
-          - PATH_DROPPED
-          - NODE_RETIRED
-          - NODE_REVIVED
-    PathwayMutationResultPage:
-      type: object
-      properties:
-        pageResponse:
-          $ref: "#/components/schemas/PageResponse"
-        values:
-          type: array
-          items:
-            $ref: "#/components/schemas/PathwayMutation"
     PathwayResultPage:
       type: object
       properties:
@@ -18145,43 +18232,7 @@ components:
         values:
           type: array
           items:
-            $ref: "#/components/schemas/PathwaySummary"
-    PathwaySummary:
-      type: object
-      properties:
-        createTime:
-          $ref: "#/components/schemas/NanoTime"
-        lastUsedTime:
-          $ref: "#/components/schemas/NanoTime"
-        name:
-          type: string
-        nodes:
-          type: integer
-          format: int32
-        paths:
-          type: integer
-          format: int32
-        sizeBytes:
-          type: integer
-          format: int64
-        timesUpdated:
-          type: integer
-          format: int64
-        timesUsed:
-          type: integer
-          format: int64
-        updateTime:
-          $ref: "#/components/schemas/NanoTime"
-    PathwayUsage:
-      type: object
-      properties:
-        nodes:
-          type: array
-          items:
-            $ref: "#/components/schemas/NodeUsage"
-        sequence:
-          type: integer
-          format: int64
+            $ref: "#/components/schemas/Pathway"
     PathwaysDoc:
       type: object
       properties:
@@ -18200,30 +18251,20 @@ components:
           type: string
         description:
           type: string
-        hasSharedFileStoreData:
-          type: boolean
-        ignoredAttributes:
-          type: array
-          items:
-            type: string
-        ignoredSpanNames:
-          type: array
-          items:
-            type: string
         infoFeed:
           $ref: "#/components/schemas/DocRef"
         name:
           type: string
-        narrowingWindow:
-          $ref: "#/components/schemas/SimpleDuration"
         pathways:
           type: array
           items:
             $ref: "#/components/schemas/Pathway"
-        sharedFileStore:
-          $ref: "#/components/schemas/SharedFileStoreSettings"
+        processingNode:
+          type: string
         temporalOrderingTolerance:
           $ref: "#/components/schemas/SimpleDuration"
+        tracesDocRef:
+          $ref: "#/components/schemas/DocRef"
         type:
           type: string
         updateTimeMs:
@@ -18235,14 +18276,6 @@ components:
           type: string
         version:
           type: string
-    PathwaysSettings:
-      type: object
-      allOf:
-      - $ref: "#/components/schemas/AbstractPlanBSettings"
-      - type: object
-        properties:
-          sharedFileStore:
-            $ref: "#/components/schemas/SharedFileStoreSettings"
     PermissionChangeEvent:
       type: object
       properties:
@@ -18349,6 +18382,7 @@ components:
           - DOCUMENT_ANALYTIC_RULE
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
+          - DOCUMENT_DATA_CONNECTION
           - DOCUMENT_DATA_GEN
           - DOCUMENT_DICTIONARY
           - DOCUMENT_DOCUMENTATION
@@ -18720,7 +18754,6 @@ components:
           - HISTOGRAM
           - METRIC
           - TRACE
-          - PATHWAYS
         type:
           type: string
         updateTimeMs:
@@ -19216,6 +19249,8 @@ components:
           $ref: "#/components/schemas/DocRef"
         expression:
           $ref: "#/components/schemas/ExpressionOperator"
+        nativeQuery:
+          type: string
         params:
           type: array
           items:
@@ -21022,6 +21057,7 @@ components:
       discriminator:
         mapping:
           accessToken: "#/components/schemas/AccessTokenSecret"
+          awsKey: "#/components/schemas/AwsKeySecret"
           keyStore: "#/components/schemas/KeyStoreSecret"
           keyStoreFile: "#/components/schemas/KeyStoreFileSecret"
           sshKey: "#/components/schemas/SshKeySecret"
@@ -23182,8 +23218,6 @@ components:
           type: boolean
         name:
           type: string
-        pathwaysDocRef:
-          $ref: "#/components/schemas/DocRef"
         settings:
           $ref: "#/components/schemas/AbstractPlanBSettings"
         stateType:
@@ -23197,7 +23231,6 @@ components:
           - HISTOGRAM
           - METRIC
           - TRACE
-          - PATHWAYS
         type:
           type: string
         updateTimeMs:
