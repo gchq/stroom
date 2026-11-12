@@ -187,7 +187,8 @@ class TestListFields extends DraftFixtures {
     void aJsonArrayOfObjectsIsDraftedAsADataGroup() {
         final String text = """
                 [{"time": "2026-10-01T08:00:00Z", "action": "send", "host": "mx01", "sender": "jane",
-                  "recipients": [{"id": "john", "address": {"domain": "mail.com"}}, {"id": "jack", "status": "ok"}]},
+                  "recipients": [{"id": "john", "address": {"domain": "mail.com"}, "roles": ["to", "cc"]},
+                                 {"id": "jack", "status": "ok"}]},
                  {"time": "2026-10-01T08:05:00Z", "action": "send", "host": "mx01", "sender": "jane", "recipients": []},
                  {"time": "2026-10-01T08:07:00Z", "action": "send", "host": "mx01", "sender": "bob",
                   "recipients": [{"id": "jill"}]}]
@@ -203,6 +204,9 @@ class TestListFields extends DraftFixtures {
                         map("path", "Data", "data_name", "status", "field", "status"))));
         assertThat(notes(draft)).anySatisfy(note -> assertThat(note)
                 .startsWith("'recipients' (keys id, address.domain, status) holds an array of objects"));
+        // A list inside each object is left out of the group, and said (seen in review: dropped unsaid).
+        assertThat(notes(draft)).anySatisfy(note -> assertThat(note)
+                .startsWith("Not drafted: 'roles' in each object of 'recipients' (a list inside each object"));
         final XsltGenerator.Generated result = generated(draft);
         assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
     }
