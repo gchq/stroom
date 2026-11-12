@@ -106,6 +106,34 @@ class TestKindFields {
     }
 
     @Test
+    void aFieldOfMessagesOrAddressesTellsNoKindsApartWhyIsSaid() {
+        // Seen in testing (Synology DSM): kind_field "body", whole syslog messages, and an `event` field of sentences
+        // naming the user, taken as kinds.
+        final List<Map<String, Object>> records = new ArrayList<>();
+        for (int i = 0; i < 30; i++) {
+            final Map<String, Object> one = new LinkedHashMap<>();
+            one.put("event", "User [user" + i % 4 + "] logged in from [10.0.0." + i % 4 + "] via [SSH]");
+            one.put("body", "<14>1 2026-11-11T20:51:0" + i % 10 + "Z nas01 - - - [synolog@6574 event_id=\"0x0004\"] "
+                            + "User [user" + i + "] logged in");
+            one.put("event_id", List.of("0x0004", "0x0005", "0x0006").get(i % 3));
+            one.put("logid", List.of("0101039424", "0101039425").get(i % 2));
+            records.add(one);
+        }
+
+        assertThat(KindFields.whyNot("body", records)).hasValueSatisfying(why ->
+                assertThat(why).contains("holds whole messages"));
+        assertThat(KindFields.whyNot("event", records)).hasValueSatisfying(why ->
+                assertThat(why).contains("holds whole messages"));
+        assertThat(KindFields.whyNot("nothing", records)).hasValue("the records have no field 'nothing'");
+        // Codes are kinds, whatever they look like: a hex id, a FortiGate logid of ten digits.
+        assertThat(KindFields.whyNot("event_id", records)).isEmpty();
+        assertThat(KindFields.whyNot("logid", records)).isEmpty();
+        // A field of addresses names no kinds.
+        assertThat(KindFields.messagesNotKinds("src", List.of("from 10.0.0.1", "from 10.0.0.2")))
+                .hasValueSatisfying(why -> assertThat(why).contains("addresses or times"));
+    }
+
+    @Test
     void aKindFieldArgumentIsReadAsTheUserSaidIt() {
         assertThat(KindFields.parse(null)).isNull();
         assertThat(KindFields.parse(" ")).isNull();

@@ -218,7 +218,11 @@ public final class SyslogHeaders {
     /// @return Whether it is an RFC 5424 tail holding structured data elements (not `-`).
     public static boolean hasStructuredData(final String text) {
         final Matcher m = tailOf(text);
-        return m != null && !"-".equals(m.group(4)) && wellFormed(m.group(4));
+        // With a parameter or an enterprise's id, as a source's structured data has: a bare bracketed word or number
+        // is a log's own label (seen in testing: a mail gateway's `msw 2026-11-10 00:00:04.6 [1002294] [info] ...`
+        // read as an app, a process id of 2026-11-10 and structured data [1002294]).
+        return m != null && !"-".equals(m.group(4)) && wellFormed(m.group(4))
+               && (m.group(4).contains("=\"") || m.group(4).contains("@"));
     }
 
     /// @param text A text.

@@ -195,6 +195,80 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    void aKindFieldOfWholeMessagesIsRefusedWithTheFieldsThatCould() {
+        // Seen in testing (Synology DSM, 2026-11-11): kind_field "body", a whole syslog message, passed unasked and
+        // taken by its name, the kinds then chosen silently another way.
+        samples(11L, mailCsv());
+
+        final String refused = text("{\"build\": \"acme\", \"source\": \"SEG\", \"stream_ids\": [11], "
+                                    + "\"kind_field\": \"message\"}");
+
+        assertThat(refused).contains("kind_field 'message' can't tell the kinds of event apart: 'message' holds "
+                                     + "whole messages")
+                .contains("Fields that could: msg_act (allow, quarantine, reject)");
+    }
+
+    @Test
+    void aKindFieldTheAgentGivesIsConfirmedByTheUserInAFormOnce() {
+        // Seen in testing (Synology DSM): the agent chose the kind field itself, and the user was never asked.
+        samples(11L, mailCsv());
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer",
+                "msg_act (allow, quarantine, reject)"));
+
+        final Map<String, Object> listed = call("{\"build\": \"acme\", \"source\": \"SEG\", \"stream_ids\": [11], "
+                                                + "\"kind_field\": \"msg_act\"}", user.context());
+
+        assertThat(user.shown()).singleElement().asString()
+                .contains("The kinds of event are to be told apart by msg_act.");
+        assertThat(list(listed.get("to_classify"))).extracting(kind -> kind.get("value"))
+                .containsExactlyInAnyOrder("allow", "quarantine", "reject");
+        // Chosen in a form: not asked again.
+        final BuildToolCalls.FormUser again = BuildToolCalls.user(Map.of("answer", "msg_act"));
+        call("{\"build\": \"acme\", \"source\": \"SEG\", \"stream_ids\": [11], \"kind_field\": \"msg_act\"}",
+                again.context());
+        assertThat(again.shown()).isEmpty();
+    }
+
+    @Test
+    void mostRecordsInNoKindPutTheFieldsThatCouldTellThemApartToTheUser() {
+        // Seen in testing (2026-11-12, a mail gateway): one kind of 433 records listed and settled, 5,567 of 6,000
+        // records in none, "every kind is settled: go on to the draft", and no form put to the user.
+        final StringBuilder csv = new StringBuilder("timestamp,sender,type,disposition\n");
+        for (int i = 0; i < 30; i++) {
+            csv.append("2026-11-11T08:%02d:04Z,u%d@example.com,%s,%s\n".formatted(i, i, i < 3
+                    ? "config"
+                    : "", List.of("SEGTrap", "SEGDeliver", "SEGQuarantine").get(i % 3)));
+        }
+        samples(12L, csv.toString());
+
+        // Without forms: the candidates for the agent to put to the user in the chat; nothing classified.
+        final Map<String, Object> asking = call("{\"build\": \"acme\", \"source\": \"SEG\", "
+                                                + "\"stream_ids\": [12]}", BuildToolCalls.context());
+        assertThat(asking).containsEntry("status", "needs_kind_field");
+        assertThat(String.valueOf(asking.get("candidates"))).contains("field=disposition");
+        assertThat(String.valueOf(asking.get("hint"))).startsWith("27 of the 30 records are in no kind");
+
+        // With forms: the user chooses, and the kinds are listed by their choice at once.
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "disposition"));
+        final Map<String, Object> listed = call("{\"build\": \"acme\", \"source\": \"SEG\", "
+                                                + "\"stream_ids\": [12]}", user.context());
+        assertThat(user.shown()).singleElement().asString().contains("27 of the 30 sample records are in no kind");
+        assertThat(list(listed.get("to_classify"))).as("%s", listed).extracting(kind -> kind.get("value"))
+                .containsExactlyInAnyOrder("SEGTrap", "SEGDeliver", "SEGQuarantine");
+    }
+
+    // A CSV mail log: its kind in msg_act, a message of sentences, an address each.
+    private static String mailCsv() {
+        final StringBuilder csv = new StringBuilder("timestamp,sender,msg_act,message\n");
+        for (int i = 0; i < 30; i++) {
+            csv.append("2026-11-11T08:%02d:04Z,u%d@example.com,%s,Message from u%d was handled by the gateway "
+                       .formatted(i, i, List.of("allow", "quarantine", "reject").get(i % 3), i)
+                       + "and logged\n");
+        }
+        return csv.toString();
+    }
+
+    @Test
     void oneKindIsClassifiedLikeAnyOther() {
         // Asked for by the user: one kind of event was "nothing to classify", so the user was never asked what the
         // events are, and the draft left them Unknown.

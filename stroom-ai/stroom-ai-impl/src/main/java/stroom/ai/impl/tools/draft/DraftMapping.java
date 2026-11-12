@@ -1165,6 +1165,22 @@ public final class DraftMapping {
             return held.stream().filter(fits).count() >= 0.8 * held.size();
         }
 
+        // The fields a splitter spec reads further with a body, its parts' and bodies' too.
+        private static Set<String> parsedFurther(final SplitterSpec at) {
+            final Set<String> out = new LinkedHashSet<>();
+            if (at == null) {
+                return out;
+            }
+            if (at.body() != null && at.bodyField() != null) {
+                out.add(at.bodyField());
+                out.addAll(parsedFurther(at.body()));
+            }
+            (at.parts() == null
+                    ? List.<SplitterSpec>of()
+                    : at.parts()).forEach(part -> out.addAll(parsedFurther(part)));
+            return out;
+        }
+
         // Text holding a syslog line (a shipper's JSON around the source's own line: a container runtime's log, a
         // collector's message), or what follows the host in an RFC 5424 header (a shipper that read the header up to
         // the host into keys of its own, the rest kept as one value: seen in testing): the header's parts are fields
@@ -1176,6 +1192,9 @@ public final class DraftMapping {
             final List<String> out = new ArrayList<>(heldFields);
             final Set<String> skipped = new HashSet<>(heldFields);
             skipped.addAll(EventTimes.wrappedTexts(spec));
+            // Nor text the splitter reads further itself (seen in testing: a mail gateway's message, its words and
+            // pairs already fields, read again as a header's app, procid and msgid: `message.pid` 2026-11-10).
+            skipped.addAll(parsedFurther(spec));
             final List<String> derived = new ArrayList<>();
             for (final String name : List.copyOf(names)) {
                 // Text, or text ending in XML (a syslog line whose message is XML).
@@ -1956,8 +1975,11 @@ public final class DraftMapping {
             final Set<String> kinds = new HashSet<>(values.get(name));
             kinds.removeAll(NIL);
             // By its own name or with its parent's (Winlogbeat's event.code is event_code).
+            // And by its values: short codes or phrases, not messages or addresses (seen in testing: a Synology DSM
+            // `event` field of sentences naming the user, drafted as a kind per user and action).
             return FieldHomes.keys(name).stream().anyMatch(k -> ToolText.match(NAMING, k)) && !kinds.isEmpty()
-                   && kinds.size() <= MAX_KINDS && repeats(name, kinds.size());
+                   && kinds.size() <= MAX_KINDS && repeats(name, kinds.size())
+                   && KindFields.messagesNotKinds(name, kinds).isEmpty();
         }
 
         // Past 64 values, kinds repeat: each value in two records or more on average. Seen when the limit was
@@ -2030,6 +2052,13 @@ public final class DraftMapping {
                     .toList();
             if (!present.isEmpty()) {
                 return kindsBy(present);
+            }
+            if (!given.isEmpty()) {
+                // Said, not chosen another way unsaid (seen in testing: a kind field the records didn't have as such,
+                // and the kinds silently taken from other fields).
+                notes.add("The kind field(s) " + given + " chosen for these records aren't fields of theirs as read "
+                          + "here, so the kinds below are by the fields named like kinds: check the kind field with "
+                          + "the user (classify_kinds kind_field=).");
             }
             String naming = headerKinds();
             if (naming == null) {

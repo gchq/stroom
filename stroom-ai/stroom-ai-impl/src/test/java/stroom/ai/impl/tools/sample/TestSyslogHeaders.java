@@ -75,6 +75,10 @@ class TestSyslogHeaders {
         // No structured data: a process id that is a number.
         assertThat(SyslogHeaders.isTail("dovecot 11886 - - Indexed 3 messages")).isTrue();
         assertThat(SyslogHeaders.hasStructuredData("dovecot 11886 - - Indexed 3 messages")).isFalse();
+        // A log's own bracketed labels aren't structured data (seen in testing: a mail gateway's message read as an
+        // app, a process id of 2026-11-10 and structured data [1002294]).
+        assertThat(SyslogHeaders.hasStructuredData("msw 2026-11-10 00:00:04.646042 [1002294] [info] [SEGTLS] "
+                                                   + "peer=\"mx6.partner.co.uk\"")).isFalse();
     }
 
     @Test
