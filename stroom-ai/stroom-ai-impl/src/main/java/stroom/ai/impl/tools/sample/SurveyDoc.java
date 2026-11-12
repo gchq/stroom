@@ -30,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -67,6 +68,9 @@ public final class SurveyDoc {
     public static final String ACCEPTED = "accepted";
     /// The state's key for the streams a call the user agreed to survey the feed with, below the default.
     public static final String FEWER_STREAMS = "fewer_streams";
+    /// The state's key for the user's choice of where the survey doc goes when the build is promoted (`choice`:
+    /// `beside` the feed, `keep` in the build, or `later`; `by`, `at`).
+    public static final String PROMOTION = "promotion";
 
     private static final DateTimeFormatter AT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
             .withZone(ZoneOffset.UTC);
@@ -307,6 +311,17 @@ public final class SurveyDoc {
         if (result.get(FEWER_STREAMS) != null) {
             merged.put(FEWER_STREAMS, result.get(FEWER_STREAMS));
         }
+        // An aggregated feed's source type field and what each source type's records showed (SourceTypeProfiles):
+        // counts add up call by call.
+        if (result.get(SourceTypeProfiles.STATE_KEY) instanceof final Map<?, ?> sources) {
+            merged.put(SourceTypeProfiles.STATE_KEY, SourceTypeProfiles.merge(
+                    JsonValues.truthy(merged.get(SourceTypeProfiles.STATE_KEY))
+                            ? (Map<String, Object>) merged.get(SourceTypeProfiles.STATE_KEY)
+                            : null, (Map<String, Object>) sources));
+        }
+        if (result.get(PROMOTION) != null) {
+            merged.put(PROMOTION, result.get(PROMOTION));
+        }
         if (result.get(ACCEPTED) != null) {
             merged.put(ACCEPTED, result.get(ACCEPTED));
         } else if (!resultStreams.isEmpty()) {
@@ -457,6 +472,7 @@ public final class SurveyDoc {
             }
             n++;
         }
+        sourceTypes(state).ifPresent(said -> lines.addAll(List.of("## Source types", "", said, "")));
         lines.addAll(List.of("## Surveys", "", "| When | Streams read | Records | New kinds |",
                 "| --- | --- | --- | --- |"));
         for (final Map<String, Object> survey : surveys) {
@@ -469,6 +485,24 @@ public final class SurveyDoc {
                 "Read by survey_feed to carry on where the last survey stopped; do not edit.", "",
                 "```json survey-state", ToolJson.dumps(state, 1), "```", ""));
         return String.join("\n", lines);
+    }
+
+    // The source types counted, in a line: the field and each value's records read.
+    private static Optional<String> sourceTypes(final Map<String, Object> state) {
+        final Map<String, Object> sources = JsonValues.mapOrEmpty(state.get(SourceTypeProfiles.STATE_KEY));
+        if (sources.get(SourceTypeProfiles.FIELD) == null) {
+            return Optional.empty();
+        }
+        final List<String> counted = new ArrayList<>();
+        SourceTypeProfiles.valueCounts(sources).entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(30)
+                .forEach(entry -> counted.add(entry.getKey() + " (" + entry.getValue() + ")"));
+        return Optional.of("An aggregated feed: its records' source is told by `"
+                                     + ToolText.str(sources.get(SourceTypeProfiles.FIELD)) + "`. Records read by "
+                                     + "value: " + String.join(", ", counted) + ". The registry, `"
+                                     + SourceTypeRegistry.docName(ToolText.str(state.get("feed")))
+                                     + "`, profiles each source type.");
     }
 
     @SuppressWarnings("unchecked")

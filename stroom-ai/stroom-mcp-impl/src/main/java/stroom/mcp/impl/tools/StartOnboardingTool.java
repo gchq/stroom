@@ -57,6 +57,9 @@ class StartOnboardingTool extends AbstractBuiltInTool {
     static final String FOLDERS_ARG = "folders";
     static final String STREAM_IDS_ARG = "stream_ids";
     static final String KIND_ARG = "kind";
+    static final String FEED_ARG = "feed";
+    /// The kind of build that assesses a feed: surveyed, its source types registered, nothing onboarded.
+    static final String ASSESSMENT = "assessment";
 
     private final WriteGuard guard;
     private final BuildPlan plan;
@@ -152,9 +155,15 @@ class StartOnboardingTool extends AbstractBuiltInTool {
                                 .build())
                         .addEnumProperty(KIND_ARG, BuildRecords.BUILD_KINDS, "The kind of work, when it is not an "
                                                                              + "events pipeline: discovery (raw data "
-                                                                             + "indexed as it is, for exploration) "
-                                                                             + "or reference (a table to look values "
-                                                                             + "up in); the plan's steps follow it.")
+                                                                             + "indexed as it is, for exploration), "
+                                                                             + "reference (a table to look values "
+                                                                             + "up in), or assessment (an existing "
+                                                                             + "feed surveyed and, if it aggregates "
+                                                                             + "sources, its source types "
+                                                                             + "registered: nothing onboarded; give "
+                                                                             + "feed, no samples); the plan's steps "
+                                                                             + "follow it.")
+                        .addStringProperty(FEED_ARG, "For kind=assessment: the existing feed to assess.")
                         .required(SOURCE_NAME_ARG)
                         .build())
                 .build();
@@ -176,6 +185,9 @@ class StartOnboardingTool extends AbstractBuiltInTool {
             if (kind != null && !BuildRecords.BUILD_KINDS.contains(kind)) {
                 return JsonResults.refused("kind is one of " + ToolText.list(BuildRecords.BUILD_KINDS) + ", not '"
                                            + kind + "'");
+            }
+            if (ASSESSMENT.equals(kind) && samples == null && streamIds.isEmpty() && files.isEmpty()) {
+                return JsonResults.of(assess(context, sourceName, build, stringArg(call, FEED_ARG), folders));
             }
             if (!files.isEmpty() && samples == null && streamIds.isEmpty()) {
                 return JsonResults.of(filesFirst(context, sourceName, files, build, folders, kind));
@@ -296,6 +308,42 @@ class StartOnboardingTool extends AbstractBuiltInTool {
         result.put("hint", "Propose the feed name from sibling feeds and create_feed. Don't read the files' text into "
                            + "the conversation: the server reads the uploaded streams. Ask the user now only what "
                            + "stage 1 needs, not the indexing backend.");
+        result.put("tools", BuildPlan.HIDDEN_TOOLS);
+        return result;
+    }
+
+    // An assessment of an existing feed: the build, the feed recorded as what it works from, and the plan (survey,
+    // source types, promotion), its first step the survey. Nothing is onboarded; once the registry is written, the
+    // user may onboard a scope of it in a build of its own.
+    private Map<String, Object> assess(final ToolCallContext context,
+                                       final String sourceName,
+                                       final String build,
+                                       final String feed,
+                                       final List<String> folders) {
+        if (NullSafe.isBlankString(feed)) {
+            throw new ToolRefusal("Give feed: the existing feed to assess (kind=assessment surveys a feed already "
+                                  + "in Stroom; no samples).");
+        }
+        final WriteGuard.Folder folder = guard.buildFolder(build);
+        plan.rememberBuild(context, build);
+        remember(build, ASSESSMENT);
+        buildRecords.addSourceFeeds(build, List.of(feed.strip()));
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("build", build);
+        result.put("folder", folder.path());
+        result.put("source", sourceName);
+        result.put("kind", ASSESSMENT);
+        result.put("feed", feed.strip());
+        result.put("plan", plan.plannedSteps(build));
+        result.put("task_list", BuildPlan.TASK_LIST);
+        plan.nextStep(build, null).ifPresent(next -> result.put("next", next));
+        result.put("done", false);
+        result.put("standing_instructions", instructions(context, folders));
+        result.put("hint", "An assessment: survey_feed build='" + build + "' feed='" + feed.strip() + "' until "
+                           + "covered. If the feed aggregates sources, the survey asks the user to confirm the field "
+                           + "that tells them apart, and record_source_types writes the registry of its source "
+                           + "types with their profiles. The plan ends there, with promote_build (the survey and "
+                           + "registry beside the feed); then offer to onboard the source types the user picks.");
         result.put("tools", BuildPlan.HIDDEN_TOOLS);
         return result;
     }

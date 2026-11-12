@@ -91,6 +91,8 @@ public final class Shapes {
     // The fields that tell structured records' kinds apart, chosen once for the survey (KindFields), or null to
     // choose by name in each part as before.
     private List<String> kindFields;
+    // Told of every record added (the source type profiles), or null.
+    private RecordObserver observer;
 
     /// Shapes with none known, keeping two examples each.
     public Shapes() {
@@ -132,6 +134,14 @@ public final class Shapes {
                 : KindFields.oneKind(fields)
                         ? List.of()
                         : List.copyOf(fields);
+    }
+
+    /// Tells an observer of every record added from now on, wherever it was read from (a head, a window, a part read
+    /// deeper): the survey's source type profiles count the same records the shapes do.
+    ///
+    /// @param observer The observer, or null for none.
+    public void observe(final RecordObserver observer) {
+        this.observer = observer;
     }
 
     /// @return The shapes by signature, in the order first seen: each `signature`, `known`, `count`, `examples`
@@ -403,6 +413,9 @@ public final class Shapes {
             kept.add(SampleProfiler.map("text", text, "location",
                     SampleProfiler.map("stream", streamId, "part", part, "record", recordNumber(firstRecord + index))));
         }
+        if (observer != null) {
+            observer.added(chunk.parsedAt(index), text, streamId, part, firstRecord + index);
+        }
         return isNew;
     }
 
@@ -512,5 +525,21 @@ public final class Shapes {
                 : ToolText.round(100.0 * (count == null
                         ? 0
                         : count.longValue()) / total, 1);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Told of each record the shapes count.
+    @FunctionalInterface
+    public interface RecordObserver {
+
+        /// @param parsed   The record's fields (flattened), or null for a record with none (text).
+        /// @param text     The record's text.
+        /// @param streamId The stream it is in.
+        /// @param part     The part it is in.
+        /// @param record   Its index in the part.
+        void added(Map<String, Object> parsed, String text, long streamId, int part, long record);
     }
 }

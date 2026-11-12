@@ -144,6 +144,13 @@ interface BuildFacts {
     /// read.
     Optional<Map<String, Object>> surveyState(List<Map<String, Object>> surveys);
 
+    /// @param feeds The existing feeds a build works from.
+    /// @return Whether a source type registry is promoted beside one of them: a build on it starts at the scope
+    /// choice, its parked and new source types offered.
+    default boolean registryBeside(final List<String> feeds) {
+        return false;
+    }
+
     /// @param pipelineUuid A pipeline.
     /// @return Its processor filters, as processing_status gives them (each with `enabled` and `finished`).
     List<Map<String, Object>> processingFilters(String pipelineUuid);
@@ -162,8 +169,8 @@ interface BuildFacts {
     List<Map<String, Object>> translating(List<String> feeds);
 
     /// @param build A build.
-    /// @return The kind of work it was started as (`events`, `discovery` or `reference`), or empty when none was
-    /// named.
+    /// @return The kind of work it was started as (`events`, `discovery`, `reference` or `assessment`), or empty
+    /// when none was named.
     Optional<String> kind(String build);
 
     /// @param feed A feed's name.

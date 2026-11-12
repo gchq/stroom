@@ -73,6 +73,7 @@ public final class BuiltInToolGroups {
                     "review_coverage",
                     "write_documentation",
                     "set_shape_handling",
+                    "record_source_types",
                     "instruction_evidence"),
             PROCESSING, List.of(
                     "step_sample",

@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -72,7 +73,7 @@ class TestSurveyFeedTool {
     private final SurveyFeedTool tool = new SurveyFeedTool(streamReader, feedNames, world.guard(),
             new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)), consent,
             new FewerStreams(securityContext),
-            world.documentAccess, auditLog);
+            world.documentAccess, auditLog, besideFeed());
 
     TestSurveyFeedTool() {
         Mockito.when(world.documentAccess.canViewData()).thenReturn(true);
@@ -617,17 +618,27 @@ class TestSurveyFeedTool {
             stream(id, "ACME-VPN", id, logins(3), false);
         }
         final String args = "{\"stream_ids\": [7, 8, 9], \"build\": \"acme-v1\"}";
-        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+        // The survey of an existing feed, covered, asks where its doc goes at promotion too.
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true, "answer",
+                SurveyFeedTool.KEEP_IN_BUILD));
         assertThat(json(call(args, user.context()))).containsEntry(SurveyDoc.FEWER_STREAMS, 3);
 
         // A node restarted (its memory empty), with no form to ask in: the build's survey record still says so.
         final SurveyFeedTool restarted = new SurveyFeedTool(streamReader, feedNames, world.guard(),
                 new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)),
-                consent, new FewerStreams(securityContext), world.documentAccess, auditLog);
+                consent, new FewerStreams(securityContext), world.documentAccess, auditLog, besideFeed());
         final ToolResult again = restarted.execute(BuildToolCalls.call(SurveyFeedTool.NAME, args),
                 BuildToolCalls.context());
         assertThat(again.text()).doesNotContain("Not done: Survey feed 'ACME-VPN' only 3 stream(s)");
         assertThat(json(again)).containsEntry(SurveyDoc.FEWER_STREAMS, 3);
+    }
+
+    // Nothing is beside any feed.
+    private static SourceTypeRegistries besideFeed() {
+        final SourceTypeRegistries registries = Mockito.mock(SourceTypeRegistries.class);
+        Mockito.when(registries.promotedSurvey(anyString())).thenReturn(Optional.empty());
+        Mockito.when(registries.registry(any(), anyString())).thenReturn(Optional.empty());
+        return registries;
     }
 
     private void feedHoldsMany() {
@@ -671,6 +682,79 @@ class TestSurveyFeedTool {
                                                    + "\"build\": \"acme-v1\"}", again.context()));
         assertThat(again.shown()).isEmpty();
         assertThat(next.get(SurveyDoc.KIND_FIELDS)).isEqualTo(Map.of("fields", List.of("msg_act"), "by", "user"));
+    }
+
+    @Test
+    void anAggregatedFeedsSourceTypeFieldIsPutToTheUserAndItsSourceTypesCounted() {
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, wrappedLines(60), false);
+
+        // Without forms: nothing surveyed, the agent asks the user in the chat.
+        final Map<String, Object> asking = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
+                                                     + "\"build\": \"acme-v1\"}"));
+        assertThat(asking).containsEntry("status", "needs_source_type_field").doesNotContainKey("streams_read");
+        assertThat((List<Map<String, Object>>) asking.get("candidates")).extracting(candidate -> candidate.get("field"))
+                .containsExactly("source");
+
+        // In a form: the user confirms it; the kinds are told apart within the source types, and each is counted.
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "source"));
+        final Map<String, Object> chosen = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
+                                                     + "\"build\": \"acme-v1\"}", user.context()));
+        assertThat(user.shown()).first().asString().contains("source (", "aggregates several sources");
+        final Map<String, Object> sources = (Map<String, Object>) chosen.get("source_types");
+        assertThat(sources).containsEntry("field", "source").containsEntry("by", "user");
+        assertThat((Map<String, Object>) sources.get("records_read_by_value")).containsEntry("Security", 20)
+                .containsEntry("Database", 20).containsEntry("Integration", 20);
+        assertThat(String.valueOf(sources.get("registry"))).contains("record_source_types");
+
+        // Kept: the next call asks nothing, and counts on.
+        final BuildToolCalls.FormUser again = BuildToolCalls.user(Map.of("answer", "unused"));
+        json(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\"}", again.context()));
+        assertThat(again.shown()).isEmpty();
+    }
+
+    @Test
+    void theUserMaySayTheFeedIsOneSource() {
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, wrappedLines(60), false);
+
+        final Map<String, Object> said = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
+                                                   + "\"build\": \"acme-v1\", \"source_type_field\": \"none\"}"));
+        assertThat((Map<String, Object>) said.get("source_types")).containsEntry("aggregated", false);
+        // Kept: never asked.
+        final BuildToolCalls.FormUser again = BuildToolCalls.user(Map.of("answer", "unused"));
+        json(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\"}", again.context()));
+        assertThat(again.shown()).isEmpty();
+        assertThat(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\", "
+                        + "\"source_type_field\": \"verdict\"}").text()).contains("names no field of the records");
+    }
+
+    @Test
+    void theAnswerToWhereTheSurveyDocGoesIsReadFromTheUsersWords() {
+        assertThat(SurveyFeedTool.promotionChoice(SurveyFeedTool.PROMOTE_BESIDE)).isEqualTo(SurveyFeedTool.BESIDE);
+        assertThat(SurveyFeedTool.promotionChoice(SurveyFeedTool.KEEP_IN_BUILD)).isEqualTo(SurveyFeedTool.KEEP);
+        assertThat(SurveyFeedTool.promotionChoice(SurveyFeedTool.DECIDE_LATER)).isEqualTo(SurveyFeedTool.LATER);
+        assertThat(SurveyFeedTool.promotionChoice("not sure")).isEqualTo(SurveyFeedTool.LATER);
+    }
+
+    // JSON lines wrapped with a source field, each source's messages in a format of its own.
+    private static String wrappedLines(final int count) {
+        final StringBuilder out = new StringBuilder();
+        for (int i = 0; i < count; i++) {
+            final String message = switch (i % 3) {
+                case 0 -> "{\\\"eventType\\\": \\\"" + (i % 2 == 0
+                        ? "login"
+                        : "logout") + "\\\", \\\"outcome\\\": \\\"failure\\\"}";
+                case 1 -> i % 2 == 0
+                        ? "Executing query took " + i + "ms"
+                        : "Connection pool grew to " + i;
+                default -> "Request: <Envelope><Body>" + i + "</Body></Envelope>";
+            };
+            final String source = List.of("Security", "Database", "Integration").get(i % 3);
+            out.append("{\"app\": \"acme\", \"source\": \"").append(source).append("\", \"message\": \"")
+                    .append(message).append("\"}\n");
+        }
+        return out.toString();
     }
 
     @Test
