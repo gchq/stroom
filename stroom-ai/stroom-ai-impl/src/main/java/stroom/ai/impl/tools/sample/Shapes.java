@@ -62,6 +62,8 @@ public final class Shapes {
 
     static final Pattern TOKEN_WITH_DIGIT = ToolText.re("\\S*\\d\\S*");
 
+    // A bracketed label: a short word of letters (`[SEGTrap]`, `[required]`), no digits (a pid, a time).
+    private static final Pattern LABEL = Pattern.compile("\\[[A-Za-z][A-Za-z_.-]{0,31}\\]");
     private static final Pattern KV = ToolText.re("(?<![\\w.])([A-Za-z_][\\w.]*)=\\\\?\"?([\\w.:-]+)");
     // Key: [Value], as audit messages name the event (Secret Server: "Event: [User] Action: [Login Failed]").
     private static final Pattern BRACKETED = ToolText.re(
@@ -294,7 +296,7 @@ public final class Shapes {
                 }
             }
             if (!tokens.isEmpty() && same / (double) tokens.size() >= 0.6
-                && template.getFirst().equals(tokens.getFirst())) {
+                && template.getFirst().equals(tokens.getFirst()) && !labelsDiffer(template, tokens)) {
                 final List<String> merged = new ArrayList<>();
                 for (int i = 0; i < Math.min(template.size(), tokens.size()); i++) {
                     merged.add(template.get(i).equals(tokens.get(i))
@@ -313,6 +315,20 @@ public final class Shapes {
         }
         bucket.add(new ArrayList<>(tokens));
         return "text:" + program + "|" + String.join(" ", tokens);
+    }
+
+    // Whether two templates differ in a bracketed label (`[SEGTrap]` and `[SEGDeliver]`): a word a log puts in
+    // brackets to say what a line is, so lines differing in one are different shapes, never merged into one with
+    // the label a wildcard (seen in testing: a mail gateway's [SEGTrap], [SEGDeliver] and [SEGQuarantine] lines,
+    // 89% of its records, surveyed as one shape).
+    private static boolean labelsDiffer(final List<String> template, final List<String> tokens) {
+        for (int i = 0; i < Math.min(template.size(), tokens.size()); i++) {
+            if (!template.get(i).equals(tokens.get(i)) && LABEL.matcher(template.get(i)).matches()
+                && LABEL.matcher(tokens.get(i)).matches()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // A text template widened: rename the shapes that end in it (a message inside a record ends its signature),

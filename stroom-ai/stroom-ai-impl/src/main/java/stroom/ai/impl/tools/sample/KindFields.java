@@ -21,12 +21,14 @@ import stroom.ai.impl.tools.generation.FieldHomes;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -55,6 +57,10 @@ public final class KindFields {
     // The longest a kind value is, and the most words it has: kinds are codes or short phrases, not sentences.
     private static final int MAX_LENGTH = 40;
     private static final int MAX_WORDS = 3;
+    // The most words in a value of a field named like a kind field: a short phrase (`SSLVPN LOGIN`, `user login
+    // failed`), not a sentence naming the user it is about (seen in testing: a Synology DSM `event` field, "User
+    // [anja.michel] logged in from [10.0.0.5] via [SSH]", drafted as a kind per user and action).
+    private static final int MAX_NAMED_WORDS = 6;
     // The records a field must have values in to be put to the user as a kind field without a kind field's name,
     // each of its values in two of them on average: a few records show nothing repeating (seen: {"a": 1}, {"a": 2}).
     static final int MIN_RECORDS = 6;
@@ -68,6 +74,13 @@ public final class KindFields {
     // A value that is an address, an id or a time, whatever the field's name.
     private static final Pattern ADDRESS = Pattern.compile("@|^\\d{1,3}(\\.\\d{1,3}){3}(:\\d+)?$|^[0-9a-fA-F]{12,}$"
                                                            + "|^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-");
+    // The records a field's values must be in, each a value of its own, for a field given as the kind field to be
+    // refused as an identifier.
+    private static final int EACH_ONCE_CHECKED = 20;
+    // A time of day or a date inside a value: a kind names neither.
+    private static final Pattern CLOCK = Pattern.compile("\\b\\d{1,2}:\\d{2}:\\d{2}\\b|\\b\\d{4}-\\d{2}-\\d{2}\\b");
+    // An address inside a value (`from [10.0.0.5]`): a kind names no address.
+    private static final Pattern HOLDS_ADDRESS = Pattern.compile("@|\\b\\d{1,3}(\\.\\d{1,3}){3}\\b");
     private static final Pattern TIME = Pattern.compile("\\d{1,2}:\\d{2}|\\d{4}-\\d{2}-\\d{2}|^\\d{10,13}$");
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
     private static final Pattern QUOTES = Pattern.compile("^['\"`]|['\"`]$");
@@ -103,6 +116,116 @@ public final class KindFields {
                 .thenComparingInt(candidate -> candidate.values().size()));
         final List<Candidate> shown = ranked.subList(0, Math.min(MAX_CANDIDATES, ranked.size()));
         return new Choice(List.of(shown.getFirst().field()), false, List.copyOf(shown), Set.copyOf(values.keySet()));
+    }
+
+    /// Why a field can't tell the records' kinds of event apart, judged by its values as [#choose] judges them: a field
+    /// the records don't have, one whose values are each a record's own (an id), sentences, addresses or times, or
+    /// too many to be kinds. Asked for by the user (seen in testing: `kind_field: "body"`, a whole syslog message,
+    /// taken by name, and the kinds then chosen silently another way).
+    ///
+    /// @param field   A field, as the records spell it.
+    /// @param records The records, parsed.
+    /// @return Why it can't, said for the agent and the user; empty when it can.
+    public static Optional<String> whyNot(final String field, final List<Map<String, Object>> records) {
+        final List<String> held = valuesByField(records).get(field);
+        if (held == null) {
+            return Optional.of("the records have no field '" + field + "'");
+        }
+        return whyNotValues(field, held);
+    }
+
+    /// @param field   A field, as the records spell it.
+    /// @param records The records, parsed.
+    /// @return The field as the user is shown it among the candidates (its name and commonest values); empty when the
+    /// records hold no value in it.
+    public static Optional<Candidate> candidateOf(final String field, final List<Map<String, Object>> records) {
+        final List<String> held = valuesByField(records).get(field);
+        return held == null || held.isEmpty()
+                ? Optional.empty()
+                : Optional.of(candidate(field, held));
+    }
+
+    /// As [#whyNot(String, List)], for a field's values already read.
+    ///
+    /// @param field  The field's name, as said.
+    /// @param values Its values, a record's each (nil values may be among them: they are left out).
+    /// @return Why it can't tell kinds apart; empty when it can.
+    public static Optional<String> whyNotValues(final String field, final List<String> values) {
+        final List<String> held = values.stream()
+                .filter(value -> value != null && !NIL.contains(value.strip().toLowerCase(Locale.ROOT)))
+                .map(String::strip)
+                .toList();
+        if (held.isEmpty()) {
+            return Optional.of("'" + field + "' holds no value in the records");
+        }
+        final Set<String> distinct = new LinkedHashSet<>(held);
+        // Messages and addresses first: what the user is told says what the field holds.
+        final Optional<String> messages = messagesNotKinds(field, distinct);
+        if (messages.isPresent()) {
+            return messages;
+        }
+        // Over enough records that kinds would repeat: an excerpt may show each of a few kinds once.
+        if (held.size() >= EACH_ONCE_CHECKED && distinct.size() == held.size()) {
+            return Optional.of("each record has a value of its own in '" + field + "' (an id, a time or a message), "
+                               + "so it names no kinds");
+        }
+        if (distinct.size() > MAX_VALUES || distinct.size() > FEW_VALUES && distinct.size() * 2L > held.size()) {
+            return Optional.of("'" + field + "' has " + distinct.size() + " different values in " + held.size()
+                               + " records, too many to be kinds of event");
+        }
+        return Optional.empty();
+    }
+
+    /// Whether a field's values are messages or addresses rather than kinds: values of sentences (more than a short
+    /// phrase), or holding an address or a time of day. Codes are kinds whatever they look like (a FortiGate logid,
+    /// `0101039424`; a Windows event id).
+    ///
+    /// @param field  The field's name, as said.
+    /// @param values Its values.
+    /// @return Why its values aren't kinds; empty when they may be.
+    public static Optional<String> messagesNotKinds(final String field, final Collection<String> values) {
+        final Optional<String> sentence = values.stream()
+                .filter(value -> value != null && (value.length() > MAX_LENGTH * 2
+                                                   || WHITESPACE.split(value.strip()).length > MAX_NAMED_WORDS))
+                .findFirst();
+        if (sentence.isPresent()) {
+            return Optional.of("'" + field + "' holds whole messages (e.g. \"" + ToolText.head(sentence.get(), 60)
+                               + "\"), not the short codes or phrases that name kinds of event");
+        }
+        return values.stream()
+                .filter(value -> value != null && (HOLDS_ADDRESS.matcher(value).find()
+                                                   || CLOCK.matcher(value).find()))
+                .findFirst()
+                .map(value -> "'" + field + "' holds addresses or times (e.g. \"" + ToolText.head(value, 60)
+                              + "\"), which name no kind of event");
+    }
+
+    /// Every field that could tell the records' kinds apart, named like a kind field or not, best first (most
+    /// records with a value, then most values: a level, `info` or `warning`, beside the kinds it is in, isn't them;
+    /// seen in testing, a mail gateway's [info] put before its [SEGTrap]), for the user to choose among: where the
+    /// kinds a field named like one tells leave most records in none (seen in testing: one kind of 433 records told,
+    /// 5,567 of 6,000 in none).
+    ///
+    /// @param records The records, parsed.
+    /// @return The choice: not certain, its candidates every field that passes (at most five), the first chosen.
+    public static Choice candidates(final List<Map<String, Object>> records) {
+        final Map<String, List<String>> values = valuesByField(records);
+        final List<Candidate> candidates = new ArrayList<>();
+        values.forEach((field, held) -> {
+            if (namedLikeKinds(field)
+                    ? passesNamed(held)
+                    : passes(field, held)) {
+                candidates.add(candidate(field, held));
+            }
+        });
+        candidates.sort(Comparator.comparingInt(Candidate::records).reversed()
+                .thenComparing(Comparator.comparingInt((Candidate candidate) -> candidate.values().size())
+                        .reversed()));
+        final List<Candidate> shown = List.copyOf(candidates.subList(0, Math.min(MAX_CANDIDATES,
+                candidates.size())));
+        return new Choice(shown.isEmpty()
+                ? List.of()
+                : List.of(shown.getFirst().field()), false, shown, Set.copyOf(values.keySet()));
     }
 
     /// @param format A format, as [SampleProfiler] names it.
@@ -232,7 +355,8 @@ public final class KindFields {
         }
         return distinct.stream().allMatch(value -> value.length() <= MAX_LENGTH * 2
                                                    && !ADDRESS.matcher(value).find()
-                                                   && !TIME.matcher(value).find());
+                                                   && !TIME.matcher(value).find())
+               && messagesNotKinds("", distinct).isEmpty();
     }
 
     // Whether a field's values are a kind field's: at least two values, short codes or phrases, not addresses or
