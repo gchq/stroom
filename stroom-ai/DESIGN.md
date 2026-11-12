@@ -1941,6 +1941,24 @@ Built in phase 4 (where the design was silent):
 * Not covered: a pipeline newly made in a later build running a dispatcher's working copy is not re-pointed at
   promotion (use `copy_pipeline`); a production pipeline not copied into the build gains no reference data.
 
+Built in phase 5 (where the design was silent):
+
+* The registry's machine block holds the feed's shared `indexing` (backend and naming, one decision for every output
+  feed) and `indexes` by output feed (index, backend, index doc, fields, which build added each, groups, `replaces`).
+  A later build inherits them with no form; another backend or index name is refused unless the user asks
+  (`change_shared=true`, confirmed in a form). Where the backend was never asked, the first promoted plan's is taken.
+* A group's index plan is the union of every group routed to its output feed: `IndexingInputs` follows a dispatcher's
+  imports to its groups' XSLTs, and the paths those groups write are planned even when the sample lacks them.
+* A type clash offers renaming this build's field to `<field>_<group>` or a new index version (`<index>-v2`, inheriting
+  every group's fields; the old index is left alone). A meaning clash compares descriptions where both have one, else
+  the Events path (the schema gives a path its meaning); "same meaning" reads the field from both paths. Required
+  fields (StreamId, EventId, the time field) are checked for type only.
+* Answers are applied to the plan, not stored: promotion re-checks the kept plans and refuses while a clash remains
+  (it can't change a saved XSLT); drafting again asks the form. Promotion then records the index in the registry and
+  adds the new Lucene fields, forward only.
+* A build's output feed is its Events stream's feed, or the registry's feed when the stream is in the build's test
+  feed.
+
 #### Open decisions
 
 None at present.

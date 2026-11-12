@@ -119,6 +119,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     // themselves.
     private Provider<SourceTypeGroups> groupsProvider;
     private Provider<DispatcherReferences> referencesProvider;
+    // An aggregated feed's indexes, one per output feed; none in tests that make the tool themselves.
+    private Provider<FeedIndexDecisions> feedIndexesProvider;
 
     @Inject
     PromoteBuildTool(final BuildFacts facts,
@@ -160,6 +162,16 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     void setAggregated(final Provider<SourceTypeGroups> groups, final Provider<DispatcherReferences> references) {
         this.groupsProvider = groups;
         this.referencesProvider = references;
+    }
+
+    /// An aggregated feed's indexes: each output feed's gains the build's new fields, recorded in the feed's
+    /// registry, once clashes with the fields it has are resolved (set by injection; none in tests that make the
+    /// tool themselves).
+    ///
+    /// @param feedIndexes The feed's indexes.
+    @Inject
+    void setFeedIndexes(final Provider<FeedIndexDecisions> feedIndexes) {
+        this.feedIndexesProvider = feedIndexes;
     }
 
     @Override
@@ -340,6 +352,11 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 ? List.of()
                 : referencesProvider.get().changes(build, docs);
         final List<String> pipelineChanges = referenceChanges.stream().map(DispatcherReferences.Change::said).toList();
+        // An aggregated feed's output feeds' indexes: held while a field clashes with one the index has.
+        final List<FeedIndexDecisions.IndexChange> indexChanges = feedIndexesProvider == null
+                ? List.of()
+                : feedIndexesProvider.get().changes(build, docs);
+        final List<String> indexSaid = indexChanges.stream().map(FeedIndexDecisions.IndexChange::said).toList();
         final String tree = layout.promotionTree(plan, creating);
         // The question applies: documents of several roles.
         final boolean roles = rolesMoved.size() > 1;
@@ -349,6 +366,12 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 review.put("pipeline_changes", pipelineChanges);
                 review.put("hint", review.get("hint") + " Say the pipeline_changes too: the reference data each "
                                    + "pipeline gains for its source type groups' lookups.");
+            }
+            if (!indexSaid.isEmpty()) {
+                review.put("index_changes", indexSaid);
+                review.put("hint", review.get("hint") + " Say the index_changes too: each output feed's index, "
+                                   + "which the feed's source type groups share, and the fields this build adds to "
+                                   + "it (forward only).");
             }
             return review;
         }
@@ -375,6 +398,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (!pipelineChanges.isEmpty()) {
             shortForm.put("pipeline changes", pipelineChanges);
         }
+        if (!indexSaid.isEmpty()) {
+            shortForm.put("index changes", indexSaid);
+        }
         consent.require(call, context, Consent.Request.approval(NAME,
                 "Promote build '" + build + "' as shown in the chat", shortForm).boundTo(tree));
         final List<String> done = new ArrayList<>();
@@ -386,6 +412,17 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 throw new ToolRefusal("Not promoted: the build's modules couldn't be pointed at the originals of "
                                       + "their working copies: " + e.getMessage() + ". Done before it: "
                                       + (done.isEmpty()
+                        ? "nothing"
+                        : String.join("; ", done)));
+            }
+        }
+        if (!indexChanges.isEmpty()) {
+            // Recorded in the registry before it is moved beside the feed.
+            try {
+                done.addAll(feedIndexesProvider.get().apply(context, build, indexChanges));
+            } catch (final RuntimeException e) {
+                throw new ToolRefusal("Not promoted: the output feeds' indexes couldn't be recorded in the feed's "
+                                      + "registry: " + e.getMessage() + ". Done before it: " + (done.isEmpty()
                         ? "nothing"
                         : String.join("; ", done)));
             }

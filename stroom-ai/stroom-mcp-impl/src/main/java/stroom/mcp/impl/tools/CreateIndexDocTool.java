@@ -82,6 +82,7 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
     private final Consent consent;
     private final BuildPlan plan;
     private final Provider<ElasticClusterTests> elasticClusterTestsProvider;
+    private Provider<FeedIndexDecisions> feedIndexes;
 
     @Inject
     CreateIndexDocTool(final IndexPlans plans,
@@ -159,6 +160,15 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
                 .build();
     }
 
+    /// An aggregated feed's indexes, one per output feed (set by injection; none in tests that make the tool
+    /// themselves).
+    ///
+    /// @param feedIndexes The feed's indexes.
+    @Inject
+    void setFeedIndexes(final Provider<FeedIndexDecisions> feedIndexes) {
+        this.feedIndexes = feedIndexes;
+    }
+
     @Override
     public ToolResult execute(final ToolCall call, final ToolCallContext context) {
         try {
@@ -191,6 +201,14 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
                     : null;
         }
         final boolean elastic = FieldPlan.ELASTICSEARCH.equals(backend);
+        if (feedIndexes != null) {
+            // An aggregated feed's output feed has one index, made by its first build: never a second.
+            feedIndexes.get().refuseIndexMade(build, elastic
+                    ? NullSafe.nonBlankStringElse(indexName, fieldPlan == null
+                    ? null
+                    : fieldPlan.indexName())
+                    : proposedName);
+        }
         if (!elastic) {
             final Optional<WriteGuard.BuildDoc> existing = guard.folderContents(build, true).stream()
                     .filter(doc -> LuceneIndexDoc.TYPE.equals(doc.type()) && doc.name().equals(proposedName))

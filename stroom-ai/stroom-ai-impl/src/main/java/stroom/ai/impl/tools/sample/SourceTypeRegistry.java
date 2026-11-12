@@ -18,6 +18,7 @@ package stroom.ai.impl.tools.sample;
 
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.indexing.FeedIndexes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +44,8 @@ import java.util.regex.Pattern;
 /// (true while the feed's pipeline's new version is still to be copied). `output_feed` is the feed its Events go to:
 /// absent for the raw feed's own, `""` while one of its own is still to be made. `modules` names the feed's `helpers`
 /// and `common` modules (`uuid`, `name`), so a later build finds them beside the feed. Every UUID is the build's
-/// document while a build changes it (a working copy), and the original's once promoted.
+/// document while a build changes it (a working copy), and the original's once promoted. `indexing` and `indexes` are
+/// the feed's shared indexing decisions and its output feeds' indexes ([FeedIndexes]).
 public final class SourceTypeRegistry {
 
     /// What a feed's registry is named after.
@@ -142,6 +144,7 @@ public final class SourceTypeRegistry {
                     ? ""
                     : ": " + decided.get("reason"))) + " |");
         }
+        lines.addAll(indexes(registry));
         lines.addAll(List.of("", "## Registry state", "",
                 "Read and written by the Stroom AI tools; do not edit.", "",
                 OPEN + block(registry) + " -->", ""));
@@ -180,6 +183,36 @@ public final class SourceTypeRegistry {
                 .distinct()
                 .forEach(reason -> out.append(" Why: ").append(reason).append('.'));
         return out.toString();
+    }
+
+    // The feed's shared indexing decisions and each output feed's index, where any are recorded.
+    private static List<String> indexes(final Map<String, Object> registry) {
+        final Map<String, Object> indexing = FeedIndexes.indexing(registry);
+        final Map<String, Object> indexes = JsonValues.mapOrEmpty(registry.get(FeedIndexes.INDEXES));
+        if (indexing.isEmpty() && indexes.isEmpty()) {
+            return List.of();
+        }
+        final List<String> lines = new ArrayList<>(List.of("", "## Indexes", ""));
+        if (!indexing.isEmpty()) {
+            final Map<String, Object> naming = JsonValues.mapOrEmpty(indexing.get("naming"));
+            final Map<String, Object> decided = JsonValues.mapOrEmpty(indexing.get("decided"));
+            lines.add("Shared by every build of the feed: backend " + firstSet(indexing.get("backend"), null,
+                    "not chosen") + ", fields named " + (naming.get("like_index") != null
+                    ? "after the index " + JsonValues.text(naming.get("like_index"))
+                    : "by the " + firstSet(naming.get("convention"), null, "(not chosen)") + " convention")
+                      + " (decided by " + firstSet(decided.get("by"), null, "-") + ", "
+                      + firstSet(decided.get("at"), null, "-") + "). One index per output feed: the groups "
+                      + "writing to it share it.");
+            lines.add("");
+        }
+        indexes.forEach((feed, value) -> {
+            final Map<String, Object> entry = JsonValues.mapOrEmpty(value);
+            lines.add("* Output feed " + code(feed) + ": index " + code(entry.get("index")) + " ("
+                      + firstSet(entry.get("backend"), null, "-") + "), "
+                      + JsonValues.listOrEmpty(entry.get("fields")).size() + " field(s), for group(s) "
+                      + firstSet(String.join(", ", JsonValues.strings(entry.get("groups"))), null, "-") + ".");
+        });
+        return lines;
     }
 
     // A row's status, with the source type group translating it where one does, the pipeline that runs it and the
