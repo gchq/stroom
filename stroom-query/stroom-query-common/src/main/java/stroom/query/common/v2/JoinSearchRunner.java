@@ -82,6 +82,7 @@ public class JoinSearchRunner {
     private final Executor executor;
     private final Provider<SearchResultStoreConfig> resultStoreConfigProvider;
     private final SecurityContext securityContext;
+    private final JoinPushdown joinPushdown;
 
     @Inject
     public JoinSearchRunner(final CoprocessorsFactory coprocessorsFactory,
@@ -90,7 +91,8 @@ public class JoinSearchRunner {
                             final TaskContextFactory taskContextFactory,
                             final Executor executor,
                             final Provider<SearchResultStoreConfig> resultStoreConfigProvider,
-                            final SecurityContext securityContext) {
+                            final SecurityContext securityContext,
+                            final JoinPushdown joinPushdown) {
         this.coprocessorsFactory = coprocessorsFactory;
         this.resultStoreFactory = resultStoreFactory;
         this.joinTables = joinTables;
@@ -98,6 +100,7 @@ public class JoinSearchRunner {
         this.executor = executor;
         this.resultStoreConfigProvider = resultStoreConfigProvider;
         this.securityContext = securityContext;
+        this.joinPushdown = joinPushdown;
     }
 
     /// Creates the placeholder result store of a search with joins. Put it where polls find it, then
@@ -190,6 +193,7 @@ public class JoinSearchRunner {
 
         private void run() {
             final List<JoinTable> tables = new ArrayList<>();
+            final List<JoinPushdown.Keys> keys = new ArrayList<>();
             boolean tablesRegistered = false;
             try {
                 checkNoNestedJoins();
@@ -201,14 +205,16 @@ public class JoinSearchRunner {
                         placeholder.getCoprocessors().getExpressionContext(),
                         ParamUtil.createParamMap(query.getParams()));
                 for (final JoinPlan plan : plans) {
-                    tables.add(buildTable(plan));
+                    final JoinPushdown.Keys tableKeys = JoinPushdown.Keys.forJoin(plan.getJoin());
+                    tables.add(buildTable(plan, tableKeys));
+                    keys.add(tableKeys);
                 }
 
                 joinTables.register(searchRequest.getKey(), query, tables, placeholder.getUserRef());
                 tablesRegistered = true;
                 checkNotTerminated();
                 if (query.getSourceTableSettings() == null) {
-                    searchFirstSource();
+                    searchFirstSource(keys);
                 } else {
                     searchBracketedFirstSource();
                 }
@@ -275,8 +281,9 @@ public class JoinSearchRunner {
             }
         }
 
-        // Searches a joined source as a child search and builds its join table from the child's rows.
-        private JoinTable buildTable(final JoinPlan plan) {
+        // Searches a joined source as a child search and builds its join table from the child's rows,
+        // collecting its keys for pushing the join down.
+        private JoinTable buildTable(final JoinPlan plan, final JoinPushdown.Keys keys) {
             final QueryJoin join = plan.getJoin();
             final String alias = join.getAlias();
             info = "Searching '" + alias + "' to join";
@@ -284,7 +291,11 @@ public class JoinSearchRunner {
             try {
                 final ResultStore child = searchChild(join.getQuery(), getJoinedTableSettings(join, plan), alias);
                 final List<String> storedFields = plan.getStoredFields();
-                readRows(child, alias, storedFields, row -> table.add(plan.getRightKey(row), row));
+                readRows(child, alias, storedFields, row -> {
+                    final String key = plan.getRightKey(row);
+                    table.add(key, row);
+                    keys.add(key);
+                });
                 table.complete();
                 info = "Joining " + ModelStringUtil.formatCsv(table.getRowCount()) + " rows of '" + alias + "'";
                 destroyChild(child);
@@ -330,10 +341,11 @@ public class JoinSearchRunner {
         }
 
         // Searches the first source, with its rows going through the joins, and puts its result store
-        // in the placeholder's place.
-        private void searchFirstSource() {
+        // in the placeholder's place. Joins with few keys narrow the search of the first source.
+        private void searchFirstSource(final List<JoinPushdown.Keys> keys) {
             info = "Searching";
-            final ResultStore searchStore = starter.start(searchRequest);
+            final Query pushedDown = joinPushdown.apply(query, keys, ParamUtil.createParamMap(query.getParams()));
+            final ResultStore searchStore = starter.start(searchRequest.copy().query(pushedDown).build());
             copyMessages(placeholder, searchStore, null);
             handOver(searchStore);
         }

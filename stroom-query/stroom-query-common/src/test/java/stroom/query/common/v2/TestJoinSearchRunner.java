@@ -20,6 +20,7 @@ import stroom.query.api.Column;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchTaskProgress;
+import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.ErrorMessage;
 
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,56 @@ class TestJoinSearchRunner extends AbstractJoinSearchTest {
                 List.of("c", "h3", ""),
                 List.of("a", "h4", "Sales"));
         assertThat(run.searchStore().get().getErrors()).isEmpty();
+    }
+
+    @Test
+    void keepJoinNarrowsTheSearchOfTheFirstSource() throws InterruptedException {
+        sourceFields.put("events", List.of(QueryField.createKeyword("UserId"), QueryField.createKeyword("Host")));
+        final JoinSearchRunner runner = createRunner(1_000_000);
+        final Run run = run(runner, """
+                from events
+                keep join hr on UserId = hr.Username
+                select UserId, Host""", new FakeSources());
+        run.awaitSearchStore();
+
+        final SearchRequest eventsRequest = getFirstSourceRequest();
+        assertThat(eventsRequest.getQuery().getExpression().toString()).contains("UserId in a,b,d");
+        assertThat(rows(run.searchStore().get(), "UserId", "Host")).containsExactlyInAnyOrder(
+                List.of("a", "h1"),
+                List.of("b", "h2"),
+                List.of("a", "h4"));
+    }
+
+    @Test
+    void dropJoinOnAnIdFieldNarrowsTheSearchOfTheFirstSource() throws InterruptedException {
+        sourceFields.put("events", List.of(QueryField.createId("UserId"), QueryField.createKeyword("Host")));
+        final FakeSources sources = new FakeSources();
+        final JoinSearchRunner runner = createRunner(1_000_000);
+        final Run run = run(runner, """
+                from events
+                drop join (from hr where Department = 'Sales' select Username) as hr on UserId = hr.Username
+                select UserId, Host""", sources);
+        run.awaitSearchStore();
+
+        // Only the keys that are whole numbers would be pushed down onto an ID field, and 'a' isn't.
+        assertThat(ExpressionUtil.fields(getFirstSourceRequest().getQuery().getExpression())).isEmpty();
+        assertThat(rows(run.searchStore().get(), "UserId", "Host")).containsExactlyInAnyOrder(
+                List.of("b", "h2"),
+                List.of("c", "h3"));
+    }
+
+    @Test
+    void joinOnAFieldTheFirstSourceCantSearchIsNotPushedDown() throws InterruptedException {
+        sourceFields.put("events", List.of(QueryField.createKeyword("UserId", false)));
+        final JoinSearchRunner runner = createRunner(1_000_000);
+        final Run run = run(runner, """
+                from events
+                keep join hr on UserId = hr.Username
+                select UserId""", new FakeSources());
+        run.awaitSearchStore();
+
+        assertThat(ExpressionUtil.fields(getFirstSourceRequest().getQuery().getExpression())).isEmpty();
+        assertThat(rows(run.searchStore().get(), "UserId")).hasSize(3);
     }
 
     @Test
@@ -223,5 +274,14 @@ class TestJoinSearchRunner extends AbstractJoinSearchTest {
         assertThat(run.awaitSearchStore().getErrors())
                 .extracting(ErrorMessage::getMessage)
                 .contains("'hr': hr is slow");
+    }
+
+    // The request that searched the first source, events, under the search's own key.
+    private SearchRequest getFirstSourceRequest() {
+        return startedRequests.stream()
+                .filter(request -> request.getKey() != null)
+                .filter(request -> "events".equals(request.getQuery().getDataSource().getName()))
+                .findFirst()
+                .orElseThrow();
     }
 }

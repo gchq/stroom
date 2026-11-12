@@ -16,12 +16,15 @@
 
 package stroom.query.common.v2;
 
+import stroom.docref.DocRef;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
@@ -53,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -86,6 +90,9 @@ abstract class AbstractJoinSearchTest {
     ResultStoreFactory resultStoreFactory;
     final List<SearchRequest> startedRequests = Collections.synchronizedList(new ArrayList<>());
     final List<ResultStore> createdStores = Collections.synchronizedList(new ArrayList<>());
+    // The fields of each data source, by name, for pushing joins down. A source with none has no
+    // search provider, so no join is pushed down onto it.
+    final Map<String, List<QueryField>> sourceFields = new ConcurrentHashMap<>();
 
     @BeforeEach
     void setUp() {
@@ -166,7 +173,18 @@ abstract class AbstractJoinSearchTest {
         return new JoinSearchRunner(
                 coprocessorsFactory, resultStoreFactory, joinTables, new SimpleTaskContextFactory(), executor,
                 () -> config,
-                MockSecurityContext.getInstance());
+                MockSecurityContext.getInstance(),
+                new JoinPushdown(this::findSearchProvider));
+    }
+
+    private Optional<SearchProvider> findSearchProvider(final DocRef dataSource) {
+        final List<QueryField> fields = sourceFields.get(dataSource.getName());
+        if (fields == null) {
+            return Optional.empty();
+        }
+        final SearchProvider searchProvider = Mockito.mock(SearchProvider.class);
+        Mockito.when(searchProvider.getFieldInfo(Mockito.any())).thenReturn(ResultPage.createUnboundedList(fields));
+        return Optional.of(searchProvider);
     }
 
     static void awaitComplete(final ResultStore store) {
@@ -350,20 +368,30 @@ abstract class AbstractJoinSearchTest {
             }
         }
 
-        // True if the row has every value the query's equals terms ask for.
+        // True if the row matches every equals and in term of the query, or, under a not, fails to.
         boolean matches(final ExpressionOperator expression, final Map<String, String> source) {
             if (expression == null || expression.getChildren() == null) {
                 return true;
             }
+            boolean matchesAll = true;
             for (final ExpressionItem item : expression.getChildren()) {
-                if (item instanceof final ExpressionTerm term
-                    && !term.getValue().equals(source.get(term.getField()))) {
-                    return false;
+                if (item instanceof final ExpressionTerm term && !matches(term, source)) {
+                    matchesAll = false;
                 } else if (item instanceof final ExpressionOperator operator && !matches(operator, source)) {
-                    return false;
+                    matchesAll = false;
                 }
             }
-            return true;
+            return expression.op() == Op.NOT
+                    ? !matchesAll
+                    : matchesAll;
+        }
+
+        boolean matches(final ExpressionTerm term, final Map<String, String> source) {
+            final String value = source.get(term.getField());
+            if (term.getCondition() == Condition.IN) {
+                return List.of(term.getValue().split(",")).contains(value);
+            }
+            return term.getValue().equals(value);
         }
     }
 

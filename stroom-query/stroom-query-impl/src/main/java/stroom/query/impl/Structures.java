@@ -140,6 +140,21 @@ class Structures {
                           select UserId, count() as Exports
                         ) as ex on UserId = ex.UserId
                         ```
+
+                        Several joins can follow `from`, and a later join's keys can use an earlier
+                        join's fields. Keys match exactly, as text, so case matters; a blank key never
+                        matches.
+
+                        `where` can name joined fields too. Conditions on the first source's fields
+                        narrow its search; conditions on the joined fields are applied once rows are
+                        joined.
+
+                        The joined source is searched first and held while the first source is searched,
+                        up to 1 million rows or 256 MB (set by administrators). Group or filter it to
+                        join more. A `join` or `keep join` with at most 1,000 keys, on a field the first
+                        source can search, also narrows the first source's search to those keys.
+
+                        Joins can't be used in streaming or table builder analytic rules.
                         """,
                 "join \"${1:source}\" as ${2:alias} on ${3:field} = ${2:alias}.${4:field}\n$0");
         add(list, name(TokenType.ON),
