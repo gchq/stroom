@@ -1071,7 +1071,7 @@ second attempt. Both came right at 4 workers. To do: the runner could wait for t
 
 ### Sample data installs the old visualisations, with no assets
 
-**Re-checked** (6 November 2026, against the code): the code is as recorded (`SetupSampleData`, `ReleasedContentPacks`; `content-packs.json` now names `v8.0-beta.4`), still not run against a database; the splitter overlay and its stories exist. The explorer resized beside a dashboard needs a check in the app.
+**Re-checked** (6 November 2026, against the code): the code is as recorded (`SetupSampleData`, `ReleasedContentPacks`; `content-packs.json` now names `v8.0-beta.5` (12 November 2026)), still not run against a database; the splitter overlay and its stories exist. The explorer resized beside a dashboard needs a check in the app.
 
 **Fixed** (3 November 2026), not yet run against a database: `SetupSampleData` now leaves the
 Content Store's `stroom-visualisations` entry out (`ContentStoreTestSetup.installSampleDataPacks`
