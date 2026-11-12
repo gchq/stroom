@@ -1,0 +1,56 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <!-- An Amazon Athena Data Connection's settings, a section of its Settings tab -->
+    <g:FlowPanel styleName="data-connection-settings__section">
+        <form:FormGroup identity="dataConnectionRegion"
+                        label="AWS Region"
+                        helpText="The AWS region of the Athena workgroup, e.g. eu-west-2.">
+            <form:TextBox ui:field="region" addStyleNames="text-field--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionWorkGroup"
+                        label="Workgroup"
+                        helpText="The Athena workgroup queries run in. The region and workgroup must match one of the patterns an administrator has allowed in the dataConnection.allowedAthenaWorkGroups property. The workgroup's per-query data scan limit is the control on cost. Default: primary">
+            <form:TextBox ui:field="workGroup" addStyleNames="text-field--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionCatalog"
+                        label="Data Catalog"
+                        helpText="The data catalog queries run in. Default: AwsDataCatalog">
+            <form:TextBox ui:field="catalog" addStyleNames="text-field--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionDatabase"
+                        label="Database"
+                        helpText="The database queries run in. Default: default">
+            <form:TextBox ui:field="database" addStyleNames="text-field--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionOutputLocation"
+                        label="Output Location (optional)"
+                        helpText="The S3 URI query results are written to, e.g. s3://my-bucket/athena/. Leave empty to use the workgroup's. It must match one of the patterns an administrator has allowed in the dataConnection.allowedAthenaOutputLocations property.">
+            <form:TextBox ui:field="outputLocation" addStyleNames="text-field--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionAthenaCredential"
+                        label="Credential"
+                        helpText="The AWS access key credential to query with. You need Use permission on it, as does anyone who queries this data source. With none, Stroom's own AWS identity is used, if an administrator has turned on dataConnection.allowDefaultAwsCredentials. Use an identity that can only read the tables Stroom should query.">
+            <form:DescriptionHTML ui:field="credentialNote"/>
+            <l:SelectionBox ui:field="credential" addStyleNames="text-field--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionResultReuseMinutes"
+                        label="Result Reuse (minutes)"
+                        helpText="How old a result of the same query may be and still be reused instead of running the query again. Athena bills every run, so this saves cost when a dashboard is refreshed. 0 never reuses a result. Default: 0">
+            <v:ValueSpinner ui:field="resultReuseMinutes" minValue="0" maxValue="10080" addStyleNames="value-spinner--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionAthenaMinRefreshMinutes"
+                        label="Minimum Refresh (minutes)"
+                        helpText="The shortest interval at which a dashboard may rerun a query of this data source automatically. Every Athena run is billed by the data it scans, and result reuse rarely helps a dashboard, as its time range changes on every refresh. Many refreshes also use up the account's limit on Athena queries running at once. 0 sets no minimum beyond the dashboard's own 10 seconds. Default: 5">
+            <v:ValueSpinner ui:field="minRefreshMinutes" minValue="0" maxValue="1440" addStyleNames="value-spinner--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionAthenaMaxDataScannedMb"
+                        label="Max Data Scanned (MB)"
+                        helpText="The most data, in MB, a query may scan in Athena before Stroom stops it; Athena bills by the data a query scans. Stroom checks while the query runs, so a query may pass the limit by what it scans between two checks. The workgroup's own per-query data scan limit is the one Athena enforces exactly, so set that too. 0 sets no limit beyond the workgroup's. Default: 0">
+            <v:ValueSpinner ui:field="maxDataScannedMb" minValue="0" maxValue="10000000" addStyleNames="value-spinner--wide"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

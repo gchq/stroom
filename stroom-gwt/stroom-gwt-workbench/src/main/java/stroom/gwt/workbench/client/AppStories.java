@@ -51,6 +51,7 @@ import stroom.gwt.workbench.client.app.dictionary.DictionaryEditorStories;
 import stroom.gwt.workbench.client.app.editors.AnalyticRuleEditorStories;
 import stroom.gwt.workbench.client.app.editors.CodeDocumentEditorStories;
 import stroom.gwt.workbench.client.app.editors.DashboardEditorStories;
+import stroom.gwt.workbench.client.app.editors.DataConnectionEditorStories;
 import stroom.gwt.workbench.client.app.editors.DataGenEditorStories;
 import stroom.gwt.workbench.client.app.editors.DocumentationEditorStories;
 import stroom.gwt.workbench.client.app.editors.ElasticClusterEditorStories;
@@ -332,6 +333,8 @@ public final class AppStories {
         DataGenEditorStories.addTo(registry);
         // App/Editors/DocumentationEditor
         DocumentationEditorStories.addTo(registry);
+        // App/Editors/DataConnectionEditor
+        DataConnectionEditorStories.addTo(registry);
         // App/Editors/ElasticClusterEditor
         ElasticClusterEditorStories.addTo(registry);
         // App/Editors/FloorMapEditor

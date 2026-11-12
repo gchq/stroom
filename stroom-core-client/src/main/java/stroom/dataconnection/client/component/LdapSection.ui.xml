@@ -1,0 +1,54 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:dc="urn:import:stroom.dataconnection.client.component">
+    <!-- An LDAP Data Connection's settings, a section of its Settings tab -->
+    <g:FlowPanel styleName="data-connection-settings__section">
+        <form:FormGroup identity="dataConnectionLdapUrl"
+                        label="LDAP URL"
+                        helpText="The directory's URL: its scheme, host and port only, e.g. ldaps://directory.example.org:636. It must match one of the patterns an administrator has allowed in the dataConnection.allowedLdapUrlPatterns property. The certificate must be trusted by Stroom's Java trust store and name the host.">
+            <form:TextBox ui:field="url" addStyleNames="text-field--wide"/>
+        </form:FormGroup>
+        <form:FormGroup helpText="Whether to start TLS on an ldap:// connection before binding, so the password and results are encrypted. An ldaps:// connection is always encrypted. Plain ldap:// without StartTLS can only be used if an administrator turns on dataConnection.allowPlainLdap. Default: off">
+            <tickbox:TickBox ui:field="startTls" identity="dataConnectionLdapStartTls" label="Use StartTLS"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionLdapCredential"
+                        label="Credential"
+                        helpText="The username and password credential to bind with: its username is the bind DN, e.g. cn=stroom-reader,ou=Services,dc=example,dc=org. You need Use permission on it, as does anyone who queries this data source. Anonymous binds are not allowed. Use an account that can only read the entries and attributes Stroom needs, as directories hold personal data.">
+            <form:DescriptionHTML ui:field="credentialNote"/>
+            <l:SelectionBox ui:field="credential" addStyleNames="text-field--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionLdapBaseDn"
+                        label="Base DN"
+                        helpText="Where searches start, e.g. ou=People,dc=example,dc=org. Queries cannot search outside it.">
+            <form:TextBox ui:field="baseDn" addStyleNames="text-field--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionLdapScope"
+                        label="Scope"
+                        helpText="How far below the base DN searches reach: the base entry only, the entries directly below it, or the whole subtree. Default: the whole subtree">
+            <l:SelectionBox ui:field="scope" addStyleNames="text-field--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionLdapPageSize"
+                        label="Page Size"
+                        helpText="How many entries are fetched in each page of results. The directory's own size limit for the bind account still applies, and ends a search early with a warning. Default: 500">
+            <v:ValueSpinner ui:field="pageSize" minValue="1" maxValue="10000" addStyleNames="value-spinner--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionLdapMinRefreshMinutes"
+                        label="Minimum Refresh (minutes)"
+                        helpText="The shortest interval at which a dashboard may rerun a query of this data source automatically, to limit the load on the directory. 0 sets no minimum beyond the dashboard's own 10 seconds. Default: 0">
+            <v:ValueSpinner ui:field="minRefreshMinutes" minValue="0" maxValue="1440" addStyleNames="value-spinner--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionLdapAttributes"
+                        label="Attributes"
+                        helpText="The attributes read from each entry. Each becomes a query field of the same name, after dn, which every entry has. An attribute an entry lacks is empty. Text joins several values with '; '; other types need a single value, and a value that is not of its type is empty, and the query warns. Date reads LDAP times and Active Directory's FILETIME numbers. Detect Attributes lists those of the first 100 entries, keeping a type you set here; add others, such as operational attributes, by name.">
+            <dc:DataColumnList ui:field="attributes" namesEditable="true" tableName="Attributes"
+                               emptyText="No attributes yet. Click Detect Attributes, or add them by name."/>
+        </form:FormGroup>
+        <b:Button ui:field="detectAttributes" text="Detect Attributes" addStyleNames="allow-focus data-connection-settings__button"/>
+    </g:FlowPanel>
+</ui:UiBinder>

@@ -27,6 +27,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = AccessTokenSecret.class, name = "accessToken"),
+        @JsonSubTypes.Type(value = AwsKeySecret.class, name = "awsKey"),
         @JsonSubTypes.Type(value = KeyStoreSecret.class, name = "keyStore"),
         @JsonSubTypes.Type(value = KeyStoreFileSecret.class, name = "keyStoreFile"),
         @JsonSubTypes.Type(value = SshKeySecret.class, name = "sshKey"),
@@ -36,12 +37,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
         discriminatorProperty = "type",
         discriminatorMapping = {
                 @DiscriminatorMapping(value = "accessToken", schema = AccessTokenSecret.class),
+                @DiscriminatorMapping(value = "awsKey", schema = AwsKeySecret.class),
                 @DiscriminatorMapping(value = "keyStore", schema = KeyStoreSecret.class),
                 @DiscriminatorMapping(value = "keyStoreFile", schema = KeyStoreFileSecret.class),
                 @DiscriminatorMapping(value = "sshKey", schema = SshKeySecret.class),
                 @DiscriminatorMapping(value = "usernamePassword", schema = UsernamePasswordSecret.class)})
 public sealed interface Secret permits
         AccessTokenSecret,
+        AwsKeySecret,
         KeyStoreSecret,
         KeyStoreFileSecret,
         SshKeySecret,

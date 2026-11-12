@@ -47,6 +47,7 @@ import stroom.query.api.DestroyReason;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.QueryKey;
+import stroom.query.client.DataSourceClient;
 import stroom.query.client.DateTimeSettingsFactory;
 import stroom.query.client.ErrorMessageTemplates;
 import stroom.query.client.SearchErrorListener;
@@ -109,6 +110,7 @@ public class QueryPaneController
     private final IndexLoader indexLoader;
     private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
     private final QueryPane view;
+    private final DataSourceClient dataSourceClient;
     private final SearchModel searchModel;
     private ErrorMessages currentErrors;
     private boolean initialised;
@@ -150,7 +152,8 @@ public class QueryPaneController
                                final LocationManager locationManager,
                                final DateTimeSettingsFactory dateTimeSettingsFactory,
                                final ResultStoreModel resultStoreModel,
-                               final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
+                               final DynamicFieldSelectionListModel fieldSelectionBoxModel,
+                               final DataSourceClient dataSourceClient) {
         super(eventBus, settingsControllerProvider);
         this.view = view;
         initWidget(view);
@@ -167,6 +170,7 @@ public class QueryPaneController
         this.clientPropertyCache = clientPropertyCache;
         this.locationManager = locationManager;
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
+        this.dataSourceClient = dataSourceClient;
         // Shows its requests' progress as this controller's owners do (its context's)
         fieldSelectionBoxModel.setTaskMonitorFactory(taskMonitor());
 
@@ -308,6 +312,15 @@ public class QueryPaneController
         fieldSelectionBoxModel.setQueryable(true);
         expressionTree.init(dataSourceRef, fieldSelectionBoxModel);
         expressionTree.setValueScopeSupplier(this::getValueScope);
+
+        // Some data sources, such as Amazon Athena, cost money on every run, so may set a minimum.
+        setDataSourceMinRefreshInterval(null);
+        dataSourceClient.fetchMinRefreshInterval(dataSourceRef, guard(minimum -> {
+            // Ignore the answer if the data source has changed since.
+            if (Objects.equals(indexLoader.getLoadedDataSourceRef(), dataSourceRef)) {
+                setDataSourceMinRefreshInterval(minimum);
+            }
+        }), taskMonitor());
 
         if (!Objects.equals(getQuerySettings().getDataSource(), dataSourceRef)) {
             setSettings(getQuerySettings()
