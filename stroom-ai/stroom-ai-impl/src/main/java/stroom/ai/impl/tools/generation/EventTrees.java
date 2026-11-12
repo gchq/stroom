@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -272,81 +273,9 @@ final class EventTrees {
         }
         typeIdFallback(rule, byKey);
         for (final Map.Entry<List<String>, FieldMapping> keyed : byKey.entrySet()) {
-            final String path = keyed.getKey().get(0);
-            final FieldMapping entry = keyed.getValue();
-            final String dataName = entry.dataName();
-            final String where = "[" + rule.name() + "] " + path + (isSet(dataName)
-                    ? " (Data " + entry.dataKey() + ")"
-                    : "");
-            final List<Child> chain;
-            try {
-                chain = schema.resolve(path);
-            } catch (final IllegalArgumentException e) {
-                note(problems, "[" + rule.name() + "] " + path + ": " + e.getMessage() + asData(path, dataName, entry,
-                        rule));
-                continue;
-            }
-            if (chain.isEmpty()) {
-                note(problems, where + ": map a path below Event");
-                continue;
-            }
-            final Child last = chain.getLast();
-            if (dataName != null) {
-                if (!"Data".equals(last.name())) {
-                    note(problems, where + ": data_name only goes with a path ending in Data");
-                    continue;
-                }
-                final EventNode parent = walk(tree, chain.subList(0, chain.size() - 1), where);
-                if (parent != null) {
-                    parent.data.add(new EventNode.DataEntry(last, entry));
-                }
-                continue;
-            }
-            if ("Data".equals(last.name())) {
-                note(problems, where + ": a Data path needs data_name (the Data element's Name)");
-                continue;
-            }
-            if (!schema.isLeaf(last.decl())) {
-                final List<String> options = schema.children(last.decl()).stream().map(Child::name).toList();
-                final String parentName = chain.size() > 1
-                        ? chain.get(chain.size() - 2).name()
-                        : "";
-                List<String> example = SHAPES.get(List.of(parentName, last.name()));
-                if (example == null) {
-                    example = SHAPES.get(List.of("", last.name()));
-                }
-                note(problems, where + ": " + last.name() + " holds other elements; map one of "
-                               + ToolText.list(options) + (example != null
-                        ? ", e.g. " + example.stream().map(e -> path + "/" + e).collect(Collectors.joining(", "))
-                        : ""));
-                continue;
-            }
-            final EventNode node = walk(tree, chain, where);
-            if (node == null) {
-                continue;
-            }
-            if (!node.kids.isEmpty()) {
-                note(problems, where + ": already has child elements mapped");
-                continue;
-            }
-            node.leaf = entry;
-            checkLeaf(where, last, entry);
-            if (entry.repeat()) {
-                int anchor = -1;
-                for (int i = 0; i < chain.size(); i++) {
-                    if (chain.get(i).repeatable()) {
-                        anchor = i;
-                    }
-                }
-                if (anchor < 0) {
-                    note(problems, where + ": repeat needs an element on the path the schema lets repeat; none of "
-                                   + ToolText.list(chain.stream().map(Child::name).toList())
-                                   + " may occur more than once");
-                } else {
-                    walk(tree, chain.subList(0, anchor + 1), where).repeat = entry;
-                }
-            }
+            place(tree, keyed.getKey().get(0), keyed.getValue(), rule);
         }
+        checkGroups(tree, rule);
         for (final EventNode anchor : anchors(tree)) {
             final List<EventNode> leaves = leaves(anchor);
             if (leaves.size() > 1 || nodes(anchor).stream().anyMatch(n -> !n.data.isEmpty())) {
@@ -400,9 +329,175 @@ final class EventTrees {
         }
         conditional = new ArrayList<>();
         root = tree;
-        checkStructure(rule.name(), tree, schema.event());
+        checkStructure(rule.name(), tree, schema.event(), false);
         checkActions(rule, tree);
         return tree;
+    }
+
+    // An entry at its place in the rule's tree (a group's, with its fields below it), checked against the schema.
+    private void place(final EventNode tree, final String path, final FieldMapping entry, final EventRule rule) {
+        final String dataName = entry.dataName();
+        final String where = "[" + rule.name() + "] " + path + (isSet(dataName)
+                ? " (Data " + entry.dataKey() + ")"
+                : "");
+        final List<Child> chain;
+        try {
+            chain = schema.resolve(path);
+        } catch (final IllegalArgumentException e) {
+            note(problems, "[" + rule.name() + "] " + path + ": " + e.getMessage() + asData(path, dataName, entry,
+                    rule));
+            return;
+        }
+        if (chain.isEmpty()) {
+            note(problems, where + ": map a path below Event");
+            return;
+        }
+        if (entry.isGroup()) {
+            placeGroup(tree, path, chain, entry, rule, where);
+            return;
+        }
+        final Child last = chain.getLast();
+        if (dataName != null) {
+            if (!"Data".equals(last.name())) {
+                note(problems, where + ": data_name only goes with a path ending in Data");
+                return;
+            }
+            final EventNode parent = walk(tree, chain.subList(0, chain.size() - 1), where);
+            if (parent != null) {
+                parent.data.add(new EventNode.DataEntry(last, entry));
+            }
+            return;
+        }
+        if ("Data".equals(last.name())) {
+            note(problems, where + ": a Data path needs data_name (the Data element's Name)");
+            return;
+        }
+        if (!schema.isLeaf(last.decl())) {
+            final List<String> options = schema.children(last.decl()).stream().map(Child::name).toList();
+            final String parentName = chain.size() > 1
+                    ? chain.get(chain.size() - 2).name()
+                    : "";
+            List<String> example = SHAPES.get(List.of(parentName, last.name()));
+            if (example == null) {
+                example = SHAPES.get(List.of("", last.name()));
+            }
+            note(problems, where + ": " + last.name() + " holds other elements; map one of "
+                           + ToolText.list(options) + (example != null
+                    ? ", e.g. " + example.stream().map(e -> path + "/" + e).collect(Collectors.joining(", "))
+                    : ""));
+            return;
+        }
+        final EventNode node = walk(tree, chain, where);
+        if (node == null) {
+            return;
+        }
+        if (!node.kids.isEmpty()) {
+            note(problems, where + ": already has child elements mapped");
+            return;
+        }
+        if (node.leaf != null && node.leaf != entry) {
+            // Only a group's field and an entry outside it can meet here: entries outside groups are one a path.
+            note(problems, where + ": mapped twice, in a group's fields and outside them; keep one");
+            return;
+        }
+        node.leaf = entry;
+        checkLeaf(where, last, entry);
+        if (entry.repeat()) {
+            int anchor = -1;
+            for (int i = 0; i < chain.size(); i++) {
+                if (chain.get(i).repeatable()) {
+                    anchor = i;
+                }
+            }
+            if (anchor < 0) {
+                note(problems, where + ": repeat needs an element on the path the schema lets repeat; none of "
+                               + ToolText.list(chain.stream().map(Child::name).toList())
+                               + " may occur more than once");
+            } else {
+                walk(tree, chain.subList(0, anchor + 1), where).repeat = entry;
+            }
+        }
+    }
+
+    // A group: its element (one the schema lets repeat) written once per item, its fields placed below it; a Data
+    // group is a Data entry of its parent, its own Data inside it.
+    private void placeGroup(final EventNode tree,
+                            final String path,
+                            final List<Child> chain,
+                            final FieldMapping entry,
+                            final EventRule rule,
+                            final String where) {
+        final Child last = chain.getLast();
+        if (!last.repeatable()) {
+            final List<String> repeatable = chain.stream().filter(Child::repeatable).map(Child::name).toList();
+            note(problems, where + ": a group writes its element once per item, but the schema allows one "
+                           + last.name() + " there" + (repeatable.isEmpty()
+                    ? ", and nothing on the path may occur more than once"
+                    : "; of the path's elements, " + ToolText.list(repeatable) + " may occur more than once")
+                           + ". Put the group at an element that may repeat (e.g. Destination/User), or map one "
+                           + "value");
+            return;
+        }
+        if (entry.dataName() != null) {
+            if (!"Data".equals(last.name())) {
+                note(problems, where + ": data_name only goes with a path ending in Data");
+                return;
+            }
+            final EventNode parent = walk(tree, chain.subList(0, chain.size() - 1), where);
+            if (parent != null) {
+                parent.data.add(new EventNode.DataEntry(last, entry));
+            }
+            return;
+        }
+        if ("Data".equals(last.name())) {
+            note(problems, where + ": a Data group needs data_name (the Name of the Data written for each item)");
+            return;
+        }
+        if (schema.isLeaf(last.decl())) {
+            note(problems, where + ": a group's element holds the elements its fields write, and " + last.name()
+                           + " holds a value: for one " + last.name() + " per value of a list, give the entry "
+                           + "repeat: true (with split in an xpath), or put the group at the element around it");
+            return;
+        }
+        final EventNode node = walk(tree, chain, where);
+        if (node == null) {
+            return;
+        }
+        if (node.group != null) {
+            note(problems, where + ": two groups write this element; give it one, with every field it holds");
+            return;
+        }
+        node.group = entry;
+        for (final FieldMapping field : entry.group().fields()) {
+            place(tree, path + "/" + field.strippedPath(), field, rule);
+        }
+    }
+
+    // Nothing but a group's own fields is mapped below its element: each item's element holds what the item gives.
+    private void checkGroups(final EventNode tree, final EventRule rule) {
+        for (final EventNode node : nodes(tree)) {
+            if (node.group == null) {
+                continue;
+            }
+            final Set<FieldMapping> owned = Collections.newSetFromMap(new IdentityHashMap<>());
+            owned.addAll(FieldGroup.everyEntry(node.group.group().fields()));
+            final List<String> found = new ArrayList<>();
+            for (final EventNode below : nodes(node)) {
+                if ((below.leaf != null && !owned.contains(below.leaf))
+                    || (below != node && below.group != null && !owned.contains(below.group))) {
+                    found.add(below.path);
+                }
+                below.data.stream()
+                        .filter(data -> !owned.contains(data.entry()))
+                        .forEach(data -> found.add(below.path + "/Data[" + data.entry().dataKey() + "]"));
+            }
+            if (!found.isEmpty()) {
+                note(problems, "[" + rule.name() + "] " + node.path + " is written once per item ("
+                               + node.group.group().forEach().describe() + "), holding the group's fields; map "
+                               + "nothing else below it (found " + ToolText.list(found) + "): put it in the group's "
+                               + "fields (scope: record reads the record's)");
+            }
+        }
     }
 
     // What a rule's events say happened, and who did it.
@@ -590,10 +685,12 @@ final class EventTrees {
         return node;
     }
 
-    private void checkStructure(final String rule, final EventNode node, final Element decl) {
+    private void checkStructure(final String rule, final EventNode node, final Element decl, final boolean inGroup) {
         if (node.leaf != null || node.shared != null) {
             return;
         }
+        // Below a group, an element's guard reads the item, known only as the group's loop is written.
+        final boolean grouped = inGroup || node.group != null;
         final List<Child> allowed = schema.children(decl);
         final Map<Integer, List<String>> chosen = new LinkedHashMap<>();
         for (final EventNode kid : node.kids.values()) {
@@ -633,7 +730,7 @@ final class EventTrees {
                         : "";
                 note(problems, "[" + rule + "] " + node.path + "/" + c.name() + " is required by the schema; map it"
                                + unknown);
-            } else if (c.required() && node.kids.containsKey(c.name())) {
+            } else if (c.required() && node.kids.containsKey(c.name()) && !grouped) {
                 final String kidTest = generator.testOf(node.kids.get(c.name()));
                 final String nodeTest = generator.testOf(node);
                 if (kidTest != null && !kidTest.equals(nodeTest)) {
@@ -649,7 +746,7 @@ final class EventTrees {
             }
         }
         for (final EventNode kid : List.copyOf(node.kids.values())) {
-            checkStructure(rule, kid, kid.child.decl());
+            checkStructure(rule, kid, kid.child.decl(), grouped);
         }
     }
 
@@ -878,7 +975,7 @@ final class EventTrees {
             entries.addAll(rule.fields());
             final Set<String> mapped = entries.stream().map(FieldMapping::path).collect(Collectors.toSet());
             for (final FieldMapping entry : entries) {
-                if (!entry.path().endsWith("/Data") || !isSet(entry.dataName())) {
+                if (!entry.path().endsWith("/Data") || !isSet(entry.dataName()) || entry.isGroup()) {
                     continue;
                 }
                 final List<String> given = new ArrayList<>();

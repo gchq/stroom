@@ -881,6 +881,8 @@ public final class DraftMapping {
             nilValues();
             doubledQuotes();
             repeatedKeys();
+            // Fields holding lists (a comma list, a JSON array of objects): a Data per item, not the whole list.
+            notes.addAll(ListFields.propose(mapping, values, "json".equals(mapping.get("input"))));
             final Map<String, Object> result = new LinkedHashMap<>();
             result.put("mapping", mapping);
             result.put("source_notes", applied);

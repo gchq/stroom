@@ -216,6 +216,9 @@ public record TranslationMapping(String input,
                         ? entry
                         : entry.withDataName(XsltNames.dataNameIn(entry.dataName(), style.dataNames())))
                 .map(this::parentInStyle)
+                .map(entry -> entry.isGroup()
+                        ? entry.withGroupFields(namedInStyle(entry.group().fields()))
+                        : entry)
                 .toList();
     }
 
@@ -252,6 +255,12 @@ public record TranslationMapping(String input,
         final List<FieldMapping> out = new ArrayList<>(common);
         events.forEach(rule -> out.addAll(rule.fields()));
         return out;
+    }
+
+    /// @return Every field mapping, the fields of groups too (at any depth, paths as given: a group's relative to
+    /// it), for what reads input fields by name.
+    public List<FieldMapping> everyEntry() {
+        return FieldGroup.everyEntry(allEntries());
     }
 
     /// @param mode How to write it.

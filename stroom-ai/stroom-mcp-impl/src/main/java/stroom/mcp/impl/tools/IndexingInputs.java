@@ -25,6 +25,8 @@ import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.fielddoc.IndexFieldDocs;
+import stroom.ai.impl.tools.generation.FieldGroup;
+import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
@@ -42,6 +44,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -162,6 +165,50 @@ class IndexingInputs {
     /// @return Whether the translations of the pipelines that wrote them write a source path ([TranslationWrites]);
     /// false for every path when none can be read.
     Predicate<String> translationWrites(final List<Long> eventsStreamIds) {
+        return TranslationWrites.of(translations(eventsStreamIds).stream()
+                .map(XsltDoc::getData)
+                .filter(Objects::nonNull)
+                .toList());
+    }
+
+    /// The fields the translations that wrote some Events write, as the mappings kept with their XSLTs say: a
+    /// group's fields with their full paths and their groups, for the index plan to keep an item's values together
+    /// ([stroom.ai.impl.tools.indexing.GroupedFields]).
+    ///
+    /// @param eventsStreamIds Events streams.
+    /// @return Each translation mapping's fields ([FieldGroup#leaves(List)]), the common ones and each rule's; none
+    /// when no mapping is kept or can be read.
+    List<FieldGroup.Leaf> translationFields(final List<Long> eventsStreamIds) {
+        return mappingFields(translations(eventsStreamIds).stream()
+                .map(XsltDoc::getDescription)
+                .filter(Objects::nonNull)
+                .toList());
+    }
+
+    /// @param descriptions Translation XSLTs' descriptions.
+    /// @return The fields of the translation mappings they keep ([FieldGroup#leaves(List)]), the common ones and each
+    /// rule's; a mapping that doesn't validate (or none kept) adds none.
+    static List<FieldGroup.Leaf> mappingFields(final List<String> descriptions) {
+        final List<FieldGroup.Leaf> out = new ArrayList<>();
+        for (final String description : NullSafe.list(descriptions)) {
+            final Optional<KeptMapping.Kept> kept = KeptMapping.readMapping(description)
+                    .filter(mapping -> KeptMapping.TRANSLATION.equals(mapping.kind()));
+            if (kept.isEmpty()) {
+                continue;
+            }
+            try {
+                final TranslationMapping mapping = TranslationMapping.parse(kept.get().payload().get("mapping"));
+                out.addAll(FieldGroup.leaves(mapping.common()));
+                mapping.events().forEach(rule -> out.addAll(FieldGroup.leaves(rule.fields())));
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> LogUtil.message("No translation mapping read: {}", e.getMessage()));
+            }
+        }
+        return out;
+    }
+
+    // The translation XSLTs of the pipelines that wrote some Events, those the user may read.
+    private List<XsltDoc> translations(final List<Long> eventsStreamIds) {
         final Set<String> pipelines = new LinkedHashSet<>();
         for (final Long id : NullSafe.list(eventsStreamIds)) {
             try {
@@ -173,21 +220,19 @@ class IndexingInputs {
                 LOGGER.debug(() -> LogUtil.message("No pipeline read for stream {}: {}", id, e.getMessage()));
             }
         }
-        final List<String> codes = new ArrayList<>();
+        final List<XsltDoc> out = new ArrayList<>();
         for (final String pipeline : pipelines) {
             try {
                 pipelineShapes.merged(pipeline).translationDocs(pipeline).stream()
                         .map(MergedPipeline.TranslationDoc::doc)
                         .filter(doc -> XsltDoc.TYPE.equals(doc.getType()))
-                        .forEach(doc -> documentAccess.read(doc, XsltDoc.class)
-                                .map(XsltDoc::getData)
-                                .ifPresent(codes::add));
+                        .forEach(doc -> documentAccess.read(doc, XsltDoc.class).ifPresent(out::add));
             } catch (final RuntimeException e) {
                 LOGGER.debug(() -> LogUtil.message("No translation read for pipeline {}: {}", pipeline,
                         e.getMessage()));
             }
         }
-        return TranslationWrites.of(codes);
+        return out;
     }
 
     /// @param streamId An Events stream.

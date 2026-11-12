@@ -253,6 +253,22 @@
   "data_name": {
    "description": "For a path ending in Data: the Data element's Name.",
    "model": null
+  },
+  "item": {
+   "description": "In a group's fields: true to read the group's item itself (a split's piece), or the name (as) of an outer group to read its item (with field, a key of it). Omitted, a field reads a key of its own group's item.",
+   "model": null
+  },
+  "for_each": {
+   "description": "Makes the entry a group: its element (one the schema lets repeat) written once per item, each holding the group's fields. {split: field, on: ','} (a literal separator), {array: field} (a JSON array or repeated element) or {zip: {name: field, ...}} (lists paired by position).",
+   "model": "ItemSource"
+  },
+  "as": {
+   "description": "A group's item name, by which fields of groups inside it read it (item: '<as>').",
+   "model": null
+  },
+  "fields": {
+   "description": "A group's fields: entries with paths relative to the group's element, read from each item (a key with field, the item with item: true, the record with scope: record); groups may nest, 16 deep at most.",
+   "model": "FieldMapping"
   }
  },
  "Lookup": {
@@ -358,6 +374,32 @@
   },
   "names": {
    "description": "Field names for keys named otherwise: {key: name}, for a name an input field already has, say.",
+   "model": null
+  }
+ },
+ "ItemSource": {
+  "split": {
+   "description": "The field whose text is split on 'on' into items, each trimmed, empty ones dropped.",
+   "model": null
+  },
+  "on": {
+   "description": "With split (or zip): the separator, a literal string, e.g. ','.",
+   "model": null
+  },
+  "array": {
+   "description": "The field holding the items: a JSON array (of objects or values), or an element repeated in the record.",
+   "model": null
+  },
+  "zip": {
+   "description": "Lists paired by position: item name -> the field holding the list; each item has one value from each, read by its name. Lists of unequal length: the record is logged as an error and its event isn't written.",
+   "model": null
+  },
+  "item": {
+   "description": "The name (as) of an outer group whose item the field is read from.",
+   "model": null
+  },
+  "scope": {
+   "description": "'record' to read the field from the record, not from the enclosing item.",
    "model": null
   }
  }

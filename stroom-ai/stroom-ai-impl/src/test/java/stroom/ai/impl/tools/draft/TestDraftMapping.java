@@ -1023,7 +1023,9 @@ class TestDraftMapping extends DraftFixtures {
             final Map<String, Object> mapping = mappingOf(draft);
 
             assertThat(mapping).as(separator).doesNotContainKey("extract");
-            assertThat(String.valueOf(mapping)).contains("data_name=recipients, field=recipients")
+            // A list: a Data a recipient (ListFields), split on its separator.
+            assertThat(String.valueOf(mapping)).contains("data_name=recipients, for_each={split=recipients, on="
+                                                         + separator.strip() + "}")
                     .doesNotContain("recipients_2").doesNotContain("data_name=words");
             assertThat((List<String>) draft.get("notes")).anySatisfy(note -> assertThat(note)
                     .startsWith("'message' is the text the splitter read its key/value pairs from"));

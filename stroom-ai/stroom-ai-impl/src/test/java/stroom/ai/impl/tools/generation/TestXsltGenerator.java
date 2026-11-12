@@ -370,6 +370,36 @@ class TestXsltGenerator extends XsltRuns {
     }
 
     @Test
+    void eachRecipientInAListIsAUserWithItsIdAndItsDomain() {
+        // Asked for by the user (a SEG mail gateway's recipients="a@x,b@y"): each recipient one Destination/User with
+        // its own Id and Domain. Two repeated entries were refused ("map nothing else below it"); a group writes the
+        // User once per piece of the split list, each field reading that piece.
+        final List<Object> fields = new ArrayList<>(List.of(
+                json("""
+                        {"path": "EventDetail/TypeId", "value": "SEGTrap"}"""),
+                json("""
+                        {"path": "EventDetail/Send/Source/User/Id", "field": "sender"}"""),
+                json("""
+                        {"path": "EventDetail/Send/Destination/User", "for_each": {"split": "recipients", "on": ","},
+                         "as": "recipient",
+                         "fields": [{"path": "Id", "item": true, "transform": "strip_domain"},
+                                    {"path": "Domain", "item": true, "transform": "domain"}]}""")));
+        final XsltGenerator.Generated result = generate(mapping(with("events", List.of(rule("send", List.of(),
+                fields)))));
+        assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
+        final XmlElement events = transform(result.xslt(), """
+                <records xmlns="records:2">
+                <record><data name="time" value="2026-09-28T10:00:00.000Z"/><data name="action" value="send"/>\
+                <data name="sender" value="jane.doe@mail.com"/>\
+                <data name="recipients" value="john.smith@mail.com, jack.sparrow@gmail.com"/></record>
+                </records>""");
+        assertThat(invalid(events, XSD)).isEmpty();
+        final XmlElement destination = find(children(events, "Event").getFirst(), "EventDetail/Send/Destination");
+        assertThat(children(destination, "User")).extracting(user -> text(user, "Id") + "@" + text(user, "Domain"))
+                .containsExactly("john.smith@mail.com", "jack.sparrow@gmail.com");
+    }
+
+    @Test
     void aDataParentGoesWithAPathEndingInDataAndItsDataName() {
         assertThatThrownBy(() -> FieldMapping.fromJson(json("""
                 {"path": "EventSource/User/Id", "data_parent": "x", "field": "user"}""")))

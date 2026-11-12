@@ -159,11 +159,14 @@ public final class MappingFacts {
     /// @param name    A field name.
     /// @return True if it reads it.
     public static boolean readsInput(final TranslationMapping mapping, final String name) {
-        final List<FieldMapping> entries = mapping.allEntries();
+        final List<FieldMapping> entries = mapping.everyEntry();
         final List<Condition> conditions = conditions(mapping);
         final Set<String> names = new HashSet<>();
         for (final FieldMapping entry : entries) {
             names.add(entry.field());
+            if (entry.isGroup()) {
+                names.addAll(entry.group().forEach().fields());
+            }
             if (entry.anyOf() != null) {
                 names.addAll(entry.anyOf());
             }
@@ -312,7 +315,7 @@ public final class MappingFacts {
     /// @return Every xpath it gives: fields' and lookups', conditions', extractions', for_each and shared templates'
     /// parameters.
     public static List<String> mappingXpaths(final TranslationMapping mapping) {
-        final List<FieldMapping> entries = mapping.allEntries();
+        final List<FieldMapping> entries = mapping.everyEntry();
         final List<String> found = new ArrayList<>();
         entries.forEach(entry -> found.add(entry.xpath()));
         entries.stream().filter(entry -> entry.lookup() != null).forEach(entry -> found.add(entry.lookup().xpath()));

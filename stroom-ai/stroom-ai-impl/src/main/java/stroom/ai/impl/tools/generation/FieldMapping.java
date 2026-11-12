@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -74,6 +75,13 @@ import java.util.regex.Pattern;
 ///                     none.
 /// @param zoneSource   `timezone` given as an object: the field or stream meta attribute each record's zone is read
 ///                     from, with a map and a default (see [ZoneSource]); null for a fixed `timezone` or none.
+/// @param group        A repeated group (`for_each`, `as` and `fields`, see [FieldGroup]): the element at path written
+///                     once per item, each holding its fields. A group entry has no input of its own. Null for an
+///                     entry that isn't one.
+/// @param item         In a group's fields: the item read. `""` (given as `item: true`) for the group's own item,
+///                     else the name (`as`) of an outer group's; with field, a key of that item, alone the item
+///                     itself. Null for an entry reading a key of its own group's item (or, outside groups, any
+///                     entry).
 public record FieldMapping(String path,
                            String field,
                            List<String> anyOf,
@@ -96,12 +104,21 @@ public record FieldMapping(String path,
                            boolean rollover,
                            String timeFallback,
                            ZoneSource zoneSource,
-                           List<String> metaFallback) {
+                           List<String> metaFallback,
+                           FieldGroup group,
+                           String item) {
 
     /// The transforms an input may be given.
     public static final List<String> TRANSFORMS = List.of("lower", "upper", "trim", "strip_domain", "domain",
             "digits", "unescape_quotes", "strip_control");
 
+    // What a group entry can't have: an input or conversion of its own.
+    private static final List<String> GROUP_REFUSES = List.of("field", "any_of", "join", "value", "xpath", "meta",
+            "lookup", "dictionary", "transform", "repeat", "scope", "time_format", "timezone", "map", "default",
+            "data_parent", "separator", "rollover", "time_fallback", "meta_fallback", "item");
+    // An Event's own children: a group's field path starting with one is a path from Event, not from the group.
+    private static final Set<String> EVENT_SECTIONS = Set.of("EventTime", "EventSource", "EventDetail", "EventChain",
+            "Meta", "Followers");
     // A stream meta attribute's name, as stroom:meta reads it.
     private static final Pattern META_NAME = Pattern.compile("[A-Za-z][\\w-]*");
     private static final Pattern SPILLED = Pattern.compile("[^\\w/@.-]", Pattern.UNICODE_CHARACTER_CLASS);
@@ -120,7 +137,7 @@ public record FieldMapping(String path,
     /// @return The entry carrying the field as that Data.
     public static FieldMapping data(final String path, final String dataName, final String field) {
         return new FieldMapping(path, field, null, null, null, null, null, null, null, false, null, null, null,
-                null, null, dataName, null, null, null, false, null, null, null);
+                null, null, dataName, null, null, null, false, null, null, null, null, null);
     }
 
     /// Reads one from JSON-like values: lax types, defaults and the model's own checks, every error collected.
@@ -130,6 +147,14 @@ public record FieldMapping(String path,
     /// @param loc    Where it is.
     /// @return It, or null (with the errors noted) if it doesn't validate.
     static FieldMapping read(final ModelReader reader, final Object input, final List<Object> loc) {
+        return read(reader, input, loc, List.of());
+    }
+
+    // One in the groups given (outermost first, each with its full path), or in none.
+    private static FieldMapping read(final ModelReader reader,
+                                     final Object input,
+                                     final List<Object> loc,
+                                     final List<Enclosing> enclosing) {
         final ModelReader.Fields fields = reader.fields(input, loc, "FieldMapping");
         if (fields == null) {
             return null;
@@ -144,6 +169,10 @@ public record FieldMapping(String path,
                               + "and why; ask the user if unsure");
             return null;
         }
+        if (fields.has("for_each")) {
+            return readGroup(reader, fields, enclosing);
+        }
+        final String item = readItem(fields);
         final FieldMapping read = new FieldMapping(fields.requiredString("path"), fields.optionalString("field"),
                 fields.optionalStrings("any_of"), fields.optionalString("value"), fields.optionalString("xpath"),
                 fields.optionalString("meta"), fields.optionalModel("lookup", (value, at) -> Lookup.read(reader,
@@ -158,18 +187,207 @@ public record FieldMapping(String path,
                 fields.optionalString("separator"), fields.bool("rollover", false),
                 fields.optionalString("time_fallback"), fields.input().get("timezone") instanceof Map
                         ? fields.optionalModel("timezone", (value, at) -> ZoneSource.read(reader, value, at))
-                        : null, fields.optionalStrings("meta_fallback"));
+                        : null, fields.optionalStrings("meta_fallback"), null, item);
         if (!fields.ok()) {
             return null;
         }
-        final String problem = read.problem();
+        String problem = read.problem();
+        if (problem == null) {
+            problem = read.groupProblem(enclosing);
+        }
         if (problem != null) {
             fields.valueError(problem);
             return null;
         }
-        return read.meta == null
+        final FieldMapping placed = enclosing.isEmpty()
                 ? read
-                : read.withMetaRead();
+                : read.withPath(enclosing.getLast().relative(read.strippedPath()));
+        return placed.meta == null
+                ? placed
+                : placed.withMetaRead();
+    }
+
+    // item: true (the group's own item), a name (an outer group's), or none.
+    private static String readItem(final ModelReader.Fields fields) {
+        final Object given = fields.input().get("item");
+        if (given == null || Boolean.FALSE.equals(given)) {
+            return null;
+        }
+        if (Boolean.TRUE.equals(given)) {
+            return "";
+        }
+        if (given instanceof final String name && ItemSource.NAME.matcher(name).matches()) {
+            return name;
+        }
+        fields.valueError("item is true (the group's own item) or the name (as) of an outer group, not "
+                          + ToolText.repr(given));
+        return null;
+    }
+
+    // A group entry: path (data_name for a Data group), for_each, as and fields; no input of its own.
+    private static FieldMapping readGroup(final ModelReader reader,
+                                          final ModelReader.Fields fields,
+                                          final List<Enclosing> enclosing) {
+        final String path = fields.requiredString("path");
+        final String dataName = fields.optionalString("data_name");
+        final ItemSource source = fields.optionalModel("for_each", (value, at) -> ItemSource.read(reader, value,
+                at));
+        final String as = fields.optionalString("as");
+        if (!fields.ok() || source == null) {
+            return null;
+        }
+        final String where = "'" + path + "'";
+        final List<String> extra = GROUP_REFUSES.stream().filter(fields::has).toList();
+        if (!extra.isEmpty()) {
+            fields.valueError(where + ": a group (for_each) writes its element once per item, each holding its "
+                              + "fields; it has no input of its own, so no " + String.join(", ", extra) + " (those "
+                              + "go on its fields)");
+            return null;
+        }
+        if (enclosing.size() >= FieldGroup.MAX_DEPTH) {
+            fields.valueError(where + ": groups nest " + FieldGroup.MAX_DEPTH + " deep at most; this one is deeper. "
+                              + "Map the deeper levels as Data, or leave them out");
+            return null;
+        }
+        if (as != null && (!ItemSource.NAME.matcher(as).matches()
+                           || enclosing.stream().anyMatch(outer -> as.equals(outer.group().itemName())))) {
+            fields.valueError(where + ": as names the group's item, for the fields of groups inside it: a plain name "
+                              + "(letters, digits, _ or -) no group it is in has, not " + ToolText.repr(as));
+            return null;
+        }
+        final String sourceProblem = itemProblem(source.item(), source.readsRecord(), source.fields(),
+                source.item() == null, enclosing);
+        if (sourceProblem != null) {
+            fields.valueError(where + ": for_each " + sourceProblem);
+            return null;
+        }
+        final String stripped = ToolText.strip(path, "/");
+        final String relative = enclosing.isEmpty()
+                ? stripped
+                : enclosing.getLast().relative(stripped);
+        final String full = enclosing.isEmpty()
+                ? stripped
+                : enclosing.getLast().path() + "/" + relative;
+        final boolean dataPath = "Data".equals(relative) || relative.endsWith("/Data");
+        if ((dataName != null || dataPath) && !(dataName != null && dataPath)) {
+            fields.valueError(where + ": a Data group's path ends in Data, with data_name the Name of the Data written "
+                              + "for each item, e.g. {\"path\": \"EventDetail/Send/Data\", \"data_name\": "
+                              + "\"recipient\", \"for_each\": {...}, \"fields\": [{\"path\": \"Data\", \"data_name\": "
+                              + "\"id\", \"item\": true}]}");
+            return null;
+        }
+        if (!enclosing.isEmpty() && enclosing.getLast().data() && !"Data".equals(relative)) {
+            fields.valueError(where + ": a Data group holds Data entries only (path Data, with data_name)");
+            return null;
+        }
+        final FieldGroup header = new FieldGroup(source, as, List.of());
+        final List<Enclosing> inner = new ArrayList<>(enclosing);
+        inner.add(new Enclosing(full, header, dataPath));
+        final List<FieldMapping> entries = fields.requiredModels("fields", (value, at) -> read(reader, value, at,
+                List.copyOf(inner)), 1);
+        if (!fields.ok()) {
+            return null;
+        }
+        return new FieldMapping(enclosing.isEmpty()
+                ? path
+                : relative, null, null, null, null, null, null, null, null, false, null, null, null, null, null,
+                dataName, null, null, null, false, null, null, null, header.withFields(entries), null);
+    }
+
+    // Whether an input of a group's field (or of a group's for_each) reads what it may: item names a group it is in,
+    // no key of a text item is read, and a zip item's keys are its names. Null if it does.
+    private static String itemProblem(final String item,
+                                      final boolean record,
+                                      final List<String> keys,
+                                      final boolean own,
+                                      final List<Enclosing> enclosing) {
+        if (enclosing.isEmpty()) {
+            return item == null
+                    ? null
+                    : "item reads a group's item, so it goes in a group's fields";
+        }
+        if (record) {
+            return null;
+        }
+        final Enclosing from;
+        if (item == null || item.isEmpty()) {
+            from = enclosing.getLast();
+        } else {
+            from = enclosing.stream().filter(outer -> item.equals(outer.group().itemName())).findFirst().orElse(null);
+            if (from == null) {
+                return "item " + ToolText.repr(item) + " names no group it is in (their items: "
+                       + ToolText.list(enclosing.stream().map(outer -> outer.group().itemName()).toList()) + ")";
+            }
+        }
+        final ItemSource source = from.group().forEach();
+        final String name = from.group().itemName();
+        final List<String> named = keys.stream().filter(key -> key != null && !key.isEmpty()).toList();
+        if (named.isEmpty()) {
+            return ItemSource.ZIP.equals(source.kind())
+                    ? "reads " + name + " whole, but a zip's item is one value from each list, read by its name: "
+                      + "field " + ToolText.list(List.copyOf(source.zip().keySet()))
+                    : null;
+        }
+        if (ItemSource.SPLIT.equals(source.kind())) {
+            return "the items of " + name + " are pieces of text (a split), with no keys: read the piece with item: "
+                   + (own
+                    ? "true"
+                    : "\"" + name + "\"") + ", not field " + ToolText.list(named);
+        }
+        if (ItemSource.ZIP.equals(source.kind())) {
+            final List<String> unknown = named.stream().filter(key -> !source.zip().containsKey(key)).toList();
+            if (!unknown.isEmpty()) {
+                return "a zip's item has the names " + ToolText.list(List.copyOf(source.zip().keySet()))
+                       + ", one value each: not " + ToolText.list(unknown);
+            }
+        }
+        return null;
+    }
+
+    // The checks of an entry by the groups it is in (and of item, outside them).
+    private String groupProblem(final List<Enclosing> enclosing) {
+        final String where = "'" + path + "'";
+        if (enclosing.isEmpty()) {
+            return item == null
+                    ? null
+                    : where + ": item reads a group's item, so it goes in a group's fields (for_each)";
+        }
+        if (repeat) {
+            return where + ": a group's field is written once per item already; repeat goes with a field outside "
+                   + "groups (for a list inside an item, make it a group of its own)";
+        }
+        final String stripped = strippedPath();
+        final Enclosing group = enclosing.getLast();
+        final String first = ToolText.split(stripped, "/").getFirst();
+        if (!stripped.startsWith(group.path() + "/") && EVENT_SECTIONS.contains(first)) {
+            return where + " is outside the group's element " + group.path() + ": a group's fields are paths below "
+                   + "it, relative to it (e.g. 'Id' for " + group.path() + "/Id)";
+        }
+        if (group.data() && (dataName == null || !"Data".equals(group.relative(stripped)))) {
+            return where + ": a Data group holds Data entries only: {\"path\": \"Data\", \"data_name\": \"<its "
+                   + "Name>\", ...}";
+        }
+        final List<String> keys = new ArrayList<>();
+        if (field != null) {
+            keys.add(field);
+        }
+        if (anyOf != null) {
+            keys.addAll(anyOf);
+        }
+        if (join != null) {
+            keys.addAll(join);
+        }
+        if (lookup != null && lookup.field() != null) {
+            keys.add(lookup.field());
+        }
+        if (keys.isEmpty() && item == null) {
+            return null;     // a constant, or an xpath of its own
+        }
+        final String problem = itemProblem(item, "record".equals(scope), keys, item == null || item.isEmpty(),
+                enclosing);
+        return problem == null
+                ? null
+                : where + ": " + problem;
     }
 
     /// The model's own check (one_source).
@@ -199,6 +417,10 @@ public record FieldMapping(String path,
         final List<String> given = meta == null
                 ? given()
                 : List.of("xpath");
+        if (item != null && (given.isEmpty() || given.equals(List.of("field")))) {
+            // The item itself, or a key of it: one source.
+            return problemBeyondSource();
+        }
         if (given.size() != 1) {
             return "'" + path + "': give exactly one of field, any_of, join, value, xpath or lookup ("
                    + (given.isEmpty()
@@ -209,6 +431,11 @@ public record FieldMapping(String path,
                     ? ": any_of alone lists the fields to try, first with a value wins"
                     : "");
         }
+        return problemBeyondSource();
+    }
+
+    // The checks after the one source is found.
+    private String problemBeyondSource() {
         final List<String> names = new ArrayList<>();
         if (field != null && !field.isEmpty()) {
             names.add(field);
@@ -304,7 +531,7 @@ public record FieldMapping(String path,
     private FieldMapping withMetaRead() {
         return new FieldMapping(path, field, anyOf, value, "stroom:meta('" + ToolText.strip(meta) + "')", null, lookup,
                 dictionary, transform, repeat, scope, timeFormat, timezone, map, defaultValue, dataName, dataParent,
-                join, separator, rollover, timeFallback, zoneSource, metaFallback);
+                join, separator, rollover, timeFallback, zoneSource, metaFallback, group, item);
     }
 
     /// @param defaultValue The output when the input is empty.
@@ -312,7 +539,7 @@ public record FieldMapping(String path,
     public FieldMapping withDefault(final String defaultValue) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback);
+                zoneSource, metaFallback, group, item);
     }
 
     /// @param dataName The Data element's Name.
@@ -320,7 +547,7 @@ public record FieldMapping(String path,
     public FieldMapping withDataName(final String dataName) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback);
+                zoneSource, metaFallback, group, item);
     }
 
     /// @return The Data entry's Name with the Names of the Data elements it is written in, e.g. `members/member`:
@@ -336,7 +563,28 @@ public record FieldMapping(String path,
     public FieldMapping withDataParent(final String dataParent) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback);
+                zoneSource, metaFallback, group, item);
+    }
+
+    /// @param path The path.
+    /// @return This entry at that path.
+    public FieldMapping withPath(final String path) {
+        return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
+                timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
+                zoneSource, metaFallback, group, item);
+    }
+
+    /// @param fields A group entry's fields.
+    /// @return This group entry with those fields.
+    public FieldMapping withGroupFields(final List<FieldMapping> fields) {
+        return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
+                timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
+                zoneSource, metaFallback, group.withFields(fields), item);
+    }
+
+    /// @return True if it is a group (for_each): its element written once per item.
+    public boolean isGroup() {
+        return group != null;
     }
 
     /// @return What join puts between its values.
@@ -392,6 +640,36 @@ public record FieldMapping(String path,
                         : null)
                 .putIfSet("time_fallback", timeFallback)
                 .putIfSet("meta_fallback", metaFallback)
+                .putIfSet("item", item == null
+                        ? null
+                        : item.isEmpty()
+                                ? (Object) Boolean.TRUE
+                                : item)
+                .putIfSet("for_each", group == null
+                        ? null
+                        : group.forEach().toJson(mode))
+                .putIfSet("as", group == null
+                        ? null
+                        : group.as())
+                .putIfSet("fields", group == null
+                        ? null
+                        : group.fields().stream().map(entry -> entry.toJson(mode)).toList())
                 .build();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // A group a field being read is in: its element's full path, the group (fields not yet read), and whether it is a
+    // Data group.
+    private record Enclosing(String path, FieldGroup group, boolean data) {
+
+        // A field's path relative to the group: as given, or with the group's path taken off when given from Event.
+        String relative(final String given) {
+            return given.startsWith(path + "/")
+                    ? given.substring(path.length() + 1)
+                    : given;
+        }
     }
 }
