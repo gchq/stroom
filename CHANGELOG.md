@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.16-parallel-pathways] - 2026-11-12
+
 * Bug **#5995** : Fix filtering of selection lists, e.g. time zone IDs in User Preferences, so that it ignores case. Filter text with upper case letters used to find nothing.
 
 * Bug **#6011** : Fix node startup and content searches waiting for a content index re-build to finish.
@@ -2910,7 +2912,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.15-parallel-pathways...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.16-parallel-pathways...HEAD
+[v7.14-beta.16-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.15-parallel-pathways...v7.14-beta.16-parallel-pathways
 [v7.14-beta.15-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.11-parallel-pathways...v7.14-beta.15-parallel-pathways
 [v7.14-beta.11-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.10-parallel-pathways...v7.14-beta.11-parallel-pathways
 [v7.14-beta.10-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.9-parallel-pathways...v7.14-beta.10-parallel-pathways
