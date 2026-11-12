@@ -84,6 +84,10 @@ public enum TokenType {
     FROM,
     // The native query of a data source that takes one, such as the SQL of a Data Connection.
     SQL,
+    // A join line: 'join', 'left join', 'keep join' or 'drop join', followed by the joined source.
+    JOIN,
+    // The keys of a join, as in 'on UserId = hr.Username'. Only a keyword after a join.
+    ON,
     WHERE,
     EVAL,
     SELECT,
@@ -109,6 +113,8 @@ public enum TokenType {
     public static final Set<TokenType> ALL_KEYWORDS = Collections.unmodifiableSet(EnumSet.of(
             FROM,
             SQL,
+            JOIN,
+            ON,
             WHERE,
             FILTER,
             EVAL,
@@ -121,6 +127,7 @@ public enum TokenType {
             SHOW));
 
     public static final Set<TokenType> EXPRESSION_KEYWORDS = Set.of(
+            ON,
             WHERE,
             FILTER,
             HAVING);
@@ -173,6 +180,8 @@ public enum TokenType {
             new EnumMap<>(Map.ofEntries(
                     entry(FROM, Collections.emptySet()),
                     entry(SQL, EnumSet.of(FROM)),
+                    entry(JOIN, EnumSet.of(FROM)),
+                    entry(ON, EnumSet.of(FROM, JOIN)),
                     entry(WHERE, EnumSet.of(FROM)),
                     entry(AND, EnumSet.of(FROM)),
                     entry(OR, EnumSet.of(FROM)),
@@ -193,24 +202,31 @@ public enum TokenType {
     public static final Map<TokenType, Set<TokenType>> KEYWORDS_VALID_BEFORE = Collections.unmodifiableMap(
             new EnumMap<>(Map.ofEntries(
                     entry(FROM, Collections.emptySet()),
-                    // SQL can only come straight after FROM.
-                    entry(SQL, EnumSet.of(FROM)),
-                    entry(WHERE, EnumSet.of(FROM, SQL)),
+                    // SQL can only come straight after FROM or a join's source, so after a join line
+                    // and its keys there can be another join with its own SQL.
+                    entry(SQL, EnumSet.of(FROM, SQL, JOIN, ON)),
+                    // Join lines come straight after FROM, each one followed by its keys.
+                    entry(JOIN, EnumSet.of(FROM, SQL, JOIN, ON)),
+                    entry(ON, EnumSet.of(FROM, SQL, JOIN, ON)),
+                    entry(WHERE, EnumSet.of(FROM, SQL, JOIN, ON)),
                     // AND/OR/NOT can appear after WHERE, FILTER and HAVING
-                    entry(AND, EnumSet.of(FROM, SQL, WHERE, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
-                    entry(OR, EnumSet.of(FROM, SQL, WHERE, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
-                    entry(NOT, EnumSet.of(FROM, SQL, WHERE, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
-                    entry(EVAL, EnumSet.of(FROM, SQL, WHERE, AND, OR, NOT, EVAL, WINDOW)),
-                    entry(WINDOW, EnumSet.of(FROM, SQL, WHERE, AND, OR, NOT, EVAL)),
-                    entry(FILTER, EnumSet.of(FROM, SQL, WHERE, AND, OR, NOT, EVAL, WINDOW)),
-                    entry(SORT, EnumSet.of(FROM, SQL, WHERE, AND, OR, NOT, EVAL, WINDOW, FILTER, GROUP)),
+                    entry(AND, EnumSet.of(FROM, SQL, JOIN, ON, WHERE, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
+                    entry(OR, EnumSet.of(FROM, SQL, JOIN, ON, WHERE, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
+                    entry(NOT, EnumSet.of(FROM, SQL, JOIN, ON, WHERE, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
+                    entry(EVAL, EnumSet.of(FROM, SQL, JOIN, ON, WHERE, AND, OR, NOT, EVAL, WINDOW)),
+                    entry(WINDOW, EnumSet.of(FROM, SQL, JOIN, ON, WHERE, AND, OR, NOT, EVAL)),
+                    entry(FILTER, EnumSet.of(FROM, SQL, JOIN, ON, WHERE, AND, OR, NOT, EVAL, WINDOW)),
+                    entry(SORT, EnumSet.of(FROM, SQL, JOIN, ON, WHERE, AND, OR, NOT, EVAL, WINDOW, FILTER, GROUP)),
                     // Multiple 'group by's are allowed for nested grouping
-                    entry(GROUP, EnumSet.of(FROM, SQL, WHERE, AND, OR, NOT, EVAL, WINDOW, FILTER, SORT, GROUP)),
-                    entry(HAVING, EnumSet.of(FROM, SQL, WHERE, AND, OR, NOT, EVAL, WINDOW, FILTER, SORT, GROUP)),
-                    entry(LIMIT, EnumSet.of(FROM, SQL, WHERE, AND, OR, NOT, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
-                    entry(SELECT, EnumSet.of(FROM, SQL, WHERE, AND, OR, NOT, EVAL,
+                    entry(GROUP, EnumSet.of(FROM, SQL, JOIN, ON, WHERE, AND, OR, NOT, EVAL, WINDOW,
+                            FILTER, SORT, GROUP)),
+                    entry(HAVING, EnumSet.of(FROM, SQL, JOIN, ON, WHERE, AND, OR, NOT, EVAL, WINDOW,
+                            FILTER, SORT, GROUP)),
+                    entry(LIMIT, EnumSet.of(FROM, SQL, JOIN, ON, WHERE, AND, OR, NOT, EVAL, WINDOW,
+                            FILTER, SORT, GROUP, HAVING)),
+                    entry(SELECT, EnumSet.of(FROM, SQL, JOIN, ON, WHERE, AND, OR, NOT, EVAL,
                             WINDOW, FILTER, SORT, GROUP, HAVING, LIMIT)),
-                    entry(SHOW, EnumSet.of(FROM, SQL, WHERE, AND, OR, NOT, EVAL,
+                    entry(SHOW, EnumSet.of(FROM, SQL, JOIN, ON, WHERE, AND, OR, NOT, EVAL,
                             WINDOW, FILTER, SORT, GROUP, HAVING, SELECT, LIMIT))
             )));
 
@@ -229,6 +245,19 @@ public enum TokenType {
                     validNextKeywords.computeIfAbsent(priorType, k -> EnumSet.noneOf(TokenType.class))
                             .add(tokenType);
                 }
+            }
+        });
+
+        // A join line is always followed by its SQL or its keys, and only a join line is followed by
+        // keys, which are not followed by SQL.
+        validNextKeywords.put(JOIN, EnumSet.of(SQL, ON));
+        validNextKeywords.forEach((tokenType, tokenTypes) -> {
+            if (tokenType != JOIN && tokenType != SQL) {
+                tokenTypes.remove(ON);
+            }
+            // A source has at most one sql clause, and keys come after it.
+            if (tokenType == ON || tokenType == SQL) {
+                tokenTypes.remove(SQL);
             }
         });
 

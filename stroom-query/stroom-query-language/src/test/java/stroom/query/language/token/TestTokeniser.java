@@ -152,4 +152,86 @@ public class TestTokeniser extends AbstractQueryTest {
         assertThat(Tokeniser.endsInsideTripleQuotedString("")).isFalse();
         assertThat(Tokeniser.endsInsideTripleQuotedString(null)).isFalse();
     }
+
+    @Test
+    void joinKindIsPartOfTheJoinToken() {
+        final List<Token> tokens = withoutWhitespace("from x left join y on a = y.a select a");
+
+        assertThat(tokens)
+                .extracting(Token::getTokenType)
+                .containsExactly(TokenType.FROM, TokenType.STRING,
+                        TokenType.JOIN, TokenType.STRING,
+                        TokenType.ON, TokenType.STRING, TokenType.EQUALS, TokenType.STRING,
+                        TokenType.SELECT, TokenType.STRING);
+        assertThat(tokens.get(2).getText()).isEqualTo("left join");
+        assertThat(withoutWhitespace("from x KEEP\n  JOIN y on a = y.a").get(2).getText()).isEqualTo("KEEP\n  JOIN");
+    }
+
+    @Test
+    void onIsOnlyAKeywordInAJoinLine() {
+        assertThat(withoutWhitespace("from x where on = 1 eval on = 2 select on"))
+                .extracting(Token::getTokenType)
+                .doesNotContain(TokenType.ON);
+        // Only the first on of a join line is a keyword.
+        assertThat(withoutWhitespace("from x join y on a = y.on select a"))
+                .extracting(Token::getTokenType)
+                .containsOnlyOnce(TokenType.ON);
+    }
+
+    @Test
+    void onAfterABracketedJoinIsAKeyword() {
+        // The clauses inside the brackets don't end the join line around them.
+        final List<Token> tokens = withoutWhitespace(
+                "from x join (from y where b = 1 select b) as z on a = z.b and c = z.c select a");
+
+        assertThat(tokens).extracting(Token::getTokenType).containsOnlyOnce(TokenType.ON);
+        // The keys are an expression, so their 'and' is a keyword.
+        assertThat(tokens).extracting(Token::getTokenType).contains(TokenType.AND);
+    }
+
+    @Test
+    void fromStraightAfterABracketIsAKeyword() {
+        assertThat(withoutWhitespace("from (from y select b) as z select b"))
+                .extracting(Token::getTokenType)
+                .startsWith(TokenType.FROM, TokenType.OPEN_BRACKET, TokenType.FROM);
+    }
+
+    @Test
+    void joinIsOnlyAKeywordWhereAJoinLineCanStart() {
+        assertThat(withoutWhitespace("from x where join = 1 eval join = 2 select a, join"))
+                .extracting(Token::getTokenType)
+                .doesNotContain(TokenType.JOIN);
+        assertThat(withoutWhitespace("from x where a = 'b' and join = 1 select join"))
+                .extracting(Token::getTokenType)
+                .doesNotContain(TokenType.JOIN, TokenType.ON);
+        // A misplaced join line stays a keyword, so the parser can say it is out of place.
+        assertThat(withoutWhitespace("from x where a = 'b' left join y on a = y.a"))
+                .extracting(Token::getTokenType)
+                .contains(TokenType.JOIN, TokenType.ON);
+        // After a join line's keys, another join line can start.
+        assertThat(withoutWhitespace("from x join y on a = y.a drop join z on a = z.a select a"))
+                .extracting(Token::getTokenType)
+                .containsSubsequence(TokenType.JOIN, TokenType.ON, TokenType.JOIN, TokenType.ON);
+    }
+
+    @Test
+    void dataSourceNamedLikeAJoinKindIsNotPartOfTheJoin() {
+        final List<Token> tokens = withoutWhitespace("from Left join y on a = y.a");
+
+        assertThat(tokens)
+                .extracting(Token::getTokenType)
+                .startsWith(TokenType.FROM, TokenType.STRING, TokenType.JOIN, TokenType.STRING, TokenType.ON);
+        assertThat(tokens.get(1).getText()).isEqualTo("Left");
+        assertThat(tokens.get(2).getText()).isEqualTo("join");
+        assertThat(withoutWhitespace("from join select a"))
+                .extracting(Token::getTokenType)
+                .containsExactly(TokenType.FROM, TokenType.STRING, TokenType.SELECT, TokenType.STRING);
+    }
+
+    @Test
+    void sqlIsAKeywordAfterAJoinedSource() {
+        assertThat(withoutWhitespace("from x join y as z sql 'select 1' on a = z.a select a"))
+                .extracting(Token::getTokenType)
+                .contains(TokenType.SQL);
+    }
 }

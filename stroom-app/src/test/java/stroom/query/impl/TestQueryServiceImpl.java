@@ -33,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.mockito.Mockito;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -113,7 +114,43 @@ class TestQueryServiceImpl {
                 .addCase("""
                         from Dual
                         eval =\s""", FIELDS_AND_FUNCS)
+                .addCase("""
+                        from Dual
+                        join\s""", Set.of(QueryHelpType.DATA_SOURCE))
+                .addCase("""
+                        from Dual
+                        left join Dual2""", Set.of(QueryHelpType.DATA_SOURCE))
+                .addCase("""
+                        from Dual
+                        join Dual2 as d
+                        """, Set.of(QueryHelpType.STRUCTURE))
+                .addCase("""
+                        from Dual
+                        join Dual2 as d
+                        on\s""", FIELDS_AND_FUNCS)
+                .addCase("""
+                        from Dual
+                        join Dual2 as d
+                        on Dummy = d.Dummy
+                        """, Set.of(QueryHelpType.FIELD, QueryHelpType.FUNCTION, QueryHelpType.STRUCTURE))
                 .build();
+    }
+
+    @Test
+    void joinLineIsFollowedOnlyByItsSqlOrKeys() {
+        final QueryServiceImpl queryService = queryServiceWithSqlSources();
+
+        assertThat(queryService.getQueryHelpContext("from Dual\n").applicableStructureItems())
+                .contains(Structures.name(TokenType.JOIN))
+                .doesNotContain(Structures.name(TokenType.ON));
+        assertThat(queryService.getQueryHelpContext("from Dual\njoin Dual2 as d\n").applicableStructureItems())
+                .containsExactly(Structures.name(TokenType.ON));
+        assertThat(queryService.getQueryHelpContext("from Dual\njoin sql_hr as hr\n").applicableStructureItems())
+                .containsExactlyInAnyOrder(Structures.name(TokenType.SQL), Structures.name(TokenType.ON));
+        assertThat(queryService.getQueryHelpContext("from Dual\njoin Dual2 as d on a = d.a\n")
+                .applicableStructureItems())
+                .contains(Structures.name(TokenType.JOIN), Structures.name(TokenType.WHERE))
+                .doesNotContain(Structures.name(TokenType.ON), Structures.name(TokenType.SQL));
     }
 
     // A query service whose data sources named sql_... run SQL, as a Data Connection does.
@@ -128,6 +165,12 @@ class TestQueryServiceImpl {
             ((Consumer<DocRef>) invocation.getArgument(1)).accept(new DocRef("Type", name, name));
             return null;
         }).when(searchRequestFactory).extractDataSourceOnly(Mockito.anyString(), Mockito.any());
+        Mockito.when(searchRequestFactory.extractLastJoinDataSource(Mockito.anyString()))
+                .thenAnswer(invocation -> {
+                    final String query = invocation.getArgument(0);
+                    final String joined = query.substring(query.lastIndexOf("join") + 4).trim().split("\\s")[0];
+                    return Optional.of(new DocRef("Type", joined, joined));
+                });
         final DataSourceProviderRegistry registry = Mockito.mock(DataSourceProviderRegistry.class);
         Mockito.when(registry.takesNativeQuery(Mockito.any()))
                 .thenAnswer(invocation -> ((DocRef) invocation.getArgument(0)).getName().startsWith("sql_"));

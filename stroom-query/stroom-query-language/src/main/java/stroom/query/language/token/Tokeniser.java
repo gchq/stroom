@@ -45,6 +45,8 @@ public class Tokeniser {
     // A triple-quoted string holds its text as written, with no escapes, so SQL with double quotes
     // and backslashes can be pasted in unchanged.
     private static final char[] TRIPLE_QUOTE = new char[]{'"', '"', '"'};
+    private static final String JOIN_PATTERN = "(?:(?:left|keep|drop)\\s+)?join";
+    private static final String JOIN_WORD = "join";
 
     private List<Token> tokens;
 
@@ -65,11 +67,16 @@ public class Tokeniser {
 
         // Tag keywords.
         TokenType.ALL_KEYWORDS.forEach(token -> {
-            tokens = tagKeyword(token.toString().toLowerCase(Locale.ROOT), token, tokens);
+            tokens = tagKeyword(getKeywordPattern(token), token, tokens);
         });
-        // 'sql' is only a keyword straight after 'from <data source>', so a field or data source
-        // named sql elsewhere is not affected.
+        // A bracketed query starts with 'from' straight after its bracket, as in '(from X ...)'.
+        tokens = split("(\\()(from)(\\s|$)", 2, TokenType.FROM, tokens);
+        // 'sql' is only a keyword straight after 'from <data source>' or a joined source, so a field
+        // or data source named sql elsewhere is not affected.
         tokens = untagSqlOutsideItsClause(tokens);
+        // 'join' is only a keyword where a join line can start and 'on' only in a join line, so a field
+        // or data source with either name elsewhere is not affected.
+        tokens = untagJoinWordsOutsideJoinLines(tokens);
 
         // Treat NOT/AND/OR as keywords if they are in an expression to make sure they aren't treated as functions,
         // e.g. not().
@@ -139,6 +146,15 @@ public class Tokeniser {
 
         // Tag everything else as a string.
         tokens = categorise(TokenType.STRING, tokens);
+    }
+
+    // The pattern of a keyword's text. A join line starts with 'join' or with its kind and 'join', as in
+    // 'left join', which is a single token so the kind does not end up in the clause before it.
+    private static String getKeywordPattern(final TokenType keyword) {
+        if (TokenType.JOIN.equals(keyword)) {
+            return JOIN_PATTERN;
+        }
+        return keyword.toString().toLowerCase(Locale.ROOT);
     }
 
     public static List<Token> tagKeyword(final String pattern, final TokenType tokenType, final List<Token> tokens) {
@@ -439,7 +455,8 @@ public class Tokeniser {
         boolean valueSinceKeyword = false;
         for (int i = 0; i < tokens.size(); i++) {
             final Token token = tokens.get(i);
-            final boolean keepSql = (TokenType.FROM.equals(lastKeyword) && valueSinceKeyword)
+            final boolean afterSource = TokenType.FROM.equals(lastKeyword) || TokenType.JOIN.equals(lastKeyword);
+            final boolean keepSql = (afterSource && valueSinceKeyword)
                                     || isFollowedByTripleQuotedString(tokens, i);
             final Token current = TokenType.SQL.equals(token.getTokenType()) && !keepSql
                     ? new Token(TokenType.UNKNOWN, token.getChars(), token.getStart(), token.getEnd())
@@ -454,20 +471,144 @@ public class Tokeniser {
                 valueSinceKeyword = true;
             }
 
-            final Token previous = out.isEmpty()
-                    ? null
-                    : out.getLast();
-            if (previous != null
-                && TokenType.UNKNOWN.equals(previous.getTokenType())
-                && TokenType.UNKNOWN.equals(current.getTokenType())
-                && previous.getEnd() + 1 == current.getStart()) {
-                out.set(out.size() - 1, new Token(
-                        TokenType.UNKNOWN, previous.getChars(), previous.getStart(), current.getEnd()));
+            addJoiningUnknown(out, current);
+        }
+        return out;
+    }
+
+    // Turns each 'join' and 'on' keyword back into plain text unless it is where a join line can be,
+    // so a field or data source with either name keeps working. A join line can only start after the
+    // from source, a sql clause or another join line's keys. 'on' is only a keyword once in each join
+    // line, after its source. Brackets are followed so that the clauses of a bracketed query, as in
+    // 'join (from X where Y) as x on ...', do not hide the clauses around them.
+    private static List<Token> untagJoinWordsOutsideJoinLines(final List<Token> tokens) {
+        final List<Token> out = new ArrayList<>(tokens.size());
+        // The clause state of each open bracket level.
+        final List<ClauseState> levels = new ArrayList<>();
+        levels.add(new ClauseState());
+        for (int i = 0; i < tokens.size(); i++) {
+            final Token token = tokens.get(i);
+            final TokenType tokenType = token.getTokenType();
+            final ClauseState state = levels.getLast();
+            if (TokenType.JOIN.equals(tokenType)) {
+                addJoin(token, state, looksLikeJoinLine(tokens, i), out);
+            } else if (TokenType.ON.equals(tokenType)) {
+                if (state.awaitingOn) {
+                    state.keyword(TokenType.ON);
+                    addJoiningUnknown(out, token);
+                } else {
+                    state.valueSinceKeyword = true;
+                    addJoiningUnknown(out, toUnknown(token, token.getStart()));
+                }
+            } else if (TokenType.ALL_KEYWORDS.contains(tokenType)) {
+                state.keyword(tokenType);
+                addJoiningUnknown(out, token);
             } else {
-                out.add(current);
+                if (TokenType.UNKNOWN.equals(tokenType)) {
+                    followBrackets(token, levels);
+                } else if (!TokenType.COMMENT.equals(tokenType) && !TokenType.BLOCK_COMMENT.equals(tokenType)) {
+                    state.valueSinceKeyword = true;
+                }
+                addJoiningUnknown(out, token);
             }
         }
         return out;
+    }
+
+    // Adds a join keyword token, or turns it back into plain text where a join line can't be. Straight
+    // after 'from', with no data source yet, the word before 'join' in 'Left join' is the data source.
+    // A misplaced join line stays a keyword, so the parser can say it is out of place.
+    private static void addJoin(final Token token,
+                                final ClauseState state,
+                                final boolean looksLikeJoinLine,
+                                final List<Token> out) {
+        final boolean afterSource = TokenType.SQL.equals(state.lastKeyword)
+                                    || TokenType.ON.equals(state.lastKeyword)
+                                    || TokenType.JOIN.equals(state.lastKeyword)
+                                    || (TokenType.FROM.equals(state.lastKeyword) && state.valueSinceKeyword);
+        final boolean misplacedJoinLine = !TokenType.FROM.equals(state.lastKeyword) && looksLikeJoinLine;
+        if (afterSource || misplacedJoinLine) {
+            state.keyword(TokenType.JOIN);
+            out.add(token);
+        } else if (TokenType.FROM.equals(state.lastKeyword) && token.getText().length() > JOIN_WORD.length()) {
+            // 'from Left join X': 'Left' is the data source, 'join' starts the join line.
+            final int joinStart = token.getEnd() - JOIN_WORD.length() + 1;
+            addJoiningUnknown(out, new Token(TokenType.UNKNOWN, token.getChars(), token.getStart(), joinStart - 1));
+            out.add(new Token(TokenType.JOIN, token.getChars(), joinStart, token.getEnd()));
+            state.keyword(TokenType.JOIN);
+        } else {
+            state.valueSinceKeyword = true;
+            addJoiningUnknown(out, toUnknown(token, token.getStart()));
+        }
+    }
+
+    // True if the join keyword at the index is followed by a source, a word, quoted name or bracket,
+    // and later by 'on', as a join line is. A field named join is followed by an operator, a comma, a
+    // keyword or the end instead.
+    private static boolean looksLikeJoinLine(final List<Token> tokens, final int index) {
+        boolean sourceFollows = false;
+        for (int i = index + 1; i < tokens.size(); i++) {
+            final Token next = tokens.get(i);
+            final TokenType nextType = next.getTokenType();
+            if (TokenType.COMMENT.equals(nextType) || TokenType.BLOCK_COMMENT.equals(nextType)) {
+                continue;
+            }
+            final String text = next.getText().stripLeading();
+            if (text.isEmpty()) {
+                continue;
+            }
+            if (!sourceFollows) {
+                sourceFollows = next instanceof QuotedStringToken
+                                || (TokenType.UNKNOWN.equals(nextType)
+                                    && (Character.isLetterOrDigit(text.charAt(0)) || text.charAt(0) == '('));
+                if (!sourceFollows) {
+                    return false;
+                }
+            } else if (TokenType.ON.equals(nextType)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static Token toUnknown(final Token token, final int start) {
+        return new Token(TokenType.UNKNOWN, token.getChars(), start, token.getEnd());
+    }
+
+    // Opens and closes bracket levels for the brackets in plain text, and notes any other text as a
+    // value. Quoted text and comments are already separate tokens, so every bracket here is a real one.
+    private static void followBrackets(final Token token, final List<ClauseState> levels) {
+        for (int i = token.getStart(); i <= token.getEnd(); i++) {
+            final char c = token.getChars()[i];
+            if (c == '(') {
+                // A bracketed query or expression is a value of the clause it is in.
+                levels.getLast().valueSinceKeyword = true;
+                levels.add(new ClauseState());
+            } else if (c == ')') {
+                if (levels.size() > 1) {
+                    levels.removeLast();
+                }
+            } else if (!Character.isWhitespace(c)) {
+                levels.getLast().valueSinceKeyword = true;
+            }
+        }
+    }
+
+    // Adds a token, joining it to the token before if both are plain text that touch, so the text is
+    // tokenised exactly as it would have been had the keyword never been tagged.
+    private static void addJoiningUnknown(final List<Token> out, final Token current) {
+        final Token previous = out.isEmpty()
+                ? null
+                : out.getLast();
+        if (previous != null
+            && TokenType.UNKNOWN.equals(previous.getTokenType())
+            && TokenType.UNKNOWN.equals(current.getTokenType())
+            && previous.getEnd() + 1 == current.getStart()) {
+            out.set(out.size() - 1, new Token(
+                    TokenType.UNKNOWN, previous.getChars(), previous.getStart(), current.getEnd()));
+        } else {
+            out.add(current);
+        }
     }
 
     // True if the next token after the one at the index, ignoring white space, is triple-quoted.
@@ -499,5 +640,26 @@ public class Tokeniser {
     private static Pattern getPattern(final String regex) {
         return PATTERN_CACHE.computeIfAbsent(regex, k ->
                 Pattern.compile(k, Pattern.CASE_INSENSITIVE));
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // Where the tokens of one bracket level have got to: the last clause keyword, whether a value has
+    // followed it, and whether a join line is waiting for its 'on'.
+    private static final class ClauseState {
+
+        private TokenType lastKeyword;
+        private boolean valueSinceKeyword;
+        private boolean awaitingOn;
+
+        // A join line waits for its 'on', still waiting after its own sql clause.
+        private void keyword(final TokenType keyword) {
+            awaitingOn = TokenType.JOIN.equals(keyword)
+                         || (TokenType.SQL.equals(keyword) && awaitingOn);
+            lastKeyword = keyword;
+            valueSinceKeyword = false;
+        }
     }
 }

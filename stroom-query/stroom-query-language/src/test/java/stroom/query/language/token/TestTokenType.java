@@ -30,6 +30,8 @@ import org.junit.jupiter.api.TestFactory;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class TestTokenType {
 
     @Test
@@ -127,5 +129,22 @@ class TestTokenType {
                                 List.of(TokenType.ORDER, TokenType.BY), new TokenType[]{TokenType.ORDER, TokenType.BY}),
                         true)
                 .build();
+    }
+
+    @Test
+    void joinLineIsFollowedByItsSqlOrKeys() {
+        assertThat(TokenType.getKeywordsValidAfter(TokenType.JOIN))
+                .containsExactlyInAnyOrder(TokenType.SQL, TokenType.ON);
+    }
+
+    @Test
+    void keysAreOnlyOfferedAfterAJoinLine() {
+        assertThat(TokenType.getKeywordsValidAfter(TokenType.FROM))
+                .contains(TokenType.JOIN, TokenType.WHERE)
+                .doesNotContain(TokenType.ON);
+        assertThat(TokenType.getKeywordsValidAfter(TokenType.WHERE)).doesNotContain(TokenType.JOIN, TokenType.ON);
+        assertThat(TokenType.getKeywordsValidAfter(TokenType.ON))
+                .contains(TokenType.JOIN, TokenType.WHERE, TokenType.SELECT)
+                .doesNotContain(TokenType.SQL, TokenType.ON);
     }
 }

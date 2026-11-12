@@ -51,8 +51,17 @@ var StroomQueryHighlightRules = function() {
             token : ["variable", "variable", "text", "variable" ], // ${xxx}
             regex : '(\\$)(\\{)(.*?)(})'
         },  {
+            // A join line, e.g. 'left join "HR Users"'. Its kind is only a keyword as part of one.
+            token : ["keyword", "text", "keyword"],
+            regex : "(left|keep|drop)(\\s+)(join)\\b",
+            next : "doc-rule" // The joined data source, as after from
+        },  {
+            token : "keyword",
+            regex : /join\b/,
+            next : "doc-rule" // The joined data source, as after from
+        },  {
             token : ["keyword"],
-            regex : "(from|sql|select|where|filter|eval|and|or|not|sort|group|order|"
+            regex : "(from|sql|on|within|select|where|filter|eval|and|or|not|sort|group|order|"
                     + "limit|having|as|by|when|desc|asc|window|show|advance)\\b"
         },  {
             token : ["support.function", "text", "paren.lparen" ], // Un-quoted func, 'foo('
@@ -99,6 +108,11 @@ var StroomQueryHighlightRules = function() {
 
         // For highlighting a Doc name, e.g. show/from/dictionary
         "doc-rule" : [ {
+            // A bracketed query, e.g. 'from (from MyDoc ...)', so back to the main rules.
+            token : "paren.lparen",
+            regex : /\(/,
+            next : "start"
+        },  {
             token : "support.type", // e.g. '"My Doc"'
             regex : /"(?:\\"|[^"])*"/,
             next : "start"

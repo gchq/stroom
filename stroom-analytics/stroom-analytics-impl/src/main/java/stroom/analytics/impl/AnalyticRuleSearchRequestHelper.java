@@ -17,6 +17,7 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticProcessType;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
@@ -31,6 +32,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
+
+import java.util.Locale;
 
 public class AnalyticRuleSearchRequestHelper {
 
@@ -61,14 +64,30 @@ public class AnalyticRuleSearchRequestHelper {
                     DateTimeSettings.builder().build(),
                     false);
             final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
-            return searchRequestFactory
+            final SearchRequest searchRequest = searchRequestFactory
                     .create(doc.getQuery(), sampleRequest, expressionContext);
+            checkNoJoins(doc, searchRequest);
+            return searchRequest;
         } catch (final RuntimeException e) {
             LOGGER.debug(() ->
                     LogUtil.message(
                             "Error creating search request for analytic rule - {}",
                             RuleUtil.getRuleIdentity(doc)), e);
             throw e;
+        }
+    }
+
+    // Streaming and table builder rules run on each event as it is processed, so there is no other
+    // source's search to join it to. Scheduled queries run as searches, so they can have joins.
+    private static void checkNoJoins(final AbstractAnalyticRuleDoc doc, final SearchRequest searchRequest) {
+        final AnalyticProcessType processType = doc.getAnalyticProcessType();
+        final boolean runsOnEachEvent = AnalyticProcessType.STREAMING.equals(processType)
+                                        || AnalyticProcessType.TABLE_BUILDER.equals(processType);
+        if (runsOnEachEvent && searchRequest.getQuery().needsJoinSupport()) {
+            throw new IllegalArgumentException("A " + processType.getDisplayValue().toLowerCase(Locale.ROOT)
+                                               + " rule can't have joins, an alias or a bracketed query in from, "
+                                               + "as it runs on each event as it is processed. Use a scheduled "
+                                               + "query rule instead.");
         }
     }
 }

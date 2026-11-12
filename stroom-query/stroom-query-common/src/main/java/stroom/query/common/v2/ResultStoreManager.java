@@ -210,6 +210,11 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
             if (dataSourceRef == null || dataSourceRef.getUuid() == null) {
                 throw new RuntimeException("No search data source has been specified");
             }
+            // TODO: Run joins and bracketed queries once their execution is built (StroomQL joins,
+            //  stages 2 and 3). Until then they are refused here rather than run as a plain search.
+            if (modifiedRequest.getQuery().needsJoinSupport()) {
+                throw new RuntimeException("Joins, aliases and bracketed queries in from can't be run yet");
+            }
 
             // Get a store factory to perform this new search.
             final Optional<SearchProvider> optionalSearchProvider =

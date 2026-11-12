@@ -671,6 +671,25 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
         });
     }
 
+    // The data source a sql clause typed next would be for: the joined source straight after a join
+    // line, otherwise the from source.
+    private Optional<DocRef> getSqlClauseDataSource(final TokenType lastKeyword, final String query) {
+        return TokenType.JOIN.equals(lastKeyword)
+                ? getJoinedDataSource(query)
+                : getReferencedDataSource(query);
+    }
+
+    // The data source of the last join line, if it can be found yet.
+    private Optional<DocRef> getJoinedDataSource(final String query) {
+        try {
+            return searchRequestFactory.extractLastJoinDataSource(query);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> e.getMessage() + ". Enable TRACE to see stacktrace");
+            LOGGER.trace(e::getMessage, e);
+            return Optional.empty();
+        }
+    }
+
     @Override
     public Optional<String> getReferencedNativeQuery(final String query) {
         return searchRequestFactory.extractNativeQuery(query);
@@ -709,6 +728,8 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
             final Set<String> applicableStructureItems;
             final List<Token> tokens = Tokeniser.parse(partialQuery);
             TokenType lastKeyword = null;
+            // The keyword before lastKeyword, which tells whose sql clause a sql clause is.
+            TokenType previousKeyword = null;
             // The list of token types seen since (and including) lastKeyword
             final List<TokenType> lastKeywordSequence = new ArrayList<>();
             final Set<TokenType> keywordsSeen = new HashSet<>();
@@ -722,6 +743,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                 final TokenType tokenType = token.getTokenType();
                 if (TokenType.isKeyword(tokenType)) {
                     keywordsSeen.add(tokenType);
+                    previousKeyword = lastKeyword;
                     lastKeyword = tokenType;
                     lastKeywordSequence.clear();
                 }
@@ -737,7 +759,8 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
             }
 
             // Determine what keywords can come after the last one seen
-            final Set<TokenType> keywordsValidAfter = getKeywordsValidAfter(lastKeyword, lastKeywordSequence);
+            final Set<TokenType> keywordsValidAfter = getKeywordsValidAfter(
+                    lastKeyword, previousKeyword, lastKeywordSequence);
 
             if (seenInDictionary(tokens)) {
                 // If we see 'in dictionary ' then the only thing we want after that is a dictionary
@@ -748,9 +771,10 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                     types.add(QueryHelpType.DATA_SOURCE);
                 }
 
-                // Only offer a sql clause for a data source that runs SQL.
+                // Only offer a sql clause for a data source that runs SQL: the joined source in a
+                // join line, otherwise the from source.
                 final boolean offerSql = keywordsValidAfter.contains(TokenType.SQL)
-                                         && getReferencedDataSource(partialQuery)
+                                         && getSqlClauseDataSource(lastKeyword, partialQuery)
                                                  .map(docRef -> dataSourceProviderRegistry.takesNativeQuery(docRef))
                                                  .orElse(false);
                 applicableStructureItems = keywordsValidAfter.stream()
@@ -791,10 +815,14 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
             queryHelpTypes = EnumSet.of(QueryHelpType.STRUCTURE);
         } else {
             queryHelpTypes = switch (lastKeyword) {
-                case FROM -> count >= 4
-                        // 'from xxx '
+                case FROM, JOIN -> count >= 4
+                        // 'from xxx ' or 'join xxx '
                         ? EnumSet.of(QueryHelpType.STRUCTURE)
                         : QueryHelpType.NO_TYPES;
+                case ON -> count > 2
+                        // 'on UserId = hr.Username '
+                        ? EnumSet.of(QueryHelpType.FIELD, QueryHelpType.FUNCTION, QueryHelpType.STRUCTURE)
+                        : EnumSet.of(QueryHelpType.FIELD, QueryHelpType.FUNCTION);
                 case SQL -> count > 3
                         // 'sql """...""" ', after which only other clauses can follow
                         ? EnumSet.of(QueryHelpType.STRUCTURE)
@@ -872,9 +900,15 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
     }
 
     private static Set<TokenType> getKeywordsValidAfter(final TokenType lastKeyword,
+                                                        final TokenType previousKeyword,
                                                         final List<TokenType> lastKeywordSequence) {
         final Set<TokenType> keywordsValidAfter;
-        if (lastKeyword == null) {
+        if (lastKeyword == TokenType.SQL) {
+            // A join line's sql clause is followed by its keys; the from source's by anything but keys.
+            keywordsValidAfter = previousKeyword == TokenType.JOIN
+                    ? Set.of(TokenType.ON)
+                    : TokenType.exclude(TokenType.getKeywordsValidAfter(TokenType.SQL), TokenType.ON);
+        } else if (lastKeyword == null) {
             // FROM must be first keyword
             keywordsValidAfter = Set.of(TokenType.FROM);
         } else if (lastKeyword == TokenType.GROUP || lastKeyword == TokenType.SORT) {
@@ -895,8 +929,10 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
         return keywordsValidAfter;
     }
 
+    // Data sources are offered straight after from or a join line's join.
     private boolean includeDataSources(final List<TokenType> lastKeywordSequence) {
-        return isAtIndex(lastKeywordSequence, TokenType.FROM, 0)
+        return (isAtIndex(lastKeywordSequence, TokenType.FROM, 0)
+                || isAtIndex(lastKeywordSequence, TokenType.JOIN, 0))
                && isAtIndex(lastKeywordSequence, TokenType.WHITESPACE, 1)
                && lastKeywordSequence.size() <= 3;
     }

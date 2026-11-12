@@ -114,6 +114,47 @@ class Structures {
                         query parameter of that name. Values are always bound, never pasted into the SQL.
                         """,
                 "sql \"\"\"\n${1:select * from my_table}\n\"\"\"\n$0");
+        add(list, name(TokenType.JOIN),
+                """
+                        Join another data source to the rows of the query, straight after `from`, e.g.
+                        ```stroomql
+                        from "Windows events"
+                        left join "HR Users" as hr on UserId = hr.Username
+                        select UserId, hr.Department
+                        ```
+
+                        The kinds of join are:
+                        * `join` - one row per match; rows with no match are dropped.
+                        * `left join` - one row per match; rows with no match are kept, with blank joined fields.
+                        * `keep join` - each row with at least one match, once, with no joined fields.
+                        * `drop join` - each row with no match, with no joined fields.
+
+                        The joined fields are named `<alias>.<field>`. The alias is the name after `as`,
+                        or the data source's name if there is none.
+
+                        The joined source can be a bracketed query, which needs an alias, e.g.
+                        ```stroomql
+                        left join (
+                          from "File events"
+                          group by UserId
+                          select UserId, count() as Exports
+                        ) as ex on UserId = ex.UserId
+                        ```
+                        """,
+                "join \"${1:source}\" as ${2:alias} on ${3:field} = ${2:alias}.${4:field}\n$0");
+        add(list, name(TokenType.ON),
+                """
+                        Give the keys of a join, whose values must be equal for rows to join, e.g.
+                        ```stroomql
+                        on lowerCase(UserId) = hr.Username and Host = hr.Host
+                        ```
+
+                        An event-to-event join can also give a time window, e.g.
+                        ```stroomql
+                        on logon.UserId = export.UserId within 10m after logon.EventTime
+                        ```
+                        """,
+                "on ${1:field} = ${2:alias}.${3:field}$0");
         add(list, name(TokenType.WHERE),
                 """
                         Use where to construct query criteria, e.g.

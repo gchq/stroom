@@ -19,6 +19,7 @@ package stroom.query.api;
 import stroom.docref.DocRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -33,7 +34,8 @@ import java.util.Objects;
 /**
  * {@value #CLASS_DESC}
  */
-@JsonPropertyOrder({"dataSource", "expression", "params", "timeRange", "nativeQuery"})
+@JsonPropertyOrder({"dataSource", "expression", "params", "timeRange", "nativeQuery", "alias",
+        "sourceTableSettings", "joins"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = Query.CLASS_DESC)
 public final class Query {
@@ -64,17 +66,38 @@ public final class Query {
     @JsonProperty
     private final String nativeQuery;
 
+    @JsonPropertyDescription("The name the first source's fields may be prefixed with, as in <alias>.<field>, " +
+            "when the query has joins.")
+    @JsonProperty
+    private final String alias;
+
+    @JsonPropertyDescription("The eval, grouping and select of a bracketed query in 'from', whose result rows " +
+            "are the rows of this query, rather than the data source's own rows. Null when 'from' names a " +
+            "data source.")
+    @JsonProperty
+    private final TableSettings sourceTableSettings;
+
+    @JsonPropertyDescription("The sources joined to the rows of this query, applied in order.")
+    @JsonProperty
+    private final List<QueryJoin> joins;
+
     @JsonCreator
     public Query(@JsonProperty("dataSource") final DocRef dataSource,
                  @JsonProperty("expression") final ExpressionOperator expression,
                  @JsonProperty("params") final List<Param> params,
                  @JsonProperty("timeRange") final TimeRange timeRange,
-                 @JsonProperty("nativeQuery") final String nativeQuery) {
+                 @JsonProperty("nativeQuery") final String nativeQuery,
+                 @JsonProperty("alias") final String alias,
+                 @JsonProperty("sourceTableSettings") final TableSettings sourceTableSettings,
+                 @JsonProperty("joins") final List<QueryJoin> joins) {
         this.dataSource = dataSource;
         this.expression = expression;
         this.params = params;
         this.timeRange = timeRange;
         this.nativeQuery = nativeQuery;
+        this.alias = alias;
+        this.sourceTableSettings = sourceTableSettings;
+        this.joins = joins;
     }
 
     public DocRef getDataSource() {
@@ -100,6 +123,38 @@ public final class Query {
         return nativeQuery;
     }
 
+    /// Gets the name the first source's fields may be prefixed with when the query has joins.
+    ///
+    /// @return The alias, or `null` if none was given.
+    public String getAlias() {
+        return alias;
+    }
+
+    /// Gets the eval, grouping and select of a bracketed query in `from`, whose result rows are the
+    /// rows of this query.
+    ///
+    /// @return The table settings, or `null` if `from` names a data source.
+    public TableSettings getSourceTableSettings() {
+        return sourceTableSettings;
+    }
+
+    /// Gets the sources joined to the rows of this query, in the order they are applied.
+    ///
+    /// @return The joins, or `null` if there are none.
+    public List<QueryJoin> getJoins() {
+        return joins;
+    }
+
+    /// Finds whether running this query needs join support rather than a single search of its data
+    /// source: it joins other sources, reads a bracketed query, or names fields with an alias that
+    /// must be mapped to the data source's own field names.
+    ///
+    /// @return True if the query has joins, a bracketed query in `from`, or an alias.
+    @JsonIgnore
+    public boolean needsJoinSupport() {
+        return (joins != null && !joins.isEmpty()) || sourceTableSettings != null || alias != null;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -113,12 +168,15 @@ public final class Query {
                 Objects.equals(expression, query.expression) &&
                 Objects.equals(params, query.params) &&
                 Objects.equals(timeRange, query.timeRange) &&
-                Objects.equals(nativeQuery, query.nativeQuery);
+                Objects.equals(nativeQuery, query.nativeQuery) &&
+                Objects.equals(alias, query.alias) &&
+                Objects.equals(sourceTableSettings, query.sourceTableSettings) &&
+                Objects.equals(joins, query.joins);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dataSource, expression, params, timeRange, nativeQuery);
+        return Objects.hash(dataSource, expression, params, timeRange, nativeQuery, alias, sourceTableSettings, joins);
     }
 
     @Override
@@ -129,6 +187,9 @@ public final class Query {
                 ", params=" + params +
                 ", timeRange=" + timeRange +
                 ", nativeQuery=" + nativeQuery +
+                ", alias=" + alias +
+                ", sourceTableSettings=" + sourceTableSettings +
+                ", joins=" + joins +
                 '}';
     }
 
@@ -150,6 +211,9 @@ public final class Query {
         private List<Param> params;
         private TimeRange timeRange;
         private String nativeQuery;
+        private String alias;
+        private TableSettings sourceTableSettings;
+        private List<QueryJoin> joins;
 
         private Builder() {
         }
@@ -160,6 +224,9 @@ public final class Query {
             this.params = query.params;
             this.timeRange = query.timeRange;
             this.nativeQuery = query.nativeQuery;
+            this.alias = query.alias;
+            this.sourceTableSettings = query.sourceTableSettings;
+            this.joins = query.joins;
         }
 
         /**
@@ -233,8 +300,42 @@ public final class Query {
             return this;
         }
 
+        /// Sets the name the first source's fields may be prefixed with when the query has joins.
+        ///
+        /// @param alias The alias, or `null` for none.
+        /// @return The [Builder], enabling method chaining.
+        public Builder alias(final String alias) {
+            this.alias = alias;
+            return this;
+        }
+
+        /// Sets the eval, grouping and select of a bracketed query in `from`.
+        ///
+        /// @param sourceTableSettings The table settings, or `null` if `from` names a data source.
+        /// @return The [Builder], enabling method chaining.
+        public Builder sourceTableSettings(final TableSettings sourceTableSettings) {
+            this.sourceTableSettings = sourceTableSettings;
+            return this;
+        }
+
+        /// Sets the sources joined to the rows of the query, in the order they are applied.
+        ///
+        /// @param joins The joins, or `null` for none.
+        /// @return The [Builder], enabling method chaining.
+        public Builder joins(final List<QueryJoin> joins) {
+            this.joins = joins;
+            return this;
+        }
+
         public Query build() {
-            return new Query(dataSource, expression, params, timeRange, nativeQuery);
+            return new Query(dataSource,
+                    expression,
+                    params,
+                    timeRange,
+                    nativeQuery,
+                    alias,
+                    sourceTableSettings,
+                    joins);
         }
     }
 }
