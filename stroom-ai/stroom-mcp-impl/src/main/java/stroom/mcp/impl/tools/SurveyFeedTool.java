@@ -44,6 +44,8 @@ import stroom.ai.impl.tools.sample.Shapes;
 import stroom.ai.impl.tools.sample.SourceTypeFields;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
+import stroom.ai.impl.tools.sample.SourceTypeRows;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.ToolTimeoutException;
@@ -150,6 +152,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     static final String STEP_FURTHER = "Step records further in first";
     // The share of a part's budget its windows take when it is read in order from its start: a quarter.
     private static final int WINDOW_SHARE = 4;
+    // How many more records than the budget a build's scope may have split from a head or window to find its own: a
+    // scope of a tenth of the records gets its budget from the text a whole-feed survey reads.
+    static final int SCOPE_SPREAD = 10;
     static final String EXAMPLES_ARG = "examples_per_shape";
     static final String BUILD_ARG = "build";
     static final String SOURCE_TYPE_FIELD_ARG = "source_type_field";
@@ -265,8 +270,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                              + "count, share and examples, and where each example is (stream, part, record) for "
                              + "step_records. Call again with skip_stream_ids (all streams read so far) and "
                              + "known_signatures to read further streams for kinds of event not seen yet. With a "
-                             + "build, the results are kept in (and continued from) the build's survey doc. Reads "
-                             + "only, apart from that doc.")
+                             + "build, the results are kept in (and continued from) the build's survey doc; once "
+                             + "the build's scope over an aggregated feed's source types is chosen "
+                             + "(record_source_types), only the scope's records are surveyed, the others counted by "
+                             + "source type. Reads only, apart from that doc.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(FEED_ARG, "The feed that already holds the raw data.")
                         .addStringProperty(STREAM_TYPE_ARG, "Stream type to sample.")
@@ -564,8 +571,29 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final Set<Long> skip = new TreeSet<>(request.skipStreamIds());
         final Set<String> known = new LinkedHashSet<>(request.knownSignatures());
         known.removeAll(dropped);
+        // A build's scope over an aggregated feed's source types: only its records make shapes. A stream read before
+        // for other source types (a narrower scope, or another build's) is read again for those it wasn't read for.
+        final Map<String, Object> keptScope = JsonValues.mapOrEmpty(keptSources.get(SourceTypeProfiles.SCOPE));
+        final SourceTypeScope scope = build == null || keptScope.isEmpty()
+                ? null
+                : SourceTypeScope.of(keptSources, build, JsonValues.listOrEmpty(keptScope.get(SourceTypeScope.ROWS))
+                        .isEmpty()
+                        ? registryRows(build, feed)
+                        : List.of()).orElse(null);
+        final SourceTypeScope reader = scope != null
+                ? scope
+                : readerOf(keptSources, build, feed);
+        final Map<Long, List<String>> readAgain = new LinkedHashMap<>();
         if (state != null) {
-            JsonValues.listOrEmpty(state.get("streams_read")).forEach(id -> skip.add(((Number) id).longValue()));
+            JsonValues.listOrEmpty(state.get("streams_read")).forEach(id -> {
+                final long stream = ((Number) id).longValue();
+                final List<String> signed = SurveyDoc.readFor(state, stream);
+                if (reader == null || reader.covers(signed)) {
+                    skip.add(stream);
+                } else {
+                    readAgain.put(stream, signed);
+                }
+            });
             JsonValues.mapOrEmpty(state.get("shapes")).keySet().forEach(signature -> known.add(String.valueOf(
                     signature)));
         }
@@ -630,6 +658,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                    + "asked how far).");
             }
             noteGone(result, gone, dropped);
+            noteCarriedOn(result, promoted);
             return keep(context, kept, result, Map.of());
         }
         if (streams.isEmpty()) {
@@ -689,7 +718,16 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 : new SourceTypeProfiles(sources.field());
         if (profiles != null) {
             shapes.observe(profiles::add);
+            final String field = sources.field();
+            shapes.keepSourceValues(parsed -> SourceTypeFields.valueOf(parsed, field));
         }
+        // The scope chosen for another field, or before the field changed, isn't this survey's.
+        final boolean scoped = scope != null && scope.field().equals(sources.field()) && !sources.changed();
+        final StreamScopes scopes = new StreamScopes(shapes, scoped
+                ? scope
+                : null, reader != null && reader.field().equals(sources.field()) && !sources.changed()
+                ? reader
+                : null, readAgain, profiles);
         // Parts the user had read deeper that a call's time cut short: read on from where they stopped, not read
         // again from their start (which would count their records twice).
         final Map<String, SurveyDepth.Part> earlier = depthOf(state);
@@ -701,7 +739,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         pending.forEach(part -> continuing.add(part.stream()));
         final Reading reading = read(context, progress, feed, streams.stream()
                 .filter(meta -> !continuing.contains(meta.getId()))
-                .toList(), shapes, limits, peeked, profiles);
+                .toList(), shapes, limits, peeked, profiles, scopes);
         if (reading.firstChunk() == null && pending.isEmpty()) {
             if (reading.stopped()) {
                 throw new ToolTimeoutException();
@@ -717,6 +755,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final Map<String, Object> result = result(new Outcome(feed, span, chosen, exhausted, !known.isEmpty(),
                 state, streams.size(), request.maxStreams(), limits), reading, shapes, context);
         noteDepth(result, reading, depth);
+        noteScope(result, scopes, reading, depth, keptSources, profiles);
         settleInPart(call, context, request, result, reading, depth, state, !chosen.isEmpty() || exhausted);
         noteGone(result, gone, dropped);
         if (kinds != null) {
@@ -736,15 +775,20 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         } else if (build == null) {
             noteAggregated(result, feed, heads);
         }
+        noteCarriedOn(result, promoted);
+        if (build != null) {
+            askPromotion(call, context, request, feed, state, result);
+        }
+        return withSourcesSaid(keep(context, kept, result, shapes.shapes()), build, feed);
+    }
+
+    // A survey carried on from the doc promoted beside the feed says so, whether or not anything was left to read.
+    private static void noteCarriedOn(final Map<String, Object> result, final SurveyRecord promoted) {
         if (promoted != null) {
             result.put("carried_on_from", "the survey doc promoted beside the feed (" + promoted.uuid() + "): its "
                                           + "streams were skipped and its kinds of event known; the build's survey "
                                           + "doc is its working copy, written back over it at promotion");
         }
-        if (build != null) {
-            askPromotion(call, context, request, feed, state, result);
-        }
-        return withSourcesSaid(keep(context, kept, result, shapes.shapes()), build, feed);
     }
 
     // The source type field, as the user chose it: given now (source_type_field), kept by the survey, or found in
@@ -1347,6 +1391,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final List<SurveyDepth.Part> out = new ArrayList<>();
         for (final SurveyDepth.Part part : parts) {
             if (!part.settled() && part.target() > part.readTo() && !timeIsUp()) {
+                if (reading.scopes != null) {
+                    reading.scopes.prepare(part.stream());
+                }
                 final SurveyDepth.Deeper deeper = SurveyDepth.readDeeper(streamReader, shapes, part,
                         SurveyFeedTool::timeIsUp);
                 reading.recordsRead += deeper.records();
@@ -1437,9 +1484,11 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                          final Shapes shapes,
                          final Limits limits,
                          final Map<Long, RawHead> peeked,
-                         final SourceTypeProfiles profiles) {
+                         final SourceTypeProfiles profiles,
+                         final StreamScopes scopes) {
         final Reading reading = new Reading();
         reading.peeked.putAll(peeked);
+        reading.scopes = scopes;
         progress.say("Reading the head of " + streams.size() + " stream" + (streams.size() != 1
                 ? "s"
                 : "") + " of " + feed);
@@ -1455,6 +1504,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 if (profiles != null) {
                     profiles.streamCreated(meta.getId(), meta.getCreateMs());
                 }
+                scopes.prepare(meta.getId());
                 progress.nowAndThen("Reading stream " + meta.getId() + " (" + n + " of " + streams.size() + "): "
                                     + reading.recordsRead + " records read so far");
                 readStream(reading, meta, shapes, limits);
@@ -1508,10 +1558,15 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             parts = head.parts();
             cut = cut || head.truncated();
             final int budget = limits.maxRecords();
+            // Within a build's scope, the budget is of the scope's records: more of the head is split to find them.
+            final boolean scoped = reading.scopes != null && reading.scopes.scoped(meta.getId());
+            final int most = budget * SPLIT_MORE * (scoped
+                    ? SCOPE_SPREAD
+                    : 1);
             final RecordSplitter.Chunk chunk;
             try {
                 // More than are read, so those read can be spread over them (see below).
-                chunk = RecordSplitter.split(head.text(), budget * SPLIT_MORE, head.truncated());
+                chunk = RecordSplitter.split(head.text(), most, head.truncated());
             } catch (final RuntimeException e) {
                 // A part this detector cannot split.
                 reading.perStream.add(entry("stream", meta.getId(), "part", part, "error",
@@ -1540,7 +1595,19 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 final int inOrder = Math.min(chunk.records().size(), windowed
                         ? budget - budget / WINDOW_SHARE
                         : budget);
-                picks = LongStream.range(0, inOrder).boxed().toList();
+                picks = LongStream.range(0, scoped
+                        ? throughScope(chunk, shapes, 0, inOrder)
+                        : inOrder).boxed().toList();
+            } else if (scoped) {
+                // As below, the records read spread over as many more as the scope's share of the head asks, so
+                // about the budget of them are the scope's.
+                final int want = windowed
+                        ? Math.max(1, budget / 2)
+                        : budget;
+                final int spread = scopeSpread(chunk, shapes, want);
+                picks = windowed
+                        ? RecordPicks.headAndSpread(Math.min(chunk.records().size(), spread), spread)
+                        : RecordPicks.headAndSpread(chunk.records().size(), spread);
             } else {
                 // A part bigger than its head: the head takes at most half the records, the windows spread to its
                 // end the rest. A head holding more records than are read: a block at its start and the rest spread
@@ -1553,21 +1620,25 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             }
             int partRead = 0;
             for (final long index : picks) {
+                // Only the scope's records count as read: the others are passed over (counted by source type).
+                if (shapes.inScope(chunk, (int) index)) {
+                    partRead++;
+                }
                 if (shapes.add(chunk, (int) index, meta.getId(), part)) {
                     newHere++;
                 }
-                partRead++;
             }
             List<List<Long>> ranges = List.of();
             if (windowed && partRead < budget && !timeIsUp()) {
-                final WindowsRead read = readWindows(reading, meta, part, head, chunk, shapes, budget - partRead);
+                final WindowsRead read = readWindows(reading, meta, part, head, chunk, shapes, budget - partRead,
+                        scoped);
                 windowsHere += read.windows();
                 partRead += read.records();
                 newHere += read.newShapes();
                 ranges = read.ranges();
             }
             // Every record of the part read: its whole text was read, and split into fewer records than the most.
-            final boolean partWhole = !head.truncated() && chunk.records().size() < budget * SPLIT_MORE
+            final boolean partWhole = !head.truncated() && chunk.records().size() < most
                                       && picks.size() == chunk.records().size();
             if (!partWhole) {
                 inPart = true;
@@ -1633,7 +1704,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                               final RawHead head,
                               final RecordSplitter.Chunk chunk,
                               final Shapes shapes,
-                              final int maxRecords) {
+                              final int maxRecords,
+                              final boolean scoped) {
         final List<StreamReader.Window> windows;
         try {
             windows = streamReader.readWindows(meta.getId(), part,
@@ -1664,9 +1736,11 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             try {
                 more = RecordSplitter.splitAs(chunk.format(), chunk.header() == null
                         ? window.text()
-                        : chunk.header() + "\n" + window.text(), tail
+                        : chunk.header() + "\n" + window.text(), (tail
                         ? take * SPLIT_MORE
-                        : take, false);
+                        : take) * (scoped
+                        ? SCOPE_SPREAD
+                        : 1), false);
             } catch (final RuntimeException e) {
                 continue;
             }
@@ -1677,15 +1751,30 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             final long firstRecord = window.firstLine() - (chunk.header() == null
                     ? 0
                     : 1);
-            final int from = tail
-                    ? Math.max(0, more.records().size() - take)
-                    : 0;
-            final int to = Math.min(more.records().size(), from + take);
+            final int size = more.records().size();
+            final int from;
+            final int to;
+            if (scoped) {
+                // As many records as hold `take` of the scope's: from the window's start, or back from the tail's end.
+                from = tail
+                        ? backThroughScope(more, shapes, take)
+                        : 0;
+                to = tail
+                        ? size
+                        : throughScope(more, shapes, 0, take);
+            } else {
+                from = tail
+                        ? Math.max(0, size - take)
+                        : 0;
+                to = Math.min(size, from + take);
+            }
             for (int index = from; index < to; index++) {
+                if (shapes.inScope(more, index)) {
+                    records++;
+                }
                 if (shapes.add(more, index, meta.getId(), part, firstRecord)) {
                     newShapes++;
                 }
-                records++;
             }
             ranges.add(List.of(firstRecord + from, (long) (to - from)));
         }
@@ -1710,6 +1799,130 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                        .filter(Objects::nonNull)
                        .flatMap(record -> record.values().stream())
                        .anyMatch(value -> value instanceof final String text && text.indexOf('\n') >= 0);
+    }
+
+    // The index after the first `take` of the scope's records from `from`: the chunk's end when it holds fewer.
+    private static int throughScope(final RecordSplitter.Chunk chunk,
+                                    final Shapes shapes,
+                                    final int from,
+                                    final int take) {
+        int found = 0;
+        int index = from;
+        while (index < chunk.records().size() && found < take) {
+            if (shapes.inScope(chunk, index)) {
+                found++;
+            }
+            index++;
+        }
+        return index;
+    }
+
+    // The index from which the chunk's last records hold `take` of the scope's: 0 when it holds fewer.
+    private static int backThroughScope(final RecordSplitter.Chunk chunk, final Shapes shapes, final int take) {
+        int found = 0;
+        int index = chunk.records().size();
+        while (index > 0 && found < take) {
+            index--;
+            if (shapes.inScope(chunk, index)) {
+                found++;
+            }
+        }
+        return index;
+    }
+
+    // How many of a head's records to spread the picks over for about `want` of them to be the scope's: by the
+    // scope's share of the head, at most the head; `want` when the head holds none of the scope's.
+    private static int scopeSpread(final RecordSplitter.Chunk chunk, final Shapes shapes, final int want) {
+        final int size = chunk.records().size();
+        int inScope = 0;
+        for (int index = 0; index < size; index++) {
+            if (shapes.inScope(chunk, index)) {
+                inScope++;
+            }
+        }
+        if (inScope == 0) {
+            return Math.min(size, want);
+        }
+        return (int) Math.min(size, (long) Math.ceil((double) want * size / inScope));
+    }
+
+    // The rows of the feed's registry (the build's, else the one beside the feed); none when it has none.
+    private List<SourceTypeRows.Row> registryRows(final String build, final String feed) {
+        try {
+            return besideFeed.registry(build, feed)
+                    .map(found -> SourceTypeRegistry.rows(found.state()))
+                    .orElse(List.of());
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No registry read for feed {}: {}", feed, e.getMessage()));
+            return List.of();
+        }
+    }
+
+    // Every source type, told apart by the rows a scope kept (another build's) or the registry's, for reading again
+    // the streams a narrower scope read; null when no source type field is kept.
+    private SourceTypeScope readerOf(final Map<String, Object> sources, final String build, final String feed) {
+        if (!(sources.get(SourceTypeProfiles.FIELD) instanceof final String field) || field.isBlank()) {
+            return null;
+        }
+        final List<SourceTypeRows.Row> kept = SourceTypeScope.rowsOf(JsonValues.mapOrEmpty(
+                sources.get(SourceTypeProfiles.SCOPE)).get(SourceTypeScope.ROWS));
+        return new SourceTypeScope(build, field, kept.isEmpty()
+                ? registryRows(build, feed)
+                : kept, null);
+    }
+
+    // What the call read through the build's scope: each stream read signed by it (kept in the survey state, so a
+    // scope that adds source types reads them again for those), the scope and its share of the feed said, and the
+    // records of other source types passed over.
+    private static void noteScope(final Map<String, Object> result,
+                                  final StreamScopes scopes,
+                                  final Reading reading,
+                                  final List<SurveyDepth.Part> depth,
+                                  final Map<String, Object> keptSources,
+                                  final SourceTypeProfiles profiles) {
+        if (scopes.scope == null && scopes.readAgain.isEmpty()) {
+            return;
+        }
+        final Set<Long> read = new TreeSet<>(reading.streamsRead());
+        depth.forEach(part -> read.add(part.stream()));
+        final Map<String, Object> signed = new LinkedHashMap<>();
+        for (final long stream : read) {
+            if (scopes.scope != null) {
+                signed.put(String.valueOf(stream), scopes.scope.signature());
+            } else if (scopes.readAgain.containsKey(stream)) {
+                signed.put(String.valueOf(stream), List.of(SourceTypeScope.ALL));
+            }
+        }
+        if (!signed.isEmpty()) {
+            result.put(SurveyDoc.SCOPE_READ, signed);
+        }
+        if (!scopes.readAgain.isEmpty()) {
+            final List<Long> again = scopes.readAgain.keySet().stream().filter(read::contains).toList();
+            if (!again.isEmpty()) {
+                result.put("read_again", "Stream(s) " + again + " were read before for other source types only: "
+                                         + "read again for those they weren't, so the survey's coverage of them "
+                                         + "starts again.");
+            }
+        }
+        if (scopes.scope == null) {
+            return;
+        }
+        final Map<String, Object> sources = profiles == null
+                ? keptSources
+                : SourceTypeProfiles.merge(keptSources, profiles.toState(Map.of()));
+        final Map<String, Object> share = scopes.scope.share(sources);
+        final Map<String, Object> said = new LinkedHashMap<>();
+        said.put("build", scopes.scope.build());
+        said.put(SourceTypeScope.SOURCE_TYPES, share.get(SourceTypeScope.SOURCE_TYPES));
+        said.put("share_percent", share.get("share_percent"));
+        said.put("records_passed_over", scopes.shapes.passedOver());
+        said.put("note", "Only the scope's records were surveyed (records_read, the kinds, coverage); the "
+                         + scopes.shapes.passedOver() + " record(s) of other source types read past were counted by "
+                         + "source type for the registry, and nothing more.");
+        result.put("scope", said);
+        if (result.get("coverage") instanceof final String coverage) {
+            result.put("coverage", coverage + " (within the scope: " + scopes.scope.shareSaid(sources) + ")");
+        }
     }
 
     // The call's result.
@@ -2183,6 +2396,50 @@ class SurveyFeedTool extends AbstractBuiltInTool {
 
     }
 
+    // What each stream is read for: the build's scope; or, for a stream read before for other source types only, the
+    // scope's source types it wasn't read for (its records counted by source type when it was first read).
+    private static final class StreamScopes {
+
+        private final Shapes shapes;
+        private final SourceTypeScope scope;
+        private final SourceTypeScope reader;
+        private final Map<Long, List<String>> readAgain;
+        private final SourceTypeProfiles profiles;
+
+        private StreamScopes(final Shapes shapes,
+                             final SourceTypeScope scope,
+                             final SourceTypeScope reader,
+                             final Map<Long, List<String>> readAgain,
+                             final SourceTypeProfiles profiles) {
+            this.shapes = shapes;
+            this.scope = scope;
+            this.reader = reader;
+            this.readAgain = readAgain;
+            this.profiles = profiles;
+        }
+
+        // Sets the shapes to read a stream through what it is read for.
+        private void prepare(final long stream) {
+            final List<String> signed = readAgain.get(stream);
+            if (signed != null && reader != null) {
+                shapes.scope(reader.notReadFor(signed));
+                shapes.observe(null);
+                return;
+            }
+            shapes.scope(scope == null
+                    ? null
+                    : scope::inScope);
+            shapes.observe(profiles == null
+                    ? null
+                    : profiles::add);
+        }
+
+        // Whether a stream is read through a scope: its budget is of the scope's records.
+        private boolean scoped(final long stream) {
+            return scope != null || reader != null && readAgain.containsKey(stream);
+        }
+    }
+
     // What has been read so far.
     private static final class Reading {
 
@@ -2197,6 +2454,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         private final List<SurveyDepth.Part> partial = new ArrayList<>();
         // The first parts' heads read already (to choose the kind fields), by stream.
         private final Map<Long, RawHead> peeked = new LinkedHashMap<>();
+        // What each stream is read for (a build's scope), or null.
+        private StreamScopes scopes;
 
         private void stop() {
             stopped = true;

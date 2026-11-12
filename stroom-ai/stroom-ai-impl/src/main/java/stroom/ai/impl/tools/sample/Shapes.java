@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,8 +49,16 @@ import java.util.regex.Pattern;
 ///   merged with other messages that differ only in a few words (user names, hosts), in the style of Drain.
 ///
 /// A shape is JSON, as the survey doc keeps it: `signature`, `known`, `count`, `examples` (each `text` and
-/// `location`: `stream`, `part`, `record`) and `streams`.
+/// `location`: `stream`, `part`, `record`) and `streams`; for an aggregated feed, `source_values` too (the source
+/// type field's values its records had).
+///
+/// For a build with a scope over an aggregated feed's source types ([SourceTypeScope]), only the scope's records
+/// make shapes: the others are passed over, told to the observer (the source type profiles count them) and nothing
+/// more.
 public final class Shapes {
+
+    /// A shape's key for the source type field's values its records had.
+    public static final String SOURCE_VALUES = "source_values";
 
     /// A field or column that usually names the kind of event.
     public static final Pattern NAMING = ToolText.re(
@@ -93,6 +103,12 @@ public final class Shapes {
     private List<String> kindFields;
     // Told of every record added (the source type profiles), or null.
     private RecordObserver observer;
+    // The records that make shapes (a build's scope), or null for every one.
+    private Predicate<Map<String, Object>> scope;
+    // The source type field's value of a record, kept with its shape, or null.
+    private Function<Map<String, Object>, String> sourceValue;
+    // The records the scope passed over.
+    private long passedOver;
 
     /// Shapes with none known, keeping two examples each.
     public Shapes() {
@@ -142,6 +158,35 @@ public final class Shapes {
     /// @param observer The observer, or null for none.
     public void observe(final RecordObserver observer) {
         this.observer = observer;
+    }
+
+    /// Only the records this tells are in a build's scope make shapes from now on; the others are passed over (told
+    /// to the observer, and counted by [#passedOver()]).
+    ///
+    /// @param inScope Whether a record (its fields, flattened; null for one with none) is in the scope; null for every
+    ///                record.
+    public void scope(final Predicate<Map<String, Object>> inScope) {
+        this.scope = inScope;
+    }
+
+    /// Keeps with each shape the source type field's values its records had, so a later build can tell which source
+    /// types a shape is of.
+    ///
+    /// @param value A record's source type field value (null when it has none); null to keep none.
+    public void keepSourceValues(final Function<Map<String, Object>, String> value) {
+        this.sourceValue = value;
+    }
+
+    /// @param chunk A part's records.
+    /// @param index A record's index.
+    /// @return True if the record makes shapes: there is no scope, or it is in the scope.
+    public boolean inScope(final RecordSplitter.Chunk chunk, final int index) {
+        return scope == null || scope.test(chunk.parsedAt(index));
+    }
+
+    /// @return The records added that the scope passed over.
+    public long passedOver() {
+        return passedOver;
     }
 
     /// @return The shapes by signature, in the order first seen: each `signature`, `known`, `count`, `examples`
@@ -366,6 +411,9 @@ public final class Shapes {
                     streams.add(stream);
                 }
             }
+            for (final String value : (List<String>) shape.getOrDefault(SOURCE_VALUES, List.of())) {
+                into.put(SOURCE_VALUES, SourceTypeScope.withValue((List<String>) into.get(SOURCE_VALUES), value));
+            }
             final List<Map<String, Object>> kept = new ArrayList<>((List<Map<String, Object>>) into.get("examples"));
             kept.addAll((List<Map<String, Object>>) shape.get("examples"));
             into.put("examples", new ArrayList<>(kept.subList(0, Math.min(examples, kept.size()))));
@@ -399,6 +447,16 @@ public final class Shapes {
                        final long streamId,
                        final int part,
                        final long firstRecord) {
+        if (!inScope(chunk, index)) {
+            // Outside the build's scope: counted by source type, never signed (a text template signed would widen
+            // the scope's templates).
+            passedOver++;
+            if (observer != null) {
+                observer.added(chunk.parsedAt(index), chunk.records().get(index), streamId, part,
+                        firstRecord + index);
+            }
+            return false;
+        }
         final String signature = signature(chunk, index);
         final boolean isNew = !shapes.containsKey(signature);
         final Map<String, Object> shape = addShape(signature, false);
@@ -412,6 +470,12 @@ public final class Shapes {
         if (kept.size() < examples && kept.stream().noneMatch(e -> text.equals(e.get("text")))) {
             kept.add(SampleProfiler.map("text", text, "location",
                     SampleProfiler.map("stream", streamId, "part", part, "record", recordNumber(firstRecord + index))));
+        }
+        if (sourceValue != null) {
+            final String value = sourceValue.apply(chunk.parsedAt(index));
+            if (value != null) {
+                shape.put(SOURCE_VALUES, SourceTypeScope.withValue((List<String>) shape.get(SOURCE_VALUES), value));
+            }
         }
         if (observer != null) {
             observer.added(chunk.parsedAt(index), text, streamId, part, firstRecord + index);

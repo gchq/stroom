@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.sample.RecordSplitter;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 
 import java.util.ArrayList;
@@ -48,6 +49,21 @@ final class SurveyExamples {
     static Added added(final Map<String, String> texts,
                        final List<SampleStreamTexts.Cut> cut,
                        final List<Map<String, Object>> states) {
+        return added(texts, cut, states, null);
+    }
+
+    /// As [#added(Map, List, List)], through a build's scope over an aggregated feed's source types: only the
+    /// scope's records are added.
+    ///
+    /// @param texts  The sample's texts as read (not through the scope), by name.
+    /// @param cut    The parts the sample read only in part.
+    /// @param states The build's survey states.
+    /// @param scope  The build's scope, or null for none.
+    /// @return A text for each cut part the survey found records of the scope in that its text doesn't hold.
+    static Added added(final Map<String, String> texts,
+                       final List<SampleStreamTexts.Cut> cut,
+                       final List<Map<String, Object>> states,
+                       final SourceTypeScope scope) {
         final List<String> added = new ArrayList<>();
         final Set<Long> streams = new LinkedHashSet<>();
         int records = 0;
@@ -70,12 +86,24 @@ final class SurveyExamples {
             for (final Map<String, Object> state : states) {
                 further.addAll(examplesIn(state, part, text));
             }
-            if (!further.isEmpty()) {
-                added.add((head.header() == null
-                        ? ""
-                        : head.header() + "\n") + String.join("\n", further) + "\n");
+            if (further.isEmpty()) {
+                continue;
+            }
+            String scoped = (head.header() == null
+                    ? ""
+                    : head.header() + "\n") + String.join("\n", further) + "\n";
+            int count = further.size();
+            if (scope != null) {
+                final SourceTypeScope.Filtered filtered = scope.filter(scoped);
+                if (filtered.filtered()) {
+                    scoped = filtered.text();
+                    count = filtered.kept();
+                }
+            }
+            if (count > 0) {
+                added.add(scoped);
                 streams.add(part.stream());
-                records += further.size();
+                records += count;
             }
         }
         return new Added(added, records, List.copyOf(streams));

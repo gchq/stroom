@@ -29,6 +29,7 @@ import stroom.ai.impl.tools.generation.Extraction;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.impl.tools.sample.TimePatterns;
 import stroom.ai.impl.tools.sample.ToolJson;
@@ -518,6 +519,16 @@ class TranslationBuilds {
             LOGGER.debug(() -> LogUtil.message("No survey read from build {}: {}", build, e.getMessage()));
         }
         return Optional.empty();
+    }
+
+    /// @param build A build, or null.
+    /// @return The build's scope over an aggregated feed's source types, as its survey keeps it
+    /// ([SourceTypeScope]); empty for a build without one (or without a build).
+    Optional<SourceTypeScope> scope(final String build) {
+        return surveyStatesInBuild(build).stream()
+                .map(state -> SourceTypeScope.ofSurvey(state, build, List.of()))
+                .flatMap(Optional::stream)
+                .findFirst();
     }
 
     /// @param build A build, or null.

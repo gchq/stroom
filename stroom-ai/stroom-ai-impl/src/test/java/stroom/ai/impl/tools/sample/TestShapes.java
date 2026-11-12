@@ -411,6 +411,37 @@ class TestShapes {
                 "fields:msg_id,verdict | verdict=block");
     }
 
+    @Test
+    void recordsOutsideABuildsScopeArePassedOverButStillObserved() {
+        final String text = "{\"source\": \"db\", \"event\": \"select\"}\n"
+                            + "{\"source\": \"web\", \"event\": \"get\"}\n"
+                            + "{\"source\": \"db\", \"event\": \"update\"}\n"
+                            + "{\"source\": \"web\", \"event\": \"post\"}\n";
+        final Shapes shapes = new Shapes();
+        final List<Long> observed = new ArrayList<>();
+        shapes.observe((parsed, record, stream, part, index) -> observed.add(index));
+        shapes.scope(parsed -> parsed != null && "db".equals(parsed.get("source")));
+        shapes.keepSourceValues(parsed -> parsed == null
+                ? null
+                : String.valueOf(parsed.get("source")));
+        final RecordSplitter.Chunk chunk = RecordSplitter.split(text);
+
+        final List<Boolean> added = new ArrayList<>();
+        for (int i = 0; i < chunk.records().size(); i++) {
+            added.add(shapes.add(chunk, i, 7L, 0, 10));
+        }
+
+        assertThat(added).containsExactly(true, false, true, false);
+        assertThat(shapes.inScope(chunk, 1)).isFalse();
+        assertThat(shapes.passedOver()).isEqualTo(2);
+        // The source type profiles count every record, where it is.
+        assertThat(observed).containsExactly(10L, 11L, 12L, 13L);
+        assertThat(String.join(" ", shapes.shapes().keySet())).contains("event=select", "event=update")
+                .doesNotContain("event=get", "event=post");
+        assertThat(shapes.shapes().values()).allSatisfy(shape -> assertThat(shape.get(Shapes.SOURCE_VALUES))
+                .isEqualTo(List.of("db")));
+    }
+
     private static void addAll(final Shapes shapes, final String text) {
         final RecordSplitter.Chunk chunk = RecordSplitter.split(text);
         for (int i = 0; i < chunk.records().size(); i++) {

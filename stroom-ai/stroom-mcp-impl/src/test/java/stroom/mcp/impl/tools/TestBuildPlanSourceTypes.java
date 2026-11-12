@@ -86,6 +86,25 @@ class TestBuildPlanSourceTypes {
     }
 
     @Test
+    void aBuildWithAScopeDraftsThroughItAndJudgesCoverageWithinIt() {
+        final Map<String, Object> scope = Map.of("build", "b", "source_types", List.of("PegaDB"), "share_percent",
+                40.0);
+        final BuildPlan.CallArgs args = new BuildPlan.CallArgs("b", List.of(), List.of(1L), List.of(), null, null,
+                null, null, List.of("ACME"), false, null, null, null, null, null, scope);
+
+        // The draft is given the build, so it reads the sample through the scope.
+        assertThat(BuildPlan.nextCall("translation", args).call().get("arguments"))
+                .isEqualTo(Map.of("stream_ids", List.of(1L), "build", "b"));
+        assertThat(BuildPlan.nextCall("covered", args).then()).contains("Coverage is judged within the build's "
+                                                                       + "scope, PegaDB (about 40.0% of the feed's "
+                                                                       + "records read)");
+        final BuildPlan.CallArgs without = BuildPlan.CallArgs.of("b", List.of(), List.of(1L), List.of(), null, null);
+        assertThat(BuildPlan.nextCall("translation", without).call().get("arguments"))
+                .isEqualTo(Map.of("stream_ids", List.of(1L)));
+        assertThat(BuildPlan.nextCall("covered", without).then()).doesNotContain("scope");
+    }
+
+    @Test
     void theStepIsNoOnboardingStepInToolDescriptions() {
         assertThat(BuildPlan.onboardingChecklist()).extracting(step -> step.get("step"))
                 .doesNotContain("source_types");

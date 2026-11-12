@@ -167,10 +167,13 @@ final class SurveyDepth {
                 if (inWindows(part.windows(), readTo + index)) {
                     continue;
                 }
+                // Within a build's scope, only its records count as read; the others are passed over.
+                if (shapes.inScope(chunk, index)) {
+                    records++;
+                }
                 if (shapes.add(chunk, index, part.stream(), part.part(), readTo)) {
                     newShapes++;
                 }
-                records++;
             }
             readTo += read.records().size();
             whole = read.ended();

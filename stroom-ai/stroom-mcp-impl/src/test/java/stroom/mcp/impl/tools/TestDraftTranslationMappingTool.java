@@ -16,6 +16,9 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.sample.SourceTypeRows;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
+import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.documentation.shared.DocumentationDoc;
 
@@ -296,6 +299,41 @@ class TestDraftTranslationMappingTool {
                 "build", "acme-v1"));
 
         assertThat(ToolJson.dumps(draft.get("mapping"))).contains("EventDetail/Authenticate");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aBuildWithAScopeDraftsTheScopesRulesAlone() {
+        // An aggregated feed's build covering one source type: the other's records are left out as they are read.
+        final StringBuilder lines = new StringBuilder();
+        for (int i = 0; i < 8; i++) {
+            lines.append("{\"source\": \"db\", \"time\": \"2026-10-01T10:00:0").append(i)
+                    .append("Z\", \"action\": \"").append(i % 2 == 0
+                            ? "select"
+                            : "update").append("\", \"user\": \"u").append(i).append("\"}\n");
+            lines.append("{\"source\": \"web\", \"time\": \"2026-10-01T10:00:0").append(i)
+                    .append("Z\", \"action\": \"").append(i % 2 == 0
+                            ? "get"
+                            : "post").append("\", \"path\": \"/p").append(i).append("\"}\n");
+        }
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", lines.toString()), List.of()));
+        final Map<String, Object> state = SurveyDoc.merge(null, Map.of("feed", "ACME", "format", "json lines",
+                "streams_read", List.of(7L)), Map.of(), 2, "now");
+        state.put("source_types", Map.of("field", "source", "scope", Map.of("build", "acme-v1", "source_types",
+                List.of("db"), "rows", SourceTypeScope.kept(List.of(
+                        new SourceTypeRows.Row("db", SourceTypeRows.VALUE, "db"),
+                        new SourceTypeRows.Row("web", SourceTypeRows.VALUE, "web"))))));
+        final String survey = world.inBuild("acme-v1", DocumentationDoc.TYPE, SurveyDoc.docName("ACME")).getUuid();
+        world.world.docs.put(survey, DocumentationDoc.builder().uuid(survey).name(SurveyDoc.docName("ACME"))
+                .version("v0").data(SurveyDoc.render(state)).build());
+
+        final Map<String, Object> draft = world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1"));
+
+        assertThat((Map<String, Object>) draft.get("scope")).containsEntry("records_in_scope", 8)
+                .containsEntry("records_left_out", Map.of("web", 8));
+        assertThat(ToolJson.dumps(draft.get("mapping"))).contains("select", "update").doesNotContain("\"get\"",
+                "\"post\"", "\"field\": \"path\"");
     }
 
     @Test

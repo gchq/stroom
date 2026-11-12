@@ -27,6 +27,8 @@ import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.sample.FeedSampling;
 import stroom.ai.impl.tools.sample.RecordStream;
 import stroom.ai.impl.tools.sample.SampleProfiler;
+import stroom.ai.impl.tools.sample.SourceTypeRows;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
@@ -727,6 +729,92 @@ class TestSurveyFeedTool {
         assertThat(again.shown()).isEmpty();
         assertThat(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\", "
                         + "\"source_type_field\": \"verdict\"}").text()).contains("names no field of the records");
+    }
+
+    @Test
+    void aBuildsScopeIsSurveyedAloneTheOtherSourceTypesOnlyCounted() {
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, wrappedLines(60), false);
+        json(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\", "
+                  + "\"source_type_field\": \"source\"}"));
+        scope(List.of("Security"));
+        stream(8, "ACME-VPN", 1, wrappedLines(60), false);
+
+        final Map<String, Object> scoped = json(call("{\"stream_ids\": [8], \"max_streams\": 1, "
+                                                     + "\"build\": \"acme-v1\"}"));
+
+        // Only the scope's records make shapes and count as read; the others are counted by source type only.
+        assertThat(scoped).containsEntry("records_read", 20);
+        assertThat(String.valueOf(scoped.get("shapes"))).contains("Security").doesNotContain("Database",
+                "Integration");
+        final Map<String, Object> scope = (Map<String, Object>) scoped.get("scope");
+        assertThat(scope).containsEntry("records_passed_over", 40).containsEntry("source_types",
+                List.of("Security"));
+        assertThat(((Number) scope.get("share_percent")).doubleValue()).isEqualTo(33.3);
+        assertThat((Map<String, Object>) ((Map<String, Object>) scoped.get("source_types"))
+                .get("records_read_by_value")).containsEntry("Database", 20).containsEntry("Integration", 20);
+        assertThat((String) scoped.get("coverage")).contains("within the scope: build 'acme-v1' covers Security");
+        assertThat(SurveyDoc.readFor(surveyState(), 8L)).containsExactly("Security");
+        assertThat(SurveyDoc.readFor(surveyState(), 7L)).containsExactly(SourceTypeScope.ALL);
+    }
+
+    @Test
+    void aScopeThatAddsSourceTypesReadsTheStreamsAgainForThemAlone() {
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, wrappedLines(60), false);
+        json(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\", "
+                  + "\"source_type_field\": \"source\"}"));
+        scope(List.of("Security"));
+        stream(8, "ACME-VPN", 1, wrappedLines(60), false);
+        json(call("{\"stream_ids\": [8], \"max_streams\": 1, \"build\": \"acme-v1\"}"));
+        scope(List.of("Security", "Database"));
+
+        final Map<String, Object> wider = json(call("{\"stream_ids\": [8], \"max_streams\": 1, "
+                                                    + "\"build\": \"acme-v1\"}"));
+
+        // Read again for the source type it wasn't read for: its Security records aren't counted twice.
+        assertThat(wider).containsEntry("records_read", 20).containsKey("read_again");
+        assertThat(String.valueOf(wider.get("shapes"))).contains("Database").doesNotContain("Integration");
+        assertThat(SurveyDoc.readFor(surveyState(), 8L)).containsExactly("Database", "Security");
+    }
+
+    @Test
+    void aScopesBudgetIsOfItsOwnRecords() {
+        // A scope of a third of the records, read to 10 records a stream: 10 of the scope's, not 10 records of
+        // which four are the scope's.
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, wrappedLines(60), false);
+        json(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\", "
+                  + "\"source_type_field\": \"source\"}"));
+        scope(List.of("Security"));
+        stream(9, "ACME-VPN", 2, wrappedLines(60), false);
+
+        final Map<String, Object> scoped = json(call("{\"stream_ids\": [9], \"max_streams\": 1, "
+                                                     + "\"build\": \"acme-v1\", \"max_records_per_stream\": 10}"));
+
+        assertThat(scoped).containsEntry("records_read", 10).doesNotContainKey("read_again");
+        assertThat((Map<String, Object>) scoped.get("scope")).containsEntry("records_passed_over", 18);
+    }
+
+    // The scope the build's source types step records: these source types, matched by their own names.
+    @SuppressWarnings("unchecked")
+    private void scope(final List<String> names) {
+        final SurveyDocuments docs = new SurveyDocuments(world.guard(), world.documentAccess,
+                new DocumentWrites(world.documentAccess));
+        final FeedSampling.SurveyRecord record = docs.load("acme-v1", "ACME-VPN").orElseThrow();
+        final Map<String, Object> state = SurveyDoc.readState(record.text());
+        final Map<String, Object> sources = new LinkedHashMap<>((Map<String, Object>) state.get("source_types"));
+        sources.put("scope", Map.of("build", "acme-v1", "source_types", names, "rows", SourceTypeScope.kept(
+                List.of("Security", "Database", "Integration").stream()
+                        .map(name -> new SourceTypeRows.Row(name, SourceTypeRows.VALUE, name))
+                        .toList())));
+        state.put("source_types", sources);
+        docs.write(session(), record, SurveyDoc.render(state));
+    }
+
+    private Map<String, Object> surveyState() {
+        return SurveyDoc.readState(new SurveyDocuments(world.guard(), world.documentAccess,
+                new DocumentWrites(world.documentAccess)).load("acme-v1", "ACME-VPN").orElseThrow().text());
     }
 
     @Test

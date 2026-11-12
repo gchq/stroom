@@ -1869,6 +1869,22 @@ Built in phase 1 (where the design was silent):
 * The promotion prompt is for a survey of a feed outside the build; a new source's sample survey stays with its
   build. With no choice made, a registry goes beside the feed.
 
+Built in phase 2 (where the design was silent):
+
+* A record is in a scope when its source type field's value first matches one of the scope's rows; a record with no
+  value, or one no row matches (a new source type), is outside every scope. The rows are snapshotted into the survey
+  state's scope, so the survey alone matches records as the registry does.
+* A scope applies to the build that chose it: a later build carrying on from a promoted survey reads unscoped until
+  it chooses its own.
+* The survey signs each stream it reads with the scope's source types; a wider scope reads streams again only for the
+  types it adds (`coverage_restarted`), a narrower one never restarts coverage. Out-of-scope records are counted and
+  profiled but make no shapes; budgets count the scope's records; locations stay the stream's real records.
+* Samples are filtered record by record on the parsed field (JSON, key=value, delimited with a header); XML and text
+  read only through the converter are kept whole, said in a note. `classify_kinds`, the draft and the sample check say
+  how many records were in scope and which source types were left out.
+* `review_coverage` judges within the scope (out-of-scope kinds `passed_over`, not `missed`) and adds unmatched values
+  to the build's registry as `new`; it is no longer read-only (it changes only its build, so asks no approval).
+
 #### Open decisions
 
 None at present.

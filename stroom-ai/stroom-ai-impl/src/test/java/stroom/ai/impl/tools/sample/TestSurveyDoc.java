@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.sample;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolRefusal;
 
 import org.junit.jupiter.api.Test;
@@ -188,5 +189,38 @@ class TestSurveyDoc {
         assertThat(ToolJson.dumps(state)).contains("x".repeat(SurveyDoc.MAX_EXAMPLE_CHARS) + "\"")
                 .doesNotContain("x".repeat(SurveyDoc.MAX_EXAMPLE_CHARS + 1));
         assertThat(SurveyDoc.docName("ACME")).isEqualTo("ACME - Survey");
+    }
+
+    @Test
+    void eachStreamIsSignedByTheScopeItWasReadThroughAndShapesKeepTheirSourceValues() {
+        final Map<String, Map<String, Object>> shapes = new LinkedHashMap<>();
+        final Map<String, Object> first = shape(2, 1, "{\"source\": \"db\"}", 0);
+        first.put(Shapes.SOURCE_VALUES, new ArrayList<>(List.of("db")));
+        shapes.put("fields:source", first);
+        final Map<String, Object> scoped = result(List.of(1L, 2L), 4, false);
+        scoped.put(SurveyDoc.SCOPE_READ, Map.of("2", List.of("db")));
+
+        final Map<String, Object> state = SurveyDoc.merge(null, scoped, shapes, 2, "now");
+
+        // Read before scopes were kept, or with none: for every source type.
+        assertThat(SurveyDoc.readFor(state, 1L)).containsExactly(SourceTypeScope.ALL);
+        assertThat(SurveyDoc.readFor(state, 2L)).containsExactly("db");
+        assertThat(SurveyDoc.readFor(state, 3L)).isEmpty();
+
+        final Map<String, Map<String, Object>> more = new LinkedHashMap<>();
+        final Map<String, Object> again = shape(1, 2, "{\"source\": \"web\"}", 1);
+        again.put(Shapes.SOURCE_VALUES, new ArrayList<>(List.of("web")));
+        more.put("fields:source", again);
+        final Map<String, Object> wider = result(List.of(2L), 1, false);
+        wider.put(SurveyDoc.SCOPE_READ, Map.of("2", List.of("web")));
+        final Map<String, Object> merged = SurveyDoc.merge(state, wider, more, 2, "later");
+
+        assertThat(SurveyDoc.readFor(merged, 2L)).containsExactly("db", "web");
+        assertThat(JsonValues.strings(JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(merged.get("shapes"))
+                .get("fields:source")).get(Shapes.SOURCE_VALUES))).containsExactly("db", "web");
+        final Map<String, Object> all = result(List.of(2L), 1, false);
+        all.put(SurveyDoc.SCOPE_READ, Map.of("2", List.of(SourceTypeScope.ALL)));
+        assertThat(SurveyDoc.readFor(SurveyDoc.merge(merged, all, Map.of(), 2, "last"), 2L))
+                .containsExactly(SourceTypeScope.ALL);
     }
 }

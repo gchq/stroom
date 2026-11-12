@@ -35,6 +35,7 @@ import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.Extraction;
 import stroom.ai.impl.tools.generation.XPathRegex;
 import stroom.ai.impl.tools.sample.KindFields;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.shared.AiToolCategory;
 import stroom.security.shared.DocumentPermission;
@@ -452,6 +453,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         if (readWith != null) {
             result.put("read_with", "the build's Data Splitter '" + readWith + "'");
         }
+        if (read.scope() != null) {
+            result.put("scope", read.scope());
+        }
         result.put("kinds_found", kinds.size());
         result.put("already_settled", kinds.stream().map(Kind::key).filter(settled::contains).toList());
         // Counted against every kind's records, those confirmed splits cover too (seen in chat 169: "1753 of the 2000
@@ -592,7 +596,18 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         if (streams.isEmpty()) {
             throw new ToolRefusal("No sample streams: upload the samples first, or give stream_ids");
         }
-        final Map<String, String> samples = sampleStreamTexts.read(streams).texts();
+        // An aggregated feed's build with a scope: only the scope's records are listed and classified, those of
+        // other source types left out as they are read.
+        final SampleStreamTexts.Texts read = sampleStreamTexts.read(streams);
+        final Optional<SourceTypeScope> scope = builds.scope(build);
+        final SampleStreamTexts.Scoped scoped = scope.map(found -> SampleStreamTexts.inScope(read, found))
+                .orElse(null);
+        final Map<String, String> samples = scoped == null
+                ? read.texts()
+                : scoped.texts().texts();
+        final Map<String, Object> scopeSaid = scoped == null
+                ? null
+                : scoped.said();
         SplitterSpec splitter = BuildTranslationXsltTool.Request.splitter(rawArg(call, SPLITTER_ARG));
         String readWith = null;
         if (splitter == null) {
@@ -609,7 +624,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final KindsChosen chosen = kindFields(call, context, build, notesNow, raw.records(),
                 mayAsk && KindFields.structured(String.valueOf(raw.info().get("format"))), userChose);
         if (chosen.asking() != null) {
-            return new Sampled(samples, readWith, List.of(), List.of(), null, chosen.asking(), List.of());
+            return new Sampled(samples, readWith, List.of(), List.of(), null, chosen.asking(), List.of(), scopeSaid);
         }
         final Map<String, Object> draft = DraftMapping.draft(List.copyOf(samples.values()), source, null, null,
                 chosen.fields().isEmpty()
@@ -622,7 +637,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         return new Sampled(samples, readWith, records, kinds(draft, records), variantField(draft, records), null,
                 chosen.fromUser()
                         ? chosen.fields()
-                        : List.of());
+                        : List.of(), scopeSaid);
     }
 
     // What a listing keeps in the source notes, with the kind fields the kinds were told apart by (the user's), so the
@@ -2214,14 +2229,16 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     }
 
     // The sample read: its texts by name, the build's converter it was read with (or null), its records, the kinds
-    // the draft tells apart in them, and the field naming each record's format (or null).
+    // the draft tells apart in them, the field naming each record's format (or null), and, for a build with a scope
+    // over an aggregated feed's source types, what reading through it kept and left out (or null).
     private record Sampled(Map<String, String> samples,
                            String readWith,
                            List<Map<String, Object>> records,
                            List<Kind> kinds,
                            String variantField,
                            Map<String, Object> asking,
-                           List<String> kindFields) {
+                           List<String> kindFields,
+                           Map<String, Object> scope) {
 
     }
 
