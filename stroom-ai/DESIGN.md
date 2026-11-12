@@ -1914,6 +1914,33 @@ Built in phase 3 (where the design was silent):
   Saxon refuses a stylesheet importing one module twice (XTSE0210), which every aggregated feed does (each group imports
   the common and helpers modules). Errors inside an imported XSLT now name that id as their location.
 
+Built in phase 4 (where the design was silent):
+
+* Registry rows carry `pipeline` (`own`, its dispatcher, its name, `new_version`), `output_feed` (absent for the feed's
+  own Events, empty while a group's own feed is still to be made) and `references` (the reference data a group looks
+  up, given on `build_translation_xslt group=`); the registry's top level names the feed's `modules` (helpers,
+  common). `record_source_types` carries all of these over when a later build records the registry again.
+* The feed's pipeline runs `<feed> dispatcher`; a group in a pipeline of its own gets `<feed> <group> dispatcher`.
+  Each translated row is routed by exactly one dispatcher; the others log its records (INFO, never a warning) as
+  handled by that pipeline, named once `create_pipeline` names it.
+* Placement is asked only for a new group (no row placed or translated). Without forms the call is refused until
+  `pipeline=shared|own|new_version` (and `own_output_feed`) is given.
+* `create_pipeline` fills the XSLT slot with the build's dispatcher, refuses rather than guesses when the build holds
+  two (naming both), refuses a group, common or helpers module as the pipeline's XSLT, sets each stream appender's
+  `feed` to the group's output feed (refusing until `create_feed group=` has made it), and loads the groups' reference
+  data when no `references` are given.
+* One open build per aggregated feed is enforced at `start_build`, `start_onboarding kind=assessment` and
+  `record_source_types`. A build is open on the feed when its folder holds the feed's registry, or it works from or
+  holds the feed and holds an XSLT or pipeline.
+* Working copies of modules go in the Events role folder; every promoted module importing a copied one is copied too,
+  so stepping in the build runs the copies. Module imports are rewritten by text and dispatchers regenerated from their
+  spec, without `check_xslt` (the code was checked; checking against the originals' old content could fail).
+* Promotion moves modules (found by their `mcp:module` marker) and group output feeds beside the feed; after approval
+  and before write-back it points every module at the originals and rewrites the registry to name them. Reference data
+  is only ever added, never removed, shown in the approval as `pipeline_changes`.
+* Not covered: a pipeline newly made in a later build running a dispatcher's working copy is not re-pointed at
+  promotion (use `copy_pipeline`); a production pipeline not copied into the build gains no reference data.
+
 #### Open decisions
 
 None at present.
