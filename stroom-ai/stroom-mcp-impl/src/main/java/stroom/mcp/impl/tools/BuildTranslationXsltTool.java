@@ -55,6 +55,7 @@ import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.Placeholders;
 import stroom.ai.impl.tools.sample.SampleTexts;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.ToolJson;
@@ -678,13 +679,24 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         final List<String> warnings = TranslationBuilds.warnings(b.result);
         List<String> samples = request.samples();
         if (samples == null && !request.streamIds().isEmpty()) {
-            final SampleStreamTexts.Texts texts = sampleStreamTexts.read(request.streamIds());
+            // An aggregated feed's build with a scope: the mapping is checked against the scope's records alone,
+            // those of other source types left out as they are read.
+            final Optional<SourceTypeScope> scope = builds.scope(request.build());
+            final SampleStreamTexts.Texts read = sampleStreamTexts.read(request.streamIds());
+            final SampleStreamTexts.Scoped scoped = scope.map(found -> SampleStreamTexts.inScope(read, found))
+                    .orElse(null);
+            final SampleStreamTexts.Texts texts = scoped == null
+                    ? read
+                    : scoped.texts();
+            if (scoped != null) {
+                b.result.put("scope", scoped.said());
+            }
             samples = new ArrayList<>(texts.texts().values());
             texts.notes().forEach(note -> warnings.add("sample: " + note));
             if (!texts.cut().isEmpty()) {
-                // The records the survey found further in than the sample is read to, checked too.
-                final SurveyExamples.Added added = SurveyExamples.added(texts.texts(), texts.cut(),
-                        builds.surveyStatesInBuild(request.build()));
+                // The records the survey found further in than the sample is read to, checked too (the scope's).
+                final SurveyExamples.Added added = SurveyExamples.added(read.texts(), texts.cut(),
+                        builds.surveyStatesInBuild(request.build()), scope.orElse(null));
                 if (!added.texts().isEmpty()) {
                     samples.addAll(added.texts());
                     warnings.add("sample: " + added.records() + " record(s) the survey found further into streams "

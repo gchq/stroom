@@ -47,7 +47,9 @@ import java.util.regex.Pattern;
 ///
 /// The state is JSON: `feed`, `format`, `time_range` (`oldest`, `newest`), `streams_read`, `saturated`, `surveys`
 /// (each `at`, `streams`, `records`, `new_shapes`), `shapes` (by signature: `count`, `streams`, `examples` with
-/// `text` and `location`, `first_seen`) and `handling` (by signature: `handling`, `reason`, `at`).
+/// `text` and `location`, `first_seen`, and for an aggregated feed `source_values`), `handling` (by signature:
+/// `handling`, `reason`, `at`), and for an aggregated feed `source_types` ([SourceTypeProfiles], with the build's
+/// scope) and `scope_read` (what each stream was read for).
 public final class SurveyDoc {
 
     /// The fenced block holding the state.
@@ -71,6 +73,10 @@ public final class SurveyDoc {
     /// The state's key for the user's choice of where the survey doc goes when the build is promoted (`choice`:
     /// `beside` the feed, `keep` in the build, or `later`; `by`, `at`).
     public static final String PROMOTION = "promotion";
+    /// The state's key for what each stream read was read for, by its id: the source types of the build's scope it
+    /// was read through ([SourceTypeScope#signature()]), or [SourceTypeScope#ALL] for every one. A stream read with
+    /// no entry was read before scopes were kept: for every source type.
+    public static final String SCOPE_READ = "scope_read";
 
     private static final DateTimeFormatter AT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
             .withZone(ZoneOffset.UTC);
@@ -322,6 +328,10 @@ public final class SurveyDoc {
         if (result.get(PROMOTION) != null) {
             merged.put(PROMOTION, result.get(PROMOTION));
         }
+        if (result.get(SCOPE_READ) instanceof final Map<?, ?> signed && !signed.isEmpty()) {
+            merged.put(SCOPE_READ, signed(JsonValues.mapOrEmpty(merged.get(SCOPE_READ)),
+                    (Map<String, Object>) signed));
+        }
         if (result.get(ACCEPTED) != null) {
             merged.put(ACCEPTED, result.get(ACCEPTED));
         } else if (!resultStreams.isEmpty()) {
@@ -368,8 +378,44 @@ public final class SurveyDoc {
                             MAX_EXAMPLE_CHARS), "location", example.get("location")));
                 }
             }
+            for (final String value : JsonValues.strings(shape.get(Shapes.SOURCE_VALUES))) {
+                kept.put(Shapes.SOURCE_VALUES, SourceTypeScope.withValue(kept.get(Shapes.SOURCE_VALUES) == null
+                        ? null
+                        : new ArrayList<>(JsonValues.strings(kept.get(Shapes.SOURCE_VALUES))), value));
+            }
         }
         return merged;
+    }
+
+    /// @param state  A survey state.
+    /// @param stream A stream.
+    /// @return What the stream was read for: the source types of the scope it was read through,
+    /// [SourceTypeScope#ALL] for every one (a stream read with no scope, or before scopes were kept); empty when it
+    /// wasn't read.
+    public static List<String> readFor(final Map<String, Object> state, final long stream) {
+        final List<String> signed = JsonValues.strings(JsonValues.mapOrEmpty(state.get(SCOPE_READ))
+                .get(String.valueOf(stream)));
+        if (!signed.isEmpty()) {
+            return signed;
+        }
+        final boolean read = JsonValues.listOrEmpty(state.get("streams_read")).stream()
+                .anyMatch(id -> id instanceof final Number number && number.longValue() == stream);
+        return read
+                ? List.of(SourceTypeScope.ALL)
+                : List.of();
+    }
+
+    // What each stream was read for, a call's added: every source type once either says so, else the union.
+    private static Map<String, Object> signed(final Map<String, Object> kept, final Map<String, Object> call) {
+        final Map<String, Object> out = new LinkedHashMap<>(kept);
+        call.forEach((stream, now) -> {
+            final Set<String> union = new TreeSet<>(JsonValues.strings(out.get(stream)));
+            union.addAll(JsonValues.strings(now));
+            out.put(stream, union.contains(SourceTypeScope.ALL)
+                    ? List.of(SourceTypeScope.ALL)
+                    : new ArrayList<>(union));
+        });
+        return out;
     }
 
     // The streams read only in part so far: those read so now, and those before that this call didn't read whole.
@@ -498,11 +544,16 @@ public final class SurveyDoc {
                 .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
                 .limit(30)
                 .forEach(entry -> counted.add(entry.getKey() + " (" + entry.getValue() + ")"));
+        final String scope = SourceTypeScope.of(sources, null, null)
+                .map(found -> " " + Character.toUpperCase(found.shareSaid(sources).charAt(0))
+                              + found.shareSaid(sources).substring(1) + ": the survey reads only its records, "
+                              + "the others counted by source type.")
+                .orElse("");
         return Optional.of("An aggregated feed: its records' source is told by `"
                                      + ToolText.str(sources.get(SourceTypeProfiles.FIELD)) + "`. Records read by "
                                      + "value: " + String.join(", ", counted) + ". The registry, `"
                                      + SourceTypeRegistry.docName(ToolText.str(state.get("feed")))
-                                     + "`, profiles each source type.");
+                                     + "`, profiles each source type." + scope);
     }
 
     @SuppressWarnings("unchecked")

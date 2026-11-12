@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
@@ -84,6 +85,10 @@ import java.util.TreeSet;
 /// Events the changed pipeline writes for the records it missed, with what to change, and, for Elasticsearch, what
 /// the cluster's admin has to do before those streams are indexed again.
 ///
+/// On an aggregated feed ([SourceTypeCoverage]) the kinds found are judged against the build's scope: those of
+/// source types outside it are passed over, not missed, and the scope's share of the feed is said. A source type met
+/// that the registry lacks is added to the build's registry as `new` (the one write, and only in a build).
+///
 /// Read as the user. It takes a run slot, says where it is, stops at once when its thread is interrupted, and
 /// stops reading Error streams before the session's time limit for a long call, saying where to carry on.
 class ReviewCoverageTool extends AbstractBuiltInTool {
@@ -115,6 +120,7 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
     private final PipelineStepping stepping;
     private final EventStreams eventStreams;
     private final WriteGuard guard;
+    private final SourceTypeCoverage sourceTypes;
 
     @Inject
     ReviewCoverageTool(final DocumentAccess documentAccess,
@@ -125,7 +131,8 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
                        final IndexTemplateAgreements indexTemplateAgreements,
                        final PipelineStepping stepping,
                        final EventStreams eventStreams,
-                       final WriteGuard guard) {
+                       final WriteGuard guard,
+                       final SourceTypeCoverage sourceTypes) {
         this.documentAccess = documentAccess;
         this.keptMappings = keptMappings;
         this.reads = reads;
@@ -135,6 +142,7 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         this.stepping = stepping;
         this.eventStreams = eventStreams;
         this.guard = guard;
+        this.sourceTypes = sourceTypes;
     }
 
     @Override
@@ -152,7 +160,10 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
                              + "the user approves any reprocessing. Then reviews the pipelines that read its Events "
                              + "(indexing, CEF output) against the Events the pipeline writes for those records: "
                              + "what each lacks, what to change, its documentation, and for Elasticsearch what the "
-                             + "cluster's admin must do before the streams are indexed again. Reads only.")
+                             + "cluster's admin must do before the streams are indexed again. On an aggregated "
+                             + "feed it judges against the build's scope (other source types passed over, not "
+                             + "missed) and adds source types the registry lacks to the build's registry as new; "
+                             + "otherwise it reads only.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(PIPELINE_UUID_ARG, "The events pipeline (Raw Events to Events), once it "
                                                               + "has processed its feed, or much of it.")
@@ -197,13 +208,42 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
     }
 
     @Override
+    public boolean isReadOnly() {
+        // In a build, it adds source types an aggregated feed's registry lacks to it as new.
+        return false;
+    }
+
+    @Override
+    public boolean isReadOnly(final ToolCall call) {
+        // Outside a build nothing is written: only a build changes a registry.
+        final String uuid = stringArg(call, PIPELINE_UUID_ARG);
+        try {
+            return uuid == null || guard.buildOf(new DocRef(PipelineDoc.TYPE, uuid)).isEmpty();
+        } catch (final RuntimeException e) {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean hasReadOnlyCalls() {
+        return true;
+    }
+
+    @Override
+    public boolean changesOnlyItsBuild() {
+        // Through WriteGuard, only the build's registry.
+        return true;
+    }
+
+    @Override
     public ToolPermissions permissions() {
         return ToolPermissions.builder()
                 .requires(AppPermission.VIEW_DATA_PERMISSION)
                 .unlockedBy(AppPermission.STEPPING_PERMISSION)
-                .checksDocuments(DocumentPermission.VIEW)
+                .checksDocuments(DocumentPermission.VIEW, DocumentPermission.EDIT)
                 .note("The pipeline's Error and Events streams are read, and records stepped (the Stepping "
-                      + "permission), as the user: only streams of feeds they may view.")
+                      + "permission), as the user: only streams of feeds they may view. In a build, an aggregated "
+                      + "feed's registry is changed as the user.")
                 .build();
     }
 
@@ -303,8 +343,11 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
                 examples.add(example);
             }
         }
-        final List<Map<String, Object>> groups = new ArrayList<>(byKey.values());
-        groups.sort(Comparator.comparingInt(g -> -size(g)));
+        final List<Map<String, Object>> found = new ArrayList<>(byKey.values());
+        found.sort(Comparator.comparingInt(g -> -size(g)));
+        // An aggregated feed: the kinds of source types outside the build's scope are passed over, not missed.
+        final Optional<SourceTypeCoverage.Judged> judged = sourceTypes.judge(context.session(), pipeline, found);
+        final List<Map<String, Object>> groups = judged.map(SourceTypeCoverage.Judged::missed).orElse(found);
         if (mapping != null) {
             // A few raw records for examples; the grouping itself needs none.
             final String converter = keptMappings.dataSplitter(request.pipelineUuid()).orElse(null);
@@ -330,6 +373,12 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
             sampled.addAll(sampledUnknown(pipeline, request.maxStreams(), groups));
         }
         final Set<Long> affectedIds = new TreeSet<>(raws.keySet());
+        if (judged.isPresent() && !judged.get().passedOver().isEmpty()) {
+            // Only the raw streams of the kinds missed within the scope need processing again.
+            affectedIds.clear();
+            groups.forEach(group -> JsonValues.listOrEmpty(group.get("raw_streams")).forEach(id -> affectedIds.add(
+                    ((Number) id).longValue())));
+        }
         affectedIds.addAll(sampled);
         final List<Long> affectedList = List.copyOf(affectedIds);
         final List<Long> created = raws.values().stream().filter(Objects::nonNull).toList();
@@ -372,11 +421,40 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         }
         tellUser(result, groups, affected, affectedList, keptUnknown, more, continued,
                 errors.size(), pipeline);
+        judged.ifPresent(told -> sourceTypesSaid(result, told));
         cappedCounts(result, logged.capped());
         if (request.followOn()) {
             followOn(context, request, pipeline, kept, groups, affected, affectedList, anyEvents, more, result);
         }
         return result;
+    }
+
+    // What the review says of an aggregated feed's source types: the build's scope and its share of the feed, the
+    // kinds passed over as outside it, and the source types met that the registry lacks.
+    private static void sourceTypesSaid(final Map<String, Object> result, final SourceTypeCoverage.Judged judged) {
+        result.put("source_types", judged.said());
+        final StringBuilder said = new StringBuilder();
+        if (judged.scope() != null) {
+            final Object share = JsonValues.mapOrEmpty(judged.said().get("scope")).get("share_percent");
+            said.append("Judged within build '").append(judged.scope().build()).append("''s scope, ")
+                    .append(judged.scope().said()).append(share == null
+                            ? ""
+                            : " (about " + share + "% of the feed's records the survey read)").append(". ");
+        }
+        final String told = String.valueOf(result.get("tell_user"));
+        said.append(told);
+        if (!judged.passedOver().isEmpty()) {
+            result.put("passed_over", judged.passedOver());
+            said.append(" ").append(judged.passedOver().size()).append(" kind(s) of source types outside the scope ")
+                    .append(JsonValues.mapOrEmpty(judged.said().get("passed_over")).keySet())
+                    .append(" were passed over, not missed: the scope's translation isn't meant to take them.");
+        }
+        final List<String> found = JsonValues.strings(judged.said().get("new_source_types"));
+        if (!found.isEmpty()) {
+            said.append(" Source types the registry lacks were met: ").append(found).append(" (")
+                    .append(judged.said().get("registry")).append(").");
+        }
+        result.put("tell_user", said.toString());
     }
 
     // Unknown events sampled from the pipeline's newest Events streams, added to the groups; the raw streams they

@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.cef.CefEvents;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.indexing.FieldPlan;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.validation.EventStreams;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
@@ -79,8 +80,9 @@ class TestReviewCoverageTool {
     private final PipelineStepping stepping = Mockito.mock(PipelineStepping.class);
     private final EventStreams eventStreams = Mockito.mock(EventStreams.class);
     private final WriteGuard guard = Mockito.mock(WriteGuard.class);
+    private final SourceTypeCoverage sourceTypes = Mockito.mock(SourceTypeCoverage.class);
     private final ReviewCoverageTool tool = new ReviewCoverageTool(documentAccess, keptMappings, reads,
-            processorFilters, pipelineShapes, agreements, stepping, eventStreams, guard);
+            processorFilters, pipelineShapes, agreements, stepping, eventStreams, guard, sourceTypes);
 
     @BeforeEach
     void setUp() {
@@ -262,6 +264,42 @@ class TestReviewCoverageTool {
         assertThat((String) next.get(1)).contains("copy_pipeline working_copy=true");
         assertThat((String) next.get(3)).startsWith("Processing the affected raw streams again is the user's");
         assertThat(((Map<?, ?>) result.get("progress")).get("done")).isEqualTo(true);
+    }
+
+    @Test
+    void anAggregatedFeedsKindsOutsideTheBuildsScopeArePassedOverNotMissed() {
+        Mockito.when(reads.errorBatch(any(), anyLong(), anyInt())).thenReturn(new CoverageReads.ErrorBatch(
+                List.of(new CoverageReads.ErrorStream(10, 3L, 1_790_000_000_000L, Map.of()),
+                        new CoverageReads.ErrorStream(11, 4L, 1_790_000_100_000L, Map.of())), null));
+        Mockito.doReturn(new CoverageReads.LoggedRecords(List.of(
+                new CoverageReads.Logged(3, 1_790_000_000_000L, 1, null, Map.of("action", "login")),
+                new CoverageReads.Logged(4, 1_790_000_100_000L, 0, null, Map.of("action", "query")),
+                new CoverageReads.Logged(4, 1_790_000_100_000L, 2, null, Map.of("action", "query"))), 2))
+                .when(reads).logged(any(), any());
+        final SourceTypeScope scope = new SourceTypeScope("b", "sourcetype", List.of(), List.of("Security"));
+        Mockito.when(sourceTypes.judge(any(), any(), any())).thenAnswer(inv -> {
+            final List<Map<String, Object>> groups = inv.getArgument(2);
+            final List<Map<String, Object>> missed = groups.stream()
+                    .filter(group -> String.valueOf(group.get("kind")).contains("login"))
+                    .toList();
+            final List<Map<String, Object>> passed = groups.stream().filter(group -> !missed.contains(group))
+                    .toList();
+            return Optional.of(new SourceTypeCoverage.Judged(missed, passed, scope, Map.of("field", "sourcetype",
+                    "scope", Map.of("share_percent", 12.5), "passed_over", Map.of("Database", 2))));
+        });
+
+        final Map<String, Object> result = tool.review(new SteppingWorld().context(), new ReviewCoverageTool.Request(
+                "ev", null, 500, List.of(), false, null, List.of()));
+
+        assertThat((List<?>) result.get("missed")).as("%s", result).hasSize(1);
+        assertThat((List<?>) result.get("passed_over")).hasSize(1);
+        // Only the raw streams of the kinds missed within the scope need processing again.
+        assertThat(result.get("affected_raw_stream_ids")).isEqualTo(List.of(3L));
+        assertThat((String) result.get("tell_user")).startsWith("Judged within build 'b''s scope, Security (about "
+                                                                + "12.5% of the feed's records the survey read). "
+                                                                + "Found untranslated events: 1 record(s)")
+                .contains("1 kind(s) of source types outside the scope [Database] were passed over, not missed");
+        assertThat((Map<String, Object>) result.get("source_types")).containsEntry("field", "sourcetype");
     }
 
     @Test

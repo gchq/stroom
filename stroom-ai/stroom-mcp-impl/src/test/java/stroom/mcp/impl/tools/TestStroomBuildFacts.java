@@ -20,6 +20,8 @@ import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ProcessorFilterAccess;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamReader.RawText;
+import stroom.ai.impl.tools.sample.Shapes;
+import stroom.ai.impl.tools.sample.SourceTypeProfiles;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
@@ -78,6 +80,34 @@ class TestStroomBuildFacts {
         assertThat(StroomBuildFacts.combine(List.of(state(true, null, 5, 61))).orElseThrow().get("locations"))
                 .isNull();
         assertThat(StroomBuildFacts.combine(List.of())).isEmpty();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aBuildWithAScopeStepsAndSamplesOnlyTheScopesKinds() {
+        final Map<String, Object> state = new LinkedHashMap<>();
+        state.put("saturated", true);
+        state.put("streams_read", List.of(5L));
+        final Map<String, Object> shapes = new LinkedHashMap<>();
+        shapes.put("db", Map.of("count", 3L, Shapes.SOURCE_VALUES, List.of("PegaDB"), "examples", List.of(Map.of(
+                "text", "{\"sourcetype\": \"PegaDB\"}", "location", Map.of("stream", 5L, "part", 0, "record", 0)))));
+        shapes.put("sec", Map.of("count", 2L, Shapes.SOURCE_VALUES, List.of("PegaSecurityEvent"), "examples",
+                List.of(Map.of("text", "{\"sourcetype\": \"PegaSecurityEvent\"}", "location", Map.of("stream",
+                        5L, "part", 0, "record", 1)))));
+        state.put("shapes", shapes);
+        final Map<String, Object> values = new LinkedHashMap<>();
+        values.put("PegaDB", Map.of("records", 3));
+        values.put("PegaSecurityEvent", Map.of("records", 1));
+        state.put(SourceTypeProfiles.STATE_KEY, Map.of("field", "sourcetype", "records", 4, "values", values,
+                "scope", Map.of("build", "b", "source_types", List.of("PegaSecurityEvent"))));
+
+        final Map<String, Object> survey = StroomBuildFacts.combine(List.of(state)).orElseThrow();
+
+        assertThat((List<?>) survey.get("locations")).singleElement()
+                .isEqualTo(Map.of("stream", 5L, "part", 0, "record", 1));
+        assertThat(String.valueOf(survey.get("sample"))).contains("PegaSecurityEvent").doesNotContain("PegaDB");
+        assertThat((Map<String, Object>) ((Map<String, Object>) survey.get(SourceTypeProfiles.STATE_KEY))
+                .get(StroomBuildFacts.SCOPE_SHARE)).containsEntry("share_percent", 25.0);
     }
 
     @Test

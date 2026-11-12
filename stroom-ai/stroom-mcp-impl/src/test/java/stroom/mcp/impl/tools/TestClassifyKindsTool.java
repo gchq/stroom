@@ -24,6 +24,8 @@ import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.draft.SplitterXml;
+import stroom.ai.impl.tools.sample.SourceTypeRows;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.validation.EventSchema;
@@ -1157,6 +1159,36 @@ class TestClassifyKindsTool {
         assertThat(String.valueOf(listed.get("unlisted_records"))).as("%s", listed)
                 .contains("3 of the 11 records are in no kind listed").contains("never take this listing");
         assertThat(String.valueOf(listed.get("hint"))).contains("3 of the 11 records are in no kind listed");
+    }
+
+    @Test
+    void aBuildWithAScopeListsOnlyTheScopesKinds() {
+        // An aggregated feed's build covering one source type: the other's kinds are never listed nor classified.
+        final StringBuilder lines = new StringBuilder();
+        for (int i = 0; i < 12; i++) {
+            lines.append("{\"source\": \"db\", \"action\": \"").append(i % 2 == 0
+                    ? "select"
+                    : "update").append("\", \"user\": \"u").append(i).append("\"}\n");
+            lines.append("{\"source\": \"web\", \"action\": \"").append(i % 2 == 0
+                    ? "get"
+                    : "post").append("\", \"user\": \"u").append(i).append("\"}\n");
+        }
+        samples(21L, lines.toString());
+        final TranslationBuilds builds = Mockito.mock(TranslationBuilds.class);
+        Mockito.when(builds.scope("acme")).thenReturn(Optional.of(new SourceTypeScope("acme", "source",
+                List.of(new SourceTypeRows.Row("db", SourceTypeRows.VALUE, "db"),
+                        new SourceTypeRows.Row("web", SourceTypeRows.VALUE, "web")), List.of("db"))));
+        final ClassifyKindsTool scoped = new ClassifyKindsTool(notesTool, sampleStreamTexts, consent, plan, builds,
+                now::get);
+
+        final Map<String, Object> listed = BuildToolCalls.json(scoped.execute(BuildToolCalls.call(
+                ClassifyKindsTool.NAME, "{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [21], "
+                                        + "\"kind_field\": \"action\"}"), BuildToolCalls.context()).text());
+
+        assertThat(list(listed.get("to_classify"))).as("%s", listed).extracting(kind -> kind.get("value"))
+                .containsExactlyInAnyOrder("select", "update");
+        assertThat((Map<String, Object>) listed.get("scope")).containsEntry("records_in_scope", 12)
+                .containsEntry("records_left_out", Map.of("web", 12));
     }
 
     private void samples(final long stream, final String text) {

@@ -240,7 +240,7 @@ document in a build folder also needs Create there.
 | `classify_kinds` | The agent classifies each kind of event the documentation doesn't cover; the user confirms in one form | content | no | build | View Data | | View, Edit | build |
 | `rename_index` | Changes the Elasticsearch index name the build's Elastic Index and pipelines use | indexing | no | indexing | | | View, Edit | confirms |
 | `reprocess_streams` | Processes streams again through a build's pipeline | processing | no | processing | Manage Processors | View Data | View, Edit | confirms |
-| `review_coverage` | Finds the records across a feed that no rule of its translation matched | content | yes | build | View Data | Stepping | View | slot |
+| `review_coverage` | Finds the records across a feed that no rule of its translation matched | content | no | build | View Data | Stepping | View, Edit | build, slot |
 | `save_dictionary` | Saves a Dictionary document in the build | content | no | build | | | View, Edit | build |
 | `save_text_converter` | Saves a text converter in the build | content | no | build | | | View, Edit | build |
 | `save_xslt` | Saves an XSLT in the build, after the checks and the hand-edit gate | content | no | build | | | View, Edit | build |
@@ -2762,6 +2762,23 @@ fields, shapes, kinds, levels, signals); the result's `source_types` gives the f
 value, and names `record_source_types`. A survey with no build notes a likely field (`aggregated_feed`) and offers an
 assessment build (`no_build`).
 
+**A build's scope.** Once the build's scope is chosen (`source_types.scope`, kept by `record_source_types` with the
+rows it was chosen by: `SourceTypeScope`), only the scope's records make shapes (`Shapes.scope`): a record is the
+scope's when its source type field's value, by the rows in order (the first match winning), names a source type of
+the scope; a record of another source type, of a value no row matches, or with none is passed over, counted by
+source type for the registry's profiles, and nothing more. So the kinds, saturation, coverage and the depth asked
+about are the scope's, and `records_read` counts the scope's records. The budget a part is of the scope's records: a
+head (or window) is split to as many as ten times as many records to find them (`SCOPE_SPREAD`), read in order to the
+budget's worth of the scope's (whole streams, windows) or spread over as many records as the scope's share of the
+head asks (sampled heads), so a scope of rare source types is read deeper than a whole-feed survey would read it.
+Each stream read is signed by the scope (`scope_read` in the state: its source types, or `*` for every one; a stream
+read before scopes were kept is `*`); a stream read for other source types only (a narrower scope, another build's)
+is read again for the scope's source types it wasn't read for (`read_again`), its records not counted for the
+profiles twice. Shapes keep the source type field's values their records had (`source_values`). The result's `scope`
+gives the build, the source types, their share of the records the survey counted (an estimate) and the records
+passed over; `coverage` ends with the scope and its share. A scope chosen by another build (one carried on from a
+promoted survey) is not read through.
+
 **Promotion of the survey.** Once a build's survey of a feed outside the build is covered (or the user goes ahead
 with it as it is), the user is asked once where its doc goes when the build is promoted: beside the feed, kept in
 the build only, or decided at promotion (`promotion` in the state; `promote_survey` without forms). The form says the
@@ -2789,8 +2806,12 @@ confidence, examples; and `rests_on` (`not seen in the N records read`, `from on
 `needs_review` with the table, its `review_id` and the rows as confirmed; called again with `reviewed` and those rows,
 the user chooses in a form which source types to build now (a yes each, and why the others wait). Every source type
 offered is then `parked` (the scope's saying so; none is `translated` until a source type group exists), `dropped`
-only by `dropped` with `drop_reason`; the scope is kept in the registry and the survey state. An assessment writes the
-registry at once, every source type parked. The registry, `<feed> source types` (`SourceTypeRegistry`), has an account
+only by `dropped` with `drop_reason`; the scope is kept in the registry and the survey state, the survey's with the
+rows it was chosen by (`SourceTypeScope`), and the build's tools then read the feed through it (survey_feed,
+classify_kinds, draft_translation_mapping, build_translation_xslt's sample check, review_coverage). A scope that adds
+source types some stream the survey read wasn't read for makes the survey not covered again (`coverage_restarted`):
+survey_feed reads those streams again for them. An assessment writes the registry at once, every source type
+parked. The registry, `<feed> source types` (`SourceTypeRegistry`), has an account
 of the feed, a table a row a source type, and a machine block `<!-- stroom-mcp source types {...} -->` holding the
 field, the feed's Environment and default System Name, and each row's match, System Name, status, decision, group,
 pipeline, output feed and profile.
@@ -2799,7 +2820,7 @@ pipeline, output feed and profile.
   forms), `dropped`, `drop_reason`, `system_name`, `system_names` (by source type), `environment`.
 * **Returns**: `needs_review` (`table`, `review_id`, `rows`), `needs_user` (the rows proposed, or the source types
   offered), or `feed`, `field`, `registry`, `rows` (each `name`, `match`, `status`, `reason`, `records_read`,
-  `share_percent`, `suggested_category`, `confidence`), `table`, `scope`, `hint`, `next`.
+  `share_percent`, `suggested_category`, `confidence`), `table`, `scope`, `coverage_restarted`, `hint`, `next`.
 * **Refuses**: no source type field known (`survey_feed` first); no values counted; rows that can't be used; an
   answer that is neither; a scope naming a source type not offered; `dropped` without `drop_reason`.
 
@@ -2974,6 +2995,13 @@ it without `from_user` is refused; those of it not sent back are recorded `rejec
 unanswered is not a refusal and changes nothing. A listing keeps proposals still to confirm. `from_user` is only for what the user said. Without forms, `asked: false` and the `table` for the chat; nothing recorded. The
 plan's `classify` step (after the converter, before the translation) is done when the notes say nothing is pending,
 not recorded once the translation is written.
+
+A build with a scope over an aggregated feed's source types (`TranslationBuilds.scope`, from its survey) reads the
+sample streams through it (`SampleStreamTexts.inScope`): each text split into its records, those of other source
+types left out as they are read (by the source type field and the scope's rows, the first match winning, never by a
+pattern over the text), the rest written back in the text's format; a text of none of the scope's records is left
+out, one that can't be read record by record (XML, text) kept whole and said so, and a sample of none refused. The
+result's `scope` says what was kept and left out. So the kinds listed and classified are the scope's.
 
 * **Arguments**: `build` (required); `source` (the source's name; the notes' when the build has them); `stream_ids`
   (the build's newest five raw sample streams when left out); `splitter` (the build's saved Data Splitter when left
@@ -4040,6 +4068,14 @@ rule. Several user fields in one record (`users()`) are noted with their roles b
 drafted as `EventSource/User/Id`; a correlation id shared by records (`correlated()`) is noted, each record mapped
 alone.
 
+A build with a scope over an aggregated feed's source types (`TranslationBuilds.scope`, from its survey) reads the
+sample streams through it (`SampleStreamTexts.inScope`): each text split into its records, those of other source
+types left out as they are read (by the source type field and the scope's rows, the first match winning, never by a
+pattern over the text), the rest written back in the text's format; a text of none of the scope's records is left
+out, one that can't be read record by record (XML, text) kept whole and said so, and a sample of none refused. The
+result's `scope` says what was kept and left out. So the rules drafted are the scope's; the plan's call gives
+`build` for such a build.
+
 The user chooses the event-logging version first (`EventVersions.target`), before anything is read. The draft is
 compacted (`MappingCompaction.compactRules`, `compactPairs`) so it fits a reply: a rule's leftover fields as its
 `data` list, pairs as `pairs` entries.
@@ -4154,6 +4190,14 @@ through the model. A call runs in this order:
    values are computed, not what they are, and was copied into documentation as it was.
 8. **The save**, through `TranslationDocs.createXslt` / `updateXslt` (see save_xslt for the checks). Rules kept as
    Unknown are agreed with the user first (below).
+
+A build with a scope over an aggregated feed's source types (`TranslationBuilds.scope`, from its survey) reads the
+sample streams through it (`SampleStreamTexts.inScope`): each text split into its records, those of other source
+types left out as they are read (by the source type field and the scope's rows, the first match winning, never by a
+pattern over the text), the rest written back in the text's format; a text of none of the scope's records is left
+out, one that can't be read record by record (XML, text) kept whole and said so, and a sample of none refused. The
+result's `scope` says what was kept and left out. So the sample check is of the scope's records, the survey's
+records further in too.
 
 * **Arguments**: `mapping` or `changes` (objects, or JSON text); `schema_version` (a version, or the UUID of the
   XML schema document the user chose where several hold it); `feeds` (for standing
@@ -4692,9 +4736,10 @@ precedence, as do a topic, vendor and pipeline template the instructions name (`
 
 ### `review_coverage`
 
-content · read-only · requires View Data; unlocked by Stepping (records are stepped); checks View (only streams of
-feeds the user may view) · takes a run slot · Classes: `ReviewCoverageTool`, `CoverageReads`, `ProcessorFilters`,
-`IndexTemplateAgreements`, `CefDraft`, `PipelineStepping`, `EventStreams`
+content · write in a build only (an aggregated feed's registry; read-only outside a build) · requires View Data;
+unlocked by Stepping (records are stepped); checks View (only streams of feeds the user may view) and Edit (the
+build's registry) · takes a run slot · Classes: `ReviewCoverageTool`, `CoverageReads`, `ProcessorFilters`,
+`IndexTemplateAgreements`, `CefDraft`, `PipelineStepping`, `EventStreams`, `SourceTypeCoverage`, `SourceTypeScope`
 
 Whole-feed coverage of an events pipeline once its feed is processed: the kinds of event the sample missed. The
 generated translation logs, into the Error stream of the raw stream a record came from, each record no rule
@@ -4706,6 +4751,16 @@ what earlier rules leave: `Caught by rule 'r': record N (...)`, the same templat
 caught kind's streams are counted (`streams`), not its records, and told apart in `tell_user`: a caught kind is for the
 agent to check against the kinds classified, and a new one is the user's to classify. So the kinds are grouped from the Error streams alone, however large the feed, with a
 few raw records read only for examples (`CoverageReads.example`).
+
+**Aggregated feeds** (`SourceTypeCoverage`): where the feed has a source type field (the build's survey, or its
+registry), each kind's first example record (up to 60 kinds) is read and its source type told by the field and the
+registry's rows, the first match winning (`source_type` on the kind). In a build with a scope, a kind of a source
+type outside it (parked, dropped, or one the registry lacks) is passed over, not missed (`passed_over`): the scope's
+translation isn't meant to take it; only the kinds missed within the scope make `missed`, the affected streams and
+`next`, and `tell_user` starts with the scope and its share of the records the survey read. A value no row matches is
+a `new` source type: added to the build's registry as a `new` row (decided by `review_coverage`; through a working
+copy when the registry is beside the feed, written back at promotion) for the user to place with
+record_source_types. Outside a build nothing is written (only a build changes the registry): they are said.
 
 A feed of hundreds of thousands of streams is read in bounded batches by Id (`max_streams` a call,
 `continue_from` carries on; clean streams skipped where Stroom counts them), and what is kept is bounded: counts
@@ -4734,7 +4789,9 @@ is reported with its error, not allowed to hide the others.
   every kind found was kept as Unknown, only to show them: kinds the user agreed to keep as Unknown need no rule);
   `counts_capped` (`raw_streams`, `count`, `note`) when an Error stream held as many log lines of a severity as
   Stroom writes (`CoverageReads.MAX_WRITTEN_MARKERS`, 1,000, from `RecordErrorReceiver`), so its counts are short;
-  `follow_on` and `follow_on_events`. Examples (`holds`) are read with the pipeline's own Data Splitter
+  `follow_on` and `follow_on_events`; on an aggregated feed `source_types` (`field`, `scope` with its share,
+  `passed_over` records by source type, `new_source_types`, `registry`) and `passed_over` (the kinds outside the
+  scope). Examples (`holds`) are read with the pipeline's own Data Splitter
   (`KeptMappings.dataSplitter`), as processing read them, else a spec inferred from the stream.
 * **Refuses**: no `pipeline_uuid`; a pipeline that can't be read; one that has processed nothing (no Error and no
   Events streams, on a first call); `max_streams` out of range; a cancelled call; no Stepping permission where it
