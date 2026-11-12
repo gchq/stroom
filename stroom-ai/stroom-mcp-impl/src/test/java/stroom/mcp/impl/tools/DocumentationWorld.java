@@ -57,9 +57,12 @@ final class DocumentationWorld {
     final BuildDocumentation docs = new BuildDocumentation(world.guard(), facts, world.records(),
             world.documentAccess, places, writes, translation.streamReader, streamSummaries,
             translation.agentInstructions, translation.builds, translation.history);
+    /// The session's docs not yet written, shared by the tools the world makes.
+    final PendingDocumentation pendingDocs = new PendingDocumentation();
+
     final IndexDocumentation indexDocumentation = new IndexDocumentation(docs, world.documentAccess, places, writes,
             pipelineShapes, translation.consent, indexSurveys, indexFields, translation.eventVersions,
-            world.guard());
+            world.guard(), pendingDocs);
 
     /// Whether a kept mapping is still what its XSLT is: as it is, unless a test says.
     final GeneratedDrift drift = Mockito.mock(GeneratedDrift.class);
@@ -72,9 +75,6 @@ final class DocumentationWorld {
                 (String) inv.getArgument(0), "translation")));
         Mockito.when(keptMappings.keptXslt(anyString())).thenReturn(Optional.empty());
     }
-
-    /// The session's docs not yet written, shared by the tools the world makes.
-    final PendingDocumentation pendingDocs = new PendingDocumentation();
 
     /// @return write_documentation, wired on the world.
     WriteDocumentationTool documentationTool() {

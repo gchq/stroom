@@ -334,16 +334,20 @@ public final class Descriptions {
                                 ? reads
                                 : List.of(source)))
                         : source;
-                if (key.equals(anyAction) && used.containsKey(key) && !used.get(key).equals(from)) {
+                if (key.equals(anyAction) && used.containsKey(key) && differ(used.get(key), from)) {
                     // Already said of an element read from elsewhere: not this one's meaning.
                     continue;
                 }
-                if (givenFrom.containsKey(key) && !givenFrom.get(key).equals(from)) {
+                if (givenFrom.containsKey(key) && differ(givenFrom.get(key), from)) {
                     // Given of a field that came from elsewhere: asked again, with what it said.
                     was = given.get(key);
                     continue;
                 }
-                used.put(key, from);
+                // Documented from the XSLT as it runs, a field's source is unknown: the one it was given with is
+                // kept.
+                used.put(key, WrittenEventDocs.WRITTEN.equals(from) && givenFrom.containsKey(key)
+                        ? givenFrom.get(key)
+                        : from);
                 return given.get(key);
             }
         }
@@ -373,6 +377,14 @@ public final class Descriptions {
             }
         }
         return said.values().stream().findFirst().orElse("");
+    }
+
+    // Whether two sources of a field differ. "Written by the XSLT" (documented from an XSLT edited by hand, as it runs)
+    // says nothing of where a field comes from, so it differs from none (seen in testing: a translation rebuilt
+    // from its mapping and edited by hand by turns, every one of ~150 descriptions asked for again at each turn).
+    private static boolean differ(final String source, final String other) {
+        return !source.equals(other) && !WrittenEventDocs.WRITTEN.equals(source)
+               && !WrittenEventDocs.WRITTEN.equals(other);
     }
 
     /// [#of(String, String, List, Map, String, List, List, List)] with the event-logging schema's words alone.
