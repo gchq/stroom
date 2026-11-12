@@ -1521,6 +1521,7 @@ write, never shown as the text. One row per source type:
 | Source type group | the source type group that translates it, with its XSLT doc, or none |
 | Status | `translated`, `parked` (for a later build), `dropped` (the user chose never to translate it), or `new` (seen after the registry was made) |
 | Examples | survey locations (stream, part, record) to step |
+| System | the EventSource/System/Name its group writes: the feed's default unless set for this source type |
 | Decided | who chose the status, and when; a reason for parked and dropped |
 
 How it is filled and kept:
@@ -1582,6 +1583,11 @@ suggested category: security audit, operational, network, diagnostic noise, with
 suggested category then size; a source type's detail on request. The scope form then lists the source types by name and
 share alone, referring to the table, as forms do (plain text, no Markdown). The agent suggests; the user chooses.
 
+A source type the survey's records rarely show is profiled from those few, saying so ("from only N records"); a
+row the survey didn't meet (one the user named, or carried over from an earlier registry) says "not seen in the N
+records read". The survey's budget may never meet a rare source type at all: an assessment's registry can be
+incomplete, and the dispatcher's warnings of new source types are how it fills in later.
+
 What it costs: the source type field is read in every record the survey reads (cheap: a field of the parsed JSON),
 the profile's counts and samples kept per source type within the survey's own budget. Shares are estimates from the
 records read, said as such ("about"), scaled to the streams' sizes as the survey's depth estimates are now. A source
@@ -1638,10 +1644,16 @@ Parser (JSON) -> dispatch XSLT -> Schema filter -> Writer
                  (generated; xsl:import of each source type group's XSLT doc)
 ```
 
-* **The dispatcher** (generated from the registry, small): it reads the source type field, writes each Event's parts
-  the wrapper or the record's common fields give (EventTime, EventSource's device and system), and hands the record to
-  its source type group's mode; the group writes the rest. So a change to the wrapper's fields touches the
-  dispatcher, generated anyway, rather than every group.
+* **The dispatcher** (generated from the registry, small) only routes: it reads the source type field and hands the
+  record to its source type group's mode, or passes it over and counts it. It owns every stylesheet-level declaration
+  (`xsl:output`, `xsl:strip-space`, global parameters, keys).
+* **The feed's common module** (`<feed> common`, generated, one per feed) holds named templates for the parts of an
+  Event every group writes one way: the wrapper's or the record's common fields (EventTime, EventSource's device and
+  system) and the site's shared calls (below). Every group imports it. An Event can't be split between two writers:
+  a group writes inside EventSource (its user, client) and may know a better time than the wrapper's (a collector's
+  receive time against an access log's own), so each group writes its whole Event, calling the common module's
+  templates for the shared parts and overriding the time where its records have their own. A change to the wrapper's
+  fields touches the common module alone.
 
   ```xml
   <xsl:import href="uuid='...', name='PEGA-Mail'"/>
@@ -1650,11 +1662,7 @@ Parser (JSON) -> dispatch XSLT -> Schema filter -> Writer
   <xsl:template match="record">
     <xsl:choose>
       <xsl:when test="sourcetype = ('MailIn', 'MailOut', 'MailQueue')">
-        <Event>
-          <EventTime>...</EventTime>
-          <EventSource>...</EventSource>
-          <xsl:apply-templates select="." mode="pega-mail"/>
-        </Event>
+        <xsl:apply-templates select="." mode="pega-mail"/>
       </xsl:when>
       <xsl:when test="sourcetype = 'IntegrationServices'">...</xsl:when>
       <xsl:otherwise><!-- out of scope: not written, counted --></xsl:otherwise>
@@ -1663,7 +1671,11 @@ Parser (JSON) -> dispatch XSLT -> Schema filter -> Writer
   ```
 
 * **A source type group** is an XSLT doc of templates in a mode of its own, generated from its own mapping (kept
-  with the XSLT, as now), reading the records as translations read them now. It parses its own messages with the
+  with the XSLT, as now), reading the records as translations read them now, writing its whole Event (the common
+  module's templates called for the shared parts, in schema order: `Meta`, `Classification` and `SharingData` come
+  before EventTime and EventSource). It holds only templates in its mode and its imports: no stylesheet-level
+  declarations, no template matching the document or the record outside its mode, its own named templates prefixed
+  with its mode's name. It parses its own messages with the
   held-format reading the draft already makes (`xml_fields`, `json_fields`, `extract`; XML parsed in a `try`), which
   needs no 80% threshold as its messages are all its own format; text before the XML (`Request: `) is its to read.
   A message that fails to parse is counted per group in the processing checks (a truncated SOAP body would otherwise
@@ -1673,7 +1685,52 @@ Parser (JSON) -> dispatch XSLT -> Schema filter -> Writer
 * **Records outside the scope** (parked, dropped or new source types): not written, counted (decided, 2026-11-12):
   the dispatcher reads the source type field and nothing else of them, and the processing checks say how many of each
   source type were passed over in each stream. A source type the registry lacks is also logged once a stream (WARN,
-  naming it) and added to the registry as `new`.
+  naming it). Processing can't write the registry (only a build can): `review_coverage`, or the next build on the
+  feed, reads those warnings and adds the rows as `new`; until then they are warnings in the processing checks.
+
+**Imports, shared and generated.** At run time the dispatcher, the groups, the common module and the site's libraries
+are one compiled stylesheet:
+
+```text
+dispatcher ── xsl:import ──> group A ── xsl:import ──> <feed> common ── xsl:import ──> site library (e.g. Event/Meta)
+           │                         └─ xsl:import ──> <feed> helpers
+           └─ xsl:import ──> group B ── xsl:import ──> <feed> common, <feed> helpers
+```
+
+* **The site's shared calls** (`SiblingSharedCalls`: the named templates of shared XSLTs the environment's event
+  pipelines call, and where; seen: the stream's GUID written into `Event/Meta` by a standard import) are found once
+  per feed by the first scoped build, recorded beside the registry with the feed's other shared decisions, and made
+  in one place, the common module, so every group writes the site's parts one way and groups built months apart
+  agree. A shared call only one group needs is imported and called by that group.
+* **Generated helpers** (`mcp:parse-xml`, `mcp:time-ms`, `mcp:json-to-xml` and the generator's global variables) live
+  in one module per feed, `<feed> helpers`, generated with the dispatcher and imported by each group; never inline in
+  a group, where several groups' copies would meet in one stylesheet and the highest import precedence would win
+  silently (groups generated by different generator versions running another group's helper).
+* **The same module imported more than once** (every group importing the common module and the helpers) is allowed in
+  XSLT: the copies take different import precedence, and identical copies change nothing.
+* **Checks** (`check_xslt`, the generator's own): a group module holds nothing stylesheet-level and nothing outside its
+  mode; imports don't cycle (a hand-edited group importing the dispatcher is refused, saying why), and their depth is
+  capped.
+* **Patterns in Saxon and in the tools**: the dispatcher matches a pattern with XPath's `matches()` (Saxon), the tools
+  with Java's regular expressions, whose dialects differ (no lookarounds in Saxon, for one); a pattern is checked
+  against what both accept when the user confirms it, so the survey's counts and processing agree.
+* **A changed site library** changes every group at once, outside any build: documentation lists the libraries each
+  group imports, with the versions checked against, and `review_coverage` steps the groups again when an imported
+  library has changed since.
+
+**Reference data**: a group whose mapping looks values up (`stroom:lookup`) needs a reference loader on the XSLT
+filter element, which is pipeline configuration, not a document. The registry records each group's reference
+pipelines, and the dispatcher filter's list is their union, set at promotion: the one part of adding a group that
+changes the pipeline, and said so to the user.
+
+**Checking a group before it is saved**: `build_translation_xslt` and the stepping tools step an unsaved draft in
+place of an element's own code, but the dispatcher imports each group by UUID, and an import resolves to the saved
+document. So the tools step a temporary dispatcher with the draft group inlined in place of its import (the draft's
+own imports hoisted to the top, as XSLT requires imports first).
+
+**Working copies**: a later build changing a promoted group, the common module or the helpers works on copies with
+UUIDs of their own. Stepping in the build resolves imports to the working copies; promotion writes them back over
+the originals and regenerates the dispatcher against the originals' UUIDs.
 
 The same shape with or without a wrapper: without one (Azure's audit log), the dispatcher chooses by the record's own
 field (`Workload`) and each group reads the fields its source types have (`event.*` for one workload, others for
@@ -1695,13 +1752,17 @@ example "a pipeline for ExchangeOnline and SharePoint", optionally writing to an
   pipelines' records aren't reported as errors.
 
 Why this shape: one pass over each record whatever the number of groups, out-of-scope records costing a field read;
-a group added or changed is a document change (its XSLT, the dispatcher regenerated, the registry row), never a change
-to the pipeline; nothing new for the generator to read, its groups' input being records as translations read them now.
+a group added or changed is a document change (its XSLT, the dispatcher regenerated, the registry row), not a change
+to the pipeline unless it brings a reference loader the pipeline lacks; nothing new for the generator to read, its
+groups' input being records as translations read them now.
 
 What it needs that isn't built:
 
-* the generator writing a source type group (templates in a mode, no Events root, no wrapper parts) and the dispatcher
-  (its imports, its choose, the wrapper's Event parts, the count of records passed over);
+* the generator writing a source type group (templates in a mode writing its whole Event, no stylesheet-level
+  declarations), the feed's common module (the shared Event parts, the site's shared calls), the helpers module, and
+  the dispatcher (its imports, its choose, the count of records passed over);
+* the tools' checks of a group module, the temporary dispatcher for stepping an unsaved group, imports resolved to
+  working copies in a build, and the reference loaders' union at promotion;
 * kept mappings, drift checks and documentation per group XSLT, and the pipeline's documentation listing its groups
   with a link to the registry;
 * index plans merged from the groups' plans into one index per output feed (decided, 2026-11-12): the groups writing
@@ -1718,8 +1779,10 @@ coordinating build is either recorded beside it or derived from it.
 * **One build at a time per feed.** A build is refused for a feed that has another open (made and not promoted or
   abandoned), naming it: finish or abandon it first. So the registry, the dispatcher and the feed's documents are
   only ever changed by one build, and promotion needs no merging.
-* **The feed's shared decisions**: System and Environment names, field conventions, the indexing backend and each
-  output feed's index, recorded beside the registry (in its machine block). The first scoped build makes them with the user;
+* **The feed's shared decisions**: the Environment, a default System Name (each source type's own in its registry
+  row: Azure's ExchangeOnline, SharePoint and AzureActiveDirectory are different systems), field conventions, the
+  site's shared calls, the indexing backend and each output feed's index, recorded beside the registry (in its
+  machine block). The first scoped build makes them with the user;
   later builds inherit them, and the tools refuse a change the user hasn't asked for, saying where they are kept.
 * **Bootstrap**: the first scoped build makes what the feed needs whatever its scope: the pipeline, the dispatcher
   and the index (and a group's own pipeline, output feed and index, when the user asks for them). Nothing is assumed
@@ -1734,7 +1797,9 @@ coordinating build is either recorded beside it or derived from it.
   working copies, as promotion changes promoted documents now.
 * **The index across builds**: each build adds its group's fields to its output feed's index. A field another
   source type group already has with another type can't be changed in an Elasticsearch index: the build says so before
-  promotion and the user chooses (a field of another name, or a new index version).
+  promotion and the user chooses (a field of another name, or a new index version). A field of the same name and
+  type meaning something else in another group isn't caught by its type: the build compares the two fields'
+  descriptions and asks the user where they differ.
 * **Agents**: a scoped build is a build like any other, its context its own (the main gain over one long
   onboarding of every source type), its record and the registry what it starts from. Builds are one after another,
   in Ask Stroom AI and in other clients alike.
@@ -1787,7 +1852,11 @@ surveys of the feed through a working copy, like any promoted document.
 
 #### Open decisions
 
-None at present.
+* **Backfill**: a source type moved out of parked has no Events for the streams already processed (its records were
+  passed over). Translating its history means reprocessing those raw streams, which reruns every group on them and
+  would write their Events, and index documents, a second time. Forward only by default (the user told so), or
+  reprocessing that supersedes the earlier output and cleans up the index? To decide once Stroom's handling of
+  reprocessed output is checked.
 
 
 ## Translation
