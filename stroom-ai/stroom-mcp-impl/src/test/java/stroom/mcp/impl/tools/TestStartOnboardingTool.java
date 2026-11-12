@@ -131,6 +131,38 @@ class TestStartOnboardingTool {
     }
 
     @Test
+    void anAssessmentGivenStreamsIsAnAssessmentOfTheirFeed() {
+        final SourceTypeRegistries registries = Mockito.mock(SourceTypeRegistries.class);
+        tool.setRegistries(() -> registries);
+        Mockito.when(streamTexts.feedsOf(List.of(7L))).thenReturn(List.of("PEGA"));
+
+        final Map<String, Object> result = call(Map.of("source_name", "PEGA", "build", "pega-assess", "kind",
+                "assessment", "stream_ids", List.of(7)));
+
+        assertThat(result).containsEntry("kind", StartOnboardingTool.ASSESSMENT).containsEntry("feed", "PEGA");
+        assertThat(String.valueOf(result.get("hint"))).startsWith("An assessment");
+        assertThat(world.records().load("pega-assess").get(BuildRecords.SOURCE_FEEDS)).isEqualTo(List.of("PEGA"));
+        Mockito.verify(registries).refuseOpenBuild("PEGA", "pega-assess", false);
+    }
+
+    @Test
+    void onboardingTheStreamsOfAFeedAnotherBuildIsOpenOnIsRefused() {
+        final SourceTypeRegistries registries = Mockito.mock(SourceTypeRegistries.class);
+        tool.setRegistries(() -> registries);
+        Mockito.when(streamTexts.feedsOf(List.of(7L))).thenReturn(List.of("PEGA"));
+        Mockito.doThrow(new stroom.ai.impl.tools.ToolRefusal("build 'other' is open on it"))
+                .when(registries).refuseOpenBuild("PEGA", "acme-v1", false);
+
+        final ToolResult refused = tool.execute(BuildToolCalls.call(StartOnboardingTool.NAME,
+                JsonUtil.writeValueAsString(Map.of("source_name", "Acme", "build", "acme-v1", "stream_ids",
+                        List.of(7)), false)), BuildToolCalls.context());
+
+        assertThat(refused.isError()).isTrue();
+        assertThat(refused.text()).contains("build 'other' is open on it");
+        Mockito.verify(streamTexts, Mockito.never()).read(any());
+    }
+
+    @Test
     void aBuildIsNamedFromItsSource() {
         assertThat(StartOnboardingTool.buildName("Acme door controller", null))
                 .isEqualTo("onboard-acme-door-controller");

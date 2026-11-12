@@ -74,6 +74,9 @@ public class BuildRecords {
 
     /// In a working copy's entry: the version its original had when it was copied.
     static final String COPY_OF_VERSION = "copy_of_version";
+    /// In a document's entry: true once a promotion of the build left it in the workspace (the user kept it), so it
+    /// doesn't hold the build open on its feed.
+    static final String KEPT_AT_PROMOTION = "kept_at_promotion";
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BuildRecords.class);
 

@@ -189,13 +189,14 @@ class CreateFeedTool extends AbstractBuiltInTool {
         final String streamType = NullSafe.nonBlankStringElse(stringArg(call, STREAM_TYPE_ARG), "Raw Events");
         final String description = NullSafe.string(rawArg(call, DESCRIPTION_ARG));
         final boolean testFeed = JsonValues.truthy(flag(call, TEST_FEED_ARG));
+        final String group = stringArg(call, GROUP_ARG);
+        if (group != null) {
+            // Before the build's feed of the name is carried on with: a group's output feed is marked as the group's.
+            return groupOutputFeed(call, context, build, proposed, encoding, description, group);
+        }
         final Optional<Map<String, Object>> existing = buildFeeds.existingFeed(proposed, build);
         if (existing.isPresent()) {
             return plan.withNext(context, build, existing.get());
-        }
-        final String group = stringArg(call, GROUP_ARG);
-        if (group != null) {
-            return groupOutputFeed(call, context, build, proposed, encoding, description, group);
         }
         buildFeeds.refuseCaseTwin(proposed);
         final List<String> chosen = stringListArg(call, USER_SAMPLES_ARG);
@@ -293,6 +294,10 @@ class CreateFeedTool extends AbstractBuiltInTool {
             throw new ToolRefusal("group= is an aggregated feed's: this server has no source type groups");
         }
         groupsProvider.get().checkOwnOutputFeed(build, group);
+        final Optional<Map<String, Object>> existing = buildFeeds.existingFeed(proposed, build);
+        if (existing.isPresent()) {
+            return groupOutputFeedIn(context, build, existing.get(), group);
+        }
         buildFeeds.refuseCaseTwin(proposed);
         final Map<String, Object> details = new LinkedHashMap<>();
         details.put("build", build);
@@ -304,6 +309,11 @@ class CreateFeedTool extends AbstractBuiltInTool {
                 .withEditable(NAME_ARG, "Feed name", proposed));
         final String name = consent.edited(context, NAME_ARG, proposed);
         if (!name.equals(proposed)) {
+            // The name the user settled on in the form, checked as the proposed one was.
+            final Optional<Map<String, Object>> theirs = buildFeeds.existingFeed(name, build);
+            if (theirs.isPresent()) {
+                return groupOutputFeedIn(context, build, theirs.get(), group);
+            }
             buildFeeds.refuseCaseTwin(name);
         }
         final DocRef ref = createFeed(name, build);
@@ -326,6 +336,33 @@ class CreateFeedTool extends AbstractBuiltInTool {
         result.put("hint", "The output feed of group '" + group + "': create_pipeline for the group's pipeline of "
                            + "its own (translationFilter.xslt its dispatcher) sets its stream appender's feed to "
                            + "it.");
+        return plan.withNext(context, build, result);
+    }
+
+    // A feed the build has already, named for a group's output feed: marked as the group's, and named in the
+    // registry's rows for it, so create_pipeline finds it. One holding raw data is refused.
+    private Map<String, Object> groupOutputFeedIn(final ToolCallContext context,
+                                                  final String build,
+                                                  final Map<String, Object> existing,
+                                                  final String group) {
+        final String name = String.valueOf(existing.get("name"));
+        final String streamType = existing.get("stream_type") == null
+                ? null
+                : String.valueOf(existing.get("stream_type"));
+        if (NullSafe.isNonBlankString(streamType) && !"Events".equals(streamType)) {
+            throw new ToolRefusal("The build's feed '" + name + "' holds " + streamType + ", not Events: it can't be "
+                                  + "group '" + group + "''s output feed. Propose another name.");
+        }
+        final DocRef saved = new DocRef(FeedDoc.TYPE, String.valueOf(existing.get("uuid")), name);
+        records.update(build, saved, entry -> entry.put(BuildFeeds.GROUP_OUTPUT, group));
+        final List<String> types = groupsProvider.get().outputFeed(context, build, group, name);
+        final Map<String, Object> result = new LinkedHashMap<>(existing);
+        result.put("group", group);
+        result.put("source_types", types);
+        result.put("note", "The build already has feed '" + name + "': nothing new was made. It is now the output "
+                           + "feed of group '" + group + "'.");
+        result.put("hint", "create_pipeline for the group's pipeline of its own (translationFilter.xslt its "
+                           + "dispatcher) sets its stream appender's feed to it.");
         return plan.withNext(context, build, result);
     }
 

@@ -199,8 +199,11 @@ class StartOnboardingTool extends AbstractBuiltInTool {
                 return JsonResults.refused("kind is one of " + ToolText.list(BuildRecords.BUILD_KINDS) + ", not '"
                                            + kind + "'");
             }
-            if (ASSESSMENT.equals(kind) && samples == null && streamIds.isEmpty() && files.isEmpty()) {
-                return JsonResults.of(assess(context, sourceName, build, stringArg(call, FEED_ARG), folders));
+            if (ASSESSMENT.equals(kind)) {
+                // An assessment surveys a feed already in Stroom: samples name it (their streams' feed), or are
+                // left aside, never profiled as an onboarding's.
+                return JsonResults.of(assess(context, sourceName, build, assessedFeed(call, streamIds), folders,
+                        samples != null || !streamIds.isEmpty() || !files.isEmpty()));
             }
             if (!files.isEmpty() && samples == null && streamIds.isEmpty()) {
                 return JsonResults.of(filesFirst(context, sourceName, files, build, folders, kind));
@@ -220,6 +223,11 @@ class StartOnboardingTool extends AbstractBuiltInTool {
                                       final String kind) {
         List<String> notes = List.of();
         final Map<String, String> named;
+        if (!streamIds.isEmpty() && samples == null && registriesProvider != null) {
+            // One open build per aggregated feed: streams of a feed another build is open on aren't onboarded here.
+            sampleStreamTexts.feedsOf(streamIds).forEach(feed -> registriesProvider.get().refuseOpenBuild(feed,
+                    build, false));
+        }
         if (!streamIds.isEmpty() && samples == null) {
             final SampleStreamTexts.Texts read = sampleStreamTexts.read(streamIds);
             named = read.texts();
@@ -332,7 +340,8 @@ class StartOnboardingTool extends AbstractBuiltInTool {
                                        final String sourceName,
                                        final String build,
                                        final String feed,
-                                       final List<String> folders) {
+                                       final List<String> folders,
+                                       final boolean samplesGiven) {
         if (NullSafe.isBlankString(feed)) {
             throw new ToolRefusal("Give feed: the existing feed to assess (kind=assessment surveys a feed already "
                                   + "in Stroom; no samples).");
@@ -356,6 +365,10 @@ class StartOnboardingTool extends AbstractBuiltInTool {
         plan.nextStep(build, null).ifPresent(next -> result.put("next", next));
         result.put("done", false);
         result.put("standing_instructions", instructions(context, folders));
+        if (samplesGiven) {
+            result.put("samples", "Not profiled: an assessment surveys the feed itself (survey_feed), its streams "
+                                  + "read where they are.");
+        }
         result.put("hint", "An assessment: survey_feed build='" + build + "' feed='" + feed.strip() + "' until "
                            + "covered. If the feed aggregates sources, the survey asks the user to confirm the field "
                            + "that tells them apart, and record_source_types writes the registry of its source "
@@ -363,6 +376,22 @@ class StartOnboardingTool extends AbstractBuiltInTool {
                            + "registry beside the feed); then offer to onboard the source types the user picks.");
         result.put("tools", BuildPlan.HIDDEN_TOOLS);
         return result;
+    }
+
+    // The feed an assessment surveys: the one named, else the one feed its streams are in.
+    private String assessedFeed(final ToolCall call, final List<Long> streamIds) {
+        final String named = stringArg(call, FEED_ARG);
+        if (NullSafe.isNonBlankString(named) || streamIds.isEmpty()) {
+            return named;
+        }
+        final List<String> feeds = sampleStreamTexts.feedsOf(streamIds);
+        if (feeds.size() > 1) {
+            throw new ToolRefusal("The streams given are in " + feeds.size() + " feeds (" + String.join(", ", feeds)
+                                  + "): an assessment surveys one. Give feed: the one to assess.");
+        }
+        return feeds.isEmpty()
+                ? null
+                : feeds.getFirst();
     }
 
     // The kind of work the build is, when named: kept in its record, so the plan's steps follow it from the start.

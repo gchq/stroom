@@ -44,8 +44,9 @@ class TestDispatcherReferences {
 
     private final PipelineWorld pipelines = new PipelineWorld();
     private final SourceTypeGroups groups = Mockito.mock(SourceTypeGroups.class);
+    private final PipelineIndex pipelineIndex = Mockito.mock(PipelineIndex.class);
     private final DispatcherReferences references = new DispatcherReferences(groups, pipelines.writes,
-            pipelines.pipelineDocs);
+            pipelines.pipelineDocs, () -> pipelineIndex);
 
     @BeforeEach
     void setUp() {
@@ -94,6 +95,26 @@ class TestDispatcherReferences {
                     assertThat(reference.getFeed().getUuid()).isEqualTo("f-users");
                 });
         // Loaded already: nothing more to add.
+        assertThat(references.changes(BUILD, docs)).isEmpty();
+    }
+
+    @Test
+    void aProductionPipelineRunningTheDispatchersOriginalGainsTheReferenceDataThoughNotInTheBuild() {
+        // A later build adds a group with lookups to the feed's pipeline: only the dispatcher's working copy is in
+        // the build, and the production pipeline running its original must load the group's reference data.
+        Mockito.when(pipelineIndex.containing(PipelineDoc.TYPE, "d0")).thenReturn(List.of(
+                new DocRef(PipelineDoc.TYPE, "prod", "ACME-Events")));
+        final List<Map<String, Object>> docs = List.of(FakeBuildFacts.doc(XsltDoc.TYPE, "d1", "ACME dispatcher",
+                "working_copy_of", "d0"));
+
+        final List<DispatcherReferences.Change> changes = references.changes(BUILD, docs);
+
+        assertThat(changes).singleElement().satisfies(change -> {
+            assertThat(change.pipeline().getUuid()).isEqualTo("prod");
+            assertThat(change.said()).contains("pipeline 'ACME-Events'", "ACME-USERS");
+        });
+        assertThat(references.apply(changes)).hasSize(1);
+        assertThat(pipelines.pipelineDoc("prod").getPipelineData().getAddedPipelineReferences()).hasSize(1);
         assertThat(references.changes(BUILD, docs)).isEmpty();
     }
 

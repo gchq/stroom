@@ -1939,7 +1939,8 @@ Built in phase 4 (where the design was silent):
   and before write-back it points every module at the originals and rewrites the registry to name them. Reference data
   is only ever added, never removed, shown in the approval as `pipeline_changes`.
 * Not covered: a pipeline newly made in a later build running a dispatcher's working copy is not re-pointed at
-  promotion (use `copy_pipeline`); a production pipeline not copied into the build gains no reference data.
+  promotion (use `copy_pipeline`). Production pipelines running a dispatcher's original gain the reference data too
+  (fixed after review, 2026-11-13).
 
 Built in phase 5 (where the design was silent):
 
@@ -1973,6 +1974,27 @@ Built in phase 6 (where the design was silent):
   records (Stroom moves the record location only when it is read).
 * The clean-step record and check say why a lookup failed (logged at WARN, and in the refusal) instead of taking a
   failure for "not managed" or "not passed".
+
+Fixed after a review of the whole work (2026-11-13):
+
+* The registry always goes beside the feed at promotion, whatever the survey doc's choice; what promotion keeps in the
+  workspace is marked `kept_at_promotion`, so the build doesn't count as open on the feed.
+* `record_source_types rows=` keeps translated or placed rows it leaves out; removing one (`remove`) or changing a
+  translated row's value or pattern is confirmed in a form; a translated row is never renamed (add, then remove).
+* Rows added to a placed group join its pipeline, dispatcher and output feed; no dispatcher is made that no pipeline
+  runs, and placement is asked instead.
+* Registry working copies record the version copied, so promotion asks if the original changed; the one-open-build
+  guard also runs when a registry working copy is made, when a group falls back to the registry beside the feed, and
+  in `start_onboarding` given streams. `kind=assessment` is always an assessment, samples or not.
+* Promotion leaves working copies the user kept untouched, and refuses when a promoted module would import an original
+  lacking a name it uses.
+* Group modes that meet (equal, or one the other plus a separator) are refused, as is a source type another group
+  already translates.
+* The dispatcher reads the source type value as the tools do: whitespace stripped, `-`, `null`, `none` and `n/a` no
+  value.
+* `compare_outputs` and `summarise_fix` step a group's draft through a temporary dispatcher; `create_feed group=`
+  takes a feed already in the build as the group's output feed and checks a corrected name; the Events question is
+  asked only for a pipeline of its own.
 
 #### Open decisions
 

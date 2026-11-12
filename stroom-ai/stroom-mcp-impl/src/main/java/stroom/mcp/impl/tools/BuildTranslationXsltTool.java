@@ -1063,8 +1063,17 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             final Map<String, Object> group = groupSaid(b);
             group.put("xslt", Map.of("uuid", savedUuid, "name", String.valueOf(saved.get("name"))));
             group.putAll(imports.saved());
-            group.putAll(groups.dispatch(context, b.build, b.group, imports, savedUuid,
-                    String.valueOf(saved.get("name")), placement, request.references(), b.schema, b.version));
+            final Map<String, Object> dispatched = new LinkedHashMap<>(groups.dispatch(context, b.build, b.group,
+                    imports, savedUuid, String.valueOf(saved.get("name")), placement, request.references(), b.schema,
+                    b.version));
+            // What placing it said joins what splitting its mapping said.
+            final List<String> notes = new ArrayList<>(JsonValues.strings(group.get("notes")));
+            notes.addAll(JsonValues.strings(dispatched.remove("notes")));
+            notes.addAll(b.placementNotes);
+            group.putAll(dispatched);
+            if (!notes.isEmpty()) {
+                group.put("notes", notes);
+            }
             groupNext(b.group, placement).ifPresent(next -> group.put("group_next", next));
             b.result.put("group", group);
         }
@@ -1126,22 +1135,22 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                                + "until the new one replaces it)", SourceTypeGroups.NEW_VERSION));
         final List<String> feeds = List.of("Into the feed's Events", "To an output feed of its own (made next, in a "
                                                                      + "form)");
-        final Map<String, Consent.Question> questions = new LinkedHashMap<>();
-        questions.put("pipeline", new Consent.Question("Which pipeline handles group '" + b.group.group() + "'?",
-                List.copyOf(options.keySet())));
-        questions.put("events", new Consent.Question("Where do its Events go? (a pipeline of its own only)", feeds));
-        final Optional<Map<String, String>> chosen = consent.chooseEach(call, context, NAME, "Source type group '"
-                                                                                             + b.group.group()
-                                                                                             + "' ("
-                                                                                             + String.join(", ",
+        final Optional<String> chosen = consent.choose(call, context, NAME, "Source type group '" + b.group.group()
+                                                                            + "' (" + String.join(", ",
                 b.group.sourceTypes()) + ") is new: choose the pipeline that handles it. The feed's pipeline passes "
-                                                                                             + "over every other "
-                                                                                             + "pipeline's records.",
-                questions);
-        if (chosen.isPresent() && chosen.get().containsKey("pipeline")) {
-            final String choice = options.get(chosen.get().get("pipeline"));
-            return new SourceTypeGroups.Placement(choice, SourceTypeGroups.OWN.equals(choice)
-                                                          && feeds.get(1).equals(chosen.get().get("events")));
+                                                                            + "over every other pipeline's records.",
+                List.copyOf(options.keySet()), "Which pipeline handles group '" + b.group.group() + "'?");
+        if (chosen.isPresent()) {
+            final String choice = options.get(chosen.get());
+            // Where its Events go is asked only for a pipeline of its own: the feed's pipeline, or a new version of
+            // it, writes into the feed's Events.
+            final boolean ownFeed = SourceTypeGroups.OWN.equals(choice) && consent.choose(call, context, NAME,
+                    "Group '" + b.group.group() + "' runs in a pipeline of its own: its Events go into the feed's "
+                    + "Events, or to an output feed of its own.", feeds, "Where do the Events of group '"
+                                                                         + b.group.group() + "' go?")
+                    .map(feeds.get(1)::equals)
+                    .orElse(false);
+            return new SourceTypeGroups.Placement(choice, ownFeed);
         }
         final Request request = b.request;
         if (request.pipeline() == null) {
@@ -1157,8 +1166,15 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                     ? " (the feed has no pipeline in production yet to make a new version of)"
                     : ""));
         }
-        return new SourceTypeGroups.Placement(request.pipeline(), SourceTypeGroups.OWN.equals(request.pipeline())
-                                                                  && request.ownOutputFeed());
+        final boolean own = SourceTypeGroups.OWN.equals(request.pipeline());
+        if (request.ownOutputFeed() && !own) {
+            b.placementNotes.add(OWN_OUTPUT_FEED_ARG + "=true was ignored: only a group in a pipeline of its own has "
+                                 + "an output feed of its own, and group '" + b.group.group() + "' is in "
+                                 + (SourceTypeGroups.NEW_VERSION.equals(request.pipeline())
+                    ? "a new version of the feed's pipeline"
+                    : "the feed's pipeline") + ", writing into the feed's Events.");
+        }
+        return new SourceTypeGroups.Placement(request.pipeline(), own && request.ownOutputFeed());
     }
 
     // What the agent does next for a group placed now: its pipeline of its own made, its output feed made first, or
@@ -1800,6 +1816,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         private Map<String, Object> saved;
         // A source type group's: how it is built, and its build.
         private SourceTypeGroups.Plan group;
+        // What placing a group said of the arguments it was given (one ignored, say).
+        private final List<String> placementNotes = new ArrayList<>();
         private String build;
 
         private Build(final Request request) {

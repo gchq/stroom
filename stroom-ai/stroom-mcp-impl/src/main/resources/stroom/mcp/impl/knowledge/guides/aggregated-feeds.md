@@ -45,7 +45,10 @@ promotion; its example records are then as readable as the feed's folder.
    asked again. It writes the registry; the source types not chosen are `parked` with the user's reason.
 
 Pass the feed's `system_name` and `environment` (and `system_names` for a source type whose system differs) as the
-user gave them. `dropped=` only on the user's word. A row no record could reach (an earlier row always matches first)
+user gave them. `dropped=` only on the user's word. A later build's `rows=` keeps the registry's translated and placed
+rows it leaves out; `remove=` drops a row, on the user's word. Removing a translated or placed row, or changing a
+translated row's value or pattern, is confirmed by the user in a form (refused for a translated row without forms). A
+translated row can't be renamed: add the new row and remove the old one. A row no record could reach (an earlier row always matches first)
 is refused. Without forms, `patterns=`, `scope=` and `reason=` carry the user's answers.
 
 ## Building a group
@@ -66,7 +69,10 @@ source_types=[...]` and its own mapping, drafted from the scope's records (the d
 pipeline (the default; one pass over every record), a pipeline of its own (it reads every stream of the feed and
 passes over the other groups' records; optionally to an output feed of its own), or a new version of the feed's
 pipeline (`copy_pipeline`). A feed with no pipeline yet is offered only the first two. Without forms, the call is
-refused until `pipeline=shared|own|new_version` (and `own_output_feed`) carries the user's answer. A group's own
+refused until `pipeline=shared|own|new_version` (and `own_output_feed`, for a pipeline of its own only) carries the
+user's answer. Source types added to a group later join its pipeline and output feed (said in `group.notes`). A
+source type belongs to one group: one another group translates is refused, as is a group name whose mode meets
+another group's (`PEGA` and `PEGA mail`). A group's own
 output feed is made with `create_feed group=<name>` before its pipeline.
 
 `create_pipeline` puts the build's dispatcher in the pipeline's XSLT slot (naming both when the build holds two:
@@ -96,7 +102,8 @@ user in one form: a field of another name, or a new index version; promotion is 
 
 ## Promotion and later builds
 
-* Promotion moves the modules, the registry and any group output feed beside the feed; its review shows the
+* Promotion moves the modules, the registry (always, whatever was chosen for the survey doc) and any group output
+  feed beside the feed; its review shows the
   pipeline changes (reference data, only ever added) and the index changes (fields added, forward only).
 * One open build per aggregated feed: another is refused, naming the open one. Finish (promote) or abandon it first.
 * A later build changes promoted modules through working copies; `copy_pipeline working_copy=true` steps the feed's

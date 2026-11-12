@@ -35,6 +35,7 @@ import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
+import stroom.docref.DocRef;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
@@ -50,6 +51,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -250,18 +252,25 @@ class SummariseFixTool extends AbstractBuiltInTool {
                                   + ToolText.list(new TreeSet<>(docs.keySet())));
         }
         final TranslationDoc target = docs.get(element);
-        final String saved = code(target);
+        // A source type group's draft is proven through the feed's dispatcher the element runs (inlined in place of
+        // its import), and diffed against the group's saved XSLT, not the dispatcher.
+        final Optional<XsltDoc> group = stepping.savedGroup(request.pipelineUuid(), element, draft);
+        final String saved = group.map(doc -> NullSafe.string(doc.getData())).orElseGet(() -> code(target));
         if (saved.equals(draft)) {
             throw new ToolRefusal("The draft is the same as the saved code");
         }
-        final String diff = diff(saved, draft, target.doc().getName());
-        final Map<String, String> code = Map.of(element, draft);
+        final String diff = diff(saved, draft, group.map(XsltDoc::getName).orElse(target.doc().getName()));
+        final Map<String, String> code = stepping.withGroupsInlined(request.pipelineUuid(), Map.of(element, draft));
+        // What the fix changes: the group's XSLT, for a group's draft.
+        final TranslationDoc fixed = group.map(doc -> new TranslationDoc(element, target.elementType(),
+                        new DocRef(XsltDoc.TYPE, doc.getUuid(), doc.getName()), target.setBy(), false))
+                .orElse(target);
         final Proof proof = PipelineStepping.withinTimeLimit(context, () -> prove(call, context, request, element,
                 target, code));
         if (proof.stopped()) {
-            return stoppedEarly(context, request, pipeline, element, target);
+            return stoppedEarly(context, request, pipeline, element, fixed);
         }
-        return packaged(request, pipeline, element, target, draft, diff, proof);
+        return packaged(request, pipeline, element, fixed, draft, diff, proof);
     }
 
     // The fix compared with the saved code, then stepped with each, until the call's time is up.

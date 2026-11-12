@@ -26,14 +26,17 @@ import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 /// Sample streams' raw text, read in place of text sent by the client, so a sample passes through the model once
@@ -117,6 +120,24 @@ class SampleStreamTexts {
             }
         }
         return new Texts(texts, notes, cut);
+    }
+
+    /// @param streamIds Streams.
+    /// @return The feeds they are in, each once, in the order first met.
+    /// @throws ToolRefusal if a stream can't be read.
+    List<String> feedsOf(final List<Long> streamIds) {
+        final Set<String> feeds = new LinkedHashSet<>();
+        for (final long streamId : streamIds) {
+            try {
+                final String feed = streamReader.meta(streamId).getFeedName();
+                if (NullSafe.isNonBlankString(feed)) {
+                    feeds.add(feed);
+                }
+            } catch (final StreamReadException e) {
+                throw new ToolRefusal(e.getMessage());
+            }
+        }
+        return List.copyOf(feeds);
     }
 
     /// The texts read through a build's scope over an aggregated feed: each split into its records, those of

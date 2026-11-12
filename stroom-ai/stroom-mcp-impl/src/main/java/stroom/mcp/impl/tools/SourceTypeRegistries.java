@@ -74,7 +74,8 @@ class SourceTypeRegistries {
     /// documents are only ever changed by one build, and promotion needs no merging. A build is open on a feed while
     /// its folder holds the feed's registry, or works from the feed (or holds it) and holds work (an XSLT or a
     /// pipeline): made and not promoted or abandoned (its folder deleted). A build holding only the feed and its
-    /// samples, or only a test feed promotion left behind, is not.
+    /// samples, or only what its promotion kept in the workspace (a test feed, a survey doc the user kept, a document
+    /// given 'keep'), is not.
     ///
     /// @param feed       A feed's name.
     /// @param build      The build asking, left out.
@@ -92,13 +93,20 @@ class SourceTypeRegistries {
             if (other.equals(build) || BACKUPS.equals(other)) {
                 continue;
             }
-            final List<WriteGuard.BuildDoc> docs = guard.folderContents(other);
+            final Map<String, Object> record = recordOf(other);
+            final Map<String, Object> entries = BuildRecords.docs(record);
+            // What the build's promotion kept in the workspace is no work in progress.
+            final List<WriteGuard.BuildDoc> docs = guard.folderContents(other).stream()
+                    .filter(doc -> !(entries.get(doc.uuid()) instanceof final Map<?, ?> entry
+                                     && Boolean.TRUE.equals(entry.get(BuildRecords.KEPT_AT_PROMOTION))))
+                    .toList();
             final boolean registry = docs.stream()
                     .anyMatch(doc -> DocumentationDoc.TYPE.equals(doc.type()) && name.equals(doc.name()));
             final boolean onFeed = registry
                                    || docs.stream().anyMatch(doc -> FeedDoc.TYPE.equals(doc.type())
                                                                     && feed.equalsIgnoreCase(doc.name()))
-                                   || worksFrom(other).stream().anyMatch(feed::equalsIgnoreCase);
+                                   || JsonValues.strings(record.get(BuildRecords.SOURCE_FEEDS)).stream()
+                                           .anyMatch(feed::equalsIgnoreCase);
             final boolean work = registry || docs.stream().anyMatch(doc -> XsltDoc.TYPE.equals(doc.type())
                                                                            || PipelineDoc.TYPE.equals(doc.type()));
             isAggregated |= registry;
@@ -114,13 +122,13 @@ class SourceTypeRegistries {
         }
     }
 
-    // The existing feeds a build works from, as its record names them.
-    private List<String> worksFrom(final String build) {
+    // A build's record: the existing feeds it works from, and what its promotion kept; empty if it can't be read.
+    private Map<String, Object> recordOf(final String build) {
         try {
-            return JsonValues.strings(records.get().load(build).get(BuildRecords.SOURCE_FEEDS));
+            return records.get().load(build);
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("No record read for build {}: {}", build, e.getMessage()));
-            return List.of();
+            return BuildRecords.empty();
         }
     }
 
@@ -175,7 +183,8 @@ class SourceTypeRegistries {
     }
 
     /// Writes a feed's registry in the build: over the build's own, else made new, as a working copy of the one
-    /// beside the feed when there is one.
+    /// beside the feed when there is one. A working copy records the version it was copied at, so promotion asks
+    /// before writing it over a registry changed since; and is made only while no other build is open on the feed.
     ///
     /// @param session  The session, for the audit log.
     /// @param build    The build.
@@ -193,10 +202,21 @@ class SourceTypeRegistries {
             guard.checkInBuild(session, ref);
             return write(ref, text);
         }
+        if (existing != null) {
+            // The build starts work on the feed from the registry beside it: one open build per feed.
+            refuseOpenBuild(feed, build, true);
+        }
         final DocRef made = guard.create(DocumentationDoc.TYPE, SourceTypeRegistry.docName(feed), build,
                 existing == null
                         ? null
                         : existing.doc().uuid(), false, null);
+        if (existing != null) {
+            documentAccess.read(new DocRef(DocumentationDoc.TYPE, existing.doc().uuid(), existing.doc().name()),
+                            DocumentationDoc.class)
+                    .map(DocumentationDoc::getVersion)
+                    .ifPresent(version -> records.get().update(build, made, entry ->
+                            entry.put(BuildRecords.COPY_OF_VERSION, version)));
+        }
         return write(made, text);
     }
 

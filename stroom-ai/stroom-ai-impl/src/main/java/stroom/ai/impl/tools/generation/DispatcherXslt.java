@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.SourceTypeFields;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.XmlTrees;
@@ -229,6 +230,18 @@ public final class DispatcherXslt {
                 }
             }
         }
+        final List<DispatcherSpec.Group> groups = spec.groups();
+        for (int i = 0; i < groups.size(); i++) {
+            for (int j = i + 1; j < groups.size(); j++) {
+                final DispatcherSpec.Group one = groups.get(i);
+                final DispatcherSpec.Group other = groups.get(j);
+                if (one.mode() != null && other.mode() != null && ModuleChecks.modesMeet(one.mode(), other.mode())) {
+                    out.add("Groups '" + one.name() + "' (mode " + one.mode() + ") and '" + other.name() + "' (mode "
+                            + other.mode() + ") have modes that meet: the names one declares could be the other's in "
+                            + "the dispatcher's stylesheet. Name one of the groups otherwise");
+                }
+            }
+        }
         inlined.keySet().stream()
                 .filter(mode -> spec.groups().stream().noneMatch(group -> group.mode().equals(mode)))
                 .forEach(mode -> out.add("Inlined group " + mode + " is not one the dispatcher imports"));
@@ -246,7 +259,7 @@ public final class DispatcherXslt {
             }
             final XmlElement when = choose.addElement(XSL, "when", "test", "$source_type = ("
                                                                          + literals(group.sourceTypes()) + ")");
-            when.append(new XmlComment(" " + group.name().replace("--", "-") + " "));
+            when.append(new XmlComment(XsltComments.comment(group.name())));
             when.addElement(XSL, "apply-templates", "select", ".", "mode", group.mode());
         }
         final XmlElement otherwise = choose.addElement(XSL, "otherwise");
@@ -271,8 +284,7 @@ public final class DispatcherXslt {
                                                       + spec.field() + " matches (= a value, ~ an anchored "
                                                       + "pattern), '' for none")));
         fn.addElement(XSL, "param", "name", "record", "as", "element()");
-        fn.addElement(XSL, "variable", "name", "value", "select", "string(($record/" + fieldText(spec, input)
-                                                                  + ")[1])");
+        fn.addElement(XSL, "variable", "name", "value", "select", valueFunction(spec) + "($record)");
         final XmlElement choose = fn.addElement(XSL, "choose");
         for (final DispatcherSpec.Row row : spec.rows()) {
             final String test = SourceTypeRows.PATTERN.equals(row.match())
@@ -283,11 +295,34 @@ public final class DispatcherXslt {
                 final String status = row.handledBy() == null
                         ? row.status()
                         : row.status() + ", handled by " + row.handledBy();
-                when.append(new XmlComment(" " + status.replace("--", "-") + " "));
+                when.append(new XmlComment(XsltComments.comment(status)));
             }
             when.addElement(XSL, "sequence", "select", XPathText.literal(row.name()));
         }
         choose.addElement(XSL, "otherwise").addElement(XSL, "sequence", "select", "''");
+        valueFunction(sheet, spec, input);
+    }
+
+    // A record's value of the source type field as the tools read it (SourceTypeFields.valueOf): stripped of the
+    // white space around it, and '' for none or a nil value (-, null, none, n/a), so processing and the survey count
+    // the same records as each source type.
+    private static void valueFunction(final XmlElement sheet,
+                                      final DispatcherSpec spec,
+                                      final TranslationMapping input) {
+        final XmlElement fn = sheet.addElement(XSL, "function", "name", valueFunction(spec), "as", "xs:string");
+        fn.append(new XmlComment(XsltComments.comment("A record's " + spec.field() + " as the tools read it: stripped, "
+                                                      + "and '' for none or a nil value")));
+        fn.addElement(XSL, "param", "name", "record", "as", "element()");
+        fn.addElement(XSL, "variable", "name", "stripped", "select", "replace(string(($record/"
+                                                                     + fieldText(spec, input) + ")[1]), "
+                                                                     + "'^\\s+|\\s+$', '')");
+        fn.addElement(XSL, "sequence", "select", "if (lower-case($stripped) = (" + literals(SourceTypeFields.NIL_VALUES)
+                                                 + ")) then '' else $stripped");
+    }
+
+    // The name of the function reading a record's value of the source type field.
+    private static String valueFunction(final DispatcherSpec spec) {
+        return "mcp:" + name(spec, "source-type-value");
     }
 
     // The counts of records passed over, by source type, logged at the end of the document (INFO); each value no row
@@ -324,7 +359,7 @@ public final class DispatcherXslt {
                 : said.addElement(XSL, "otherwise")).addElement(XSL, "sequence", "select", passedOverLog(null));
         final XmlElement unmatched = template.addElement(XSL, "for-each-group", "select", "$records[" + function
                                                                                           + "(.) = '']",
-                "group-by", "string((" + fieldText(spec, input) + ")[1])");
+                "group-by", valueFunction(spec) + "(.)");
         unmatched.addElement(XSL, "variable", "name", "key", "select", "concat('mcp-new-source-type:', "
                                                                        + "current-grouping-key())");
         final XmlElement first = unmatched.addElement(XSL, "if", "test", "not(string(stroom:get($key)))");
