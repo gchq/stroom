@@ -319,9 +319,7 @@ class SecurityFilter implements Filter {
     boolean isCsrfSafe(final HttpServletRequest request, final CredentialSource source) {
         final boolean credentialIsAmbient =
                 CredentialSource.SESSION.equals(source)
-                || (CredentialSource.REQUEST_TOKEN.equals(source)
-                    && isEdgeAuthenticationEnabled()
-                    && hasBrowserProvenance(request));
+                || isEdgeBrowserRequestToken(request, source);
 
         if (credentialIsAmbient) {
             return isOriginValid(request) && isCsrfValid(request);
@@ -364,22 +362,38 @@ class SecurityFilter implements Filter {
     /// that is never used to authenticate a request.
     ///
     /// Only requests issued by a browser are recorded, so that machine clients sending bearer
-    /// tokens through the proxy do not each create a session.
+    /// tokens through the proxy are left alone.
+    ///
+    /// The user is only recorded against a session the browser already has; this never creates
+    /// one. The UI gets its session when it first loads the explorer tree. Creating one here
+    /// instead would give the user a session for each of the UI's concurrent first requests,
+    /// and would let any page create sessions in the victim's name, as the proxy's cookie is
+    /// sent cross-site but stroom's (SameSite=Strict by default) session cookie is not.
+    ///
+    /// A session that holds an identity is left alone, so a session only ever has one owner.
+    /// The identity may only have expired and can be refreshed, at which point it would
+    /// authenticate the session's requests again.
     ///
     /// @param request    The authenticated request.
     /// @param credential The credential that authenticated the request.
     // Pkg private for testing
     void recordEdgeSessionUser(final HttpServletRequest request, final AuthenticatedCredential credential) {
-        if (CredentialSource.REQUEST_TOKEN.equals(credential.source())
-            && isEdgeAuthenticationEnabled()
-            && hasBrowserProvenance(request)
+        if (isEdgeBrowserRequestToken(request, credential.source())
             && credential.identity() instanceof final HasUserRef hasUserRef) {
 
-            final HttpSession session = SessionUtil.getOrCreateSession(request, null);
-            UserIdentitySessionUtil.setEdgeUserInSession(session, hasUserRef.getUserRef());
-            // A newly created session has not had the user agent set on it yet.
-            UserAgentSessionUtil.setUserAgentInSession(request, session);
+            final HttpSession session = SessionUtil.getExistingSession(request);
+            if (session != null && UserIdentitySessionUtil.getUserFromSession(session).isEmpty()) {
+                UserIdentitySessionUtil.setEdgeUserInSession(session, hasUserRef.getUserRef());
+            }
         }
+    }
+
+    /// Whether the request was authenticated by a token that an authenticating edge proxy
+    /// injected into a request issued by a browser.
+    private boolean isEdgeBrowserRequestToken(final HttpServletRequest request, final CredentialSource source) {
+        return CredentialSource.REQUEST_TOKEN.equals(source)
+               && isEdgeAuthenticationEnabled()
+               && hasBrowserProvenance(request);
     }
 
     private boolean isEdgeAuthenticationEnabled() {

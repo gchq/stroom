@@ -51,6 +51,11 @@ public final class UserIdentitySessionUtil {
                 NullSafe.get(session, HttpSession::getId),
                 userIdentity));
         session.setAttribute(SESSION_USER_IDENTITY, userIdentity);
+        if (userIdentity != null) {
+            // The session is now owned by this identity, so any user recorded by an edge proxy
+            // before it is out of date.
+            session.removeAttribute(SESSION_EDGE_USER_REF);
+        }
     }
 
     public static Optional<UserIdentity> getUserFromSession(final HttpSession session) {
@@ -78,11 +83,14 @@ public final class UserIdentitySessionUtil {
     /// apart from the identity set by [#setUserInSession(HttpSession, UserIdentity)], because
     /// the identity in the session authenticates later requests and this must not.
     ///
+    /// A session should not hold both: setting an identity clears this, and this should not be
+    /// set on a session that holds an identity.
+    ///
     /// @param session The session to record the user against. Must not be null.
     /// @param userRef The user making requests on the session, or null to clear it.
     public static void setEdgeUserInSession(final HttpSession session, final UserRef userRef) {
         Objects.requireNonNull(session);
-        LOGGER.debug(() -> LogUtil.message("Setting edge userRef {} in session {}",
+        LOGGER.trace(() -> LogUtil.message("Setting edge userRef {} in session {}",
                 userRef,
                 NullSafe.get(session, HttpSession::getId)));
         session.setAttribute(SESSION_EDGE_USER_REF, userRef);
@@ -95,7 +103,6 @@ public final class UserIdentitySessionUtil {
     /// @param session The session to read, may be null.
     /// @return The recorded user, or empty if the session is null or has no recorded user.
     public static Optional<UserRef> getEdgeUserFromSession(final HttpSession session) {
-        return Optional.ofNullable(session)
-                .map(session2 -> (UserRef) session2.getAttribute(SESSION_EDGE_USER_REF));
+        return Optional.ofNullable(SessionUtil.getAttribute(session, SESSION_EDGE_USER_REF, UserRef.class));
     }
 }

@@ -20,11 +20,13 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.HasUserRef;
 import stroom.security.shared.SessionListResponse;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
+import stroom.test.common.MockHttpSessionFactory;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.UserRef;
 
@@ -249,9 +251,9 @@ class TestSessionListListenerPermissions {
     }
 
     @Test
-    void theSessionIdentityTakesPrecedenceOverARecordedEdgeUser() {
-        final HttpSession session = registerSession("sess1", userRef("alice"));
-        lenient().when(session.getAttribute("SESSION_EDGE_USER_REF")).thenReturn(userRef("bob"));
+    void identitySetAfterAnEdgeUserIsListed() {
+        final HttpSession session = registerEdgeSession("sess1", userRef("bob"));
+        UserIdentitySessionUtil.setUserInSession(session, identityFor(userRef("alice")));
         stubSecureResultToRun();
 
         final SessionListResponse response = listener.listSessions(THIS_NODE);
@@ -313,13 +315,20 @@ class TestSessionListListenerPermissions {
     }
 
     // Put a session into the listener's map as an authenticating edge proxy deployment would leave it:
-    // no identity held in the session, only the recorded edge user.
+    // no identity held in the session, only the recorded edge user (none if userRef is null).
     private HttpSession registerEdgeSession(final String sessionId, final UserRef userRef) {
-        final HttpSession session = Mockito.mock(HttpSession.class);
-        lenient().when(session.getId()).thenReturn(sessionId);
-        lenient().when(session.getAttribute("SESSION_EDGE_USER_REF")).thenReturn(userRef);
+        final HttpSession session = MockHttpSessionFactory.create(sessionId);
+        if (userRef != null) {
+            UserIdentitySessionUtil.setEdgeUserInSession(session, userRef);
+        }
         listener.sessionCreated(sessionEvent(session));
         return session;
+    }
+
+    private static UserIdentity identityFor(final UserRef userRef) {
+        final SessionUserIdentity identity = Mockito.mock(SessionUserIdentity.class);
+        lenient().when(identity.getUserRef()).thenReturn(userRef);
+        return identity;
     }
 
     private HttpSessionEvent sessionEvent(final HttpSession session) {

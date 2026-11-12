@@ -17,42 +17,20 @@
 package stroom.security.common.impl;
 
 import stroom.security.api.UserIdentity;
+import stroom.test.common.MockHttpSessionFactory;
 import stroom.util.shared.UserRef;
 
 import jakarta.servlet.http.HttpSession;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 
-@ExtendWith(MockitoExtension.class)
 class TestUserIdentitySessionUtil {
 
     private static final UserRef ALICE = UserRef.builder().uuid("alice-uuid").subjectId("alice").build();
 
-    @Mock
-    private HttpSession session;
-
-    private final Map<String, Object> attributes = new HashMap<>();
-
-    @BeforeEach
-    void setUp() {
-        // Back the mock session with a real attribute map.
-        lenient().doAnswer(invocation -> attributes.put(invocation.getArgument(0), invocation.getArgument(1)))
-                .when(session).setAttribute(anyString(), any());
-        lenient().when(session.getAttribute(anyString()))
-                .thenAnswer(invocation -> attributes.get((String) invocation.getArgument(0)));
-    }
+    private final HttpSession session = MockHttpSessionFactory.create("session-1");
 
     @Test
     void edgeUserIsReadBack() {
@@ -78,6 +56,25 @@ class TestUserIdentitySessionUtil {
 
         assertThat(UserIdentitySessionUtil.getEdgeUserFromSession(session))
                 .isEmpty();
+    }
+
+    @Test
+    void settingAnIdentityClearsTheEdgeUser() {
+        // A session has one owner, so an identity replaces any edge user recorded before it.
+        UserIdentitySessionUtil.setEdgeUserInSession(session, ALICE);
+        UserIdentitySessionUtil.setUserInSession(session, mock(UserIdentity.class));
+
+        assertThat(UserIdentitySessionUtil.getEdgeUserFromSession(session))
+                .isEmpty();
+    }
+
+    @Test
+    void clearingTheIdentityLeavesTheEdgeUser() {
+        UserIdentitySessionUtil.setEdgeUserInSession(session, ALICE);
+        UserIdentitySessionUtil.setUserInSession(session, null);
+
+        assertThat(UserIdentitySessionUtil.getEdgeUserFromSession(session))
+                .contains(ALICE);
     }
 
     @Test

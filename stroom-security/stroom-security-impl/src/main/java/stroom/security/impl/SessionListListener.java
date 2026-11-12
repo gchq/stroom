@@ -288,7 +288,8 @@ class SessionListListener implements HttpSessionListener, HttpSessionIdListener,
                 .filter(uid -> uid instanceof HasUserRef)
                 .map(uid -> ((HasUserRef) uid).getUserRef())
                 // Behind an authenticating edge proxy no identity is held in the session, only a
-                // record of who is using it.
+                // record of who is using it. The two are never both set (see
+                // SecurityFilter.recordEdgeSessionUser and UserIdentitySessionUtil.setUserInSession).
                 .or(() -> UserIdentitySessionUtil.getEdgeUserFromSession(httpSession))
                 .orElse(null);
     }
