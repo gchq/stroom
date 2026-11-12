@@ -504,6 +504,30 @@ class TestSurveyFeedTool {
     }
 
     @Test
+    void syslogReadOnlyInPartIsOfferedDeeper() {
+        // Seen in testing (2026-11-12): a mail gateway's 30,000-line syslog streams could only be stopped at, "can't
+        // be read further in a call", as syslog wasn't read from part-way through.
+        sampleFeedInABuild();
+        final String syslog = IntStream.range(0, 12).mapToObj(i -> ("Nov  9 00:02:%02d svr01.example.com msw "
+                                                                     + "2026-11-09 00:01:%02d.240795 [1080890] "
+                                                                     + "[required] [SEGTrap] id=\"q%d\"; "
+                                                                     + "subject=\"Test\"").formatted(i, i, i))
+                .collect(Collectors.joining("\n")) + "\n";
+        stream(7, "ACME-VPN", 0, syslog, true);
+        Mockito.when(streamReader.readWindows(eq(7L), eq(0), anyLong(), anyInt(), anyInt())).thenReturn(List.of(
+                new StreamReader.Window("Nov  9 09:00:00 svr01.example.com msw 2026-11-09 08:59:00.1 [1] [info] "
+                                        + "[SEGTLS] peer=\"mx1\"\n", 5_001, 4_000_000)));
+
+        final Map<String, Object> result = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
+                                                     + "\"max_records_per_stream\": 10}"));
+
+        assertThat(String.valueOf(result.get("format"))).startsWith("syslog");
+        assertThat(String.valueOf(result.get("shapes"))).contains("SEGTLS");
+        assertThat((String) result.get("coverage")).startsWith("NOT COVERED: 1 part(s) read only in part");
+        assertThat((String) result.get("hint")).contains("read_deeper=");
+    }
+
+    @Test
     void aStreamStroomCantReadIsSaidAndTheOthersAreStillSurveyed() {
         sampleFeedInABuild();
         stream(7, "ACME-VPN", 0, JSON_LINES, false);
@@ -716,7 +740,11 @@ class TestSurveyFeedTool {
         final String args = "{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\"";
 
         final Map<String, Object> asked = json(call(args + "}"));
-        assertThat((String) asked.get("coverage")).startsWith("NOT COVERED: Stream(s) [7] can't be read further");
+        // Said plainly: how much was read, and why no more can be (seen: "records read: per_stream").
+        assertThat((String) asked.get("coverage")).startsWith("NOT COVERED: The survey read only the start of stream "
+                                                             + "7, too big to read whole in one go, and can't read "
+                                                             + "further into it. Stream 7: 60 records from its "
+                                                             + "start; it has 25 parts, more than a call reads (");
         assertThat((String) asked.get("hint")).contains("stop and accept", "Don't raise max_chars_per_stream");
 
         final Map<String, Object> stopped = json(call(args + ", \"read_deeper\": \"stop\"}"));
