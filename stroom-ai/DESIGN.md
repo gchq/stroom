@@ -1478,7 +1478,7 @@ beside the feed:
 `draft_translation_mapping` drafts from the notes; `build_translation_xslt` checks the mapping against the catalogue.
 Where the sample and the documentation disagree, the sample decides the format and the documentation the meaning.
 
-### Aggregated feeds: source types and components (proposed, 2026-11-12)
+### Aggregated feeds: source types and source type groups (proposed, 2026-11-12)
 
 Not built. A design for feeds that aggregate several discrete sources: a JSON wrapper with fixed metadata (host,
 source type, time...) around a `message` whose format depends on the source type (seen: PEGA logs, whose messages are
@@ -1494,27 +1494,31 @@ for later or for another pipeline: their choice limits what the build surveys an
 
 Terms:
 
-* **Source type**: a value of the field that says which source a record came from: the wrapper's (PEGA's source
-  type), or the record's own (Azure's `Workload`). Its field is the **source type field**; a source type's kinds of
-  event are told apart within it as now (Azure's `Operation` within a workload).
+* **Source type**: the records a value of one field marks as from one source, matched exactly (Azure's `Workload` =
+  `ExchangeOnline`, PEGA's source type) or by a pattern on the value (`LogFilePath` under `/var/log/mail/`: every log
+  file of one directory one source). The field is the wrapper's or the record's own, at any depth (`event.Workload`),
+  and is the **source type field**: one field, never a combination (a second discriminator, Azure's `RecordType`, tells
+  kinds apart within a source type, as Azure's `Operation` does within a workload).
 * **Scope**: the source types a build covers. A build's survey, samples, classification and translation see only the
   records in its scope; the rest are counted, by source type, for the registry, and nothing more.
-* **Component**: the source types one translation handles, e.g. a mail component for several mail source types. A
-  component is one mapping and one XSLT doc; its rules tell its source types (and the kinds within them) apart.
+* **Source type group**: the source types one translation handles, e.g. a mail group for several mail source types. A
+  source type group is one mapping and one XSLT doc; its rules tell its source types (and the kinds within them) apart.
 * **Registry**: the feed's list of its source types and what became of each.
 
 #### The source type registry
 
 A Documentation doc, `<feed> source types`, made in the build and promoted beside the feed with the pipeline, so a
-later build finds it. A table for the user and, as the survey record does, a machine block (`<!-- stroom-mcp source
-types {...} -->`) the tools read. One row per source type:
+later build finds it (decided, 2026-11-12). It has a human-readable part: a short account of the feed (what the
+source type field is, how many source types, which are translated, which parked and why) and a table, a row a source
+type; and, as the survey record does, a machine block (`<!-- stroom-mcp source types {...} -->`) the tools read and
+write, never shown as the text. One row per source type:
 
 | Column | |
 | --- | --- |
-| Source type | the value, as the wrapper writes it |
+| Source type | its name, and how its records are matched: a value exactly, or a pattern on the source type field (an anchored regular expression, e.g. `^/var/log/mail/`) |
 | Records | its share of the surveyed records, and how many |
 | Message | the formats its messages were seen in (XML with its root element, JSON, syslog, key=value, text), and how many of them failed to parse |
-| Component | the component that translates it, with its XSLT doc, or none |
+| Source type group | the source type group that translates it, with its XSLT doc, or none |
 | Status | `translated`, `parked` (for a later build), `dropped` (the user chose never to translate it), or `new` (seen after the registry was made) |
 | Examples | survey locations (stream, part, record) to step |
 | Decided | who chose the status, and when; a reason for parked and dropped |
@@ -1524,12 +1528,28 @@ How it is filled and kept:
 * The "source types" step ([How it starts](#how-it-starts)) surveys the feed by source type, and the user confirms
   the source type field as they confirm a kind field (`KindFields`, [Samples and the text
   converter](#samples-and-the-text-converter-built)): chosen by values, put to them when unsure.
-* The user chooses, in a form, the components to build now; every other source type is `parked`, with their reason.
-  `dropped` only on their word.
+* The user chooses, in a form, the source type groups to build now; every other source type is `parked`, with their
+  reason. `dropped` only on their word.
 * `review_coverage` and the processing checks add any source type the dispatcher meets that the registry lacks as
   `new`, so new sources in an aggregated feed surface rather than vanishing into a catch-all.
 * A build started on a feed that has a registry (`start_onboarding` on an existing feed) shows its parked and new
   source types, and the plan offers a scoped build for those the user picks.
+
+#### Matching records to source types
+
+* **Exact values** where the field holds a few, as most discriminators do; **patterns** where its values are many and
+  their structure says the source (file paths, logger names, URLs): the agent proposes them from the values (a common
+  directory, a prefix, a dotted package), each with the values it covers and how many records, and the user confirms
+  them in the source type step, as they confirm the field.
+* **Order**: the registry's rows are tried in order and the first match wins, so a narrower pattern goes before a
+  wider one (`^/var/log/mail/audit/` before `^/var/log/mail/`); the registry shows the order, and the tools refuse a row
+  no record could reach (one an earlier row always matches first).
+* **Patterns stay small and anchored**: matched once on one field's value per record (`matches()` in the dispatcher,
+  the same in the tools), never on the message, so a long value costs one scan, not backtracking (seen on 2026-11-06: a
+  key=value regex over long lines overflowed the stack). A value no row matches is a `new` source type: counted, logged
+  once a stream, and added to the registry for the user to place.
+* **Survey and profiles** count by the registry's rows, so a pattern's source type is profiled as one, whatever the
+  number of values it covers.
 
 #### Profiling the source types
 
@@ -1558,9 +1578,9 @@ and the agent puts the profiles to the user before the scope form. A profile, ke
 * **Examples**: two or three records each, from the survey's locations, steppable.
 
 How it is shown: a table in the chat, a row a source type (size, top kinds, signals in a few words, the agent's
-suggested group: security audit, operational, network, diagnostic noise, with its confidence), sorted by the agent's
-suggestion then size; a source type's detail on request. The scope form then lists the source types by name and share
-alone, referring to the table, as forms do (plain text, no Markdown). The agent suggests; the user chooses.
+suggested category: security audit, operational, network, diagnostic noise, with its confidence), sorted by the agent's
+suggested category then size; a source type's detail on request. The scope form then lists the source types by name and
+share alone, referring to the table, as forms do (plain text, no Markdown). The agent suggests; the user chooses.
 
 What it costs: the source type field is read in every record the survey reads (cheap: a field of the parsed JSON),
 the profile's counts and samples kept per source type within the survey's own budget. Shares are estimates from the
@@ -1573,8 +1593,8 @@ dashboard tools, for a feed too big to survey well. Optional; the survey's profi
 
 #### Scope
 
-The user chooses a build's scope in a form once the source type field is confirmed, from the source types the
-survey counted (each with its share of records and its message formats): all of them, a component's, or any subset.
+The user chooses a build's scope in a form once the source type field is confirmed, from the source types the survey
+counted (each with its share of records and its message formats): all of them, a source type group's, or any subset.
 What it changes:
 
 * **Survey** (`survey_feed`): records outside the scope are counted by source type and not otherwise read, so they
@@ -1585,8 +1605,8 @@ What it changes:
   changed scope starts the survey's coverage again for the source types it adds.
 * **Samples, classification and the draft**: read through the scope (records outside it left out as they are read,
   located as the survey locates them), so the kinds listed and the rules drafted are the scope's.
-* **The translation**: a scope's component handles its source types; records outside it go to the dispatcher's
-  parked branch, never to a catch-all rule of the component's.
+* **The translation**: a scope's source type group handles its source types; records outside it are passed over by
+  the dispatcher and counted, never sent to a catch-all rule of the group's.
 * **Coverage and processing checks** (`review_coverage`): judged against the scope, saying what share of the feed the
   scope is.
 
@@ -1597,36 +1617,31 @@ Options considered:
 1. **Dynamic XSLT naming** (`xsltNamePattern`). Stroom resolves the pattern once per stream, from `${feed}` and
    `${pipeline}` only (`PipelineDocFinder`), so it can't choose an XSLT for each record of a stream that mixes source
    types. Useful only where source types already arrive in feeds of their own. Rejected for mixed streams.
-2. **A pipeline per component**, each a child of a base pipeline (Stroom's pipeline inheritance) overriding its
-   translation XSLT, each translating its own source types and dropping the rest. Every pipeline reads every stream:
-   N components read the feed N times, write N Events streams for each raw stream, and each logs or hides the 90% of
-   records it skips. Kept for components that need what a pipeline gives on its own: another destination, another
-   owner, reprocessing on their own.
-3. **Chained filters**, one XSLT filter per component, each translating its records and passing the others through.
-   One pass over every stream per component, a document half Events and half records until the last filter, the
-   schema checked only at the end, and a component added by changing the pipeline's structure.
-4. **Unwrap, then dispatch (proposed)**: two XSLT filters in one pipeline, whatever the number of components.
+2. **A pipeline per source type group**, each a child of a base pipeline (Stroom's pipeline inheritance) overriding its
+   translation XSLT, each translating its own source types and dropping the rest. Every pipeline reads every stream: N
+   source type groups read the feed N times, write N Events streams for each raw stream, and each logs or hides the 90%
+   of records it skips. Kept for source type groups that need what a pipeline gives on its own: another destination,
+   another owner, reprocessing on their own.
+3. **Chained filters**, one XSLT filter per source type group, each translating its records and passing the others
+   through. One pass over every stream per source type group, a document half Events and half records until the last
+   filter, the schema checked only at the end, and a source type group added by changing the pipeline's structure.
+4. **Unwrap, then dispatch**: an unwrap XSLT filter normalising each record (the wrapper's fields as attributes, the
+   message parsed into elements), then the dispatcher. Groups read one clean format, a wrapper change touches
+   unwrap alone, and stepping shows the normalised records; but every record is passed over twice, unwrap must know
+   the scope to parse only in-scope messages (so changes as the scope grows), and the generator, draft, checks and
+   docs would all need a new intermediate input. Rejected (2026-11-12).
+5. **Dispatch, one filter (decided, 2026-11-12)**: one XSLT filter, the dispatcher, importing each source type
+   group's XSLT; each group parses its own messages.
 
 ```text
-Parser (JSON) -> unwrap XSLT -> dispatch XSLT -> Schema filter -> Writer
-                 (the feed's)   (generated; imports each component's XSLT)
+Parser (JSON) -> dispatch XSLT -> Schema filter -> Writer
+                 (generated; xsl:import of each source type group's XSLT doc)
 ```
 
-* **Unwrap** (one per feed, from the wrapper's mapping): each record becomes a normalised record, the wrapper's
-  fields as attributes and the message as it is; a message holding XML or JSON is parsed once here into a child
-  element (`parse-xml` in a `try`, as held XML is read now), so namespaces and escaping are dealt with in one place,
-  and a message that fails to parse is marked, its count said in the processing checks (a truncated SOAP body would
-  otherwise read as empty values, unsaid).
-
-  ```xml
-  <record source-type="IntegrationServices" host="pega01" time="2026-11-12T09:00:01Z">
-    <message>Request: &lt;soapenv:Envelope ...</message>
-    <parsed><soapenv:Envelope xmlns:soapenv="...">...</soapenv:Envelope></parsed>
-  </record>
-  ```
-
-* **Dispatch** (generated, small): it writes each Event's parts the wrapper gives (EventTime, EventSource's device
-  and system) and hands the record to its component, chosen by source type; the component writes the rest.
+* **The dispatcher** (generated from the registry, small): it reads the source type field, writes each Event's parts
+  the wrapper or the record's common fields give (EventTime, EventSource's device and system), and hands the record to
+  its source type group's mode; the group writes the rest. So a change to the wrapper's fields touches the
+  dispatcher, generated anyway, rather than every group.
 
   ```xml
   <xsl:import href="uuid='...', name='PEGA-Mail'"/>
@@ -1634,77 +1649,91 @@ Parser (JSON) -> unwrap XSLT -> dispatch XSLT -> Schema filter -> Writer
   ...
   <xsl:template match="record">
     <xsl:choose>
-      <xsl:when test="@source-type = ('MailIn', 'MailOut', 'MailQueue')">
-        <xsl:apply-templates select="." mode="pega-mail"/>
+      <xsl:when test="sourcetype = ('MailIn', 'MailOut', 'MailQueue')">
+        <Event>
+          <EventTime>...</EventTime>
+          <EventSource>...</EventSource>
+          <xsl:apply-templates select="." mode="pega-mail"/>
+        </Event>
       </xsl:when>
-      <xsl:when test="@source-type = 'IntegrationServices'">
-        <xsl:apply-templates select="." mode="pega-integration"/>
-      </xsl:when>
-      <xsl:otherwise><!-- parked, dropped or new: as the user chose, see below --></xsl:otherwise>
+      <xsl:when test="sourcetype = 'IntegrationServices'">...</xsl:when>
+      <xsl:otherwise><!-- out of scope: not written, counted --></xsl:otherwise>
     </xsl:choose>
   </xsl:template>
   ```
 
-* **Components** are XSLT docs of templates in a mode of their own, each generated from its own mapping (kept with
-  the XSLT, as now), reading unwrapped records, not raw text. Imported by UUID: Stroom refuses an import whose name
-  matches two XSLTs (`CustomURIResolver`), and a rename doesn't break a UUID. Saving a component recompiles every
-  pooled XSLT that imports (gh-5968), so processing and stepping follow it.
-* **Parked, dropped and new records**: written as `EventDetail/Unknown` events holding the source type and the raw
-  message, so they are kept and indexed by the wrapper's fields until translated; or not written, with a count in the
-  processing checks. The user chooses one for the feed. A new source type is also logged once a stream (WARN, naming
-  it) and added to the registry.
+* **A source type group** is an XSLT doc of templates in a mode of its own, generated from its own mapping (kept
+  with the XSLT, as now), reading the records as translations read them now. It parses its own messages with the
+  held-format reading the draft already makes (`xml_fields`, `json_fields`, `extract`; XML parsed in a `try`), which
+  needs no 80% threshold as its messages are all its own format; text before the XML (`Request: `) is its to read.
+  A message that fails to parse is counted per group in the processing checks (a truncated SOAP body would otherwise
+  read as empty values, unsaid). Imported by UUID: Stroom refuses an import whose name matches two XSLTs
+  (`CustomURIResolver`), and a rename doesn't break a UUID. Saving a group's XSLT recompiles every pooled XSLT that
+  imports (gh-5968), so processing and stepping follow it.
+* **Records outside the scope** (parked, dropped or new source types): not written, counted (decided, 2026-11-12):
+  the dispatcher reads the source type field and nothing else of them, and the processing checks say how many of each
+  source type were passed over in each stream. A source type the registry lacks is also logged once a stream (WARN,
+  naming it) and added to the registry as `new`.
 
-Without a wrapper there is no unwrap step: `Parser (JSON) -> dispatch XSLT -> Schema filter -> Writer`, the
-dispatcher choosing by the record's own field (`Workload`) and the components reading the records as they are, each
-the fields its source types have (`event.*` for one workload, others for another).
+The same shape with or without a wrapper: without one (Azure's audit log), the dispatcher chooses by the record's own
+field (`Workload`) and each group reads the fields its source types have (`event.*` for one workload, others for
+another).
 
-Several pipelines on one feed, each with its own scope (the user's "this pipeline handles ExchangeOnline and
-SharePoint"): Stroom's processor filters choose streams, not records, so each such pipeline reads every stream and
-passes over the records outside its scope (option 2's cost). The plan offers that only when the user wants the
-pipelines apart (another destination, owner or reprocessing); otherwise a scope is a component of the feed's one
-pipeline, and "the pipeline for ExchangeOnline" is that component. Either way, records outside a pipeline's scope are
-passed over without a warning a record (counted once a stream), so the other pipelines' records aren't reported as
-errors.
+A group in a pipeline of its own, at the user's request only (decided, 2026-11-12: the agent never suggests it), for
+example "a pipeline for ExchangeOnline and SharePoint", optionally writing to an output feed of its own:
 
-Why this shape: two passes over each record whatever the number of components; a component added or changed is a
-document change (its XSLT, the dispatcher regenerated, the registry row), never a change to the pipeline; stepping
-shows the unwrapped records, which are also the components' samples; the wrapper is mapped once.
+* **Its pipeline** has the same one-filter shape, its dispatcher handling only its group. Its Events go to its own
+  feed through the stream appender's `feed` property (Stroom writes to the input stream's feed when it isn't set);
+  the build makes that feed as it makes feeds now, in a form.
+* **The cost**, said when the user asks: Stroom's processor filters choose streams, not records, so the pipeline reads
+  every stream of the raw feed and passes over the records outside its group.
+* **The feed's main pipeline** passes over that group's source types like any record outside its scope, counted as
+  handled by that pipeline, not as parked or new.
+* **The registry** records, for each source type, the pipeline and the output feed that handle it; every dispatcher
+  is generated from it, so no two pipelines claim a source type.
+* Records outside a pipeline's scope are passed over without a warning a record (counted once a stream), so other
+  pipelines' records aren't reported as errors.
+
+Why this shape: one pass over each record whatever the number of groups, out-of-scope records costing a field read;
+a group added or changed is a document change (its XSLT, the dispatcher regenerated, the registry row), never a change
+to the pipeline; nothing new for the generator to read, its groups' input being records as translations read them now.
 
 What it needs that isn't built:
 
-* the mapping's input as unwrapped records (an XML input whose record carries the wrapper's attributes and the
-  parsed message);
-* the generator writing a component (templates in a mode, no Events root, no wrapper parts) and the dispatcher (its
-  imports, its choose, the parked branch);
-* kept mappings, drift checks and documentation per component XSLT, and the pipeline's documentation listing its
-  components with a link to the registry;
-* index plans merged from the components' plans into the feed's one index, its conventions and backend chosen once.
+* the generator writing a source type group (templates in a mode, no Events root, no wrapper parts) and the dispatcher
+  (its imports, its choose, the wrapper's Event parts, the count of records passed over);
+* kept mappings, drift checks and documentation per group XSLT, and the pipeline's documentation listing its groups
+  with a link to the registry;
+* index plans merged from the groups' plans into one index per output feed (decided, 2026-11-12): the groups writing
+  to the same Events feed share its index, its conventions and backend chosen once; a group with an output feed of
+  its own has its own index.
+* the stream appender's `feed` property set by the pipeline tools, for a group's own output feed.
 
 #### Scoped builds
 
-A feed with a registry is onboarded by **scoped builds**, each covering one or more of its source types: a component,
-or several. There is no build above them: the registry holds the feed's state, and what used to need a coordinating
-build is either recorded beside it or derived from it.
+A feed with a registry is onboarded by **scoped builds**, each covering one or more of its source types: a source type
+group, or several. There is no build above them: the registry holds the feed's state, and what used to need a
+coordinating build is either recorded beside it or derived from it.
 
 * **One build at a time per feed.** A build is refused for a feed that has another open (made and not promoted or
   abandoned), naming it: finish or abandon it first. So the registry, the dispatcher and the feed's documents are
   only ever changed by one build, and promotion needs no merging.
-* **The feed's shared decisions**: System and Environment names, field conventions, the indexing backend and the
-  feed's index, recorded beside the registry (in its machine block). The first scoped build makes them with the user;
+* **The feed's shared decisions**: System and Environment names, field conventions, the indexing backend and each
+  output feed's index, recorded beside the registry (in its machine block). The first scoped build makes them with the user;
   later builds inherit them, and the tools refuse a change the user hasn't asked for, saying where they are kept.
-* **Bootstrap**: the first scoped build makes what the feed needs whatever its scope: the pipeline, the unwrap XSLT
-  (with a wrapper), the dispatcher and the index. Nothing is assumed made until promoted: a build abandoned before
-  promotion leaves the next to make them.
-* **Its own work**: its sample is the scope's records (unwrapped, where there is a wrapper: a new tool steps the
-  unwrap XSLT over the feed's streams and keeps its source types' records, located as the survey locates them, so the
-  agent never re-uploads text); then the usual steps (classify, draft, build the component XSLT, document). One
-  format a source type, so held formats need no 80% threshold, and its kinds are those of its source types alone.
-* **Promotion**: its component XSLT; the dispatcher, generated from the registry as it will be (an import for every
-  `translated` component, the parked branch for the rest); the registry rows it changed; the index's new fields; the
-  feed's documentation, assembled from the registry and the components' docs. On a promoted feed, through working
-  copies, as promotion changes promoted documents now.
-* **The index across builds**: each build adds its component's fields to the feed's one index. A field another
-  component already has with another type can't be changed in an Elasticsearch index: the build says so before
+* **Bootstrap**: the first scoped build makes what the feed needs whatever its scope: the pipeline, the dispatcher
+  and the index (and a group's own pipeline, output feed and index, when the user asks for them). Nothing is assumed
+  made until promoted: a build abandoned before promotion leaves the next to make them.
+* **Its own work**: its sample is the scope's records, read from the feed's streams where the survey located them
+  (the tools read through the scope, so the agent never re-uploads text); then the usual steps (classify, draft, build
+  the group's XSLT, document). One format a source type, so held formats need no 80% threshold, and its kinds are
+  those of its source types alone.
+* **Promotion**: its group's XSLT; the dispatcher, generated from the registry as it will be (an import for every
+  `translated` group, the rest passed over and counted); the registry rows it changed; the index's new fields; the
+  feed's documentation, assembled from the registry and the source type groups' docs. On a promoted feed, through
+  working copies, as promotion changes promoted documents now.
+* **The index across builds**: each build adds its group's fields to its output feed's index. A field another
+  source type group already has with another type can't be changed in an Elasticsearch index: the build says so before
   promotion and the user chooses (a field of another name, or a new index version).
 * **Agents**: a scoped build is a build like any other, its context its own (the main gain over one long
   onboarding of every source type), its record and the registry what it starts from. Builds are one after another,
@@ -1741,18 +1770,24 @@ afresh. Beside the feed, the survey's example records (the feed's own data) are 
 lets them be, which the form says; the user may keep them in the build instead. A promoted survey is updated by later
 surveys of the feed through a working copy, like any promoted document.
 
+#### Decided (2026-11-12)
+
+* Records outside a pipeline's scope (parked, dropped, new): not written, counted.
+* The registry: a doc beside the feed, with a human-readable part and the tools' machine block.
+* One XSLT filter, the dispatcher importing each source type group's XSLT; each group parses its own messages, so only
+  in-scope messages are parsed. No unwrap step.
+* One index per output feed: groups writing to the same Events feed share its index.
+* A group gets a pipeline of its own, optionally with its own output feed, only when the user asks.
+* The source type field is one field, at any depth; a source type matches a value exactly or by a pattern on it,
+  rows tried in order.
+* Profiles show the agent's suggested category for each source type by default, beside the signals it rests on.
+* A "component" is called a source type group.
+* No concurrent builds: one open build per feed.
+* Surveying a feed prompts the user to promote the survey doc beside it.
+
 #### Open decisions
 
-* Parked records: Unknown events (kept, indexed by the wrapper's fields) or not written (counted)? Per feed, or per
-  source type?
-* The registry: a doc beside the feed (proposed), or only in the build's record?
-* Unwrap: parse every held XML and JSON message, or only those of the components built?
-* Option 2 (a pipeline per component): when is it offered, and who decides?
-* One index for the feed (proposed), or an index per component when the user asks?
-* A source type field nested below the record (`event.Workload`), or two of them together (`Workload` and
-  `RecordType`): one field (proposed), or a list as kind fields allow?
-* Profiles: suggested groups (security audit, operational, network, diagnostic noise) shown by default, or only
-  the signals unless the user asks?
+None at present.
 
 
 ## Translation
