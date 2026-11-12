@@ -35,10 +35,11 @@ import java.util.stream.Collectors;
 /// importing each source type group's XSLT (and the feed's helpers) and owning every stylesheet-level declaration. It
 /// reads the source type field of each record once, tries the registry's rows in order (a value exactly with `=`, a
 /// pattern with XPath's `matches()`, anchored), and hands the record to its group's mode; a record of any other source
-/// type (parked, dropped, another pipeline's) is passed over: not written, counted. At the end of each document it
-/// logs (INFO) how many records of each source type it passed over (one another pipeline translates said as handled
-/// by that pipeline, never a warning), and (WARN, once a stream) each value no row matches, a new source type for the
-/// registry.
+/// type (parked, dropped, another pipeline's) is passed over: not written, counted, its record's number read as a
+/// group reads it for the records it takes (so the groups' log lines name the right records). At the end of each
+/// document it logs (INFO) how many records of each source type it passed over (one another pipeline translates said
+/// as handled by that pipeline, never a warning), and (WARN, once a stream) each value no row matches, a new source
+/// type for the registry.
 ///
 /// With an unsaved group's code given, that group is inlined in place of its import (its own imports hoisted among
 /// the dispatcher's): a temporary dispatcher, for stepping a group before it is saved.
@@ -251,6 +252,13 @@ public final class DispatcherXslt {
         final XmlElement otherwise = choose.addElement(XSL, "otherwise");
         otherwise.append(new XmlComment(" Out of scope (parked, dropped, new, or another pipeline's): not written, "
                                         + "counted at the end of the document "));
+        // Its record's number read, as each group reads it for the records it takes: Stroom moves on to the next
+        // record's location only when one is read, so a record passed over without it left every group's log lines
+        // naming an earlier record (seen in the aggregated feed walks: review_coverage read a parked source type's
+        // record as a group's missed kind).
+        final String recordNo = name(spec, XsltGenerator.RECORD_NO);
+        otherwise.addElement(XSL, "variable", "name", recordNo, "select", "stroom:record-no()");
+        otherwise.addElement(XSL, "sequence", "select", "$" + recordNo + "[string(.) = '#']");
     }
 
     // The source type a record's value first matches, by the registry's rows in order; '' for none.

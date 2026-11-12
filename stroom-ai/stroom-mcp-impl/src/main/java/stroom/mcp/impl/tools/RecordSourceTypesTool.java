@@ -154,7 +154,8 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                         .addStringProperty(FEED_ARG, "The surveyed feed.")
                         .addStringProperty(REVIEWED_ARG, "The review_id of the needs_review reply, once its table "
                                                          + "has been shown to the user.")
-                        .addProperty(ROWS_ARG, stringArraySchema("Only as the user says: the source types in the "
+                        .addProperty(ROWS_ARG, stringArraySchema("The rows a needs_review reply gave back, or "
+                                                                 + "only as the user says: the source types in the "
                                                                  + "order tried, each 'name = value' (exactly) or "
                                                                  + "'name ~ ^pattern' (an anchored regular "
                                                                  + "expression on the field's value), e.g. 'mail "
@@ -242,10 +243,12 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
             final SurveyRecord written = registries.writeRegistry(context.session(), build, feed, existing,
                     SourceTypeRegistry.render(registry));
             final Map<String, Object> result = written(feed, field, registry, written, table);
-            result.put("hint", "The registry is written: show the user the table (as it is), and offer to onboard "
-                               + "the source types they pick, in a build of its own (start_onboarding on the feed: "
-                               + "it starts at the scope choice). Then promote_build, the survey and registry going "
-                               + "beside the feed.");
+            result.put("hint", "The registry is written: show the user the table (as it is). Then promote_build, the "
+                               + "survey and registry going beside the feed: until then this build is open on the "
+                               + "feed, and no other build can start on it. Once promoted, offer to onboard the "
+                               + "source types they pick, in a build of its own (start_build feeds=['" + feed
+                               + "']: its survey carries on from the promoted one, and " + NAME + " offers the "
+                               + "parked source types for its scope).");
             return plan.withNext(context, build, result);
         }
         final Object reviewed = argsMap(call).get(REVIEWED_ARG);

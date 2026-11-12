@@ -100,9 +100,11 @@ rules:
   # helpers modules, by design.
   - {message: 'is included or imported more than once\. This is permitted', class: benign,
      reason: "One XSLT imported by several others in one stylesheet (each of an aggregated feed's source type groups imports its common and helpers modules), which XSLT permits: the copies are identical, so nothing changes"}
-  # A value of the source type field no registry row matches: a new source type, its records passed over.
-  - {message: 'New source type: no registry row matches ', class: review,
-     reason: "A source type the feed's registry lacks: its records are passed over, translated by no group. review_coverage adds it to the registry as new, for the user to place (record_source_types): translate it in a group, park it or drop it"}
+  # A value of the source type field no registry row matches: a new source type, its records passed over. Not a
+  # fault of the pipeline, so it doesn't hold its clean step (seen in the aggregated feed walks: a later build
+  # stepping the feed's new data could never step clean until a build placed the source type), but the user is told.
+  - {message: 'New source type: no registry row matches ', class: benign,
+     reason: "A source type the feed's registry lacks: its records are passed over, translated by no group, as the dispatcher does for every record outside its groups. Tell the user: review_coverage adds it to the registry as new, for them to place in a later build (record_source_types): translate it in a group, park it or drop it"}
   # A source type group's held field (a message) that doesn't parse: its values are left out of the event, which is
   # still written; counted, not a fault of the pipeline (a source truncating its messages, as PEGA's SOAP bodies).
   - {message: ' did not parse as (XML|JSON) \(truncated, or not that format\)', class: benign,

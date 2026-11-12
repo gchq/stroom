@@ -90,6 +90,11 @@ that read its Events (indexing, CEF): review_coverage reviews them too, and they
 with it. Each save records its change (change=) for the XSLT's version history and the doc's version control, as one
 entry when the build is promoted.
 
+Aggregated feeds (several sources in one feed, told apart by one field): when survey_feed finds such a field or the
+user says so, the plan adds record_source_types (the feed's registry of source types, and the build's scope). Then
+build one source type group at a time (build_translation_xslt group=); the user chooses each new group's pipeline in a
+form. One open build per feed; a parked source type's history is not backfilled. stroom://guide/aggregated-feeds.
+
 Questions about the data (what a feed holds, what a field means, how to search it): describe_feed, read only,
 from the generated documentation and the indexes' fields. Answer in plain words and give the documentation links.
 

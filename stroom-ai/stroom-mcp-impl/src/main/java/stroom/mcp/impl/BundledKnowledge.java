@@ -45,6 +45,7 @@ public class BundledKnowledge implements AgentKnowledge {
     /// The guides, by name: each is `guides/<name>.md`.
     static final List<String> GUIDES = List.of(
             "agent-instructions",
+            "aggregated-feeds",
             "cef",
             "data-splitter",
             "documentation",

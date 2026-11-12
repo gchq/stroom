@@ -53,6 +53,8 @@ class TestSourceTypeCoverage {
             {"sourcetype": "PegaBatch", "message": "job"}
             """;
 
+    private static final CoverageReads.Dispatched NOTHING_DISPATCHED = new CoverageReads.Dispatched();
+
     private final WriteGuard guard = Mockito.mock(WriteGuard.class);
     private final TranslationBuilds builds = Mockito.mock(TranslationBuilds.class);
     private final SourceTypeRegistries registries = Mockito.mock(SourceTypeRegistries.class);
@@ -74,7 +76,8 @@ class TestSourceTypeCoverage {
         raw();
         final List<Map<String, Object>> groups = List.of(group(0, 5), group(1, 40), group(2, 3));
 
-        final SourceTypeCoverage.Judged judged = coverage.judge(session, PIPELINE, groups).orElseThrow();
+        final SourceTypeCoverage.Judged judged = coverage.judge(session, PIPELINE, groups, NOTHING_DISPATCHED)
+                .orElseThrow();
 
         assertThat(judged.missed()).extracting(group -> group.get("source_type"))
                 .containsExactly("PegaSecurityEvent");
@@ -97,6 +100,88 @@ class TestSourceTypeCoverage {
     }
 
     @Test
+    void theDispatchersWarningsAddNewSourceTypesAndItsCountsAreReportedBySourceType() {
+        inBuild("b");
+        Mockito.when(builds.surveyStatesInBuild("b")).thenReturn(List.of());
+        // No kind missed: the feed is told from the raw streams the dispatcher logged for.
+        Mockito.when(streamReader.meta(12L)).thenReturn(Meta.builder().id(12L).feedName("PEGA").build());
+        final Map<String, Object> state = new LinkedHashMap<>();
+        state.put("feed", "PEGA");
+        state.put("field", "sourcetype");
+        final Map<String, Object> integration = row("PegaIntegration");
+        integration.put("status", SourceTypeRegistry.TRANSLATED);
+        integration.put("pipeline", Map.of("own", true, "name", "PEGA-Integration-Events"));
+        final Map<String, Object> mine = row("PegaSecurityEvent");
+        mine.put("status", SourceTypeRegistry.TRANSLATED);
+        mine.put("pipeline", Map.of("own", false, "name", PIPELINE.getName()));
+        // A value an earlier call added already: not added again.
+        final Map<String, Object> earlier = row("PegaQueue");
+        earlier.put("status", SourceTypeRegistry.NEW);
+        state.put("rows", List.of(mine, row("PegaDB"), integration, earlier));
+        final SourceTypeRegistries.Found registry = new SourceTypeRegistries.Found(new SurveyRecord("r",
+                "PEGA source types", SourceTypeRegistry.render(state)), false, state);
+        Mockito.when(registries.registry("b", "PEGA")).thenReturn(Optional.of(registry));
+        Mockito.when(registries.writeRegistry(any(), eq("b"), eq("PEGA"), eq(registry), anyString()))
+                .thenReturn(new SurveyRecord("r", "PEGA source types", ""));
+        final CoverageReads.Dispatched dispatched = new CoverageReads.Dispatched();
+        dispatched.add(12L, "Passed over 40 record(s) of source type PegaDB");
+        dispatched.add(12L, "Passed over 3 record(s) of source type (none: no registry row matches)");
+        dispatched.add(12L, "Passed over 9 record(s) of source type PegaIntegration, handled by pipeline "
+                            + "'PEGA-Integration-Events'");
+        dispatched.add(12L, "New source type: no registry row matches sourcetype 'PegaBatch': its records are "
+                            + "passed over (review_coverage adds it to the registry as new)");
+        dispatched.add(12L, "New source type: no registry row matches sourcetype 'PegaQueue': its records are "
+                            + "passed over (review_coverage adds it to the registry as new)");
+
+        final SourceTypeCoverage.Judged judged = coverage.judge(session, PIPELINE, List.of(), dispatched)
+                .orElseThrow();
+
+        final Map<String, Object> processing = JsonValues.mapOrEmpty(judged.said().get("processing"));
+        assertThat(JsonValues.mapOrEmpty(processing.get("passed_over"))).containsOnlyKeys("PegaDB",
+                "(none: no registry row matches)");
+        assertThat(JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(processing.get("passed_over")).get("PegaDB")))
+                .containsEntry("records", 40L).containsEntry("status", SourceTypeRegistry.PARKED);
+        // Another pipeline's source type: handled elsewhere, never parked or new.
+        assertThat(JsonValues.mapOrEmpty(processing.get("handled_elsewhere"))).containsOnlyKeys("PegaIntegration");
+        assertThat(JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(processing.get("handled_elsewhere"))
+                .get("PegaIntegration"))).containsEntry("pipeline", "pipeline 'PEGA-Integration-Events'")
+                .containsEntry("records", 9L);
+        assertThat(JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(processing.get("new_source_types")).get("PegaQueue")))
+                .containsEntry("now_in_registry_as", "PegaQueue");
+        assertThat(judged.said()).containsEntry("new_source_types", List.of("PegaBatch"));
+        final ArgumentCaptor<String> written = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(registries).writeRegistry(eq(session), eq("b"), eq("PEGA"), eq(registry),
+                written.capture());
+        assertThat(JsonValues.maps(SourceTypeRegistry.read(written.getValue()).get("rows")))
+                .extracting(row -> row.get("name"))
+                .containsExactly("PegaSecurityEvent", "PegaDB", "PegaIntegration", "PegaQueue", "PegaBatch");
+    }
+
+    @Test
+    void aKindOfAnotherPipelinesSourceTypeIsHandledElsewhere() {
+        Mockito.when(guard.buildOf(PIPELINE)).thenReturn(Optional.empty());
+        Mockito.when(streamReader.meta(9L)).thenReturn(Meta.builder().id(9L).feedName("PEGA").build());
+        final Map<String, Object> state = new LinkedHashMap<>();
+        state.put("feed", "PEGA");
+        state.put("field", "sourcetype");
+        final Map<String, Object> db = row("PegaDB");
+        db.put("status", SourceTypeRegistry.TRANSLATED);
+        db.put("pipeline", Map.of("own", true, "name", "PEGA-DB-Events"));
+        state.put("rows", List.of(row("PegaSecurityEvent"), db));
+        Mockito.when(registries.registry(null, "PEGA")).thenReturn(Optional.of(new SourceTypeRegistries.Found(
+                new SurveyRecord("r", "PEGA source types", SourceTypeRegistry.render(state)), true, state)));
+        raw();
+
+        final SourceTypeCoverage.Judged judged = coverage.judge(session, PIPELINE, List.of(group(0, 5),
+                group(1, 40)), NOTHING_DISPATCHED).orElseThrow();
+
+        assertThat(judged.missed()).extracting(group -> group.get("source_type")).containsExactly(
+                "PegaSecurityEvent");
+        assertThat(judged.handled()).singleElement().satisfies(group -> assertThat(group)
+                .containsEntry("handled_by", "pipeline 'PEGA-DB-Events'"));
+    }
+
+    @Test
     void outsideABuildNothingIsWrittenAndNothingPassedOver() {
         Mockito.when(guard.buildOf(PIPELINE)).thenReturn(Optional.empty());
         Mockito.when(streamReader.meta(9L)).thenReturn(Meta.builder().id(9L).feedName("PEGA").build());
@@ -104,7 +189,7 @@ class TestSourceTypeCoverage {
         raw();
 
         final SourceTypeCoverage.Judged judged = coverage.judge(session, PIPELINE, List.of(group(0, 5),
-                group(2, 3))).orElseThrow();
+                group(2, 3)), NOTHING_DISPATCHED).orElseThrow();
 
         assertThat(judged.passedOver()).isEmpty();
         assertThat(judged.scope()).isNull();
@@ -118,8 +203,8 @@ class TestSourceTypeCoverage {
         Mockito.when(streamReader.meta(9L)).thenReturn(Meta.builder().id(9L).feedName("PLAIN").build());
         Mockito.when(registries.registry(null, "PLAIN")).thenReturn(Optional.empty());
 
-        assertThat(coverage.judge(session, PIPELINE, List.of(group(0, 5)))).isEmpty();
-        assertThat(coverage.judge(session, PIPELINE, List.of())).isEmpty();
+        assertThat(coverage.judge(session, PIPELINE, List.of(group(0, 5)), NOTHING_DISPATCHED)).isEmpty();
+        assertThat(coverage.judge(session, PIPELINE, List.of(), NOTHING_DISPATCHED)).isEmpty();
     }
 
     private void inBuild(final String build) {
