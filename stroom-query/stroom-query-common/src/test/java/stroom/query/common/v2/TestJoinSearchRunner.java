@@ -53,6 +53,21 @@ class TestJoinSearchRunner extends AbstractJoinSearchTest {
     }
 
     @Test
+    void firstSourceWithOnlyAnAliasIsSearched() throws InterruptedException {
+        sourceFields.put("events", List.of(QueryField.createKeyword("UserId")));
+        final JoinSearchRunner runner = createRunner(1_000_000);
+        final Run run = run(runner, "from events as e select e.UserId, Host", new FakeSources());
+
+        final ResultStore searchStore = run.awaitSearchStore();
+        assertThat(rows(searchStore, "e.UserId", "Host")).containsExactlyInAnyOrder(
+                List.of("a", "h1"),
+                List.of("b", "h2"),
+                List.of("c", "h3"),
+                List.of("a", "h4"));
+        assertThat(searchStore.getErrors()).isEmpty();
+    }
+
+    @Test
     void keepJoinNarrowsTheSearchOfTheFirstSource() throws InterruptedException {
         sourceFields.put("events", List.of(QueryField.createKeyword("UserId"), QueryField.createKeyword("Host")));
         final JoinSearchRunner runner = createRunner(1_000_000);

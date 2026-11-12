@@ -166,8 +166,21 @@ class Structures {
 
                         An event-to-event join can also give a time window, e.g.
                         ```stroomql
-                        on logon.UserId = export.UserId within 10m after logon.EventTime
+                        from "Windows events" as logon
+                        join "File events" as export
+                          on logon.UserId = export.UserId
+                          within 10m after logon.EventTime
+                        select logon.UserId, logon.EventTime, export.FileName
                         ```
+
+                        A joined event matches when its time, taken from its data source's time field,
+                        is within the window: from the first source's time to 10 minutes after it, or,
+                        with `before`, from 10 minutes before it to that time.
+
+                        The first source is searched first and held, up to the join limit, so make it
+                        selective. The joined source is then searched only within the first source's
+                        times and the window. The rows appear once both are searched. A query with a
+                        time window can have only one join line, joining a data source to a data source.
                         """,
                 "on ${1:field} = ${2:alias}.${3:field}$0");
         add(list, name(TokenType.WHERE),

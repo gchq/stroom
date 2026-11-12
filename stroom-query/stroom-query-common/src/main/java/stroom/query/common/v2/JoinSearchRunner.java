@@ -16,7 +16,11 @@
 
 package stroom.query.common.v2;
 
+import stroom.docref.DocRef;
 import stroom.query.api.Column;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
 import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.ParamUtil;
@@ -28,10 +32,12 @@ import stroom.query.api.ResultRequest.ResultStyle;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchTaskProgress;
 import stroom.query.api.TableSettings;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ErrorMessage;
@@ -43,13 +49,16 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -74,6 +83,10 @@ public class JoinSearchRunner {
 
     private static final String CHILD_COMPONENT_ID = "join";
     private static final long AWAIT_INTERVAL_SECONDS = 1;
+    // The key an anchor with no key is held under in an anchor table. Real keys are never empty.
+    private static final String NO_KEY = "";
+    // The most time ranges the joined source of an event-to-event join is searched over.
+    private static final int MAX_TIME_RANGES = 20;
 
     private final CoprocessorsFactory coprocessorsFactory;
     private final ResultStoreFactory resultStoreFactory;
@@ -83,6 +96,7 @@ public class JoinSearchRunner {
     private final Provider<SearchResultStoreConfig> resultStoreConfigProvider;
     private final SecurityContext securityContext;
     private final JoinPushdown joinPushdown;
+    private final SearchProviderRegistry searchProviderRegistry;
 
     @Inject
     public JoinSearchRunner(final CoprocessorsFactory coprocessorsFactory,
@@ -92,7 +106,8 @@ public class JoinSearchRunner {
                             final Executor executor,
                             final Provider<SearchResultStoreConfig> resultStoreConfigProvider,
                             final SecurityContext securityContext,
-                            final JoinPushdown joinPushdown) {
+                            final JoinPushdown joinPushdown,
+                            final SearchProviderRegistry searchProviderRegistry) {
         this.coprocessorsFactory = coprocessorsFactory;
         this.resultStoreFactory = resultStoreFactory;
         this.joinTables = joinTables;
@@ -101,6 +116,7 @@ public class JoinSearchRunner {
         this.resultStoreConfigProvider = resultStoreConfigProvider;
         this.securityContext = securityContext;
         this.joinPushdown = joinPushdown;
+        this.searchProviderRegistry = searchProviderRegistry;
     }
 
     /// Creates the placeholder result store of a search with joins. Put it where polls find it, then
@@ -197,6 +213,10 @@ public class JoinSearchRunner {
             boolean tablesRegistered = false;
             try {
                 checkNoNestedJoins();
+                if (WindowedJoin.isWindowed(query)) {
+                    searchWindowed();
+                    return;
+                }
                 final List<JoinPlan> plans = JoinPlan.createAll(
                         query,
                         // The placeholder's field index holds the fields the query names, as the
@@ -323,21 +343,179 @@ public class JoinSearchRunner {
                 }
                 return bracketedTableSettings.copy().maxResults(maxResults).build();
             }
+            return createFieldTableSettings(plan.getStoredFields(), plan.getStoredFields());
+        }
+
+        // Table settings with a column of the given name for each field of the source, limited to one
+        // row more than a join table may hold.
+        private TableSettings createFieldTableSettings(final List<String> names, final List<String> fields) {
             final List<Column> columns = new ArrayList<>();
-            final List<String> storedFields = plan.getStoredFields();
-            for (int i = 0; i < storedFields.size(); i++) {
-                final String field = storedFields.get(i);
+            for (int i = 0; i < names.size(); i++) {
                 columns.add(Column.builder()
                         .id("field" + i)
-                        .name(field)
-                        .expression("${" + field + "}")
+                        .name(names.get(i))
+                        .expression("${" + fields.get(i) + "}")
                         .build());
             }
             return TableSettings.builder()
                     .columns(columns)
                     .extractValues(true)
-                    .maxResults(List.of(maxRows))
+                    .maxResults(List.of(resultStoreConfigProvider.get().getJoinMaxRows() + 1))
                     .build();
+        }
+
+        // Runs an event-to-event join: searches the first source for the anchors, then the joined
+        // source within the anchors' time span, and gives the joined rows to a result store of the
+        // query's own, in the placeholder's place, once both are searched.
+        private void searchWindowed() {
+            final QueryJoin join = query.getJoins().getFirst();
+            final String rightTimeField = findTimeField(join);
+            final Map<String, String> paramMap = ParamUtil.createParamMap(query.getParams());
+            final WindowedJoin windowedJoin = WindowedJoin.create(
+                    query,
+                    placeholder.getCoprocessors().getFieldIndex(),
+                    placeholder.getCoprocessors().getExpressionContext(),
+                    paramMap,
+                    rightTimeField);
+            final String leftName = Objects.requireNonNullElse(query.getAlias(), "from");
+
+            info = "Searching the first source for the events to join to";
+            final Query leftQuery = query.copy()
+                    .alias(null)
+                    .joins(null)
+                    .build();
+            // The first source is searched with the query's own extraction pipeline, if it has one.
+            final TableSettings leftTableSettings = createFieldTableSettings(
+                    windowedJoin.getLeftFields(), windowedJoin.getLeftSourceFields())
+                    .copy()
+                    .extractionPipeline(getExtractionPipeline())
+                    .build();
+            final ResultStore leftChild = searchChild(leftQuery, leftTableSettings, leftName);
+            final JoinTable anchors = joinTables.create(
+                    searchRequest.getKey(), leftName, windowedJoin.getAnchorTableFields());
+            try {
+                final AnchorReader anchorReader = new AnchorReader(windowedJoin, anchors);
+                readRows(leftChild, leftName, windowedJoin.getLeftFields(), anchorReader::add);
+                anchors.complete();
+                destroyChild(leftChild);
+
+                // With no anchor that has a key and a time, no joined row can match.
+                ResultStore rightChild = null;
+                if (anchorReader.getTimes().length > 0) {
+                    info = "Searching '" + join.getAlias() + "' within the windows of "
+                           + ModelStringUtil.formatCsv(anchorReader.getCount()) + " events";
+                    rightChild = searchChild(
+                            createWindowedJoinedQuery(join, windowedJoin, anchorReader, rightTimeField, paramMap),
+                            createFieldTableSettings(
+                                    windowedJoin.getRightSourceFields(), windowedJoin.getRightSourceFields()),
+                            join.getAlias());
+                    checkJoinedRowCount(rightChild, join.getAlias());
+                }
+                joinWindowed(windowedJoin, anchors, anchorReader.getCount(), rightChild);
+            } finally {
+                anchors.close();
+            }
+        }
+
+        // The extraction pipeline of the query's table, or null to use its data source's default.
+        private DocRef getExtractionPipeline() {
+            return NullSafe.list(searchRequest.getResultRequests())
+                    .stream()
+                    .flatMap(resultRequest -> NullSafe.list(resultRequest.getMappings()).stream())
+                    .filter(Objects::nonNull)
+                    .map(TableSettings::getExtractionPipeline)
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        // The time field of a windowed join's joined source, which its rows' times are taken from.
+        private String findTimeField(final QueryJoin join) {
+            final DocRef dataSource = join.getQuery().getDataSource();
+            return searchProviderRegistry.getSearchProvider(dataSource)
+                    .flatMap(provider -> provider.getTimeField(dataSource))
+                    .map(QueryField::getFldName)
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "A join with a time window needs a joined source with a time field, but '"
+                            + join.getAlias() + "' has none"));
+        }
+
+        // The joined source's query, narrowed to the anchors' windows, and to their keys where it can
+        // be. Each range of windows is one condition, so the keys leave room for them under the data
+        // source's limit on conditions.
+        private Query createWindowedJoinedQuery(final QueryJoin join,
+                                                final WindowedJoin windowedJoin,
+                                                final AnchorReader anchorReader,
+                                                final String rightTimeField,
+                                                final Map<String, String> paramMap) {
+            final Query joinedQuery = joinPushdown.narrowJoinedSource(
+                    join, join.getQuery(), anchorReader.getKeys(), paramMap,
+                    JoinPushdown.MAX_KEYS - MAX_TIME_RANGES);
+            final QueryField timeField = QueryField.createDate(rightTimeField);
+            final ExpressionOperator.Builder ranges = ExpressionOperator.builder().op(Op.OR);
+            for (final WindowedJoin.TimeSpan range :
+                    windowedJoin.getSearchRanges(anchorReader.getTimes(), MAX_TIME_RANGES)) {
+                // Widened by a millisecond each way, as data sources differ in whether the ends of a
+                // range are included; the probe checks each window exactly.
+                ranges.addDateTerm(timeField, ExpressionTerm.Condition.BETWEEN,
+                        DateUtil.createNormalDateTimeString(range.from().toEpochMilli() - 1)
+                        + ","
+                        + DateUtil.createNormalDateTimeString(range.to().toEpochMilli() + 1));
+            }
+            final ExpressionOperator.Builder expression = ExpressionOperator.builder().addOperator(ranges.build());
+            if (joinedQuery.getExpression() != null) {
+                expression.addOperator(joinedQuery.getExpression());
+            }
+            return joinedQuery.copy().expression(expression.build()).build();
+        }
+
+        // Fails the join search, before any joined row is given, if the joined source has more rows in
+        // the windows than a join may read. Its search is limited to one row more than that.
+        private void checkJoinedRowCount(final ResultStore rightChild, final String alias) {
+            final long maxRows = resultStoreConfigProvider.get().getJoinMaxRows();
+            final AtomicLong rowCount = new AtomicLong();
+            readRows(rightChild, alias, List.of(), values -> rowCount.incrementAndGet());
+            if (rowCount.get() > maxRows) {
+                throw new IllegalStateException(
+                        "More than " + ModelStringUtil.formatCsv(maxRows) + " rows of '" + alias
+                        + "' fall within the windows of the events joined to. Narrow the first source, the "
+                        + "window or the joined source's where.");
+            }
+        }
+
+        // Puts a result store of the query's own in the placeholder's place, then gives it the joined
+        // rows.
+        private void joinWindowed(final WindowedJoin windowedJoin,
+                                  final JoinTable anchors,
+                                  final int anchorCount,
+                                  final ResultStore rightChild) {
+            final QueryJoin join = windowedJoin.getJoin();
+            final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
+                    searchRequest,
+                    DataStoreSettings.createBasicSearchResultStoreSettings());
+            final ResultStore searchStore = resultStoreFactory.create(
+                    searchRequest.getSearchRequestSource(), coprocessors);
+            // Terminating the store that takes the placeholder's place stops the rows being given.
+            searchStore.setSearchProcess(this);
+            copyMessages(placeholder, searchStore, null);
+            handOver(searchStore);
+            info = "Joining the events of '" + join.getAlias() + "'";
+            try {
+                final WindowedJoin.Probe probe = windowedJoin.createProbe(
+                        anchors, anchorCount, coprocessors.getFieldIndex(), coprocessors.getErrorConsumer());
+                if (rightChild != null) {
+                    readRows(rightChild, join.getAlias(), windowedJoin.getRightSourceFields(),
+                            values -> probe.probe(values, coprocessors::accept));
+                    destroyChild(rightChild);
+                }
+                probe.finish(coprocessors::accept);
+            } catch (final JoinSearchTerminatedException e) {
+                LOGGER.debug("Join search {} terminated while joining its rows", searchRequest.getKey());
+            } catch (final RuntimeException e) {
+                searchStore.addError(e);
+            } finally {
+                searchStore.signalComplete();
+            }
         }
 
         // Searches the first source, with its rows going through the joins, and puts its result store
@@ -579,6 +757,55 @@ public class JoinSearchRunner {
 
         private JoinSearchTerminatedException() {
             super("The search was terminated");
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // Puts the first source's rows in an event-to-event join's anchor table, keeping their keys and
+    // the times of those that have a key and a time.
+    private static final class AnchorReader {
+
+        private final WindowedJoin windowedJoin;
+        private final JoinTable anchors;
+        private final JoinPushdown.Keys keys = JoinPushdown.Keys.collecting();
+        private long[] times = new long[1_024];
+        private int timeCount;
+        private int count;
+
+        private AnchorReader(final WindowedJoin windowedJoin, final JoinTable anchors) {
+            this.windowedJoin = windowedJoin;
+            this.anchors = anchors;
+        }
+
+        private void add(final Val[] values) {
+            final Val[] anchor = windowedJoin.createAnchorRow(values, count);
+            count++;
+            final String key = windowedJoin.getLeftKey(anchor);
+            final Instant time = windowedJoin.getAnchorTime(anchor);
+            // An anchor with no key matches nothing, but left and drop joins still give it.
+            anchors.add(Objects.requireNonNullElse(key, NO_KEY), anchor);
+            if (key != null && time != null) {
+                keys.add(key);
+                if (timeCount == times.length) {
+                    times = Arrays.copyOf(times, times.length * 2);
+                }
+                times[timeCount++] = time.toEpochMilli();
+            }
+        }
+
+        private int getCount() {
+            return count;
+        }
+
+        private long[] getTimes() {
+            return Arrays.copyOf(times, timeCount);
+        }
+
+        private JoinPushdown.Keys getKeys() {
+            return keys;
         }
     }
 }

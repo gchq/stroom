@@ -103,7 +103,8 @@ public class JoinPushdown {
     public Query apply(final Query query,
                        final List<Keys> keys,
                        final Map<String, String> paramMap) {
-        final List<QueryJoin> joins = query.getJoins();
+        // A query with only an alias for its first source has no join lines.
+        final List<QueryJoin> joins = NullSafe.list(query.getJoins());
         final List<ExpressionOperator> pushedDown = new ArrayList<>();
         // The first source's fields, found once if a join needs them.
         final Map<String, QueryField> fields = new HashMap<>();
@@ -113,11 +114,60 @@ public class JoinPushdown {
         if (pushedDown.isEmpty()) {
             return query;
         }
+        return and(query, pushedDown);
+    }
+
+    /// Narrows the search of an event-to-event join's joined source to the keys of its anchors, as a
+    /// joined row with any other key matches no anchor, whatever the kind of join.
+    ///
+    /// @param join        The join line, whose right key must be a plain field of the joined source.
+    /// @param joinedQuery The query of the joined source's search.
+    /// @param keys        The keys of the anchors.
+    /// @param paramMap    The query's parameters.
+    /// @param maxKeys     The most keys to narrow to, at most [#MAX_KEYS], leaving room under the data
+    ///                    source's limit on conditions for others the query adds.
+    /// @return The joined source's query with an `in` term added, or as it was if it can't be narrowed.
+    public Query narrowJoinedSource(final QueryJoin join,
+                                    final Query joinedQuery,
+                                    final Keys keys,
+                                    final Map<String, String> paramMap,
+                                    final int maxKeys) {
+        if (NullSafe.size(join.getKeys()) != 1
+            || !keys.hasValues()
+            || keys.getValues().isEmpty()
+            || keys.getValues().size() > maxKeys) {
+            return joinedQuery;
+        }
+        final String field = getJoinedSourceField(join, paramMap);
+        if (field == null) {
+            return joinedQuery;
+        }
+        return createInTerm(joinedQuery, field, false, keys.getValues(), findFields(joinedQuery))
+                .map(in -> and(joinedQuery, List.of(in)))
+                .orElse(joinedQuery);
+    }
+
+    // The joined source's field a right key is, without the join's alias, or null if the key is
+    // anything else.
+    private static String getJoinedSourceField(final QueryJoin join, final Map<String, String> paramMap) {
+        final Matcher matcher = FIELD_REFERENCE.matcher(join.getKeys().getFirst().getRight());
+        if (!matcher.matches() || paramMap.containsKey(matcher.group(1))) {
+            return null;
+        }
+        final String name = matcher.group(1);
+        final String prefix = join.getAlias() + ".";
+        return name.startsWith(prefix)
+                ? name.substring(prefix.length())
+                : null;
+    }
+
+    // The query with the conditions and-ed to its expression.
+    private static Query and(final Query query, final List<ExpressionOperator> added) {
         final ExpressionOperator.Builder expression = ExpressionOperator.builder().op(Op.AND);
         if (query.getExpression() != null) {
             expression.addOperator(query.getExpression());
         }
-        expression.addOperators(pushedDown);
+        expression.addOperators(added);
         return query.copy().expression(expression.build()).build();
     }
 
@@ -138,22 +188,30 @@ public class JoinPushdown {
         if (fields.isEmpty()) {
             fields.putAll(findFields(query));
         }
+        LOGGER.debug(() -> LogUtil.message("Trying to push down the {} of '{}' as {} keys of {}",
+                type.getDisplayValue(), join.getAlias(), keys.getValues().size(), field));
+        return createInTerm(query, field, type == JoinType.DROP, keys.getValues(), fields);
+    }
+
+    // An 'in' term, or 'not in' to drop, for the keys on a field of a source, if the source can
+    // search the field for them as the join matches them.
+    private static Optional<ExpressionOperator> createInTerm(final Query sourceQuery,
+                                                             final String field,
+                                                             final boolean drop,
+                                                             final Set<String> values,
+                                                             final Map<String, QueryField> fields) {
         final QueryField queryField = fields.get(field);
         if (queryField == null || !canSearchWithIn(queryField)) {
             return Optional.empty();
         }
-        final boolean drop = type == JoinType.DROP;
         if (drop && !isMatchedExactly(queryField.getFldType())) {
             return Optional.empty();
         }
-        final Set<String> values = keys.getValues();
         if (!values.stream().allMatch(value -> isPlainKey(queryField.getFldType(), value))) {
-            LOGGER.debug("Not pushing down the join of '{}', as a key isn't plain", join.getAlias());
+            LOGGER.debug("Not narrowing the search of {} to keys of {}, as a key isn't plain",
+                    sourceQuery.getDataSource(), field);
             return Optional.empty();
         }
-
-        LOGGER.debug(() -> LogUtil.message("Pushing down the {} of '{}' as {} keys of {}",
-                type.getDisplayValue(), join.getAlias(), values.size(), field));
         final ExpressionTerm in = ExpressionTerm.builder()
                 .field(field)
                 .condition(Condition.IN)
@@ -189,7 +247,7 @@ public class JoinPushdown {
                 : null;
     }
 
-    // Finds the fields of the first source, by name.
+    // Finds the fields of a source, by name.
     private Map<String, QueryField> findFields(final Query query) {
         final DocRef dataSource = query.getDataSource();
         final Map<String, QueryField> fields = new HashMap<>();
@@ -264,6 +322,13 @@ public class JoinPushdown {
 
         private Keys(final Set<String> values) {
             this.values = values;
+        }
+
+        /// Creates a collector of keys, which collects them all, up to [#MAX_KEYS].
+        ///
+        /// @return The collector.
+        public static Keys collecting() {
+            return new Keys(new LinkedHashSet<>());
         }
 
         /// Creates the collector of a join's keys, which collects nothing for a join that can't be

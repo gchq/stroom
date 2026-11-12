@@ -111,6 +111,51 @@ class TestJoinPushdown {
     }
 
     @Test
+    void joinedSourceIsNarrowedToTheAnchorsKeys() {
+        final Query joined = Query.builder().dataSource(EVENTS).expression(WHERE).build();
+        final QueryJoin join = query(JoinType.LEFT, "${UserId}").getJoins().getFirst();
+
+        final Query narrowed = joinPushdown.narrowJoinedSource(
+                withRightKey(join, "${hr.UserId}"), joined, collected("a", "b"), Map.of(), JoinPushdown.MAX_KEYS);
+
+        assertThat(pushedTerms(narrowed)).containsExactly(in("UserId", "a,b"));
+    }
+
+    @Test
+    void joinedSourceIsNotNarrowedWhenItCantBe() {
+        final Query joined = Query.builder().dataSource(EVENTS).expression(WHERE).build();
+        final QueryJoin join = query(JoinType.INNER, "${UserId}").getJoins().getFirst();
+
+        // An expression, a parameter, a field without the join's alias, a key that isn't plain and
+        // more keys than allowed.
+        assertThat(joinPushdown.narrowJoinedSource(
+                withRightKey(join, "lowerCase(${hr.UserId})"), joined, collected("a"), Map.of(), 10))
+                .isSameAs(joined);
+        assertThat(joinPushdown.narrowJoinedSource(
+                withRightKey(join, "${hr.UserId}"), joined, collected("a"), Map.of("hr.UserId", "x"), 10))
+                .isSameAs(joined);
+        assertThat(joinPushdown.narrowJoinedSource(
+                withRightKey(join, "${UserId}"), joined, collected("a"), Map.of(), 10))
+                .isSameAs(joined);
+        assertThat(joinPushdown.narrowJoinedSource(
+                withRightKey(join, "${hr.UserId}"), joined, collected("a b"), Map.of(), 10))
+                .isSameAs(joined);
+        assertThat(joinPushdown.narrowJoinedSource(
+                withRightKey(join, "${hr.UserId}"), joined, collected("a", "b"), Map.of(), 1))
+                .isSameAs(joined);
+        assertThat(joinPushdown.narrowJoinedSource(
+                withRightKey(join, "${hr.UserId}"), joined, collected(), Map.of(), 10))
+                .isSameAs(joined);
+    }
+
+    @Test
+    void queryWithOnlyAnAliasIsLeftAlone() {
+        final Query query = Query.builder().dataSource(EVENTS).alias("e").expression(WHERE).build();
+
+        assertThat(joinPushdown.apply(query, List.of(), Map.of())).isSameAs(query);
+    }
+
+    @Test
     void leftJoinIsNotPushedDown() {
         final Query query = query(JoinType.LEFT, "${UserId}");
 
@@ -319,6 +364,20 @@ class TestJoinPushdown {
 
     private static ExpressionTerm in(final String field, final String value) {
         return ExpressionTerm.builder().field(field).condition(Condition.IN).value(value).build();
+    }
+
+    private static QueryJoin withRightKey(final QueryJoin join, final String rightKey) {
+        return new QueryJoin(join.getType(), join.getAlias(), join.getQuery(), null,
+                List.of(new JoinKey("${UserId}", rightKey)), null);
+    }
+
+    // The keys of anchors, collected whatever the kind of join.
+    private static JoinPushdown.Keys collected(final String... values) {
+        final JoinPushdown.Keys keys = JoinPushdown.Keys.collecting();
+        for (final String value : values) {
+            keys.add(key(value));
+        }
+        return keys;
     }
 
     // An empty collector of the keys of a join that might be pushed down.

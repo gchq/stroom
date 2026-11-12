@@ -56,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -82,6 +83,21 @@ abstract class AbstractJoinSearchTest {
             Map.of("Username", "b", "Department", "IT"),
             Map.of("Username", "d", "Department", "Unused"));
 
+    // Logons and exports, for event-to-event joins.
+    static final List<Map<String, String>> LOGONS = List.of(
+            Map.of("UserId", "a", "EventTime", "2026-01-01T10:00:00.000Z"),
+            Map.of("UserId", "b", "EventTime", "2026-01-01T10:00:00.000Z"),
+            Map.of("UserId", "c", "EventTime", "2026-01-01T10:00:00.000Z"),
+            Map.of("UserId", "a", "EventTime", "2026-01-01T12:00:00.000Z"),
+            Map.of("EventTime", "2026-01-01T10:00:00.000Z"));
+    static final List<Map<String, String>> EXPORTS = List.of(
+            Map.of("UserId", "a", "File", "f1", "EventTime", "2026-01-01T10:05:00.000Z"),
+            Map.of("UserId", "a", "File", "f2", "EventTime", "2026-01-01T10:20:00.000Z"),
+            Map.of("UserId", "b", "File", "f3", "EventTime", "2026-01-01T09:55:00.000Z"),
+            Map.of("UserId", "c", "File", "f4", "EventTime", "2026-01-01T10:10:00.000Z"),
+            Map.of("UserId", "d", "File", "f5", "EventTime", "2026-01-01T10:01:00.000Z"),
+            Map.of("UserId", "a", "File", "f6", "EventTime", "2026-03-01T10:00:00.000Z"));
+
     @TempDir
     Path tempDir;
     ExecutorService executor;
@@ -93,6 +109,10 @@ abstract class AbstractJoinSearchTest {
     // The fields of each data source, by name, for pushing joins down. A source with none has no
     // search provider, so no join is pushed down onto it.
     final Map<String, List<QueryField>> sourceFields = new ConcurrentHashMap<>();
+    // The time field of each data source, by name.
+    final Map<String, String> sourceTimeFields = new ConcurrentHashMap<>(Map.of(
+            "logons", "EventTime",
+            "exports", "EventTime"));
 
     @BeforeEach
     void setUp() {
@@ -174,16 +194,21 @@ abstract class AbstractJoinSearchTest {
                 coprocessorsFactory, resultStoreFactory, joinTables, new SimpleTaskContextFactory(), executor,
                 () -> config,
                 MockSecurityContext.getInstance(),
-                new JoinPushdown(this::findSearchProvider));
+                new JoinPushdown(this::findSearchProvider),
+                this::findSearchProvider);
     }
 
     private Optional<SearchProvider> findSearchProvider(final DocRef dataSource) {
         final List<QueryField> fields = sourceFields.get(dataSource.getName());
-        if (fields == null) {
+        final String timeField = sourceTimeFields.get(dataSource.getName());
+        if (fields == null && timeField == null) {
             return Optional.empty();
         }
         final SearchProvider searchProvider = Mockito.mock(SearchProvider.class);
-        Mockito.when(searchProvider.getFieldInfo(Mockito.any())).thenReturn(ResultPage.createUnboundedList(fields));
+        Mockito.when(searchProvider.getFieldInfo(Mockito.any()))
+                .thenReturn(ResultPage.createUnboundedList(Objects.requireNonNullElse(fields, List.of())));
+        Mockito.when(searchProvider.getTimeField(Mockito.any()))
+                .thenReturn(Optional.ofNullable(timeField).map(QueryField::createDate));
         return Optional.of(searchProvider);
     }
 
@@ -253,7 +278,8 @@ abstract class AbstractJoinSearchTest {
     // coprocessors, given the source's rows in the background, filtered by the query's equals terms.
     final class FakeSources {
 
-        final Map<String, List<Map<String, String>>> tables = Map.of("events", EVENTS, "hr", HR);
+        final Map<String, List<Map<String, String>>> tables = Map.of(
+                "events", EVENTS, "hr", HR, "logons", LOGONS, "exports", EXPORTS);
         final Map<String, CountDownLatch> heldBack = new ConcurrentHashMap<>();
         final Map<String, CountDownLatch> started = new ConcurrentHashMap<>();
         final Map<String, Boolean> terminated = new ConcurrentHashMap<>();
@@ -368,28 +394,43 @@ abstract class AbstractJoinSearchTest {
             }
         }
 
-        // True if the row matches every equals and in term of the query, or, under a not, fails to.
+        // True if the row matches the query's terms: every one, any one under an or, or not every one
+        // under a not.
         boolean matches(final ExpressionOperator expression, final Map<String, String> source) {
-            if (expression == null || expression.getChildren() == null) {
+            if (expression == null || expression.getChildren() == null || expression.getChildren().isEmpty()) {
                 return true;
             }
-            boolean matchesAll = true;
+            int matchCount = 0;
             for (final ExpressionItem item : expression.getChildren()) {
-                if (item instanceof final ExpressionTerm term && !matches(term, source)) {
-                    matchesAll = false;
-                } else if (item instanceof final ExpressionOperator operator && !matches(operator, source)) {
-                    matchesAll = false;
+                if (item instanceof final ExpressionTerm term && matches(term, source)) {
+                    matchCount++;
+                } else if (item instanceof final ExpressionOperator operator && matches(operator, source)) {
+                    matchCount++;
                 }
             }
-            return expression.op() == Op.NOT
-                    ? !matchesAll
-                    : matchesAll;
+            final boolean matchesAll = matchCount == expression.getChildren().size();
+            return switch (expression.op()) {
+                case OR -> matchCount > 0;
+                case NOT -> !matchesAll;
+                default -> matchesAll;
+            };
         }
 
         boolean matches(final ExpressionTerm term, final Map<String, String> source) {
             final String value = source.get(term.getField());
             if (term.getCondition() == Condition.IN) {
                 return List.of(term.getValue().split(",")).contains(value);
+            }
+            // Dates, which compare as text when written the same way.
+            if (term.getCondition() == Condition.GREATER_THAN_OR_EQUAL_TO) {
+                return value != null && value.compareTo(term.getValue()) >= 0;
+            }
+            if (term.getCondition() == Condition.LESS_THAN_OR_EQUAL_TO) {
+                return value != null && value.compareTo(term.getValue()) <= 0;
+            }
+            if (term.getCondition() == Condition.BETWEEN) {
+                final String[] range = term.getValue().split(",");
+                return value != null && value.compareTo(range[0]) >= 0 && value.compareTo(range[1]) <= 0;
             }
             return term.getValue().equals(value);
         }

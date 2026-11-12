@@ -22,6 +22,8 @@ import stroom.dataconnection.shared.DataColumn;
 import stroom.dataconnection.shared.DataColumnType;
 import stroom.dataconnection.shared.DataConnectionType;
 import stroom.docref.DocRef;
+import stroom.index.impl.IndexStore;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.DestroyReason;
 import stroom.query.api.Result;
@@ -37,11 +39,13 @@ import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.util.date.DateUtil;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -72,6 +76,8 @@ class TestLuceneSearchProviderJoinIntegration extends AbstractCoreIntegrationTes
     private ExpressionContextFactory expressionContextFactory;
     @Inject
     private JoinPushdown joinPushdown;
+    @Inject
+    private IndexStore indexStore;
 
     private String users;
 
@@ -145,6 +151,67 @@ class TestLuceneSearchProviderJoinIntegration extends AbstractCoreIntegrationTes
         expected.remove(streamId);
         assertThat(eventsPerStream(dropped)).containsExactlyInAnyOrderEntriesOf(expected);
         assertThat(eventsPerStream(noneDropped)).containsExactlyInAnyOrderEntriesOf(all);
+    }
+
+    @Test
+    void indexEventsJoinedToTheSameUsersLaterEventsWithinADay() {
+        // Joining the index's events to its later events needs its time field, and its default
+        // extraction pipeline for the later events' fields. The index is put back afterwards.
+        final DocRef index = indexStore.list()
+                .stream()
+                .filter(docRef -> "Test index".equals(docRef.getName()))
+                .findFirst()
+                .orElseThrow();
+        final LuceneIndexDoc original = indexStore.readDocument(index);
+        indexStore.writeDocument(original.copy()
+                .timeField("EventTime")
+                .defaultExtractionPipeline(commonIndexingTestHelper.getSearchResultPipeline())
+                .build());
+        try {
+            checkEventsJoinedToTheSameUsersLaterEventsWithinADay();
+        } finally {
+            indexStore.writeDocument(indexStore.readDocument(index).copy()
+                    .timeField(original.getTimeField())
+                    .defaultExtractionPipeline(original.getDefaultExtractionPipeline())
+                    .build());
+        }
+    }
+
+    private void checkEventsJoinedToTheSameUsersLaterEventsWithinADay() {
+        final String eventTimes = """
+                  and first.EventTime >= 2000-01-01T00:00:00.000Z
+                  and first.EventTime <= 2016-01-02T00:00:00.000Z""";
+        final List<List<String>> rows = search("""
+                from "Test index" as first
+                join "Test index" as later on first.User = later.User within 1d after first.EventTime
+                where first.UserId = user5 and first.Description = e0567
+                %s
+                select first.User, first.EventTime, later.EventTime""".formatted(eventTimes), 3);
+
+        // Every event of the user, to work out what the join should give.
+        final List<Long> userEventTimes = search("""
+                from "Test index"
+                where UserId = user5
+                select EventTime""", 1)
+                .stream()
+                .map(row -> DateUtil.parseNormalDateTimeString(row.getFirst()))
+                .toList();
+        final List<List<String>> anchors = search("""
+                from "Test index" as first
+                where first.UserId = user5 and first.Description = e0567
+                %s
+                select first.User, first.EventTime""".formatted(eventTimes), 2);
+        final List<List<String>> expected = new ArrayList<>();
+        for (final List<String> anchor : anchors) {
+            final long anchorTime = DateUtil.parseNormalDateTimeString(anchor.get(1));
+            userEventTimes.stream()
+                    .filter(time -> time >= anchorTime && time <= anchorTime + Duration.ofDays(1).toMillis())
+                    .forEach(time -> expected.add(List.of(
+                            anchor.get(0), anchor.get(1), DateUtil.createNormalDateTimeString(time))));
+        }
+
+        assertThat(anchors).hasSize(5);
+        assertThat(rows).isNotEmpty().containsExactlyInAnyOrderElementsOf(expected);
     }
 
     private String createStreamsCsv(final String streamId) {

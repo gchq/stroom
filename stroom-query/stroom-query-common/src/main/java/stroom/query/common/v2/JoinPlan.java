@@ -107,9 +107,16 @@ public final class JoinPlan {
         return Collections.unmodifiableList(plans);
     }
 
-    // The joined source's fields to hold: those its keys name, then those the rest of the query
-    // names, without the alias prefix.
-    private static List<String> getStoredFields(final QueryJoin join,
+    /// Gets the joined source's fields a join must hold: those its keys name, then those the rest of
+    /// the query names, without the alias prefix.
+    ///
+    /// @param join              The join line.
+    /// @param fieldIndex        The fields the query names.
+    /// @param aliases           Every alias of the query.
+    /// @param expressionContext The query's expression context.
+    /// @param paramMap          The query's parameters.
+    /// @return The field names, without the join's alias.
+    static List<String> getStoredFields(final QueryJoin join,
                                                 final FieldIndex fieldIndex,
                                                 final List<String> aliases,
                                                 final ExpressionContext expressionContext,
