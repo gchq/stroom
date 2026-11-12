@@ -29,6 +29,7 @@ import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.time.SimpleDuration;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +52,11 @@ public interface QueryService {
 
     Optional<DocRef> fetchDefaultExtractionPipeline(DocRef dataSourceRef);
 
+    /// @param dataSourceRef A data source the user may use.
+    /// @return The shortest interval at which a dashboard may rerun its queries automatically, or
+    /// empty for none beyond the dashboard's own.
+    Optional<SimpleDuration> fetchMinRefreshInterval(DocRef dataSourceRef);
+
     Optional<DocRef> getReferencedDataSource(String query);
 
     ExpressionOperator parseQuery(String query);
@@ -58,6 +64,12 @@ public interface QueryService {
     ContextualQueryHelp getQueryHelpContext(String query, int row, int col);
 
     ResultPage<QueryField> findFields(FindFieldCriteria criteria);
+
+    /// Finds the native query, such as SQL, in the `sql` clause of query text that may be incomplete.
+    ///
+    /// @param query The query text.
+    /// @return The native query, or empty if there is none.
+    Optional<String> getReferencedNativeQuery(String query);
 
     int getFieldCount(DocRef dataSourceRef);
 

@@ -34,6 +34,7 @@ import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
 import stroom.credentials.impl.CredentialsConfig;
 import stroom.dashboard.impl.DashboardConfig;
+import stroom.dataconnection.impl.DataConnectionConfig;
 import stroom.docstore.impl.DocStoreConfig;
 import stroom.document.asset.impl.DocumentAssetConfig;
 import stroom.document.asset.impl.db.DocumentAssetDbConfig;
@@ -138,6 +139,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_SESSION_COOKIE = "sessionCookie";
     public static final String PROP_NAME_SESSION = "session";
     public static final String PROP_NAME_SOLR = "solr";
+    public static final String PROP_NAME_DATA_CONNECTION = "dataConnection";
     public static final String PROP_NAME_SQL_STORE = "sqlStore";
     public static final String PROP_NAME_PLANB = "planb";
 
@@ -205,6 +207,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final SessionCookieConfig sessionCookieConfig;
     private final SessionConfig sessionConfig;
     private final SolrConfig solrConfig;
+    private final DataConnectionConfig dataConnectionConfig;
     private final SqlStoreConfig sqlStoreConfig;
     private final PlanBConfig planBConfig;
     private final StatisticsConfig statisticsConfig;
@@ -265,6 +268,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new SessionCookieConfig(),
                 new SessionConfig(),
                 new SolrConfig(),
+                new DataConnectionConfig(),
                 new SqlStoreConfig(),
                 new PlanBConfig(),
                 new StatisticsConfig(),
@@ -324,6 +328,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
                      @JsonProperty(PROP_NAME_SESSION) final SessionConfig sessionConfig,
                      @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
+                     @JsonProperty(PROP_NAME_DATA_CONNECTION) final DataConnectionConfig dataConnectionConfig,
                      @JsonProperty(PROP_NAME_SQL_STORE) final SqlStoreConfig sqlStoreConfig,
                      @JsonProperty(PROP_NAME_PLANB) final PlanBConfig planBConfig,
                      @JsonProperty(PROP_NAME_STATISTICS) final StatisticsConfig statisticsConfig,
@@ -382,6 +387,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.sessionCookieConfig = sessionCookieConfig;
         this.sessionConfig = sessionConfig;
         this.solrConfig = solrConfig;
+        this.dataConnectionConfig = dataConnectionConfig;
         this.sqlStoreConfig = sqlStoreConfig;
         this.planBConfig = planBConfig;
         this.statisticsConfig = statisticsConfig;
@@ -650,6 +656,13 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_SESSION)
     public SessionConfig getSessionConfig() {
         return sessionConfig;
+    }
+
+    @JsonProperty(PROP_NAME_DATA_CONNECTION)
+    @JsonPropertyDescription("Configuration for Data Connections: JDBC, Amazon Athena, LDAP, CSV and Excel " +
+            "data that StroomQL and dashboards can query")
+    public DataConnectionConfig getDataConnectionConfig() {
+        return dataConnectionConfig;
     }
 
     @JsonProperty(PROP_NAME_SQL_STORE)

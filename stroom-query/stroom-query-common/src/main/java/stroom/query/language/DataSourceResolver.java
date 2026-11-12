@@ -60,6 +60,12 @@ public class DataSourceResolver {
         return docRefs.getFirst();
     }
 
+    /// @param dataSourceRef A data source.
+    /// @return True if queries of the data source carry their own native query, such as SQL.
+    public boolean takesNativeQuery(final DocRef dataSourceRef) {
+        return dataSourceProviderRegistryProvider.get().takesNativeQuery(dataSourceRef);
+    }
+
     public DocRef findVisualisationDoc(final String name) {
         return resolveDocRef("Visualisation", name);
     }

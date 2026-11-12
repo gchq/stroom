@@ -101,6 +101,7 @@ dependencies {
     implementation project(':stroom-data:stroom-data-zip')
     implementation project(':stroom-datagen:stroom-datagen-impl')
     implementation project(':stroom-floormap:stroom-floormap-impl')
+    implementation project(':stroom-data-connection:stroom-data-connection-impl')
     implementation project(':stroom-db-util')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-dictionary:stroom-dictionary-impl')
@@ -249,6 +250,7 @@ dependencies {
     testImplementation project(':stroom-task:stroom-task-api')
     testImplementation project(':stroom-test-common')
 
+    testImplementation libs.aws.athena
     testImplementation libs.classgraph
     testImplementation libs.data.faker
     testImplementation libs.guice.extension
@@ -259,6 +261,7 @@ dependencies {
     testImplementation libs.lmdbjava
     testImplementation libs.saxon.he
     testImplementation libs.swagger.annotations
+    testImplementation libs.unboundid.ldapsdk
     testImplementation libs.vavr
 
     testImplementation libs.dropwizard.testing

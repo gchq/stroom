@@ -17,7 +17,7 @@
 package stroom.dashboard.client.main;
 
 import stroom.dashboard.shared.Automate;
-import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.time.SimpleDuration;
 
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Provider;
@@ -27,10 +27,9 @@ import com.gwtplatform.mvp.client.View;
 public abstract class AbstractRefreshableComponentPresenter<V extends View>
         extends AbstractComponentPresenter<V> implements Refreshable, Queryable {
 
-    private static final int TEN_SECONDS = 10000;
-
     private boolean allowRefresh = true;
     private Timer refreshTimer;
+    private SimpleDuration dataSourceMinRefreshInterval;
 
     public AbstractRefreshableComponentPresenter(final EventBus eventBus, final V view,
                                                  final Provider<?> settingsPresenterProvider) {
@@ -40,6 +39,18 @@ public abstract class AbstractRefreshableComponentPresenter<V extends View>
     @Override
     public void setAllowRefresh(final boolean allowRefresh) {
         this.allowRefresh = allowRefresh;
+    }
+
+    /// Sets the shortest interval at which the query's data source may be rerun automatically, as
+    /// reported by the server, e.g. for an Amazon Athena Data Connection.
+    ///
+    /// @param dataSourceMinRefreshInterval The minimum, or `null` for none beyond the dashboard's own.
+    protected void setDataSourceMinRefreshInterval(final SimpleDuration dataSourceMinRefreshInterval) {
+        this.dataSourceMinRefreshInterval = dataSourceMinRefreshInterval;
+        // The minimum may arrive after a refresh was scheduled without it.
+        if (refreshTimer != null) {
+            scheduleRefresh();
+        }
     }
 
     @Override
@@ -63,11 +74,10 @@ public abstract class AbstractRefreshableComponentPresenter<V extends View>
         final Automate automate = getAutomate();
         if (isInitialised() && automate.isRefresh()) {
             try {
-                final String interval = automate.getRefreshInterval();
-                int millis = ModelStringUtil.parseDurationString(interval).intValue();
-
-                // Ensure that the refresh interval is not less than 10 seconds.
-                millis = Math.max(millis, TEN_SECONDS);
+                // Never sooner than 10 seconds, or the data source's own minimum.
+                final int millis = (int) Math.min(
+                        Integer.MAX_VALUE,
+                        RefreshDelay.millis(automate.getRefreshInterval(), dataSourceMinRefreshInterval));
 
                 refreshTimer = new Timer() {
                     @Override

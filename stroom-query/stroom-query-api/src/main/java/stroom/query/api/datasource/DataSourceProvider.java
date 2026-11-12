@@ -18,6 +18,7 @@ package stroom.query.api.datasource;
 
 import stroom.docref.DocRef;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.time.SimpleDuration;
 
 import java.util.List;
 import java.util.Optional;
@@ -58,6 +59,25 @@ public interface DataSourceProvider {
      * @return An optional documentation string.
      */
     default Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.empty();
+    }
+
+    /// Whether queries of a data source carry their own native query, such as the SQL of a JDBC
+    /// Data Connection, in `Query.nativeQuery`, given in StroomQL by a `sql` clause. Queries of
+    /// other data sources may not have one.
+    ///
+    /// @param docRef The data source, as some types of data source take a native query and some do not.
+    /// @return True if the data source takes a native query.
+    default boolean takesNativeQuery(final DocRef docRef) {
+        return false;
+    }
+
+    /// The shortest interval at which a dashboard may rerun a query of this data source
+    /// automatically, for data sources where every run costs money or load, such as Amazon Athena.
+    ///
+    /// @param docRef The data source.
+    /// @return The minimum, or empty for none beyond the dashboard's own.
+    default Optional<SimpleDuration> fetchMinRefreshInterval(final DocRef docRef) {
         return Optional.empty();
     }
 

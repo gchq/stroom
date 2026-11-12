@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Bug **#5995** : Fix filtering of selection lists, e.g. time zone IDs in User Preferences, so that it ignores case. Filter text with upper case letters used to find nothing.
+
+* Bug **#6011** : Fix node startup and content searches waiting for a content index re-build to finish.
+
+
 ## [v7.14-beta.15-parallel-pathways] - 2026-11-11
 
 * Bug **#6017** : Fix Ask Stroom AI ignoring the timeouts in the OpenAI Model document's HTTP client configuration. Requests to chat and embedding models always used a 60 second read timeout and a 15 second connect timeout.

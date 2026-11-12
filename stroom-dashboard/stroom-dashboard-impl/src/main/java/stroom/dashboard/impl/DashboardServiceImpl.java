@@ -520,7 +520,9 @@ class DashboardServiceImpl implements DashboardService {
                         search.getDataSourceRef(),
                         search.getExpression(),
                         search.getParams(),
-                        search.getTimeRange());
+                        search.getTimeRange(),
+                        // Dashboards do not supply a native query yet.
+                        null);
                 final SearchRequestSource searchRequestSource = request.getSearchRequestSource();
                 final StoredQuery storedQuery = StoredQuery
                         .builder()
