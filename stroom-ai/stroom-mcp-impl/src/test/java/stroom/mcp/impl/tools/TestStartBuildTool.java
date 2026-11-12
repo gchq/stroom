@@ -105,7 +105,7 @@ class TestStartBuildTool {
                 .doesNotContain("translation", "index");
         assertThat(tool.execute(BuildToolCalls.call(StartBuildTool.NAME,
                 "{\"build\": \"hr-users\", \"kind\": \"lookup\"}"), BuildToolCalls.context()).text())
-                .contains("kind is one of ['events', 'discovery', 'reference'], not 'lookup'");
+                .contains("kind is one of ['events', 'discovery', 'reference', 'assessment'], not 'lookup'");
     }
 
     @Test

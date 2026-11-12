@@ -41,11 +41,15 @@ import stroom.ai.impl.tools.sample.KindFields;
 import stroom.ai.impl.tools.sample.RecordSplitter;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.Shapes;
+import stroom.ai.impl.tools.sample.SourceTypeFields;
+import stroom.ai.impl.tools.sample.SourceTypeProfiles;
+import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.data.shared.StreamTypeNames;
+import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
@@ -64,6 +68,7 @@ import jakarta.inject.Inject;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -147,6 +152,17 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     private static final int WINDOW_SHARE = 4;
     static final String EXAMPLES_ARG = "examples_per_shape";
     static final String BUILD_ARG = "build";
+    static final String SOURCE_TYPE_FIELD_ARG = "source_type_field";
+    static final String AGGREGATED_ARG = "aggregated";
+    static final String PROMOTE_SURVEY_ARG = "promote_survey";
+    // The answers to where the survey doc goes when the build is promoted.
+    static final String PROMOTE_BESIDE = "Promote it beside the feed";
+    static final String KEEP_IN_BUILD = "Keep it in the build only";
+    static final String DECIDE_LATER = "Decide when the build is promoted";
+    /// The choices kept for the survey doc's promotion.
+    static final String BESIDE = "beside";
+    static final String KEEP = "keep";
+    static final String LATER = "later";
 
     /// The most characters read of a part, asked for.
     static final int MAX_CHARS = 5_000_000;
@@ -163,6 +179,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     private final FewerStreams fewerStreams;
     private final DocumentAccess documentAccess;
     private final AiAuditLog auditLog;
+    private final SourceTypeRegistries besideFeed;
 
     @Inject
     SurveyFeedTool(final StreamReader streamReader,
@@ -172,7 +189,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                    final Consent consent,
                    final FewerStreams fewerStreams,
                    final DocumentAccess documentAccess,
-                   final AiAuditLog auditLog) {
+                   final AiAuditLog auditLog,
+                   final SourceTypeRegistries besideFeed) {
         this.streamReader = streamReader;
         this.feedNames = feedNames;
         this.guard = guard;
@@ -181,6 +199,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         this.fewerStreams = fewerStreams;
         this.documentAccess = documentAccess;
         this.auditLog = auditLog;
+        this.besideFeed = besideFeed;
     }
 
     @Override
@@ -300,7 +319,22 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                         .addStringProperty(BUILD_ARG, "Keep the survey record in this build: a Documentation doc "
                                                       + "'<feed> - Survey' with the kinds of event, examples and "
                                                       + "survey state. An existing record is continued: its "
-                                                      + "streams are skipped and its shapes are known.")
+                                                      + "streams are skipped and its shapes are known; with none "
+                                                      + "in the build, one promoted beside the feed is carried on "
+                                                      + "from (as a working copy).")
+                        .addStringProperty(SOURCE_TYPE_FIELD_ARG, "Only what the user said: the field that says "
+                                                                  + "which source each record of an aggregated "
+                                                                  + "feed came from (e.g. 'sourcetype', "
+                                                                  + "'event.Workload'), or 'none' when they say the "
+                                                                  + "feed is one source. Unasked, the build's survey "
+                                                                  + "finds a candidate itself and asks them.")
+                        .addBooleanProperty(AGGREGATED_ARG, "True when the user says the feed aggregates several "
+                                                            + "sources: the survey looks harder for the field "
+                                                            + "that tells them apart, and asks the user.")
+                        .addStringProperty(PROMOTE_SURVEY_ARG, "Only when the client shows no forms: what the user "
+                                                               + "said when asked where the survey doc goes at "
+                                                               + "promotion (beside the feed, keep it in the build, "
+                                                               + "or decide later).")
                         .build())
                 .build();
     }
@@ -346,7 +380,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 stringArg(call, BUILD_ARG),
                 stringArg(call, READ_DEEPER_ARG),
                 stringArg(call, KIND_FIELD_ARG),
-                stringArg(call, ACCEPT_ARG));
+                stringArg(call, ACCEPT_ARG),
+                stringArg(call, SOURCE_TYPE_FIELD_ARG),
+                "true".equalsIgnoreCase(NullSafe.string(stringArg(call, AGGREGATED_ARG)).strip()),
+                stringArg(call, PROMOTE_SURVEY_ARG));
     }
 
     // The streams named, by id.
@@ -452,6 +489,18 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         }
     }
 
+    // Whether a feed is outside the build (an existing feed, or another build's): false for the build's own feed (a
+    // new source's samples), or when it can't be told.
+    private boolean outsideBuild(final String feed, final String build) {
+        try {
+            final List<DocRef> refs = feedNames.feedsNamed(feed);
+            return !refs.isEmpty() && refs.stream().noneMatch(ref -> guard.buildOf(ref).filter(build::equals)
+                    .isPresent());
+        } catch (final RuntimeException e) {
+            return false;
+        }
+    }
+
     // Whether a feed is one a build made (its uploaded samples, a test feed); not for an existing feed. True when
     // it can't be told.
     private boolean inABuild(final String feed) {
@@ -472,9 +521,19 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final SurveyRecord record = build == null
                 ? null
                 : surveyDocuments.load(build, feed).orElse(null);
-        final Map<String, Object> read = record == null
+        // With none in the build, a survey promoted beside the feed is carried on from: its streams are skipped and
+        // its shapes known, and the build's survey doc is made as its working copy.
+        final SurveyRecord promoted = build == null || record != null
                 ? null
-                : SurveyDoc.readState(record.text());
+                : besideFeed.promotedSurvey(feed).orElse(null);
+        final Map<String, Object> read = record != null
+                ? SurveyDoc.readState(record.text())
+                : promoted == null
+                        ? null
+                        : SurveyDoc.readState(promoted.text());
+        final String copyOf = promoted == null
+                ? null
+                : promoted.uuid();
         // Streams deleted since they were surveyed: their shapes are found again where the data is now.
         final Set<Long> gone = read == null
                 ? Set.of()
@@ -493,11 +552,14 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final Map<String, Object> state = kindsChanged
                 ? null
                 : surveyed;
+        final Map<String, Object> keptSources = surveyed == null
+                ? Map.of()
+                : JsonValues.mapOrEmpty(surveyed.get(SourceTypeProfiles.STATE_KEY));
         final Set<String> dropped = read == null || state == null
                 ? Set.of()
                 : droppedShapes(read, state);
         if (request.acceptAsIs() != null) {
-            return acceptAsIs(call, context, request, feed, record, state, fewer);
+            return acceptAsIs(call, context, request, feed, record, state, fewer, copyOf);
         }
         final Set<Long> skip = new TreeSet<>(request.skipStreamIds());
         final Set<String> known = new LinkedHashSet<>(request.knownSignatures());
@@ -540,7 +602,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 : FEED_PARTS), orDefault(request.maxRecords(), whole
                 ? FeedSampling.SAMPLE_RECORDS
                 : FeedSampling.FEED_RECORDS), whole);
-        final SurveyRecords kept = new SurveyRecords(build, record, state, request.examples(), fewer);
+        final SurveyRecords kept = new SurveyRecords(build, record, state, request.examples(), fewer, copyOf);
         if (streams.isEmpty() && !skip.isEmpty()) {
             final Map<String, Object> result = new LinkedHashMap<>();
             result.put("feed", feed);
@@ -574,19 +636,29 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             throw new ToolRefusal("No " + request.streamType() + " streams in feed '" + feed + "'");
         }
         final Shapes shapes = new Shapes(new ArrayList<>(known), request.examples());
-        // The first stream's head, read to choose the kind fields, read once: the survey reads on from it.
+        // The first stream's head, read to choose the source type and kind fields, read once: the survey reads on
+        // from it.
         final Map<Long, RawHead> peeked = new LinkedHashMap<>();
+        final Heads heads = new Heads(() -> peekRecords(streams.getFirst(), limits, peeked));
+        // An aggregated feed's source type field first: the kinds of event are told apart within its source types.
+        final SourceDecision sources = decideSources(call, context, request, feed, keptSources, heads);
+        if (sources.early() != null) {
+            return sources.early();
+        }
+        if (sources.changed() && state != null) {
+            // Another field (or none): the source types counted by the old one go.
+            state.remove(SourceTypeProfiles.STATE_KEY);
+        }
         final Map<String, Object> kinds;
         if (givenKinds != null) {
-            kinds = kindsKept(asTheRecordsSpellThem(givenKinds, peekKinds(streams.getFirst(), limits, peeked)),
-                    "user");
+            kinds = kindsKept(asTheRecordsSpellThem(givenKinds, kindChoice(heads, sources.field())), "user");
         } else if (!keptKinds.isEmpty()) {
             kinds = keptKinds;
         } else {
             // Not once the call is stopped: nothing more is read.
             final Optional<KindFields.Choice> choice = Thread.currentThread().isInterrupted()
                     ? Optional.empty()
-                    : peekKinds(streams.getFirst(), limits, peeked);
+                    : kindChoice(heads, sources.field());
             if (choice.isEmpty()) {
                 kinds = null;
             } else if (choice.get().certain() && choice.get().fields().isEmpty()) {
@@ -612,6 +684,12 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         if (kinds != null) {
             shapes.useKindFields(JsonValues.strings(kinds.get("fields")));
         }
+        final SourceTypeProfiles profiles = sources.field() == null
+                ? null
+                : new SourceTypeProfiles(sources.field());
+        if (profiles != null) {
+            shapes.observe(profiles::add);
+        }
         // Parts the user had read deeper that a call's time cut short: read on from where they stopped, not read
         // again from their start (which would count their records twice).
         final Map<String, SurveyDepth.Part> earlier = depthOf(state);
@@ -623,7 +701,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         pending.forEach(part -> continuing.add(part.stream()));
         final Reading reading = read(context, progress, feed, streams.stream()
                 .filter(meta -> !continuing.contains(meta.getId()))
-                .toList(), shapes, limits, peeked);
+                .toList(), shapes, limits, peeked, profiles);
         if (reading.firstChunk() == null && pending.isEmpty()) {
             if (reading.stopped()) {
                 throw new ToolTimeoutException();
@@ -649,7 +727,290 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                              + keptKinds.get("fields") + "): the survey started afresh, every "
                                              + "stream read again and the kinds of event found again.");
         }
-        return keep(context, kept, result, shapes.shapes());
+        if (sources.decision() != null) {
+            final Map<String, Object> counted = new LinkedHashMap<>(sources.decision());
+            if (profiles != null) {
+                counted.putAll(profiles.toState(partSizes(profiles)));
+            }
+            result.put(SourceTypeProfiles.STATE_KEY, counted);
+        } else if (build == null) {
+            noteAggregated(result, feed, heads);
+        }
+        if (promoted != null) {
+            result.put("carried_on_from", "the survey doc promoted beside the feed (" + promoted.uuid() + "): its "
+                                          + "streams were skipped and its kinds of event known; the build's survey "
+                                          + "doc is its working copy, written back over it at promotion");
+        }
+        if (build != null) {
+            askPromotion(call, context, request, feed, state, result);
+        }
+        return withSourcesSaid(keep(context, kept, result, shapes.shapes()), build, feed);
+    }
+
+    // The source type field, as the user chose it: given now (source_type_field), kept by the survey, or found in
+    // the first stream's head and put to the user in a form (or, with no forms, a needs_source_type_field result:
+    // nothing surveyed yet). A survey with no build only reads, so nothing is asked.
+    private SourceDecision decideSources(final ToolCall call,
+                                         final ToolCallContext context,
+                                         final Request request,
+                                         final String feed,
+                                         final Map<String, Object> kept,
+                                         final Heads heads) {
+        final String keptField = kept.get(SourceTypeProfiles.FIELD) instanceof final String field
+                ? field
+                : null;
+        final boolean keptNone = Boolean.FALSE.equals(kept.get("aggregated"));
+        if (request.sourceTypeField() != null) {
+            final String given = request.sourceTypeField().strip();
+            if (saysOneSource(given)) {
+                return new SourceDecision(sourcesChosen(null, "user"), null, null, keptField != null);
+            }
+            final String field = spelt(given, heads.get()).orElseThrow(() -> new ToolRefusal(
+                    SOURCE_TYPE_FIELD_ARG + " '" + given + "' names no field of the records: they have "
+                    + new TreeSet<>(fieldsOf(heads.get())) + ". Ask the user which one they meant."));
+            return new SourceDecision(sourcesChosen(field, "user"), field, null,
+                    keptField != null && !keptField.equals(field) || keptNone);
+        }
+        if (keptField != null || keptNone && !request.aggregated()) {
+            final Map<String, Object> decision = new LinkedHashMap<>();
+            for (final String key : List.of(SourceTypeProfiles.FIELD, "aggregated", SourceTypeProfiles.BY, "at")) {
+                if (kept.get(key) != null) {
+                    decision.put(key, kept.get(key));
+                }
+            }
+            return new SourceDecision(decision, keptField, null, false);
+        }
+        if (request.build() == null || Thread.currentThread().isInterrupted()) {
+            return new SourceDecision(null, null, null, false);
+        }
+        final List<SourceTypeFields.Candidate> candidates = SourceTypeFields.candidates(heads.get(),
+                request.aggregated());
+        if (candidates.isEmpty()) {
+            if (request.aggregated()) {
+                throw new ToolRefusal("The user says feed '" + feed + "' aggregates several sources, but no field "
+                                      + "of its records tells them apart by its values. Ask them which field says "
+                                      + "each record's source, and call " + NAME + " again with "
+                                      + SOURCE_TYPE_FIELD_ARG + " as they say.");
+            }
+            return new SourceDecision(null, null, null, false);
+        }
+        final List<String> options = new ArrayList<>(candidates.stream()
+                .map(SourceTypeFields.Candidate::label)
+                .toList());
+        options.add(SourceTypeFields.NOT_AGGREGATED);
+        final Optional<String> answer = consent.answer(call, context, NAME, sourceIntro(feed, candidates),
+                "Which field says which source a record came from?", options);
+        if (answer.isEmpty()) {
+            return new SourceDecision(null, null, needsSourceTypeField(feed, candidates), false);
+        }
+        final String said = answer.get().strip();
+        if (saysOneSource(said)) {
+            return new SourceDecision(sourcesChosen(null, "user"), null, null, false);
+        }
+        final Optional<String> field = candidates.stream()
+                .filter(candidate -> said.equalsIgnoreCase(candidate.label()))
+                .map(SourceTypeFields.Candidate::field)
+                .findFirst()
+                .or(() -> spelt(said, heads.get()));
+        if (field.isEmpty()) {
+            throw new ToolRefusal("The user's answer ('" + said + "') names none of the records' fields: ask them "
+                                  + "in the chat which field says each record's source (or whether the feed is "
+                                  + "one source), and call " + NAME + " again with " + SOURCE_TYPE_FIELD_ARG
+                                  + " as they say.");
+        }
+        return new SourceDecision(sourcesChosen(field.get(), "user"), field.get(), null, false);
+    }
+
+    // Whether the user's words say the feed is one source.
+    private static boolean saysOneSource(final String said) {
+        final String text = said.strip().toLowerCase(Locale.ROOT);
+        return SourceTypeFields.NOT_AGGREGATED.equalsIgnoreCase(said.strip()) || Set.of("none", "no", "one source",
+                "not aggregated", "-").contains(text) || text.startsWith("not an aggregated")
+               || text.startsWith("not aggregated");
+    }
+
+    // A field the user named, as the records spell it (matched ignoring case); the name as given when the head
+    // holds no structured records to check it against.
+    private static Optional<String> spelt(final String given, final List<Map<String, Object>> records) {
+        if (records.isEmpty()) {
+            return Optional.of(given);
+        }
+        return fieldsOf(records).stream().filter(name -> name.equalsIgnoreCase(given)).findFirst();
+    }
+
+    private static Set<String> fieldsOf(final List<Map<String, Object>> records) {
+        final Set<String> names = new LinkedHashSet<>();
+        records.forEach(record -> names.addAll(record.keySet()));
+        return names;
+    }
+
+    private static Map<String, Object> sourcesChosen(final String field, final String by) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        if (field == null) {
+            out.put("aggregated", false);
+        } else {
+            out.put(SourceTypeProfiles.FIELD, field);
+        }
+        out.put(SourceTypeProfiles.BY, by);
+        out.put("at", SurveyDoc.at(Instant.now()));
+        return out;
+    }
+
+    // The form's message: which fields could say each record's source, in plain text.
+    private static String sourceIntro(final String feed, final List<SourceTypeFields.Candidate> candidates) {
+        final List<String> lines = new ArrayList<>();
+        candidates.forEach(candidate -> lines.add(candidate.label() + ": " + candidate.values().size()
+                                                  + " values over " + candidate.records() + " records"));
+        return "Feed '" + feed + "' looks like it aggregates several sources: the records of each value of this "
+               + "field differ in their fields or messages, and each holds kinds of event of its own:\n"
+               + String.join("\n", lines) + "\nConfirmed, the survey profiles each source type, and the build's "
+               + "source types step lists them for you to choose which to build now.";
+    }
+
+    // With no forms: the agent asks the user which field, in the chat.
+    private static Map<String, Object> needsSourceTypeField(final String feed,
+                                                            final List<SourceTypeFields.Candidate> candidates) {
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("feed", feed);
+        result.put("status", "needs_source_type_field");
+        result.put("candidates", candidates.stream().map(candidate -> entry("field", candidate.field(), "values",
+                candidate.values().subList(0, Math.min(10, candidate.values().size())), "records",
+                candidate.records())).toList());
+        result.put("hint", "Nothing was surveyed yet. The feed looks like it aggregates several sources: the records "
+                           + "of each value of these fields differ in their fields or messages. Ask the user in the "
+                           + "chat which field says each record's source (show them the candidates and their "
+                           + "values), or whether the feed is one source, then call " + NAME + " again with "
+                           + SOURCE_TYPE_FIELD_ARG + " as they said ('none' for one source). Don't choose for "
+                           + "them.");
+        return result;
+    }
+
+    // A survey with no build: a field that looks like a source type field is said, with the offer of an
+    // assessment build to keep what the survey finds.
+    private static void noteAggregated(final Map<String, Object> result, final String feed, final Heads heads) {
+        final List<SourceTypeFields.Candidate> candidates = heads.peekedAlready()
+                ? SourceTypeFields.candidates(heads.get(), false)
+                : List.of();
+        if (!candidates.isEmpty()) {
+            result.put("aggregated_feed", "The records' " + candidates.getFirst().label() + " looks like it says "
+                                          + "which source each came from: the feed may aggregate several sources.");
+        }
+        result.put("no_build", "Nothing of this survey is kept: it has no build. To keep it (and, for an "
+                               + "aggregated feed, a registry of its source types with their profiles), offer the "
+                               + "user an assessment build: start_onboarding source_name=<the feed> "
+                               + "kind=assessment feed='" + feed + "', then survey_feed build=<it>. Declined, show "
+                               + "this survey in the chat.");
+    }
+
+    // The source types of the result as the agent reads them: the field, and the records read of each value this
+    // call; the full counts are in the survey doc.
+    private static Map<String, Object> withSourcesSaid(final Map<String, Object> result,
+                                                       final String build,
+                                                       final String feed) {
+        if (!(result.get(SourceTypeProfiles.STATE_KEY) instanceof final Map<?, ?> counted)) {
+            return result;
+        }
+        final Map<String, Object> said = new LinkedHashMap<>();
+        final Map<String, Object> state = JsonValues.mapOrEmpty(counted);
+        if (state.get(SourceTypeProfiles.FIELD) == null) {
+            said.put("aggregated", false);
+            said.put("by", state.get(SourceTypeProfiles.BY));
+            result.put(SourceTypeProfiles.STATE_KEY, said);
+            return result;
+        }
+        said.put("field", state.get(SourceTypeProfiles.FIELD));
+        said.put("by", state.get(SourceTypeProfiles.BY));
+        final Map<String, Long> counts = SourceTypeProfiles.valueCounts(state);
+        final Map<String, Long> top = new LinkedHashMap<>();
+        counts.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(20)
+                .forEach(entry -> top.put(entry.getKey(), entry.getValue()));
+        said.put("records_read_by_value", top);
+        said.put("registry", "the build's source types step: record_source_types build='" + build + "' feed='"
+                             + feed + "' profiles each source type and writes the registry, '"
+                             + SourceTypeRegistry.docName(feed) + "'");
+        result.put(SourceTypeProfiles.STATE_KEY, said);
+        return result;
+    }
+
+    // Each part the profiles counted records of, and its size, for their estimates.
+    private Map<String, Long> partSizes(final SourceTypeProfiles profiles) {
+        final Map<String, Long> sizes = new LinkedHashMap<>();
+        for (final String key : profiles.partsRead()) {
+            final int colon = key.indexOf(':');
+            final long size = partSize(Long.parseLong(key.substring(0, colon)),
+                    Integer.parseInt(key.substring(colon + 1)));
+            if (size > 0) {
+                sizes.put(key, size);
+            }
+        }
+        return sizes;
+    }
+
+    // Once the build's survey is covered (or the user goes ahead with it as it is): where its doc goes when the
+    // build is promoted, put to the user once, in a form (decided 2026-11-12). Only for a feed outside the build: a
+    // new source's sample survey stays with its build. Kept in the survey state; deferred, it is asked again at
+    // promote_build.
+    private void askPromotion(final ToolCall call,
+                              final ToolCallContext context,
+                              final Request request,
+                              final String feed,
+                              final Map<String, Object> state,
+                              final Map<String, Object> result) {
+        if (request.promoteSurvey() != null) {
+            result.put(SurveyDoc.PROMOTION, promotionChosen(request.promoteSurvey()));
+            return;
+        }
+        final boolean asked = state != null && state.get(SurveyDoc.PROMOTION) != null;
+        if (!Boolean.TRUE.equals(result.get("saturated")) || asked || !outsideBuild(feed, request.build())) {
+            return;
+        }
+        final String intro = "The survey of feed '" + feed + "' is covered. Its doc, '" + SurveyDoc.docName(feed)
+                             + "' (with the source type registry, '" + SourceTypeRegistry.docName(feed)
+                             + "', where the feed has one), can go beside the feed when the build is promoted, so "
+                             + "a later build or survey of the feed carries on from it, whether or not anything is "
+                             + "onboarded. Beside the feed, the survey's example records (the feed's own data) are "
+                             + "as readable as the feed's folder lets them be. Kept in the build only, they go with "
+                             + "the build.";
+        final Optional<String> answer = consent.answer(call, context, NAME, intro,
+                "Where does the survey doc go when the build is promoted?",
+                List.of(PROMOTE_BESIDE, KEEP_IN_BUILD, DECIDE_LATER));
+        if (answer.isEmpty()) {
+            result.put("promotion_question", intro + " Ask the user in the chat whether to promote it beside the "
+                                             + "feed, keep it in the build only, or decide when the build is "
+                                             + "promoted, then call " + NAME + " build=" + request.build()
+                                             + " with " + PROMOTE_SURVEY_ARG + " as they said.");
+            return;
+        }
+        result.put(SurveyDoc.PROMOTION, promotionChosen(answer.get()));
+    }
+
+    /// @param said The user's answer: a button, or their own words.
+    /// @return The choice it makes: [#BESIDE], [#KEEP] or [#LATER].
+    static String promotionChoice(final String said) {
+        final String text = NullSafe.string(said).strip().toLowerCase(Locale.ROOT);
+        if (text.contains("keep")) {
+            return KEEP;
+        }
+        if (text.contains("later") || text.contains("decide") || text.contains("defer")) {
+            return LATER;
+        }
+        if (text.contains("beside") || text.contains("promote") || text.startsWith("yes")) {
+            return BESIDE;
+        }
+        return LATER;
+    }
+
+    private static Map<String, Object> promotionChosen(final String said) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("choice", promotionChoice(said));
+        out.put("by", "user");
+        out.put("at", SurveyDoc.at(Instant.now()));
+        if (!Set.of(PROMOTE_BESIDE, KEEP_IN_BUILD, DECIDE_LATER).contains(said.strip())) {
+            out.put("user_says", said.strip());
+        }
+        return out;
     }
 
     // The user's kind fields as the records spell them; refused when the records have none of them.
@@ -674,9 +1035,29 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         return out;
     }
 
-    // The kind fields the first stream's start suggests, when its records are structured (delimited, JSON,
-    // key=value); empty for text, or when it can't be read.
-    private Optional<KindFields.Choice> peekKinds(final Meta first,
+    // The kind fields the first stream's start suggests, the source type field aside (kinds are told apart within
+    // source types); empty for text, or when it can't be read.
+    private static Optional<KindFields.Choice> kindChoice(final Heads heads, final String sourceField) {
+        final List<Map<String, Object>> records = heads.get();
+        if (records.isEmpty()) {
+            return Optional.empty();
+        }
+        if (sourceField == null) {
+            return Optional.of(KindFields.choose(records));
+        }
+        final List<Map<String, Object>> without = records.stream()
+                .map(record -> {
+                    final Map<String, Object> copy = new LinkedHashMap<>(record);
+                    copy.remove(sourceField);
+                    return copy;
+                })
+                .toList();
+        return Optional.of(KindFields.choose(without));
+    }
+
+    // The first stream's start, its records parsed, when they are structured (delimited, JSON, key=value); none for
+    // text, or when it can't be read.
+    private List<Map<String, Object>> peekRecords(final Meta first,
                                                   final Limits limits,
                                                   final Map<Long, RawHead> peeked) {
         try {
@@ -688,11 +1069,11 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                     .filter(Objects::nonNull)
                     .toList();
             return parsed.isEmpty() || !KindFields.structured(chunk.format())
-                    ? Optional.empty()
-                    : Optional.of(KindFields.choose(parsed));
+                    ? List.of()
+                    : parsed;
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("No kind fields from stream {}: {}", first.getId(), e.getMessage()));
-            return Optional.empty();
+            return List.of();
         }
     }
 
@@ -752,7 +1133,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                            final String feed,
                                            final SurveyRecord record,
                                            final Map<String, Object> state,
-                                           final Integer fewer) {
+                                           final Integer fewer,
+                                           final String copyOf) {
         if (request.build() == null || state == null) {
             throw new ToolRefusal("Nothing surveyed yet" + (request.build() == null
                     ? ": give build"
@@ -802,8 +1184,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         result.put("locations", List.of());
         result.put("hint", "The user went ahead with the survey as it is: go on with the plan (build_status). "
                            + "review_coverage after processing finds any kind of event the survey didn't see.");
-        return keep(context, new SurveyRecords(request.build(), record, state, request.examples(), fewer), result,
-                Map.of());
+        askPromotion(call, context, request, feed, state, result);
+        return keep(context, new SurveyRecords(request.build(), record, state, request.examples(), fewer, copyOf),
+                result, Map.of());
     }
 
     // Whether the user's answer goes ahead: the button, or their own yes.
@@ -1053,7 +1436,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                          final List<Meta> streams,
                          final Shapes shapes,
                          final Limits limits,
-                         final Map<Long, RawHead> peeked) {
+                         final Map<Long, RawHead> peeked,
+                         final SourceTypeProfiles profiles) {
         final Reading reading = new Reading();
         reading.peeked.putAll(peeked);
         progress.say("Reading the head of " + streams.size() + " stream" + (streams.size() != 1
@@ -1067,6 +1451,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 if (timeIsUp() && !reading.peeked.containsKey(meta.getId())) {
                     reading.stop();
                     break;
+                }
+                if (profiles != null) {
+                    profiles.streamCreated(meta.getId(), meta.getCreateMs());
                 }
                 progress.nowAndThen("Reading stream " + meta.getId() + " (" + n + " of " + streams.size() + "): "
                                     + reading.recordsRead + " records read so far");
@@ -1510,7 +1897,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             // The user's agreement to fewer streams a call, kept with the build's survey.
             result.put(SurveyDoc.FEWER_STREAMS, kept.fewer());
         }
-        return FeedSampling.keep(surveyDocuments.records(context.session()), kept.build(), kept.record(),
+        return FeedSampling.keep(surveyDocuments.records(context.session(), kept.copyOf()), kept.build(), kept.record(),
                 kept.state(), result, shapes, kept.examples());
     }
 
@@ -1683,6 +2070,12 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     /// @param maxRecords      The most records of a stream, or null for the default.
     /// @param examples        The most examples a shape.
     /// @param build           The build to keep the survey in, or null.
+    /// @param readDeeper      What the user said of reading parts deeper, or null.
+    /// @param kindField       The kind field the user gave, or null.
+    /// @param acceptAsIs      The user's going ahead with the survey as it is, or null.
+    /// @param sourceTypeField The source type field the user gave (or `none`), or null.
+    /// @param aggregated      True when the user said the feed aggregates sources.
+    /// @param promoteSurvey   Where the user said the survey doc goes at promotion, or null.
     private record Request(String feed,
                            String streamType,
                            List<Long> streamIds,
@@ -1696,7 +2089,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                            String build,
                            String readDeeper,
                            String kindField,
-                           String acceptAsIs) {
+                           String acceptAsIs,
+                           String sourceTypeField,
+                           boolean aggregated,
+                           String promoteSurvey) {
 
     }
 
@@ -1717,12 +2113,51 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     /// @param record   The build's survey doc for the feed as read before the survey, or null.
     /// @param state    The state read from it, or null.
     /// @param examples The most examples kept a shape.
+    /// @param fewer    The streams a call the user agreed to, or null.
+    /// @param copyOf   The survey doc promoted beside the feed that the build's is made a working copy of, or null.
     private record SurveyRecords(String build,
                                  SurveyRecord record,
                                  Map<String, Object> state,
                                  int examples,
-                                 Integer fewer) {
+                                 Integer fewer,
+                                 String copyOf) {
 
+    }
+
+    /// The source type field, as decided for the call.
+    ///
+    /// @param decision What the survey state keeps of it (`field` or `aggregated: false`, `by`, `at`), or null
+    ///                 when nothing is decided.
+    /// @param field    The field, or null.
+    /// @param early    A result to return at once (the user is to be asked in the chat), or null.
+    /// @param changed  True when it differs from the one the survey kept: the old counts go.
+    private record SourceDecision(Map<String, Object> decision,
+                                  String field,
+                                  Map<String, Object> early,
+                                  boolean changed) {
+
+    }
+
+    // The first stream's head, parsed, read when first asked for.
+    private static final class Heads {
+
+        private final Supplier<List<Map<String, Object>>> reader;
+        private List<Map<String, Object>> records;
+
+        private Heads(final Supplier<List<Map<String, Object>>> reader) {
+            this.reader = reader;
+        }
+
+        private List<Map<String, Object>> get() {
+            if (records == null) {
+                records = reader.get();
+            }
+            return records;
+        }
+
+        private boolean peekedAlready() {
+            return records != null;
+        }
     }
 
     /// What the result is worked out from, besides what was read.

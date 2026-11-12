@@ -110,6 +110,8 @@ public final class ToolSummaries {
             Map.entry("rebuild_mapping", "Rebuilds a translation's mapping from its XSLT."),
             Map.entry("record_source_notes",
                     "Keeps vendor reference documentation, and notes made from it, in the build."),
+            Map.entry("record_source_types", "Profiles an aggregated feed's source types and records the build's "
+                                             + "scope in its registry."),
             Map.entry("rename_index", "Onboarding: changes the Elasticsearch index name the build uses."),
             Map.entry("reprocess_streams", "Processes streams again through a pipeline under development."),
             Map.entry("review_coverage", "Finds the kinds of event in a feed that its sample missed."),
