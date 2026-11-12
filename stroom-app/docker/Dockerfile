@@ -14,28 +14,11 @@
 # limitations under the License.
 #**********************************************************************
 
-# ~~~ JCMD base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Build the jcmd/jmap/jstat binaries using jlink so we can have them witout the rest of the JDK
-FROM eclipse-temurin:25.0.5_8-jdk-ubi10-minimal@sha256:6d870f0c9a54ea090e1ed8396a4926f183b1d379934248b0d335567282417517 AS jlink_base
-# Comma delimited list of extra modules to add in
-ARG EXTRA_MODULES="jdk.jcmd"
-ARG JAVA_MAJOR_VERSION="25"
-COPY ./build/stroom-app-all.jar /app/
-RUN set -eux; \
-    MODULES="$(jdeps --print-module-deps --ignore-missing-deps --multi-release ${JAVA_MAJOR_VERSION} /app/stroom-app-all.jar)"; \
-    MODULES="${MODULES}${EXTRA_MODULES:+,${EXTRA_MODULES}}"; \
-    echo "jlink modules: ${MODULES}"; \
-    jlink \
-        --add-modules "${MODULES}" \
-        --strip-debug \
-        --no-header-files \
-        --no-man-pages \
-        --compress=zip-6 \
-        --output /javaruntime
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ARG APP_JAR_FILENAME="stroom-app-all.jar"
 
 
-# ~~~ stroom base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~ common base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Intermediate build stage that is common to stroom and proxy to speed up
 # the build. Keep both statements the same between this and stroom-proxy
@@ -45,51 +28,71 @@ RUN set -eux; \
 # jstat/jmap/jcmd/etc.
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM redhat/ubi10-minimal:10.2-1794227009@sha256:f0c7b9ae9914fcf183e7c36fc46864903c2d2caf3af327421913ae54b3d29e94 AS stroom-base-stage
+FROM redhat/ubi10-minimal:10.2-1794227009@sha256:f0c7b9ae9914fcf183e7c36fc46864903c2d2caf3af327421913ae54b3d29e94 AS common-base-stage
 
 # bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user
-# tini required for process control in the entrypoint
 # All the packages in the add --upgrade section had CVEs at some point.
 # Make sure binutils is not present as that has unfixed CVEs
-RUN echo "http_proxy: $http_proxy" &&  \
-    echo "https_proxy: $https_proxy"
 
-RUN microdnf install -y \
+RUN \
+    set -eu; \
+    echo "http_proxy: ${http_proxy:-}"; \
+    echo "https_proxy: ${https_proxy:-}"; \
+    microdnf install -y \
         bash \
-        jq \
-        curl \
-        tzdata \
-        wget \
         ca-certificates \
-        openssl \
-        fontconfig \
+        curl \
         glibc-langpack-en \
+        jq \
+        openssl \
         shadow-utils \
-        tini && \
-    microdnf clean all
+        tzdata && \
+    microdnf clean all; \
+    locale -a
 
-RUN locale -a
-
+# Re-define the JAVA_HOME for our custom JRE
 ENV JAVA_HOME=/opt/java/runtime
 ENV PATH="${JAVA_HOME}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 # Needed to fix 'Fontconfig warning: ignoring C.UTF-8: not a valid language tag'
 #ENV LANG=en_GB.UTF-8 LANGUAGE=en_GB:en LC_ALL=en_GB.UTF-8
 ENV LANG=en_GB.UTF-8
 ENV LANGUAGE=en_GB:en
-
-# Pull in the jcmd binaries from our JDK based stage
-#COPY --from=jcmd_base /opt/jcmd /opt/jcmd
-#ENV PATH="${PATH}:/opt/jcmd/bin"
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+# ~~~ jlink base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Build the custom JRE by scanning the app jar to find out what modules are needed
+FROM eclipse-temurin:25.0.5_8-jdk-ubi10-minimal@sha256:6d870f0c9a54ea090e1ed8396a4926f183b1d379934248b0d335567282417517 AS stroom_jlink_stage
+# Comma delimited list of extra modules to add in
+# We need jdk.jcmd so we can take heap dumps if needs be
+ARG EXTRA_MODULES="jdk.jcmd"
+ARG JAVA_MAJOR_VERSION="25"
+ARG APP_JAR_FILENAME
+COPY "./build/${APP_JAR_FILENAME}" /app/
+RUN set -eux; \
+    MODULES="$(jdeps -quiet --recursive --print-module-deps --ignore-missing-deps --multi-release ${JAVA_MAJOR_VERSION} "/app/${APP_JAR_FILENAME}" )"; \
+    MODULES="${MODULES}${EXTRA_MODULES:+,${EXTRA_MODULES}}"; \
+    echo "jlink modules: ${MODULES}"; \
+    jlink \
+        --add-modules "${MODULES}" \
+        --no-header-files \
+        --compress=zip-9 \
+        --output /javaruntime
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
 
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Final build stage
 
-FROM stroom-base-stage
+FROM common-base-stage AS main-stage
 
 ARG USER_NAME=stroom
 ARG USER_ID=1000
@@ -97,6 +100,7 @@ ARG USER_ID=1000
 # This is to allow OKD/Openshift to run as any user it likes that is also a member of GID 0
 ARG GROUP_NAME=root
 ARG GROUP_ID=0
+ARG APP_JAR_FILENAME
 
 # IN_DOCKER tells setup.sh to run Configure without asking for user input, i.e. using defaults.
 ENV IN_DOCKER="true"
@@ -114,12 +118,8 @@ WORKDIR /stroom
 EXPOSE 8080
 EXPOSE 8081
 
-# run entrypoint script inside tini for better unix process handling,
-# see https://github.com/krallin/tini/issues/8
-ENTRYPOINT [ \
-  "/sbin/tini", \
-  "--", \
-  "/stroom/docker-entrypoint.sh"]
+# Entrypoint must use 'exec' to ensure CMD runs as PID1 for SIGTERM handling
+ENTRYPOINT [ "/stroom/docker-entrypoint.sh"]
 
 # start the app, the config file will either be supplied by a bind mount volume
 # or a fallback version baked into the image
@@ -130,48 +130,51 @@ CMD [ \
 # https://github.com/gchq/stroom/issues/884
 # JRE fails to load fonts if there are no standard fonts in the image; ttf-DejaVu is a good choice,
 # see https://github.com/docker-library/openjdk/issues/73#issuecomment-207816707
+# Fonts needed for ExcelTarget class (exporting search results to excel)
 
 # Create a user with no home and no shell
-RUN \
-    set -eux; \
-    microdnf install -y \
-        dejavu-fonts; \
-    microdnf clean all
 
 RUN \
-    set -eux; \
-    /usr/sbin/groupadd \
-        --gid ${GROUP_ID} \
-        --system ${GROUP_NAME}; \
-    /usr/sbin/useradd \
+    set -eu; \
+    if ! getent group "${GROUP_NAME}" >/dev/null 2>&1; then \
+        groupadd \
+            --gid "${GROUP_ID}" \
+            --system "${GROUP_NAME}"; \
+    fi; \
+    useradd \
         --uid ${USER_ID} \
         --system \
         --gid ${GROUP_ID} \
         --shell /sbin/nologin \
-        --no-create-home ${USER_NAME}
-
-RUN \
-    mkdir -p /stroom/config && \
-    mkdir -p /stroom/config_fallback && \
-    mkdir -p /stroom/content_pack_import && \
-    mkdir -p /stroom/content_index && \
-    mkdir -p /stroom/data_feed_identities && \
-    mkdir -p /stroom/git_repo && \
-    mkdir -p /stroom/lmdb && \
-    mkdir -p /stroom/lmdb_library && \
-    mkdir -p /stroom/logs/access && \
-    mkdir -p /stroom/logs/app && \
-    mkdir -p /stroom/logs/migration && \
-    mkdir -p /stroom/logs/user && \
-    mkdir -p /stroom/output && \
-    mkdir -p /stroom/planb && \
-    mkdir -p /stroom/reference_data && \
-    mkdir -p /stroom/reference_staging_data && \
-    mkdir -p /stroom/search_results && \
-    mkdir -p /stroom/volumes && \
-    chown -R "$USER_ID:$GROUP_ID"  /stroom && \
-    # Give the group the same perms as the user so any user with GID 0 can run stroom in
-    # the same way as UID 1000
+        --no-create-home ${USER_NAME}; \
+    microdnf install -y \
+        fontconfig \
+        dejavu-sans-fonts; \
+    # was needed for groupadd/useradd, so now can be removed \
+    microdnf remove -y \
+        shadow-utils; \
+    microdnf clean all; \
+    mkdir -p /stroom/config; \
+    mkdir -p /stroom/config_fallback; \
+    mkdir -p /stroom/content_pack_import; \
+    mkdir -p /stroom/content_index; \
+    mkdir -p /stroom/data_feed_identities; \
+    mkdir -p /stroom/git_repo; \
+    mkdir -p /stroom/lmdb; \
+    mkdir -p /stroom/lmdb_library; \
+    mkdir -p /stroom/logs/access; \
+    mkdir -p /stroom/logs/app; \
+    mkdir -p /stroom/logs/migration; \
+    mkdir -p /stroom/logs/user; \
+    mkdir -p /stroom/output; \
+    mkdir -p /stroom/planb; \
+    mkdir -p /stroom/reference_data; \
+    mkdir -p /stroom/reference_staging_data; \
+    mkdir -p /stroom/search_results; \
+    mkdir -p /stroom/volumes; \
+    chown -R "$USER_ID:$GROUP_ID"  /stroom; \
+    # Give the group the same perms as the user so any user with GID 0 can run stroom in \
+    # the same way as UID 1000 \
     chmod -R 770 /stroom
 
 # IMPORTANT!!!
@@ -182,35 +185,38 @@ RUN \
 
 # Copy in the content packs downloaded by gradle
 COPY \
-  --chown=$USER_ID:$GROUP_ID \
-  --chmod=660 \
-  ./build/content_packs \
-  /stroom/content_pack_import
+    --chown=$USER_ID:$GROUP_ID \
+    --chmod=660 \
+    ./build/content_packs \
+    /stroom/content_pack_import
 
 # Copy all the distribution scripts
 COPY \
-  --chown=$USER_ID:$GROUP_ID \
-  --chmod=770 \
-  *.sh \
-  /stroom/
+    --chown=$USER_ID:$GROUP_ID \
+    --chmod=770 \
+    *.sh \
+    /stroom/
 
 # This config file is a fallback for use in development
 # (or when a stack with the config bind mount is not available)
 COPY \
-  --chown=$USER_ID:$GROUP_ID \
-  --chmod=660 \
-  build/config.yml \
-  /stroom/config_fallback/config.yml
+    --chown=$USER_ID:$GROUP_ID \
+    --chmod=660 \
+    build/config.yml \
+    /stroom/config_fallback/config.yml
 
-# Our custom java runtime
-COPY --from=jlink_base /javaruntime ${JAVA_HOME}
+# Our jlink generateed custom java runtime environment
+COPY \
+    --from=stroom_jlink_stage \
+    /javaruntime \
+    ${JAVA_HOME}
 
 # The application fat jar
 COPY \
-  --chown=$USER_ID:$GROUP_ID \
-  --chmod=660 \
-  ./build/stroom-app-all.jar \
-  /stroom/
+    --chown=$USER_ID:$GROUP_ID \
+    --chmod=660 \
+    "./build/${APP_JAR_FILENAME}" \
+    /stroom/
 
 # Intentiaonally done near the end because they will often change on each build
 ARG GIT_COMMIT=unspecified
@@ -275,3 +281,5 @@ VOLUME /stroom/volumes/
 
 # Run as our non-root user
 USER "$USER_ID"
+
+# vim: set tabstop=4 shiftwidth=4 expandtab:
