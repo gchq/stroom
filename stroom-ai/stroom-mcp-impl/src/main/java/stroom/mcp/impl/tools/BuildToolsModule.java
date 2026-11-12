@@ -53,6 +53,7 @@ public class BuildToolsModule extends AbstractModule {
                 .addBinding(ProfileSampleTool.class)
                 .addBinding(SurveyFeedTool.class)
                 .addBinding(SetShapeHandlingTool.class)
+                .addBinding(RecordSourceTypesTool.class)
                 .addBinding(StepPipelineTool.class)
                 .addBinding(StepSampleTool.class)
                 .addBinding(StepRecordsTool.class)

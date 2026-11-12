@@ -25,6 +25,7 @@ import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.sample.SourceTypeProfiles;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
@@ -47,6 +48,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -94,6 +96,7 @@ class StroomBuildFacts implements BuildFacts {
 
     private static final String TRANSLATION = "translation";
 
+    private Provider<SourceTypeRegistries> registriesProvider;
     private final WriteGuard guard;
     private final BuildRecords buildRecords;
     private final DocumentAccess documentAccess;
@@ -135,6 +138,15 @@ class StroomBuildFacts implements BuildFacts {
         this.pipelineFeeds = pipelineFeeds;
         this.processingStatus = processingStatus;
         this.sampleProfiler = sampleProfiler;
+    }
+
+    /// Where the feeds' source type registries are found (set by injection; none in tests that make the facts
+    /// themselves, where no registry is beside any feed).
+    ///
+    /// @param registries The feeds' registries.
+    @Inject
+    void setRegistries(final Provider<SourceTypeRegistries> registries) {
+        this.registriesProvider = registries;
     }
 
     @Override
@@ -560,6 +572,21 @@ class StroomBuildFacts implements BuildFacts {
                 .filter(format -> format != null && !"".equals(format))
                 .findFirst()
                 .orElse(null));
+        // An aggregated feed's source type field and the scope chosen (SourceTypeProfiles), as the plan's source
+        // types step reads them.
+        states.stream()
+                .map(state -> JsonValues.mapOrEmpty(state.get(SourceTypeProfiles.STATE_KEY)))
+                .filter(sources -> !sources.isEmpty())
+                .findFirst()
+                .ifPresent(sources -> {
+                    final Map<String, Object> said = new LinkedHashMap<>();
+                    for (final String key : List.of(SourceTypeProfiles.FIELD, "aggregated", SourceTypeProfiles.SCOPE)) {
+                        if (sources.get(key) != null) {
+                            said.put(key, sources.get(key));
+                        }
+                    }
+                    survey.put(SourceTypeProfiles.STATE_KEY, said);
+                });
         survey.put("locations", !locations.isEmpty() && locations.size() <= 60
                 ? locations
                 : null);
@@ -591,6 +618,21 @@ class StroomBuildFacts implements BuildFacts {
                     : Optional.empty();
         } catch (final RuntimeException e) {
             return Optional.empty();
+        }
+    }
+
+    @Override
+    public boolean registryBeside(final List<String> feeds) {
+        if (registriesProvider == null) {
+            return false;
+        }
+        try {
+            final SourceTypeRegistries registries = registriesProvider.get();
+            return feeds.stream().anyMatch(feed -> registries.registry(null, feed).isPresent());
+        } catch (final RuntimeException e) {
+            // Advice: the plan goes on as if no registry were beside the feed.
+            LOGGER.debug("Unable to look for a registry beside {}", feeds, e);
+            return false;
         }
     }
 

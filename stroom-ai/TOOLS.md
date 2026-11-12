@@ -236,6 +236,7 @@ document in a build folder also needs Create there.
 | `propose_index_template` | Builds the final Elasticsearch index template for the cluster admin to apply | indexing | no | indexing | Stepping | | View, Edit | slot, confirms |
 | `rebuild_mapping` | Rebuilds a translation's kept mapping from its XSLT | content | no | build | | Stepping | View, Edit | slot, confirms |
 | `record_source_notes` | Keeps vendor reference documentation, and notes made from it, in the build | content | no | build | | | View, Edit | build |
+| `record_source_types` | Profiles an aggregated feed's source types and writes its registry, with the build's scope | processing | no | build | | | View, Edit | build, confirms |
 | `classify_kinds` | The agent classifies each kind of event the documentation doesn't cover; the user confirms in one form | content | no | build | View Data | | View, Edit | build |
 | `rename_index` | Changes the Elasticsearch index name the build's Elastic Index and pipelines use | indexing | no | indexing | | | View, Edit | confirms |
 | `reprocess_streams` | Processes streams again through a build's pipeline | processing | no | processing | Manage Processors | View Data | View, Edit | confirms |
@@ -2745,6 +2746,62 @@ kept still reads (see `SurveyDoc` under "Sample analysis").
   call (...) stopped the survey after N of the M streams picked ...`, the survey doc keeping it. Every stream read is
   audited. A delimited field may be any length (seen: one 250,000-character URL query stopped a whole part being
   surveyed).
+
+**Aggregated feeds.** With a build, the first stream's head is also read for a source type field
+(`SourceTypeFields`): one field (at any depth, e.g. `event.Workload`) whose values tell apart records that differ in
+their fields or their message's format or template, each value holding kinds of event of its own (a kind field's
+values are each one shape, so a kind field isn't taken); hosts, users, sessions and messages never, addresses and
+times by their values. Chosen by values and shapes alone, never by a product's names. A candidate is put to the user
+in a form (`Which field says which source a record came from?`, the candidates by label, and `Not an aggregated
+feed: one source`); without forms, `status: needs_source_type_field` with the candidates, nothing surveyed.
+`source_type_field` gives the user's answer (`none` for one source); `aggregated: true` says the user called the feed
+aggregated (weaker separation is enough, and a field of one shape a value is offered). The choice is kept in the
+survey state (`source_types`); the kind fields are then chosen with the source type field left out. Each record read
+is counted by its value (`SourceTypeProfiles`: records, bytes, days, streams, message formats and parse failures,
+fields, shapes, kinds, levels, signals); the result's `source_types` gives the field and the records read of each
+value, and names `record_source_types`. A survey with no build notes a likely field (`aggregated_feed`) and offers an
+assessment build (`no_build`).
+
+**Promotion of the survey.** Once a build's survey of a feed outside the build is covered (or the user goes ahead
+with it as it is), the user is asked once where its doc goes when the build is promoted: beside the feed, kept in
+the build only, or decided at promotion (`promotion` in the state; `promote_survey` without forms). The form says the
+example records beside the feed are as readable as the feed's folder lets them be. A build with no survey doc of the
+feed carries on from one promoted beside the feed (`carried_on_from`), its doc made as a working copy written back
+over it at promotion.
+
+### `record_source_types`
+
+Processing · write · checks View and Edit · confirms itself · chat group build · Classes: `RecordSourceTypesTool`,
+`SourceTypeRegistries`, `SourceTypeRegistry`, `SourceTypeRows`, `SourceTypeProfiles`, `SurveyDocuments`, `Consent`,
+`BuildPlan`
+
+The plan's `source_types` step for an aggregated feed. Rows come from the values the survey counted: a value each,
+or, where the values are many structured ones or share containers (paths, URLs, dotted names), anchored patterns a
+container, narrower before wider, a common root's own values kept as rows of their own; patterns are put to the user
+(`Use these patterns` / `One source type per value`). Rows given (`name = value`, `name ~ ^pattern`) are checked:
+anchored, at most 200 characters, no repeated group of repeats, names once, and none that an earlier row always
+matches first. A registry already in the build, or beside the feed, is carried on from: its rows and statuses kept,
+values it lacks added as `new`. Each row's profile is the sum of its values' (`SourceTypeProfiles.summarise`):
+records and bytes read and their shares, an estimate scaled to the streams read, per day, streams seen, formats and
+failures, fields (the wrapper's aside) with fill rates, shapes and the commonest's share, top kinds, levels, signals
+each with what it rests on, a suggested category (security audit, operational, network, diagnostic noise) with a
+confidence, examples; and `rests_on` (`not seen in the N records read`, `from only N of ...`). The first call returns
+`needs_review` with the table, its `review_id` and the rows as confirmed; called again with `reviewed` and those rows,
+the user chooses in a form which source types to build now (a yes each, and why the others wait). Every source type
+offered is then `parked` (the scope's saying so; none is `translated` until a source type group exists), `dropped`
+only by `dropped` with `drop_reason`; the scope is kept in the registry and the survey state. An assessment writes the
+registry at once, every source type parked. The registry, `<feed> source types` (`SourceTypeRegistry`), has an account
+of the feed, a table a row a source type, and a machine block `<!-- stroom-mcp source types {...} -->` holding the
+field, the feed's Environment and default System Name, and each row's match, System Name, status, decision, group,
+pipeline, output feed and profile.
+
+* **Arguments**: `feed` (required), `build`, `reviewed`, `rows`, `patterns` (no forms), `scope` and `reason` (no
+  forms), `dropped`, `drop_reason`, `system_name`, `system_names` (by source type), `environment`.
+* **Returns**: `needs_review` (`table`, `review_id`, `rows`), `needs_user` (the rows proposed, or the source types
+  offered), or `feed`, `field`, `registry`, `rows` (each `name`, `match`, `status`, `reason`, `records_read`,
+  `share_percent`, `suggested_category`, `confidence`), `table`, `scope`, `hint`, `next`.
+* **Refuses**: no source type field known (`survey_feed` first); no values counted; rows that can't be used; an
+  answer that is neither; a scope naming a source type not offered; `dropped` without `drop_reason`.
 
 ### `set_shape_handling`
 

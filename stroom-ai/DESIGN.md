@@ -1855,6 +1855,20 @@ surveys of the feed through a working copy, like any promoted document.
 * No concurrent builds: one open build per feed.
 * Surveying a feed prompts the user to promote the survey doc beside it.
 
+Built in phase 1 (where the design was silent):
+
+* The source types step is its own tool, `record_source_types`, in two rounds as `promote_build` is: the table shown
+  (`needs_review`), then the scope form (a yes per source type, and why the others wait). The plan step
+  `source_types` sits between the converter and classification, needed only once a source type field is confirmed or
+  a registry exists; an assessment (`start_onboarding kind=assessment feed=`) plans only it, coverage and promotion.
+* No status of its own for the scope: rows the build takes on stay `parked`, their reason saying which build takes
+  them on; the scope is kept in the survey state and the registry's `scope`. `translated` waits for a group.
+* The field is found on structured records only (separation of the records' shapes by its values, and kinds within
+  each value); text read through the converter waits for a later phase. With a source type field confirmed, kind
+  fields are chosen without it.
+* The promotion prompt is for a survey of a feed outside the build; a new source's sample survey stays with its
+  build. With no choice made, a registry goes beside the feed.
+
 #### Open decisions
 
 None at present.

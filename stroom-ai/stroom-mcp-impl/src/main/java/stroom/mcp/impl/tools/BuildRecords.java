@@ -98,13 +98,13 @@ public class BuildRecords {
     public static final String EVENT_LOGGING_VERSION = "event_logging_version";
     /// The record's key for the indexing choices the user made in forms (`backend`, `naming`).
     public static final String INDEXING_CHOICES = "indexing_choices";
-    /// The record's key for the kind of work the build was started as, when it was named: `events`, `discovery` or
-    /// `reference`.
+    /// The record's key for the kind of work the build was started as, when it was named: `events`, `discovery`,
+    /// `reference` or `assessment` (a feed surveyed and its source types registered, nothing onboarded).
     public static final String KIND = "kind";
     // The EventSource/System/Name and Environment the user gave for the build's translation.
     private static final String SYSTEM = "system";
     /// The kinds of work a build may be started as.
-    public static final List<String> BUILD_KINDS = List.of("events", "discovery", "reference");
+    public static final List<String> BUILD_KINDS = List.of("events", "discovery", "reference", "assessment");
 
     static final Pattern FENCE = Pattern.compile("```json build-record\\n(.*?)\\n```", Pattern.DOTALL);
     // The tags earlier versions kept these in, and the entry each one fills (null: the build, now the folder it is

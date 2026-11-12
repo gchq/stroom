@@ -21,6 +21,8 @@ import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.SourceTypeProfiles;
+import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
@@ -101,6 +103,12 @@ public class BuildPlan {
     private static final String PROCESSED = "processed";
     // The step an existing feed's survey is covered by.
     private static final String COVERED = "covered";
+    // The step an aggregated feed's source types are profiled and scoped by.
+    private static final String SOURCE_TYPES = "source_types";
+    // The kind of build that only assesses a feed: its plan ends once its source type registry is written.
+    private static final String ASSESSMENT = "assessment";
+    // The steps an assessment takes.
+    private static final Set<String> ASSESSMENT_STEPS = Set.of(SOURCE_TYPES, COVERED, "promoted");
     private static final List<List<String>> STAGE_1 = List.of(
             List.of("feed", "Create the feed in the build", "create_feed"),
             List.of("samples", "Upload every sample file as its own stream",
@@ -109,6 +117,10 @@ public class BuildPlan {
                                  + "the sample text (for XML fragments: the wrapper, as the environment writes "
                                  + "them; stroom://guide/data-splitter)",
                     "build_data_splitter stream_ids=<the sample streams>, save_text_converter"),
+            List.of(SOURCE_TYPES, "An aggregated feed's source types: the source type field confirmed (by the "
+                                  + "survey), each source type profiled and the registry written, the user choosing "
+                                  + "in a form which to build now (an assessment: the registry written)",
+                    "record_source_types build=... feed=... (then again with reviewed=<its review_id>)"),
             List.of("classify", "Each kind of event the user's documentation doesn't cover classified: you propose "
                                 + "each from its records and what you know of the source, the user confirms them in "
                                 + "one form (into the source notes the draft follows)",
@@ -230,7 +242,8 @@ public class BuildPlan {
     /// take.
     public static List<Map<String, Object>> onboardingChecklist() {
         return checklist().stream()
-                .filter(step -> !"covered".equals(step.get("step")) && !STAGE_OUTPUT.equals(step.get("stage"))
+                .filter(step -> !"covered".equals(step.get("step")) && !SOURCE_TYPES.equals(step.get("step"))
+                                && !STAGE_OUTPUT.equals(step.get("stage"))
                                 && !STAGE_REFERENCE.equals(step.get("stage")))
                 .toList();
     }
@@ -698,13 +711,18 @@ public class BuildPlan {
                 .filter(doc -> String.valueOf(doc.get("name")).endsWith(StroomBuildFacts.SURVEY))
                 .toList();
         final boolean surveyed = !surveys.isEmpty();
+        final boolean assessment = ASSESSMENT.equals(kind);
         // A survey of the build's own feed (a new source's sample) leaves it a new source: only the feeds outside the
         // build make it one on existing data (sourceFeeds leaves the build's own out). Seen: onboarding surveyed its
         // sample with the build, and the plan skipped indexing as if the feed already existed.
         final boolean existing = !sources.isEmpty() || !copies.isEmpty();
         final boolean ownFeed = !of(byType, FeedDoc.TYPE).isEmpty();
-        final Map<String, Object> survey = surveyed && existing
+        // A new source's sample survey is read too, for an aggregated feed's source type field.
+        final Map<String, Object> surveyState = surveyed
                 ? facts.surveyState(surveys).orElse(null)
+                : null;
+        final Map<String, Object> survey = existing
+                ? surveyState
                 : null;
         // An existing feed onboarded (not a copy of a production pipeline) is surveyed before it is processed, with
         // or without a survey record: seen in testing, the agent deleted the build's survey record and the plan's
@@ -790,6 +808,7 @@ public class BuildPlan {
         // A copied pipeline's XSLT is there already, with its mapping or written by hand.
         // Asked for by the user (work package E8): before the draft; not needed once the build has a translation
         // (saved from a mapping, written by hand, or a copied pipeline's).
+        done.put(SOURCE_TYPES, sourceTypesDone(surveyState, of(byType, DocumentationDoc.TYPE), sources, assessment));
         done.put("classify", facts.classified(docs)
                 ? Boolean.TRUE
                 : hasMapping(xslts, "translation") || !translation.isEmpty()
@@ -852,7 +871,9 @@ public class BuildPlan {
         done.put("promoted", false);
 
         final Set<String> declined = memory.skippedStages(build);
-        final List<Map<String, Object>> steps = steps(done, skipped(new Kinds(discovery, reference, referenceOnly),
+        final List<Map<String, Object>> steps = assessment
+                ? steps(done, assessmentSkips())
+                : steps(done, skipped(new Kinds(discovery, reference, referenceOnly),
                 survey != null || surveyRequired, existing, !copies.isEmpty() && !ownFeed,
                 stage1 && !declined.contains(STAGE_EVENTS),
                 stage2 && !declined.contains(STAGE_INDEXING), cefBuild && !declined.contains(STAGE_OUTPUT)));
@@ -1013,7 +1034,7 @@ public class BuildPlan {
                 ? "promoted"
                 : nextStep, args);
         // On existing data, before any pipeline: which stage comes next is the work's (a survey, a copy, an index).
-        final boolean onlyExistingData = existing && !stage1 && !stage2 && !cefBuild && !reference;
+        final boolean onlyExistingData = existing && !stage1 && !stage2 && !cefBuild && !reference && !assessment;
         final Map<String, Object> start = onlyExistingData
                 ? existingDataStart(sources, named)
                 : null;
@@ -1101,6 +1122,14 @@ public class BuildPlan {
                     + "the chat. From then on give tools stream_ids, not the text");
             case "converter" -> call("build_data_splitter", args("stream_ids", raw, "build", build, "save_as",
                     "<converter name>"), "it saves the converter once every line parses");
+            case SOURCE_TYPES -> call("record_source_types", args("build", build, "feed", args.sources().isEmpty()
+                            ? args.feeds().isEmpty()
+                                    ? "<the feed>"
+                                    : args.feeds().getFirst()
+                            : args.sources().getFirst()),
+                    "it profiles each source type: show the user its table, then call again with reviewed=<its "
+                    + "review_id>; they choose in a form which source types to build now, and the registry is "
+                    + "written");
             case "classify" -> call("classify_kinds", args("build", build, "stream_ids", raw),
                     "lists the kinds to classify; call again with a proposal for each, which the user confirms");
             case "translation" -> call("draft_translation_mapping", args("stream_ids", raw),
@@ -1488,7 +1517,7 @@ public class BuildPlan {
 
     private static List<Map<String, Object>> steps(final Map<String, Boolean> done, final Set<String> skipped) {
         // Not needed when their state is null: a converter for a format that needs none, a template for Lucene.
-        final Set<String> notNeeded = Set.of("converter", "classify", "index_template", "covered");
+        final Set<String> notNeeded = Set.of("converter", SOURCE_TYPES, "classify", "index_template", "covered");
         final List<Map<String, Object>> steps = new ArrayList<>();
         for (final Map<String, Object> item : checklist()) {
             final String step = String.valueOf(item.get("step"));
@@ -1506,6 +1535,35 @@ public class BuildPlan {
             steps.add(shown);
         }
         return steps;
+    }
+
+    // An assessment surveys the feed and writes its source type registry: every other step is left out.
+    private static Set<String> assessmentSkips() {
+        final Set<String> skipped = new HashSet<>();
+        checklist().forEach(step -> skipped.add(String.valueOf(step.get("step"))));
+        skipped.removeAll(ASSESSMENT_STEPS);
+        return skipped;
+    }
+
+    // The source types step: not needed (null) for a feed of one source, which never sees it; to do once the
+    // survey's field is confirmed (or a registry is beside the feed) until the registry is written in the build and,
+    // but for an assessment, the user has chosen the build's scope.
+    private Boolean sourceTypesDone(final Map<String, Object> surveyState,
+                                    final List<Map<String, Object>> documentation,
+                                    final List<String> sources,
+                                    final boolean assessment) {
+        final Map<String, Object> said = surveyState == null
+                ? Map.of()
+                : JsonValues.mapOrEmpty(surveyState.get(SourceTypeProfiles.STATE_KEY));
+        final boolean registry = documentation.stream()
+                .anyMatch(doc -> String.valueOf(doc.get("name")).endsWith(SourceTypeRegistry.SUFFIX));
+        final boolean aggregated = said.get(SourceTypeProfiles.FIELD) != null || registry
+                                   || (!Boolean.FALSE.equals(said.get("aggregated"))
+                                       && facts.registryBeside(sources));
+        if (!aggregated) {
+            return null;
+        }
+        return registry && (assessment || said.get(SourceTypeProfiles.SCOPE) != null);
     }
 
     private static Set<String> skipped(final Kinds kinds,

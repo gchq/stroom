@@ -51,7 +51,8 @@ class TestPromoteBuildTool {
     private final PromoteBuildTool tool = new PromoteBuildTool(docs.facts, new PromotionLayout(docs.places),
             docs.places, world.guard(), world.records(), docs.translation.consent, processing,
             Mockito.mock(ProcessorFilterWrites.class), Mockito.mock(OutputFeeds.class), docs.writes,
-            world.documentAccess, docs.translation.history, docs.pendingDocs);
+            world.documentAccess, docs.translation.history, docs.pendingDocs,
+            new SurveyDocuments(world.guard(), world.documentAccess, docs.writes));
 
     @Test
     void aBuildIsNotPromotedWhileADocItWroteIsPending() {

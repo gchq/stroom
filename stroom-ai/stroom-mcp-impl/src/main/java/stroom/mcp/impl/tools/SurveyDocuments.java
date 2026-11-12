@@ -72,6 +72,14 @@ class SurveyDocuments {
     /// @param session The session the calls are made in.
     /// @return The survey documents as the survey keeps them ([stroom.ai.impl.tools.sample.FeedSampling#keep]).
     SurveyRecords records(final ToolSession session) {
+        return records(session, null);
+    }
+
+    /// @param session The session the calls are made in.
+    /// @param copyOf  The survey doc promoted beside the feed that the build's carries on from: the one made is its
+    ///                working copy, written back over it at promotion; null for a new survey doc.
+    /// @return The survey documents as the survey keeps them.
+    SurveyRecords records(final ToolSession session, final String copyOf) {
         return new SurveyRecords() {
             @Override
             public Optional<SurveyRecord> load(final String build, final String feed) {
@@ -80,6 +88,9 @@ class SurveyDocuments {
 
             @Override
             public SurveyRecord create(final String build, final String name, final String text) {
+                if (copyOf != null) {
+                    return writeText(guard.create(DocumentationDoc.TYPE, name, build, copyOf, false, null), text);
+                }
                 return guard.createFilled(DocumentationDoc.TYPE, name, build, ref -> writeText(ref, text), false,
                         null);
             }
