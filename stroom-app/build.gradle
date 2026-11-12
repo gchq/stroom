@@ -209,6 +209,7 @@ dependencies {
     implementation libs.jose4j
     implementation libs.logback.classic
     implementation libs.mysql.connector.java
+    // Needed for server side classes like DirectRestService
     implementation libs.restygwt
     implementation libs.slf4j.api
     implementation libs.ws.rs.api
@@ -341,6 +342,9 @@ shadowJar {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 
     archiveFileName = fatJarName
+    // restygwt and some of its deps pull in the source (for GWT transpiling) but we don't need the
+    // source in the fat jar, so exclude.
+    exclude '**/*.java'
     exclude '**/gwt-unitCache'
 }
 
