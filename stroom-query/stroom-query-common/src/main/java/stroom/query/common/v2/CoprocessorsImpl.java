@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 
@@ -47,6 +48,12 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
     private final LongAdder counter = new LongAdder();
     private final ErrorConsumer errorConsumer;
     private final ExpressionContext expressionContext;
+    // The joins rows go through before the coprocessors, if the query has any.
+    private volatile JoiningCoprocessors joins;
+    // Run when the coprocessors are cleared, to delete the joins' tables.
+    private volatile Runnable onClear;
+    // Whether payloads have been refused because of the joins.
+    private final AtomicBoolean payloadsRefused = new AtomicBoolean();
 
     CoprocessorsImpl(final Map<Integer, Coprocessor> coprocessorMap,
                      final Map<String, TableCoprocessor> componentIdCoprocessorMap,
@@ -64,6 +71,19 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
 
     @Override
     public void readPayloads(final Input input) {
+        // TODO: Join the rows of searches that run on several nodes (StroomQL joins, stage 5). Until
+        //  then their payloads, which never pass through the joins, are refused rather than shown
+        //  unjoined.
+        if (joins != null) {
+            if (payloadsRefused.getAndSet(true)) {
+                // Refused once already, which is reported once.
+                return;
+            }
+            throw new IllegalStateException("Joins can't be run yet with a first source that is searched on "
+                                            + "every node, such as an index. Put it in a bracketed query, "
+                                            + "as in from (from MyIndex select ...) as x, which can be "
+                                            + "joined.");
+        }
         // If the remote node hasn't started yet it will return 0 results so by default we need to tell the calling
         // process that we still want to keep polling by returning true by default.
         final int length = input.readInt();
@@ -85,8 +105,35 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
         }
     }
 
+    /// Makes every row go through a query's joins before the coprocessors. Set this before the
+    /// search starts.
+    ///
+    /// @param joins   The joins, made with [#getUnjoined()] as their coprocessors.
+    /// @param onClear Run when these coprocessors are cleared, e.g. to delete the joins' tables.
+    void setJoins(final JoiningCoprocessors joins, final Runnable onClear) {
+        this.joins = joins;
+        this.onClear = onClear;
+    }
+
+    /// Gets a view of these coprocessors that takes rows straight to the coprocessors, without the
+    /// joins of [#setJoins(JoiningCoprocessors, Runnable)].
+    ///
+    /// @return The view.
+    Coprocessors getUnjoined() {
+        return new UnjoinedCoprocessors();
+    }
+
     @Override
     public void accept(final Val[] values) {
+        final JoiningCoprocessors joins = this.joins;
+        if (joins != null) {
+            joins.accept(values);
+        } else {
+            acceptUnjoined(values);
+        }
+    }
+
+    private void acceptUnjoined(final Val[] values) {
         counter.increment();
         LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(values)));
         // Give the data array to each of our coprocessors
@@ -153,6 +200,14 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
                 LOGGER.error(() -> "Error clearing coprocessor: " + e.getMessage(), e);
             }
         }
+        final Runnable onClear = this.onClear;
+        if (onClear != null) {
+            try {
+                onClear.run();
+            } catch (final RuntimeException e) {
+                LOGGER.error(() -> "Error clearing joins: " + e.getMessage(), e);
+            }
+        }
     }
 
     private CompletionState getCompletionState(final Coprocessor coprocessor) {
@@ -189,7 +244,12 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
 
     @Override
     public void forEachExtractionCoprocessor(final BiConsumer<DocRef, Set<Coprocessor>> consumer) {
-        extractionPipelineCoprocessorMap.forEach(consumer);
+        final JoiningCoprocessors joins = this.joins;
+        if (joins != null) {
+            joins.forEachExtractionCoprocessor(consumer);
+        } else {
+            extractionPipelineCoprocessorMap.forEach(consumer);
+        }
     }
 
     @Override
@@ -199,5 +259,63 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
                 .stream()
                 .map(Coprocessor::getByteSize)
                 .reduce(0L, Long::sum);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // These coprocessors without their joins, for the joins to give joined rows to.
+    private final class UnjoinedCoprocessors implements Coprocessors {
+
+        @Override
+        public void accept(final Val[] values) {
+            acceptUnjoined(values);
+        }
+
+        @Override
+        public void forEachExtractionCoprocessor(final BiConsumer<DocRef, Set<Coprocessor>> consumer) {
+            extractionPipelineCoprocessorMap.forEach(consumer);
+        }
+
+        @Override
+        public void readPayloads(final Input input) {
+            CoprocessorsImpl.this.readPayloads(input);
+        }
+
+        @Override
+        public void writePayloads(final Output output) {
+            CoprocessorsImpl.this.writePayloads(output);
+        }
+
+        @Override
+        public ErrorConsumer getErrorConsumer() {
+            return errorConsumer;
+        }
+
+        @Override
+        public ExpressionContext getExpressionContext() {
+            return expressionContext;
+        }
+
+        @Override
+        public Coprocessor get(final int coprocessorId) {
+            return coprocessorMap.get(coprocessorId);
+        }
+
+        @Override
+        public boolean isPresent() {
+            return CoprocessorsImpl.this.isPresent();
+        }
+
+        @Override
+        public FieldIndex getFieldIndex() {
+            return fieldIndex;
+        }
+
+        @Override
+        public long getByteSize() {
+            return CoprocessorsImpl.this.getByteSize();
+        }
     }
 }

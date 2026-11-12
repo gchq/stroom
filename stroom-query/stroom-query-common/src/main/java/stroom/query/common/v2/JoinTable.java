@@ -39,6 +39,7 @@ import org.lmdbjava.EnvFlags;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -70,6 +71,7 @@ public final class JoinTable implements AutoCloseable {
             ByteBuffer.allocateDirect(Long.BYTES));
 
     private final String name;
+    private final List<String> fields;
     private final JoinLimits limits;
     private final LmdbEnv env;
     private final LmdbDb db;
@@ -85,11 +87,17 @@ public final class JoinTable implements AutoCloseable {
     /// Creates an empty join table.
     ///
     /// @param name           The name of the joined source, for messages, e.g. its alias.
+    /// @param fields         The joined source's fields the table holds, in the order of each row's
+    ///                       values, without the alias prefix.
     /// @param lmdbEnvBuilder A builder for the LMDB environment that holds the table, with its
     ///                       directory set. The table owns the environment and deletes it on close.
     /// @param limits         The most rows and bytes the table may hold.
-    public JoinTable(final String name, final LmdbEnv.Builder lmdbEnvBuilder, final JoinLimits limits) {
+    public JoinTable(final String name,
+                     final List<String> fields,
+                     final LmdbEnv.Builder lmdbEnvBuilder,
+                     final JoinLimits limits) {
         this.name = Objects.requireNonNull(name);
+        this.fields = List.copyOf(fields);
         this.limits = Objects.requireNonNull(limits);
         this.env = lmdbEnvBuilder
                 .maxDbs(1)
@@ -217,6 +225,13 @@ public final class JoinTable implements AutoCloseable {
             }
         }
         return count;
+    }
+
+    /// Gets the joined source's fields the table holds, in the order of each row's values.
+    ///
+    /// @return The fields, without the alias prefix.
+    public List<String> getFields() {
+        return fields;
     }
 
     /// Gets the number of rows held.

@@ -144,6 +144,8 @@ class TestSearchResultCreation {
                                 .localDir("search_results")
                                 .maxStoreSize(ByteSize.ofMebibytes(100))
                                 .build(),
+                        null,
+                        null,
                         null),
                 pathCreator,
                 executorProvider,
@@ -192,7 +194,7 @@ class TestSearchResultCreation {
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider);
+                dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider, null);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final CoprocessorsImpl coprocessors = record(coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
@@ -304,7 +306,7 @@ class TestSearchResultCreation {
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider);
+                dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider, null);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final CoprocessorsImpl coprocessors = record(coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
@@ -384,7 +386,7 @@ class TestSearchResultCreation {
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider);
+                dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider, null);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final CoprocessorsImpl coprocessors = record(coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
@@ -480,7 +482,7 @@ class TestSearchResultCreation {
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider);
+                dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider, null);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final CoprocessorsImpl coprocessors = record(coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),

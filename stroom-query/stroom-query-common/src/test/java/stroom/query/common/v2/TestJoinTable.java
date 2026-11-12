@@ -200,7 +200,7 @@ class TestJoinTable {
 
     private JoinTable createTable(final JoinLimits limits) {
         final LmdbEnv.Builder builder = JoinTestHelper.createLmdbEnvBuilder(tempDir);
-        return new JoinTable("hr", builder, limits);
+        return new JoinTable("hr", List.of("Username", "Department"), builder, limits);
     }
 
     private static List<List<String>> matches(final JoinTable table, final String key) {

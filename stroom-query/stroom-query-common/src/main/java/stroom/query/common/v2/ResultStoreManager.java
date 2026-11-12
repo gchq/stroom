@@ -56,6 +56,7 @@ import stroom.util.time.StroomDuration;
 
 import com.google.common.base.Preconditions;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.time.Instant;
@@ -65,11 +66,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -84,19 +87,24 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
     private final Map<QueryKey, ResultStore> resultStoreMap;
     private final SearchProviderRegistry searchProviderRegistry;
     private final UserRefLookup userRefLookup;
+    private final Provider<JoinSearchRunner> joinSearchRunnerProvider;
+    // The placeholder stores of searches with joins that another store hasn't taken the place of yet.
+    private final Set<ResultStore> joinPlaceholders = ConcurrentHashMap.newKeySet();
 
     @Inject
     ResultStoreManager(final TaskContextFactory taskContextFactory,
                        final SecurityContext securityContext,
                        final ExecutorProvider executorProvider,
                        final SearchProviderRegistry searchProviderRegistry,
-                       final UserRefLookup userRefLookup) {
+                       final UserRefLookup userRefLookup,
+                       final Provider<JoinSearchRunner> joinSearchRunnerProvider) {
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
         this.userRefLookup = userRefLookup;
         this.resultStoreMap = new ConcurrentHashMap<>();
         this.searchProviderRegistry = searchProviderRegistry;
+        this.joinSearchRunnerProvider = joinSearchRunnerProvider;
     }
 
     public void update(final QueryKey queryKey,
@@ -134,6 +142,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
     }
 
     private void destroyAndRemove(final QueryKey queryKey, final ResultStore resultStore) {
+        joinPlaceholders.remove(resultStore);
         try {
             securityContext.asProcessingUser(resultStore::destroy);
         } catch (final RuntimeException e) {
@@ -210,10 +219,8 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
             if (dataSourceRef == null || dataSourceRef.getUuid() == null) {
                 throw new RuntimeException("No search data source has been specified");
             }
-            // TODO: Run joins and bracketed queries once their execution is built (StroomQL joins,
-            //  stages 2 and 3). Until then they are refused here rather than run as a plain search.
             if (modifiedRequest.getQuery().needsJoinSupport()) {
-                throw new RuntimeException("Joins, aliases and bracketed queries in from can't be run yet");
+                return startJoinSearch(modifiedRequest);
             }
 
             // Get a store factory to perform this new search.
@@ -252,6 +259,80 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
         }
 
         return new RequestAndStore(modifiedRequest, resultStore);
+    }
+
+    // Starts a search whose query has joins, an alias or a bracketed query in from. Polls see a
+    // placeholder store until the joined sources are searched and the first source's search takes its
+    // place.
+    private RequestAndStore startJoinSearch(final SearchRequest searchRequest) {
+        final SearchRequest modifiedRequest = addReferenceTime(addCurrentUserParam(addQueryKey(searchRequest)));
+        final QueryKey queryKey = modifiedRequest.getKey();
+        final JoinSearchRunner joinSearchRunner = joinSearchRunnerProvider.get();
+        final ResultStore placeholder = joinSearchRunner.createPlaceholder(modifiedRequest);
+        joinPlaceholders.add(placeholder);
+        resultStoreMap.put(queryKey, placeholder);
+        LOGGER.debug(() -> "Starting join search for key: " + queryKey);
+        joinSearchRunner.start(
+                modifiedRequest,
+                placeholder,
+                this::startSearchForJoin,
+                searchStore -> {
+                    if (!resultStoreMap.replace(queryKey, placeholder, searchStore)) {
+                        // The search was destroyed while its joined sources were searched.
+                        searchStore.destroy();
+                    }
+                    joinPlaceholders.remove(placeholder);
+                });
+        return new RequestAndStore(modifiedRequest, placeholder);
+    }
+
+    /// Gets the result store that holds a search's results, for a caller that reads them itself rather
+    /// than polling with the search's key. For most searches that is the store the search started
+    /// with. A search with joins starts with a placeholder store, which another store takes the place
+    /// of once its joined sources are searched; this waits for that store. If the search with joins
+    /// is stopped before then, the placeholder, which has no rows, is the store.
+    ///
+    /// @param requestAndStore The search's request and the store it started with.
+    /// @return The store that holds the search's results.
+    /// @throws InterruptedException If interrupted while waiting.
+    /// @throws IllegalStateException If the search with joins failed before its first source was
+    ///                               searched, with the reasons it failed.
+    public ResultStore getSearchStore(final RequestAndStore requestAndStore) throws InterruptedException {
+        final QueryKey queryKey = requestAndStore.searchRequest().getKey();
+        ResultStore store = requestAndStore.resultStore();
+        while (joinPlaceholders.contains(store)) {
+            store.awaitCompletion(1, TimeUnit.SECONDS);
+            final ResultStore current = resultStoreMap.get(queryKey);
+            if (current != null && current != store) {
+                store = current;
+            } else if (store.isComplete()) {
+                final String errors = store.getErrors()
+                        .stream()
+                        .filter(message -> message.getSeverity().greaterThanOrEqual(Severity.ERROR))
+                        .map(ErrorMessage::getMessage)
+                        .collect(Collectors.joining("; "));
+                if (!errors.isEmpty()) {
+                    throw new IllegalStateException("The search failed: " + errors);
+                }
+                break;
+            }
+        }
+        return store;
+    }
+
+    // Starts the search of one data source of a search with joins: a joined source's child search,
+    // which has no key yet and isn't held here, or the first source's search, under the search's key.
+    private ResultStore startSearchForJoin(final SearchRequest searchRequest) {
+        final DocRef dataSourceRef = searchRequest.getQuery().getDataSource();
+        final SearchProvider searchProvider = searchProviderRegistry.getSearchProvider(dataSourceRef)
+                .orElseThrow(() -> new RuntimeException("No search provider found for " + dataSourceRef.getType()));
+        SearchRequest modifiedRequest = searchRequest;
+        if (modifiedRequest.getKey() == null) {
+            modifiedRequest = addCurrentUserParam(addQueryKey(modifiedRequest));
+        }
+        modifiedRequest = addTimeRangeExpression(searchProvider.getTimeField(dataSourceRef), modifiedRequest);
+        modifiedRequest = addReferenceTime(modifiedRequest);
+        return searchProvider.createResultStore(modifiedRequest);
     }
 
     private SearchRequest addQueryKey(final SearchRequest searchRequest) {

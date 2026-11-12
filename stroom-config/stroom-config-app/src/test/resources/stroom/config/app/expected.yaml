@@ -1191,6 +1191,8 @@ appConfig:
     maxBooleanClauseCount: 1024
     maxStoredDataQueueSize: 1000
     resultStore:
+      joinMaxRows: 1000000
+      joinMaxSize: "256M"
       lmdb:
         localDir: "search_results"
         maxReaders: 10

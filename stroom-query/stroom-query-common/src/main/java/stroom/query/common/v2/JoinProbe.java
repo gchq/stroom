@@ -66,7 +66,7 @@ public final class JoinProbe {
         this.type = plan.getJoin().getType();
         this.errorConsumer = errorConsumer;
         final String alias = plan.getJoin().getAlias();
-        final List<String> storedFields = plan.getStoredFields();
+        final List<String> storedFields = table.getFields();
         this.targetPositions = new int[storedFields.size()];
         for (int i = 0; i < storedFields.size(); i++) {
             final Integer pos = fieldIndex.getPos(alias + "." + storedFields.get(i));

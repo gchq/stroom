@@ -20,11 +20,13 @@ import stroom.docref.DocRef;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.Param;
 import stroom.query.api.ParamUtil;
+import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.TableSettings;
+import stroom.query.common.v2.JoinTables.Registration;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ref.ErrorConsumer;
@@ -42,6 +44,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
@@ -53,16 +56,19 @@ public class CoprocessorsFactory {
     private final ExpressionContextFactory expressionContextFactory;
     private final SizesProvider sizesProvider;
     private final Provider<Executor> executorProvider;
+    private final Provider<JoinTables> joinTablesProvider;
 
     @Inject
     public CoprocessorsFactory(final DataStoreFactory dataStoreFactory,
                                final ExpressionContextFactory expressionContextFactory,
                                final SizesProvider sizesProvider,
-                               final Provider<Executor> executorProvider) {
+                               final Provider<Executor> executorProvider,
+                               final Provider<JoinTables> joinTablesProvider) {
         this.dataStoreFactory = dataStoreFactory;
         this.expressionContextFactory = expressionContextFactory;
         this.sizesProvider = sizesProvider;
         this.executorProvider = executorProvider;
+        this.joinTablesProvider = joinTablesProvider;
     }
 
     public List<CoprocessorSettings> createSettings(final SearchRequest searchRequest) {
@@ -114,6 +120,29 @@ public class CoprocessorsFactory {
                 coprocessorSettingsList,
                 searchRequest.getQuery().getParams(),
                 dataStoreSettings);
+    }
+
+    // Makes the rows of a search with joins go through its joins, once its join tables are built.
+    // Until then, as for the placeholder store a search with joins has while its joined sources are
+    // searched, the coprocessors have no joins. Every provider creates its coprocessors here, by
+    // whichever method, so every first source's rows are joined.
+    private void addJoins(final QueryKey queryKey, final CoprocessorsImpl coprocessors) {
+        if (queryKey == null || joinTablesProvider == null) {
+            return;
+        }
+        final JoinTables joinTables = joinTablesProvider.get();
+        final Optional<Registration> optionalRegistration = joinTables.get(queryKey);
+        if (optionalRegistration.isPresent()) {
+            final Query query = optionalRegistration.get().query();
+            final List<JoinPlan> plans = JoinPlan.createAll(
+                    query,
+                    coprocessors.getFieldIndex(),
+                    coprocessors.getExpressionContext(),
+                    ParamUtil.createParamMap(query.getParams()));
+            final JoiningCoprocessors joins = JoiningCoprocessors.create(
+                    coprocessors.getUnjoined(), query, plans, optionalRegistration.get().tables());
+            coprocessors.setJoins(joins, () -> joinTables.remove(queryKey));
+        }
     }
 
     public CoprocessorsImpl create(final SearchRequestSource searchRequestSource,
@@ -175,13 +204,15 @@ public class CoprocessorsFactory {
                     new HashSet<>()).add(coprocessor);
         });
 
-        return new CoprocessorsImpl(
+        final CoprocessorsImpl coprocessors = new CoprocessorsImpl(
                 Collections.unmodifiableMap(coprocessorMap),
                 Collections.unmodifiableMap(componentIdCoprocessorMap),
                 Collections.unmodifiableMap(extractionPipelineCoprocessorMap),
                 fieldIndex,
                 errorConsumer,
                 expressionContext);
+        addJoins(queryKey, coprocessors);
+        return coprocessors;
     }
 
     private Coprocessor create(final ExpressionContext expressionContext,

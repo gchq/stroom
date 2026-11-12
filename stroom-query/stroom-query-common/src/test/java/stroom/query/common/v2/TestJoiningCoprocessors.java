@@ -254,7 +254,10 @@ class TestJoiningCoprocessors {
         for (int i = 0; i < plans.size(); i++) {
             final JoinPlan plan = plans.get(i);
             final JoinTable table = new JoinTable(
-                    plan.getJoin().getAlias(), JoinTestHelper.createLmdbEnvBuilder(tempDir), JoinLimits.DEFAULT);
+                    plan.getJoin().getAlias(),
+                    plan.getStoredFields(),
+                    JoinTestHelper.createLmdbEnvBuilder(tempDir),
+                    JoinLimits.DEFAULT);
             tables.add(table);
             for (final String[] source : joinedRows.get(i)) {
                 // The source's rows have fields Username/Name then Department/CostCentre.
