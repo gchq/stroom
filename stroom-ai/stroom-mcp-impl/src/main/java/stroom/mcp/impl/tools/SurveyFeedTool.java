@@ -118,11 +118,18 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     // Formats of one record a line, read from a window as from the head; not XML, a JSON document, or records of
     // several lines, whose records a window can't be started in.
     // Lines of mixed formats too (seen in testing: a NetScaler stream read to its 10,000th record was never offered
-    // deeper, and kinds only further in were found at processing).
+    // deeper, and kinds only further in were found at processing), and syslog (seen in testing: a mail gateway's
+    // 30,000-line streams could only be stopped at, "can't be read further in a call").
     private static final Set<String> WINDOWED = Set.of(RecordSplitter.DELIMITED, RecordSplitter.JSON_LINES,
             SampleProfiler.KEY_VALUE_FORMAT, SampleProfiler.CEF_FORMAT, SampleProfiler.CRI,
-            RecordSplitter.UNKNOWN_TEXT, SampleProfiler.MIXED_LINES);
+            RecordSplitter.UNKNOWN_TEXT, SampleProfiler.MIXED_LINES, SampleProfiler.SYSLOG_3164_FORMAT,
+            SampleProfiler.SYSLOG_5424_FORMAT);
+    // Formats whose records may run over several lines, so a window can be started in one only when none does.
+    private static final Set<String> LINES_UNLESS_SEEN = Set.of(SampleProfiler.MIXED_LINES,
+            SampleProfiler.SYSLOG_3164_FORMAT, SampleProfiler.SYSLOG_5424_FORMAT);
     static final String MAX_PARTS_ARG = "max_parts_per_stream";
+    /// Why a stream read only in part can't be read further, in its `per_stream` entry.
+    static final String NOT_READ_FURTHER = "not_read_further";
     /// The most parts of a stream read.
     static final int MAX_PARTS = 20;
     /// The parts of each of a feed's streams read by default when it is sampled across its life.
@@ -841,7 +848,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             }
             return;
         }
-        final String said = "Stream(s) " + other + " can't be read further in a call (records read: per_stream)";
+        final String said = inPartSaid(reading, other);
         // The read_deeper answer only when it answers this question (stop, or step): "1,000 more" was for parts that
         // can be read deeper.
         final String given = NullSafe.string(request.readDeeper()).strip();
@@ -849,12 +856,13 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                     || given.toLowerCase(Locale.ROOT).contains("step");
         final Optional<String> answer = answersThis
                 ? Optional.of(given)
-                : consent.answer(call, context, NAME, said + ": kinds of event only further in them weren't seen.",
+                : consent.answer(call, context, NAME, said + " Kinds of event that only appear later in them "
+                                                       + "haven't been seen.",
                         "Stop and accept them as read, or step records further in first?",
                         List.of(STOP_THERE, STEP_FURTHER));
         if (answer.isEmpty()) {
-            result.put("coverage", "NOT COVERED: " + said + "; the user decides whether to stop and accept them as "
-                                   + "read, or step records further in first");
+            result.put("coverage", "NOT COVERED: " + said + " The user decides whether to stop and accept them as "
+                                   + "read, or step records further in first.");
             result.put("hint", "Ask the user in the chat whether to stop and accept stream(s) " + other + " as read, "
                                + "or step records further in first, then call " + NAME + " again with stream_ids "
                                + other + " and " + READ_DEEPER_ARG + " as they said. Don't raise "
@@ -871,11 +879,40 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             }
             return;
         }
-        result.put("coverage", "NOT COVERED: " + said + "; the user chose to step records further in first");
+        result.put("coverage", "NOT COVERED: " + said + " The user chose to step records further in first.");
         result.put("hint", "Step records further in these streams with step_records (their windows in per_stream), "
                            + "then ask the user again whether to stop there, and call " + NAME + " with stream_ids "
                            + other + " and " + READ_DEEPER_ARG + " as they say. Don't raise " + MAX_CHARS_ARG
                            + ": a call reads no more of them.");
+    }
+
+    // What the user is told of streams read only in part that can't be read further: how much of each was read, and
+    // why it can't be read further (seen in testing: "can't be read further in a call (records read: per_stream)",
+    // a name in the agent's result, left the user asking what it meant).
+    private static String inPartSaid(final Reading reading, final List<Long> streams) {
+        final List<String> each = new ArrayList<>();
+        for (final long id : streams) {
+            final Map<String, Object> stream = reading.perStream.stream()
+                    .filter(entry -> entry.get("stream") instanceof final Number number && number.longValue() == id
+                                     && entry.containsKey("records"))
+                    .findFirst()
+                    .orElse(Map.of());
+            final String records = stream.get("records") instanceof final Number number
+                    ? String.format("%,d", number.longValue())
+                    : "some";
+            final Object why = stream.get(NOT_READ_FURTHER);
+            each.add("Stream " + id + ": " + records + " records from its start" + (why != null
+                    ? "; " + why
+                    : "") + ".");
+        }
+        final List<String> ids = streams.stream().map(String::valueOf).toList();
+        final String named = ids.size() == 1
+                ? "stream " + ids.getFirst()
+                : "streams " + String.join(", ", ids.subList(0, ids.size() - 1)) + " and " + ids.getLast();
+        return "The survey read only the start of " + named + ", too big to read whole in one go, and can't read "
+               + "further into " + (ids.size() == 1
+                ? "it"
+                : "them") + ". " + String.join(" ", each);
     }
 
     // Each part's depth as the survey state keeps it, by stream:part.
@@ -1054,6 +1091,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         int windowsHere = 0;
         boolean cut = false;
         boolean inPart = false;
+        // Why the stream can't be read further than this call reads, said to the user if it isn't read whole.
+        String notFurther = null;
         int parts = 1;
         int part = 0;
         while (part < Math.min(parts, limits.maxParts())) {
@@ -1061,6 +1100,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 // Stopped part-way: what is read of it so far counts, as the start of the stream.
                 reading.stop();
                 cut = true;
+                notFurther = "the survey's time ran out";
                 break;
             }
             final RawHead head;
@@ -1144,6 +1184,11 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                       && picks.size() == chunk.records().size();
             if (!partWhole) {
                 inPart = true;
+                if (!windowable(chunk)) {
+                    notFurther = WINDOWED.contains(chunk.format())
+                            ? "its records run over several lines, so it can't be read from part-way through"
+                            : "its records (" + chunk.format() + ") can't be read from part-way through";
+                }
                 if (limits.whole() && windowable(chunk)) {
                     reading.partial.add(new SurveyDepth.Part(meta.getId(), part, picks.size(), ranges,
                             chunk.header(), chunk.format(), partSize(meta.getId(), part),
@@ -1154,6 +1199,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             part++;
         }
         reading.recordsRead += readHere;
+        if (parts > limits.maxParts()) {
+            notFurther = "it has " + parts + " parts, more than a call reads (" + limits.maxParts() + ")";
+        }
         final Map<String, Object> entry = entry("stream", meta.getId(), "created", meta.getCreateMs() != 0
                         ? FeedSampling.iso(meta.getCreateMs())
                         : null,
@@ -1161,6 +1209,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 "new_shapes", newHere);
         if (windowsHere > 0) {
             entry.put("windows", windowsHere);
+        }
+        if (notFurther != null && Boolean.TRUE.equals(entry.get("head_only"))) {
+            entry.put(NOT_READ_FURTHER, notFurther);
         }
         entry.putAll(FeedSampling.charsetEntry(streamReader.charsetReport(meta.getId())));
         reading.perStream.add(entry);
@@ -1261,7 +1312,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         if (!WINDOWED.contains(chunk.format()) || holdsLineBreaks(chunk)) {
             return false;
         }
-        return !SampleProfiler.MIXED_LINES.equals(chunk.format())
+        return !LINES_UNLESS_SEEN.contains(chunk.format())
                || chunk.records().stream().noneMatch(record -> record.indexOf('\n') >= 0);
     }
 
