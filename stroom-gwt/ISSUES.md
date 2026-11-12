@@ -3320,7 +3320,7 @@ which throws. On 7.14 that is only on Save after choosing Excel without uploadin
 (`DataConnectionSettingsPresenter.writeExcel`); on master every change writes the document to work
 out whether it is dirty, so choosing the Excel type threw at once
 (`DataConnectionSettingsController.writeExcel`). Story: `App/Editors/DataConnectionEditor`,
-TypeSections. **7.14 still has it.** Confirmed.
+TypeSections. Also fixed on 7.14 (12 November 2026). Confirmed.
 
 ### Replace Secret stories expected the old request
 
