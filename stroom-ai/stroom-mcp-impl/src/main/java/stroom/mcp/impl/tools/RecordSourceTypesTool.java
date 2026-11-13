@@ -161,8 +161,8 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                              + "in a form which source types go in this build's source type group (a build makes "
                              + "one group, one pipeline; any number of source types) and keeps or changes its "
                              + "name; the others are parked for later builds. Naming an existing group adds the "
-                             + "chosen source types to it. Then it writes the feed's registry ('<feed> source "
-                             + "types') in the build. An assessment build writes the "
+                             + "chosen source types to it, or, none chosen, changes it alone. Then it writes the "
+                             + "feed's registry ('<feed> source types') in the build. An assessment build writes the "
                              + "registry without a scope. Where the field's values are many paths or names, it "
                              + "proposes anchored patterns, confirmed by the user. Rows given again keep the "
                              + "registry's translated and placed rows they leave out; remove= drops a row, and "
@@ -196,7 +196,9 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                                          + "source type per value).")
                         .addProperty(SCOPE_ARG, stringArraySchema("Only when the client shows no forms: the "
                                                                   + "source types the user chose for this build's "
-                                                                  + "group, by name (with group)."))
+                                                                  + "group, by name (with group). [] with an "
+                                                                  + "existing group's name changes that group "
+                                                                  + "alone (refused for a new group)."))
                         .addStringProperty(GROUP_ARG, "The name of this build's source type group, for its source "
                                                       + "types (e.g. 'Messaging'): with forms, your suggestion, "
                                                       + "which the user keeps or changes in the form; without, "
@@ -331,7 +333,8 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                + "group is called (suggest a name; an existing group's name adds them to it); the "
                                + "rest are parked for later builds. Then call " + NAME + " again with "
                                + "reviewed=<review_id>, " + SCOPE_ARG + "=[their names], " + GROUP_ARG
-                               + "=<the name> and, if they gave one, " + REASON_ARG + " (why the rest wait).");
+                               + "=<the name> and, if they gave one, " + REASON_ARG + " (why the rest wait); "
+                               + SCOPE_ARG + "=[] with an existing group's name changes that group alone.");
             return result;
         }
         // The group's source types: those it translates already (an existing group named), and those chosen now.
@@ -735,6 +738,22 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
         final List<String> given = stringListArg(call, SCOPE_ARG);
         final String suggested = NullSafe.string(stringArg(call, GROUP_ARG)).strip();
         final List<String> groups = registryGroups(registry);
+        if (given.isEmpty() && emptyScopeGiven(call) && !context.userQuestions().canAsk()) {
+            // Without forms, scope=[] with an existing group's name is the user's "change that group alone", as no
+            // source type ticked in the form is.
+            if (suggested.isEmpty()) {
+                throw new ToolRefusal("Give " + GROUP_ARG + ": an empty " + SCOPE_ARG + " changes an existing source "
+                                      + "type group alone, and names it" + groupsSaid(groups)
+                                      + ". Nothing was written.");
+            }
+            final String group = groupNamed(groups, suggested);
+            if (!groups.contains(group)) {
+                throw new ToolRefusal("An empty " + SCOPE_ARG + " changes an existing source type group alone, and '"
+                                      + group + "' is a new one: a new group needs one or more source types. Ask "
+                                      + "the user which go in it" + groupsSaid(groups) + ". Nothing was written.");
+            }
+            return Optional.of(new Scope(List.of(), NullSafe.string(stringArg(call, REASON_ARG)).strip(), group));
+        }
         if (!given.isEmpty()) {
             if (suggested.isEmpty()) {
                 throw new ToolRefusal("Give " + GROUP_ARG + ": the name the user gave this build's source type group "
@@ -773,6 +792,11 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
         final String named = NullSafe.nonBlankStringElse(NullSafe.get(answers.get().get(Consent.REVIEW_TEXT),
                 String::valueOf), suggested).strip();
         return Optional.of(new Scope(chosen, "", groupNamed(groups, named)));
+    }
+
+    // True when the call gives scope as an empty list: an answer (no source type added), not a scope left out.
+    private static boolean emptyScopeGiven(final ToolCall call) {
+        return argsMap(call).get(SCOPE_ARG) instanceof final List<?> list && list.isEmpty();
     }
 
     // The scope form's message, in plain text.

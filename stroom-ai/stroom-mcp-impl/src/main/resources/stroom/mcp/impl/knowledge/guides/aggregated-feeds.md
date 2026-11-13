@@ -57,7 +57,7 @@ rows it leaves out; `remove=` drops a row, on the user's word. Removing a transl
 translated row's value or pattern, is confirmed by the user in a form (refused for a translated row without forms). A
 translated row can't be renamed: add the new row and remove the old one. A row no record could reach (an earlier row always matches first)
 is refused. Without forms, `patterns=`, `scope=`, `group=` (required with `scope=`) and `reason=` carry the user's
-answers.
+answers; `scope=[]` with an existing group's name changes that group alone (refused for a new group).
 
 ## Building a group
 

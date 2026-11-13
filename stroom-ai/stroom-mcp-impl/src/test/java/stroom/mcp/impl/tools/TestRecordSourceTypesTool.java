@@ -253,6 +253,44 @@ class TestRecordSourceTypesTool {
     }
 
     @Test
+    void withoutFormsAnEmptyScopeWithAnExistingGroupsNameChangesThatGroupAlone() {
+        final Map<String, Object> result = called(BuildToolCalls.context(), Map.of("scope", List.of(),
+                "group", "pega SECURITY", "reason", "later"));
+
+        assertThat(result).as("%s", result).containsEntry("group", "PEGA security")
+                .containsEntry("scope", List.of("PegaSecurityEvent"));
+        assertThat(JsonValues.mapOrEmpty(SourceTypeRegistry.read(written.getLast()).get("scope")))
+                .containsEntry("group", "PEGA security")
+                .containsEntry("source_types", List.of("PegaSecurityEvent"));
+        assertThat(rowNamed("PegaDB")).containsEntry("status", SourceTypeRegistry.PARKED);
+        assertThat(JsonValues.mapOrEmpty(rowNamed("PegaDB").get("decided"))).containsEntry("reason", "later");
+        assertThat(rowNamed("PegaSecurityEvent")).containsEntry("status", SourceTypeRegistry.TRANSLATED);
+    }
+
+    @Test
+    void withoutFormsAnEmptyScopeIsRefusedForANewGroupOrNoGroup() {
+        final Map<String, Object> newGroup = called(BuildToolCalls.context(), Map.of("scope", List.of(),
+                "group", "PEGA databases"));
+        assertThat(String.valueOf(newGroup.get("error"))).contains("'PEGA databases' is a new one",
+                "PEGA security");
+
+        final Map<String, Object> noGroup = called(BuildToolCalls.context(), Map.of("scope", List.of()));
+        assertThat(String.valueOf(noGroup.get("error"))).contains("Give group", "changes an existing");
+        assertThat(written).isEmpty();
+    }
+
+    @Test
+    void withFormsAnEmptyScopeIsNoAnswerAndTheFormIsShown() {
+        final GroupUser user = new GroupUser(List.of("PegaDB"), "");
+
+        final Map<String, Object> result = called(user.context(), Map.of("scope", List.of(),
+                "group", "PEGA security"));
+
+        assertThat(user.intros()).hasSize(1);
+        assertThat(result).as("%s", result).containsEntry("scope", List.of("PegaSecurityEvent", "PegaDB"));
+    }
+
+    @Test
     void namingAnExistingGroupAddsTheSourceTypesToIt() {
         final Map<String, Object> result = called(BuildToolCalls.context(), Map.of("scope", List.of("PegaDB"),
                 "group", "pega SECURITY"));

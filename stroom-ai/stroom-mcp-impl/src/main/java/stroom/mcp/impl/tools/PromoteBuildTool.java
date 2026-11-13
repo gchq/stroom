@@ -438,13 +438,19 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             done.addAll(referencesProvider.get().apply(referenceChanges));
         }
         // A choice about a changed original holds for this promotion only: promoted again, it is asked again. What
-        // was kept is marked so, so it doesn't hold the build open on its feed.
+        // was kept is marked so, with its version, so it doesn't hold the build open on its feed until it changes.
         plan.stream()
                 .filter(p -> PromotionLayout.KEEP.equals(p.action()))
-                .forEach(p -> buildRecords.update(build, ref(p.doc()), entry -> {
-                    entry.remove(ORIGINAL_CHOICE);
-                    entry.put(BuildRecords.KEPT_AT_PROMOTION, true);
-                }));
+                .forEach(p -> {
+                    final DocRef kept = ref(p.doc());
+                    final Optional<String> version = BuildRecords.version(documentAccess, kept);
+                    buildRecords.update(build, kept, entry -> {
+                        entry.remove(ORIGINAL_CHOICE);
+                        entry.put(BuildRecords.KEPT_AT_PROMOTION, true);
+                        version.ifPresentOrElse(v -> entry.put(BuildRecords.KEPT_VERSION, v),
+                                () -> entry.remove(BuildRecords.KEPT_VERSION));
+                    });
+                });
         // What the record kept about the promoted docs only meant something inside the build; it goes once nothing
         // is left in the build.
         buildRecords.forget(build, plan.stream()
@@ -492,8 +498,13 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 plan.add(new PromotionLayout.Step(doc, PromotionLayout.KEEP, "left in the workspace: a survey doc "
                                                                              + "stays in its build", null));
             } else if (!destinations.containsKey(uuid) && besideFeeds.containsKey(uuid)) {
-                plan.add(new PromotionLayout.Step(doc, PromotionLayout.MOVE,
-                        String.join("/", WriteGuard.folderParts(besideFeeds.get(uuid))), null));
+                String target = String.join("/", WriteGuard.folderParts(besideFeeds.get(uuid)));
+                if (doc.get("version_of") != null && joins.containsKey(target)) {
+                    // A new version of a group's XSLT goes in its pipeline's version folder, not beside the old one
+                    // (seen in e2e: two XSLTs of one name in the feed's folder, the new pipeline's in v2/).
+                    target = joins.get(target);
+                }
+                plan.add(new PromotionLayout.Step(doc, PromotionLayout.MOVE, target, null));
             } else if (KEEP.equals(NullSafe.string(destinations.get(uuid)).strip().toLowerCase(Locale.ROOT))) {
                 // Seen (fix_errors, Haiku): a test feed the agent made had nowhere to go but production, and with no
                 // way to leave it out the agent never promoted the fix.

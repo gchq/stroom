@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.api.ExplorerService;
 import stroom.util.json.JsonUtil;
@@ -77,6 +78,9 @@ public class BuildRecords {
     /// In a document's entry: true once a promotion of the build left it in the workspace (the user kept it), so it
     /// doesn't hold the build open on its feed.
     static final String KEPT_AT_PROMOTION = "kept_at_promotion";
+    /// In a kept document's entry: its version when the promotion kept it. Changed since (by the tools or by hand),
+    /// it is work in progress again, so holds the build open on its feed.
+    static final String KEPT_VERSION = "kept_version";
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BuildRecords.class);
 
@@ -162,6 +166,20 @@ public class BuildRecords {
         }
         return found.map(doc -> parse(bodyText(read(doc.docRef()))))
                 .orElseGet(BuildRecords::empty);
+    }
+
+    /// @param documentAccess Reads the document, as the user.
+    /// @param ref            A document.
+    /// @return Its version: empty when it can't be read, or has none.
+    static Optional<String> version(final DocumentAccess documentAccess, final DocRef ref) {
+        try {
+            return documentAccess.read(ref)
+                    .filter(AbstractDoc.class::isInstance)
+                    .map(doc -> ((AbstractDoc) doc).getVersion());
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No version read for {}: {}", ref, e.getMessage()));
+            return Optional.empty();
+        }
     }
 
     /// @param build A build's name, or null.
