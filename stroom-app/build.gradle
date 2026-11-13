@@ -106,7 +106,7 @@ dependencies {
     implementation project(':stroom-dictionary:stroom-dictionary-impl')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-impl')
-    implementation project(':stroom-docstore:stroom-docstore-impl-dao')
+    implementation project(':stroom-docstore:stroom-docstore-impl-database')
     implementation project(':stroom-docstore:stroom-docstore-impl-db')
     implementation project(':stroom-documentation:stroom-documentation-impl')
     implementation project(':stroom-dropwizard-common')

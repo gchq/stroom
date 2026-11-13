@@ -42,7 +42,7 @@ dependencies {
     implementation project(':stroom-data:stroom-data-store-impl-fs')
     implementation project(':stroom-db-util')
     implementation project(':stroom-docref')
-    implementation project(':stroom-docstore:stroom-docstore-impl-dao')
+    implementation project(':stroom-docstore:stroom-docstore-impl-database')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging:stroom-event-logging-impl')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')

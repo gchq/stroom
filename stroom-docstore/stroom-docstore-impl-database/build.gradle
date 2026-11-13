@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.docstore.impl.dao'
+ext.moduleName = 'stroom.docstore.impl.database'
 
 dependencies {
 

@@ -34,7 +34,7 @@ import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
 import stroom.credentials.impl.CredentialsConfig;
 import stroom.dashboard.impl.DashboardConfig;
-import stroom.docstore.impl.dao.DocStoreConfig;
+import stroom.docstore.impl.database.DocStoreConfig;
 import stroom.document.asset.impl.DocumentAssetConfig;
 import stroom.document.asset.impl.db.DocumentAssetDbConfig;
 import stroom.event.logging.impl.LoggingConfig;

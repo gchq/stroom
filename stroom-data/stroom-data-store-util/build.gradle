@@ -26,7 +26,7 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docstore:stroom-docstore-impl')
-    implementation project(':stroom-docstore:stroom-docstore-impl-dao')
+    implementation project(':stroom-docstore:stroom-docstore-impl-database')
     implementation project(':stroom-docstore:stroom-docstore-impl-db')
     implementation project(':stroom-docstore:stroom-docstore-mock')
     implementation project(':stroom-data:stroom-data-retention-api')
