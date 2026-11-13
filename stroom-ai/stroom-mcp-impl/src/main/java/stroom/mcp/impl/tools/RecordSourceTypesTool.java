@@ -725,9 +725,9 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
     }
 
     // The scope the user chooses in a form: a yes for each source type offered (parked, new, or every one of a first
-    // registry) to put in the build's one source type group, and the group's name (the agent's suggestion, kept or
-    // changed); the others are parked for a later build. Or as they said in the chat (scope=, group=, reason=). An
-    // existing group's name, in any case, is that group's.
+    // registry; none ticked to start) to put in the build's one source type group, and the group's name (the agent's
+    // suggestion, kept or changed); the others are parked for a later build. Or as they said in the chat (scope=,
+    // group=, reason=). An existing group's name, in any case, is that group's.
     private Optional<Scope> scope(final ToolCall call,
                                   final ToolCallContext context,
                                   final String feed,
@@ -783,7 +783,7 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                     JsonValues.mapOrEmpty(profile.get("formats")).keySet())));
         }
         final Optional<Map<String, Object>> answers = consent.review(call, context, NAME, scopeIntro(feed, groups),
-                items, GROUP_QUESTION, suggested);
+                items, GROUP_QUESTION, suggested, false);
         if (answers.isEmpty()) {
             return Optional.empty();
         }
