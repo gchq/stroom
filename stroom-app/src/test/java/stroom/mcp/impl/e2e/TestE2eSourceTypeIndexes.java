@@ -51,7 +51,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 ///   of another type and a field of another meaning are held at promotion, then resolved in one form (a field of
 ///   another name; one field read from both); promotion adds the build's new fields to the index (and to the Lucene
 ///   index doc), on Lucene and Elasticsearch alike;
-/// * a group with an output feed of its own has an index of its own, the feed's own index refused for its Events.
+/// * a group with an output feed of its own (a later build's: one source type group a build) has an index of its own,
+///   the feed's own index refused for its Events.
 @SuppressWarnings("unchecked")
 class TestE2eSourceTypeIndexes extends AbstractE2eTest {
 
@@ -78,9 +79,9 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         // The first build: the security group, its Events indexed; the backend and naming chosen with the user.
         final String first = "pega-idx-1" + tag;
         json("start_build", args("build", first, "feeds", List.of(feed)));
-        client.answeringWith(TestE2eSourceTypeGroups.scopeOf(List.of("PegaSecurityEvent"), "for later builds"));
+        client.answeringWith(TestE2eSourceTypeGroups.scopeOf(List.of("PegaSecurityEvent"), null));
         json("survey_feed", args("feed", feed, "build", first));
-        recordSourceTypes(first, feed);
+        recordSourceTypes(first, feed, SECURITY);
         group(first, feed, SECURITY, "PegaSecurityEvent", TestE2eSourceTypeGroups.securityMapping(), stream);
         final String template = templateUuid("translation", "Event Data (JSON)");
         final String pipeline = uuidOf(agreed("create_pipeline", args("build", first, "group", SECURITY,
@@ -115,9 +116,9 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         // A later build: the integration group, its Events into the feed's, by a pipeline of its own.
         final String later = "pega-idx-2" + tag;
         json("start_build", args("build", later, "feeds", List.of(feed)));
-        client.answeringWith(TestE2eSourceTypeGroups.scopeOf(List.of("PegaIntegration"), "for later builds"));
+        client.answeringWith(TestE2eSourceTypeGroups.scopeOf(List.of("PegaIntegration"), null));
         json("survey_feed", args("feed", feed, "build", later));
-        recordSourceTypes(later, feed);
+        recordSourceTypes(later, feed, INTEGRATION);
         group(later, feed, INTEGRATION, "PegaIntegration", TestE2eSourceTypeGroups.integrationMapping(), stream);
         final String integrationPipeline = uuidOf(agreed("create_pipeline", args("build", later, "group",
                 INTEGRATION, "template_uuid", template)));
@@ -225,41 +226,55 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
     void aGroupWithAnOutputFeedOfItsOwnHasAnIndexOfItsOwn() {
         final String feed = "E2E-PEGA-IDX-OWN";
         final String folder = "E2E Feeds/PegaIdxOwn";
-        final String build = "pega-idx-own";
+        final String index = "e2e-pega-idx-own";
         createFeed("pega-idx-own-src", feed);
         final String text = TestE2eSourceTypeGroups.lines("pega/pega-1.json", 1500);
         final long stream = upload(feed, text);
         promote("pega-idx-own-src", Map.of("Feed", folder));
-        json("start_build", args("build", build, "feeds", List.of(feed)));
-        client.answeringWith(ownFeedFor(List.of("PegaSecurityEvent", "PegaIntegration"), INTEGRATION));
-        json("survey_feed", args("feed", feed, "build", build));
-        recordSourceTypes(build, feed);
-        final Map<String, Object> security = group(build, feed, SECURITY, "PegaSecurityEvent",
-                TestE2eSourceTypeGroups.securityMapping(), stream);
-        final Map<String, Object> integration = group(build, feed, INTEGRATION, "PegaIntegration",
-                TestE2eSourceTypeGroups.integrationMapping(), stream);
-        final String outputFeed = feed + "-INTEGRATION-EVENTS";
-        agreed("create_feed", args("build", build, "name", outputFeed, "stream_type", "Events", "group",
-                INTEGRATION));
         final String template = templateUuid("translation", "Event Data (JSON)");
+
+        // The first build: the security group, its Events into the feed's, indexed by the feed's index. One source
+        // type group a build.
+        final String first = "pega-idx-own-1";
+        json("start_build", args("build", first, "feeds", List.of(feed)));
+        client.answeringWith(ownFeedFor(List.of("PegaSecurityEvent"), INTEGRATION));
+        json("survey_feed", args("feed", feed, "build", first));
+        recordSourceTypes(first, feed, SECURITY);
+        final Map<String, Object> security = group(first, feed, SECURITY, "PegaSecurityEvent",
+                TestE2eSourceTypeGroups.securityMapping(), stream);
         assertThat(security).doesNotContainKey("output_feed");
-        assertThat(integration).containsEntry("output_feed", "");
-        final String main = uuidOf(agreed("create_pipeline", args("build", build, "group", SECURITY,
-                "template_uuid", template)));
-        final String own = uuidOf(agreed("create_pipeline", args("build", build, "group", INTEGRATION,
+        final String main = uuidOf(agreed("create_pipeline", args("build", first, "group", SECURITY,
                 "template_uuid", template)));
         final List<Long> mainEvents = events(main, stream);
-        final List<Long> ownEvents = events(own, stream);
-        assertThat(meta(ownEvents.getFirst()).getFeedName()).isEqualTo(outputFeed);
         client.answeringWith(choosing(STROOM_FLAT));
         json("get_field_conventions", args());
         client.answeringWith(McpTestClient::agree);
-
-        // The feed's own Events: its index. The group's own output feed: the feed's index refused, one of its own.
-        final String index = "e2e-pega-idx-own";
         final Map<String, Object> mainDraft = draft("lucene", index, mainEvents, null);
         assertThat(map(mainDraft, "feed_index")).containsEntry("output_feed", feed);
         assertThat((List<String>) map(mainDraft, "feed_index").get("groups")).containsExactly(SECURITY);
+        json("save_xslt", args("build", first, "name", index + "-XSLT", "index_plan", map(mainDraft, "plan")));
+        promote(first, Map.of("Pipeline", folder, "XSLT", folder));
+
+        // The second build: the integration group, its Events into an output feed of its own.
+        final String second = "pega-idx-own-2";
+        json("start_build", args("build", second, "feeds", List.of(feed)));
+        client.answeringWith(ownFeedFor(List.of("PegaIntegration"), INTEGRATION));
+        json("survey_feed", args("feed", feed, "build", second));
+        recordSourceTypes(second, feed, INTEGRATION);
+        final Map<String, Object> integration = group(second, feed, INTEGRATION, "PegaIntegration",
+                TestE2eSourceTypeGroups.integrationMapping(), stream);
+        assertThat(integration).containsEntry("output_feed", "");
+        final String outputFeed = feed + "-INTEGRATION-EVENTS";
+        agreed("create_feed", args("build", second, "name", outputFeed, "stream_type", "Events", "group",
+                INTEGRATION));
+        final String own = uuidOf(agreed("create_pipeline", args("build", second, "group", INTEGRATION,
+                "template_uuid", template)));
+        final List<Long> ownEvents = events(own, stream);
+        assertThat(meta(ownEvents.getFirst()).getFeedName()).isEqualTo(outputFeed);
+        client.answeringWith(McpTestClient::agree);
+        json("get_field_conventions", args());
+
+        // The group's own output feed: the feed's index refused, one of its own.
         assertThat(refusal("draft_index_mapping", args("backend", "lucene", "index_name", index, "convention",
                 "stroom-flat", "events_stream_ids", ownEvents))).contains("is the index of output feed '" + feed
                                                                           + "'");
@@ -267,10 +282,9 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         final Map<String, Object> ownDraft = draft("lucene", ownIndex, ownEvents, null);
         assertThat(map(ownDraft, "feed_index")).containsEntry("output_feed", outputFeed);
         assertThat((List<String>) map(ownDraft, "feed_index").get("groups")).containsExactly(INTEGRATION);
-        json("save_xslt", args("build", build, "name", index + "-XSLT", "index_plan", map(mainDraft, "plan")));
-        json("save_xslt", args("build", build, "name", ownIndex + "-XSLT", "index_plan", map(ownDraft, "plan")));
+        json("save_xslt", args("build", second, "name", ownIndex + "-XSLT", "index_plan", map(ownDraft, "plan")));
 
-        promote(build, Map.of("Pipeline", folder, "XSLT", folder));
+        promote(second, Map.of("Pipeline", folder, "XSLT", folder));
         final Map<String, Object> registry = registry(folder, feed);
         assertThat(map(registry, FeedIndexes.INDEXES)).containsOnlyKeys(feed, outputFeed);
         assertThat(FeedIndexes.index(registry, feed)).containsEntry("index", index);
@@ -320,10 +334,12 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         return drafted;
     }
 
-    // record_source_types: the table, then the scope form.
-    private void recordSourceTypes(final String build, final String feed) {
+    // record_source_types: the table, then the scope form, the build's group suggested by this name.
+    private void recordSourceTypes(final String build, final String feed, final String group) {
         final Map<String, Object> shown = json("record_source_types", args("build", build, "feed", feed));
-        json("record_source_types", args("build", build, "feed", feed, "reviewed", shown.get("review_id")));
+        final Map<String, Object> written = json("record_source_types", args("build", build, "feed", feed,
+                "reviewed", shown.get("review_id"), "group", group));
+        assertThat(written).as("scoped: %s", written).containsEntry("group", group);
     }
 
     // promote_build: the layout shown first (needs_review), then promoted once the user agrees in the form.
@@ -401,8 +417,7 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
     // and agrees to everything else.
     private static Function<ElicitFormRequest, ElicitResult> ownFeedFor(final List<String> scope,
                                                                         final String ownGroup) {
-        final Function<ElicitFormRequest, ElicitResult> scoping = TestE2eSourceTypeGroups.scopeOf(scope,
-                "for later builds");
+        final Function<ElicitFormRequest, ElicitResult> scoping = TestE2eSourceTypeGroups.scopeOf(scope, null);
         return form -> {
             if (form.message().contains(TestE2eSourceTypeGroups.SCOPE_FORM)) {
                 return scoping.apply(form);

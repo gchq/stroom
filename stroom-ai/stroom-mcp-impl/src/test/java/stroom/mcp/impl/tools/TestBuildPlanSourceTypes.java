@@ -105,6 +105,19 @@ class TestBuildPlanSourceTypes {
     }
 
     @Test
+    void aBuildsScopeNamingItsGroupSaysTheTranslationIsThatGroups() {
+        final Map<String, Object> scope = Map.of("build", "b", "group", "PEGA back end", "source_types",
+                List.of("PegaDB", "PegaIntegration"), "share_percent", 50.0);
+        final BuildPlan.CallArgs args = new BuildPlan.CallArgs("b", List.of(), List.of(1L), List.of(), null, null,
+                null, null, List.of("ACME"), false, null, null, null, null, null, scope);
+
+        assertThat(BuildPlan.nextCall("translation", args).then()).contains("source type group 'PEGA back end'",
+                "default to the scope's");
+        assertThat(BuildPlan.nextCall("covered", args).then()).contains("scope, group 'PEGA back end': PegaDB, "
+                                                                       + "PegaIntegration");
+    }
+
+    @Test
     void theStepIsNoOnboardingStepInToolDescriptions() {
         assertThat(BuildPlan.onboardingChecklist()).extracting(step -> step.get("step"))
                 .doesNotContain("source_types");

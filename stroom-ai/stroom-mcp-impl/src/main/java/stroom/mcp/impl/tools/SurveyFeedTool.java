@@ -51,7 +51,6 @@ import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.data.shared.StreamTypeNames;
-import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
@@ -159,15 +158,6 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     static final String BUILD_ARG = "build";
     static final String SOURCE_TYPE_FIELD_ARG = "source_type_field";
     static final String AGGREGATED_ARG = "aggregated";
-    static final String PROMOTE_SURVEY_ARG = "promote_survey";
-    // The answers to where the survey doc goes when the build is promoted.
-    static final String PROMOTE_BESIDE = "Promote it beside the feed";
-    static final String KEEP_IN_BUILD = "Keep it in the build only";
-    static final String DECIDE_LATER = "Decide when the build is promoted";
-    /// The choices kept for the survey doc's promotion.
-    static final String BESIDE = "beside";
-    static final String KEEP = "keep";
-    static final String LATER = "later";
 
     /// The most characters read of a part, asked for.
     static final int MAX_CHARS = 5_000_000;
@@ -326,9 +316,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                         .addStringProperty(BUILD_ARG, "Keep the survey record in this build: a Documentation doc "
                                                       + "'<feed> - Survey' with the kinds of event, examples and "
                                                       + "survey state. An existing record is continued: its "
-                                                      + "streams are skipped and its shapes are known; with none "
-                                                      + "in the build, one promoted beside the feed is carried on "
-                                                      + "from (as a working copy).")
+                                                      + "streams are skipped and its shapes are known. It stays "
+                                                      + "in the build at promotion, so a later build surveys the "
+                                                      + "feed afresh.")
                         .addStringProperty(SOURCE_TYPE_FIELD_ARG, "Only what the user said: the field that says "
                                                                   + "which source each record of an aggregated "
                                                                   + "feed came from (e.g. 'sourcetype', "
@@ -338,10 +328,6 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                         .addBooleanProperty(AGGREGATED_ARG, "True when the user says the feed aggregates several "
                                                             + "sources: the survey looks harder for the field "
                                                             + "that tells them apart, and asks the user.")
-                        .addStringProperty(PROMOTE_SURVEY_ARG, "Only when the client shows no forms: what the user "
-                                                               + "said when asked where the survey doc goes at "
-                                                               + "promotion (beside the feed, keep it in the build, "
-                                                               + "or decide later).")
                         .build())
                 .build();
     }
@@ -389,8 +375,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 stringArg(call, KIND_FIELD_ARG),
                 stringArg(call, ACCEPT_ARG),
                 stringArg(call, SOURCE_TYPE_FIELD_ARG),
-                "true".equalsIgnoreCase(NullSafe.string(stringArg(call, AGGREGATED_ARG)).strip()),
-                stringArg(call, PROMOTE_SURVEY_ARG));
+                "true".equalsIgnoreCase(NullSafe.string(stringArg(call, AGGREGATED_ARG)).strip()));
     }
 
     // The streams named, by id.
@@ -496,18 +481,6 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         }
     }
 
-    // Whether a feed is outside the build (an existing feed, or another build's): false for the build's own feed (a
-    // new source's samples), or when it can't be told.
-    private boolean outsideBuild(final String feed, final String build) {
-        try {
-            final List<DocRef> refs = feedNames.feedsNamed(feed);
-            return !refs.isEmpty() && refs.stream().noneMatch(ref -> guard.buildOf(ref).filter(build::equals)
-                    .isPresent());
-        } catch (final RuntimeException e) {
-            return false;
-        }
-    }
-
     // Whether a feed is one a build made (its uploaded samples, a test feed); not for an existing feed. True when
     // it can't be told.
     private boolean inABuild(final String feed) {
@@ -528,19 +501,11 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final SurveyRecord record = build == null
                 ? null
                 : surveyDocuments.load(build, feed).orElse(null);
-        // With none in the build, a survey promoted beside the feed is carried on from: its streams are skipped and
-        // its shapes known, and the build's survey doc is made as its working copy.
-        final SurveyRecord promoted = build == null || record != null
+        // Only the build's own survey doc is carried on from: a survey doc left beside the feed by an earlier
+        // promotion (before survey docs stayed in their build, 2026-11-13) is ignored, and the survey starts afresh.
+        final Map<String, Object> read = record == null
                 ? null
-                : besideFeed.promotedSurvey(feed).orElse(null);
-        final Map<String, Object> read = record != null
-                ? SurveyDoc.readState(record.text())
-                : promoted == null
-                        ? null
-                        : SurveyDoc.readState(promoted.text());
-        final String copyOf = promoted == null
-                ? null
-                : promoted.uuid();
+                : SurveyDoc.readState(record.text());
         // Streams deleted since they were surveyed: their shapes are found again where the data is now.
         final Set<Long> gone = read == null
                 ? Set.of()
@@ -566,7 +531,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 ? Set.of()
                 : droppedShapes(read, state);
         if (request.acceptAsIs() != null) {
-            return acceptAsIs(call, context, request, feed, record, state, fewer, copyOf);
+            return acceptAsIs(call, context, request, feed, record, state, fewer);
         }
         final Set<Long> skip = new TreeSet<>(request.skipStreamIds());
         final Set<String> known = new LinkedHashSet<>(request.knownSignatures());
@@ -630,7 +595,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 : FEED_PARTS), orDefault(request.maxRecords(), whole
                 ? FeedSampling.SAMPLE_RECORDS
                 : FeedSampling.FEED_RECORDS), whole);
-        final SurveyRecords kept = new SurveyRecords(build, record, state, request.examples(), fewer, copyOf);
+        final SurveyRecords kept = new SurveyRecords(build, record, state, request.examples(), fewer);
         if (streams.isEmpty() && !skip.isEmpty()) {
             final Map<String, Object> result = new LinkedHashMap<>();
             result.put("feed", feed);
@@ -658,7 +623,6 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                    + "asked how far).");
             }
             noteGone(result, gone, dropped);
-            noteCarriedOn(result, promoted);
             return keep(context, kept, result, Map.of());
         }
         if (streams.isEmpty()) {
@@ -775,20 +739,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         } else if (build == null) {
             noteAggregated(result, feed, heads);
         }
-        noteCarriedOn(result, promoted);
-        if (build != null) {
-            askPromotion(call, context, request, feed, state, result);
-        }
         return withSourcesSaid(keep(context, kept, result, shapes.shapes()), build, feed);
-    }
-
-    // A survey carried on from the doc promoted beside the feed says so, whether or not anything was left to read.
-    private static void noteCarriedOn(final Map<String, Object> result, final SurveyRecord promoted) {
-        if (promoted != null) {
-            result.put("carried_on_from", "the survey doc promoted beside the feed (" + promoted.uuid() + "): its "
-                                          + "streams were skipped and its kinds of event known; the build's survey "
-                                          + "doc is its working copy, written back over it at promotion");
-        }
     }
 
     // The source type field, as the user chose it: given now (source_type_field), kept by the survey, or found in
@@ -908,7 +859,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         return "Feed '" + feed + "' looks like it aggregates several sources: the records of each value of this "
                + "field differ in their fields or messages, and each holds kinds of event of its own:\n"
                + String.join("\n", lines) + "\nConfirmed, the survey profiles each source type, and the build's "
-               + "source types step lists them for you to choose which to build now.";
+               + "source types step lists them for you to choose the source types of this build's group.";
     }
 
     // With no forms: the agent asks the user which field, in the chat.
@@ -990,71 +941,6 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             }
         }
         return sizes;
-    }
-
-    // Once the build's survey is covered (or the user goes ahead with it as it is): where its doc goes when the
-    // build is promoted, put to the user once, in a form (decided 2026-11-12). Only for a feed outside the build: a
-    // new source's sample survey stays with its build. Kept in the survey state; deferred, it is asked again at
-    // promote_build.
-    private void askPromotion(final ToolCall call,
-                              final ToolCallContext context,
-                              final Request request,
-                              final String feed,
-                              final Map<String, Object> state,
-                              final Map<String, Object> result) {
-        if (request.promoteSurvey() != null) {
-            result.put(SurveyDoc.PROMOTION, promotionChosen(request.promoteSurvey()));
-            return;
-        }
-        final boolean asked = state != null && state.get(SurveyDoc.PROMOTION) != null;
-        if (!Boolean.TRUE.equals(result.get("saturated")) || asked || !outsideBuild(feed, request.build())) {
-            return;
-        }
-        final String intro = "The survey of feed '" + feed + "' is covered. Its doc, '" + SurveyDoc.docName(feed)
-                             + "' (with the source type registry, '" + SourceTypeRegistry.docName(feed)
-                             + "', where the feed has one), can go beside the feed when the build is promoted, so "
-                             + "a later build or survey of the feed carries on from it, whether or not anything is "
-                             + "onboarded. Beside the feed, the survey's example records (the feed's own data) are "
-                             + "as readable as the feed's folder lets them be. Kept in the build only, they go with "
-                             + "the build.";
-        final Optional<String> answer = consent.answer(call, context, NAME, intro,
-                "Where does the survey doc go when the build is promoted?",
-                List.of(PROMOTE_BESIDE, KEEP_IN_BUILD, DECIDE_LATER));
-        if (answer.isEmpty()) {
-            result.put("promotion_question", intro + " Ask the user in the chat whether to promote it beside the "
-                                             + "feed, keep it in the build only, or decide when the build is "
-                                             + "promoted, then call " + NAME + " build=" + request.build()
-                                             + " with " + PROMOTE_SURVEY_ARG + " as they said.");
-            return;
-        }
-        result.put(SurveyDoc.PROMOTION, promotionChosen(answer.get()));
-    }
-
-    /// @param said The user's answer: a button, or their own words.
-    /// @return The choice it makes: [#BESIDE], [#KEEP] or [#LATER].
-    static String promotionChoice(final String said) {
-        final String text = NullSafe.string(said).strip().toLowerCase(Locale.ROOT);
-        if (text.contains("keep")) {
-            return KEEP;
-        }
-        if (text.contains("later") || text.contains("decide") || text.contains("defer")) {
-            return LATER;
-        }
-        if (text.contains("beside") || text.contains("promote") || text.startsWith("yes")) {
-            return BESIDE;
-        }
-        return LATER;
-    }
-
-    private static Map<String, Object> promotionChosen(final String said) {
-        final Map<String, Object> out = new LinkedHashMap<>();
-        out.put("choice", promotionChoice(said));
-        out.put("by", "user");
-        out.put("at", SurveyDoc.at(Instant.now()));
-        if (!Set.of(PROMOTE_BESIDE, KEEP_IN_BUILD, DECIDE_LATER).contains(said.strip())) {
-            out.put("user_says", said.strip());
-        }
-        return out;
     }
 
     // The user's kind fields as the records spell them; refused when the records have none of them.
@@ -1177,8 +1063,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                            final String feed,
                                            final SurveyRecord record,
                                            final Map<String, Object> state,
-                                           final Integer fewer,
-                                           final String copyOf) {
+                                           final Integer fewer) {
         if (request.build() == null || state == null) {
             throw new ToolRefusal("Nothing surveyed yet" + (request.build() == null
                     ? ": give build"
@@ -1228,8 +1113,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         result.put("locations", List.of());
         result.put("hint", "The user went ahead with the survey as it is: go on with the plan (build_status). "
                            + "review_coverage after processing finds any kind of event the survey didn't see.");
-        askPromotion(call, context, request, feed, state, result);
-        return keep(context, new SurveyRecords(request.build(), record, state, request.examples(), fewer, copyOf),
+        return keep(context, new SurveyRecords(request.build(), record, state, request.examples(), fewer),
                 result, Map.of());
     }
 
@@ -2110,7 +1994,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             // The user's agreement to fewer streams a call, kept with the build's survey.
             result.put(SurveyDoc.FEWER_STREAMS, kept.fewer());
         }
-        return FeedSampling.keep(surveyDocuments.records(context.session(), kept.copyOf()), kept.build(), kept.record(),
+        return FeedSampling.keep(surveyDocuments.records(context.session()), kept.build(), kept.record(),
                 kept.state(), result, shapes, kept.examples());
     }
 
@@ -2288,7 +2172,6 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     /// @param acceptAsIs      The user's going ahead with the survey as it is, or null.
     /// @param sourceTypeField The source type field the user gave (or `none`), or null.
     /// @param aggregated      True when the user said the feed aggregates sources.
-    /// @param promoteSurvey   Where the user said the survey doc goes at promotion, or null.
     private record Request(String feed,
                            String streamType,
                            List<Long> streamIds,
@@ -2304,8 +2187,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                            String kindField,
                            String acceptAsIs,
                            String sourceTypeField,
-                           boolean aggregated,
-                           String promoteSurvey) {
+                           boolean aggregated) {
 
     }
 
@@ -2327,13 +2209,11 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     /// @param state    The state read from it, or null.
     /// @param examples The most examples kept a shape.
     /// @param fewer    The streams a call the user agreed to, or null.
-    /// @param copyOf   The survey doc promoted beside the feed that the build's is made a working copy of, or null.
     private record SurveyRecords(String build,
                                  SurveyRecord record,
                                  Map<String, Object> state,
                                  int examples,
-                                 Integer fewer,
-                                 String copyOf) {
+                                 Integer fewer) {
 
     }
 

@@ -18,7 +18,6 @@
 package stroom.mcp.impl.e2e;
 
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
-import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
@@ -46,14 +45,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// Aggregated feeds through the REAL tools on a real Stroom: the survey finds the source type field and the user
 /// confirms it, the plan's source types step profiles each source type and writes the feed's registry, the user
 /// choosing the build's scope; an assessment writes the registry with no scope; a field of file paths gets patterns,
-/// the narrower first. A build's scope is all its survey, classification and draft see; the survey doc and registry go
-/// beside the feed at promotion, and a later build carries on from them through working copies written back at its
-/// own promotion. The samples are synthetic test resources under `aggregated/` (PEGA logs in a JSON wrapper,
-/// Azure's audit log, collector paths), made by its aggregated-feeds-generator.py.
+/// the narrower first. A build's scope is all its survey, classification and draft see; the registry goes beside the
+/// feed at promotion and the survey doc stays in the build, and a later build surveys the feed afresh and carries on
+/// from the registry through a working copy written back at its own promotion. The samples are synthetic test
+/// resources under `aggregated/` (PEGA logs in a JSON wrapper, Azure's audit log, collector paths), made by its
+/// aggregated-feeds-generator.py.
 @SuppressWarnings("unchecked")
 class TestE2eSourceTypes extends AbstractE2eTest {
 
-    private static final String SCOPE_FORM = "source types does this build cover";
+    private static final String SCOPE_FORM = TestE2eSourceTypeGroups.SCOPE_FORM;
     // The PEGA slice's source types that the scoped builds leave out, as their records name them.
     private static final List<String> OUT_OF_SCOPE = List.of("\"PegaDB\"", "\"PegaRULES\"",
             "\"PegaClusterHeartbeat\"", "\"PegaIntegration\"");
@@ -71,8 +71,8 @@ class TestE2eSourceTypes extends AbstractE2eTest {
         upload(feed, lines("pega/pega-1.json", 1500));
         upload(feed, lines("pega/pega-2.json", 1500));
         json("start_build", args("build", build, "feeds", List.of(feed)));
-        // The user builds the commonest source type now, and parks the rest.
-        client.answeringWith(scopeOfFirst("noisy, for later"));
+        // The user puts the commonest source type in the build's group, names it, and parks the rest.
+        client.answeringWith(scopeOfFirst("PEGA databases"));
 
         final Map<String, Object> surveyed = json("survey_feed", args("feed", feed, "build", build));
         final Map<String, Object> sources = map(surveyed, "source_types");
@@ -81,9 +81,9 @@ class TestE2eSourceTypes extends AbstractE2eTest {
                 "PegaClusterHeartbeat", "PegaIntegration", "PegaSecurityEvent", "PegaALERT");
         assertThat(formMessages()).anySatisfy(message -> assertThat(message).contains("aggregates several sources",
                 "sourcetype ("));
-        // Covered, the user is asked where the survey doc goes at promotion, its example records' reach said.
-        assertThat(formMessages()).anySatisfy(message -> assertThat(message).contains("is covered",
-                "as readable as the feed's folder lets them be"));
+        // Covered, nothing asks where the survey doc goes: it stays in the build (decided 2026-11-13).
+        assertThat(formMessages()).noneMatch(message -> message.contains("survey doc")
+                                                  || message.contains("survey's findings"));
 
         final Map<String, Object> status = json("build_status", args("build", build));
         assertThat(nextStep(status)).isEqualTo("source_types");
@@ -93,8 +93,8 @@ class TestE2eSourceTypes extends AbstractE2eTest {
         assertThat(shown).containsEntry("status", "needs_review").containsEntry("field", "sourcetype");
         assertThat((String) shown.get("table")).contains("PegaSecurityEvent", "security audit");
         final Map<String, Object> written = json("record_source_types", args("build", build, "feed", feed,
-                "reviewed", shown.get("review_id")));
-        assertThat(formMessages()).anySatisfy(message -> assertThat(message).contains(SCOPE_FORM));
+                "reviewed", shown.get("review_id"), "group", "PEGA db"));
+        assertThat(formMessages()).anySatisfy(message -> assertThat(message).contains(SCOPE_FORM, "one group"));
         final Map<String, Map<String, Object>> rows = byName(list(written, "rows"));
         assertThat(rows).containsOnlyKeys("PegaDB", "PegaRULES", "PegaClusterHeartbeat", "PegaIntegration",
                 "PegaSecurityEvent", "PegaALERT");
@@ -104,12 +104,14 @@ class TestE2eSourceTypes extends AbstractE2eTest {
         assertThat(rows.get("PegaSecurityEvent")).containsEntry("suggested_category", "security audit");
         assertThat(rows.get("PegaClusterHeartbeat")).containsEntry("suggested_category", "diagnostic noise");
         assertThat(rows.get("PegaDB")).containsEntry("suggested_category", "operational");
-        // Every source type parked until a source type group translates it: the scope's say so, the rest carry the
-        // user's reason.
+        // Every source type parked until a source type group translates it: the scope's say so, naming the group
+        // the user named; the rest are left for a later build.
         assertThat(rows.values()).allSatisfy(row -> assertThat(row).containsEntry("status", "parked"));
-        assertThat(String.valueOf(rows.get("PegaDB").get("reason"))).contains("in the scope of build");
-        assertThat(rows.get("PegaRULES")).containsEntry("reason", "noisy, for later");
+        assertThat(String.valueOf(rows.get("PegaDB").get("reason"))).contains("in the scope of build",
+                "'PEGA databases'");
+        assertThat(rows.get("PegaRULES")).containsEntry("reason", "left for a later build");
         assertThat(strings(written, "scope")).containsExactly("PegaDB");
+        assertThat(written).containsEntry("group", "PEGA databases");
         assertThat(map(written, "registry")).containsEntry("name", feed + " source types");
 
         final Map<String, Object> after = json("build_status", args("build", build));
@@ -170,7 +172,7 @@ class TestE2eSourceTypes extends AbstractE2eTest {
                 "/var/log/mail/audit/mailaudit.log"));
         final int forms = client.forms().size();
         final Map<String, Object> written = json("record_source_types", args("build", build, "feed", feed,
-                "reviewed", shown.get("review_id"), "rows", shown.get("rows")));
+                "reviewed", shown.get("review_id"), "rows", shown.get("rows"), "group", "Collected logs"));
         // Given back, the rows the user confirmed aren't asked about again: only the scope is.
         assertThat(client.forms().subList(forms, client.forms().size())).singleElement()
                 .satisfies(form -> assertThat(form.message()).contains(SCOPE_FORM));
@@ -195,12 +197,14 @@ class TestE2eSourceTypes extends AbstractE2eTest {
         final long first = upload(feed, firstText);
         final long second = upload(feed, secondText);
         json("start_build", args("build", build, "feeds", List.of(feed)));
-        client.answeringWith(scopeOf(scope, "operational, for later"));
+        client.answeringWith(TestE2eSourceTypeGroups.scopeOf(scope, null));
         json("survey_feed", args("feed", feed, "build", build));
         final Map<String, Object> shown = json("record_source_types", args("build", build, "feed", feed));
         final Map<String, Object> written = json("record_source_types", args("build", build, "feed", feed,
-                "reviewed", shown.get("review_id")));
+                "reviewed", shown.get("review_id"), "group", "PEGA security and alerts"));
+        // One group of two source types, its name the suggestion the user kept.
         assertThat(strings(written, "scope")).containsExactlyInAnyOrderElementsOf(scope);
+        assertThat(written).containsEntry("group", "PEGA security and alerts");
 
         // A stream that arrives once the scope is chosen is surveyed through it: only the scope's records are read
         // and make kinds; the others are counted by source type, and the scope's share of the feed is said.
@@ -243,7 +247,10 @@ class TestE2eSourceTypes extends AbstractE2eTest {
     }
 
     @Test
-    void theSurveyAndRegistryGoBesideTheFeedAndALaterBuildCarriesOnFromThem() {
+    void theRegistryGoesBesideTheFeedTheSurveyDocStaysInTheBuildAndALaterBuildSurveysAfresh() {
+        // Decided 2026-11-13: the survey doc always stays in the build at promotion, nobody asked; the registry
+        // always goes beside the feed (seen in review: kept in the build, it left the promoted build open on the
+        // feed for ever, and no later build found it).
         final String feed = "E2E-PEGA-PROMO";
         final String folder = "E2E Feeds/PegaPromo";
         createFeed("pega-promo-src", feed);
@@ -252,70 +259,45 @@ class TestE2eSourceTypes extends AbstractE2eTest {
         promote("pega-promo-src", Map.of("Feed", folder));
         assertThat(documentsIn("System/" + folder, "Feed", feed)).as("the feed, outside any build").hasSize(1);
 
-        // An assessment: its survey doc and registry go beside the feed when it is promoted.
+        // An assessment: its registry goes beside the feed when it is promoted; its survey doc stays in the build.
         json("start_onboarding", args("source_name", "PEGA", "build", "pega-assess", "kind", "assessment",
                 "feed", feed));
-        json("survey_feed", args("feed", feed, "build", "pega-assess"));
+        final Map<String, Object> assessed = json("survey_feed", args("feed", feed, "build", "pega-assess"));
+        assertThat(assessed).doesNotContainKeys("promotion", "promotion_question", "carried_on_from");
+        assertThat(formMessages()).noneMatch(message -> message.contains("survey doc")
+                                                  || message.contains("survey's findings"));
         json("record_source_types", args("build", "pega-assess", "feed", feed));
         promote("pega-assess", Map.of());
-        final String surveyUuid = besideTheFeed(folder, feed + " - Survey");
         final String registryUuid = besideTheFeed(folder, feed + " source types");
+        assertThat(documentsIn("System/" + folder, "Documentation", feed + " - Survey")).isEmpty();
 
-        // A later build carries on from them: the survey's streams aren't read again, and its survey doc and
-        // registry are working copies of those beside the feed.
+        // A later build surveys the feed afresh (the streams read again), and its registry is a working copy of
+        // the one beside the feed. The assessment build holds only the survey doc its promotion kept: it is not
+        // open on the feed.
         final String build = "pega-later";
         json("start_build", args("build", build, "feeds", List.of(feed)));
-        client.answeringWith(scopeOf(List.of("PegaSecurityEvent"), "for a later build"));
-        final Map<String, Object> carried = json("survey_feed", args("feed", feed, "build", build));
-        dump("survey_feed carried on", carried);
-        assertThat(String.valueOf(carried.get("carried_on_from"))).contains(surveyUuid);
+        client.answeringWith(TestE2eSourceTypeGroups.scopeOf(List.of("PegaSecurityEvent"), null));
+        final Map<String, Object> afresh = json("survey_feed", args("feed", feed, "build", build));
+        dump("survey_feed afresh", afresh);
+        assertThat(afresh).doesNotContainKey("carried_on_from");
+        assertThat(ids(afresh, "streams_read")).as("the streams the assessment read, read again").isNotEmpty();
         final Map<String, Object> shown = json("record_source_types", args("build", build, "feed", feed));
         final Map<String, Object> written = json("record_source_types", args("build", build, "feed", feed,
-                "reviewed", shown.get("review_id")));
+                "reviewed", shown.get("review_id"), "group", "PEGA security"));
         assertThat(strings(written, "scope")).containsExactly("PegaSecurityEvent");
         assertThat(map(written, "registry").get("uuid")).isNotEqualTo(registryUuid);
         // Data the feed receives since: upload_sample takes no feed outside a build, so as Stroom's receiver
-        // stores it.
+        // stores it. The build's own survey doc is carried on from.
         final long later = send(feed, slice("pega/pega-2.json", 1000, 1000));
         final Map<String, Object> surveyed = json("survey_feed", args("feed", feed, "build", build));
         assertThat(ids(surveyed, "streams_read")).containsExactly(later);
 
-        // Promoted, the working copies are written back over those beside the feed.
+        // Promoted, the registry's working copy is written back over the one beside the feed; the survey doc
+        // stays in the build again.
         promote(build, Map.of());
-        assertThat(besideTheFeed(folder, feed + " - Survey")).isEqualTo(surveyUuid);
         assertThat(besideTheFeed(folder, feed + " source types")).isEqualTo(registryUuid);
-        final Map<String, Object> survey = SurveyDoc.readState(documentation(surveyUuid));
-        assertThat(ids(survey, "streams_read")).contains(later);
-        assertThat(map(map(survey, "source_types"), "scope")).containsEntry("build", build);
-        assertThat(map(SourceTypeRegistry.read(documentation(registryUuid)), "scope")).containsEntry("build", build);
-    }
-
-    @Test
-    void theRegistryGoesBesideTheFeedEvenWhenTheSurveyDocIsKeptInTheBuild() {
-        // Seen in review: kept with the survey doc, the registry left the promoted build open on the feed for ever,
-        // and no later build found it.
-        final String feed = "E2E-PEGA-KEPT";
-        final String folder = "E2E Feeds/PegaKept";
-        createFeed("pega-kept-src", feed);
-        upload(feed, lines("pega/pega-1.json", 1000));
-        promote("pega-kept-src", Map.of("Feed", folder));
-        client.answeringWith(form -> form.message().contains("can go beside the feed when the build is promoted")
-                ? new ElicitResult(ElicitResult.Action.ACCEPT, Map.of("answer", "Keep it in the build only"), null)
-                : McpTestClient.agree(form));
-        json("start_onboarding", args("source_name", "PEGA", "build", "pega-kept-assess", "kind", "assessment",
-                "feed", feed));
-        json("survey_feed", args("feed", feed, "build", "pega-kept-assess"));
-        json("record_source_types", args("build", "pega-kept-assess", "feed", feed));
-        client.answeringWith(McpTestClient::agree);
-
-        promote("pega-kept-assess", Map.of());
-
-        besideTheFeed(folder, feed + " source types");
         assertThat(documentsIn("System/" + folder, "Documentation", feed + " - Survey")).isEmpty();
-        // The build holds only the survey doc its promotion kept: it is not open on the feed.
-        final Map<String, Object> started = json("start_build", args("build", "pega-kept-later", "feeds",
-                List.of(feed)));
-        assertThat(started).containsEntry("build", "pega-kept-later");
+        assertThat(map(SourceTypeRegistry.read(documentation(registryUuid)), "scope")).containsEntry("build", build);
     }
 
     // The text stored in the feed as Stroom's receiver stores data posted to its datafeed.
@@ -371,29 +353,9 @@ class TestE2eSourceTypes extends AbstractE2eTest {
                 .count();
     }
 
-    // A user who chooses these source types for the build's scope, giving their reason for the rest, and agrees to
+    // A user who puts only the first source type offered in the build's group, naming the group so, and agrees to
     // everything else.
-    private static Function<ElicitFormRequest, ElicitResult> scopeOf(final List<String> chosen,
-                                                                     final String reason) {
-        return form -> {
-            final ElicitResult agreed = McpTestClient.agree(form);
-            if (!form.message().contains(SCOPE_FORM)) {
-                return agreed;
-            }
-            final Map<String, Object> content = new LinkedHashMap<>(agreed.content());
-            final Map<?, ?> properties = (Map<?, ?>) form.requestedSchema().get("properties");
-            content.replaceAll((key, value) -> value instanceof Boolean
-                    ? chosen.stream().anyMatch(name -> ("Build " + name + " now").equals(
-                    ((Map<?, ?>) properties.get(key)).get("title")))
-                    : value);
-            content.put("text", reason);
-            return new ElicitResult(ElicitResult.Action.ACCEPT, content, null);
-        };
-    }
-
-    // A user who chooses only the first source type offered for the build's scope, giving their reason for the
-    // rest, and agrees to everything else.
-    private static Function<ElicitFormRequest, ElicitResult> scopeOfFirst(final String reason) {
+    private static Function<ElicitFormRequest, ElicitResult> scopeOfFirst(final String group) {
         return form -> {
             final ElicitResult agreed = McpTestClient.agree(form);
             if (!form.message().contains(SCOPE_FORM)) {
@@ -403,7 +365,7 @@ class TestE2eSourceTypes extends AbstractE2eTest {
             content.replaceAll((key, value) -> value instanceof Boolean
                     ? "i1".equals(key)
                     : value);
-            content.put("text", reason);
+            content.put("text", group);
             return new ElicitResult(ElicitResult.Action.ACCEPT, content, null);
         };
     }

@@ -39,16 +39,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// An aggregated feed's pipelines and promotion through the REAL tools on a real Stroom, on the synthetic PEGA
 /// sample under `aggregated/`, each source type group the XSLT of a pipeline of its own:
 ///
-/// * a group whose Events go to an output feed of its own and another whose Events go into the feed's: each
-///   pipeline made by create_pipeline group= (named for the group, its XSLT the group's, the output feed set on its
-///   stream appender once create_feed group= has made it, one pipeline a group); processing writes each group's
-///   Events to its feed, the other source types' records passed over and counted, never warned of; a second build
-///   on the feed is refused while this one is open;
-/// * a later build changing a promoted group (asked whether the change goes to its pipeline or a new version of it,
-///   the user choosing the pipeline): it works on a working copy of the group's XSLT, run by a working copy of its
-///   pipeline, and adds a group of its own; promotion writes the copy back importing the original common module (the
-///   chain pointing at the originals) and puts the new group and its pipeline beside the feed;
-/// * a third build making a new version of the group's pipeline: a new version of its XSLT, copy_pipeline running
+/// * a group whose Events go into the feed's, and, in a second build (one source type group a build), another whose
+///   Events go to an output feed of its own: each pipeline made by create_pipeline group= (named for the group, its
+///   XSLT the group's, the output feed set on its stream appender once create_feed group= has made it, one pipeline
+///   a group); processing writes each group's Events to its feed, the other source types' records passed over and
+///   counted, never warned of; a second build on the feed is refused while one is open; a second group in a build
+///   is refused;
+/// * a later build changing a promoted group alone (its scope naming the group, no source type added; asked whether
+///   the change goes to its pipeline or a new version of it, the user choosing the pipeline): it works on a working
+///   copy of the group's XSLT, run by a working copy of its pipeline; promotion writes the copy back importing the
+///   original common module (the chain pointing at the originals); the next build's group and its pipeline go beside
+///   the feed;
+/// * a last build making a new version of the group's pipeline: a new version of its XSLT, copy_pipeline running
 ///   it, the registry's rows of the group moved to the new version, production left as it was.
 @SuppressWarnings("unchecked")
 class TestE2eSourceTypePipelines extends AbstractE2eTest {
@@ -67,90 +69,62 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
     @Test
     void eachGroupHasAPipelineOfItsOwnWritingItsEventsToItsFeed() {
         final String feed = "E2E-PEGA-OWN";
-        final String build = "pega-own";
+        final String folder = "E2E Feeds/PegaOwn";
         createFeed("pega-own-src", feed);
         final String text = TestE2eSourceTypeGroups.lines("pega/pega-1.json", 1500);
         final long stream = upload(feed, text);
-        json("start_build", args("build", build, "feeds", List.of(feed)));
-        // The integration group's Events go to an output feed of its own; the security group's into the feed's.
-        client.answeringWith(answering(List.of("PegaSecurityEvent", "PegaIntegration"), INTEGRATION, false));
-        json("survey_feed", args("feed", feed, "build", build));
-        final Map<String, Object> shown = json("record_source_types", args("build", build, "feed", feed,
-                "system_name", "PEGA", "environment", "Prod"));
-        json("record_source_types", args("build", build, "feed", feed, "system_name", "PEGA", "environment",
-                "Prod", "reviewed", shown.get("review_id")));
-
-        // One open build per aggregated feed: a second is refused, naming this one.
-        assertThat(refusal("start_build", args("build", "pega-own-2", "feeds", List.of(feed))))
-                .contains("build '" + build + "' is open on it");
-
-        final int formsBefore = client.forms().size();
-        final Map<String, Object> security = group(build, feed, SECURITY, "PegaSecurityEvent",
-                TestE2eSourceTypeGroups.securityMapping(), stream);
-        final Map<String, Object> integration = group(build, feed, INTEGRATION, "PegaIntegration",
-                TestE2eSourceTypeGroups.integrationMapping(), stream);
-        // Each new group asked where its Events go, never which pipeline: every group has its own.
-        final List<ElicitFormRequest> placements = formsSince(formsBefore).stream()
-                .filter(form -> form.message().contains("is new. It gets a pipeline of its own"))
-                .toList();
-        assertThat(placements).hasSize(2);
-        assertThat(placements).allSatisfy(form -> assertThat(form.message()).doesNotContain("**", "`", "|"));
-        final String securityName = feed + " " + SECURITY;
-        final String integrationName = feed + " " + INTEGRATION;
-        assertThat(map(security, "pipeline")).containsEntry("name", securityName).doesNotContainKey("own");
-        assertThat(security).doesNotContainKey("output_feed");
-        assertThat(map(integration, "pipeline")).containsEntry("name", integrationName);
-        assertThat(integration).containsEntry("output_feed", "");
-        assertThat(String.valueOf(integration.get("group_next"))).contains("create_feed", "create_pipeline");
-        final String securityUuid = uuidOf(map(security, "xslt"));
-        final String integrationUuid = uuidOf(map(integration, "xslt"));
-
-        // Its pipeline can't be made before its output feed; the build makes that in a form.
+        promote("pega-own-src", Map.of("Feed", folder));
         final String template = templateUuid("translation", "Event Data (JSON)");
-        assertThat(refusal("create_pipeline", args("build", build, "group", INTEGRATION, "template_uuid",
-                template))).contains("output feed of its own, not made yet", "create_feed");
-        final String outputFeed = feed + "-INTEGRATION-EVENTS";
-        final Map<String, Object> made = agreed("create_feed", args("build", build, "name", outputFeed,
-                "stream_type", "Events", "group", INTEGRATION));
-        assertThat(strings(made, "source_types")).containsExactly("PegaIntegration");
-
-        // Each group's pipeline, named for it by default, its XSLT the group's.
-        final Map<String, Object> securityMade = agreed("create_pipeline", args("build", build, "group", SECURITY,
-                "template_uuid", template));
-        assertThat(securityMade).containsEntry("name", securityName).containsEntry("group", SECURITY);
-        assertThat(strings(securityMade, "source_types")).containsExactly("PegaSecurityEvent");
-        final String main = uuidOf(securityMade);
-        final Map<String, Object> ownMade = agreed("create_pipeline", args("build", build, "group", INTEGRATION,
-                "template_uuid", template));
-        dump("create_pipeline own", ownMade);
-        assertThat(strings(ownMade, "sets")).contains("translationFilter.xslt");
-        assertThat(String.valueOf(ownMade.get("filled_from_build"))).contains(".feed = " + outputFeed);
-        final String own = uuidOf(ownMade);
-        // One pipeline a group.
-        assertThat(refusal("create_pipeline", args("build", build, "name", feed + "-Again", "group", SECURITY,
-                "template_uuid", template))).contains("a group has one pipeline");
-        final Map<String, Map<String, Object>> rows = rows(uuidOf(map(integration, "registry")));
-        assertThat((Map<String, Object>) rows.get("PegaIntegration").get("pipeline"))
-                .containsEntry("name", integrationName).containsEntry("uuid", own);
-        assertThat(rows.get("PegaIntegration")).containsEntry("output_feed", outputFeed)
-                .containsEntry("group_xslt", Map.of("uuid", integrationUuid, "name", INTEGRATION));
-        assertThat((Map<String, Object>) rows.get("PegaSecurityEvent").get("pipeline"))
-                .containsEntry("name", securityName).containsEntry("uuid", main);
-        assertThat(rows.get("PegaSecurityEvent")).doesNotContainKey("output_feed");
-        assertThat(map(rows.get("PegaSecurityEvent"), "group_xslt")).containsEntry("uuid", securityUuid);
-
-        for (final String pipeline : List.of(main, own)) {
-            final Map<String, Object> stepped = stepSample(pipeline, List.of(stream));
-            dump("step_sample", stepped);
-            assertThat(stepped).as("stepped clean: %s", stepped).containsEntry("verdict", "clean")
-                    .doesNotContainKey("record");
-        }
         final List<String> records = text.lines().toList();
         final long total = records.size();
         final long securityRecords = records.stream().filter(line -> line.contains(
                 "\"sourcetype\": \"PegaSecurityEvent\"")).count();
         final long integrationRecords = records.stream().filter(line -> line.contains(
                 "\"sourcetype\": \"PegaIntegration\"")).count();
+
+        // The first build: the security group, its Events into the feed's.
+        final String build = "pega-own";
+        json("start_build", args("build", build, "feeds", List.of(feed)));
+        client.answeringWith(answering(List.of("PegaSecurityEvent"), INTEGRATION, false));
+        json("survey_feed", args("feed", feed, "build", build));
+        recordSourceTypes(build, feed, SECURITY);
+
+        // One open build per aggregated feed: a second is refused, naming this one.
+        assertThat(refusal("start_build", args("build", "pega-own-x", "feeds", List.of(feed))))
+                .contains("build '" + build + "' is open on it");
+
+        final int formsBefore = client.forms().size();
+        final Map<String, Object> security = group(build, feed, SECURITY, "PegaSecurityEvent",
+                TestE2eSourceTypeGroups.securityMapping(), stream);
+        // One source type group a build: another is refused, for a later build.
+        assertThat(refusal("build_translation_xslt", args("build", build, "feeds", List.of(feed), "group",
+                INTEGRATION, "source_types", List.of("PegaIntegration"), "schema_version", VERSION, "stream_ids",
+                List.of(stream), "mapping", TestE2eSourceTypeGroups.integrationMapping())))
+                .contains("one source type group a build", "'" + SECURITY + "'", "later build");
+        // The new group asked where its Events go, never which pipeline: every group has its own.
+        final List<ElicitFormRequest> placements = formsSince(formsBefore).stream()
+                .filter(form -> form.message().contains("is new. It gets a pipeline of its own"))
+                .toList();
+        assertThat(placements).hasSize(1);
+        assertThat(placements).allSatisfy(form -> assertThat(form.message()).doesNotContain("**", "`", "|"));
+        final String securityName = feed + " " + SECURITY;
+        final String integrationName = feed + " " + INTEGRATION;
+        assertThat(map(security, "pipeline")).containsEntry("name", securityName).doesNotContainKey("own");
+        assertThat(security).doesNotContainKey("output_feed");
+        final String securityUuid = uuidOf(map(security, "xslt"));
+
+        // Its pipeline, named for it by default, its XSLT the group's.
+        final Map<String, Object> securityMade = agreed("create_pipeline", args("build", build, "group", SECURITY,
+                "template_uuid", template));
+        assertThat(securityMade).containsEntry("name", securityName).containsEntry("group", SECURITY);
+        assertThat(strings(securityMade, "source_types")).containsExactly("PegaSecurityEvent");
+        final String main = uuidOf(securityMade);
+        // One pipeline a group.
+        assertThat(refusal("create_pipeline", args("build", build, "name", feed + "-Again", "group", SECURITY,
+                "template_uuid", template))).contains("a group has one pipeline");
+        final Map<String, Object> mainStepped = stepSample(main, List.of(stream));
+        assertThat(mainStepped).as("stepped clean: %s", mainStepped).containsEntry("verdict", "clean")
+                .doesNotContainKey("record");
 
         // The security group's pipeline: its Events into the feed's; every other record passed over, counted,
         // never warned of.
@@ -166,6 +140,50 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
         assertThat(TestE2eSourceTypeGroups.passedOver(mainLog)).isEqualTo(total - securityRecords);
         assertThat(mainLog.lines().filter(line -> line.contains("WARN") && line.contains("PegaIntegration")))
                 .isEmpty();
+        promote(build, Map.of("Pipeline", folder));
+
+        // The second build: the integration group, its Events into an output feed of its own.
+        final String second = "pega-own-2";
+        json("start_build", args("build", second, "feeds", List.of(feed)));
+        client.answeringWith(answering(List.of("PegaIntegration"), INTEGRATION, false));
+        json("survey_feed", args("feed", feed, "build", second));
+        recordSourceTypes(second, feed, INTEGRATION);
+        final int secondFormsBefore = client.forms().size();
+        final Map<String, Object> integration = group(second, feed, INTEGRATION, "PegaIntegration",
+                TestE2eSourceTypeGroups.integrationMapping(), stream);
+        assertThat(formsSince(secondFormsBefore).stream()
+                .filter(form -> form.message().contains("is new. It gets a pipeline of its own"))).hasSize(1);
+        assertThat(map(integration, "pipeline")).containsEntry("name", integrationName);
+        assertThat(integration).containsEntry("output_feed", "");
+        assertThat(String.valueOf(integration.get("group_next"))).contains("create_feed", "create_pipeline");
+        final String integrationUuid = uuidOf(map(integration, "xslt"));
+
+        // Its pipeline can't be made before its output feed; the build makes that in a form.
+        assertThat(refusal("create_pipeline", args("build", second, "group", INTEGRATION, "template_uuid",
+                template))).contains("output feed of its own, not made yet", "create_feed");
+        final String outputFeed = feed + "-INTEGRATION-EVENTS";
+        final Map<String, Object> made = agreed("create_feed", args("build", second, "name", outputFeed,
+                "stream_type", "Events", "group", INTEGRATION));
+        assertThat(strings(made, "source_types")).containsExactly("PegaIntegration");
+        final Map<String, Object> ownMade = agreed("create_pipeline", args("build", second, "group", INTEGRATION,
+                "template_uuid", template));
+        dump("create_pipeline own", ownMade);
+        assertThat(strings(ownMade, "sets")).contains("translationFilter.xslt");
+        assertThat(String.valueOf(ownMade.get("filled_from_build"))).contains(".feed = " + outputFeed);
+        final String own = uuidOf(ownMade);
+        final Map<String, Map<String, Object>> rows = rows(uuidOf(map(integration, "registry")));
+        assertThat((Map<String, Object>) rows.get("PegaIntegration").get("pipeline"))
+                .containsEntry("name", integrationName).containsEntry("uuid", own);
+        assertThat(rows.get("PegaIntegration")).containsEntry("output_feed", outputFeed)
+                .containsEntry("group_xslt", Map.of("uuid", integrationUuid, "name", INTEGRATION));
+        assertThat((Map<String, Object>) rows.get("PegaSecurityEvent").get("pipeline"))
+                .containsEntry("name", securityName).containsEntry("uuid", main);
+        assertThat(rows.get("PegaSecurityEvent")).doesNotContainKey("output_feed");
+        assertThat(map(rows.get("PegaSecurityEvent"), "group_xslt")).containsEntry("uuid", securityUuid);
+        final Map<String, Object> ownStepped = stepSample(own, List.of(stream));
+        dump("step_sample", ownStepped);
+        assertThat(ownStepped).as("stepped clean: %s", ownStepped).containsEntry("verdict", "clean")
+                .doesNotContainKey("record");
 
         // The integration group's pipeline: its Events in its own output feed; the rest passed over.
         final Map<String, Object> ownDone = list(process(own, List.of(stream)), "streams").getFirst();
@@ -193,7 +211,7 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
         json("start_build", args("build", first, "feeds", List.of(feed)));
         client.answeringWith(answering(List.of("PegaSecurityEvent"), null, false));
         json("survey_feed", args("feed", feed, "build", first));
-        recordSourceTypes(first, feed);
+        recordSourceTypes(first, feed, SECURITY);
         final Map<String, Object> security = group(first, feed, SECURITY, "PegaSecurityEvent",
                 TestE2eSourceTypeGroups.securityMapping(), stream);
         final String securityUuid = uuidOf(map(security, "xslt"));
@@ -207,13 +225,14 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
         assertThat(folderOf(pipeline)).endsWith("PegaWc");
         assertThat(documentsIn("System/" + folder, "XSLT", feed + " helpers")).hasSize(1);
 
-        // A later build: the security group changed, the user choosing to change its pipeline; and the
-        // integration group added, with a pipeline of its own.
+        // A later build changes the security group alone: its scope names the group, no source type added; the
+        // user chooses to change its pipeline.
         final String later = "pega-wc-2";
         json("start_build", args("build", later, "feeds", List.of(feed)));
-        client.answeringWith(answering(List.of("PegaIntegration"), null, false));
+        client.answeringWith(answering(List.of(), null, false));
         json("survey_feed", args("feed", feed, "build", later));
-        recordSourceTypes(later, feed);
+        final Map<String, Object> scoped = recordSourceTypes(later, feed, SECURITY);
+        assertThat(strings(scoped, "scope")).containsExactly("PegaSecurityEvent");
         final int formsBefore = client.forms().size();
         final String changedText = jsonOf(TestE2eSourceTypeGroups.securityMapping()).replace("\"Login\"",
                 "\"LoginV2\"");
@@ -231,12 +250,6 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
         assertThat(readXslt(securityCopy).getData()).contains("LoginV2", "uuid='" + commonUuid + "'");
         assertThat(readXslt(securityUuid).getData()).doesNotContain("LoginV2");
         assertThat(String.valueOf(securityAgain.get("group_next"))).contains("copy_pipeline", "working_copy=true");
-        final Map<String, Object> integration = group(later, feed, INTEGRATION, "PegaIntegration",
-                TestE2eSourceTypeGroups.integrationMapping(), stream);
-        final String integrationUuid = uuidOf(map(integration, "xslt"));
-        assertThat(readXslt(integrationUuid).getData()).contains("uuid='" + commonUuid + "'");
-        final String integrationPipeline = uuidOf(agreed("create_pipeline", args("build", later, "group",
-                INTEGRATION, "template_uuid", template)));
 
         // The group's pipeline stepped in the build through a working copy of it: it runs the group's working copy.
         final Map<String, Object> copied = agreed("copy_pipeline", args("build", later, "source_uuid", pipeline,
@@ -247,36 +260,49 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
         final int loginAt = TestE2eSourceTypeGroups.indexOf(records, "\\\"eventType\\\": \\\"login\\\"", null);
         final int soapAt = TestE2eSourceTypeGroups.indexOf(records, "\"PegaIntegration\"", "Envelope>\"}");
         assertThat(translationOutput(workingPipeline, stream, loginAt)).contains("LoginV2");
-        assertThat(children(parse(translationOutput(integrationPipeline, stream, soapAt)).getDocumentElement(),
-                "Event")).hasSize(1);
 
-        // Promoted: the working copy written back importing the original common module, the new group and its
-        // pipeline beside the feed, and the registry naming the originals.
+        // Promoted: the working copy written back importing the original common module.
         promote(later, Map.of("Pipeline", folder));
         assertThat(readXslt(securityUuid).getData()).contains("LoginV2", "uuid='" + commonUuid + "'")
                 .doesNotContain(securityCopy);
+        // Production translates as changed.
+        assertThat(translationOutput(pipeline, stream, loginAt)).contains("LoginV2");
+
+        // The next build: the integration group, with a pipeline of its own beside the feed.
+        final String next = "pega-wc-3";
+        json("start_build", args("build", next, "feeds", List.of(feed)));
+        client.answeringWith(answering(List.of("PegaIntegration"), null, false));
+        json("survey_feed", args("feed", feed, "build", next));
+        recordSourceTypes(next, feed, INTEGRATION);
+        final Map<String, Object> integration = group(next, feed, INTEGRATION, "PegaIntegration",
+                TestE2eSourceTypeGroups.integrationMapping(), stream);
+        final String integrationUuid = uuidOf(map(integration, "xslt"));
+        assertThat(readXslt(integrationUuid).getData()).contains("uuid='" + commonUuid + "'");
+        final String integrationPipeline = uuidOf(agreed("create_pipeline", args("build", next, "group",
+                INTEGRATION, "template_uuid", template)));
+        assertThat(children(parse(translationOutput(integrationPipeline, stream, soapAt)).getDocumentElement(),
+                "Event")).hasSize(1);
+        promote(next, Map.of("Pipeline", folder));
         assertThat(readXslt(integrationUuid).getData()).contains("uuid='" + commonUuid + "'");
         assertThat(folderOf(integrationUuid)).isEqualTo(folderOf(securityUuid));
         final Map<String, Object> registry = SourceTypeRegistry.read(documentation(documentsIn("System/" + folder,
                 "Documentation", feed + SourceTypeRegistry.SUFFIX).getFirst().getUuid()));
         assertThat(jsonOf(registry)).contains(securityUuid, integrationUuid, pipeline, integrationPipeline)
                 .doesNotContain(securityCopy, workingPipeline);
-        // Production translates as changed.
-        assertThat(translationOutput(pipeline, stream, loginAt)).contains("LoginV2");
 
-        // A third build: a new version of the security group's pipeline, the user's choice.
-        final String third = "pega-wc-3";
-        json("start_build", args("build", third, "feeds", List.of(feed)));
-        client.answeringWith(answering(List.of("PegaDB"), null, true));
-        json("survey_feed", args("feed", feed, "build", third));
-        recordSourceTypes(third, feed);
-        final Map<String, Object> versioned = group(third, feed, SECURITY, "PegaSecurityEvent",
+        // A last build: a new version of the security group's pipeline, the user's choice.
+        final String last = "pega-wc-4";
+        json("start_build", args("build", last, "feeds", List.of(feed)));
+        client.answeringWith(answering(List.of(), null, true));
+        json("survey_feed", args("feed", feed, "build", last));
+        recordSourceTypes(last, feed, SECURITY);
+        final Map<String, Object> versioned = group(last, feed, SECURITY, "PegaSecurityEvent",
                 TestE2eSourceTypeGroups.jsonValue(changedText.replace("LoginV2", "LoginV3")), stream);
         final String securityVersion = uuidOf(map(versioned, "xslt"));
         assertThat(securityVersion).isNotEqualTo(securityUuid);
         assertThat((Map<String, Object>) versioned.get("pipeline")).containsEntry("new_version", true);
         assertThat(String.valueOf(versioned.get("group_next"))).contains("copy_pipeline", "working_copy=false");
-        final Map<String, Object> version = agreed("copy_pipeline", args("build", third, "source_uuid", pipeline,
+        final Map<String, Object> version = agreed("copy_pipeline", args("build", last, "source_uuid", pipeline,
                 "new_name", pipelineName + " v2", "working_copy", false));
         dump("copy_pipeline new version", version);
         final String versionPipeline = uuidOf(version);
@@ -310,10 +336,13 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
         return map(saved, "group");
     }
 
-    // record_source_types: the table, then the scope form.
-    private void recordSourceTypes(final String build, final String feed) {
+    // record_source_types: the table, then the scope form, the build's group suggested by this name.
+    private Map<String, Object> recordSourceTypes(final String build, final String feed, final String group) {
         final Map<String, Object> shown = json("record_source_types", args("build", build, "feed", feed));
-        json("record_source_types", args("build", build, "feed", feed, "reviewed", shown.get("review_id")));
+        final Map<String, Object> written = json("record_source_types", args("build", build, "feed", feed,
+                "reviewed", shown.get("review_id"), "group", group));
+        assertThat(written).as("scoped: %s", written).containsEntry("group", group);
+        return written;
     }
 
     // The registry's rows by source type.
@@ -352,8 +381,7 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
     private static Function<ElicitFormRequest, ElicitResult> answering(final List<String> scope,
                                                                        final String ownGroup,
                                                                        final boolean newVersion) {
-        final Function<ElicitFormRequest, ElicitResult> scoping = TestE2eSourceTypeGroups.scopeOf(scope,
-                "for later builds");
+        final Function<ElicitFormRequest, ElicitResult> scoping = TestE2eSourceTypeGroups.scopeOf(scope, null);
         return form -> {
             if (form.message().contains(TestE2eSourceTypeGroups.SCOPE_FORM)) {
                 return scoping.apply(form);

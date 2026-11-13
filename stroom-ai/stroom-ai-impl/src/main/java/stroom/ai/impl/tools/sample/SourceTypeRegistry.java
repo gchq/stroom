@@ -32,7 +32,8 @@ import java.util.regex.Pattern;
 /// in ways a registry already kept still reads.
 ///
 /// The block is JSON: `feed`, `field` (the source type field), `field_by`, `environment` and `system_name` (the
-/// feed's, the default for each row), `updated`, `scope` (the build that chose it, `source_types`, `by`, `at`), and
+/// feed's, the default for each row), `updated`, `scope` (the build that chose it, `group` (the build's one source type
+/// group), `source_types`, `by`, `at`), and
 /// `rows` in the order they are tried, each `name`, `match` (`value` or `pattern`), `value` (the value, or the
 /// pattern), `system_name`, `status` (`translated`, `parked`, `dropped` or `new`), `decided` (`by`, `at`, `reason`),
 /// `group`, `pipeline` and `output_feed` (empty until a source type group handles it; `group_xslt` names the group's
@@ -171,7 +172,11 @@ public final class SourceTypeRegistry {
         }
         final Map<String, Object> scope = JsonValues.mapOrEmpty(registry.get("scope"));
         if (!scope.isEmpty()) {
+            final String group = JsonValues.text(scope.get("group"));
             out.append(" Build '").append(JsonValues.text(scope.get("build"))).append("' covers ")
+                    .append(group.isEmpty()
+                            ? ""
+                            : "source type group '" + group + "': ")
                     .append(String.join(", ", JsonValues.strings(scope.get("source_types"))))
                     .append(" (chosen by ").append(JsonValues.text(scope.get("by"))).append(", ")
                     .append(JsonValues.text(scope.get("at"))).append(").");

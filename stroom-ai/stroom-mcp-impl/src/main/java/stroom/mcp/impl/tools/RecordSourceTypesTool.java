@@ -49,19 +49,25 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /// `record_source_types` - the plan's source types step for an aggregated feed: each source type the build's survey
 /// counted is profiled (by the registry's rows, so a pattern's source type is one), the profiles are shown to the
-/// user as a table, the user chooses in a form which source types the build covers (its scope), and the feed's
-/// source type registry (`<feed> source types`) is written in the build, through [WriteGuard]. An assessment writes
+/// user as a table, the user chooses in a form which source types go in the build's one source type group and what it
+/// is called (its scope), and the feed's source type registry (`<feed> source types`) is written in the build,
+/// through [WriteGuard]. An assessment writes
 /// the registry without a scope. Rows are a value each, or patterns where the values are many structured ones,
 /// confirmed by the user; a registry beside the feed is carried on from (a working copy), its rows and statuses kept
 /// and values it lacks added as `new`.
 ///
-/// The scope is recorded in the registry and in the survey state, with the rows it was chosen by
-/// ([SourceTypeScope]), and the build's tools read the feed through it (the survey, samples, classification, the
-/// draft, the sample checks and review_coverage). The source types in it stay `parked` until a source type group
-/// translates them. A scope that adds source types the survey's streams weren't read for starts its coverage again.
+/// A build makes at most one source type group, so one pipeline: the scope is that group, any number of source types
+/// under one name (the agent suggests it, the user keeps or changes it), and the source types left out are parked for
+/// a later build. Naming a group the registry has already adds the chosen source types to it (they join its pipeline
+/// and output feed when it is built). The scope and its group are recorded in the registry and in the survey state,
+/// with the rows it was chosen by ([SourceTypeScope]), and the build's tools read the feed through it (the survey,
+/// samples, classification, the draft, the sample checks and review_coverage). The source types in it stay `parked`
+/// until a source type group translates them. A scope that adds source types the survey's streams weren't read for
+/// starts its coverage again.
 class RecordSourceTypesTool extends AbstractBuiltInTool {
 
     static final String NAME = "record_source_types";
@@ -72,6 +78,9 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
     static final String REMOVE_ARG = "remove";
     static final String PATTERNS_ARG = "patterns";
     static final String SCOPE_ARG = "scope";
+    static final String GROUP_ARG = "group";
+    /// The scope's key for the name of the build's source type group.
+    static final String SCOPE_GROUP = "group";
     static final String REASON_ARG = "reason";
     static final String DROPPED_ARG = "dropped";
     static final String DROP_REASON_ARG = "drop_reason";
@@ -85,6 +94,8 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
     private static final String ASSESSED = "assessment";
     private static final String NEEDS_REVIEW = "needs_review";
     private static final String NEEDS_USER = "needs_user";
+    // The scope form's free-text field: the group's name.
+    private static final String GROUP_QUESTION = "What is the group called?";
 
     private final SurveyDocuments surveyDocuments;
     private final SourceTypeRegistries registries;
@@ -146,9 +157,12 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                              + "call profiles each source type from the build's survey (size, message formats, "
                              + "fields, kinds, levels, signals of an audit trail or operational traffic, a "
                              + "suggested category) and returns a table to show the user (needs_review). Called "
-                             + "again with reviewed=<its review_id>, the user chooses in a form which source types "
-                             + "to build now; the others are parked with their reason. Then it writes the feed's "
-                             + "registry ('<feed> source types') in the build. An assessment build writes the "
+                             + "again with reviewed=<its review_id> and group=<a name you suggest>, the user chooses "
+                             + "in a form which source types go in this build's source type group (a build makes "
+                             + "one group, one pipeline; any number of source types) and keeps or changes its "
+                             + "name; the others are parked for later builds. Naming an existing group adds the "
+                             + "chosen source types to it. Then it writes the feed's registry ('<feed> source "
+                             + "types') in the build. An assessment build writes the "
                              + "registry without a scope. Where the field's values are many paths or names, it "
                              + "proposes anchored patterns, confirmed by the user. Rows given again keep the "
                              + "registry's translated and placed rows they leave out; remove= drops a row, and "
@@ -181,10 +195,16 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                                          + "to the proposed patterns ('use' them, or 'exact': a "
                                                          + "source type per value).")
                         .addProperty(SCOPE_ARG, stringArraySchema("Only when the client shows no forms: the "
-                                                                  + "source types the user chose to build now, by "
-                                                                  + "name."))
+                                                                  + "source types the user chose for this build's "
+                                                                  + "group, by name (with group)."))
+                        .addStringProperty(GROUP_ARG, "The name of this build's source type group, for its source "
+                                                      + "types (e.g. 'Messaging'): with forms, your suggestion, "
+                                                      + "which the user keeps or changes in the form; without, "
+                                                      + "the name the user gave. An existing group's name adds the "
+                                                      + "source types to that group.")
                         .addStringProperty(REASON_ARG, "Why the other source types are left for later, in the "
-                                                       + "user's words (no forms).")
+                                                       + "user's words (no forms; default 'left for a later "
+                                                       + "build').")
                         .addProperty(DROPPED_ARG, stringArraySchema("Only on the user's word: source types never "
                                                                     + "to be translated, by name."))
                         .addStringProperty(DROP_REASON_ARG, "Why those are never translated, in the user's words.")
@@ -263,11 +283,12 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                     SourceTypeRegistry.render(registry));
             final Map<String, Object> result = written(feed, field, registry, written, table);
             result.put("hint", "The registry is written: show the user the table (as it is). Then promote_build, the "
-                               + "survey and registry going beside the feed: until then this build is open on the "
-                               + "feed, and no other build can start on it. Once promoted, offer to onboard the "
-                               + "source types they pick, in a build of its own (start_build feeds=['" + feed
-                               + "']: its survey carries on from the promoted one, and " + NAME + " offers the "
-                               + "parked source types for its scope).");
+                               + "registry going beside the feed (the survey doc stays in this build): until then "
+                               + "this build is open on the feed, and no other build can start on it. Once "
+                               + "promoted, offer to onboard the source types they pick, one source type group "
+                               + "(any number of source types, one pipeline) a build (start_build feeds=['" + feed
+                               + "']: it surveys the feed afresh, and " + NAME + " offers the registry's parked "
+                               + "source types for its group).");
             return plan.withNext(context, build, result);
         }
         final Object reviewed = argsMap(call).get(REVIEWED_ARG);
@@ -290,10 +311,12 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                     ? "The chat shows the user this table itself, as it is: don't repeat or restyle it. "
                     : "Show the user this table in your reply, as it is, sorted by suggested category then size, "
                       + "with what each suggestion rests on. ")
-                               + "Then call " + NAME + " again with the same arguments, rows=<these rows> and "
-                               + "reviewed=<review_id>: "
-                               + "the user chooses in a form which source types to build now. Suggest; don't "
-                               + "choose for them.");
+                               + "Then call " + NAME + " again with the same arguments, rows=<these rows>, "
+                               + "reviewed=<review_id> and " + GROUP_ARG + "=<a name you suggest for the group>: "
+                               + "the user chooses in a form which source types go in this build's one source type "
+                               + "group (one pipeline; any number of them, e.g. those of one kind of system) and "
+                               + "keeps or changes its name; the rest are parked for later builds. Suggest; don't "
+                               + "choose for them." + groupsSaid(registryGroups(before)));
             return result;
         }
         final Optional<Scope> scope = scope(call, context, feed, registry, profiles);
@@ -302,17 +325,29 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
             result.put("status", NEEDS_USER);
             result.put("feed", feed);
             result.put("offered", offered(registry).stream().map(row -> JsonValues.text(row.get("name"))).toList());
-            result.put("hint", "Ask the user in the chat which of the offered source types to build now (the table "
-                               + "shown), and why the others are left for later; then call " + NAME + " again with "
-                               + "reviewed=<review_id>, " + SCOPE_ARG + "=[their names] and " + REASON_ARG + ".");
+            result.put("groups", registryGroups(registry));
+            result.put("hint", "Ask the user in the chat which of the offered source types go in this build's source "
+                               + "type group (a build makes one group, one pipeline; the table shown) and what the "
+                               + "group is called (suggest a name; an existing group's name adds them to it); the "
+                               + "rest are parked for later builds. Then call " + NAME + " again with "
+                               + "reviewed=<review_id>, " + SCOPE_ARG + "=[their names], " + GROUP_ARG
+                               + "=<the name> and, if they gave one, " + REASON_ARG + " (why the rest wait).");
             return result;
+        }
+        // The group's source types: those it translates already (an existing group named), and those chosen now.
+        final List<String> groupTypes = new ArrayList<>(groupRows(registry, scope.get().group()));
+        scope.get().chosen().stream().filter(name -> !groupTypes.contains(name)).forEach(groupTypes::add);
+        if (groupTypes.isEmpty()) {
+            throw new ToolRefusal("No source type was chosen for group '" + scope.get().group() + "': a build makes "
+                                  + "one source type group, of one or more source types. Ask the user which go in it, "
+                                  + "and call " + NAME + " again. Nothing was written.");
         }
         confirm(call, context, feed, edits);
         final String now = SurveyDoc.at(Instant.now());
         applyScope(registry, build, scope.get(), now);
         applyDropped(call, registry, now);
-        registry.put("scope", Entries.of("build", build, "source_types", scope.get().chosen(), "by", "user",
-                "at", now));
+        registry.put("scope", Entries.of("build", build, SCOPE_GROUP, scope.get().group(), "source_types",
+                groupTypes, "by", "user", "at", now));
         final SurveyRecord written = registries.writeRegistry(context.session(), build, feed, existing,
                 SourceTypeRegistry.render(registry));
         boolean restarted = false;
@@ -324,19 +359,28 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
             surveyScope.put(SourceTypeScope.ROWS, SourceTypeScope.kept(rows.rows()));
             kept.put(SourceTypeProfiles.SCOPE, surveyScope);
             survey.put(SourceTypeProfiles.STATE_KEY, kept);
-            restarted = restartsCoverage(survey, new SourceTypeScope(build, field, rows.rows(), scope.get().chosen()));
+            restarted = restartsCoverage(survey, new SourceTypeScope(build, field, rows.rows(), groupTypes));
             surveyDocuments.write(context.session(), surveyDoc.get(), SurveyDoc.render(survey));
         }
         final Map<String, Object> result = written(feed, field, registry, written, table);
-        result.put("scope", scope.get().chosen());
+        result.put("scope", groupTypes);
+        result.put(GROUP_ARG, scope.get().group());
+        final Optional<Map<String, Object>> joined = placedRow(registry, scope.get().group());
+        if (joined.isPresent()) {
+            result.put("joins", "Group '" + scope.get().group() + "' exists: the source types join it, its pipeline"
+                                + " and where its Events go, when build_translation_xslt builds it (through a "
+                                + "working copy of its XSLT where it is promoted).");
+        }
         if (restarted) {
             result.put("coverage_restarted", "The scope adds source types some streams the survey read weren't read "
                                              + "for (a narrower scope read them): its coverage starts again, and "
                                              + "survey_feed build='" + build + "' feed='" + feed + "' reads them "
                                              + "again for those source types.");
         }
-        result.put("hint", "The registry is written and the build's scope recorded: " + scope.get().chosen()
-                           + ". Carry on with the plan (next).");
+        result.put("hint", "The registry is written and the build's scope recorded: source type group '"
+                           + scope.get().group() + "', " + groupTypes + ". build_translation_xslt builds "
+                           + "it (group and source_types default to these); a build makes one group, so another "
+                           + "is a later build's, after this one is promoted. Carry on with the plan (next).");
         return plan.withNext(context, build, result);
     }
 
@@ -677,8 +721,10 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
         return registry;
     }
 
-    // The scope the user chooses in a form (a yes for each source type offered: parked, new, or every one of a
-    // first registry), with why the others wait; or as they said in the chat (scope=, reason=).
+    // The scope the user chooses in a form: a yes for each source type offered (parked, new, or every one of a first
+    // registry) to put in the build's one source type group, and the group's name (the agent's suggestion, kept or
+    // changed); the others are parked for a later build. Or as they said in the chat (scope=, group=, reason=). An
+    // existing group's name, in any case, is that group's.
     private Optional<Scope> scope(final ToolCall call,
                                   final ToolCallContext context,
                                   final String feed,
@@ -687,34 +733,96 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
         final List<Map<String, Object>> offered = offered(registry);
         final List<String> names = offered.stream().map(row -> JsonValues.text(row.get("name"))).toList();
         final List<String> given = stringListArg(call, SCOPE_ARG);
+        final String suggested = NullSafe.string(stringArg(call, GROUP_ARG)).strip();
+        final List<String> groups = registryGroups(registry);
         if (!given.isEmpty()) {
+            if (suggested.isEmpty()) {
+                throw new ToolRefusal("Give " + GROUP_ARG + ": the name the user gave this build's source type group "
+                                      + "(a build makes one group, its source types the scope's)"
+                                      + groupsSaid(groups) + ". Nothing was written.");
+            }
             final List<String> chosen = new ArrayList<>();
             for (final String name : given) {
                 chosen.add(names.stream().filter(offer -> offer.equalsIgnoreCase(name.strip())).findFirst()
                         .orElseThrow(() -> new ToolRefusal("'" + name + "' is none of the source types offered: "
                                                            + names)));
             }
-            return Optional.of(new Scope(chosen, NullSafe.string(stringArg(call, REASON_ARG)).strip()));
+            return Optional.of(new Scope(List.copyOf(new LinkedHashSet<>(chosen)), NullSafe.string(stringArg(call,
+                    REASON_ARG)).strip(), groupNamed(groups, suggested)));
+        }
+        if (context.userQuestions().canAsk() && suggested.isEmpty() && !names.isEmpty()) {
+            throw new ToolRefusal("Give " + GROUP_ARG + ": a name you suggest for this build's source type group "
+                                  + "(e.g. for the kind of system its source types are), which the user keeps or "
+                                  + "changes in the form" + groupsSaid(groups) + ". Nothing was asked.");
         }
         final Map<String, Consent.Editable> items = new LinkedHashMap<>();
         for (final String name : names) {
             final Map<String, Object> profile = profiles.getOrDefault(name, Map.of());
-            items.put(name, new Consent.Editable("Build " + name + " now", "about "
-                                                                          + JsonValues.text(profile.getOrDefault(
+            items.put(name, new Consent.Editable("Put " + name + " in the group", "about "
+                                                                                + JsonValues.text(profile.getOrDefault(
                     "share_percent", 0)) + "% of the records read; " + String.join(", ",
                     JsonValues.mapOrEmpty(profile.get("formats")).keySet())));
         }
-        final Optional<Map<String, Object>> answers = consent.review(call, context, NAME, "Which of feed '" + feed
-                                                                                          + "''s source types does "
-                                                                                          + "this build cover? Each "
-                                                                                          + "is profiled in the "
-                                                                                          + "table shown in the "
-                                                                                          + "chat. Those you leave "
-                                                                                          + "out are parked for a "
-                                                                                          + "later build.", items,
-                "Why are the others left for later?");
-        return answers.map(found -> new Scope(names.stream().filter(name -> Boolean.TRUE.equals(found.get(name)))
-                .toList(), NullSafe.string(NullSafe.get(found.get(Consent.REVIEW_TEXT), String::valueOf)).strip()));
+        final Optional<Map<String, Object>> answers = consent.review(call, context, NAME, scopeIntro(feed, groups),
+                items, GROUP_QUESTION, suggested);
+        if (answers.isEmpty()) {
+            return Optional.empty();
+        }
+        final List<String> chosen = names.stream().filter(name -> Boolean.TRUE.equals(answers.get().get(name)))
+                .toList();
+        final String named = NullSafe.nonBlankStringElse(NullSafe.get(answers.get().get(Consent.REVIEW_TEXT),
+                String::valueOf), suggested).strip();
+        return Optional.of(new Scope(chosen, "", groupNamed(groups, named)));
+    }
+
+    // The scope form's message, in plain text.
+    private static String scopeIntro(final String feed, final List<String> groups) {
+        return "Which of feed '" + feed + "''s source types go in this build's source type group? A build makes one "
+               + "group, translated by one pipeline. Each source type is profiled in the table shown in the chat. "
+               + "Those you leave out are parked for a later build." + (groups.isEmpty()
+                ? ""
+                : " Naming an existing group (" + String.join(", ", groups) + ") adds them to it, or, none "
+                  + "ticked, changes it alone.");
+    }
+
+    // The registry's source type groups, by name, in the order its rows name them.
+    private static List<String> registryGroups(final Map<String, Object> registry) {
+        return List.copyOf(JsonValues.maps(registry.get("rows")).stream()
+                .map(row -> JsonValues.text(row.get("group")))
+                .filter(group -> !group.isBlank())
+                .collect(Collectors.toCollection(LinkedHashSet::new)));
+    }
+
+    // The registry's groups, said for a refusal or a hint: empty when it has none.
+    private static String groupsSaid(final List<String> groups) {
+        return groups.isEmpty()
+                ? ""
+                : "; the feed's groups are " + ToolText.list(groups) + ", and naming one adds the source types to it";
+    }
+
+    // The group's name: an existing group's own where it names one (any case), else as given.
+    private static String groupNamed(final List<String> groups, final String name) {
+        if (NullSafe.isBlankString(name)) {
+            throw new ToolRefusal("The source type group has no name: ask the user what to call it, and call " + NAME
+                                  + " again with " + GROUP_ARG + ". Nothing was written.");
+        }
+        return groups.stream().filter(group -> group.equalsIgnoreCase(name.strip())).findFirst()
+                .orElse(name.strip());
+    }
+
+    // The registry's source types a group translates already, in order: none for a new group.
+    private static List<String> groupRows(final Map<String, Object> registry, final String group) {
+        return JsonValues.maps(registry.get("rows")).stream()
+                .filter(row -> group.equals(JsonValues.text(row.get("group"))) && translated(row))
+                .map(row -> JsonValues.text(row.get("name")))
+                .toList();
+    }
+
+    // A row of the group placed in a pipeline: the group exists, and the source types added to it join it there.
+    private static Optional<Map<String, Object>> placedRow(final Map<String, Object> registry, final String group) {
+        return JsonValues.maps(registry.get("rows")).stream()
+                .filter(row -> group.equals(JsonValues.text(row.get("group"))) && placed(row))
+                .findFirst();
     }
 
     // The rows offered for the scope: those not yet translated or dropped.
@@ -725,7 +833,7 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                 .toList();
     }
 
-    // The scope's statuses: every source type offered is parked (none is translated until a source type group
+    // The scope's statuses: every source type offered is parked (none is translated until its source type group
     // handles it); those in the scope say so, the rest carry the user's reason.
     private static void applyScope(final Map<String, Object> registry,
                                    final String build,
@@ -735,7 +843,8 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
         for (final Map<String, Object> row : offered(registry)) {
             final String name = JsonValues.text(row.get("name"));
             decide(row, SourceTypeRegistry.PARKED, "user", now, chosen.contains(name)
-                    ? "in the scope of build '" + build + "': translated once its source type group is built"
+                    ? "in the scope of build '" + build + "': translated once its source type group '"
+                      + scope.group() + "' is built"
                     : scope.reason().isBlank()
                             ? "left for a later build"
                             : scope.reason());
@@ -884,9 +993,10 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
 
     /// The scope the user chose.
     ///
-    /// @param chosen The source types to build now.
+    /// @param chosen The source types of the build's source type group.
     /// @param reason Why the others wait, in their words.
-    private record Scope(List<String> chosen, String reason) {
+    /// @param group  The group's name: an existing group's adds the source types to it.
+    private record Scope(List<String> chosen, String reason, String group) {
 
     }
 

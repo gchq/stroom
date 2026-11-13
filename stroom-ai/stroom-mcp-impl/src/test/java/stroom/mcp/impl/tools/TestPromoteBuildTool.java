@@ -51,8 +51,7 @@ class TestPromoteBuildTool {
     private final PromoteBuildTool tool = new PromoteBuildTool(docs.facts, new PromotionLayout(docs.places),
             docs.places, world.guard(), world.records(), docs.translation.consent, processing,
             Mockito.mock(ProcessorFilterWrites.class), Mockito.mock(OutputFeeds.class), docs.writes,
-            world.documentAccess, docs.translation.history, docs.pendingDocs,
-            new SurveyDocuments(world.guard(), world.documentAccess, docs.writes));
+            world.documentAccess, docs.translation.history, docs.pendingDocs);
 
     @Test
     void aBuildIsNotPromotedWhileADocItWroteIsPending() {
@@ -183,6 +182,22 @@ class TestPromoteBuildTool {
                            + "├── ACME-DIR  (Feed)\n"
                            + "├── Acme directory reference - audit log reference  (Documentation)\n"
                            + "└── Acme directory source notes  (Documentation)");
+    }
+
+    @Test
+    void theSurveyDocStaysInTheBuildAndTheRegistryGoesBesideTheFeed() {
+        // Decided 2026-11-13: the survey doc always stays in the build, unasked; the registry goes beside the feed.
+        exists("System/Feeds/Acme");
+        listed(doc(FeedDoc.TYPE, "f", "ACME-DIR", null), doc(DocumentationDoc.TYPE, "s", "ACME-DIR - Survey", null),
+                doc(DocumentationDoc.TYPE, "r", "ACME-DIR source types", null));
+
+        final Map<String, Object> shown = review(Map.of("Feed", "System/Feeds/Acme"), null);
+
+        assertThat(shown.get("layout")).isEqualTo("System/Feeds/Acme/\n"
+                                                  + "├── ACME-DIR  (Feed)\n"
+                                                  + "└── ACME-DIR source types  (Documentation)\n\n"
+                                                  + "Left in the workspace: ACME-DIR - Survey (Documentation)");
+        assertThat(shown).doesNotContainKey("registries");
     }
 
     @Test

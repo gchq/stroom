@@ -59,7 +59,8 @@ import static org.mockito.ArgumentMatchers.eq;
 /// a pipeline of its own, the feed's common module and helpers made from the first group's mapping (a chain: the
 /// group imports the common module, which imports the helpers), and the registry's rows set translated; a second
 /// group reusing the common module, and a shared call of its own added to it; a group regenerated from its kept
-/// mapping alone; and an unsaved group stepped, compared and proven as draft code for its pipeline's XSLT.
+/// mapping alone; an unsaved group stepped, compared and proven as draft code for its pipeline's XSLT; and one source
+/// type group a build: the group and its source types taken from the build's scope, another group refused.
 class TestSourceTypeGroups {
 
     private static final String BUILD = "pega-v1";
@@ -329,6 +330,72 @@ class TestSourceTypeGroups {
                         "PegaDB"));
         assertThat(JsonValues.strings(JsonValues.mapOrEmpty(saved.get("group")).get("notes")))
                 .anySatisfy(note -> assertThat(note).contains("PegaDB", "PEGA-INTEGRATION-EVENTS"));
+    }
+
+    @Test
+    void theGroupAndItsSourceTypesDefaultToTheScopesAManyTypeGroupTranslatingEach() {
+        scoped("PEGA back end", List.of("PegaIntegration", "PegaDB"));
+        final Map<String, Object> given = new LinkedHashMap<>(args(integration(), null, List.of()));
+        given.remove("group");
+        given.remove("source_types");
+
+        final Map<String, Object> saved = world.call(tool, given);
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        final Map<String, Object> group = JsonValues.mapOrEmpty(saved.get("group"));
+        assertThat(group).containsEntry("name", "PEGA back end").containsEntry("mode", "pega_back_end");
+        assertThat(JsonValues.strings(group.get("source_types"))).containsExactly("PegaIntegration", "PegaDB");
+        // One XSLT, one pipeline, for both source types; the third passed over.
+        assertThat(xsltsInBuild()).containsOnlyKeys("PEGA back end", "PEGA common", "PEGA helpers");
+        assertThat(ModuleChecks.marker(world.xslt(xsltsInBuild().get("PEGA back end")).getData()))
+                .hasValueSatisfying(marker -> assertThat(marker.sourceTypes()).containsExactly("PegaIntegration",
+                        "PegaDB"));
+        for (final String type : List.of("PegaIntegration", "PegaDB")) {
+            assertThat(rowNamed(written.getLast(), type)).containsEntry("status", SourceTypeRegistry.TRANSLATED)
+                    .containsEntry("group", "PEGA back end");
+            assertThat(JsonValues.mapOrEmpty(rowNamed(written.getLast(), type).get("pipeline")))
+                    .containsEntry("name", "PEGA PEGA back end");
+        }
+        assertThat(rowNamed(written.getLast(), "PegaSecurityEvent")).containsEntry("status",
+                SourceTypeRegistry.PARKED);
+    }
+
+    @Test
+    void aSecondGroupInABuildIsRefused() {
+        scoped("PEGA security", List.of("PegaSecurityEvent"));
+        world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
+
+        final Map<String, Object> refused = world.call(tool, args(integration(), "PEGA integration",
+                List.of("PegaIntegration")));
+
+        assertThat(String.valueOf(refused.get("error"))).contains("one source type group a build",
+                "'PEGA security'", "'PEGA integration'", "later build", "promoting");
+        assertThat(xsltsInBuild()).containsKey("PEGA security").doesNotContainKey("PEGA integration");
+        assertThat(rowNamed(written.getLast(), "PegaIntegration")).containsEntry("status",
+                SourceTypeRegistry.PARKED);
+    }
+
+    @Test
+    void anExistingGroupTheScopeNamesKeepsItsSourceTypesAndTakesTheScopes() {
+        world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
+        // A later scope adds PegaDB to the group.
+        scoped("PEGA security", List.of("PegaDB"));
+        final Map<String, Object> given = new LinkedHashMap<>(args(security(), null, List.of()));
+        given.remove("group");
+        given.remove("source_types");
+        given.remove("own_output_feed");
+
+        final Map<String, Object> saved = world.call(tool, given);
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        assertThat(JsonValues.strings(JsonValues.mapOrEmpty(saved.get("group")).get("source_types")))
+                .containsExactly("PegaSecurityEvent", "PegaDB");
+        assertThat(ModuleChecks.marker(world.xslt(xsltsInBuild().get("PEGA security")).getData()))
+                .hasValueSatisfying(marker -> assertThat(marker.sourceTypes()).containsExactly("PegaSecurityEvent",
+                        "PegaDB"));
+        // PegaDB joins the group where it runs.
+        assertThat(JsonValues.mapOrEmpty(rowNamed(written.getLast(), "PegaDB").get("pipeline")))
+                .containsEntry("name", "PEGA PEGA security");
     }
 
     @Test
@@ -642,6 +709,16 @@ class TestSourceTypeGroups {
                 TranslationWorld.VERSION);
         assertThat(generated.problems()).isEmpty();
         return generated.xslt();
+    }
+
+    // The build's scope recorded in its registry, as record_source_types records it: its group and source types.
+    private void scoped(final String group, final List<String> sourceTypes) {
+        final Map<String, Object> state = SourceTypeRegistry.read(written.isEmpty()
+                ? registry().doc().text()
+                : written.getLast());
+        state.put("scope", Map.of("build", BUILD, "group", group, "source_types", sourceTypes, "by", "user", "at",
+                "2026-11-13T00:00:00Z"));
+        written.add(SourceTypeRegistry.render(state));
     }
 
     // The registry's text with each row changed so.

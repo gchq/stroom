@@ -85,8 +85,7 @@ public final class SourceTypeScope {
     /// @param build    The build reading through it, or null for whichever build chose it.
     /// @param fallback The registry's rows, used when the scope keeps none (one chosen before they were kept); with
     ///                 none, each source type matches its own name exactly.
-    /// @return The scope; empty when no source type field or scope is kept, or the scope is another build's (a survey
-    /// carried on from one promoted beside the feed keeps the scope of the build that promoted it).
+    /// @return The scope; empty when no source type field or scope is kept, or the scope is another build's.
     public static Optional<SourceTypeScope> of(final Map<String, Object> sources,
                                                final String build,
                                                final List<SourceTypeRows.Row> fallback) {

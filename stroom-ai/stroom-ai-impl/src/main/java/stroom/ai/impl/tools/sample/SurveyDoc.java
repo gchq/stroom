@@ -70,9 +70,6 @@ public final class SurveyDoc {
     public static final String ACCEPTED = "accepted";
     /// The state's key for the streams a call the user agreed to survey the feed with, below the default.
     public static final String FEWER_STREAMS = "fewer_streams";
-    /// The state's key for the user's choice of where the survey doc goes when the build is promoted (`choice`:
-    /// `beside` the feed, `keep` in the build, or `later`; `by`, `at`).
-    public static final String PROMOTION = "promotion";
     /// The state's key for what each stream read was read for, by its id: the source types of the build's scope it
     /// was read through ([SourceTypeScope#signature()]), or [SourceTypeScope#ALL] for every one. A stream read with
     /// no entry was read before scopes were kept: for every source type.
@@ -324,9 +321,6 @@ public final class SurveyDoc {
                     JsonValues.truthy(merged.get(SourceTypeProfiles.STATE_KEY))
                             ? (Map<String, Object>) merged.get(SourceTypeProfiles.STATE_KEY)
                             : null, (Map<String, Object>) sources));
-        }
-        if (result.get(PROMOTION) != null) {
-            merged.put(PROMOTION, result.get(PROMOTION));
         }
         if (result.get(SCOPE_READ) instanceof final Map<?, ?> signed && !signed.isEmpty()) {
             merged.put(SCOPE_READ, signed(JsonValues.mapOrEmpty(merged.get(SCOPE_READ)),
