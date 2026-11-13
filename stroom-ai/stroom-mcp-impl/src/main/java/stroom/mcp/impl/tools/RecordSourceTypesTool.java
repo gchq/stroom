@@ -658,9 +658,10 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                 }
             }
             if (was.get("pipeline") instanceof final Map<?, ?> pipeline) {
-                // A dispatcher's routing, from before each group had a pipeline of its own, is no longer kept.
+                // Only what a group's pipeline is: its name, its uuid and whether it is a new version (an earlier
+                // routing between pipelines, before each group had a pipeline of its own, is not kept).
                 final Map<String, Object> kept = new LinkedHashMap<>(JsonValues.mapOrEmpty(pipeline));
-                kept.keySet().removeAll(List.of("own", "dispatcher"));
+                kept.keySet().retainAll(List.of("name", "uuid", "new_version"));
                 entry.put("pipeline", kept);
             }
             if (was.get("references") != null) {

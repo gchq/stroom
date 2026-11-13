@@ -95,6 +95,10 @@ rules:
   # counted, once a document (XsltGenerator.PASSED_OVER), as the user chose.
   - {message: 'Passed over \d+ record\(s\) not of this group''s source types', class: benign,
      reason: "Records of source types this pipeline's source type group doesn't translate (other groups', parked, dropped or new), passed over as the user chose and counted: not a fault"}
+  # A whole translation of a feed whose survey confirmed a source type field: a value the survey didn't see, logged
+  # once a stream (XsltGenerator.UNSEEN_SOURCE_TYPE). Its records are translated by the rules as any other.
+  - {message: 'New source type ''.*'' in .+, not seen when this feed was surveyed', class: benign,
+     reason: "A value of the source type field the survey didn't see when this translation was built: its records were translated by the rules as any other, so not a fault, but the feed carries a source it wasn't surveyed for. Tell the user, and suggest surveying the feed again (survey_feed in a build on it) so its kinds are classified and translated"}
   # A source type group's held field (a message) that doesn't parse: its values are left out of the event, which is
   # still written; counted, not a fault of the pipeline (a source truncating its messages, as PEGA's SOAP bodies).
   - {message: ' did not parse as (XML|JSON) \(truncated, or not that format\)', class: benign,

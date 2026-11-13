@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolRefusal;
@@ -23,6 +24,7 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.HelpersXslt;
 import stroom.ai.impl.tools.generation.ModuleChecks;
+import stroom.ai.impl.tools.generation.SeenSourceTypes;
 import stroom.ai.impl.tools.generation.SourceTypeModule;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
@@ -86,6 +88,39 @@ class TestSourceTypeGroups {
                     written.add(inv.getArgument(4));
                     return new SurveyRecord("r", "PEGA source types", inv.getArgument(4));
                 });
+    }
+
+    @Test
+    void aWholeTranslationsSeenSourceTypesAreTheRegistrysRowsElseTheSurveysValues() {
+        final TranslationBuilds builds = Mockito.mock(TranslationBuilds.class);
+        final SourceTypeRegistries registries = Mockito.mock(SourceTypeRegistries.class);
+        final SourceTypeGroups groups = new SourceTypeGroups(Mockito.mock(WriteGuard.class),
+                Mockito.mock(DocumentAccess.class), registries, Mockito.mock(TranslationDocs.class), builds,
+                Mockito.mock(BuildRecords.class));
+        final Map<String, Object> values = new LinkedHashMap<>();
+        values.put("PegaSecurityEvent", Map.of("records", 3));
+        values.put("PegaDB", Map.of("records", 2));
+        final Map<String, Object> surveyed = Map.of("feed", "PEGA", "source_types", Map.of("field", "sourcetype",
+                "values", values));
+        Mockito.when(builds.surveyStatesInBuild("whole")).thenReturn(List.of(surveyed));
+        Mockito.when(registries.registry("whole", "PEGA")).thenReturn(Optional.empty());
+
+        // No registry: the survey's values.
+        assertThat(groups.seenSourceTypes("whole")).contains(new SeenSourceTypes("sourcetype", List.of(
+                "PegaSecurityEvent", "PegaDB"), List.of()));
+        // A registry (record_source_types ran, no group built): its rows.
+        Mockito.when(registries.registry("whole", "PEGA")).thenReturn(Optional.of(registry()));
+        assertThat(groups.seenSourceTypes("whole")).contains(new SeenSourceTypes("sourcetype", List.of(
+                "PegaSecurityEvent", "PegaIntegration", "PegaDB"), List.of()));
+        // More values than the survey keeps one by one: an unseen value can't be told.
+        Mockito.when(registries.registry("whole", "PEGA")).thenReturn(Optional.empty());
+        values.put("(other values)", Map.of("records", 9));
+        assertThat(groups.seenSourceTypes("whole")).isEmpty();
+        // A feed with no source type field, or no build: nothing.
+        Mockito.when(builds.surveyStatesInBuild("plain")).thenReturn(List.of(Map.of("feed", "PLAIN",
+                "source_types", Map.of("aggregated", false))));
+        assertThat(groups.seenSourceTypes("plain")).isEmpty();
+        assertThat(groups.seenSourceTypes(null)).isEmpty();
     }
 
     @Test

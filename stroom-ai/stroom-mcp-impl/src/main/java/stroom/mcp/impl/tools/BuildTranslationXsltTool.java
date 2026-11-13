@@ -48,6 +48,7 @@ import stroom.ai.impl.tools.generation.MappingChanges;
 import stroom.ai.impl.tools.generation.MappingCompaction;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.MappingValidationException;
+import stroom.ai.impl.tools.generation.SeenSourceTypes;
 import stroom.ai.impl.tools.generation.SharedFunctions;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.SourceTypeModule;
@@ -692,6 +693,14 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             if (!request.sourceTypes().isEmpty()) {
                 throw new ToolRefusal("source_types are a source type group's: give group (its name) too");
             }
+            if (kept == null) {
+                // A whole translation of a feed whose survey confirmed a source type field: the values seen kept with
+                // the mapping, so the XSLT logs one it didn't see. Outside a build, the mapping's own are kept.
+                final String build = NullSafe.isNonBlankString(request.build())
+                        ? request.build()
+                        : NullSafe.get(request.uuid(), uuid -> groups.buildOf(uuid).orElse(null));
+                groups.seenSourceTypes(build).ifPresent(seen -> b.mapping = b.mapping.withSeenSourceTypes(seen));
+            }
             return;
         }
         final String build = NullSafe.nonBlankStringElse(request.build(), request.uuid() == null
@@ -710,7 +719,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 ? request.sourceTypes()
                 : kept.sourceTypes();
         final SourceTypeGroups.Registry registry = groups.registry(build, request.feeds());
-        b.group = groups.plan(build, registry, group, types, b.mapping.withModule(null), b.schema, b.version);
+        b.group = groups.plan(build, registry, group, types, b.mapping.withModule(null).withSeenSourceTypes(null),
+                b.schema, b.version);
         b.mapping = b.group.groupMapping();
     }
 
@@ -764,6 +774,13 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 b.result.put("xslt", null);
             }
             b.result.put("group", groupSaid(b));
+        } else if (b.mapping.seenSourceTypes() != null) {
+            final SeenSourceTypes seen = b.mapping.seenSourceTypes();
+            b.result.put("seen_source_types", "The survey found source type field " + seen.field() + ": the "
+                                              + (seen.values().size() + seen.patterns().size()) + " value(s) and "
+                                              + "pattern(s) seen are kept with the mapping, and the XSLT logs (INFO, "
+                                              + "once a stream) a value outside them, so review_coverage reports it "
+                                              + "(unseen_source_types) and the user can survey the feed again.");
         }
         b.result.put("schema_version", b.version);
         // A version given still needs telling where the user chose the variant in a form the agent didn't see.

@@ -116,6 +116,16 @@ public final class XsltGenerator {
     public static final String PASSED_OVER = "Passed over ";
     /// The end of a [#PASSED_OVER] line.
     public static final String PASSED_OVER_END = " record(s) not of this group's source types";
+    /// Logged (INFO) by a whole translation of a feed whose survey confirmed a source type field (its mapping's
+    /// `seen_source_types`), once a stream for each value of the field none seen matches: this, the value,
+    /// [#UNSEEN_SOURCE_TYPE_IN], the field, then [#UNSEEN_SOURCE_TYPE_END]. A prompt to survey the feed again, not a
+    /// fault: the records are translated by the rules as any other.
+    public static final String UNSEEN_SOURCE_TYPE = "New source type '";
+    /// What follows the value in an [#UNSEEN_SOURCE_TYPE] line, before the field.
+    public static final String UNSEEN_SOURCE_TYPE_IN = "' in ";
+    /// The end of an [#UNSEEN_SOURCE_TYPE] line.
+    public static final String UNSEEN_SOURCE_TYPE_END = ", not seen when this feed was surveyed: survey the feed "
+                                                        + "again to cover it";
     // The rule the common module's parts are written from: the wrapper's entries alone.
     private static final String COMMON_RULE = "common";
     // The field names a template's xpaths read, Data Splitter's and JSON's: data[@name='x'], *[@key='x'].
@@ -2170,7 +2180,8 @@ public final class XsltGenerator {
         final boolean callsJson = JSON_CALL.matcher(ToolJson.dumps(m.toJson(DumpMode.WITHOUT_NONE))).find();
         final boolean usesJson = !m.jsonFields().isEmpty() || !m.xmlFields().isEmpty() || callsJson
                                  || !ownFunctions.isEmpty() || !keyedFunctions.isEmpty() || zoneFunctionWanted
-                                 || dataFunctionWanted || module != null;     // the mcp prefix: its own functions
+                                 || dataFunctionWanted || module != null
+                                 || watchesSourceTypes();     // the mcp prefix: its own functions
         final Map<String, String> bound = new LinkedHashMap<>();
         m.functions().forEach(functions -> bound.put(functions.prefix(), functions.namespace()));
         final XmlElement sheet = XmlElement.create(XSL, "stylesheet", namespaces(usesDictMap, usesJson, bound));
@@ -2222,6 +2233,9 @@ public final class XsltGenerator {
             // event-logging's for the version.
             events.set(MappingFacts.XSI, "schemaLocation", schemaLocation(schema, version));
             events.addElement(XSL, "apply-templates", "select", recordsSelect(m), "mode", "event");
+            if (watchesSourceTypes()) {
+                logUnseenSourceTypes(events);
+            }
         }
         final List<Rooted> written = trees.stream().filter(rooted -> rooted.root() != null).toList();
         chooseShared(written);
@@ -2298,6 +2312,8 @@ public final class XsltGenerator {
         ownFunctions().forEach(sheet::append);
         if (module != null) {
             groupFunctions(sheet);
+        } else if (watchesSourceTypes()) {
+            seenFunctions(sheet);
         }
         return XmlSerialiser.toPrettyDocument(sheet);
     }
@@ -2359,8 +2375,8 @@ public final class XsltGenerator {
     }
 
     // A record of any other source type (or none): not written, its number read as the group's records' are, so
-    // Stroom moves on to the next record's location and the group's log lines name the right records (seen with the
-    // dispatcher: a record passed over without it left later lines naming an earlier record).
+    // Stroom moves on to the next record's location and the group's log lines name the right records (seen in
+    // testing: a record passed over without it left later lines naming an earlier record).
     private void groupPassOver(final XmlElement sheet) {
         final XmlElement template = sheet.addElement(XSL, "template", "match", "*[not(" + groupFunction("in-group")
                                                                                + "(.))]", "mode", recordMode(),
@@ -2409,6 +2425,66 @@ public final class XsltGenerator {
         value.addElement(XSL, "sequence", "select", "if (lower-case($stripped) = ("
                                                     + literals(SourceTypeFields.NIL_VALUES)
                                                     + ")) then '' else $stripped");
+    }
+
+    // --- a whole translation on a feed whose survey confirmed a source type field: values it didn't see ---
+
+    // Whether the XSLT logs the source type values its survey didn't see: a whole translation (no module) whose
+    // mapping keeps those seen.
+    private boolean watchesSourceTypes() {
+        return module == null && m.seenSourceTypes() != null && isSet(m.seenSourceTypes().field());
+    }
+
+    // Each value of the source type field in the document that none seen matches, logged (INFO) once a stream (a
+    // stroom:put key a value), after the records are translated as any other.
+    private void logUnseenSourceTypes(final XmlElement events) {
+        final String field = m.seenSourceTypes().field();
+        final String values = "distinct-values((" + recordsSelect(m) + ")/" + seenFunction("source-type-value")
+                              + "(.))";
+        final XmlElement each = events.addElement(XSL, "for-each", "select", values + "[. ne '' and not("
+                                                                             + seenFunction("seen-source-type")
+                                                                             + "(.))]");
+        final String key = "concat(" + onceKey("unseen") + ", .)";
+        final XmlElement first = each.addElement(XSL, "if", "test", "not(string(stroom:get(" + key + ")))");
+        first.addElement(XSL, "value-of", "select", "stroom:put(" + key + ", 'y')");
+        first.addElement(XSL, "sequence", "select", "stroom:log('INFO', concat(" + XPathText.literal(
+                UNSEEN_SOURCE_TYPE) + ", ., " + XPathText.literal(UNSEEN_SOURCE_TYPE_IN + field
+                                                                  + UNSEEN_SOURCE_TYPE_END) + "))");
+    }
+
+    // The functions telling a value the survey didn't see: a record's value of the source type field as the tools
+    // read it, and whether a value is one seen (equal to a value, or matching an anchored pattern).
+    private void seenFunctions(final XmlElement sheet) {
+        final SeenSourceTypes seen = m.seenSourceTypes();
+        final XmlElement value = sheet.addElement(XSL, "function", "name", seenFunction("source-type-value"), "as",
+                "xs:string");
+        value.append(new XmlComment(XsltComments.comment("A record's " + seen.field() + " as the tools read it: "
+                                                         + "stripped, and '' for none or a nil value")));
+        value.addElement(XSL, "param", "name", "record", "as", "element()");
+        value.addElement(XSL, "variable", "name", "stripped", "select", "replace(string(($record/"
+                                                                        + XPathText.fieldText(m.input(),
+                seen.field()) + ")[1]), '^[ \\t\\n\\r]+|[ \\t\\n\\r]+$', '')");
+        value.addElement(XSL, "sequence", "select", "if (lower-case($stripped) = ("
+                                                    + literals(SourceTypeFields.NIL_VALUES)
+                                                    + ")) then '' else $stripped");
+        final XmlElement known = sheet.addElement(XSL, "function", "name", seenFunction("seen-source-type"), "as",
+                "xs:boolean");
+        known.append(new XmlComment(XsltComments.comment("True for a value of " + seen.field() + " seen when the "
+                                                         + "feed was surveyed")));
+        known.addElement(XSL, "param", "name", "value", "as", "xs:string");
+        final List<String> tests = new ArrayList<>();
+        if (!seen.values().isEmpty()) {
+            tests.add("$value = (" + literals(seen.values()) + ")");
+        }
+        seen.patterns().forEach(pattern -> tests.add("matches($value, " + XPathText.literal(pattern) + ")"));
+        known.addElement(XSL, "sequence", "select", tests.isEmpty()
+                ? "false()"
+                : String.join(" or ", tests));
+    }
+
+    // A function telling values the survey didn't see, in the mcp namespace.
+    private String seenFunction(final String name) {
+        return "mcp:" + XsltNames.styleName(name, style.naming());
     }
 
     // A function of the group's own, in the mcp namespace, its name prefixed with the group's mode.
