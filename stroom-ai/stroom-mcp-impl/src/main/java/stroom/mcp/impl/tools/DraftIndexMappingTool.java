@@ -635,13 +635,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             keepExample(draft, indexName, streamIds.getFirst(), pasted, exampleNotes);
         }
         plan = plans.withCardinality(plan);
-        // The fields a translation's repeated group writes (each recipient one User with its Id and Domain): one
-        // field of objects in Elasticsearch, so an item's values stay together; fields of values in Lucene.
-        // An aggregated feed's output feed: the fields of every group writing to it.
-        final GroupedFields.Grouped grouped = GroupedFields.apply(plan, inputs.translationFields(streamIds,
-                feedIndexes == null
-                        ? List.of()
-                        : feedIndexes.get().groupXslts(build, streamIds)));
+        final GroupedFields.Grouped grouped = grouped(plan, build, streamIds);
         plan = grouped.plan();
         draftNotes.addAll(grouped.notes());
         final List<String> standInWarnings = new ArrayList<>();
@@ -1318,12 +1312,17 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         } catch (final IllegalArgumentException e) {
             throw new ToolRefusal("The amended plan isn't valid: " + e.getMessage());
         }
+        // The streams given, else those the plan was drafted from.
+        final List<Long> planStreams = streamIds.isEmpty()
+                ? memory.planStreams(indexName)
+                : streamIds;
+        // A field a change adds from a translation's repeated group is planned as the draft plans one (seen: a
+        // group's field added by changes= stayed a flat field beside the group's field of objects).
+        final GroupedFields.Grouped grouped = grouped(plan, buildOf(context, planStreams), planStreams);
+        plan = grouped.plan();
         // An aggregated feed's output feed: checked against its index again, as a change may clash.
         Map<String, Object> feedIndex = Map.of();
         if (feedIndexes != null) {
-            final List<Long> planStreams = streamIds.isEmpty()
-                    ? memory.planStreams(indexName)
-                    : streamIds;
             final FeedIndexDecisions.ForPlan forFeed = feedIndexes.get().forPlan(call, context,
                     buildOf(context, planStreams), planStreams, plan, NAME);
             plan = forFeed.plan();
@@ -1343,10 +1342,22 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                 inputs.translationWrites(streamIds.isEmpty()
                         ? memory.planStreams(indexName)
                         : streamIds)));
+        if (!grouped.notes().isEmpty()) {
+            result.put("draft_notes", grouped.notes());
+        }
         if (!feedIndex.isEmpty()) {
             result.put("feed_index", feedIndex);
         }
         return result;
+    }
+
+    // The fields a translation's repeated group writes (each recipient one User with its Id and Domain): one field
+    // of objects in Elasticsearch, so an item's values stay together; fields of values in Lucene. An aggregated
+    // feed's output feed: the fields of every group writing to it.
+    private GroupedFields.Grouped grouped(final FieldPlan plan, final String build, final List<Long> streamIds) {
+        return GroupedFields.apply(plan, inputs.translationFields(streamIds, feedIndexes == null
+                ? List.of()
+                : feedIndexes.get().groupXslts(build, streamIds)));
     }
 
     /// What the index being replaced wrote that the draft doesn't. Seen in VS Code: asked to make an indexing pipeline

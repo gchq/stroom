@@ -37,6 +37,7 @@ public final class LeafReading {
     private String repeat;
     private String repeatSelect;
     private String guard;
+    private GroupReading group;
 
     /// @param path     Where the element goes, e.g. `EventDetail/Authenticate/User/Id`, or `.../@Attribute`; a
     ///                 Data entry inside Data elements with a [#CONTAINER] step for each.
@@ -124,6 +125,17 @@ public final class LeafReading {
         this.guard = guard;
     }
 
+    /// @return For a repeated group's element (written once per item by the generator's loop), the loop read;
+    /// else null.
+    public GroupReading group() {
+        return group;
+    }
+
+    /// @param group The group's loop read.
+    void setGroup(final GroupReading group) {
+        this.group = group;
+    }
+
     /// @return What it is known by: its path and Data name (with the Data it is in, as [FieldMapping#dataKey()]).
     public List<String> key() {
         return Arrays.asList(path, dataName == null || dataParent == null
@@ -132,9 +144,12 @@ public final class LeafReading {
     }
 
     /// @param parser The parser of the XSLT it was read from.
-    /// @return What it writes, to compare with another reading's: its constant, its repeat as written, or its
-    /// expression whatever its spacing and brackets.
+    /// @return What it writes, to compare with another reading's: its constant, its group's loop as read, its
+    /// repeat as written, or its expression whatever its spacing and brackets.
     public List<Object> form(final XPathTreeParser parser) {
+        if (group != null) {
+            return group.form(parser);
+        }
         if (value != null) {
             return Arrays.asList("value", value);
         }
@@ -156,6 +171,10 @@ public final class LeafReading {
         if (dataParent != null) {
             // Only for a Data inside Data, so other readings keep the keys the reader fixtures pin.
             out.put("data_parent", dataParent);
+        }
+        if (group != null) {
+            // Only for a group's loop, so other readings keep the keys the reader fixtures pin.
+            out.put("group", group.toMap());
         }
         return out;
     }

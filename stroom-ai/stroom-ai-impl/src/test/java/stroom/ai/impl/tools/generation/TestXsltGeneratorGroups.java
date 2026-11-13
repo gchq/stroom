@@ -339,17 +339,4 @@ class TestXsltGeneratorGroups extends XsltRuns {
                 {"path": "Id", "item": true}"""))).hasMessageContaining("item reads a group's item");
     }
 
-    @Test
-    void aGroupsLoopReadBackIsNamedAsNotRead() {
-        // rebuild_mapping doesn't read a group's loop back into a group entry: it says so rather than lose it.
-        final XsltGenerator.Generated result = generate(sendMapping("data_splitter", entry("""
-                {"path": "EventDetail/Send/Destination/User", "for_each": {"split": "recipients", "on": ","},
-                 "fields": [{"path": "Id", "item": true}]}""")));
-        final RebuiltMapping rebuilt = XsltReader.rebuild(result.xslt(), null, null);
-        assertThat(rebuilt.mapping() == null
-                   || rebuilt.mapping().everyEntry().stream().noneMatch(FieldMapping::isGroup)).isTrue();
-        assertThat(String.join(" ", rebuilt.lost()) + String.join(" ", rebuilt.raw())
-                   + String.join(" ", rebuilt.notes()) + String.join(" ", rebuilt.problems()))
-                .as(String.valueOf(rebuilt.summary())).contains("for-each");
-    }
 }

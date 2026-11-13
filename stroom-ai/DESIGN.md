@@ -2263,9 +2263,12 @@ from a SEG mail gateway's `recipients="a@x,b@y"`, each recipient wanted as one `
   wrote the Events): two or more planned fields read from one group's element become, in Elasticsearch, one `object`
   field (not `nested`) whose description says a query on two of an item's fields can match values from different
   items; in Lucene (or Elasticsearch with flat names) fields of several values, saying the pairing is lost. Only the
-  outermost group is an object. Not applied on the `changes=` amend path.
-* **Not built:** `rebuild_mapping` (`XsltReader`) doesn't read a group's loop back into a group entry; it reports
-  that XSLT as not read, as it does other XSLT it can't read.
+  outermost group is an object, on the draft and the `changes=` amend path alike (built 2026-11-13: a field added
+  later joins its group's object).
+* `rebuild_mapping` (`XsltReader`) reads a group's loop in the generator's shape back into a group entry (split,
+  array or zip, `as`, item and record reads, nested to the depth cap; built 2026-11-13); a loop of any other shape,
+  or a field reading two items, is reported as not read, never guessed. With the mapping lost, `as` comes back in
+  the generator's naming style.
 
 ### Saxon limits (built)
 

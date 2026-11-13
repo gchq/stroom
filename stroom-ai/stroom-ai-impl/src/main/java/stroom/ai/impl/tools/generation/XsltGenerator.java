@@ -1616,17 +1616,25 @@ public final class XsltGenerator {
         return members(base(source, field, "json".equals(m.input())));
     }
 
-    // Each value's text split on a literal separator (Saxon's q flag: no regex over the whole value), each piece
-    // trimmed.
-    private static String pieces(final String values, final String separator) {
+    /// @param values    The values split.
+    /// @param separator The separator, a literal.
+    /// @return Each value's text split on a literal separator (Saxon's q flag: no regex over the whole value), each
+    /// piece trimmed: a split group's items (before empty pieces are dropped), or a zip's list.
+    static String pieces(final String values, final String separator) {
         return "(" + values + ") ! tokenize(string(.), " + XPathText.literal(separator) + ", 'q') ! " + TRIM;
     }
 
     // An array's members: a JSON array's (one object, not in an array, as one item), else the nodes as they are.
     private String members(final String values) {
         return "json".equals(m.input())
-                ? "(" + values + ")/(if (self::array) then * else .)"
+                ? jsonMembers(values)
                 : values;
+    }
+
+    /// @param values A JSON input.
+    /// @return Its members: an array's, or one object (not in an array) as one.
+    static String jsonMembers(final String values) {
+        return "(" + values + ")/(if (self::array) then * else .)";
     }
 
     // Where a source's field is read: the record (a group in none, or scope record) or an item. Elements: a Data

@@ -34,6 +34,7 @@ public final class RuleReading {
     private final List<String> lost = new ArrayList<>();
     private final List<String> guards = new ArrayList<>();
     private final List<SharedCall> calls = new ArrayList<>();
+    private int groupDepth;
 
     /// @param key  Its template's mode or name, `inline-N`, or `drop-NAME`.
     /// @param name Its name, from the comment the generator writes before it, or null.
@@ -102,6 +103,16 @@ public final class RuleReading {
     /// @return The named templates of an imported XSLT it calls in place.
     public List<SharedCall> calls() {
         return calls;
+    }
+
+    /// @return While reading: how many groups' loops the element being read is in.
+    int groupDepth() {
+        return groupDepth;
+    }
+
+    /// @param groupDepth How many groups' loops the element being read is in.
+    void setGroupDepth(final int groupDepth) {
+        this.groupDepth = groupDepth;
     }
 
     /// @param name Its name.

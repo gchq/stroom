@@ -254,6 +254,70 @@ class TestGroupedFields {
     }
 
     @Test
+    void aFieldAddedBesideAGroupsObjectNamedBelowItJoinsIt() {
+        // An amended plan (changes=): the group's object planned already, and a field of the group added.
+        final String withStatus = """
+                {"path": "EventDetail/Send/Destination/User", "for_each": {"split": "recipients", "on": ","},
+                 "as": "recipient",
+                 "fields": [{"path": "Id", "item": true, "transform": "strip_domain"},
+                            {"path": "Domain", "item": true, "transform": "domain"},
+                            {"path": "Data", "data_name": "status", "field": "status", "scope": "record"}]}""";
+        final FieldPlan drafted = GroupedFields.apply(plan(FieldPlan.ELASTICSEARCH, recipientFields()),
+                leaves(RECIPIENTS)).plan();
+        final List<PlannedField> fields = new ArrayList<>(drafted.fields());
+        fields.add(PlannedField.of("destination.user.status", "keyword",
+                "EventDetail/Send/Destination/User/Data[@Name='status']/@Value"));
+
+        final GroupedFields.Grouped grouped = GroupedFields.apply(drafted.withFields(fields), leaves(withStatus));
+
+        assertThat(grouped.plan().fields()).extracting(PlannedField::name)
+                .containsExactly("StreamId", "EventId", "@timestamp", "destination.user", "source.ip");
+        assertThat(grouped.plan().fields().get(3).items()).extracting(PlannedField::name, PlannedField::source)
+                .containsExactly(tuple("id", "Id"), tuple("domain", "Domain"),
+                        tuple("status", "Data[@Name='status']/@Value"));
+        assertThat(grouped.plan().fields().get(3).items().getLast().description())
+                .startsWith("Per item: one object for each recipient");
+        assertThat(grouped.notes()).singleElement().asString()
+                .startsWith("`destination.user.status`: items of `destination.user`");
+        // Planned again: as it is, nothing said.
+        final GroupedFields.Grouped again = GroupedFields.apply(grouped.plan(), leaves(withStatus));
+        assertThat(again.plan()).isEqualTo(grouped.plan());
+        assertThat(again.notes()).isEmpty();
+    }
+
+    @Test
+    void aFieldAddedBesideAGroupsObjectNotNamedBelowItSaysThePairingIsLost() {
+        final FieldPlan drafted = GroupedFields.apply(plan(FieldPlan.ELASTICSEARCH, recipientFields()),
+                leaves(RECIPIENTS)).plan();
+        final List<PlannedField> fields = new ArrayList<>(drafted.fields());
+        fields.add(PlannedField.of("recipient_domain", "keyword", "EventDetail/Send/Destination/User/Domain"));
+
+        final GroupedFields.Grouped grouped = GroupedFields.apply(drafted.withFields(fields), leaves(RECIPIENTS));
+
+        final PlannedField added = grouped.plan().fields().getLast();
+        assertThat(added.name()).isEqualTo("recipient_domain");
+        assertThat(added.multiple()).isTrue();
+        assertThat(added.description()).contains("beside `destination.user.id`, `destination.user.domain` of the "
+                                                 + "same item", "the pairing of an item's values is lost");
+        assertThat(grouped.notes()).singleElement().asString()
+                .contains("isn't named below `destination.user`");
+        final GroupedFields.Grouped again = GroupedFields.apply(grouped.plan(), leaves(RECIPIENTS));
+        assertThat(again.plan()).isEqualTo(grouped.plan());
+        assertThat(again.notes()).isEmpty();
+    }
+
+    @Test
+    void luceneFieldsOfAGroupPlannedAgainAreAsTheyWereAndNothingIsSaid() {
+        final GroupedFields.Grouped grouped = GroupedFields.apply(plan(FieldPlan.LUCENE, recipientFields()),
+                leaves(RECIPIENTS));
+
+        final GroupedFields.Grouped again = GroupedFields.apply(grouped.plan(), leaves(RECIPIENTS));
+
+        assertThat(again.plan()).isEqualTo(grouped.plan());
+        assertThat(again.notes()).isEmpty();
+    }
+
+    @Test
     void theDocumentationCarriesTheNotesAfterTheFieldsOwnWords() {
         final GroupedFields.Grouped elastic = GroupedFields.apply(plan(FieldPlan.ELASTICSEARCH, recipientFields()),
                 leaves(RECIPIENTS));

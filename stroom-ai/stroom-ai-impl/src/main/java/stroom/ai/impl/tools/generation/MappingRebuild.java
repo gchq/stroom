@@ -22,8 +22,10 @@ import stroom.ai.impl.tools.validation.XsltVersionHistory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -38,6 +40,13 @@ import java.util.regex.Pattern;
 final class MappingRebuild {
 
     private static final Pattern EVENT_TYPE = Pattern.compile("^event[_-]type[_-]");
+    // What the rebuild reads of loops, said where one isn't read.
+    private static final String NOT_A_LOOP_READ = "a group's loop and a repeated Data entry's are read back as the "
+                                                  + "generator writes them, not other loops (one written by hand, "
+                                                  + "say); carry it into the mapping by hand (a group: for_each, as "
+                                                  + "and fields)";
+    // A path of XML names and attributes, as a field of an XML input is written.
+    private static final Pattern XML_PATH = Pattern.compile("@?[A-Za-z_][A-Za-z0-9_.-]*(/@?[A-Za-z_][A-Za-z0-9_.-]*)*");
     private static final String XSL = XmlTrees.XSL;
     private static final String EVT = XsltGenerator.EVT;
 
@@ -47,6 +56,8 @@ final class MappingRebuild {
     private final Map<String, String> imported;
     private XsltReading reading;
     private RebuiltMapping out;
+    // The input: data_splitter, json, xml or xml_fragments.
+    private String kind;
 
     /// @param code     The XSLT as it is.
     /// @param kept     The mapping kept with it before, or null.
@@ -72,7 +83,7 @@ final class MappingRebuild {
         }
         out = new RebuiltMapping(reading.notes());
         final String records = Objects.requireNonNullElse(reading.records(), "");
-        String kind = kept != null
+        kind = kept != null
                 ? kept.input()
                 : XsltReader.INPUT_NAMESPACE.entrySet().stream()
                         .filter(entry -> entry.getValue().equals(reading.namespace()))
@@ -188,15 +199,29 @@ final class MappingRebuild {
             final LeafReading previous = oldLeaves.get(leaf.key());
             final List<Object> form = leaf.form(reading.parser());
             if (previous != null && previous.form(baseParser).equals(form) && old.effective().containsKey(leaf.key())) {
-                entries.add(new Written(Arrays.asList(leaf.key(), form),
-                        old.effective().get(leaf.key()).toJson(DumpMode.WITHOUT_NONE)));
+                final FieldMapping same = old.effective().get(leaf.key());
+                // A group's dump without its defaults: a group refuses repeat, even false.
+                entries.add(new Written(Arrays.asList(leaf.key(), form), same.toJson(same.isGroup()
+                        ? DumpMode.COMPACT
+                        : DumpMode.WITHOUT_NONE)));
                 reused.add(entries.size() - 1);
                 out.reusedOne();
                 continue;
             }
+            if (leaf.group() != null) {
+                final String where = "rule " + name + ": " + leaf.path() + (XsltReader.truthy(leaf.dataName())
+                        ? " Data " + leaf.key().get(1)
+                        : "");
+                final Map<String, Object> group = groupEntry(leaf, List.of(), idioms, where);
+                if (group != null) {
+                    entries.add(new Written(Arrays.asList(leaf.key(), form), group));
+                    out.added().add(where);
+                }
+                continue;
+            }
             if (XsltReader.truthy(leaf.repeat()) && leaf.repeatSelect() == null) {
                 out.problems().add("rule " + name + ": " + leaf.path() + " repeats (xsl:for-each) in a way no entry "
-                                   + "it had writes");
+                                   + "it had writes: " + NOT_A_LOOP_READ);
                 continue;
             }
             final ReadIdioms.Entry entry = idioms.entry(repeated(leaf));
@@ -228,6 +253,436 @@ final class MappingRebuild {
             }
         }
         return keptOrder(entries, reused, old);
+    }
+
+    // --- repeated groups ----------------------------------------------------------------------------------------
+
+    // A group's loop read back into its entry: path (and Data name), for_each, as and fields, each field read as an
+    // entry is, its reads of an item told apart by putting a sentinel field in the item's place (ReadIdioms reads it
+    // as it reads a field of the record). Null, with the problem said, when the loop or a field reads in a way no
+    // group entry writes.
+    private Map<String, Object> groupEntry(final LeafReading leaf,
+                                           final List<ItemFrame> outer,
+                                           final ReadIdioms idioms,
+                                           final String where) {
+        final GroupReading group = leaf.group();
+        final ItemFrame frame = new ItemFrame(group.variable(), outer.size(), zipNames(group));
+        final Map<String, Object> forEach = itemSource(group, outer, frame, idioms, where);
+        if (forEach == null) {
+            return null;
+        }
+        final List<ItemFrame> frames = new ArrayList<>(outer);
+        frames.add(frame);
+        final List<Map<String, Object>> fields = new ArrayList<>();
+        for (final LeafReading child : group.leaves()) {
+            final String at = where + " > " + child.path() + (XsltReader.truthy(child.dataName())
+                    ? " Data " + child.key().get(1)
+                    : "");
+            final Map<String, Object> field;
+            if (child.group() != null) {
+                field = groupEntry(child, frames, idioms, at);
+            } else if (XsltReader.truthy(child.repeat())) {
+                out.problems().add(at + " repeats (xsl:for-each) inside a group's item in a way no entry writes: "
+                                   + NOT_A_LOOP_READ);
+                field = null;
+            } else {
+                field = groupField(child, frames, idioms, at);
+            }
+            if (field == null) {
+                return null;
+            }
+            fields.add(field);
+        }
+        final Map<String, Object> entry = new LinkedHashMap<>();
+        entry.put("path", leaf.path());
+        if (XsltReader.truthy(leaf.dataName())) {
+            entry.put("data_name", leaf.dataName());
+            if (leaf.dataParent() != null) {
+                entry.put("data_parent", leaf.dataParent());
+            }
+        }
+        entry.put("for_each", forEach);
+        if (!"item".equals(group.variable())) {
+            entry.put("as", group.variable());
+        }
+        entry.put("fields", fields);
+        return entry;
+    }
+
+    // Each zip list's variable ($name) to its name in the zip: the variable without the item's name it starts with
+    // (the generator names it after the item and the list).
+    private static Map<String, String> zipNames(final GroupReading group) {
+        final Map<String, String> out = new LinkedHashMap<>();
+        for (final String variable : group.lists().keySet()) {
+            String name = variable.substring(1);
+            if (name.length() > group.variable().length() && name.startsWith(group.variable())) {
+                name = name.substring(group.variable().length());
+                if (name.startsWith("_") || name.startsWith("-")) {
+                    name = name.substring(1);
+                } else {
+                    name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
+                }
+            }
+            out.put(variable, name);
+        }
+        return out;
+    }
+
+    // A group's for_each, from what its loop selects: a split's pieces, a zip's lists, or an array's members.
+    private Map<String, Object> itemSource(final GroupReading group,
+                                           final List<ItemFrame> outer,
+                                           final ItemFrame frame,
+                                           final ReadIdioms idioms,
+                                           final String where) {
+        final Map<String, Object> source = new LinkedHashMap<>();
+        final List<SourceField> read = new ArrayList<>();
+        if (!frame.lists().isEmpty()) {
+            final Map<String, String> zip = new LinkedHashMap<>();
+            final Set<String> separators = new HashSet<>();
+            for (final Map.Entry<String, String> list : group.lists().entrySet()) {
+                final XPathNode node = XsltReader.parseOrNull(list.getValue(), reading.parser());
+                final XPathMatch pieces = unify("pieces", node);
+                final SourceField field = pieces != null
+                        ? sourceField(pieces.expr(1), outer, false)
+                        : sourceField(members(node), outer, false);
+                separators.add(pieces != null
+                        ? pieces.string(1)
+                        : "");
+                if (field == null) {
+                    return notASource(where, list.getValue());
+                }
+                read.add(field);
+                zip.put(frame.lists().get(list.getKey()), field.name());
+            }
+            if (separators.size() != 1) {
+                out.problems().add(where + ": the lists of its zip aren't split alike (some on a separator, some "
+                                   + "not, or on different ones), as no zip's lists are; not read");
+                return null;
+            }
+            source.put(ItemSource.ZIP, zip);
+            final String on = separators.iterator().next();
+            if (!on.isEmpty()) {
+                source.put("on", on);
+            }
+        } else {
+            final XPathNode node = XsltReader.parseOrNull(group.items(), reading.parser());
+            final XPathMatch pieces = unify("pieces", node);
+            final SourceField field = pieces != null
+                    ? sourceField(pieces.expr(1), outer, false)
+                    : sourceField(members(node), outer, true);
+            if (field == null) {
+                return notASource(where, group.items());
+            }
+            read.add(field);
+            source.put(pieces != null
+                    ? ItemSource.SPLIT
+                    : ItemSource.ARRAY, field.name());
+            if (pieces != null) {
+                source.put("on", pieces.string(1));
+            }
+        }
+        final Set<Integer> from = new HashSet<>();
+        read.forEach(field -> from.add(field.frame()));
+        if (from.size() != 1) {
+            out.problems().add(where + ": its zip's lists are read from different items (or the record), as no "
+                               + "zip's are; not read");
+            return null;
+        }
+        final int at = from.iterator().next();
+        if (at < 0 && !outer.isEmpty()) {
+            source.put("scope", "record");
+        } else if (at >= 0 && at < outer.size() - 1) {
+            source.put("item", outer.get(at).variable());
+        }
+        return source;
+    }
+
+    private Map<String, Object> notASource(final String where, final String items) {
+        out.problems().add(where + ": its loop's items (" + XsltReader.head(items, 120) + ") aren't a split, an array "
+                           + "or a zip as the generator writes a group's; not read");
+        return null;
+    }
+
+    // An array's (or an unsplit zip list's) input: a JSON array's members' input, else the input as it is.
+    private XPathNode members(final XPathNode node) {
+        final XPathMatch json = "json".equals(kind)
+                ? unify("json members", node)
+                : null;
+        return json != null
+                ? json.expr(1)
+                : node;
+    }
+
+    private static XPathMatch unify(final String shape, final XPathNode node) {
+        return node == null
+                ? null
+                : XPathTrees.unify(ReadShapes.SHAPES.get(shape), node).orElse(null);
+    }
+
+    // The field a group's items are read from, and where (an enclosing item's depth, or -1 for the record); null if
+    // it isn't a field. Elements: a Data Splitter array's data elements, read without their values.
+    private SourceField sourceField(final XPathNode node,
+                                    final List<ItemFrame> frames,
+                                    final boolean elements) {
+        if (node == null) {
+            return null;
+        }
+        String text = substitute(XPathTrees.normal(node).text(), frames);
+        if (elements && "data_splitter".equals(kind)) {
+            text = text + "/@value";
+        }
+        final String field;
+        if (isXml()) {
+            field = XML_PATH.matcher(text).matches()
+                    ? text
+                    : null;
+        } else {
+            final XPathNode parsed = XsltReader.parseOrNull(text, reading.parser());
+            field = parsed == null
+                    ? null
+                    : new ReadIdioms(reading, kind, new ArrayList<>()).fieldOf(parsed);
+        }
+        if (!XsltReader.truthy(field)) {
+            return null;
+        }
+        final ItemRef ref = decode(field, frames);
+        return ref.key() == null
+                ? null
+                : new SourceField(ref.key(), ref.frame());
+    }
+
+    // A field of a group: read as an entry is, the item's place held by its sentinel, then the sentinel read back as
+    // the item (item: true, a key of it, an outer group's item by its name) or the record (scope: record).
+    private Map<String, Object> groupField(final LeafReading leaf,
+                                           final List<ItemFrame> frames,
+                                           final ReadIdioms idioms,
+                                           final String at) {
+        if (leaf.value() != null) {
+            return idioms.entry(leaf).json();
+        }
+        final Map<String, Object> xpath = itemXpath(leaf, frames);
+        if (xpath != null) {
+            return xpath;
+        }
+        final StringBuilder path = new StringBuilder();
+        if (leaf.dataParent() != null) {
+            for (final String parent : leaf.dataParent().split("/", -1)) {
+                path.append(LeafReading.CONTAINER).append(parent).append('/');
+            }
+        }
+        final LeafReading placed = new LeafReading(path + leaf.path(), leaf.dataName());
+        placed.setExpr(substitute(Objects.requireNonNullElse(leaf.expr(), ""), frames));
+        if (leaf.guard() != null) {
+            placed.setGuard(substitute(leaf.guard(), frames));
+        }
+        final int extracts = idioms.extracts().size();
+        final ReadIdioms.Entry entry = idioms.entry(placed);
+        final boolean extracted = idioms.extracts().subList(extracts, idioms.extracts().size()).stream()
+                .anyMatch(extraction -> String.valueOf(extraction).contains(ReadIdioms.ITEM_SENTINEL));
+        if (extracted) {
+            idioms.extracts().subList(extracts, idioms.extracts().size()).clear();
+        }
+        final Map<String, Object> json = new LinkedHashMap<>(entry.json());
+        final String problem = extracted
+                ? "extracts from its item, which no group field does"
+                : placeItem(json, frames);
+        if (problem != null) {
+            out.problems().add(at + ": " + problem + "; not read");
+            return null;
+        }
+        if (entry.raw()) {
+            (callsImported((String) json.get("xpath"))
+                    ? out.importedCalls()
+                    : out.raw()).add(at);
+        }
+        return json;
+    }
+
+    // A group's xpath entry, as the generator writes one: `$item ! (xpath)`, the item its context. Null for anything
+    // else.
+    private Map<String, Object> itemXpath(final LeafReading leaf, final List<ItemFrame> frames) {
+        final XPathNode tree = XsltReader.parseOrNull(leaf.expr(), reading.parser());
+        if (tree == null) {
+            return null;
+        }
+        final XPathNode node = XPathTrees.firstOf(tree).orElse(XPathTrees.normal(tree));
+        if (!"!".equals(node.symbol()) || node.size() != 2 || !"$".equals(node.get(0).symbol())) {
+            return null;
+        }
+        final int frame = frameOf(node.get(0).valueText(), frames);
+        final XPathNode inner = XPathTrees.unbracketed(node.get(1));
+        if (frame < 0 || XsltReader.variables(inner).stream()
+                .anyMatch(variable -> frameOf(variable.valueText(), frames) >= 0 || listOf(variable, frames) >= 0)) {
+            return null;
+        }
+        final Map<String, Object> json = new LinkedHashMap<>();
+        json.put("path", leaf.path());
+        if (XsltReader.truthy(leaf.dataName())) {
+            json.put("data_name", leaf.dataName());
+            if (leaf.dataParent() != null) {
+                json.put("data_parent", leaf.dataParent());
+            }
+        }
+        json.put("xpath", inner.text());
+        if (frame < frames.size() - 1) {
+            json.put("item", frames.get(frame).variable());
+        }
+        return json;
+    }
+
+    // An entry's reads of the sentinels put back as the item it reads: a key of it (field), the item itself (no
+    // field), from its own group's item or an outer one (item); reads of the record alone are scope: record. The
+    // problem, if it reads in a way no group field writes; else null.
+    @SuppressWarnings("unchecked")
+    private String placeItem(final Map<String, Object> json, final List<ItemFrame> frames) {
+        final List<ItemRef> refs = new ArrayList<>();
+        if (json.get("field") instanceof final String field) {
+            refs.add(decode(field, frames));
+        }
+        if (json.get("any_of") instanceof final List<?> anyOf) {
+            anyOf.forEach(field -> refs.add(decode(String.valueOf(field), frames)));
+        }
+        final Map<String, Object> lookup = json.get("lookup") instanceof final Map<?, ?> given
+                ? new LinkedHashMap<>((Map<String, Object>) given)
+                : null;
+        if (lookup != null && lookup.get("field") instanceof final String field) {
+            refs.add(decode(field, frames));
+        }
+        final Set<Integer> from = new HashSet<>();
+        refs.forEach(ref -> from.add(ref.frame()));
+        if (from.size() > 1) {
+            return "reads more than one item (or an item and the record) in one value, as no group field does";
+        }
+        final boolean self = refs.stream().anyMatch(ref -> ref.key() == null);
+        if (self && (refs.size() > 1 || lookup != null)) {
+            return "reads its item whole with another input, as no group field does";
+        }
+        if (json.get("field") instanceof String) {
+            if (self) {
+                json.remove("field");
+            } else {
+                json.put("field", refs.getFirst().key());
+            }
+        }
+        if (json.get("any_of") instanceof List<?>) {
+            json.put("any_of", refs.stream().map(ItemRef::key).toList());
+        }
+        if (lookup != null && lookup.get("field") instanceof String) {
+            lookup.put("field", refs.getLast().key());
+            json.put("lookup", lookup);
+        }
+        final int frame = from.isEmpty()
+                ? -1
+                : from.iterator().next();
+        if (frame < 0) {
+            if (!refs.isEmpty() || json.containsKey("xpath")) {
+                json.put("scope", "record");
+            }
+        } else if (frame < frames.size() - 1) {
+            json.put("item", frames.get(frame).variable());
+        } else if (self) {
+            json.put("item", true);
+        }
+        return json.toString().contains(ReadIdioms.ITEM_SENTINEL)
+                ? "reads its item in an expression no group field writes"
+                : null;
+    }
+
+    // A field read back: the item it is of (its depth, -1 for the record) and its key (null for the item itself).
+    private ItemRef decode(final String field, final List<ItemFrame> frames) {
+        final String separator = isXml()
+                ? "/"
+                : ReadShapes.SEPARATOR.get(kind);
+        for (final ItemFrame frame : frames) {
+            final String sentinel = frame.sentinel();
+            if (field.equals(sentinel)) {
+                return new ItemRef(frame.depth(), null);
+            }
+            if (field.startsWith(sentinel + separator)) {
+                return new ItemRef(frame.depth(), field.substring(sentinel.length() + separator.length()));
+            }
+        }
+        return new ItemRef(-1, field);
+    }
+
+    // The expression with each read of a group's item put as a read of the item's sentinel field: $item/key as
+    // the sentinel's key, $item alone as the sentinel, a zip list's $list[$item] as the sentinel's key of that name.
+    private String substitute(final String expr, final List<ItemFrame> frames) {
+        final XPathNode tree = XsltReader.parseOrNull(expr, reading.parser());
+        if (tree == null || frames.isEmpty()) {
+            return expr;
+        }
+        final Set<XPathNode> free = Collections.newSetFromMap(new IdentityHashMap<>());
+        free.addAll(XsltReader.variables(tree));
+        final List<XPathTrees.Replacement> found = new ArrayList<>();
+        for (final XPathNode node : tree.walk()) {
+            if ("[".equals(node.symbol()) && node.size() == 2 && free.contains(node.get(0))
+                && free.contains(node.get(1))) {
+                final int list = listOf(node.get(0), frames);
+                if (list >= 0 && frameOf(node.get(1).valueText(), frames) == list) {
+                    final ItemFrame frame = frames.get(list);
+                    found.add(new XPathTrees.Replacement(node, keyText(frame, frame.lists().get("$"
+                                                                                              + node.get(0)
+                            .valueText()))));
+                    free.remove(node.get(0));
+                    free.remove(node.get(1));
+                }
+            } else if ("/".equals(node.symbol()) && node.size() == 2 && free.contains(node.get(0))) {
+                final int frame = frameOf(node.get(0).valueText(), frames);
+                if (frame >= 0) {
+                    found.add(new XPathTrees.Replacement(node.get(0), containerText(frames.get(frame))));
+                    free.remove(node.get(0));
+                }
+            }
+        }
+        for (final XPathNode variable : free) {
+            final int frame = frameOf(variable.valueText(), frames);
+            if (frame >= 0) {
+                found.add(new XPathTrees.Replacement(variable, XPathText.fieldText(kind, frames.get(frame)
+                        .sentinel())));
+            }
+        }
+        return XPathTrees.splice(tree.text(), found);
+    }
+
+    // The innermost group whose item is this variable, or -1.
+    private static int frameOf(final String variable, final List<ItemFrame> frames) {
+        for (int i = frames.size() - 1; i >= 0; i--) {
+            if (frames.get(i).variable().equals(variable)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    // The innermost group one of whose zip lists is this variable, or -1.
+    private static int listOf(final XPathNode variable, final List<ItemFrame> frames) {
+        for (int i = frames.size() - 1; i >= 0; i--) {
+            if (frames.get(i).lists().containsKey("$" + variable.valueText())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    // The sentinel as the element its keys are below: a JSON key's, a Data Splitter data element's, an XML element.
+    private String containerText(final ItemFrame frame) {
+        return switch (kind) {
+            case "json" -> "*[@key=" + XPathText.literal(frame.sentinel()) + "]";
+            case "data_splitter" -> "data[@name=" + XPathText.literal(frame.sentinel()) + "]";
+            default -> frame.sentinel();
+        };
+    }
+
+    // A key of the sentinel, as a field of the record is read.
+    private String keyText(final ItemFrame frame, final String key) {
+        return isXml()
+                ? frame.sentinel() + "/" + key
+                : XPathText.fieldText(kind, frame.sentinel() + ReadShapes.SEPARATOR.get(kind) + key);
+    }
+
+    private boolean isXml() {
+        return !ReadShapes.SEPARATOR.containsKey(kind);
     }
 
     // A Data entry the generator repeats, read as an entry over what its loop selects (the entry's input); any other
@@ -531,6 +986,38 @@ final class MappingRebuild {
                 ? new ArrayList<>((List<Object>) list)
                 : value));
         return out;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A group being read back: its item's variable, its depth (0 outermost), and a zip's lists' variables ($name) to
+    /// their names in it.
+    private record ItemFrame(String variable, int depth, Map<String, String> lists) {
+
+        // What stands in for the item while its fields are read.
+        private String sentinel() {
+            return ReadIdioms.ITEM_SENTINEL + depth;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A field of an item or the record: the item's depth (-1 for the record), and the key (null for the item itself).
+    private record ItemRef(int frame, String key) {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The field a group's items are read from, and the item it is of (-1 for the record).
+    private record SourceField(String name, int frame) {
+
     }
 
 
