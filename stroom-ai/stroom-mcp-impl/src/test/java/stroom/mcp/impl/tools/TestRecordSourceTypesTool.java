@@ -20,6 +20,7 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
@@ -27,6 +28,7 @@ import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.util.json.JsonUtil;
 
+import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -43,8 +45,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
 /// record_source_types' scope against what the survey read: a scope that adds source types some stream wasn't read
-/// for starts the survey's coverage again; and rows given again, which keep the translated and placed rows they leave
-/// out, and change or remove one only as the user confirms.
+/// for starts the survey's coverage again; rows given again, which keep the translated and placed rows they leave
+/// out, and change or remove one only as the user confirms; and the scope as the build's one source type group, its
+/// source types and name chosen in one form (or given without forms), an existing group's name joining that group.
 class TestRecordSourceTypesTool {
 
     private static final String BUILD = "pega-v2";
@@ -147,13 +150,140 @@ class TestRecordSourceTypesTool {
                 .contains("rename", "PegaSecurityEvent", "Security", "remove");
     }
 
+    @Test
+    void theScopeFormChoosesTheGroupsSourceTypesAndItsName() {
+        final GroupUser user = new GroupUser(List.of("PegaIntegration", "PegaDB"), "PEGA back end");
+
+        final Map<String, Object> result = called(user.context(), Map.of("group", "PEGA integration"));
+
+        assertThat(result).as("%s", result).doesNotContainKey("error")
+                .containsEntry("group", "PEGA back end")
+                .containsEntry("scope", List.of("PegaIntegration", "PegaDB"))
+                .doesNotContainKey("joins");
+        // One form: a yes per source type offered (not the translated one), and the group's name, suggested.
+        assertThat(user.intros()).hasSize(1);
+        assertThat(user.intros().getFirst()).contains("go in this build's source type group", "one group",
+                        "parked for a later build", "Naming an existing group (PEGA security)")
+                .doesNotContain("**").doesNotContain("| ");
+        final Map<?, ?> properties = (Map<?, ?>) user.forms().getFirst().get("properties");
+        assertThat(properties.values().stream().map(field -> String.valueOf(((Map<?, ?>) field).get("title")))
+                .toList())
+                .containsExactly("Put PegaIntegration in the group", "Put PegaDB in the group",
+                        "What is the group called?");
+        assertThat(((Map<?, ?>) properties.get("text")).get("default")).isEqualTo("PEGA integration");
+        final Map<String, Object> scope = JsonValues.mapOrEmpty(SourceTypeRegistry.read(written.getLast())
+                .get("scope"));
+        assertThat(scope).containsEntry("build", BUILD).containsEntry("group", "PEGA back end")
+                .containsEntry("source_types", List.of("PegaIntegration", "PegaDB"));
+        assertThat(JsonValues.mapOrEmpty(rowNamed("PegaDB").get("decided")).get("reason")).asString()
+                .contains("PEGA back end");
+    }
+
+    @Test
+    void theSuggestedNameStandsWhereTheUserLeavesItAndTheRestIsParkedForLater() {
+        final GroupUser user = new GroupUser(List.of("PegaDB"), "");
+
+        final Map<String, Object> result = called(user.context(), Map.of("group", "PEGA databases"));
+
+        assertThat(result).as("%s", result).containsEntry("group", "PEGA databases")
+                .containsEntry("scope", List.of("PegaDB"));
+        assertThat(rowNamed("PegaIntegration")).containsEntry("status", SourceTypeRegistry.PARKED);
+        assertThat(JsonValues.mapOrEmpty(rowNamed("PegaIntegration").get("decided")).get("reason"))
+                .isEqualTo("left for a later build");
+    }
+
+    @Test
+    void aFormWithNoGroupToSuggestIsRefusedBeforeAnythingIsAsked() {
+        final GroupUser user = new GroupUser(List.of("PegaDB"), "Anything");
+
+        final Map<String, Object> refused = called(user.context(), Map.of());
+
+        assertThat(String.valueOf(refused.get("error"))).contains("Give group", "PEGA security");
+        assertThat(user.intros()).isEmpty();
+        assertThat(written).isEmpty();
+    }
+
+    @Test
+    void aGroupWithNoSourceTypeChosenIsRefused() {
+        final GroupUser user = new GroupUser(List.of(), "PEGA databases");
+
+        final Map<String, Object> refused = called(user.context(), Map.of("group", "PEGA databases"));
+
+        assertThat(String.valueOf(refused.get("error"))).contains("No source type was chosen", "PEGA databases");
+        assertThat(written).isEmpty();
+    }
+
+    @Test
+    void anExistingGroupNamedWithNoSourceTypeChosenIsChangedAlone() {
+        final GroupUser user = new GroupUser(List.of(), "PEGA security");
+
+        final Map<String, Object> result = called(user.context(), Map.of("group", "PEGA security"));
+
+        assertThat(result).as("%s", result).containsEntry("group", "PEGA security")
+                .containsEntry("scope", List.of("PegaSecurityEvent"));
+        assertThat(user.intros().getFirst()).contains("none ticked, changes it alone");
+        assertThat(rowNamed("PegaDB")).containsEntry("status", SourceTypeRegistry.PARKED);
+    }
+
+    @Test
+    void withoutFormsTheScopeTakesTheGroupsNameAndIsRefusedWithoutOne() {
+        final Map<String, Object> refused = called(BuildToolCalls.context(), Map.of("scope",
+                List.of("PegaDB", "PegaIntegration")));
+        assertThat(String.valueOf(refused.get("error"))).contains("Give group", "one group");
+        assertThat(written).isEmpty();
+
+        final Map<String, Object> result = called(BuildToolCalls.context(), Map.of("scope",
+                List.of("PegaDB", "PegaIntegration"), "group", "PEGA back end", "reason", "noisy"));
+
+        assertThat(result).as("%s", result).containsEntry("group", "PEGA back end")
+                .containsEntry("scope", List.of("PegaDB", "PegaIntegration"));
+        assertThat(JsonValues.mapOrEmpty(SourceTypeRegistry.read(written.getLast()).get("scope")))
+                .containsEntry("group", "PEGA back end");
+    }
+
+    @Test
+    void withoutFormsAndNoScopeTheUserIsAskedInTheChatForTheGroup() {
+        final Map<String, Object> asked = called(BuildToolCalls.context(), Map.of());
+
+        assertThat(asked).containsEntry("status", "needs_user")
+                .containsEntry("offered", List.of("PegaIntegration", "PegaDB"))
+                .containsEntry("groups", List.of("PEGA security"));
+        assertThat(String.valueOf(asked.get("hint"))).contains("group=", "one group");
+        assertThat(written).isEmpty();
+    }
+
+    @Test
+    void namingAnExistingGroupAddsTheSourceTypesToIt() {
+        final Map<String, Object> result = called(BuildToolCalls.context(), Map.of("scope", List.of("PegaDB"),
+                "group", "pega SECURITY"));
+
+        // The existing group's own name, whatever the case given: its pipeline and output feed are the source
+        // types' too once it is built.
+        assertThat(result).as("%s", result).containsEntry("group", "PEGA security").containsKey("joins");
+        assertThat(String.valueOf(result.get("joins"))).contains("PEGA security", "working copy");
+        // The scope is the group: its own source type and the one added.
+        assertThat(result).containsEntry("scope", List.of("PegaSecurityEvent", "PegaDB"));
+        assertThat(JsonValues.mapOrEmpty(SourceTypeRegistry.read(written.getLast()).get("scope")))
+                .containsEntry("group", "PEGA security")
+                .containsEntry("source_types", List.of("PegaSecurityEvent", "PegaDB"));
+        // The translated row is not offered again, and stays as it is.
+        assertThat(rowNamed("PegaSecurityEvent")).containsEntry("status", SourceTypeRegistry.TRANSLATED);
+    }
+
     // The tool called twice, as the agent does: the table shown, then the scope given.
     private Map<String, Object> recorded(final ToolCallContext context, final Map<String, Object> given) {
         final Map<String, Object> args = new LinkedHashMap<>(given);
+        args.put("scope", List.of("PegaDB"));
+        args.put("group", "PEGA databases");
+        args.put("reason", "later");
+        return called(context, args);
+    }
+
+    // The tool called twice, as the agent does: the table shown, then called again with reviewed and these args.
+    private Map<String, Object> called(final ToolCallContext context, final Map<String, Object> given) {
+        final Map<String, Object> args = new LinkedHashMap<>(given);
         args.put("build", BUILD);
         args.put("feed", FEED);
-        args.put("scope", List.of("PegaDB"));
-        args.put("reason", "later");
         final Map<String, Object> shown = result(tool.execute(BuildToolCalls.call(RecordSourceTypesTool.NAME,
                 JsonUtil.writeValueAsString(args, false)), context));
         if (shown.containsKey("error")) {
@@ -214,5 +344,66 @@ class TestRecordSourceTypesTool {
         survey.put(SurveyDoc.ACCEPTED, Map.of("at", "now"));
         survey.put(SurveyDoc.SCOPE_READ, signed);
         return survey;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A user of a client that shows forms, who answers the scope form: these source types in the group, and the
+    /// group's name (blank to keep the suggestion).
+    private static final class GroupUser implements UserQuestions {
+
+        private final List<String> chosen;
+        private final String name;
+        private final List<String> intros = new ArrayList<>();
+        private final List<Map<String, Object>> forms = new ArrayList<>();
+
+        private GroupUser(final List<String> chosen, final String name) {
+            this.chosen = chosen;
+            this.name = name;
+        }
+
+        private ToolCallContext context() {
+            return ToolCallContext.builder(BuildToolCalls.context().session())
+                    .userQuestions(this)
+                    .build();
+        }
+
+        private List<String> intros() {
+            return intros;
+        }
+
+        private List<Map<String, Object>> forms() {
+            return forms;
+        }
+
+        @Override
+        public boolean canAsk() {
+            return true;
+        }
+
+        @Override
+        public ElicitResult ask(final String toolName,
+                                final String callId,
+                                final String intro,
+                                final Map<String, Object> form) {
+            intros.add(intro);
+            forms.add(form);
+            final Map<String, Object> content = new LinkedHashMap<>();
+            ((Map<?, ?>) form.get("properties")).forEach((key, field) -> {
+                final Map<?, ?> definition = (Map<?, ?>) field;
+                if ("boolean".equals(definition.get("type"))) {
+                    content.put(String.valueOf(key), chosen.stream().anyMatch(type -> ("Put " + type
+                                                                                       + " in the group").equals(
+                            definition.get("title"))));
+                } else {
+                    content.put(String.valueOf(key), name.isBlank()
+                            ? definition.get("default")
+                            : name);
+                }
+            });
+            return new ElicitResult(ElicitResult.Action.ACCEPT, content);
+        }
     }
 }

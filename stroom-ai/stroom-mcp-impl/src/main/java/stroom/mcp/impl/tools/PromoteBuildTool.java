@@ -18,7 +18,6 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
@@ -28,9 +27,7 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.generation.CodeDiff;
 import stroom.ai.impl.tools.generation.ModuleChecks;
-import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
-import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
 import stroom.ai.shared.AiToolCategory;
@@ -114,7 +111,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     private final DocumentAccess documentAccess;
     private final XsltHistory history;
     private final PendingDocumentation pendingDocs;
-    private final SurveyDocuments surveyDocuments;
     // An aggregated feed's modules and the reference data its pipelines load; none in tests that make the tool
     // themselves.
     private Provider<SourceTypeGroups> groupsProvider;
@@ -135,8 +131,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                      final DocumentWrites writes,
                      final DocumentAccess documentAccess,
                      final XsltHistory history,
-                     final PendingDocumentation pendingDocs,
-                     final SurveyDocuments surveyDocuments) {
+                     final PendingDocumentation pendingDocs) {
         this.facts = facts;
         this.layout = layout;
         this.places = places;
@@ -150,7 +145,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         this.documentAccess = documentAccess;
         this.history = history;
         this.pendingDocs = pendingDocs;
-        this.surveyDocuments = surveyDocuments;
     }
 
     /// An aggregated feed's modules, put beside the feed and pointed at the originals of their working copies, and
@@ -292,9 +286,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         // pipelines' filters name the feeds it works from (seen in VS Code: the promoted filter selected the test
         // feed).
         final List<String> sources = facts.sourceFeeds(build, docs);
-        // A feed's survey doc and source type registry: beside the feed, or kept in the build, as the user chose.
-        final Map<String, String> besideFeeds = besideFeeds(call, context, build, docs, destinations);
-        final List<String> registriesSaid = registriesBeside(docs, besideFeeds);
+        // A feed's source type registry goes beside the feed; its survey doc stays in the build.
+        final Map<String, String> besideFeeds = besideFeeds(docs, destinations);
         // An aggregated feed's modules and a group's output feed of its own: beside the feed.
         modulesBeside(build, docs, destinations, versions.proposed()).forEach(besideFeeds::putIfAbsent);
         final List<PromotionLayout.Step> plan = plan(docs, destinations, versions.proposed(), joins, sources,
@@ -375,11 +368,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         final boolean roles = rolesMoved.size() > 1;
         if (!Consent.wasReviewed(reviewed, tree)) {
             final Map<String, Object> review = review(build, tree, warnings, processed, roles, reviewed);
-            if (!registriesSaid.isEmpty()) {
-                review.put("registries", registriesSaid);
-                review.put("hint", review.get("hint") + " Say the registries note too: each registry goes beside "
-                                   + "its feed, though its survey doc stays in the build.");
-            }
             if (!pipelineChanges.isEmpty()) {
                 review.put("pipeline_changes", pipelineChanges);
                 review.put("hint", review.get("hint") + " Say the pipeline_changes too: the reference data each "
@@ -412,9 +400,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         }
         if (!processing.isEmpty()) {
             shortForm.put("processing after promotion", processed);
-        }
-        if (!registriesSaid.isEmpty()) {
-            shortForm.put("registries", registriesSaid);
         }
         if (!pipelineChanges.isEmpty()) {
             shortForm.put("pipeline changes", pipelineChanges);
@@ -504,8 +489,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             } else if (copyOf != null) {
                 plan.add(new PromotionLayout.Step(doc, PromotionLayout.WRITE_BACK, String.valueOf(copyOf), null));
             } else if (!destinations.containsKey(uuid) && KEEP.equals(besideFeeds.get(uuid))) {
-                plan.add(new PromotionLayout.Step(doc, PromotionLayout.KEEP, "left in the workspace: the user "
-                                                                             + "kept it in the build", null));
+                plan.add(new PromotionLayout.Step(doc, PromotionLayout.KEEP, "left in the workspace: a survey doc "
+                                                                             + "stays in its build", null));
             } else if (!destinations.containsKey(uuid) && besideFeeds.containsKey(uuid)) {
                 plan.add(new PromotionLayout.Step(doc, PromotionLayout.MOVE,
                         String.join("/", WriteGuard.folderParts(besideFeeds.get(uuid))), null));
@@ -553,18 +538,14 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         return plan;
     }
 
-    // Where each new survey doc and source type registry goes, by uuid: the folder of its feed, or `keep`. A survey
-    // doc goes where the user chose when the survey was covered (decided 2026-11-12), asked again now if they
-    // deferred it. A registry always goes beside the feed, whatever was chosen for the survey doc (decided
-    // 2026-11-13): the registry is a doc beside the feed, where later builds find it; kept in the build, it held the
-    // promoted build open on the feed for ever. One whose feed has no folder yet is placed as before.
-    private Map<String, String> besideFeeds(final ToolCall call,
-                                            final ToolCallContext context,
-                                            final String build,
-                                            final List<Map<String, Object>> docs,
+    // Where each new survey doc and source type registry goes, by uuid: `keep` for a survey doc, which stays in the
+    // build (decided 2026-11-13: no longer asked), or the folder of its feed for a registry. A registry always goes
+    // beside the feed (decided 2026-11-13): the registry is a doc beside the feed, where later builds find it; kept
+    // in the build, it held the promoted build open on the feed for ever. One whose feed has no folder yet is placed
+    // as before.
+    private Map<String, String> besideFeeds(final List<Map<String, Object>> docs,
                                             final Map<String, String> destinations) {
         final Map<String, String> out = new LinkedHashMap<>();
-        final Map<String, String> choices = new LinkedHashMap<>();
         for (final Map<String, Object> doc : docs) {
             final String name = String.valueOf(doc.get("name"));
             final String uuid = String.valueOf(doc.get("uuid"));
@@ -582,43 +563,12 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             if (destinations.containsKey(uuid)) {
                 continue;
             }
-            final String feed = name.substring(0, name.length() - (survey
-                    ? " - Survey".length()
-                    : SourceTypeRegistry.SUFFIX.length()));
-            if (registry) {
-                feedFolder(feed, docs, destinations).ifPresent(folder -> out.put(uuid, folder));
-                continue;
-            }
-            final String choice = choices.computeIfAbsent(feed, ignored -> surveyChoice(call, context, build, feed));
-            if (KEEP.equals(choice)) {
+            if (survey) {
                 out.put(uuid, KEEP);
-            } else if (SurveyFeedTool.BESIDE.equals(choice)) {
-                feedFolder(feed, docs, destinations).ifPresent(folder -> out.put(uuid, folder));
-            }
-        }
-        return out;
-    }
-
-    // Each registry going beside its feed while the feed's survey doc stays in the build, said for the user: the
-    // survey doc's choice is theirs, the registry's place is not.
-    private static List<String> registriesBeside(final List<Map<String, Object>> docs,
-                                                 final Map<String, String> besideFeeds) {
-        final List<String> out = new ArrayList<>();
-        for (final Map<String, Object> doc : docs) {
-            final String name = String.valueOf(doc.get("name"));
-            final String uuid = String.valueOf(doc.get("uuid"));
-            if (!DocumentationDoc.TYPE.equals(doc.get("type")) || !name.endsWith(SourceTypeRegistry.SUFFIX)
-                || besideFeeds.get(uuid) == null || KEEP.equals(besideFeeds.get(uuid))) {
                 continue;
             }
             final String feed = name.substring(0, name.length() - SourceTypeRegistry.SUFFIX.length());
-            final boolean surveyKept = docs.stream()
-                    .filter(other -> SurveyDoc.docName(feed).equals(other.get("name")))
-                    .anyMatch(other -> KEEP.equals(besideFeeds.get(String.valueOf(other.get("uuid")))));
-            if (surveyKept) {
-                out.add("'" + name + "' goes beside feed '" + feed + "', though its survey doc stays in the build: "
-                        + "a registry always goes beside its feed, where later builds find it");
-            }
+            feedFolder(feed, docs, destinations).ifPresent(folder -> out.put(uuid, folder));
         }
         return out;
     }
@@ -661,44 +611,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     // A feed made in the build as a source type group's output feed of its own.
     private boolean groupOutput(final String build, final Map<String, Object> feed) {
         return buildRecords.entry(build, String.valueOf(feed.get("uuid"))).get(BuildFeeds.GROUP_OUTPUT) != null;
-    }
-
-    // The user's choice for a feed's survey doc (beside, keep, or empty when none was made), asked now in a form if
-    // they deferred it, and kept in the survey state so it is asked once.
-    private String surveyChoice(final ToolCall call,
-                                final ToolCallContext context,
-                                final String build,
-                                final String feed) {
-        final Optional<SurveyRecord> record = surveyDocuments.load(build, feed);
-        final Map<String, Object> state = record.map(found -> SurveyDoc.readState(found.text())).orElse(null);
-        final String choice = state == null
-                ? ""
-                : JsonValues.text(JsonValues.mapOrEmpty(state.get(SurveyDoc.PROMOTION)).get("choice"));
-        if (!SurveyFeedTool.LATER.equals(choice)) {
-            return choice;
-        }
-        final Optional<String> answer = consent.answer(call, context, NAME, "When feed '" + feed + "' was surveyed, "
-                                                                            + "where its survey doc goes was left "
-                                                                            + "until now. Beside the feed, a later "
-                                                                            + "build or survey carries on from it; "
-                                                                            + "its example records (the feed's own "
-                                                                            + "data) are then as readable as the "
-                                                                            + "feed's folder lets them be.",
-                "Where does the survey doc of '" + feed + "' go?", List.of(SurveyFeedTool.PROMOTE_BESIDE,
-                        SurveyFeedTool.KEEP_IN_BUILD));
-        if (answer.isEmpty()) {
-            throw new ToolRefusal("Where the survey doc of '" + feed + "' goes was left until promotion: ask the "
-                                  + "user whether it goes beside the feed or stays in the build, and give it in "
-                                  + "destinations by its uuid (the feed's folder, or 'keep'). Nothing was changed.");
-        }
-        final String chosen = SurveyFeedTool.promotionChoice(answer.get());
-        final Map<String, Object> promotion = new LinkedHashMap<>();
-        promotion.put("choice", chosen);
-        promotion.put("by", "user");
-        promotion.put("at", SurveyDoc.at(Instant.now()));
-        state.put(SurveyDoc.PROMOTION, promotion);
-        surveyDocuments.write(context.session(), record.get(), SurveyDoc.render(state));
-        return chosen;
     }
 
     // The folder a feed's documents go beside: an existing feed's own, or where the build's feed of that name goes.

@@ -55,11 +55,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// registry with a scope of one source type; classifies, drafts and builds that group from the draft (where its Events
 /// go asked in a form), makes the group's pipeline, steps it clean, processes it, reviews coverage (every other
 /// record passed over and summed from the group's own lines, the other source types parked, no kind missed), plans
-/// the feed's index and promotes. Its second build carries on: a second group with a pipeline of its own (in the
-/// PEGA walk writing to an output feed of its own, with an index of its own), the promoted first group changed
-/// through working copies (in the Azure walk); data arriving later holds a value no registry row matches, which
-/// neither pipeline warns of (counted with the rest passed over); both pipelines process it, coverage is reviewed,
-/// and promotion leaves the registry beside the feed with both groups translated, each by its own pipeline.
+/// the feed's index and promotes. Its second build carries on, one source type group a build: a second group with a
+/// pipeline of its own (in the PEGA walk writing to an output feed of its own, with an index of its own; in the Azure
+/// walk of two source types, ExchangeOnline and MicrosoftTeams, its pipeline translating both and passing over the
+/// rest); data arriving later holds a value no registry row matches, which neither pipeline warns of (counted with
+/// the rest passed over); both pipelines process it, coverage is reviewed, and promotion leaves the registry beside
+/// the feed with both groups translated, each by its own pipeline. In the Azure walk a third build changes the
+/// promoted first group alone (its scope naming the group, no source type added), through working copies.
 ///
 /// A last walk translates an aggregated feed whole, as a normal source: its later data's source type value the
 /// survey didn't see is logged once a stream, triaged benign, and reported by review_coverage.
@@ -100,17 +102,18 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
     @Test
     void pegasWrappedMessagesInTwoBuildsTheSecondGroupWithAnOutputFeedOfItsOwn() {
         walk(new Family("pega", "pega/pega-1.json", "pega/pega-2.json", "sourcetype", "PegaSecurityEvent",
-                rules(TestE2eSourceTypeGroups.securityMapping()), "PegaIntegration",
+                rules(TestE2eSourceTypeGroups.securityMapping()), List.of("PegaIntegration"),
                 rules(TestE2eSourceTypeGroups.integrationMapping()), "PegaBatch", true, false));
     }
 
     @Test
-    void azuresAuditLogByWorkloadInTwoBuildsTheFirstGroupChangedThroughWorkingCopies() {
+    void azuresAuditLogByWorkloadAMessagingGroupOfTwoWorkloadsAndTheFirstGroupChangedThroughWorkingCopies() {
         walk(new Family("azure", "azure-audit/azure-audit-1.json", "azure-audit/azure-audit-2.json", "Workload",
-                "AzureActiveDirectory", TestE2eSourceTypeGroups.jsonValue(AZURE_FIRST_RULES), "ExchangeOnline",
+                "AzureActiveDirectory", TestE2eSourceTypeGroups.jsonValue(AZURE_FIRST_RULES),
+                List.of("ExchangeOnline", "MicrosoftTeams"),
                 TestE2eSourceTypeGroups.jsonValue("""
                         {"events": [
-                          {"name": "mail", "allow_unknown": "mailbox activity, for a later build",
+                          {"name": "messaging", "allow_unknown": "mailbox and Teams activity, for a later build",
                            "fields": [{"path": "EventDetail/TypeId", "field": "Operation"},
                                       {"path": "EventDetail/Unknown/Data", "data_name": "user",
                                        "field": "UserId"}]}]}"""),
@@ -141,7 +144,7 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
                            "fields": [{"path": "EventDetail/TypeId", "value": "sshd"},
                                       {"path": "EventDetail/Unknown/Data", "data_name": "message",
                                        "field": "message"}]}]}"""),
-                "^/var/log/mail/audit/", TestE2eSourceTypeGroups.jsonValue("""
+                List.of("^/var/log/mail/audit/"), TestE2eSourceTypeGroups.jsonValue("""
                         {"events": [
                           {"name": "audit", "allow_unknown": "mailbox administration, for a later build",
                            "fields": [{"path": "EventDetail/TypeId", "value": "mailaudit"},
@@ -261,12 +264,13 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         client.answeringWith(answering(List.of(firstType), null));
         final Map<String, Object> written = json("record_source_types", args("build", first, "feed", feed,
                 "system_name", tag, "environment", "Prod", "reviewed", shown.get("review_id"), "rows",
-                shown.get("rows")));
+                shown.get("rows"), "group", firstName));
         assertThat(strings(written, "scope")).containsExactly(firstType);
+        assertThat(written).containsEntry("group", firstName);
 
         classified(first, List.of(stream), family.firstRules());
         final int placedBefore = client.forms().size();
-        final Saved firstSaved = group(first, feed, firstName, firstType, family.firstRules(), stream);
+        final Saved firstSaved = group(first, feed, firstName, List.of(firstType), family.firstRules(), stream);
         assertThat(formsSince(placedBefore)).anySatisfy(form -> assertThat(form.message())
                 .contains("'" + firstName + "'", PLACEMENT));
         final String firstPipelineName = feed + " " + firstName;
@@ -285,11 +289,11 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         final Map<String, Object> firstTypes = map(firstReview, "source_types");
         assertThat(firstTypes).containsEntry("group", firstName).doesNotContainKeys("other_groups",
                 "new_source_types", "unseen_source_types");
-        assertThat(passedOver(firstTypes)).isEqualTo(RECORDS - records(text, family, firstType, written));
+        assertThat(passedOver(firstTypes)).isEqualTo(RECORDS - records(text, family, List.of(firstType), written));
         assertThat(String.valueOf(firstReview.get("tell_user"))).contains("Judged against source type group '"
                                                                           + firstName + "'", "passed over");
         assertThat(firstReview).doesNotContainKey("passed_over");
-        noKindMissed(firstReview, firstType);
+        noKindMissed(firstReview, List.of(firstType));
         // The other source types parked, for later builds.
         final Map<String, Map<String, Object>> firstRows = rows(registryInBuild(firstSaved));
         firstRows.forEach((name, row) -> assertThat(row).as(name).containsEntry("status", name.equals(firstType)
@@ -306,21 +310,31 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         json("save_xslt", args("build", first, "name", index + "-XSLT", "index_plan", firstPlan));
         promote(first, Map.of("Pipeline", folder, "XSLT", folder, "Index", folder, "Documentation", folder));
         assertThat(folderOf(firstPipeline)).startsWith("System/" + folder);
+        // The registry beside the feed; the survey doc stays in the build, nobody asked where it goes (decided
+        // 2026-11-13).
+        assertThat(documentsIn("System/" + folder, "Documentation", feed + SourceTypeRegistry.SUFFIX)).hasSize(1);
+        assertThat(documentsIn("System/" + folder, "Documentation", feed + " - Survey")).isEmpty();
+        assertThat(documentsIn("System/MCP Workspace/" + first, "Documentation", feed + " - Survey")).hasSize(1);
+        assertThat(formMessages()).noneMatch(message -> message.contains("survey doc")
+                                                  || message.contains("survey's findings"));
 
-        // --- The second build: another group with its own pipeline; the first group changed in one walk. ---
+        // --- The second build: another group, of one or more source types, with its own pipeline. ---
         final String second = "walk-" + family.name() + "-2";
         json("start_build", args("build", second, "feeds", List.of(feed)));
         json("survey_feed", args("feed", feed, "build", second));
         final Map<String, Object> shownAgain = json("record_source_types", args("build", second, "feed", feed));
-        final String secondType = rowName(shownAgain, family.secondGroup());
-        client.answeringWith(answering(List.of(secondType), family.secondOwnFeed()
+        final List<String> secondTypes = family.secondGroups().stream()
+                .map(value -> rowName(shownAgain, value))
+                .toList();
+        client.answeringWith(answering(secondTypes, family.secondOwnFeed()
                 ? secondName
                 : null));
-        json("record_source_types", args("build", second, "feed", feed, "reviewed", shownAgain.get("review_id"),
-                "rows", shownAgain.get("rows")));
+        final Map<String, Object> secondScoped = json("record_source_types", args("build", second, "feed", feed,
+                "reviewed", shownAgain.get("review_id"), "rows", shownAgain.get("rows"), "group", secondName));
+        assertThat(strings(secondScoped, "scope")).containsExactlyElementsOf(secondTypes);
         classified(second, List.of(stream), family.secondRules());
         final int formsBefore = client.forms().size();
-        final Saved secondSaved = group(second, feed, secondName, secondType, family.secondRules(), stream);
+        final Saved secondSaved = group(second, feed, secondName, secondTypes, family.secondRules(), stream);
         assertThat(formsSince(formsBefore)).anySatisfy(form -> assertThat(form.message())
                 .contains("'" + secondName + "'", PLACEMENT));
         final String outputFeed = feed + "-SECOND-EVENTS";
@@ -331,24 +345,27 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         } else {
             assertThat(secondSaved.group()).doesNotContainKey("output_feed");
         }
-        final String secondPipeline = uuidOf(agreed("create_pipeline", args("build", second, "group", secondName,
-                "template_uuid", template)));
-        if (family.changesFirst()) {
-            // The promoted first group changed: the user chooses to change its pipeline, through working copies.
-            final int changeBefore = client.forms().size();
-            final Map<String, Object> changed = agreed("build_translation_xslt", args("build", second, "feeds",
-                    List.of(feed), "group", firstName, "source_types", List.of(firstType), "schema_version",
-                    VERSION, "stream_ids", List.of(stream), "mapping", TestE2eSourceTypeGroups.jsonValue(
-                            jsonOf(firstSaved.mapping()).replace("\"LogonFailed\"", "\"LogonFailedV2\""))));
-            assertThat(changed).as("changed: %s", changed.get("problems")).containsEntry("ok", true);
-            assertThat(formsSince(changeBefore)).anySatisfy(form -> assertThat(form.message())
-                    .contains("'" + firstName + "'", PIPELINE_FORM, firstPipelineName));
-            final String copy = uuidOf(map(map(changed, "group"), "xslt"));
-            assertThat(copy).isNotEqualTo(uuidOf(map(firstSaved.group(), "xslt")));
-            assertThat(readXslt(copy).getData()).contains("LogonFailedV2");
+        final Map<String, Object> secondMade = agreed("create_pipeline", args("build", second, "group", secondName,
+                "template_uuid", template));
+        assertThat(strings(secondMade, "source_types")).containsExactlyElementsOf(secondTypes);
+        final String secondPipeline = uuidOf(secondMade);
+        // One source type group a build: the first group isn't this build's to change.
+        assertThat(refusal("build_translation_xslt", args("build", second, "feeds", List.of(feed), "group",
+                firstName, "source_types", List.of(firstType), "schema_version", VERSION, "stream_ids",
+                List.of(stream), "mapping", firstSaved.mapping()))).contains("one source type group a build",
+                "'" + secondName + "'");
+        if (secondTypes.size() > 1) {
+            // A group of several source types: its one pipeline translates a record of each.
+            final List<String> lines = text.lines().toList();
+            for (final String value : family.secondGroups()) {
+                final int at = TestE2eSourceTypeGroups.indexOf(lines, "\"" + family.field() + "\": \"" + value
+                                                                      + "\"", null);
+                assertThat(children(parse(translationOutput(secondPipeline, stream, at)).getDocumentElement(),
+                        "Event")).as("a record of %s", value).hasSize(1);
+            }
         }
         // Processing in the build runs the build's pipelines: the first group's production pipeline through a working
-        // copy of it (the group's working copy, where the build changed it).
+        // copy of it.
         final String firstRunning = uuidOf(agreed("copy_pipeline", args("build", second, "source_uuid", firstPipeline,
                 "new_name", firstPipelineName, "working_copy", true)));
 
@@ -358,10 +375,10 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
                 family.field(), family.newValue());
         final long laterStream = send(feed, later);
         final Map<String, Long> passed = new LinkedHashMap<>();
-        passed.put(firstRunning, RECORDS - records(text, family, firstType, written)
-                                 + LATER_RECORDS - records(later, family, firstType, written));
-        passed.put(secondPipeline, RECORDS - records(text, family, secondType, written)
-                                   + LATER_RECORDS - records(later, family, secondType, written));
+        passed.put(firstRunning, RECORDS - records(text, family, List.of(firstType), written)
+                                 + LATER_RECORDS - records(later, family, List.of(firstType), written));
+        passed.put(secondPipeline, RECORDS - records(text, family, secondTypes, written)
+                                   + LATER_RECORDS - records(later, family, secondTypes, written));
         for (final String pipeline : passed.keySet()) {
             final Map<String, Object> stepped = stepSample(pipeline, List.of(laterStream));
             assertThat(stepped).as("stepped clean: %s", stepped).containsEntry("verdict", "clean");
@@ -375,36 +392,31 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
                 final String raw = input.equals(String.valueOf(laterStream))
                         ? later
                         : text;
-                final String type = pipeline.equals(secondPipeline)
-                        ? secondType
-                        : firstType;
+                final List<String> types = pipeline.equals(secondPipeline)
+                        ? secondTypes
+                        : List.of(firstType);
                 assertThat(TestE2eSourceTypeGroups.passedOver(logged)).as("passed over in %s", input)
-                        .isEqualTo(raw.lines().count() - records(raw, family, type, written));
+                        .isEqualTo(raw.lines().count() - records(raw, family, types, written));
             }
         }
         if (family.secondOwnFeed()) {
             assertThat(streamIdsOf(outputFeed)).isNotEmpty();
-        }
-        if (family.changesFirst()) {
-            final List<String> records = later.lines().toList();
-            final int failedAt = TestE2eSourceTypeGroups.indexOf(records, "\"UserLoginFailed\"", null);
-            assertThat(translationOutput(firstRunning, laterStream, failedAt)).contains("LogonFailedV2");
         }
 
         // Coverage of each pipeline: its group's own, the other's source type left to it, nothing new.
         final Map<String, Object> secondReview = json("review_coverage", args("pipeline_uuid", secondPipeline,
                 "follow_on", false));
         dump("review_coverage " + second, secondReview);
-        final Map<String, Object> secondTypes = map(secondReview, "source_types");
-        assertThat(secondTypes).containsEntry("group", secondName).doesNotContainKeys("new_source_types",
+        final Map<String, Object> secondReviewed = map(secondReview, "source_types");
+        assertThat(secondReviewed).containsEntry("group", secondName).doesNotContainKeys("new_source_types",
                 "unseen_source_types");
-        assertThat(passedOver(secondTypes)).isEqualTo(passed.get(secondPipeline));
-        noKindMissed(secondReview, secondType);
+        assertThat(passedOver(secondReviewed)).isEqualTo(passed.get(secondPipeline));
+        noKindMissed(secondReview, secondTypes);
         final Map<String, Object> firstAgain = json("review_coverage", args("pipeline_uuid", firstRunning,
                 "follow_on", false));
         assertThat(map(firstAgain, "source_types")).containsEntry("group", firstName);
         assertThat(passedOver(map(firstAgain, "source_types"))).isEqualTo(passed.get(firstRunning));
-        noKindMissed(firstAgain, firstType);
+        noKindMissed(firstAgain, List.of(firstType));
 
         // The index: one per output feed, inherited where the group's Events share the feed's.
         final Map<String, Object> inherited = json("get_field_conventions", args());
@@ -434,19 +446,65 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
                 .containsEntry("group", firstName);
         assertThat(map(rows.get(firstType), "pipeline")).containsEntry("uuid", firstPipeline)
                 .containsEntry("name", firstPipelineName);
-        assertThat(rows.get(secondType)).containsEntry("status", SourceTypeRegistry.TRANSLATED)
-                .containsEntry("group", secondName);
-        assertThat(map(rows.get(secondType), "pipeline")).containsEntry("uuid", secondPipeline);
+        for (final String secondType : secondTypes) {
+            assertThat(rows.get(secondType)).containsEntry("status", SourceTypeRegistry.TRANSLATED)
+                    .containsEntry("group", secondName);
+            assertThat(map(rows.get(secondType), "pipeline")).containsEntry("uuid", secondPipeline);
+            if (family.secondOwnFeed()) {
+                assertThat(rows.get(secondType)).containsEntry("output_feed", outputFeed);
+            }
+        }
         assertThat(rows).doesNotContainKey(family.newValue());
         assertThat(folderOf(secondPipeline)).isEqualTo(folderOf(firstPipeline));
-        if (family.secondOwnFeed()) {
-            assertThat(rows.get(secondType)).containsEntry("output_feed", outputFeed);
-        }
         assertThat(jsonOf(registry)).doesNotContain(firstRunning);
         if (family.changesFirst()) {
-            // The working copy written back: production translates as changed.
-            assertThat(readXslt(uuidOf(map(firstSaved.group(), "xslt"))).getData()).contains("LogonFailedV2");
+            changeFirst(family, feed, folder, firstName, firstType, firstSaved, firstPipeline, stream, laterStream,
+                    later);
         }
+    }
+
+    // A third build that changes the promoted first group alone: its scope names the group, no source type added;
+    // the user chooses to change its pipeline, through working copies, written back at promotion.
+    private void changeFirst(final Family family,
+                             final String feed,
+                             final String folder,
+                             final String firstName,
+                             final String firstType,
+                             final Saved firstSaved,
+                             final String firstPipeline,
+                             final long stream,
+                             final long laterStream,
+                             final String later) {
+        final String third = "walk-" + family.name() + "-3";
+        json("start_build", args("build", third, "feeds", List.of(feed)));
+        json("survey_feed", args("feed", feed, "build", third));
+        final Map<String, Object> shown = json("record_source_types", args("build", third, "feed", feed));
+        client.answeringWith(answering(List.of(), null));
+        final Map<String, Object> scoped = json("record_source_types", args("build", third, "feed", feed,
+                "reviewed", shown.get("review_id"), "rows", shown.get("rows"), "group", firstName));
+        assertThat(scoped).containsEntry("group", firstName).containsKey("joins");
+        assertThat(strings(scoped, "scope")).containsExactly(firstType);
+        // The group and its source types are the scope's: none given.
+        final int changeBefore = client.forms().size();
+        final Map<String, Object> changed = agreed("build_translation_xslt", args("build", third, "feeds",
+                List.of(feed), "schema_version", VERSION, "stream_ids", List.of(stream), "mapping",
+                TestE2eSourceTypeGroups.jsonValue(jsonOf(firstSaved.mapping()).replace("\"LogonFailed\"",
+                        "\"LogonFailedV2\""))));
+        assertThat(changed).as("changed: %s", changed.get("problems")).containsEntry("ok", true);
+        assertThat(map(changed, "group")).containsEntry("name", firstName);
+        assertThat(formsSince(changeBefore)).anySatisfy(form -> assertThat(form.message())
+                .contains("'" + firstName + "'", PIPELINE_FORM, feed + " " + firstName));
+        final String original = uuidOf(map(firstSaved.group(), "xslt"));
+        final String copy = uuidOf(map(map(changed, "group"), "xslt"));
+        assertThat(copy).isNotEqualTo(original);
+        assertThat(readXslt(copy).getData()).contains("LogonFailedV2");
+        final String running = uuidOf(agreed("copy_pipeline", args("build", third, "source_uuid", firstPipeline,
+                "new_name", feed + " " + firstName, "working_copy", true)));
+        final int failedAt = TestE2eSourceTypeGroups.indexOf(later.lines().toList(), "\"UserLoginFailed\"", null);
+        assertThat(translationOutput(running, laterStream, failedAt)).contains("LogonFailedV2");
+        promote(third, Map.of("Pipeline", folder, "XSLT", folder, "Documentation", folder));
+        // The working copy written back: production translates as changed.
+        assertThat(readXslt(original).getData()).contains("LogonFailedV2");
     }
 
     // --- the steps ---
@@ -456,7 +514,7 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
     private Saved group(final String build,
                         final String feed,
                         final String name,
-                        final String sourceType,
+                        final List<String> sourceTypes,
                         final Map<String, Object> rules,
                         final long stream) {
         final Map<String, Object> draft = agreed("draft_translation_mapping", args("stream_ids", List.of(stream),
@@ -465,7 +523,7 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         assertThat(map(draft, "scope")).as("drafted through the scope").isNotEmpty();
         final Map<String, Object> mapping = withRules(map(draft, "mapping"), rules);
         final Map<String, Object> saved = agreed("build_translation_xslt", args("build", build, "feeds",
-                List.of(feed), "group", name, "source_types", List.of(sourceType), "schema_version", VERSION,
+                List.of(feed), "group", name, "source_types", sourceTypes, "schema_version", VERSION,
                 "stream_ids", List.of(stream), "mapping", mapping));
         dump("build_translation_xslt " + name, saved);
         assertThat(saved).as("group %s saved: %s", name, saved.get("problems")).containsEntry("ok", true);
@@ -628,10 +686,10 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
     }
 
     // No kind the rules missed: only the kinds the group keeps as Unknown (logged once a stream), all of its own
-    // source type, none of another's.
-    private static void noKindMissed(final Map<String, Object> review, final String sourceType) {
+    // source types, none of another's.
+    private static void noKindMissed(final Map<String, Object> review, final List<String> sourceTypes) {
         assertThat(list(review, "missed")).allSatisfy(kind -> assertThat(kind)
-                .containsEntry("source_type", sourceType)
+                .hasEntrySatisfying("source_type", type -> assertThat(sourceTypes).contains((String) type))
                 .containsKey("streams")
                 .doesNotContainKey("events"));
         assertThat(review).doesNotContainKeys("passed_over", "other_groups");
@@ -674,10 +732,10 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         return rows;
     }
 
-    // The records of a text of a source type, as the registry's rows tell them (the first match winning).
+    // The records of a text of these source types, as the registry's rows tell them (the first match winning).
     private static long records(final String text,
                                 final Family family,
-                                final String sourceType,
+                                final List<String> sourceTypes,
                                 final Map<String, Object> registry) {
         final List<Map<String, Object>> rows = list(registry, "rows");
         final String key = "\"" + family.field() + "\": \"";
@@ -691,7 +749,7 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
             return rows.stream()
                     .filter(row -> matches(String.valueOf(row.get("match")), value))
                     .findFirst()
-                    .map(row -> sourceType.equals(row.get("name")))
+                    .map(row -> sourceTypes.contains(String.valueOf(row.get("name"))))
                     .orElse(false);
         }).count();
     }
@@ -712,13 +770,12 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         return out;
     }
 
-    // A user who chooses these source types for the build's scope, gives the group named (if any) an output feed of
-    // its own, and agrees to everything else (a new group's Events into the feed's, a change to a promoted group's
-    // pipeline going to that pipeline).
+    // A user who puts these source types in the build's group (its suggested name kept), gives the group named (if
+    // any) an output feed of its own, and agrees to everything else (a new group's Events into the feed's, a change
+    // to a promoted group's pipeline going to that pipeline).
     private static Function<ElicitFormRequest, ElicitResult> answering(final List<String> scope,
                                                                        final String ownGroup) {
-        final Function<ElicitFormRequest, ElicitResult> scoping = TestE2eSourceTypeGroups.scopeOf(scope,
-                "for a later build");
+        final Function<ElicitFormRequest, ElicitResult> scoping = TestE2eSourceTypeGroups.scopeOf(scope, null);
         return form -> {
             if (form.message().contains(TestE2eSourceTypeGroups.SCOPE_FORM)) {
                 return scoping.apply(form);
@@ -757,18 +814,18 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
     /// @param firstGroup    The value (or pattern) of the first build's source type.
     /// @param firstRules    What the agent changes in the first group's draft: its rules, and how it reads the
     ///                      message.
-    /// @param secondGroup   The value (or pattern) of the second build's.
+    /// @param secondGroups  The values (or patterns) of the second build's source types: one group of them.
     /// @param secondRules   What it changes in the second's.
     /// @param newValue      A value no row matches, for data that arrives later.
     /// @param secondOwnFeed Whether the second group's Events go to an output feed of its own.
-    /// @param changesFirst  Whether the second build changes the promoted first group too.
+    /// @param changesFirst  Whether a third build changes the promoted first group alone.
     private record Family(String name,
                           String file,
                           String laterFile,
                           String field,
                           String firstGroup,
                           Map<String, Object> firstRules,
-                          String secondGroup,
+                          List<String> secondGroups,
                           Map<String, Object> secondRules,
                           String newValue,
                           boolean secondOwnFeed,

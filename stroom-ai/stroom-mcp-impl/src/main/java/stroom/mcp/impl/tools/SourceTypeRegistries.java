@@ -22,7 +22,6 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
-import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.feed.shared.FeedDoc;
@@ -39,9 +38,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/// A feed's documents kept beside it once promoted: its source type registry ([SourceTypeRegistry]) and its survey
-/// doc ([SurveyDoc]). A build makes or changes them in its own folder, through [WriteGuard]: one beside the feed
-/// already is changed through a working copy, which promotion writes back over it, as any promoted document is.
+/// A feed's source type registry ([SourceTypeRegistry]), kept beside the feed once promoted (its survey doc stays in
+/// the build). A build makes or changes it in its own folder, through [WriteGuard]: one beside the feed already is
+/// changed through a working copy, which promotion writes back over it, as any promoted document is.
 class SourceTypeRegistries {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SourceTypeRegistries.class);
@@ -74,7 +73,7 @@ class SourceTypeRegistries {
     /// feed's documents are only ever changed by one build, and promotion needs no merging. A build is open on a feed
     /// while its folder holds the feed's registry, or works from the feed (or holds it) and holds work (an XSLT or a
     /// pipeline): made and not promoted or abandoned (its folder deleted). A build holding only the feed and its
-    /// samples, or only what its promotion kept in the workspace (a test feed, a survey doc the user kept, a document
+    /// samples, or only what its promotion kept in the workspace (a test feed, its survey doc, a document
     /// given 'keep'), is not.
     ///
     /// @param feed       A feed's name.
@@ -145,7 +144,7 @@ class SourceTypeRegistries {
     /// @param feed A feed's name.
     /// @param name A Documentation doc's name.
     /// @return The Documentation doc of that name in the folder of the feed (one outside any build), if the user
-    /// can read it: a registry or survey promoted beside the feed.
+    /// can read it: a registry promoted beside the feed.
     Optional<SurveyRecord> besideFeed(final String feed, final String name) {
         try {
             for (final DocRef ref : feedNames.feedsNamed(feed)) {
@@ -218,12 +217,6 @@ class SourceTypeRegistries {
                             entry.put(BuildRecords.COPY_OF_VERSION, version)));
         }
         return write(made, text);
-    }
-
-    /// @param feed A feed's name.
-    /// @return Its survey doc promoted beside it, with the state it keeps, if there is one the user can read.
-    Optional<SurveyRecord> promotedSurvey(final String feed) {
-        return besideFeed(feed, SurveyDoc.docName(feed)).filter(doc -> SurveyDoc.readState(doc.text()) != null);
     }
 
     private Optional<SurveyRecord> read(final DocRef ref) {

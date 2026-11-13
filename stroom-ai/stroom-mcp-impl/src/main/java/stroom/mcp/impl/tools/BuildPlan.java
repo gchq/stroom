@@ -119,8 +119,10 @@ public class BuildPlan {
                     "build_data_splitter stream_ids=<the sample streams>, save_text_converter"),
             List.of(SOURCE_TYPES, "An aggregated feed's source types: the source type field confirmed (by the "
                                   + "survey), each source type profiled and the registry written, the user choosing "
-                                  + "in a form which to build now (an assessment: the registry written)",
-                    "record_source_types build=... feed=... (then again with reviewed=<its review_id>)"),
+                                  + "in a form which go in the build's one source type group and its name, the rest "
+                                  + "parked for later builds (an assessment: the registry written)",
+                    "record_source_types build=... feed=... (then again with reviewed=<its review_id> and "
+                    + "group=<a name you suggest>)"),
             List.of("classify", "Each kind of event the user's documentation doesn't cover classified: you propose "
                                 + "each from its records and what you know of the source, the user confirms them in "
                                 + "one form (into the source notes the draft follows)",
@@ -1128,8 +1130,9 @@ public class BuildPlan {
                                     : args.feeds().getFirst()
                             : args.sources().getFirst()),
                     "it profiles each source type: show the user its table, then call again with reviewed=<its "
-                    + "review_id>; they choose in a form which source types to build now, and the registry is "
-                    + "written");
+                    + "review_id> and group=<a name you suggest>; they choose in a form which source types go in "
+                    + "this build's one source type group (one pipeline) and keep or change its name, the rest "
+                    + "parked for later builds, and the registry is written");
             case "classify" -> call("classify_kinds", args("build", build, "stream_ids", raw),
                     "lists the kinds to classify; call again with a proposal for each, which the user confirms");
             // A build with a scope over an aggregated feed's source types drafts through it: the build says which.
@@ -1137,7 +1140,11 @@ public class BuildPlan {
                             ? args("stream_ids", raw)
                             : args("stream_ids", raw, "build", build),
                     "decide what its notes ask, then build_translation_xslt with the mapping, stream_ids, the "
-                    + "splitter, build and name: it saves the XSLT with the mapping");
+                    + "splitter, build and name: it saves the XSLT with the mapping" + (args.scope() == null
+                            || JsonValues.text(args.scope().get("group")).isEmpty()
+                            ? ""
+                            : ", as the build's source type group '" + JsonValues.text(args.scope().get("group"))
+                              + "' (group and source_types default to the scope's)"));
             case "pipeline" -> call("find_pipeline_templates", args("stage", "translation"),
                     "then create_pipeline from the best candidate: it takes the build's converter and XSLT");
             // The feed's next version (V1.3 for V1.2): a child of the template the pipeline translating it now has.
@@ -1561,6 +1568,9 @@ public class BuildPlan {
         }
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("build", scope.get("build"));
+        if (scope.get(RecordSourceTypesTool.SCOPE_GROUP) != null) {
+            out.put("group", scope.get(RecordSourceTypesTool.SCOPE_GROUP));
+        }
         out.put("source_types", JsonValues.strings(scope.get("source_types")));
         out.put("share_percent", JsonValues.mapOrEmpty(sources.get(StroomBuildFacts.SCOPE_SHARE))
                 .get("share_percent"));
@@ -1573,7 +1583,10 @@ public class BuildPlan {
             return "";
         }
         final Object share = scope.get("share_percent");
-        return ". Coverage is judged within the build's scope, " + String.join(", ",
+        final String group = JsonValues.text(scope.get("group"));
+        return ". Coverage is judged within the build's scope, " + (group.isEmpty()
+                ? ""
+                : "group '" + group + "': ") + String.join(", ",
                 JsonValues.strings(scope.get("source_types"))) + (share == null
                 ? ""
                 : " (about " + share + "% of the feed's records read)")
@@ -1928,8 +1941,8 @@ public class BuildPlan {
     /// @param reference   Its reference data: `pipeline` (the reference-data pipeline's UUID), `raw` (its Raw
     ///                    Reference streams) and `unloaded` (feeds the events pipeline looks values up in that hold
     ///                    no Reference stream yet); null for a build without.
-    /// @param scope       For an aggregated feed's build with a scope: its source types and their share of the
-    ///                    records the survey read ([StroomBuildFacts#SCOPE_SHARE]); null for a build without.
+    /// @param scope       For an aggregated feed's build with a scope: its group, its source types and their share
+    ///                    of the records the survey read ([StroomBuildFacts#SCOPE_SHARE]); null for a build without.
     public record CallArgs(String build,
                            List<String> feeds,
                            Object raw,

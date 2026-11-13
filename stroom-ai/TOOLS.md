@@ -2464,8 +2464,9 @@ given. It has two paths:
 `feed`, it assesses the one feed they are in; samples, stream ids or files given are not profiled (said in
 `samples`): the survey reads the feed itself. The build records the feed as what it works from, and its plan is the survey (`survey_feed`, which finds
 and confirms a source type field), `source_types` (`record_source_types`, which writes the registry at once, every
-source type `parked`) and promotion, the survey and registry going beside the feed. The user may then onboard a
-scope of it in a build of its own.
+source type `parked`) and promotion, the registry going beside the feed (its lasting output, where later builds
+find it; the survey doc stays in the build). The user may then onboard its source types, one source type group (any
+number of source types) a build.
 
 **One open build per aggregated feed** (`SourceTypeRegistries.refuseOpenBuild`, decided 2026-11-12), checked by an
 assessment here (given `feed`, or the one feed its `stream_ids` are in), by an onboarding given `stream_ids` (for
@@ -2475,7 +2476,7 @@ building from the registry beside the feed, and wherever a build makes a working
 `record_source_types`, any feed) is refused while another build is open on it: one whose folder holds the feed's
 registry, or that works from or holds the feed and holds an XSLT or pipeline (made and neither promoted nor
 abandoned; the workspace's `backups` aside). What a build's promotion kept in the workspace (marked
-`kept_at_promotion` in its record: a test feed, a survey doc the user kept, a document given `keep`) doesn't count. `Feed '<feed>' aggregates source types, and
+`kept_at_promotion` in its record: a test feed, a survey doc, a document given `keep`) doesn't count. `Feed '<feed>' aggregates source types, and
 build '<other>' is open on it: one build at a time per feed ... Finish build '<other>' (promote_build) or abandon it
 (the user deletes its folder) first, or carry on in it.` So the registry, the group pipelines and the feed's
 documents change in one build at a time, and promotion needs no merging.
@@ -2551,12 +2552,10 @@ or replaced by a new version); once approved, the registry records each output f
 recorded, and a Lucene index doc beside the feed gains the fields it lacks (`IndexFields.addPromotedLuceneFields`).
 An Elasticsearch index's fields come from its template, the cluster admin's to commit. Nothing is reindexed.
 
-A feed's survey doc (`besideFeeds`) goes beside the feed when the user chose so at the survey (a choice left until
-now is asked in a form, `Where does the survey doc of '<feed>' go?`, refused without forms until `destinations` gives
-it), or stays in the build (`keep`). Its source type registry always goes beside the feed, whatever was chosen for
-the survey doc (decided 2026-11-13; `keep` for it is refused): where the survey doc stays, the review and the approval
-say so (`registries`). Each document left in the workspace is marked `kept_at_promotion` in the build's record, so it
-doesn't hold the build open on its feed.
+A feed's survey doc (`besideFeeds`) always stays in the build (`keep`, decided 2026-11-13: nobody is asked, and the
+review doesn't offer to move it); its source type registry always goes beside the feed (`keep` for it is refused).
+Each document left in the workspace is marked `kept_at_promotion` in the build's record, so it doesn't hold the
+build open on its feed.
 An aggregated feed's modules (`modulesBeside`: helpers, common module and source type groups, by their `mcp:module`
 marker) and a group's output feed of its own go beside the feed too, unless given a destination, a working copy's
 (written back) or a new version's (its version folder); the group pipelines go where the destinations say. The
@@ -2785,7 +2784,7 @@ kept still reads (see `SurveyDoc` under "Sample analysis").
   `max_parts_per_stream` (1 to 20; default every part, up to 20, for `stream_ids` and a feed's last streams, which
   are read whole, else 3: seen in testing, a feed's latest streams uploaded again as one stream of five parts was
   surveyed through three), `max_records_per_stream` (10 to 10,000), `examples_per_shape` (1 to 10,
-  default 2), `build`; as the user said: `kind_field`, `read_deeper` and `promote_survey` (no forms), `accept_as_is`,
+  default 2), `build`; as the user said: `kind_field`, `read_deeper` (no forms), `accept_as_is`,
   `source_type_field` (`none` for one source), `aggregated` (below).
 * **Returns**: `feed`, `format`, `time_range`, `streams_read`, `records_read`, `records_in` (an XML document's root
   with its namespace, which the examples inherit), `saturated`, `coverage`, `per_stream` (each stream's records,
@@ -2843,15 +2842,11 @@ read before scopes were kept is `*`); a stream read for other source types only 
 is read again for the scope's source types it wasn't read for (`read_again`), its records not counted for the
 profiles twice. Shapes keep the source type field's values their records had (`source_values`). The result's `scope`
 gives the build, the source types, their share of the records the survey counted (an estimate) and the records
-passed over; `coverage` ends with the scope and its share. A scope chosen by another build (one carried on from a
-promoted survey) is not read through.
+passed over; `coverage` ends with the scope and its share. A scope chosen by another build is not read through.
 
-**Promotion of the survey.** Once a build's survey of a feed outside the build is covered (or the user goes ahead
-with it as it is), the user is asked once where its doc goes when the build is promoted: beside the feed, kept in
-the build only, or decided at promotion (`promotion` in the state; `promote_survey` without forms). The form says the
-example records beside the feed are as readable as the feed's folder lets them be. A build with no survey doc of the
-feed carries on from one promoted beside the feed (`carried_on_from`), its doc made as a working copy written back
-over it at promotion.
+**The survey doc stays in its build.** Promotion leaves a build's survey doc in the workspace (decided 2026-11-13;
+nothing asks where it goes), so a later build or survey of the feed starts its survey afresh; a later build still
+finds the source type registry beside the feed. A survey doc an earlier version promoted beside a feed is ignored.
 
 ### `record_source_types`
 
@@ -2874,10 +2869,21 @@ records and bytes read and their shares, an estimate scaled to the streams read,
 failures, fields (the wrapper's aside) with fill rates, shapes and the commonest's share, top kinds, levels, signals
 each with what it rests on, a suggested category (security audit, operational, network, diagnostic noise) with a
 confidence, examples; and `rests_on` (`not seen in the N records read`, `from only N of ...`). The first call returns
-`needs_review` with the table, its `review_id` and the rows as confirmed; called again with `reviewed` and those rows,
-the user chooses in a form which source types to build now (a yes each, and why the others wait). Every source type
-offered is then `parked` (the scope's saying so; none is `translated` until a source type group exists), `dropped`
-only by `dropped` with `drop_reason`; the scope is kept in the registry and the survey state, the survey's with the
+`needs_review` with the table, its `review_id` and the rows as confirmed; called again with `reviewed`, those rows
+and `group` (the name the agent suggests), the user chooses in a form which source types go in the build's source type
+group and what it is called (decided 2026-11-13: one source type group a build, any number of source types). The form
+(plain text): "Which of feed 'x''s source types go in this build's source type group? A build makes one group,
+translated by one pipeline. ... Those you leave out are parked for a later build." (and, where the registry has
+groups, "Naming an existing group (...) adds them to it."), a yes per source type offered ("Put x in the group",
+with its share and formats), and one text field, "What is the group called?", filled with the suggested name, which
+the user keeps or changes (left empty, the suggestion stands). A call with forms and no `group` is refused before
+anything is asked. The name matching an existing group's (any case) is that group's: the source types join it (its
+pipeline and output feed, when `build_translation_xslt` builds it; a promoted one through a working copy of its XSLT),
+said in `joins`; with none chosen, the build changes that group alone. A new group with no source type chosen is
+refused. The scope's `source_types` are the group's: those it translates already, and those chosen. Every source type offered is then `parked` (the
+scope's saying so, naming its group; none is `translated` until its group is built; the rest with the user's reason,
+else "left for a later build"), `dropped` only by `dropped` with `drop_reason`; the scope (`build`, `group`,
+`source_types`, `by`, `at`) is kept in the registry and the survey state, the survey's with the
 rows it was chosen by (`SourceTypeScope`), and the build's tools then read the feed through it (survey_feed,
 classify_kinds, draft_translation_mapping, build_translation_xslt's sample check, review_coverage). A scope that adds
 source types some stream the survey read wasn't read for makes the survey not covered again (`coverage_restarted`):
@@ -2892,18 +2898,20 @@ over. The review is bound to the table (`Consent.wasReviewed`): other rows, or c
 
 * **Arguments**: `feed` (required), `build`, `reviewed`, `rows` (the `rows` a `needs_review` reply gave back, or as
   the user says), `remove` (rows to remove, by name, on the user's word), `patterns` (no forms: `use` or `exact`),
-  `scope` and `reason` (no forms), `dropped`, `drop_reason`, `system_name`, `system_names` (by source type),
-  `environment`.
+  `group` (the group's name: the suggestion the form shows, or, without forms, the user's), `scope` and `reason` (no
+  forms), `dropped`, `drop_reason`, `system_name`, `system_names` (by source type), `environment`.
 * **Returns**: `status: needs_review` (`feed`, `field`, `table`, `review_id`, `rows`, `to_confirm`, `hint`); `status: needs_user`
-  with `proposed_rows` (each `name`, `match`, `values`, `records`: the patterns, without forms) or `offered` (the
-  source types for the scope, without forms); or `feed`, `field`, `registry` (`type`, `uuid`, `name`), `rows` (each
-  `name`, `match`, `status`, `reason`, `records_read`, `share_percent`, `suggested_category`, `confidence`), `table`,
-  `scope`, `coverage_restarted`, `hint`, `next`.
+  with `proposed_rows` (each `name`, `match`, `values`, `records`: the patterns, without forms) or `offered` and
+  `groups` (the source types for the scope and the registry's groups, without forms); or `feed`, `field`, `registry`
+  (`type`, `uuid`, `name`), `rows` (each `name`, `match`, `status`, `reason`, `records_read`, `share_percent`,
+  `suggested_category`, `confidence`), `table`, `scope`, `group`, `joins` (an existing group named), `coverage_restarted`,
+  `hint`, `next`.
 * **Refuses**: no `feed`; another build open on the feed (one open build per aggregated feed, under
   `start_onboarding`); no source type field known (`survey_feed` first); no values counted; a row that is neither
   `name = value` nor `name ~ ^pattern`; rows that can't be used (`These rows can't be used: ...`); a patterns answer
-  that is neither; a scope naming a source type not offered; `dropped` without `drop_reason`, or naming no source
-  type of the registry.
+  that is neither; a scope naming a source type not offered; `scope` without `group`; with forms, no `group` to
+  suggest; a group with no name, or a new one with no source type chosen; `dropped` without `drop_reason`, or naming no source type
+  of the registry.
 
 ### `set_shape_handling`
 
@@ -4343,8 +4351,13 @@ constants, its shared calls, the registry's Environment and default System Name;
 System Name (its source types' rows', else its mapping's) as a parameter. A later group's entries the same as the
 common module's (its System Name and Environment aside) are left to it; others are its own, said in `group.notes`;
 a shared call of a later group's that the common module lacks is added to the common module, saved again (in place,
-or through a working copy of a promoted one), never imported by the group. Its source types are `source_types`, else
-the build's scope's; the sample check reads theirs alone. Saving: the helpers (made, or written again when this
+or through a working copy of a promoted one), never imported by the group. **One source type group a build**
+(decided 2026-11-13): `group` defaults to the one the build's scope names (`record_source_types`; a new translation in
+such a build with no `group` is that group's), and another group name is refused (`one source type group a build`;
+for a scope kept before scopes named their group, another group whose XSLT the build made is refused). Its source types
+are `source_types`, else the build's scope's with those the group translates already (an existing group named in the
+scope keeps its own); the sample check reads theirs alone. A build with a whole-feed scope (no registry) is
+unaffected. Saving: the helpers (made, or written again when this
 generator writes them otherwise) and common module first, then the group importing the common module by UUID, and the
 registry's rows for the group's source types set `translated` with `group` and `group_xslt`.
 

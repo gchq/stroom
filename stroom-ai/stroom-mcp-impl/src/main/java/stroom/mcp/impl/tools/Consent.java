@@ -237,6 +237,29 @@ public class Consent {
                                                 final String intro,
                                                 final Map<String, Editable> items,
                                                 final String text) {
+        return review(call, context, action, intro, items, text, null);
+    }
+
+    /// As [#review(ToolCall, ToolCallContext, String, String, Map, String)], the free-text field filled with a
+    /// suggested answer the user may keep or change: e.g. a proposed name.
+    ///
+    /// @param call      The call asking.
+    /// @param context   The call's context.
+    /// @param action    The tool asking, e.g. `record_source_types`.
+    /// @param intro     What the form is about, its message.
+    /// @param items     The yes/no items by key, in the order shown.
+    /// @param text      The free-text field's title.
+    /// @param suggested The free-text field's suggested answer, or null for none.
+    /// @return Each item's answer by key, and the free text (blank when none) under [#REVIEW_TEXT]; empty when the
+    /// session can't show a form now, or the form would be too large to show (the agent then asks the user).
+    /// @throws ToolRefusal if the user declined the form.
+    public Optional<Map<String, Object>> review(final ToolCall call,
+                                                final ToolCallContext context,
+                                                final String action,
+                                                final String intro,
+                                                final Map<String, Editable> items,
+                                                final String text,
+                                                final String suggested) {
         if (NullSafe.isEmptyMap(items) || !context.userQuestions().canAsk()) {
             return Optional.empty();
         }
@@ -257,6 +280,9 @@ public class Consent {
         final Map<String, Object> textField = new LinkedHashMap<>();
         textField.put("type", "string");
         textField.put("title", heading(text));
+        if (NullSafe.isNonBlankString(suggested)) {
+            textField.put("default", suggested.strip());
+        }
         properties.put("text", textField);
         final Map<String, Object> schema = new LinkedHashMap<>();
         schema.put("type", "object");

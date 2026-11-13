@@ -620,10 +620,13 @@ class TestSurveyFeedTool {
             stream(id, "ACME-VPN", id, logins(3), false);
         }
         final String args = "{\"stream_ids\": [7, 8, 9], \"build\": \"acme-v1\"}";
-        // The survey of an existing feed, covered, asks where its doc goes at promotion too.
-        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true, "answer",
-                SurveyFeedTool.KEEP_IN_BUILD));
-        assertThat(json(call(args, user.context()))).containsEntry(SurveyDoc.FEWER_STREAMS, 3);
+        // The survey of an existing feed, covered, asks nothing of where its doc goes: it stays in the build.
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+        final Map<String, Object> first = json(call(args, user.context()));
+        assertThat(first).containsEntry(SurveyDoc.FEWER_STREAMS, 3)
+                .doesNotContainKeys("promotion", "promotion_question", "carried_on_from");
+        assertThat(user.shown()).noneMatch(message -> message.contains("beside the feed")
+                                               || message.contains("survey's findings"));
 
         // A node restarted (its memory empty), with no form to ask in: the build's survey record still says so.
         final SurveyFeedTool restarted = new SurveyFeedTool(streamReader, feedNames, world.guard(),
@@ -638,7 +641,6 @@ class TestSurveyFeedTool {
     // Nothing is beside any feed.
     private static SourceTypeRegistries besideFeed() {
         final SourceTypeRegistries registries = Mockito.mock(SourceTypeRegistries.class);
-        Mockito.when(registries.promotedSurvey(anyString())).thenReturn(Optional.empty());
         Mockito.when(registries.registry(any(), anyString())).thenReturn(Optional.empty());
         return registries;
     }
@@ -815,14 +817,6 @@ class TestSurveyFeedTool {
     private Map<String, Object> surveyState() {
         return SurveyDoc.readState(new SurveyDocuments(world.guard(), world.documentAccess,
                 new DocumentWrites(world.documentAccess)).load("acme-v1", "ACME-VPN").orElseThrow().text());
-    }
-
-    @Test
-    void theAnswerToWhereTheSurveyDocGoesIsReadFromTheUsersWords() {
-        assertThat(SurveyFeedTool.promotionChoice(SurveyFeedTool.PROMOTE_BESIDE)).isEqualTo(SurveyFeedTool.BESIDE);
-        assertThat(SurveyFeedTool.promotionChoice(SurveyFeedTool.KEEP_IN_BUILD)).isEqualTo(SurveyFeedTool.KEEP);
-        assertThat(SurveyFeedTool.promotionChoice(SurveyFeedTool.DECIDE_LATER)).isEqualTo(SurveyFeedTool.LATER);
-        assertThat(SurveyFeedTool.promotionChoice("not sure")).isEqualTo(SurveyFeedTool.LATER);
     }
 
     // JSON lines wrapped with a source field, each source's messages in a format of its own.

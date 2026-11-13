@@ -372,8 +372,10 @@ class StartOnboardingTool extends AbstractBuiltInTool {
         result.put("hint", "An assessment: survey_feed build='" + build + "' feed='" + feed.strip() + "' until "
                            + "covered. If the feed aggregates sources, the survey asks the user to confirm the field "
                            + "that tells them apart, and record_source_types writes the registry of its source "
-                           + "types with their profiles. The plan ends there, with promote_build (the survey and "
-                           + "registry beside the feed); then offer to onboard the source types the user picks.");
+                           + "types with their profiles. The plan ends there, with promote_build (the registry "
+                           + "beside the feed, where later builds find it; the survey doc stays in this build); then "
+                           + "offer to onboard the source types the user picks, one source type group (any number "
+                           + "of source types, one pipeline) a build.");
         result.put("tools", BuildPlan.HIDDEN_TOOLS);
         return result;
     }

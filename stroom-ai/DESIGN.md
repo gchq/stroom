@@ -1859,7 +1859,8 @@ surveys of the feed through a working copy, like any promoted document.
 * Profiles show the agent's suggested category for each source type by default, beside the signals it rests on.
 * A "component" is called a source type group.
 * No concurrent builds: one open build per feed.
-* Surveying a feed prompts the user to promote the survey doc beside it.
+* Surveying a feed prompts the user to promote the survey doc beside it. (Superseded 2026-11-13: the survey doc stays
+  in its build; nobody is asked.)
 
 Built in phase 1 (where the design was silent):
 
@@ -2097,6 +2098,27 @@ Built in rework R3 (where the design was silent):
   unseen value once a stream; the line is triaged benign, and `review_coverage` reports it as `unseen_source_types`.
 * A promoted group's pipeline is processed in a later build through a working copy (`copy_pipeline
   working_copy=true`), as the tools refuse processing with a production pipeline in a build.
+
+#### The survey doc stays in its build (decided, 2026-11-13)
+
+Replaces "surveying a feed prompts the user to promote the survey doc beside it": nobody is asked. The survey doc
+(`<feed> - Survey`, the feed's example records among it) always stays in its build at promotion; the registry always
+goes beside the feed. A later build or survey of the feed surveys afresh; a survey doc an earlier version put beside a
+feed is ignored. An assessment's lasting output is the registry.
+
+#### One source type group a build (decided, 2026-11-13)
+
+To keep the flow focused, a build makes at most one source type group, so one pipeline. The user chooses which source
+types go in it, any number: a group need not be one source type (ExchangeOnline and MicrosoftTeams as one "Messaging"
+group).
+
+* **The scope is the group.** The scope form asks which source types go in this build's group and what the group is
+  called (the agent suggests a name); the source types left out are parked for a later build. A feed the user doesn't
+  want split is translated whole instead, as a normal source.
+* **Naming an existing group** adds the chosen source types to it: they join its pipeline and output feed, through a
+  working copy of its XSLT when it is promoted.
+* **One group a build**: `build_translation_xslt` takes the build's group and its source types from the scope by
+  default, and refuses another group name in the same build; the next group is the next build's, after promotion.
 
 #### Open decisions
 
