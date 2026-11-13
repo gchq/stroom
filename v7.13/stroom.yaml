@@ -13822,6 +13822,8 @@ components:
       properties:
         dependencyWarningsEnabled:
           type: boolean
+        edgeAuthentication:
+          type: boolean
         externalIdentityProvider:
           type: boolean
         lastAnnotationChangeTime:
