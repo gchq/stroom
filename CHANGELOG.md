@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13.10] - 2026-11-13
+
+* Bug **#6023** : Fix S3 stream processing when optional metadata or context streams are absent.
+
+
 ## [v7.13.9] - 2026-11-13
 
 * Bug **#6022** : Fix the User Access screen and session list showing no sessions when an authenticating edge proxy (e.g. an AWS ALB) is in use.
@@ -2674,7 +2679,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.10...HEAD
+[v7.13.10]: https://github.com/gchq/stroom/compare/v7.13.9...v7.13.10
 [v7.13.9]: https://github.com/gchq/stroom/compare/v7.13.8...v7.13.9
 [v7.13.8]: https://github.com/gchq/stroom/compare/v7.13.7...v7.13.8
 [v7.13.7]: https://github.com/gchq/stroom/compare/v7.13.6...v7.13.7
