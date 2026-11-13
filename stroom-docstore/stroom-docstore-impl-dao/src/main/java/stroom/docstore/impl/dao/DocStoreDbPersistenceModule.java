@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dao;
+package stroom.docstore.impl.dao;
 
 import stroom.docstore.api.DocDependencyProviderBinder;
 import stroom.docstore.api.DocDependencyService;
@@ -53,6 +53,10 @@ public class DocStoreDbPersistenceModule extends AbstractModule {
                                      "Removes all associated data, audit, and snapshot rows.")
                         .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression()));
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class PhysicalDeleteOldDocs extends RunnableWrapper {
 

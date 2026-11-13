@@ -16,10 +16,8 @@
 
 package stroom.index.impl.dao;
 
-import stroom.collection.api.CollectionService;
-import stroom.dictionary.api.WordListProvider;
-import stroom.dictionary.shared.WordList;
-import stroom.docref.DocRef;
+import stroom.collection.mock.MockCollectionModule;
+import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docstore.mock.MockDocFinderModule;
 import stroom.index.api.IndexVolumeGroupService;
 import stroom.index.impl.IndexStore;
@@ -28,11 +26,6 @@ import stroom.security.api.SecurityContext;
 import stroom.test.common.util.db.DbTestModule;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -45,6 +38,8 @@ class TestModule extends AbstractModule {
     protected void configure() {
         install(new DbTestModule());
         install(new MockDocFinderModule());
+        install(new MockCollectionModule());
+        install(new MockWordListProviderModule());
 
         // Create a test security context
         final SecurityContext securityContext = mock(SecurityContext.class);
@@ -53,51 +48,5 @@ class TestModule extends AbstractModule {
         bind(SecurityContext.class).toInstance(securityContext);
         bind(IndexVolumeGroupService.class).toInstance(new MockIndexVolumeGroupService());
         bind(IndexStore.class).toInstance(mock(IndexStore.class));
-    }
-
-    @Provides
-    CollectionService collectionService() {
-        return new CollectionService() {
-            @Override
-            public Set<DocRef> getChildren(final DocRef folder, final String type) {
-                return null;
-            }
-
-            @Override
-            public Set<DocRef> getDescendants(final DocRef folder, final String type) {
-                return null;
-            }
-        };
-    }
-
-    @Provides
-    WordListProvider wordListProvider() {
-        return new WordListProvider() {
-
-            @Override
-            public List<DocRef> findByName(final String name) {
-                return List.of();
-            }
-
-            @Override
-            public Optional<DocRef> findByUuid(final String uuid) {
-                return Optional.empty();
-            }
-
-            @Override
-            public String getCombinedData(final DocRef dictionaryRef) {
-                return null;
-            }
-
-            @Override
-            public String[] getWords(final DocRef dictionaryRef) {
-                return null;
-            }
-
-            @Override
-            public WordList getCombinedWordList(final DocRef dictionaryRef) {
-                return null;
-            }
-        };
     }
 }

@@ -21,7 +21,7 @@ import stroom.collection.mock.MockCollectionModule;
 import stroom.data.retention.api.DataRetentionRulesProvider;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.dictionary.mock.MockWordListProviderModule;
-import stroom.docstore.impl.dao.MockDocDependencyModule;
+import stroom.docstore.mock.MockDocDependencyModule;
 import stroom.docstore.mock.MockDocFinderModule;
 import stroom.node.mock.MockNodeServiceModule;
 import stroom.security.mock.MockSecurityContextModule;

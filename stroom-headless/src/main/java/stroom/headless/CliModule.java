@@ -25,7 +25,7 @@ import stroom.dictionary.impl.DictionaryModule;
 import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.impl.DocFinderModule;
 import stroom.docstore.impl.DocStoreModule;
-import stroom.docstore.impl.dao.MockDocDependencyService;
+import stroom.docstore.mock.MockDocDependencyService;
 import stroom.explorer.api.IsSpecialExplorerDataSource;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.FeedModule;

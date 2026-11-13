@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dao;
+package stroom.docstore.impl.dao;
 
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;

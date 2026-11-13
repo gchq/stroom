@@ -27,21 +27,13 @@ import stroom.security.mock.MockSecurityContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Set;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TestDocDependencyRebuildStartup {
@@ -67,7 +59,7 @@ class TestDocDependencyRebuildStartup {
 
     @BeforeEach
     void setUp() {
-        lenient().when(pipelineProvider.getType()).thenReturn(PIPELINE_TYPE);
+        Mockito.lenient().when(pipelineProvider.getType()).thenReturn(PIPELINE_TYPE);
         startup = new DocDependencyRebuildStartup(
                 clusterLockService,
                 new MockSecurityContext(),
@@ -82,92 +74,110 @@ class TestDocDependencyRebuildStartup {
 
         startup.run();
 
-        verify(clusterLockService).tryLock(eq(DocDependencyRebuildStartup.LOCK_NAME), any());
-        verifyNoInteractions(docDependencyDao, docDependencyService, pipelineProvider);
+        Mockito.verify(clusterLockService).tryLock(ArgumentMatchers.eq(DocDependencyRebuildStartup.LOCK_NAME),
+                ArgumentMatchers.any());
+        Mockito.verifyNoInteractions(docDependencyDao, docDependencyService, pipelineProvider);
     }
 
     @Test
     void testRun_nothingStale() {
         givenLockAcquired();
-        when(docDependencyDao.findDocsWithStaleDependencies()).thenReturn(List.of());
+        Mockito.when(docDependencyDao.findDocsWithStaleDependencies()).thenReturn(List.of());
 
         startup.run();
 
-        verify(docDependencyDao, never()).setDependenciesIfUnchanged(any(), anyString(), any());
-        verifyNoInteractions(docDependencyService);
+        Mockito.verify(docDependencyDao, Mockito.never()).setDependenciesIfUnchanged(ArgumentMatchers.any(),
+                ArgumentMatchers.anyString(),
+                ArgumentMatchers.any());
+        Mockito.verifyNoInteractions(docDependencyService);
     }
 
     @Test
     void testRun_rebuildsStaleDocs() {
         givenLockAcquired();
-        when(docDependencyDao.findDocsWithStaleDependencies()).thenReturn(List.of(
+        Mockito.when(docDependencyDao.findDocsWithStaleDependencies()).thenReturn(List.of(
                 new DocVersion(PIPELINE_1, "v1"),
                 new DocVersion(PIPELINE_2, "v2")));
-        when(pipelineProvider.getDependencies(PIPELINE_1)).thenReturn(Set.of(PARENT_PIPELINE));
-        when(pipelineProvider.getDependencies(PIPELINE_2)).thenReturn(Set.of());
-        when(docDependencyDao.setDependenciesIfUnchanged(any(), anyString(), any())).thenReturn(true);
+        Mockito.when(pipelineProvider.getDependencies(PIPELINE_1)).thenReturn(Set.of(PARENT_PIPELINE));
+        Mockito.when(pipelineProvider.getDependencies(PIPELINE_2)).thenReturn(Set.of());
+        Mockito.when(docDependencyDao.setDependenciesIfUnchanged(ArgumentMatchers.any(),
+                ArgumentMatchers.anyString(),
+                ArgumentMatchers.any())).thenReturn(true);
 
         startup.run();
 
-        verify(docDependencyDao).setDependenciesIfUnchanged(PIPELINE_1, "v1", Set.of(PARENT_PIPELINE));
-        verify(docDependencyDao).setDependenciesIfUnchanged(PIPELINE_2, "v2", Set.of());
-        verify(docDependencyService).invalidateBrokenDependencyCache();
+        Mockito.verify(docDependencyDao).setDependenciesIfUnchanged(PIPELINE_1, "v1", Set.of(PARENT_PIPELINE));
+        Mockito.verify(docDependencyDao).setDependenciesIfUnchanged(PIPELINE_2, "v2", Set.of());
+        Mockito.verify(docDependencyService).invalidateBrokenDependencyCache();
     }
 
     @Test
     void testRun_docChangedDuringRebuild() {
         givenLockAcquired();
-        when(docDependencyDao.findDocsWithStaleDependencies()).thenReturn(List.of(
+        Mockito.when(docDependencyDao.findDocsWithStaleDependencies()).thenReturn(List.of(
                 new DocVersion(PIPELINE_1, "v1"),
                 new DocVersion(PIPELINE_2, "v2")));
-        when(pipelineProvider.getDependencies(any())).thenReturn(Set.of(PARENT_PIPELINE));
+        Mockito.when(pipelineProvider.getDependencies(ArgumentMatchers.any())).thenReturn(Set.of(PARENT_PIPELINE));
         // The first doc was saved after it was found, so the guarded write is refused
-        when(docDependencyDao.setDependenciesIfUnchanged(eq(PIPELINE_1), anyString(), any())).thenReturn(false);
-        when(docDependencyDao.setDependenciesIfUnchanged(eq(PIPELINE_2), anyString(), any())).thenReturn(true);
+        Mockito.when(docDependencyDao.setDependenciesIfUnchanged(ArgumentMatchers.eq(PIPELINE_1),
+                ArgumentMatchers.anyString(),
+                ArgumentMatchers.any())).thenReturn(false);
+        Mockito.when(docDependencyDao.setDependenciesIfUnchanged(ArgumentMatchers.eq(PIPELINE_2),
+                ArgumentMatchers.anyString(),
+                ArgumentMatchers.any())).thenReturn(true);
 
         startup.run();
 
-        verify(docDependencyDao).setDependenciesIfUnchanged(PIPELINE_2, "v2", Set.of(PARENT_PIPELINE));
-        verify(docDependencyService).invalidateBrokenDependencyCache();
+        Mockito.verify(docDependencyDao).setDependenciesIfUnchanged(PIPELINE_2, "v2", Set.of(PARENT_PIPELINE));
+        Mockito.verify(docDependencyService).invalidateBrokenDependencyCache();
     }
 
     @Test
     void testRun_errorOnOneDocContinues() {
         givenLockAcquired();
-        when(docDependencyDao.findDocsWithStaleDependencies()).thenReturn(List.of(
+        Mockito.when(docDependencyDao.findDocsWithStaleDependencies()).thenReturn(List.of(
                 new DocVersion(PIPELINE_1, "v1"),
                 new DocVersion(PIPELINE_2, "v2")));
-        when(pipelineProvider.getDependencies(PIPELINE_1)).thenThrow(new DocumentNotFoundException(PIPELINE_1));
-        when(pipelineProvider.getDependencies(PIPELINE_2)).thenReturn(Set.of(PARENT_PIPELINE));
-        when(docDependencyDao.setDependenciesIfUnchanged(any(), anyString(), any())).thenReturn(true);
+        Mockito.when(pipelineProvider.getDependencies(PIPELINE_1)).thenThrow(new DocumentNotFoundException(PIPELINE_1));
+        Mockito.when(pipelineProvider.getDependencies(PIPELINE_2)).thenReturn(Set.of(PARENT_PIPELINE));
+        Mockito.when(docDependencyDao.setDependenciesIfUnchanged(ArgumentMatchers.any(),
+                ArgumentMatchers.anyString(),
+                ArgumentMatchers.any())).thenReturn(true);
 
         startup.run();
 
-        verify(docDependencyDao, never()).setDependenciesIfUnchanged(eq(PIPELINE_1), anyString(), any());
-        verify(docDependencyDao).setDependenciesIfUnchanged(PIPELINE_2, "v2", Set.of(PARENT_PIPELINE));
-        verify(docDependencyService).invalidateBrokenDependencyCache();
+        Mockito.verify(docDependencyDao, Mockito.never()).setDependenciesIfUnchanged(ArgumentMatchers.eq(PIPELINE_1),
+                ArgumentMatchers.anyString(),
+                ArgumentMatchers.any());
+        Mockito.verify(docDependencyDao).setDependenciesIfUnchanged(PIPELINE_2, "v2", Set.of(PARENT_PIPELINE));
+        Mockito.verify(docDependencyService).invalidateBrokenDependencyCache();
     }
 
     @Test
     void testRun_typeWithNoProviderIsSkipped() {
         givenLockAcquired();
-        when(docDependencyDao.findDocsWithStaleDependencies()).thenReturn(List.of(
+        Mockito.when(docDependencyDao.findDocsWithStaleDependencies()).thenReturn(List.of(
                 new DocVersion(VIEW, "v1"),
                 new DocVersion(PIPELINE_1, "v2")));
-        when(pipelineProvider.getDependencies(PIPELINE_1)).thenReturn(Set.of(PARENT_PIPELINE));
-        when(docDependencyDao.setDependenciesIfUnchanged(any(), anyString(), any())).thenReturn(true);
+        Mockito.when(pipelineProvider.getDependencies(PIPELINE_1)).thenReturn(Set.of(PARENT_PIPELINE));
+        Mockito.when(docDependencyDao.setDependenciesIfUnchanged(ArgumentMatchers.any(),
+                ArgumentMatchers.anyString(),
+                ArgumentMatchers.any())).thenReturn(true);
 
         startup.run();
 
-        verify(docDependencyDao, never()).setDependenciesIfUnchanged(eq(VIEW), anyString(), any());
-        verify(docDependencyDao).setDependenciesIfUnchanged(PIPELINE_1, "v2", Set.of(PARENT_PIPELINE));
+        Mockito.verify(docDependencyDao, Mockito.never()).setDependenciesIfUnchanged(ArgumentMatchers.eq(VIEW),
+                ArgumentMatchers.anyString(),
+                ArgumentMatchers.any());
+        Mockito.verify(docDependencyDao).setDependenciesIfUnchanged(PIPELINE_1, "v2", Set.of(PARENT_PIPELINE));
     }
 
     private void givenLockAcquired() {
-        doAnswer(invocation -> {
+        Mockito.doAnswer(invocation -> {
             final Runnable runnable = invocation.getArgument(1);
             runnable.run();
             return null;
-        }).when(clusterLockService).tryLock(eq(DocDependencyRebuildStartup.LOCK_NAME), any());
+        }).when(clusterLockService).tryLock(ArgumentMatchers.eq(DocDependencyRebuildStartup.LOCK_NAME),
+                ArgumentMatchers.any());
     }
 }

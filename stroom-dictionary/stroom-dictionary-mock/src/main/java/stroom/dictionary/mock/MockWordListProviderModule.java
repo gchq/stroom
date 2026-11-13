@@ -28,6 +28,7 @@ import java.util.Optional;
 
 public class MockWordListProviderModule extends AbstractModule {
 
+    @SuppressWarnings("unused")
     @Provides
     WordListProvider wordListProvider() {
         return new WordListProvider() {
@@ -54,7 +55,7 @@ public class MockWordListProviderModule extends AbstractModule {
 
             @Override
             public WordList getCombinedWordList(final DocRef dictionaryRef) {
-                return null;
+                return WordList.EMPTY;
             }
         };
     }

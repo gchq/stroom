@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dao;
+package stroom.docstore.impl.dao;
 
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;

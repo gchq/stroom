@@ -17,14 +17,14 @@
 ext.moduleName = 'stroom.docstore.api'
 
 dependencies {
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-explorer:stroom-explorer-api')
-    implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-query:stroom-query-api')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-util-shared')
+    api project(':stroom-core-shared')
+    api project(':stroom-docref')
+    api project(':stroom-explorer:stroom-explorer-api')
+    api project(':stroom-importexport:stroom-importexport-api')
+    api project(':stroom-query:stroom-query-api')
+    api project(':stroom-security:stroom-security-api')
+    api project(':stroom-util-shared')
 
     implementation libs.guice
-    implementation project(':stroom-docref')
 }
 

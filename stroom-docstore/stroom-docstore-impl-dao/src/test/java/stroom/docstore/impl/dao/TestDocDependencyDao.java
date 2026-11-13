@@ -35,8 +35,10 @@ import stroom.util.shared.filter.FilterFieldDefinition;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import jakarta.inject.Inject;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -46,7 +48,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static stroom.docstore.impl.db.jooq.tables.Doc.DOC;
 import static stroom.docstore.impl.db.jooq.tables.DocDependency.DOC_DEPENDENCY;
 
@@ -70,8 +71,8 @@ class TestDocDependencyDao {
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(WordListProvider.class).toInstance(mock(WordListProvider.class));
-                        bind(CollectionService.class).toInstance(mock(CollectionService.class));
+                        bind(WordListProvider.class).toInstance(Mockito.mock(WordListProvider.class));
+                        bind(CollectionService.class).toInstance(Mockito.mock(CollectionService.class));
                     }
                 }
         ).injectMembers(this);
@@ -92,11 +93,11 @@ class TestDocDependencyDao {
     private void createDocRow(final DocRef docRef) {
         // Insert a minimal row into the doc table so LEFT JOINs can resolve names
         JooqUtil.context(connProvider, ctx -> ctx
-                .insertInto(stroom.docstore.impl.db.jooq.tables.Doc.DOC)
-                .set(stroom.docstore.impl.db.jooq.tables.Doc.DOC.TYPE, docRef.getType())
-                .set(stroom.docstore.impl.db.jooq.tables.Doc.DOC.UUID, docRef.getUuid())
-                .set(stroom.docstore.impl.db.jooq.tables.Doc.DOC.NAME, docRef.getName())
-                .set(stroom.docstore.impl.db.jooq.tables.Doc.DOC.VERSION,
+                .insertInto(DOC)
+                .set(DOC.TYPE, docRef.getType())
+                .set(DOC.UUID, docRef.getUuid())
+                .set(DOC.NAME, docRef.getName())
+                .set(DOC.VERSION,
                         UUID.randomUUID().toString())
                 .execute());
     }
@@ -117,7 +118,7 @@ class TestDocDependencyDao {
                 .fetchOptional()
                 .map(r -> r.value1())
                 .orElse(0));
-        assertThat(count).isEqualTo(2);
+        Assertions.assertThat(count).isEqualTo(2);
     }
 
     @Test
@@ -133,8 +134,8 @@ class TestDocDependencyDao {
         dao.setDependencies(from, Set.of(to2));
 
         final Set<DocRef> deps = dao.getDependenciesOf(from.getUuid());
-        assertThat(deps).hasSize(1);
-        assertThat(deps.iterator().next().getUuid()).isEqualTo(to2.getUuid());
+        Assertions.assertThat(deps).hasSize(1);
+        Assertions.assertThat(deps.iterator().next().getUuid()).isEqualTo(to2.getUuid());
     }
 
     @Test
@@ -191,8 +192,8 @@ class TestDocDependencyDao {
         dao.setDependencies(from, Set.of(to1, to2));
 
         final Set<DocRef> deps = dao.getDependenciesOf(from.getUuid());
-        assertThat(deps).hasSize(2);
-        assertThat(deps.stream().map(DocRef::getUuid)).containsExactlyInAnyOrder(
+        Assertions.assertThat(deps).hasSize(2);
+        Assertions.assertThat(deps.stream().map(DocRef::getUuid)).containsExactlyInAnyOrder(
                 to1.getUuid(), to2.getUuid());
     }
 
@@ -213,8 +214,8 @@ class TestDocDependencyDao {
         dao.setDependencies(dependant2, Set.of(target));
 
         final Set<DocRef> dependants = dao.getDependantsOf(target.getUuid());
-        assertThat(dependants).hasSize(2);
-        assertThat(dependants.stream().map(DocRef::getUuid)).containsExactlyInAnyOrder(
+        Assertions.assertThat(dependants).hasSize(2);
+        Assertions.assertThat(dependants.stream().map(DocRef::getUuid)).containsExactlyInAnyOrder(
                 dependant1.getUuid(), dependant2.getUuid());
     }
 
@@ -234,9 +235,9 @@ class TestDocDependencyDao {
         dao.setDependencies(dependant, Set.of(target));
 
         final Set<DocRef> dependants = dao.getDependantsOf(target.getUuid());
-        assertThat(dependants).hasSize(1);
+        Assertions.assertThat(dependants).hasSize(1);
         // Name is resolved live from the doc table, not the stored snapshot.
-        assertThat(dependants.iterator().next().getName()).isEqualTo("Live Dashboard Name");
+        Assertions.assertThat(dependants.iterator().next().getName()).isEqualTo("Live Dashboard Name");
     }
 
     @Test
@@ -258,10 +259,10 @@ class TestDocDependencyDao {
 
         // The dependant is attributed to the pipeline (a real tree node), not the filter, with the
         // owner's live name.
-        assertThat(dependants).hasSize(1);
+        Assertions.assertThat(dependants).hasSize(1);
         final DocRef dependant = dependants.iterator().next();
-        assertThat(dependant.getUuid()).isEqualTo(pipeline.getUuid());
-        assertThat(dependant.getName()).isEqualTo("Owning Pipeline");
+        Assertions.assertThat(dependant.getUuid()).isEqualTo(pipeline.getUuid());
+        Assertions.assertThat(dependant.getName()).isEqualTo("Owning Pipeline");
     }
 
     @Test
@@ -276,8 +277,8 @@ class TestDocDependencyDao {
         final Set<DocRef> dependants = dao.getDependantsOf(sharedDict.getUuid());
 
         // No owner to roll up to, so it stays as the filter itself.
-        assertThat(dependants).hasSize(1);
-        assertThat(dependants.iterator().next().getUuid()).isEqualTo(filter.getUuid());
+        Assertions.assertThat(dependants).hasSize(1);
+        Assertions.assertThat(dependants.iterator().next().getUuid()).isEqualTo(filter.getUuid());
     }
 
     // --- deleteAllForDoc ---
@@ -325,7 +326,7 @@ class TestDocDependencyDao {
                 .from(DOC_DEPENDENCY)
                 .where(DOC_DEPENDENCY.FROM_UUID.eq(from.getUuid()))
                 .fetchOne(DOC_DEPENDENCY.FROM_NAME));
-        assertThat(storedName).isEqualTo("New Name");
+        Assertions.assertThat(storedName).isEqualTo("New Name");
     }
 
     @Test
@@ -342,7 +343,7 @@ class TestDocDependencyDao {
                 .from(DOC_DEPENDENCY)
                 .where(DOC_DEPENDENCY.TO_UUID.eq(to.getUuid()))
                 .fetchOne(DOC_DEPENDENCY.TO_NAME));
-        assertThat(storedName).isEqualTo("New Index Name");
+        Assertions.assertThat(storedName).isEqualTo("New Index Name");
     }
 
     // --- getBrokenDependencies ---
@@ -359,10 +360,10 @@ class TestDocDependencyDao {
         dao.setDependencies(from, Set.of(missingTarget));
 
         final Map<DocRef, Set<DocRef>> broken = dao.getBrokenDependencies(Set.of());
-        assertThat(broken).isNotEmpty();
+        Assertions.assertThat(broken).isNotEmpty();
 
         // Should contain an entry mapping 'from' -> set containing the missing target
-        assertThat(broken.values().stream().flatMap(Set::stream).map(DocRef::getUuid))
+        Assertions.assertThat(broken.values().stream().flatMap(Set::stream).map(DocRef::getUuid))
                 .contains(missingTarget.getUuid());
     }
 
@@ -377,7 +378,7 @@ class TestDocDependencyDao {
 
         // Pseudo-ref should be excluded
         final Map<DocRef, Set<DocRef>> broken = dao.getBrokenDependencies(Set.of(pseudoUuid));
-        assertThat(broken).isEmpty();
+        Assertions.assertThat(broken).isEmpty();
     }
 
     @Test
@@ -391,7 +392,7 @@ class TestDocDependencyDao {
         dao.setDependencies(from, Set.of(to));
 
         final Map<DocRef, Set<DocRef>> broken = dao.getBrokenDependencies(Set.of());
-        assertThat(broken).isEmpty();
+        Assertions.assertThat(broken).isEmpty();
     }
 
     @Test
@@ -410,11 +411,11 @@ class TestDocDependencyDao {
         final Map<DocRef, Set<DocRef>> broken = dao.getBrokenDependencies(Set.of());
 
         // The broken dep is attributed to the pipeline (a real tree node), not the filter.
-        assertThat(broken).containsOnlyKeys(pipeline);
-        assertThat(broken.get(pipeline).stream().map(DocRef::getUuid))
+        Assertions.assertThat(broken).containsOnlyKeys(pipeline);
+        Assertions.assertThat(broken.get(pipeline).stream().map(DocRef::getUuid))
                 .containsExactly(missingDict.getUuid());
         // The rolled-up key carries the owner's live name resolved from the doc table.
-        assertThat(broken.keySet().iterator().next().getName()).isEqualTo("My Pipeline");
+        Assertions.assertThat(broken.keySet().iterator().next().getName()).isEqualTo("My Pipeline");
     }
 
     @Test
@@ -428,8 +429,8 @@ class TestDocDependencyDao {
         final Map<DocRef, Set<DocRef>> broken = dao.getBrokenDependencies(Set.of());
 
         // No owner to roll up to, so it stays keyed on the filter.
-        assertThat(broken).containsOnlyKeys(filter);
-        assertThat(broken.get(filter).stream().map(DocRef::getUuid))
+        Assertions.assertThat(broken).containsOnlyKeys(filter);
+        Assertions.assertThat(broken.get(filter).stream().map(DocRef::getUuid))
                 .containsExactly(missingDict.getUuid());
     }
 
@@ -445,8 +446,8 @@ class TestDocDependencyDao {
 
         final Map<DocRef, Set<DocRef>> broken = dao.getBrokenDependencies(Set.of());
 
-        assertThat(broken).containsOnlyKeys(analyticRule);
-        assertThat(broken.get(analyticRule).stream().map(DocRef::getUuid))
+        Assertions.assertThat(broken).containsOnlyKeys(analyticRule);
+        Assertions.assertThat(broken.get(analyticRule).stream().map(DocRef::getUuid))
                 .containsExactly(missingDict.getUuid());
     }
 
@@ -460,19 +461,19 @@ class TestDocDependencyDao {
         createDocRow(index);
         dao.setDependencies(filter, Set.of(pipeline, index));
 
-        assertThat(filter("fromtype:ProcessorFilter").getValues())
+        Assertions.assertThat(filter("fromtype:ProcessorFilter").getValues())
                 .hasSize(2)
                 .extracting(dependency -> dependency.getFrom().getName())
                 .containsOnly("My Pipeline");
 
         // The name is the pipeline's live name, so a rename needs no propagating
         renameDocRow(pipeline, "Renamed Pipeline");
-        assertThat(filter("fromtype:ProcessorFilter").getValues())
+        Assertions.assertThat(filter("fromtype:ProcessorFilter").getValues())
                 .extracting(dependency -> dependency.getFrom().getName())
                 .containsOnly("Renamed Pipeline");
 
         // The quick filter on the source name uses the same name
-        assertThat(filter("fromname:Renamed").getValues())
+        Assertions.assertThat(filter("fromname:Renamed").getValues())
                 .hasSize(2);
     }
 
@@ -484,12 +485,12 @@ class TestDocDependencyDao {
         dao.setDependencies(filter, Set.of(pipeline));
         deleteDocRow(pipeline);
 
-        assertThat(filter("fromtype:ProcessorFilter").getValues())
+        Assertions.assertThat(filter("fromtype:ProcessorFilter").getValues())
                 .singleElement()
                 .satisfies(dependency -> {
-                    assertThat(dependency.getFrom().getName())
+                    Assertions.assertThat(dependency.getFrom().getName())
                             .isEmpty();
-                    assertThat(dependency.isOk())
+                    Assertions.assertThat(dependency.isOk())
                             .isFalse();
                 });
     }
@@ -503,7 +504,7 @@ class TestDocDependencyDao {
         createDocRow(parent);
         dao.setDependencies(child, Set.of(parent));
 
-        assertThat(filter("fromuuid:" + child.getUuid()).getValues())
+        Assertions.assertThat(filter("fromuuid:" + child.getUuid()).getValues())
                 .singleElement()
                 .extracting(dependency -> dependency.getFrom().getName())
                 .isEqualTo("Child Pipeline");
@@ -528,8 +529,8 @@ class TestDocDependencyDao {
         final DependencyCriteria criteria = new DependencyCriteria();
         final ResultPage<Dependency> page = dao.fetchDependencies(criteria, Set.of(), dep -> true);
 
-        assertThat(page.getValues()).hasSize(3);
-        assertThat(page.getPageResponse().getTotal()).isEqualTo(3);
+        Assertions.assertThat(page.getValues()).hasSize(3);
+        Assertions.assertThat(page.getPageResponse().getTotal()).isEqualTo(3);
     }
 
     @Test
@@ -545,12 +546,12 @@ class TestDocDependencyDao {
         final DependencyCriteria criteria = new DependencyCriteria();
         final ResultPage<Dependency> page = dao.fetchDependencies(criteria, Set.of(), dep -> true);
 
-        assertThat(page.getValues()).hasSize(1);
+        Assertions.assertThat(page.getValues()).hasSize(1);
         final Dependency dep = page.getValues().getFirst();
         // Names should be resolved from the doc table (COALESCE prefers live name)
-        assertThat(dep.getFrom().getName()).isEqualTo("Dashboard Name");
-        assertThat(dep.getTo().getName()).isEqualTo("Index Name");
-        assertThat(dep.isOk()).isTrue();
+        Assertions.assertThat(dep.getFrom().getName()).isEqualTo("Dashboard Name");
+        Assertions.assertThat(dep.getTo().getName()).isEqualTo("Index Name");
+        Assertions.assertThat(dep.isOk()).isTrue();
     }
 
     @Test
@@ -566,11 +567,11 @@ class TestDocDependencyDao {
         final DependencyCriteria criteria = new DependencyCriteria();
         final ResultPage<Dependency> page = dao.fetchDependencies(criteria, Set.of(), dep -> true);
 
-        assertThat(page.getValues()).hasSize(1);
+        Assertions.assertThat(page.getValues()).hasSize(1);
         final Dependency dep = page.getValues().getFirst();
         // to name should fall back to the stored name
-        assertThat(dep.getTo().getName()).isEqualTo("Stored Index Name");
-        assertThat(dep.isOk()).isFalse();  // Target missing = broken
+        Assertions.assertThat(dep.getTo().getName()).isEqualTo("Stored Index Name");
+        Assertions.assertThat(dep.isOk()).isFalse();  // Target missing = broken
     }
 
     // --- Edge cases ---
@@ -607,9 +608,9 @@ class TestDocDependencyDao {
     void testFetchDependencies_filterByToUuid() {
         final Fixture f = new Fixture();
 
-        assertThat(filter("touuid:" + f.index.getUuid()).getValues()
-                .stream()
-                .map(dep -> dep.getFrom().getName()))
+        Assertions.assertThat(filter("touuid:" + f.index.getUuid()).getValues()
+                        .stream()
+                        .map(dep -> dep.getFrom().getName()))
                 .containsExactly("Dashboard One");
     }
 
@@ -617,15 +618,15 @@ class TestDocDependencyDao {
     void testFetchDependencies_filterByFromUuid() {
         final Fixture f = new Fixture();
 
-        assertThat(filter("fromuuid:" + f.dashboard1.getUuid()).getValues()).hasSize(2);
+        Assertions.assertThat(filter("fromuuid:" + f.dashboard1.getUuid()).getValues()).hasSize(2);
     }
 
     @Test
     void testFetchDependencies_filterByType() {
         new Fixture();
 
-        assertThat(filter("fromtype:View").getValues()).hasSize(1);
-        assertThat(filter("totype:Index").getValues()).hasSize(2);
+        Assertions.assertThat(filter("fromtype:View").getValues()).hasSize(1);
+        Assertions.assertThat(filter("totype:Index").getValues()).hasSize(2);
     }
 
     @Test
@@ -633,11 +634,11 @@ class TestDocDependencyDao {
         new Fixture();
 
         // Matches on the from name only.
-        assertThat(filter("Dashboard One").getValues()).hasSize(2);
+        Assertions.assertThat(filter("Dashboard One").getValues()).hasSize(2);
         // Matches on the to name only.
-        assertThat(filter("Dict").getValues()).hasSize(1);
+        Assertions.assertThat(filter("Dict").getValues()).hasSize(1);
         // Matches nothing.
-        assertThat(filter("nosuchthing").getValues()).isEmpty();
+        Assertions.assertThat(filter("nosuchthing").getValues()).isEmpty();
     }
 
     @Test
@@ -646,10 +647,10 @@ class TestDocDependencyDao {
 
         // Only the edge to the deleted dictionary is broken.
         final ResultPage<Dependency> missing = filter("status:Missing");
-        assertThat(missing.getValues()).hasSize(1);
-        assertThat(missing.getValues().getFirst().getTo().getUuid()).isEqualTo(f.missingDict.getUuid());
+        Assertions.assertThat(missing.getValues()).hasSize(1);
+        Assertions.assertThat(missing.getValues().getFirst().getTo().getUuid()).isEqualTo(f.missingDict.getUuid());
 
-        assertThat(filter("status:OK").getValues()).hasSize(2);
+        Assertions.assertThat(filter("status:OK").getValues()).hasSize(2);
     }
 
     @Test
@@ -657,21 +658,21 @@ class TestDocDependencyDao {
         new Fixture();
 
         // Equals, rather than the default contains.
-        assertThat(filter("totype:=Index").getValues()).hasSize(2);
-        assertThat(filter("totype:=Ind").getValues()).isEmpty();
+        Assertions.assertThat(filter("totype:=Index").getValues()).hasSize(2);
+        Assertions.assertThat(filter("totype:=Ind").getValues()).isEmpty();
         // Starts with / ends with - both discriminating, the View row has neither.
-        assertThat(filter("fromname:^Dashboard").getValues()).hasSize(2);
-        assertThat(filter("fromname:$One").getValues()).hasSize(2);
+        Assertions.assertThat(filter("fromname:^Dashboard").getValues()).hasSize(2);
+        Assertions.assertThat(filter("fromname:$One").getValues()).hasSize(2);
         // Negation.
-        assertThat(filter("totype:!Index").getValues()).hasSize(1);
+        Assertions.assertThat(filter("totype:!Index").getValues()).hasSize(1);
     }
 
     @Test
     void testFetchDependencies_andOr() {
         new Fixture();
 
-        assertThat(filter("fromtype:Dashboard and totype:Index").getValues()).hasSize(1);
-        assertThat(filter("fromtype:Dashboard or fromtype:View").getValues()).hasSize(3);
+        Assertions.assertThat(filter("fromtype:Dashboard and totype:Index").getValues()).hasSize(1);
+        Assertions.assertThat(filter("fromtype:Dashboard or fromtype:View").getValues()).hasSize(3);
     }
 
     /**
@@ -689,13 +690,13 @@ class TestDocDependencyDao {
         // Without the pseudo-ref set it looks broken...
         final ResultPage<Dependency> unaware =
                 dao.fetchDependencies(new DependencyCriteria(), Set.of(), dep -> true);
-        assertThat(unaware.getValues().getFirst().isOk()).isFalse();
+        Assertions.assertThat(unaware.getValues().getFirst().isOk()).isFalse();
 
         // ...and with it, it is fine, and is excluded from a "missing" filter.
         final Set<String> pseudoRefUuids = Set.of(pseudoRef.getUuid());
         final ResultPage<Dependency> aware =
                 dao.fetchDependencies(new DependencyCriteria(), pseudoRefUuids, dep -> true);
-        assertThat(aware.getValues().getFirst().isOk()).isTrue();
+        Assertions.assertThat(aware.getValues().getFirst().isOk()).isTrue();
 
         final DependencyCriteria criteria = new DependencyCriteria();
         criteria.setQuickFilter("status:Missing");
@@ -711,9 +712,9 @@ class TestDocDependencyDao {
         new Fixture();
 
         // Unbalanced quote.
-        assertThat(filter("\"Dashboard").getValues()).isEmpty();
+        Assertions.assertThat(filter("\"Dashboard").getValues()).isEmpty();
         // WORD_BOUNDARY is not in ConditionSet.SQL_TEXT and TermHandler would throw on it.
-        assertThat(filter("fromname:?Dashboard").getValues()).isEmpty();
+        Assertions.assertThat(filter("fromname:?Dashboard").getValues()).isEmpty();
     }
 
     /**
@@ -727,15 +728,15 @@ class TestDocDependencyDao {
 
         final ResultPage<Dependency> page = filter("fromname:?Dashboard");
 
-        assertThat(page.getValues()).isEmpty();
-        assertThat(page.getFilterError()).isNotNull();
-        assertThat(page.getFilterError().getText())
+        Assertions.assertThat(page.getValues()).isEmpty();
+        Assertions.assertThat(page.getFilterError()).isNotNull();
+        Assertions.assertThat(page.getFilterError().getText())
                 .contains("does not support")
                 .contains("word boundary");
         // Positional, so the offending token can be underlined rather than described.
-        assertThat(page.getFilterError().getFrom()).isNotNull();
-        assertThat(page.getFilterError().getTo()).isNotNull();
-        assertThat(page.getFilterError().getSeverity()).isEqualTo(Severity.ERROR);
+        Assertions.assertThat(page.getFilterError().getFrom()).isNotNull();
+        Assertions.assertThat(page.getFilterError().getTo()).isNotNull();
+        Assertions.assertThat(page.getFilterError().getSeverity()).isEqualTo(Severity.ERROR);
     }
 
     /**
@@ -748,8 +749,8 @@ class TestDocDependencyDao {
 
         final ResultPage<Dependency> page = filter("fromname:NoSuchThingExists");
 
-        assertThat(page.getValues()).isEmpty();
-        assertThat(page.getFilterError()).isNull();
+        Assertions.assertThat(page.getValues()).isEmpty();
+        Assertions.assertThat(page.getFilterError()).isNull();
     }
 
     @Test
@@ -764,9 +765,9 @@ class TestDocDependencyDao {
         final ResultPage<Dependency> page = dao.fetchDependencies(criteria, Set.of(), dep -> true);
 
         // One row on the page, but the total reflects everything the filter matched.
-        assertThat(page.getValues()).hasSize(1);
-        assertThat(page.getPageResponse().getTotal()).isEqualTo(2);
-        assertThat(page.getValues().getFirst().getTo().getName()).isEqualTo("Dict One");
+        Assertions.assertThat(page.getValues()).hasSize(1);
+        Assertions.assertThat(page.getPageResponse().getTotal()).isEqualTo(2);
+        Assertions.assertThat(page.getValues().getFirst().getTo().getName()).isEqualTo("Dict One");
     }
 
     /**
@@ -796,9 +797,9 @@ class TestDocDependencyDao {
         // "Missing" sorts before "OK", and only the dictionary is genuinely missing. If the sort
         // used a pseudo-ref blind expression, "Alpha Pseudo" would sort into the missing group and
         // come first.
-        assertThat(page.getValues().stream().map(dep -> dep.getTo().getName()))
+        Assertions.assertThat(page.getValues().stream().map(dep -> dep.getTo().getName()))
                 .containsExactly("Beta Missing", "Alpha Pseudo", "Zeta Index");
-        assertThat(page.getValues().stream().map(Dependency::isOk))
+        Assertions.assertThat(page.getValues().stream().map(Dependency::isOk))
                 .containsExactly(false, true, true);
     }
 
@@ -811,18 +812,18 @@ class TestDocDependencyDao {
     void testFetchDependencies_everyAdvertisedQualifierResolves() {
         final Fixture f = new Fixture();
 
-        assertThat(filter("fromtype:Dashboard").getValues()).hasSize(2);
-        assertThat(filter("fromname:Dashboard One").getValues()).hasSize(2);
-        assertThat(filter("fromuuid:" + f.dashboard1.getUuid()).getValues()).hasSize(2);
-        assertThat(filter("totype:Index").getValues()).hasSize(2);
-        assertThat(filter("toname:Index One").getValues()).hasSize(1);
-        assertThat(filter("touuid:" + f.index.getUuid()).getValues()).hasSize(1);
-        assertThat(filter("status:OK").getValues()).hasSize(2);
+        Assertions.assertThat(filter("fromtype:Dashboard").getValues()).hasSize(2);
+        Assertions.assertThat(filter("fromname:Dashboard One").getValues()).hasSize(2);
+        Assertions.assertThat(filter("fromuuid:" + f.dashboard1.getUuid()).getValues()).hasSize(2);
+        Assertions.assertThat(filter("totype:Index").getValues()).hasSize(2);
+        Assertions.assertThat(filter("toname:Index One").getValues()).hasSize(1);
+        Assertions.assertThat(filter("touuid:" + f.index.getUuid()).getValues()).hasSize(1);
+        Assertions.assertThat(filter("status:OK").getValues()).hasSize(2);
 
         // And the qualifiers are exactly those derived from the tooltip's field definitions.
-        assertThat(DependencyCriteria.FIELD_DEFINITIONS
-                .stream()
-                .map(FilterFieldDefinition::getFilterQualifier))
+        Assertions.assertThat(DependencyCriteria.FIELD_DEFINITIONS
+                        .stream()
+                        .map(FilterFieldDefinition::getFilterQualifier))
                 .containsExactlyInAnyOrder(
                         "fromtype", "fromname", "fromuuid",
                         "totype", "toname", "touuid",
@@ -837,12 +838,12 @@ class TestDocDependencyDao {
         final DocRef to = docRef("Pipeline", "Pipeline");
         createDocRow(from);
 
-        assertThat(getDependencyVersion(from))
+        Assertions.assertThat(getDependencyVersion(from))
                 .isNull();
 
         dao.setDependencies(from, Set.of(to));
 
-        assertThat(getDependencyVersion(from))
+        Assertions.assertThat(getDependencyVersion(from))
                 .isEqualTo(DocDependencyDao.CURRENT_DEPENDENCY_VERSION);
     }
 
@@ -892,12 +893,12 @@ class TestDocDependencyDao {
 
         final boolean written = dao.setDependenciesIfUnchanged(from, version, Set.of(newTo));
 
-        assertThat(written)
+        Assertions.assertThat(written)
                 .isTrue();
         assertThat(dao.getDependenciesOf(from.getUuid()))
                 .extracting(DocRef::getUuid)
                 .containsExactly(newTo.getUuid());
-        assertThat(getDependencyVersion(from))
+        Assertions.assertThat(getDependencyVersion(from))
                 .isEqualTo(DocDependencyDao.CURRENT_DEPENDENCY_VERSION);
     }
 
@@ -913,7 +914,7 @@ class TestDocDependencyDao {
 
         final boolean written = dao.setDependenciesIfUnchanged(from, readVersion, Set.of(staleTo));
 
-        assertThat(written)
+        Assertions.assertThat(written)
                 .isFalse();
         assertThat(dao.getDependenciesOf(from.getUuid()))
                 .extracting(DocRef::getUuid)
@@ -929,7 +930,7 @@ class TestDocDependencyDao {
 
         final boolean written = dao.setDependenciesIfUnchanged(from, version, Set.of(to));
 
-        assertThat(written)
+        Assertions.assertThat(written)
                 .isFalse();
         assertThat(dao.getDependenciesOf(from.getUuid()))
                 .isEmpty();
@@ -942,7 +943,7 @@ class TestDocDependencyDao {
 
         final boolean written = dao.setDependenciesIfUnchanged(from, UUID.randomUUID().toString(), Set.of(to));
 
-        assertThat(written)
+        Assertions.assertThat(written)
                 .isFalse();
         assertThat(dao.getDependenciesOf(from.getUuid()))
                 .isEmpty();

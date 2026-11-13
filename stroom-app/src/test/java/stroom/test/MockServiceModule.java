@@ -35,7 +35,7 @@ import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.impl.DocFinderModule;
 import stroom.docstore.impl.DocStoreModule;
-import stroom.docstore.impl.dao.MockDocDependencyService;
+import stroom.docstore.mock.MockDocDependencyService;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.feed.impl.MockFeedModule;

@@ -20,11 +20,6 @@ import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.impl.db.DocStoreDbConnProvider;
-import stroom.docstore.impl.db.jooq.tables.Doc;
-import stroom.docstore.impl.db.jooq.tables.DocAudit;
-import stroom.docstore.impl.db.jooq.tables.DocAuditDataSnapshot;
-import stroom.docstore.impl.db.jooq.tables.DocData;
-import stroom.docstore.impl.db.jooq.tables.DocDataSnapshot;
 import stroom.docstore.shared.AuditAction;
 import stroom.docstore.shared.DocAuditEntry;
 import stroom.docstore.shared.DocDataType;
@@ -37,6 +32,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.inject.Guice;
 import jakarta.inject.Inject;
+import org.assertj.core.api.Assertions;
 import org.jooq.Table;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,7 +47,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static stroom.docstore.impl.db.jooq.tables.Doc.DOC;
 import static stroom.docstore.impl.db.jooq.tables.DocAudit.DOC_AUDIT;
 import static stroom.docstore.impl.db.jooq.tables.DocAuditDataSnapshot.DOC_AUDIT_DATA_SNAPSHOT;
@@ -251,10 +246,10 @@ class TestDBPersistence {
      * to verify complete removal.
      */
     private void assertAllRowsGone(final String uuid, final long docId) {
-        assertThat(docRowExists(uuid)).isFalse();
-        assertThat(countDocDataRows(docId)).isEqualTo(0);
-        assertThat(countSnapshotRows(docId)).isEqualTo(0);
-        assertThat(countAuditRows(docId)).isEqualTo(0);
+        Assertions.assertThat(docRowExists(uuid)).isFalse();
+        Assertions.assertThat(countDocDataRows(docId)).isEqualTo(0);
+        Assertions.assertThat(countSnapshotRows(docId)).isEqualTo(0);
+        Assertions.assertThat(countAuditRows(docId)).isEqualTo(0);
     }
 
     private int countDocDataRows(final long docId) {
@@ -293,11 +288,11 @@ class TestDBPersistence {
         assertThat(dbPersistence.exists(docRef)).isTrue();
 
         // Read — MySQL normalises JSON whitespace
-        assertThat(new String(dbPersistence.read(docRef).getExtAssetData("meta"), CHARSET))
+        Assertions.assertThat(new String(dbPersistence.read(docRef).getExtAssetData("meta"), CHARSET))
                 .contains("version");
 
         writeUpdate(docRef, createMetaDoc(json2), version1);
-        assertThat(new String(dbPersistence.read(docRef).getExtAssetData("meta"), CHARSET))
+        Assertions.assertThat(new String(dbPersistence.read(docRef).getExtAssetData("meta"), CHARSET))
                 .contains("version");
 
         assertThat(dbPersistence.list(docRef.getType())).contains(docRef);
@@ -349,8 +344,8 @@ class TestDBPersistence {
         writeCreate(docRef2, createMetaDoc(String.format(metaJson2, uuid2)));
 
         final List<DocRef> docRefs = dbPersistence.findDocRefsEmbeddedIn(docRef2);
-        assertThat(docRefs).hasSize(1);
-        assertThat(docRefs.getFirst()).isEqualTo(docRef1);
+        Assertions.assertThat(docRefs).hasSize(1);
+        Assertions.assertThat(docRefs.getFirst()).isEqualTo(docRef1);
     }
 
     /**
@@ -365,7 +360,7 @@ class TestDBPersistence {
         // Pre-delete: verify via API
         assertThat(dbPersistence.exists(docRef)).isTrue();
         assertThat(dbPersistence.read(docRef).getExtAssets()).hasSize(1);
-        assertThat(getAuditEntries(docRef)).hasSize(1);
+        Assertions.assertThat(getAuditEntries(docRef)).hasSize(1);
 
         // Delete
         dbPersistence.delete(docRef, null);
@@ -375,19 +370,19 @@ class TestDBPersistence {
         assertThat(dbPersistence.list(docRef.getType())).doesNotContain(docRef);
 
         // Direct DB: deleted timestamp is set
-        assertThat(getDeletedTimestamp(docRef.getUuid())).isNotNull();
+        Assertions.assertThat(getDeletedTimestamp(docRef.getUuid())).isNotNull();
 
         // Direct DB: child rows survive (API can't read deleted docs, so we must
         // check the DB directly to verify soft-delete preserves data)
         final long docId = getDocId(docRef.getUuid());
-        assertThat(countDocDataRows(docId)).isGreaterThan(0);
-        assertThat(countSnapshotRows(docId)).isGreaterThan(0);
+        Assertions.assertThat(countDocDataRows(docId)).isGreaterThan(0);
+        Assertions.assertThat(countSnapshotRows(docId)).isGreaterThan(0);
 
         // Audit trail still accessible via API (getAuditInfo works for deleted docs)
         final List<DocAuditEntry> entries = getAuditEntries(docRef);
-        assertThat(entries).hasSize(2);
-        assertThat(entries.get(0).getAction()).isEqualTo(AuditAction.CREATE);
-        assertThat(entries.get(1).getAction()).isEqualTo(AuditAction.DELETE);
+        Assertions.assertThat(entries).hasSize(2);
+        Assertions.assertThat(entries.get(0).getAction()).isEqualTo(AuditAction.CREATE);
+        Assertions.assertThat(entries.get(1).getAction()).isEqualTo(AuditAction.DELETE);
     }
 
     /**
@@ -408,9 +403,9 @@ class TestDBPersistence {
 
         // Verify via read — both extensions present with correct content
         final ImportExportDocument readDoc = dbPersistence.read(docRef);
-        assertThat(readDoc.getExtAssets()).hasSize(2);
-        assertThat(new String(readDoc.getExtAssetData("meta"), CHARSET)).contains("multi-test");
-        assertThat(new String(readDoc.getExtAssetData("xsl"), CHARSET)).isEqualTo(xsl);
+        Assertions.assertThat(readDoc.getExtAssets()).hasSize(2);
+        Assertions.assertThat(new String(readDoc.getExtAssetData("meta"), CHARSET)).contains("multi-test");
+        Assertions.assertThat(new String(readDoc.getExtAssetData("xsl"), CHARSET)).isEqualTo(xsl);
     }
 
     /**
@@ -424,13 +419,13 @@ class TestDBPersistence {
         writeUpdate(docRef, createMetaDoc("{\"v\":3}"), v2);
 
         final List<DocAuditEntry> entries = getAuditEntries(docRef);
-        assertThat(entries).hasSize(3);
-        assertThat(entries.get(0).getAction()).isEqualTo(AuditAction.CREATE);
-        assertThat(entries.get(1).getAction()).isEqualTo(AuditAction.UPDATE);
-        assertThat(entries.get(2).getAction()).isEqualTo(AuditAction.UPDATE);
+        Assertions.assertThat(entries).hasSize(3);
+        Assertions.assertThat(entries.get(0).getAction()).isEqualTo(AuditAction.CREATE);
+        Assertions.assertThat(entries.get(1).getAction()).isEqualTo(AuditAction.UPDATE);
+        Assertions.assertThat(entries.get(2).getAction()).isEqualTo(AuditAction.UPDATE);
 
-        assertThat(entries.get(0).getTime()).isLessThanOrEqualTo(entries.get(1).getTime());
-        assertThat(entries.get(1).getTime()).isLessThanOrEqualTo(entries.get(2).getTime());
+        Assertions.assertThat(entries.get(0).getTime()).isLessThanOrEqualTo(entries.get(1).getTime());
+        Assertions.assertThat(entries.get(1).getTime()).isLessThanOrEqualTo(entries.get(2).getTime());
     }
 
     /**
@@ -450,14 +445,14 @@ class TestDBPersistence {
 
         // Direct DB: verify snapshot dedup — no public API for this
         final long docId = getDocId(docRef.getUuid());
-        assertThat(countSnapshotRowsByExt(docId, "txt")).isEqualTo(1);  // Reused
-        assertThat(countSnapshotRowsByExt(docId, "xsl")).isEqualTo(2);  // Changed
+        Assertions.assertThat(countSnapshotRowsByExt(docId, "txt")).isEqualTo(1);  // Reused
+        Assertions.assertThat(countSnapshotRowsByExt(docId, "xsl")).isEqualTo(2);  // Changed
 
         // Both audit entries should link to 2 snapshots each (txt + xsl)
         final List<Long> auditIds = getAuditIds(docId);
-        assertThat(auditIds).hasSize(2);
-        assertThat(countAuditSnapshotLinks(auditIds.get(0))).isEqualTo(2);
-        assertThat(countAuditSnapshotLinks(auditIds.get(1))).isEqualTo(2);
+        Assertions.assertThat(auditIds).hasSize(2);
+        Assertions.assertThat(countAuditSnapshotLinks(auditIds.get(0))).isEqualTo(2);
+        Assertions.assertThat(countAuditSnapshotLinks(auditIds.get(1))).isEqualTo(2);
 
         // One snapshot ID should be shared (the txt one)
         final List<Long> audit1Snapshots = getSnapshotIdsForAudit(auditIds.get(0));
@@ -465,7 +460,7 @@ class TestDBPersistence {
         final long commonCount = audit1Snapshots.stream()
                 .filter(audit2Snapshots::contains)
                 .count();
-        assertThat(commonCount).isEqualTo(1);
+        Assertions.assertThat(commonCount).isEqualTo(1);
     }
 
     /**
@@ -478,13 +473,13 @@ class TestDBPersistence {
 
         // Verify via API
         final List<DocAuditEntry> entries = getAuditEntries(docRef);
-        assertThat(entries).hasSize(1);
-        assertThat(entries.getFirst().getAction()).isEqualTo(AuditAction.IMPORT);
+        Assertions.assertThat(entries).hasSize(1);
+        Assertions.assertThat(entries.getFirst().getAction()).isEqualTo(AuditAction.IMPORT);
 
         // Direct DB: verify snapshot link exists — no public API
         final long docId = getDocId(docRef.getUuid());
         final List<Long> auditIds = getAuditIds(docId);
-        assertThat(countAuditSnapshotLinks(auditIds.getFirst())).isEqualTo(1);
+        Assertions.assertThat(countAuditSnapshotLinks(auditIds.getFirst())).isEqualTo(1);
     }
 
     /**
@@ -500,13 +495,13 @@ class TestDBPersistence {
         final List<AuditAction> actions = getAuditEntries(docRef).stream()
                 .map(DocAuditEntry::getAction)
                 .toList();
-        assertThat(actions).containsExactly(
+        Assertions.assertThat(actions).containsExactly(
                 AuditAction.CREATE, AuditAction.UPDATE, AuditAction.DELETE);
 
         // Separate test for IMPORT
         final DocRef importDocRef = randomDocRef("test-action-import");
         writeImport(importDocRef, createMetaDoc("{\"v\":1}"));
-        assertThat(getAuditEntries(importDocRef).getFirst().getAction())
+        Assertions.assertThat(getAuditEntries(importDocRef).getFirst().getAction())
                 .isEqualTo(AuditAction.IMPORT);
     }
 
@@ -528,7 +523,7 @@ class TestDBPersistence {
 
         // 30d retention should NOT remove recently deleted doc
         assertThat(dbPersistence.physicalDelete(Duration.ofDays(30))).isEqualTo(0);
-        assertThat(docRowExists(docRef.getUuid())).isTrue();
+        Assertions.assertThat(docRowExists(docRef.getUuid())).isTrue();
 
         // Backdate beyond retention, then physical delete
         backdateDeleted(docRef.getUuid(), Duration.ofDays(31));
@@ -540,7 +535,7 @@ class TestDBPersistence {
         // Kept doc unaffected — verify via API
         assertThat(dbPersistence.exists(keepDocRef)).isTrue();
         assertThat(dbPersistence.read(keepDocRef).getExtAssets()).hasSize(1);
-        assertThat(getAuditEntries(keepDocRef)).hasSize(1);
+        Assertions.assertThat(getAuditEntries(keepDocRef)).hasSize(1);
     }
 
     /**
@@ -557,7 +552,7 @@ class TestDBPersistence {
         final String importVersion = writeImport(docRef, createMetaDoc("{\"name\":\"reimported\"}"));
 
         // Direct DB: deleted timestamp cleared
-        assertThat(getDeletedTimestamp(docRef.getUuid())).isNull();
+        Assertions.assertThat(getDeletedTimestamp(docRef.getUuid())).isNull();
 
         // Direct DB: version column matches the imported version
         final String storedVersion = JooqUtil.contextResult(connProvider, context -> context
@@ -565,27 +560,27 @@ class TestDBPersistence {
                 .from(DOC)
                 .where(DOC.UUID.eq(docRef.getUuid()))
                 .fetchOne(DOC.VERSION));
-        assertThat(storedVersion).isEqualTo(importVersion);
+        Assertions.assertThat(storedVersion).isEqualTo(importVersion);
 
         // API: visible again with new content
         assertThat(dbPersistence.exists(docRef)).isTrue();
         assertThat(dbPersistence.list(docRef.getType())).contains(docRef);
-        assertThat(new String(dbPersistence.read(docRef).getExtAssetData("meta"), CHARSET))
+        Assertions.assertThat(new String(dbPersistence.read(docRef).getExtAssetData("meta"), CHARSET))
                 .contains("reimported");
 
         // API: audit trail CREATE → DELETE → IMPORT
         final List<AuditAction> actions = getAuditEntries(docRef).stream()
                 .map(DocAuditEntry::getAction)
                 .toList();
-        assertThat(actions).containsExactly(
+        Assertions.assertThat(actions).containsExactly(
                 AuditAction.CREATE, AuditAction.DELETE, AuditAction.IMPORT);
 
         // Direct DB: snapshot links for CREATE and IMPORT, not DELETE
         final long docId = getDocId(docRef.getUuid());
         final List<Long> auditIds = getAuditIds(docId);
-        assertThat(countAuditSnapshotLinks(auditIds.get(0))).isEqualTo(1); // CREATE
-        assertThat(countAuditSnapshotLinks(auditIds.get(1))).isEqualTo(0); // DELETE
-        assertThat(countAuditSnapshotLinks(auditIds.get(2))).isEqualTo(1); // IMPORT
+        Assertions.assertThat(countAuditSnapshotLinks(auditIds.get(0))).isEqualTo(1); // CREATE
+        Assertions.assertThat(countAuditSnapshotLinks(auditIds.get(1))).isEqualTo(0); // DELETE
+        Assertions.assertThat(countAuditSnapshotLinks(auditIds.get(2))).isEqualTo(1); // IMPORT
     }
 
     /**
@@ -604,7 +599,7 @@ class TestDBPersistence {
         // API: doc visible again
         assertThat(dbPersistence.exists(docRef)).isTrue();
         assertThat(dbPersistence.list(docRef.getType())).contains(docRef);
-        assertThat(new String(dbPersistence.read(docRef).getExtAssetData("meta"), CHARSET))
+        Assertions.assertThat(new String(dbPersistence.read(docRef).getExtAssetData("meta"), CHARSET))
                 .contains("alive");
     }
 
@@ -632,7 +627,7 @@ class TestDBPersistence {
                 .from(DOC)
                 .where(DOC.UUID.eq(docRef.getUuid()))
                 .fetchOne(DOC.VERSION));
-        assertThat(storedVersion).isEqualTo(version);
+        Assertions.assertThat(storedVersion).isEqualTo(version);
     }
 
     /**
@@ -649,8 +644,8 @@ class TestDBPersistence {
                 .from(DOC)
                 .where(DOC.UUID.eq(docRef.getUuid()))
                 .fetchOne(DOC.VERSION));
-        assertThat(storedVersion).isEqualTo(v2);
-        assertThat(storedVersion).isNotEqualTo(v1);
+        Assertions.assertThat(storedVersion).isEqualTo(v2);
+        Assertions.assertThat(storedVersion).isNotEqualTo(v1);
     }
 
     /**
@@ -663,7 +658,7 @@ class TestDBPersistence {
         final String v2 = writeUpdate(docRef, createMetaDoc("{\"v\":2}"), v1);
 
         // Verify doc was updated
-        assertThat(new String(dbPersistence.read(docRef).getExtAssetData("meta"), CHARSET))
+        Assertions.assertThat(new String(dbPersistence.read(docRef).getExtAssetData("meta"), CHARSET))
                 .contains("\"v\": 2");
 
         // Verify version column
@@ -672,7 +667,7 @@ class TestDBPersistence {
                 .from(DOC)
                 .where(DOC.UUID.eq(docRef.getUuid()))
                 .fetchOne(DOC.VERSION));
-        assertThat(storedVersion).isEqualTo(v2);
+        Assertions.assertThat(storedVersion).isEqualTo(v2);
     }
 
     /**
@@ -686,7 +681,7 @@ class TestDBPersistence {
         writeUpdate(docRef, createMetaDoc("{\"v\":2}"), v1);
 
         // Attempt update with stale expectedVersion (V1) — should throw
-        assertThatThrownBy(() -> writeUpdate(docRef, createMetaDoc("{\"v\":3}"), v1))
+        Assertions.assertThatThrownBy(() -> writeUpdate(docRef, createMetaDoc("{\"v\":3}"), v1))
                 .isInstanceOf(DataChangedException.class)
                 .hasMessageContaining("modified by another user");
     }
@@ -698,8 +693,8 @@ class TestDBPersistence {
     void testOptimisticLockDocNotFound() {
         final DocRef docRef = new DocRef("test-type", UUID.randomUUID().toString(), "ghost");
 
-        assertThatThrownBy(() -> writeUpdate(docRef, createMetaDoc("{\"v\":1}"),
-                UUID.randomUUID().toString()))
+        Assertions.assertThatThrownBy(() -> writeUpdate(docRef, createMetaDoc("{\"v\":1}"),
+                        UUID.randomUUID().toString()))
                 .isInstanceOf(DocumentNotFoundException.class);
     }
 
@@ -712,7 +707,7 @@ class TestDBPersistence {
         final String v1 = writeCreate(docRef, createMetaDoc("{\"v\":1}"));
         dbPersistence.delete(docRef, null);
 
-        assertThatThrownBy(() -> writeUpdate(docRef, createMetaDoc("{\"v\":2}"), v1))
+        Assertions.assertThatThrownBy(() -> writeUpdate(docRef, createMetaDoc("{\"v\":2}"), v1))
                 .isInstanceOf(DocumentNotFoundException.class);
     }
 
@@ -733,10 +728,10 @@ class TestDBPersistence {
                 .from(DOC)
                 .where(DOC.UUID.eq(docRef.getUuid()))
                 .fetchOne(DOC.VERSION));
-        assertThat(storedVersion).isEqualTo(importVersion);
+        Assertions.assertThat(storedVersion).isEqualTo(importVersion);
 
         // Verify content was replaced
-        assertThat(new String(dbPersistence.read(docRef).getExtAssetData("meta"), CHARSET))
+        Assertions.assertThat(new String(dbPersistence.read(docRef).getExtAssetData("meta"), CHARSET))
                 .contains("imported");
     }
 
@@ -756,6 +751,6 @@ class TestDBPersistence {
                 .from(DOC)
                 .where(DOC.UUID.eq(docRef.getUuid()))
                 .fetchOne(DOC.VERSION));
-        assertThat(storedVersion).isEqualTo(v1);
+        Assertions.assertThat(storedVersion).isEqualTo(v1);
     }
 }

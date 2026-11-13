@@ -22,16 +22,19 @@ ext.jooqFlywayTable = 'docstore_schema_history'
 apply from: "${rootDir}/gradle/jooq-codegen.gradle"
 
 dependencies {
-    implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-db-util')
+
+    api project(':stroom-config:stroom-config-common')
+    api project(':stroom-db-util')
+
+    api libs.jackson.annotations
+    api libs.jooq
+
     implementation project(':stroom-docref')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.jooq
     implementation libs.flyway.mysql
     implementation libs.guice
-    implementation libs.jackson.annotations
     implementation libs.jaxb.api
     implementation libs.slf4j.api
 
