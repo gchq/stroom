@@ -1478,12 +1478,16 @@ beside the feed:
 `draft_translation_mapping` drafts from the notes; `build_translation_xslt` checks the mapping against the catalogue.
 Where the sample and the documentation disagree, the sample decides the format and the documentation the meaning.
 
-### Aggregated feeds: source types and source type groups (built, 2026-11-13)
+### Aggregated feeds: source types and source type groups (built 2026-11-13; pipeline revised 2026-11-13)
 
-Not built. A design for feeds that aggregate several discrete sources: a JSON wrapper with fixed metadata (host,
-source type, time...) around a `message` whose format depends on the source type (seen: PEGA logs, whose messages are
-plain text for most source types and SOAP envelopes, namespaces and all, for others). Today such a feed is one build
-and one translation: the draft unpacks a held format only where 80% of a field's values are in it, the survey never
+Built as designed below, then revised: each source type group has a pipeline of its own and there is no dispatcher
+([A pipeline per source type group](#a-pipeline-per-source-type-group-decided-2026-11-13)). Where the text below and
+the revision differ, the revision holds.
+
+A design for feeds that aggregate several discrete sources: a JSON wrapper with fixed metadata (host, source type,
+time...) around a `message` whose format depends on the source type (seen: PEGA logs, whose messages are plain text
+for most source types and SOAP envelopes, namespaces and all, for others). Before it, such a feed was one build and
+one translation: the draft unpacks a held format only where 80% of a field's values are in it, the survey never
 looks inside `message`, and the agent's context holds every source type at once. The user may also want only some of
 the source types translated now, and the rest later.
 
@@ -1844,10 +1848,12 @@ surveys of the feed through a working copy, like any promoted document.
 * Records outside a pipeline's scope (parked, dropped, new): not written, counted.
 * The registry: a doc beside the feed, with a human-readable part and the tools' machine block.
 * One XSLT filter, the dispatcher importing each source type group's XSLT; each group parses its own messages, so only
-  in-scope messages are parsed. No unwrap step.
+  in-scope messages are parsed. No unwrap step. (Superseded 2026-11-13: a pipeline per group, no dispatcher.)
 * One index per output feed: groups writing to the same Events feed share its index.
 * Which pipeline handles a group is always asked in a form: the existing pipeline (the default), a pipeline of its own
-  (optionally with its own output feed), or a new version of the existing pipeline.
+  (optionally with its own output feed), or a new version of the existing pipeline. (Superseded 2026-11-13: every
+  group has its own pipeline; the form asks where its Events go, and for a promoted pipeline whether to change it or
+  make a new version.)
 * The source type field is one field, at any depth; a source type matches a value exactly or by a pattern on it,
   rows tried in order.
 * Profiles show the agent's suggested category for each source type by default, beside the signals it rests on.
@@ -1995,6 +2001,61 @@ Fixed after a review of the whole work (2026-11-13):
 * `compare_outputs` and `summarise_fix` step a group's draft through a temporary dispatcher; `create_feed group=`
   takes a feed already in the build as the group's output feed and checks a corrected name; the Events question is
   asked only for a pipeline of its own.
+
+#### A pipeline per source type group (decided, 2026-11-13)
+
+Replaces the dispatcher ([The pipeline](#the-pipeline), option 5) with option 2: every source type group has a
+pipeline of its own. Options weighed on the way:
+
+* **The dispatcher** (built): one pipeline, one XSLT routing each record to its group's imported XSLT. One read of
+  each stream, but it needs a generated document routing every group, a temporary dispatcher to step an unsaved
+  group, working copies of the dispatcher and its imports re-pointed at promotion, and every group importing the
+  common and helpers modules, an import diamond Saxon refused (XTSE0210) until Stroom's import resolver was changed.
+* **A branched pipeline**: one pipeline whose parser feeds an XSLT filter per group (Stroom forks a parent's events to
+  every child, `XMLFilterFork`). One read of each stream and no dispatcher, but adding a group changes the pipeline's
+  structure, every branch reads every record, and the counts of records passed over need a home of their own.
+  Rejected.
+* **A pipeline per group** (chosen): the simplest, each group isolated (its own processor filter, priority,
+  reprocessing and errors); the feed is read once a group, which the user accepts. A user who doesn't want this treats
+  the feed as a normal source and surveys and translates it in its entirety.
+
+What it is:
+
+```text
+Parser (JSON) -> <feed> <group> XSLT -> Schema filter -> Writer -> Stream appender (the feed's Events, or its own)
+```
+
+* **The group's XSLT is the pipeline's XSLT**: it writes `<Events>`, translates the records of its source types (the
+  registry's rows in order, a value exactly or an anchored pattern, as before), and passes over every other record.
+  It holds the stylesheet-level declarations the dispatcher held.
+* **Records passed over** are counted, once a document, in one INFO line (`Passed over N record(s) not of this group's
+  source types`), never warned of: the user chose the group's source types, so a source type outside them, new or not,
+  is not its concern.
+* **Imports form a chain**: group → `<feed> common` → `<feed> helpers` → site library (e.g. Event/Meta), each module
+  imported once, so no stylesheet imports a module twice and Stroom's import resolver is unchanged. A shared call only
+  one group needs is called from the common module like the rest, never imported by the group beside it.
+* **Placement**: whenever a build makes a group, a form asks where its Events go: the feed's Events (the default) or
+  an output feed of its own; and, for a group whose pipeline is promoted, whether a change goes to that pipeline or to
+  a new version of it (`copy_pipeline`, for history). It no longer asks which pipeline.
+* **Pipelines**: `<feed> <group>`, made by `create_pipeline` from the group's XSLT, with the group's own reference
+  loaders. Every pipeline reads every stream of the raw feed (processor filters choose streams, not records).
+* **Index**: one per output feed, as decided: the groups whose pipelines write to the same Events feed share it.
+* **Backfill** stays forward only, and is now per group: reprocessing a group's pipeline reruns only that group.
+* **Stepping an unsaved group** is stepping draft code for its pipeline's XSLT element, as any translation is stepped.
+
+New source types outside any group:
+
+* A feed translated as a normal source (no groups) on which the survey found a source type field: the build records
+  the values seen, and the translation logs INFO, once a stream per value, for a value outside them (`New source type
+  'X' in <field>, not seen when this feed was surveyed: survey the feed again to cover it`). `review_coverage` reports
+  it. It is a prompt only: nothing is written to a registry.
+* A feed without a source type field gets nothing new.
+
+What goes: the dispatcher (`DispatcherXslt`, `DispatcherSpec`), the temporary dispatcher, routing by "handled by
+pipeline", dispatcher working copies and their regeneration at promotion, the reference loaders' union
+(`DispatcherReferences`), and the `CustomURIResolver` system-id change (dropped, not split out). What stays: the
+registry, scopes, profiles, per-group kept mappings, drift and docs, the common and helpers modules (and their
+working copies), one index per output feed, one open build per feed, and the review's fixes that still apply.
 
 #### Open decisions
 
