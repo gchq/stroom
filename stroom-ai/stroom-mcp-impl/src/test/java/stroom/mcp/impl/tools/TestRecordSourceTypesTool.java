@@ -171,6 +171,11 @@ class TestRecordSourceTypesTool {
                 .containsExactly("Put PegaIntegration in the group", "Put PegaDB in the group",
                         "What is the group called?");
         assertThat(((Map<?, ?>) properties.get("text")).get("default")).isEqualTo("PEGA integration");
+        // No source type ticked to start: the user picks the group's.
+        assertThat(properties.values().stream().map(field -> (Map<?, ?>) field)
+                .filter(field -> "boolean".equals(field.get("type")))
+                .map(field -> (Object) field.get("default")).toList())
+                .containsExactly(false, false);
         final Map<String, Object> scope = JsonValues.mapOrEmpty(SourceTypeRegistry.read(written.getLast())
                 .get("scope"));
         assertThat(scope).containsEntry("build", BUILD).containsEntry("group", "PEGA back end")

@@ -237,11 +237,11 @@ public class Consent {
                                                 final String intro,
                                                 final Map<String, Editable> items,
                                                 final String text) {
-        return review(call, context, action, intro, items, text, null);
+        return review(call, context, action, intro, items, text, null, true);
     }
 
     /// As [#review(ToolCall, ToolCallContext, String, String, Map, String)], the free-text field filled with a
-    /// suggested answer the user may keep or change: e.g. a proposed name.
+    /// suggested answer the user may keep or change (e.g. a proposed name), and the items ticked or not to start.
     ///
     /// @param call      The call asking.
     /// @param context   The call's context.
@@ -250,6 +250,8 @@ public class Consent {
     /// @param items     The yes/no items by key, in the order shown.
     /// @param text      The free-text field's title.
     /// @param suggested The free-text field's suggested answer, or null for none.
+    /// @param ticked    True when every item starts ticked (a proposal to accept), false when none does (a choice
+    ///                  the user makes, e.g. which source types go in a group).
     /// @return Each item's answer by key, and the free text (blank when none) under [#REVIEW_TEXT]; empty when the
     /// session can't show a form now, or the form would be too large to show (the agent then asks the user).
     /// @throws ToolRefusal if the user declined the form.
@@ -259,7 +261,8 @@ public class Consent {
                                                 final String intro,
                                                 final Map<String, Editable> items,
                                                 final String text,
-                                                final String suggested) {
+                                                final String suggested,
+                                                final boolean ticked) {
         if (NullSafe.isEmptyMap(items) || !context.userQuestions().canAsk()) {
             return Optional.empty();
         }
@@ -274,7 +277,7 @@ public class Consent {
             if (NullSafe.isNonBlankString(item.proposed())) {
                 field.put("description", item.proposed());
             }
-            field.put("default", true);
+            field.put("default", ticked);
             properties.put(fieldKey, field);
         });
         final Map<String, Object> textField = new LinkedHashMap<>();
