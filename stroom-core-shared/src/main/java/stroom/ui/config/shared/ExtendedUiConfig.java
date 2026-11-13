@@ -54,6 +54,11 @@ public class ExtendedUiConfig {
     private final boolean externalIdentityProvider;
 
     @JsonProperty
+    @JsonPropertyDescription("Whether an authenticating edge proxy (e.g. an AWS ALB) in front of stroom is the " +
+                             "OpenID Connect relying party")
+    private final boolean edgeAuthentication;
+
+    @JsonProperty
     @JsonPropertyDescription(
             "Enables warning indicators in the explorer tree for documents with broken dependencies")
     private final boolean dependencyWarningsEnabled;
@@ -79,6 +84,7 @@ public class ExtendedUiConfig {
 
     public ExtendedUiConfig() {
         this.externalIdentityProvider = false;
+        this.edgeAuthentication = false;
         this.uiConfig = new UiConfig();
         this.dependencyWarningsEnabled = false;
         this.maxApiKeyExpiryAgeMs = DEFAULT_MAX_API_KEY_EXPIRY_AGE_MS;
@@ -105,6 +111,7 @@ public class ExtendedUiConfig {
     public ExtendedUiConfig(
             @JsonProperty("uiConfig") final UiConfig uiConfig,
             @JsonProperty("externalIdentityProvider") final Boolean externalIdentityProvider,
+            @JsonProperty("edgeAuthentication") final Boolean edgeAuthentication,
             @JsonProperty("dependencyWarningsEnabled") final Boolean dependencyWarningsEnabled,
             @JsonProperty("maxApiKeyExpiryAgeMs") final Long maxApiKeyExpiryAgeMs,
             @JsonProperty("obfuscatedFields") final Set<String> obfuscatedFields,
@@ -113,6 +120,7 @@ public class ExtendedUiConfig {
 
         this.uiConfig = uiConfig;
         this.externalIdentityProvider = Objects.requireNonNullElse(externalIdentityProvider, false);
+        this.edgeAuthentication = Objects.requireNonNullElse(edgeAuthentication, false);
         this.dependencyWarningsEnabled = Objects.requireNonNullElse(dependencyWarningsEnabled, false);
         this.maxApiKeyExpiryAgeMs = Objects.requireNonNullElse(maxApiKeyExpiryAgeMs, DEFAULT_MAX_API_KEY_EXPIRY_AGE_MS);
         // Ensures serialisation tests work
@@ -290,6 +298,16 @@ public class ExtendedUiConfig {
         return externalIdentityProvider;
     }
 
+    /// Whether an authenticating edge proxy (e.g. an AWS ALB) in front of stroom is the OpenID
+    /// Connect relying party. When it is, ending a stroom session does not sign the user out, as
+    /// the proxy authenticates their next request.
+    ///
+    /// @return True if edge authentication is enabled.
+    @JsonIgnore
+    public boolean isEdgeAuthentication() {
+        return edgeAuthentication;
+    }
+
     @JsonIgnore
     public boolean isDependencyWarningsEnabled() {
         return dependencyWarningsEnabled;
@@ -321,6 +339,7 @@ public class ExtendedUiConfig {
         }
         final ExtendedUiConfig that = (ExtendedUiConfig) o;
         return externalIdentityProvider == that.externalIdentityProvider
+               && edgeAuthentication == that.edgeAuthentication
                && dependencyWarningsEnabled == that.dependencyWarningsEnabled
                && maxApiKeyExpiryAgeMs == that.maxApiKeyExpiryAgeMs
                && Objects.equals(uiConfig, that.uiConfig)
@@ -333,6 +352,7 @@ public class ExtendedUiConfig {
     public int hashCode() {
         return Objects.hash(uiConfig,
                 externalIdentityProvider,
+                edgeAuthentication,
                 dependencyWarningsEnabled,
                 maxApiKeyExpiryAgeMs,
                 obfuscatedFields,
@@ -345,6 +365,7 @@ public class ExtendedUiConfig {
         return "ExtendedUiConfig{" +
                "uiConfig=" + uiConfig +
                ", externalIdentityProvider=" + externalIdentityProvider +
+               ", edgeAuthentication=" + edgeAuthentication +
                ", dependencyWarningsEnabled=" + dependencyWarningsEnabled +
                ", maxApiKeyExpiryAgeMs=" + maxApiKeyExpiryAgeMs +
                ", obfuscatedFields=" + obfuscatedFields +

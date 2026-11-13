@@ -94,6 +94,8 @@ public class UserAccessPresenter
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
                 isExternalIdp = extendedUiConfig.isExternalIdentityProvider();
+                listPresenter.setTokensTracked(!isExternalIdp);
+                setEdgeAuthentication(extendedUiConfig.isEdgeAuthentication());
             }
         }, this);
     }
@@ -116,6 +118,16 @@ public class UserAccessPresenter
             showSessionsForSelectedUser();
         }));
         setButtonStates();
+    }
+
+    // Behind an authenticating edge proxy (e.g. an AWS ALB) ending a session does not sign the user out:
+    // the proxy authenticates their very next request, and it issues their tokens rather than stroom, so
+    // there are none to revoke here. Offering the actions would let an administrator believe they had cut
+    // someone off when they had not, so they are hidden and the screen says what does work.
+    private void setEdgeAuthentication(final boolean edgeAuthentication) {
+        revokeButton.setVisible(!edgeAuthentication);
+        sessionsListPresenter.setEdgeAuthentication(edgeAuthentication);
+        getView().setEdgeAuthenticationNoteVisible(edgeAuthentication);
     }
 
     private void showSessionsForSelectedUser() {
@@ -252,5 +264,11 @@ public class UserAccessPresenter
          * The detail pane: the selected user's individual sessions.
          */
         void setSessionList(View view);
+
+        /// Show or hide the note explaining that, behind an authenticating edge proxy, sessions
+        /// cannot be ended here and how to stop a user's access instead.
+        ///
+        /// @param visible True to show the note.
+        void setEdgeAuthenticationNoteVisible(boolean visible);
     }
 }
