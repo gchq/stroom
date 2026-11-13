@@ -651,13 +651,18 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                 decide(entry, SourceTypeRegistry.NEW, "survey", now, "seen after the registry was made");
             }
             entry.put("group", was.get("group"));
-            // Where its group's XSLT is, the pipeline that runs it, and what it looks up: the feed's dispatchers are
-            // generated from them.
-            if (was.get("group_xslt") != null) {
-                entry.put("group_xslt", was.get("group_xslt"));
+            // Where its group's XSLT is, the group's pipeline, where its Events go and what it looks up.
+            for (final String key : List.of("group_xslt", "pipeline", "output_feed")) {
+                if (was.get(key) != null) {
+                    entry.put(key, was.get(key));
+                }
             }
-            entry.put("pipeline", was.get("pipeline"));
-            entry.put("output_feed", was.get("output_feed"));
+            if (was.get("pipeline") instanceof final Map<?, ?> pipeline) {
+                // A dispatcher's routing, from before each group had a pipeline of its own, is no longer kept.
+                final Map<String, Object> kept = new LinkedHashMap<>(JsonValues.mapOrEmpty(pipeline));
+                kept.keySet().removeAll(List.of("own", "dispatcher"));
+                entry.put("pipeline", kept);
+            }
             if (was.get("references") != null) {
                 entry.put("references", was.get("references"));
             }

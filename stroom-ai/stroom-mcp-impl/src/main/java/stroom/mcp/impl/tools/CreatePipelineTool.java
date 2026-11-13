@@ -34,6 +34,7 @@ import stroom.ai.impl.tools.generation.ModuleChecks;
 import stroom.ai.impl.tools.generation.SourceTypeModule;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
+import stroom.feed.shared.FeedDoc;
 import stroom.mcp.impl.tools.PipelineWrites.Filled;
 import stroom.mcp.impl.tools.PipelineWrites.Layout;
 import stroom.mcp.impl.tools.PipelineWrites.ReferenceRequest;
@@ -50,6 +51,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -79,6 +81,10 @@ class CreatePipelineTool extends AbstractBuiltInTool {
     static final String STANDALONE_ARG = "standalone";
     static final String VERSION_OF_ARG = "version_of";
     static final String KEEP_REFERENCES_ARG = "keep_references";
+    static final String GROUP_ARG = "group";
+    // The element a translation template's XSLT is set on.
+    private static final String TRANSLATION_FILTER = "translationFilter";
+    private static final String STREAM_APPENDER = "StreamAppender";
     /// The chain of a pipeline of its own sending Events to Kafka: element ids and types, in order.
     static final List<Map.Entry<String, String>> KAFKA_CHAIN = List.of(Map.entry("Source", "Source"),
             Map.entry("xmlParser", "XMLParser"), Map.entry("splitFilter", "SplitFilter"),
@@ -103,6 +109,8 @@ class CreatePipelineTool extends AbstractBuiltInTool {
     private final BuildRecords records;
     private final PipelineTemplates templates;
     private final EventVersions eventVersions;
+    // An aggregated feed's source type groups; none in tests that make the tool themselves.
+    private Provider<SourceTypeGroups> groupsProvider;
 
     @Inject
     CreatePipelineTool(final PipelineWrites writes,
@@ -123,6 +131,15 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         this.records = records;
         this.templates = templates;
         this.eventVersions = eventVersions;
+    }
+
+    /// Where an aggregated feed's source type groups are found (set by injection; none in tests that make the tool
+    /// themselves).
+    ///
+    /// @param groups The feed's source type groups.
+    @Inject
+    void setGroups(final Provider<SourceTypeGroups> groups) {
+        this.groupsProvider = groups;
     }
 
     @Override
@@ -165,11 +182,19 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                              + "read the build's sample streams. A production pipeline's next version, with the "
                              + "build's XSLT: version_of= it, a child of its template, with its reference data if "
                              + "the user keeps them. An aggregated feed's source type group has a pipeline of its "
-                             + "own, its XSLT the group's (give it in set_properties where the build has several); "
-                             + "the feed's common module and helpers are imported, never a pipeline's XSLT. The user "
-                             + "confirms the template and name first.")
+                             + "own: group= names it ('<feed> <group>' by default) and sets translationFilter.xslt "
+                             + "to the group's XSLT (refused when another pipeline of the build runs it); its "
+                             + "stream appender writes to the group's output feed where it has one of its own "
+                             + "(refused until create_feed group= has made it), its reference data is the group's "
+                             + "unless references are given, and the registry then names the pipeline for the "
+                             + "group. The feed's common module and helpers are imported, never a pipeline's XSLT. "
+                             + "The user confirms the template and name first.")
                 .parameters(ObjectSchema.builder()
-                        .addStringProperty(NAME_ARG, "Pipeline name following the environment's convention.")
+                        .addStringProperty(NAME_ARG, "Pipeline name following the environment's convention "
+                                                     + "(for a source type group, '<feed> <group>' by default).")
+                        .addStringProperty(GROUP_ARG, "An aggregated feed's source type group whose pipeline this "
+                                                      + "is (build_translation_xslt group= saved it): its XSLT is "
+                                                      + "the pipeline's.")
                         .addStringProperty(TEMPLATE_UUID_ARG, "Parent template, from find_pipeline_templates (its "
                                                               + "UUID; `template` takes a UUID or a name too).")
                         .addProperty(SET_PROPERTIES_ARG, propertiesSchema("What the child supplies "
@@ -236,7 +261,6 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                                                                  + "the reference data that pipeline loads (for its "
                                                                  + "lookups), as the user chooses. Asked for when it "
                                                                  + "loads any.")
-                        .required(NAME_ARG)
                         .build())
                 .build();
     }
@@ -253,13 +277,17 @@ class CreatePipelineTool extends AbstractBuiltInTool {
     }
 
     private Map<String, Object> create(final ToolCall call, final ToolCallContext context) {
-        final String proposed = stringArg(call, NAME_ARG);
+        final String build = plan.resolveBuild(context, stringArg(call, BUILD_ARG), NAME);
+        final List<PropertyValue> given = new ArrayList<>(PropertyValue.listOf(argsMap(call).get(SET_PROPERTIES_ARG),
+                SET_PROPERTIES_ARG));
+        // A source type group's pipeline: its XSLT the group's, named for it unless a name is given.
+        final Optional<SourceTypeGroups.GroupRun> group = groupGiven(build, stringArg(call, GROUP_ARG), given);
+        final String proposed = NullSafe.nonBlankStringElse(stringArg(call, NAME_ARG), group
+                .map(run -> SourceTypeGroups.pipelineName(run.feed(), run.group()))
+                .orElse(null));
         if (proposed == null) {
             throw new ToolRefusal("Give name");
         }
-        final String build = plan.resolveBuild(context, stringArg(call, BUILD_ARG), NAME);
-        final List<PropertyValue> given = PropertyValue.listOf(argsMap(call).get(SET_PROPERTIES_ARG),
-                SET_PROPERTIES_ARG);
         final String description = NullSafe.string(rawArg(call, DESCRIPTION_ARG));
         final boolean reuse = ToolArgs.flag(call, REUSE_EXISTING_DOCS_ARG);
         final String templateGiven = stringArg(call, TEMPLATE_UUID_ARG) != null
@@ -367,7 +395,19 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         writes.ownDocuments(build, properties, request.reuseExistingDocs(), previous);
         // An aggregated feed's common module or helpers is never a pipeline's XSLT.
         refuseImportedModules(properties);
+        // A source type group's pipeline: its output feed and the reference data the group looks up.
+        final Optional<SourceTypeGroups.GroupRun> group = groupRun(build, properties);
         final List<ReferenceRequest> requested = new ArrayList<>(request.references());
+        if (group.isPresent()) {
+            refuseRunElsewhere(build, group.get());
+            properties.addAll(groupFeed(group.get(), merged, properties, filled));
+            if (requested.isEmpty()) {
+                group.get().references().forEach(reference -> requested.add(new ReferenceRequest(
+                        JsonValues.text(reference.get("feed")), reference.get("loader_pipeline") == null
+                        ? null
+                        : JsonValues.text(reference.get("loader_pipeline")), null)));
+            }
+        }
         final List<PipelineReference> references = new ArrayList<>(writes.referenceEntries(merged, requested));
         references.addAll(PipelineWrites.carriedReferences(merged, version.carried(), references));
         final List<String> left = previous == null
@@ -444,6 +484,12 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         result.put("uuid", doc.getUuid());
         result.put("name", doc.getName());
         result.put("template", template.getName());
+        if (group.isPresent()) {
+            // The registry names the pipeline for the group.
+            result.put("group", group.get().group());
+            result.put("source_types", groupsProvider.get().pipelineMade(context, build, group.get().group(),
+                    new DocRef(PipelineDoc.TYPE, doc.getUuid(), doc.getName())));
+        }
         if (previous != null) {
             result.put("version_of", previous.getName());
         }
@@ -711,6 +757,92 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         result.put("sets", sets);
         result.put("note", own.note());
         return plan.withNext(context, build, result);
+    }
+
+    // The group given (group=), its XSLT added as translationFilter's where set_properties sets no XSLT; else the
+    // group whose XSLT set_properties sets, if any.
+    private Optional<SourceTypeGroups.GroupRun> groupGiven(final String build,
+                                                           final String group,
+                                                           final List<PropertyValue> given) {
+        if (group == null) {
+            return groupRun(build, given);
+        }
+        if (groupsProvider == null) {
+            throw new ToolRefusal("group= is an aggregated feed's: this server has no source type groups");
+        }
+        final SourceTypeGroups.GroupRun run = groupsProvider.get().groupNamed(build, group);
+        final Optional<PropertyValue> xslt = given.stream()
+                .filter(property -> XsltDoc.TYPE.equals(property.docType()) && property.docUuid() != null)
+                .findFirst();
+        if (xslt.isEmpty()) {
+            given.add(PropertyValue.document(TRANSLATION_FILTER, "xslt", run.xslt(), XsltDoc.TYPE));
+        } else if (!run.xslt().equals(xslt.get().docUuid())) {
+            throw new ToolRefusal(xslt.get().dotted() + " is not group '" + group + "''s XSLT (" + run.xslt()
+                                  + "): leave it out of set_properties, and group= sets it");
+        }
+        return Optional.of(run);
+    }
+
+    // The source type group whose XSLT the properties set, if any.
+    private Optional<SourceTypeGroups.GroupRun> groupRun(final String build, final List<PropertyValue> properties) {
+        if (groupsProvider == null) {
+            return Optional.empty();
+        }
+        for (final PropertyValue property : properties) {
+            if (XsltDoc.TYPE.equals(property.docType()) && property.docUuid() != null) {
+                final Optional<SourceTypeGroups.GroupRun> run = groupsProvider.get().groupOf(build,
+                        property.docUuid());
+                if (run.isPresent()) {
+                    return run;
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    // One pipeline per group: a group's XSLT another pipeline of the build runs already is refused.
+    private void refuseRunElsewhere(final String build, final SourceTypeGroups.GroupRun group) {
+        for (final WriteGuard.BuildDoc doc : guard.folderContents(build)) {
+            if (!PipelineDoc.TYPE.equals(doc.type())) {
+                continue;
+            }
+            final boolean runs = PipelineDocs.addedProperties(pipelineDocs.read(doc.uuid())).stream()
+                    .map(property -> NullSafe.get(property.getValue(), PipelinePropertyValue::getEntity))
+                    .anyMatch(entity -> entity != null && group.xslt().equals(entity.getUuid()));
+            if (runs) {
+                throw new ToolRefusal("Pipeline '" + doc.name() + "' (" + doc.uuid() + ") of the build runs group '"
+                                      + group.group() + "''s XSLT already: a group has one pipeline. Carry on with "
+                                      + "that one (update_pipeline), or delete it first.");
+            }
+        }
+    }
+
+    // The stream appenders' feed for a group whose Events go to an output feed of its own, where the properties
+    // don't set it; none for one whose Events go into the feed's.
+    private List<PropertyValue> groupFeed(final SourceTypeGroups.GroupRun group,
+                                          final Layout merged,
+                                          final List<PropertyValue> properties,
+                                          final List<String> filled) {
+        final Optional<String> feed = group.outputFeed();
+        if (feed.isEmpty()) {
+            return List.of();
+        }
+        if (feed.get().isBlank()) {
+            throw new ToolRefusal("Group '" + group.group() + "''s Events go to an output feed of its own, not made "
+                                  + "yet: create_feed name=<its name> stream_type=Events group='" + group.group()
+                                  + "' first");
+        }
+        final Set<String> set = new HashSet<>();
+        properties.forEach(property -> set.add(property.dotted()));
+        final DocRef ref = writes.docRefByName(FeedDoc.TYPE, feed.get());
+        final List<PropertyValue> out = new ArrayList<>();
+        merged.elements().forEach((id, type) -> {
+            if (STREAM_APPENDER.equals(type) && !set.contains(id + ".feed")) {
+                out.add(PropertyValue.document(id, "feed", ref.getUuid(), FeedDoc.TYPE));
+                filled.add(id + ".feed = " + ref.getName() + " (the output feed of group '" + group.group() + "')");
+            }
+        });
+        return out;
     }
 
     // An aggregated feed's common module or helpers set as a pipeline's XSLT is refused: a source type group imports

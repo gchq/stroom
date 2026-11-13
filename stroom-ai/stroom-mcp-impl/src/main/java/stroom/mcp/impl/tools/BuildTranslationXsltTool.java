@@ -283,8 +283,11 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                              + "Generator, Device from the wrapper's fields and the site's shared calls, made from "
                              + "this mapping's common entries for the first group, its parts called by every group; "
                              + "a rule mapping one of those elements itself writes its own), which imports the "
-                             + "helpers ('<feed> helpers'). With build, the registry's rows are set translated. A new "
-                             + "group's placement is asked in a form as it is saved; group.group_next says what "
+                             + "helpers ('<feed> helpers'). With build, the registry's rows are set translated. Each "
+                             + "group has a pipeline of its own ('<feed> <group>', made by create_pipeline group=); "
+                             + "for a new group a form asks where its Events go (the feed's Events, or an output "
+                             + "feed of its own), and for a group whose pipeline is promoted whether the change "
+                             + "goes to that pipeline or to a new version of it; group.group_next says what "
                              + "follows. A later build changing a promoted group, the common module or the helpers "
                              + "works on working copies, imported by the build's own modules. The stepping tools "
                              + "step an unsaved group as draft code for its pipeline's XSLT element, as any "
@@ -382,17 +385,20 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                         .addProperty(SOURCE_TYPES_ARG, stringArraySchema("With group: the registry's source types "
                                                                          + "it translates; default the build's "
                                                                          + "scope's."))
-                        .addEnumProperty(PIPELINE_ARG, SourceTypeGroups.PLACEMENTS, "With group, only where no form "
-                                                                                   + "can be shown: which pipeline "
-                                                                                   + "the user chose for a new "
-                                                                                   + "group (the feed's, shared; "
-                                                                                   + "its own; or a new version of "
-                                                                                   + "the feed's). Otherwise the "
-                                                                                   + "user is asked in a form "
-                                                                                   + "when a new group is saved.")
-                        .addBooleanProperty(OWN_OUTPUT_FEED_ARG, "With pipeline=own, only where no form can be "
-                                                                 + "shown: true when the user wants the group's "
-                                                                 + "Events in an output feed of its own.")
+                        .addEnumProperty(PIPELINE_ARG, SourceTypeGroups.PIPELINE_CHOICES, "With group, only where "
+                                                                                         + "no form can be shown, "
+                                                                                         + "for a group whose "
+                                                                                         + "pipeline is promoted: "
+                                                                                         + "change that pipeline, "
+                                                                                         + "or make a new version "
+                                                                                         + "of it (copy_pipeline), "
+                                                                                         + "as the user chose. "
+                                                                                         + "Otherwise asked in a "
+                                                                                         + "form.")
+                        .addBooleanProperty(OWN_OUTPUT_FEED_ARG, "With group, only where no form can be shown, for "
+                                                                 + "a new group: true when the user wants its "
+                                                                 + "Events in an output feed of its own, false for "
+                                                                 + "the feed's Events. Otherwise asked in a form.")
                         .addProperty(REFERENCES_ARG, CreatePipelineTool.referencesSchema("With group: the reference "
                                                                                         + "data the group's lookups "
                                                                                         + "read (find_reference_"
@@ -1017,9 +1023,12 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         String target = request.uuid();
         String name = request.name();
         SourceTypeGroups.Placement placement = null;
+        String choice = null;
         if (b.group != null) {
-            // Where a new group goes is the user's choice, asked before anything is saved.
+            // Where a new group's Events go, and what a change to a promoted pipeline makes, are the user's
+            // choices, asked before anything is saved.
             placement = placement(call, context, b);
+            choice = pipelineChoice(call, context, b);
             imports = groups.saveImports(context, b.build, b.group.withGroupMapping(b.mapping), b.schema, b.version);
             b.mapping = imports.group();
             final XsltGenerator.Generated regenerated = XsltGenerator.generate(b.mapping, b.schema, b.version);
@@ -1033,9 +1042,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             }
             name = NullSafe.nonBlankStringElse(name, b.group.group());
             if (target == null) {
-                target = groups.xsltNamed(b.build, name)
-                        .or(() -> groups.promotedGroupCopy(context, b.build, b.group))
-                        .orElse(null);
+                target = groups.groupTarget(context, b.build, b.group, name, choice).orElse(null);
             }
         }
         Map<String, Object> saved;
@@ -1061,7 +1068,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             group.put("xslt", Map.of("uuid", savedUuid, "name", String.valueOf(saved.get("name"))));
             group.putAll(imports.saved());
             final Map<String, Object> marked = new LinkedHashMap<>(groups.markTranslated(context, b.build, b.group,
-                    imports, savedUuid, String.valueOf(saved.get("name")), placement, request.references()));
+                    imports, savedUuid, String.valueOf(saved.get("name")), placement, choice,
+                    request.references()));
             // What placing it said joins what splitting its mapping said.
             final List<String> notes = new ArrayList<>(JsonValues.strings(group.get("notes")));
             notes.addAll(JsonValues.strings(marked.remove("notes")));
@@ -1070,7 +1078,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             if (!notes.isEmpty()) {
                 group.put("notes", notes);
             }
-            groupNext(b.group, placement).ifPresent(next -> group.put("group_next", next));
+            groupNext(b, placement, choice).ifPresent(next -> group.put("group_next", next));
             b.result.put("group", group);
         }
         final String uuid = savedUuid;
@@ -1114,80 +1122,112 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         return Optional.empty();
     }
 
-    // Which pipeline a new group goes in, and where its Events go: asked in a form whenever a build makes a group
-    // (decided 2026-11-12), the feed's pipeline the default where it has one; the first build of a feed asks only
-    // shared or own. Where no form can be shown, the agent asks in the chat and passes the answer. Null for a group
-    // placed already.
+    // Where a new group's Events go: asked in a form whenever a build makes a group (decided 2026-11-13), the feed's
+    // Events the default; every group has a pipeline of its own. Where no form can be shown, the agent asks in the
+    // chat and passes the answer (own_output_feed). Null for a group placed already.
     private SourceTypeGroups.Placement placement(final ToolCall call, final ToolCallContext context, final Build b) {
+        final Request request = b.request;
         if (!SourceTypeGroups.needsPlacement(b.group)) {
+            if (request.ownOutputFeed() != null) {
+                b.placementNotes.add(OWN_OUTPUT_FEED_ARG + " was ignored: group '" + b.group.group() + "' is "
+                                     + "placed already, and source types added to it join its output feed.");
+            }
             return null;
         }
-        final Optional<String> existing = groups.existingPipeline(b.build, b.group);
-        final Map<String, String> options = new LinkedHashMap<>();
-        options.put(existing.map(name -> "The feed's pipeline, " + name + " (reads each record once)")
-                .orElse("The feed's pipeline, shared by its groups (reads each record once)"), SourceTypeGroups.SHARED);
-        options.put("A pipeline of its own (reads every stream of the feed again)", SourceTypeGroups.OWN);
-        existing.ifPresent(name -> options.put("A new version of " + name + " (copied; the current one runs on "
-                                               + "until the new one replaces it)", SourceTypeGroups.NEW_VERSION));
-        final List<String> feeds = List.of("Into the feed's Events", "To an output feed of its own (made next, in a "
-                                                                     + "form)");
+        final String pipeline = SourceTypeGroups.pipelineName(b.group.feed(), b.group.group());
+        final List<String> feeds = List.of("Into the feed's Events (one index with the feed's other groups there)",
+                "To an output feed of its own (made next, in a form; an index of its own)");
         final Optional<String> chosen = consent.choose(call, context, NAME, "Source type group '" + b.group.group()
                                                                             + "' (" + String.join(", ",
-                b.group.sourceTypes()) + ") is new: choose the pipeline that handles it. The feed's pipeline passes "
-                                                                            + "over every other pipeline's records.",
-                List.copyOf(options.keySet()), "Which pipeline handles group '" + b.group.group() + "'?");
+                b.group.sourceTypes()) + ") is new. It gets a pipeline of its own, '" + pipeline + "', which reads "
+                                                                            + "every stream of the feed and passes "
+                                                                            + "over the other source types' "
+                                                                            + "records. Choose where its Events go.",
+                feeds, "Where do the Events of group '" + b.group.group() + "' go?");
         if (chosen.isPresent()) {
-            final String choice = options.get(chosen.get());
-            // Where its Events go is asked only for a pipeline of its own: the feed's pipeline, or a new version of
-            // it, writes into the feed's Events.
-            final boolean ownFeed = SourceTypeGroups.OWN.equals(choice) && consent.choose(call, context, NAME,
-                    "Group '" + b.group.group() + "' runs in a pipeline of its own: its Events go into the feed's "
-                    + "Events, or to an output feed of its own.", feeds, "Where do the Events of group '"
-                                                                         + b.group.group() + "' go?")
-                    .map(feeds.get(1)::equals)
-                    .orElse(false);
-            return new SourceTypeGroups.Placement(choice, ownFeed);
+            return new SourceTypeGroups.Placement(feeds.get(1).equals(chosen.get()));
         }
-        final Request request = b.request;
-        if (request.pipeline() == null) {
-            throw new ToolRefusal("Group '" + b.group.group() + "' is new: ask the user which pipeline handles it ("
-                                  + String.join("; ", options.keySet()) + ") and, for a pipeline of its own, whether "
-                                  + "its Events go to an output feed of its own; then call again with pipeline="
-                                  + ToolText.list(List.copyOf(options.values())) + " (and own_output_feed). Nothing "
-                                  + "was saved.");
+        if (request.ownOutputFeed() == null) {
+            throw new ToolRefusal("Group '" + b.group.group() + "' is new: it gets a pipeline of its own ('"
+                                  + pipeline + "'). Ask the user where its Events go: " + String.join("; ", feeds)
+                                  + ". Then call again with " + OWN_OUTPUT_FEED_ARG + "=false (the feed's Events) or "
+                                  + "true (an output feed of its own). Nothing was saved.");
         }
-        if (!options.containsValue(request.pipeline())) {
-            throw new ToolRefusal("pipeline=" + request.pipeline() + " isn't a choice for group '" + b.group.group()
-                                  + "': " + ToolText.list(List.copyOf(options.values())) + (existing.isEmpty()
-                    ? " (the feed has no pipeline in production yet to make a new version of)"
-                    : ""));
-        }
-        final boolean own = SourceTypeGroups.OWN.equals(request.pipeline());
-        if (request.ownOutputFeed() && !own) {
-            b.placementNotes.add(OWN_OUTPUT_FEED_ARG + "=true was ignored: only a group in a pipeline of its own has "
-                                 + "an output feed of its own, and group '" + b.group.group() + "' is in "
-                                 + (SourceTypeGroups.NEW_VERSION.equals(request.pipeline())
-                    ? "a new version of the feed's pipeline"
-                    : "the feed's pipeline") + ", writing into the feed's Events.");
-        }
-        return new SourceTypeGroups.Placement(request.pipeline(), own && request.ownOutputFeed());
+        return new SourceTypeGroups.Placement(request.ownOutputFeed());
     }
 
-    // What the agent does next for a group placed now: its pipeline made (every group has one of its own, its XSLT
-    // the group's), its output feed made first where it has one of its own.
-    private static Optional<String> groupNext(final SourceTypeGroups.Plan plan,
-                                              final SourceTypeGroups.Placement placement) {
-        if (placement == null) {
-            return Optional.empty();
+    // What a change to a group whose pipeline is promoted goes to: that pipeline (through working copies), or a new
+    // version of it, asked the first time the build changes the group. Null for a group whose pipeline isn't
+    // promoted, or whose change is decided already.
+    private String pipelineChoice(final ToolCall call, final ToolCallContext context, final Build b) {
+        final Request request = b.request;
+        final Optional<Map<String, Object>> promoted = groups.promotedPipeline(b.build, b.group);
+        if (promoted.isEmpty()) {
+            if (request.pipeline() != null) {
+                b.placementNotes.add(PIPELINE_ARG + "=" + request.pipeline() + " was ignored: group '"
+                                     + b.group.group() + "' has no pipeline in production to change, or the build "
+                                     + "has decided already.");
+            }
+            return null;
         }
-        return Optional.of((placement.ownOutputFeed()
-                ? "Make its output feed first: create_feed build=<this build> name=<a name following the feed's "
-                  + "convention> stream_type=Events group='" + plan.group() + "'. Then "
-                : "") + "create_pipeline for the group's own pipeline, its translationFilter.xslt the group's XSLT "
-                           + "(group.xslt): it translates this group's source types and passes over the feed's "
-                           + "other records, counting them" + (placement.ownOutputFeed()
-                ? ", and its Events go to the output feed (create_pipeline sets the stream appender's feed)"
-                : "") + ".");
+        final String name = JsonValues.text(promoted.get().get("name"));
+        final Map<String, String> options = new LinkedHashMap<>();
+        options.put("Change " + name + " (its working copy is written back over it at promotion)",
+                SourceTypeGroups.CHANGE);
+        options.put("A new version of " + name + " (copy_pipeline; " + name + " runs on until the new one replaces "
+                    + "it)", SourceTypeGroups.NEW_VERSION);
+        final Optional<String> chosen = consent.choose(call, context, NAME, "Group '" + b.group.group() + "' runs in "
+                                                                            + "pipeline " + name + ", in "
+                                                                            + "production. This build changes the "
+                                                                            + "group: change that pipeline, or make "
+                                                                            + "a new version of it.",
+                List.copyOf(options.keySet()), "What does the change to group '" + b.group.group() + "' go to?");
+        if (chosen.isPresent()) {
+            return options.get(chosen.get());
+        }
+        if (request.pipeline() == null) {
+            throw new ToolRefusal("Group '" + b.group.group() + "' runs in pipeline " + name + ", in production: ask "
+                                  + "the user whether this change goes to that pipeline or to a new version of it ("
+                                  + String.join("; ", options.keySet()) + "), then call again with " + PIPELINE_ARG
+                                  + "=" + ToolText.list(SourceTypeGroups.PIPELINE_CHOICES) + ". Nothing was saved.");
+        }
+        if (!SourceTypeGroups.PIPELINE_CHOICES.contains(request.pipeline())) {
+            throw new ToolRefusal(PIPELINE_ARG + " is one of " + ToolText.list(SourceTypeGroups.PIPELINE_CHOICES)
+                                  + ", not " + ToolText.repr(request.pipeline()) + ". Nothing was saved.");
+        }
+        return request.pipeline();
+    }
+
+    // What the agent does next for a group placed now (its pipeline made, its output feed first where it has one of
+    // its own), or for a change to a promoted pipeline (its working copy, or its new version, copied).
+    private static Optional<String> groupNext(final Build b,
+                                              final SourceTypeGroups.Placement placement,
+                                              final String choice) {
+        final SourceTypeGroups.Plan plan = b.group;
+        if (placement != null) {
+            return Optional.of((placement.ownOutputFeed()
+                    ? "Make its output feed first: create_feed build=<this build> name=<a name following the feed's "
+                      + "convention> stream_type=Events group='" + plan.group() + "'. Then "
+                    : "") + "create_pipeline build=<this build> group='" + plan.group() + "' template=<the "
+                               + "translation template>: the group's own pipeline ('"
+                               + SourceTypeGroups.pipelineName(plan.feed(), plan.group()) + "' by default), its "
+                               + "translationFilter.xslt the group's XSLT, translating this group's source types and "
+                               + "passing over the feed's other records, counted" + (placement.ownOutputFeed()
+                    ? "; its Events go to the output feed (create_pipeline sets the stream appender's feed)"
+                    : "; its Events go into the feed's Events") + ".");
+        }
+        if (SourceTypeGroups.NEW_VERSION.equals(choice)) {
+            return Optional.of("Copy the group's pipeline as its new version: copy_pipeline build=<this build> "
+                               + "source_uuid=<the pipeline's uuid> new_name=<the new version's name> "
+                               + "working_copy=false. It runs the new version of the group's XSLT saved now, and the "
+                               + "registry's rows of the group move to it.");
+        }
+        if (SourceTypeGroups.CHANGE.equals(choice)) {
+            return Optional.of("To step and process the change in the build, copy the group's pipeline as a working "
+                               + "copy: copy_pipeline build=<this build> source_uuid=<the pipeline's uuid> "
+                               + "new_name=<its name> working_copy=true. It runs the group's working copy.");
+        }
+        return Optional.empty();
     }
 
     // What a source type group's call says of the group: its mode and source types, what its mapping left to the
@@ -1653,8 +1693,10 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     /// @param handEditChoices The user's answers about fields edited by hand, or null.
     /// @param group           A source type group's name, or null.
     /// @param sourceTypes     The group's source types given (none: the build's scope's).
-    /// @param pipeline        A new group's pipeline as the user chose it, where no form can be shown, or null.
-    /// @param ownOutputFeed   True when the user wants a group of its own pipeline to write to a feed of its own.
+    /// @param pipeline        For a group whose pipeline is promoted, change or new_version as the user chose
+    ///                        where no form can be shown, or null.
+    /// @param ownOutputFeed   For a new group, true when the user wants its Events in a feed of its own, false for
+    ///                        the feed's Events; null when not given.
     /// @param references      The reference data a group's lookups read, or null for those the registry has.
     record Request(Object mapping,
                    Object changes,
@@ -1677,7 +1719,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                    String group,
                    List<String> sourceTypes,
                    String pipeline,
-                   boolean ownOutputFeed,
+                   Boolean ownOutputFeed,
                    List<Map<String, Object>> references) {
 
         /// Reads a call's arguments.
@@ -1714,7 +1756,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                     tool.stringArg(call, GROUP_ARG),
                     stringListArg(call, SOURCE_TYPES_ARG),
                     tool.stringArg(call, PIPELINE_ARG),
-                    ToolArgs.flag(call, OWN_OUTPUT_FEED_ARG),
+                    ToolArgs.raw(call, OWN_OUTPUT_FEED_ARG) == null
+                            ? null
+                            : ToolArgs.flag(call, OWN_OUTPUT_FEED_ARG),
                     references(ToolArgs.raw(call, REFERENCES_ARG)));
         }
 

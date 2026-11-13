@@ -101,8 +101,11 @@ class TestRecordSourceTypesTool {
         final Map<String, Object> kept = rowNamed("PegaSecurityEvent");
         assertThat(kept).containsEntry("status", SourceTypeRegistry.TRANSLATED)
                 .containsEntry("group", "PEGA security")
-                .containsKey("pipeline")
-                .containsKey("group_xslt");
+                .containsKey("group_xslt")
+                .doesNotContainKey("output_feed");
+        // The group's pipeline kept; the dispatcher's routing dropped.
+        assertThat(JsonValues.mapOrEmpty(kept.get("pipeline"))).containsOnly(Map.entry("name", "PEGA PEGA security"),
+                Map.entry("uuid", "p1"));
         // Kept where it was in the order: rows are tried in order.
         assertThat(rows().stream().map(row -> row.get("name")).toList()).containsExactly("PegaSecurityEvent",
                 "PegaIntegration", "PegaDB");
@@ -175,7 +178,7 @@ class TestRecordSourceTypesTool {
         return rows().stream().filter(row -> name.equals(row.get("name"))).findFirst().orElseThrow();
     }
 
-    // The build's registry: one source type translated, by a group in the feed's pipeline; two parked.
+    // The build's registry: one source type translated, by a group in its pipeline; two parked.
     private static Map<String, Object> registry() {
         final Map<String, Object> state = new LinkedHashMap<>();
         state.put("feed", FEED);
@@ -183,8 +186,9 @@ class TestRecordSourceTypesTool {
         final Map<String, Object> translated = row("PegaSecurityEvent", SourceTypeRegistry.TRANSLATED);
         translated.put("group", "PEGA security");
         translated.put("group_xslt", Map.of("uuid", "g1", "name", "PEGA security"));
+        // Kept as a registry from before each group had a pipeline of its own: a dispatcher's routing with it.
         translated.put("pipeline", Map.of("own", false, "dispatcher", Map.of("uuid", "d1", "name",
-                "PEGA dispatcher")));
+                "PEGA dispatcher"), "name", "PEGA PEGA security", "uuid", "p1"));
         state.put("rows", List.of(translated, row("PegaIntegration", SourceTypeRegistry.PARKED),
                 row("PegaDB", SourceTypeRegistry.PARKED)));
         return state;

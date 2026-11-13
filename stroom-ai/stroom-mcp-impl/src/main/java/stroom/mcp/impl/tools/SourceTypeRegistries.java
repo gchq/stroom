@@ -70,9 +70,9 @@ class SourceTypeRegistries {
         this.records = records;
     }
 
-    /// One open build per aggregated feed (decided 2026-11-12): so the registry, the dispatchers and the feed's
-    /// documents are only ever changed by one build, and promotion needs no merging. A build is open on a feed while
-    /// its folder holds the feed's registry, or works from the feed (or holds it) and holds work (an XSLT or a
+    /// One open build per aggregated feed (decided 2026-11-12): so the registry, the groups' pipelines and the
+    /// feed's documents are only ever changed by one build, and promotion needs no merging. A build is open on a feed
+    /// while its folder holds the feed's registry, or works from the feed (or holds it) and holds work (an XSLT or a
     /// pipeline): made and not promoted or abandoned (its folder deleted). A build holding only the feed and its
     /// samples, or only what its promotion kept in the workspace (a test feed, a survey doc the user kept, a document
     /// given 'keep'), is not.
@@ -116,7 +116,7 @@ class SourceTypeRegistries {
         }
         if (isAggregated && open != null) {
             throw new ToolRefusal("Feed '" + feed + "' aggregates source types, and build '" + open + "' is open on "
-                                  + "it: one build at a time per feed, so its registry, dispatchers and documents "
+                                  + "it: one build at a time per feed, so its registry, pipelines and documents "
                                   + "change in one place. Finish build '" + open + "' (promote_build) or abandon it "
                                   + "(the user deletes its folder) first, or carry on in it.");
         }
