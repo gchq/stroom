@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13.9] - 2026-11-13
+
+* Bug **#6022** : Fix the User Access screen and session list showing no sessions when an authenticating edge proxy (e.g. an AWS ALB) is in use.
+
+
 ## [v7.13.8] - 2026-11-11
 
 * Bug **#6017** : Fix Ask Stroom AI ignoring the timeouts in the OpenAI Model document's HTTP client configuration. Requests to chat and embedding models always used a 60 second read timeout and a 15 second connect timeout.
@@ -2669,7 +2674,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.9...HEAD
+[v7.13.9]: https://github.com/gchq/stroom/compare/v7.13.8...v7.13.9
 [v7.13.8]: https://github.com/gchq/stroom/compare/v7.13.7...v7.13.8
 [v7.13.7]: https://github.com/gchq/stroom/compare/v7.13.6...v7.13.7
 [v7.13.6]: https://github.com/gchq/stroom/compare/v7.13.5...v7.13.6
