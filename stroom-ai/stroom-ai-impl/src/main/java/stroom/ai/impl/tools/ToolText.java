@@ -194,34 +194,32 @@ public final class ToolText {
         return strip(text).isEmpty();
     }
 
-    /// @return The text's lines without their line ends, as `str.splitlines()`: split at `\n`, `\r`, `\r\n` and
-    /// the other line boundaries Python knows, except the information separators (`\x1c` to `\x1e`), which Stroom's
-    /// parsers read as part of a line (seen: auditd's ENRICHED format separates its translated fields with `\x1d`,
-    /// and each line was profiled as two).
+    /// @return The text's lines without their line ends, split as Stroom's parsers split records (a Data Splitter's
+    /// `<split delimiter="\n">`, the JSON parser's lines): at `\n` only, a `\r` before it (CRLF) or at the text's
+    /// end dropped, as Stroom trims it from the record. Not at the other line boundaries Python's `str.splitlines()`
+    /// knows (a lone `\r`, `\x0b`, `\x0c`, `\x1c` to `\x1e`, `\x85`, `\u2028`, `\u2029`): Stroom reads those as
+    /// part of a line (seen: Azure audit JSON lines whose string values held `\u2028` were profiled, surveyed and
+    /// dry run as two records each, where Stroom read one; auditd's ENRICHED format separates its translated fields
+    /// with `\x1d`, and each line was profiled as two).
     public static List<String> splitlines(final String text) {
         final List<String> lines = new ArrayList<>();
         int start = 0;
-        int i = 0;
         final int length = text.length();
-        while (i < length) {
-            final char c = text.charAt(i);
-            if (isLineBoundary(c)) {
-                lines.add(text.substring(start, i));
-                if (c == '\r' && i + 1 < length && text.charAt(i + 1) == '\n') {
-                    i++;
-                }
-                start = i + 1;
-            }
-            i++;
-        }
-        if (start < length) {
-            lines.add(text.substring(start));
+        while (start < length) {
+            final int newLine = text.indexOf('\n', start);
+            final int end = newLine < 0
+                    ? length
+                    : newLine;
+            lines.add(withoutCarriageReturn(text.substring(start, end)));
+            start = end + 1;
         }
         return lines;
     }
 
-    private static boolean isLineBoundary(final char c) {
-        return c == '\n' || c == '\r' || c == 0x0B || c == 0x0C || c == 0x85 || c == 0x2028 || c == 0x2029;
+    private static String withoutCarriageReturn(final String line) {
+        return line.endsWith("\r")
+                ? line.substring(0, line.length() - 1)
+                : line;
     }
 
     /// @return The text's lines that aren't blank: `[line for line in text.splitlines() if line.strip()]`.

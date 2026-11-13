@@ -491,6 +491,19 @@ class TestSampleProfiler {
     }
 
     @Test
+    void jsonLinesWhoseValuesHoldLineSeparatorsAreNotMalformed() {
+        // Seen in chat 176: "59 of the 938 lines read aren't JSON (Unterminated string)", the lines split at a
+        // \u2028 inside a value, where Stroom splits only at \n.
+        final String sample = "{\"a\": \"x\u2028y\", \"b\": 1}\n{\"a\": \"p\u2029q\u0085r\", \"b\": 2}\n"
+                              + "{\"a\": \"z\", \"b\": 3}\n";
+
+        final Map<String, Object> info = SampleProfiler.profile(sample);
+
+        assertThat(info).containsEntry("format", "json lines").containsEntry("lines", 3)
+                .doesNotContainKey("malformed_lines");
+    }
+
+    @Test
     void jsonLinesEncodedTwiceAreJsonLinesReadByADataSplitter() {
         // Each line a JSON string holding the object: no keys for Stroom's JSONParser, so read a line a record and
         // parsed by the mapping.

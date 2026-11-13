@@ -340,7 +340,8 @@ public final class DraftMapping {
                         }
                     }
                     if (badLines && spec == null) {
-                        spec = SplitterSpec.builder("regex").pattern("^(.*)$").names(List.of("json")).build();
+                        spec = SplitterSpec.builder("regex").pattern(SampleProfiler.JSON_LINE_PATTERN)
+                                .names(List.of("json")).build();
                     }
                 }
                 case SampleProfiler.XML, SampleProfiler.XML_FRAGMENTS -> xmlElements(fmt, text)

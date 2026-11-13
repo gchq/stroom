@@ -72,10 +72,11 @@ class TestSurveyFeedTool {
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     private final Consent consent = new Consent(() -> auditLog);
+    private final BuildMemory memory = new BuildMemory();
     private final SurveyFeedTool tool = new SurveyFeedTool(streamReader, feedNames, world.guard(),
             new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)), consent,
             new FewerStreams(securityContext),
-            world.documentAccess, auditLog, besideFeed());
+            world.documentAccess, auditLog, besideFeed(), memory);
 
     TestSurveyFeedTool() {
         Mockito.when(world.documentAccess.canViewData()).thenReturn(true);
@@ -546,6 +547,50 @@ class TestSurveyFeedTool {
     }
 
     @Test
+    void jsonLinesWhoseValuesHoldLineSeparatorsAreReadARecordALine() {
+        // Seen in chat 176: Azure audit JSON lines whose string values held \u2028 were split there, every part
+        // failed to split, and the survey refused with nothing readable.
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, "{\"a\": \"x\u2028y\", \"b\": 1}\n{\"a\": \"p\u2029q\u0085r\", \"b\": 2}\n"
+                                 + "{\"a\": \"z\", \"b\": 3}\r\n", false);
+
+        final Map<String, Object> result = json(call("{\"stream_ids\": [7]}"));
+
+        assertThat(result.get("format")).isEqualTo("json lines");
+        assertThat(result.get("records_read")).isEqualTo(3);
+    }
+
+    @Test
+    void nothingReadableSaysWhyEachStreamCouldntBeReadAndIsKeptForTheBuild() {
+        sampleFeedInABuild();
+        for (long id = 1; id <= 7; id++) {
+            Mockito.when(streamReader.meta(id)).thenReturn(meta(id, "ACME-VPN", 0));
+            Mockito.when(streamReader.readHead(eq(id), anyInt(), anyInt()))
+                    .thenThrow(new StreamReader.StreamReadException("volume " + id + " gone"));
+        }
+
+        final String refused = call("{\"stream_ids\": [1, 2, 3, 4, 5, 6, 7], \"build\": \"acme-v1\"}").text();
+
+        assertThat(refused).contains("Nothing readable in the sampled streams of 'ACME-VPN': stream 1 part 0: "
+                                     + "Stroom couldn't read it: volume 1 gone; stream 2 part 0:")
+                .contains("volume 5 gone; and 2 more")
+                .doesNotContain("volume 6 gone");
+        assertThat(memory.unreadableSurveys("acme-v1")).containsOnlyKeys("ACME-VPN");
+        assertThat(memory.unreadableSurveys("acme-v1").get("ACME-VPN")).startsWith("stream 1 part 0: ");
+        assertThat(memory.unreadableSurveys("other")).isEmpty();
+    }
+
+    @Test
+    void whyNothingIsReadableIsEachPartsErrorCutShort() {
+        assertThat(SurveyFeedTool.whyNothingReadable(List.of())).isEqualTo("no stream gave any records");
+        assertThat(SurveyFeedTool.whyNothingReadable(List.of(
+                Map.of("stream", 3, "part", 1, "error", "could not split records: " + "x".repeat(300)),
+                Map.of("stream", 4, "part", 0, "note", "reads as cef, not json lines; skipped"))))
+                .matches("stream 3 part 1: could not split records: x{175}; stream 4 part 0: reads as cef, not json "
+                         + "lines; skipped");
+    }
+
+    @Test
     void theCallsTimeLimitStopsTheSurveyWithWhatItHasRead() {
         sampleFeedInABuild();
         for (int id = 1; id <= 3; id++) {
@@ -631,7 +676,7 @@ class TestSurveyFeedTool {
         // A node restarted (its memory empty), with no form to ask in: the build's survey record still says so.
         final SurveyFeedTool restarted = new SurveyFeedTool(streamReader, feedNames, world.guard(),
                 new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)),
-                consent, new FewerStreams(securityContext), world.documentAccess, auditLog, besideFeed());
+                consent, new FewerStreams(securityContext), world.documentAccess, auditLog, besideFeed(), memory);
         final ToolResult again = restarted.execute(BuildToolCalls.call(SurveyFeedTool.NAME, args),
                 BuildToolCalls.context());
         assertThat(again.text()).doesNotContain("Not done: Survey feed 'ACME-VPN' only 3 stream(s)");
@@ -686,6 +731,28 @@ class TestSurveyFeedTool {
                                                    + "\"build\": \"acme-v1\"}", again.context()));
         assertThat(again.shown()).isEmpty();
         assertThat(next.get(SurveyDoc.KIND_FIELDS)).isEqualTo(Map.of("fields", List.of("msg_act"), "by", "user"));
+    }
+
+    @Test
+    void aFeedWithARegistryTakesItsSourceTypeFieldUnasked() {
+        // Seen in an e2e walk: a later build's survey chose the field again from the newest stream's head, the user
+        // was asked, and another field than the registry's came first.
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, wrappedLines(60), false);
+        final SourceTypeRegistries registered = Mockito.mock(SourceTypeRegistries.class);
+        Mockito.when(registered.registry(any(), anyString())).thenReturn(Optional.of(
+                new SourceTypeRegistries.Found(null, true, Map.of("field", "source"))));
+        final SurveyFeedTool withRegistry = new SurveyFeedTool(streamReader, feedNames, world.guard(),
+                new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)),
+                consent, new FewerStreams(securityContext), world.documentAccess, auditLog, registered, memory);
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "unused"));
+
+        final Map<String, Object> surveyed = json(withRegistry.execute(BuildToolCalls.call(SurveyFeedTool.NAME,
+                "{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\"}"), user.context()));
+
+        assertThat(user.shown()).noneSatisfy(message -> assertThat(message).contains("aggregates several sources"));
+        assertThat((Map<String, Object>) surveyed.get("source_types")).containsEntry("field", "source")
+                .containsEntry("by", "registry");
     }
 
     @Test

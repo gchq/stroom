@@ -167,6 +167,10 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         final Map<String, Object> surveyed = json("survey_feed", args("feed", feed, "build", build));
         assertThat(map(surveyed, "source_types")).as("the source type field confirmed: %s",
                 surveyed.get("source_types")).containsEntry("field", "Workload");
+        // A record whose values hold \u2028 (four of them) is one record, as Stroom reads it (seen in chat 176:
+        // split there, every part failed and the survey read nothing).
+        assertThat(text.lines().filter(line -> line.contains("\u2028")).count()).isEqualTo(4);
+        assertThat(((Number) surveyed.get("records_read")).intValue()).isEqualTo(RECORDS);
 
         // Translated whole, as a normal source: no registry, no group. The values the survey saw are kept.
         final Map<String, Object> rules = new LinkedHashMap<>(TestE2eSourceTypeGroups.jsonValue(
@@ -193,6 +197,10 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         assertThat(stepSample(pipeline, List.of(stream))).containsEntry("verdict", "clean");
         final Map<String, Object> first = list(processed(pipeline, List.of(stream)), "streams").getFirst();
         assertThat(streamText(ids(first, "errors").getFirst())).doesNotContain(XsltGenerator.UNSEEN_SOURCE_TYPE);
+        // Every record an Event, those holding \u2028 and the JSON-escaped control characters (NUL, BEL, FF, ESC)
+        // too.
+        assertThat(TestE2eSourceTypeGroups.count(streamText(ids(first, "events").getFirst()), "<Event>"))
+                .isEqualTo(RECORDS);
 
         // Later data carries a source the survey never met: logged once a stream however many records, benign.
         final long later = send(feed, withNewSourceType(TestE2eSourceTypeGroups.lines(
@@ -545,7 +553,10 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
                              final String later) {
         final String third = "walk-" + family.name() + "-3";
         json("start_build", args("build", third, "feeds", List.of(feed)));
-        json("survey_feed", args("feed", feed, "build", third));
+        final Map<String, Object> thirdSurvey = json("survey_feed", args("feed", feed, "build", third));
+        // The field the registry beside the feed says, not chosen again from the newest stream's head.
+        assertThat(map(thirdSurvey, "source_types")).containsEntry("field", family.field())
+                .containsEntry("by", "registry");
         final Map<String, Object> shown = json("record_source_types", args("build", third, "feed", feed));
         client.answeringWith(answering(List.of(), null));
         final Map<String, Object> scoped = json("record_source_types", args("build", third, "feed", feed,

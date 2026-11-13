@@ -100,10 +100,14 @@ public final class SampleProfiler {
     public static final int MALFORMED_SCAN = 5000;
     /// The most records profiled.
     public static final int MAX_RECORDS = 200;
+    /// The Data Splitter regex reading a JSON line whole: `[^\n]`, not `.`, which stops at `\u2028` and the like
+    /// (seen: `^(.*)$` failed in Stroom at the first line whose string values held `\u2028`).
+    public static final String JSON_LINE_PATTERN = "^" + SplitterDryRun.REST_OF_LINE;
     /// The Data Splitter spec for JSON lines some of which aren't JSON: one record a line, the JSON parsed in the
     /// XSLT.
     public static final String JSON_LINES_SPEC =
-            "build_data_splitter spec {'kind': 'regex', 'pattern': '^(.*)$', 'names': ['json']}";
+            "build_data_splitter spec {'kind': 'regex', 'pattern': '" + JSON_LINE_PATTERN + "', 'names': "
+            + "['json']}";
     /// The wrapper an XMLFragmentParser puts round XML fragments (its text converter, type XML_FRAGMENT): the entity
     /// `fragment` is the stream. Fragments that declare no namespace of their own take the wrapper's default,
     /// records:2.

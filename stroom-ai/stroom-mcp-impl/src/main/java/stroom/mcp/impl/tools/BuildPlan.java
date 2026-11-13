@@ -463,6 +463,13 @@ public class BuildPlan {
     }
 
     /// @param build A build.
+    /// @return Each feed whose survey for the build was refused because nothing could be read, with why; empty when
+    /// none was.
+    Map<String, String> unreadableSurveys(final String build) {
+        return memory.unreadableSurveys(build);
+    }
+
+    /// @param build A build.
     /// @param max   The most streams given.
     /// @return The build's newest raw sample streams (its feeds' own Raw Events streams, else Raw Reference),
     /// newest first; none for a build with none of its own.

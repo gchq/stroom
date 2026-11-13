@@ -50,6 +50,18 @@ class TestRecordSplitter {
     }
 
     @Test
+    void jsonLinesWhoseValuesHoldLineSeparatorsAreARecordALine() {
+        // Seen in chat 176: Azure audit JSON lines split at a \u2028 in a value, each piece failing to parse.
+        final String text = "{\"a\": \"x\u2028y\"}\n{\"a\": \"p\u2029q\u0085r\"}\r\n{\"a\": \"z\"}\n";
+
+        final RecordSplitter.Chunk chunk = RecordSplitter.split(text, 1000, false);
+
+        assertThat(chunk.format()).isEqualTo("json lines");
+        assertThat(chunk.records()).hasSize(3);
+        assertThat(chunk.parsedAt(0)).containsEntry("a", "x\u2028y");
+    }
+
+    @Test
     void xmlFragmentsAreRecordsWithTheirOwnNamespace() {
         final String text = IntStream.range(0, 5)
                 .mapToObj(n -> "<Event xmlns=\"urn:win\"><Id>" + n + "</Id></Event>")

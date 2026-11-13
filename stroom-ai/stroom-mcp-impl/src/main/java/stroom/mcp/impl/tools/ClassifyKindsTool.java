@@ -162,6 +162,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     // Between a shown mark's time and the call that asked its form.
     private static final String ASKED_BY = "@";
     private static final String HINT = "hint";
+    // Why a build on existing feeds classified without the survey.
+    private static final String SURVEY = "survey";
     private static final String TABLE = "table";
     private static final String RECORDED = "recorded";
     private static final String SOURCE_NOTES = "source_notes";
@@ -368,6 +370,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         if (build == null) {
             throw new ToolRefusal("Give build");
         }
+        final Optional<String> unsurveyed = unsurveyed(build);
         final String givenSource = stringArg(call, SOURCE_ARG);
         final Map<String, Object> notesNow = notes.notesOf(context, build, givenSource);
         // The source notes' name, else the build's (the plan's call gives none).
@@ -379,12 +382,37 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 : confirming(call)
                         ? confirmed(call, context, build, source, notesNow)
                         : listed(call, context, build, source, notesNow, null);
+        unsurveyed.ifPresent(why -> result.put(SURVEY, why));
         if (!proposals.isEmpty() && confirming(call) && result.containsKey(TABLE)) {
             // Seen in testing: confirm=true sent with the proposals, the form expected; the user hasn't seen the
             // table yet, so the form waits for the next call.
             result.put(HINT, "No form yet: confirm=true is not taken with proposals. " + result.get(HINT));
         }
         return plan.withNext(context, build, result);
+    }
+
+    // A build working from existing feeds classifies only once survey_feed has run for it: the survey finds the
+    // kinds of event over the feed's streams and, for an aggregated feed, its source type field, which nothing else
+    // looks for (seen in chat 176: the survey failed, the agent classified from profile_sample instead, and the
+    // feed's source types were never found). Refused until then; once a survey for the build was refused for
+    // nothing readable, it goes on, and says so (returned). Empty for a build with a survey, or of its own samples.
+    private Optional<String> unsurveyed(final String build) {
+        if (plan.worksFrom(build).isEmpty() || !builds.surveyStatesInBuild(build).isEmpty()) {
+            return Optional.empty();
+        }
+        final Map<String, String> unreadable = plan.unreadableSurveys(build);
+        if (unreadable.isEmpty()) {
+            throw new ToolRefusal("Survey the feed first: survey_feed feed=<the feed> build=" + build + ". The "
+                                  + "survey finds the kinds of event over the feed's streams and any source type "
+                                  + "field (an aggregated feed, whose source types are built a group at a time); "
+                                  + NAME + " classifies the kinds it finds.");
+        }
+        final List<String> said = new ArrayList<>();
+        unreadable.forEach((feed, why) -> said.add("'" + feed + "': " + why));
+        return Optional.of("survey_feed couldn't read the feed (" + String.join("; ", said) + "), so these kinds "
+                           + "come from the sample streams alone, and source types (an aggregated feed's source "
+                           + "type field) were not looked for. Tell the user, and survey again once the cause is "
+                           + "fixed.");
     }
 
     // The kinds to classify: those the draft finds that the documentation (or the user) hasn't settled.

@@ -78,4 +78,18 @@ class TestToolText {
         assertThat(ToolText.lastPart("id", '.')).isEqualTo("id");
         assertThat(ToolText.search(ToolText.ignoringCase("^user"), "UserId")).isTrue();
     }
+
+    @Test
+    void linesAreSplitAsStroomSplitsRecordsNotAsPythonDoes() {
+        // Seen: Azure audit JSON lines whose string values held \u2028 were read as two records each.
+        final String text = "{\"a\":\"x\u2028y\"}\n{\"b\":\"p\u2029q\u0085r\u000bs\ft\u001du\"}\r\n"
+                            + "lone\rcarriage return\n\nlast\r";
+
+        assertThat(ToolText.splitlines(text)).containsExactly("{\"a\":\"x\u2028y\"}",
+                "{\"b\":\"p\u2029q\u0085r\u000bs\ft\u001du\"}", "lone\rcarriage return", "", "last");
+        assertThat(ToolText.nonBlankLines(text)).hasSize(4);
+        assertThat(ToolText.splitlines("a\n")).containsExactly("a");
+        assertThat(ToolText.splitlines("")).isEmpty();
+        assertThat(ToolText.splitlines("\n\n")).containsExactly("", "");
+    }
 }

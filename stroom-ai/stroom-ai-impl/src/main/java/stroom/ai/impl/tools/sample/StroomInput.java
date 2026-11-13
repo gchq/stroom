@@ -47,6 +47,17 @@ public final class StroomInput {
         return out.toString();
     }
 
+    /// @param text Text.
+    /// @return The text as a Data Splitter reads it: without the characters Stroom's parser takes out, nor any
+    /// carriage return, which the Data Splitter's reader (`DS3Reader`) takes out too, wherever it is (seen: a
+    /// `\r` inside a value, which Stroom's records didn't hold).
+    public static String asSplit(final String text) {
+        final String parsed = asParsed(text);
+        return parsed == null || parsed.indexOf('\r') < 0
+                ? parsed
+                : parsed.replace("\r", "");
+    }
+
     /// @param texts Sample texts.
     /// @return What Stroom's parser would take out of them, and what to do where those characters separate fields;
     /// empty when nothing.

@@ -810,7 +810,7 @@
     "kind": "syslog",
     "body": {
      "kind": "regex",
-     "pattern": "^(\\S+)\\s+(\\S+)\\s+(.*)$",
+     "pattern": "^(\\S+)\\s+(\\S+)\\s+([^\\n]*)$",
      "names": [
       "prefix1",
       "prefix2",
@@ -1004,7 +1004,7 @@
    "source_notes": null,
    "splitter": {
     "kind": "regex",
-    "pattern": "^(\\S+)\\s+(\\S+)\\s+(.*)$",
+    "pattern": "^(\\S+)\\s+(\\S+)\\s+([^\\n]*)$",
     "names": [
      "time",
      "prefix2",
@@ -16898,7 +16898,7 @@
    "source_notes": null,
    "splitter": {
     "kind": "regex",
-    "pattern": "^(.*)$",
+    "pattern": "^([^\\n]*)$",
     "names": [
      "json"
     ]
@@ -16911,7 +16911,7 @@
     "password_change"
    ],
    "notes": [
-    "1 of the 6 lines read aren't JSON objects (first: line 5, isn't JSON: Unterminated string starting at). Stroom's JSONParser stops the stream at the first such line, a fatal error, and every record after it is lost. Read the lines with a Data Splitter instead, one record a line (build_data_splitter spec {'kind': 'regex', 'pattern': '^(.*)$', 'names': ['json']}), and map their keys through json_fields: ['json'] (a key is then json.<key>): a line that isn't JSON gives no fields, matches no rule and is logged, and the rest are read.",
+    "1 of the 6 lines read aren't JSON objects (first: line 5, isn't JSON: Unterminated string starting at). Stroom's JSONParser stops the stream at the first such line, a fatal error, and every record after it is lost. Read the lines with a Data Splitter instead, one record a line (build_data_splitter spec {'kind': 'regex', 'pattern': '^([^\\n]*)$', 'names': ['json']}), and map their keys through json_fields: ['json'] (a key is then json.<key>): a line that isn't JSON gives no fields, matches no rule and is logged, and the rest are read.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'json.action' (login, logout, password_change), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -17079,7 +17079,7 @@
     "password_change"
    ],
    "notes": [
-    "1 of the 6 lines read aren't JSON objects (first: line 5, isn't JSON: Unterminated string starting at). Stroom's JSONParser stops the stream at the first such line, a fatal error, and every record after it is lost. Read the lines with a Data Splitter instead, one record a line (build_data_splitter spec {'kind': 'regex', 'pattern': '^(.*)$', 'names': ['json']}), and map their keys through json_fields: ['json'] (a key is then json.<key>): a line that isn't JSON gives no fields, matches no rule and is logged, and the rest are read.",
+    "1 of the 6 lines read aren't JSON objects (first: line 5, isn't JSON: Unterminated string starting at). Stroom's JSONParser stops the stream at the first such line, a fatal error, and every record after it is lost. Read the lines with a Data Splitter instead, one record a line (build_data_splitter spec {'kind': 'regex', 'pattern': '^([^\\n]*)$', 'names': ['json']}), and map their keys through json_fields: ['json'] (a key is then json.<key>): a line that isn't JSON gives no fields, matches no rule and is logged, and the rest are read.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'json.action' (login, logout, password_change), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -17247,7 +17247,7 @@
     "password_change"
    ],
    "notes": [
-    "2 of the 150 lines read aren't JSON objects (first: line 5, isn't JSON: Unterminated string starting at). Stroom's JSONParser stops the stream at the first such line, a fatal error, and every record after it is lost. Read the lines with a Data Splitter instead, one record a line (build_data_splitter spec {'kind': 'regex', 'pattern': '^(.*)$', 'names': ['json']}), and map their keys through json_fields: ['json'] (a key is then json.<key>): a line that isn't JSON gives no fields, matches no rule and is logged, and the rest are read.",
+    "2 of the 150 lines read aren't JSON objects (first: line 5, isn't JSON: Unterminated string starting at). Stroom's JSONParser stops the stream at the first such line, a fatal error, and every record after it is lost. Read the lines with a Data Splitter instead, one record a line (build_data_splitter spec {'kind': 'regex', 'pattern': '^([^\\n]*)$', 'names': ['json']}), and map their keys through json_fields: ['json'] (a key is then json.<key>): a line that isn't JSON gives no fields, matches no rule and is logged, and the rest are read.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'json.action' (login, logout, password_change), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
