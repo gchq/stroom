@@ -42,9 +42,10 @@ import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// An aggregated feed walked through the REAL tools as an agent would, one walk per synthetic sample family of
-/// `.ai/data` (skipped where it is absent): PEGA's JSON wrapper around a message holding JSON, text or SOAP; Azure's
-/// audit log, with no wrapper and the `Workload` field; and a collector's `LogFilePath`, matched by patterns.
+/// An aggregated feed walked through the REAL tools as an agent would, one walk per synthetic sample family under
+/// `aggregated/` (made by aggregated-feeds-generator.py): PEGA's JSON wrapper around a message holding JSON, text or
+/// SOAP; Azure's audit log, with no wrapper and the `Workload` field; and a collector's `LogFilePath`, matched by
+/// patterns.
 ///
 /// Each walk's first build surveys the feed, confirms its source type field, profiles the source types and writes the
 /// registry with a scope of one source type; classifies, drafts and builds that source type group from the draft
@@ -449,7 +450,7 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
     /// A sample family.
     ///
     /// @param name        Short, for names.
-    /// @param file        Its sample under `.ai/data`.
+    /// @param file        Its sample under `aggregated/`.
     /// @param field       Its source type field.
     /// @param firstGroup  The value (or pattern) of the first build's source type.
     /// @param firstRules  What the agent changes in the first group's draft: its rules, and how it reads the message.

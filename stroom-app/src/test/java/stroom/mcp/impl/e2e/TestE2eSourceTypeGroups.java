@@ -29,20 +29,16 @@ import stroom.security.api.SecurityContext;
 import io.modelcontextprotocol.spec.McpSchema.ElicitFormRequest;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Element;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,12 +50,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// create_pipeline makes the one-filter pipeline, its XSLT the dispatcher filled from the build; it steps with
 /// Stroom resolving the imports by UUID: valid Events for the scope's records only, the rest passed over and
 /// counted; an unsaved group stepped through a temporary dispatcher; processing logs the counts and the truncated
-/// SOAP bodies, and doesn't stop. The samples are the synthetic slices of `.ai/data` TestE2eSourceTypes reads; the test
-/// is skipped where they are absent.
+/// SOAP bodies, and doesn't stop. The samples are the synthetic test resources under `aggregated/`
+/// that TestE2eSourceTypes reads (made by aggregated-feeds-generator.py).
 @SuppressWarnings("unchecked")
 class TestE2eSourceTypeGroups extends AbstractE2eTest {
 
-    private static final Path DATA = Path.of("..", ".ai", "data");
+    // Where the aggregated feeds' synthetic samples are, beside this class.
+    static final String SAMPLES = "aggregated/";
     static final String SCOPE_FORM = "source types does this build cover";
     private static final String FEED = "E2E-PEGA-GROUPS";
     private static final String BUILD = "pega-groups";
@@ -337,15 +334,16 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
         });
     }
 
-    // A slice of a sample file, its first lines; the test is skipped where the samples are absent.
+    // A slice of a sample file, its first lines.
     static String lines(final String file, final int count) {
-        final Path path = DATA.resolve(file);
-        Assumptions.assumeTrue(Files.isRegularFile(path), "no sample at " + path.toAbsolutePath());
-        try (Stream<String> stream = Files.lines(path)) {
-            return String.join("\n", stream.limit(count).toList()) + "\n";
-        } catch (final IOException e) {
-            throw new IllegalStateException(e);
-        }
+        return slice(file, 0, count);
+    }
+
+    // A slice of a sample file: so many lines from a line. The samples are the test resources under `aggregated/`,
+    // made by its aggregated-feeds-generator.py.
+    static String slice(final String file, final int from, final int count) {
+        final String text = textResource(SAMPLES + file);
+        return String.join("\n", text.lines().skip(from).limit(count).toList()) + "\n";
     }
 
     // A user who chooses these source types for the build's scope, giving their reason for the rest, and agrees to
