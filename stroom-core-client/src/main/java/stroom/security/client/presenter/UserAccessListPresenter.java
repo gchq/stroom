@@ -57,6 +57,7 @@ public class UserAccessListPresenter
         implements QuickFilterUiHandlers {
 
     private static final UserAccessResource USER_ACCESS_RESOURCE = GWT.create(UserAccessResource.class);
+    private static final String NOT_TRACKED = "n/a";
 
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
@@ -66,6 +67,7 @@ public class UserAccessListPresenter
 
     private RestDataProvider<UserAccessRow, ResultPage<UserAccessRow>> dataProvider = null;
     private String filter;
+    private boolean tokensTracked = true;
 
     @Inject
     public UserAccessListPresenter(final EventBus eventBus,
@@ -88,6 +90,19 @@ public class UserAccessListPresenter
 
     public MultiSelectionModelImpl<UserAccessRow> getSelectionModel() {
         return selectionModel;
+    }
+
+    /// Set whether stroom tracks the tokens issued to users. It only does for the tokens it
+    /// issues itself, i.e. with its internal identity provider. With an external identity
+    /// provider (with or without an authenticating edge proxy in front) the token columns show
+    /// that tokens are not tracked here, rather than a misleading zero.
+    ///
+    /// @param tokensTracked True if stroom tracks the users' tokens.
+    public void setTokensTracked(final boolean tokensTracked) {
+        if (this.tokensTracked != tokensTracked) {
+            this.tokensTracked = tokensTracked;
+            dataGrid.redraw();
+        }
     }
 
     private void initTableColumns() {
@@ -123,9 +138,12 @@ public class UserAccessListPresenter
                 .build();
         dataGrid.addColumn(lastAccessedColumn, "Last Accessed", ColumnSizeConstants.DATE_AND_DURATION_COL);
 
-        // Always zero against an external IdP, since nothing is minted here.
+        // Only tokens minted by the internal IdP are tracked, so against an external IdP there is no
+        // count to show.
         final Column<UserAccessRow, String> tokensColumn = DataGridUtil.textColumnBuilder(
-                        (UserAccessRow row) -> String.valueOf(row.getTokenCount()))
+                        (UserAccessRow row) -> tokensTracked
+                                ? String.valueOf(row.getTokenCount())
+                                : NOT_TRACKED)
                 .rightAligned()
                 .build();
         dataGrid.addColumn(tokensColumn, "Tokens", ColumnSizeConstants.SMALL_COL);
@@ -133,9 +151,14 @@ public class UserAccessListPresenter
         // How long token-based access would persist if left alone - usually driven by a refresh token, so
         // weeks rather than the access token's hour. This is the number that makes the case for revoking.
         final Column<UserAccessRow, String> tokenExpiryColumn = DataGridUtil.textColumnBuilder(
-                        (UserAccessRow row) -> row.getLastTokenExpiryMs() == null
-                                ? ""
-                                : dateTimeFormatter.formatWithDuration(row.getLastTokenExpiryMs()))
+                        (UserAccessRow row) -> {
+                            if (!tokensTracked) {
+                                return NOT_TRACKED;
+                            }
+                            return row.getLastTokenExpiryMs() == null
+                                    ? ""
+                                    : dateTimeFormatter.formatWithDuration(row.getLastTokenExpiryMs());
+                        })
                 .build();
         dataGrid.addAutoResizableColumn(
                 tokenExpiryColumn, "Access Expires", ColumnSizeConstants.DATE_AND_DURATION_COL);

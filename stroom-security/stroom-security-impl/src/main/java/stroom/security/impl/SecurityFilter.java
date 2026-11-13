@@ -21,6 +21,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.UserIdentitySessionUtil;
+import stroom.security.shared.HasUserRef;
 import stroom.util.authentication.HasExpiry;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -44,6 +45,7 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletMapping;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
 
@@ -210,6 +212,8 @@ class SecurityFilter implements Filter {
                     return;
                 }
 
+                recordEdgeSessionUser(request, credential);
+
                 // Now handle the request as this user
                 securityContext.asUser(credential.identity(), () ->
                         process(request, response, chain));
@@ -315,9 +319,7 @@ class SecurityFilter implements Filter {
     boolean isCsrfSafe(final HttpServletRequest request, final CredentialSource source) {
         final boolean credentialIsAmbient =
                 CredentialSource.SESSION.equals(source)
-                || (CredentialSource.REQUEST_TOKEN.equals(source)
-                    && isEdgeAuthenticationEnabled()
-                    && hasBrowserProvenance(request));
+                || isEdgeBrowserRequestToken(request, source);
 
         if (credentialIsAmbient) {
             return isOriginValid(request) && isCsrfValid(request);
@@ -349,6 +351,57 @@ class SecurityFilter implements Filter {
         return request.getHeader(ORIGIN_HEADER) != null
                || request.getHeader(REFERER_HEADER) != null
                || request.getHeader(SEC_FETCH_SITE_HEADER) != null;
+    }
+
+    /// Record who is using the browser's session when an authenticating edge proxy (e.g. an AWS
+    /// ALB) authenticated the request.
+    ///
+    /// In edge mode the identity comes from the proxy's headers on every request and is never
+    /// held in the session, so without this the session list (and so the User Access screen)
+    /// cannot tell whose session it is. Only the [UserRef] is recorded, and in an attribute
+    /// that is never used to authenticate a request.
+    ///
+    /// Only requests issued by a browser are recorded, so that machine clients sending bearer
+    /// tokens through the proxy are left alone.
+    ///
+    /// The user is only recorded against a session the browser already has; this never creates
+    /// one. The UI gets its session when it first loads the explorer tree. Creating one here
+    /// instead would give the user a session for each of the UI's concurrent first requests,
+    /// and would let any page create sessions in the victim's name, as the proxy's cookie is
+    /// sent cross-site but stroom's (SameSite=Strict by default) session cookie is not.
+    ///
+    /// A session that holds an identity is left alone, so a session only ever has one owner.
+    /// The identity may only have expired and can be refreshed, at which point it would
+    /// authenticate the session's requests again.
+    ///
+    /// @param request    The authenticated request.
+    /// @param credential The credential that authenticated the request.
+    // Pkg private for testing
+    void recordEdgeSessionUser(final HttpServletRequest request, final AuthenticatedCredential credential) {
+        if (isEdgeBrowserRequestToken(request, credential.source())
+            && credential.identity() instanceof final HasUserRef hasUserRef) {
+
+            final HttpSession session = SessionUtil.getExistingSession(request);
+            if (session != null) {
+                try {
+                    if (UserIdentitySessionUtil.getUserFromSession(session).isEmpty()) {
+                        UserIdentitySessionUtil.setEdgeUserInSession(session, hasUserRef.getUserRef());
+                    }
+                } catch (final IllegalStateException e) {
+                    // The session was invalidated concurrently, e.g. by a logout in another tab or by
+                    // expiring. There is nothing to record against, and this must not fail the request.
+                    LOGGER.debug(() -> "Not recording edge user as session was invalidated: " + e.getMessage(), e);
+                }
+            }
+        }
+    }
+
+    /// Whether the request was authenticated by a token that an authenticating edge proxy
+    /// injected into a request issued by a browser.
+    private boolean isEdgeBrowserRequestToken(final HttpServletRequest request, final CredentialSource source) {
+        return CredentialSource.REQUEST_TOKEN.equals(source)
+               && isEdgeAuthenticationEnabled()
+               && hasBrowserProvenance(request);
     }
 
     private boolean isEdgeAuthenticationEnabled() {

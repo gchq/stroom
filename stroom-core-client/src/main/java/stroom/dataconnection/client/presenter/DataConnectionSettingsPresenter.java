@@ -379,9 +379,13 @@ public class DataConnectionSettingsPresenter
                 .build();
     }
 
-    // No Excel settings for a document that has never had any, as for CSV. Saving a copy of the
-    // document, which has a new UUID, names the document read so the server copies its workbook.
-    private ExcelSettings writeExcel(final DataConnectionDoc doc) {
+    /// Builds the Excel settings to save. There are none for a document that has never had any, as
+    /// for CSV, unless Excel is the chosen type. Saving a copy of the document, which has a new UUID,
+    /// names the document read so the server copies its workbook.
+    ///
+    /// @param doc The document being written.
+    /// @return The Excel settings to save, or null if the document has none.
+    ExcelSettings writeExcel(final DataConnectionDoc doc) {
         final DataConnectionSettingsView view = getView();
         final ExcelSettings stored = doc.getExcel();
         final ExcelSettings read = NullSafe.get(getEntity(), DataConnectionDoc::getExcel);
@@ -395,9 +399,9 @@ public class DataConnectionSettingsPresenter
             && view.getSourceType() != DataConnectionType.EXCEL) {
             return null;
         }
-        final ExcelSettings previous = Objects.requireNonNullElse(
-                Objects.requireNonNullElse(stored, read),
-                ExcelSettings.builder().build());
+        // A document that has never had a workbook has neither, as when Excel is first chosen.
+        final ExcelSettings previous = NullSafe.coalesce(stored, read)
+                .orElseGet(() -> ExcelSettings.builder().build());
         final boolean header = view.isExcelHeader();
         final boolean savingACopy = getEntity() != null
                                     && !Objects.equals(doc.getUuid(), getEntity().getUuid());
