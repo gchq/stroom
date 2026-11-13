@@ -200,15 +200,12 @@ class TestErrorTriage {
     }
 
     @Test
-    void aModuleImportedMoreThanOnceIsBenignOnEveryRecord() {
-        // Seen in the aggregated feed walks: Saxon's warning as the dispatcher is compiled, which stepping attaches to
-        // every record, raised the group to review and stopped the pipeline stepping clean.
-        final List<Marker> markers = Stream.of("a", "b", "c")
-                .map(r -> marker("WARNING", "translationFilter", "XsltPool - Stylesheet module uuid='u', "
-                                                                 + "name='FEED helpers' is included or imported more "
-                                                                 + "than once. This is permitted, but may lead to "
-                                                                 + "errors or unexpected behavior", "r" + r))
-                .toList();
+    void aSourceTypeGroupsCountOfRecordsPassedOverIsBenign() {
+        // A group's own pipeline passes over the records of every other source type, counting them once a document:
+        // what the user chose, not a fault.
+        final List<Marker> markers = List.of(marker("INFO", "translationFilter", XsltGenerator.PASSED_OVER + "40"
+                                                                                  + XsltGenerator.PASSED_OVER_END,
+                null));
 
         final Map<String, Object> result = RULES.triage(markers, Set.of("translationFilter"), 3, 3, List.of());
 

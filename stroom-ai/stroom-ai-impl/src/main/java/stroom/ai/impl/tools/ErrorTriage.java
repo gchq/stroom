@@ -54,10 +54,6 @@ public final class ErrorTriage {
     public static final String BLOCKING = "blocking";
     public static final String REVIEW = "review";
     public static final String BENIGN = "benign";
-    /// Saxon's warning of one module imported more than once in a stylesheet (an aggregated feed's groups each
-    /// importing its common and helpers modules, by design): reported as the stylesheet is compiled, so stepping
-    /// attaches it to every record.
-    public static final String IMPORTED_MORE_THAN_ONCE = "is included or imported more than once";
     /// The classes, in the order groups are given.
     public static final List<String> CLASSES = List.of(BLOCKING, REVIEW, BENIGN);
 
@@ -283,13 +279,10 @@ public final class ErrorTriage {
                     : group.records.size();
             // A field no rule reads is logged once a stream, but stepping keeps no value from record to record, so
             // there it is logged for each record: no sign our output is at fault (seen in the e2e suite: every
-            // mapping leaving a field out stepped "review"). Nor is a warning of the stylesheet's own, given as it
-            // is compiled (seen in the aggregated feed walks: a group's common module importing the helpers its
-            // group and dispatcher import too stepped "review" on every record).
+            // mapping leaving a field out stepped "review").
             if (BENIGN.equals(classified.classification()) && recordCount != null && recordCount > 0
                 && Objects.requireNonNullElse(affected, group.count) >= recordCount
-                && !firstMessage.contains(XsltGenerator.UNREAD_FIELD)
-                && !firstMessage.contains(IMPORTED_MORE_THAN_ONCE)) {
+                && !firstMessage.contains(XsltGenerator.UNREAD_FIELD)) {
                 classified = new Classified(REVIEW, "Occurs for every record; our output may be the cause");
             }
             final AcceptedErrors.Entry known = AcceptedErrors.match(accepted, group.element, firstMessage);

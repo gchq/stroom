@@ -118,7 +118,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     // An aggregated feed's modules and the reference data its pipelines load; none in tests that make the tool
     // themselves.
     private Provider<SourceTypeGroups> groupsProvider;
-    private Provider<DispatcherReferences> referencesProvider;
     // An aggregated feed's indexes, one per output feed; none in tests that make the tool themselves.
     private Provider<FeedIndexDecisions> feedIndexesProvider;
 
@@ -153,15 +152,13 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         this.surveyDocuments = surveyDocuments;
     }
 
-    /// An aggregated feed's modules, put beside the feed and pointed at the originals of their working copies, and
-    /// the reference data its pipelines load (set by injection; none in tests that make the tool themselves).
+    /// An aggregated feed's modules, put beside the feed and pointed at the originals of their working copies (set
+    /// by injection; none in tests that make the tool themselves).
     ///
-    /// @param groups     The feed's source type groups.
-    /// @param references The reference data its pipelines load.
+    /// @param groups The feed's source type groups.
     @Inject
-    void setAggregated(final Provider<SourceTypeGroups> groups, final Provider<DispatcherReferences> references) {
+    void setAggregated(final Provider<SourceTypeGroups> groups) {
         this.groupsProvider = groups;
-        this.referencesProvider = references;
     }
 
     /// An aggregated feed's indexes: each output feed's gains the build's new fields, recorded in the feed's
@@ -221,11 +218,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                              + "first. A working copy is written back over its original after the original is "
                              + "backed up to <workspace>/backups, then the copy is deleted. The build's workspace "
                              + "folder is removed afterwards if nothing is left in it. An aggregated feed's modules "
-                             + "(helpers, common module, source type groups, dispatchers) and a group's output feed "
-                             + "go beside the feed, with its registry; working copies of modules are written back "
-                             + "with every module importing the originals again (the dispatchers regenerated against "
-                             + "the originals' UUIDs), and each pipeline running a dispatcher gains the reference "
-                             + "data its groups look up (a pipeline change, in the approval). What build_status says "
+                             + "(helpers, common module, source type groups) and a group's output feed go beside the "
+                             + "feed, with its registry; working copies of modules are written back with every "
+                             + "module importing the originals again. What build_status says "
                              + "is "
                              + "missing goes in the approval, except documentation the build's own change left "
                              + "behind: write_documentation again first (once promoted, documentation only changes "
@@ -359,11 +354,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                   + "change through a working copy.");
         }
         final List<String> processed = processingSaid(processing);
-        // The reference data an aggregated feed's pipelines gain for their groups' lookups: a pipeline change.
-        final List<DispatcherReferences.Change> referenceChanges = referencesProvider == null
-                ? List.of()
-                : referencesProvider.get().changes(build, docs);
-        final List<String> pipelineChanges = referenceChanges.stream().map(DispatcherReferences.Change::said).toList();
         // An aggregated feed's output feeds' indexes: held while a field clashes with one the index has.
         final List<FeedIndexDecisions.IndexChange> indexChanges = feedIndexesProvider == null
                 ? List.of()
@@ -378,11 +368,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 review.put("registries", registriesSaid);
                 review.put("hint", review.get("hint") + " Say the registries note too: each registry goes beside "
                                    + "its feed, though its survey doc stays in the build.");
-            }
-            if (!pipelineChanges.isEmpty()) {
-                review.put("pipeline_changes", pipelineChanges);
-                review.put("hint", review.get("hint") + " Say the pipeline_changes too: the reference data each "
-                                   + "pipeline gains for its source type groups' lookups.");
             }
             if (!indexSaid.isEmpty()) {
                 review.put("index_changes", indexSaid);
@@ -415,9 +400,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (!registriesSaid.isEmpty()) {
             shortForm.put("registries", registriesSaid);
         }
-        if (!pipelineChanges.isEmpty()) {
-            shortForm.put("pipeline changes", pipelineChanges);
-        }
         if (!indexSaid.isEmpty()) {
             shortForm.put("index changes", indexSaid);
         }
@@ -448,9 +430,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             }
         }
         carryOut(build, docs, plan, folders, creating, done);
-        if (!referenceChanges.isEmpty()) {
-            done.addAll(referencesProvider.get().apply(referenceChanges));
-        }
         // A choice about a changed original holds for this promotion only: promoted again, it is asked again. What
         // was kept is marked so, so it doesn't hold the build open on its feed.
         plan.stream()
@@ -622,7 +601,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         return out;
     }
 
-    // An aggregated feed's modules (its helpers, common module, groups and dispatchers, by the marker the generator
+    // An aggregated feed's modules (its helpers, common module and groups, by the marker the generator
     // writes in each) and its groups' output feeds of their own: beside the feed, where a later build finds them
     // through the registry. Not working copies (written back where their originals are), nor a new version's
     // documents (in its version folder), nor any given a destination.

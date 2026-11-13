@@ -17,8 +17,6 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.generation.DispatcherSpec;
-import stroom.ai.impl.tools.generation.DispatcherXslt;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.pipeline.shared.PipelineDoc;
@@ -110,44 +108,6 @@ class TestBuildChecks {
                 .first().isEqualTo("Pipeline 'Acme': its XSLT was edited by hand");
         assertThat(checks(drifted).checks(docs).get(1)).doesNotEndWith(BuildChecks.BLOCKS);
         assertThat(kept.kept()).isEqualTo(new KeptMapping.Kept("translation", Map.of("mapping", Map.of())));
-    }
-
-    @Test
-    void anAggregatedFeedsPipelineIsCheckedGroupByGroup() {
-        // The pipeline's XSLT is a dispatcher, keeping no mapping: the groups it imports keep theirs.
-        final List<DispatcherSpec.Group> imported = List.of(
-                new DispatcherSpec.Group("A", "a", "uuid='ga', name='A'", List.of("a")),
-                new DispatcherSpec.Group("B", "b", "uuid='gb', name='B'", List.of("b")));
-        final DispatcherSpec spec = new DispatcherSpec("ACME", "acme_dispatch", Map.of("input", "json"), "kind",
-                null, List.of(), imported, Map.of());
-        world.docs.put("x", XsltDoc.builder().uuid("x").name("ACME dispatcher").data("<xsl:stylesheet/>")
-                .description(KeptMapping.withBlock("", DispatcherXslt.SPEC_BLOCK, spec.toJson())).build());
-        final String hidden = "<!-- stroom-mcp translation mapping: kept by the server, do not edit or delete\n"
-                              + "{\"mapping\":{}}\n-->";
-        for (final String group : List.of("ga", "gb")) {
-            world.docs.put(group, XsltDoc.builder().uuid(group).name(group).description(hidden)
-                    .data("<xsl:stylesheet>" + group + "</xsl:stylesheet>").build());
-        }
-        world.records().recordPassed(new DocRef(PipelineDoc.TYPE, "p", "Acme"), BuildRecords.STEPPED, null, null);
-        final List<KeptMappings.KeptXslt> groups = keptMappings.groupXslts("p");
-        assertThat(groups).hasSize(2);
-        // Documented before group B was changed: B's section predates it, and holds promotion up.
-        world.docs.put("d", DocumentationDoc.builder().uuid("d").name("Acme")
-                .data("<!-- stroom-mcp field-mapping " + BuildChecks.mappingDigest(groups.getFirst()) + " -->\n"
-                      + "<!-- stroom-mcp field-mapping 0000000000000000 -->").build());
-        final List<Map<String, Object>> docs = List.of(FakeBuildFacts.doc(PipelineDoc.TYPE, "p", "Acme"),
-                FakeBuildFacts.doc(DocumentationDoc.TYPE, "d", "Acme"));
-        assertThat(checks(Mockito.mock(GeneratedDrift.class)).checks(docs)).singleElement().satisfies(problem ->
-                assertThat(problem).startsWith("Pipeline 'Acme': source type group XSLT 'gb': the documentation's "
-                                               + "Field mapping predates").endsWith(BuildChecks.BLOCKS));
-        // A group edited by hand drifts from its mapping: said for that group, only a warning.
-        final GeneratedDrift drifted = Mockito.mock(GeneratedDrift.class);
-        Mockito.when(drifted.drift(Mockito.argThat(kept -> kept != null && "ga".equals(kept.xslt().getUuid()))))
-                .thenReturn(Optional.of("its XSLT was edited by hand"));
-        Mockito.when(drifted.drift(Mockito.argThat(kept -> kept != null && "gb".equals(kept.xslt().getUuid()))))
-                .thenReturn(Optional.empty());
-        assertThat(checks(drifted).checks(docs)).first()
-                .isEqualTo("Pipeline 'Acme': source type group XSLT 'ga': its XSLT was edited by hand");
     }
 
     @Test

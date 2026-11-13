@@ -22,8 +22,6 @@ import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
-import stroom.ai.impl.tools.generation.DispatcherSpec;
-import stroom.ai.impl.tools.generation.DispatcherXslt;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.HelpersXslt;
@@ -58,17 +56,17 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-/// An aggregated feed's source type groups, as `build_translation_xslt group=` builds them: the group's mapping
-/// split from the feed's common module (the wrapper's entries every group writes one way, its parts), the common
-/// module and the feed's helpers made when the feed has none, and, once the group is saved, the registry's rows for
-/// its source types set `translated`, placed in the pipeline the user chose, and every dispatcher of the feed
-/// generated from the registry ([#regenerate]): the feed's pipeline's, and one for each group with a pipeline of its
-/// own, so no two pipelines claim a source type.
+/// An aggregated feed's source type groups, as `build_translation_xslt group=` builds them: each group the XSLT of a
+/// pipeline of its own, translating its source types' records and passing over the rest. The group's mapping is
+/// split from the feed's common module (the wrapper's entries every group writes one way, its parts, and the site's
+/// shared calls); the common module and the feed's helpers are made when the feed has none. Imports form a chain:
+/// the group imports the common module, which imports the helpers and the site's libraries. Once the group is saved,
+/// the registry's rows for its source types are set `translated`, naming the group and its XSLT.
 ///
 /// A later build finds the feed's modules through the registry, beside the feed. It changes a promoted one through a
 /// working copy with a UUID of its own ([#workingCopy]), and every promoted module importing that one is copied too,
 /// importing the copy, so stepping in the build runs the copies; promotion points them all at the originals again
-/// ([#toOriginals]), the dispatchers regenerated against the originals' UUIDs, before the copies are written back.
+/// ([#toOriginals]) before the copies are written back.
 class SourceTypeGroups {
 
     /// What a feed's common module is named after: `<feed> common`.
@@ -90,7 +88,6 @@ class SourceTypeGroups {
     static final String OUTPUT_FEED = "output_feed";
     static final String REFERENCES = "references";
     private static final String MODULES = "modules";
-    private static final String DISPATCHER = "dispatcher";
     private static final String GROUP_XSLT = "group_xslt";
 
     private final WriteGuard guard;
@@ -176,9 +173,11 @@ class SourceTypeGroups {
 
     /// Splits a mapping into a source type group's and the feed's common module's.
     ///
-    /// The common module, where the feed has one (the build's, or promoted beside the feed), is kept as it is: a
-    /// group's entries for one of its parts that are the same as the module's (the System Name and Environment
-    /// aside) are left to it; different ones are the group's own, overriding the part for the group. Where the feed
+    /// The common module, where the feed has one (the build's, or promoted beside the feed), is kept: a group's
+    /// entries for one of its parts that are the same as the module's (the System Name and Environment aside) are
+    /// left to it; different ones are the group's own, overriding the part for the group. A shared call of the
+    /// group's that the module lacks is added to the module (a group imports only the common module, so a site
+    /// library is never imported twice in its stylesheet), and the module is saved again with it. Where the feed
     /// has none, it is made from the mapping's common entries for its parts (EventTime, System, Generator, Device)
     /// that read only the record's own fields or constants (never a field held in a message, an extraction, an
     /// xpath), and the mapping's shared calls; the registry's Environment and default System Name replacing the
@@ -206,12 +205,10 @@ class SourceTypeGroups {
         final List<String> types = sourceTypes(build, state, group, sourceTypes);
         final String naming = given.style().naming();
         final String mode = XsltNames.styleName(group, naming);
-        if (mode.equals(XsltNames.styleName(feed + "-common", naming))
-            || mode.equals(XsltNames.styleName(feed + "-dispatch", naming))) {
-            throw new ToolRefusal("The group's name '" + group + "' makes the mode of the feed's common module or "
-                                  + "dispatcher: name it for its source types");
+        if (mode.equals(XsltNames.styleName(feed + "-common", naming))) {
+            throw new ToolRefusal("The group's name '" + group + "' makes the mode of the feed's common module: name "
+                                  + "it for its source types");
         }
-        refuseMeetingModes(state, group, mode, naming);
         final Module helpersDoc = module(build, state, "helpers", HelpersXslt.docName(feed));
         final Module commonDoc = module(build, state, "common", commonName(feed));
         final String helpersHref = helpersDoc == null
@@ -222,25 +219,21 @@ class SourceTypeGroups {
                 : href(commonDoc.uuid(), commonDoc.name());
         final List<String> notes = new ArrayList<>();
         final String systemName = systemName(state, types, given);
-        final TranslationMapping common;
-        final TranslationMapping groupMapping;
-        if (commonDoc == null) {
-            final Split split = firstSplit(given, state, feed, naming, helpersHref);
-            common = split.common();
-            groupMapping = split.group();
-            notes.addAll(split.notes());
-        } else {
-            common = keptCommon(commonDoc);
-            groupMapping = leftToCommon(given, common, notes);
-        }
+        final Split split = commonDoc == null
+                ? firstSplit(given, state, feed, naming, helpersHref)
+                : leftToCommon(given, keptCommon(commonDoc), helpersHref);
+        final TranslationMapping common = split.common();
+        final TranslationMapping groupMapping = split.group();
+        notes.addAll(split.notes());
+        final boolean commonChanged = commonDoc != null && split.commonChanged();
         final SourceTypeModule module = new SourceTypeModule(SourceTypeModule.GROUP, group, mode, types, commonHref,
-                helpersHref, SourceTypeModule.commonParts(common), systemName, field);
+                null, SourceTypeModule.commonParts(common), systemName, field, rows(state));
         final Map<String, String> unsaved = new LinkedHashMap<>();
         final List<String> problems = new ArrayList<>();
         if (helpersDoc == null) {
             unsaved.put(helpersHref, HelpersXslt.generate());
         }
-        if (commonDoc == null) {
+        if (commonDoc == null || commonChanged) {
             final XsltGenerator.Generated generated = XsltGenerator.generate(common, schema, version);
             generated.problems().forEach(problem -> problems.add("the feed's common module: " + problem));
             if (generated.ok()) {
@@ -248,13 +241,21 @@ class SourceTypeGroups {
             }
         }
         return new Plan(feed, group, mode, types, field, systemName, registry, helpersDoc, commonDoc, common,
-                groupMapping.withModule(module), effective(groupMapping, common, systemName, field), notes, unsaved,
-                problems);
+                commonChanged, groupMapping.withModule(module), effective(groupMapping, common, systemName, field),
+                notes, unsaved, problems);
+    }
+
+    // The registry's rows, in the order they are tried, as a group tells its records by them.
+    private static List<SourceTypeModule.Row> rows(final Map<String, Object> state) {
+        return JsonValues.maps(state.get("rows")).stream()
+                .map(row -> new SourceTypeModule.Row(JsonValues.text(row.get("name")), JsonValues.text(row.get(
+                        "match")), JsonValues.text(row.get("value"))))
+                .toList();
     }
 
     /// Saves what the group's XSLT imports before it: the feed's helpers (made, or written again when the generator
     /// writes them otherwise now: a promoted one through a working copy) and its common module (made, where the feed
-    /// has none).
+    /// has none; written again with a shared call the group added to it, a promoted one through a working copy).
     ///
     /// @param context The call's context.
     /// @param build   The build.
@@ -281,13 +282,12 @@ class SourceTypeGroups {
                     ? NullSafe.get(plan.helpersDoc(), Module::uuid)
                     : workingCopy(context, build, state, promotedHelpers.uuid());
             helpers = translationDocs.saveModule(context, build, HelpersXslt.docName(plan.feed()), into, helpersCode,
-                    TranslationDocs.Source.NONE, null, null, "The generator's helpers, version "
-                                                             + HelpersXslt.VERSION);
+                    TranslationDocs.Source.NONE, "The generator's helpers, version " + HelpersXslt.VERSION);
         }
         saved.put("helpers", helpers);
         final String helpersHref = href(String.valueOf(helpers.get("uuid")), String.valueOf(helpers.get("name")));
-        String commonHref = plan.groupMapping().module().common();
-        if (plan.commonDoc() == null) {
+        final String commonHref;
+        if (plan.commonDoc() == null || plan.commonChanged()) {
             final TranslationMapping common = plan.common().withModule(plan.common().module().withImports(null,
                     helpersHref));
             final XsltGenerator.Generated generated = XsltGenerator.generate(common, schema, version);
@@ -295,11 +295,21 @@ class SourceTypeGroups {
                 throw new ToolRefusal("The feed's common module doesn't generate: " + String.join("; ",
                         generated.problems()));
             }
+            // The build's copy where it has one (the helpers' working copy may have brought one), else a working
+            // copy of the promoted one; a new one for a feed with none.
+            final Module existing = plan.commonDoc() == null
+                    ? null
+                    : Objects.requireNonNullElse(module(build, state, "common", commonName(plan.feed())),
+                            plan.commonDoc());
+            final String into = existing == null
+                    ? null
+                    : existing.inBuild()
+                            ? existing.uuid()
+                            : workingCopy(context, build, state, existing.uuid());
             final Map<String, Object> made = translationDocs.saveModule(context, build, commonName(plan.feed()),
-                    null, generated.xslt(), TranslationDocs.Source.of(common), null, null, "The parts every source "
-                                                                                           + "type group of "
-                                                                                           + plan.feed()
-                                                                                           + " writes one way");
+                    into, generated.xslt(), TranslationDocs.Source.of(common), existing == null
+                            ? "The parts every source type group of " + plan.feed() + " writes one way"
+                            : "The shared calls of group '" + plan.group() + "' added");
             saved.put("common", made);
             commonHref = href(String.valueOf(made.get("uuid")), String.valueOf(made.get("name")));
         } else {
@@ -309,8 +319,9 @@ class SourceTypeGroups {
             saved.put("common", moduleSaid(common, false));
             commonHref = href(common.uuid(), common.name());
         }
+        // The group imports the common module alone, which imports the helpers: a chain.
         final TranslationMapping group = plan.groupMapping().withModule(plan.groupMapping().module()
-                .withImports(commonHref, helpersHref));
+                .withImports(commonHref, null));
         return new Imports(group, helpersHref, saved);
     }
 
@@ -335,32 +346,17 @@ class SourceTypeGroups {
         return Optional.empty();
     }
 
-    /// Whether the user chooses where the group runs ([Placement]): for a new group, none of whose rows is placed
-    /// or translated; and for a row with no pipeline that can neither join its group's (a source type added to a
-    /// group already placed takes the group's pipeline, dispatcher and output feed) nor, translated before pipelines
-    /// were placed, the feed's pipeline, where the feed has none (no dispatcher is made up for it).
+    /// Whether the user chooses where the group runs ([Placement]): for a new group, none of whose rows is placed.
+    /// A source type added to a group placed already takes the group's placement.
     ///
     /// @param plan A group's plan.
     /// @return True if the user is asked where the group runs.
     static boolean needsPlacement(final Plan plan) {
-        final Map<String, Object> state = plan.registry().found().state();
-        final List<Map<String, Object>> rows = JsonValues.maps(state.get("rows")).stream()
-                .filter(row -> plan.sourceTypes().contains(JsonValues.text(row.get("name"))))
-                .toList();
-        final boolean known = rows.stream().anyMatch(row -> row.get(PIPELINE) != null
-                                                            || SourceTypeRegistry.TRANSLATED.equals(row.get("status")));
-        if (!known) {
-            return true;
-        }
-        if (groupPlacement(state, plan.group()).isPresent()) {
-            return false;
-        }
-        return rows.stream().anyMatch(row -> JsonValues.mapOrEmpty(row.get(PIPELINE)).isEmpty())
-               && existingMainPipeline(state).isEmpty();
+        return groupPlacement(plan.registry().found().state(), plan.group()).isEmpty();
     }
 
-    // Where a group's rows already run: the pipeline (its dispatcher, own, name) and output feed of the first of its
-    // rows placed; empty for a group none of whose rows is placed.
+    // Where a group's rows already run: the pipeline (own, name) and output feed of the first of its rows placed;
+    // empty for a group none of whose rows is placed.
     private static Optional<Map<String, Object>> groupPlacement(final Map<String, Object> state, final String group) {
         return JsonValues.maps(state.get("rows")).stream()
                 .filter(row -> group.equals(JsonValues.text(row.get("group")))
@@ -370,49 +366,34 @@ class SourceTypeGroups {
 
     /// @param build A build.
     /// @param plan  A group's plan.
-    /// @return The feed's pipeline in production, by name, where it has one (a promoted dispatcher's pipeline): the
+    /// @return The feed's pipeline, by name, where the registry names one (a row placed in it and run by it): the
     /// placement form's default; empty for a feed whose first pipeline this build makes.
     Optional<String> existingPipeline(final String build, final Plan plan) {
-        for (final Map<String, Object> row : JsonValues.maps(plan.registry().found().state().get("rows"))) {
-            final Map<String, Object> pipeline = JsonValues.mapOrEmpty(row.get(PIPELINE));
-            final String name = JsonValues.text(pipeline.get("name"));
-            final String dispatcher = JsonValues.text(JsonValues.mapOrEmpty(pipeline.get(DISPATCHER)).get("uuid"));
-            if (JsonValues.truthy(pipeline.get(OWN)) || name.isEmpty() || dispatcher.isEmpty()) {
-                continue;
-            }
-            final Optional<String> in = guard.buildOf(new DocRef(XsltDoc.TYPE, dispatcher));
-            if (in.isEmpty() || guard.copyOf(new DocRef(XsltDoc.TYPE, dispatcher)).isPresent()) {
-                return Optional.of(name);
-            }
-        }
-        return Optional.empty();
+        return existingMainPipeline(plan.registry().found().state())
+                .map(pipeline -> JsonValues.text(pipeline.get("name")))
+                .filter(name -> !name.isEmpty());
     }
 
-    /// Saves the group in the registry and the feed's dispatchers: its rows set `translated`, naming the group, its
-    /// XSLT, its pipeline (as placed, for a new group), the output feed and its reference data; then every dispatcher
-    /// regenerated from the registry ([#regenerate]).
+    /// Saves the group in the registry: its rows set `translated`, naming the group, its XSLT, its pipeline (as
+    /// placed, for a new group), the output feed and its reference data; and the feed's modules (helpers, common).
     ///
-    /// @param context     The call's context.
-    /// @param build       The build.
-    /// @param plan        The plan.
-    /// @param imports     What the group imports, as saved.
-    /// @param groupUuid   The group's XSLT's UUID.
-    /// @param groupName   Its name.
-    /// @param placement   Where a new group goes, or null for one placed already.
-    /// @param references  The reference data its mapping looks up, or null to keep what the registry has.
-    /// @param schema      The event-logging schema the Events are written in.
-    /// @param version     Its version.
-    /// @return What was saved: the group's dispatcher, every dispatcher, the registry, and where the group runs.
-    Map<String, Object> dispatch(final ToolCallContext context,
-                                 final String build,
-                                 final Plan plan,
-                                 final Imports imports,
-                                 final String groupUuid,
-                                 final String groupName,
-                                 final Placement placement,
-                                 final List<Map<String, Object>> references,
-                                 final EventSchema schema,
-                                 final String version) {
+    /// @param context    The call's context.
+    /// @param build      The build.
+    /// @param plan       The plan.
+    /// @param imports    What the group imports, as saved.
+    /// @param groupUuid  The group's XSLT's UUID.
+    /// @param groupName  Its name.
+    /// @param placement  Where a new group goes, or null for one placed already.
+    /// @param references The reference data its mapping looks up, or null to keep what the registry has.
+    /// @return What was saved: the registry, and where the group runs.
+    Map<String, Object> markTranslated(final ToolCallContext context,
+                                       final String build,
+                                       final Plan plan,
+                                       final Imports imports,
+                                       final String groupUuid,
+                                       final String groupName,
+                                       final Placement placement,
+                                       final List<Map<String, Object>> references) {
         final Map<String, Object> state = JsonValues.deepCopy(plan.registry().found().state());
         final Map<String, Object> modules = new LinkedHashMap<>(JsonValues.mapOrEmpty(state.get(MODULES)));
         for (final String key : List.of("helpers", "common")) {
@@ -426,8 +407,8 @@ class SourceTypeGroups {
         final String now = SurveyDoc.at(Instant.now());
         final Map<String, Object> placed = placement == null
                 ? null
-                : placed(state, plan, placement);
-        // A group placed already: the source types added to it join its pipeline, dispatcher and output feed.
+                : placed(state, placement);
+        // A group placed already: the source types added to it join its pipeline and output feed.
         final Optional<Map<String, Object>> joined = placed == null
                 ? groupPlacement(state, plan.group()).map(JsonValues::deepCopy)
                 : Optional.empty();
@@ -469,36 +450,24 @@ class SourceTypeGroups {
         }
         state.put("rows", rows);
         state.put("updated", now);
-        final List<Map<String, Object>> dispatchers = regenerate(context, build, plan.feed(), state,
-                new Regeneration(imports.helpersHref(), schema, version, DispatcherSpec.inputOf(plan.groupMapping()),
-                        plan.groupMapping().style().naming()));
         final SurveyRecord written = registries.writeRegistry(context.session(), build, plan.feed(),
                 plan.registry().found(), SourceTypeRegistry.render(state));
         final Map<String, Object> out = new LinkedHashMap<>();
-        // The rows as regenerating left them: each with its dispatcher saved.
-        final Map<String, Object> pipeline = JsonValues.maps(state.get("rows")).stream()
+        final Map<String, Object> pipeline = rows.stream()
                 .filter(row -> plan.sourceTypes().contains(JsonValues.text(row.get("name"))))
                 .map(row -> JsonValues.mapOrEmpty(row.get(PIPELINE)))
                 .findFirst()
                 .orElse(Map.of());
-        final String own = JsonValues.text(JsonValues.mapOrEmpty(pipeline.get(DISPATCHER)).get("uuid"));
-        dispatchers.stream()
-                .filter(saved -> own.equals(saved.get("uuid")))
-                .findFirst()
-                .ifPresent(saved -> out.put(DISPATCHER, saved));
-        out.put("dispatchers", dispatchers);
         out.put("pipeline", pipeline);
         if (!joining.isEmpty()) {
             final Map<String, Object> joinedPipeline = JsonValues.mapOrEmpty(joined.get().get(PIPELINE));
-            final String dispatcher = JsonValues.text(JsonValues.mapOrEmpty(pipeline.get(DISPATCHER)).get("name"));
             final String outputFeed = JsonValues.text(joined.get().get(OUTPUT_FEED));
             out.put("notes", List.of("Source type(s) " + ToolText.list(joining) + " joined group '" + plan.group()
                                      + "' where it runs: " + (JsonValues.truthy(joinedPipeline.get(OWN))
                     ? "its pipeline of its own"
                     : "the feed's pipeline") + (JsonValues.text(joinedPipeline.get("name")).isEmpty()
                     ? ""
-                    : " '" + joinedPipeline.get("name") + "'") + ", dispatcher '" + dispatcher + "'"
-                                     + (joined.get().containsKey(OUTPUT_FEED)
+                    : " '" + joinedPipeline.get("name") + "'") + (joined.get().containsKey(OUTPUT_FEED)
                     ? ", output feed " + (outputFeed.isEmpty()
                             ? "(still to be made)"
                             : "'" + outputFeed + "'")
@@ -512,294 +481,34 @@ class SourceTypeGroups {
         return out;
     }
 
-    // A new group's rows' pipeline, as placed: the feed's pipeline (its dispatcher, and its name where it has one),
-    // a new version of it (copy_pipeline to come), or a pipeline of its own with a dispatcher of its own.
-    private static Map<String, Object> placed(final Map<String, Object> state,
-                                              final Plan plan,
-                                              final Placement placement) {
+    // A new group's rows' pipeline, as placed: the feed's pipeline (by its name where it has one), a new version of
+    // it (copy_pipeline to come), or a pipeline of its own.
+    private static Map<String, Object> placed(final Map<String, Object> state, final Placement placement) {
         final Map<String, Object> pipeline = new LinkedHashMap<>();
         if (OWN.equals(placement.choice())) {
             pipeline.put(OWN, true);
-            pipeline.put(DISPATCHER, Map.of("name", ownDispatcherName(plan.feed(), plan.group())));
             return pipeline;
         }
         pipeline.put(OWN, false);
-        final Map<String, Object> main = mainPipeline(state, plan.feed());
-        pipeline.put(DISPATCHER, main.get(DISPATCHER));
-        if (main.get("name") != null) {
-            pipeline.put("name", main.get("name"));
-        }
+        existingMainPipeline(state)
+                .map(main -> main.get("name"))
+                .ifPresent(name -> pipeline.put("name", name));
         if (NEW_VERSION.equals(placement.choice())) {
             pipeline.put(NEW_VERSION, true);
         }
         return pipeline;
     }
 
-    // The pipeline of the feed's translated rows not in a pipeline of their own, for a group the user placed in it:
-    // its dispatcher and name; the feed's dispatcher by name where none is placed yet (its first shared group).
-    private static Map<String, Object> mainPipeline(final Map<String, Object> state, final String feed) {
-        return existingMainPipeline(state).orElseGet(() -> {
-            final Map<String, Object> out = new LinkedHashMap<>();
-            out.put(DISPATCHER, Map.of("name", DispatcherXslt.docName(feed)));
-            return out;
-        });
-    }
-
-    // The pipeline of the feed's translated rows not in a pipeline of their own, where a row is placed in it: its
-    // dispatcher and name; empty where none is.
+    // The pipeline of the feed's translated rows not in a pipeline of their own, where a row is placed in it and the
+    // registry names it; empty where none is.
     private static Optional<Map<String, Object>> existingMainPipeline(final Map<String, Object> state) {
         for (final Map<String, Object> row : JsonValues.maps(state.get("rows"))) {
             final Map<String, Object> pipeline = JsonValues.mapOrEmpty(row.get(PIPELINE));
-            if (!pipeline.isEmpty() && !JsonValues.truthy(pipeline.get(OWN)) && pipeline.get(DISPATCHER) != null) {
-                final Map<String, Object> out = new LinkedHashMap<>();
-                out.put(DISPATCHER, pipeline.get(DISPATCHER));
-                if (pipeline.get("name") != null) {
-                    out.put("name", pipeline.get("name"));
-                }
-                return Optional.of(out);
+            if (!pipeline.isEmpty() && !JsonValues.truthy(pipeline.get(OWN)) && pipeline.get("name") != null) {
+                return Optional.of(Map.of("name", pipeline.get("name")));
             }
         }
         return Optional.empty();
-    }
-
-    /// @param feed  A feed's name.
-    /// @param group One of its source type groups.
-    /// @return The name of the dispatcher of the group's pipeline of its own.
-    static String ownDispatcherName(final String feed, final String group) {
-        return feed + " " + group + DispatcherXslt.SUFFIX;
-    }
-
-    /// Every dispatcher of the feed generated from its registry and saved in the build: each translated row is
-    /// routed by its pipeline's dispatcher (the feed's pipeline's, or its group's own), every other pipeline's rows
-    /// passed over as handled by that pipeline, and the rest as parked, dropped or new. A promoted dispatcher is
-    /// changed through a working copy; the feed's pipeline's waits while its new version is still to be copied
-    /// (copy_pipeline regenerates it). Each row's dispatcher is set to the one saved.
-    ///
-    /// @param context The call's context.
-    /// @param build   The build.
-    /// @param feed    The feed.
-    /// @param state   The registry's machine block, changed in place: each row's dispatcher.
-    /// @param how     What a dispatcher made new is made with.
-    /// @return Each dispatcher saved: `uuid`, `name`, `changed`, and the `groups` it routes.
-    /// @throws ToolRefusal if a dispatcher doesn't generate.
-    List<Map<String, Object>> regenerate(final ToolCallContext context,
-                                         final String build,
-                                         final String feed,
-                                         final Map<String, Object> state,
-                                         final Regeneration how) {
-        final List<Map<String, Object>> rows = new ArrayList<>();
-        JsonValues.maps(state.get("rows")).forEach(row -> rows.add(new LinkedHashMap<>(row)));
-        state.put("rows", rows);
-        // Each translated row's pipeline, the dispatchers in the order first met.
-        final Map<String, Map<String, Object>> dispatchers = new LinkedHashMap<>();
-        final Map<String, List<Map<String, Object>>> routed = new LinkedHashMap<>();
-        final Map<String, String> handledBy = new LinkedHashMap<>();
-        for (final Map<String, Object> row : rows) {
-            if (!SourceTypeRegistry.TRANSLATED.equals(row.get("status"))) {
-                continue;
-            }
-            Map<String, Object> pipeline = JsonValues.mapOrEmpty(row.get(PIPELINE));
-            if (pipeline.isEmpty()) {
-                // Translated before pipelines were placed: its group's pipeline, else the feed's; never a
-                // dispatcher no pipeline runs.
-                final String group = JsonValues.text(row.get("group"));
-                final Optional<Map<String, Object>> joined = groupPlacement(state, group)
-                        .map(placed -> JsonValues.mapOrEmpty(placed.get(PIPELINE)));
-                pipeline = new LinkedHashMap<>(joined.or(() -> existingMainPipeline(state))
-                        .orElseThrow(() -> new ToolRefusal("Source type '" + row.get("name") + "' of group '"
-                                                           + group + "' is translated in no pipeline, and the "
-                                                           + "feed has none of its own: build_translation_xslt "
-                                                           + "group='" + group + "' asks the user where it runs")));
-                if (joined.isEmpty()) {
-                    pipeline.put(OWN, false);
-                }
-                row.put(PIPELINE, pipeline);
-            }
-            final Map<String, Object> dispatcher = JsonValues.mapOrEmpty(pipeline.get(DISPATCHER));
-            final String key = dispatcherKey(dispatcher);
-            dispatchers.putIfAbsent(key, dispatcher);
-            routed.computeIfAbsent(key, ignored -> new ArrayList<>()).add(row);
-            final String name = JsonValues.text(pipeline.get("name"));
-            handledBy.putIfAbsent(key, name.isEmpty()
-                    ? "the pipeline running '" + JsonValues.text(dispatcher.get("name")) + "'"
-                    : "pipeline '" + name + "'");
-        }
-        final List<Map<String, Object>> out = new ArrayList<>();
-        DispatcherSpec known = null;
-        for (final Map.Entry<String, Map<String, Object>> entry : dispatchers.entrySet()) {
-            final List<Map<String, Object>> its = routed.get(entry.getKey());
-            final Module existing = dispatcherModule(build, entry.getValue());
-            final boolean waits = existing != null && !existing.inBuild()
-                                  && its.stream().anyMatch(row -> JsonValues.truthy(JsonValues.mapOrEmpty(
-                    row.get(PIPELINE)).get(NEW_VERSION)));
-            if (waits) {
-                continue;
-            }
-            final String uuid = existing == null
-                    ? null
-                    : existing.inBuild()
-                            ? existing.uuid()
-                            : workingCopy(context, build, state, existing.uuid());
-            final DispatcherSpec kept = uuid == null
-                    ? null
-                    : keptSpec(uuid).orElse(null);
-            known = kept != null
-                    ? kept
-                    : known;
-            final boolean own = its.stream().anyMatch(row -> JsonValues.truthy(JsonValues.mapOrEmpty(
-                    row.get(PIPELINE)).get(OWN)));
-            final String firstGroup = JsonValues.text(its.getFirst().get("group"));
-            final String mode = kept != null
-                    ? kept.mode()
-                    : XsltNames.styleName(own
-                            ? feed + "-" + firstGroup + "-dispatch"
-                            : feed + "-dispatch", NullSafe.nonBlankStringElse(how.naming(), "snake_case"));
-            final DispatcherSpec base = kept != null
-                    ? kept
-                    : known;
-            final Map<String, Object> input = base != null
-                    ? base.input()
-                    : how.input();
-            final String helpers = NullSafe.nonBlankStringElse(how.helpersHref(), base == null
-                    ? helpersHref(build, state, feed)
-                    : base.helpers());
-            final List<DispatcherSpec.Row> specRows = new ArrayList<>();
-            for (final Map<String, Object> row : rows) {
-                final String rowKey = rowKey(row);
-                specRows.add(new DispatcherSpec.Row(JsonValues.text(row.get("name")), JsonValues.text(row.get(
-                        "match")), JsonValues.text(row.get("value")), JsonValues.text(row.get("status")),
-                        rowKey == null || rowKey.equals(entry.getKey())
-                                ? null
-                                : handledBy.get(rowKey)));
-            }
-            DispatcherSpec spec = new DispatcherSpec(feed, mode, input, JsonValues.text(state.get("field")), helpers,
-                    specRows, groups(build, its, kept), base == null
-                    ? Map.of()
-                    : base.events());
-            if (how.schema() != null) {
-                spec = spec.withEvents(how.version(), XsltGenerator.schemaLocation(how.schema(), how.version()));
-            }
-            final DispatcherXslt.Generated generated = DispatcherXslt.generate(spec, how.schema(), how.version());
-            if (!generated.ok()) {
-                throw new ToolRefusal("The feed's dispatcher '" + JsonValues.text(entry.getValue().get("name"))
-                                      + "' doesn't generate: " + String.join("; ", generated.problems()));
-            }
-            final String name = existing != null
-                    ? existing.name()
-                    : JsonValues.text(entry.getValue().get("name"));
-            final List<String> groupNames = spec.groups().stream().map(DispatcherSpec.Group::name).toList();
-            final Map<String, Object> saved = new LinkedHashMap<>(translationDocs.saveModule(context, build, name,
-                    uuid, generated.xslt(), TranslationDocs.Source.NONE, DispatcherXslt.SPEC_BLOCK, spec.toJson(),
-                    "Routes " + (groupNames.isEmpty()
-                            ? "no group"
-                            : "group(s) " + String.join(", ", groupNames))));
-            saved.put("groups", groupNames);
-            final Map<String, Object> ref = Map.of("uuid", String.valueOf(saved.get("uuid")), "name",
-                    String.valueOf(saved.get("name")));
-            for (final Map<String, Object> row : its) {
-                final Map<String, Object> pipeline = new LinkedHashMap<>(JsonValues.mapOrEmpty(row.get(PIPELINE)));
-                pipeline.put(DISPATCHER, ref);
-                row.put(PIPELINE, pipeline);
-            }
-            out.add(saved);
-        }
-        return out;
-    }
-
-    // The groups a dispatcher imports, each once, in the order the dispatcher kept them, then the registry's: each
-    // the build's XSLT (its working copy, where it has one) or the promoted one.
-    private List<DispatcherSpec.Group> groups(final String build,
-                                              final List<Map<String, Object>> routed,
-                                              final DispatcherSpec kept) {
-        final Map<String, List<String>> types = new LinkedHashMap<>();
-        final Map<String, String> xslts = new LinkedHashMap<>();
-        if (kept != null) {
-            kept.groups().forEach(group -> types.put(group.name(), new ArrayList<>()));
-        }
-        for (final Map<String, Object> row : routed) {
-            final String group = JsonValues.text(row.get("group"));
-            final String uuid = JsonValues.text(JsonValues.mapOrEmpty(row.get(GROUP_XSLT)).get("uuid"));
-            if (group.isEmpty() || uuid.isEmpty()) {
-                continue;
-            }
-            types.computeIfAbsent(group, ignored -> new ArrayList<>()).add(JsonValues.text(row.get("name")));
-            xslts.putIfAbsent(group, copyInBuild(build, uuid).orElse(uuid));
-        }
-        final List<DispatcherSpec.Group> out = new ArrayList<>();
-        types.forEach((group, sourceTypes) -> {
-            final String uuid = xslts.get(group);
-            if (uuid == null || sourceTypes.isEmpty()) {
-                return;
-            }
-            final Optional<XsltDoc> doc = documentAccess.read(new DocRef(XsltDoc.TYPE, uuid), XsltDoc.class);
-            final String mode = doc.flatMap(xslt -> ModuleChecks.marker(NullSafe.string(xslt.getData())))
-                    .map(ModuleChecks.Marker::mode)
-                    .or(() -> Optional.ofNullable(kept)
-                            .flatMap(spec -> spec.groups().stream()
-                                    .filter(one -> one.name().equals(group))
-                                    .findFirst())
-                            .map(DispatcherSpec.Group::mode))
-                    .orElse(null);
-            out.add(new DispatcherSpec.Group(group, mode, href(uuid, doc.map(XsltDoc::getName).orElse(group)),
-                    sourceTypes));
-        });
-        return out;
-    }
-
-    // The helpers' import as the registry names them (the build's working copy, where it has one).
-    private String helpersHref(final String build, final Map<String, Object> state, final String feed) {
-        final Module helpers = module(build, state, "helpers", HelpersXslt.docName(feed));
-        return helpers == null
-                ? null
-                : href(helpers.uuid(), helpers.name());
-    }
-
-    // A row's dispatcher's key, or null for a row no dispatcher routes.
-    private static String rowKey(final Map<String, Object> row) {
-        if (!SourceTypeRegistry.TRANSLATED.equals(row.get("status"))) {
-            return null;
-        }
-        final Map<String, Object> pipeline = JsonValues.mapOrEmpty(row.get(PIPELINE));
-        return pipeline.isEmpty()
-                ? null
-                : dispatcherKey(JsonValues.mapOrEmpty(pipeline.get(DISPATCHER)));
-    }
-
-    // A dispatcher's key: its UUID once saved, else its name.
-    private static String dispatcherKey(final Map<String, Object> dispatcher) {
-        final String uuid = JsonValues.text(dispatcher.get("uuid"));
-        return uuid.isEmpty()
-                ? "name:" + JsonValues.text(dispatcher.get("name"))
-                : uuid;
-    }
-
-    // A dispatcher the registry names: the build's (its own, or its working copy of a promoted one), else the
-    // promoted one; null for one not made yet.
-    private Module dispatcherModule(final String build, final Map<String, Object> dispatcher) {
-        final String uuid = JsonValues.text(dispatcher.get("uuid"));
-        if (!uuid.isEmpty()) {
-            if (inBuild(build, uuid)) {
-                return new Module(uuid, JsonValues.text(dispatcher.get("name")), true);
-            }
-            final Optional<String> copy = copyInBuild(build, uuid);
-            if (copy.isPresent()) {
-                return new Module(copy.get(), JsonValues.text(dispatcher.get("name")), true);
-            }
-            if (readable(uuid) && guard.buildOf(new DocRef(XsltDoc.TYPE, uuid)).isEmpty()) {
-                return new Module(uuid, JsonValues.text(dispatcher.get("name")), false);
-            }
-        }
-        final WriteGuard.BuildDoc named = xsltInBuild(build, JsonValues.text(dispatcher.get("name")));
-        return named == null
-                ? null
-                : new Module(named.uuid(), named.name(), true);
-    }
-
-    // The spec kept with a dispatcher.
-    private Optional<DispatcherSpec> keptSpec(final String uuid) {
-        return documentAccess.read(new DocRef(XsltDoc.TYPE, uuid), XsltDoc.class)
-                .flatMap(doc -> KeptMapping.readBlock(doc.getDescription(), DispatcherXslt.SPEC_BLOCK))
-                .flatMap(DispatcherSpec::fromJson);
     }
 
     /// The build's working copy of a promoted module of the feed: made now if the build has none, with a UUID of
@@ -858,16 +567,13 @@ class SourceTypeGroups {
         }
     }
 
-    // The feed's modules promoted beside it, as its registry names them: helpers, common module, groups and
-    // dispatchers.
+    // The feed's modules promoted beside it, as its registry names them: helpers, common module and groups.
     private List<String> promotedModules(final String build, final Map<String, Object> state) {
         final Set<String> found = new LinkedHashSet<>();
         JsonValues.mapOrEmpty(state.get(MODULES)).values()
                 .forEach(module -> found.add(JsonValues.text(JsonValues.mapOrEmpty(module).get("uuid"))));
         for (final Map<String, Object> row : JsonValues.maps(state.get("rows"))) {
             found.add(JsonValues.text(JsonValues.mapOrEmpty(row.get(GROUP_XSLT)).get("uuid")));
-            found.add(JsonValues.text(JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(row.get(PIPELINE))
-                    .get(DISPATCHER)).get("uuid")));
         }
         return found.stream()
                 .filter(uuid -> !uuid.isEmpty() && readable(uuid)
@@ -875,12 +581,11 @@ class SourceTypeGroups {
                 .toList();
     }
 
-    /// Before a build's working copies are written back at promotion: every module of the build imports the
-    /// originals again (each working copy's UUID replaced by its original's, in its code and in the mapping or spec
-    /// kept with it), each dispatcher regenerated from its spec against the originals' UUIDs, and the registry names
-    /// the originals. A working copy the user kept in the build (its original changed in production since it was
-    /// copied) is left as it is: the modules promoted import its original, as production has it ([#keptProblems]
-    /// says when that original lacks what they need of it).
+    /// Before a build's working copies are written back at promotion: every module of the build imports the originals
+    /// again (each working copy's UUID replaced by its original's, in its code and in the mapping kept with it), and
+    /// the registry names the originals. A working copy the user kept in the build (its original changed in production
+    /// since it was copied) is left as it is: the modules promoted import its original, as production has it
+    /// ([#keptProblems] says when that original lacks what they need of it).
     ///
     /// @param context The call's context.
     /// @param build   The build.
@@ -907,12 +612,7 @@ class SourceTypeGroups {
             if (!XsltDoc.TYPE.equals(doc.get("type")) || kept.contains(uuid)) {
                 continue;
             }
-            final Optional<DispatcherSpec> spec = keptSpec(uuid);
-            if (spec.isPresent()) {
-                if (regenerated(context, uuid, spec.get(), back, change)) {
-                    done.add("regenerated dispatcher '" + doc.get("name") + "' against the originals' UUIDs");
-                }
-            } else if (translationDocs.rewriteImports(context, uuid, back, change)) {
+            if (translationDocs.rewriteImports(context, uuid, back, change)) {
                 done.add("pointed '" + doc.get("name") + "' at the originals it imports");
             }
         }
@@ -981,147 +681,6 @@ class SourceTypeGroups {
         return out;
     }
 
-    // A dispatcher regenerated from its spec, its imports the originals'.
-    private boolean regenerated(final ToolCallContext context,
-                                final String uuid,
-                                final DispatcherSpec spec,
-                                final Map<String, String> back,
-                                final String change) {
-        final List<DispatcherSpec.Group> groups = spec.groups().stream()
-                .map(group -> new DispatcherSpec.Group(group.name(), group.mode(), originalHref(group.href(), back),
-                        group.sourceTypes()))
-                .toList();
-        final DispatcherSpec original = new DispatcherSpec(spec.feed(), spec.mode(), spec.input(), spec.field(),
-                originalHref(spec.helpers(), back), spec.rows(), groups, spec.events());
-        if (original.equals(spec)) {
-            return false;
-        }
-        final DispatcherXslt.Generated generated = DispatcherXslt.generate(original, null, null);
-        if (!generated.ok()) {
-            throw new ToolRefusal("The dispatcher doesn't generate against the originals: " + String.join("; ",
-                    generated.problems()));
-        }
-        return translationDocs.rewriteModule(context, uuid, generated.xslt(), description -> KeptMapping.withBlock(
-                description, DispatcherXslt.SPEC_BLOCK, original.toJson()), change);
-    }
-
-    private static String originalHref(final String href, final Map<String, String> back) {
-        if (href == null) {
-            return null;
-        }
-        String out = href;
-        for (final Map.Entry<String, String> entry : back.entrySet()) {
-            out = out.replace("uuid='" + entry.getKey() + "'", "uuid='" + entry.getValue() + "'");
-        }
-        return out;
-    }
-
-    /// The pipeline made in the build to run one of the feed's dispatchers, named in the registry: each row the
-    /// dispatcher routes says its pipeline, and every other dispatcher is regenerated to say its records are
-    /// handled by it.
-    ///
-    /// @param context    The call's context.
-    /// @param build      The build.
-    /// @param dispatcher The dispatcher's UUID (the build's).
-    /// @param pipeline   The pipeline's name.
-    /// @return The registry's rows for it, empty if the XSLT isn't one of a registry's dispatchers.
-    List<String> runBy(final ToolCallContext context,
-                       final String build,
-                       final String dispatcher,
-                       final String pipeline) {
-        final Optional<Registry> registry = dispatcherRegistry(build, dispatcher);
-        if (registry.isEmpty()) {
-            return List.of();
-        }
-        final Map<String, Object> state = JsonValues.deepCopy(registry.get().found().state());
-        final String original = guard.copyOf(new DocRef(XsltDoc.TYPE, dispatcher)).orElse(null);
-        final List<String> named = new ArrayList<>();
-        final List<Map<String, Object>> rows = new ArrayList<>();
-        for (final Map<String, Object> given : JsonValues.maps(state.get("rows"))) {
-            final Map<String, Object> row = new LinkedHashMap<>(given);
-            final Map<String, Object> placed = new LinkedHashMap<>(JsonValues.mapOrEmpty(row.get(PIPELINE)));
-            final String uuid = JsonValues.text(JsonValues.mapOrEmpty(placed.get(DISPATCHER)).get("uuid"));
-            if (uuid.equals(dispatcher) || uuid.equals(original)) {
-                placed.put("name", pipeline);
-                row.put(PIPELINE, placed);
-                named.add(JsonValues.text(row.get("name")));
-            }
-            rows.add(row);
-        }
-        if (named.isEmpty() || rows.equals(JsonValues.maps(state.get("rows")))) {
-            return named;
-        }
-        state.put("rows", rows);
-        regenerate(context, build, registry.get().feed(), state, new Regeneration(null, null, null, Map.of(), null));
-        registries.writeRegistry(context.session(), build, registry.get().feed(), registry.get().found(),
-                SourceTypeRegistry.render(state));
-        return named;
-    }
-
-    /// A new version of the feed's pipeline copied into the build (copy_pipeline): the rows its predecessor's
-    /// dispatcher routes are the copy's, run by the new version, and every dispatcher is regenerated from the
-    /// registry, so the copy routes the groups placed in the new version too.
-    ///
-    /// @param context  The call's context.
-    /// @param build    The build.
-    /// @param original The predecessor's dispatcher's UUID.
-    /// @param copy     The copy's.
-    /// @param pipeline The new version's name.
-    /// @return The dispatchers saved; none when the XSLT isn't one of a registry's dispatchers.
-    List<Map<String, Object>> newVersion(final ToolCallContext context,
-                                         final String build,
-                                         final String original,
-                                         final String copy,
-                                         final String pipeline) {
-        final Optional<Registry> registry = dispatcherRegistry(build, original);
-        if (registry.isEmpty()) {
-            return List.of();
-        }
-        final Map<String, Object> state = JsonValues.deepCopy(registry.get().found().state());
-        final String copyName = documentAccess.read(new DocRef(XsltDoc.TYPE, copy), XsltDoc.class)
-                .map(XsltDoc::getName)
-                .orElse(null);
-        final List<Map<String, Object>> rows = new ArrayList<>();
-        for (final Map<String, Object> given : JsonValues.maps(state.get("rows"))) {
-            final Map<String, Object> row = new LinkedHashMap<>(given);
-            final Map<String, Object> placed = new LinkedHashMap<>(JsonValues.mapOrEmpty(row.get(PIPELINE)));
-            if (original.equals(JsonValues.text(JsonValues.mapOrEmpty(placed.get(DISPATCHER)).get("uuid")))) {
-                placed.put(DISPATCHER, Map.of("uuid", copy, "name", NullSafe.string(copyName)));
-                placed.put("name", pipeline);
-                placed.remove(NEW_VERSION);
-                row.put(PIPELINE, placed);
-            }
-            rows.add(row);
-        }
-        state.put("rows", rows);
-        final List<Map<String, Object>> saved = regenerate(context, build, registry.get().feed(), state,
-                new Regeneration(null, null, null, Map.of(), null));
-        registries.writeRegistry(context.session(), build, registry.get().feed(), registry.get().found(),
-                SourceTypeRegistry.render(state));
-        return saved;
-    }
-
-    /// @param build      A build.
-    /// @param dispatcher A dispatcher's UUID: the build's, its working copy's original, or one copied from.
-    /// @return The rows of the feed's registry it routes, with the registry's feed; empty for an XSLT no registry
-    /// of the build names as a dispatcher.
-    Optional<Routed> routedBy(final String build, final String dispatcher) {
-        final Optional<Registry> registry = dispatcherRegistry(build, dispatcher);
-        if (registry.isEmpty()) {
-            return Optional.empty();
-        }
-        final String original = guard.copyOf(new DocRef(XsltDoc.TYPE, dispatcher)).orElse(dispatcher);
-        final List<Map<String, Object>> rows = JsonValues.maps(registry.get().found().state().get("rows")).stream()
-                .filter(row -> {
-                    final String uuid = JsonValues.text(JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(
-                            row.get(PIPELINE)).get(DISPATCHER)).get("uuid"));
-                    return SourceTypeRegistry.TRANSLATED.equals(row.get("status"))
-                           && (uuid.equals(dispatcher) || uuid.equals(original));
-                })
-                .toList();
-        return Optional.of(new Routed(registry.get().feed(), rows));
-    }
-
     /// @param build A build.
     /// @param group A source type group of its registry.
     /// @throws ToolRefusal if the registry has no such group, or it isn't in a pipeline of its own.
@@ -1178,25 +737,6 @@ class SourceTypeGroups {
         registries.writeRegistry(context.session(), build, registry.feed(), registry.found(),
                 SourceTypeRegistry.render(state));
         return types;
-    }
-
-    // The registry of the build naming this dispatcher (or its original) for a row: its feed's, as its spec says.
-    private Optional<Registry> dispatcherRegistry(final String build, final String dispatcher) {
-        final Registry registry;
-        try {
-            registry = registry(build, keptSpec(dispatcher).map(DispatcherSpec::feed).map(List::of)
-                    .orElse(List.of()));
-        } catch (final ToolRefusal e) {
-            return Optional.empty();
-        }
-        final String original = guard.copyOf(new DocRef(XsltDoc.TYPE, dispatcher)).orElse(dispatcher);
-        final boolean names = JsonValues.maps(registry.found().state().get("rows")).stream()
-                .map(row -> JsonValues.text(JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(row.get(PIPELINE))
-                        .get(DISPATCHER)).get("uuid")))
-                .anyMatch(uuid -> uuid.equals(dispatcher) || uuid.equals(original));
-        return names
-                ? Optional.of(registry)
-                : Optional.empty();
     }
 
     // A module of the feed: the build's of that name (its own, or its working copy), else the promoted one the
@@ -1258,35 +798,6 @@ class SourceTypeGroups {
             out.put("promoted", true);
         }
         return out;
-    }
-
-    // Another group of the feed whose mode meets this one's (the same, or one starting with the other and a
-    // separator): their names could meet in the dispatcher's stylesheet, so the group is refused, naming both.
-    private void refuseMeetingModes(final Map<String, Object> state,
-                                    final String group,
-                                    final String mode,
-                                    final String naming) {
-        final Map<String, String> others = new LinkedHashMap<>();
-        for (final Map<String, Object> row : JsonValues.maps(state.get("rows"))) {
-            final String other = JsonValues.text(row.get("group"));
-            if (!other.isEmpty() && !other.equals(group)) {
-                others.putIfAbsent(other, JsonValues.text(JsonValues.mapOrEmpty(row.get(GROUP_XSLT)).get("uuid")));
-            }
-        }
-        others.forEach((other, uuid) -> {
-            final String theirs = (uuid.isEmpty()
-                    ? Optional.<XsltDoc>empty()
-                    : documentAccess.read(new DocRef(XsltDoc.TYPE, uuid), XsltDoc.class))
-                    .flatMap(xslt -> ModuleChecks.marker(NullSafe.string(xslt.getData())))
-                    .map(ModuleChecks.Marker::mode)
-                    .orElseGet(() -> XsltNames.styleName(other, naming));
-            if (ModuleChecks.modesMeet(mode, theirs)) {
-                throw new ToolRefusal("Group '" + group + "' (mode " + mode + ") and the feed's group '" + other
-                                      + "' (mode " + theirs + ") have modes that meet: the names one declares could "
-                                      + "be the other's in the dispatcher's stylesheet. Name group '" + group
-                                      + "' otherwise. Nothing was saved.");
-            }
-        });
     }
 
     // The group's source types: those given, else the build's scope's; each a row of the registry, and translated by
@@ -1383,7 +894,7 @@ class SourceTypeGroups {
         }
         final Map<String, Object> json = new LinkedHashMap<>(given.toJson(DumpMode.COMPACT));
         for (final String key : List.of("pairs", "extract", "json_fields", "xml_fields", "for_each", "drop_when",
-                "ignored_fields", "unmatched", "log_unmapped_fields", "imports", "module")) {
+                "ignored_fields", "unmatched", "log_unmapped_fields", "imports", "functions", "module")) {
             json.remove(key);
         }
         json.put("common", commonEntries);
@@ -1403,13 +914,16 @@ class SourceTypeGroups {
                     : " and its shared calls") + ": every group of the feed calls them, and a rule mapping one of "
                       + "those elements itself writes its own");
         }
-        return new Split(common, given.withCommonAndShared(kept, List.of()), notes);
+        return new Split(common, given.withCommonAndShared(kept, List.of()), notes, true);
     }
 
     // The group's entries the build's common module writes the same way left to it; different ones are the group's.
-    private static TranslationMapping leftToCommon(final TranslationMapping given,
-                                                   final TranslationMapping common,
-                                                   final List<String> notes) {
+    // The group's shared calls the module lacks are added to it: a group imports only the common module, which
+    // imports the site's libraries, so none is imported twice in the group's stylesheet.
+    private static Split leftToCommon(final TranslationMapping given,
+                                      final TranslationMapping common,
+                                      final String helpersHref) {
+        final List<String> notes = new ArrayList<>();
         final List<FieldMapping> kept = new ArrayList<>(given.common());
         for (final SourceTypeModule.CommonPart part : SourceTypeModule.commonParts(common)) {
             final List<FieldMapping> theirs = given.common().stream()
@@ -1428,11 +942,23 @@ class SourceTypeGroups {
                           + "module's), so the common module's part isn't called for it");
             }
         }
-        final List<SharedTemplate> shared = given.shared().stream()
+        final List<SharedTemplate> added = given.shared().stream()
                 .filter(use -> common.shared().stream().noneMatch(theirs -> theirs.template().equals(use.template())
                                                                            && theirs.at().equals(use.at())))
                 .toList();
-        return given.withCommonAndShared(kept, shared);
+        if (added.isEmpty()) {
+            return new Split(common, given.withCommonAndShared(kept, List.of()), notes, false);
+        }
+        final List<SharedTemplate> shared = new ArrayList<>(common.shared());
+        shared.addAll(added);
+        final TranslationMapping withCalls = common.withCommonAndShared(common.common(), shared)
+                .withModule(common.module().withImports(null, helpersHref));
+        notes.add("Shared call(s) " + ToolText.list(added.stream().map(SharedTemplate::template).toList())
+                  + " added to the feed's common module '" + (common.module() == null
+                ? "common"
+                : common.module().name() + COMMON_SUFFIX) + "', which imports their libraries: a group imports only "
+                  + "the common module, and calls them through it");
+        return new Split(withCalls, given.withCommonAndShared(kept, List.of()), notes, true);
     }
 
     // Entries compared as JSON, in any order, the System Name and Environment aside: each group passes its own name,
@@ -1530,7 +1056,8 @@ class SourceTypeGroups {
         if (field == null || field.isBlank()) {
             return effective;
         }
-        // The source type field is the dispatcher's to read, not a field the group leaves unread.
+        // The source type field is read to tell the group's records from the rest, not a field the group leaves
+        // unread.
         final Map<String, Object> json = new LinkedHashMap<>(effective.toJson(DumpMode.COMPACT));
         final Set<String> ignored = new LinkedHashSet<>(effective.ignoredFields());
         ignored.add(ToolText.split(ToolText.split(field, ".").getFirst(), "/").getFirst());
@@ -1570,6 +1097,8 @@ class SourceTypeGroups {
     /// @param helpersDoc   The feed's helpers module (the build's, or promoted), or null.
     /// @param commonDoc    The feed's common module (the build's, or promoted), or null.
     /// @param common       The common module's mapping.
+    /// @param commonChanged True when the build's or promoted common module is saved again (a shared call of the
+    ///                     group's added to it).
     /// @param groupMapping The group's mapping (its module importing the modules as they are now).
     /// @param effective    What the group writes, as one translation's mapping: for the sample check and the docs.
     /// @param notes        What was left to the common module, or kept the group's own.
@@ -1585,6 +1114,7 @@ class SourceTypeGroups {
                 Module helpersDoc,
                 Module commonDoc,
                 TranslationMapping common,
+                boolean commonChanged,
                 TranslationMapping groupMapping,
                 TranslationMapping effective,
                 List<String> notes,
@@ -1598,8 +1128,8 @@ class SourceTypeGroups {
                     ? mapping.withModule(groupMapping.module())
                     : mapping;
             return new Plan(feed, group, mode, sourceTypes, field, systemName, registry, helpersDoc, commonDoc,
-                    common, withModule, SourceTypeGroups.effective(withModule.withModule(null), common, systemName,
-                    field), notes, unsaved, problems);
+                    common, commonChanged, withModule, SourceTypeGroups.effective(withModule.withModule(null), common,
+                    systemName, field), notes, unsaved, problems);
         }
     }
 
@@ -1631,53 +1161,6 @@ class SourceTypeGroups {
         }
     }
 
-    /// What a dispatcher made new is made with.
-    ///
-    /// @param helpersHref The helpers' import, or null for the dispatcher's kept one (the registry's, for a new one).
-    /// @param schema      The event-logging schema the Events are written in, or null for the dispatcher's kept one.
-    /// @param version     Its version, or null likewise.
-    /// @param input       The input as the groups read it, for a dispatcher with no spec of the feed's to start from.
-    /// @param naming      The naming style of a new dispatcher's mode, or null for snake_case.
-    record Regeneration(String helpersHref,
-                        EventSchema schema,
-                        String version,
-                        Map<String, Object> input,
-                        String naming) {
-
-    }
-
-    /// The rows of a feed's registry one dispatcher routes.
-    ///
-    /// @param feed The feed.
-    /// @param rows Its rows.
-    record Routed(String feed, List<Map<String, Object>> rows) {
-
-        /// @return The feed its Events go to, if the rows say one of its own: its name, or "" while it is still to
-        /// be made; empty for the raw feed's.
-        Optional<String> outputFeed() {
-            return rows.stream()
-                    .filter(row -> row.containsKey(OUTPUT_FEED) && row.get(OUTPUT_FEED) != null)
-                    .map(row -> JsonValues.text(row.get(OUTPUT_FEED)))
-                    .findFirst();
-        }
-
-        /// @return The reference data the rows' groups look up, each once.
-        List<Map<String, Object>> references() {
-            final List<Map<String, Object>> out = new ArrayList<>();
-            rows.forEach(row -> JsonValues.maps(row.get(REFERENCES)).forEach(reference -> {
-                if (!out.contains(reference)) {
-                    out.add(reference);
-                }
-            }));
-            return out;
-        }
-
-        /// @return The groups the rows are of, each once.
-        List<String> groups() {
-            return rows.stream().map(row -> JsonValues.text(row.get("group"))).distinct().toList();
-        }
-    }
-
     /// The group's mapping importing the saved modules.
     ///
     /// @param group       The group's mapping.
@@ -1687,7 +1170,10 @@ class SourceTypeGroups {
 
     }
 
-    private record Split(TranslationMapping common, TranslationMapping group, List<String> notes) {
+    private record Split(TranslationMapping common,
+                         TranslationMapping group,
+                         List<String> notes,
+                         boolean commonChanged) {
 
     }
 }

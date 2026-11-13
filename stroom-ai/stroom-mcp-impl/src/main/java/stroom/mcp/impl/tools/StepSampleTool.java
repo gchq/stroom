@@ -159,9 +159,7 @@ class StepSampleTool extends AbstractBuiltInTool {
             }
             final Integer maxRecords = atLeastOne(call, MAX_RECORDS_ARG);
             final Integer recordsPerStream = atLeastOne(call, RECORDS_PER_STREAM_ARG);
-            // A source type group's draft is stepped through the feed's dispatcher, inlined in place of its import.
-            final Map<String, String> draftCode = stepping.withGroupsInlined(pipelineUuid,
-                    PipelineStepping.draftCode(call, DRAFT_CODE_ARG));
+            final Map<String, String> draftCode = PipelineStepping.draftCode(call, DRAFT_CODE_ARG);
             return JsonResults.of(stepSample(call, context, pipelineUuid, streamIds, draftCode, maxRecords,
                     recordsPerStream));
         } catch (final ToolRefusal e) {

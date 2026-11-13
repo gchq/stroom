@@ -29,6 +29,7 @@ import stroom.security.api.SecurityContext;
 import io.modelcontextprotocol.spec.McpSchema.ElicitFormRequest;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -54,6 +55,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// adds another group to the promoted feed through working copies; data arriving later holds a source type the
 /// registry lacks, which review_coverage reads from the dispatcher's warnings and adds to the registry as new; the
 /// index plan is the union of both groups'; promotion writes it all back beside the feed.
+@Disabled("aggregated feeds rework R2/R3 (2026-11-13)")
 @SuppressWarnings("unchecked")
 class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
 

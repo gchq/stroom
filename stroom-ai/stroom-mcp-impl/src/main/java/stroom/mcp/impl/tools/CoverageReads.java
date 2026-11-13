@@ -24,7 +24,6 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.cef.CefEvents;
 import stroom.ai.impl.tools.draft.LocalCheck;
-import stroom.ai.impl.tools.generation.DispatcherXslt;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
@@ -80,17 +79,31 @@ class CoverageReads {
             "(?:No event mapping matched record |Kept as Unknown by rule '(.*)': record "
             + "|Caught by rule '(.*)': record )(\\d+)(?: \\((.*)\\))?\\s*$");
     private static final Pattern DATA_NAME = Pattern.compile("Data\\[@Name='([^']+)'\\]");
+    // The lines the dispatcher (replaced by a pipeline per source type group, 2026-11-13) logged, still read until
+    // review_coverage reads a group's own lines (aggregated feeds rework R3).
+    /// A dispatcher's INFO line of records passed over: this, the count, [#PASSED_OVER_OF], the source type.
+    static final String PASSED_OVER = "Passed over ";
+    /// What follows the count in a [#PASSED_OVER] line, before the source type's name.
+    static final String PASSED_OVER_OF = " record(s) of source type ";
+    /// What follows the source type in a [#PASSED_OVER] line of a source type another pipeline translates.
+    static final String HANDLED_BY = ", handled by ";
+    /// The source type said in a [#PASSED_OVER] line of records no row matches.
+    static final String PASSED_OVER_NONE = "(none: no registry row matches)";
+    /// A dispatcher's WARN line of a value no row matches: this, the field, the value, [#NEW_SOURCE_TYPE_END].
+    static final String NEW_SOURCE_TYPE = "New source type: no registry row matches ";
+    /// The end of a [#NEW_SOURCE_TYPE] line.
+    static final String NEW_SOURCE_TYPE_END = ": its records are passed over (review_coverage adds it to the "
+                                              + "registry as new)";
     // A dispatcher's INFO line of records passed over: the count, the source type, and the pipeline that handles it
     // when another pipeline does.
-    private static final Pattern PASSED_OVER = Pattern.compile(Pattern.quote(DispatcherXslt.PASSED_OVER) + "(\\d+)"
-                                                               + Pattern.quote(DispatcherXslt.PASSED_OVER_OF)
-                                                               + "(.+?)(?:" + Pattern.quote(DispatcherXslt.HANDLED_BY)
-                                                               + "(.+?))?\\s*$");
+    private static final Pattern PASSED_OVER_LINE = Pattern.compile(Pattern.quote(PASSED_OVER) + "(\\d+)"
+                                                                    + Pattern.quote(PASSED_OVER_OF)
+                                                                    + "(.+?)(?:" + Pattern.quote(HANDLED_BY)
+                                                                    + "(.+?))?\\s*$");
     // A dispatcher's WARN line of a value no registry row matches: the field, then the value quoted (or no value).
-    private static final Pattern NEW_SOURCE_TYPE = Pattern.compile(Pattern.quote(DispatcherXslt.NEW_SOURCE_TYPE)
-                                                                   + "(\\S+) (?:'(.*)'|\\(no value\\))"
-                                                                   + Pattern.quote(
-            DispatcherXslt.NEW_SOURCE_TYPE_END));
+    private static final Pattern NEW_SOURCE_TYPE_LINE = Pattern.compile(Pattern.quote(NEW_SOURCE_TYPE)
+                                                                        + "(\\S+) (?:'(.*)'|\\(no value\\))"
+                                                                        + Pattern.quote(NEW_SOURCE_TYPE_END));
     private static final List<String> COUNTS = List.of("Warning Count", "Error Count", "Fatal Error Count",
             "Info Count");
 
@@ -555,7 +568,7 @@ class CoverageReads {
 
     }
 
-    /// What an aggregated feed's dispatcher ([DispatcherXslt]) logged in a pipeline's Error streams: the records it
+    /// What an aggregated feed's dispatcher logged in a pipeline's Error streams: the records it
     /// passed over, by source type (summed over the documents and streams read), the pipeline that handles a source
     /// type when another pipeline does, and each value of the source type field no registry row matched (a new source
     /// type), with the raw streams it was met in.
@@ -573,7 +586,7 @@ class CoverageReads {
         /// @return True if it was a dispatcher's line.
         boolean add(final Long raw, final String message) {
             final String text = NullSafe.string(message);
-            final Matcher passed = PASSED_OVER.matcher(text);
+            final Matcher passed = PASSED_OVER_LINE.matcher(text);
             if (passed.find()) {
                 final String sourceType = passed.group(2).trim();
                 passedOver.merge(sourceType, Long.parseLong(passed.group(1)), Long::sum);
@@ -582,7 +595,7 @@ class CoverageReads {
                 }
                 return true;
             }
-            final Matcher found = NEW_SOURCE_TYPE.matcher(text);
+            final Matcher found = NEW_SOURCE_TYPE_LINE.matcher(text);
             if (found.find()) {
                 field = found.group(1);
                 final String value = NullSafe.string(found.group(2));
@@ -595,7 +608,7 @@ class CoverageReads {
             return false;
         }
 
-        /// @return Records passed over by source type, those of [DispatcherXslt#PASSED_OVER_NONE] included, and
+        /// @return Records passed over by source type, those of [CoverageReads#PASSED_OVER_NONE] included, and
         /// those another pipeline handles; sorted by source type.
         Map<String, Long> passedOver() {
             return Collections.unmodifiableMap(passedOver);

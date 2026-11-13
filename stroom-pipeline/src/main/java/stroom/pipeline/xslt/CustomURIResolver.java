@@ -41,9 +41,6 @@ import javax.xml.transform.stream.StreamSource;
  */
 class CustomURIResolver implements URIResolver {
 
-    /// What the system id of an imported XSLT starts with, its UUID following.
-    static final String SYSTEM_ID_PREFIX = "urn:stroom:xslt:";
-
     private final XsltImports xsltImports;
 
     @Inject
@@ -72,18 +69,7 @@ class CustomURIResolver implements URIResolver {
             throw new TransformerException(LogUtil.message(
                     "No XSLT found with name or UUID \"{}\"", href));
         }
-        // A system id of its own for each XSLT (its UUID): without one, Saxon takes an XSLT imported twice in one
-        // stylesheet (two modules each importing a third, as an aggregated feed's source type groups import its common
-        // module) for a stylesheet importing itself (XTSE0210), and refuses it.
-        final StreamSource source = new StreamSource(StreamUtil.stringToStream(resolution.xsltDoc().getData()));
-        source.setSystemId(systemId(resolution.xsltDoc()));
-        return source;
-    }
-
-    /// @param xsltDoc An XSLT.
-    /// @return The system id an import of it is read with: one URI a document, whatever href names it.
-    static String systemId(final XsltDoc xsltDoc) {
-        return SYSTEM_ID_PREFIX + xsltDoc.getUuid();
+        return new StreamSource(StreamUtil.stringToStream(resolution.xsltDoc().getData()));
     }
 
     static DocRef parseDocRef(final String href) {

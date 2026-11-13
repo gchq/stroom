@@ -163,37 +163,38 @@ class TestCheckXsltTool {
     }
 
     @Test
-    void aGroupsImportsByUuidAreFoundAndItsStylesheetLevelDeclarationsAndAnImportOfTheDispatcherRefused() {
-        // An aggregated feed's modules import each other by UUID, as Stroom resolves uuid='…', name='…'.
-        final String common = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"3.0\"/>";
+    void aGroupsImportsByUuidAreFoundAndAModuleImportedTwiceOrANameNotItsOwnRefused() {
+        // An aggregated feed's modules import each other by UUID, as Stroom resolves uuid='…', name='…': the group
+        // the common module, the common module the helpers.
+        final String helpersHref = "uuid='c0000000-0000-0000-0000-000000000002', name='PEGA helpers'";
+        final String helpers = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"3.0\"/>";
+        final String common = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"3.0\">"
+                              + "<xsl:import href=\"" + helpersHref + "\"/></xsl:stylesheet>";
         Mockito.when(documentAccess.read(eq(new DocRef(XsltDoc.TYPE, "c0000000-0000-0000-0000-000000000001")),
                 eq(XsltDoc.class))).thenReturn(Optional.of(XsltDoc.builder()
                 .uuid("c0000000-0000-0000-0000-000000000001").name("PEGA common").data(common).build()));
+        Mockito.when(documentAccess.read(eq(new DocRef(XsltDoc.TYPE, "c0000000-0000-0000-0000-000000000002")),
+                eq(XsltDoc.class))).thenReturn(Optional.of(XsltDoc.builder()
+                .uuid("c0000000-0000-0000-0000-000000000002").name("PEGA helpers").data(helpers).build()));
         final String group = """
                 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:mcp="stroom-mcp:functions"
                                 xmlns="event-logging:3" version="3.0">
                   <xsl:import href="uuid='c0000000-0000-0000-0000-000000000001', name='PEGA common'"/>
                   <mcp:module kind="group" name="PEGA security" mode="pega_security"/>
+                  <xsl:template match="/"><Events/></xsl:template>
                   <xsl:template match="*" mode="pega_security"><Event/></xsl:template>
                 </xsl:stylesheet>""";
         assertThat(call(group).get("errors")).isEqualTo(List.of());
 
-        // Edited by hand: a stylesheet-level declaration, and an import of the feed's dispatcher (a cycle).
-        Mockito.when(docFinder.findByName(eq(XsltDoc.TYPE), eq("PEGA dispatcher"), eq(false))).thenReturn(List.of(
-                new DocRef(XsltDoc.TYPE, "d1", "PEGA dispatcher")));
-        Mockito.when(documentAccess.read(eq(new DocRef(XsltDoc.TYPE, "d1", "PEGA dispatcher")), eq(XsltDoc.class)))
-                .thenReturn(Optional.of(XsltDoc.builder().uuid("d1").name("PEGA dispatcher").data("""
-                        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                                        xmlns:mcp="stroom-mcp:functions" version="3.0">
-                          <mcp:module kind="dispatcher" name="PEGA" mode="pega_dispatch"/>
-                        </xsl:stylesheet>""").build()));
-        final List<?> errors = (List<?>) call(group.replace("<mcp:module", "<xsl:import href=\"PEGA dispatcher\"/>"
-                                                                           + "<mcp:module")
-                .replace("<xsl:template match", "<xsl:output method=\"text\"/><xsl:template match")).get("errors");
-        assertThat(errors).anySatisfy(error -> assertThat(String.valueOf(error)).contains("xsl:output",
-                "stylesheet-level"));
-        assertThat(errors).anySatisfy(error -> assertThat(String.valueOf(error)).contains(
-                "imports the feed's dispatcher"));
+        // Edited by hand: the helpers imported beside the common module (a diamond), and a name not the group's.
+        final List<?> errors = (List<?>) call(group.replace("<mcp:module", "<xsl:import href=\"" + helpersHref
+                                                                           + "\"/><mcp:module")
+                .replace("<xsl:template match=\"/\">", "<xsl:template name=\"helper\"/><xsl:template match=\"/\">"))
+                .get("errors");
+        assertThat(errors).anySatisfy(error -> assertThat(String.valueOf(error)).contains("'PEGA helpers' is "
+                                                                                        + "imported twice"));
+        assertThat(errors).anySatisfy(error -> assertThat(String.valueOf(error)).contains("named template helper",
+                "not prefixed"));
     }
 
     @Test

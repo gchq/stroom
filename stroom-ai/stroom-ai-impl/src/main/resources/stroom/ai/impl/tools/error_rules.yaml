@@ -91,20 +91,10 @@ rules:
   # seen in the e2e suite, triaged as "info from an inherited element", which it isn't.
   - {message: 'Caught by rule ', class: benign,
      reason: "A kind of record a catch-all rule took (a rule with no conditions, or fewer than one before it), logged once a stream a kind so review_coverage finds every kind in the whole feed: it is translated as that rule says. Check each against the kinds classified: one no one classified is the user's to classify (classify_kinds)"}
-  # An aggregated feed's dispatcher (DispatcherXslt): records of source types outside the pipeline's scope (parked,
-  # dropped, another pipeline's) passed over and counted at the end of each document, as the user chose.
-  - {message: 'Passed over \d+ record\(s\) of source type ', class: benign,
-     reason: "Records of source types this pipeline's dispatcher doesn't translate (parked, dropped, or another pipeline's), passed over as the user chose and counted: not a fault. A source type moved out of parked is translated from the next processing on"}
-  # Saxon's warning, as Stroom's XSLT pool reports it, of one module imported more than once in a stylesheet: an
-  # aggregated feed's dispatcher imports each source type group, and every group imports the feed's common and
-  # helpers modules, by design.
-  - {message: 'is included or imported more than once\. This is permitted', class: benign,
-     reason: "One XSLT imported by several others in one stylesheet (each of an aggregated feed's source type groups imports its common and helpers modules), which XSLT permits: the copies are identical, so nothing changes"}
-  # A value of the source type field no registry row matches: a new source type, its records passed over. Not a
-  # fault of the pipeline, so it doesn't hold its clean step (seen in the aggregated feed walks: a later build
-  # stepping the feed's new data could never step clean until a build placed the source type), but the user is told.
-  - {message: 'New source type: no registry row matches ', class: benign,
-     reason: "A source type the feed's registry lacks: its records are passed over, translated by no group, as the dispatcher does for every record outside its groups. Tell the user: review_coverage adds it to the registry as new, for them to place in a later build (record_source_types): translate it in a group, park it or drop it"}
+  # An aggregated feed's source type group (its pipeline's XSLT): the records of other source types passed over and
+  # counted, once a document (XsltGenerator.PASSED_OVER), as the user chose.
+  - {message: 'Passed over \d+ record\(s\) not of this group''s source types', class: benign,
+     reason: "Records of source types this pipeline's source type group doesn't translate (other groups', parked, dropped or new), passed over as the user chose and counted: not a fault"}
   # A source type group's held field (a message) that doesn't parse: its values are left out of the event, which is
   # still written; counted, not a fault of the pipeline (a source truncating its messages, as PEGA's SOAP bodies).
   - {message: ' did not parse as (XML|JSON) \(truncated, or not that format\)', class: benign,

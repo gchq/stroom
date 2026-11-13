@@ -31,9 +31,9 @@ import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.ModuleChecks;
+import stroom.ai.impl.tools.generation.SourceTypeModule;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
-import stroom.feed.shared.FeedDoc;
 import stroom.mcp.impl.tools.PipelineWrites.Filled;
 import stroom.mcp.impl.tools.PipelineWrites.Layout;
 import stroom.mcp.impl.tools.PipelineWrites.ReferenceRequest;
@@ -50,7 +50,6 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -92,7 +91,6 @@ class CreatePipelineTool extends AbstractBuiltInTool {
             Map.entry("translationFilter", "XSLTFilter"), Map.entry("schemaFilter", "SchemaFilter"),
             Map.entry("recordOutputFilter", "RecordOutputFilter"),
             Map.entry("writeRecordCountFilter", "RecordCountFilter"), Map.entry("streamAppender", "StreamAppender"));
-    private static final String STREAM_APPENDER = "StreamAppender";
     // The parsers that read through a text converter.
     private static final Set<String> CONVERTER_PARSERS = Set.of("DSParser", "XMLFragmentParser", "CombinedParser");
 
@@ -105,8 +103,6 @@ class CreatePipelineTool extends AbstractBuiltInTool {
     private final BuildRecords records;
     private final PipelineTemplates templates;
     private final EventVersions eventVersions;
-    // An aggregated feed's source type groups; none in tests that make the tool themselves.
-    private Provider<SourceTypeGroups> groupsProvider;
 
     @Inject
     CreatePipelineTool(final PipelineWrites writes,
@@ -127,15 +123,6 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         this.records = records;
         this.templates = templates;
         this.eventVersions = eventVersions;
-    }
-
-    /// Where an aggregated feed's dispatchers are found (set by injection; none in tests that make the tool
-    /// themselves).
-    ///
-    /// @param groups The feed's source type groups.
-    @Inject
-    void setGroups(final Provider<SourceTypeGroups> groups) {
-        this.groupsProvider = groups;
     }
 
     @Override
@@ -177,12 +164,10 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                              + "build_translation_xslt and build_data_splitter) and a template whose parser cannot "
                              + "read the build's sample streams. A production pipeline's next version, with the "
                              + "build's XSLT: version_of= it, a child of its template, with its reference data if "
-                             + "the user keeps them. An aggregated feed's pipeline has one XSLT, a dispatcher the "
-                             + "build generated (filled in when the build has one; give the group's own dispatcher "
-                             + "for a group with a pipeline of its own): its stream appender writes to the group's "
-                             + "output feed of its own where it has one, its reference data is its groups' unless "
-                             + "references are given, and the registry then names the pipeline for each source type "
-                             + "it handles. The user confirms the template and name first.")
+                             + "the user keeps them. An aggregated feed's source type group has a pipeline of its "
+                             + "own, its XSLT the group's (give it in set_properties where the build has several); "
+                             + "the feed's common module and helpers are imported, never a pipeline's XSLT. The user "
+                             + "confirms the template and name first.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(NAME_ARG, "Pipeline name following the environment's convention.")
                         .addStringProperty(TEMPLATE_UUID_ARG, "Parent template, from find_pipeline_templates (its "
@@ -380,12 +365,9 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                        + "record)");
         });
         writes.ownDocuments(build, properties, request.reuseExistingDocs(), previous);
-        // An aggregated feed's pipeline: its dispatcher's output feed and the reference data its groups look up.
-        final Aggregated aggregated = aggregated(build, merged, properties, request.references().isEmpty());
-        properties.addAll(aggregated.properties());
-        filled.addAll(aggregated.filled());
+        // An aggregated feed's common module or helpers is never a pipeline's XSLT.
+        refuseImportedModules(properties);
         final List<ReferenceRequest> requested = new ArrayList<>(request.references());
-        requested.addAll(aggregated.references());
         final List<PipelineReference> references = new ArrayList<>(writes.referenceEntries(merged, requested));
         references.addAll(PipelineWrites.carriedReferences(merged, version.carried(), references));
         final List<String> left = previous == null
@@ -462,12 +444,6 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         result.put("uuid", doc.getUuid());
         result.put("name", doc.getName());
         result.put("template", template.getName());
-        if (aggregated.dispatcher() != null) {
-            // The registry says which pipeline runs each source type, and the other dispatchers say so.
-            result.put("source_types", groupsProvider.get().runBy(context, build, aggregated.dispatcher(),
-                    doc.getName()));
-            result.put("dispatcher", aggregated.dispatcher());
-        }
         if (previous != null) {
             result.put("version_of", previous.getName());
         }
@@ -737,66 +713,21 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         return plan.withNext(context, build, result);
     }
 
-    // An aggregated feed's pipeline (its translation XSLT one of the feed's dispatchers): the stream appenders'
-    // feed set to the output feed of its group's own, where it has one, and the reference data its groups look up
-    // where none are given. A group's module (or the common module, the helpers) is refused: the dispatcher imports
-    // them, and is the pipeline's one XSLT.
-    private Aggregated aggregated(final String build,
-                                  final Layout merged,
-                                  final List<PropertyValue> properties,
-                                  final boolean addReferences) {
-        if (groupsProvider == null) {
-            return Aggregated.NONE;
-        }
-        String dispatcher = null;
+    // An aggregated feed's common module or helpers set as a pipeline's XSLT is refused: a source type group imports
+    // them, and the group's XSLT is its own pipeline's.
+    private void refuseImportedModules(final List<PropertyValue> properties) {
         for (final PropertyValue property : properties) {
             if (!XsltDoc.TYPE.equals(property.docType()) || property.docUuid() == null) {
                 continue;
             }
             final Optional<ModuleChecks.Marker> marker = writes.xsltData(property.docUuid())
                     .flatMap(ModuleChecks::marker);
-            if (marker.isPresent() && !ModuleChecks.DISPATCHER.equals(marker.get().kind())) {
+            if (marker.isPresent() && !SourceTypeModule.GROUP.equals(marker.get().kind())) {
                 throw new ToolRefusal(property.dotted() + " is an aggregated feed's " + marker.get().kind()
-                                      + " module, which the feed's dispatcher imports: set it to the dispatcher (the "
-                                      + "group's own dispatcher for a group with a pipeline of its own)");
-            }
-            if (marker.isPresent()) {
-                dispatcher = property.docUuid();
+                                      + " module, which its source type groups import: set it to a group's XSLT (each "
+                                      + "group has a pipeline of its own)");
             }
         }
-        if (dispatcher == null) {
-            return Aggregated.NONE;
-        }
-        final Optional<SourceTypeGroups.Routed> routed = groupsProvider.get().routedBy(build, dispatcher);
-        if (routed.isEmpty()) {
-            return new Aggregated(dispatcher, List.of(), List.of(), List.of());
-        }
-        final List<PropertyValue> added = new ArrayList<>();
-        final List<String> filled = new ArrayList<>();
-        final Optional<String> feed = routed.get().outputFeed();
-        if (feed.isPresent()) {
-            if (feed.get().isBlank()) {
-                throw new ToolRefusal("Group(s) " + ToolText.list(routed.get().groups()) + " write to an output feed "
-                                      + "of their own, not made yet: create_feed build='" + build + "' name=<its "
-                                      + "name> stream_type=Events group=<the group> first");
-            }
-            final DocRef ref = writes.docRefByName(FeedDoc.TYPE, feed.get());
-            merged.elements().forEach((id, type) -> {
-                if (STREAM_APPENDER.equals(type)) {
-                    added.add(PropertyValue.document(id, "feed", ref.getUuid(), FeedDoc.TYPE));
-                    filled.add(id + ".feed = " + ref.getName() + " (the output feed of group(s) "
-                               + String.join(", ", routed.get().groups()) + ")");
-                }
-            });
-        }
-        final List<ReferenceRequest> references = new ArrayList<>();
-        if (addReferences) {
-            routed.get().references().forEach(reference -> references.add(new ReferenceRequest(
-                    JsonValues.text(reference.get("feed")), reference.get("loader_pipeline") == null
-                    ? null
-                    : JsonValues.text(reference.get("loader_pipeline")), null)));
-        }
-        return new Aggregated(dispatcher, added, filled, references);
     }
 
     // The template a new pipeline is a child of, and for a next version (version_of), the pipeline it follows and
@@ -944,16 +875,6 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                        String stage,
                        String note) {
 
-    }
-
-    // An aggregated feed's pipeline: the dispatcher it runs (null for any other pipeline), what is set for it, and
-    // the reference data its groups look up.
-    private record Aggregated(String dispatcher,
-                              List<PropertyValue> properties,
-                              List<String> filled,
-                              List<ReferenceRequest> references) {
-
-        private static final Aggregated NONE = new Aggregated(null, List.of(), List.of(), List.of());
     }
 
     // The template a pipeline is made from; for a next version, the pipeline it follows and the reference data it

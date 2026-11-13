@@ -2057,6 +2057,19 @@ pipeline", dispatcher working copies and their regeneration at promotion, the re
 registry, scopes, profiles, per-group kept mappings, drift and docs, the common and helpers modules (and their
 working copies), one index per output feed, one open build per feed, and the review's fixes that still apply.
 
+Built in rework R1 (where the design was silent):
+
+* A group carries every registry row (a snapshot when it is saved), matches first-wins as the survey and scope do,
+  and translates a record whose first matching row is one of its own source types; values no row matches are counted
+  with the rest in the one passed-over line.
+* A later group's shared call the common module lacks is added to the common module, which is saved again (in place,
+  or through a working copy of a promoted one); a group never imports a shared call itself. Function libraries and
+  standing-instruction imports stay on the group; `check_xslt` refuses any module reached twice (a diamond), naming
+  both paths, besides cycles and depth.
+* Groups no longer share a stylesheet, so groups' modes may meet; only a group whose mode is the common module's is
+  refused. The group check is of names only (the mode prefix), stylesheet-level declarations being the group's now.
+* `CustomURIResolver` and its test are as they were before the aggregated feeds work.
+
 #### Open decisions
 
 None at present.

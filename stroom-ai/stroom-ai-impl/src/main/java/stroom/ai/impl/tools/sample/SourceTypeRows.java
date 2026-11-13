@@ -216,14 +216,15 @@ public final class SourceTypeRows {
         } catch (final PatternSyntaxException e) {
             return Optional.of("its pattern is not a regular expression: " + e.getDescription());
         }
-        // The dispatcher matches it with XPath's matches() (Saxon), the tools with Java's: it must compile in both.
+        // A source type group matches it with XPath's matches() (Saxon), the tools with Java's: it must compile in
+        // both.
         return XPathRegex.problem(regex)
-                .map(why -> "its pattern isn't one XPath reads as the tools do, and the dispatcher matches it with "
-                            + "XPath's matches(): " + why);
+                .map(why -> "its pattern isn't one XPath reads as the tools do, and a source type group matches it "
+                            + "with XPath's matches(): " + why);
     }
 
-    /// A pattern is matched by the tools in Java's dialect and by the dispatcher in XPath's (Saxon's): where the two
-    /// differ on a value seen, the survey's counts and processing would disagree, so it is refused.
+    /// A pattern is matched by the tools in Java's dialect and by a source type group in XPath's (Saxon's): where the
+    /// two differ on a value seen, the survey's counts and processing would disagree, so it is refused.
     ///
     /// @param regex  An anchored pattern, one both dialects compile.
     /// @param values The values seen.
@@ -251,7 +252,7 @@ public final class SourceTypeRows {
                         : "doesn't match") + " '" + value + "' in the tools' (Java's) dialect but "
                                    + (xpath
                         ? "matches"
-                        : "doesn't match") + " it in XPath's, which the dispatcher runs: write one both read "
+                        : "doesn't match") + " it in XPath's, which a source type group runs: write one both read "
                                    + "alike (plain characters, classes and anchors)");
             }
         }

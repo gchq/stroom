@@ -115,12 +115,7 @@ class BuildChecks {
             }
             final Optional<KeptMappings.KeptXslt> kept = keptMappings.keptXslt(uuid);
             if (kept.isEmpty()) {
-                final List<KeptMappings.KeptXslt> groups = keptMappings.groupXslts(uuid);
-                if (groups.isEmpty()) {
-                    mappingDrift.lostMappings(uuid).forEach(lost -> problems.add(said + lost));
-                } else {
-                    checkGroups(ref, groups, documented.get(name), problems);
-                }
+                mappingDrift.lostMappings(uuid).forEach(lost -> problems.add(said + lost));
                 return;
             }
             final Optional<String> drift = "translation".equals(kept.get().kept().kind())
@@ -149,34 +144,6 @@ class BuildChecks {
         }
     }
 
-    // An aggregated feed's pipeline runs its dispatcher, which keeps no mapping: each source type group it imports is
-    // checked as a translation's XSLT is (what its mapping generates), and the documentation's Field mapping is
-    // checked against each group's (a section a group, each marked with its group's digest).
-    private void checkGroups(final DocRef pipeline,
-                             final List<KeptMappings.KeptXslt> groups,
-                             final Map<String, Object> documentation,
-                             final List<String> problems) {
-        final String said = "Pipeline '" + pipeline.getName() + "': ";
-        final List<String> marks = documentation == null
-                ? List.of()
-                : docDigests(documentAccess.read(new DocRef(DocumentationDoc.TYPE,
-                                String.valueOf(documentation.get("uuid"))), DocumentationDoc.class)
-                        .map(BuildRecords::bodyText)
-                        .orElse(""));
-        for (final KeptMappings.KeptXslt group : groups) {
-            final String of = said + "source type group XSLT '" + group.xslt().getName() + "': ";
-            final Optional<String> drift = mappingDrift.drift(group);
-            drift.ifPresent(why -> problems.add(of + why));
-            if (documentation != null && !marks.contains(mappingDigest(group))) {
-                problems.add(of + "the documentation's Field mapping predates its current mapping or XSLT "
-                             + "(write_documentation build=<this build> pipeline_uuid='" + pipeline.getUuid() + "' "
-                             + "stream_ids=<its sample streams> change=<what changed>)" + (drift.isEmpty()
-                        ? BLOCKS
-                        : ""));
-            }
-        }
-    }
-
     private boolean steppedClean(final DocRef ref) {
         try {
             return buildRecords.steppedClean(ref);
@@ -191,18 +158,6 @@ class BuildChecks {
     static String mappingDigest(final KeptMappings.KeptXslt kept) {
         return XsltCode.digest(ToolJson.dumpsSortedKeys(kept.kept().payload()),
                 XsltCode.normalise(kept.xslt().getData()));
-    }
-
-    /// @param markdown A Documentation doc's text.
-    /// @return The digests its Field mapping sections were generated from: one for a translation's, one a source
-    /// type group for an aggregated feed's pipeline.
-    static List<String> docDigests(final String markdown) {
-        final Matcher matcher = DOC_MARK.matcher(NullSafe.string(markdown));
-        final List<String> out = new ArrayList<>();
-        while (matcher.find()) {
-            out.add(matcher.group(1));
-        }
-        return out;
     }
 
     /// @param markdown A Documentation doc's text.

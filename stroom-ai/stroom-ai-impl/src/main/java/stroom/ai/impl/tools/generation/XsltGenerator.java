@@ -17,6 +17,8 @@
 package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.SourceTypeFields;
+import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.XmlTrees;
@@ -108,6 +110,12 @@ public final class XsltGenerator {
     public static final String NOT_PARSED = " did not parse as ";
     /// The end of a [#NOT_PARSED] line, before the record's number.
     public static final String NOT_PARSED_END = " (truncated, or not that format): its values are left out: record ";
+    /// Logged (INFO) by a source type group, once a document, for the records it passed over (any other source type's,
+    /// or none's): this, the count, then [#PASSED_OVER_END]. Stroom hands an XSLT a stream in several documents, so a
+    /// stream's count is the sum of its lines.
+    public static final String PASSED_OVER = "Passed over ";
+    /// The end of a [#PASSED_OVER] line.
+    public static final String PASSED_OVER_END = " record(s) not of this group's source types";
     // The rule the common module's parts are written from: the wrapper's entries alone.
     private static final String COMMON_RULE = "common";
     // The field names a template's xpaths read, Data Splitter's and JSON's: data[@name='x'], *[@key='x'].
@@ -333,10 +341,12 @@ public final class XsltGenerator {
             shared.addAll(parts);
             generator = new XsltGenerator(mapping.withCommonAndShared(mapping.common(), shared), schema, markRules,
                     parts);
-            xslt = generator.stylesheet(version);
+            groupProblems(module, mapping).forEach(problem -> note(generator.problems, problem));
+            xslt = generator.problems.isEmpty()
+                    ? generator.stylesheet(version)
+                    : null;
             if (xslt != null && generator.problems.isEmpty()) {
-                // The generator's own check of what it wrote: a group holds nothing stylesheet-level, nothing outside
-                // its mode.
+                // The generator's own check of what it wrote: its names prefixed with its mode.
                 ModuleChecks.groupProblems(xslt).forEach(problem -> note(generator.problems, problem));
             }
         } else {
@@ -2167,11 +2177,15 @@ public final class XsltGenerator {
         sheet.set("version", "3.0");
         sheet.set("xpath-default-namespace", MappingFacts.inputNamespace(m));
         // Imports come first in a stylesheet: one per document, for its named templates or its functions. A group
-        // imports the feed's common module and its helpers first.
+        // imports the feed's common module first (which imports the helpers and the site's libraries: a chain, each
+        // module imported once in the stylesheet), or the helpers where it has no common module.
         final Set<String> hrefs = new LinkedHashSet<>();
         if (module != null) {
-            Optional.ofNullable(module.common()).filter(XsltGenerator::isSet).ifPresent(hrefs::add);
-            Optional.ofNullable(module.helpers()).filter(XsltGenerator::isSet).ifPresent(hrefs::add);
+            if (isSet(module.common())) {
+                hrefs.add(module.common());
+            } else {
+                Optional.ofNullable(module.helpers()).filter(XsltGenerator::isSet).ifPresent(hrefs::add);
+            }
         }
         m.shared().forEach(use -> hrefs.add(use.href()));
         m.functions().forEach(functions -> hrefs.add(functions.href()));
@@ -2191,9 +2205,10 @@ public final class XsltGenerator {
         bound.keySet().stream().filter(prefix -> !own.contains(prefix)).forEach(excluded::add);
         sheet.set("exclude-result-prefixes", String.join(" ", excluded));
         if (module != null) {
-            // A group's records come from the feed's dispatcher, which owns the document and Events; its generated
-            // helpers come from the feed's helpers module, never inline.
+            // A group is its pipeline's XSLT: it writes the Events, translating its own source types' records and
+            // passing over the rest; its generated helpers come from the feed's helpers module, never inline.
             sheet.append(moduleMarker());
+            groupRoot(sheet, version);
         } else {
             if (!m.jsonFields().isEmpty() || callsJson) {
                 sheet.append(XmlParser.parse(SAFE_JSON));
@@ -2214,8 +2229,9 @@ public final class XsltGenerator {
         if (module != null) {
             sheet.append(new XmlComment(XsltComments.comment("Source type group '" + module.name() + "' ("
                                                              + String.join(", ", module.sourceTypes())
-                                                             + "): each record the feed's dispatcher hands to mode "
+                                                             + "): each record of its source types, in mode "
                                                              + recordMode())));
+            groupPassOver(sheet);
         }
         XmlElement recordTemplate = sheet.addElement(XSL, "template", "match", "*", "mode", recordMode());
         final XmlElement eventTemplate = recordTemplate;
@@ -2280,7 +2296,128 @@ public final class XsltGenerator {
             sheet.append(template.getValue().template());
         }
         ownFunctions().forEach(sheet::append);
+        if (module != null) {
+            groupFunctions(sheet);
+        }
         return XmlSerialiser.toPrettyDocument(sheet);
+    }
+
+    // --- a source type group's own pipeline XSLT: its records told from the rest ---
+
+    // What stops a group's XSLT being written: no source type field or rows to tell its records by, a source type no
+    // row has, a pattern the two dialects don't both read; a shared call the group would import itself.
+    private static List<String> groupProblems(final SourceTypeModule module, final TranslationMapping mapping) {
+        final List<String> out = new ArrayList<>();
+        final String group = "Source type group '" + module.name() + "'";
+        if (!isSet(module.field())) {
+            out.add(group + " has no source type field to tell its records by: record_source_types confirms it");
+        }
+        if (module.sourceTypes().isEmpty()) {
+            out.add(group + " translates no source type");
+        }
+        final List<String> names = module.rows().stream().map(SourceTypeModule.Row::name).toList();
+        module.sourceTypes().stream()
+                .filter(type -> !names.contains(type))
+                .forEach(type -> out.add(group + " translates source type '" + type + "', which the registry has no "
+                                         + "row for"));
+        final List<SourceTypeRows.Row> rows = module.rows().stream()
+                .map(row -> new SourceTypeRows.Row(row.name(), row.match(), row.value()))
+                .toList();
+        // Checked against the rows' own values: what both dialects must agree on.
+        final List<String> values = module.rows().stream()
+                .filter(row -> SourceTypeRows.VALUE.equals(row.match()))
+                .map(SourceTypeModule.Row::value)
+                .toList();
+        SourceTypeRows.problems(rows, values).forEach(problem -> out.add("Registry row " + problem));
+        if (isSet(module.common())) {
+            mapping.shared().stream()
+                    .filter(use -> !module.common().equals(use.href()))
+                    .forEach(use -> out.add(group + " calls shared template " + use.template() + " of "
+                                            + use.href() + " itself: a group imports only the feed's common module, "
+                                            + "which imports the site's libraries (an XSLT imported twice in one "
+                                            + "stylesheet is refused), so the call belongs in the common module"));
+        }
+        return out;
+    }
+
+    // The group's root template: the Events, each record handed to the group's mode (its own translated, the rest
+    // passed over, in document order, so each record's number is read in turn), and the records passed over counted
+    // in one INFO line, once a document.
+    private void groupRoot(final XmlElement sheet, final String version) {
+        final String records = recordsSelect(m);
+        final XmlElement root = sheet.addElement(XSL, "template", "match", rootMatch(m));
+        final XmlElement events = root.addElement(ns, "Events", "Version", version);
+        events.set(MappingFacts.XSI, "schemaLocation", schemaLocation(schema, version));
+        events.addElement(XSL, "apply-templates", "select", records, "mode", recordMode());
+        final String passed = own(XsltNames.styleName("passed-over", style.naming()));
+        events.addElement(XSL, "variable", "name", passed, "select", "count((" + records + ")[not("
+                                                                     + groupFunction("in-group") + "(.))])");
+        events.addElement(XSL, "if", "test", "$" + passed + " gt 0")
+                .addElement(XSL, "sequence", "select", "stroom:log('INFO', concat(" + XPathText.literal(PASSED_OVER)
+                                                       + ", $" + passed + ", " + XPathText.literal(PASSED_OVER_END)
+                                                       + "))");
+    }
+
+    // A record of any other source type (or none): not written, its number read as the group's records' are, so
+    // Stroom moves on to the next record's location and the group's log lines name the right records (seen with the
+    // dispatcher: a record passed over without it left later lines naming an earlier record).
+    private void groupPassOver(final XmlElement sheet) {
+        final XmlElement template = sheet.addElement(XSL, "template", "match", "*[not(" + groupFunction("in-group")
+                                                                               + "(.))]", "mode", recordMode(),
+                "priority", "1");
+        template.append(new XmlComment(" Not of this group's source types: not written, counted "));
+        template.addElement(XSL, "variable", "name", RECORD_NO, "select", "stroom:record-no()");
+        template.addElement(XSL, "sequence", "select", READ_RECORD_NO);
+    }
+
+    // The functions telling a group's records: the source type a record is of (the registry's rows in order, = a
+    // value, ~ an anchored pattern), its value of the source type field as the tools read it, and whether it is one
+    // of the group's.
+    private void groupFunctions(final XmlElement sheet) {
+        final XmlElement inGroup = sheet.addElement(XSL, "function", "name", groupFunction("in-group"), "as",
+                "xs:boolean");
+        inGroup.append(new XmlComment(XsltComments.comment("True for a record of the group's source types")));
+        inGroup.addElement(XSL, "param", "name", "record", "as", "element()");
+        inGroup.addElement(XSL, "sequence", "select", groupFunction("source-type") + "($record) = ("
+                                                      + literals(module.sourceTypes()) + ")");
+        final XmlElement type = sheet.addElement(XSL, "function", "name", groupFunction("source-type"), "as",
+                "xs:string");
+        type.append(new XmlComment(XsltComments.comment("The source type a record is of: the first registry row its "
+                                                        + module.field() + " matches (= a value, ~ an anchored "
+                                                        + "pattern), '' for none")));
+        type.addElement(XSL, "param", "name", "record", "as", "element()");
+        type.addElement(XSL, "variable", "name", "value", "select", groupFunction("source-type-value") + "($record)");
+        final XmlElement choose = type.addElement(XSL, "choose");
+        for (final SourceTypeModule.Row row : module.rows()) {
+            final String test = SourceTypeRows.PATTERN.equals(row.match())
+                    ? "matches($value, " + XPathText.literal(row.value()) + ")"
+                    : "$value = " + XPathText.literal(row.value());
+            choose.addElement(XSL, "when", "test", test).addElement(XSL, "sequence", "select",
+                    XPathText.literal(row.name()));
+        }
+        choose.addElement(XSL, "otherwise").addElement(XSL, "sequence", "select", "''");
+        // As the tools read it (SourceTypeFields.valueOf): stripped of XML's white space around it, '' for none or a
+        // nil value, so processing and the survey count the same records as each source type.
+        final XmlElement value = sheet.addElement(XSL, "function", "name", groupFunction("source-type-value"), "as",
+                "xs:string");
+        value.append(new XmlComment(XsltComments.comment("A record's " + module.field() + " as the tools read it: "
+                                                         + "stripped, and '' for none or a nil value")));
+        value.addElement(XSL, "param", "name", "record", "as", "element()");
+        value.addElement(XSL, "variable", "name", "stripped", "select", "replace(string(($record/"
+                                                                        + XPathText.fieldText(m.input(),
+                module.field()) + ")[1]), '^[ \\t\\n\\r]+|[ \\t\\n\\r]+$', '')");
+        value.addElement(XSL, "sequence", "select", "if (lower-case($stripped) = ("
+                                                    + literals(SourceTypeFields.NIL_VALUES)
+                                                    + ")) then '' else $stripped");
+    }
+
+    // A function of the group's own, in the mcp namespace, its name prefixed with the group's mode.
+    private String groupFunction(final String name) {
+        return "mcp:" + own(XsltNames.styleName(name, style.naming()));
+    }
+
+    private static String literals(final List<String> values) {
+        return values.stream().map(XPathText::literal).collect(Collectors.joining(", "));
     }
 
     /// @param mapping A mapping.
@@ -2501,7 +2638,7 @@ public final class XsltGenerator {
                 : JSON_KEY_READ;
         final Set<String> read = new TreeSet<>(m.ignoredFields());
         if (module != null) {
-            // A group's records' fields the dispatcher (the source type field) and the common module's parts read.
+            // A group's records' fields its record test (the source type field) and the common module's parts read.
             Optional.ofNullable(module.field()).filter(XsltGenerator::isSet)
                     .ifPresent(field -> read.add(ToolText.split(ToolText.split(field, ".").getFirst(), "/")
                             .getFirst()));

@@ -82,10 +82,10 @@ public final class SourceTypeFields {
     private static final Set<String> NOT_SOURCES = Set.of("EventSource/Device/HostName", "EventSource/Device/Name",
             "EventSource/Device/MACAddress", "EventSource/Client/Port", "EventSource/Server/Port",
             "EventSource/User/Id", "EventSource/RunAs/Id", "EventSource/SessionId", "EventDetail/Description");
-    /// The values a field holds for no value, as the tools and the dispatcher read them (any case), the empty
+    /// The values a field holds for no value, as the tools and a source type group read them (any case), the empty
     /// value aside.
     public static final List<String> NIL_VALUES = List.of("-", "null", "none", "n/a");
-    // The white space around a value: XML's, as XPath's \s reads it, so the dispatcher strips the same.
+    // The white space around a value: XML's, as XPath's \s reads it, so a source type group strips the same.
     private static final Pattern AROUND = Pattern.compile("^[ \t\n\r]+|[ \t\n\r]+$");
     private static final Pattern ADDRESS = Pattern.compile("^\\d{1,3}(\\.\\d{1,3}){3}(:\\d+)?$|^[0-9a-fA-F]{12,}$"
                                                            + "|^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-|@");

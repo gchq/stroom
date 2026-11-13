@@ -21,22 +21,25 @@ import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// The checks of an aggregated feed's translation modules ([SourceTypeModule], [DispatcherXslt], [HelpersXslt]),
-/// made by the generator on what it writes and by check_xslt on any code saved or stepped (a hand-edited group, say).
+/// The checks of an aggregated feed's translation modules ([SourceTypeModule], [HelpersXslt]), made by the
+/// generator on what it writes and by check_xslt on any code saved or stepped (a hand-edited group, say).
 ///
-/// At run time the dispatcher, every group, the common module, the helpers and the site's libraries are one compiled
-/// stylesheet, so a group holds only templates in its own mode, its own names prefixed with its mode, and its imports:
-/// a stylesheet-level declaration in a group (xsl:output, a key, a global parameter) would apply to every group, and a
-/// template matching the record outside its mode would take every group's records. Imports must not cycle (a group
-/// importing the dispatcher), and they nest no deeper than [#MAX_IMPORT_DEPTH].
+/// A source type group is its own pipeline's XSLT, compiled with the modules it imports: the feed's common module,
+/// which imports the feed's helpers and the site's libraries. Every name a group declares (templates, functions,
+/// global variables, modes) is prefixed with its mode, so none meets one of the modules it imports. Imports form a
+/// chain, each module imported once: an XSLT imported twice in one stylesheet (a group importing the helpers or a
+/// site library the common module imports too) is refused, as Saxon refuses it under Stroom's resolver of imports;
+/// imports must not cycle, and they nest no deeper than [#MAX_IMPORT_DEPTH].
 ///
 /// A module says what it is in a mark Saxon ignores, a user-defined data element:
 /// `<mcp:module kind="group" name="PEGA security" mode="pega_security"><mcp:source-type>...</mcp:source-type>`.
@@ -46,18 +49,12 @@ public final class ModuleChecks {
     public static final String MARKER = "module";
     /// The local name of a group's source type, inside its mark.
     public static final String SOURCE_TYPE = "source-type";
-    /// The kind of the feed's dispatcher's mark.
-    public static final String DISPATCHER = "dispatcher";
     /// The kind of the feed's helpers module's mark.
     public static final String HELPERS = "helpers";
-    /// How deep imports may nest below the XSLT checked: dispatcher, group, common module, a site library and its
-    /// own imports fit well within it.
+    /// How deep imports may nest below the XSLT checked: group, common module, helpers, a site library and its own
+    /// imports fit well within it.
     public static final int MAX_IMPORT_DEPTH = 8;
 
-    // What only the stylesheet as a whole may declare: the dispatcher's, never a group's.
-    private static final Set<String> STYLESHEET_LEVEL = Set.of("output", "strip-space", "preserve-space", "param",
-            "key", "accumulator", "decimal-format", "namespace-alias", "character-map", "attribute-set", "mode",
-            "global-context-item", "use-package", "include", "import-schema", "expose", "accept");
     // An import or include and its href, as Stroom's resolver finds them.
     private static final Pattern IMPORT = Pattern.compile(
             "<(?:[\\w.-]+:)?(?:import|include)\\b[^>]*?\\bhref\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)')");
@@ -93,9 +90,9 @@ public final class ModuleChecks {
         return Optional.empty();
     }
 
-    /// What is wrong with a source type group's module: anything stylesheet-level, a template matching outside its
-    /// mode (or matching the document), and a name it declares that isn't prefixed with its mode. An XSLT marked as
-    /// another kind of module, or not marked, has none of these problems.
+    /// What is wrong with a source type group's module: a name it declares (a named template, a function, a global
+    /// variable or parameter, a mode) that isn't prefixed with its mode, which could meet a name of a module it
+    /// imports. An XSLT marked as another kind of module, or not marked, has none of these problems.
     ///
     /// @param xslt An XSLT's text.
     /// @return The problems, each saying why; none for a sound group, or an XSLT that isn't one.
@@ -114,7 +111,7 @@ public final class ModuleChecks {
         final String group = "Source type group '" + marker.get().name() + "' (mode " + mode + ")";
         final List<String> out = new ArrayList<>();
         if (mode == null || mode.isBlank()) {
-            out.add(group + " has no mode in its mark: the dispatcher hands its records to that mode");
+            out.add(group + " has no mode in its mark: its records are translated in that mode");
             return out;
         }
         for (final XmlElement child : root.childElements()) {
@@ -122,64 +119,47 @@ public final class ModuleChecks {
                 continue;
             }
             final String what = child.localName();
-            if (STYLESHEET_LEVEL.contains(what)) {
-                out.add(group + " declares xsl:" + what + ", which is stylesheet-level: in the one stylesheet the "
-                        + "dispatcher and every group compile into it would apply to every group. It belongs in the "
-                        + "dispatcher, which owns the stylesheet's declarations" + ("include".equals(what)
-                        ? " (to use another XSLT's templates, xsl:import it)"
-                        : ""));
-            } else if ("template".equals(what)) {
+            if ("template".equals(what)) {
                 templateProblem(child, mode, group).ifPresent(out::add);
-            } else if ("function".equals(what) || "variable".equals(what)) {
+            } else if (Set.of("function", "variable", "param").contains(what)) {
                 final String name = String.valueOf(child.get("name"));
-                final String local = name.contains(":")
-                        ? name.substring(name.indexOf(':') + 1)
-                        : name;
-                if (!ownName(local, mode)) {
-                    out.add(group + " declares xsl:" + what + " " + name + ", not prefixed with its mode: another "
-                            + "group's of the same name would meet it in the dispatcher's stylesheet, and the one "
-                            + "imported last would be used by both. Name it " + mode + "_...");
+                if (!ownName(local(name), mode)) {
+                    out.add(group + " declares xsl:" + what + " " + name + ", not prefixed with its mode: a module "
+                            + "it imports (the feed's common module, its helpers) could declare one of the same "
+                            + "name, and the group's would be used by both. Name it " + mode + "_...");
                 }
             }
         }
         return out;
     }
 
-    // A template matching outside the group's mode, matching the document, or named without the mode's prefix.
+    // A template in a mode not the group's own (#all, #default and the root template aside), or named without the
+    // mode's prefix.
     private static Optional<String> templateProblem(final XmlElement template, final String mode, final String group) {
-        final String match = template.get("match");
-        final String name = template.get("name");
-        if (match != null) {
-            final String modes = template.get("mode");
-            if (modes == null || modes.isBlank()) {
-                return Optional.of(group + " has a template matching " + match + " outside its mode: it would take "
-                                   + "records the dispatcher hands to other groups. Put it in mode " + mode
-                                   + " (or a mode named " + mode + "_...)");
-            }
+        final String modes = template.get("mode");
+        if (template.get("match") != null && modes != null) {
             for (final String one : ToolText.split(modes.strip(), " ")) {
-                if (!one.isEmpty() && !ownName(one, mode)) {
-                    return Optional.of(group + " has a template in mode " + one + ", not its own: modes "
-                                       + "#all, #default and another group's take other groups' records. Use "
-                                       + mode + " or a mode named " + mode + "_...");
+                if (!one.isEmpty() && !one.startsWith("#") && !ownName(one, mode)) {
+                    return Optional.of(group + " has a template in mode " + one + ", not its own: a module it "
+                                       + "imports could have templates in a mode of that name. Use " + mode
+                                       + " or a mode named " + mode + "_...");
                 }
             }
-            if ("/".equals(match.strip())) {
-                return Optional.of(group + " has a template matching the document (/): the dispatcher owns the "
-                                   + "document and the Events; a group's templates match the records it is handed");
-            }
         }
-        if (name != null) {
-            final String local = name.contains(":")
-                    ? name.substring(name.indexOf(':') + 1)
-                    : name;
-            if (!ownName(local, mode)) {
-                return Optional.of(group + " has a named template " + name + ", not prefixed with its mode: "
-                                   + "another group's of the same name would meet it in the dispatcher's "
-                                   + "stylesheet, and the one imported last would run for both. Name it " + mode
-                                   + "_...");
-            }
+        final String name = template.get("name");
+        if (name != null && !ownName(local(name), mode)) {
+            return Optional.of(group + " has a named template " + name + ", not prefixed with its mode: a module it "
+                               + "imports could name one the same, and the group's would run for both. Name it "
+                               + mode + "_...");
         }
         return Optional.empty();
+    }
+
+    // A name without its prefix.
+    private static String local(final String name) {
+        return name.contains(":")
+                ? name.substring(name.indexOf(':') + 1)
+                : name;
     }
 
     /// @param name A name a group declares (a template's, a function's, a variable's, or a mode).
@@ -196,17 +176,6 @@ public final class ModuleChecks {
         }
         final char next = name.charAt(mode.length());
         return next == '_' || next == '-' || Character.isUpperCase(next) || Character.isDigit(next);
-    }
-
-    /// Two groups' modes meet when they are the same, or one is the other followed by a separator (`pega` and
-    /// `pega_mail`): the names one declares could then be the other's, and the one imported last would be used by
-    /// both.
-    ///
-    /// @param one   A group's mode.
-    /// @param other Another group's mode.
-    /// @return True if they meet.
-    public static boolean modesMeet(final String one, final String other) {
-        return ownName(one, other) || ownName(other, one);
     }
 
     /// @param xslt An XSLT's text, or null.
@@ -260,8 +229,9 @@ public final class ModuleChecks {
     }
 
     /// What is wrong with an XSLT's imports, followed through the documents they name: a cycle (an XSLT importing
-    /// one that imports it, a module importing the dispatcher), and nesting deeper than [#MAX_IMPORT_DEPTH]. An
-    /// href that names nothing is left to the check of missing imports.
+    /// one that imports it), a document imported twice in the one stylesheet they compile into (a diamond: a group
+    /// importing the feed's helpers or a site library that its common module imports too), and nesting deeper than
+    /// [#MAX_IMPORT_DEPTH]. An href that names nothing is left to the check of missing imports.
     ///
     /// @param xslt    The XSLT's text.
     /// @param ownUuid Its document's UUID, where it is saved, or null.
@@ -272,24 +242,22 @@ public final class ModuleChecks {
                                               final Function<String, Optional<Imported>> resolve) {
         final List<String> out = new ArrayList<>();
         final Optional<Marker> own = marker(xslt);
-        final boolean isDispatcher = own.map(marker -> DISPATCHER.equals(marker.kind())).orElse(false);
         final List<String> stack = new ArrayList<>();
         stack.add(ownUuid == null
                 ? "(this XSLT)"
                 : ownUuid);
         final List<String> names = new ArrayList<>(List.of(own.map(Marker::name).filter(n -> !n.isBlank())
                 .orElse("this XSLT")));
-        walk(xslt, isDispatcher, stack, names, resolve, out, new ArrayList<>());
+        walk(xslt, stack, names, resolve, out, new LinkedHashMap<>());
         return out;
     }
 
     private static void walk(final String xslt,
-                             final boolean fromDispatcher,
                              final List<String> stack,
                              final List<String> names,
                              final Function<String, Optional<Imported>> resolve,
                              final List<String> out,
-                             final List<String> seen) {
+                             final Map<String, List<String>> seen) {
         for (final String href : hrefs(xslt)) {
             final Optional<Imported> found = resolve.apply(href);
             if (found.isEmpty()) {
@@ -303,29 +271,26 @@ public final class ModuleChecks {
                           + "imports it; Saxon refuses the stylesheet, and every record fails");
                 continue;
             }
-            final boolean importsDispatcher = marker(imported.text())
-                    .map(marker -> DISPATCHER.equals(marker.kind()))
-                    .orElse(false);
-            if (importsDispatcher && !fromDispatcher) {
-                note(out, String.join(" -> ", chain) + ": a module imports the feed's dispatcher. The dispatcher "
-                          + "imports each source type group (and they the common and helpers modules), never the "
-                          + "other way round: drop the import of '" + imported.name() + "'");
-                continue;
-            }
             if (stack.size() > MAX_IMPORT_DEPTH) {
                 note(out, "Imports nest more than " + MAX_IMPORT_DEPTH + " deep (" + String.join(" -> ", chain)
                           + "): import what is needed nearer the top");
                 continue;
             }
-            if (seen.contains(imported.uuid())) {
-                // The same module imported again (every group importing the common module): allowed, and its
-                // imports were followed once already.
+            final List<String> before = seen.get(imported.uuid());
+            if (before != null) {
+                note(out, "'" + imported.name() + "' is imported twice in one stylesheet (" + String.join(" -> ",
+                        before) + ", and " + String.join(" -> ", chain) + "): under Stroom's resolver of "
+                          + "imports Saxon takes the second for a stylesheet importing itself (XTSE0210) and refuses "
+                          + "it, so every record fails. Import each module once, in a chain: a source "
+                          + "type group imports only the feed's common module, which imports the helpers and the "
+                          + "site's libraries; drop the import of '" + imported.name() + "' from '" + names.getLast()
+                          + "'");
                 continue;
             }
-            seen.add(imported.uuid());
+            seen.put(imported.uuid(), chain);
             stack.add(imported.uuid());
             names.add(imported.name());
-            walk(imported.text(), false, stack, names, resolve, out, seen);
+            walk(imported.text(), stack, names, resolve, out, seen);
             stack.removeLast();
             names.removeLast();
         }
@@ -343,9 +308,9 @@ public final class ModuleChecks {
 
     /// A module's mark.
     ///
-    /// @param kind        `group`, `common`, [#HELPERS] or [#DISPATCHER].
+    /// @param kind        `group`, `common` or [#HELPERS].
     /// @param name        Its name.
-    /// @param mode        Its mode (a group's records are handed to it), the prefix of its names.
+    /// @param mode        Its mode (a group's records are translated in it), the prefix of its names.
     /// @param sourceTypes A group's source types.
     public record Marker(String kind, String name, String mode, List<String> sourceTypes) {
 

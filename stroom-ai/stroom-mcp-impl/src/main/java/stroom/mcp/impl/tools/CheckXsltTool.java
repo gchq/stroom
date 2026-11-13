@@ -117,10 +117,10 @@ class CheckXsltTool extends AbstractBuiltInTool {
                              + "the user to agree to them. When all that passes, it is compiled as Stroom compiles "
                              + "it, with Stroom's own functions and its imports, so an undeclared variable or a "
                              + "wrong call is found before stepping. An aggregated feed's source type group (marked "
-                             + "<mcp:module kind=\"group\">) holds nothing stylesheet-level (xsl:output, keys, global "
-                             + "params: the dispatcher's) and no template matching outside its mode, its own names "
-                             + "prefixed with its mode; imports (by name, or uuid='…', name='…') must not cycle (a "
-                             + "group importing the dispatcher) or nest more than "
+                             + "<mcp:module kind=\"group\">) has its own names prefixed with its mode; imports (by "
+                             + "name, or uuid='…', name='…') must not cycle, import one module twice in the one "
+                             + "stylesheet (a group importing the helpers beside the common module, which imports "
+                             + "them) or nest more than "
                              + ModuleChecks.MAX_IMPORT_DEPTH + " deep.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(XSLT_ARG, "Full XSLT document text.")
@@ -235,8 +235,9 @@ class CheckXsltTool extends AbstractBuiltInTool {
             errors.add("xsl:import/include targets not found as XSLT documents: " + String.join(", ", missing));
         }
         errors.addAll(importNamespaceProblems(xslt, imports));
-        // An aggregated feed's source type group: nothing stylesheet-level, nothing outside its mode; and any XSLT's
-        // imports don't cycle (a group importing the dispatcher) or nest too deep.
+        // An aggregated feed's source type group: its names prefixed with its mode; and any XSLT's imports don't
+        // cycle, import a module twice in one stylesheet (a group importing the helpers beside the common module) or
+        // nest too deep.
         errors.addAll(ModuleChecks.groupProblems(xslt));
         if (missing.isEmpty()) {
             errors.addAll(ModuleChecks.importProblems(xslt, null, href -> resolved(href)
