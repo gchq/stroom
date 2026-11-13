@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
 import stroom.data.store.api.Store;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.mcp.impl.McpTestClient;
 import stroom.security.api.SecurityContext;
 
@@ -51,7 +52,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 ///   original common module (the chain pointing at the originals); the next build's group and its pipeline go beside
 ///   the feed;
 /// * a last build making a new version of the group's pipeline: a new version of its XSLT, copy_pipeline running
-///   it, the registry's rows of the group moved to the new version, production left as it was.
+///   it, the registry's rows of the group moved to the new version, production left as it was; promoted, the new
+///   pipeline and its XSLT go in a version folder beside the old ones (left as they were), importing the original
+///   common module, and the registry beside the feed names the new version for the group's rows.
 @SuppressWarnings("unchecked")
 class TestE2eSourceTypePipelines extends AbstractE2eTest {
 
@@ -319,6 +322,35 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
         // Production as it was: the old version runs on.
         assertThat(readXslt(securityUuid).getData()).contains("LoginV2").doesNotContain("LoginV3");
         assertThat(translationOutput(pipeline, stream, loginAt)).contains("LoginV2");
+
+        // Promoted: the new version and its XSLT in a version folder beside the old, which is left as it was; the
+        // registry beside the feed names the new version for the group's rows.
+        promote(last, Map.of("Pipeline", folder));
+        final String versionFolder = folderOf(versionPipeline);
+        assertThat(versionFolder).endsWith("PegaWc/v2");
+        assertThat(folderOf(securityVersion)).isEqualTo(versionFolder);
+        assertThat(folderOf(pipeline)).endsWith("PegaWc").isEqualTo(folderOf(securityUuid));
+        assertThat(folderOf(commonUuid)).endsWith("PegaWc");
+        assertThat(readXslt(securityUuid).getData()).contains("LoginV2", "uuid='" + commonUuid + "'")
+                .doesNotContain("LoginV3");
+        assertThat(translationOutput(pipeline, stream, loginAt)).contains("LoginV2");
+        // The new version's chain points at the originals of the common and helpers modules.
+        final String helpersUuid = documentsIn("System/" + folder, "XSLT", feed + " helpers").getFirst().getUuid();
+        assertThat(readXslt(securityVersion).getData()).contains("LoginV3", "uuid='" + commonUuid + "'");
+        assertThat(readXslt(commonUuid).getData()).contains("uuid='" + helpersUuid + "'");
+        assertThat(documentsIn("System/" + folder, "XSLT", feed + " common")).hasSize(1);
+        assertThat(translationOutput(versionPipeline, stream, loginAt)).contains("LoginV3");
+        final List<ExplorerNode> registries = documentsIn("System/" + folder, "Documentation",
+                feed + SourceTypeRegistry.SUFFIX);
+        assertThat(registries).hasSize(1);
+        final Map<String, Map<String, Object>> promotedRows = rows(registries.getFirst().getUuid());
+        assertThat((Map<String, Object>) promotedRows.get("PegaSecurityEvent").get("pipeline"))
+                .containsEntry("name", pipelineName + " v2").containsEntry("uuid", versionPipeline)
+                .doesNotContainKey("new_version");
+        assertThat(map(promotedRows.get("PegaSecurityEvent"), "group_xslt")).containsEntry("uuid",
+                securityVersion);
+        assertThat((Map<String, Object>) promotedRows.get("PegaIntegration").get("pipeline"))
+                .containsEntry("uuid", integrationPipeline);
     }
 
     // build_translation_xslt group=: the group saved with its mapping, where it goes as the user chose it.

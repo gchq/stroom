@@ -123,6 +123,33 @@ class TestSourceTypeRegistries {
                 .hasMessageContaining("build 'done' is open on it");
     }
 
+    @Test
+    void aKeptDocumentChangedSincePromotionHoldsTheBuildOpenAgain() {
+        Mockito.when(guard.builds()).thenReturn(List.of(BUILD, "done"));
+        Mockito.when(guard.folderContents("done")).thenReturn(List.of(doc(XsltDoc.TYPE, "x1", "PEGA scratch")));
+        Mockito.when(places.documentationBeside(any(), eq(REGISTRY))).thenReturn(Optional.empty());
+        final Map<String, Object> record = BuildRecords.empty();
+        record.put(BuildRecords.SOURCE_FEEDS, List.of(FEED));
+        final Map<String, Object> entry = new LinkedHashMap<>();
+        entry.put(BuildRecords.KEPT_AT_PROMOTION, true);
+        entry.put(BuildRecords.KEPT_VERSION, "v1");
+        record.put(BuildRecords.DOCS, new LinkedHashMap<>(Map.of("x1", entry)));
+        Mockito.when(records.load("done")).thenReturn(record);
+        final DocRef xslt = new DocRef(XsltDoc.TYPE, "x1", "PEGA scratch");
+        Mockito.when(documentAccess.read(xslt)).thenReturn(Optional.of(XsltDoc.builder().uuid("x1")
+                .name("PEGA scratch").version("v1").build()));
+
+        // Unchanged since its promotion kept it: not work in progress.
+        registries.refuseOpenBuild(FEED, BUILD, true);
+
+        // Written again after promotion (by a tool or by hand): it is work in the build, which is open again.
+        Mockito.when(documentAccess.read(xslt)).thenReturn(Optional.of(XsltDoc.builder().uuid("x1")
+                .name("PEGA scratch").version("v2").build()));
+        assertThatThrownBy(() -> registries.refuseOpenBuild(FEED, BUILD, true))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("build 'done' is open on it");
+    }
+
     private static SourceTypeRegistries.Found promoted() {
         return new SourceTypeRegistries.Found(new SurveyRecord("orig", REGISTRY, ""), true, Map.of("feed", FEED));
     }

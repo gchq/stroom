@@ -2119,6 +2119,17 @@ group).
   working copy of its XSLT when it is promoted.
 * **One group a build**: `build_translation_xslt` takes the build's group and its source types from the scope by
   default, and refuses another group name in the same build; the next group is the next build's, after promotion.
+* Naming an existing group with no source types ticked changes that group alone; without forms, that is an explicit
+  `scope=[]` with the group's name (with forms, an empty scope is no answer).
+
+Closed afterwards (2026-11-13):
+
+* A group's new-version XSLT goes in the new pipeline's version folder at promotion, beside its pipeline, not beside
+  the original of the same name.
+* A document promotion keeps in the workspace records its version (`kept_version`); edited since, it holds its build
+  open again.
+* A value no registry row matches reaches the registry from processing only through a whole translation of a feed
+  that has one (`review_coverage` on a missed kind); a group pipeline counts it among the records it passes over.
 
 #### Open decisions
 

@@ -74,7 +74,7 @@ class SourceTypeRegistries {
     /// while its folder holds the feed's registry, or works from the feed (or holds it) and holds work (an XSLT or a
     /// pipeline): made and not promoted or abandoned (its folder deleted). A build holding only the feed and its
     /// samples, or only what its promotion kept in the workspace (a test feed, its survey doc, a document
-    /// given 'keep'), is not.
+    /// given 'keep') and unchanged since, is not.
     ///
     /// @param feed       A feed's name.
     /// @param build      The build asking, left out.
@@ -94,10 +94,9 @@ class SourceTypeRegistries {
             }
             final Map<String, Object> record = recordOf(other);
             final Map<String, Object> entries = BuildRecords.docs(record);
-            // What the build's promotion kept in the workspace is no work in progress.
+            // What the build's promotion kept in the workspace is no work in progress, until it is changed.
             final List<WriteGuard.BuildDoc> docs = guard.folderContents(other).stream()
-                    .filter(doc -> !(entries.get(doc.uuid()) instanceof final Map<?, ?> entry
-                                     && Boolean.TRUE.equals(entry.get(BuildRecords.KEPT_AT_PROMOTION))))
+                    .filter(doc -> !keptUnchanged(doc, entries.get(doc.uuid())))
                     .toList();
             final boolean registry = docs.stream()
                     .anyMatch(doc -> DocumentationDoc.TYPE.equals(doc.type()) && name.equals(doc.name()));
@@ -119,6 +118,18 @@ class SourceTypeRegistries {
                                   + "change in one place. Finish build '" + open + "' (promote_build) or abandon it "
                                   + "(the user deletes its folder) first, or carry on in it.");
         }
+    }
+
+    // True for a document a promotion kept in the workspace and nothing has changed since: its version is the one
+    // kept (a record from before versions were kept has none, and is taken as unchanged).
+    private boolean keptUnchanged(final WriteGuard.BuildDoc doc, final Object entry) {
+        if (!(entry instanceof final Map<?, ?> map) || !Boolean.TRUE.equals(map.get(BuildRecords.KEPT_AT_PROMOTION))) {
+            return false;
+        }
+        final Object kept = map.get(BuildRecords.KEPT_VERSION);
+        return kept == null || BuildRecords.version(documentAccess, doc.docRef())
+                .map(version -> version.equals(String.valueOf(kept)))
+                .orElse(true);
     }
 
     // A build's record: the existing feeds it works from, and what its promotion kept; empty if it can't be read.

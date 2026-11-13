@@ -2476,7 +2476,8 @@ building from the registry beside the feed, and wherever a build makes a working
 `record_source_types`, any feed) is refused while another build is open on it: one whose folder holds the feed's
 registry, or that works from or holds the feed and holds an XSLT or pipeline (made and neither promoted nor
 abandoned; the workspace's `backups` aside). What a build's promotion kept in the workspace (marked
-`kept_at_promotion` in its record: a test feed, a survey doc, a document given `keep`) doesn't count. `Feed '<feed>' aggregates source types, and
+`kept_at_promotion` in its record: a test feed, a survey doc, a document given `keep`) doesn't count while its
+version is still the one kept (`kept_version`); changed since, by the tools or by hand, it is work again. `Feed '<feed>' aggregates source types, and
 build '<other>' is open on it: one build at a time per feed ... Finish build '<other>' (promote_build) or abandon it
 (the user deletes its folder) first, or carry on in it.` So the registry, the group pipelines and the feed's
 documents change in one build at a time, and promotion needs no merging.
@@ -2554,11 +2555,13 @@ An Elasticsearch index's fields come from its template, the cluster admin's to c
 
 A feed's survey doc (`besideFeeds`) always stays in the build (`keep`, decided 2026-11-13: nobody is asked, and the
 review doesn't offer to move it); its source type registry always goes beside the feed (`keep` for it is refused).
-Each document left in the workspace is marked `kept_at_promotion` in the build's record, so it doesn't hold the
-build open on its feed.
+Each document left in the workspace is marked `kept_at_promotion` in the build's record, with its version then
+(`kept_version`), so it doesn't hold the build open on its feed until it is changed.
 An aggregated feed's modules (`modulesBeside`: helpers, common module and source type groups, by their `mcp:module`
 marker) and a group's output feed of its own go beside the feed too, unless given a destination, a working copy's
-(written back) or a new version's (its version folder); the group pipelines go where the destinations say. The
+(written back) or a new version's (its version folder); a group's new version of its XSLT (`version_of` the
+original, named as it is) goes in its pipeline's version folder, not beside the old one; the group pipelines go
+where the destinations say. The
 reference data each group pipeline lacks for its group's lookups (`GroupReferences.changes`, from the registry rows'
 `references`) is listed in the review and the approval form as `pipeline_changes` and added once approved, after the
 moves (forward only: none is removed): the build's pipelines (a new one, a new version, or a working copy's
@@ -2879,7 +2882,8 @@ with its share and formats), and one text field, "What is the group called?", fi
 the user keeps or changes (left empty, the suggestion stands). A call with forms and no `group` is refused before
 anything is asked. The name matching an existing group's (any case) is that group's: the source types join it (its
 pipeline and output feed, when `build_translation_xslt` builds it; a promoted one through a working copy of its XSLT),
-said in `joins`; with none chosen, the build changes that group alone. A new group with no source type chosen is
+said in `joins`; with none chosen, the build changes that group alone (without forms, `scope=[]`, an explicit empty
+list, with the group's name; ignored where forms are shown). A new group with no source type chosen is
 refused. The scope's `source_types` are the group's: those it translates already, and those chosen. Every source type offered is then `parked` (the
 scope's saying so, naming its group; none is `translated` until its group is built; the rest with the user's reason,
 else "left for a later build"), `dropped` only by `dropped` with `drop_reason`; the scope (`build`, `group`,
@@ -2899,7 +2903,7 @@ over. The review is bound to the table (`Consent.wasReviewed`): other rows, or c
 * **Arguments**: `feed` (required), `build`, `reviewed`, `rows` (the `rows` a `needs_review` reply gave back, or as
   the user says), `remove` (rows to remove, by name, on the user's word), `patterns` (no forms: `use` or `exact`),
   `group` (the group's name: the suggestion the form shows, or, without forms, the user's), `scope` and `reason` (no
-  forms), `dropped`, `drop_reason`, `system_name`, `system_names` (by source type), `environment`.
+  forms; `scope=[]` with an existing group's name changes that group alone), `dropped`, `drop_reason`, `system_name`, `system_names` (by source type), `environment`.
 * **Returns**: `status: needs_review` (`feed`, `field`, `table`, `review_id`, `rows`, `to_confirm`, `hint`); `status: needs_user`
   with `proposed_rows` (each `name`, `match`, `values`, `records`: the patterns, without forms) or `offered` and
   `groups` (the source types for the scope and the registry's groups, without forms); or `feed`, `field`, `registry`
@@ -2910,7 +2914,7 @@ over. The review is bound to the table (`Consent.wasReviewed`): other rows, or c
   `start_onboarding`); no source type field known (`survey_feed` first); no values counted; a row that is neither
   `name = value` nor `name ~ ^pattern`; rows that can't be used (`These rows can't be used: ...`); a patterns answer
   that is neither; a scope naming a source type not offered; `scope` without `group`; with forms, no `group` to
-  suggest; a group with no name, or a new one with no source type chosen; `dropped` without `drop_reason`, or naming no source type
+  suggest; a group with no name, or a new one with no source type chosen (`scope=[]` naming a new group, or no group); `dropped` without `drop_reason`, or naming no source type
   of the registry.
 
 ### `set_shape_handling`

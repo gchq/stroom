@@ -24,6 +24,7 @@ import stroom.data.store.api.SourceUtil;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.mcp.impl.McpTestClient;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.StandardHeaderArguments;
@@ -64,7 +65,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// promoted first group alone (its scope naming the group, no source type added), through working copies.
 ///
 /// A last walk translates an aggregated feed whole, as a normal source: its later data's source type value the
-/// survey didn't see is logged once a stream, triaged benign, and reported by review_coverage.
+/// survey didn't see is logged once a stream, triaged benign, and reported by review_coverage. Translated whole after
+/// an assessment put its registry beside it, a value no row matches in a kind the translation missed is added by
+/// review_coverage to the build's registry as new, and is beside the feed after promotion.
 @SuppressWarnings("unchecked")
 class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
 
@@ -171,19 +174,7 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         classified(build, List.of(stream), rules);
         final Map<String, Object> draft = agreed("draft_translation_mapping", args("stream_ids", List.of(stream),
                 "build", build));
-        final Map<String, Object> mapping = withRules(map(draft, "mapping"), rules);
-        // The system's name and environment as the user gives them.
-        final List<Map<String, Object>> common = new ArrayList<>();
-        for (final Map<String, Object> entry : list(mapping, "common")) {
-            final Map<String, Object> given = new LinkedHashMap<>(entry);
-            if ("EventSource/System/Name".equals(entry.get("path"))) {
-                given.put("value", "Microsoft 365");
-            } else if ("EventSource/System/Environment".equals(entry.get("path"))) {
-                given.put("value", "Prod");
-            }
-            common.add(given);
-        }
-        mapping.put("common", common);
+        final Map<String, Object> mapping = withSystem(withRules(map(draft, "mapping"), rules));
         final Map<String, Object> saved = agreed("build_translation_xslt", args("build", build, "feeds",
                 List.of(feed), "name", feed + "-XSLT", "schema_version", VERSION, "stream_ids", List.of(stream),
                 "mapping", mapping));
@@ -234,6 +225,83 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
                 List.of(later, laterAgain));
         assertThat(sourceTypes).doesNotContainKeys("new_source_types", "group", "processing");
         assertThat(String.valueOf(review.get("tell_user"))).contains("PowerBI", "surveys the feed again");
+    }
+
+    @Test
+    void aValueNoRowMatchesInAMissedKindIsAddedToTheRegistryAsNewAndGoesBesideTheFeed() {
+        // A feed assessed (its registry beside it, every source type parked), then translated whole: review_coverage
+        // meets a value no registry row matches in a kind the translation missed, and adds it to the build's
+        // registry as new, through a working copy written back beside the feed at promotion. (A source type group's
+        // pipeline passes such records over, counted, and adds nothing: see the walks.)
+        final String feed = "E2E-WALK-NEWROW";
+        final String folder = "E2E Feeds/WalkNewRow";
+        final String text = TestE2eSourceTypeGroups.lines("azure-audit/azure-audit-1.json", RECORDS);
+        createFeed("walk-newrow-src", feed);
+        final long stream = upload(feed, text);
+        promote("walk-newrow-src", Map.of("Feed", folder));
+        json("start_onboarding", args("source_name", "Azure audit", "build", "walk-newrow-assess", "kind",
+                "assessment", "feed", feed));
+        json("survey_feed", args("feed", feed, "build", "walk-newrow-assess"));
+        json("record_source_types", args("build", "walk-newrow-assess", "feed", feed));
+        promote("walk-newrow-assess", Map.of());
+        final List<ExplorerNode> assessed = documentsIn("System/" + folder, "Documentation",
+                feed + SourceTypeRegistry.SUFFIX);
+        assertThat(assessed).hasSize(1);
+        final String registryUuid = assessed.getFirst().getUuid();
+        assertThat(rows(SourceTypeRegistry.read(documentation(registryUuid)))).doesNotContainKey("PowerBI");
+
+        // Translated whole, with a catch-all keeping the rest as Unknown.
+        final String build = "walk-newrow";
+        json("start_build", args("build", build, "feeds", List.of(feed)));
+        json("survey_feed", args("feed", feed, "build", build));
+        final Map<String, Object> rules = new LinkedHashMap<>(TestE2eSourceTypeGroups.jsonValue(
+                AZURE_FIRST_RULES));
+        classified(build, List.of(stream), rules);
+        final Map<String, Object> draft = agreed("draft_translation_mapping", args("stream_ids", List.of(stream),
+                "build", build));
+        final Map<String, Object> saved = agreed("build_translation_xslt", args("build", build, "feeds",
+                List.of(feed), "name", feed + "-XSLT", "schema_version", VERSION, "stream_ids", List.of(stream),
+                "mapping", withSystem(withRules(map(draft, "mapping"), rules))));
+        dump("build_translation_xslt newrow", saved);
+        assertThat(saved).as("saved: %s", saved.get("problems")).containsEntry("ok", true).doesNotContainKey(
+                "group");
+        final String pipeline = uuidOf(agreed("create_pipeline", args("build", build, "name", feed + "-Events",
+                "template_uuid", templateUuid("translation", "Event Data (JSON)"))));
+
+        // Later data carries a source the registry lacks, its records of an operation no other source has: a
+        // kind of its own, kept as Unknown by the catch-all, so missed.
+        final long later = send(feed, withNewSourceType(withNewSourceType(TestE2eSourceTypeGroups.lines(
+                "azure-audit/azure-audit-2.json", LATER_RECORDS), "Workload", "PowerBI"), "Operation",
+                "ViewReport"));
+        final Map<String, Object> stepped = stepSample(pipeline, List.of(stream));
+        assertThat(stepped).as("stepped clean: %s", stepped).containsEntry("verdict", "clean");
+        process(pipeline, List.of(stream, later));
+        final Map<String, Object> review = json("review_coverage", args("pipeline_uuid", pipeline, "follow_on",
+                false));
+        dump("review_coverage newrow", review);
+        final Map<String, Object> sourceTypes = map(review, "source_types");
+        assertThat(strings(sourceTypes, "new_source_types")).containsExactly("PowerBI");
+        final String added = String.valueOf(sourceTypes.get("registry"));
+        assertThat(added).contains("added to the registry", "working copy");
+
+        // In the build's working copy of the registry, as new; the one beside the feed unchanged until promotion.
+        final String copy = added.substring(added.indexOf('(') + 1, added.indexOf(')'));
+        assertThat(copy).isNotEqualTo(registryUuid);
+        assertThat(folderOf(copy)).contains(build);
+        assertThat(rows(SourceTypeRegistry.read(documentation(copy))).get("PowerBI"))
+                .containsEntry("status", SourceTypeRegistry.NEW).containsEntry("value", "PowerBI");
+        assertThat(rows(SourceTypeRegistry.read(documentation(registryUuid)))).doesNotContainKey("PowerBI");
+        // Asked again, the value is the registry's: not added twice.
+        final Map<String, Object> again = json("review_coverage", args("pipeline_uuid", pipeline, "follow_on",
+                false));
+        assertThat(map(again, "source_types")).doesNotContainKey("new_source_types");
+
+        // Promoted: beside the feed, the value is a new source type, for a later build to place.
+        promote(build, Map.of("Pipeline", folder, "XSLT", folder, "Documentation", folder));
+        final Map<String, Map<String, Object>> rows = rows(SourceTypeRegistry.read(documentation(registryUuid)));
+        assertThat(rows.get("PowerBI")).containsEntry("status", SourceTypeRegistry.NEW);
+        assertThat(map(rows.get("PowerBI"), "decided")).containsEntry("by", "review_coverage");
+        assertThat(rows.get("AzureActiveDirectory")).containsEntry("status", SourceTypeRegistry.PARKED);
     }
 
     // --- the walk ---
@@ -696,6 +764,23 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
     }
 
     // --- the data and the registry ---
+
+    // The mapping with the system's name and environment as the user gives them.
+    private static Map<String, Object> withSystem(final Map<String, Object> mapping) {
+        final List<Map<String, Object>> common = new ArrayList<>();
+        for (final Map<String, Object> entry : list(mapping, "common")) {
+            final Map<String, Object> given = new LinkedHashMap<>(entry);
+            if ("EventSource/System/Name".equals(entry.get("path"))) {
+                given.put("value", "Microsoft 365");
+            } else if ("EventSource/System/Environment".equals(entry.get("path"))) {
+                given.put("value", "Prod");
+            }
+            common.add(given);
+        }
+        final Map<String, Object> out = new LinkedHashMap<>(mapping);
+        out.put("common", common);
+        return out;
+    }
 
     // Every fifth record given this value of the source type field, as a source the feed starts carrying.
     private static String withNewSourceType(final String text, final String field, final String value) {
