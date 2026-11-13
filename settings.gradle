@@ -335,3 +335,5 @@ include 'stroom-util-shared'
 // View
 include 'stroom-view:stroom-view-api'
 include 'stroom-view:stroom-view-impl'
+include 'stroom-security:stroom-security-impl-dao'
+include 'stroom-docstore:stroom-docstore-impl-dao'

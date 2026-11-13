@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.docstore.impl.dao;
+package dao;
 
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
@@ -378,7 +378,9 @@ public class DocDependencyDao {
                         getOwnerDocRefs(ctx, nonExplorerSourceByUuid.keySet());
                 nonExplorerSourceByUuid.forEach((uuid, sourceRef) -> {
                     final DocRef owner = ownerBySourceUuid.get(uuid);
-                    dependants.add(owner != null ? owner : sourceRef);
+                    dependants.add(owner != null
+                            ? owner
+                            : sourceRef);
                 });
             }
 
@@ -547,7 +549,9 @@ public class DocDependencyDao {
                     final Map<DocRef, Set<DocRef>> rolledUp = new HashMap<>();
                     result.forEach((source, missing) -> {
                         final DocRef owner = ownerBySourceUuid.get(source.getUuid());
-                        rolledUp.computeIfAbsent(owner != null ? owner : source, k -> new HashSet<>())
+                        rolledUp.computeIfAbsent(owner != null
+                                        ? owner
+                                        : source, k -> new HashSet<>())
                                 .addAll(missing);
                     });
                     return rolledUp;

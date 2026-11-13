@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.docstore.impl.dao;
+package dao;
 
 import stroom.docstore.api.DocDependencyProviderBinder;
 import stroom.docstore.api.DocDependencyService;

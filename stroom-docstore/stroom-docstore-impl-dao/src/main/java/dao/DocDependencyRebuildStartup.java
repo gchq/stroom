@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.docstore.impl.dao;
+package dao;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocDependencyProvider;
 import stroom.docstore.api.DocDependencyService;
-import stroom.docstore.impl.dao.DocDependencyDao.DocVersion;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import dao.DocDependencyDao.DocVersion;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.docstore.impl.dao;
+package dao;
 
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.db.DocStoreDbConnProvider;
-import stroom.docstore.impl.db.jooq.tables.Doc;
-import stroom.docstore.impl.db.jooq.tables.DocAudit;
-import stroom.docstore.impl.db.jooq.tables.DocAuditDataSnapshot;
-import stroom.docstore.impl.db.jooq.tables.DocData;
-import stroom.docstore.impl.db.jooq.tables.DocDataSnapshot;
 import stroom.docstore.impl.db.jooq.tables.records.DocDataSnapshotRecord;
 import stroom.docstore.shared.AuditAction;
 import stroom.docstore.shared.DocAuditEntry;
