@@ -325,32 +325,6 @@ class TestReviewCoverageTool {
     }
 
     @Test
-    void aDispatchersGroupsLogTheirOwnUnknownRecords() {
-        // Seen in the aggregated feed walks: a pipeline running a dispatcher (which keeps no mapping) was taken for
-        // one whose XSLT logs no Unknown records, so its newest Events were sampled and its Unknown kinds reported
-        // twice.
-        Mockito.when(reads.errorBatch(any(), anyLong(), anyInt())).thenReturn(new CoverageReads.ErrorBatch(
-                List.of(new CoverageReads.ErrorStream(11, 4L, 1_790_000_100_000L, Map.of())), null));
-        Mockito.doReturn(new CoverageReads.LoggedRecords(List.of(
-                new CoverageReads.Logged(4, 1_790_000_100_000L, 5, "other", Map.of("action", "export"))), 1))
-                .when(reads).logged(any(), any());
-        final Map<String, Object> mapping = Map.of("input", "json", "events", List.of(Map.of("name", "other",
-                "allow_unknown", "for later", "fields", List.of(Map.of("path", "EventDetail/TypeId", "value",
-                        "x")))));
-        Mockito.when(keptMappings.groupXslts("ev")).thenReturn(List.of(new KeptMappings.KeptXslt(
-                new KeptMapping.Kept("translation", Map.of("mapping", mapping)), "translationFilter",
-                XsltDoc.builder().uuid("g").name("Group").data("Kept as Unknown by rule 'other'").build())));
-
-        final Map<String, Object> result = tool.review(new SteppingWorld().context(), new ReviewCoverageTool.Request(
-                "ev", null, 500, List.of(), false, null, List.of()));
-
-        Mockito.verify(reads, Mockito.never()).sampledUnknown(any(), anyInt(), anyInt());
-        assertThat((List<?>) result.get("missed")).singleElement();
-        assertThat((String) result.get("tell_user")).endsWith("The kinds kept as Unknown were agreed with the user: "
-                                                              + "they need no rule.");
-    }
-
-    @Test
     void countsCutShortByStroomsLimitOfLogLinesAreSaid() {
         Mockito.when(reads.errorBatch(any(), anyLong(), anyInt())).thenReturn(new CoverageReads.ErrorBatch(
                 List.of(new CoverageReads.ErrorStream(11, 4L, 1_790_000_100_000L, Map.of())), null));

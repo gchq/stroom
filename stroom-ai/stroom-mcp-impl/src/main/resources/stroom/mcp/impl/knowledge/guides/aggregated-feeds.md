@@ -58,12 +58,16 @@ source_types=[...]` and its own mapping, drafted from the scope's records (the d
 
 * Its messages are its own format, so the draft reads a held format (`json_fields`, `xml_fields`, `extract`) with
   no threshold, namespaces and all (stroom://guide/json-input).
+* A group's XSLT is the XSLT of a pipeline of its own: it writes the Events, translates its source types' records
+  (the registry's rows tried in order) and passes over every other record, counted.
 * The first group of a feed makes `<feed> common` (the wrapper's or record's shared Event parts: time, System,
-  Generator, Device) and `<feed> helpers`; later groups reuse them and keep only what differs, said in
-  `group.notes`. A group writes its whole Event.
-* Each save regenerates `<feed> dispatcher` from the registry and sets the group's rows `translated`. Never edit a
-  dispatcher, common or helpers module by hand: they are regenerated.
-* A group that looks values up gives `references=`; the dispatcher's pipeline loads every group's reference data.
+  Generator, Device, and the site's shared calls) and `<feed> helpers`; later groups reuse them and keep only what
+  differs, said in `group.notes` (a shared call of a later group's is added to the common module). A group writes
+  its whole Event. Imports are a chain: the group imports only the common module, which imports the helpers and the
+  site's libraries; a module imported twice in one stylesheet is refused.
+* Each save sets the group's rows `translated`. Never edit a common or helpers module by hand: they are
+  regenerated.
+* A group that looks values up gives `references=`; its pipeline loads them.
 
 **Which pipeline** handles a new group is always the user's choice, in a form when it is first saved: the feed's
 pipeline (the default; one pass over every record), a pipeline of its own (it reads every stream of the feed and
@@ -75,17 +79,16 @@ source type belongs to one group: one another group translates is refused, as is
 another group's (`PEGA` and `PEGA mail`). A group's own
 output feed is made with `create_feed group=<name>` before its pipeline.
 
-`create_pipeline` puts the build's dispatcher in the pipeline's XSLT slot (naming both when the build holds two:
-then give the one with `set_properties`), sets a group's output feed on the stream appender, and refuses a group,
-common or helpers module as the pipeline's XSLT.
+`create_pipeline` makes each group's pipeline: its XSLT the group's (give it with `set_properties` when the build
+holds several groups); it refuses a common or helpers module as the pipeline's XSLT.
 
 ## Stepping, processing and coverage
 
-* Step and process the dispatcher's pipeline as any events pipeline: records outside its groups give no Event and
-  are not faults. An unsaved group's code given as `draft_code` is stepped through a temporary dispatcher.
-* Processing logs, per document, `Passed over N record(s) of source type X` (INFO; another pipeline's source types
-  `handled by pipeline '...'`), and a value no registry row matches once a stream (WARN, `New source type: ...`).
-  These are counts, not errors: don't fix them.
+* Step and process a group's pipeline as any events pipeline: records of other source types give no Event and are
+  not faults. An unsaved group's code is stepped as `draft_code` for its pipeline's XSLT element, as any
+  translation's.
+* Processing logs, per document, `Passed over N record(s) not of this group's source types` (INFO). These are
+  counts, not errors: don't fix them.
 * `review_coverage` judges the kinds missed against the build's scope (other source types `passed_over`, not
   missed; another pipeline's `handled_elsewhere`), reports the dispatcher's counts by source type and status
   (`source_types.processing`), and adds every new value to the build's registry as `new`. Tell the user: a later
@@ -107,7 +110,7 @@ user in one form: a field of another name, or a new index version; promotion is 
   pipeline changes (reference data, only ever added) and the index changes (fields added, forward only).
 * One open build per aggregated feed: another is refused, naming the open one. Finish (promote) or abandon it first.
 * A later build changes promoted modules through working copies; `copy_pipeline working_copy=true` steps the feed's
-  pipeline with them. Promotion writes them back and regenerates the dispatcher against the originals.
+  pipeline with them. Promotion writes them back, the modules pointed at the originals.
 * **Forward only**: a source type moved out of parked is translated from the next processing on. Tell the user its
   history isn't: backfilling means reprocessing the period's raw streams, which translates and indexes every
   group's records again (the superseded Events streams' documents stay in the index). For history without that, the

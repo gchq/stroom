@@ -18,8 +18,6 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.StreamSummaries;
-import stroom.ai.impl.tools.generation.DispatcherSpec;
-import stroom.ai.impl.tools.generation.DispatcherXslt;
 import stroom.ai.impl.tools.generation.FieldGroup;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.sample.ToolJson;
@@ -81,20 +79,5 @@ class TestIndexingInputs {
         assertThat(leaves.get(2).groups()).extracting(FieldMapping::path)
                 .containsExactly("EventDetail/Send/Destination/User");
         assertThat(IndexingInputs.mappingFields(List.of())).isEmpty();
-    }
-
-    @Test
-    void aDispatchersGroupsAreFoundByTheUuidsItImports() {
-        final DispatcherSpec spec = new DispatcherSpec("PEGA", "pega", Map.of(), "sourcetype", null, List.of(),
-                List.of(new DispatcherSpec.Group("PEGA security", "pega_security",
-                                SourceTypeGroups.href("u-security", "PEGA security"), List.of("PegaSecurityEvent")),
-                        new DispatcherSpec.Group("PEGA mail", "pega_mail", SourceTypeGroups.href("u-mail",
-                                "PEGA mail"), List.of("PegaMail"))), Map.of());
-        final String description = KeptMapping.withBlock("The feed's dispatcher", DispatcherXslt.SPEC_BLOCK,
-                spec.toJson());
-
-        assertThat(IndexingInputs.groupUuids(description)).containsExactly("u-security", "u-mail");
-        assertThat(IndexingInputs.groupUuids("A translation")).isEmpty();
-        assertThat(IndexingInputs.groupUuids(null)).isEmpty();
     }
 }

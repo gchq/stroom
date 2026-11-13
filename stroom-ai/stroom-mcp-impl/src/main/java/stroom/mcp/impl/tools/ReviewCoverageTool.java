@@ -52,7 +52,6 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -373,28 +372,16 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
                 }
             }
         }
-        // An aggregated feed's pipeline runs a dispatcher, which keeps no mapping: its groups keep theirs, and log
-        // their own Unknown records (seen in the aggregated feed walks: a dispatcher's pipeline was taken for one
-        // whose XSLT logs none, and its Unknown events sampled and reported twice).
-        final List<KeptMappings.KeptXslt> groupXslts = mapping == null
-                ? groupXslts(request.pipelineUuid())
-                : List.of();
         final List<String> keptUnknown = new ArrayList<>();
-        final List<TranslationMapping> mappings = new ArrayList<>();
         if (mapping != null) {
-            mappings.add(mapping);
+            NullSafe.list(mapping.events()).stream()
+                    .filter(rule -> NullSafe.isNonEmptyString(rule.allowUnknown()))
+                    .map(EventRule::name)
+                    .forEach(keptUnknown::add);
         }
-        groupXslts.forEach(group -> mappings.add(TranslationMapping.parse(group.kept().payload().get("mapping"))));
-        mappings.forEach(each -> NullSafe.list(each.events()).stream()
-                .filter(rule -> NullSafe.isNonEmptyString(rule.allowUnknown()))
-                .map(EventRule::name)
-                .forEach(keptUnknown::add));
         final String loggedUnknown = XsltGenerator.KEPT_UNKNOWN.split("'")[0];
-        final boolean pipelineLogsUnknown = kept.isPresent() && NullSafe.string(kept.get().xslt().getData())
+        final boolean logsUnknown = kept.isPresent() && NullSafe.string(kept.get().xslt().getData())
                 .contains(loggedUnknown);
-        final boolean groupsLogUnknown = !groupXslts.isEmpty() && groupXslts.stream()
-                .allMatch(group -> NullSafe.string(group.xslt().getData()).contains(loggedUnknown));
-        final boolean logsUnknown = pipelineLogsUnknown || groupsLogUnknown;
         final Set<Long> sampled = new TreeSet<>();
         if ((!keptUnknown.isEmpty() || mapping == null) && !logsUnknown && !continued) {
             sampled.addAll(sampledUnknown(pipeline, request.maxStreams(), groups));
@@ -515,17 +502,6 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         if (!warned.isEmpty()) {
             said.append(" The dispatcher warned of values no registry row matches: ").append(warned.keySet())
                     .append(".");
-        }
-    }
-
-    // The groups an aggregated feed's dispatcher imports, each with its kept mapping; none for another pipeline, or
-    // one that can't be read (then its Unknown events are sampled, as before).
-    private List<KeptMappings.KeptXslt> groupXslts(final String pipelineUuid) {
-        try {
-            return keptMappings.groupXslts(pipelineUuid);
-        } catch (final RuntimeException e) {
-            LOGGER.debug(() -> LogUtil.message("No groups read for pipeline {}: {}", pipelineUuid, e.getMessage()));
-            return List.of();
         }
     }
 

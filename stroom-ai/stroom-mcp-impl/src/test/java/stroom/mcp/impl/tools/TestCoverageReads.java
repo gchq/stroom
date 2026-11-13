@@ -20,7 +20,6 @@ import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.ErrorTriage;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
-import stroom.ai.impl.tools.generation.DispatcherXslt;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
@@ -114,26 +113,26 @@ class TestCoverageReads {
         // As an aggregated feed's dispatcher logs them: counts at the end of each document, a new value once a
         // stream.
         Mockito.when(streamSummaries.errorMarkers(Mockito.eq(10L), anyInt())).thenReturn(List.of(
-                info(DispatcherXslt.PASSED_OVER + "40" + DispatcherXslt.PASSED_OVER_OF + "PegaDB"),
-                info(DispatcherXslt.PASSED_OVER + "7" + DispatcherXslt.PASSED_OVER_OF + "PegaIntegration"
-                     + DispatcherXslt.HANDLED_BY + "pipeline 'PEGA-Integration-Events'"),
-                info(DispatcherXslt.PASSED_OVER + "3" + DispatcherXslt.PASSED_OVER_OF
-                     + DispatcherXslt.PASSED_OVER_NONE),
-                new ErrorTriage.Marker("WARNING", "translationFilter", DispatcherXslt.NEW_SOURCE_TYPE
+                info(CoverageReads.PASSED_OVER + "40" + CoverageReads.PASSED_OVER_OF + "PegaDB"),
+                info(CoverageReads.PASSED_OVER + "7" + CoverageReads.PASSED_OVER_OF + "PegaIntegration"
+                     + CoverageReads.HANDLED_BY + "pipeline 'PEGA-Integration-Events'"),
+                info(CoverageReads.PASSED_OVER + "3" + CoverageReads.PASSED_OVER_OF
+                     + CoverageReads.PASSED_OVER_NONE),
+                new ErrorTriage.Marker("WARNING", "translationFilter", CoverageReads.NEW_SOURCE_TYPE
                                                                        + "sourcetype 'PegaBatch'"
-                                                                       + DispatcherXslt.NEW_SOURCE_TYPE_END,
+                                                                       + CoverageReads.NEW_SOURCE_TYPE_END,
                         null, null, null),
-                new ErrorTriage.Marker("WARNING", "translationFilter", DispatcherXslt.NEW_SOURCE_TYPE
+                new ErrorTriage.Marker("WARNING", "translationFilter", CoverageReads.NEW_SOURCE_TYPE
                                                                        + "sourcetype (no value)"
-                                                                       + DispatcherXslt.NEW_SOURCE_TYPE_END,
+                                                                       + CoverageReads.NEW_SOURCE_TYPE_END,
                         null, null, null),
                 new ErrorTriage.Marker("WARNING", "x", "No event mapping matched record 2 (a=b)", null, null,
                         null)));
         Mockito.when(streamSummaries.errorMarkers(Mockito.eq(11L), anyInt())).thenReturn(List.of(
-                info(DispatcherXslt.PASSED_OVER + "2" + DispatcherXslt.PASSED_OVER_OF + "PegaDB"),
-                new ErrorTriage.Marker("WARNING", "translationFilter", DispatcherXslt.NEW_SOURCE_TYPE
+                info(CoverageReads.PASSED_OVER + "2" + CoverageReads.PASSED_OVER_OF + "PegaDB"),
+                new ErrorTriage.Marker("WARNING", "translationFilter", CoverageReads.NEW_SOURCE_TYPE
                                                                        + "sourcetype 'PegaBatch'"
-                                                                       + DispatcherXslt.NEW_SOURCE_TYPE_END,
+                                                                       + CoverageReads.NEW_SOURCE_TYPE_END,
                         null, null, null)));
 
         final CoverageReads.LoggedRecords found = reads.logged(progress, List.of(
@@ -143,7 +142,7 @@ class TestCoverageReads {
         // The records the rules missed are read as before; the dispatcher's lines apart.
         assertThat(found.records()).extracting(CoverageReads.Logged::raw).containsExactly(1L);
         final CoverageReads.Dispatched dispatched = found.dispatched();
-        assertThat(dispatched.passedOver()).isEqualTo(Map.of(DispatcherXslt.PASSED_OVER_NONE, 3L, "PegaDB", 42L,
+        assertThat(dispatched.passedOver()).isEqualTo(Map.of(CoverageReads.PASSED_OVER_NONE, 3L, "PegaDB", 42L,
                 "PegaIntegration", 7L));
         assertThat(dispatched.handledBy()).containsExactly(Map.entry("PegaIntegration",
                 "pipeline 'PEGA-Integration-Events'"));

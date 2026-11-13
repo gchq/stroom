@@ -155,7 +155,7 @@ class FieldMappingSections {
         final String kind = kept.kept().kind();
         final String section;
         if (KeptMapping.TRANSLATION.equals(kind)) {
-            section = translationSection(context, build, pipeline, kept, streamIds, layout, described, false);
+            section = translationSection(context, build, pipeline, kept, streamIds, layout, described);
         } else if ("cef".equals(kind)) {
             section = cefSection(context, pipeline, kept, streamIds, layout, described);
         } else {
@@ -408,62 +408,19 @@ class FieldMappingSections {
                + " not stepped: the time for stepping ran out";
     }
 
-    /// The Field mapping section of an aggregated feed's pipeline, whose one XSLT is its dispatcher: a list of its
-    /// source type groups, the feed's registry named for what becomes of every source type, then each group's own
-    /// Field mapping, generated as a translation's is from the mapping kept with the group's XSLT, stepped through a
-    /// temporary dispatcher handing it its records alone.
-    ///
-    /// @param context   The call's context.
-    /// @param build     The build.
-    /// @param pipeline  The pipeline documented.
-    /// @param groups    The mappings kept with its source type groups' XSLTs.
-    /// @param streamIds The sample streams.
-    /// @param layout    [FieldDocs#BY_EVENT_TYPE] or [FieldDocs#COMPACT].
-    /// @param described The field descriptions, given and asked for.
-    /// @return The section.
-    /// @throws ToolRefusal if a group's can't be generated, saying why.
-    String groupsSection(final ToolCallContext context,
-                         final String build,
-                         final PipelineDoc pipeline,
-                         final List<KeptMappings.KeptXslt> groups,
-                         final List<Long> streamIds,
-                         final String layout,
-                         final Descriptions described) {
-        final List<String> parts = new ArrayList<>();
-        final List<String> rows = new ArrayList<>(List.of("| Source type group | Source types | XSLT |",
-                "| --- | --- | --- |"));
-        String feed = null;
-        for (final KeptMappings.KeptXslt group : groups) {
-            final SourceTypeModule module = TranslationMapping.parse(group.kept().payload().get("mapping"))
-                    .module();
-            if (module == null || !module.isGroup()) {
-                continue;
-            }
-            rows.add("| " + module.name() + " | " + String.join(", ", module.sourceTypes()) + " | "
-                     + group.xslt().getName() + " |");
-            if (module.common() != null && module.common().contains(SourceTypeGroups.COMMON_SUFFIX)) {
-                final String name = module.common().replaceFirst(".*name='(.*)'.*", "$1");
-                feed = name.endsWith(SourceTypeGroups.COMMON_SUFFIX)
-                        ? name.substring(0, name.length() - SourceTypeGroups.COMMON_SUFFIX.length())
-                        : feed;
-            }
-        }
-        parts.add("This pipeline's one XSLT is its feed's dispatcher: it hands each record to the source type group "
-                  + "translating its source type, and passes the rest over, counting them. What becomes of every "
-                  + "source type is in the feed's registry" + (feed == null
+    // What a source type group's section says first: the pipeline's XSLT is the group's, translating its source
+    // types and passing over the rest, and what becomes of every source type is in the feed's registry.
+    private static String groupLine(final SourceTypeModule module) {
+        final String common = NullSafe.string(module.common());
+        final String name = common.replaceFirst(".*name='(.*)'.*", "$1");
+        final String feed = name.endsWith(SourceTypeGroups.COMMON_SUFFIX)
+                ? name.substring(0, name.length() - SourceTypeGroups.COMMON_SUFFIX.length())
+                : null;
+        return "This pipeline's XSLT is source type group " + module.name() + "'s (" + String.join(", ",
+                module.sourceTypes()) + "): it translates those source types' records and passes over the feed's "
+               + "others, counting them. What becomes of every source type is in the feed's registry" + (feed == null
                 ? ""
-                : ", '" + SourceTypeRegistry.docName(feed) + "'") + ".");
-        parts.add(String.join("\n", rows));
-        for (final KeptMappings.KeptXslt group : groups) {
-            final SourceTypeModule module = TranslationMapping.parse(group.kept().payload().get("mapping"))
-                    .module();
-            parts.add("### Source type group: " + group.xslt().getName() + (module == null
-                    ? ""
-                    : " (" + String.join(", ", module.sourceTypes()) + ")"));
-            parts.add(translationSection(context, build, pipeline, group, streamIds, layout, described, true)
-                    .stripTrailing() + "\n\n" + docMark(group));
-        }
-        return String.join("\n\n", parts);
+                : ", '" + SourceTypeRegistry.docName(feed) + "'") + ".\n\n";
     }
 
     // A group's mapping as one translation reads, for its field tables: the common module's parts it calls are
@@ -512,12 +469,13 @@ class FieldMappingSections {
                                       final KeptMappings.KeptXslt kept,
                                       final List<Long> streamIds,
                                       final String layout,
-                                      final Descriptions described,
-                                      final boolean group) {
+                                      final Descriptions described) {
         final Map<String, Object> payload = kept.kept().payload();
         final String version = eventVersions.translationVersion(KeptCode.keptVersion(payload),
                 kept.xslt().getData());
         final TranslationMapping mapping = TranslationMapping.parse(payload.get("mapping"));
+        final SourceTypeModule module = mapping.module();
+        final boolean group = module != null && module.isGroup();
         final EventSchema schema = eventVersions.keptSchema(context, null, payload, version);
         final XsltGenerator.Generated marked = XsltGenerator.generate(mapping, schema, version, true);
         if (!marked.ok()) {
@@ -525,14 +483,7 @@ class FieldMappingSections {
                     marked.problems().subList(0, Math.min(3, marked.problems().size()))));
         }
         final SteppedPipeline loaded = load(pipeline.getUuid());
-        // A source type group's, through a temporary dispatcher handing it its records alone: its events its own.
-        final Map<String, String> markedCode = Map.of(kept.element(), group
-                ? stepping.groupAlone(pipeline.getUuid(), kept.element(), marked.xslt())
-                : marked.xslt());
-        final Map<String, String> savedCode = group
-                ? Map.of(kept.element(), stepping.groupAlone(pipeline.getUuid(), kept.element(),
-                kept.xslt().getData()))
-                : null;
+        final Map<String, String> markedCode = Map.of(kept.element(), marked.xslt());
         // The streams' first records and the build's survey examples beyond them (asked for by the user: seen in
         // chat 173, a stream's rarer kinds documented "(not in the sample)" from its first 200 records alone).
         final Map<String, String> outputs = steppedOutputs(context, loaded, streamIds, kept.element(),
@@ -542,7 +493,7 @@ class FieldMappingSections {
         // each given the rule the mapping's marked XSLT gave the same record's event. Seen: a hand edit making
         // users distinct documented from what the mapping generates, duplicates and all.
         final List<XmlElement> events = drift.isPresent()
-                ? EventFieldDocs.runningEvents(steppedOutputs(context, loaded, streamIds, kept.element(), savedCode,
+                ? EventFieldDocs.runningEvents(steppedOutputs(context, loaded, streamIds, kept.element(), null,
                         build).outputs(), outputs)
                 : EventFieldDocs.sampledEvents(new ArrayList<>(outputs.values()));
         if (events.isEmpty()) {
@@ -553,7 +504,9 @@ class FieldMappingSections {
         // Rewritten by hand (most events not as the mapping writes them): documented by the events it writes, by
         // event type, not by rules that no longer write them.
         final long unmarked = events.stream().filter(event -> EventFieldDocs.ruleOf(event) == null).count();
-        String section = countsLine(outputs) + (drift.isPresent() && unmarked * 2 > events.size()
+        String section = (group
+                ? groupLine(module)
+                : "") + countsLine(outputs) + (drift.isPresent() && unmarked * 2 > events.size()
                 ? WrittenEventDocs.writtenEventsMarkdown(schema, events, layout, described)
                 : EventFieldDocs.fieldMappingMarkdown(group
                         ? withCommonParts(mapping)

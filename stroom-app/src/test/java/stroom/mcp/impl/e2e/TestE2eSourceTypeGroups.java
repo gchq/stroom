@@ -16,7 +16,6 @@
 
 package stroom.mcp.impl.e2e;
 
-import stroom.ai.impl.tools.generation.DispatcherXslt;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.ToolJson;
@@ -45,13 +44,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// An aggregated feed's source type groups through the REAL tools on a real Stroom: on the PEGA slice, a build scoped
 /// to PegaSecurityEvent (a JSON message) and PegaIntegration (SOAP, some bodies truncated) builds a source type group
 /// for each with build_translation_xslt; the first makes the feed's common module and helpers from its wrapper
-/// entries, each save regenerates the feed's dispatcher from the registry and sets the registry's rows translated.
-/// Each new group's pipeline is asked in a form (shared or its own only: the feed has no pipeline yet).
-/// create_pipeline makes the one-filter pipeline, its XSLT the dispatcher filled from the build; it steps with
-/// Stroom resolving the imports by UUID: valid Events for the scope's records only, the rest passed over and
-/// counted; an unsaved group stepped through a temporary dispatcher; processing logs the counts and the truncated
-/// SOAP bodies, and doesn't stop. The samples are the synthetic test resources under `aggregated/`
-/// that TestE2eSourceTypes reads (made by aggregated-feeds-generator.py).
+/// entries, and each save sets the registry's rows translated. Each group is the XSLT of a pipeline of its own
+/// (create_pipeline, its XSLT set to the group's), Stroom resolving the chain of imports (group, common module,
+/// helpers) by UUID: each steps clean with valid Events for its own source types' records only, the rest passed over
+/// and counted; an unsaved group is stepped as draft code for its pipeline's XSLT; processing writes each group's
+/// Events, logs the counts passed over and the truncated SOAP bodies, and doesn't stop. The samples are the synthetic
+/// test resources under `aggregated/` that TestE2eSourceTypes reads (made by aggregated-feeds-generator.py).
 @SuppressWarnings("unchecked")
 class TestE2eSourceTypeGroups extends AbstractE2eTest {
 
@@ -74,7 +72,7 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
     private SecurityContext securityContext;
 
     @Test
-    void aGroupPerSourceTypeIsDispatchedFromTheRegistryAndTheRestPassedOver() {
+    void eachGroupIsItsOwnPipelinesXsltTranslatingItsSourceTypesAndPassingTheRestOver() {
         createFeed("pega-groups-src", FEED);
         final String text = lines("pega/pega-1.json", 1500);
         final long stream = upload(FEED, text);
@@ -93,16 +91,15 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
         dump("build_translation_xslt PEGA security", security);
         assertThat(security).as("the security group saved: %s", security.get("problems")).containsEntry("ok", true);
         final Map<String, Object> first = map(security, "group");
-        assertThat(first).containsEntry("mode", "pega_security");
+        assertThat(first).containsEntry("mode", "pega_security").doesNotContainKey("dispatcher");
         assertThat(String.valueOf(first.get("notes"))).contains("common module");
         // The sample check read the scope's records: the group's alone.
         assertThat(jsonOf(security.get("scope"))).contains("PegaSecurityEvent");
         final String commonUuid = uuidOf(map(first, "common"));
         final String helpersUuid = uuidOf(map(first, "helpers"));
         final String securityUuid = uuidOf(map(first, "xslt"));
-        final String dispatcherUuid = uuidOf(map(first, "dispatcher"));
 
-        // The second group reuses the common module, and joins the dispatcher.
+        // The second group reuses the common module.
         final Map<String, Object> integration = agreed("build_translation_xslt", args("build", BUILD, "feeds",
                 List.of(FEED), "group", "PEGA integration", "source_types", List.of("PegaIntegration"),
                 "schema_version", VERSION, "stream_ids", List.of(stream), "mapping", integrationMapping()));
@@ -111,12 +108,14 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
                 .containsEntry("ok", true);
         final Map<String, Object> second = map(integration, "group");
         assertThat(uuidOf(map(second, "common"))).isEqualTo(commonUuid);
-        assertThat(uuidOf(map(second, "dispatcher"))).isEqualTo(dispatcherUuid);
         final String integrationUuid = uuidOf(map(second, "xslt"));
-        final String dispatcher = readXslt(dispatcherUuid).getData();
-        assertThat(dispatcher).contains("uuid='" + securityUuid + "'", "uuid='" + integrationUuid + "'",
-                "uuid='" + helpersUuid + "'", "mode=\"pega_integration\"");
-        assertThat(readXslt(securityUuid).getData()).contains("uuid='" + commonUuid + "'");
+        // A chain of imports: each group imports the common module alone, which imports the helpers.
+        for (final String group : List.of(securityUuid, integrationUuid)) {
+            final String code = readXslt(group).getData();
+            assertThat(code).contains("uuid='" + commonUuid + "'", "<xsl:template match=\"/\">")
+                    .doesNotContain("uuid='" + helpersUuid + "'");
+        }
+        assertThat(readXslt(commonUuid).getData()).contains("uuid='" + helpersUuid + "'");
         // The registry's rows for the two translated, by their groups; the rest still parked.
         final Map<String, Object> registry = SourceTypeRegistry.read(documentation(uuidOf(map(second,
                 "registry"))));
@@ -124,95 +123,104 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
         list(registry, "rows").forEach(row -> rows.put((String) row.get("name"), row));
         assertThat(rows.get("PegaSecurityEvent")).containsEntry("status", "translated")
                 .containsEntry("group", "PEGA security");
+        assertThat(map(rows.get("PegaSecurityEvent"), "group_xslt")).containsEntry("uuid", securityUuid);
         assertThat(rows.get("PegaIntegration")).containsEntry("status", "translated")
                 .containsEntry("group", "PEGA integration");
         assertThat(rows.get("PegaDB")).containsEntry("status", "parked");
 
-        // Each new group's pipeline was asked in a form: the feed has none yet, so shared or its own only.
-        final List<ElicitFormRequest> placements = client.forms().stream()
-                .filter(form -> form.message().contains("is new: choose the pipeline that handles it"))
-                .toList();
-        assertThat(placements).hasSize(2);
-        assertThat(placements.getFirst().message()).contains("'PEGA security' (PegaSecurityEvent)")
-                .doesNotContain("**", "|");
-        final Map<?, ?> question = (Map<?, ?>) ((Map<?, ?>) placements.getFirst().requestedSchema()
-                .get("properties")).get("choice");
-        assertThat((List<?>) question.get("enum")).hasSize(2);
-        assertThat(String.valueOf(question.get("enum"))).contains("The feed's pipeline", "A pipeline of its own")
-                .doesNotContain("new version");
-        assertThat(map(first, "pipeline")).containsEntry("own", false);
-        // Where the Events go is asked only for a pipeline of its own: neither group has one.
-        assertThat(client.forms()).noneSatisfy(form -> assertThat(form.message()).contains("runs in a pipeline of "
-                                                                                          + "its own"));
-
-        // The pipeline, made by the tools: its one XSLT the build's dispatcher (filled from the build), Stroom
-        // resolving the imports by UUID.
-        final Map<String, Object> made = agreed("create_pipeline", args("build", BUILD, "name", FEED + "-Events",
-                "template_uuid", templateUuid("translation", "Event Data (JSON)")));
-        dump("create_pipeline", made);
-        assertThat(made).containsEntry("dispatcher", dispatcherUuid);
-        assertThat(String.valueOf(made.get("filled_from_build"))).contains("translationFilter.xslt = " + FEED
-                                                                            + " dispatcher");
-        assertThat(strings(made, "source_types")).containsExactlyInAnyOrder("PegaSecurityEvent", "PegaIntegration");
-        final String pipeline = uuidOf(made);
-        // The registry names the pipeline that runs each source type.
-        assertThat(list(SourceTypeRegistry.read(documentation(uuidOf(map(second, "registry")))), "rows"))
-                .filteredOn(row -> "PegaSecurityEvent".equals(row.get("name")))
-                .singleElement()
-                .satisfies(row -> assertThat((Map<String, Object>) row.get("pipeline"))
-                        .containsEntry("name", FEED + "-Events"));
+        // Each group's pipeline, made by the tools with the group's XSLT as its XSLT, Stroom resolving the imports
+        // by UUID.
+        final String template = templateUuid("translation", "Event Data (JSON)");
+        final String securityPipeline = uuidOf(agreed("create_pipeline", args("build", BUILD, "name",
+                FEED + "-Security-Events", "template_uuid", template, "set_properties", List.of(docProperty(
+                        "translationFilter", "xslt", securityUuid, "XSLT")))));
+        final String integrationPipeline = uuidOf(agreed("create_pipeline", args("build", BUILD, "name",
+                FEED + "-Integration-Events", "template_uuid", template, "set_properties", List.of(docProperty(
+                        "translationFilter", "xslt", integrationUuid, "XSLT")))));
         final List<String> records = text.lines().toList();
         final int securityAt = indexOf(records, "\"PegaSecurityEvent\"", null);
         final int soapAt = indexOf(records, "\"PegaIntegration\"", "Envelope>\"}");
         final int truncatedAt = indexOfTruncated(records);
         final int dbAt = indexOf(records, "\"PegaDB\"", null);
-        for (final int record : List.of(securityAt, soapAt, truncatedAt)) {
-            final String output = translationOutput(pipeline, stream, record);
-            final Map<String, Object> valid = json("check_events", args("events_xml", output));
-            assertThat(map(valid, "schema")).as("record %s valid: %s", record, output).containsEntry("valid", true);
-            assertThat(children(parse(output).getDocumentElement(), "Event")).as("record %s: one Event", record)
-                    .hasSize(1);
+        assertOneValidEvent(securityPipeline, stream, securityAt);
+        for (final int record : List.of(soapAt, truncatedAt)) {
+            assertOneValidEvent(integrationPipeline, stream, record);
         }
-        final Element login = children(parse(translationOutput(pipeline, stream, securityAt)).getDocumentElement(),
-                "Event").getFirst();
+        final Element login = children(parse(translationOutput(securityPipeline, stream, securityAt))
+                .getDocumentElement(), "Event").getFirst();
         assertThat(textAt(login, "EventSource/System/Name")).isEqualTo("PEGA");
         assertThat(textAt(login, "EventSource/System/Environment")).isEqualTo("Prod");
         assertThat(textAt(login, "EventSource/Device/HostName")).startsWith("pega-app");
         assertThat(textAt(login, "EventTime/TimeCreated")).startsWith("2026-11-10T");
-        // Out of scope: no Event, the record passed over and counted.
-        assertThat(children(parse(translationOutput(pipeline, stream, dbAt)).getDocumentElement(), "Event"))
-                .isEmpty();
+        // Not of its group's source types: no Event, the record passed over and counted.
+        for (final int record : List.of(dbAt, soapAt)) {
+            assertThat(children(parse(translationOutput(securityPipeline, stream, record)).getDocumentElement(),
+                    "Event")).as("record %s in the security pipeline", record).isEmpty();
+        }
+        assertThat(children(parse(translationOutput(integrationPipeline, stream, securityAt)).getDocumentElement(),
+                "Event")).isEmpty();
 
-        // An unsaved change to a group, stepped through a temporary dispatcher with it inlined.
+        // An unsaved change to a group, stepped as draft code for its pipeline's XSLT.
         final String draft = readXslt(securityUuid).getData().replace("<TypeId>Login</TypeId>",
                 "<TypeId>LoginDraft</TypeId>");
         assertThat(draft).contains("LoginDraft");
         final int loginAt = indexOf(records, "\\\"eventType\\\": \\\"login\\\"", null);
-        final Map<String, Object> stepped = json("step_pipeline", args("pipeline_uuid", pipeline, "stream_id",
-                stream, "record", loginAt, "draft_code", Map.of("translationFilter", draft)));
+        final Map<String, Object> stepped = json("step_pipeline", args("pipeline_uuid", securityPipeline,
+                "stream_id", stream, "record", loginAt, "draft_code", Map.of("translationFilter", draft)));
         assertThat(String.valueOf(map(map(stepped, "elements"), "translationFilter").get("output")))
                 .contains("LoginDraft");
 
         // Stepped clean with the saved code: the passed-over records and the truncated bodies are counted, not
-        // faults.
-        final Map<String, Object> sampled = stepSample(pipeline, List.of(stream));
-        dump("step_sample", sampled.get("groups"));
-        assertThat(sampled).as("stepped clean: %s", sampled.get("groups")).containsEntry("verdict", "clean");
+        // faults, and no module is imported twice.
+        for (final String pipeline : List.of(securityPipeline, integrationPipeline)) {
+            final Map<String, Object> sampled = stepSample(pipeline, List.of(stream));
+            dump("step_sample", sampled.get("groups"));
+            assertThat(sampled).as("stepped clean: %s", sampled.get("groups")).containsEntry("verdict", "clean");
+            assertThat(jsonOf(sampled)).doesNotContain("imported more than once", "cannot import itself");
+        }
 
-        // The pipeline's documentation: its groups listed, the registry named, each group's own Field mapping.
+        // The pipeline's documentation: its group named, the registry named, the group's own Field mapping.
         final Map<String, Object> documented = agreed("write_documentation", args("build", BUILD, "pipeline_uuid",
-                pipeline, "stream_ids", List.of(stream), "markdown", "# " + FEED + "-Events\n\n## Purpose and data"
-                                                                      + "\n\nPEGA's security events and integration "
-                                                                      + "calls.\n\n## Field mapping\n\nGenerated.\n",
+                securityPipeline, "stream_ids", List.of(stream), "markdown", "# " + FEED + "-Security-Events\n\n"
+                                                                              + "## Purpose and data\n\nPEGA's "
+                                                                              + "security events.\n\n## Field "
+                                                                              + "mapping\n\nGenerated.\n",
                 "change", "Created"));
         dump("write_documentation", documented);
         final String docText = documentation(uuidOf(documented));
-        assertThat(docText).contains("### Source type group: PEGA security (PegaSecurityEvent)",
-                "### Source type group: PEGA integration (PegaIntegration)", FEED + " source types",
+        assertThat(docText).contains("source type group PEGA security's (PegaSecurityEvent)", FEED + " source types",
                 "`EventDetail/Authenticate/User/Id`", "`EventTime/TimeCreated`");
 
-        // Processing: valid Events for the scope's records alone; the passed-over counted, the truncated SOAP bodies
-        // counted, and nothing stops.
+        // Processing: each group's pipeline writes valid Events for its own source types alone; the rest passed over
+        // and counted (once a document: the lines add up to the stream's), the truncated SOAP bodies counted, and
+        // nothing stops.
+        final long total = records.size();
+        final Processed securityDone = processed(securityPipeline, stream);
+        final long securityRecords = recordsOf(records, "PegaSecurityEvent");
+        assertThat(count(securityDone.events(), "<Event>")).isEqualTo(securityRecords);
+        assertThat(passedOver(securityDone.logged())).isEqualTo(total - securityRecords);
+        final Processed integrationDone = processed(integrationPipeline, stream);
+        final long integrationRecords = recordsOf(records, "PegaIntegration");
+        assertThat(count(integrationDone.events(), "<Event>")).isEqualTo(integrationRecords);
+        assertThat(passedOver(integrationDone.logged())).isEqualTo(total - integrationRecords);
+        final long truncated = records.stream().filter(TestE2eSourceTypeGroups::isTruncatedSoap).count();
+        assertThat(truncated).isPositive();
+        assertThat(count(integrationDone.logged(), "pega_integration: soap" + XsltGenerator.NOT_PARSED + "XML"))
+                .isEqualTo(truncated);
+        assertThat(securityDone.logged() + integrationDone.logged()).doesNotContain("WARN New source type");
+    }
+
+    // One record's output in a pipeline: valid, one Event.
+    private void assertOneValidEvent(final String pipeline, final long stream, final int record) {
+        final String output = translationOutput(pipeline, stream, record);
+        final Map<String, Object> valid = json("check_events", args("events_xml", output));
+        assertThat(map(valid, "schema")).as("record %s valid: %s", record, output).containsEntry("valid", true);
+        assertThat(children(parse(output).getDocumentElement(), "Event")).as("record %s: one Event", record)
+                .hasSize(1);
+    }
+
+    // A pipeline's processing of the stream: its one Events stream, valid, and what it logged beside it.
+    private Processed processed(final String pipeline, final long stream) {
         final Map<String, Object> done = process(pipeline, List.of(stream));
         dump("wait_for_processing", done);
         final Map<String, Object> processed = list(done, "streams").getFirst();
@@ -220,21 +228,13 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
         assertThat(events).as("an Events stream: %s", processed).hasSize(1);
         final Map<String, Object> checked = json("check_events", args("stream_ids", events));
         assertThat(map(checked, "schema")).as("Events valid: %s", checked).containsEntry("valid", true);
-        final long inScope = records.stream().filter(line -> SCOPE.stream().anyMatch(type -> line.contains(
-                "\"sourcetype\": \"" + type + "\""))).count();
-        assertThat(count(streamText(events.getFirst()), "<Event>")).isEqualTo(inScope);
         final List<Long> errors = ids(processed, "errors");
         assertThat(errors).as("the counts logged beside the Events").isNotEmpty();
-        final String logged = streamText(errors.getFirst());
-        final long db = records.stream().filter(line -> line.contains("\"sourcetype\": \"PegaDB\"")).count();
-        // Counted at the end of each document Stroom hands the dispatcher (a stream is split into several): the
-        // counts add up to the stream's.
-        assertThat(passedOver(logged, "PegaDB")).isEqualTo(db);
-        assertThat(passedOver(logged, "PegaSecurityEvent")).isZero();
-        final long truncated = records.stream().filter(TestE2eSourceTypeGroups::isTruncatedSoap).count();
-        assertThat(truncated).isPositive();
-        assertThat(count(logged, "pega_integration: soap" + XsltGenerator.NOT_PARSED + "XML"))
-                .isEqualTo(truncated);
+        return new Processed(streamText(events.getFirst()), streamText(errors.getFirst()));
+    }
+
+    private static long recordsOf(final List<String> records, final String sourceType) {
+        return records.stream().filter(line -> line.contains("\"sourcetype\": \"" + sourceType + "\"")).count();
     }
 
     // --- the mappings an agent would send for each group ---
@@ -303,10 +303,10 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
         return line.contains("\"sourcetype\": \"PegaIntegration\"") && !line.endsWith("Envelope>\"}");
     }
 
-    // The records of a source type the dispatcher's lines say it passed over, added up.
-    static long passedOver(final String logged, final String sourceType) {
-        final Matcher matcher = Pattern.compile(Pattern.quote(DispatcherXslt.PASSED_OVER) + "(\\d+)"
-                                                + Pattern.quote(DispatcherXslt.PASSED_OVER_OF + sourceType) + "$",
+    // The records a group's pipeline says it passed over, added up over its lines (one a document).
+    static long passedOver(final String logged) {
+        final Matcher matcher = Pattern.compile(Pattern.quote(XsltGenerator.PASSED_OVER) + "(\\d+)"
+                                                + Pattern.quote(XsltGenerator.PASSED_OVER_END) + "$",
                 Pattern.MULTILINE).matcher(logged);
         long total = 0;
         while (matcher.find()) {
@@ -364,5 +364,14 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
             content.put("text", reason);
             return new ElicitResult(ElicitResult.Action.ACCEPT, content, null);
         };
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // A pipeline's Events and what it logged, as Stroom stored them.
+    private record Processed(String events, String logged) {
+
     }
 }

@@ -277,21 +277,18 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                              + "itself from the mapping kept with the XSLT, stepped over the sample streams. "
                              + "An aggregated feed (a source type registry, record_source_types): give group (a "
                              + "name) and source_types (default: the build's scope) to build a source type group: "
-                             + "templates in a mode of its own writing its whole Event, the feed's common module "
-                             + "('<feed> common': EventTime, System, Generator, Device from the wrapper's fields, "
-                             + "made from this mapping's common entries for the first group, its parts called by "
-                             + "every group; a rule mapping one of those elements itself writes its own) and helpers "
-                             + "('<feed> helpers') imported, and with build the feed's dispatcher ('<feed> "
-                             + "dispatcher', the pipeline's one XSLT: routes each record by the registry's rows, "
-                             + "passes the rest over and counts them) regenerated and the registry's rows set "
-                             + "translated. A new group's pipeline is the user's choice, asked in a form as it is "
-                             + "saved: the feed's pipeline (shared), a pipeline of its own (its own dispatcher, "
-                             + "optionally an output feed of its own: create_feed group=, then create_pipeline), or a "
-                             + "new version of the feed's pipeline (copy_pipeline); group.group_next says what "
+                             + "the XSLT of a pipeline of its own, translating its source types' records (the "
+                             + "registry's rows tried in order) in a mode of its own and passing over the rest, "
+                             + "counted; it imports the feed's common module ('<feed> common': EventTime, System, "
+                             + "Generator, Device from the wrapper's fields and the site's shared calls, made from "
+                             + "this mapping's common entries for the first group, its parts called by every group; "
+                             + "a rule mapping one of those elements itself writes its own), which imports the "
+                             + "helpers ('<feed> helpers'). With build, the registry's rows are set translated. A new "
+                             + "group's placement is asked in a form as it is saved; group.group_next says what "
                              + "follows. A later build changing a promoted group, the common module or the helpers "
-                             + "works on working copies, imported by the build's own modules. step_sample, "
-                             + "step_records and step_pipeline take a group's draft code for the dispatcher's "
-                             + "element: it is inlined into a temporary dispatcher.")
+                             + "works on working copies, imported by the build's own modules. The stepping tools "
+                             + "step an unsaved group as draft code for its pipeline's XSLT element, as any "
+                             + "translation.")
                 .parameters(ObjectSchema.builder()
                         .addProperty(MAPPING_ARG, TranslationArgs.object(
                                 "The translation mapping: {input, common: [{path, field|value|...}], events: [{name, "
@@ -378,8 +375,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                                                    + "(rebuild_mapping) instead.")
                         .addProperty(HAND_EDIT_CHOICES_ARG, TranslationArgs.object(TranslationArgs.HAND_EDIT_CHOICES))
                         .addStringProperty(GROUP_ARG, "An aggregated feed's source type group to build, by name "
-                                                      + "(e.g. 'PEGA security'): the XSLT is the group's module, "
-                                                      + "imported by the feed's dispatcher. Needs the build's "
+                                                      + "(e.g. 'PEGA security'): the XSLT is the group's, the "
+                                                      + "XSLT of its own pipeline. Needs the build's "
                                                       + "source type registry. A saved group's uuid alone "
                                                       + "regenerates it as a group.")
                         .addProperty(SOURCE_TYPES_ARG, stringArraySchema("With group: the registry's source types "
@@ -695,8 +692,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 ? null
                 : groups.buildOf(request.uuid()).orElse(null));
         if (build == null) {
-            throw new ToolRefusal("A source type group is built in a build, beside the feed's registry, common "
-                                  + "module and dispatcher: give build");
+            throw new ToolRefusal("A source type group is built in a build, beside the feed's registry and common "
+                                  + "module: give build");
         }
         b.build = build;
         b.schema = schemaOf(context, b);
@@ -738,6 +735,10 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         final Set<String> have = new LinkedHashSet<>(b.mapping.imports());
         b.mapping.shared().stream().map(SharedTemplate::href).forEach(have::add);
         b.mapping.functions().stream().map(SharedFunctions::href).forEach(have::add);
+        if (b.group != null) {
+            // A group's stylesheet imports what its common module imports: never imported again by the group.
+            b.group.common().shared().stream().map(SharedTemplate::href).forEach(have::add);
+        }
         final List<String> missing = required.stream()
                 .map(RequiredImport::href)
                 .filter(href -> !have.contains(href))
@@ -960,10 +961,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             // The documentation run steps a copy that marks each Event with its rule; the returned XSLT has no
             // marks.
             final String marked = XsltGenerator.generate(b.mapping, b.schema, b.version, true).xslt();
-            // A source type group's is stepped through the feed's dispatcher, inlined in place of its import.
-            final Map<String, String> code = b.group == null
-                    ? Map.of(element, marked)
-                    : stepping.withGroupsInlined(request.pipelineUuid(), Map.of(element, marked));
+            final Map<String, String> code = Map.of(element, marked);
             final PipelineStepping.Outputs outputs = PipelineStepping.withinTimeLimit(context, () ->
                     stepping.outputs(context, pipeline, request.streamIds(), element, code,
                             request.maxRecords()));
@@ -1058,19 +1056,17 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
         final String savedUuid = String.valueOf(saved.get("uuid"));
         if (imports != null) {
-            // The feed's dispatcher regenerated from the registry with the group imported, and its source types
-            // translated.
+            // The registry's rows for its source types translated, naming the group's XSLT.
             final Map<String, Object> group = groupSaid(b);
             group.put("xslt", Map.of("uuid", savedUuid, "name", String.valueOf(saved.get("name"))));
             group.putAll(imports.saved());
-            final Map<String, Object> dispatched = new LinkedHashMap<>(groups.dispatch(context, b.build, b.group,
-                    imports, savedUuid, String.valueOf(saved.get("name")), placement, request.references(), b.schema,
-                    b.version));
+            final Map<String, Object> marked = new LinkedHashMap<>(groups.markTranslated(context, b.build, b.group,
+                    imports, savedUuid, String.valueOf(saved.get("name")), placement, request.references()));
             // What placing it said joins what splitting its mapping said.
             final List<String> notes = new ArrayList<>(JsonValues.strings(group.get("notes")));
-            notes.addAll(JsonValues.strings(dispatched.remove("notes")));
+            notes.addAll(JsonValues.strings(marked.remove("notes")));
             notes.addAll(b.placementNotes);
-            group.putAll(dispatched);
+            group.putAll(marked);
             if (!notes.isEmpty()) {
                 group.put("notes", notes);
             }
@@ -1177,26 +1173,19 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         return new SourceTypeGroups.Placement(request.pipeline(), own && request.ownOutputFeed());
     }
 
-    // What the agent does next for a group placed now: its pipeline of its own made, its output feed made first, or
-    // the feed's pipeline's new version copied.
+    // What the agent does next for a group placed now: its pipeline made (every group has one of its own, its XSLT
+    // the group's), its output feed made first where it has one of its own.
     private static Optional<String> groupNext(final SourceTypeGroups.Plan plan,
                                               final SourceTypeGroups.Placement placement) {
-        if (placement == null || SourceTypeGroups.SHARED.equals(placement.choice())) {
+        if (placement == null) {
             return Optional.empty();
-        }
-        if (SourceTypeGroups.NEW_VERSION.equals(placement.choice())) {
-            return Optional.of("The group goes in a new version of the feed's pipeline: copy_pipeline of that "
-                               + "pipeline (working_copy=false, a new name with its version, rename= for its "
-                               + "documents): its copy of the feed's dispatcher is then regenerated to route this "
-                               + "group, and the current pipeline runs on until the new one replaces it.");
         }
         return Optional.of((placement.ownOutputFeed()
                 ? "Make its output feed first: create_feed build=<this build> name=<a name following the feed's "
                   + "convention> stream_type=Events group='" + plan.group() + "'. Then "
-                : "") + "create_pipeline for its pipeline of its own, with translationFilter.xslt the group's "
-                           + "dispatcher '" + SourceTypeGroups.ownDispatcherName(plan.feed(), plan.group()) + "' "
-                           + "(group.dispatcher): it handles only this group, the feed's pipeline passes its records "
-                           + "over as handled by it" + (placement.ownOutputFeed()
+                : "") + "create_pipeline for the group's own pipeline, its translationFilter.xslt the group's XSLT "
+                           + "(group.xslt): it translates this group's source types and passes over the feed's "
+                           + "other records, counting them" + (placement.ownOutputFeed()
                 ? ", and its Events go to the output feed (create_pipeline sets the stream appender's feed)"
                 : "") + ".");
     }
