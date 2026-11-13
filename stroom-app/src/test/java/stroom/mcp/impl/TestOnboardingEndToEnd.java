@@ -329,7 +329,11 @@ class TestOnboardingEndToEnd extends AbstractAiIntegrationTest {
         assertThat(converter).containsEntry("type", "TextConverter").containsEntry("name", CONVERTER);
         final String converterUuid = (String) converter.get("uuid");
         assertThat(folderOf(converterUuid)).isEqualTo(EVENTS_FOLDER);
-        assertNextStep(converter, "translation");
+        assertNextStep(converter, "classify");
+
+        // The kinds of event classified with the user before the draft, as the plan asks: here, none to classify.
+        final Map<String, Object> classified = classify(map(map(converter, "next"), "call"));
+        assertNextStep(classified, "translation");
 
         // The mapping drafted from the sample, settled as the user decides, generated and saved with it.
         final Map<String, Object> draft = client.json("draft_translation_mapping",
@@ -368,6 +372,25 @@ class TestOnboardingEndToEnd extends AbstractAiIntegrationTest {
         assertThat(folderOf(pipelineUuid)).isEqualTo(EVENTS_FOLDER);
         assertNextStep(pipeline, "stepped");
         return new Built(feedUuid, rawStreamId, converterUuid, xsltUuid, pipelineUuid, mapping, splitterSpec);
+    }
+
+    // The plan's classify step as an agent takes it: the call it names lists the kinds. The sample's fields name no
+    // kind of event (every record a logon, told by nothing in it), so there is nothing to put to the user: no form,
+    // the step done and the draft next.
+    private Map<String, Object> classify(final Map<String, Object> call) {
+        assertThat(call).containsEntry("tool", "classify_kinds");
+        assertThat(map(call, "arguments")).containsEntry("build", BUILD).containsKey("stream_ids");
+        final int forms = client.forms().size();
+        final Map<String, Object> listed = client.json("classify_kinds", map(call, "arguments"));
+        dump("classify_kinds", listed);
+        assertThat(listed).containsEntry("kinds_found", 0).containsEntry("to_classify", List.of());
+        assertThat((String) listed.get("read_with")).isEqualTo("the build's Data Splitter '" + CONVERTER + "'");
+        assertThat((String) listed.get("hint")).startsWith("No kinds told apart");
+        assertThat(map(listed, "source_notes")).containsEntry("name", BUILD + " source notes");
+        assertThat(client.forms()).hasSize(forms);
+        assertThat((String) map(listed, "next").get("progress"))
+                .endsWith("done: feed, samples, converter, classify");
+        return listed;
     }
 
     // The sample processed into Events: the filter made (asked for in a form), its tasks run as Stroom's job

@@ -97,7 +97,6 @@ public class ErrorTriageRuleConfig implements IsAtomicConfigValue {
     }
 
     /// @return blocking, review or benign.
-    @JsonProperty("class")
     public String getClassification() {
         return classification;
     }
