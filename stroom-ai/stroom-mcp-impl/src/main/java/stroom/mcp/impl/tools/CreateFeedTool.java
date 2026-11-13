@@ -142,9 +142,9 @@ class CreateFeedTool extends AbstractBuiltInTool {
                              + "true). A build on an existing feed's data creates no feed, unless the user chooses "
                              + "sample files of their own instead (user_samples): then it is a test feed for those; "
                              + "or names the test feed its Events are written to (test_feed). An aggregated feed's "
-                             + "source type group with a pipeline of its own and an output feed of its own: group= "
-                             + "makes that Events feed, promoted with the build, and create_pipeline then sets the "
-                             + "group's pipeline's stream appender to it.")
+                             + "source type group whose Events go to an output feed of its own (the user chose it when "
+                             + "the group was saved): group= makes that Events feed, promoted with the build, and "
+                             + "create_pipeline group= then sets the group's pipeline's stream appender to it.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(BUILD_ARG, BUILD_DESCRIPTION)
                         .addStringProperty(NAME_ARG, "Feed name following the environment's convention, e.g. "
@@ -303,7 +303,7 @@ class CreateFeedTool extends AbstractBuiltInTool {
         details.put("build", build);
         details.put("feed name", proposed);
         details.put("stream type", "Events");
-        details.put("holds", "the Events of source type group '" + group + "', from its pipeline of its own");
+        details.put("holds", "the Events of source type group '" + group + "', from its pipeline");
         consent.require(call, context, Consent.Request.confirmation(NAME, "Create feed '" + proposed + "' for the "
                                                                           + "Events of group '" + group + "'", details)
                 .withEditable(NAME_ARG, "Feed name", proposed));
@@ -333,9 +333,8 @@ class CreateFeedTool extends AbstractBuiltInTool {
         result.put("group", group);
         result.put("source_types", types);
         result.put("link", context.links().documentTarget(saved));
-        result.put("hint", "The output feed of group '" + group + "': create_pipeline for the group's pipeline of "
-                           + "its own (translationFilter.xslt its dispatcher) sets its stream appender's feed to "
-                           + "it.");
+        result.put("hint", "The output feed of group '" + group + "': create_pipeline group='" + group + "' makes "
+                           + "the group's pipeline, its stream appender's feed set to it.");
         return plan.withNext(context, build, result);
     }
 
@@ -361,8 +360,8 @@ class CreateFeedTool extends AbstractBuiltInTool {
         result.put("source_types", types);
         result.put("note", "The build already has feed '" + name + "': nothing new was made. It is now the output "
                            + "feed of group '" + group + "'.");
-        result.put("hint", "create_pipeline for the group's pipeline of its own (translationFilter.xslt its "
-                           + "dispatcher) sets its stream appender's feed to it.");
+        result.put("hint", "create_pipeline group='" + group + "' makes the group's pipeline, its stream "
+                           + "appender's feed set to it.");
         return plan.withNext(context, build, result);
     }
 

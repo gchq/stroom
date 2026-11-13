@@ -29,7 +29,6 @@ import stroom.util.shared.PageRequest;
 import io.modelcontextprotocol.spec.McpSchema.ElicitFormRequest;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -46,13 +45,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// An aggregated feed's indexes through the REAL tools on a real Stroom, on the synthetic PEGA sample under
 /// `aggregated/`:
 ///
-/// * the groups writing to the feed's own Events share one index across builds: the first build's backend and naming
-///   are the feed's shared decisions, kept in its registry and inherited by the next build (a change refused), whose
-///   plan is the union of the groups' fields; a field of another type and a field of another meaning are held at
-///   promotion, then resolved in one form (a field of another name; one field read from both); promotion adds the
-///   build's new fields to the index (and to the Lucene index doc), on Lucene and Elasticsearch alike;
+/// * the groups whose pipelines write to the feed's own Events share one index across builds: the first build's
+///   backend and naming are the feed's shared decisions, kept in its registry and inherited by the next build (a
+///   change refused), whose plan for its own group's pipeline's Events is the union of the groups' fields; a field
+///   of another type and a field of another meaning are held at promotion, then resolved in one form (a field of
+///   another name; one field read from both); promotion adds the build's new fields to the index (and to the Lucene
+///   index doc), on Lucene and Elasticsearch alike;
 /// * a group with an output feed of its own has an index of its own, the feed's own index refused for its Events.
-@Disabled("aggregated feeds rework R2/R3 (2026-11-13)")
 @SuppressWarnings("unchecked")
 class TestE2eSourceTypeIndexes extends AbstractE2eTest {
 
@@ -83,9 +82,9 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         json("survey_feed", args("feed", feed, "build", first));
         recordSourceTypes(first, feed);
         group(first, feed, SECURITY, "PegaSecurityEvent", TestE2eSourceTypeGroups.securityMapping(), stream);
-        final String pipelineName = feed + "-Events";
-        final String pipeline = uuidOf(agreed("create_pipeline", args("build", first, "name", pipelineName,
-                "template_uuid", templateUuid("translation", "Event Data (JSON)"))));
+        final String template = templateUuid("translation", "Event Data (JSON)");
+        final String pipeline = uuidOf(agreed("create_pipeline", args("build", first, "group", SECURITY,
+                "template_uuid", template)));
         final List<Long> firstEvents = events(pipeline, stream);
         client.answeringWith(choosing(STROOM_FLAT));
         final Map<String, Object> conventions = json("get_field_conventions", lucene
@@ -113,16 +112,16 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
             assertThat(map(firstIndex, "index_doc")).containsEntry("type", LuceneIndexDoc.TYPE);
         }
 
-        // A later build: the integration group, in the feed's pipeline (a working copy of it).
+        // A later build: the integration group, its Events into the feed's, by a pipeline of its own.
         final String later = "pega-idx-2" + tag;
         json("start_build", args("build", later, "feeds", List.of(feed)));
         client.answeringWith(TestE2eSourceTypeGroups.scopeOf(List.of("PegaIntegration"), "for later builds"));
         json("survey_feed", args("feed", feed, "build", later));
         recordSourceTypes(later, feed);
         group(later, feed, INTEGRATION, "PegaIntegration", TestE2eSourceTypeGroups.integrationMapping(), stream);
-        final String working = uuidOf(agreed("copy_pipeline", args("build", later, "source_uuid", pipeline,
-                "new_name", pipelineName, "working_copy", true)));
-        final List<Long> laterEvents = events(working, stream);
+        final String integrationPipeline = uuidOf(agreed("create_pipeline", args("build", later, "group",
+                INTEGRATION, "template_uuid", template)));
+        final List<Long> laterEvents = events(integrationPipeline, stream);
 
         // The backend and naming are inherited from the registry: nothing asked, a change refused.
         client.answeringWith(McpTestClient::agree);
@@ -160,7 +159,8 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         clashing.put("fields", clashingFields);
         final String laterXslt = uuidOf(json("save_xslt", args("build", later, "name", index + "-XSLT-2",
                 "index_plan", clashing)));
-        final String held = refusal("promote_build", args("build", later, "destinations", Map.of("XSLT", folder)));
+        final String held = refusal("promote_build", args("build", later, "destinations", Map.of("XSLT", folder,
+                "Pipeline", folder)));
         dump("promote_build held", held);
         assertThat(held).contains("Not promoted: held", "Field " + typeField + ": long", "Field " + hostField,
                 "draft_index_mapping");
@@ -168,7 +168,8 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
                 ? "Documents already indexed keep the old type"
                 : "Elasticsearch can't change a field's type");
 
-        // Drafted again: the union of the groups' fields, the clashes put to the user in one form.
+        // Drafted again: the union of the groups' fields (the security group's read from its XSLT through the
+        // registry, its pipeline not this build's), the clashes put to the user in one form.
         final int clashFormsBefore = client.forms().size();
         client.answeringWith(resolving());
         final Map<String, Object> laterDraft = draft(backend, index, laterEvents, List.of(
@@ -200,11 +201,11 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         // Saved again from the resolved plan: promotion adds its new fields to the feed's index.
         json("save_xslt", args("build", later, "uuid", laterXslt, "index_plan", laterPlan));
         final Map<String, Object> review = json("promote_build", args("build", later, "destinations",
-                Map.of("XSLT", folder)));
+                Map.of("XSLT", folder, "Pipeline", folder)));
         assertThat(review).containsEntry("status", "needs_review");
         assertThat(String.valueOf(review.get("index_changes"))).contains("index " + index, "adds", renamed,
                 "forward only");
-        promote(later, Map.of("XSLT", folder));
+        promote(later, Map.of("XSLT", folder, "Pipeline", folder));
         final Map<String, Object> laterIndex = FeedIndexes.index(registry(folder, feed), feed);
         assertThat(laterIndex).containsEntry("index", index);
         assertThat((List<String>) laterIndex.get("groups")).containsExactlyInAnyOrder(SECURITY, INTEGRATION);
@@ -241,12 +242,12 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         agreed("create_feed", args("build", build, "name", outputFeed, "stream_type", "Events", "group",
                 INTEGRATION));
         final String template = templateUuid("translation", "Event Data (JSON)");
-        final String main = uuidOf(agreed("create_pipeline", args("build", build, "name", feed + "-Events",
-                "template_uuid", template, "set_properties", List.of(docProperty("translationFilter", "xslt",
-                        uuidOf(map(security, "dispatcher")), "XSLT")))));
-        final String own = uuidOf(agreed("create_pipeline", args("build", build, "name",
-                feed + "-Integration-Events", "template_uuid", template, "set_properties",
-                List.of(docProperty("translationFilter", "xslt", uuidOf(map(integration, "dispatcher")), "XSLT")))));
+        assertThat(security).doesNotContainKey("output_feed");
+        assertThat(integration).containsEntry("output_feed", "");
+        final String main = uuidOf(agreed("create_pipeline", args("build", build, "group", SECURITY,
+                "template_uuid", template)));
+        final String own = uuidOf(agreed("create_pipeline", args("build", build, "group", INTEGRATION,
+                "template_uuid", template)));
         final List<Long> mainEvents = events(main, stream);
         final List<Long> ownEvents = events(own, stream);
         assertThat(meta(ownEvents.getFirst()).getFeedName()).isEqualTo(outputFeed);
@@ -396,8 +397,8 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         };
     }
 
-    // A user who chooses these source types for the build's scope, places the group named in a pipeline of its own
-    // writing to an output feed of its own, and agrees to everything else.
+    // A user who chooses these source types for the build's scope, gives the group named an output feed of its own,
+    // and agrees to everything else.
     private static Function<ElicitFormRequest, ElicitResult> ownFeedFor(final List<String> scope,
                                                                         final String ownGroup) {
         final Function<ElicitFormRequest, ElicitResult> scoping = TestE2eSourceTypeGroups.scopeOf(scope,
@@ -414,8 +415,7 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
             final Map<?, ?> properties = (Map<?, ?>) form.requestedSchema().get("properties");
             properties.forEach((key, field) -> ((List<?>) ((Map<?, ?>) field).get("enum")).stream()
                     .map(String::valueOf)
-                    .filter(option -> option.startsWith("A pipeline of its own")
-                                      || option.startsWith("To an output feed of its own"))
+                    .filter(option -> option.startsWith("To an output feed of its own"))
                     .findFirst()
                     .ifPresent(option -> content.put(String.valueOf(key), option)));
             return new ElicitResult(ElicitResult.Action.ACCEPT, content, null);

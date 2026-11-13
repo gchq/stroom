@@ -270,6 +270,86 @@ class TestCreatePipelineTool {
         assertThat(String.valueOf(made.get("filled_from_build"))).contains("translationFilter.xslt = ACME mail");
     }
 
+    @Test
+    void aGroupsPipelineIsNamedForItRunsItsXsltWritesToItsOutputFeedAndLoadsItsReferenceData() {
+        textTemplate();
+        pipelines.textConverter("tc", "Acme-Splitter");
+        pipelines.xslt("g1", "ACME mail", Map.of());
+        pipelines.xslt("g2", "ACME web", Map.of());
+        pipelines.productionPipeline(PipelineWorld.LOADER, "Reference Loader", null,
+                PipelineLayers.layer(PipelineWorld.LOADER));
+        pipelines.feeds.feedAt("System/Feeds", "ACME-USERS", "f-users");
+        pipelines.feeds.feedAt("System/Feeds", "ACME-MAIL-EVENTS", "f-mail");
+        Mockito.when(pipelines.referenceData.resolveLoader("ACME-USERS")).thenReturn(PipelineWorld.LOADER);
+        final SourceTypeGroups groups = Mockito.mock(SourceTypeGroups.class);
+        tool.setGroups(() -> groups);
+        final Map<String, Object> row = new java.util.LinkedHashMap<>();
+        row.put("name", "MailIn");
+        row.put("group", "ACME mail");
+        row.put("output_feed", "ACME-MAIL-EVENTS");
+        row.put("references", List.of(Map.of("feed", "ACME-USERS")));
+        final SourceTypeGroups.GroupRun mail = new SourceTypeGroups.GroupRun("ACME", "ACME mail", "g1",
+                List.of(row));
+        Mockito.when(groups.groupNamed(BUILD, "ACME mail")).thenReturn(mail);
+        Mockito.when(groups.groupOf(BUILD, "g1")).thenReturn(Optional.of(mail));
+        Mockito.when(groups.pipelineMade(Mockito.any(), Mockito.eq(BUILD), Mockito.eq("ACME mail"), Mockito.any()))
+                .thenReturn(List.of("MailIn"));
+
+        // No name, no XSLT given: the group's, named for it (two group XSLTs in the build, so none is guessed).
+        final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"group\": "
+                                                                 + "\"ACME mail\", \"template_uuid\": \""
+                                                                 + TEMPLATE + "\"}",
+                BuildToolCalls.answering(Map.of())));
+
+        assertThat(made).containsEntry("name", "ACME ACME mail").containsEntry("group", "ACME mail")
+                .containsEntry("source_types", List.of("MailIn"));
+        assertThat(made.get("reference_data")).isEqualTo(List.of("ACME-USERS via Reference Loader"));
+        assertThat(String.valueOf(made.get("filled_from_build"))).contains("streamAppender.feed = ACME-MAIL-EVENTS");
+        final PipelineDoc doc = pipelines.pipelineNamed("ACME ACME mail");
+        assertThat(PipelineDocs.addedProperties(doc)).contains(
+                new PipelineProperty("translationFilter", "xslt", new PipelinePropertyValue(new DocRef("XSLT", "g1",
+                        "ACME mail"))));
+        assertThat(PipelineDocs.addedProperties(doc)).anySatisfy(property -> {
+            assertThat(property.getElement()).isEqualTo("streamAppender");
+            assertThat(property.getName()).isEqualTo("feed");
+            assertThat(property.getValue().getEntity().getUuid()).isEqualTo("f-mail");
+        });
+        Mockito.verify(groups).pipelineMade(Mockito.any(), Mockito.eq(BUILD), Mockito.eq("ACME mail"),
+                Mockito.eq(new DocRef(PipelineDoc.TYPE, doc.getUuid(), "ACME ACME mail")));
+
+        // One pipeline a group: a second running its XSLT is refused.
+        final ToolResult again = call("{\"build\": \"acme-v1\", \"name\": \"Another\", \"group\": \"ACME mail\", "
+                                      + "\"template_uuid\": \"" + TEMPLATE + "\"}", BuildToolCalls.answering(Map.of()));
+        assertThat(again.text()).contains("runs group 'ACME mail''s XSLT already", "a group has one pipeline");
+    }
+
+    @Test
+    void aGroupsPipelineIsRefusedUntilItsOutputFeedIsMade() {
+        textTemplate();
+        pipelines.textConverter("tc", "Acme-Splitter");
+        pipelines.xslt("g1", "ACME mail", Map.of());
+        final SourceTypeGroups groups = Mockito.mock(SourceTypeGroups.class);
+        tool.setGroups(() -> groups);
+        final Map<String, Object> row = new java.util.LinkedHashMap<>();
+        row.put("name", "MailIn");
+        row.put("group", "ACME mail");
+        row.put("output_feed", "");
+        final SourceTypeGroups.GroupRun mail = new SourceTypeGroups.GroupRun("ACME", "ACME mail", "g1",
+                List.of(row));
+        Mockito.when(groups.groupOf(BUILD, "g1")).thenReturn(Optional.of(mail));
+
+        // Its XSLT given in set_properties: the group is found by its XSLT.
+        final ToolResult refused = call("{\"build\": \"acme-v1\", \"template_uuid\": \"" + TEMPLATE + "\", "
+                                        + "\"set_properties\": [{\"element\": \"translationFilter\", \"name\": "
+                                        + "\"xslt\", \"doc_uuid\": \"g1\", \"doc_type\": \"XSLT\"}]}",
+                BuildToolCalls.answering(Map.of()));
+
+        assertThat(refused.text()).contains("output feed of its own, not made yet", "create_feed",
+                "group='ACME mail'");
+        Mockito.verify(groups, Mockito.never()).pipelineMade(Mockito.any(), Mockito.any(), Mockito.any(),
+                Mockito.any());
+    }
+
     // An XSLT as the generator writes an aggregated feed's module: its marker.
     private static String module(final String kind, final String mode) {
         return "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "

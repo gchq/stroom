@@ -115,26 +115,11 @@ class FeedIndexDecisions {
     /// @return The Events paths the source type groups writing to that output feed write, as their mappings say
     /// (kept with each group's XSLT); none for a build of no aggregated feed.
     List<String> writtenByGroups(final String build, final List<Long> streamIds) {
-        final Optional<SourceTypeGroups.Registry> found = registry(build);
-        if (found.isEmpty() || NullSafe.isEmptyCollection(streamIds)) {
-            return List.of();
-        }
-        final String outputFeed = outputFeedIn(build, found.get(), streamIds.getFirst());
-        final Map<String, Object> state = found.get().found().state();
-        if (outputFeed == null) {
-            return List.of();
-        }
         final List<String> descriptions = new ArrayList<>();
-        final Set<String> read = new LinkedHashSet<>();
-        for (final Map<String, Object> row : JsonValues.maps(state.get("rows"))) {
-            final String uuid = JsonValues.text(JsonValues.mapOrEmpty(row.get("group_xslt")).get("uuid"));
-            if (SourceTypeRegistry.TRANSLATED.equals(row.get("status")) && !uuid.isBlank() && read.add(uuid)
-                && outputFeed.equals(FeedIndexes.outputFeedOf(state, row))) {
-                documentAccess.read(new DocRef(XsltDoc.TYPE, uuid), XsltDoc.class)
-                        .map(XsltDoc::getDescription)
-                        .ifPresent(descriptions::add);
-            }
-        }
+        groupXslts(build, streamIds).forEach(uuid -> documentAccess.read(new DocRef(XsltDoc.TYPE, uuid),
+                        XsltDoc.class)
+                .map(XsltDoc::getDescription)
+                .ifPresent(descriptions::add));
         final Set<String> paths = new LinkedHashSet<>();
         IndexingInputs.mappingFields(descriptions).forEach(leaf -> {
             final String path = leaf.entry().path();
@@ -143,6 +128,34 @@ class FeedIndexDecisions {
             }
         });
         return List.copyOf(paths);
+    }
+
+    /// The XSLTs of the source type groups whose Events go to one output feed: their index is one, so its plan is
+    /// the union of their fields. Found through the registry's rows (each translated row's `group_xslt` and
+    /// `output_feed`), each group's pipeline being its own.
+    ///
+    /// @param build     The build the Events are from, or null.
+    /// @param streamIds Events streams of one of its aggregated feed's output feeds.
+    /// @return The groups' XSLTs' UUIDs, each once, in the registry's order; none for a build of no aggregated feed.
+    List<String> groupXslts(final String build, final List<Long> streamIds) {
+        final Optional<SourceTypeGroups.Registry> found = registry(build);
+        if (found.isEmpty() || NullSafe.isEmptyCollection(streamIds)) {
+            return List.of();
+        }
+        final String outputFeed = outputFeedIn(build, found.get(), streamIds.getFirst());
+        if (outputFeed == null) {
+            return List.of();
+        }
+        final Map<String, Object> state = found.get().found().state();
+        final Set<String> out = new LinkedHashSet<>();
+        for (final Map<String, Object> row : JsonValues.maps(state.get("rows"))) {
+            final String uuid = JsonValues.text(JsonValues.mapOrEmpty(row.get("group_xslt")).get("uuid"));
+            if (SourceTypeRegistry.TRANSLATED.equals(row.get("status")) && !uuid.isBlank()
+                && outputFeed.equals(FeedIndexes.outputFeedOf(state, row))) {
+                out.add(uuid);
+            }
+        }
+        return List.copyOf(out);
     }
 
     // --------------------------------------------------------------------------------

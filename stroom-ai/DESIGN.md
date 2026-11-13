@@ -2070,6 +2070,22 @@ Built in rework R1 (where the design was silent):
   refused. The group check is of names only (the mode prefix), stylesheet-level declarations being the group's now.
 * `CustomURIResolver` and its test are as they were before the aggregated feeds work.
 
+Built in rework R2 (where the design was silent):
+
+* The placement form for a new group asks only where its Events go (`own_output_feed` without forms); the default
+  pipeline name `<feed> <group>` is recorded then, so the group counts as placed. For a group whose pipeline is
+  promoted, the first save in a build asks change or new version (`pipeline=change|new_version`); the answer isn't
+  stored, the build's copy of the group's XSLT marks it decided (a working copy for change, a new XSLT recorded
+  `version_of` the original for a new version, which `copy_pipeline working_copy=false` then reuses).
+* Registry rows carry `pipeline` {name, uuid, new_version} and `output_feed`; `create_pipeline group=` fills the
+  group's XSLT, refuses an XSLT another pipeline in the build already runs, sets every stream appender's `feed`, loads
+  the group's reference data, and records the pipeline's uuid. A working copy pipeline leaves the registry naming the
+  originals; only a new version moves the rows.
+* `copy_pipeline` re-points every module in the build that imports a promoted module with a working copy in the build
+  to that copy, so the chain runs the copies. Promotion's `pipeline_changes` add each group pipeline's missing
+  reference data, including the production pipeline of a group changed through a working copy of its XSLT.
+* The index union per output feed reads the group XSLTs of the translated rows sharing that output feed.
+
 #### Open decisions
 
 None at present.

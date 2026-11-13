@@ -30,6 +30,7 @@ import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.docref.DocRef;
+import stroom.documentation.shared.DocumentationDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.HasData;
@@ -73,6 +74,8 @@ class TestSourceTypeGroups {
 
     @BeforeEach
     void setUp() {
+        // The build holds the feed's registry, as record_source_types made it.
+        world.world.inBuild(BUILD, DocumentationDoc.TYPE, "PEGA source types", "r");
         // The registry as last written, as the build holds it.
         Mockito.when(world.registries.registry(eq(BUILD), eq("PEGA"))).thenAnswer(inv -> Optional.of(written.isEmpty()
                 ? registry()
@@ -193,7 +196,6 @@ class TestSourceTypeGroups {
         world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
         final Map<String, Object> own = new LinkedHashMap<>(args(integration(), "PEGA integration",
                 List.of("PegaIntegration")));
-        own.put("pipeline", "own");
         own.put("own_output_feed", true);
         own.put("references", List.of(Map.of("feed", "PEGA-HOSTS", "loader_pipeline", "Reference Loader")));
 
@@ -202,34 +204,44 @@ class TestSourceTypeGroups {
         assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
         final Map<String, Object> group = JsonValues.mapOrEmpty(saved.get("group"));
         assertThat(String.valueOf(group.get("group_next"))).contains("create_feed", "group='PEGA integration'",
-                "create_pipeline", "the group's XSLT");
+                "create_pipeline", "the group's XSLT", "'PEGA PEGA integration'");
         assertThat(xsltsInBuild()).containsOnlyKeys("PEGA security", "PEGA integration", "PEGA common",
                 "PEGA helpers");
         // The registry says where it goes: its output feed to make, its reference data kept.
+        // The registry says where it goes: its own pipeline to make, its output feed to make, its reference data
+        // kept; the other group's Events go into the feed's.
         final Map<String, Object> row = rowNamed(written.getLast(), "PegaIntegration");
-        assertThat(JsonValues.mapOrEmpty(row.get("pipeline"))).containsEntry("own", true);
+        assertThat(JsonValues.mapOrEmpty(row.get("pipeline"))).containsOnly(Map.entry("name",
+                "PEGA PEGA integration"));
         assertThat(row).containsEntry("output_feed", "");
         assertThat(JsonValues.maps(row.get("references"))).singleElement()
                 .satisfies(reference -> assertThat(reference).containsEntry("feed", "PEGA-HOSTS"));
-        assertThat(JsonValues.mapOrEmpty(rowNamed(written.getLast(), "PegaSecurityEvent").get("pipeline")))
-                .containsEntry("own", false);
+        final Map<String, Object> security = rowNamed(written.getLast(), "PegaSecurityEvent");
+        assertThat(JsonValues.mapOrEmpty(security.get("pipeline"))).containsOnly(Map.entry("name",
+                "PEGA PEGA security"));
+        assertThat(security).doesNotContainKey("output_feed");
     }
 
     @Test
     void aNewGroupIsPlacedOnlyAsTheUserChose() {
         final Map<String, Object> unasked = new LinkedHashMap<>(args(security(), "PEGA security",
                 List.of("PegaSecurityEvent")));
-        unasked.remove("pipeline");
+        unasked.remove("own_output_feed");
 
         final Map<String, Object> refused = world.call(tool, unasked);
 
-        assertThat(String.valueOf(refused.get("error"))).contains("ask the user which pipeline handles it",
-                "Nothing was saved");
+        assertThat(String.valueOf(refused.get("error"))).contains("is new", "'PEGA PEGA security'",
+                "Ask the user where its Events go", "own_output_feed", "Nothing was saved");
         assertThat(xsltsInBuild()).isEmpty();
-        // A new version only of a pipeline in production: the feed has none yet.
+        // Which pipeline is no longer asked: a new group has no pipeline in production to change.
+        unasked.put("own_output_feed", false);
         unasked.put("pipeline", "new_version");
-        assertThat(String.valueOf(world.call(tool, unasked).get("error"))).contains("isn't a choice",
-                "no pipeline in production");
+        final Map<String, Object> saved = world.call(tool, unasked);
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        assertThat(JsonValues.strings(JsonValues.mapOrEmpty(saved.get("group")).get("notes")))
+                .anySatisfy(note -> assertThat(note).contains("pipeline=new_version was ignored"));
+        assertThat(JsonValues.mapOrEmpty(rowNamed(written.getLast(), "PegaSecurityEvent").get("pipeline")))
+                .doesNotContainKey("new_version");
     }
 
     @Test
@@ -253,11 +265,10 @@ class TestSourceTypeGroups {
     }
 
     @Test
-    void sourceTypesAddedToAGroupWithAPipelineOfItsOwnJoinItsPlacement() {
+    void sourceTypesAddedToAGroupJoinItsPipelineAndOutputFeed() {
         world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
         final Map<String, Object> own = new LinkedHashMap<>(args(integration(), "PEGA integration",
                 List.of("PegaIntegration")));
-        own.put("pipeline", "own");
         own.put("own_output_feed", true);
         world.call(tool, own);
         // Its output feed made (create_feed group=).
@@ -266,16 +277,16 @@ class TestSourceTypeGroups {
                 row.put("output_feed", "PEGA-INTEGRATION-EVENTS");
             }
         }));
-        // The group grows: PegaDB added to it, with no placement asked (the group has its own).
+        // The group grows: PegaDB added to it, with nothing asked (the group is placed).
         final Map<String, Object> grown = new LinkedHashMap<>(args(integration(), "PEGA integration",
                 List.of("PegaIntegration", "PegaDB")));
-        grown.remove("pipeline");
+        grown.remove("own_output_feed");
 
         final Map<String, Object> saved = world.call(tool, grown);
 
         assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
         final Map<String, Object> db = rowNamed(written.getLast(), "PegaDB");
-        assertThat(JsonValues.mapOrEmpty(db.get("pipeline"))).containsEntry("own", true);
+        assertThat(JsonValues.mapOrEmpty(db.get("pipeline"))).containsEntry("name", "PEGA PEGA integration");
         assertThat(db).containsEntry("output_feed", "PEGA-INTEGRATION-EVENTS");
         // The group's XSLT now translates both.
         assertThat(ModuleChecks.marker(world.xslt(xsltsInBuild().get("PEGA integration")).getData()))
@@ -289,7 +300,7 @@ class TestSourceTypeGroups {
     void aTranslatedRowWithNoPlacementIsPlacedAsTheUserChooses() {
         final Map<String, Object> own = new LinkedHashMap<>(args(integration(), "PEGA integration",
                 List.of("PegaIntegration")));
-        own.put("pipeline", "own");
+        own.put("own_output_feed", true);
         world.call(tool, own);
         // A registry from before pipelines were placed: a translated row of another group, in no pipeline.
         written.add(withRows(written.getLast(), row -> {
@@ -300,11 +311,11 @@ class TestSourceTypeGroups {
         }));
         final Map<String, Object> unplaced = new LinkedHashMap<>(args(security(), "PEGA security",
                 List.of("PegaSecurityEvent")));
-        unplaced.remove("pipeline");
+        unplaced.remove("own_output_feed");
 
         final Map<String, Object> refused = world.call(tool, unplaced);
 
-        assertThat(String.valueOf(refused.get("error"))).contains("ask the user which pipeline handles it");
+        assertThat(String.valueOf(refused.get("error"))).contains("Ask the user where its Events go");
         assertThat(xsltsInBuild()).doesNotContainKey("PEGA security");
     }
 
@@ -345,26 +356,28 @@ class TestSourceTypeGroups {
     }
 
     @Test
-    void theEventsQuestionIsAskedOnlyForAPipelineOfItsOwn() {
+    void aNewGroupIsAskedWhereItsEventsGoNotWhichPipeline() {
         world.forms = true;
-        final String shared = "The feed's pipeline, shared by its groups (reads each record once)";
-        world.answers.put("Which pipeline handles group", shared);
-        world.answers.put("Source type group 'PEGA security'", shared);
+        world.answers.put("Source type group 'PEGA security'", "To an output feed of its own (made next, in a form; "
+                                                               + "an index of its own)");
         final Map<String, Object> asked = new LinkedHashMap<>(args(security(), "PEGA security",
                 List.of("PegaSecurityEvent")));
-        asked.remove("pipeline");
+        asked.remove("own_output_feed");
 
         final Map<String, Object> saved = world.call(tool, asked);
 
         assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
-        assertThat(world.formsShown).noneSatisfy(form -> assertThat(String.valueOf(form))
-                .contains("Where do its Events go"));
-        assertThat(world.formsShown).anySatisfy(form -> assertThat(String.valueOf(form))
-                .contains("Which pipeline handles group"));
+        assertThat(placementForms()).singleElement().satisfies(form -> assertThat(form).contains(
+                "a pipeline of its own, 'PEGA PEGA security'", "where its Events go").doesNotContain("**", "`"));
+        assertThat(rowNamed(written.getLast(), "PegaSecurityEvent")).containsEntry("output_feed", "");
+        // Saved again in the build: placed, so it isn't asked again.
+        world.call(tool, asked);
+        assertThat(placementForms()).hasSize(1);
     }
 
     @Test
-    void anOwnOutputFeedGivenForASharedPipelineIsSaidToBeIgnored() {
+    void anOwnOutputFeedGivenForAGroupPlacedAlreadyIsSaidToBeIgnored() {
+        world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
         final Map<String, Object> given = new LinkedHashMap<>(args(security(), "PEGA security",
                 List.of("PegaSecurityEvent")));
         given.put("own_output_feed", true);
@@ -375,6 +388,99 @@ class TestSourceTypeGroups {
         assertThat(rowNamed(written.getLast(), "PegaSecurityEvent")).doesNotContainKey("output_feed");
         assertThat(JsonValues.strings(JsonValues.mapOrEmpty(saved.get("group")).get("notes")))
                 .anySatisfy(note -> assertThat(note).contains("own_output_feed", "ignored"));
+    }
+
+    @Test
+    void aChangeToAGroupWhosePipelineIsPromotedIsAskedForThenGoesToAWorkingCopy() {
+        final String original = promotedGroup();
+        final Map<String, Object> again = new LinkedHashMap<>(args(security(), "PEGA security",
+                List.of("PegaSecurityEvent")));
+        again.remove("own_output_feed");
+
+        final Map<String, Object> refused = world.call(tool, again);
+
+        assertThat(String.valueOf(refused.get("error"))).contains("runs in pipeline PEGA PEGA security, in "
+                                                                  + "production", "pipeline=", "Nothing was saved");
+        again.put("pipeline", "change");
+        final Map<String, Object> saved = world.call(tool, again);
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        final String copy = xsltsInBuild().get("PEGA security");
+        assertThat(copy).isNotEqualTo(original);
+        assertThat(world.world.records().entry(BUILD, copy)).containsEntry("copy_of", original);
+        final Map<String, Object> row = rowNamed(written.getLast(), "PegaSecurityEvent");
+        assertThat(JsonValues.mapOrEmpty(row.get("group_xslt"))).containsEntry("uuid", copy);
+        assertThat(JsonValues.mapOrEmpty(row.get("pipeline"))).containsEntry("uuid", "o-pipeline")
+                .doesNotContainKey("new_version");
+        assertThat(String.valueOf(JsonValues.mapOrEmpty(saved.get("group")).get("group_next")))
+                .contains("copy_pipeline", "working_copy=true");
+        // Decided for the build: saved again, nothing is asked.
+        again.remove("pipeline");
+        assertThat(world.call(tool, again).get("problems")).isEqualTo(List.of());
+    }
+
+    @Test
+    void aNewVersionOfAGroupsPromotedPipelineGetsANewVersionOfItsXslt() {
+        final String original = promotedGroup();
+        world.forms = true;
+        world.answers.put("Group 'PEGA security' runs in pipeline", "A new version of PEGA PEGA security "
+                                                                    + "(copy_pipeline; PEGA PEGA security runs on "
+                                                                    + "until the new one replaces it)");
+        final String code = world.xslt(original).getData();
+        final Map<String, Object> again = new LinkedHashMap<>(args(security(), "PEGA security",
+                List.of("PegaSecurityEvent")));
+        again.remove("own_output_feed");
+
+        final Map<String, Object> saved = world.call(tool, again);
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        final String version = xsltsInBuild().get("PEGA security");
+        assertThat(world.world.records().entry(BUILD, version)).containsEntry("version_of", original)
+                .doesNotContainKey("copy_of");
+        assertThat(world.xslt(original).getData()).isEqualTo(code);
+        final Map<String, Object> row = rowNamed(written.getLast(), "PegaSecurityEvent");
+        assertThat(JsonValues.mapOrEmpty(row.get("group_xslt"))).containsEntry("uuid", version);
+        assertThat(JsonValues.mapOrEmpty(row.get("pipeline"))).containsEntry("uuid", "o-pipeline")
+                .containsEntry("new_version", true);
+        assertThat(String.valueOf(JsonValues.mapOrEmpty(saved.get("group")).get("group_next")))
+                .contains("copy_pipeline", "working_copy=false");
+        assertThat(world.asked).anySatisfy(form -> assertThat(form).contains("change that pipeline, or make a new "
+                                                                             + "version of it"));
+    }
+
+    @Test
+    void aNewVersionCopiedMovesTheGroupsRowsToIt() {
+        final String original = promotedGroup();
+        final DocRef copy = new DocRef(XsltDoc.TYPE, "v-security", "PEGA security v2");
+
+        final List<String> moved = world.groups.newVersion(world.context(), BUILD, "o-pipeline",
+                Map.of(original, copy), new DocRef("Pipeline", "v-pipeline", "PEGA PEGA security v2"));
+
+        assertThat(moved).containsExactly("PegaSecurityEvent");
+        final Map<String, Object> row = rowNamed(written.getLast(), "PegaSecurityEvent");
+        assertThat(JsonValues.mapOrEmpty(row.get("pipeline"))).containsOnly(Map.entry("name",
+                "PEGA PEGA security v2"), Map.entry("uuid", "v-pipeline"));
+        assertThat(JsonValues.mapOrEmpty(row.get("group_xslt"))).containsEntry("uuid", "v-security");
+        // A pipeline no row names moves nothing.
+        assertThat(world.groups.newVersion(world.context(), BUILD, "other", Map.of(), new DocRef("Pipeline", "x",
+                "X"))).isEmpty();
+    }
+
+    @Test
+    void aPipelineMadeForAGroupIsNamedInItsRows() {
+        world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
+
+        final List<String> types = world.groups.pipelineMade(world.context(), BUILD, "PEGA security",
+                new DocRef("Pipeline", "p1", "PEGA-Security-Events"));
+
+        assertThat(types).containsExactly("PegaSecurityEvent");
+        assertThat(JsonValues.mapOrEmpty(rowNamed(written.getLast(), "PegaSecurityEvent").get("pipeline")))
+                .containsOnly(Map.entry("name", "PEGA-Security-Events"), Map.entry("uuid", "p1"));
+        final SourceTypeGroups.GroupRun run = world.groups.groupNamed(BUILD, "PEGA security");
+        assertThat(run.xslt()).isEqualTo(xsltsInBuild().get("PEGA security"));
+        assertThat(run.outputFeed()).isEmpty();
+        assertThat(world.groups.groupOf(BUILD, xsltsInBuild().get("PEGA security"))).hasValueSatisfying(found ->
+                assertThat(found.group()).isEqualTo("PEGA security"));
+        assertThat(world.groups.groupOf(BUILD, xsltsInBuild().get("PEGA common"))).isEmpty();
     }
 
     @Test
@@ -526,6 +632,27 @@ class TestSourceTypeGroups {
         return doc;
     }
 
+    // The forms asking where a new group's Events go, as the user was shown them.
+    private List<String> placementForms() {
+        return world.asked.stream().filter(form -> form.contains("is new. It gets a pipeline")).toList();
+    }
+
+    // The security group as a first build promoted it: its XSLT and its pipeline in production, beside the feed, the
+    // registry naming them. Returns its XSLT's UUID.
+    private String promotedGroup() {
+        world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
+        final String uuid = xsltsInBuild().get("PEGA security");
+        final String folder = world.world.folder("System/Feeds/PEGA").uuid;
+        world.world.move(uuid, folder);
+        world.world.add("Pipeline", "PEGA PEGA security", folder, "o-pipeline");
+        written.add(withRows(written.getLast(), row -> {
+            if ("PegaSecurityEvent".equals(row.get("name"))) {
+                row.put("pipeline", Map.of("name", "PEGA PEGA security", "uuid", "o-pipeline"));
+            }
+        }));
+        return uuid;
+    }
+
     private static Map<String, Object> args(final Map<String, Object> mapping,
                                             final String group,
                                             final List<String> sourceTypes) {
@@ -536,8 +663,8 @@ class TestSourceTypeGroups {
         args.put("feeds", List.of("PEGA"));
         args.put("group", group);
         args.put("source_types", sourceTypes);
-        // No form can be shown here: the user's choice, as the agent passes it.
-        args.put("pipeline", "shared");
+        // No form can be shown here: the user's choice for a new group, as the agent passes it.
+        args.put("own_output_feed", false);
         return args;
     }
 
