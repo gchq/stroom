@@ -42,8 +42,8 @@ import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// An aggregated feed's indexes through the REAL tools on a real Stroom, on the PEGA slice of `.ai/data` (skipped
-/// where it is absent):
+/// An aggregated feed's indexes through the REAL tools on a real Stroom, on the synthetic PEGA sample under
+/// `aggregated/`:
 ///
 /// * the groups writing to the feed's own Events share one index across builds: the first build's backend and naming
 ///   are the feed's shared decisions, kept in its registry and inherited by the next build (a change refused), whose
