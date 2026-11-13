@@ -47,7 +47,6 @@ import stroom.credentials.impl.CredentialsConfig;
 import stroom.credentials.impl.KeyStoreFileCredentialConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.docref.DocRef;
-import stroom.docstore.impl.DocStoreConfig;
 import stroom.document.asset.impl.DocumentAssetConfig;
 import stroom.document.asset.impl.db.DocumentAssetDbConfig;
 import stroom.event.logging.impl.LoggingConfig;

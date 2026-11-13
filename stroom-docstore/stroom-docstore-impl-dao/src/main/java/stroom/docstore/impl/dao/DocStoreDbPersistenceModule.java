@@ -18,7 +18,6 @@ package stroom.docstore.impl.dao;
 
 import stroom.docstore.api.DocDependencyProviderBinder;
 import stroom.docstore.api.DocDependencyService;
-import stroom.docstore.impl.DocStoreConfig;
 import stroom.docstore.impl.Persistence;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;

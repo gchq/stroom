@@ -34,7 +34,7 @@ import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
 import stroom.credentials.impl.CredentialsConfig;
 import stroom.dashboard.impl.DashboardConfig;
-import stroom.docstore.impl.DocStoreConfig;
+import stroom.docstore.impl.dao.DocStoreConfig;
 import stroom.document.asset.impl.DocumentAssetConfig;
 import stroom.document.asset.impl.db.DocumentAssetDbConfig;
 import stroom.event.logging.impl.LoggingConfig;
@@ -331,10 +331,8 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_PATH) final StroomPathConfig pathConfig,
                      @JsonProperty(PROP_NAME_UI) final UiConfig uiConfig,
                      @JsonProperty(PROP_NAME_UI_URI) final UiUriConfig uiUri,
-                     @JsonProperty(PROP_NAME_DOCUMENT_ASSET)
-                     final DocumentAssetConfig documentAssetConfig,
-                     @JsonProperty(PROP_NAME_DOCUMENT_ASSET_DB)
-                     final DocumentAssetDbConfig documentAssetDbConfig,
+                     @JsonProperty(PROP_NAME_DOCUMENT_ASSET) final DocumentAssetConfig documentAssetConfig,
+                     @JsonProperty(PROP_NAME_DOCUMENT_ASSET_DB) final DocumentAssetDbConfig documentAssetDbConfig,
                      @JsonProperty(PROP_NAME_VOLUMES) final VolumeConfig volumeConfig) {
         this.haltBootOnConfigValidationFailure = Objects.requireNonNullElse(haltBootOnConfigValidationFailure,
                 DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE);

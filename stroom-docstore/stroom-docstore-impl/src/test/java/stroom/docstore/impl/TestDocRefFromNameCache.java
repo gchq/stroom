@@ -68,7 +68,7 @@ class TestDocRefFromNameCache {
                             .filter(docRef -> type.equals(docRef.getType()) && name.equals(docRef.getName()))
                             .toList();
                 });
-        cache = new DocRefFromNameCache(cacheManager, DocStoreConfig::new, persistence);
+        cache = new DocRefFromNameCache(cacheManager, DocStoreCommonConfig::new, persistence);
     }
 
     /// After a rename, a lookup of the old name must not find the renamed document.

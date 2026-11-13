@@ -26,7 +26,7 @@ import stroom.config.common.CommonDbConfig;
 import stroom.config.global.impl.db.PropertyServiceDbConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
 import stroom.data.store.impl.fs.db.DataStoreServiceDbConfig;
-import stroom.docstore.impl.DocStoreConfig;
+import stroom.docstore.impl.dao.DocStoreConfig;
 import stroom.docstore.impl.db.DocStoreDbConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.explorer.impl.db.ExplorerDbConfig;

@@ -28,7 +28,6 @@ dependencies {
     implementation project(':stroom-config:stroom-config-common')
 //    implementation project(':stroom-db-util')
     implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-docstore:stroom-docstore-impl-db')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')

@@ -47,7 +47,7 @@ class DocRefToNameCache implements EntityEvent.Handler, Clearable {
 
     @Inject
     DocRefToNameCache(final CacheManager cacheManager,
-                      final Provider<DocStoreConfig> docStoreConfigProvider,
+                      final Provider<DocStoreCommonConfig> docStoreConfigProvider,
                       final Persistence persistence) {
 
         cache = cacheManager.createLoadingCache(

@@ -83,7 +83,7 @@ class TestDocRefToNameCache {
 
         docRefToNameCache = new DocRefToNameCache(
                 cacheManager,
-                DocStoreConfig::new,
+                DocStoreCommonConfig::new,
                 docFinder);
     }
 
