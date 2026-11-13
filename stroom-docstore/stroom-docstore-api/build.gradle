@@ -25,6 +25,8 @@ dependencies {
     api project(':stroom-security:stroom-security-api')
     api project(':stroom-util-shared')
 
-    implementation libs.guice
+    api libs.guice
+
+    implementation libs.jakarta.inject
 }
 

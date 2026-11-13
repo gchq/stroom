@@ -18,27 +18,28 @@ ext.moduleName = 'stroom.docstore.impl'
 
 dependencies {
 
-    api project(':stroom-core-shared')
-    api project(':stroom-docref')
-    api project(':stroom-importexport:stroom-importexport-api')
-    api project(':stroom-util-shared')
+    // For CacheConfig
+    api project(':stroom-util')
+
+    api libs.jackson.annotations
 
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-config:stroom-config-common')
-//    implementation project(':stroom-db-util')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-query:stroom-query-api')
-    implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-common')
+    implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
     implementation libs.guice
-    implementation libs.jackson.annotations
     implementation libs.jackson.databind
     implementation libs.slf4j.api
 
