@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.ErrorTriage;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
+import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
@@ -109,57 +110,55 @@ class TestCoverageReads {
     }
 
     @Test
-    void aDispatchersLinesGiveThePassedOverCountsAndTheNewSourceTypes() throws Exception {
-        // As an aggregated feed's dispatcher logs them: counts at the end of each document, a new value once a
-        // stream.
+    void aGroupsPassedOverLinesAreSummedAndAWholeTranslationsUnseenValuesKeptWithTheirStreams() throws Exception {
+        // As a group's pipeline logs them: its count at the end of each document (two in stream 1); and as a whole
+        // translation logs a value its survey didn't see, once a stream a value.
         Mockito.when(streamSummaries.errorMarkers(Mockito.eq(10L), anyInt())).thenReturn(List.of(
-                info(CoverageReads.PASSED_OVER + "40" + CoverageReads.PASSED_OVER_OF + "PegaDB"),
-                info(CoverageReads.PASSED_OVER + "7" + CoverageReads.PASSED_OVER_OF + "PegaIntegration"
-                     + CoverageReads.HANDLED_BY + "pipeline 'PEGA-Integration-Events'"),
-                info(CoverageReads.PASSED_OVER + "3" + CoverageReads.PASSED_OVER_OF
-                     + CoverageReads.PASSED_OVER_NONE),
-                new ErrorTriage.Marker("WARNING", "translationFilter", CoverageReads.NEW_SOURCE_TYPE
-                                                                       + "sourcetype 'PegaBatch'"
-                                                                       + CoverageReads.NEW_SOURCE_TYPE_END,
-                        null, null, null),
-                new ErrorTriage.Marker("WARNING", "translationFilter", CoverageReads.NEW_SOURCE_TYPE
-                                                                       + "sourcetype (no value)"
-                                                                       + CoverageReads.NEW_SOURCE_TYPE_END,
-                        null, null, null),
+                info(passedOver(40)),
+                info(passedOver(3)),
+                info(unseen("PowerBI")),
+                info(unseen("Teams")),
                 new ErrorTriage.Marker("WARNING", "x", "No event mapping matched record 2 (a=b)", null, null,
                         null)));
         Mockito.when(streamSummaries.errorMarkers(Mockito.eq(11L), anyInt())).thenReturn(List.of(
-                info(CoverageReads.PASSED_OVER + "2" + CoverageReads.PASSED_OVER_OF + "PegaDB"),
-                new ErrorTriage.Marker("WARNING", "translationFilter", CoverageReads.NEW_SOURCE_TYPE
-                                                                       + "sourcetype 'PegaBatch'"
-                                                                       + CoverageReads.NEW_SOURCE_TYPE_END,
-                        null, null, null)));
+                info(passedOver(2)),
+                info(unseen("PowerBI"))));
 
         final CoverageReads.LoggedRecords found = reads.logged(progress, List.of(
                 new CoverageReads.ErrorStream(10, 1L, null, Map.of()),
                 new CoverageReads.ErrorStream(11, 2L, null, Map.of())));
 
-        // The records the rules missed are read as before; the dispatcher's lines apart.
+        // The records the rules missed are read as before; the source type lines apart.
         assertThat(found.records()).extracting(CoverageReads.Logged::raw).containsExactly(1L);
-        final CoverageReads.Dispatched dispatched = found.dispatched();
-        assertThat(dispatched.passedOver()).isEqualTo(Map.of(CoverageReads.PASSED_OVER_NONE, 3L, "PegaDB", 42L,
-                "PegaIntegration", 7L));
-        assertThat(dispatched.handledBy()).containsExactly(Map.entry("PegaIntegration",
-                "pipeline 'PEGA-Integration-Events'"));
-        assertThat(dispatched.newSourceTypes()).containsExactly(Map.entry("PegaBatch", Set.of(1L, 2L)),
-                Map.entry("", Set.of(1L)));
-        assertThat(dispatched.field()).isEqualTo("sourcetype");
-        assertThat(dispatched.rawStreams()).containsExactly(1L, 2L);
+        final CoverageReads.SourceTypeLines lines = found.sourceTypes();
+        assertThat(lines.passedOver()).isEqualTo(45L);
+        assertThat(lines.passedOverStreams()).containsExactly(1L, 2L);
+        assertThat(lines.unseen()).containsExactly(Map.entry("PowerBI", Set.of(1L, 2L)),
+                Map.entry("Teams", Set.of(1L)));
+        assertThat(lines.field()).isEqualTo("Workload");
+        assertThat(lines.rawStreams()).containsExactly(1L, 2L);
     }
 
     @Test
-    void otherLinesAreNotADispatchers() {
-        final CoverageReads.Dispatched dispatched = new CoverageReads.Dispatched();
+    void otherLinesAreNotSourceTypeLines() {
+        final CoverageReads.SourceTypeLines lines = new CoverageReads.SourceTypeLines();
 
-        assertThat(dispatched.add(1L, "Passed over the record")).isFalse();
-        assertThat(dispatched.add(1L, null)).isFalse();
-        assertThat(dispatched.add(1L, "New source type: no registry row matches")).isFalse();
-        assertThat(dispatched.isEmpty()).isTrue();
+        assertThat(lines.add(1L, "Passed over the record")).isFalse();
+        assertThat(lines.add(1L, null)).isFalse();
+        // The dispatcher's lines, from before each group had a pipeline of its own, are no longer read.
+        assertThat(lines.add(1L, "Passed over 40 record(s) of source type PegaDB")).isFalse();
+        assertThat(lines.add(1L, "New source type: no registry row matches sourcetype 'PegaBatch': its records "
+                                 + "are passed over (review_coverage adds it to the registry as new)")).isFalse();
+        assertThat(lines.isEmpty()).isTrue();
+    }
+
+    private static String passedOver(final int records) {
+        return XsltGenerator.PASSED_OVER + records + XsltGenerator.PASSED_OVER_END;
+    }
+
+    private static String unseen(final String value) {
+        return XsltGenerator.UNSEEN_SOURCE_TYPE + value + XsltGenerator.UNSEEN_SOURCE_TYPE_IN + "Workload"
+               + XsltGenerator.UNSEEN_SOURCE_TYPE_END;
     }
 
     @Test

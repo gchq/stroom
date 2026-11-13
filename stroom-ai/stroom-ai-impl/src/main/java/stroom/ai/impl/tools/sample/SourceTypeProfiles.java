@@ -272,6 +272,13 @@ public final class SourceTypeProfiles {
     }
 
     /// @param state The survey state's source types.
+    /// @return True if the survey met more values than it keeps one by one: the rest counted together, so a value
+    /// outside those kept may have been seen.
+    public static boolean valuesCapped(final Map<String, Object> state) {
+        return JsonValues.mapOrEmpty(state.get(VALUES)).containsKey(OTHER);
+    }
+
+    /// @param state The survey state's source types.
     /// @return The records seen with each value of the source type field.
     public static Map<String, Long> valueCounts(final Map<String, Object> state) {
         final Map<String, Long> out = new LinkedHashMap<>();

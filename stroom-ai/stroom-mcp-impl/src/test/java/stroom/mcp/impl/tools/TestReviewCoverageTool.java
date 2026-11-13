@@ -277,14 +277,14 @@ class TestReviewCoverageTool {
                 new CoverageReads.Logged(4, 1_790_000_100_000L, 2, null, Map.of("action", "query"))), 2))
                 .when(reads).logged(any(), any());
         final SourceTypeScope scope = new SourceTypeScope("b", "sourcetype", List.of(), List.of("Security"));
-        Mockito.when(sourceTypes.judge(any(), any(), any(), any())).thenAnswer(inv -> {
-            final List<Map<String, Object>> groups = inv.getArgument(2);
+        Mockito.when(sourceTypes.judge(any(), any(), any(), any(), any())).thenAnswer(inv -> {
+            final List<Map<String, Object>> groups = inv.getArgument(3);
             final List<Map<String, Object>> missed = groups.stream()
                     .filter(group -> String.valueOf(group.get("kind")).contains("login"))
                     .toList();
             final List<Map<String, Object>> passed = groups.stream().filter(group -> !missed.contains(group))
                     .toList();
-            return Optional.of(new SourceTypeCoverage.Judged(missed, passed, List.of(), scope, Map.of("field",
+            return Optional.of(new SourceTypeCoverage.Judged(missed, passed, List.of(), scope, null, Map.of("field",
                     "sourcetype",
                     "scope", Map.of("share_percent", 12.5), "passed_over", Map.of("Database", 2))));
         });

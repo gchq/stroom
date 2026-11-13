@@ -20,6 +20,9 @@ import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.generation.SourceTypeModule;
+import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
@@ -42,8 +45,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
-/// review_coverage on an aggregated feed: the kinds processing missed judged against the build's scope, and the
-/// source types the registry lacks added to the build's registry as new.
+/// review_coverage on an aggregated feed: the kinds processing missed judged against a group's source types or the
+/// build's scope (another group's left to its pipeline), a group's passed-over lines summed, a whole translation's
+/// unseen source types reported, and the source types the registry lacks added to the build's registry as new.
 class TestSourceTypeCoverage {
 
     private static final DocRef PIPELINE = new DocRef(PipelineDoc.TYPE, "p", "PEGA-Events");
@@ -53,7 +57,7 @@ class TestSourceTypeCoverage {
             {"sourcetype": "PegaBatch", "message": "job"}
             """;
 
-    private static final CoverageReads.Dispatched NOTHING_DISPATCHED = new CoverageReads.Dispatched();
+    private static final CoverageReads.SourceTypeLines NO_LINES = new CoverageReads.SourceTypeLines();
 
     private final WriteGuard guard = Mockito.mock(WriteGuard.class);
     private final TranslationBuilds builds = Mockito.mock(TranslationBuilds.class);
@@ -68,7 +72,7 @@ class TestSourceTypeCoverage {
     @Test
     void kindsOutsideTheScopeArePassedOverAndNewSourceTypesAddedToTheBuildsRegistry() {
         inBuild("b");
-        Mockito.when(builds.surveyStatesInBuild("b")).thenReturn(List.of(survey("b")));
+        Mockito.when(builds.surveyStatesInBuild("b")).thenReturn(List.of(survey("b", "PegaSecurityEvent")));
         final SourceTypeRegistries.Found registry = registry(false);
         Mockito.when(registries.registry("b", "PEGA")).thenReturn(Optional.of(registry));
         Mockito.when(registries.writeRegistry(any(), eq("b"), eq("PEGA"), eq(registry), anyString()))
@@ -76,7 +80,7 @@ class TestSourceTypeCoverage {
         raw();
         final List<Map<String, Object>> groups = List.of(group(0, 5), group(1, 40), group(2, 3));
 
-        final SourceTypeCoverage.Judged judged = coverage.judge(session, PIPELINE, groups, NOTHING_DISPATCHED)
+        final SourceTypeCoverage.Judged judged = coverage.judge(session, PIPELINE, null, groups, NO_LINES)
                 .orElseThrow();
 
         assertThat(judged.missed()).extracting(group -> group.get("source_type"))
@@ -100,85 +104,93 @@ class TestSourceTypeCoverage {
     }
 
     @Test
-    void theDispatchersWarningsAddNewSourceTypesAndItsCountsAreReportedBySourceType() {
+    void aGroupsPipelineIsJudgedAgainstItsGroupItsPassedOverLinesSummedAndAnotherGroupsKindsLeftToIt() {
         inBuild("b");
-        Mockito.when(builds.surveyStatesInBuild("b")).thenReturn(List.of());
-        // No kind missed: the feed is told from the raw streams the dispatcher logged for.
-        Mockito.when(streamReader.meta(12L)).thenReturn(Meta.builder().id(12L).feedName("PEGA").build());
+        // The build's scope is another group's: a group's pipeline is judged against its own source types.
+        Mockito.when(builds.surveyStatesInBuild("b")).thenReturn(List.of(survey("b", "PegaDB")));
         final Map<String, Object> state = new LinkedHashMap<>();
         state.put("feed", "PEGA");
         state.put("field", "sourcetype");
-        final Map<String, Object> integration = row("PegaIntegration");
-        integration.put("status", SourceTypeRegistry.TRANSLATED);
-        integration.put("pipeline", Map.of("own", true, "name", "PEGA-Integration-Events"));
-        final Map<String, Object> mine = row("PegaSecurityEvent");
-        mine.put("status", SourceTypeRegistry.TRANSLATED);
-        mine.put("pipeline", Map.of("own", false, "name", PIPELINE.getName()));
-        // A value an earlier call added already: not added again.
-        final Map<String, Object> earlier = row("PegaQueue");
-        earlier.put("status", SourceTypeRegistry.NEW);
-        state.put("rows", List.of(mine, row("PegaDB"), integration, earlier));
+        state.put("rows", List.of(translated("PegaSecurityEvent", "PEGA security"), translated("PegaDB",
+                "PEGA db")));
         final SourceTypeRegistries.Found registry = new SourceTypeRegistries.Found(new SurveyRecord("r",
                 "PEGA source types", SourceTypeRegistry.render(state)), false, state);
         Mockito.when(registries.registry("b", "PEGA")).thenReturn(Optional.of(registry));
         Mockito.when(registries.writeRegistry(any(), eq("b"), eq("PEGA"), eq(registry), anyString()))
                 .thenReturn(new SurveyRecord("r", "PEGA source types", ""));
-        final CoverageReads.Dispatched dispatched = new CoverageReads.Dispatched();
-        dispatched.add(12L, "Passed over 40 record(s) of source type PegaDB");
-        dispatched.add(12L, "Passed over 3 record(s) of source type (none: no registry row matches)");
-        dispatched.add(12L, "Passed over 9 record(s) of source type PegaIntegration, handled by pipeline "
-                            + "'PEGA-Integration-Events'");
-        dispatched.add(12L, "New source type: no registry row matches sourcetype 'PegaBatch': its records are "
-                            + "passed over (review_coverage adds it to the registry as new)");
-        dispatched.add(12L, "New source type: no registry row matches sourcetype 'PegaQueue': its records are "
-                            + "passed over (review_coverage adds it to the registry as new)");
+        raw();
+        // Its one line a document: two documents in stream 12, one in stream 13.
+        final CoverageReads.SourceTypeLines lines = new CoverageReads.SourceTypeLines();
+        lines.add(12L, XsltGenerator.PASSED_OVER + 40 + XsltGenerator.PASSED_OVER_END);
+        lines.add(12L, XsltGenerator.PASSED_OVER + 2 + XsltGenerator.PASSED_OVER_END);
+        lines.add(13L, XsltGenerator.PASSED_OVER + 5 + XsltGenerator.PASSED_OVER_END);
 
-        final SourceTypeCoverage.Judged judged = coverage.judge(session, PIPELINE, List.of(), dispatched)
-                .orElseThrow();
+        final SourceTypeCoverage.Judged judged = coverage.judge(session, PIPELINE, group("PEGA security",
+                "PegaSecurityEvent"), List.of(group(0, 5), group(1, 40), group(2, 3)), lines).orElseThrow();
 
-        final Map<String, Object> processing = JsonValues.mapOrEmpty(judged.said().get("processing"));
-        assertThat(JsonValues.mapOrEmpty(processing.get("passed_over"))).containsOnlyKeys("PegaDB",
-                "(none: no registry row matches)");
-        assertThat(JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(processing.get("passed_over")).get("PegaDB")))
-                .containsEntry("records", 40L).containsEntry("status", SourceTypeRegistry.PARKED);
-        // Another pipeline's source type: handled elsewhere, never parked or new.
-        assertThat(JsonValues.mapOrEmpty(processing.get("handled_elsewhere"))).containsOnlyKeys("PegaIntegration");
-        assertThat(JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(processing.get("handled_elsewhere"))
-                .get("PegaIntegration"))).containsEntry("pipeline", "pipeline 'PEGA-Integration-Events'")
-                .containsEntry("records", 9L);
-        assertThat(JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(processing.get("new_source_types")).get("PegaQueue")))
-                .containsEntry("now_in_registry_as", "PegaQueue");
+        assertThat(judged.group()).isEqualTo("PEGA security");
+        assertThat(judged.missed()).extracting(group -> group.get("source_type"))
+                .containsExactly("PegaSecurityEvent");
+        // Another group's source type: left to its pipeline, never missed or passed over.
+        assertThat(judged.otherGroups()).singleElement().satisfies(group -> assertThat(group)
+                .containsEntry("source_type", "PegaDB")
+                .containsEntry("translated_by", "group 'PEGA db', pipeline 'PEGA db pipeline'"));
+        assertThat(judged.said()).containsEntry("other_groups", Map.of("PegaDB",
+                "group 'PEGA db', pipeline 'PEGA db pipeline'")).containsEntry("group", "PEGA security");
+        // A value no row matches, met in a kind: passed over, and added to the registry as new.
+        assertThat(judged.passedOver()).extracting(group -> group.get("source_type"))
+                .containsExactly("PegaBatch (new)");
         assertThat(judged.said()).containsEntry("new_source_types", List.of("PegaBatch"));
-        final ArgumentCaptor<String> written = ArgumentCaptor.forClass(String.class);
-        Mockito.verify(registries).writeRegistry(eq(session), eq("b"), eq("PEGA"), eq(registry),
-                written.capture());
-        assertThat(JsonValues.maps(SourceTypeRegistry.read(written.getValue()).get("rows")))
-                .extracting(row -> row.get("name"))
-                .containsExactly("PegaSecurityEvent", "PegaDB", "PegaIntegration", "PegaQueue", "PegaBatch");
+        assertThat(JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(judged.said().get("processing")).get(
+                "passed_over"))).containsEntry("records", 47L).containsEntry("raw_streams", 2);
+        assertThat(judged.said()).doesNotContainKeys("unseen_source_types", "handled_elsewhere");
     }
 
     @Test
-    void aKindOfAnotherPipelinesSourceTypeIsHandledElsewhere() {
+    void aWholeTranslationsUnseenSourceTypesAreReportedAndNoKindIsNewWithoutARegistry() {
+        inBuild("b");
+        final Map<String, Object> surveyState = new LinkedHashMap<>();
+        surveyState.put("feed", "PEGA");
+        surveyState.put("source_types", Map.of("field", "sourcetype", "values", Map.of("PegaSecurityEvent",
+                Map.of("records", 1))));
+        Mockito.when(builds.surveyStatesInBuild("b")).thenReturn(List.of(surveyState));
+        Mockito.when(registries.registry("b", "PEGA")).thenReturn(Optional.empty());
+        raw();
+        final CoverageReads.SourceTypeLines lines = new CoverageReads.SourceTypeLines();
+        lines.add(12L, XsltGenerator.UNSEEN_SOURCE_TYPE + "PegaBatch" + XsltGenerator.UNSEEN_SOURCE_TYPE_IN
+                       + "sourcetype" + XsltGenerator.UNSEEN_SOURCE_TYPE_END);
+
+        final SourceTypeCoverage.Judged judged = coverage.judge(session, PIPELINE, null, List.of(group(0, 5),
+                group(2, 3)), lines).orElseThrow();
+
+        // Translated whole: every kind is the pipeline's to take.
+        assertThat(judged.missed()).extracting(group -> group.get("source_type"))
+                .containsExactly("PegaSecurityEvent", "PegaBatch");
+        assertThat(judged.passedOver()).isEmpty();
+        assertThat(judged.said()).containsEntry("unseen_source_types", Map.of("PegaBatch", Map.of("raw_streams",
+                List.of(12L)))).doesNotContainKeys("new_source_types", "processing", "group");
+        Mockito.verify(registries, Mockito.never()).writeRegistry(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void aKindOfASourceTypeAGroupTranslatesIsLeftToItsPipeline() {
         Mockito.when(guard.buildOf(PIPELINE)).thenReturn(Optional.empty());
         Mockito.when(streamReader.meta(9L)).thenReturn(Meta.builder().id(9L).feedName("PEGA").build());
         final Map<String, Object> state = new LinkedHashMap<>();
         state.put("feed", "PEGA");
         state.put("field", "sourcetype");
-        final Map<String, Object> db = row("PegaDB");
-        db.put("status", SourceTypeRegistry.TRANSLATED);
-        db.put("pipeline", Map.of("own", true, "name", "PEGA-DB-Events"));
-        state.put("rows", List.of(row("PegaSecurityEvent"), db));
+        state.put("rows", List.of(row("PegaSecurityEvent"), translated("PegaDB", "PEGA db")));
         Mockito.when(registries.registry(null, "PEGA")).thenReturn(Optional.of(new SourceTypeRegistries.Found(
                 new SurveyRecord("r", "PEGA source types", SourceTypeRegistry.render(state)), true, state)));
         raw();
 
-        final SourceTypeCoverage.Judged judged = coverage.judge(session, PIPELINE, List.of(group(0, 5),
-                group(1, 40)), NOTHING_DISPATCHED).orElseThrow();
+        final SourceTypeCoverage.Judged judged = coverage.judge(session, PIPELINE, null, List.of(group(0, 5),
+                group(1, 40)), NO_LINES).orElseThrow();
 
         assertThat(judged.missed()).extracting(group -> group.get("source_type")).containsExactly(
                 "PegaSecurityEvent");
-        assertThat(judged.handled()).singleElement().satisfies(group -> assertThat(group)
-                .containsEntry("handled_by", "pipeline 'PEGA-DB-Events'"));
+        assertThat(judged.otherGroups()).singleElement().satisfies(group -> assertThat(group)
+                .containsEntry("translated_by", "group 'PEGA db', pipeline 'PEGA db pipeline'"));
     }
 
     @Test
@@ -188,8 +200,8 @@ class TestSourceTypeCoverage {
         Mockito.when(registries.registry(null, "PEGA")).thenReturn(Optional.of(registry(true)));
         raw();
 
-        final SourceTypeCoverage.Judged judged = coverage.judge(session, PIPELINE, List.of(group(0, 5),
-                group(2, 3)), NOTHING_DISPATCHED).orElseThrow();
+        final SourceTypeCoverage.Judged judged = coverage.judge(session, PIPELINE, null, List.of(group(0, 5),
+                group(2, 3)), NO_LINES).orElseThrow();
 
         assertThat(judged.passedOver()).isEmpty();
         assertThat(judged.scope()).isNull();
@@ -203,8 +215,8 @@ class TestSourceTypeCoverage {
         Mockito.when(streamReader.meta(9L)).thenReturn(Meta.builder().id(9L).feedName("PLAIN").build());
         Mockito.when(registries.registry(null, "PLAIN")).thenReturn(Optional.empty());
 
-        assertThat(coverage.judge(session, PIPELINE, List.of(group(0, 5)), NOTHING_DISPATCHED)).isEmpty();
-        assertThat(coverage.judge(session, PIPELINE, List.of(), NOTHING_DISPATCHED)).isEmpty();
+        assertThat(coverage.judge(session, PIPELINE, null, List.of(group(0, 5)), NO_LINES)).isEmpty();
+        assertThat(coverage.judge(session, PIPELINE, null, List.of(), NO_LINES)).isEmpty();
     }
 
     private void inBuild(final String build) {
@@ -224,14 +236,30 @@ class TestSourceTypeCoverage {
         return group;
     }
 
-    private static Map<String, Object> survey(final String build) {
+    // A source type group's kept mapping.
+    private static TranslationMapping group(final String name, final String sourceType) {
+        return TranslationMapping.fromJson(Map.of("input", "json", "events", List.of(Map.of("name", "x", "fields",
+                List.of(Map.of("path", "EventDetail/TypeId", "value", "x")))))).withModule(new SourceTypeModule(
+                SourceTypeModule.GROUP, name, "pega_security", List.of(sourceType), null, null, List.of(), null,
+                "sourcetype", List.of()));
+    }
+
+    private static Map<String, Object> translated(final String name, final String group) {
+        final Map<String, Object> row = row(name);
+        row.put("status", SourceTypeRegistry.TRANSLATED);
+        row.put("group", group);
+        row.put("pipeline", Map.of("name", group + " pipeline"));
+        return row;
+    }
+
+    private static Map<String, Object> survey(final String build, final String scope) {
         final Map<String, Object> values = new LinkedHashMap<>();
         values.put("PegaSecurityEvent", Map.of("records", 1));
         values.put("PegaDB", Map.of("records", 3));
         final Map<String, Object> state = new LinkedHashMap<>();
         state.put("feed", "PEGA");
         state.put("source_types", Map.of("field", "sourcetype", "records", 4, "values", values, "scope", Map.of(
-                SourceTypeScope.BUILD, build, SourceTypeScope.SOURCE_TYPES, List.of("PegaSecurityEvent"))));
+                SourceTypeScope.BUILD, build, SourceTypeScope.SOURCE_TYPES, List.of(scope))));
         return state;
     }
 

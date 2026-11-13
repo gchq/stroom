@@ -1478,7 +1478,7 @@ beside the feed:
 `draft_translation_mapping` drafts from the notes; `build_translation_xslt` checks the mapping against the catalogue.
 Where the sample and the documentation disagree, the sample decides the format and the documentation the meaning.
 
-### Aggregated feeds: source types and source type groups (built 2026-11-13; pipeline revised 2026-11-13)
+### Aggregated feeds: source types and source type groups (built 2026-11-13; pipeline per group, built 2026-11-13)
 
 Built as designed below, then revised: each source type group has a pipeline of its own and there is no dispatcher
 ([A pipeline per source type group](#a-pipeline-per-source-type-group-decided-2026-11-13)). Where the text below and
@@ -2085,6 +2085,18 @@ Built in rework R2 (where the design was silent):
   to that copy, so the chain runs the copies. Promotion's `pipeline_changes` add each group pipeline's missing
   reference data, including the production pipeline of a group changed through a working copy of its XSLT.
 * The index union per output feed reads the group XSLTs of the translated rows sharing that output feed.
+
+Built in rework R3 (where the design was silent):
+
+* `review_coverage` judges a group pipeline against its own group's source types, whatever the build's scope; a kind
+  of a source type another group translates goes to `other_groups`, never `missed`. It reads the groups' passed-over
+  lines (summed over documents and streams); processing never adds registry rows.
+* A whole translation keeps the values (or the registry's rows) its survey saw in its kept mapping
+  (`seen_source_types`), from the first survey in the build with a confirmed source type field; none when the
+  survey's values were capped, as an unseen value can't then be told. Its XSLT checks once a document and logs each
+  unseen value once a stream; the line is triaged benign, and `review_coverage` reports it as `unseen_source_types`.
+* A promoted group's pipeline is processed in a later build through a working copy (`copy_pipeline
+  working_copy=true`), as the tools refuse processing with a production pipeline in a build.
 
 #### Open decisions
 

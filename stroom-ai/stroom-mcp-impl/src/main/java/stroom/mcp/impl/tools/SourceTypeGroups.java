@@ -26,13 +26,16 @@ import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.HelpersXslt;
 import stroom.ai.impl.tools.generation.ModuleChecks;
+import stroom.ai.impl.tools.generation.SeenSourceTypes;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.SourceTypeModule;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.generation.XsltNames;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
+import stroom.ai.impl.tools.sample.SourceTypeProfiles;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
+import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.impl.tools.sample.ToolJson;
@@ -140,6 +143,41 @@ class SourceTypeGroups {
     /// @return The UUID of the build's XSLT of that name, if it has one.
     Optional<String> xsltNamed(final String build, final String name) {
         return Optional.ofNullable(xsltInBuild(build, name)).map(WriteGuard.BuildDoc::uuid);
+    }
+
+    /// The source types a whole translation's survey saw (no source type group), for its XSLT to log a value outside
+    /// them once a stream: the build's survey confirmed a source type field; the registry's rows where the build has
+    /// a registry for the feed, else the values the survey read. None for a feed without a source type field, or a
+    /// survey whose values were too many to keep each (some counted together), where a value outside them can't be
+    /// told.
+    ///
+    /// @param build The build, or null.
+    /// @return The source types seen, if the build's survey confirmed a source type field.
+    Optional<SeenSourceTypes> seenSourceTypes(final String build) {
+        if (build == null) {
+            return Optional.empty();
+        }
+        for (final Map<String, Object> state : builds.surveyStatesInBuild(build)) {
+            final Map<String, Object> sources = JsonValues.mapOrEmpty(state.get(SourceTypeProfiles.STATE_KEY));
+            if (!(sources.get(SourceTypeProfiles.FIELD) instanceof final String field) || field.isBlank()) {
+                continue;
+            }
+            final String feed = JsonValues.text(state.get("feed"));
+            final Optional<SourceTypeRegistries.Found> registry = feed.isBlank()
+                    ? Optional.empty()
+                    : registries.registry(build, feed);
+            final List<SourceTypeRows.Row> rows = registry.map(found -> SourceTypeRegistry.rows(found.state()))
+                    .orElse(List.of());
+            if (!rows.isEmpty()) {
+                return Optional.of(SeenSourceTypes.ofRows(field, rows));
+            }
+            if (SourceTypeProfiles.valuesCapped(sources)) {
+                return Optional.empty();
+            }
+            return Optional.of(new SeenSourceTypes(field, List.copyOf(SourceTypeProfiles.valueCounts(sources)
+                    .keySet()), List.of()));
+        }
+        return Optional.empty();
     }
 
     /// The registry of the build's aggregated feed.

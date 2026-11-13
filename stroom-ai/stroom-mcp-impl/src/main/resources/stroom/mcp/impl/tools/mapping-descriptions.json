@@ -87,6 +87,10 @@
   "module": {
    "description": "Set by build_translation_xslt (group=), never by hand: what makes the mapping one module of an aggregated feed's translation, a source type group's (its mode, its source types, the feed's common and helpers modules it imports and the common parts it calls) or the feed's common module.",
    "model": null
+  },
+  "seen_source_types": {
+   "description": "Set by build_translation_xslt, never by hand: on a feed translated as a normal source whose survey confirmed a source type field, the field and the values (and registry patterns) seen, so the XSLT logs (INFO) once a stream a value outside them, prompting a new survey.",
+   "model": null
   }
  },
  "SharedFunctions": {

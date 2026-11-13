@@ -581,7 +581,7 @@ class TranslationBuilds {
                 mapping.forEach(), mapping.nilValues(), mapping.dropWhen(), mapping.common(), mapping.events(),
                 mapping.unmatched(), mapping.ignoredFields(), mapping.logUnmappedFields(), mapping.style(), imports,
                 mapping.shared(),
-                mapping.functions(), mapping.module());
+                mapping.functions(), mapping.module(), mapping.seenSourceTypes());
     }
 
     /// @param result A generator's result ([#generated]).

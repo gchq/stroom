@@ -214,6 +214,21 @@ class TestErrorTriage {
     }
 
     @Test
+    void aSourceTypeTheSurveyDidNotSeeIsBenignAndSuggestsANewSurvey() {
+        // A whole translation of a feed with a source type field logs a value its survey didn't see, once a stream:
+        // its records are translated as any other, so a prompt, not a fault.
+        final String unseen = XsltGenerator.UNSEEN_SOURCE_TYPE + "PowerBI" + XsltGenerator.UNSEEN_SOURCE_TYPE_IN
+                              + "Workload" + XsltGenerator.UNSEEN_SOURCE_TYPE_END;
+        final List<Marker> markers = List.of(marker("INFO", "translationFilter", unseen, "r1"));
+
+        final Map<String, Object> result = RULES.triage(markers, Set.of("translationFilter"), 3, 3, List.of());
+
+        assertThat(result.get("verdict")).isEqualTo("clean");
+        assertThat(groups(result).getFirst().get("class")).isEqualTo("benign");
+        assertThat(String.valueOf(groups(result).getFirst().get("reason"))).contains("surveying the feed again");
+    }
+
+    @Test
     void aStoredErrorWithoutARealLocationHasNone() {
         final StoredError stored = new StoredError(Severity.ERROR, DefaultLocation.of(-1, -1),
                 new ElementId("schemaFilter"), "bad");

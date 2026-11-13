@@ -20,6 +20,9 @@ import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.generation.SeenSourceTypes;
+import stroom.ai.impl.tools.generation.SourceTypeModule;
+import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.RecordSplitter;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
@@ -31,7 +34,6 @@ import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
@@ -45,18 +47,23 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 
-/// review_coverage on an aggregated feed: the kinds of event processing missed, judged against the build's scope
-/// ([SourceTypeScope]). Each kind's first example record is read and its source type told by the source type field
-/// and the registry's rows (the first match winning): a kind of a source type outside the scope is passed over, not
-/// missed (the scope's translation isn't meant to take it), a kind of a source type another pipeline translates is
-/// handled elsewhere, and a value no row matches is a `new` source type, added to the build's registry as a `new` row
-/// (through a working copy when the registry is beside the feed) for the user to place. Outside a build nothing is
-/// written: only a build changes the registry.
+/// review_coverage on an aggregated feed, or on a feed translated whole whose survey confirmed a source type field:
+/// the kinds of event processing missed, judged against what the pipeline translates. Each kind's first example
+/// record is read and its source type told by the source type field and the registry's rows (the first match
+/// winning).
 ///
-/// What the dispatcher logged in processing ([CoverageReads.Dispatched]) is read too: the records it passed over by
-/// source type (each with its registry status), those it passed over as another pipeline's (handled elsewhere), and
-/// the values it warned no row matches, which are added to the registry as `new` as those met in the kinds are. A
-/// value the registry has a row for since (one an earlier call added) is not added again.
+/// * A source type group's pipeline (its XSLT's kept mapping a group's) is judged against the group's source types:
+///   a kind of a source type another group translates (the registry's `translated` rows of another group) is left
+///   to that group's pipeline (`other_groups`), never missed; one of any other source type outside the group is
+///   passed over. The group's own line a document of records passed over is summed over the Error streams read.
+/// * A whole translation is judged against the build's scope, where it has one; a kind of a source type a group
+///   translates is left to that group's pipeline as above. Its lines of values of the source type field its survey
+///   didn't see are reported (`unseen_source_types`), a prompt to survey the feed again: nothing is written for them.
+///
+/// A value no row matches, met in a kind, is a `new` source type where the feed has a registry, added to the build's
+/// registry as a `new` row (through a working copy when the registry is beside the feed) for the user to place. Group
+/// pipelines never add one from processing: values outside a group are counted with the rest passed over. Outside a
+/// build nothing is written: only a build changes the registry.
 class SourceTypeCoverage {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SourceTypeCoverage.class);
@@ -87,24 +94,33 @@ class SourceTypeCoverage {
         this.sampleStreamTexts = sampleStreamTexts;
     }
 
-    /// Judges the kinds found against the build's scope, and adds the source types met that no row matches to the
-    /// build's registry as `new`.
+    /// Judges the kinds found against what the pipeline translates, and adds the source types met that no row
+    /// matches to the build's registry as `new`.
     ///
-    /// @param session    The session, for the audit log of the registry's writing.
-    /// @param pipeline   The events pipeline reviewed.
-    /// @param groups     The kinds found (each `examples` with `raw_stream` and `record`), changed in place: each
-    ///                   told's `source_type` set.
-    /// @param dispatched What the pipeline's dispatcher logged in the Error streams read.
+    /// @param session  The session, for the audit log of the registry's writing.
+    /// @param pipeline The events pipeline reviewed.
+    /// @param mapping  The mapping kept with the pipeline's XSLT (a source type group's, or a whole translation's),
+    ///                 or null when it keeps none.
+    /// @param groups   The kinds found (each `examples` with `raw_stream` and `record`), changed in place: each
+    ///                 told's `source_type` set.
+    /// @param lines    What the pipeline's XSLT logged of the source types in the Error streams read.
     /// @return The judgement; empty for a feed with no source type field (or one that can't be told).
     Optional<Judged> judge(final ToolSession session,
                            final DocRef pipeline,
+                           final TranslationMapping mapping,
                            final List<Map<String, Object>> groups,
-                           final CoverageReads.Dispatched dispatched) {
+                           final CoverageReads.SourceTypeLines lines) {
         final String build = buildOf(pipeline);
         final Map<String, Object> survey = sourceTypesSurvey(build);
+        final SourceTypeModule module = mapping != null && mapping.module() != null && mapping.module().isGroup()
+                ? mapping.module()
+                : null;
+        final SeenSourceTypes seen = mapping == null || module != null
+                ? null
+                : mapping.seenSourceTypes();
         final String feed = survey != null
                 ? JsonValues.text(survey.get("feed"))
-                : feedOf(groups, dispatched);
+                : feedOf(groups, lines);
         if (feed == null || feed.isBlank()) {
             return Optional.empty();
         }
@@ -112,27 +128,29 @@ class SourceTypeCoverage {
         final Map<String, Object> sources = survey == null
                 ? Map.of()
                 : JsonValues.mapOrEmpty(survey.get(SourceTypeProfiles.STATE_KEY));
-        final String field = registry != null && registry.state().get("field") instanceof final String named
-                ? named
-                : surveyedOrLogged(JsonValues.text(sources.get(SourceTypeProfiles.FIELD)), dispatched);
-        if (field == null || field.isBlank()) {
+        final String field = firstSet(registry == null
+                        ? null
+                        : JsonValues.text(registry.state().get("field")),
+                JsonValues.text(sources.get(SourceTypeProfiles.FIELD)),
+                module == null
+                        ? null
+                        : module.field(),
+                seen == null
+                        ? null
+                        : seen.field(),
+                lines.field());
+        if (field == null) {
             return Optional.empty();
         }
-        final List<SourceTypeRows.Row> rows = registry == null
-                ? List.of()
-                : SourceTypeRegistry.rows(registry.state());
-        final SourceTypeScope scope = build == null
-                ? null
-                : SourceTypeScope.of(sources, build, rows).orElse(null);
-        final SourceTypeScope reader = new SourceTypeScope(build, field, scope == null
-                ? rows
-                : scope.rows(), null);
-        final Map<String, String> elsewhere = handledElsewhere(registry, pipeline, dispatched);
+        final List<SourceTypeRows.Row> rows = rowsOf(registry, module);
+        final SourceTypeScope scope = scopeOf(build, field, rows, module, sources);
+        final Map<String, String> others = otherGroups(registry, module);
         final List<Map<String, Object>> missed = new ArrayList<>();
         final List<Map<String, Object>> passedOver = new ArrayList<>();
-        final List<Map<String, Object>> handled = new ArrayList<>();
+        final List<Map<String, Object>> otherGroups = new ArrayList<>();
         final Map<String, Integer> passedRecords = new TreeMap<>();
         final Set<String> newValues = new LinkedHashSet<>();
+        final SourceTypeScope reader = new SourceTypeScope(build, field, rows, null);
         final Map<Long, RecordSplitter.Chunk> read = new LinkedHashMap<>();
         for (int i = 0; i < groups.size(); i++) {
             final Map<String, Object> group = groups.get(i);
@@ -145,19 +163,21 @@ class SourceTypeCoverage {
             }
             final String value = reader.value(parsed);
             final Optional<String> type = reader.sourceType(parsed);
-            if (value != null && type.isEmpty()) {
+            if (value != null && type.isEmpty() && registry != null) {
                 newValues.add(value);
             }
             final String said = type.orElse(value == null
                     ? SourceTypeScope.UNMATCHED
-                    : value + " (new)");
+                    : value + (registry == null
+                            ? ""
+                            : " (new)"));
             group.put("source_type", said);
-            if (type.isPresent() && elsewhere.containsKey(type.get())) {
-                // Another pipeline translates it: neither missed here nor parked.
-                group.put("handled_by", elsewhere.get(type.get()));
-                handled.add(group);
+            if (type.isPresent() && others.containsKey(type.get())) {
+                // Another group's pipeline translates it: neither missed here nor parked.
+                group.put("translated_by", others.get(type.get()));
+                otherGroups.add(group);
             } else if (scope != null && !scope.inScope(parsed)) {
-                // Outside the scope (parked, dropped or new): not the scope's translation's to take.
+                // Outside what the pipeline translates (parked, dropped or new): not its to take.
                 passedOver.add(group);
                 passedRecords.merge(said, records(group), Integer::sum);
             } else {
@@ -166,98 +186,110 @@ class SourceTypeCoverage {
         }
         final Map<String, Object> said = new LinkedHashMap<>();
         said.put("field", field);
+        if (module != null) {
+            said.put("group", module.name());
+            said.put("group_source_types", module.sourceTypes());
+        }
         if (scope != null) {
-            said.put("scope", scope.share(sources));
+            if (!sources.isEmpty()) {
+                said.put("scope", scope.share(sources));
+            }
             said.put("passed_over", passedRecords);
         }
-        if (!dispatched.isEmpty() || !elsewhere.isEmpty()) {
-            said.put("processing", processing(rows, registry, elsewhere, dispatched));
+        if (!otherGroups.isEmpty()) {
+            final Map<String, Object> byType = new TreeMap<>();
+            otherGroups.forEach(group -> byType.put(String.valueOf(group.get("source_type")),
+                    group.get("translated_by")));
+            said.put("other_groups", byType);
         }
-        // The values the dispatcher warned no row matches: new, unless a row has been added for them since.
-        dispatched.newSourceTypes().keySet().stream()
-                .filter(value -> !value.isBlank())
-                .filter(value -> SourceTypeRows.first(rows, value).isEmpty())
-                .forEach(newValues::add);
+        if (module != null || lines.passedOver() > 0) {
+            said.put("processing", processing(lines));
+        }
+        if (!lines.unseen().isEmpty()) {
+            said.put("unseen_source_types", unseen(lines));
+        }
         if (!newValues.isEmpty()) {
             said.put("new_source_types", List.copyOf(newValues));
             said.put("registry", addNew(session, build, feed, registry, newValues));
         }
-        return Optional.of(new Judged(missed, passedOver, handled, scope, said));
+        return Optional.of(new Judged(missed, passedOver, otherGroups, scope, module == null
+                ? null
+                : module.name(), said));
     }
 
-    // The source types another pipeline translates, by the pipeline said to handle them: as the dispatcher's lines
-    // name it, else as the registry's rows do (a translated row placed in a pipeline other than this one, by name).
-    private static Map<String, String> handledElsewhere(final SourceTypeRegistries.Found registry,
-                                                        final DocRef pipeline,
-                                                        final CoverageReads.Dispatched dispatched) {
-        final Map<String, String> out = new TreeMap<>();
-        if (registry != null) {
-            for (final Map<String, Object> row : JsonValues.maps(registry.state().get("rows"))) {
-                final Map<String, Object> placed = JsonValues.mapOrEmpty(row.get("pipeline"));
-                final String name = JsonValues.text(placed.get("name"));
-                // A row waiting for a new version of the feed's pipeline names the pipeline it leaves.
-                if (SourceTypeRegistry.TRANSLATED.equals(row.get("status")) && !name.isBlank()
-                    && !name.equals(pipeline.getName()) && !JsonValues.truthy(placed.get("new_version"))) {
-                    out.put(JsonValues.text(row.get("name")), "pipeline '" + name + "'");
-                }
+    // The first of these that is set; null for none.
+    private static String firstSet(final String... candidates) {
+        for (final String candidate : candidates) {
+            if (candidate != null && !candidate.isBlank()) {
+                return candidate;
             }
         }
-        out.putAll(dispatched.handledBy());
+        return null;
+    }
+
+    // The registry's rows, in order; a group's own snapshot of them where the feed's registry can't be read.
+    private static List<SourceTypeRows.Row> rowsOf(final SourceTypeRegistries.Found registry,
+                                                   final SourceTypeModule module) {
+        if (registry != null) {
+            return SourceTypeRegistry.rows(registry.state());
+        }
+        return module == null
+                ? List.of()
+                : module.rows().stream().map(row -> new SourceTypeRows.Row(row.name(), row.match(), row.value()))
+                        .toList();
+    }
+
+    // What the pipeline is judged against: a group's source types, else the build's scope; null for neither.
+    private static SourceTypeScope scopeOf(final String build,
+                                           final String field,
+                                           final List<SourceTypeRows.Row> rows,
+                                           final SourceTypeModule module,
+                                           final Map<String, Object> sources) {
+        if (module != null) {
+            return new SourceTypeScope(build, field, rows, module.sourceTypes());
+        }
+        return build == null
+                ? null
+                : SourceTypeScope.of(sources, build, rows).orElse(null);
+    }
+
+    // The source types another group's pipeline translates, by the group: the registry's translated rows of a group
+    // other than this pipeline's.
+    private static Map<String, String> otherGroups(final SourceTypeRegistries.Found registry,
+                                                   final SourceTypeModule module) {
+        final Map<String, String> out = new TreeMap<>();
+        if (registry == null) {
+            return out;
+        }
+        for (final Map<String, Object> row : JsonValues.maps(registry.state().get("rows"))) {
+            final String group = JsonValues.text(row.get("group"));
+            if (SourceTypeRegistry.TRANSLATED.equals(row.get("status")) && !group.isBlank()
+                && (module == null || !group.equals(module.name()))) {
+                final String pipeline = JsonValues.text(JsonValues.mapOrEmpty(row.get("pipeline")).get("name"));
+                out.put(JsonValues.text(row.get("name")), "group '" + group + "'" + (pipeline.isBlank()
+                        ? ""
+                        : ", pipeline '" + pipeline + "'"));
+            }
+        }
         return out;
     }
 
-    // What the dispatcher logged in processing: `passed_over` (records by source type, each with its registry
-    // status), `handled_elsewhere` (another pipeline's source types: the pipeline, and the records passed over here)
-    // and `new_source_types` (each value no row matched, with raw streams it was met in).
-    private static Map<String, Object> processing(final List<SourceTypeRows.Row> rows,
-                                                  final SourceTypeRegistries.Found registry,
-                                                  final Map<String, String> elsewhere,
-                                                  final CoverageReads.Dispatched dispatched) {
-        final Map<String, String> statuses = new LinkedHashMap<>();
-        if (registry != null) {
-            JsonValues.maps(registry.state().get("rows")).forEach(row -> statuses.put(JsonValues.text(row.get(
-                    "name")), JsonValues.text(row.get("status"))));
-        }
+    // What a group's pipeline logged in processing: the records it passed over (any other source type's, or none's),
+    // summed over the documents and streams read, and the raw streams it said so for.
+    private static Map<String, Object> processing(final CoverageReads.SourceTypeLines lines) {
         final Map<String, Object> passed = new LinkedHashMap<>();
-        final Map<String, Object> handled = new LinkedHashMap<>();
-        elsewhere.forEach((type, by) -> {
-            final Map<String, Object> entry = new LinkedHashMap<>();
-            entry.put("pipeline", by);
-            entry.put("records", dispatched.passedOver().getOrDefault(type, 0L));
-            handled.put(type, entry);
-        });
-        dispatched.passedOver().forEach((type, records) -> {
-            if (elsewhere.containsKey(type)) {
-                return;
-            }
-            final Map<String, Object> entry = new LinkedHashMap<>();
-            entry.put("records", records);
-            entry.put("status", CoverageReads.PASSED_OVER_NONE.equals(type)
-                    ? SourceTypeRegistry.NEW
-                    : NullSafe.nonBlankStringElse(statuses.get(type), "not in the registry"));
-            passed.put(type, entry);
-        });
-        final Map<String, Object> found = new LinkedHashMap<>();
-        dispatched.newSourceTypes().forEach((value, streams) -> {
-            final Map<String, Object> entry = new LinkedHashMap<>();
-            entry.put("raw_streams", List.copyOf(streams));
-            SourceTypeRows.first(rows, value).ifPresent(row -> entry.put("now_in_registry_as", row.name()));
-            found.put(value.isBlank()
-                    ? "(no value)"
-                    : value, entry);
-        });
+        passed.put("records", lines.passedOver());
+        passed.put("raw_streams", lines.passedOverStreams().size());
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("passed_over", passed);
-        out.put("handled_elsewhere", handled);
-        out.put("new_source_types", found);
         return out;
     }
 
-    // The source type field the survey kept, else the one the dispatcher's warnings named; null for neither.
-    private static String surveyedOrLogged(final String surveyed, final CoverageReads.Dispatched dispatched) {
-        return surveyed == null || surveyed.isBlank()
-                ? dispatched.field()
-                : surveyed;
+    // Each value a whole translation logged as not seen in its survey, with raw streams it was met in.
+    private static Map<String, Object> unseen(final CoverageReads.SourceTypeLines lines) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        lines.unseen().forEach((value, streams) -> out.put(value, Map.of("raw_streams", List.copyOf(streams))));
+        return out;
     }
 
     // The build a pipeline is in; null outside one.
@@ -282,9 +314,9 @@ class SourceTypeCoverage {
                 .orElse(null);
     }
 
-    // The feed the kinds' raw streams (else the raw streams the dispatcher logged for) are in; null when none can be
-    // read.
-    private String feedOf(final List<Map<String, Object>> groups, final CoverageReads.Dispatched dispatched) {
+    // The feed the kinds' raw streams (else the raw streams the source type lines were logged for) are in; null when
+    // none can be read.
+    private String feedOf(final List<Map<String, Object>> groups, final CoverageReads.SourceTypeLines lines) {
         final Set<Long> raws = new LinkedHashSet<>();
         for (final Map<String, Object> group : groups) {
             for (final Map<String, Object> example : JsonValues.maps(group.get("examples"))) {
@@ -293,7 +325,7 @@ class SourceTypeCoverage {
                 }
             }
         }
-        raws.addAll(dispatched.rawStreams());
+        raws.addAll(lines.rawStreams());
         for (final Long raw : raws) {
             try {
                 return streamReader.meta(raw).getFeedName();
@@ -412,20 +444,23 @@ class SourceTypeCoverage {
     // --------------------------------------------------------------------------------
 
 
-    /// The kinds found, judged against the build's scope.
+    /// The kinds found, judged against what the pipeline translates.
     ///
-    /// @param missed     The kinds of the scope's source types (and those whose source type can't be told).
-    /// @param passedOver The kinds of source types outside the scope: passed over, not missed.
-    /// @param handled    The kinds of source types another pipeline translates (each with `handled_by`).
-    /// @param scope      The build's scope, or null for none.
-    /// @param said       What review_coverage says of them: `field`, `scope` (its share of the feed),
-    ///                   `passed_over` (records by source type), `processing` (what the dispatcher logged:
-    ///                   `passed_over`, `handled_elsewhere`, `new_source_types`), `new_source_types` and
-    ///                   `registry`.
+    /// @param missed      The kinds of the source types it translates (and those whose source type can't be told).
+    /// @param passedOver  The kinds of source types outside them (parked, dropped or new): passed over, not missed.
+    /// @param otherGroups The kinds of source types another group's pipeline translates (each with `translated_by`).
+    /// @param scope       What it was judged against: a group's source types or the build's scope; null for none.
+    /// @param group       The source type group whose pipeline it is, or null for a whole translation.
+    /// @param said        What review_coverage says of them: `field`, `group` and `group_source_types`, `scope` (its
+    ///                    share of the feed), `passed_over` (the kinds' records by source type), `other_groups`
+    ///                    (source type to the group translating it), `processing` (a group's `passed_over`
+    ///                    records and raw streams, as its pipeline logged them), `unseen_source_types` (a whole
+    ///                    translation's values its survey didn't see), `new_source_types` and `registry`.
     record Judged(List<Map<String, Object>> missed,
                   List<Map<String, Object>> passedOver,
-                  List<Map<String, Object>> handled,
+                  List<Map<String, Object>> otherGroups,
                   SourceTypeScope scope,
+                  String group,
                   Map<String, Object> said) {
 
     }
