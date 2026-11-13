@@ -36,6 +36,7 @@ public final class ToolSummaries {
             Map.entry("check_events", "Onboarding: validates event XML against the event-logging schema."),
             Map.entry("check_index_template", "Onboarding: checks an Elasticsearch index template."),
             Map.entry("check_xslt", "Checks an XSLT for errors before it is saved or stepped."),
+            Map.entry("classify_kinds", "Onboarding: classifies each kind of event in a sample with the user."),
             Map.entry("compare_outputs",
                     "Steps records through a pipeline and a changed version of it, and compares the output."),
             Map.entry("config_properties", "Reads Stroom's system properties."),
