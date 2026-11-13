@@ -41,6 +41,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -73,6 +74,8 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     private final BuildRecords records;
     private final Consent consent;
     private final BuildPlan plan;
+    // An aggregated feed's source type groups; none in tests that make the tool themselves.
+    private Provider<SourceTypeGroups> groupsProvider;
 
     @Inject
     CopyPipelineTool(final PipelineWrites writes,
@@ -93,6 +96,15 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         this.records = records;
         this.consent = consent;
         this.plan = plan;
+    }
+
+    /// Where an aggregated feed's source type groups are found (set by injection; none in tests that make the tool
+    /// themselves).
+    ///
+    /// @param groups The feed's source type groups.
+    @Inject
+    void setGroups(final Provider<SourceTypeGroups> groups) {
+        this.groupsProvider = groups;
     }
 
     @Override
@@ -133,7 +145,11 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                              + "converters it owns are copied too and the copy is rewired to them; other documents "
                              + "(shared libraries, indexes, clusters) stay shared; one the build has copied already "
                              + "(an aggregated feed's source type group, copied when the group was saved) is used, "
-                             + "not copied again. The user confirms the names first.")
+                             + "not copied again. A copy of an aggregated feed's source type group imports the "
+                             + "build's working copies of the feed's common module and helpers where it has them, "
+                             + "so stepping in the build runs the build's chain. A new version of a group's "
+                             + "pipeline: the registry's rows of the group move to it, and to its copy of the "
+                             + "group's XSLT. The user confirms the names first.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(BUILD_ARG, CreateFeedTool.BUILD_DESCRIPTION)
                         .addStringProperty(SOURCE_UUID_ARG, "Pipeline to copy.")
@@ -243,6 +259,18 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                 .pipelineData(changed.getPipelineData())
                 .build());
         final Map<String, Object> result = new LinkedHashMap<>();
+        if (groupsProvider != null) {
+            // An aggregated feed's group copied: it imports the build's copies of the feed's modules, and a new
+            // version runs the group's rows from now on.
+            groupsProvider.get().chainCopies(context, build);
+            if (!workingCopy) {
+                final List<String> types = groupsProvider.get().newVersion(context, build, sourceUuid, copies,
+                        new DocRef(PipelineDoc.TYPE, doc.getUuid(), doc.getName()));
+                if (!types.isEmpty()) {
+                    result.put("source_types", types);
+                }
+            }
+        }
         result.put("type", PipelineDoc.TYPE);
         result.put("uuid", doc.getUuid());
         result.put("name", doc.getName());

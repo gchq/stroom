@@ -637,7 +637,11 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         plan = plans.withCardinality(plan);
         // The fields a translation's repeated group writes (each recipient one User with its Id and Domain): one
         // field of objects in Elasticsearch, so an item's values stay together; fields of values in Lucene.
-        final GroupedFields.Grouped grouped = GroupedFields.apply(plan, inputs.translationFields(streamIds));
+        // An aggregated feed's output feed: the fields of every group writing to it.
+        final GroupedFields.Grouped grouped = GroupedFields.apply(plan, inputs.translationFields(streamIds,
+                feedIndexes == null
+                        ? List.of()
+                        : feedIndexes.get().groupXslts(build, streamIds)));
         plan = grouped.plan();
         draftNotes.addAll(grouped.notes());
         final List<String> standInWarnings = new ArrayList<>();

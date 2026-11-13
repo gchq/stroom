@@ -40,6 +40,7 @@ import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.documentation.shared.DocumentationDoc;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.shared.NullSafe;
 
@@ -55,13 +56,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /// An aggregated feed's source type groups, as `build_translation_xslt group=` builds them: each group the XSLT of a
 /// pipeline of its own, translating its source types' records and passing over the rest. The group's mapping is
 /// split from the feed's common module (the wrapper's entries every group writes one way, its parts, and the site's
 /// shared calls); the common module and the feed's helpers are made when the feed has none. Imports form a chain:
 /// the group imports the common module, which imports the helpers and the site's libraries. Once the group is saved,
-/// the registry's rows for its source types are set `translated`, naming the group and its XSLT.
+/// the registry's rows for its source types are set `translated`, naming the group and its XSLT, its pipeline
+/// (`<feed> <group>` until create_pipeline makes it) and its output feed (absent for the feed's own Events).
 ///
 /// A later build finds the feed's modules through the registry, beside the feed. It changes a promoted one through a
 /// working copy with a UUID of its own ([#workingCopy]), and every promoted module importing that one is copied too,
@@ -75,20 +78,20 @@ class SourceTypeGroups {
     private static final String COMMON_RULE = "common";
     private static final String SYSTEM_NAME = "EventSource/System/Name";
     private static final String ENVIRONMENT = "EventSource/System/Environment";
-    /// A group placed in the feed's pipeline, shared by its groups.
-    static final String SHARED = "shared";
-    /// A group placed in a pipeline of its own.
-    static final String OWN = "own";
-    /// A group placed in a new version of the feed's pipeline (copy_pipeline).
+    /// A build changing a group whose pipeline is promoted changes that pipeline (through working copies).
+    static final String CHANGE = "change";
+    /// A build changing a group whose pipeline is promoted makes a new version of it (copy_pipeline).
     static final String NEW_VERSION = "new_version";
-    /// The placements a new group may be given.
-    static final List<String> PLACEMENTS = List.of(SHARED, OWN, NEW_VERSION);
+    /// What a build changing a group whose pipeline is promoted may do with that pipeline.
+    static final List<String> PIPELINE_CHOICES = List.of(CHANGE, NEW_VERSION);
     // A row's keys: where it is translated, and its group's reference data.
     static final String PIPELINE = "pipeline";
     static final String OUTPUT_FEED = "output_feed";
     static final String REFERENCES = "references";
     private static final String MODULES = "modules";
     private static final String GROUP_XSLT = "group_xslt";
+    // A build record's key naming the promoted document a build's document is a new version of.
+    private static final String VERSION_OF = "version_of";
 
     private final WriteGuard guard;
     private final DocumentAccess documentAccess;
@@ -325,57 +328,107 @@ class SourceTypeGroups {
         return new Imports(group, helpersHref, saved);
     }
 
-    /// The XSLT a group is saved in when the build has none of its name: the build's working copy of the group's
-    /// promoted XSLT (made now), for a later build changing a promoted group.
+    /// The XSLT a group is saved in: the build's own (the one the registry names, or of the group's name), else a
+    /// copy of the group's promoted XSLT made now: a working copy, written back over it at promotion, or, where the
+    /// user chose a new version of the group's pipeline, a new version of it, promoted beside its predecessor. A copy
+    /// imports the build's copies of the feed's modules, so the chain stays the build's.
     ///
     /// @param context The call's context.
     /// @param build   The build.
     /// @param plan    The plan.
-    /// @return The working copy's UUID; empty when the group was never promoted (a new XSLT is made).
-    Optional<String> promotedGroupCopy(final ToolCallContext context, final String build, final Plan plan) {
+    /// @param name    The name the group's XSLT is saved with.
+    /// @param choice  [#CHANGE] or [#NEW_VERSION] for a group whose pipeline is promoted, or null.
+    /// @return The XSLT's UUID; empty when a new one is made.
+    Optional<String> groupTarget(final ToolCallContext context,
+                                 final String build,
+                                 final Plan plan,
+                                 final String name,
+                                 final String choice) {
         final Map<String, Object> state = plan.registry().found().state();
-        for (final Map<String, Object> row : JsonValues.maps(state.get("rows"))) {
-            if (!plan.group().equals(JsonValues.text(row.get("group")))) {
-                continue;
-            }
-            final String uuid = JsonValues.text(JsonValues.mapOrEmpty(row.get(GROUP_XSLT)).get("uuid"));
-            if (!uuid.isEmpty() && !inBuild(build, uuid) && readable(uuid)) {
-                return Optional.of(workingCopy(context, build, state, uuid));
-            }
+        final String uuid = groupXslt(state, plan.group());
+        if (uuid.isEmpty() || !readable(uuid)) {
+            return xsltNamed(build, name);
         }
-        return Optional.empty();
+        if (inBuild(build, uuid)) {
+            return Optional.of(uuid);
+        }
+        final Optional<String> have = copyInBuild(build, uuid).or(() -> versionInBuild(build, uuid));
+        if (have.isPresent()) {
+            return have;
+        }
+        return Optional.of(NEW_VERSION.equals(choice)
+                ? versionCopy(context, build, uuid)
+                : workingCopy(context, build, state, uuid));
     }
 
-    /// Whether the user chooses where the group runs ([Placement]): for a new group, none of whose rows is placed.
-    /// A source type added to a group placed already takes the group's placement.
+    // The UUID of the XSLT the registry names for a group, or "".
+    private static String groupXslt(final Map<String, Object> state, final String group) {
+        return groupRows(state, group).stream()
+                .map(row -> JsonValues.text(JsonValues.mapOrEmpty(row.get(GROUP_XSLT)).get("uuid")))
+                .filter(uuid -> !uuid.isEmpty())
+                .findFirst()
+                .orElse("");
+    }
+
+    // The registry's rows of a group, in order.
+    private static List<Map<String, Object>> groupRows(final Map<String, Object> state, final String group) {
+        return JsonValues.maps(state.get("rows")).stream()
+                .filter(row -> group.equals(JsonValues.text(row.get("group"))))
+                .toList();
+    }
+
+    /// Whether the user chooses where a group's Events go ([Placement]): for a new group, none of whose rows is
+    /// placed. A source type added to a group placed already joins the group's pipeline and output feed.
     ///
     /// @param plan A group's plan.
-    /// @return True if the user is asked where the group runs.
+    /// @return True if the user is asked where the group's Events go.
     static boolean needsPlacement(final Plan plan) {
         return groupPlacement(plan.registry().found().state(), plan.group()).isEmpty();
     }
 
-    // Where a group's rows already run: the pipeline (own, name) and output feed of the first of its rows placed;
-    // empty for a group none of whose rows is placed.
+    // Where a group's rows already run: the first of its rows placed (its pipeline and output feed); empty for a
+    // group none of whose rows is placed.
     private static Optional<Map<String, Object>> groupPlacement(final Map<String, Object> state, final String group) {
-        return JsonValues.maps(state.get("rows")).stream()
-                .filter(row -> group.equals(JsonValues.text(row.get("group")))
-                               && !JsonValues.mapOrEmpty(row.get(PIPELINE)).isEmpty())
+        return groupRows(state, group).stream()
+                .filter(row -> !JsonValues.mapOrEmpty(row.get(PIPELINE)).isEmpty())
                 .findFirst();
     }
 
+    /// The group's pipeline, when it is promoted and the build changes the group for the first time: the user then
+    /// chooses whether the change goes to that pipeline or to a new version of it. Not asked again once the build has
+    /// a copy of the group's XSLT (a working copy, made by a change or by copy_pipeline, or a new version's).
+    ///
     /// @param build A build.
     /// @param plan  A group's plan.
-    /// @return The feed's pipeline, by name, where the registry names one (a row placed in it and run by it): the
-    /// placement form's default; empty for a feed whose first pipeline this build makes.
-    Optional<String> existingPipeline(final String build, final Plan plan) {
-        return existingMainPipeline(plan.registry().found().state())
-                .map(pipeline -> JsonValues.text(pipeline.get("name")))
-                .filter(name -> !name.isEmpty());
+    /// @return The pipeline (`name`, `uuid`), as the registry names it; empty for a group whose pipeline is still to
+    /// be made or is the build's, or whose change is decided already.
+    Optional<Map<String, Object>> promotedPipeline(final String build, final Plan plan) {
+        final Map<String, Object> state = plan.registry().found().state();
+        final Optional<Map<String, Object>> placed = groupPlacement(state, plan.group())
+                .map(row -> JsonValues.mapOrEmpty(row.get(PIPELINE)));
+        final String pipeline = placed.map(map -> JsonValues.text(map.get("uuid"))).orElse("");
+        if (pipeline.isEmpty() || guard.buildOf(new DocRef(PipelineDoc.TYPE, pipeline)).isPresent()
+            || !documentAccess.read(new DocRef(PipelineDoc.TYPE, pipeline), PipelineDoc.class).isPresent()) {
+            return Optional.empty();
+        }
+        final String xslt = groupXslt(state, plan.group());
+        if (!xslt.isEmpty() && (inBuild(build, xslt) || copyInBuild(build, xslt).isPresent()
+                                || versionInBuild(build, xslt).isPresent())) {
+            return Optional.empty();
+        }
+        return placed;
     }
 
-    /// Saves the group in the registry: its rows set `translated`, naming the group, its XSLT, its pipeline (as
-    /// placed, for a new group), the output feed and its reference data; and the feed's modules (helpers, common).
+    /// @param feed  An aggregated feed's name.
+    /// @param group One of its source type groups.
+    /// @return The name its pipeline is given by default: `<feed> <group>`.
+    static String pipelineName(final String feed, final String group) {
+        return feed + " " + group;
+    }
+
+    /// Saves the group in the registry: its rows set `translated`, naming the group, its XSLT, its pipeline (by the
+    /// name it is to be made with, for a new group), the output feed and its reference data; and the feed's modules
+    /// (helpers, common).
     ///
     /// @param context    The call's context.
     /// @param build      The build.
@@ -383,7 +436,9 @@ class SourceTypeGroups {
     /// @param imports    What the group imports, as saved.
     /// @param groupUuid  The group's XSLT's UUID.
     /// @param groupName  Its name.
-    /// @param placement  Where a new group goes, or null for one placed already.
+    /// @param placement  Where a new group's Events go, or null for one placed already.
+    /// @param choice     [#NEW_VERSION] when the user chose a new version of the group's promoted pipeline, else
+    ///                   null.
     /// @param references The reference data its mapping looks up, or null to keep what the registry has.
     /// @return What was saved: the registry, and where the group runs.
     Map<String, Object> markTranslated(final ToolCallContext context,
@@ -393,6 +448,7 @@ class SourceTypeGroups {
                                        final String groupUuid,
                                        final String groupName,
                                        final Placement placement,
+                                       final String choice,
                                        final List<Map<String, Object>> references) {
         final Map<String, Object> state = JsonValues.deepCopy(plan.registry().found().state());
         final Map<String, Object> modules = new LinkedHashMap<>(JsonValues.mapOrEmpty(state.get(MODULES)));
@@ -405,23 +461,21 @@ class SourceTypeGroups {
         }
         state.put(MODULES, modules);
         final String now = SurveyDoc.at(Instant.now());
-        final Map<String, Object> placed = placement == null
-                ? null
-                : placed(state, placement);
         // A group placed already: the source types added to it join its pipeline and output feed.
-        final Optional<Map<String, Object>> joined = placed == null
+        final Optional<Map<String, Object>> joined = placement == null
                 ? groupPlacement(state, plan.group()).map(JsonValues::deepCopy)
                 : Optional.empty();
         final List<String> joining = new ArrayList<>();
         final List<Map<String, Object>> rows = new ArrayList<>();
         for (final Map<String, Object> given : JsonValues.maps(state.get("rows"))) {
             final Map<String, Object> row = new LinkedHashMap<>(given);
-            if (plan.sourceTypes().contains(JsonValues.text(row.get("name")))) {
+            final boolean ours = plan.sourceTypes().contains(JsonValues.text(row.get("name")));
+            if (ours) {
                 row.put("status", SourceTypeRegistry.TRANSLATED);
                 row.put("group", plan.group());
                 row.put(GROUP_XSLT, Map.of("uuid", groupUuid, "name", groupName));
-                if (placed != null) {
-                    row.put(PIPELINE, JsonValues.deepCopy(placed));
+                if (placement != null) {
+                    row.put(PIPELINE, Map.of("name", pipelineName(plan.feed(), plan.group())));
                     if (placement.ownOutputFeed()) {
                         row.put(OUTPUT_FEED, "");
                     } else {
@@ -429,7 +483,7 @@ class SourceTypeGroups {
                     }
                 } else if (joined.isPresent() && JsonValues.mapOrEmpty(row.get(PIPELINE)).isEmpty()) {
                     row.put(PIPELINE, JsonValues.deepCopy(joined.get().get(PIPELINE)));
-                    if (joined.get().containsKey(OUTPUT_FEED)) {
+                    if (joined.get().get(OUTPUT_FEED) != null) {
                         row.put(OUTPUT_FEED, joined.get().get(OUTPUT_FEED));
                     } else {
                         row.remove(OUTPUT_FEED);
@@ -446,6 +500,12 @@ class SourceTypeGroups {
                                       + "'");
                 row.put("decided", decided);
             }
+            if ((ours || plan.group().equals(JsonValues.text(row.get("group")))) && NEW_VERSION.equals(choice)) {
+                // Every row of the group: its pipeline's new version is still to be copied (copy_pipeline).
+                final Map<String, Object> pipeline = new LinkedHashMap<>(JsonValues.mapOrEmpty(row.get(PIPELINE)));
+                pipeline.put(NEW_VERSION, true);
+                row.put(PIPELINE, pipeline);
+            }
             rows.add(row);
         }
         state.put("rows", rows);
@@ -453,25 +513,25 @@ class SourceTypeGroups {
         final SurveyRecord written = registries.writeRegistry(context.session(), build, plan.feed(),
                 plan.registry().found(), SourceTypeRegistry.render(state));
         final Map<String, Object> out = new LinkedHashMap<>();
-        final Map<String, Object> pipeline = rows.stream()
-                .filter(row -> plan.sourceTypes().contains(JsonValues.text(row.get("name"))))
-                .map(row -> JsonValues.mapOrEmpty(row.get(PIPELINE)))
+        final Map<String, Object> row = rows.stream()
+                .filter(each -> plan.sourceTypes().contains(JsonValues.text(each.get("name"))))
                 .findFirst()
                 .orElse(Map.of());
-        out.put("pipeline", pipeline);
+        out.put("pipeline", JsonValues.mapOrEmpty(row.get(PIPELINE)));
+        if (row.get(OUTPUT_FEED) != null) {
+            out.put(OUTPUT_FEED, row.get(OUTPUT_FEED));
+        }
         if (!joining.isEmpty()) {
-            final Map<String, Object> joinedPipeline = JsonValues.mapOrEmpty(joined.get().get(PIPELINE));
+            final String pipeline = JsonValues.text(JsonValues.mapOrEmpty(joined.get().get(PIPELINE)).get("name"));
             final String outputFeed = JsonValues.text(joined.get().get(OUTPUT_FEED));
             out.put("notes", List.of("Source type(s) " + ToolText.list(joining) + " joined group '" + plan.group()
-                                     + "' where it runs: " + (JsonValues.truthy(joinedPipeline.get(OWN))
-                    ? "its pipeline of its own"
-                    : "the feed's pipeline") + (JsonValues.text(joinedPipeline.get("name")).isEmpty()
+                                     + "' where it runs: its pipeline" + (pipeline.isEmpty()
                     ? ""
-                    : " '" + joinedPipeline.get("name") + "'") + (joined.get().containsKey(OUTPUT_FEED)
+                    : " '" + pipeline + "'") + (joined.get().get(OUTPUT_FEED) != null
                     ? ", output feed " + (outputFeed.isEmpty()
                             ? "(still to be made)"
                             : "'" + outputFeed + "'")
-                    : ", into the feed's Events") + ". No placement was asked: the group's is theirs."));
+                    : ", into the feed's Events") + ". Nothing was asked: where the group's Events go is theirs."));
         }
         final Map<String, Object> registry = new LinkedHashMap<>();
         registry.put("uuid", written.uuid());
@@ -479,36 +539,6 @@ class SourceTypeGroups {
         registry.put("translated", plan.sourceTypes());
         out.put("registry", registry);
         return out;
-    }
-
-    // A new group's rows' pipeline, as placed: the feed's pipeline (by its name where it has one), a new version of
-    // it (copy_pipeline to come), or a pipeline of its own.
-    private static Map<String, Object> placed(final Map<String, Object> state, final Placement placement) {
-        final Map<String, Object> pipeline = new LinkedHashMap<>();
-        if (OWN.equals(placement.choice())) {
-            pipeline.put(OWN, true);
-            return pipeline;
-        }
-        pipeline.put(OWN, false);
-        existingMainPipeline(state)
-                .map(main -> main.get("name"))
-                .ifPresent(name -> pipeline.put("name", name));
-        if (NEW_VERSION.equals(placement.choice())) {
-            pipeline.put(NEW_VERSION, true);
-        }
-        return pipeline;
-    }
-
-    // The pipeline of the feed's translated rows not in a pipeline of their own, where a row is placed in it and the
-    // registry names it; empty where none is.
-    private static Optional<Map<String, Object>> existingMainPipeline(final Map<String, Object> state) {
-        for (final Map<String, Object> row : JsonValues.maps(state.get("rows"))) {
-            final Map<String, Object> pipeline = JsonValues.mapOrEmpty(row.get(PIPELINE));
-            if (!pipeline.isEmpty() && !JsonValues.truthy(pipeline.get(OWN)) && pipeline.get("name") != null) {
-                return Optional.of(Map.of("name", pipeline.get("name")));
-            }
-        }
-        return Optional.empty();
     }
 
     /// The build's working copy of a promoted module of the feed: made now if the build has none, with a UUID of
@@ -553,6 +583,180 @@ class SourceTypeGroups {
         rewire(context, build, Map.of(original, ref.getUuid()), "Imports the working copy of '" + doc.getName()
                                                                 + "'");
         return ref.getUuid();
+    }
+
+    // A new version of a promoted group's XSLT, in the build: its content as the original's (so a later save is
+    // checked for hand edits as a working copy is), promoted beside its predecessor, importing the build's copies of
+    // the feed's modules.
+    private String versionCopy(final ToolCallContext context, final String build, final String original) {
+        final XsltDoc doc = documentAccess.read(new DocRef(XsltDoc.TYPE, original), XsltDoc.class)
+                .orElseThrow(() -> new ToolRefusal("XSLT " + original + " can't be read: it doesn't exist, or you "
+                                                   + "don't have permission to view it"));
+        final DocRef ref = guard.create(XsltDoc.TYPE, doc.getName(), build, null, false, "Events");
+        records.update(build, ref, entry -> entry.put(VERSION_OF, original));
+        final XsltDoc made = documentAccess.read(ref, XsltDoc.class)
+                .orElseThrow(() -> new ToolRefusal("The new version of '" + doc.getName() + "' can't be read"));
+        writeXslt(made.copy().data(doc.getData()).description(doc.getDescription()).build());
+        if (guard.tags(new DocRef(XsltDoc.TYPE, original)).contains(WriteGuard.KEPT_MAPPING)) {
+            guard.tag(List.of(ref), Set.of(WriteGuard.KEPT_MAPPING));
+        }
+        chainCopies(context, build);
+        return ref.getUuid();
+    }
+
+    /// Keeps the build's chain of imports its own: every module of the build importing a promoted module the build
+    /// has a working copy of imports the copy instead (a group copied by copy_pipeline imports the build's copy of
+    /// the common module, which imports the build's copy of the helpers, where those are copied).
+    ///
+    /// @param context The call's context.
+    /// @param build   The build.
+    /// @return The names of the XSLTs changed.
+    List<String> chainCopies(final ToolCallContext context, final String build) {
+        final Map<String, Object> docs = BuildRecords.docs(records.load(build));
+        // An aggregated feed's modules only (the generator's mark in each): other XSLTs are left as they are.
+        final List<WriteGuard.BuildDoc> xslts = guard.folderContents(build).stream()
+                .filter(doc -> XsltDoc.TYPE.equals(doc.type())
+                               && ModuleChecks.marker(readXsltData(doc.uuid())).isPresent())
+                .toList();
+        final Map<String, String> copies = new LinkedHashMap<>();
+        for (final WriteGuard.BuildDoc doc : xslts) {
+            if (docs.get(doc.uuid()) instanceof final Map<?, ?> entry && entry.get("copy_of") != null) {
+                copies.put(String.valueOf(entry.get("copy_of")), doc.uuid());
+            }
+        }
+        final List<String> changed = new ArrayList<>();
+        if (copies.isEmpty()) {
+            return changed;
+        }
+        for (final WriteGuard.BuildDoc doc : xslts) {
+            if (translationDocs.rewriteImports(context, doc.uuid(), copies, "Imports the build's working copies")) {
+                changed.add(doc.name());
+            }
+        }
+        return changed;
+    }
+
+    /// @param build    A build.
+    /// @param xsltUuid An XSLT's UUID.
+    /// @return The source type group whose XSLT it is (by the module mark the generator writes in it), with its
+    /// registry's rows; empty for any other XSLT, or a build with no registry naming the group.
+    Optional<GroupRun> groupOf(final String build, final String xsltUuid) {
+        final Optional<ModuleChecks.Marker> marker = documentAccess.read(new DocRef(XsltDoc.TYPE, xsltUuid),
+                        XsltDoc.class)
+                .map(XsltDoc::getData)
+                .flatMap(ModuleChecks::marker)
+                .filter(found -> SourceTypeModule.GROUP.equals(found.kind()) && found.name() != null);
+        if (marker.isEmpty()) {
+            return Optional.empty();
+        }
+        final Registry registry;
+        try {
+            registry = registry(build, List.of());
+        } catch (final ToolRefusal e) {
+            return Optional.empty();
+        }
+        final List<Map<String, Object>> rows = groupRows(registry.found().state(), marker.get().name());
+        return rows.isEmpty()
+                ? Optional.empty()
+                : Optional.of(new GroupRun(registry.feed(), marker.get().name(), xsltUuid, rows));
+    }
+
+    /// @param build A build.
+    /// @param group A source type group of its registry.
+    /// @return The group, with its rows.
+    /// @throws ToolRefusal if the build's registry has no such group, or it has no XSLT yet.
+    GroupRun groupNamed(final String build, final String group) {
+        final Registry registry = registry(build, List.of());
+        final List<Map<String, Object>> rows = groupRows(registry.found().state(), group);
+        if (rows.isEmpty()) {
+            throw new ToolRefusal("The registry of " + registry.feed() + " has no source type group '" + group
+                                  + "': build_translation_xslt group= saves it first");
+        }
+        final String xslt = groupXslt(registry.found().state(), group);
+        if (xslt.isEmpty()) {
+            throw new ToolRefusal("Group '" + group + "' has no XSLT yet: build_translation_xslt group= saves it");
+        }
+        return new GroupRun(registry.feed(), group, xslt, rows);
+    }
+
+    /// The pipeline made in the build for a group, named in the registry's rows of the group.
+    ///
+    /// @param context  The call's context.
+    /// @param build    The build.
+    /// @param group    The group.
+    /// @param pipeline The pipeline made.
+    /// @return The source types it translates.
+    List<String> pipelineMade(final ToolCallContext context,
+                              final String build,
+                              final String group,
+                              final DocRef pipeline) {
+        return movePipeline(context, build, row -> group.equals(JsonValues.text(row.get("group"))), pipeline,
+                Map.of());
+    }
+
+    /// A new version of a group's promoted pipeline copied into the build (copy_pipeline): the group's rows move to
+    /// it, naming the copy of the group's XSLT it runs.
+    ///
+    /// @param context  The call's context.
+    /// @param build    The build.
+    /// @param original The pipeline copied.
+    /// @param copies   The copies of the documents it owns, by the original's UUID.
+    /// @param pipeline The new version.
+    /// @return The source types it translates; none when the registry names no group in the pipeline copied.
+    List<String> newVersion(final ToolCallContext context,
+                            final String build,
+                            final String original,
+                            final Map<String, DocRef> copies,
+                            final DocRef pipeline) {
+        final Registry registry;
+        try {
+            registry = registry(build, List.of());
+        } catch (final ToolRefusal e) {
+            return List.of();
+        }
+        final boolean named = JsonValues.maps(registry.found().state().get("rows")).stream()
+                .anyMatch(row -> original.equals(JsonValues.text(JsonValues.mapOrEmpty(row.get(PIPELINE))
+                        .get("uuid"))));
+        if (!named) {
+            return List.of();
+        }
+        return movePipeline(context, build, row -> original.equals(JsonValues.text(JsonValues.mapOrEmpty(
+                row.get(PIPELINE)).get("uuid"))), pipeline, copies);
+    }
+
+    // The rows chosen run by the pipeline given: its name and UUID (a new version still to be copied no longer),
+    // and the copy of the group's XSLT where the copies have one.
+    private List<String> movePipeline(final ToolCallContext context,
+                                      final String build,
+                                      final Predicate<Map<String, Object>> chosen,
+                                      final DocRef pipeline,
+                                      final Map<String, DocRef> copies) {
+        final Registry registry = registry(build, List.of());
+        final Map<String, Object> state = JsonValues.deepCopy(registry.found().state());
+        final List<String> types = new ArrayList<>();
+        final List<Map<String, Object>> rows = new ArrayList<>();
+        for (final Map<String, Object> given : JsonValues.maps(state.get("rows"))) {
+            final Map<String, Object> row = new LinkedHashMap<>(given);
+            if (chosen.test(row)) {
+                final Map<String, Object> placed = new LinkedHashMap<>();
+                placed.put("name", pipeline.getName());
+                placed.put("uuid", pipeline.getUuid());
+                row.put(PIPELINE, placed);
+                final DocRef copy = copies.get(JsonValues.text(JsonValues.mapOrEmpty(row.get(GROUP_XSLT)).get("uuid")));
+                if (copy != null) {
+                    row.put(GROUP_XSLT, Map.of("uuid", copy.getUuid(), "name", NullSafe.string(copy.getName())));
+                }
+                types.add(JsonValues.text(row.get("name")));
+            }
+            rows.add(row);
+        }
+        if (!rows.equals(JsonValues.maps(state.get("rows")))) {
+            state.put("rows", rows);
+            state.put("updated", SurveyDoc.at(Instant.now()));
+            registries.writeRegistry(context.session(), build, registry.feed(), registry.found(),
+                    SourceTypeRegistry.render(state));
+        }
+        return types;
     }
 
     // Every module of the build importing one of the documents given imports the one it maps to instead.
@@ -683,30 +887,33 @@ class SourceTypeGroups {
 
     /// @param build A build.
     /// @param group A source type group of its registry.
-    /// @throws ToolRefusal if the registry has no such group, or it isn't in a pipeline of its own.
+    /// @throws ToolRefusal if the registry has no such group, or its Events go into the feed's.
     void checkOwnOutputFeed(final String build, final String group) {
         final Registry registry = registry(build, List.of());
-        final List<Map<String, Object>> rows = JsonValues.maps(registry.found().state().get("rows")).stream()
-                .filter(row -> group.equals(JsonValues.text(row.get("group"))))
-                .toList();
+        final List<Map<String, Object>> rows = groupRows(registry.found().state(), group);
         if (rows.isEmpty()) {
             throw new ToolRefusal("The registry of " + registry.feed() + " has no source type group '" + group
                                   + "': build_translation_xslt group= saves it first");
         }
-        if (rows.stream().noneMatch(row -> JsonValues.truthy(JsonValues.mapOrEmpty(row.get(PIPELINE)).get(OWN)))) {
-            throw new ToolRefusal("Group '" + group + "' is in the feed's pipeline, whose Events go into the raw "
-                                  + "feed's: only a group with a pipeline of its own has an output feed of its own");
+        if (rows.stream().noneMatch(row -> row.get(OUTPUT_FEED) != null)) {
+            throw new ToolRefusal(intoFeedsEvents(group));
         }
     }
 
-    /// Sets the output feed of a group with a pipeline of its own, made in the build.
+    // Why a group whose Events go into the feed's has no output feed of its own.
+    private static String intoFeedsEvents(final String group) {
+        return "Group '" + group + "''s Events go into the feed's Events, as the user chose when the group was "
+               + "saved: only a group the user gave an output feed of its own has one";
+    }
+
+    /// Sets the output feed of a group whose Events go to a feed of its own, made in the build.
     ///
     /// @param context The call's context.
     /// @param build   The build.
     /// @param group   The group.
     /// @param feed    The output feed's name.
     /// @return The source types whose Events go there.
-    /// @throws ToolRefusal if the build's registry has no such group, or it isn't in a pipeline of its own.
+    /// @throws ToolRefusal if the build's registry has no such group, or its Events go into the feed's.
     List<String> outputFeed(final ToolCallContext context,
                             final String build,
                             final String group,
@@ -719,7 +926,7 @@ class SourceTypeGroups {
         for (final Map<String, Object> given : JsonValues.maps(state.get("rows"))) {
             final Map<String, Object> row = new LinkedHashMap<>(given);
             if (group.equals(JsonValues.text(row.get("group")))) {
-                own |= JsonValues.truthy(JsonValues.mapOrEmpty(row.get(PIPELINE)).get(OWN));
+                own |= row.get(OUTPUT_FEED) != null;
                 row.put(OUTPUT_FEED, feed);
                 types.add(JsonValues.text(row.get("name")));
             }
@@ -730,8 +937,7 @@ class SourceTypeGroups {
                                   + "'");
         }
         if (!own) {
-            throw new ToolRefusal("Group '" + group + "' is in the feed's pipeline, whose Events go into the raw "
-                                  + "feed's: only a group with a pipeline of its own has an output feed of its own");
+            throw new ToolRefusal(intoFeedsEvents(group));
         }
         state.put("rows", rows);
         registries.writeRegistry(context.session(), build, registry.feed(), registry.found(),
@@ -761,6 +967,17 @@ class SourceTypeGroups {
         final Map<String, Object> docs = BuildRecords.docs(records.load(build));
         for (final WriteGuard.BuildDoc doc : guard.folderContents(build)) {
             if (docs.get(doc.uuid()) instanceof final Map<?, ?> entry && original.equals(entry.get("copy_of"))) {
+                return Optional.of(doc.uuid());
+            }
+        }
+        return Optional.empty();
+    }
+
+    // The build's new version of a document.
+    private Optional<String> versionInBuild(final String build, final String original) {
+        final Map<String, Object> docs = BuildRecords.docs(records.load(build));
+        for (final WriteGuard.BuildDoc doc : guard.folderContents(build)) {
+            if (docs.get(doc.uuid()) instanceof final Map<?, ?> entry && original.equals(entry.get(VERSION_OF))) {
                 return Optional.of(doc.uuid());
             }
         }
@@ -1143,21 +1360,49 @@ class SourceTypeGroups {
 
     }
 
-    /// Where a new group goes, as the user chose in the placement form.
+    /// Where a new group's Events go, as the user chose in the placement form.
     ///
-    /// @param choice        [#SHARED], [#OWN] or [#NEW_VERSION].
-    /// @param ownOutputFeed True when its Events go to an output feed of its own (a pipeline of its own only).
-    record Placement(String choice, boolean ownOutputFeed) {
+    /// @param ownOutputFeed True for an output feed of its own; false for the feed's Events.
+    record Placement(boolean ownOutputFeed) {
 
-        /// Checks the choice.
-        public Placement {
-            if (!PLACEMENTS.contains(choice)) {
-                throw new ToolRefusal("A group's pipeline is one of " + ToolText.list(PLACEMENTS) + ", not "
-                                      + ToolText.repr(choice));
-            }
-            if (ownOutputFeed && !OWN.equals(choice)) {
-                throw new ToolRefusal("Only a group with a pipeline of its own has an output feed of its own");
-            }
+    }
+
+    /// A source type group, as a pipeline runs it.
+    ///
+    /// @param feed  The aggregated feed.
+    /// @param group The group's name.
+    /// @param xslt  Its XSLT's UUID.
+    /// @param rows  The registry's rows of the group.
+    record GroupRun(String feed, String group, String xslt, List<Map<String, Object>> rows) {
+
+        /// @return The feed its Events go to, where it has one of its own: its name, or "" while it is still to be
+        /// made; empty for the feed's own Events.
+        Optional<String> outputFeed() {
+            return rows.stream()
+                    .map(row -> row.get(OUTPUT_FEED))
+                    .filter(Objects::nonNull)
+                    .map(JsonValues::text)
+                    .findFirst();
+        }
+
+        /// @return The reference data the group's lookups read, each once.
+        List<Map<String, Object>> references() {
+            final List<Map<String, Object>> out = new ArrayList<>();
+            rows.forEach(row -> JsonValues.maps(row.get(REFERENCES)).forEach(reference -> {
+                if (!out.contains(reference)) {
+                    out.add(reference);
+                }
+            }));
+            return out;
+        }
+
+        /// @return The pipeline the registry names for the group (`name`, `uuid` once made), or empty.
+        Map<String, Object> pipeline() {
+            return rows.stream()
+                    .map(row -> JsonValues.mapOrEmpty(row.get(PIPELINE)))
+                    .filter(pipeline -> !pipeline.isEmpty())
+                    .findFirst()
+                    .orElse(Map.of());
         }
     }
 

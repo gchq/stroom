@@ -40,6 +40,7 @@ import stroom.util.shared.NullSafe;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -180,7 +181,25 @@ class IndexingInputs {
     /// @return Each translation mapping's fields ([FieldGroup#leaves(List)]), the common ones and each rule's; none
     /// when no mapping is kept or can be read.
     List<FieldGroup.Leaf> translationFields(final List<Long> eventsStreamIds) {
-        return mappingFields(translations(eventsStreamIds).stream()
+        return translationFields(eventsStreamIds, List.of());
+    }
+
+    /// As [#translationFields(List)], with other translations' fields too: an aggregated feed's output feed's
+    /// index holds the Events of every source type group writing to it, each group's XSLT its own pipeline's.
+    ///
+    /// @param eventsStreamIds Events streams.
+    /// @param others          Other translation XSLTs' UUIDs whose fields the Events' index holds too.
+    /// @return Each translation mapping's fields, each XSLT read once.
+    List<FieldGroup.Leaf> translationFields(final List<Long> eventsStreamIds, final List<String> others) {
+        final List<XsltDoc> xslts = new ArrayList<>(translations(eventsStreamIds));
+        final Set<String> read = new HashSet<>();
+        xslts.forEach(xslt -> read.add(xslt.getUuid()));
+        for (final String uuid : NullSafe.list(others)) {
+            if (read.add(uuid)) {
+                documentAccess.read(new DocRef(XsltDoc.TYPE, uuid), XsltDoc.class).ifPresent(xslts::add);
+            }
+        }
+        return mappingFields(xslts.stream()
                 .map(XsltDoc::getDescription)
                 .filter(Objects::nonNull)
                 .toList());

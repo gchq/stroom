@@ -39,9 +39,9 @@ import java.util.regex.Pattern;
 /// XSLT, `uuid` and `name`, once build_translation_xslt saves it), `references` (the reference data its group looks
 /// up: `feed` and `loader_pipeline`) and `profile`.
 ///
-/// A row's `pipeline` says which pipeline's dispatcher routes it: `own` (true for a group with a pipeline of its own),
-/// `dispatcher` (`uuid` and `name` of that dispatcher's XSLT), `name` (the pipeline's, once made) and `new_version`
-/// (true while the feed's pipeline's new version is still to be copied). `output_feed` is the feed its Events go to:
+/// Each source type group has a pipeline of its own. A row's `pipeline` names its group's: `name` (`<feed> <group>`
+/// until create_pipeline makes it, then the pipeline's), `uuid` (once made) and `new_version` (true while a new
+/// version of a promoted pipeline is still to be copied, copy_pipeline). `output_feed` is the feed its Events go to:
 /// absent for the raw feed's own, `""` while one of its own is still to be made. `modules` names the feed's `helpers`
 /// and `common` modules (`uuid`, `name`), so a later build finds them beside the feed. Every UUID is the build's
 /// document while a build changes it (a working copy), and the original's once promoted. `indexing` and `indexes` are
@@ -215,8 +215,8 @@ public final class SourceTypeRegistry {
         return lines;
     }
 
-    // A row's status, with the source type group translating it where one does, the pipeline that runs it and the
-    // feed its Events go to.
+    // A row's status, with the source type group translating it where one does, the group's pipeline and the feed
+    // its Events go to.
     private static String status(final Map<String, Object> row) {
         final Object group = row.get("group");
         if (row.get("status") == null) {
@@ -228,12 +228,15 @@ public final class SourceTypeRegistry {
         }
         final Map<String, Object> pipeline = JsonValues.mapOrEmpty(row.get("pipeline"));
         if (!pipeline.isEmpty()) {
-            final Object name = pipeline.get("name");
-            out.append(", in ").append(name == null || JsonValues.text(name).isBlank()
-                    ? (JsonValues.truthy(pipeline.get("own"))
-                            ? "a pipeline of its own (to be made)"
-                            : "the feed's pipeline")
-                    : "pipeline " + JsonValues.text(name));
+            final String name = JsonValues.text(pipeline.get("name"));
+            out.append(", in ").append(name.isBlank()
+                    ? "its group's pipeline"
+                    : "pipeline " + name).append(pipeline.get("uuid") == null
+                    ? " (to be made)"
+                    : "");
+            if (JsonValues.truthy(pipeline.get("new_version"))) {
+                out.append(", a new version of it to be made");
+            }
         }
         final Object feed = row.get("output_feed");
         if (feed != null) {
