@@ -20,7 +20,6 @@ import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
-import stroom.ai.impl.tools.generation.DispatcherXslt;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.RecordSplitter;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
@@ -233,7 +232,7 @@ class SourceTypeCoverage {
             }
             final Map<String, Object> entry = new LinkedHashMap<>();
             entry.put("records", records);
-            entry.put("status", DispatcherXslt.PASSED_OVER_NONE.equals(type)
+            entry.put("status", CoverageReads.PASSED_OVER_NONE.equals(type)
                     ? SourceTypeRegistry.NEW
                     : NullSafe.nonBlankStringElse(statuses.get(type), "not in the registry"));
             passed.put(type, entry);

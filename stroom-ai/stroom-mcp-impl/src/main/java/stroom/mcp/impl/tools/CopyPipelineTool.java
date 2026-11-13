@@ -41,7 +41,6 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -74,8 +73,6 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     private final BuildRecords records;
     private final Consent consent;
     private final BuildPlan plan;
-    // An aggregated feed's source type groups; none in tests that make the tool themselves.
-    private Provider<SourceTypeGroups> groupsProvider;
 
     @Inject
     CopyPipelineTool(final PipelineWrites writes,
@@ -96,15 +93,6 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         this.records = records;
         this.consent = consent;
         this.plan = plan;
-    }
-
-    /// Where an aggregated feed's dispatchers are regenerated (set by injection; none in tests that make the tool
-    /// themselves).
-    ///
-    /// @param groups The feed's source type groups.
-    @Inject
-    void setGroups(final Provider<SourceTypeGroups> groups) {
-        this.groupsProvider = groups;
     }
 
     @Override
@@ -144,10 +132,8 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                              + "extra XSLT steps), reference loaders and property values. The XSLTs and text "
                              + "converters it owns are copied too and the copy is rewired to them; other documents "
                              + "(shared libraries, indexes, clusters) stay shared; one the build has copied already "
-                             + "(an aggregated feed's dispatcher, copied when a group was saved) is used, not copied "
-                             + "again. A new version of an aggregated feed's pipeline: its copy of the dispatcher is "
-                             + "regenerated to route the groups placed in the new version. The user confirms the "
-                             + "names first.")
+                             + "(an aggregated feed's source type group, copied when the group was saved) is used, "
+                             + "not copied again. The user confirms the names first.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(BUILD_ARG, CreateFeedTool.BUILD_DESCRIPTION)
                         .addStringProperty(SOURCE_UUID_ARG, "Pipeline to copy.")
@@ -224,8 +210,8 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         final Map<String, DocRef> copies = new LinkedHashMap<>();
         for (final DocRef entity : owned) {
             if (!copies.containsKey(entity.getUuid())) {
-                // One the build copied already (an aggregated feed's dispatcher, copied when a group was saved) is
-                // run, not copied again.
+                // One the build copied already (an aggregated feed's source type group, copied when the group was
+                // saved) is run, not copied again.
                 copies.put(entity.getUuid(), alreadyCopied(build, entity, workingCopy)
                         .orElseGet(() -> copyDocument(entity, names.get(entity.getUuid()), build, workingCopy,
                                 role)));
@@ -257,20 +243,6 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                 .pipelineData(changed.getPipelineData())
                 .build());
         final Map<String, Object> result = new LinkedHashMap<>();
-        if (groupsProvider != null) {
-            // An aggregated feed's dispatcher copied: a new version's routes the groups placed in it, and the
-            // registry says which pipeline runs each source type.
-            copies.forEach((original, copy) -> {
-                if (XsltDoc.TYPE.equals(copy.getType()) && writes.isDispatcher(copy.getUuid())) {
-                    if (workingCopy) {
-                        groupsProvider.get().runBy(context, build, copy.getUuid(), source.getName());
-                    } else {
-                        result.put("dispatchers", groupsProvider.get().newVersion(context, build, original,
-                                copy.getUuid(), doc.getName()));
-                    }
-                }
-            });
-        }
         result.put("type", PipelineDoc.TYPE);
         result.put("uuid", doc.getUuid());
         result.put("name", doc.getName());

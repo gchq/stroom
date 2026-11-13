@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.SourceTypeRows;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -30,13 +31,15 @@ import java.util.regex.Pattern;
 /// What makes a translation mapping one module of an aggregated feed's translation rather than a whole one (kept
 /// with its XSLT as the mapping's `module`, written only when set, so other mappings are kept as they always were):
 ///
-/// * a **source type group**'s (`group`): its templates in a mode of its own, writing its whole Event, the feed's
-///   common module's named templates called for the parts every group writes one way, the generated helper functions
-///   imported from the feed's helpers module, nothing stylesheet-level;
+/// * a **source type group**'s (`group`): the XSLT of the group's own pipeline, writing `<Events>`: each record of its
+///   source types (the registry's rows tried in order, as the tools try them) translated by its templates in a mode
+///   of its own, writing its whole Event, the feed's common module's named templates called for the parts every
+///   group writes one way; every other record passed over, counted;
 /// * the feed's **common module** (`common`): a named template a part (EventTime, EventSource's System, Generator and
 ///   Device, and the site's shared calls), generated from the wrapper's entries (the mapping's `common`).
 ///
-/// The feed's dispatcher ([DispatcherXslt]) imports each group and hands each record to its group's mode.
+/// Imports form a chain, each module imported once in the stylesheet a group compiles into: the group imports the
+/// common module, which imports the feed's helpers ([HelpersXslt]) and the site's libraries its shared calls name.
 ///
 /// @param kind        [#GROUP] or [#COMMON].
 /// @param name        The group's name, e.g. `PEGA security`; the feed's for the common module.
@@ -45,12 +48,15 @@ import java.util.regex.Pattern;
 /// @param sourceTypes `source_types`: a group's source types (the registry's row names); none for the common module.
 /// @param common      A group's import of the feed's common module (its href, `uuid='…', name='…'`), or null for a
 ///                    group writing its whole Event itself.
-/// @param helpers     The import of the feed's helpers module ([HelpersXslt]), or null.
+/// @param helpers     The import of the feed's helpers module ([HelpersXslt]): the common module's, or a group's
+///                    with no common module; null for a group importing the common module (which imports them).
 /// @param parts       A group's: the common module's parts it calls where its rules map nothing of their own.
 /// @param systemName  `system_name`: a group's EventSource/System/Name, passed to the common module's System part
 ///                    where it takes one; null for the common module's default.
-/// @param field       The feed's source type field, which the dispatcher reads (so a group doesn't report it as a
-///                    field no rule reads), or null.
+/// @param field       The feed's source type field, which a group reads to tell its records from the rest, or null
+///                    for the common module.
+/// @param rows        A group's: the registry's rows, in the order they are tried (every row, so a record is of the
+///                    source type its value first matches, as the tools judge it); none for the common module.
 public record SourceTypeModule(String kind,
                                String name,
                                String mode,
@@ -59,7 +65,8 @@ public record SourceTypeModule(String kind,
                                String helpers,
                                List<CommonPart> parts,
                                String systemName,
-                               String field) {
+                               String field,
+                               List<Row> rows) {
 
     /// A source type group's module.
     public static final String GROUP = "group";
@@ -73,12 +80,15 @@ public record SourceTypeModule(String kind,
     /// feed writes one way from the wrapper's fields. A shared call's element is a part too.
     public static final List<String> PART_ROOTS = List.of("EventTime", "EventSource/System", "EventSource/Generator",
             "EventSource/Device");
+    // How a row matches a value: exactly, or by an anchored pattern.
+    private static final List<String> MATCHES = List.of(SourceTypeRows.VALUE, SourceTypeRows.PATTERN);
     private static final Pattern NCNAME = Pattern.compile("[A-Za-z_][\\w.-]*", Pattern.UNICODE_CHARACTER_CLASS);
 
     /// Fills in empty lists for null ones.
     public SourceTypeModule {
         sourceTypes = List.copyOf(Objects.requireNonNullElse(sourceTypes, List.of()));
         parts = List.copyOf(Objects.requireNonNullElse(parts, List.of()));
+        rows = List.copyOf(Objects.requireNonNullElse(rows, List.of()));
     }
 
     /// Reads one from JSON-like values: lax types, defaults and the model's own checks, every error collected.
@@ -102,7 +112,8 @@ public record SourceTypeModule(String kind,
         final SourceTypeModule module = new SourceTypeModule(kind, name, mode, fields.strings("source_types"),
                 fields.optionalString("common"), fields.optionalString("helpers"),
                 fields.models("parts", (value, at) -> CommonPart.read(reader, value, at)),
-                fields.optionalString("system_name"), fields.optionalString("field"));
+                fields.optionalString("system_name"), fields.optionalString("field"),
+                fields.models("rows", (value, at) -> Row.read(reader, value, at)));
         return fields.ok()
                 ? module
                 : null;
@@ -121,6 +132,7 @@ public record SourceTypeModule(String kind,
                 .models("parts", parts, part -> part.toJson(mode))
                 .put("system_name", systemName, null)
                 .put("field", field, null)
+                .models("rows", rows, row -> row.toJson(mode))
                 .build();
     }
 
@@ -138,17 +150,18 @@ public record SourceTypeModule(String kind,
     /// build's working copies, or the promoted originals).
     ///
     /// @param commonHref  The common module's href, or null.
-    /// @param helpersHref The helpers module's href, or null.
+    /// @param helpersHref The helpers module's href, or null (a group importing the common module, which imports
+    ///                    them).
     /// @return This module with those imports.
     public SourceTypeModule withImports(final String commonHref, final String helpersHref) {
         return new SourceTypeModule(kind, name, mode, sourceTypes, commonHref, helpersHref, parts, systemName,
-                field);
+                field, rows);
     }
 
     /// @param parts The common module's parts the group calls.
     /// @return This module with those parts.
     public SourceTypeModule withParts(final List<CommonPart> parts) {
-        return new SourceTypeModule(kind, name, mode, sourceTypes, common, helpers, parts, systemName, field);
+        return new SourceTypeModule(kind, name, mode, sourceTypes, common, helpers, parts, systemName, field, rows);
     }
 
     /// @param path An entry's path below Event, e.g. `EventSource/Device/HostName`.
@@ -273,6 +286,43 @@ public record SourceTypeModule(String kind,
                     .put("template", template, null)
                     .put("params", params, List.of())
                     .put("reads", reads, List.of())
+                    .build());
+        }
+    }
+
+    /// A registry row, as a group tries it: the record is of the source type whose row its value first matches.
+    ///
+    /// @param name  The source type's name.
+    /// @param match `value` (the value exactly) or `pattern` (an anchored regular expression, matched by XPath's
+    ///              `matches()`).
+    /// @param value The value, or the pattern.
+    public record Row(String name, String match, String value) {
+
+        /// Reads one from JSON-like values, every error collected.
+        ///
+        /// @param reader The reader, collecting the errors.
+        /// @param input  The value given.
+        /// @param loc    Where it is.
+        /// @return It, or null (with the errors noted) if it doesn't validate.
+        static Row read(final ModelReader reader, final Object input, final List<Object> loc) {
+            final ModelReader.Fields fields = reader.fields(input, loc, "SourceTypeRow");
+            if (fields == null) {
+                return null;
+            }
+            final Row row = new Row(fields.requiredString("name"), fields.requiredLiteral("match", MATCHES),
+                    fields.requiredString("value"));
+            return fields.ok()
+                    ? row
+                    : null;
+        }
+
+        /// @param mode How to write it.
+        /// @return It as JSON, as the mode says.
+        public Map<String, Object> toJson(final DumpMode mode) {
+            return new LinkedHashMap<>(mode.builder()
+                    .put("name", name, null)
+                    .put("match", match, null)
+                    .put("value", value, null)
                     .build());
         }
     }

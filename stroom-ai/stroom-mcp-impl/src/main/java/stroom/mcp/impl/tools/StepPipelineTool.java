@@ -134,9 +134,7 @@ class StepPipelineTool extends AbstractBuiltInTool {
                 throw new ToolRefusal("part must be a whole number from 0, not '" + stringArg(call, PART_ARG)
                                       + "'");
             }
-            // A source type group's draft is stepped through the feed's dispatcher, inlined in place of its import.
-            final Map<String, String> draftCode = stepping.withGroupsInlined(pipelineUuid,
-                    PipelineStepping.draftCode(call, DRAFT_CODE_ARG));
+            final Map<String, String> draftCode = PipelineStepping.draftCode(call, DRAFT_CODE_ARG);
             final Map<String, Object> result = PipelineStepping.withinTimeLimit(context, () -> step(call, context,
                     pipelineUuid, streamId, record, part == null
                             ? 0

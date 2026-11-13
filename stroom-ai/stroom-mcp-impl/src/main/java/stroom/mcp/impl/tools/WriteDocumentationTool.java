@@ -348,11 +348,6 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         final String pipelineUuid = pipeline.getUuid();
         final DocRef pipelineRef = new DocRef(PipelineDoc.TYPE, pipelineUuid, pipeline.getName());
         final KeptMappings.KeptXslt kept = keptMappings.keptXslt(pipelineUuid).orElse(null);
-        // An aggregated feed's pipeline runs its dispatcher, keeping no mapping: each source type group it imports
-        // keeps its own, documented in turn.
-        final List<KeptMappings.KeptXslt> groups = kept == null
-                ? keptMappings.groupXslts(pipelineUuid)
-                : List.of();
         final List<String> noted = new ArrayList<>();
         final BuildDocumentation.Placed placed = docs.documentationOf(request.build(), pipeline);
         // What each field means, as the agent described it from the sample (asked for by the user), kept with the
@@ -377,9 +372,9 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         final Descriptions described = new Descriptions(given, givenFrom, true, docs.vendorNotes(request.build()));
         // A translation XSLT keeping no mapping (written by hand): its section is generated from the Events it writes
         // (asked for by the user: seen in testing, the agent's own section for one had no event type's fields).
-        final boolean handWritten = kept == null && groups.isEmpty()
+        final boolean handWritten = kept == null
                                     && "translation".equals(pipelineShapes.shape(pipelineUuid).stage());
-        final boolean translation = handWritten || !groups.isEmpty()
+        final boolean translation = handWritten
                                     || kept != null && KeptMapping.TRANSLATION.equals(kept.kept().kind());
         List<Long> streamIds = request.streamIds();
         if (translation && !streamIds.isEmpty()) {
@@ -389,7 +384,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
             streamIds = parents.streamIds();
             noted.addAll(parents.notes());
         }
-        if ((kept != null || handWritten || !groups.isEmpty()) && streamIds.isEmpty()) {
+        if ((kept != null || handWritten) && streamIds.isEmpty()) {
             // The streams the pipeline's current code last stepped clean on, kept in the build's record (seen:
             // prompts and agents left stream_ids out, and every documentation call was refused once first).
             streamIds = docs.steppedStreams(pipelineUuid);
@@ -410,7 +405,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         // with a note of the edit; by event type where most of its events are no longer the mapping's): documented
         // from the mapping, the section said what the XSLT no longer writes (seen in testing: TWITTER's links, saved
         // with save_xslt, left out, and its mentions shown joined as the mapping wrote them).
-        if (kept != null || handWritten || !groups.isEmpty()) {
+        if (kept != null || handWritten) {
             if (streamIds.isEmpty()) {
                 throw new ToolRefusal(kept != null
                         ? streamsNeeded(kept)
@@ -420,16 +415,11 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
             }
             final BuildDocumentation.Layout laid = docs.layout(context.session(), pipelineRef, request.layout());
             noted.addAll(laid.notes());
-            if (!groups.isEmpty()) {
-                generated = sections.groupsSection(context, request.build(), pipeline, groups, streamIds,
-                        laid.layout(), described);
-            } else {
-                generated = kept != null
-                        ? sections.fieldMappingSection(context, request.build(), pipeline, kept, streamIds,
-                        laid.layout(), described)
-                        : sections.writtenEventsSection(context, request.build(), pipelineUuid, streamIds,
-                                laid.layout(), described);
-            }
+            generated = kept != null
+                    ? sections.fieldMappingSection(context, request.build(), pipeline, kept, streamIds,
+                    laid.layout(), described)
+                    : sections.writtenEventsSection(context, request.build(), pipelineUuid, streamIds,
+                            laid.layout(), described);
             if (!described.wanted().isEmpty()) {
                 final Map<String, String> sofar = new LinkedHashMap<>(pendingDocs.of(context.session(), pipelineUuid)
                         .map(PendingDocumentation.Pending::descriptions)

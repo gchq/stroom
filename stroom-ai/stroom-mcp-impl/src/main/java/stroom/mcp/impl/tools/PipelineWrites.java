@@ -24,7 +24,8 @@ import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
-import stroom.ai.impl.tools.generation.DispatcherXslt;
+import stroom.ai.impl.tools.generation.ModuleChecks;
+import stroom.ai.impl.tools.generation.SourceTypeModule;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.feed.shared.FeedDoc;
@@ -347,19 +348,14 @@ class PipelineWrites {
                 final List<WriteGuard.BuildDoc> xslts = docs.stream()
                         .filter(doc -> XsltDoc.TYPE.equals(doc.type()))
                         .toList();
-                // An aggregated feed's pipeline runs a dispatcher, which imports the groups (each keeping a
-                // mapping), the common module and the helpers.
-                final List<WriteGuard.BuildDoc> dispatchers = xslts.stream()
-                        .filter(doc -> isDispatcher(doc.uuid()))
-                        .toList();
+                // An aggregated feed's common module and helpers are imported, never a pipeline's XSLT; each source
+                // type group is its own pipeline's.
                 final List<WriteGuard.BuildDoc> withMapping = xslts.stream()
-                        .filter(doc -> translationMapping(doc.uuid()).isPresent())
+                        .filter(doc -> translationMapping(doc.uuid()).isPresent() && !importedModule(doc.uuid()))
                         .toList();
-                candidates = !dispatchers.isEmpty()
-                        ? dispatchers
-                        : withMapping.isEmpty()
-                                ? xslts
-                                : withMapping;
+                candidates = withMapping.isEmpty()
+                        ? xslts.stream().filter(doc -> !importedModule(doc.uuid())).toList()
+                        : withMapping;
                 docType = XsltDoc.TYPE;
                 if (candidates.isEmpty()) {
                     stillOpen.add(slot.element() + ".xslt");
@@ -950,10 +946,12 @@ class PipelineWrites {
     }
 
     /// @param xsltUuid An XSLT's UUID.
-    /// @return True if it is an aggregated feed's dispatcher the tools generated (its spec kept with it).
-    boolean isDispatcher(final String xsltUuid) {
-        return documentAccess.read(new DocRef(XsltDoc.TYPE, xsltUuid), XsltDoc.class)
-                .flatMap(xslt -> KeptMapping.readBlock(xslt.getDescription(), DispatcherXslt.SPEC_BLOCK))
+    /// @return True if it is an aggregated feed's module that groups import (its common module or its helpers),
+    /// never a pipeline's XSLT.
+    boolean importedModule(final String xsltUuid) {
+        return xsltData(xsltUuid)
+                .flatMap(ModuleChecks::marker)
+                .filter(marker -> !SourceTypeModule.GROUP.equals(marker.kind()))
                 .isPresent();
     }
 

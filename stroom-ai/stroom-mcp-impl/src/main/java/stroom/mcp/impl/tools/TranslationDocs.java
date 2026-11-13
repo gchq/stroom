@@ -19,7 +19,6 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AgentKnowledge;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.InstructionRules;
-import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -487,8 +486,8 @@ public class TranslationDocs {
         return planProvider.get().nextFor(context, ref, result);
     }
 
-    /// Saves one of an aggregated feed's generated modules in a build (its helpers, its common module, its
-    /// dispatcher): made new, or written over the build's own. check_xslt first, as every save; not the imports the
+    /// Saves one of an aggregated feed's generated modules in a build (its helpers, its common module): made new, or
+    /// written over the build's own. check_xslt first, as every save; not the imports the
     /// standing instructions require of a translation (the source type groups import those), nor the hand-edit gate
     /// (a module is regenerated, never edited: its own code says so). The version history records it as generated.
     ///
@@ -498,10 +497,8 @@ public class TranslationDocs {
     /// @param uuid    The build's module to write over, or null for a new one.
     /// @param code    The module's code.
     /// @param source  The mapping it is generated from (the common module's), or [Source#NONE].
-    /// @param block   A block of the description to keep beside it (the dispatcher's spec), or null.
-    /// @param payload The block's payload.
     /// @param change  What this change is, for the version history.
-    /// @return The document, and `changed` (false where its code and block were already as given).
+    /// @return The document, and `changed` (false where its code was already as given).
     /// @throws ToolRefusal if check_xslt refuses the code, or the module isn't the tools' own.
     public Map<String, Object> saveModule(final ToolCallContext context,
                                           final String build,
@@ -509,8 +506,6 @@ public class TranslationDocs {
                                           final String uuid,
                                           final String code,
                                           final Source source,
-                                          final String block,
-                                          final Object payload,
                                           final String change) {
         checked(context, code, build, null);
         if (uuid == null) {
@@ -518,9 +513,6 @@ public class TranslationDocs {
                 final XsltDoc made = read(ref, XsltDoc.class);
                 String description = described(context, build, made.getDescription(), code, source,
                         new LinkedHashMap<>());
-                if (block != null) {
-                    description = KeptMapping.withBlock(description, block, payload);
-                }
                 description = history.pending(context.session(), description, null,
                         NullSafe.nonBlankStringElse(change, "Created"), code, false);
                 description = history.previewed(description, code);
@@ -534,10 +526,7 @@ public class TranslationDocs {
         final XsltDoc doc = readXslt(uuid);
         final DocRef ref = new DocRef(XsltDoc.TYPE, uuid, doc.getName());
         guard.checkManaged(context.session(), ref);
-        final boolean sameBlock = block == null || KeptMapping.readBlock(doc.getDescription(), block)
-                .map(kept -> kept.equals(JsonValues.deepCopy(payload)))
-                .orElse(false);
-        if (sameBlock && XsltCode.normalise(NullSafe.string(doc.getData())).equals(XsltCode.normalise(code))) {
+        if (XsltCode.normalise(NullSafe.string(doc.getData())).equals(XsltCode.normalise(code))) {
             final Map<String, Object> result = summary(doc);
             result.put("changed", false);
             return result;
@@ -545,9 +534,6 @@ public class TranslationDocs {
         String description = XsltVersionHistory.adopt(doc.getDescription(), doc.getData());
         final String data = XsltVersionHistory.strip(code);
         description = described(context, build, description, code, source, new LinkedHashMap<>());
-        if (block != null) {
-            description = KeptMapping.withBlock(description, block, payload);
-        }
         description = history.pending(context.session(), description, new XsltVersionHistory.Previous(doc.getData(),
                 doc.getUpdateUser(), doc.getUpdateTimeMs()), NullSafe.nonBlankStringElse(change, "Changed"), data,
                 false);
@@ -560,7 +546,7 @@ public class TranslationDocs {
     }
 
     /// Points a build's XSLT at other documents: each `uuid='…'` of an import named in `uuids` replaced, in its code
-    /// and in its description (the mapping or dispatcher spec kept there), and the change recorded in its version
+    /// and in its description (the mapping kept there), and the change recorded in its version
     /// history as the tools' own. A mechanical change to code already checked, so not checked again: an aggregated
     /// feed's modules made to import a build's working copies, or the originals again at promotion.
     ///
@@ -579,8 +565,8 @@ public class TranslationDocs {
                 description -> rewritten(description, uuids), change);
     }
 
-    /// Replaces a build's XSLT's code with code written from what was checked already (a dispatcher regenerated
-    /// against other UUIDs), its description changed as given, and the change recorded in its version history as the
+    /// Replaces a build's XSLT's code with code written from what was checked already (its imports pointed at other
+    /// UUIDs), its description changed as given, and the change recorded in its version history as the
     /// tools' own. Not checked again.
     ///
     /// @param context    The call's context.

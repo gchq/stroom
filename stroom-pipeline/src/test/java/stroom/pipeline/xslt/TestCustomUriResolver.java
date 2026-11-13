@@ -18,20 +18,10 @@ package stroom.pipeline.xslt;
 
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.shared.XsltDoc;
 
-import net.sf.saxon.s9api.Processor;
-import net.sf.saxon.s9api.XsltCompiler;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
-import java.io.StringReader;
-import java.util.Map;
-import javax.xml.transform.stream.StreamSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.mockito.ArgumentMatchers.anyString;
 
 class TestCustomUriResolver {
     @Test
@@ -81,35 +71,5 @@ class TestCustomUriResolver {
 
         value = CustomURIResolver.getPart("name", docRefString, null);
         assertThat(value).isEqualTo("test-name");
-    }
-
-    @Test
-    void anXsltImportedTwiceInOneStylesheetCompiles() {
-        // Two imported XSLTs each importing a third (an aggregated feed's source type groups each importing its
-        // common module): without a system id of its own, Saxon took the third for a stylesheet importing itself.
-        final Map<String, String> docs = Map.of("A", sheet("C"), "B", sheet("C"), "C", sheet());
-        final XsltImports imports = Mockito.mock(XsltImports.class);
-        Mockito.when(imports.resolve(anyString())).thenAnswer(inv -> {
-            final String href = inv.getArgument(0);
-            return XsltImports.Resolution.found(XsltDoc.builder().uuid("uuid-" + href).name(href)
-                    .data(docs.get(href)).build());
-        });
-        final XsltCompiler compiler = new Processor(false).newXsltCompiler();
-        compiler.setURIResolver(new CustomURIResolver(imports));
-
-        assertThatCode(() -> compiler.compile(new StreamSource(new StringReader(sheet("A", "B")))))
-                .doesNotThrowAnyException();
-        assertThat(CustomURIResolver.systemId(XsltDoc.builder().uuid("u-1").build()))
-                .isEqualTo("urn:stroom:xslt:u-1");
-    }
-
-    private static String sheet(final String... imports) {
-        final StringBuilder out = new StringBuilder("<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
-                                                    + "version=\"3.0\">");
-        for (final String href : imports) {
-            out.append("<xsl:import href=\"").append(href).append("\"/>");
-        }
-        return out.append("<xsl:template name=\"t").append(imports.length).append("\"/></xsl:stylesheet>")
-                .toString();
     }
 }
