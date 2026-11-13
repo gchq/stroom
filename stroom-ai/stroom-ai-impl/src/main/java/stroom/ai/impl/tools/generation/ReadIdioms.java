@@ -39,6 +39,12 @@ final class ReadIdioms {
     private static final Pattern NOT_ALPHANUMERIC = Pattern.compile("[^A-Za-z0-9]+");
     private static final Pattern NOT_WORD = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
     private static final Set<String> PLAIN_SOURCES = Set.of("field", "any_of");
+    /// What the rebuild puts in place of a group's item ([MappingRebuild]), followed by its depth: read as a field
+    /// whose first name it is, so a read of the item reads as a read of the record would.
+    static final String ITEM_SENTINEL = "mcp_item_";
+    // In an XML input (no field shapes): a group's item, and the path read below it.
+    private static final Pattern XML_ITEM_PATH = Pattern.compile(ITEM_SENTINEL
+                                                                 + "\\d+(/@?[A-Za-z_][A-Za-z0-9_.-]*)*");
     private static final List<String> TIMES = List.of("time, zone", "time", "time, ms", "epoch_ms", "epoch_s",
             "epoch_us", "epoch_ns", "windows_filetime", "epoch_s, truncated", "epoch_s, rounded", "epoch_us, rounded",
             "epoch_ns, rounded");
@@ -107,6 +113,9 @@ final class ReadIdioms {
                 }
                 return String.join(ReadShapes.SEPARATOR.get(kind), names);
             }
+        }
+        if (fields.isEmpty() && XML_ITEM_PATH.matcher(node.text()).matches()) {
+            return node.text();
         }
         return extracted(node);
     }

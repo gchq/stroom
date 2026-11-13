@@ -97,6 +97,10 @@ public final class ReadShapes {
                                                + "[1]) " + XPathText.EPOCH_SCALE.get(epoch) + "))))"));
         }
         out.put("time, ms", shape(XPathText.timeMsText(text(1), text(2), expr(1) + "[1]")));
+        // A group's items (XsltGenerator): a split's pieces, a JSON array's members, a zip's positions.
+        out.put("pieces", shape(XsltGenerator.pieces(expr(1), text(1))));
+        out.put("json members", shape(XsltGenerator.jsonMembers(expr(1))));
+        out.put("zip positions", shape("1 to count($" + expr(1) + ")"));
         // oneOfText, its values any number of strings: its shape with one value, the value's place taking any
         // expression.
         final XPathNode one = shape(XPathText.oneOfText(expr(1), List.of(text(1))));

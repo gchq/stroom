@@ -66,6 +66,8 @@ public final class XsltReader {
             Pattern.DOTALL | Pattern.UNICODE_CHARACTER_CLASS);
     private static final Pattern UNKNOWN = Pattern.compile(
             "^\\s*(.+?): EventDetail/Unknown on purpose: (.*?)\\s*$", Pattern.DOTALL | Pattern.UNICODE_CHARACTER_CLASS);
+    // What the generator's check of a group's zipped lists says of lists that differ in length.
+    private static final String ZIP_DIFFER = "the lists zipped by position differ in length";
     private static final Pattern WHOLE_TEMPLATE = Pattern.compile("\\{(?!\\{)(.*)\\}", Pattern.DOTALL);
     // The prefixes the generator binds for itself; any other is an imported XSLT's functions (a mapping's
     // functions), unless the XSLT defines functions with it (a hand edit's own, local:x say).
@@ -413,7 +415,7 @@ public final class XsltReader {
                              final XPathTreeParser parser) {
         for (final XmlElement child : node.childElements()) {
             final int written = rule.leaves().size();
-            readChild(child, path, scope, templates, rule, parser);
+            readChild(node, child, path, scope, templates, rule, parser);
             for (final LeafReading leaf : rule.leaves().subList(written, rule.leaves().size())) {
                 if (leaf.guard() == null && !rule.guards().isEmpty()) {
                     leaf.setGuard(rule.guards().getLast());
@@ -422,7 +424,8 @@ public final class XsltReader {
         }
     }
 
-    private static void readChild(final XmlElement child,
+    private static void readChild(final XmlElement parent,
+                                  final XmlElement child,
                                   final List<String> path,
                                   final Map<String, String> scope,
                                   final Map<String, XmlElement> templates,
@@ -468,6 +471,8 @@ public final class XsltReader {
             } else if (!select.startsWith("stroom:log(") && !select.equals(XsltGenerator.READ_RECORD_NO)) {
                 rule.lose(at + ": xsl:sequence " + head(select, 80) + " not read");
             }
+        } else if (child.is(XSL, "for-each") && groupLoop(child)) {
+            readGroup(parent, child, path, scope, templates, rule, parser);
         } else if (child.is(XSL, "for-each")) {
             // A Data entry repeated in a named Data (data_parent): known by its Name, as its entry is. Elsewhere read
             // with no Data name.
@@ -510,13 +515,7 @@ public final class XsltReader {
         }
         final List<String> here = new ArrayList<>(path);
         here.add(name);
-        for (final XmlElement.Attribute attribute : child.attributes()) {
-            if (attribute.namespace() == null) {
-                final LeafReading leaf = new LeafReading(join(here, "@" + attribute.name()), null);
-                setValue(leaf, attribute.value(), scope, parser);
-                rule.leaves().add(leaf);
-            }
-        }
+        readAttributes(child, here, scope, rule, parser);
         final String text = ToolText.strip(Objects.requireNonNullElse(child.text(), ""));
         if (!text.isEmpty() && child.childElements().isEmpty()) {
             final LeafReading leaf = new LeafReading(String.join("/", here), null);
@@ -527,6 +526,139 @@ public final class XsltReader {
         }
     }
 
+
+    // --- repeated groups ----------------------------------------------------------------------------------------
+
+    // The generator's loop of a group: its item held first thing in a variable selecting it.
+    private static boolean groupLoop(final XmlElement loop) {
+        final List<XmlElement> body = loop.childElements();
+        return !body.isEmpty() && body.getFirst().is(XSL, "variable") && truthy(body.getFirst().get("name"))
+               && ".".equals(ToolText.strip(Objects.requireNonNullElse(body.getFirst().get("select"), "")));
+    }
+
+    // A group's loop: the element written per item, and what each holds, read as the generator writes them. The
+    // item's variable (and a zip's lists') stay unresolved inside, so the rebuild can tell the item's reads from the
+    // record's. A loop of any other shape (hand-written, say) is read as a repeat no entry writes, and said why.
+    private static void readGroup(final XmlElement parent,
+                                  final XmlElement loop,
+                                  final List<String> path,
+                                  final Map<String, String> scope,
+                                  final Map<String, XmlElement> templates,
+                                  final RuleReading rule,
+                                  final XPathTreeParser parser) {
+        final String at = path.isEmpty()
+                ? "Event"
+                : String.join("/", path);
+        final String variable = loop.childElements().getFirst().get("name");
+        final XmlElement element = groupElement(loop);
+        if (element == null) {
+            notAGroup(loop, path, rule, at + ": an xsl:for-each over $" + variable + " holds more than the one "
+                                        + "element (in an xsl:if, or not) a group's loop writes per item");
+            return;
+        }
+        if (rule.groupDepth() >= FieldGroup.MAX_DEPTH) {
+            rule.lose(at + ": groups nested more than " + FieldGroup.MAX_DEPTH + " deep not read");
+            return;
+        }
+        final Map<String, String> lists = zipLists(parent, loop, variable, scope, parser);
+        final Map<String, String> inner = new LinkedHashMap<>(scope);
+        inner.remove(variable);
+        lists.keySet().forEach(name -> inner.remove(name.substring(1)));
+        final RuleReading items = new RuleReading(rule.key(), rule.name(), null, false);
+        items.setGroupDepth(rule.groupDepth() + 1);
+        final boolean data = "Data".equals(element.localName());
+        if (data) {
+            walk(element, List.of(), inner, templates, items, parser);
+        } else {
+            readAttributes(element, List.of(), inner, items, parser);
+            walk(element, List.of(), inner, templates, items, parser);
+        }
+        final String where = join(path, element.localName());
+        items.notes().forEach(note -> rule.notes().add(where + "/" + note));
+        items.lost().forEach(note -> rule.lost().add(where + "/" + note));
+        if (!items.calls().isEmpty()) {
+            rule.lose(where + ": a shared template called inside a group's loop not read");
+        }
+        final LeafReading leaf = new LeafReading(where, data
+                ? element.get("Name")
+                : null);
+        leaf.setGroup(new GroupReading(resolve(Objects.requireNonNullElse(loop.get("select"), ""), scope, parser),
+                variable, lists, items.leaves()));
+        rule.leaves().add(leaf);
+    }
+
+    // The one element a group's loop writes per item, in an xsl:if (its fields have a value) or not; null if the loop
+    // holds anything else.
+    private static XmlElement groupElement(final XmlElement loop) {
+        final List<XmlElement> body = loop.childElements().subList(1, loop.childElements().size());
+        if (body.size() != 1) {
+            return null;
+        }
+        XmlElement element = body.getFirst();
+        if (element.is(XSL, "if") && element.childElements().size() == 1) {
+            element = element.childElements().getFirst();
+        }
+        return EVT.equals(element.namespace())
+                ? element
+                : null;
+    }
+
+    // A zip's lists: the variables the generator declares just before its loop, over whose positions the loop runs
+    // (1 to count($first)); each by its variable ($name) to what it selects. Empty for a loop of any other items.
+    private static Map<String, String> zipLists(final XmlElement parent,
+                                                final XmlElement loop,
+                                                final String variable,
+                                                final Map<String, String> scope,
+                                                final XPathTreeParser parser) {
+        final Map<String, String> out = new LinkedHashMap<>();
+        final XPathNode select = parseOrNull(loop.get("select"), parser);
+        final XPathMatch match = select == null
+                ? null
+                : XPathTrees.unify(ReadShapes.SHAPES.get("zip positions"), select).orElse(null);
+        if (match == null) {
+            return out;
+        }
+        final List<XmlElement> siblings = parent.childElements();
+        final List<XmlElement> before = new ArrayList<>();
+        for (int i = siblings.indexOf(loop) - 1; i >= 0 && siblings.get(i).is(XSL, "variable"); i--) {
+            before.addFirst(siblings.get(i));
+        }
+        for (final XmlElement list : before) {
+            final String name = list.get("name");
+            if (truthy(name) && name.startsWith(variable) && truthy(list.get("select"))) {
+                out.put("$" + name, resolve(list.get("select"), scope, parser));
+            }
+        }
+        return out.containsKey("$" + match.expr(1).valueText())
+                ? out
+                : new LinkedHashMap<>();
+    }
+
+    // A loop not in a group's shape: read as a repeat (which the rebuild says no entry writes), and why noted.
+    private static void notAGroup(final XmlElement loop,
+                                  final List<String> path,
+                                  final RuleReading rule,
+                                  final String why) {
+        final LeafReading leaf = new LeafReading(join(path, firstEventName(loop)), null);
+        leaf.setRepeat(String.join(" ", words(XmlSerialiser.toXml(loop))));
+        rule.leaves().add(leaf);
+        rule.notes().add(why);
+    }
+
+    // An element's own attributes, each a leaf at the element's path.
+    private static void readAttributes(final XmlElement element,
+                                       final List<String> here,
+                                       final Map<String, String> scope,
+                                       final RuleReading rule,
+                                       final XPathTreeParser parser) {
+        for (final XmlElement.Attribute attribute : element.attributes()) {
+            if (attribute.namespace() == null) {
+                final LeafReading leaf = new LeafReading(join(here, "@" + attribute.name()), null);
+                setValue(leaf, attribute.value(), scope, parser);
+                rule.leaves().add(leaf);
+            }
+        }
+    }
 
     // The generator's calls that write nothing of the Event: its check of fields no rule reads
     // (XsltGenerator.UNREAD_TEMPLATE) and its log of a record's kind (XsltGenerator.LOG_KIND_TEMPLATE, or as an
@@ -762,8 +894,29 @@ public final class XsltReader {
         return parent.childElements(XSL, xslName).stream().findFirst().orElse(null);
     }
 
+    // The Event a rule writes: in its template (or branch), or behind the generator's check of a group's zipped
+    // lists (an xsl:choose whose when only logs the lists' lengths, its otherwise writing the Event).
     private static XmlElement firstEvent(final XmlElement parent) {
-        return parent.childElements(EVT, "Event").stream().findFirst().orElse(null);
+        final XmlElement event = parent.childElements(EVT, "Event").stream().findFirst().orElse(null);
+        if (event != null) {
+            return event;
+        }
+        for (final XmlElement choose : parent.childElements(XSL, "choose")) {
+            final List<XmlElement> branches = choose.childElements();
+            if (branches.size() == 2 && branches.get(0).is(XSL, "when") && branches.get(1).is(XSL, "otherwise")
+                && zipCheck(branches.get(0))) {
+                return branches.get(1).childElements(EVT, "Event").stream().findFirst().orElse(null);
+            }
+        }
+        return null;
+    }
+
+    // The when of the generator's zip check: it only logs an error, of lists zipped by position that differ.
+    private static boolean zipCheck(final XmlElement when) {
+        final List<XmlElement> body = when.childElements();
+        return body.size() == 1 && body.getFirst().is(XSL, "sequence")
+               && Objects.requireNonNullElse(body.getFirst().get("select"), "").startsWith("stroom:log('ERROR'")
+               && Objects.requireNonNullElse(when.get("test"), "").contains(ZIP_DIFFER);
     }
 
     // The first xsl element of that name below.

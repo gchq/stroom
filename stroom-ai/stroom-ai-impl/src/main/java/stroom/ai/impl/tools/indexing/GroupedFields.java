@@ -48,6 +48,10 @@ public final class GroupedFields {
         // Static only.
     }
 
+    /// Plans a drafted plan's grouped fields, or an amended one's (`changes=`), alike: a field added beside a group's
+    /// field of objects, named below it, is one of its items; one that isn't (or one beside Lucene's fields of
+    /// several values) says the pairing is lost. Applied again to a plan it has planned, it changes nothing.
+    ///
     /// @param plan   A plan.
     /// @param leaves The fields of the translation that wrote its Events ([FieldGroup#leaves(List)]), or none.
     /// @return The plan with the fields read from a group's element planned as above (two or more read from one
@@ -64,19 +68,27 @@ public final class GroupedFields {
             for (final Map.Entry<String, List<Picked>> read : picked(fields, group.getKey(), group.getValue(), done)
                     .entrySet()) {
                 final List<Picked> picked = read.getValue();
-                if (picked.size() < 2) {
+                final PlannedField object = objectOf(fields, read.getKey());
+                if (picked.isEmpty() || (picked.size() < 2 && object == null)) {
                     continue;
                 }
                 picked.forEach(p -> done.add(p.field().name()));
                 final String items = FieldGroup.itemsText(List.of(group.getValue().entry()));
+                if (object != null) {
+                    // The group's field of objects planned already (an amended plan): the new fields join it.
+                    final String note = joined(fields, object, picked, items);
+                    if (note != null) {
+                        notes.add(note);
+                    }
+                    continue;
+                }
                 final String name = objectName(picked, fields, plan);
                 if (name != null) {
                     asObject(fields, picked, name, read.getKey(), items);
                     notes.add("`" + name + "`: the translation writes " + group.getKey() + " for " + items + ", so "
                               + named(names(picked)) + " are one object per item (mapped as object, not "
                               + "nested)");
-                } else {
-                    asValues(fields, picked, items);
+                } else if (asValues(fields, picked, items, List.of())) {
                     notes.add(named(names(picked)) + ": the translation writes " + group.getKey() + " for "
                               + items + "; as fields of several values, which of an item's values go together is "
                               + "lost");
@@ -224,16 +236,64 @@ public final class GroupedFields {
                 objectItems, null));
     }
 
-    // The picked fields as fields of several values, each saying the pairing is lost.
-    private static void asValues(final List<PlannedField> fields, final List<Picked> picked, final String items) {
+    // The group's field of objects read from this element, if the plan has one.
+    private static PlannedField objectOf(final List<PlannedField> fields, final String element) {
+        return fields.stream()
+                .filter(field -> field.isObjects() && element.equals(field.source()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    // Fields read from a group whose field of objects the plan has: its items, when named below it; else fields of
+    // several values beside it, saying the pairing is lost. What was done, as a note; null when they were so already.
+    private static String joined(final List<PlannedField> fields,
+                                 final PlannedField object,
+                                 final List<Picked> picked,
+                                 final String items) {
+        final String prefix = object.name() + ".";
+        if (picked.stream().allMatch(p -> p.field().name().startsWith(prefix)
+                                          && p.field().name().length() > prefix.length())) {
+            final String note = objectNote(items);
+            final List<PlannedField> objectItems = new ArrayList<>(object.items());
+            picked.forEach(p -> objectItems.add(new PlannedField(p.field().name().substring(prefix.length()),
+                    p.field().type(), p.member().relative(), described(p.field().description(), note),
+                    p.field().transform(), p.member().nested(), List.of(), null)));
+            picked.forEach(p -> fields.remove(p.field()));
+            fields.set(fields.indexOf(object), new PlannedField(object.name(), object.type(), object.source(),
+                    object.description(), object.transform(), object.multiple(), objectItems, object.distinctBy()));
+            return named(names(picked)) + ": items of `" + object.name() + "`, the object written for " + items
+                   + " (mapped as object, not nested)";
+        }
+        final List<String> objectNames = object.items().stream().map(item -> prefix + item.name()).toList();
+        if (!asValues(fields, picked, items, objectNames)) {
+            return null;
+        }
+        return named(names(picked)) + ": the translation writes " + object.source() + " for " + items + ", but "
+               + (picked.size() == 1
+                ? "it isn't named"
+                : "they aren't named") + " below `" + object.name() + "`, so as fields of several values beside it, "
+               + "which of an item's values go together is lost";
+    }
+
+    // The picked fields as fields of several values, each saying the pairing is lost (with the others picked, and
+    // the given names of the same items). Whether a field changed: planned so already, none does.
+    private static boolean asValues(final List<PlannedField> fields,
+                                    final List<Picked> picked,
+                                    final String items,
+                                    final List<String> besides) {
         final List<String> names = names(picked);
+        boolean changed = false;
         for (final Picked p : picked) {
             final PlannedField field = p.field();
-            final List<String> others = names.stream().filter(n -> !n.equals(field.name())).toList();
-            fields.set(fields.indexOf(field), new PlannedField(field.name(), field.type(), field.source(),
+            final List<String> others = new ArrayList<>(names.stream().filter(n -> !n.equals(field.name())).toList());
+            others.addAll(besides);
+            final PlannedField noted = new PlannedField(field.name(), field.type(), field.source(),
                     described(field.description(), valuesNote(items, others)), field.transform(), true,
-                    field.items(), field.distinctBy()));
+                    field.items(), field.distinctBy());
+            changed |= !noted.equals(field);
+            fields.set(fields.indexOf(field), noted);
         }
+        return changed;
     }
 
     private static String described(final String description, final String note) {

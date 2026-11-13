@@ -67,20 +67,28 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// Seen in testing (a synthetic Netskope sample, ~147 fields): the form about the stand-ins, a question for each,
 /// was too large to show, so the call failed before saving; the domain split answered before it was lost, and
 /// asked again on every call after, so the user could never get past it.
+///
+/// The destination decides which stand-ins are asked (a value that only misfits its field is asked only where the
+/// field's element refuses text, and among numbers one holding a digit is data): the sample's many stand-ins are
+/// in its two port columns, written to the events' Port elements (numbers), and hold no digits.
 class TestAskStroomAiWideSampleForms extends AbstractAiIntegrationTest {
 
     private static final String SOURCE = "Wide gateway";
     private static final String FEED = "WIDE-GATEWAY";
     private static final String CONVERTER = "WIDE-GATEWAY-Converter";
     private static final String EVENTS = "WIDE-GATEWAY-Events";
-    private static final int RECORDS = 40;
-    // Columns of numbers, each with a value of its own standing for none, more than one form can ask about.
+    private static final int RECORDS = 60;
+    // Columns of numbers written as Data, which take text: none holds a stand-in.
     private static final int COUNT_COLUMNS = 25;
     // Columns of text, which hold no stand-ins.
-    private static final int TEXT_COLUMNS = 118;
+    private static final int TEXT_COLUMNS = 116;
+    // The port columns, written to the events' Port elements, which refuse text.
+    private static final List<String> PORT_COLUMNS = List.of("src_port", "dst_port");
+    // How many stand-ins of its own each port column holds, more than one form can ask about between them.
+    private static final int PORT_STAND_INS = 12;
     // How many records each stand-in is in.
-    private static final int STAND_IN_RECORDS = 4;
-    // The stand-ins in the sample: one in each column of numbers, and the usual '-' and 'N/A' in two of text.
+    private static final int STAND_IN_RECORDS = 2;
+    // The stand-ins in the sample: the usual '-' and 'N/A' in two columns of text, and those of the port columns.
     private static final List<String> STAND_INS = standIns();
     private static final String DOMAIN_QUESTION = "Split the domain off";
     private static final String STAND_INS_INTRO = "Some fields in the sample hold values that look like stand-ins";
@@ -156,7 +164,7 @@ class TestAskStroomAiWideSampleForms extends AbstractAiIntegrationTest {
                 .filter(docRef -> EVENTS.equals(docRef.getName()))
                 .map(xsltStore::readDocument)
                 .findFirst()
-                .orElseThrow());
+                .orElseThrow(() -> new AssertionError("Not saved: " + saved.text())));
         assertThat(STAND_INS).allSatisfy(standIn -> assertThat(xslt.getData()).contains("'" + standIn + "'"));
 
         // Built again, the user isn't asked anything: their answers are kept with the XSLT.
@@ -201,13 +209,24 @@ class TestAskStroomAiWideSampleForms extends AbstractAiIntegrationTest {
     @SuppressWarnings("unchecked")
     private static Map<String, Object> completed(final Map<String, Object> draft) {
         final Map<String, Object> mapping = new LinkedHashMap<>(draft);
-        final List<Map<String, Object>> common = new ArrayList<>(
-                (List<Map<String, Object>>) draft.getOrDefault("common", List.of()));
+        final List<Map<String, Object>> common = new ArrayList<>();
+        // The system's name and environment, as the user gives them, in place of the draft's placeholders.
+        for (final Map<String, Object> entry : (List<Map<String, Object>>) draft.getOrDefault("common", List.of())) {
+            final Object path = entry.get("path");
+            if ("EventSource/System/Name".equals(path)) {
+                common.add(Map.of("path", path, "value", SOURCE));
+            } else if ("EventSource/System/Environment".equals(path)) {
+                common.add(Map.of("path", path, "value", "Test"));
+            } else {
+                common.add(entry);
+            }
+        }
         if (common.stream().noneMatch(entry -> String.valueOf(entry.get("path")).startsWith("EventSource/Device/"))) {
             common.add(Map.of("path", "EventSource/Device/HostName", "value", "wide-gw01"));
         }
         mapping.put("common", common);
         final Set<String> placed = new HashSet<>(Set.of("src_ip", "action"));
+        placed.addAll(PORT_COLUMNS);
         common.forEach(entry -> {
             if (entry.get("field") instanceof final String field) {
                 placed.add(field);
@@ -228,6 +247,8 @@ class TestAskStroomAiWideSampleForms extends AbstractAiIntegrationTest {
         final String at = "EventDetail/Network/" + element;
         final List<Map<String, Object>> fields = new ArrayList<>();
         fields.add(Map.of("path", at + "/Source/Device/IPAddress", "field", "src_ip"));
+        fields.add(Map.of("path", at + "/Source/Port", "field", "src_port"));
+        fields.add(Map.of("path", at + "/Destination/Port", "field", "dst_port"));
         data.forEach(field -> fields.add(Map.of("path", at + "/Data", "data_name", field, "field", field)));
         return Map.of("name", action, "when", List.of(Map.of("field", "action", "equals", action)),
                 "fields", fields);
@@ -309,13 +330,15 @@ class TestAskStroomAiWideSampleForms extends AbstractAiIntegrationTest {
         return answers;
     }
 
-    // A gateway's log as CSV, ~150 columns: time, user (with a domain), source address and action; columns of
-    // numbers, each with a stand-in of its own; and columns of text, two with the usual '-' and 'N/A'.
+    // A gateway's log as CSV, ~150 columns: time, user (with a domain), source address and action; two of ports,
+    // each with stand-ins of its own; columns of numbers; and columns of text, two with the usual '-' and 'N/A'.
     private static String sample() {
         final Random random = new Random(11);
         final StringBuilder sb = new StringBuilder(String.join(",", header())).append('\n');
         for (int r = 0; r < RECORDS; r++) {
             final boolean standInRow = r < STAND_IN_RECORDS;
+            // Each port stand-in in STAND_IN_RECORDS records, the rest of the column ports.
+            final int portStandIn = r / STAND_IN_RECORDS;
             final List<String> row = new ArrayList<>();
             row.add(String.format("2026-10-30T10:%02d:00", r));
             row.add("CORP\\user" + (r % 7));
@@ -323,6 +346,11 @@ class TestAskStroomAiWideSampleForms extends AbstractAiIntegrationTest {
             row.add(r % 3 == 0
                     ? "block"
                     : "allow");
+            for (int column = 0; column < PORT_COLUMNS.size(); column++) {
+                row.add(portStandIn < PORT_STAND_INS
+                        ? portStandIn(column, portStandIn)
+                        : String.valueOf(1_024 + random.nextInt(60_000)));
+            }
             row.add(standInRow
                     ? "-"
                     : "https://site" + random.nextInt(1_000) + ".example.com/");
@@ -330,9 +358,7 @@ class TestAskStroomAiWideSampleForms extends AbstractAiIntegrationTest {
                     ? "N/A"
                     : "category " + random.nextInt(1_000));
             for (int n = 1; n <= COUNT_COLUMNS; n++) {
-                row.add(standInRow
-                        ? countStandIn(n)
-                        : String.valueOf(random.nextInt(1_000_000)));
+                row.add(String.valueOf(random.nextInt(1_000_000)));
             }
             for (int n = 1; n <= TEXT_COLUMNS; n++) {
                 row.add("value " + random.nextInt(1_000_000));
@@ -343,20 +369,28 @@ class TestAskStroomAiWideSampleForms extends AbstractAiIntegrationTest {
     }
 
     private static List<String> header() {
-        final List<String> header = new ArrayList<>(List.of("time", "user", "src_ip", "action", "referrer",
-                "category"));
+        final List<String> header = new ArrayList<>(List.of("time", "user", "src_ip", "action"));
+        header.addAll(PORT_COLUMNS);
+        header.addAll(List.of("referrer", "category"));
         IntStream.rangeClosed(1, COUNT_COLUMNS).forEach(n -> header.add(String.format("count_%02d", n)));
         IntStream.rangeClosed(1, TEXT_COLUMNS).forEach(n -> header.add(String.format("attr_%03d", n)));
         return header;
     }
 
-    private static String countStandIn(final int column) {
-        return String.format("nocount%02d", column);
+    // A port column's stand-in: letters only, as one holding a digit among numbers is data, not a stand-in.
+    private static String portStandIn(final int column, final int n) {
+        return (column == 0
+                ? "nosrc"
+                : "nodst") + (char) ('a' + n);
     }
 
     private static List<String> standIns() {
         final List<String> standIns = new ArrayList<>(List.of("-", "N/A"));
-        IntStream.rangeClosed(1, COUNT_COLUMNS).forEach(n -> standIns.add(countStandIn(n)));
+        for (int column = 0; column < PORT_COLUMNS.size(); column++) {
+            for (int n = 0; n < PORT_STAND_INS; n++) {
+                standIns.add(portStandIn(column, n));
+            }
+        }
         return List.copyOf(standIns);
     }
 

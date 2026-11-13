@@ -23,6 +23,8 @@ import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.StreamReader.RawHead;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.generation.FieldGroup;
+import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.indexing.Discovery;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
@@ -40,6 +42,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +85,9 @@ class TestDraftIndexMappingTool {
                                             + "\"2026-10-11T08:00:05Z\", \"user\": \"a\"}\n{\"ts\": "
                                             + "\"2026-10-11T08:01:00Z\", \"received\": "
                                             + "\"2026-10-11T08:01:05Z\", \"user\": \"b\"}\n";
+
+    // A recipient's element, written once per recipient by the translation's repeated group.
+    private static final String RECIPIENT = "EventDetail/Send/Destination/User";
 
     private final IndexingWorld world = new IndexingWorld();
 
@@ -266,6 +272,19 @@ class TestDraftIndexMappingTool {
         assertThat(world.plans.given(null, List.of("ecs-firewall-v1"), null).fields().getLast().name())
                 .isEqualTo("acme.ticket");
         assertThat(world.plans.given(null, List.of("ecs-elsewhere-v1"), null)).isNull();
+    }
+
+    @Test
+    void aChangeAddingAGroupsFieldInElasticsearchPlansItAsTheDraftDoes() {
+        // A field of a translation's repeated group added by changes=: one object per item with the group's other
+        // fields, as drafting with both gives, not a flat field beside it.
+        assertAmendedAsDrafted(FieldPlan.ELASTICSEARCH, "ecs");
+    }
+
+    @Test
+    void aChangeAddingAGroupsFieldInLucenePlansItAsTheDraftDoes() {
+        // Lucene: fields of several values, each saying the pairing of an item's values is lost, as drafted.
+        assertAmendedAsDrafted(FieldPlan.LUCENE, "stroom-flat");
     }
 
     @Test
@@ -682,6 +701,103 @@ class TestDraftIndexMappingTool {
         all.put("events_stream_ids", List.of(1));
         all.putAll(arguments);
         return call(all, context);
+    }
+
+    // Drafted from Events holding a recipient's Id only, then the Domain added by changes=: the group's fields as
+    // drafting from Events holding both plans them, and the amendment says so.
+    @SuppressWarnings("unchecked")
+    private void assertAmendedAsDrafted(final String backend, final String convention) {
+        final DraftIndexMappingTool tool = toolReadingGroups();
+        final Map<String, Integer> both = ordered("EventTime/TimeCreated", 100, "EventSource/System/Name", 100,
+                "EventSource/Device/HostName", 100, "EventDetail/TypeId", 100, "EventDetail/Send/Source/User/Id", 100,
+                RECIPIENT + "/Id", 100, RECIPIENT + "/Domain", 100);
+        world.populated(both, Map.of());
+        final Map<String, Object> drafted = call(tool, Map.of("backend", backend, "index_name", "mail-v2",
+                "events_stream_ids", List.of(1), "convention", convention, "without_example", true));
+        final List<PlannedField> expected = recipientFields(drafted);
+        assertThat(expected).hasSizeGreaterThanOrEqualTo(1);
+        final Map<String, Integer> idOnly = new LinkedHashMap<>(both);
+        idOnly.remove(RECIPIENT + "/Domain");
+        world.populated(idOnly, Map.of());
+        final Map<String, Object> first = call(tool, Map.of("backend", backend, "index_name", "mail-v1",
+                "events_stream_ids", List.of(1), "convention", convention, "without_example", true));
+        assertThat(recipientFields(first)).extracting(PlannedField::source).containsExactly(RECIPIENT + "/Id");
+
+        final Map<String, Object> amended = call(tool, Map.of("backend", backend, "index_name", "mail-v1",
+                "changes", Map.of("fields", List.of(ordered("name", domainName(expected), "type", "keyword",
+                        "source", RECIPIENT + "/Domain")))));
+
+        assertThat(recipientFields(amended)).isEqualTo(expected);
+        assertThat((List<String>) amended.get("draft_notes")).singleElement().asString()
+                .contains(RECIPIENT, "each recipient");
+        if (FieldPlan.ELASTICSEARCH.equals(backend)) {
+            assertThat(expected).singleElement().satisfies(object -> {
+                assertThat(object.type()).isEqualTo(PlannedField.OBJECT);
+                assertThat(object.items()).extracting(PlannedField::source).containsExactly("Domain", "Id");
+            });
+        } else {
+            assertThat(expected).hasSize(2).allSatisfy(field -> assertThat(field.description())
+                    .contains("the pairing of an item's values is lost"));
+        }
+        // Amended again with nothing of the group's: planned as it was, nothing said.
+        final Map<String, Object> again = call(tool, Map.of("backend", backend, "index_name", "mail-v1",
+                "changes", Map.of("drop_when", List.of())));
+        assertThat(recipientFields(again)).isEqualTo(expected);
+        assertThat(again).doesNotContainKey("draft_notes");
+    }
+
+    // draft_index_mapping reading, as the mapping kept with the translation that wrote the Events, a group writing
+    // each recipient of a split list as one Destination/User with its own Id and Domain.
+    private DraftIndexMappingTool toolReadingGroups() {
+        final List<FieldGroup.Leaf> leaves = FieldGroup.leaves(List.of(FieldMapping.fromJson(BuildToolCalls.json("""
+                {"path": "EventDetail/Send/Destination/User", "for_each": {"split": "recipients", "on": ","},
+                 "as": "recipient",
+                 "fields": [{"path": "Id", "item": true, "transform": "strip_domain"},
+                            {"path": "Domain", "item": true, "transform": "domain"}]}"""))));
+        final IndexingInputs inputs = Mockito.spy(world.inputs);
+        Mockito.doReturn(leaves).when(inputs).translationFields(anyList(), anyList());
+        return new DraftIndexMappingTool(world.knowledge, world.conventionsTool(), inputs, world.plans,
+                world.examples, world.memory, world.processing.feeds.consent, world.processing.feeds.streamReader,
+                world.pipelineIndex, world.world.pipelineShapes, world.world.documentAccess,
+                new SiblingSharedCalls(world.pipelineTemplates));
+    }
+
+    private Map<String, Object> call(final DraftIndexMappingTool tool, final Map<String, Object> arguments) {
+        final ToolResult result = tool.execute(BuildToolCalls.call(DraftIndexMappingTool.NAME,
+                ToolJson.dumps(arguments)), agreeing());
+        assertThat(result.isError()).as(result.text()).isFalse();
+        return BuildToolCalls.json(result.text());
+    }
+
+    // The plan's fields read from the recipients' group (a field of objects, or fields of values), by name, an
+    // object's items by name too: the order a draft and an amendment list them in differs.
+    @SuppressWarnings("unchecked")
+    private static List<PlannedField> recipientFields(final Map<String, Object> result) {
+        return FieldPlan.fromJson((Map<String, Object>) result.get("plan")).fields().stream()
+                .filter(field -> field.source() != null && field.source().startsWith(RECIPIENT))
+                .map(field -> new PlannedField(field.name(), field.type(), field.source(), field.description(),
+                        field.transform(), field.multiple(), field.items().stream()
+                        .sorted(Comparator.comparing(PlannedField::name))
+                        .toList(), field.distinctBy()))
+                .sorted(Comparator.comparing(PlannedField::name))
+                .toList();
+    }
+
+    // The name a plan gives the recipient's Domain.
+    private static String domainName(final List<PlannedField> fields) {
+        for (final PlannedField field : fields) {
+            if (field.isObjects()) {
+                return field.name() + "." + field.items().stream()
+                        .filter(item -> "Domain".equals(item.source()))
+                        .findFirst()
+                        .orElseThrow()
+                        .name();
+            }
+            if ((RECIPIENT + "/Domain").equals(field.source())) {
+                return field.name();
+            }
+        }
+        throw new AssertionError("No Domain in " + fields);
     }
 
     private Map<String, Object> discovery(final Map<String, Object> discovery) {
