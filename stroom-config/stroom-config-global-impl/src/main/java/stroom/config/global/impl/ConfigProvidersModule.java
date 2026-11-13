@@ -54,6 +54,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.ai.impl.AiInstructionSuggestionsConfig getAiInstructionSuggestionsConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.ai.impl.AiInstructionSuggestionsConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.ai.impl.AiPipelineStagesConfig getAiPipelineStagesConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
