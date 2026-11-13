@@ -161,6 +161,12 @@ class SurveyFeedTool extends AbstractBuiltInTool {
 
     /// The most characters read of a part, asked for.
     static final int MAX_CHARS = 5_000_000;
+    // The most streams (or parts) said in a refusal for nothing readable, and the most characters of each one's
+    // error.
+    private static final int MOST_SAID_STREAMS = 5;
+    private static final int MOST_SAID_CHARS = 200;
+    // Who chose a source type field taken from the feed's registry.
+    private static final String REGISTRY = "registry";
     /// The most fields naming the kind of event summed in `kinds`.
     static final int MAX_KIND_FIELDS = 6;
     /// The most values of each listed in `kinds`.
@@ -175,6 +181,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     private final DocumentAccess documentAccess;
     private final AiAuditLog auditLog;
     private final SourceTypeRegistries besideFeed;
+    private final BuildMemory memory;
 
     @Inject
     SurveyFeedTool(final StreamReader streamReader,
@@ -185,7 +192,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                    final FewerStreams fewerStreams,
                    final DocumentAccess documentAccess,
                    final AiAuditLog auditLog,
-                   final SourceTypeRegistries besideFeed) {
+                   final SourceTypeRegistries besideFeed,
+                   final BuildMemory memory) {
         this.streamReader = streamReader;
         this.feedNames = feedNames;
         this.guard = guard;
@@ -195,6 +203,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         this.documentAccess = documentAccess;
         this.auditLog = auditLog;
         this.besideFeed = besideFeed;
+        this.memory = memory;
     }
 
     @Override
@@ -708,7 +717,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             if (reading.stopped()) {
                 throw new ToolTimeoutException();
             }
-            throw new ToolRefusal("Nothing readable in the sampled streams of '" + feed + "'");
+            final String why = whyNothingReadable(reading);
+            // Kept for the build, so classify_kinds can go on without the survey, saying why it had none.
+            memory.surveyUnreadable(request.build(), feed, why);
+            throw new ToolRefusal("Nothing readable in the sampled streams of '" + feed + "': " + why);
         }
         if (reading.format == null && state != null) {
             reading.format = String.valueOf(state.get("format"));
@@ -777,6 +789,14 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         }
         if (request.build() == null || Thread.currentThread().isInterrupted()) {
             return new SourceDecision(null, null, null, false);
+        }
+        // A feed with a registry (promoted beside it by an earlier build) has its field settled: not chosen again
+        // from this head (seen in an e2e walk: the newest stream, a fifth of its records given a new source type,
+        // put Operation before Workload, and the build's scope matched none of the sample's records).
+        final Optional<String> registered = registryField(request.build(), feed)
+                .flatMap(field -> spelt(field, heads.get()));
+        if (registered.isPresent()) {
+            return new SourceDecision(sourcesChosen(registered.get(), REGISTRY), registered.get(), null, false);
         }
         final List<SourceTypeFields.Candidate> candidates = SourceTypeFields.candidates(heads.get(),
                 request.aggregated());
@@ -1730,6 +1750,20 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         return (int) Math.min(size, (long) Math.ceil((double) want * size / inScope));
     }
 
+    // The source type field of the feed's registry (the build's, else the one beside the feed); empty when it has
+    // none.
+    private Optional<String> registryField(final String build, final String feed) {
+        try {
+            return besideFeed.registry(build, feed)
+                    .map(found -> found.state().get(SourceTypeProfiles.FIELD))
+                    .filter(field -> field instanceof String text && !text.isBlank())
+                    .map(String.class::cast);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No registry read for feed {}: {}", feed, e.getMessage()));
+            return Optional.empty();
+        }
+    }
+
     // The rows of the feed's registry (the build's, else the one beside the feed); none when it has none.
     private List<SourceTypeRows.Row> registryRows(final String build, final String feed) {
         try {
@@ -2140,6 +2174,31 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         return text.codePointCount(0, text.length()) <= chars
                 ? text
                 : text.substring(0, text.offsetByCodePoints(0, chars));
+    }
+
+    // Why no stream gave records: each stream's (and part's) error or note, the first few, each cut short (seen:
+    // every part of an Azure audit feed failed to split, and the bare refusal left the agent to guess why).
+    static String whyNothingReadable(final List<Map<String, Object>> perStream) {
+        final List<String> said = perStream.stream()
+                .filter(stream -> stream.get("error") != null || stream.get("note") != null)
+                .map(stream -> "stream " + stream.get("stream") + (stream.get("part") == null
+                        ? ""
+                        : " part " + stream.get("part")) + ": " + head(String.valueOf(
+                        stream.get("error") != null
+                                ? stream.get("error")
+                                : stream.get("note")), MOST_SAID_CHARS))
+                .toList();
+        if (said.isEmpty()) {
+            return "no stream gave any records";
+        }
+        final String more = said.size() > MOST_SAID_STREAMS
+                ? "; and " + (said.size() - MOST_SAID_STREAMS) + " more"
+                : "";
+        return String.join("; ", said.subList(0, Math.min(MOST_SAID_STREAMS, said.size()))) + more;
+    }
+
+    private static String whyNothingReadable(final Reading reading) {
+        return whyNothingReadable(reading.perStream);
     }
 
     private static Map<String, Object> entry(final Object... keysAndValues) {

@@ -27,10 +27,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -77,6 +79,11 @@ class TestStroomSplitterRun {
                 Arguments.of("CSV, an empty last cell", CSV, "a,b,c\n1,2,\n1,,3\n"),
                 Arguments.of("CSV, a cell past the heading", CSV, "a,b\n1,2,3\n"),
                 Arguments.of("CSV, no new line at the end", CSV, "a,b\n1,2\n3,4"),
+                Arguments.of("CSV with CRLF line ends and a carriage return inside a cell, which Stroom takes out",
+                        CSV, "a,b\r\n1,x\ry\r\n2,z\r\n"),
+                Arguments.of("A regex over CRLF lines, a carriage return inside one",
+                        SplitterSpec.builder("regex").pattern("^(\\d+) (.*)$").names(List.of("n", "rest")).build(),
+                        "1 one\r\n2 tw\ro\r\n"),
                 Arguments.of("CSV with escapes",
                         CSV.toBuilder().escape("\\").build(), "a,b\nx\\,y,\"say \\\"hi\\\"\"\n"),
                 Arguments.of("Named columns with escapes",
@@ -355,6 +362,88 @@ class TestStroomSplitterRun {
     @MethodSource
     void theFormatsShortlistAgrees(final String name, final SplitterSpec spec, final String sample) {
         dryRunAndStroomAgree(name, spec, sample);
+    }
+
+    // Characters Stroom keeps inside a line (it splits records at \n only), which a regex's `.` doesn't match unless
+    // only \n ends a line (seen: Azure audit JSON lines whose string values held \u2028, read with ^(.*)$, failed in
+    // Stroom at the first one).
+    private static final String INSIDE_A_LINE = "\u2028\u0085\u2029";
+    private static final Pattern LAST_RUN = Pattern.compile("^(.*[A-Za-z0-9]{2})([A-Za-z0-9])", Pattern.DOTALL);
+
+    // The format samples, each line holding characters Stroom keeps inside a line, read by the spec inferred from
+    // them; and specs the tools give.
+    static Stream<Arguments> charactersKeptInsideALineAreReadAsStroomReadsThem() {
+        final List<Arguments> cases = new ArrayList<>();
+        TestFormatsShortlist.fixtures().forEach(name -> cases.add(inferredFrom(name,
+                TestFormatsShortlist.resource(name + "-lines.log"))));
+        Stream.of("csv_quoted", "tsv", "pipe", "csv_noheader", "csv_noheader_quoted", "syslog3164_freeform",
+                        "syslog5424_kv", "cef", "syslog_cef", "kv_quoted", "csv_zone_names")
+                .forEach(name -> cases.add(inferredFrom(name, SampleFixtures.format(name))));
+        Stream.of("auditd-lines.log", "mixed-lines.log", "dateless-lines.log", "txn-lines.log")
+                .forEach(name -> cases.add(inferredFrom(name, resource(name))));
+        cases.add(inferredFrom("text lines continued by a stack trace", "2026-10-11 22:14:15 INFO Service started\n"
+                                                                        + "2026-10-11 22:14:17 ERROR Call failed\n"
+                                                                        + TRACE
+                                                                        + "2026-10-11 22:14:19 WARN Disk full\n"));
+        cases.add(Arguments.of("JSON lines read whole, as the profile recommends",
+                SplitterSpec.builder("regex").pattern(SampleProfiler.JSON_LINE_PATTERN).names(List.of("json"))
+                        .build(), "{\"a\": \"x" + INSIDE_A_LINE + "y\"}\n{\"b\": 1}\n"));
+        cases.add(Arguments.of("A record no regex matches, kept by the catch-all",
+                SplitterSpec.builder("regex").pattern("^(\\d+) (\\w+)$").names(List.of("n", "word"))
+                        .catchAll(true).build(), "1 one\nsome" + INSIDE_A_LINE + "thing else\n2 two\n"));
+        cases.add(Arguments.of("Fields in any order, the rest kept",
+                SplitterSpec.builder("fields").fields(fields("user", "user=(\\S+)")).catchAll(true).build(),
+                "Login fail" + INSIDE_A_LINE + "ed user=bob\nnothing" + INSIDE_A_LINE + " to find\n"));
+        cases.add(Arguments.of("Lines in several formats, one no part reads kept",
+                MIXED.toBuilder().catchAll(true).build(), withInsideALine(MIXED_LINES + "nothing any part reads\n")));
+        return cases.stream();
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    void charactersKeptInsideALineAreReadAsStroomReadsThem(final String name,
+                                                           final SplitterSpec spec,
+                                                           final String sample) {
+        assertThat(sample).contains(INSIDE_A_LINE);
+        // With the read buffer build_data_splitter gives it (one of the mixed lines is 30,000 characters).
+        final String converter = SplitterXml.bufferSizeFor(Math.max(SplitterXml.longestLine(sample),
+                        SplitterDryRun.longestRecord(spec, sample)))
+                .stream()
+                .mapToObj(size -> SplitterXml.withBufferSize(SplitterXml.converter(spec), size))
+                .findFirst()
+                .orElse(SplitterXml.converter(spec));
+        final StroomSplitterRun.Result stroom = StroomSplitterRun.run(SCHEMA, converter, List.of(sample)).getFirst();
+
+        assertThat(stroom.errors()).as("Stroom's errors").isEmpty();
+        assertThat(stroom.records()).isEqualTo(SplitterDryRun.dryRun(spec, sample).records());
+        assertThat(stroom.records()).as("a value holding them, whole")
+                .anySatisfy(record -> assertThat(record.values()).anyMatch(value -> value.contains(INSIDE_A_LINE)));
+    }
+
+    @Test
+    void aDotStopsAtCharactersStroomKeepsInsideALineUnlessOnlyNewLinesEndALine() {
+        final String sample = "{\"a\": \"x\u2028y\"}\n{\"b\": 1}\n";
+        final SplitterSpec dot = SplitterSpec.builder("regex").pattern("^(.*)$").names(List.of("json")).build();
+
+        // As Stroom reads it, and the dry run with it: the line holding \u2028 is unmatched content.
+        assertThat(StroomSplitterRun.run(SplitterXml.converter(dot), sample).errors()).singleElement().asString()
+                .contains("unmatched content");
+        assertThat(SplitterDryRun.dryRun(dot, sample).unmatchedLines()).hasSize(1);
+        final SplitterSpec whole = dot.toBuilder().pattern(SampleProfiler.JSON_LINE_PATTERN).build();
+        assertThat(StroomSplitterRun.run(SplitterXml.converter(whole), sample).records())
+                .containsExactly(Map.of("json", "{\"a\": \"x\u2028y\"}"), Map.of("json", "{\"b\": 1}"));
+    }
+
+    private static Arguments inferredFrom(final String name, final String clean) {
+        final String sample = withInsideALine(clean);
+        return Arguments.of(name, SplitterDryRun.inferSpec(sample).spec(), sample);
+    }
+
+    // Each line holds the characters before the last letter or digit of its last run of three or more.
+    private static String withInsideALine(final String text) {
+        return text.lines()
+                .map(line -> LAST_RUN.matcher(line).replaceFirst("$1" + INSIDE_A_LINE + "$2"))
+                .collect(Collectors.joining("\n", "", "\n"));
     }
 
     private static Arguments keyed(final String fixture, final String name) {

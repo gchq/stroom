@@ -50,25 +50,30 @@ public final class SplitterDryRun {
     public static final String CRI_END = "\\S+ (?:stdout|stderr) F ";
     /// The XPath joining a CRI record's parts: each line's prefix after the first taken out, with its new line.
     public static final String CRI_JOIN = "replace(data[@name='message']/@value, '\\n\\S+ (stdout|stderr) [PF] ', '')";
+    /// The rest of a record's line, to its end, as a generated regex reads it: `[^\n]`, not `.`, which Java's regexes
+    /// (and so Stroom's Data Splitter) stop at `\r`, `\u0085`, `\u2028` and `\u2029` too, where Stroom splits
+    /// records only at `\n` (seen: Azure audit JSON lines whose string values held `\u2028` failed in Stroom with
+    /// "unmatched content").
+    public static final String REST_OF_LINE = "([^\\n]*)$";
     /// The RFC 5424 syslog header's regex; the body is the group named message. Its structured data is every
     /// element, each read to its own closing bracket: a `]` escaped (`\]`) or in quotes inside a value doesn't end it
     /// (seen in testing: `event="User [alice\] ..."`, the element read only to the escaped bracket
     /// and the rest taken for the message).
     public static final String SYSLOG_5424 = "^(?:<(\\d+)>)?1 (\\S+) (\\S+) (\\S+) (\\S+) (\\S+) ("
-                                             + SyslogHeaders.STRUCTURED_DATA + ") ?(.*)$";
+                                             + SyslogHeaders.STRUCTURED_DATA + ") ?" + REST_OF_LINE;
     /// The names of [#SYSLOG_5424]'s groups.
     public static final List<String> SYSLOG_5424_NAMES = List.of("pri", "time", "host", "app", "pid", "msgid",
             "structured", "message");
     /// The RFC 3164 syslog header's regex. The tag (app[pid]) only before a colon: Palo Alto sends none, and its
     /// CSV's first column was read as one.
     public static final String SYSLOG_3164 = "^(?:<(\\d+)>)?([A-Z][a-z]{2} [ \\d]\\d \\d{2}:\\d{2}:\\d{2}) (\\S+) "
-                                             + "(?:([^:\\[ ]+)(?:\\[(\\d+)\\])?: ?)?(.*)$";
+                                             + "(?:([^:\\[ ]+)(?:\\[(\\d+)\\])?: ?)?" + REST_OF_LINE;
     /// The names of [#SYSLOG_3164]'s groups.
     public static final List<String> SYSLOG_3164_NAMES = List.of("pri", "time", "host", "app", "pid", "message");
     /// CEF: whatever comes before it (a syslog header), the seven header fields (a | inside one is escaped \|), then
     /// the extension.
-    public static final String CEF_PATTERN = "^(.*?)CEF:(\\d+)\\|" + ("(" + ToolText.escapedRun("|") + ")\\|").repeat(6)
-                                             + "(.*)$";
+    public static final String CEF_PATTERN = "^([^\\n]*?)CEF:(\\d+)\\|"
+                                             + ("(" + ToolText.escapedRun("|") + ")\\|").repeat(6) + REST_OF_LINE;
     /// The names of the CEF header's fields.
     public static final List<String> CEF_NAMES = List.of("cef_version", "cef_vendor", "cef_product",
             "cef_device_version", "cef_signature_id", "cef_name", "cef_severity");
@@ -162,7 +167,7 @@ public final class SplitterDryRun {
         final List<String> cells = new ArrayList<>();
         if (spec.delimiter().length() > 1) {
             // A separator of several characters (' ~ ', '||'): a column runs to the next whole separator.
-            spec.columns().forEach(column -> cells.add("((?:(?!" + d + ").)*)"));
+            spec.columns().forEach(column -> cells.add("((?:(?!" + d + ")[^\\n])*)"));
             return "^" + String.join(d, cells) + "$";
         }
         final String cell;
@@ -892,7 +897,7 @@ public final class SplitterDryRun {
             n++;
         }
         names.add("message");
-        return SplitterSpec.builder("regex").pattern(pattern.append("(.*)$").toString()).names(names)
+        return SplitterSpec.builder("regex").pattern(pattern.append(REST_OF_LINE).toString()).names(names)
                 .body(spec).bodyField("message").build();
     }
 
@@ -929,8 +934,9 @@ public final class SplitterDryRun {
     /// text, which needs a regex from a human) and the sample's profile.
     public static Inferred inferSpec(final String sample) {
         final Map<String, Object> info = SampleProfiler.profile(sample);
-        // Read as Stroom's parser reads it: the characters XML doesn't allow taken out first.
-        final Inferred inferred = inferFormat(StroomInput.asParsed(sample), info);
+        // Read as Stroom's Data Splitter reads it: the characters XML doesn't allow, and carriage returns, taken out
+        // first.
+        final Inferred inferred = inferFormat(StroomInput.asSplit(sample), info);
         if (inferred.spec() == null || !Boolean.TRUE.equals(info.get(SplitterSpec.CONTINUATION))) {
             return inferred;
         }
@@ -1202,7 +1208,7 @@ public final class SplitterDryRun {
         }
         final String line = SyslogHeaders.RELAY_PREFIX + "line";
         names.add(line);
-        return SplitterSpec.builder("regex").pattern("^" + "(\\S+)\\s+".repeat(words) + "(.*)$").names(names)
+        return SplitterSpec.builder("regex").pattern("^" + "(\\S+)\\s+".repeat(words) + REST_OF_LINE).names(names)
                 .body(syslogSpec(rfc, stripped).build()).bodyField(line).build();
     }
 
@@ -1291,7 +1297,7 @@ public final class SplitterDryRun {
                 .max(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey)
                 .orElse(LineFormats.DATES.getFirst());
-        return SplitterSpec.builder("regex").variant(HEADER_VARIANT).pattern("^.*?(" + date + ").*$")
+        return SplitterSpec.builder("regex").variant(HEADER_VARIANT).pattern("^[^\\n]*?(" + date + ")[^\\n]*$")
                 .names(List.of(HEADER_DATE)).carry(CARRIED_DATE).build();
     }
 
@@ -1342,7 +1348,7 @@ public final class SplitterDryRun {
                         ? "^\\[("
                         : "^(") + shapeOf(token.group(1)) + (bracketed
                         ? ")\\]"
-                        : ")") + "\\s+(.*)$", 1, Integer::sum);
+                        : ")") + "\\s+" + REST_OF_LINE, 1, Integer::sum);
             }
         }
         return shapes.entrySet().stream()
@@ -1420,7 +1426,7 @@ public final class SplitterDryRun {
         return SplitterSpec.builder("regex")
                 .pattern("^" + prefix + "LEEF:(\\d\\.\\d)\\|" + field.repeat(4) + (two
                         ? "([^|]{0,4})\\|"
-                        : "") + "(.*)$")
+                        : "") + REST_OF_LINE)
                 .names(names)
                 .body(attributes)
                 .bodyField(LEEF_ATTRIBUTES)
@@ -1483,8 +1489,9 @@ public final class SplitterDryRun {
         if (SplitterSpec.CONVERTER.equals(spec.kind())) {
             return converterRun(spec.converter(), sample, maxRecords);
         }
-        // Read as Stroom's parser reads it: the characters XML doesn't allow taken out first.
-        final String read = StroomInput.asParsed(sample);
+        // Read as Stroom's Data Splitter reads it: the characters XML doesn't allow, and carriage returns, taken out
+        // first.
+        final String read = StroomInput.asSplit(sample);
         return SafePattern.limited(patterns(spec), () -> dryRunLimited(spec, read, maxRecords));
     }
 
@@ -1739,7 +1746,8 @@ public final class SplitterDryRun {
     }
 
     private static List<String> groupedToEnd(final List<String> lines, final String end) {
-        final Pattern ends = SafePattern.compile(end, ToolText.FLAGS);
+        // As the converter's record regex compiles it (SplitterXml#recordEndRegex): only \n ends a line.
+        final Pattern ends = SafePattern.compile(end, Pattern.MULTILINE | Pattern.UNIX_LINES);
         final List<String> records = new ArrayList<>();
         final List<String> current = new ArrayList<>();
         for (final String line : lines) {
@@ -1767,7 +1775,8 @@ public final class SplitterDryRun {
     }
 
     private static List<String> grouped(final List<String> lines, final String start) {
-        final Pattern begins = SafePattern.compile(start, ToolText.FLAGS);
+        // As the converter's record regex compiles it (SplitterXml#recordRegex): only \n ends a line.
+        final Pattern begins = SafePattern.compile(start, Pattern.DOTALL | Pattern.MULTILINE | Pattern.UNIX_LINES);
         final List<String> records = new ArrayList<>();
         for (final String line : lines) {
             if (records.isEmpty() || ToolText.match(begins, new DeadlineCharSequence(line))) {

@@ -53,6 +53,15 @@ class BuildMemory {
                 }
             });
 
+    // Why each build's survey of a feed read nothing, by build then feed.
+    private final Map<String, Map<String, String>> unreadableSurveys = Collections.synchronizedMap(
+            new LinkedHashMap<>(16, 0.75F, true) {
+                @Override
+                protected boolean removeEldestEntry(final Map.Entry<String, Map<String, String>> eldest) {
+                    return size() > MAX_SESSIONS;
+                }
+            });
+
     /// @param session A session.
     /// @param build   The build it is working on now, or null (nothing is remembered).
     void remember(final ToolSession session, final String build) {
@@ -89,6 +98,33 @@ class BuildMemory {
         return stages == null
                 ? Set.of()
                 : Set.copyOf(stages);
+    }
+
+    /// Remembers that the build's survey of a feed was refused because nothing in its streams could be read, so
+    /// classify_kinds, which otherwise waits for the survey, can go on (saying why there was none).
+    ///
+    /// @param build A build, or null (nothing is remembered).
+    /// @param feed  The feed surveyed.
+    /// @param why   Why nothing could be read.
+    void surveyUnreadable(final String build, final String feed, final String why) {
+        if (NullSafe.isNonBlankString(build)) {
+            unreadableSurveys.computeIfAbsent(build, ignored -> Collections.synchronizedMap(new LinkedHashMap<>()))
+                    .put(feed, why);
+        }
+    }
+
+    /// @param build A build.
+    /// @return Each feed whose survey for the build read nothing, with why; empty when none did.
+    Map<String, String> unreadableSurveys(final String build) {
+        final Map<String, String> surveys = build == null
+                ? null
+                : unreadableSurveys.get(build);
+        if (surveys == null) {
+            return Map.of();
+        }
+        synchronized (surveys) {
+            return new LinkedHashMap<>(surveys);
+        }
     }
 
     private static String key(final ToolSession session) {

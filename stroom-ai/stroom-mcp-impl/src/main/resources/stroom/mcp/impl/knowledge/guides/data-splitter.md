@@ -14,11 +14,15 @@ text is free-form (a regex with a name per group). Give the same spec to `build_
 so the mapping is checked against those records. A sample is the file's text, never a path: the server cannot
 read the client's files, and refuses a path with that instruction.
 
+In a pattern, read a record's text that can hold anything (a message, a JSON line) with `[^\n]*`, not `.*` (or start
+the pattern `(?s)`): Stroom splits records only at a new line, but Java's `.` also stops at `\u2028`, `\u2029` and
+`\u0085`, which JSON strings and free text may hold, so such a record fails with "unmatched content".
+
 | Spec | Example |
 | --- | --- |
 | Delimited with a header line | `{"kind": "delimited", "delimiter": ",", "header": true, "quote": "\""}` |
 | Delimited, named columns | `{"kind": "delimited", "delimiter": "\|", "header": ["time", "user", "action"]}` |
-| Regex, a name per group | `{"kind": "regex", "pattern": "^(\\S+) (\\S+) (.*)$", "names": ["time", "user", "message"]}` |
+| Regex, a name per group | `{"kind": "regex", "pattern": "^(\\S+) (\\S+) ([^\\n]*)$", "names": ["time", "user", "message"]}` |
 | key=value pairs | `{"kind": "key_value", "delimiter": " ", "pair_separator": "=", "quote": "\""}` |
 | Syslog, body parsed further | `{"kind": "syslog", "rfc": "rfc3164", "body": {"kind": "key_value"}}` |
 | LEEF 1.0/2.0, alone or after syslog (`LEEF:2.0\|Vendor\|Product\|Version\|EventID\|^\|src=...^usrName=...`) | inferred: a regex for any syslog header and LEEF's header (`leef_version`, `leef_vendor`, `leef_product`, `leef_product_version`, `leef_event_id`, 2.0's `leef_delimiter`), the attributes read as key=value pairs separated by the delimiter the header declares (a character or its hex, `x5E`) or a tab (1.0) |
@@ -32,7 +36,7 @@ read the client's files, and refuses a path with that instruction.
 | Labelled fields anywhere, in any order | `{"kind": "fields", "fields": {"user": "user=(\\S+)", "src": "src=(\\S+)"}}` |
 | Records separated by blank lines | `{"kind": "key_value", "delimiter": "\n", "blank_line_records": true}` |
 | Keep a record the spec doesn't match | add `"catch_all": true` (not delimited): it is kept whole as the field `unparsed` |
-| Lines in several formats (syslog, key=value, timestamped text) | `{"kind": "alternatives", "parts": [{"kind": "syslog", "variant": "syslog"}, {"kind": "key_value", "variant": "key_value"}, {"kind": "regex", "variant": "text", "pattern": "^(\\S+ \\S+) (.*)$", "names": ["time", "message"]}], "catch_all": true}` |
+| Lines in several formats (syslog, key=value, timestamped text) | `{"kind": "alternatives", "parts": [{"kind": "syslog", "variant": "syslog"}, {"kind": "key_value", "variant": "key_value"}, {"kind": "regex", "variant": "text", "pattern": "^(\\S+ \\S+) ([^\\n]*)$", "names": ["time", "message"]}], "catch_all": true}` |
 | Lines tied into records by a key (auditd's `msg=audit(...)`) | `{"kind": "key_value", "delimiter": " ", "quote": "\"", "single_quotes": true, "record_key": "(?<!\\S)msg=(\"[^\"]*\"\|[^\\s\"]+)", "key_field": "msg", "line_name": "(?:[^\\s=]+=\\S*\\s+)*?type=\"?([A-Za-z_][\\w.-]*)\"?(?=\\s\|$)", "lead_field": "type"}` (add `"skip_lines": "\\s*[-=*#~_]{3,}[ \\t]*(?=\\n\|$)\|\\s*time->"` for ausearch's output) |
 | Sections between marker lines carrying the key (ModSecurity's `--5f005215-B--`) | `{"kind": "regex", "pattern": "(?s)^[^\\n]*\\n?(.*)$", "names": ["text"], "record_key": "(?<![^\\n])\\-\\-(\\w+)\\-\\w+\\-\\-[ \\t]*(?=\\n\|$)", "line_name": "\\-\\-\\w+\\-(\\w+)\\-\\-[ \\t]*(?=\\n\|$)", "lead_field": "first_section", "join_unkeyed": true}` |
 | Text around the pairs (a prefix, bare flags, verbs: iptables' `[12.3] DROP: IN=eth0 ... DF PROTO=TCP SYN`) | add `"words": true` (key_value): each run of text that isn't pairs is kept as the field `words` (given again for each run; a field reads the first, `repeat: true` each) |
@@ -273,7 +277,7 @@ rather than inferring `col1`, `col2`, ...
 ## Syslog and other free text
 
 ```xml
-<regex pattern="^&lt;(\d+)&gt;(\w{3} +\d+ \d{2}:\d{2}:\d{2}) (\S+) ([^:\[]+)(?:\[(\d+)\])?: (.*)$">
+<regex pattern="^&lt;(\d+)&gt;(\w{3} +\d+ \d{2}:\d{2}:\d{2}) (\S+) ([^:\[]+)(?:\[(\d+)\])?: ([^\n]*)$">
   <data name="pri" value="$1"/><data name="time" value="$2"/><data name="host" value="$3"/>
   <data name="tag" value="$4"/><data name="pid" value="$5"/><data name="message" value="$6"/>
 </regex>
@@ -313,7 +317,7 @@ named. In an `alternatives` spec, with CEF lines beside others (`2026-11-16T00:0
    "body": {"kind": "regex",
             "pattern": "^(?:<(\\d+)>)?(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:?\\d{2})) (\\S+)(?: ([^:\\[\\s]+)(?:\\[(\\d+)\\])?:)?\\s*$",
             "names": ["pri", "time", "host", "app", "pid"]}},
-  {"kind": "regex", "variant": "linux", "pattern": "^(\\S+) (\\S+) ([\\w.:-]+)(?:\\[(\\d+)\\])?: (.*)$",
+  {"kind": "regex", "variant": "linux", "pattern": "^(\\S+) (\\S+) ([\\w.:-]+)(?:\\[(\\d+)\\])?: ([^\\n]*)$",
    "names": ["time", "host", "program", "pid", "message"]}]}
 ```
 

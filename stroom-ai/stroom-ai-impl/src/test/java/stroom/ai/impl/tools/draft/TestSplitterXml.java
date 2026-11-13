@@ -198,7 +198,8 @@ class TestSplitterXml extends DraftFixtures {
         final XmlElement group = only(only(root, "split"), "group");
         final List<XmlElement> regexes = group.childElements(DS, "regex");
         assertThat(regexes.stream().map(r -> r.get("pattern")).toList())
-                .containsExactly("^\\#Fields:\\s*(.*)$", "^\\#Software:\\s*(.*)$", "^\\#.*$", "^(.+)$");
+                .containsExactly("^\\#Fields:\\s*([^\\n]*)$", "^\\#Software:\\s*([^\\n]*)$", "^\\#[^\\n]*$",
+                        "^([^\\n]+)$");
         assertThat(only(only(only(regexes.getFirst(), "group"), "split"), "var").get("id")).isEqualTo("heading");
         final XmlElement data = regexes.getLast();
         assertThat(attributes(only(data, "data"))).isEqualTo(Map.of("name", "#Software", "value", "$directive0$1"));
@@ -282,9 +283,9 @@ class TestSplitterXml extends DraftFixtures {
         final SplitterSpec spec = SplitterSpec.builder("regex").recordStart("\\d{4}-\\d{2}-\\d{2}")
                 .pattern("(?s)^(\\S+) (.*)$").names(List.of("time", "message")).build();
         final String xml = SplitterXml.generateSplitter(spec);
-        assertThat(xml).contains("<regex pattern=\"(?sm)^((?:\\d{4}-\\d{2}-\\d{2})?.*?)\\n?(?=^(?:\\d{4}-\\d{2}-\\d{2})"
-                                 + "|\\z)\">", "<group value=\"$1\">");
-        assertThat(SplitterXml.recordRegex("x")).isEqualTo("(?sm)^((?:x)?.*?)\\n?(?=^(?:x)|\\z)");
+        assertThat(xml).contains("<regex pattern=\"(?smd)^((?:\\d{4}-\\d{2}-\\d{2})?.*?)\\n?"
+                                 + "(?=^(?:\\d{4}-\\d{2}-\\d{2})|\\z)\">", "<group value=\"$1\">");
+        assertThat(SplitterXml.recordRegex("x")).isEqualTo("(?smd)^((?:x)?.*?)\\n?(?=^(?:x)|\\z)");
     }
 
     @Test

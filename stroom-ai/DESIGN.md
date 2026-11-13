@@ -469,6 +469,79 @@ at most 5,000).
 Only those streams need processing again.
 This depends on every record's number being logged (see [Generation](#generation-built): record numbers).
 
+### A feed whose format changes (shelved, 2026-11-14)
+
+Shelved by the user on 2026-11-14 for the complexity it risks adding. The write-up is kept for if it's taken up again.
+
+A source changes at some point in time but keeps its format (still JSON, still syslog): it adds or removes fields,
+renames them, moves them under another parent, or changes a value's type. The user asks the agent for help. The
+agent finds when the change happened, from the feed's streams and their Error streams, and updates the translation
+so that it reads data from both before and after the change.
+
+**What exists already (2026-11-14):**
+
+* Added fields are reported. A Data Splitter or JSON translation logs a WARN once per stream for each field no rule
+  reads (see the decision log, 2026-11-06). Error triage reads it as benign and says to map the field or list it in
+  `ignored_fields`.
+* New kinds of event are reported. A catch-all rule logs `Caught by rule` once per stream for each kind it takes,
+  and `review_coverage` reports these kinds.
+* A whole-feed translation logs a new value of its source type field at INFO. Group pipelines pass other source
+  types over and count them.
+* Changing a production translation: a working copy (`copy_pipeline working_copy=true`) or a new version, the kept
+  mapping changed through the draft or `rebuild_mapping`, then promotion and `reprocess_streams`. `any_of` lets one
+  entry read the old key or the new one, so a single translation covers data from both sides of the change.
+* `error_streams`, `explain_processing` and `stream_meta` list streams and their errors with creation times.
+
+**Gaps:**
+
+1. **A removed or renamed field is silent.** When a key the mapping reads disappears, its element is left out
+   with no error, unless the schema requires it. A rename shows only its new name, through the unmapped-field WARN.
+2. **Nothing finds the change point.** No tool answers "when did field X first, or last, appear?". The agent would
+   page through Error streams by hand. The unmapped-field WARN is written once a stream, so it dates a change only
+   to a stream.
+3. **Structural changes are only half visible.** A key moved under a new parent (`user` to `actor.user`) looks like
+   one unmapped field and one value silently gone. A value whose type changes (a string becoming an object) may
+   raise no error at all.
+4. **There is no entry point.** The server instructions have no path for "this feed changed", so the agent would
+   improvise.
+
+**Proposed:**
+
+* **A read-only tool that compares the feed's shapes over time** (working name `compare_shapes`). It reads raw
+  streams across the feed's time range with the survey's shape reading (the same splitter, the same flattening and
+  the same kind fields), and bisects by stream creation time to the first stream whose shape differs from the
+  earliest. Shape is per kind of event: its field paths, each with its value type and fill rate.
+  * Reports: the change point (the last stream before it and the first after it, with creation times), and per kind
+    the fields added, removed, moved (the same values under a new path, matched by value overlap between the two
+    sides) and changed in type.
+  * Cross-checks the Error streams in the same window: unmapped-field WARNs, `Caught by rule` lines, and errors that
+    first appear there. Each difference says whether processing has already reported it.
+  * Bounded: bisection reads about log2(streams) streams, each as a survey part, within the survey's time budget.
+    `continue_from` resumes when time runs out.
+  * Several changes in the range: after the first change point is found, it bisects again from there and lists the
+    change points in order (at most a few, said when capped).
+* **Processing reports a field that stops appearing.** The generated translation counts, per kind, the records
+  missing each field the mapping reads. It logs one WARN per stream for a field that no record of a kind holds,
+  where the kept mapping recorded that the samples always had it (a fill rate in the kept mapping). Error triage
+  reads it as benign ("the source may have changed: compare_shapes"). This closes gap 1. It needs per-kind fill
+  rates in the kept mapping, and is built after the tool because it changes the generated XSLT.
+* **A "format change" path in the server instructions, with its own build plan.**
+  1. `start_build feeds=<feed>`, then `compare_shapes`.
+  2. Show the differences to the user and ask, per field, what to do: map the new field, read old or new
+     (`any_of`), leave it out (`ignored_fields`), or move the entry to the new path.
+  3. Change the translation through a working copy, or a new version if the user wants the old pipeline left as it
+     is.
+  4. Step sample records from both sides of the change point clean.
+  5. Promote, then reprocess the streams after the change point that hold the errors.
+* **Survey and source notes carry the time range they were read from.** A later build can then tell when its notes
+  are older than the data, and offer `compare_shapes`.
+
+**Open questions:**
+
+* Whether the comparison also covers stored Events (the element fill rates of a translation's output over time).
+  That would catch a change the raw sampling misses, but needs an index or a search over the Events.
+* Whether the "field stops appearing" WARN should be configurable per kind, as `log_unmapped_fields` is.
+
 ### Discovery index
 
 A discovery index indexes a source's raw records as they are, to explore them before or instead of translating.
@@ -3151,6 +3224,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-14 | From chat 176 (an Azure audit feed whose JSON strings held `\u2028`): the tools split lines as Stroom does, at `\n` only, a CR removed (`DS3Reader` drops every `\r`), not at the other boundaries Python's `splitlines` knows (`\u2028`, `\u2029`, `\u0085`, VT, FF), which had made the survey read nothing, the profile call JSON lines malformed and the dry run disagree with Stroom. Generated and recommended Data Splitter regexes read a record's rest with `[^\n]*`, not `.*` (Java's `.` stops at those characters, so Stroom failed with unmatched content), and the guide says so. survey_feed's refusal for nothing readable says why, per stream (at most five). classify_kinds on a build working from existing feeds waits for survey_feed, which alone finds a source type field (the agent had classified from profile_sample and the feed's source types were never found); a survey refused for nothing readable lets it go on, saying source types weren't looked for. A survey of a feed with a registry takes the registry's source type field unasked, unless the user gives one. | Builds and onboarding, Sample analysis |
 | 2026-11-12 | From external test notes (a mail gateway's syslog: `msw <date> <time> [pid] [level] [SEGTrap] id="..."; ...`). Kinds and kind fields: bracketed words before a body's pairs are fields of their own (up to eight prefix words; a date and time of day one `time`, named `message_time` beside a syslog header's); survey shapes differing in a bracketed label (`[SEGTrap]`, `[SEGDeliver]`) aren't merged; a bare bracketed label isn't RFC 5424 structured data (structured data has a parameter or an enterprise's id), so such a message isn't read as a held syslog header. Kind fields are checked by their values wherever they come from: a field of whole messages, or of values holding addresses or times, is no kind field (codes are, whatever they look like); a `kind_field` given that fails is refused with why and the fields that could, never replaced silently; one the agent gives is confirmed by the user in a short form where forms can be shown, not again once they chose it in one; kept or surveyed kind fields the records (as the build's splitter reads them) lack or that fail are passed over. Where the draft's kinds leave most records in none, the fields that could tell them apart are put to the user, and their choice listed at once; with none to offer, the listing isn't recorded as classified, so the plan doesn't go on to the draft. | Sample analysis, Builds |
 | 2026-11-12 | From the same notes. Syslog is read deeper in the survey, as other line formats are (its 30,000-line streams could only be stopped at); a stream that still can't be read further is put to the user with how many of its records were read and why, not a name from the agent's result. Field descriptions given in batches are kept, their earlier batches no longer asked for again against old sources; an existing index's doc keeps them between calls too; a field documented from a hand-edited XSLT as it runs keeps the description given with its known source, both ways (a translation edited by hand and rebuilt by turns asked for all ~150 again each turn). | Sample analysis, Documentation |
 | 2026-11-12 | From chat 173 (an events doc with 94 "(not in the sample)"). A translation's documentation is stepped over the build survey's examples beyond the sample's first 200 records, so each kind the survey found has its own values; the stepped records are kept for the session, keyed by the versions of everything stepping runs, so the rounds of field descriptions step once (some 20 rounds re-stepped the same 200 records before). An empty Sample values cell says whether no sampled record reached the rule or its sampled events held no value. | Documentation |
@@ -3370,5 +3444,6 @@ behaviour; the settled ones are listed here with the section that records them.
 | Extraction: a table given a pipeline between proposal and confirmation is replaced without warning | Open | Known gap. |
 | XML fragments drafted from several streams have no record element | Open | Known gap. Several samples are profiled per file (`SampleProfiling.profileAll`), so the record element is kept per file only, and `DraftMapping` reads it from the top level. The draft's mapping has no `record`, its own schema check fails ("xml_fragments input needs record"), and the agent has to add it. Pinned as it is by `TestE2eExistingFeed`. |
 | Extracted Elasticsearch KEYWORD and IPV4 values come out blank | Open | Being fixed separately in core (`FieldValueExtractor`). |
+| A feed whose format changes: find when, update the translation | Shelved (2026-11-14) | For the complexity it risks adding. See [A feed whose format changes](#a-feed-whose-format-changes-shelved-2026-11-14). |
 | The AI end-to-end suite runs in every `./gradlew build` | Open | Recommended: tag it out of the default build, and split the reference evaluation across forks. |
 | An Elasticsearch TLS node in CI | Open | The TLS tests skip without one. |

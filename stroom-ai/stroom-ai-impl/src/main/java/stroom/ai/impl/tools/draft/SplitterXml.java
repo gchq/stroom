@@ -63,9 +63,9 @@ public final class SplitterXml {
     public static final String BLANK_LINE = "^(?:[^\\S\\n]*\\n|[^\\S\\n]+$)";
     /// The catch_all regex over a record: all of it, without the new line at its end; never the new line alone
     /// that a record the spec matched leaves.
-    public static final String UNPARSED_RECORD = "^(?=.*\\S)(.*?)\\n?$";
+    public static final String UNPARSED_RECORD = "^(?=[^\\n]*\\S)([^\\n]*?)\\n?$";
     /// The fields kind's regex over what no field took: that text without the white space round it.
-    public static final String UNPARSED_REST = "^\\s*(.+?)\\s*$";
+    public static final String UNPARSED_REST = "^\\s*([^\\n]+?)\\s*$";
 
     private static final String DELIMITED = "delimited";
     private static final String FIELDS = "fields";
@@ -91,7 +91,7 @@ public final class SplitterXml {
                 JsonValues.dict("kind", "key_value")));
         out.put("syslog rfc5424", JsonValues.dict("kind", "syslog", "rfc", "rfc5424", "body",
                 JsonValues.dict("kind", "key_value")));
-        out.put("unknown text", JsonValues.dict("kind", "regex", "pattern", "^(\\S+ \\S+) (\\S+) (.*)$", "names",
+        out.put("unknown text", JsonValues.dict("kind", "regex", "pattern", "^(\\S+ \\S+) (\\S+) ([^\\n]*)$", "names",
                 List.of("time", "host", "message")));
         return Collections.unmodifiableMap(out);
     }
@@ -326,15 +326,17 @@ public final class SplitterXml {
     /// @param start A regex the first line of a record matches at its start.
     /// @return The regex taking one record of several lines: from a line that starts one to the next such line, or
     /// the end. Lines before the first that starts one (a stream cut in a stack trace) are a record of their own, as
-    /// the dry run groups them; before, Stroom reported them as content no expression matched.
+    /// the dry run groups them; before, Stroom reported them as content no expression matched. Only `\n` ends a line
+    /// (`d`, UNIX_LINES), as Stroom splits records: else `^` would match after a `\u2028` or `\u0085` inside one.
     public static String recordRegex(final String start) {
-        return "(?sm)^((?:" + start + ")?.*?)\\n?(?=^(?:" + start + ")|\\z)";
+        return "(?smd)^((?:" + start + ")?.*?)\\n?(?=^(?:" + start + ")|\\z)";
     }
 
     /// @param end A regex the last line of a record matches at its start.
     /// @return The regex taking one record whose last line is marked: lines that aren't an end, then the end line.
+    /// Only `\n` ends a line, as for [#recordRegex(String)].
     public static String recordEndRegex(final String end) {
-        return "(?m)^((?:(?!(?:" + end + "))[^\\n]*\\n)*(?:" + end + ")[^\\n]*)\\n?";
+        return "(?md)^((?:(?!(?:" + end + "))[^\\n]*\\n)*(?:" + end + ")[^\\n]*)\\n?";
     }
 
     /// The read buffer a Data Splitter needs for records as long as the longest seen. Stroom reads a Data Splitter's
@@ -401,9 +403,13 @@ public final class SplitterXml {
     }
 
     // A value as an attribute's text, with Data Splitter's own escapes for new lines and tabs.
+    // An attribute's value. The characters XML 1.1 reads as line ends (\r, \u0085, \u2028), and \u2029 with them,
+    // as character references: written as they are, the parser reading the converter turns them into spaces (seen:
+    // a record key inferred from lines holding them, which Stroom's copy of the regex no longer matched).
     private static String attr(final String text) {
         return text.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;")
-                .replace("\n", "\\n").replace("\t", "\\t");
+                .replace("\n", "\\n").replace("\t", "\\t").replace("\r", "&#xD;").replace("\u0085", "&#x85;")
+                .replace("\u2028", "&#x2028;").replace("\u2029", "&#x2029;");
     }
 
     private static String container(final SplitterSpec spec) {
@@ -634,7 +640,7 @@ public final class SplitterXml {
         lines.add("  <split" + id(ids, "record") + " delimiter=\"\\n\">");
         lines.add("    <group" + id(ids, "fields") + ">");
         if (hasText(spec.headerDirective())) {
-            lines.add("      <regex pattern=\"^" + attr(ToolText.escape(spec.headerDirective())) + "\\s*(.*)$\">");
+            lines.add("      <regex pattern=\"^" + attr(ToolText.escape(spec.headerDirective())) + "\\s*([^\\n]*)$\">");
             lines.add("        <group value=\"$1\">");
             lines.add("          <split delimiter=\"" + attr(spec.delimiter()) + "\"" + container(spec) + ">");
             lines.add("            <var id=\"heading\" />");
@@ -643,12 +649,13 @@ public final class SplitterXml {
             lines.add("      </regex>");
         }
         for (int n = 0; n < spec.directives().size(); n++) {
-            lines.add("      <regex pattern=\"^" + attr(ToolText.escape(spec.directives().get(n))) + "\\s*(.*)$\">");
+            lines.add("      <regex pattern=\"^" + attr(ToolText.escape(spec.directives().get(n)))
+                      + "\\s*([^\\n]*)$\">");
             lines.add("        <var id=\"directive" + n + "\" />");
             lines.add("      </regex>");
         }
-        lines.add("      <regex pattern=\"^" + attr(ToolText.escape(spec.commentPrefix())) + ".*$\" />");
-        lines.add("      <regex pattern=\"^(.+)$\">");
+        lines.add("      <regex pattern=\"^" + attr(ToolText.escape(spec.commentPrefix())) + "[^\\n]*$\" />");
+        lines.add("      <regex pattern=\"^([^\\n]+)$\">");
         for (int n = 0; n < spec.directives().size(); n++) {
             lines.add("        <data name=\"" + attr(SplitterDryRun.directiveField(spec.directives().get(n)))
                       + "\" value=\"$directive" + n + "$1\" />");

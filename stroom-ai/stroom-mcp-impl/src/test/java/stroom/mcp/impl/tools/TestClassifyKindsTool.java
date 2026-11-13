@@ -109,6 +109,42 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    void aBuildOnAnExistingFeedClassifiesOnceTheFeedIsSurveyed() {
+        // Seen in chat 176: the survey failed, the agent classified from profile_sample instead, and the aggregated
+        // feed's source type field, which only the survey looks for, was never found.
+        final FakeBuildFacts facts = new FakeBuildFacts();
+        facts.sources = List.of("AZURE-AUDIT");
+        final BuildMemory memory = new BuildMemory();
+        final TranslationBuilds builds = Mockito.mock(TranslationBuilds.class);
+        final ClassifyKindsTool gated = new ClassifyKindsTool(notesTool, sampleStreamTexts, consent,
+                new BuildPlan(facts, world.guard(), consent, memory), builds, now::get);
+        final String args = "{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}";
+
+        final String refused = gated.execute(BuildToolCalls.call(ClassifyKindsTool.NAME, args),
+                BuildToolCalls.context()).text();
+        assertThat(refused).contains("Survey the feed first: survey_feed feed=<the feed> build=acme")
+                .contains("any source type field (an aggregated feed");
+
+        // The survey refused, nothing in the feed readable: classified from the samples, saying so.
+        memory.surveyUnreadable("acme", "AZURE-AUDIT", "stream 1 part 0: could not split records: Unterminated "
+                                                        + "string");
+        final Map<String, Object> unsurveyed = BuildToolCalls.json(gated.execute(BuildToolCalls.call(
+                ClassifyKindsTool.NAME, args), BuildToolCalls.context()).text());
+        assertThat(list(unsurveyed.get("to_classify"))).hasSize(3);
+        assertThat((String) unsurveyed.get("survey")).startsWith("survey_feed couldn't read the feed ('AZURE-AUDIT': "
+                                                                 + "stream 1 part 0: could not split records: "
+                                                                 + "Unterminated string)")
+                .contains("source types (an aggregated feed's source type field) were not looked for");
+
+        // Surveyed: as for any build.
+        Mockito.when(builds.surveyStatesInBuild("acme")).thenReturn(List.of(Map.of("feed", "AZURE-AUDIT")));
+        final Map<String, Object> surveyed = BuildToolCalls.json(gated.execute(BuildToolCalls.call(
+                ClassifyKindsTool.NAME, args), BuildToolCalls.context()).text());
+        assertThat(list(surveyed.get("to_classify"))).hasSize(3);
+        assertThat(surveyed).doesNotContainKey("survey");
+    }
+
+    @Test
     void aKindInSeveralRulesIsListedOnce() {
         // Seen in an e2e test: a kind the draft writes a rule for in each of two formats was listed twice, and its
         // two proposals refused as a pair a record can't tell apart.
