@@ -319,9 +319,6 @@ compileJava {
 }
 
 shadowJar {
-    // This cuts down the fat jar from 300M to about 200M, but there is a risk it excludes classes used via reflection
-    //minimize()
-
     // We want to run the tests before we build the fat jar.
     dependsOn test
     // We want to compile all GWT and React content before we build the fat jar.
