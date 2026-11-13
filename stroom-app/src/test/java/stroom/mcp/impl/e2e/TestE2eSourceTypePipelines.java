@@ -39,8 +39,8 @@ import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// An aggregated feed's pipelines and promotion through the REAL tools on a real Stroom, on the PEGA slice of
-/// `.ai/data` (skipped where it is absent):
+/// An aggregated feed's pipelines and promotion through the REAL tools on a real Stroom, on the synthetic PEGA
+/// sample under `aggregated/`:
 ///
 /// * a group placed in a pipeline of its own, writing to an output feed of its own: its own dispatcher handles only
 ///   its group, and the feed's pipeline passes its records over as handled by that pipeline, counted, never warned

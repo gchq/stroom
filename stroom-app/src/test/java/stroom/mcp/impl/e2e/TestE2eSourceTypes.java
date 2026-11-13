@@ -32,18 +32,14 @@ import stroom.security.api.SecurityContext;
 import io.modelcontextprotocol.spec.McpSchema.ElicitFormRequest;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -52,12 +48,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// choosing the build's scope; an assessment writes the registry with no scope; a field of file paths gets patterns,
 /// the narrower first. A build's scope is all its survey, classification and draft see; the survey doc and registry go
 /// beside the feed at promotion, and a later build carries on from them through working copies written back at its
-/// own promotion. The samples are synthetic slices of `.ai/data` (PEGA logs in a JSON wrapper, Azure's audit
-/// log, collector paths); the test is skipped where they are absent.
+/// own promotion. The samples are synthetic test resources under `aggregated/` (PEGA logs in a JSON wrapper,
+/// Azure's audit log, collector paths), made by its aggregated-feeds-generator.py.
 @SuppressWarnings("unchecked")
 class TestE2eSourceTypes extends AbstractE2eTest {
 
-    private static final Path DATA = Path.of("..", ".ai", "data");
     private static final String SCOPE_FORM = "source types does this build cover";
     // The PEGA slice's source types that the scoped builds leave out, as their records name them.
     private static final List<String> OUT_OF_SCOPE = List.of("\"PegaDB\"", "\"PegaRULES\"",
@@ -358,20 +353,14 @@ class TestE2eSourceTypes extends AbstractE2eTest {
         dump("promote_build " + build, promoted);
     }
 
-    // A slice of a sample file, its first lines; the test is skipped where the samples are absent.
+    // A slice of a sample file, its first lines.
     private static String lines(final String file, final int count) {
-        return slice(file, 0, count);
+        return TestE2eSourceTypeGroups.lines(file, count);
     }
 
-    // A slice of a sample file: so many lines from a line; the test is skipped where the samples are absent.
+    // A slice of a sample file: so many lines from a line.
     private static String slice(final String file, final int from, final int count) {
-        final Path path = DATA.resolve(file);
-        Assumptions.assumeTrue(Files.isRegularFile(path), "no sample at " + path.toAbsolutePath());
-        try (Stream<String> stream = Files.lines(path)) {
-            return String.join("\n", stream.skip(from).limit(count).toList()) + "\n";
-        } catch (final IOException e) {
-            throw new IllegalStateException(e);
-        }
+        return TestE2eSourceTypeGroups.slice(file, from, count);
     }
 
     // The records of a text whose source type is one of those given.
