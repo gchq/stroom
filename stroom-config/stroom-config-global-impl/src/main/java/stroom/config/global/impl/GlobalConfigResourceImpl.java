@@ -327,6 +327,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         return new ExtendedUiConfig(
                 uiConfig.get(),
                 isExternalIdp,
+                authenticationConfigProvider.get().getEdgeAuthenticationConfig().isEnabled(),
                 explorerConfigProvider.get().getDependencyWarningsEnabled(),
                 authenticationConfigProvider.get().getMaxApiKeyExpiryAge().toMillis(),
                 stroomReceiptPolicyConfigProvider.get().getObfuscatedFields(),

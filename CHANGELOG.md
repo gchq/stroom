@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Bug **#6023** : Fix S3 stream processing when optional metadata or context streams are absent.
+
+* Bug **#6022** : Fix the User Access screen and session list showing no sessions when an authenticating edge proxy (e.g. an AWS ALB) is in use.
+
+
 ## [v7.14-beta.16] - 2026-11-12
 
 * Bug **#5995** : Fix filtering of selection lists, e.g. time zone IDs in User Preferences, so that it ignores case. Filter text with upper case letters used to find nothing.
