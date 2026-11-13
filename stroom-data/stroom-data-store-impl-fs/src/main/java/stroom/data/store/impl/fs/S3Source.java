@@ -252,6 +252,11 @@ final class S3Source implements Source {
             if (extension == null) {
                 throw new RuntimeException("Unexpected child stream type: " + childStreamType);
             }
+            final Path dataFile = dir.resolve(partString + extension);
+            // Not all child types will be present
+            if (!Files.exists(dataFile)) {
+                return null;
+            }
             return create(extension);
         }
 
