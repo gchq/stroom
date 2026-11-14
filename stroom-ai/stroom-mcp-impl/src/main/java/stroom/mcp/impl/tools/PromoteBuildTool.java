@@ -83,6 +83,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     static final String ROLE_SUBFOLDERS_ARG = "role_subfolders";
     /// What a working copy's write-back takes from it.
     static final List<String> WRITTEN_BACK = List.of("data", "converterType", "documentation", "description");
+    // A discarded step's target: a working copy the same as its original, discarded rather than written back.
+    private static final String UNCHANGED_COPY = "unchanged working copy, discarded";
 
     private static final String KEEP = "keep";
     // What becomes of a build's test feed.
@@ -546,6 +548,10 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             if (copyOf != null && PipelineDoc.TYPE.equals(type)) {
                 // The copied pipeline only existed to step the working copies; the original keeps running.
                 plan.add(new PromotionLayout.Step(doc, PromotionLayout.DISCARD, "deleted after write-back", null));
+            } else if (copyOf != null && unchangedCopy(doc, String.valueOf(copyOf))) {
+                // Seen in an eval: an unchanged working copy XSLT was listed as "updated from its working copy" in
+                // the layout and updated_in_place, while the promotion discarded it. Decided here, so both agree.
+                plan.add(new PromotionLayout.Step(doc, PromotionLayout.DISCARD, UNCHANGED_COPY, null));
             } else if (copyOf != null) {
                 plan.add(new PromotionLayout.Step(doc, PromotionLayout.WRITE_BACK, String.valueOf(copyOf), null));
             } else if (given.testFeeds().contains(uuid)) {
@@ -1107,7 +1113,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             case PromotionLayout.KEEP -> "left " + ref.getType() + " '" + ref.getName() + "' in the workspace";
             case PromotionLayout.DISCARD -> {
                 guard.delete(ref);
-                yield "deleted working-copy pipeline '" + ref.getName() + "'";
+                yield UNCHANGED_COPY.equals(step.target())
+                        ? "discarded unchanged working copy " + ref.getType() + " '" + ref.getName() + "'"
+                        : "deleted working-copy pipeline '" + ref.getName() + "'";
             }
             case PromotionLayout.MOVE -> {
                 guard.moveTo(ref, folders.get(step.target()));
@@ -1167,6 +1175,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (anyKept) {
             // The working-copy pipelines stay with the copies kept, rather than being discarded from under them.
             plan.replaceAll(step -> PromotionLayout.DISCARD.equals(step.action())
+                                    && !UNCHANGED_COPY.equals(step.target())
                     ? new PromotionLayout.Step(step.doc(), PromotionLayout.KEEP, step.target(), step.role())
                     : step);
         }
@@ -1230,6 +1239,20 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         return String.join(" | ", shown) + (lines.size() > shown.size()
                 ? " | ... and " + (lines.size() - shown.size()) + " more lines"
                 : "");
+    }
+
+    // True when a working copy's written-back content is the same as its original's now: nothing to write back.
+    private boolean unchangedCopy(final Map<String, Object> doc, final String originalUuid) {
+        try {
+            final DocRef copy = ref(doc);
+            return places.find(originalUuid)
+                    .map(found -> DocumentWrites.same(writes.fields(copy), writes.fields(
+                            new DocRef(copy.getType(), found.getUuid(), found.getName())), WRITTEN_BACK))
+                    .orElse(false);
+        } catch (final RuntimeException e) {
+            // Unreadable here: decided when it is written back, as before.
+            return false;
+        }
     }
 
     // A working copy written back over its original, after the original is backed up.

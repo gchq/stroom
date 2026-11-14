@@ -139,6 +139,28 @@ class TestLocalCheck extends DraftFixtures {
     }
 
     @Test
+    void aFieldEmptyInEveryRecordIsSaidToBeEmptyNotMissing() {
+        // Seen in an eval: "field 'AppAccessContext.IssuedAtTime' is in none of the 72 sample records; did you mean
+        // ['AppAccessContext.IssuedAtTime', ...]", of a field null in every record.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines", "common": [
+                 {"path": "EventSource/User/Id", "field": "user"},
+                 {"path": "EventTime/TimeCreated", "field": "issued", "time_format": "yyyy-MM-dd HH:mm:ss"}],
+                 "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "value": "x"}]}]}"""));
+        final List<Object> records = records(mapping, """
+                {"user": "a", "issued": null}
+                {"user": "b", "issued": null}""", null);
+
+        final Map<String, Object> check = LocalCheck.checkMapping(mapping, records);
+
+        assertThat(problems(check)).noneMatch(problem -> problem.contains("issued"));
+        assertThat(warnings(check)).contains("field 'issued' (used for EventTime/TimeCreated) is empty in all 2 "
+                                             + "sample records: its element is left out of every event of the "
+                                             + "sample");
+        assertThat(String.valueOf(check)).doesNotContain("did you mean ['issued'");
+    }
+
+    @Test
     void theMappingIsCheckedAgainstTheSampleBeforeStepping() {
         final TranslationMapping mapping = mapping(json("""
                 {"input": "json", "json_layout": "lines", "common": [

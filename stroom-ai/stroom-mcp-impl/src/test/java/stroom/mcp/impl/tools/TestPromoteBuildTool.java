@@ -370,6 +370,40 @@ class TestPromoteBuildTool {
     }
 
     @Test
+    void anUnchangedWorkingCopyIsShownAndReportedAsDiscardedNotUpdated() {
+        // Seen in an eval: an unchanged working copy XSLT was listed "updated from its working copy" in the layout
+        // and updated_in_place while promotion discarded it unchanged.
+        exists("System/Feeds/Acme");
+        final String prodFolder = world.folder("System/Feeds/Acme").uuid;
+        world.add(XsltDoc.TYPE, "ACME-XSLT", prodFolder, "x-prod");
+        world.docs.put("x-prod", XsltDoc.builder().uuid("x-prod").name("ACME-XSLT").version("v0")
+                .data("<xsl:stylesheet>v1</xsl:stylesheet>").build());
+        world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
+        world.inBuild(BUILD, DocumentationDoc.TYPE, "ACME-Events", "d");
+        world.docs.put("d", ((DocumentationDoc) world.docs.get("d")).copy()
+                .data(DocumentationVersions.withPending("# ACME-Events\n\nDoors.", "", "Created", "jane (agent)",
+                        "", Instant.parse("2026-10-20T00:00:00Z"))).build());
+        final DocRef copy = world.inBuild(BUILD, XsltDoc.TYPE, "ACME-XSLT", "x-copy");
+        world.docs.put("x-copy", XsltDoc.builder().uuid("x-copy").name("ACME-XSLT").version("v0")
+                .data("<xsl:stylesheet>v1</xsl:stylesheet>").build());
+        world.records().update(BUILD, copy, entry -> entry.put("copy_of", "x-prod"));
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null), doc(DocumentationDoc.TYPE, "d", "ACME-Events", null));
+        docs.facts.docs.add(FakeBuildFacts.doc(XsltDoc.TYPE, "x-copy", "ACME-XSLT", "working_copy_of", "x-prod"));
+        final Map<String, Object> destinations = Map.of("Pipeline", "/Feeds/Acme");
+
+        final Map<String, Object> shown = call(destinations, null);
+        assertThat(String.valueOf(shown.get("layout"))).doesNotContain("updated from its working copy");
+
+        final Map<String, Object> promoted = docs.call(tool, BuildToolCalls.answering(Map.of("value", true)),
+                DocumentationWorld.args(args(destinations, shown.get("review_id"))));
+
+        assertThat(promoted).doesNotContainKey("updated_in_place");
+        assertThat(promoted.get("promoted")).asList().contains("discarded unchanged working copy XSLT 'ACME-XSLT'");
+        assertThat(((XsltDoc) world.docs.get("x-prod")).getData()).isEqualTo("<xsl:stylesheet>v1</xsl:stylesheet>");
+        assertThat(world.nodes).doesNotContainKey("x-copy");
+    }
+
+    @Test
     void promotionMovesTheBuildIntoPlaceAndWritesItsWorkingCopiesBackAfterABackup() {
         exists("System/Feeds/Acme");
         final String prodFolder = world.folder("System/Feeds/Acme").uuid;

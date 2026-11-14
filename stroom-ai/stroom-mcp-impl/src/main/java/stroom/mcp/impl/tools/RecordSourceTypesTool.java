@@ -208,7 +208,9 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                                                   + "source types the user chose for this build's "
                                                                   + "group, by name (with group). [] with an "
                                                                   + "existing group's name changes that group "
-                                                                  + "alone (refused for a new group)."))
+                                                                  + "alone (refused for a new group). Where a "
+                                                                  + "form can be shown it is ignored: the form "
+                                                                  + "asks the user."))
                         .addStringProperty(GROUP_ARG, "The name of this build's source type group, for its source "
                                                       + "types (e.g. 'Messaging'): with forms, your suggestion, "
                                                       + "which the user keeps or changes in the form; without, "
@@ -851,7 +853,10 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
             }
             return Optional.of(new Scope(List.of(), NullSafe.string(stringArg(call, REASON_ARG)).strip(), group));
         }
-        if (!given.isEmpty()) {
+        // scope is the user's answer said in the chat, only where no form can be shown: where one can, the form
+        // asks the user, whatever scope the agent gives (seen in an eval: the agent passed scope=["OneDrive"] with
+        // forms available and the user was never asked which source types go in the group).
+        if (!given.isEmpty() && !context.userQuestions().canAsk()) {
             if (suggested.isEmpty()) {
                 throw new ToolRefusal("Give " + GROUP_ARG + ": the name the user gave this build's source type group "
                                       + "(a build makes one group, its source types the scope's)"

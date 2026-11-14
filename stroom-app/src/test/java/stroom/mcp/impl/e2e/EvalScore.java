@@ -52,6 +52,8 @@ final class EvalScore {
 
     private static final String EVT = "event-logging:3";
     private static final Set<String> DETAIL_META = Set.of("TypeId", "Description", "Classification", "Purpose");
+    // source_types.index.fields_added: scored only as the group's index recorded, fields being added when needed.
+    private static final String WHEN_NEEDED = "when_needed";
 
     private final String caseId;
     private final List<String> problems = new ArrayList<>();
@@ -234,7 +236,8 @@ final class EvalScore {
     /// - `source_types.pipeline`: `new` where the group's rows (those of `source_types.group.values`) name a pipeline
     ///   other than the setup group's, `same` where they name the setup group's own (after a working copy of it is
     ///   promoted, no new version made).
-    /// - `source_types.index.fields_added`: the registry's index of the group has fields this build added.
+    /// - `source_types.index.fields_added`: `true`, the registry's index of the group has fields this build added;
+    ///   `when_needed`, only that the group's index is recorded (fields are added only when the plan needs them).
     /// - `unchanged`: the setup group's pipeline, XSLT and index as the setup left them.
     /// - `separate_index`: the build's Events were found in an index other than the setup group's.
     ///
@@ -278,7 +281,8 @@ final class EvalScore {
                     ? "the setup's " + before.pipeline()
                     : "a new one, not the setup's " + before.pipeline()));
         }
-        if (Boolean.TRUE.equals(maps(sourceTypes.get("index")).get("fields_added"))) {
+        final Object fieldsAdded = maps(sourceTypes.get("index")).get("fields_added");
+        if (Boolean.TRUE.equals(fieldsAdded)) {
             final String group = String.valueOf(maps(sourceTypes.get("group")).get("name"));
             final Map<String, Object> index = registry == null
                     ? Map.of()
@@ -287,6 +291,15 @@ final class EvalScore {
             check("index fields added", addedBy.containsValue(build), "the index of group " + group + " ("
                                                                       + index.get("index") + ") has no field "
                                                                       + "added by " + build + ": " + addedBy);
+        } else if (WHEN_NEEDED.equals(fieldsAdded)) {
+            // Fields are added only when the build's plan indexes some the index lacks: seen in an eval, the
+            // agent's mapping wrote elements the index already had, and promotion rightly added none. Scored
+            // only that the index of the group is recorded.
+            final String group = String.valueOf(maps(sourceTypes.get("group")).get("name"));
+            final Object index = registry == null
+                    ? null
+                    : FeedIndexes.indexOfGroup(registry, group);
+            check("index of the group recorded", index != null, "no index recorded for group " + group);
         }
         if (Boolean.TRUE.equals(expected.get("unchanged"))) {
             for (final Map.Entry<String, String> entry : before.snapshot().entrySet()) {
