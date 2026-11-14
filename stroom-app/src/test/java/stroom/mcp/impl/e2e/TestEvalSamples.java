@@ -96,8 +96,21 @@ class TestEvalSamples {
     }
 
     @Test
+    void aCaseThatStartsFromAnotherShowsThatCasesSamplesAndHasNoFilesOfItsOwn() {
+        final Map<String, Object> evalCase = EvalCases.load("60_jsonl_azure_audit_new_group");
+        final Map<String, Object> setup = EvalCases.setup(evalCase);
+
+        assertThat(setup).containsEntry("id", "56_jsonl_azure_audit_aggregated");
+        assertThat(EvalCases.files(evalCase)).isEmpty();
+        assertThat(EvalCases.samples(evalCase)).isEqualTo(EvalCases.samples(setup));
+        assertThat(EvalCases.setup(EvalCases.load("56_jsonl_azure_audit_aggregated"))).isNull();
+        assertThatThrownBy(() -> EvalCases.setup(Map.of("id", "x", "setup", Map.of("from_case", 98))))
+                .hasMessageContaining("No evaluation case 98 to start x from");
+    }
+
+    @Test
     void theCasesAreAllThere() {
-        assertThat(EvalCases.IDS).hasSize(59).doesNotHaveDuplicates();
+        assertThat(EvalCases.IDS).hasSize(61).doesNotHaveDuplicates();
         assertThat(EvalCases.load("35_xml_fragments_secretserver_messages"))
                 .containsEntry("id", "35_xml_fragments_secretserver_messages")
                 .containsKeys("request", "expected", "reference", "sample");

@@ -19,6 +19,7 @@ package stroom.mcp.impl.e2e;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -184,6 +185,105 @@ class TestEvalScore {
         plain.scoreSourceTypes(expecting(Map.of("records", 1)), null, null, 0);
         assertThat(plain.sourceTypes()).isTrue();
         assertThat(plain.toMap()).doesNotContainKey("source_type_checks");
+    }
+
+    @Test
+    void theRegistrysGroupsAreScoredExactly() {
+        final EvalScore score = new EvalScore("c");
+
+        score.scoreSourceTypes(expecting(Map.of("source_types", Map.of("groups", List.of("Web", "Mail")))),
+                laterRegistry("p-new"), null, 0);
+
+        assertThat((List<String>) score.toMap().get("problems"))
+                .containsExactly("the registry's groups are [Messaging, Web], expected [Web, Mail]");
+    }
+
+    @Test
+    void aLaterBuildIsScoredAgainstWhatItsSetupLeft() {
+        final Map<String, String> snapshot = new LinkedHashMap<>();
+        snapshot.put("pipeline", "a");
+        snapshot.put("XSLT", "b");
+        final EvalScore.Before before = new EvalScore.Before("Messaging", "p-messaging", "i-messaging", snapshot);
+        final Map<String, Object> evalCase = expecting(Map.of("source_types", Map.of(
+                        "group", Map.of("name", "Web", "values", List.of("/var/log/httpd/access_log")),
+                        "pipeline", "new"),
+                "unchanged", true, "separate_index", true));
+
+        final EvalScore passing = new EvalScore("c");
+        passing.scoreLaterBuild(evalCase, laterRegistry("p-new"), before, Map.of("pipeline", "a", "XSLT", "b"),
+                "eval-60", "i-web");
+        assertThat(passing.sourceTypes()).isTrue();
+        assertThat((List<Map<String, Object>>) passing.toMap().get("source_type_checks"))
+                .extracting(check -> check.get("check"))
+                .containsExactly("pipeline new", "unchanged pipeline", "unchanged XSLT", "separate index");
+
+        // The setup group's pipeline taken, its XSLT changed, and the Events in its index.
+        final EvalScore failing = new EvalScore("c");
+        failing.scoreLaterBuild(evalCase, laterRegistry("p-messaging"), before, Map.of("pipeline", "a",
+                "XSLT", "changed"), "eval-60", "i-messaging");
+        assertThat((List<String>) failing.toMap().get("problems")).containsExactly(
+                "the group's rows name pipeline(s) [p-messaging], expected a new one, not the setup's p-messaging",
+                "the setup group Messaging's XSLT changed",
+                "the build's Events were found in index i-messaging, expected one of their own, not the setup "
+                + "group's i-messaging");
+    }
+
+    @Test
+    void aJoinedGroupKeepsItsPipelineAndItsIndexGainsTheBuildsFields() {
+        final EvalScore.Before before = new EvalScore.Before("Web", "p-web", "i-web", Map.of());
+        final Map<String, Object> evalCase = expecting(Map.of("source_types", Map.of(
+                "group", Map.of("name", "Web", "values", List.of("/var/log/httpd/access_log")),
+                "pipeline", "same", "index", Map.of("fields_added", true))));
+        final Map<String, Object> registry = new HashMap<>(laterRegistry("p-web"));
+        registry.put("indexes", Map.of("web-index", Map.of("index", "web-index", "groups", List.of("Web"),
+                "added_by", Map.of("Path", "eval-56", "Name", "eval-61"))));
+
+        final EvalScore joined = new EvalScore("c");
+        joined.scoreLaterBuild(evalCase, registry, before, Map.of(), "eval-61", "i-web");
+        assertThat(joined.sourceTypes()).as("%s", joined.toMap()).isTrue();
+
+        // Nothing added by this build.
+        final EvalScore unchanged = new EvalScore("c");
+        unchanged.scoreLaterBuild(evalCase, registry, before, Map.of(), "eval-62", "i-web");
+        assertThat((List<String>) unchanged.toMap().get("problems")).singleElement().asString()
+                .startsWith("the index of group Web (web-index) has no field added by eval-62");
+    }
+
+    @Test
+    void theFormsAskedAndNotAskedAreScored() {
+        final Map<String, Object> evalCase = expecting(Map.of("forms", Map.of(
+                "asked", List.of(Map.of("message", "runs in pipeline", "answer", "Change ")),
+                "not_asked", List.of("Which field says"))));
+        final Map<String, Object> changed = Map.of("message", "Group 'M' runs in pipeline P, in production.",
+                "content", Map.of("choice", "Change P (its working copy ...)"));
+        final Map<String, Object> versioned = Map.of("message", "Group 'M' runs in pipeline P, in production.",
+                "content", Map.of("choice", "A new version of P"));
+        final Map<String, Object> field = Map.of("message", "Which field says which source a record came from?");
+
+        final EvalScore passing = new EvalScore("c");
+        passing.scoreForms(evalCase, List.of(changed));
+        assertThat(passing.sourceTypes()).isTrue();
+
+        final EvalScore failing = new EvalScore("c");
+        failing.scoreForms(evalCase, List.of(versioned, field));
+        assertThat((List<String>) failing.toMap().get("problems")).containsExactly(
+                "the form 'runs in pipeline' wasn't answered 'Change …': [{choice=A new version of P}]",
+                "a form asked 'Which field says', which none should");
+
+        final EvalScore none = new EvalScore("c");
+        none.scoreForms(evalCase, List.of());
+        assertThat((List<String>) none.toMap().get("problems")).containsExactly("no form asked 'runs in pipeline'");
+    }
+
+    // A later build's registry: the web server group's row naming its pipeline, the mail row the Messaging group's.
+    private static Map<String, Object> laterRegistry(final String pipeline) {
+        return Map.of("field", "LogFilePath",
+                "rows", List.of(
+                        Map.of("name", "Web server", "match", "pattern", "value", "^/var/log/httpd/",
+                                "status", "translated", "group", "Web", "pipeline", Map.of("uuid", pipeline)),
+                        Map.of("name", "Mail", "match", "pattern", "value", "^/var/log/mail/", "status",
+                                "translated", "group", "Messaging", "pipeline", Map.of("uuid", "p-messaging"))),
+                "scope", Map.of("group", "Web", "source_types", List.of("Web server")));
     }
 
     // A registry as SourceTypeRegistry reads it: the collector's paths, its scope the web server group.
