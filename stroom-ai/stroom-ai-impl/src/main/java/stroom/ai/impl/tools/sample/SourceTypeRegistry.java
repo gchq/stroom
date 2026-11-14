@@ -48,7 +48,7 @@ import java.util.regex.Pattern;
 /// absent for the raw feed's own, `""` while one of its own is still to be made. `modules` names the feed's `helpers`
 /// and `common` modules (`uuid`, `name`), so a later build finds them beside the feed. Every UUID is the build's
 /// document while a build changes it (a working copy), and the original's once promoted. `indexing` and `indexes` are
-/// the feed's shared indexing decisions and its output feeds' indexes ([FeedIndexes]).
+/// the feed's shared indexing decisions and its groups' indexes ([FeedIndexes]).
 public final class SourceTypeRegistry {
 
     /// What a feed's registry is named after.
@@ -207,7 +207,7 @@ public final class SourceTypeRegistry {
         return out.toString();
     }
 
-    // The feed's shared indexing decisions and each output feed's index, where any are recorded.
+    // The feed's shared indexing decisions and each group's index, where any are recorded.
     private static List<String> indexes(final Map<String, Object> registry) {
         final Map<String, Object> indexing = FeedIndexes.indexing(registry);
         final Map<String, Object> indexes = JsonValues.mapOrEmpty(registry.get(FeedIndexes.INDEXES));
@@ -223,16 +223,17 @@ public final class SourceTypeRegistry {
                     ? "after the index " + JsonValues.text(naming.get("like_index"))
                     : "by the " + firstSet(naming.get("convention"), null, "(not chosen)") + " convention")
                       + " (decided by " + firstSet(decided.get("by"), null, "-") + ", "
-                      + firstSet(decided.get("at"), null, "-") + "). One index per output feed: the groups "
-                      + "writing to it share it.");
+                      + firstSet(decided.get("at"), null, "-") + "). Each source type group has an index of "
+                      + "its own, unless the user chose to share one.");
             lines.add("");
         }
-        indexes.forEach((feed, value) -> {
-            final Map<String, Object> entry = JsonValues.mapOrEmpty(value);
-            lines.add("* Output feed " + code(feed) + ": index " + code(entry.get("index")) + " ("
-                      + firstSet(entry.get("backend"), null, "-") + "), "
+        FeedIndexes.indexes(registry).forEach(entry -> {
+            final List<String> feeds = JsonValues.strings(entry.get("output_feeds"));
+            lines.add("* Index " + code(entry.get("index")) + " (" + firstSet(entry.get("backend"), null, "-") + "), "
                       + JsonValues.listOrEmpty(entry.get("fields")).size() + " field(s), for group(s) "
-                      + firstSet(String.join(", ", JsonValues.strings(entry.get("groups"))), null, "-") + ".");
+                      + firstSet(String.join(", ", FeedIndexes.groupsOf(entry)), null, "-") + (feeds.isEmpty()
+                    ? ""
+                    : ", Events in feed(s) " + String.join(", ", feeds)) + ".");
         });
         return lines;
     }

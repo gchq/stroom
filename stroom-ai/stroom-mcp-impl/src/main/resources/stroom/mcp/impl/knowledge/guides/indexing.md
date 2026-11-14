@@ -3,8 +3,8 @@
 Stage 2 is the same on both backends: field plan, index doc, indexing pipeline from a template,
 step the Events, process, then verify with a dashboard and test searches. Which backend a build uses
 comes from the chosen indexing template (`find_pipeline_templates stage=indexing` reports it).
-On an aggregated feed, the source type groups writing to one Events feed share one index, its backend and naming
-chosen once and kept in the feed's registry (stroom://guide/aggregated-feeds).
+On an aggregated feed, each source type group has an index of its own (shared with another group's only where the
+user asks), the backend and naming chosen once and kept in the feed's registry (stroom://guide/aggregated-feeds).
 
 | | Lucene (Stroom `Index`) | Elasticsearch |
 | --- | --- | --- |

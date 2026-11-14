@@ -416,9 +416,9 @@ class IndexFields {
         return addFields(ref, doc.getName(), plan);
     }
 
-    /// Lucene, at promotion: adds the fields a promoted build's plan has that an output feed's index doc (one beside
-    /// the feed, outside any build) lacks, as the user approved in the promotion's form. Forward only: documents
-    /// indexed before keep what they have.
+    /// Lucene, at promotion: adds the fields a promoted build's plan has that a source type group's index doc (one
+    /// beside the feed, outside any build) lacks, as the user approved in the promotion's form. Forward only:
+    /// documents indexed before keep what they have.
     ///
     /// @param index The Lucene Index doc.
     /// @param plan  The field plan (backend lucene).

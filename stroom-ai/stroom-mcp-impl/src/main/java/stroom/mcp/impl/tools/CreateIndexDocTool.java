@@ -160,8 +160,8 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
                 .build();
     }
 
-    /// An aggregated feed's indexes, one per output feed (set by injection; none in tests that make the tool
-    /// themselves).
+    /// An aggregated feed's indexes, one per source type group unless shared (set by injection; none in tests that
+    /// make the tool themselves).
     ///
     /// @param feedIndexes The feed's indexes.
     @Inject
@@ -202,7 +202,7 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
         }
         final boolean elastic = FieldPlan.ELASTICSEARCH.equals(backend);
         if (feedIndexes != null) {
-            // An aggregated feed's output feed has one index, made by its first build: never a second.
+            // An aggregated feed's index, made by an earlier build: never a second doc for it.
             feedIndexes.get().refuseIndexMade(build, elastic
                     ? NullSafe.nonBlankStringElse(indexName, fieldPlan == null
                     ? null

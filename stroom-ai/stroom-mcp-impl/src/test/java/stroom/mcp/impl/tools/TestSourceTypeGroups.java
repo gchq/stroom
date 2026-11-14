@@ -267,7 +267,8 @@ class TestSourceTypeGroups {
         final Map<String, Object> refused = world.call(tool, unasked);
 
         assertThat(String.valueOf(refused.get("error"))).contains("is new", "'PEGA PEGA security'",
-                "Ask the user where its Events go", "own_output_feed", "Nothing was saved");
+                "Ask the user where its Events go", "Into the same feed", "To an output feed of its own",
+                "own_output_feed=false (the same feed)", "Nothing was saved").doesNotContain("index");
         assertThat(xsltsInBuild()).isEmpty();
         // Which pipeline is no longer asked: a new group has no pipeline in production to change.
         unasked.put("own_output_feed", false);
@@ -460,8 +461,7 @@ class TestSourceTypeGroups {
     @Test
     void aNewGroupIsAskedWhereItsEventsGoNotWhichPipeline() {
         world.forms = true;
-        world.answers.put("Source type group 'PEGA security'", "To an output feed of its own (made next, in a form; "
-                                                               + "an index of its own)");
+        world.answers.put("Source type group 'PEGA security'", "To an output feed of its own (made next)");
         final Map<String, Object> asked = new LinkedHashMap<>(args(security(), "PEGA security",
                 List.of("PegaSecurityEvent")));
         asked.remove("own_output_feed");
@@ -470,7 +470,8 @@ class TestSourceTypeGroups {
 
         assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
         assertThat(placementForms()).singleElement().satisfies(form -> assertThat(form).contains(
-                "a pipeline of its own, 'PEGA PEGA security'", "where its Events go").doesNotContain("**", "`"));
+                "a pipeline of its own, 'PEGA PEGA security'", "where its Events go").doesNotContain("**", "`",
+                "index"));
         assertThat(rowNamed(written.getLast(), "PegaSecurityEvent")).containsEntry("output_feed", "");
         // Saved again in the build: placed, so it isn't asked again.
         world.call(tool, asked);

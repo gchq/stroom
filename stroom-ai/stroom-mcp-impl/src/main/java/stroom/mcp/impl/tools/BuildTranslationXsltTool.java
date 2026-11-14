@@ -407,7 +407,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                         .addBooleanProperty(OWN_OUTPUT_FEED_ARG, "With group, only where no form can be shown, for "
                                                                  + "a new group: true when the user wants its "
                                                                  + "Events in an output feed of its own, false for "
-                                                                 + "the feed's Events. Otherwise asked in a form.")
+                                                                 + "the same feed. Otherwise asked in a form.")
                         .addProperty(REFERENCES_ARG, CreatePipelineTool.referencesSchema("With group: the reference "
                                                                                         + "data the group's lookups "
                                                                                         + "read (find_reference_"
@@ -1164,9 +1164,10 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         return Optional.empty();
     }
 
-    // Where a new group's Events go: asked in a form whenever a build makes a group (decided 2026-11-13), the feed's
-    // Events the default; every group has a pipeline of its own. Where no form can be shown, the agent asks in the
-    // chat and passes the answer (own_output_feed). Null for a group placed already.
+    // Where a new group's Events go: asked in a form whenever a build makes a group (decided 2026-11-13), the same
+    // feed the default (its index is its own either way, decided 2026-11-14); every group has a pipeline of its own.
+    // Where no form can be shown, the agent asks in the chat and passes the answer (own_output_feed). Null for a
+    // group placed already.
     private SourceTypeGroups.Placement placement(final ToolCall call, final ToolCallContext context, final Build b) {
         final Request request = b.request;
         if (!SourceTypeGroups.needsPlacement(b.group)) {
@@ -1177,8 +1178,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             return null;
         }
         final String pipeline = SourceTypeGroups.pipelineName(b.group.feed(), b.group.group());
-        final List<String> feeds = List.of("Into the feed's Events (one index with the feed's other groups there)",
-                "To an output feed of its own (made next, in a form; an index of its own)");
+        final List<String> feeds = List.of("Into the same feed (" + b.group.feed() + ")",
+                "To an output feed of its own (made next)");
         final Optional<String> chosen = consent.choose(call, context, NAME, "Source type group '" + b.group.group()
                                                                             + "' (" + String.join(", ",
                 b.group.sourceTypes()) + ") is new. It gets a pipeline of its own, '" + pipeline + "', which reads "
@@ -1192,7 +1193,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         if (request.ownOutputFeed() == null) {
             throw new ToolRefusal("Group '" + b.group.group() + "' is new: it gets a pipeline of its own ('"
                                   + pipeline + "'). Ask the user where its Events go: " + String.join("; ", feeds)
-                                  + ". Then call again with " + OWN_OUTPUT_FEED_ARG + "=false (the feed's Events) or "
+                                  + ". Then call again with " + OWN_OUTPUT_FEED_ARG + "=false (the same feed) or "
                                   + "true (an output feed of its own). Nothing was saved.");
         }
         return new SourceTypeGroups.Placement(request.ownOutputFeed());

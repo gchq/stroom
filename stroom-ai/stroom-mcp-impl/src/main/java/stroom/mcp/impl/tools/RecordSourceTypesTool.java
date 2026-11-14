@@ -769,7 +769,7 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
             // The feed's helpers and common module, as its source type groups import them.
             registry.put("modules", before.get("modules"));
         }
-        // The feed's shared indexing decisions and its output feeds' indexes, made by earlier builds.
+        // The feed's shared indexing decisions and its groups' indexes, made by earlier builds.
         for (final String key : List.of(FeedIndexes.INDEXING, FeedIndexes.INDEXES)) {
             if (before.get(key) != null) {
                 registry.put(key, before.get(key));

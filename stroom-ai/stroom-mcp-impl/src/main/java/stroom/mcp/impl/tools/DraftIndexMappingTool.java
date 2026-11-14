@@ -153,8 +153,8 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         this.siblingSharedCalls = siblingSharedCalls;
     }
 
-    /// An aggregated feed's indexes: one per output feed, shared by the groups writing to it (set by injection;
-    /// none in tests that make the tool themselves).
+    /// An aggregated feed's indexes: one per source type group by default, shared only where the user asks (set by
+    /// injection; none in tests that make the tool themselves).
     ///
     /// @param feedIndexes The feed's indexes.
     @Inject
@@ -294,12 +294,22 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                         .addStringProperty(PIPELINE_UUID_ARG, "With changes: the indexing pipeline whose kept plan to "
                                                               + "amend, when it wasn't drafted in this session.")
                         .addBooleanProperty(FeedIndexDecisions.CHANGE_SHARED_ARG, "Only when the user asks for it: "
-                                                                                  + "an aggregated feed's output "
-                                                                                  + "feed indexed into another "
-                                                                                  + "index (a new version) or "
-                                                                                  + "backend than the one its "
-                                                                                  + "groups share. They confirm it "
-                                                                                  + "in a form.")
+                                                                                  + "an aggregated feed's source "
+                                                                                  + "type group indexed into "
+                                                                                  + "another index (a new version) "
+                                                                                  + "than its own, or another "
+                                                                                  + "backend than the feed's. They "
+                                                                                  + "confirm it in a form.")
+                        .addStringProperty(FeedIndexDecisions.SHARE_INDEX_WITH_ARG, "Only when the user asks for "
+                                                                                    + "one index with another "
+                                                                                    + "source type group of the "
+                                                                                    + "aggregated feed: that group's "
+                                                                                    + "name, or its index's. Left "
+                                                                                    + "out, each group has an index "
+                                                                                    + "of its own. Shared, the plan "
+                                                                                    + "is the union of the groups' "
+                                                                                    + "fields, clashes put to the "
+                                                                                    + "user.")
                         .required(BACKEND_ARG, INDEX_NAME_ARG)
                         .build())
                 .build();
@@ -530,12 +540,13 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         final Map<String, Object> profile = profiles.get(draft.convention);
         final Map<String, Object> events = inputs.summariseEvents(streamIds);
         final Map<String, Double> populated = IndexingInputs.population(events);
-        // An aggregated feed's output feed: its index is the union of the groups writing to it, so what each
-        // group's translation writes is planned, whether or not the sample's Events have it.
+        // An aggregated feed's source type group: what its translation writes (and, for an index shared at the
+        // user's word, what the other groups' translations write) is planned, whether or not the sample's Events
+        // have it.
         final String build = buildOf(context, streamIds);
         final List<String> groupPaths = feedIndexes == null
                 ? List.of()
-                : feedIndexes.get().writtenByGroups(build, streamIds);
+                : feedIndexes.get().writtenByGroups(call, build, streamIds);
         groupPaths.forEach(path -> populated.putIfAbsent(path, FeedIndexDecisions.WRITTEN_SHARE));
         final List<PlannedField> fields = new ArrayList<>(List.of(PlannedField.of("StreamId", "id", "@StreamId"),
                 PlannedField.of("EventId", "id", "@EventId")));
@@ -635,12 +646,12 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             keepExample(draft, indexName, streamIds.getFirst(), pasted, exampleNotes);
         }
         plan = plans.withCardinality(plan);
-        final GroupedFields.Grouped grouped = grouped(plan, build, streamIds);
+        final GroupedFields.Grouped grouped = grouped(call, plan, build, streamIds);
         plan = grouped.plan();
         draftNotes.addAll(grouped.notes());
         final List<String> standInWarnings = new ArrayList<>();
         plan = eventStandIns(call, context, indexName, plan, events, standInWarnings);
-        // An aggregated feed's output feed has one index, which every group writing to it shares.
+        // An aggregated feed's source type group has an index of its own, unless the user asked to share one.
         final Map<String, Object> feedIndex;
         if (feedIndexes != null) {
             final FeedIndexDecisions.ForPlan forFeed = feedIndexes.get().forPlan(call, context, build, streamIds,
@@ -685,9 +696,9 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             result.put("feed_index", feedIndex);
         }
         if (!groupPaths.isEmpty()) {
-            result.put("group_paths", "The paths each source type group writing to this output feed writes are "
-                                      + "planned, as the index is the groups' together: a field none of the "
-                                      + "sample's Events have is one of another group's.");
+            result.put("group_paths", "The paths the source type group's translation writes are planned (with "
+                                      + "those of the other groups of an index shared at the user's word): a "
+                                      + "field none of the sample's Events have is one its mapping writes.");
         }
         if (!standInWarnings.isEmpty()) {
             final List<Object> warnings = result.get("warnings") instanceof final List<?> given
@@ -1318,9 +1329,9 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                 : streamIds;
         // A field a change adds from a translation's repeated group is planned as the draft plans one (seen: a
         // group's field added by changes= stayed a flat field beside the group's field of objects).
-        final GroupedFields.Grouped grouped = grouped(plan, buildOf(context, planStreams), planStreams);
+        final GroupedFields.Grouped grouped = grouped(call, plan, buildOf(context, planStreams), planStreams);
         plan = grouped.plan();
-        // An aggregated feed's output feed: checked against its index again, as a change may clash.
+        // An aggregated feed's source type group: checked against its index again, as a change may clash.
         Map<String, Object> feedIndex = Map.of();
         if (feedIndexes != null) {
             final FeedIndexDecisions.ForPlan forFeed = feedIndexes.get().forPlan(call, context,
@@ -1353,11 +1364,14 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
 
     // The fields a translation's repeated group writes (each recipient one User with its Id and Domain): one field
     // of objects in Elasticsearch, so an item's values stay together; fields of values in Lucene. An aggregated
-    // feed's output feed: the fields of every group writing to it.
-    private GroupedFields.Grouped grouped(final FieldPlan plan, final String build, final List<Long> streamIds) {
+    // feed's source type group: its own fields, with those of the groups of an index shared at the user's word.
+    private GroupedFields.Grouped grouped(final ToolCall call,
+                                          final FieldPlan plan,
+                                          final String build,
+                                          final List<Long> streamIds) {
         return GroupedFields.apply(plan, inputs.translationFields(streamIds, feedIndexes == null
                 ? List.of()
-                : feedIndexes.get().groupXslts(build, streamIds)));
+                : feedIndexes.get().groupXslts(call, build, streamIds)));
     }
 
     /// What the index being replaced wrote that the draft doesn't. Seen in VS Code: asked to make an indexing pipeline

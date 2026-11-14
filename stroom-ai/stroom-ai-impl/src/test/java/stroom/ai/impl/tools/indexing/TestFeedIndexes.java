@@ -31,13 +31,16 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// An aggregated feed's indexes as its registry keeps them: one per output feed, shared by its groups, its fields the
-/// union of theirs, a field of another type or meaning a clash, and a promoted build's fields added.
+/// An aggregated feed's indexes as its registry keeps them: one per source type group (even where groups' Events go
+/// into the same feed), shared only where the user asked, its fields then the union of theirs; a field of another
+/// type or meaning a clash, and a promoted build's fields added.
 class TestFeedIndexes {
 
     private static final String FEED = "PEGA";
     private static final String OWN_FEED = "PEGA-INTEGRATION-EVENTS";
     private static final String INDEX = "pega-events";
+    private static final String SECURITY = "PEGA security";
+    private static final String MAIL = "PEGA mail";
     private static final Decided FIRST = new Decided("user", "2026-11-13T10:00:00.000Z", "pega-1");
     private static final Decided LATER = new Decided("user", "2026-11-13T11:00:00.000Z", "pega-2");
 
@@ -46,8 +49,9 @@ class TestFeedIndexes {
         final Map<String, Object> registry = registry();
 
         assertThat(FeedIndexes.outputFeeds(registry)).containsExactly(FEED, OWN_FEED);
-        assertThat(FeedIndexes.groupsTo(registry, FEED)).containsExactly("PEGA security", "PEGA mail");
-        assertThat(FeedIndexes.groupsTo(registry, OWN_FEED)).containsExactly("PEGA integration");
+        assertThat(FeedIndexes.outputFeedOfGroup(registry, SECURITY)).isEqualTo(FEED);
+        assertThat(FeedIndexes.outputFeedOfGroup(registry, MAIL)).isEqualTo(FEED);
+        assertThat(FeedIndexes.outputFeedOfGroup(registry, "PEGA integration")).isEqualTo(OWN_FEED);
     }
 
     @Test
@@ -69,23 +73,103 @@ class TestFeedIndexes {
     }
 
     @Test
-    void aPromotedPlanIsRecordedAsItsOutputFeedsIndexWithTheSharedDecisions() {
+    void aPromotedPlanIsRecordedAsItsGroupsIndexWithTheSharedDecisions() {
         final Map<String, Object> registry = registry();
 
-        final List<String> added = FeedIndexes.record(registry, FEED, firstPlan(),
+        final List<String> added = FeedIndexes.record(registry, SECURITY, FEED, firstPlan(),
                 Map.of("type", "Index", "uuid", "u-1", "name", INDEX), FIRST);
 
         assertThat(added).containsExactly("StreamId", "EventId", "EventTime", "UserId", "TypeId");
-        final Map<String, Object> entry = FeedIndexes.index(registry, FEED);
+        final Map<String, Object> entry = FeedIndexes.indexOfGroup(registry, SECURITY);
         assertThat(entry).containsEntry("index", INDEX).containsEntry("backend", FieldPlan.LUCENE);
-        assertThat(JsonValues.strings(entry.get("groups"))).containsExactly("PEGA security", "PEGA mail");
+        // The group's alone, though another group's Events go into the same feed.
+        assertThat(FeedIndexes.groupsOf(entry)).containsExactly(SECURITY);
+        assertThat(JsonValues.strings(entry.get("output_feeds"))).containsExactly(FEED);
         assertThat(JsonValues.mapOrEmpty(entry.get("added_by"))).containsEntry("UserId", "pega-1");
-        assertThat(FeedIndexes.index(registry, OWN_FEED)).isEmpty();
+        assertThat(FeedIndexes.indexOfGroup(registry, MAIL)).isEmpty();
+        assertThat(JsonValues.mapOrEmpty(registry.get(FeedIndexes.INDEXES))).containsOnlyKeys(INDEX);
         // The feed's shared decisions, from the plan where none were made in a form.
         assertThat(FeedIndexes.indexing(registry)).containsEntry("backend", FieldPlan.LUCENE)
                 .containsEntry("naming", Map.of("convention", "stroom-flat"));
-        assertThat(FeedIndexes.outputFeedOfIndex(registry, INDEX)).contains(FEED);
-        assertThat(FeedIndexes.outputFeedOfIndex(registry, "other")).isEmpty();
+        assertThat(FeedIndexes.indexNamed(registry, INDEX)).isEqualTo(entry);
+        assertThat(FeedIndexes.indexNamed(registry, "other")).isEmpty();
+    }
+
+    @Test
+    void twoGroupsIntoTheSameFeedHaveAnIndexEach() {
+        final Map<String, Object> registry = recorded();
+
+        final List<String> added = FeedIndexes.record(registry, MAIL, FEED, plan("pega-mail-events",
+                field("StreamId", "id", "@StreamId"), field("Direction", "keyword", "EventDetail/TypeId")), null,
+                LATER);
+
+        assertThat(added).containsExactly("StreamId", "Direction");
+        assertThat(FeedIndexes.indexes(registry)).extracting(entry -> entry.get("index"))
+                .containsExactly(INDEX, "pega-mail-events");
+        assertThat(FeedIndexes.groupsOf(FeedIndexes.indexOfGroup(registry, SECURITY))).containsExactly(SECURITY);
+        assertThat(FeedIndexes.groupsOf(FeedIndexes.indexOfGroup(registry, MAIL))).containsExactly(MAIL);
+        assertThat(FeedIndexes.indexOfGroup(registry, MAIL)).doesNotContainKey("replaces");
+        // The first group's index keeps its own fields: nothing of the second's.
+        assertThat(FeedIndexes.recordedFields(FeedIndexes.indexOfGroup(registry, SECURITY)))
+                .extracting(PlannedField::name).doesNotContain("Direction");
+    }
+
+    @Test
+    void anIndexSharedAtTheUsersWordHoldsBothGroupsAndTheUnionOfTheirFields() {
+        final Map<String, Object> registry = recorded();
+        final FieldPlan shared = FeedIndexes.withInherited(plan(INDEX, field("Direction", "keyword",
+                "EventDetail/TypeId")), FeedIndexes.indexOfGroup(registry, SECURITY));
+
+        final List<String> added = FeedIndexes.record(registry, MAIL, FEED, shared, null, LATER);
+
+        assertThat(added).containsExactly("Direction");
+        assertThat(FeedIndexes.indexes(registry)).singleElement().satisfies(entry -> {
+            assertThat(FeedIndexes.groupsOf(entry)).containsExactly(SECURITY, MAIL);
+            assertThat(FeedIndexes.recordedFields(entry)).extracting(PlannedField::name)
+                    .contains("UserId", "Direction");
+            assertThat(JsonValues.mapOrEmpty(entry.get("index_doc"))).containsEntry("uuid", "u-1");
+        });
+        assertThat(FeedIndexes.indexOfGroup(registry, MAIL)).isEqualTo(FeedIndexes.indexOfGroup(registry, SECURITY));
+
+        // A new version for one of them: the other stays where it is.
+        FeedIndexes.record(registry, MAIL, FEED, plan("pega-events-v2", field("TypeId", "long",
+                "EventDetail/TypeId")), null, LATER);
+
+        assertThat(FeedIndexes.indexOfGroup(registry, MAIL)).containsEntry("index", "pega-events-v2")
+                .containsEntry("replaces", INDEX);
+        assertThat(FeedIndexes.groupsOf(FeedIndexes.indexNamed(registry, INDEX))).containsExactly(SECURITY);
+    }
+
+    @Test
+    void aRegistryKeyedByOutputFeedIsReadAndRecordedByIndexName() {
+        // As kept before 2026-11-14: one index per output feed, under the feed's name.
+        final Map<String, Object> registry = registry();
+        final Map<String, Object> entry = new LinkedHashMap<>();
+        entry.put("index", INDEX);
+        entry.put("backend", FieldPlan.LUCENE);
+        entry.put("fields", firstPlan().fields().stream().map(PlannedField::toJson).toList());
+        entry.put("groups", List.of(SECURITY, MAIL));
+        registry.put(FeedIndexes.INDEXES, new LinkedHashMap<>(Map.of(FEED, entry)));
+
+        assertThat(FeedIndexes.indexOfGroup(registry, MAIL)).containsEntry("index", INDEX);
+        assertThat(FeedIndexes.indexNamed(registry, INDEX)).containsEntry("index", INDEX);
+
+        FeedIndexes.record(registry, MAIL, FEED, plan(INDEX, field("Direction", "keyword", "EventDetail/TypeId")),
+                null, LATER);
+
+        assertThat(JsonValues.mapOrEmpty(registry.get(FeedIndexes.INDEXES))).containsOnlyKeys(INDEX);
+        assertThat(FeedIndexes.groupsOf(FeedIndexes.indexNamed(registry, INDEX))).containsExactly(SECURITY, MAIL);
+    }
+
+    @Test
+    void aGroupsIndexIsNamedLikeTheFeedsOthersWithTheGroupInIt() {
+        assertThat(FeedIndexes.groupIndexName("stroom-pega-security-v1", List.of(SECURITY), "PEGA mail"))
+                .isEqualTo("stroom-pega-mail-v1");
+        assertThat(FeedIndexes.groupIndexName("pega-events-v1", List.of(SECURITY), "PEGA mail"))
+                .isEqualTo("pega-events-pega-mail-v1");
+        assertThat(FeedIndexes.groupIndexName("pega-events", List.of(SECURITY), "Mail / Audit"))
+                .isEqualTo("pega-events-mail-audit");
+        assertThat(FeedIndexes.groupIndexName("", List.of(), "PEGA mail")).isEqualTo("pega-mail");
     }
 
     @Test
@@ -94,18 +178,19 @@ class TestFeedIndexes {
         final FieldPlan later = plan(INDEX, field("StreamId", "id", "@StreamId"), field("EventId", "id", "@EventId"),
                 field("Direction", "keyword", "EventDetail/TypeId"));
 
-        final FieldPlan union = FeedIndexes.withInherited(later, FeedIndexes.index(registry, FEED));
+        final FieldPlan union = FeedIndexes.withInherited(later, FeedIndexes.indexOfGroup(registry, SECURITY));
 
         assertThat(union.fields()).extracting(PlannedField::name)
                 .containsExactly("StreamId", "EventId", "Direction", "EventTime", "UserId", "TypeId");
-        assertThat(FeedIndexes.clashes(union, FeedIndexes.index(registry, FEED))).isEmpty();
-        assertThat(FeedIndexes.newFields(union, FeedIndexes.index(registry, FEED))).extracting(PlannedField::name)
+        assertThat(FeedIndexes.clashes(union, FeedIndexes.indexOfGroup(registry, SECURITY))).isEmpty();
+        assertThat(FeedIndexes.newFields(union, FeedIndexes.indexOfGroup(registry, SECURITY)))
+                .extracting(PlannedField::name)
                 .containsExactly("Direction");
     }
 
     @Test
     void aFieldOfAnotherTypeIsATypeClashSaidForTheBackend() {
-        final Map<String, Object> entry = FeedIndexes.index(recorded(), FEED);
+        final Map<String, Object> entry = FeedIndexes.indexOfGroup(recorded(), SECURITY);
         final FieldPlan later = FeedIndexes.withInherited(plan(INDEX, field("TypeId", "long", "EventDetail/TypeId")),
                 entry);
 
@@ -126,9 +211,9 @@ class TestFeedIndexes {
     @Test
     void anElasticsearchTypeClashSaysItCantChangeInPlace() {
         final Map<String, Object> registry = registry();
-        FeedIndexes.record(registry, FEED, firstPlan().withFields(List.of(field("TypeId", "keyword",
+        FeedIndexes.record(registry, SECURITY, FEED, firstPlan().withFields(List.of(field("TypeId", "keyword",
                 "EventDetail/TypeId"))), null, FIRST);
-        final Map<String, Object> entry = new LinkedHashMap<>(FeedIndexes.index(registry, FEED));
+        final Map<String, Object> entry = new LinkedHashMap<>(FeedIndexes.indexOfGroup(registry, SECURITY));
         entry.put("backend", FieldPlan.ELASTICSEARCH);
 
         final List<Clash> clashes = FeedIndexes.clashes(plan(INDEX, field("TypeId", "long", "EventDetail/TypeId")),
@@ -140,12 +225,13 @@ class TestFeedIndexes {
 
     @Test
     void aFieldReadFromAnotherPathOrDescribedOtherwiseIsAMeaningClash() {
-        final Map<String, Object> entry = FeedIndexes.index(recorded(), FEED);
+        final Map<String, Object> entry = FeedIndexes.indexOfGroup(recorded(), SECURITY);
 
         final List<Clash> byPath = FeedIndexes.clashes(plan(INDEX, field("UserId", "keyword",
                 "EventDetail/Send/Source/User/Id")), entry);
         final List<Clash> byDescription = FeedIndexes.clashes(plan(INDEX, new PlannedField("UserId", "keyword",
-                "EventSource/User/Id", "The operator acting.", null, false)), FeedIndexes.index(described(), FEED));
+                "EventSource/User/Id", "The operator acting.", null, false)), FeedIndexes.indexOfGroup(described(),
+                SECURITY));
 
         assertThat(byPath).singleElement().satisfies(clash -> {
             assertThat(clash.kind()).isEqualTo(FeedIndexes.MEANING_CLASH);
@@ -159,22 +245,22 @@ class TestFeedIndexes {
 
     @Test
     void theSameMeaningIsNoClashWhateverTheCaseOrAFullStop() {
-        final Map<String, Object> entry = FeedIndexes.index(described(), FEED);
+        final Map<String, Object> entry = FeedIndexes.indexOfGroup(described(), SECURITY);
 
         assertThat(FeedIndexes.clashes(plan(INDEX, new PlannedField("UserId", "keyword", "EventSource/User/Id",
                 "the user  logging on", null, false)), entry)).isEmpty();
         // Reading more than the index's field (both groups' paths) is no clash.
         assertThat(FeedIndexes.clashes(plan(INDEX, field("UserId", "keyword",
-                "EventSource/User/Id | EventDetail/Send/Source/User/Id")), FeedIndexes.index(recorded(), FEED)))
-                .isEmpty();
+                "EventSource/User/Id | EventDetail/Send/Source/User/Id")), FeedIndexes.indexOfGroup(recorded(),
+                SECURITY))).isEmpty();
         // The ids and the time mean the same in every group.
         assertThat(FeedIndexes.clashes(plan(INDEX, field("EventTime", "date", "EventDetail/Time")),
-                FeedIndexes.index(recorded(), FEED))).isEmpty();
+                FeedIndexes.indexOfGroup(recorded(), SECURITY))).isEmpty();
     }
 
     @Test
     void anotherIndexHasNoClashes() {
-        final Map<String, Object> entry = FeedIndexes.index(recorded(), FEED);
+        final Map<String, Object> entry = FeedIndexes.indexOfGroup(recorded(), SECURITY);
 
         assertThat(FeedIndexes.clashes(plan("pega-events-v2", field("TypeId", "long", "EventDetail/TypeId")),
                 entry)).isEmpty();
@@ -184,7 +270,7 @@ class TestFeedIndexes {
 
     @Test
     void eachAnswerResolvesItsClash() {
-        final Map<String, Object> entry = FeedIndexes.index(recorded(), FEED);
+        final Map<String, Object> entry = FeedIndexes.indexOfGroup(recorded(), SECURITY);
         final FieldPlan typed = FeedIndexes.withInherited(plan(INDEX, field("TypeId", "long", "EventDetail/TypeId")),
                 entry);
         final Clash typeClash = FeedIndexes.clashes(typed, entry).getFirst();
@@ -222,16 +308,16 @@ class TestFeedIndexes {
     @Test
     void aPromotedLaterBuildAddsItsFieldsForwardOnly() {
         final Map<String, Object> registry = recorded();
-        final Map<String, Object> entry = FeedIndexes.index(registry, FEED);
+        final Map<String, Object> entry = FeedIndexes.indexOfGroup(registry, SECURITY);
         final FieldPlan later = FeedIndexes.resolved(FeedIndexes.withInherited(plan(INDEX, field("UserId", "keyword",
                         "EventDetail/Send/Source/User/Id"), field("Direction", "keyword", "EventDetail/TypeId")),
                 entry), entry, FeedIndexes.clashes(FeedIndexes.withInherited(plan(INDEX, field("UserId", "keyword",
                 "EventDetail/Send/Source/User/Id")), entry), entry).getFirst(), FeedIndexes.SAME_MEANING, null);
 
-        final List<String> added = FeedIndexes.record(registry, FEED, later, null, LATER);
+        final List<String> added = FeedIndexes.record(registry, SECURITY, FEED, later, null, LATER);
 
         assertThat(added).containsExactly("Direction");
-        final Map<String, Object> after = FeedIndexes.index(registry, FEED);
+        final Map<String, Object> after = FeedIndexes.indexOfGroup(registry, SECURITY);
         assertThat(JsonValues.mapOrEmpty(after.get("index_doc"))).containsEntry("uuid", "u-1");
         assertThat(JsonValues.mapOrEmpty(after.get("added_by"))).containsEntry("UserId", "pega-1")
                 .containsEntry("Direction", "pega-2");
@@ -244,13 +330,15 @@ class TestFeedIndexes {
     void aNewVersionReplacesTheIndexRecorded() {
         final Map<String, Object> registry = recorded();
 
-        final List<String> added = FeedIndexes.record(registry, FEED, plan("pega-events-v2", field("TypeId", "long",
-                "EventDetail/TypeId")), null, LATER);
+        final List<String> added = FeedIndexes.record(registry, SECURITY, FEED, plan("pega-events-v2",
+                field("TypeId", "long", "EventDetail/TypeId")), null, LATER);
 
         assertThat(added).containsExactly("TypeId");
-        assertThat(FeedIndexes.index(registry, FEED)).containsEntry("index", "pega-events-v2")
+        assertThat(FeedIndexes.indexOfGroup(registry, SECURITY)).containsEntry("index", "pega-events-v2")
                 .containsEntry("replaces", INDEX)
                 .doesNotContainKey("index_doc");
+        // No group's Events left in the old one: it is no longer recorded.
+        assertThat(FeedIndexes.indexNamed(registry, INDEX)).isEmpty();
     }
 
     @Test
@@ -269,8 +357,8 @@ class TestFeedIndexes {
 
         assertThat(text).contains("## Indexes", "Shared by every build of the feed: backend lucene, fields named by "
                                                 + "the stroom-flat convention",
-                "* Output feed `PEGA`: index `pega-events` (lucene), 5 field(s), for group(s) PEGA security, PEGA "
-                + "mail.");
+                "Each source type group has an index of its own, unless the user chose to share one.",
+                "* Index `pega-events` (lucene), 5 field(s), for group(s) PEGA security, Events in feed(s) PEGA.");
         assertThat(SourceTypeRegistry.read(text)).containsKey(FeedIndexes.INDEXES);
     }
 
@@ -308,7 +396,8 @@ class TestFeedIndexes {
     // The registry once the first build's plan is promoted.
     private static Map<String, Object> recorded() {
         final Map<String, Object> registry = registry();
-        FeedIndexes.record(registry, FEED, firstPlan(), Map.of("type", "Index", "uuid", "u-1", "name", INDEX), FIRST);
+        FeedIndexes.record(registry, SECURITY, FEED, firstPlan(), Map.of("type", "Index", "uuid", "u-1", "name",
+                INDEX), FIRST);
         return registry;
     }
 
@@ -319,7 +408,7 @@ class TestFeedIndexes {
         fields.replaceAll(field -> "UserId".equals(field.name())
                 ? new PlannedField("UserId", "keyword", "EventSource/User/Id", "The user logging on.", null, false)
                 : field);
-        FeedIndexes.record(registry, FEED, firstPlan().withFields(fields), null, FIRST);
+        FeedIndexes.record(registry, SECURITY, FEED, firstPlan().withFields(fields), null, FIRST);
         return registry;
     }
 

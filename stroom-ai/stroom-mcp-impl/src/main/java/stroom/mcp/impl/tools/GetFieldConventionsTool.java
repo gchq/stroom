@@ -491,6 +491,16 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
                 ? "draft_index_mapping like_index=" + naming.get("like_index") + " (with the events streams)."
                 : "draft_index_mapping convention=" + naming.get("convention") + " (with the events streams).");
         plan.currentBuild(context).ifPresent(build -> result.put("build", build));
+        if (sharedFrom != null && feedIndexes != null) {
+            // Each source type group has an index of its own: named like the feed's others, with the group in it.
+            plan.currentBuild(context).flatMap(build -> feedIndexes.get().suggestedIndexName(build))
+                    .ifPresent(name -> result.put("index_name", "Each source type group has an index of its own "
+                                                                + "(unless the user asks to share another group's: "
+                                                                + "draft_index_mapping "
+                                                                + FeedIndexDecisions.SHARE_INDEX_WITH_ARG + "=): "
+                                                                + "named like the feed's others, with the group in "
+                                                                + "it, e.g. index_name=" + name + "."));
+        }
         return result;
     }
 

@@ -55,22 +55,30 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /// An aggregated feed's indexes across its scoped builds ([FeedIndexes]): the indexing backend and field naming the
-/// feed's builds share, made once with the user and kept in the registry's machine block; one index per output feed,
-/// every group writing to that feed's Events sharing it; its fields the union of theirs, checked for clashes with the
-/// fields the index has already before a build adds its own; and those fields recorded when the build is promoted.
-/// Nothing here applies to a build with no source type registry.
+/// feed's builds share, made once with the user and kept in the registry's machine block; an index of its own for
+/// each source type group by default (decided 2026-11-14), even where its Events go into the same feed as other
+/// groups' (its indexing pipeline's processor filter selects only the Events its group's pipeline wrote); an index
+/// shared with other groups only where the user asks ([#SHARE_INDEX_WITH_ARG]), its fields then the union of theirs;
+/// a plan checked for clashes with the fields its index has already before a build adds its own; and those fields
+/// recorded when the build is promoted. Nothing here applies to a build with no source type registry.
 class FeedIndexDecisions {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FeedIndexDecisions.class);
 
-    /// The build record's indexing choice holding each plan's output feed, by index name.
-    static final String OUTPUT_FEEDS = "output_feeds";
+    /// The build record's indexing choice holding each plan's group, output feed and whether it is shared, by index
+    /// name.
+    static final String INDEX_GROUPS = "index_groups";
+    /// The argument that says the user asked for the group's Events in another group's index.
+    static final String SHARE_INDEX_WITH_ARG = "share_index_with";
     /// The argument that says the user asked to change a shared decision.
     static final String CHANGE_SHARED_ARG = "change_shared";
     /// The share a path a source type group writes is planned with, when no Event of the sample has it.
     static final double WRITTEN_SHARE = 0.001;
     private static final String BACKEND = "backend";
     private static final String INDEX = "index";
+    private static final String GROUP = "group";
+    private static final String OUTPUT_FEED = "output_feed";
+    private static final String SHARED = "shared";
     private static final Pattern NOT_A_NAME = Pattern.compile("[^a-z0-9]+");
 
     private final SourceTypeGroups groups;
@@ -110,13 +118,15 @@ class FeedIndexDecisions {
         return buildPlan.get().currentBuild(context).orElse(null);
     }
 
+    /// @param call      The call: its [#SHARE_INDEX_WITH_ARG], if any.
     /// @param build     The build the Events are from, or null.
-    /// @param streamIds Events streams of one of its aggregated feed's output feeds.
-    /// @return The Events paths the source type groups writing to that output feed write, as their mappings say
-    /// (kept with each group's XSLT); none for a build of no aggregated feed.
-    List<String> writtenByGroups(final String build, final List<Long> streamIds) {
+    /// @param streamIds Events streams of one of its aggregated feed's source type groups.
+    /// @return The Events paths the groups whose Events the plan's index holds write, as their mappings say (kept
+    /// with each group's XSLT): the group's own, and the groups of an index shared at the user's word; none for a
+    /// build of no aggregated feed.
+    List<String> writtenByGroups(final ToolCall call, final String build, final List<Long> streamIds) {
         final List<String> descriptions = new ArrayList<>();
-        groupXslts(build, streamIds).forEach(uuid -> documentAccess.read(new DocRef(XsltDoc.TYPE, uuid),
+        groupXslts(call, build, streamIds).forEach(uuid -> documentAccess.read(new DocRef(XsltDoc.TYPE, uuid),
                         XsltDoc.class)
                 .map(XsltDoc::getDescription)
                 .ifPresent(descriptions::add));
@@ -130,28 +140,34 @@ class FeedIndexDecisions {
         return List.copyOf(paths);
     }
 
-    /// The XSLTs of the source type groups whose Events go to one output feed: their index is one, so its plan is
-    /// the union of their fields. Found through the registry's rows (each translated row's `group_xslt` and
-    /// `output_feed`), each group's pipeline being its own.
+    /// The XSLTs of the source type groups whose Events the plan's index holds: the Events' group's own (each group
+    /// has an index of its own), and, where the user asked to share another group's index, that index's groups, its
+    /// plan then the union of their fields. Found through the registry's rows (each translated row's `group` and
+    /// `group_xslt`).
     ///
+    /// @param call      The call: its [#SHARE_INDEX_WITH_ARG], if any.
     /// @param build     The build the Events are from, or null.
-    /// @param streamIds Events streams of one of its aggregated feed's output feeds.
+    /// @param streamIds Events streams of one of its aggregated feed's source type groups.
     /// @return The groups' XSLTs' UUIDs, each once, in the registry's order; none for a build of no aggregated feed.
-    List<String> groupXslts(final String build, final List<Long> streamIds) {
+    List<String> groupXslts(final ToolCall call, final String build, final List<Long> streamIds) {
         final Optional<SourceTypeGroups.Registry> found = registry(build);
-        if (found.isEmpty() || NullSafe.isEmptyCollection(streamIds)) {
-            return List.of();
-        }
-        final String outputFeed = outputFeedIn(build, found.get(), streamIds.getFirst());
-        if (outputFeed == null) {
+        if (found.isEmpty() || NullSafe.isEmptyCollection(streamIds)
+            || outputFeedIn(build, found.get(), streamIds.getFirst()) == null) {
             return List.of();
         }
         final Map<String, Object> state = found.get().found().state();
+        final String group = groupOf(build, found.get(), streamIds.getFirst());
+        if (group == null) {
+            return List.of();
+        }
+        final Set<String> groupsIn = new LinkedHashSet<>(List.of(group.toLowerCase(Locale.ROOT)));
+        sharedIndex(call, found.get(), group, false).ifPresent(entry -> FeedIndexes.groupsOf(entry)
+                .forEach(each -> groupsIn.add(each.toLowerCase(Locale.ROOT))));
         final Set<String> out = new LinkedHashSet<>();
         for (final Map<String, Object> row : JsonValues.maps(state.get("rows"))) {
             final String uuid = JsonValues.text(JsonValues.mapOrEmpty(row.get("group_xslt")).get("uuid"));
             if (SourceTypeRegistry.TRANSLATED.equals(row.get("status")) && !uuid.isBlank()
-                && outputFeed.equals(FeedIndexes.outputFeedOf(state, row))) {
+                && groupsIn.contains(JsonValues.text(row.get(GROUP)).toLowerCase(Locale.ROOT))) {
                 out.add(uuid);
             }
         }
@@ -237,10 +253,12 @@ class FeedIndexDecisions {
     // A plan for an output feed's index.
     // --------------------------------------------------------------------------------
 
-    /// A drafted or amended plan as the output feed's index has it: the index the feed's groups share (its name,
-    /// refused otherwise unless the user asked for a new one), its fields the union of theirs, and each field of
-    /// this build's the index has otherwise put to the user in one form (another type: a field of another name, or
-    /// a new version of the index; another meaning: one field read from both, or a field of another name).
+    /// A drafted or amended plan as its group's index has it. Each source type group has an index of its own: a
+    /// name another group's index has is refused, unless the user asked to share it ([#SHARE_INDEX_WITH_ARG]); the
+    /// group's index once recorded keeps its name (refused otherwise unless the user asked for a new one); its fields
+    /// are those recorded with the plan's (the union of the groups' where it is shared), and each field of this
+    /// build's the index has otherwise is put to the user in one form (another type: a field of another name, or a
+    /// new version of the index; another meaning: one field read from both, or a field of another name).
     ///
     /// @param call      The call.
     /// @param context   Its context.
@@ -250,8 +268,8 @@ class FeedIndexDecisions {
     /// @param tool      The tool asking.
     /// @return The plan as the index has it, and what was done, said; the plan as given for a build of no
     /// aggregated feed.
-    /// @throws ToolRefusal for an index name another output feed's index has, or not the output feed's own unless
-    ///                     the user asked for a new one.
+    /// @throws ToolRefusal for an index name another group's index has (unless shared at the user's word), or not
+    ///                     the group's own unless the user asked for a new one.
     ForPlan forPlan(final ToolCall call,
                     final ToolCallContext context,
                     final String build,
@@ -264,26 +282,46 @@ class FeedIndexDecisions {
         final Optional<SourceTypeGroups.Registry> found = registry(build);
         final String outputFeed = found.map(registry -> outputFeedIn(build, registry, streamIds.getFirst()))
                 .orElse(null);
-        if (outputFeed == null) {
+        final String group = outputFeed == null
+                ? null
+                : groupOf(build, found.get(), streamIds.getFirst());
+        if (group == null) {
             return new ForPlan(plan, Map.of());
         }
         final Map<String, Object> state = found.get().found().state();
         final String feed = found.get().feed();
-        refuseOtherFeedsIndex(build, state, outputFeed, plan.indexName());
-        final Map<String, Object> entry = FeedIndexes.index(state, outputFeed);
+        final Optional<Map<String, Object>> shared = sharedIndex(call, found.get(), group, true);
+        final Map<String, Object> own = FeedIndexes.indexOfGroup(state, group);
+        final Map<String, Object> entry = shared.orElse(own);
+        refuseOtherGroupsIndex(build, state, group, plan.indexName(), entry, feed);
         final Map<String, Object> said = new LinkedHashMap<>();
-        said.put("output_feed", outputFeed);
-        said.put("groups", FeedIndexes.groupsTo(state, outputFeed));
+        said.put(OUTPUT_FEED, outputFeed);
+        said.put(GROUP, group);
+        final Set<String> groupsIn = new LinkedHashSet<>(FeedIndexes.groupsOf(entry));
+        if (groupsIn.stream().noneMatch(group::equalsIgnoreCase)) {
+            groupsIn.add(group);
+        }
+        said.put("groups", List.copyOf(groupsIn));
+        if (shared.isPresent()) {
+            said.put("shared_with", FeedIndexes.groupsOf(shared.get()).stream()
+                    .filter(each -> !each.equalsIgnoreCase(group))
+                    .toList());
+            if (!own.isEmpty() && !FeedIndexes.sameIndex(plan, own)) {
+                said.put("moves_from", JsonValues.text(own.get(INDEX)));
+            }
+        }
         FieldPlan out = plan;
-        final boolean versionChosen = outputFeed.equals(JsonValues.text(outputFeeds(build).get(plan.indexName())));
+        final Map<String, Object> remembered = JsonValues.mapOrEmpty(indexGroups(build).get(plan.indexName()));
+        final boolean versionChosen = group.equalsIgnoreCase(JsonValues.text(remembered.get(GROUP)));
         if (!entry.isEmpty() && !FeedIndexes.sameIndex(plan, entry) && versionChosen) {
-            // A new version the user chose earlier in the build (for a clash): every group's fields, nothing asked.
+            // A new version the user chose earlier in the build (for a clash): the index's fields, nothing asked.
             said.put("new_version_of", JsonValues.text(entry.get(INDEX)));
         } else if (!entry.isEmpty() && !FeedIndexes.sameIndex(plan, entry)) {
             final String index = JsonValues.text(entry.get(INDEX));
             if (!changeAsked(call)) {
-                throw new ToolRefusal("Output feed '" + outputFeed + "' has index '" + index + "', which every "
-                                      + "source type group writing to it shares (kept in " + kept(feed) + "): "
+                throw new ToolRefusal((shared.isPresent()
+                        ? "Shared at the user's word (" + SHARE_INDEX_WITH_ARG + "), the index is '" + index + "'"
+                        : "Group '" + group + "' has index '" + index + "'") + " (kept in " + kept(feed) + "): "
                                       + "draft with index_name='" + index + "'. A new index version only where "
                                       + "the user chooses one for a clash (this tool asks them), or asks for one: "
                                       + "then call again with " + CHANGE_SHARED_ARG + "=true and they confirm it.");
@@ -292,7 +330,7 @@ class FeedIndexDecisions {
             details.put("now", index);
             details.put("kept in", kept(feed));
             details.put("history", "documents already in " + index + " stay there: forward only");
-            consent.require(call, context, Consent.Request.confirmation(tool, "Index feed '" + outputFeed
+            consent.require(call, context, Consent.Request.confirmation(tool, "Index group '" + group
                                                                               + "' into a new index '"
                                                                               + plan.indexName() + "'", details));
             said.put("new_version_of", index);
@@ -307,14 +345,17 @@ class FeedIndexDecisions {
         }
         final List<Clash> clashes = FeedIndexes.clashes(out, entry);
         if (!clashes.isEmpty()) {
-            out = resolve(call, context, out, entry, clashes, suffix(build, state, outputFeed), outputFeed, tool,
-                    said);
+            out = resolve(call, context, out, entry, clashes, suffixOf(group), tool, said);
         }
         said.putIfAbsent(INDEX, out.indexName());
-        rememberOutputFeed(build, out.indexName(), outputFeed);
-        said.put("kept", "The feed's shared indexing decisions and each output feed's index are kept in " + kept(feed)
-                         + ": every group writing to '" + outputFeed + "' shares this index, and promotion adds "
-                         + "this build's new fields to it (forward only: documents indexed before don't get them).");
+        rememberIndexGroup(build, out.indexName(), group, outputFeed, shared.isPresent());
+        said.put("kept", "The feed's shared indexing decisions and each group's index are kept in " + kept(feed)
+                         + (shared.isPresent()
+                ? ": the user chose to share this index, so its fields are the union of its groups'"
+                : ": each source type group has an index of its own, its indexing pipeline's processor filter "
+                  + "selecting only the Events its group's pipeline wrote (create_processor_filter "
+                  + "source_pipeline_uuid=)") + "; promotion adds this build's new fields to it (forward only: "
+                         + "documents indexed before don't get them).");
         return new ForPlan(out, said);
     }
 
@@ -325,14 +366,13 @@ class FeedIndexDecisions {
                               final Map<String, Object> entry,
                               final List<Clash> clashes,
                               final String suffix,
-                              final String outputFeed,
                               final String tool,
                               final Map<String, Object> said) {
         final Map<String, Consent.Question> questions = new LinkedHashMap<>();
         final List<String> lines = new ArrayList<>(List.of("Fields of this build clash with index "
-                                                           + JsonValues.text(entry.get(INDEX)) + ", which every "
-                                                           + "group writing to feed " + outputFeed + " shares. "
-                                                           + "Choose for each."));
+                                                           + JsonValues.text(entry.get(INDEX)) + ", which holds "
+                                                           + "the Events of group(s) " + String.join(", ",
+                FeedIndexes.groupsOf(entry)) + ". Choose for each."));
         for (final Clash clash : clashes) {
             questions.put(clash.ours().name(), new Consent.Question(clash.question(),
                     List.copyOf(clash.options(suffix).keySet())));
@@ -369,15 +409,15 @@ class FeedIndexDecisions {
         if (!out.indexName().equals(plan.indexName())) {
             said.put("new_version_of", plan.indexName());
             said.put(INDEX, out.indexName());
-            said.put("new_version_hint", "The user chose a new index version, " + out.indexName() + ", with every "
-                                         + "group's fields: make it (create_index_doc, and a new version of the "
+            said.put("new_version_hint", "The user chose a new index version, " + out.indexName() + ", with the "
+                                         + "index's fields: make it (create_index_doc, and a new version of the "
                                          + "indexing pipeline: copy_pipeline) and index from now on. Documents "
                                          + "already in " + plan.indexName() + " stay there: forward only.");
         }
         return out;
     }
 
-    /// Refuses a second index doc for an output feed's index an earlier build made: promotion adds a later build's
+    /// Refuses a second index doc for an index of the feed's an earlier build made: promotion adds a later build's
     /// fields to it.
     ///
     /// @param build The build.
@@ -388,38 +428,101 @@ class FeedIndexDecisions {
             return;
         }
         registry(build).ifPresent(registry -> {
-            final Map<String, Object> state = registry.found().state();
-            FeedIndexes.outputFeedOfIndex(state, index).ifPresent(outputFeed -> {
-                final Map<String, Object> doc = JsonValues.mapOrEmpty(FeedIndexes.index(state, outputFeed)
-                        .get("index_doc"));
-                if (!doc.isEmpty() && guard.buildOf(new DocRef(JsonValues.text(doc.get("type")),
-                        JsonValues.text(doc.get("uuid")))).isEmpty()) {
-                    throw new ToolRefusal("Index '" + index + "' is the index of output feed '" + outputFeed + "', "
-                                          + "made by an earlier build (" + JsonValues.text(doc.get("type")) + " '"
-                                          + JsonValues.text(doc.get("name")) + "', kept in "
-                                          + kept(registry.feed()) + "): don't make another. Promotion adds this "
-                                          + "build's new fields to it; its indexing pipeline changes through a "
-                                          + "working copy (copy_pipeline working_copy=true), its XSLT saved from the "
-                                          + "plan (save_xslt index_plan=).");
-                }
-            });
+            final Map<String, Object> entry = FeedIndexes.indexNamed(registry.found().state(), index);
+            final Map<String, Object> doc = JsonValues.mapOrEmpty(entry.get("index_doc"));
+            if (!doc.isEmpty() && guard.buildOf(new DocRef(JsonValues.text(doc.get("type")),
+                    JsonValues.text(doc.get("uuid")))).isEmpty()) {
+                throw new ToolRefusal("Index '" + index + "' is the index of group(s) " + String.join(", ",
+                        FeedIndexes.groupsOf(entry)) + ", made by an earlier build (" + JsonValues.text(doc.get("type"))
+                                      + " '" + JsonValues.text(doc.get("name")) + "', kept in " + kept(registry.feed())
+                                      + "): don't make another. Promotion adds this build's new fields to it; its "
+                                      + "indexing pipeline changes through a working copy (copy_pipeline "
+                                      + "working_copy=true), its XSLT saved from the plan (save_xslt index_plan=).");
+            }
         });
     }
 
-    // An index name is one output feed's: a group with an output feed of its own has an index of its own.
-    private void refuseOtherFeedsIndex(final String build,
-                                       final Map<String, Object> state,
-                                       final String outputFeed,
-                                       final String index) {
-        final Optional<String> recorded = FeedIndexes.outputFeedOfIndex(state, index)
-                .or(() -> Optional.ofNullable(JsonValues.text(outputFeeds(build).get(index)))
-                        .filter(feed -> !feed.isBlank()));
-        if (recorded.isPresent() && !recorded.get().equals(outputFeed)) {
-            throw new ToolRefusal("Index '" + index + "' is the index of output feed '" + recorded.get() + "': one "
-                                  + "index per output feed, so the Events of '" + outputFeed + "' (a group's own "
-                                  + "output feed, or the feed's own) go in an index of their own. Give another "
-                                  + "index_name.");
+    /// @param build A build, or null.
+    /// @return The name suggested for the index of the build's source type group, named like the feed's first index
+    /// with the group in it; empty for a build of no aggregated feed, one whose group has an index already, or before
+    /// any index of the feed is recorded.
+    Optional<String> suggestedIndexName(final String build) {
+        return registry(build).flatMap(registry -> {
+            final Map<String, Object> state = registry.found().state();
+            final Optional<String> group = scopedGroup(build, registry);
+            final List<Map<String, Object>> recorded = FeedIndexes.indexes(state);
+            if (group.isEmpty() || recorded.isEmpty() || !FeedIndexes.indexOfGroup(state, group.get()).isEmpty()) {
+                return Optional.empty();
+            }
+            final Map<String, Object> first = recorded.getFirst();
+            return Optional.of(FeedIndexes.groupIndexName(JsonValues.text(first.get(INDEX)),
+                    FeedIndexes.groupsOf(first), group.get()));
+        });
+    }
+
+    // Each source type group has an index of its own: a name another group's index has (recorded, or chosen in this
+    // build for another group) is refused, unless the user asked to share it.
+    private void refuseOtherGroupsIndex(final String build,
+                                        final Map<String, Object> state,
+                                        final String group,
+                                        final String index,
+                                        final Map<String, Object> target,
+                                        final String feed) {
+        final Map<String, Object> named = FeedIndexes.indexNamed(state, index);
+        final List<String> others = new ArrayList<>(FeedIndexes.groupsOf(named));
+        final String inBuild = JsonValues.text(JsonValues.mapOrEmpty(indexGroups(build).get(index)).get(GROUP));
+        if (!inBuild.isBlank() && others.stream().noneMatch(inBuild::equalsIgnoreCase)) {
+            others.add(inBuild);
         }
+        if (others.isEmpty() || others.stream().anyMatch(group::equalsIgnoreCase)
+            || index.equals(JsonValues.text(target.get(INDEX)))) {
+            return;
+        }
+        throw new ToolRefusal("Index '" + index + "' is the index of group(s) " + String.join(", ", others) + " (kept "
+                              + "in " + kept(feed) + "): each source type group has an index of its own, even where "
+                              + "its Events go into the same feed (its indexing pipeline's processor filter selects "
+                              + "only its group's pipeline's Events). Give group '" + group + "' an index_name of "
+                              + "its own, named like the feed's others with the group in it ('"
+                              + FeedIndexes.groupIndexName(index, others, group) + "', say). Only if the user asks "
+                              + "for one index with " + String.join(", ", others) + ", call again with "
+                              + SHARE_INDEX_WITH_ARG + "='" + others.getFirst() + "': its fields are then the union of "
+                              + "the groups', checked for clashes.");
+    }
+
+    // The index the user asked to share (share_index_with: a group of the feed whose index is recorded, or a
+    // recorded index's name); empty when not asked, or when it is the group's own already.
+    private Optional<Map<String, Object>> sharedIndex(final ToolCall call,
+                                                      final SourceTypeGroups.Registry registry,
+                                                      final String group,
+                                                      final boolean refuseUnknown) {
+        final String named = call == null
+                ? null
+                : NullSafe.get(ToolArgs.raw(call, SHARE_INDEX_WITH_ARG), Object::toString);
+        if (NullSafe.isBlankString(named)) {
+            return Optional.empty();
+        }
+        final Map<String, Object> state = registry.found().state();
+        Map<String, Object> entry = FeedIndexes.indexOfGroup(state, named.strip());
+        if (entry.isEmpty()) {
+            entry = FeedIndexes.indexNamed(state, named.strip());
+        }
+        if (entry.isEmpty()) {
+            if (!refuseUnknown) {
+                return Optional.empty();
+            }
+            final List<String> known = FeedIndexes.indexes(state).stream()
+                    .map(each -> JsonValues.text(each.get(INDEX)) + " (group(s) " + String.join(", ",
+                            FeedIndexes.groupsOf(each)) + ")")
+                    .toList();
+            throw new ToolRefusal(SHARE_INDEX_WITH_ARG + "='" + named + "' names no index of feed '" + registry.feed()
+                                  + "' recorded in " + kept(registry.feed()) + (known.isEmpty()
+                    ? ": it has none yet (a group's index is recorded when its build is promoted)"
+                    : ": it has " + String.join("; ", known)) + ". Name a group whose index is recorded, or one of "
+                                  + "those indexes; or leave it out: the group gets an index of its own.");
+        }
+        return FeedIndexes.groupsOf(entry).stream().anyMatch(group::equalsIgnoreCase)
+                ? Optional.empty()
+                : Optional.of(entry);
     }
 
     // --------------------------------------------------------------------------------
@@ -427,23 +530,24 @@ class FeedIndexDecisions {
     // --------------------------------------------------------------------------------
 
     /// What promoting a build changes in its aggregated feed's indexes: each indexing plan the build keeps (with its
-    /// indexing XSLT), the output feed it is for, and the fields it adds.
+    /// indexing XSLT), the group and output feed it is for, and the fields it adds.
     ///
     /// @param build A build.
     /// @param docs  Its documents, as the plan lists them.
     /// @return The changes; none for a build of no aggregated feed, or one whose registry isn't in it.
-    /// @throws ToolRefusal while a plan has a field the index has otherwise: promotion is held until the user
-    ///                     chooses.
+    /// @throws ToolRefusal while a plan has a field the index has otherwise (promotion is held until the user
+    ///                     chooses), or names another group's index the user didn't ask to share.
     List<IndexChange> changes(final String build, final List<Map<String, Object>> docs) {
         final Optional<SourceTypeGroups.Registry> found = registry(build).filter(r -> !r.found().promoted());
         if (found.isEmpty()) {
             return List.of();
         }
         final Map<String, Object> state = found.get().found().state();
-        final List<String> outputFeeds = FeedIndexes.outputFeeds(state);
-        final Map<String, Object> recorded = outputFeeds(build);
-        final Map<String, IndexChange> byFeed = new LinkedHashMap<>();
+        final Map<String, Object> recorded = indexGroups(build);
+        final String scoped = scopedGroup(build, found.get()).orElse(null);
+        final Map<String, IndexChange> byIndex = new LinkedHashMap<>();
         final List<String> held = new ArrayList<>();
+        final List<String> notShared = new ArrayList<>();
         for (final Map<String, Object> doc : docs) {
             if (!XsltDoc.TYPE.equals(doc.get("type"))) {
                 continue;
@@ -453,35 +557,49 @@ class FeedIndexDecisions {
                 continue;
             }
             final FieldPlan plan = kept.get();
-            final String outputFeed = JsonValues.text(recorded.get(plan.indexName())).isBlank()
-                    ? FeedIndexes.outputFeedOfIndex(state, plan.indexName())
-                            .orElse(outputFeeds.size() == 1
-                                    ? outputFeeds.getFirst()
-                                    : null)
-                    : JsonValues.text(recorded.get(plan.indexName()));
-            if (outputFeed == null) {
+            final Map<String, Object> remembered = JsonValues.mapOrEmpty(recorded.get(plan.indexName()));
+            final String group = NullSafe.nonBlankStringElse(JsonValues.text(remembered.get(GROUP)), scoped);
+            if (NullSafe.isBlankString(group)) {
                 continue;
             }
-            final Map<String, Object> entry = FeedIndexes.index(state, outputFeed);
+            final String outputFeed = NullSafe.nonBlankStringElse(JsonValues.text(remembered.get(OUTPUT_FEED)),
+                    FeedIndexes.outputFeedOfGroup(state, group));
+            final Map<String, Object> named = FeedIndexes.indexNamed(state, plan.indexName());
+            if (!named.isEmpty() && FeedIndexes.groupsOf(named).stream().noneMatch(group::equalsIgnoreCase)
+                && !JsonValues.truthy(remembered.get(SHARED))) {
+                notShared.add("index " + plan.indexName() + " is the index of group(s) " + String.join(", ",
+                        FeedIndexes.groupsOf(named)) + ", not of group '" + group + "'");
+                continue;
+            }
+            final Map<String, Object> entry = named.isEmpty()
+                    ? FeedIndexes.indexOfGroup(state, group)
+                    : named;
             FeedIndexes.clashes(plan, entry).forEach(clash -> held.add(clash.said()));
             final List<String> added = FeedIndexes.newFields(plan, entry).stream().map(PlannedField::name).toList();
-            byFeed.put(outputFeed, new IndexChange(found.get().feed(), outputFeed, plan, added,
+            byIndex.put(plan.indexName(), new IndexChange(found.get().feed(), group, outputFeed, plan, added,
                     indexDoc(build, plan, entry), !FeedIndexes.sameIndex(plan, entry),
                     JsonValues.text(entry.get(INDEX))));
         }
+        if (!notShared.isEmpty()) {
+            throw new ToolRefusal("Not promoted: " + String.join("; ", notShared) + ". Each source type group has an "
+                                  + "index of its own: draft_index_mapping for this build's Events with an "
+                                  + "index_name of the group's own (or, only if the user asked for one index with "
+                                  + "that group, " + SHARE_INDEX_WITH_ARG + "=), save_xslt index_plan= the plan it "
+                                  + "gives, then promote_build.");
+        }
         if (!held.isEmpty()) {
             throw new ToolRefusal("Not promoted: held until the user chooses for each field this build's index plan "
-                                  + "has that its output feed's index has otherwise. " + String.join(" ", held)
+                                  + "has that its index has otherwise. " + String.join(" ", held)
                                   + " Call draft_index_mapping for that index again (with the Events streams): it "
                                   + "asks the user in a form (for another type, a field of another name or a new "
                                   + "index version; for another meaning, one field read from both or a field of "
                                   + "another name), then save_xslt index_plan= the plan it gives, then promote_build.");
         }
-        return List.copyOf(byFeed.values());
+        return List.copyOf(byIndex.values());
     }
 
     /// Applies a promotion's index changes, once the user approved it and before the build's documents are moved:
-    /// the registry records each output feed's index and its fields; a Lucene index doc beside the feed gains the
+    /// the registry records each group's index and its fields; a Lucene index doc beside the feed gains the
     /// fields it lacks (an Elasticsearch index's come from its template, the cluster admin's to commit).
     ///
     /// @param context The call's context.
@@ -499,7 +617,7 @@ class FeedIndexDecisions {
         final List<String> done = new ArrayList<>();
         for (final IndexChange change : changes) {
             final DocRef doc = change.indexDoc();
-            FeedIndexes.record(state, change.outputFeed(), change.plan(), doc == null
+            FeedIndexes.record(state, change.group(), change.outputFeed(), change.plan(), doc == null
                     ? null
                     : Map.of("type", doc.getType(), "uuid", doc.getUuid(), "name", NullSafe.string(doc.getName())),
                     decided(build));
@@ -580,40 +698,67 @@ class FeedIndexDecisions {
                 : null;
     }
 
-    // What a field of this build's own is named with: the build's first group writing to the output feed.
-    private String suffix(final String build, final Map<String, Object> state, final String outputFeed) {
-        for (final Map<String, Object> row : JsonValues.maps(state.get("rows"))) {
-            final String uuid = JsonValues.text(JsonValues.mapOrEmpty(row.get("group_xslt")).get("uuid"));
-            if (outputFeed.equals(FeedIndexes.outputFeedOf(state, row)) && !uuid.isBlank()
-                && guard.buildOf(new DocRef(XsltDoc.TYPE, uuid)).filter(build::equals).isPresent()) {
-                return suffixOf(JsonValues.text(row.get("group")));
+    // The source type group whose Events the stream holds: the group whose pipeline wrote it (the registry's rows
+    // name each group's pipeline), else the build's own group (its scope's). Null for neither.
+    private String groupOf(final String build, final SourceTypeGroups.Registry registry, final long streamId) {
+        String pipeline = null;
+        try {
+            pipeline = streamReader.meta(streamId).getPipelineUuid();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No pipeline read for stream {}: {}", streamId, e.getMessage()));
+        }
+        if (!NullSafe.isBlankString(pipeline)) {
+            for (final Map<String, Object> row : JsonValues.maps(registry.found().state().get("rows"))) {
+                final String group = JsonValues.text(row.get(GROUP));
+                if (!group.isBlank()
+                    && pipeline.equals(JsonValues.text(JsonValues.mapOrEmpty(row.get("pipeline")).get("uuid")))) {
+                    return group;
+                }
             }
         }
-        return null;
+        return scopedGroup(build, registry).orElse(null);
     }
 
-    private Map<String, Object> outputFeeds(final String build) {
+    // The build's own source type group, its scope's; empty for none.
+    private Optional<String> scopedGroup(final String build, final SourceTypeGroups.Registry registry) {
+        try {
+            return groups.scopedGroup(build, List.of(registry.feed()));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No group read for build {}: {}", build, e.getMessage()));
+            return Optional.empty();
+        }
+    }
+
+    private Map<String, Object> indexGroups(final String build) {
         if (NullSafe.isBlankString(build)) {
             return Map.of();
         }
         try {
-            return JsonValues.mapOrEmpty(records.indexingChoices(build).get(OUTPUT_FEEDS));
+            return JsonValues.mapOrEmpty(records.indexingChoices(build).get(INDEX_GROUPS));
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> LogUtil.message("No output feeds read for build {}: {}", build, e.getMessage()));
+            LOGGER.debug(() -> LogUtil.message("No index groups read for build {}: {}", build, e.getMessage()));
             return Map.of();
         }
     }
 
-    private void rememberOutputFeed(final String build, final String index, final String outputFeed) {
+    private void rememberIndexGroup(final String build,
+                                    final String index,
+                                    final String group,
+                                    final String outputFeed,
+                                    final boolean shared) {
         if (NullSafe.isBlankString(build)) {
             return;
         }
-        final Map<String, Object> feeds = new LinkedHashMap<>(outputFeeds(build));
-        if (outputFeed.equals(feeds.get(index))) {
+        final Map<String, Object> entry = new LinkedHashMap<>();
+        entry.put(GROUP, group);
+        entry.put(OUTPUT_FEED, outputFeed);
+        entry.put(SHARED, shared);
+        final Map<String, Object> all = new LinkedHashMap<>(indexGroups(build));
+        if (entry.equals(all.get(index))) {
             return;
         }
-        feeds.put(index, outputFeed);
-        records.rememberIndexingChoice(build, OUTPUT_FEEDS, feeds);
+        all.put(index, entry);
+        records.rememberIndexingChoice(build, INDEX_GROUPS, all);
     }
 
     private Optional<FieldPlan> keptPlan(final String xsltUuid) {
@@ -668,25 +813,28 @@ class FeedIndexDecisions {
     // --------------------------------------------------------------------------------
 
 
-    /// A plan as its output feed's index has it.
+    /// A plan as its group's index has it.
     ///
     /// @param plan The plan.
-    /// @param said What was done: `output_feed`, `index`, `groups`, `inherited_fields`, `clashes_resolved`,
-    ///             `index_clashes` (without a form), `kept`; none for a build of no aggregated feed.
+    /// @param said What was done: `output_feed`, `group`, `index`, `groups`, `shared_with` and `moves_from` (an index
+    ///             shared at the user's word), `inherited_fields`, `clashes_resolved`, `index_clashes` (without a
+    ///             form), `kept`; none for a build of no aggregated feed.
     record ForPlan(FieldPlan plan, Map<String, Object> said) {
 
     }
 
-    /// What promoting a build changes in one output feed's index.
+    /// What promoting a build changes in one group's index.
     ///
     /// @param feed       The aggregated feed.
-    /// @param outputFeed The output feed.
+    /// @param group      The source type group whose Events the index holds.
+    /// @param outputFeed The feed those Events are in.
     /// @param plan       The build's plan for its index.
     /// @param added      The fields it adds.
     /// @param indexDoc   The index's document, or null when none is known.
     /// @param newIndex   True for an index not recorded yet, or a new version of the one that is.
     /// @param replaces   The index recorded before, or "".
     record IndexChange(String feed,
+                       String group,
                        String outputFeed,
                        FieldPlan plan,
                        List<String> added,
@@ -696,15 +844,15 @@ class FeedIndexDecisions {
 
         /// @return The change, said for the approval.
         String said() {
+            final String which = "index " + plan.indexName() + " (group " + group + ", feed " + outputFeed + "): ";
             if (newIndex && !replaces.isBlank()) {
-                return "index " + plan.indexName() + " (feed " + outputFeed + "): a new version of " + replaces
-                       + ", with " + plan.fields().size() + " fields, from now on";
+                return which + "a new version of " + replaces + ", with " + plan.fields().size() + " fields, from now "
+                       + "on";
             }
             if (newIndex) {
-                return "index " + plan.indexName() + " (feed " + outputFeed + "): recorded as its index, with "
-                       + plan.fields().size() + " fields";
+                return which + "recorded as its index, with " + plan.fields().size() + " fields";
             }
-            return "index " + plan.indexName() + " (feed " + outputFeed + "): " + (added.isEmpty()
+            return which + (added.isEmpty()
                     ? "no new fields"
                     : "adds " + String.join(", ", added) + " (forward only: documents indexed before don't have them)");
         }

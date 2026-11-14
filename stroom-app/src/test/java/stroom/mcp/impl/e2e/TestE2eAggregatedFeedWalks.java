@@ -17,6 +17,7 @@
 package stroom.mcp.impl.e2e;
 
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.indexing.FeedIndexes;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Source;
@@ -56,8 +57,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// registry with a scope of one source type; classifies, drafts and builds that group from the draft (where its Events
 /// go asked in a form), makes the group's pipeline, steps it clean, processes it, reviews coverage (every other
 /// record passed over and summed from the group's own lines, the other source types parked, no kind missed), plans
-/// the feed's index and promotes. Its second build carries on, one source type group a build: a second group with a
-/// pipeline of its own (in the PEGA walk writing to an output feed of its own, with an index of its own; in the Azure
+/// the group's index and promotes. Its second build carries on, one source type group a build: a second group with a
+/// pipeline and an index of its own (in the PEGA walk writing to an output feed of its own; in the Azure
 /// walk of two source types, ExchangeOnline and MicrosoftTeams, its pipeline translating both and passing over the
 /// rest); data arriving later holds a value no registry row matches, which neither pipeline warns of (counted with
 /// the rest passed over); both pipelines process it, coverage is reviewed, and promotion leaves the registry beside
@@ -614,24 +615,20 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         assertThat(passedOver(map(firstAgain, "source_types"))).isEqualTo(passed.get(firstRunning));
         noKindMissed(firstAgain, List.of(firstType));
 
-        // The index: one per output feed, inherited where the group's Events share the feed's.
+        // The index: one of the group's own, wherever its Events go (decided 2026-11-14), named like the first's
+        // with the group in it; the backend and naming inherited.
         final Map<String, Object> inherited = json("get_field_conventions", args());
         assertThat(inherited).containsEntry("status", "chosen");
+        final String secondIndex = FeedIndexes.groupIndexName(index, List.of(firstName), secondName);
+        assertThat(String.valueOf(inherited.get("index_name"))).contains("index_name=" + secondIndex);
         final List<Long> secondEvents = eventsWritten(secondPipeline, List.of(stream));
-        if (family.secondOwnFeed()) {
-            final String ownIndex = index + "-second";
-            final Map<String, Object> ownDraft = drafted(ownIndex, secondEvents);
-            assertThat(map(ownDraft, "feed_index")).containsEntry("output_feed", outputFeed);
-            assertThat((List<String>) map(ownDraft, "feed_index").get("groups")).containsExactly(secondName);
-            json("save_xslt", args("build", second, "name", ownIndex + "-XSLT", "index_plan", map(ownDraft,
-                    "plan")));
-        } else {
-            final Map<String, Object> secondDraft = drafted(index, secondEvents);
-            assertThat((List<String>) map(secondDraft, "feed_index").get("groups")).containsExactlyInAnyOrder(
-                    firstName, secondName);
-            json("save_xslt", args("build", second, "name", index + "-XSLT-2", "index_plan", map(secondDraft,
-                    "plan")));
-        }
+        final Map<String, Object> secondDraft = drafted(secondIndex, secondEvents);
+        assertThat(map(secondDraft, "feed_index")).containsEntry("output_feed", family.secondOwnFeed()
+                ? outputFeed
+                : feed).containsEntry("group", secondName);
+        assertThat((List<String>) map(secondDraft, "feed_index").get("groups")).containsExactly(secondName);
+        json("save_xslt", args("build", second, "name", secondIndex + "-XSLT", "index_plan", map(secondDraft,
+                "plan")));
         promote(second, Map.of("Pipeline", folder, "XSLT", folder, "Documentation", folder));
 
         // Beside the feed: both groups translated, each by its own pipeline; the value no row matches not added.
@@ -651,6 +648,9 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
             }
         }
         assertThat(rows).doesNotContainKey(family.newValue());
+        // An index each: the first group's and the second's, wherever their Events go.
+        assertThat(FeedIndexes.groupsOf(FeedIndexes.indexNamed(registry, index))).containsExactly(firstName);
+        assertThat(FeedIndexes.groupsOf(FeedIndexes.indexNamed(registry, secondIndex))).containsExactly(secondName);
         assertThat(folderOf(secondPipeline)).isEqualTo(folderOf(firstPipeline));
         assertThat(jsonOf(registry)).doesNotContain(firstRunning);
         if (family.changesFirst()) {
