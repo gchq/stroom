@@ -132,8 +132,8 @@ public final class FieldDocs {
         String text;
         final Lookup lookup = entry.lookup();
         if (lookup != null) {
-            final String key = JsonValues.truthy(lookup.field())
-                    ? "`" + lookup.field() + "`"
+            final String key = JsonValues.truthy(lookup.keyFieldNames())
+                    ? lookup.keyFieldNames().stream().map(f -> "`" + f + "`").collect(Collectors.joining(" + "))
                     : "`" + readable(lookup.xpath()) + "`";
             text = "lookup `" + lookup.map() + "` by " + key + (JsonValues.truthy(lookup.path())
                     ? " -> `" + lookup.path() + "`"
@@ -157,6 +157,13 @@ public final class FieldDocs {
         }
         if (JsonValues.truthy(entry.transform())) {
             text += " (" + entry.transform() + ")";
+        }
+        if (entry.fillTemplate() != null) {
+            text += " (a template, its placeholders " + entry.fillTemplate().pattern() + " filled from `"
+                    + readable(entry.fillTemplate().valuesSource()) + "`)";
+        }
+        if (entry.maskNames() != null) {
+            text += " (a bit mask, as the names of its set bits)";
         }
         if ("record".equals(entry.scope())) {
             text += " (of the record)";

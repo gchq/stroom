@@ -39,6 +39,7 @@ import stroom.ai.impl.tools.validation.XsltChecks;
 import stroom.ai.impl.tools.validation.XsltSafety;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.ToolTimeoutException;
+import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
@@ -305,7 +306,9 @@ class PipelineStepping {
         final List<String> missing = new ArrayList<>();
         for (final PipelineReference reference : pipeline.references()) {
             final String feed = NullSafe.get(reference.getFeed(), DocRef::getName);
-            if (NullSafe.isBlankString(feed)) {
+            // Context data comes with each stream (its Context child), loaded as the stream is read: nothing to wait
+            // for.
+            if (NullSafe.isBlankString(feed) || StreamTypeNames.CONTEXT.equals(reference.getStreamType())) {
                 continue;
             }
             final String kind = NullSafe.isBlankString(reference.getStreamType())

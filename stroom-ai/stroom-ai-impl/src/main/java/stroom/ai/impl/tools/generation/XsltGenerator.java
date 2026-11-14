@@ -222,6 +222,10 @@ public final class XsltGenerator {
     private boolean logsRecordNo;
     private final Set<List<List<String>>> xslMaps = new HashSet<>();
     private final Map<Conversion, String> ownFunctions;
+    // The functions a filled template or a mask's names are written with, and whether the mapping has either.
+    private final RenderXslt render;
+    private final boolean fillsTemplates;
+    private final boolean namesMasks;
     private final Map<Extraction, Keyed> keyed = new IdentityHashMap<>();
     private final Map<Shape, String> keyedFunctions = new LinkedHashMap<>();
     private final boolean dataFunctionWanted;
@@ -323,6 +327,9 @@ public final class XsltGenerator {
         taken.addAll(keyedFunctions.values());
         taken.add("json-to-xml");
         this.dataFunction = XsltNames.uniqueName(own(XsltNames.styleName("data", naming)), taken, naming);
+        this.render = new RenderXslt(base -> own(XsltNames.styleName(base, naming)));
+        this.fillsTemplates = mapping.allEntries().stream().anyMatch(entry -> entry.fillTemplate() != null);
+        this.namesMasks = mapping.allEntries().stream().anyMatch(entry -> entry.maskNames() != null);
     }
 
     /// The XSLT for a mapping.
@@ -767,12 +774,89 @@ public final class XsltGenerator {
         return XPathText.keyText(source(fieldName, xpath, inputScope));
     }
 
+    // A lookup's key: its field or xpath, or its key_fields made one key as the reference generator makes it.
+    private String lookupKey(final Lookup lookup, final String inputScope) {
+        if (lookup.keyFields() != null) {
+            return LookupKeys.keyText(lookup.keyFields().stream()
+                    .map(field -> source(field, null, inputScope))
+                    .toList());
+        }
+        return keyExpression(lookup.field(), lookup.xpath(), inputScope);
+    }
+
+    // The value a fill_template or mask_names entry writes, from its input's first value: the template filled, or the
+    // mask's names (joined, unless the entry repeats one element a name).
+    private String renderedText(final FieldMapping entry, final Source input) {
+        final String one = "(" + source(input.field(), input.xpath(), input.scope()) + ")[1]";
+        if (entry.fillTemplate() != null) {
+            final FillTemplate fill = entry.fillTemplate();
+            return render.fillText(one, fill.pattern(), templateValues(entry));
+        }
+        final List<String> table = maskTable(entry);
+        final String names = render.namesText(one, table.get(0), table.get(1));
+        return entry.repeat()
+                ? names
+                : "string-join(" + names + ", " + XPathText.literal(entry.separator() == null
+                        ? ", "
+                        : entry.separator()) + ")";
+    }
+
+    // The values a template's placeholders are filled from, in order.
+    private String templateValues(final FieldMapping entry) {
+        final FillTemplate fill = entry.fillTemplate();
+        return "(" + source(fill.field(), fill.xpath(), entry.scope()) + ")";
+    }
+
+    // A mask_names table's masks and names, two sequences: static, or each entry of a looked-up value.
+    private List<String> maskTable(final FieldMapping entry) {
+        final MaskNames mask = entry.maskNames();
+        if (mask.names() != null) {
+            return RenderXslt.staticTable(mask.names());
+        }
+        referenceMaps.add(mask.lookup().map());
+        return RenderXslt.lookedUpTable(XPathText.lookupText(mask.lookup().map(), lookupKey(mask.lookup(),
+                entry.scope()), mask.lookup().path()), mask.mask(), mask.name());
+    }
+
+    // What stepping is told of a rendered value: the placeholders the record's values leave unfilled, or the bits of
+    // its mask no name covers (or a mask that isn't a number). A log call writes nothing, so the output is the same.
+    private void warnOfRendered(final XmlElement parent, final FieldMapping entry) {
+        if (entry.fillTemplate() == null && entry.maskNames() == null) {
+            return;
+        }
+        final Source input = inputOf(entry);
+        final String one = "(" + source(input.field(), input.xpath(), input.scope()) + ")[1]";
+        final String problem;
+        final String said;
+        if (entry.fillTemplate() != null) {
+            problem = render.unfilledText(one, entry.fillTemplate().pattern(), templateValues(entry));
+            said = "'no value for placeholder(s) ', string-join(" + problem + ", ', ')";
+        } else {
+            final List<String> table = maskTable(entry);
+            problem = render.problemText(one, table.get(0), table.get(1));
+            said = problem;
+        }
+        parent.addElement(XSL, "if", "test", "exists(" + problem + ")")
+                .addElement(XSL, "sequence", "select", "stroom:log('WARN', concat("
+                                                       + XPathText.literal(entry.strippedPath() + ": ") + ", " + said
+                                                       + ", ', record ', stroom:record-no()))");
+    }
+
     /// The entry's input as (field, xpath, scope): a field as it is; any_of, lookup and dictionary as the XPath that
     /// computes them (scope already applied), so the rest of the generator treats them like any computed value.
     ///
     /// @param entry A field mapping.
-    /// @return Its input.
+    /// @return Its input, rendered as the entry says (a template filled, a mask's names).
     Source sourceOf(final FieldMapping entry) {
+        final Source input = inputOf(entry);
+        if (entry.fillTemplate() == null && entry.maskNames() == null) {
+            return input;
+        }
+        return new Source(null, renderedText(entry, input), null);
+    }
+
+    // The entry's input as it is, before a template is filled or a mask named.
+    private Source inputOf(final FieldMapping entry) {
         if (!frames.isEmpty() && !"record".equals(entry.scope())) {
             final Source item = itemSourceOf(entry);
             if (item != null) {
@@ -782,7 +866,7 @@ public final class XsltGenerator {
         final String entryScope = entry.scope();
         if (entry.lookup() != null) {
             referenceMaps.add(entry.lookup().map());
-            final String key = keyExpression(entry.lookup().field(), entry.lookup().xpath(), entryScope);
+            final String key = lookupKey(entry.lookup(), entryScope);
             // The value's elements are in no namespace, while the stylesheet's default XPath namespace is the
             // input's: *:name selects them whatever that is, at any depth below the value.
             return new Source(null, XPathText.lookupText(entry.lookup().map(), key, entry.lookup().path()), null);
@@ -1076,6 +1160,9 @@ public final class XsltGenerator {
             writeWithFallback(element, entry);
         } else {
             warnOfSeveral(element, entry);
+            if (!entry.repeat()) {
+                warnOfRendered(element, entry);
+            }
             element.addElement(XSL, "value-of", "select", valueExpression(entry));
         }
     }
@@ -1222,6 +1309,8 @@ public final class XsltGenerator {
             } else if (item.node().repeat != null) {
                 // One element per value: the loop stands in for the guard, and the leaf below reads the current
                 // value.
+                // A repeated mask's unnamed bits are said once, before the loop.
+                warnOfRendered(parent, item.node().repeat);
                 final XmlElement loop = parent.addElement(XSL, "for-each", "select", repeatItems(item.node().repeat));
                 emitElement(loop, item.node(), testOf(item.node()), true);
             } else if (!inline && shareable(item.node()) && shared.contains(key(item.node()))) {
@@ -1282,6 +1371,7 @@ public final class XsltGenerator {
         }
         final XmlElement holder;
         if (entry.repeat()) {
+            warnOfRendered(parent, entry);
             holder = parent.addElement(XSL, "for-each", "select", repeatItems(entry));
         } else {
             final String test = leafTest(entry);
@@ -1296,6 +1386,7 @@ public final class XsltGenerator {
                     && (test.equals(values) || test.equals("exists(" + values + ")"))) {
                     dataFunctionUsed = true;
                     warnOfSeveral(parent, entry);
+                    warnOfRendered(parent, entry);
                     parent.addElement(XSL, "sequence", "select", "mcp:" + dataFunction + "("
                                                                  + XPathText.literal(entry.dataName()) + ", "
                                                                  + values + ")");
@@ -1306,6 +1397,7 @@ public final class XsltGenerator {
                     ? parent.addElement(XSL, "if", "test", test)
                     : parent;
             warnOfSeveral(holder, entry);
+            warnOfRendered(holder, entry);
         }
         final XmlElement element = holder.addElement(ns, "Data", "Name", entry.dataName());
         if (entry.value() != null) {
@@ -1735,11 +1827,15 @@ public final class XsltGenerator {
         if (entry.lookup() != null) {
             final Lookup lookup = entry.lookup();
             referenceMaps.add(lookup.map());
-            final String key = lookup.xpath() != null
-                    ? itemXpath(item, lookup.xpath())
-                    : itemField(item, lookup.field());
-            return new Source(null, XPathText.lookupText(lookup.map(), XPathText.keyText(key), lookup.path()),
-                    ITEM_SCOPE);
+            final String key;
+            if (lookup.keyFields() != null) {
+                key = LookupKeys.keyText(lookup.keyFields().stream().map(field -> itemField(item, field)).toList());
+            } else {
+                key = XPathText.keyText(lookup.xpath() != null
+                        ? itemXpath(item, lookup.xpath())
+                        : itemField(item, lookup.field()));
+            }
+            return new Source(null, XPathText.lookupText(lookup.map(), key, lookup.path()), ITEM_SCOPE);
         }
         final String keySource = hasAnyOf(entry)
                 ? XPathText.anyOfText(entry.anyOf().stream().map(field -> itemField(item, field)).toList(), nil())
@@ -2191,7 +2287,7 @@ public final class XsltGenerator {
         final boolean callsJson = JSON_CALL.matcher(ToolJson.dumps(m.toJson(DumpMode.WITHOUT_NONE))).find();
         final boolean usesJson = !m.jsonFields().isEmpty() || !m.xmlFields().isEmpty() || callsJson
                                  || !ownFunctions.isEmpty() || !keyedFunctions.isEmpty() || zoneFunctionWanted
-                                 || dataFunctionWanted || module != null
+                                 || dataFunctionWanted || module != null || fillsTemplates || namesMasks
                                  || watchesSourceTypes();     // the mcp prefix: its own functions
         final Map<String, String> bound = new LinkedHashMap<>();
         m.functions().forEach(functions -> bound.put(functions.prefix(), functions.namespace()));
@@ -3131,7 +3227,7 @@ public final class XsltGenerator {
 
     // The XSLT's own functions, one per repeated conversion: a value in, the converted value out.
     private List<XmlElement> ownFunctions() {
-        final List<XmlElement> out = new ArrayList<>();
+        final List<XmlElement> out = new ArrayList<>(render.functions(fillsTemplates, namesMasks));
         if (zoneFunctionWanted && module == null) {
             // A module's comes from the feed's helpers module.
             out.add(zoneFunction());

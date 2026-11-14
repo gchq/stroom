@@ -58,6 +58,7 @@ public final class BuiltInToolGroups {
                     "draft_cef_mapping",
                     "build_translation_xslt",
                     "build_reference_xslt",
+                    "propose_context_lookup",
                     "rebuild_mapping",
                     "save_xslt",
                     "check_xslt",

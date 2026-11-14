@@ -951,11 +951,12 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                 .items(ObjectSchema.builder()
                         .description("Reference data an XSLT step reads with stroom:lookup(): a feed of Reference "
                                      + "streams, loaded by a loader pipeline (find_reference_data lists the "
-                                     + "environment's loaders).")
+                                     + "environment's loaders); or, with stream_type 'Context', each stream's own "
+                                     + "context data.")
                         .addStringProperty("feed", ReferenceRequest.FEED)
                         .addStringProperty("loader_pipeline", ReferenceRequest.LOADER_PIPELINE)
                         .addStringProperty("element", ReferenceRequest.ELEMENT)
-                        .required("feed")
+                        .addStringProperty("stream_type", ReferenceRequest.STREAM_TYPE)
                         .build())
                 .build();
     }

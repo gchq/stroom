@@ -26,6 +26,7 @@ import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.shared.AiToolCategory;
@@ -58,6 +59,8 @@ class UploadSampleTool extends AbstractBuiltInTool {
     static final String HEADERS_ARG = "headers";
     static final String STREAM_TYPE_ARG = "stream_type";
     static final String EFFECTIVE_TIME_ARG = "effective_time";
+    static final String CONTEXT_ARG = "context";
+    static final String PARTS_ARG = "parts";
     static final String RAW_REFERENCE = "Raw Reference";
     /// A reference sample's default effective time.
     static final String ALWAYS_EFFECTIVE = "2000-01-01T00:00:00.000Z";
@@ -156,6 +159,19 @@ class UploadSampleTool extends AbstractBuiltInTool {
                                 .description("Extra receipt headers, e.g. {'MyHost': 'ws01'}; readable in XSLT with "
                                              + "stroom:meta().")
                                 .build())
+                        .addStringProperty(CONTEXT_ARG, "Context data sent with sample, as the source sends it "
+                                                        + "(only when the user gives it, or asks to enrich from it): "
+                                                        + "stored as the stream's Context child, which a pipeline "
+                                                        + "reference with stream_type 'Context' reads.")
+                        .addProperty(PARTS_ARG, ArraySchema.builder()
+                                .description("Or several parts of one stream, each with its own context data: "
+                                             + "[{sample, context}], in order (in place of sample and context).")
+                                .items(ObjectSchema.builder()
+                                        .addStringProperty(SAMPLE_ARG, "The part's raw data.")
+                                        .addStringProperty(CONTEXT_ARG, "Its context data.")
+                                        .required(SAMPLE_ARG, CONTEXT_ARG)
+                                        .build())
+                                .build())
                         .addStringProperty(STREAM_TYPE_ARG, "'Raw Events', or 'Raw Reference' for a reference "
                                                             + "feed.")
                         .addStringProperty(EFFECTIVE_TIME_ARG, "Reference data only: from when it applies (ISO 8601 "
@@ -211,6 +227,15 @@ class UploadSampleTool extends AbstractBuiltInTool {
             // event samples, whose lookups then found no reference data.
             effectiveTime = ALWAYS_EFFECTIVE;
         }
+        final List<ContextSamples.Part> parts = ContextSamples.parts(sample, rawArg(call, CONTEXT_ARG),
+                argsMap(call).get(PARTS_ARG));
+        if (!parts.isEmpty()) {
+            if (!files.isEmpty()) {
+                throw new ToolRefusal("Context data goes with sample (or parts); files on the user's disk with "
+                                      + "context are a .zip of NNN.dat and NNN.ctx pairs, sent with files=");
+            }
+            return withContext(context, feed, parts, streamType, effectiveTime, headers);
+        }
         if (!files.isEmpty() && NullSafe.isEmptyString(sample)) {
             final Map<String, String> fileHeaders = new LinkedHashMap<>();
             if (effectiveTime != null) {
@@ -255,6 +280,45 @@ class UploadSampleTool extends AbstractBuiltInTool {
         }
         result.putAll(sent.toMap());
         result.put("hint", "One stream per sample file: upload the next file, or go on with the plan (next).");
+        return plan.withNext(context, plan.buildOf(match).orElse(null), result);
+    }
+
+    // Sample text with context data: one stream, a part (and its Context child) each.
+    private Map<String, Object> withContext(final ToolCallContext context,
+                                            final String feed,
+                                            final List<ContextSamples.Part> parts,
+                                            final String streamType,
+                                            final String effectiveTime,
+                                            final Map<String, String> headers) {
+        checkImportData(feed);
+        final DocRef match = buildFeeds.buildFeed(context.session(), feed);
+        if (buildFeeds.sampleFiles(match)) {
+            throw new ToolRefusal("Feed " + feed + "'s samples are files on the user's disk: text isn't taken for "
+                                  + "it. A file with context data is a .zip of NNN.dat and NNN.ctx pairs, sent with "
+                                  + "files=.");
+        }
+        final Map<String, String> receipt = new LinkedHashMap<>();
+        receipt.put(StandardHeaderArguments.TYPE, streamType);
+        if (effectiveTime != null) {
+            receipt.put(StandardHeaderArguments.EFFECTIVE_TIME, effectiveTime);
+        }
+        receipt.putAll(headers);
+        final byte[] data = ContextSamples.zip(parts);
+        final FeedUploads.Sent sent = feedUploads.send(feed, streamType, receipt, ContextSamples.FILE_NAME,
+                new ByteArrayInputStream(data), Math.max(sampleUploads.maxBytes(), data.length));
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("feed", feed);
+        result.putAll(sent.toMap());
+        result.put("parts", parts.size());
+        result.put("context", true);
+        if (sent.streamId() == null) {
+            result.put("hint", "Stroom accepted the data but the stream is not visible yet; check stream_meta "
+                               + "feeds=['" + feed + "'] shortly.");
+            return result;
+        }
+        result.put("hint", "One stream of " + parts.size() + " part(s), each with its Context child: fetch_events "
+                           + "streamId=" + sent.streamId() + " childType='Context' reads them (firstRecord the part). "
+                           + "propose_context_lookup finds how the records' fields pick out a context entry.");
         return plan.withNext(context, plan.buildOf(match).orElse(null), result);
     }
 

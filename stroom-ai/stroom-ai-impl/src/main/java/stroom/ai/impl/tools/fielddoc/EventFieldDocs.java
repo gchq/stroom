@@ -815,7 +815,10 @@ public final class EventFieldDocs {
         names.addAll(Objects.requireNonNullElse(entry.anyOf(), List.of()));
         names.addAll(Objects.requireNonNullElse(entry.join(), List.of()));
         if (entry.lookup() != null) {
-            names.add(entry.lookup().field());
+            names.addAll(entry.lookup().keyFieldNames());
+        }
+        if (entry.fillTemplate() != null && entry.fillTemplate().valuesField() != null) {
+            names.add(entry.fillTemplate().valuesField());
         }
         return names;
     }

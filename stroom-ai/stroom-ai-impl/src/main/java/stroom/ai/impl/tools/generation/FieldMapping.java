@@ -106,7 +106,9 @@ public record FieldMapping(String path,
                            ZoneSource zoneSource,
                            List<String> metaFallback,
                            FieldGroup group,
-                           String item) {
+                           String item,
+                           FillTemplate fillTemplate,
+                           MaskNames maskNames) {
 
     /// The transforms an input may be given.
     public static final List<String> TRANSFORMS = List.of("lower", "upper", "trim", "strip_domain", "domain",
@@ -115,7 +117,8 @@ public record FieldMapping(String path,
     // What a group entry can't have: an input or conversion of its own.
     private static final List<String> GROUP_REFUSES = List.of("field", "any_of", "join", "value", "xpath", "meta",
             "lookup", "dictionary", "transform", "repeat", "scope", "time_format", "timezone", "map", "default",
-            "data_parent", "separator", "rollover", "time_fallback", "meta_fallback", "item");
+            "data_parent", "separator", "rollover", "time_fallback", "meta_fallback", "item", "fill_template",
+            "mask_names");
     // An Event's own children: a group's field path starting with one is a path from Event, not from the group.
     private static final Set<String> EVENT_SECTIONS = Set.of("EventTime", "EventSource", "EventDetail", "EventChain",
             "Meta", "Followers");
@@ -137,7 +140,7 @@ public record FieldMapping(String path,
     /// @return The entry carrying the field as that Data.
     public static FieldMapping data(final String path, final String dataName, final String field) {
         return new FieldMapping(path, field, null, null, null, null, null, null, null, false, null, null, null,
-                null, null, dataName, null, null, null, false, null, null, null, null, null);
+                null, null, dataName, null, null, null, false, null, null, null, null, null, null, null);
     }
 
     /// Reads one from JSON-like values: lax types, defaults and the model's own checks, every error collected.
@@ -187,7 +190,9 @@ public record FieldMapping(String path,
                 fields.optionalString("separator"), fields.bool("rollover", false),
                 fields.optionalString("time_fallback"), fields.input().get("timezone") instanceof Map
                         ? fields.optionalModel("timezone", (value, at) -> ZoneSource.read(reader, value, at))
-                        : null, fields.optionalStrings("meta_fallback"), null, item);
+                        : null, fields.optionalStrings("meta_fallback"), null, item,
+                fields.optionalModel("fill_template", (value, at) -> FillTemplate.read(reader, value, at)),
+                fields.optionalModel("mask_names", (value, at) -> MaskNames.read(reader, value, at)));
         if (!fields.ok()) {
             return null;
         }
@@ -291,7 +296,7 @@ public record FieldMapping(String path,
         return new FieldMapping(enclosing.isEmpty()
                 ? path
                 : relative, null, null, null, null, null, null, null, null, false, null, null, null, null, null,
-                dataName, null, null, null, false, null, null, null, header.withFields(entries), null);
+                dataName, null, null, null, false, null, null, null, header.withFields(entries), null, null, null);
     }
 
     // Whether an input of a group's field (or of a group's for_each) reads what it may: item names a group it is in,
@@ -355,6 +360,9 @@ public record FieldMapping(String path,
         if (repeat) {
             return where + ": a group's field is written once per item already; repeat goes with a field outside "
                    + "groups (for a list inside an item, make it a group of its own)";
+        }
+        if (fillTemplate != null || maskNames != null) {
+            return where + ": fill_template and mask_names go with a field outside groups";
         }
         final String stripped = strippedPath();
         final Enclosing group = enclosing.getLast();
@@ -474,7 +482,7 @@ public record FieldMapping(String path,
             return "'" + path + "': join lists the fields whose values are joined, two or more, e.g. {\"path\": \""
                    + path + "\", \"join\": [\"event\", \"action\"]} for User-Login";
         }
-        if (separator != null && join == null) {
+        if (separator != null && join == null && maskNames == null) {
             return "'" + path + "': separator goes with join, between the values it joins";
         }
         if (join != null && (repeat || isSet(timeFormat) || isSet(dictionary))) {
@@ -499,8 +507,43 @@ public record FieldMapping(String path,
             return "'" + path + "': timezone from a field or meta attribute goes with a time_format pattern (not an "
                    + "epoch, which has no zone to read) and one value";
         }
-        if (repeat && (value != null || hasMap() || isSet(timeFormat) || lookup != null || isSet(dictionary))) {
+        final String rendered = renderProblem();
+        if (rendered != null) {
+            return rendered;
+        }
+        if (repeat && maskNames == null && (value != null || hasMap() || isSet(timeFormat) || lookup != null
+                                             || isSet(dictionary))) {
             return "'" + path + "': repeat takes an input field, any_of or xpath, with transform at most";
+        }
+        return null;
+    }
+
+    // The checks of fill_template and mask_names: what goes with them.
+    private String renderProblem() {
+        if (fillTemplate == null && maskNames == null) {
+            return null;
+        }
+        final String where = "'" + path + "': ";
+        if (fillTemplate != null && maskNames != null) {
+            return where + "fill_template and mask_names each make the value from the input: give one of them";
+        }
+        final String key = fillTemplate != null
+                ? "fill_template"
+                : "mask_names";
+        if (value != null || hasMap() || isSet(timeFormat) || isSet(dictionary) || transform != null || join != null
+            || rollover || timeFallback != null || zoneSource != null) {
+            return where + key + " makes the value from the entry's input (a field, xpath or lookup): no value, map, "
+                   + "time_format, dictionary, transform or join with it";
+        }
+        if (fillTemplate != null && repeat) {
+            return where + "fill_template writes one text: no repeat with it";
+        }
+        if (separator != null && (fillTemplate != null || repeat)) {
+            return where + "separator goes between the names mask_names gives, written as one text (no repeat)";
+        }
+        if (maskNames != null && repeat && lookup != null) {
+            return where + "mask_names reads the mask from the entry's input (a field or xpath); its table may come "
+                   + "from a lookup (mask_names.lookup), the mask itself not, with repeat";
         }
         return null;
     }
@@ -531,7 +574,8 @@ public record FieldMapping(String path,
     private FieldMapping withMetaRead() {
         return new FieldMapping(path, field, anyOf, value, "stroom:meta('" + ToolText.strip(meta) + "')", null, lookup,
                 dictionary, transform, repeat, scope, timeFormat, timezone, map, defaultValue, dataName, dataParent,
-                join, separator, rollover, timeFallback, zoneSource, metaFallback, group, item);
+                join, separator, rollover, timeFallback, zoneSource, metaFallback, group, item, fillTemplate,
+                maskNames);
     }
 
     /// @param defaultValue The output when the input is empty.
@@ -539,7 +583,7 @@ public record FieldMapping(String path,
     public FieldMapping withDefault(final String defaultValue) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback, group, item);
+                zoneSource, metaFallback, group, item, fillTemplate, maskNames);
     }
 
     /// @param dataName The Data element's Name.
@@ -547,7 +591,7 @@ public record FieldMapping(String path,
     public FieldMapping withDataName(final String dataName) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback, group, item);
+                zoneSource, metaFallback, group, item, fillTemplate, maskNames);
     }
 
     /// @return The Data entry's Name with the Names of the Data elements it is written in, e.g. `members/member`:
@@ -563,7 +607,7 @@ public record FieldMapping(String path,
     public FieldMapping withDataParent(final String dataParent) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback, group, item);
+                zoneSource, metaFallback, group, item, fillTemplate, maskNames);
     }
 
     /// @param path The path.
@@ -571,7 +615,7 @@ public record FieldMapping(String path,
     public FieldMapping withPath(final String path) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback, group, item);
+                zoneSource, metaFallback, group, item, fillTemplate, maskNames);
     }
 
     /// @param fields A group entry's fields.
@@ -579,7 +623,7 @@ public record FieldMapping(String path,
     public FieldMapping withGroupFields(final List<FieldMapping> fields) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
                 timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator, rollover, timeFallback,
-                zoneSource, metaFallback, group.withFields(fields), item);
+                zoneSource, metaFallback, group.withFields(fields), item, fillTemplate, maskNames);
     }
 
     /// @return True if it is a group (for_each): its element written once per item.
@@ -640,6 +684,12 @@ public record FieldMapping(String path,
                         : null)
                 .putIfSet("time_fallback", timeFallback)
                 .putIfSet("meta_fallback", metaFallback)
+                .putIfSet("fill_template", fillTemplate == null
+                        ? null
+                        : fillTemplate.toJson(mode))
+                .putIfSet("mask_names", maskNames == null
+                        ? null
+                        : maskNames.toJson(mode))
                 .putIfSet("item", item == null
                         ? null
                         : item.isEmpty()

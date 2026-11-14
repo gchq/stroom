@@ -10,7 +10,8 @@ or instead of writing a translation. A table to look values up in (users, assets
 (start_build or start_onboarding kind=discovery or kind=reference): the plan's steps then follow the work from the
 start, and a reference table gets no translation or index. An events pipeline whose lookups read a table with no
 Reference stream yet is stepped only once that table is processed (Stroom remembers a lookup that found nothing for
-10 minutes). Events sent on to ArcSight: CEF output
+10 minutes). Context data (each stream part's Context child) only when the user asks: propose_context_lookup.
+Events sent on to ArcSight: CEF output
 (draft_cef_mapping). A pipeline to evaluate (how well an existing one works): evaluate_pipeline, then the report from
 its outline, shown to the user and saved only if they want it kept. A pipeline to fix or change: a new version or
 working copy of it (copy_pipeline). Data not

@@ -506,7 +506,7 @@
      "lookup"
     ],
     "type": "value_error",
-    "msg": "Value error, lookup 'm': give exactly one of field or xpath for the key",
+    "msg": "Value error, lookup 'm': give exactly one of field, xpath or key_fields for the key",
     "input": {
      "map": "m"
     }
@@ -1590,7 +1590,7 @@
      "lookup"
     ],
     "type": "value_error",
-    "msg": "Value error, lookup 'M': give exactly one of field or xpath for the key",
+    "msg": "Value error, lookup 'M': give exactly one of field, xpath or key_fields for the key",
     "input": {
      "map": "M",
      "field": "a",

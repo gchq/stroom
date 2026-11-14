@@ -25,6 +25,7 @@ import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.SharedFunctions;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
@@ -214,8 +215,10 @@ class CurrentTranslations {
         if (data == null) {
             return List.of();
         }
+        // A Context reference needs no feed: its data is each stream's own Context child.
         return NullSafe.list(data.getAddedPipelineReferences()).stream()
-                .filter(reference -> NullSafe.isNonBlankString(NullSafe.get(reference.getFeed(), DocRef::getUuid))
+                .filter(reference -> (NullSafe.isNonBlankString(NullSafe.get(reference.getFeed(), DocRef::getUuid))
+                                      || StreamTypeNames.CONTEXT.equals(reference.getStreamType()))
                                      && NullSafe.isNonBlankString(NullSafe.get(reference.getPipeline(),
                         DocRef::getUuid)))
                 .toList();

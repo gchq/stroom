@@ -19,6 +19,7 @@ package stroom.ai.impl.tools.generation;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /// One map a reference feed provides: the name `stroom:lookup()` uses, the key, and what the key maps to.
 ///
@@ -26,14 +27,27 @@ import java.util.Objects;
 /// @param key      Input field holding the key.
 /// @param keyXpath `key_xpath`: or an XPath for the key, e.g. `lower-case(data[@name='user']/@value)`.
 /// @param values   What the key maps to (at least one).
+/// @param keyFields `key_fields`: or the input fields whose values make the key, in order, as a lookup's `key_fields`
+///                  makes it ([LookupKeys]); one is the same as key. Null when the key is key or key_xpath.
 public record ReferenceMap(String name,
                            String key,
                            String keyXpath,
-                           List<ReferenceValue> values) {
+                           List<ReferenceValue> values,
+                           List<String> keyFields) {
 
     /// Fills in an empty list for a null one.
     public ReferenceMap {
         values = List.copyOf(Objects.requireNonNullElse(values, List.of()));
+    }
+
+    /// A map keyed by one field or xpath.
+    ///
+    /// @param name     The map name.
+    /// @param key      Input field holding the key.
+    /// @param keyXpath Or an XPath for the key.
+    /// @param values   What the key maps to.
+    public ReferenceMap(final String name, final String key, final String keyXpath, final List<ReferenceValue> values) {
+        this(name, key, keyXpath, values, null);
     }
 
     /// @param json A map as JSON-like values.
@@ -57,12 +71,18 @@ public record ReferenceMap(String name,
         }
         final ReferenceMap map = new ReferenceMap(fields.requiredString("name"), fields.optionalString("key"),
                 fields.optionalString("key_xpath"),
-                fields.requiredModels("values", (value, at) -> ReferenceValue.read(reader, value, at), 1));
+                fields.requiredModels("values", (value, at) -> ReferenceValue.read(reader, value, at), 1),
+                fields.optionalStrings("key_fields"));
         if (!fields.ok()) {
             return null;
         }
-        if ((map.key == null) == (map.keyXpath == null)) {
-            reader.valueError(loc, "map '" + map.name + "': give exactly one of key or key_xpath", input);
+        if (Stream.of(map.key, map.keyXpath, map.keyFields).filter(Objects::nonNull).count() != 1) {
+            reader.valueError(loc, "map '" + map.name + "': give exactly one of key, key_xpath or key_fields", input);
+            return null;
+        }
+        final String problem = LookupKeys.problem(map.keyFields, "map '" + map.name + "'");
+        if (problem != null) {
+            reader.valueError(loc, problem, input);
             return null;
         }
         if (map.values.stream().filter(part -> part.element().isEmpty()).count() > 1) {
@@ -81,6 +101,14 @@ public record ReferenceMap(String name,
                 .put("key", key, null)
                 .put("key_xpath", keyXpath, null)
                 .models("values", values, part -> part.toJson(mode))
+                .putIfSet("key_fields", keyFields)
                 .build();
+    }
+
+    /// @return How many fields the key is made of: key_fields' count, else 1.
+    public int keyCount() {
+        return keyFields == null
+                ? 1
+                : keyFields.size();
     }
 }

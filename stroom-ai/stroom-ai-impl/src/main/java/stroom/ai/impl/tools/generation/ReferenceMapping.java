@@ -24,7 +24,8 @@ import java.util.Objects;
 /// [ReferenceGenerator] writes the reference-data XSLT. Its JSON is kept with the XSLT, so its form must stay
 /// readable: a mapping kept by any earlier save still reads.
 ///
-/// @param input      How the reference feed is parsed: `data_splitter` or `json`.
+/// @param input      How the reference feed is parsed: `data_splitter`, `json`, or `xml` (context data, say: each
+///                   record an element, its fields XML paths relative to it, e.g. `@Source` or `Info/Name`).
 /// @param jsonLayout `json_layout`: json input only, `array` or `lines`.
 /// @param root       Root to match; defaults as for build_translation_xslt.
 /// @param record     Record elements; defaults as for build_translation_xslt.
@@ -33,16 +34,19 @@ import java.util.Objects;
 ///                   for you.
 /// @param dropWhen   `drop_when`: records to leave out of the reference data (disabled accounts, say); each
 ///                   entry's conditions must all hold.
+/// @param xmlNamespace `xml_namespace`: xml input only, the records' default namespace (their paths are written
+///                   without a prefix); null or empty for none.
 public record ReferenceMapping(String input,
                                String jsonLayout,
                                String root,
                                String record,
                                List<ReferenceMap> maps,
                                List<String> imports,
-                               List<DropRule> dropWhen) {
+                               List<DropRule> dropWhen,
+                               String xmlNamespace) {
 
     /// The kinds of input.
-    public static final List<String> INPUTS = List.of("data_splitter", "json");
+    public static final List<String> INPUTS = List.of("data_splitter", "json", "xml");
 
     /// Fills in the defaults for nulls.
     public ReferenceMapping {
@@ -50,6 +54,25 @@ public record ReferenceMapping(String input,
         maps = copy(maps);
         imports = copy(imports);
         dropWhen = copy(dropWhen);
+    }
+
+    /// A reference mapping of data_splitter or json input (no XML namespace).
+    ///
+    /// @param input      How the reference feed is parsed.
+    /// @param jsonLayout json input only, `array` or `lines`.
+    /// @param root       Root to match.
+    /// @param record     Record elements.
+    /// @param maps       The maps.
+    /// @param imports    Shared XSLTs imported.
+    /// @param dropWhen   Records to leave out.
+    public ReferenceMapping(final String input,
+                            final String jsonLayout,
+                            final String root,
+                            final String record,
+                            final List<ReferenceMap> maps,
+                            final List<String> imports,
+                            final List<DropRule> dropWhen) {
+        this(input, jsonLayout, root, record, maps, imports, dropWhen, null);
     }
 
     /// @param json A reference mapping as JSON-like values.
@@ -85,10 +108,16 @@ public record ReferenceMapping(String input,
                 fields.optionalString("record"),
                 fields.requiredModels("maps", (value, at) -> ReferenceMap.read(reader, value, at), 1),
                 fields.strings("imports"),
-                fields.models("drop_when", (value, at) -> DropRule.read(reader, value, at)));
-        return fields.ok()
-                ? mapping
-                : null;
+                fields.models("drop_when", (value, at) -> DropRule.read(reader, value, at)),
+                fields.optionalString("xml_namespace"));
+        if (!fields.ok()) {
+            return null;
+        }
+        if (mapping.xmlNamespace != null && !"xml".equals(mapping.input)) {
+            fields.valueError("xml_namespace goes with input 'xml'");
+            return null;
+        }
+        return mapping;
     }
 
     /// @param mode How to write it.
@@ -102,6 +131,7 @@ public record ReferenceMapping(String input,
                 .models("maps", maps, map -> map.toJson(mode))
                 .put("imports", imports, List.of())
                 .models("drop_when", dropWhen, rule -> rule.toJson(mode))
+                .putIfSet("xml_namespace", xmlNamespace)
                 .build();
     }
 

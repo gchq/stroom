@@ -1,0 +1,225 @@
+[
+ [
+  {
+   "record_id": "1001",
+   "description": "An account was successfully logged on. Subject: S-1-5-18\\WS01$. New logon: CORP\\carol from workstation WS18 (logon type 2). Subject again: S-1-5-18.",
+   "keywords": [
+    "Audit Success",
+    "Classic"
+   ],
+   "opcode": "Info"
+  },
+  {
+   "record_id": "1002",
+   "description": "An account failed to log on. Account: CORP\\bob. Reason: Unknown user name or bad password..",
+   "keywords": [
+    "Audit Failure",
+    "Classic"
+   ],
+   "opcode": "Info"
+  },
+  {
+   "record_id": "1003",
+   "description": "An account was logged off. Account: alice, logon ID 0xf1b94.",
+   "keywords": [
+    "Audit Success",
+    "Classic"
+   ],
+   "opcode": "Info"
+  },
+  {
+   "record_id": "1004",
+   "description": "Inventory service started on ws01.corp.example.",
+   "keywords": [
+    "Startup"
+   ],
+   "opcode": "Start"
+  },
+  {
+   "record_id": "1005",
+   "description": "Backup job nightly-5 finished: 4874 files.",
+   "keywords": [
+    "Job",
+    "Storage"
+   ],
+   "opcode": "Stop"
+  },
+  {
+   "record_id": "1006",
+   "description": "An account failed to log on. Account: CORP\\bob. Reason: Account locked out..",
+   "keywords": [
+    "Audit Failure",
+    "Classic"
+   ],
+   "opcode": "Info"
+  },
+  {
+   "record_id": "1007",
+   "description": "Backup job nightly-7 finished: 520 files.",
+   "keywords": [
+    "Job",
+    "Storage"
+   ],
+   "opcode": "Stop"
+  },
+  {
+   "record_id": "1008",
+   "description": "An account was logged off. Account: carol, logon ID 0xec8a3.",
+   "keywords": [
+    "Audit Success",
+    "Classic"
+   ],
+   "opcode": "Info"
+  },
+  {
+   "record_id": "1009",
+   "description": "An account was successfully logged on. Subject: S-1-5-18\\WS01$. New logon: CORP\\dave from workstation WS03 (logon type 2). Subject again: S-1-5-18.",
+   "keywords": [
+    "Audit Success",
+    "Classic"
+   ],
+   "opcode": "Info"
+  },
+  {
+   "record_id": "1010",
+   "description": "An account failed to log on. Account: CORP\\bob. Reason: Account locked out..",
+   "keywords": [
+    "Audit Failure",
+    "Classic"
+   ],
+   "opcode": "Info"
+  },
+  {
+   "record_id": "1011",
+   "description": "An account was logged off. Account: bob, logon ID 0x94dc8.",
+   "keywords": [
+    "Audit Success",
+    "Classic"
+   ],
+   "opcode": "Info"
+  },
+  {
+   "record_id": "1012",
+   "description": "An account failed to log on. Account: CORP\\bob. Reason: Account locked out..",
+   "keywords": [
+    "Audit Failure",
+    "Classic"
+   ],
+   "opcode": "Info"
+  }
+ ],
+ [
+  {
+   "record_id": "1013",
+   "description": "An account was successfully logged on. Subject: S-1-5-18\\WS01$. New logon: CORP\\carol from workstation WS04 (logon type 10). Subject again: S-1-5-18.",
+   "keywords": [
+    "Audit Success",
+    "Classic"
+   ],
+   "opcode": "Info"
+  },
+  {
+   "record_id": "1014",
+   "description": "The account dave (logon ID 0x3e911) was logged off.",
+   "keywords": [
+    "Audit Success",
+    "Classic"
+   ],
+   "opcode": "Info"
+  },
+  {
+   "record_id": "1015",
+   "description": "Inventory service 2.0 started on ws01.corp.example with configuration C:\\Contoso\\inventory-1.json.",
+   "keywords": [
+    "Startup",
+    "Configuration",
+    "Diagnostic"
+   ],
+   "opcode": "Begin"
+  },
+  {
+   "record_id": "1016",
+   "description": "Backup job nightly-4 finished: 4441 files.",
+   "keywords": [
+    "Job",
+    "Storage"
+   ],
+   "opcode": "Stop"
+  },
+  {
+   "record_id": "1017",
+   "description": "Inventory service 2.8 started on ws02.corp.example with configuration C:\\Contoso\\inventory-3.json.",
+   "keywords": [
+    "Startup",
+    "Configuration",
+    "Diagnostic"
+   ],
+   "opcode": "Begin"
+  },
+  {
+   "record_id": "1018",
+   "description": "Backup job nightly-6 finished: 2926 files.",
+   "keywords": [
+    "Job",
+    "Storage"
+   ],
+   "opcode": "Stop"
+  },
+  {
+   "record_id": "1019",
+   "description": "Inventory service 2.6 started on ws01.corp.example with configuration C:\\Contoso\\inventory-3.json.",
+   "keywords": [
+    "Startup",
+    "Configuration",
+    "Diagnostic"
+   ],
+   "opcode": "Begin"
+  },
+  {
+   "record_id": "1020",
+   "description": "An account was successfully logged on. Subject: S-1-5-18\\WS01$. New logon: CORP\\dave from workstation WS04 (logon type 2). Subject again: S-1-5-18.",
+   "keywords": [
+    "Audit Success",
+    "Classic"
+   ],
+   "opcode": "Info"
+  },
+  {
+   "record_id": "1021",
+   "description": "Backup job nightly-9 finished: 2183 files.",
+   "keywords": [
+    "Job",
+    "Storage"
+   ],
+   "opcode": "Stop"
+  },
+  {
+   "record_id": "1022",
+   "description": "An account was successfully logged on. Subject: S-1-5-18\\WS01$. New logon: CORP\\alice from workstation WS03 (logon type 3). Subject again: S-1-5-18.",
+   "keywords": [
+    "Audit Success",
+    "Classic"
+   ],
+   "opcode": "Info"
+  },
+  {
+   "record_id": "1023",
+   "description": "Backup job nightly-11 finished: 2827 files.",
+   "keywords": [
+    "Job",
+    "Storage"
+   ],
+   "opcode": "Stop"
+  },
+  {
+   "record_id": "1024",
+   "description": "Inventory service 2.9 started on ws02.corp.example with configuration C:\\Contoso\\inventory-3.json.",
+   "keywords": [
+    "Startup",
+    "Configuration",
+    "Diagnostic"
+   ],
+   "opcode": "Begin"
+  }
+ ]
+]

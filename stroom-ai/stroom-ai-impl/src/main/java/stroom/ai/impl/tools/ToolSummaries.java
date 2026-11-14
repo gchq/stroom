@@ -91,6 +91,8 @@ public final class ToolSummaries {
             Map.entry("profile_sample", "Profiles raw sample data: its format, fields and timestamps."),
             Map.entry("promote_build", "Onboarding: promotes a build out of the workspace, once approved."),
             Map.entry("propose_code_change", "Proposes a change to the code being stepped, for the user to accept."),
+            Map.entry("propose_context_lookup", "Onboarding: proposes how records are enriched from their context "
+                                                + "data."),
             Map.entry("propose_dashboard", "Offers the user a button to create a dashboard from a query."),
             Map.entry("propose_dashboard_change", "Proposes a change to a dashboard table, for the user to accept."),
             Map.entry("instruction_evidence",

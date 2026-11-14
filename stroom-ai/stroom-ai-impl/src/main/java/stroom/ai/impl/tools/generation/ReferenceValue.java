@@ -28,14 +28,27 @@ import java.util.stream.Stream;
 /// @param field   Input field (Data Splitter name or JSON key).
 /// @param value   Or a constant.
 /// @param xpath   Or an XPath relative to the record.
+/// @param copy    With field or xpath, and an element: the nodes it selects copied whole into the element (a table of
+///                entries, say, for a lookup's `path` to read, or mask_names' table), not their text.
 public record ReferenceValue(String element,
                              String field,
                              String value,
-                             String xpath) {
+                             String xpath,
+                             boolean copy) {
 
     /// Fills in the default element (none: a text value).
     public ReferenceValue {
         element = Objects.requireNonNullElse(element, "");
+    }
+
+    /// A value part written as text.
+    ///
+    /// @param element Element name under the value, or empty for a text value.
+    /// @param field   Input field.
+    /// @param value   Or a constant.
+    /// @param xpath   Or an XPath relative to the record.
+    public ReferenceValue(final String element, final String field, final String value, final String xpath) {
+        this(element, field, value, xpath, false);
     }
 
     /// @param json A value part as JSON-like values.
@@ -58,8 +71,15 @@ public record ReferenceValue(String element,
             return null;
         }
         final ReferenceValue part = new ReferenceValue(fields.string("element", ""), fields.optionalString("field"),
-                fields.optionalString("value"), fields.optionalString("xpath"));
+                fields.optionalString("value"), fields.optionalString("xpath"), fields.bool("copy", false));
         if (!fields.ok()) {
+            return null;
+        }
+        if (part.copy && (part.element.isEmpty() || part.value != null)) {
+            reader.valueError(loc, "value '" + (part.element.isEmpty()
+                    ? "text"
+                    : part.element) + "': copy puts the nodes a field or xpath selects inside an element: give "
+                                   + "element and field or xpath", input);
             return null;
         }
         if (Stream.of(part.field, part.value, part.xpath).filter(Objects::nonNull).count() != 1) {
@@ -79,6 +99,9 @@ public record ReferenceValue(String element,
                 .put("field", field, null)
                 .put("value", value, null)
                 .put("xpath", xpath, null)
+                .putIfSet("copy", copy
+                        ? Boolean.TRUE
+                        : null)
                 .build();
     }
 }

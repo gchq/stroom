@@ -113,7 +113,8 @@ class FindReferenceDataTool extends AbstractBuiltInTool {
                              + "(pipelines with a ReferenceDataFilter, whatever they're called) and the template "
                              + "for new reference-data pipelines (by its output). New reference data: create_feed "
                              + "(stream_type 'Raw Reference'), build_reference_xslt, create_pipeline from that "
-                             + "template.")
+                             + "template. Context data (each stream's own Context child) is loaded by a child of "
+                             + "context_loader_template, named in references with stream_type 'Context'.")
                 .build();
     }
 
@@ -196,6 +197,10 @@ class FindReferenceDataTool extends AbstractBuiltInTool {
         result.put("references_in_use", references);
         result.put("loaders", loaders);
         result.put("reference_data_template", template);
+        final List<Map<String, Object>> contextTemplates = referenceData.contextLoaderTemplates(index);
+        result.put("context_loader_template", contextTemplates.isEmpty()
+                ? null
+                : contextTemplates.getFirst());
         if (!unreadable.isEmpty()) {
             result.put("unreadable", unreadable);
         }

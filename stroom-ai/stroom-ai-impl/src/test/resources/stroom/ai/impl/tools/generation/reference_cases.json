@@ -1699,7 +1699,7 @@
      "input"
     ],
     "type": "literal_error",
-    "msg": "Input should be 'data_splitter' or 'json'",
+    "msg": "Input should be 'data_splitter', 'json' or 'xml'",
     "input": "csv"
    },
    {
@@ -1734,7 +1734,7 @@
      0
     ],
     "type": "value_error",
-    "msg": "Value error, map 'A': give exactly one of key or key_xpath",
+    "msg": "Value error, map 'A': give exactly one of key, key_xpath or key_fields",
     "input": {
      "name": "A",
      "values": [
@@ -1770,7 +1770,7 @@
      0
     ],
     "type": "value_error",
-    "msg": "Value error, map 'A': give exactly one of key or key_xpath",
+    "msg": "Value error, map 'A': give exactly one of key, key_xpath or key_fields",
     "input": {
      "name": "A",
      "key": "k",
