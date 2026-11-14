@@ -87,6 +87,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     private static final String KEEP = "keep";
     // What becomes of a build's test feed.
     private static final String TEST_FEED_KEPT = "left in the workspace: the build's test feed, never promoted";
+    private static final String TEST_INDEX_KEPT = "left in the workspace: the build's test index, never promoted";
     static final String OVERWRITE_ORIGINAL = "Overwrite production with the working copy";
     static final String KEEP_ORIGINAL = "Keep production as it is";
     // In a working copy's record entry: what the user chose for an original changed since, and at which version.
@@ -120,6 +121,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     // An aggregated feed's indexes, one per source type group unless shared; none in tests that make the tool
     // themselves.
     private Provider<FeedIndexDecisions> feedIndexesProvider;
+    private Provider<BuildTestIndexes> testIndexesProvider;
 
     @Inject
     PromoteBuildTool(final BuildFacts facts,
@@ -169,6 +171,13 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     @Inject
     void setFeedIndexes(final Provider<FeedIndexDecisions> feedIndexes) {
         this.feedIndexesProvider = feedIndexes;
+    }
+
+    /// @param testIndexes The build's test indexes: kept in the workspace at promotion, and a promoted pipeline
+    ///                    pointed back at the production index each stood in for.
+    @Inject
+    void setTestIndexes(final Provider<BuildTestIndexes> testIndexes) {
+        this.testIndexesProvider = testIndexes;
     }
 
     @Override
@@ -381,7 +390,19 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         final List<FeedIndexDecisions.IndexChange> indexChanges = feedIndexesProvider == null
                 ? List.of()
                 : feedIndexesProvider.get().changes(build, docs);
-        final List<String> indexSaid = indexChanges.stream().map(FeedIndexDecisions.IndexChange::said).toList();
+        // Any build's indexing pipelines: the production Lucene indexes they write to once promoted gain the fields
+        // their plans add (an aggregated feed's groups' indexes are the changes above).
+        final Set<String> handled = new LinkedHashSet<>();
+        indexChanges.stream()
+                .filter(change -> change.indexDoc() != null)
+                .forEach(change -> handled.add(change.indexDoc().getUuid()));
+        final List<BuildTestIndexes.FieldAddition> fieldAdditions = testIndexesProvider == null
+                ? List.of()
+                : testIndexesProvider.get().promotionAdditions(build, docs, handled);
+        final List<String> indexSaid = new ArrayList<>(indexChanges.stream()
+                .map(FeedIndexDecisions.IndexChange::said)
+                .toList());
+        fieldAdditions.forEach(addition -> indexSaid.add(addition.said()));
         final String tree = layout.promotionTree(plan, creating) + testFeedNote(plan, testFeeds);
         // The question applies: documents of several roles.
         final boolean roles = rolesMoved.size() > 1;
@@ -394,9 +415,10 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             }
             if (!indexSaid.isEmpty()) {
                 review.put("index_changes", indexSaid);
-                review.put("hint", review.get("hint") + " Say the index_changes too: the index of the build's "
-                                   + "source type group (its own, unless the user chose to share one) and the fields "
-                                   + "this build adds to it (forward only).");
+                review.put("hint", review.get("hint") + " Say the index_changes too: each production index the "
+                                   + "build's indexing changes (for an aggregated feed, its source type group's: its "
+                                   + "own, unless the user chose to share one) and the fields this build adds to it "
+                                   + "(forward only).");
             }
             return review;
         }
@@ -448,6 +470,18 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             } catch (final RuntimeException e) {
                 throw new ToolRefusal("Not promoted: the groups' indexes couldn't be recorded in the feed's "
                                       + "registry: " + e.getMessage() + ". Done before it: " + (done.isEmpty()
+                        ? "nothing"
+                        : String.join("; ", done)));
+            }
+        }
+        if (!fieldAdditions.isEmpty()) {
+            // Before the pipelines writing to them are promoted, so production indexing never meets a field the
+            // index lacks.
+            try {
+                done.addAll(testIndexesProvider.get().apply(fieldAdditions));
+            } catch (final RuntimeException e) {
+                throw new ToolRefusal("Not promoted: the production indexes couldn't be given the build's new "
+                                      + "fields: " + e.getMessage() + ". Done before it: " + (done.isEmpty()
                         ? "nothing"
                         : String.join("; ", done)));
             }
@@ -516,8 +550,11 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 plan.add(new PromotionLayout.Step(doc, PromotionLayout.WRITE_BACK, String.valueOf(copyOf), null));
             } else if (given.testFeeds().contains(uuid)) {
                 // Seen in chat 177: the build's test feed was in the layout, and the agent asked the user whether to
-                // promote it. It holds only the sample's Events: never promoted, whatever the destinations say.
-                plan.add(new PromotionLayout.Step(doc, PromotionLayout.KEEP, TEST_FEED_KEPT, null));
+                // promote it. It holds only the sample's Events: never promoted, whatever the destinations say. A
+                // test index, likewise, holds only the sample's documents.
+                plan.add(new PromotionLayout.Step(doc, PromotionLayout.KEEP, FeedDoc.TYPE.equals(type)
+                        ? TEST_FEED_KEPT
+                        : TEST_INDEX_KEPT, null));
             } else if (!destinations.containsKey(uuid) && KEEP.equals(besideFeeds.get(uuid))) {
                 plan.add(new PromotionLayout.Step(doc, PromotionLayout.KEEP, "left in the workspace: a survey doc "
                                                                              + "stays in its build", null));
@@ -788,13 +825,25 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 out.add(uuid);
             }
         }
+        // The build's test indexes (BuildTestIndexes), standing in for production indexes while it was open.
+        final Set<String> listed = new LinkedHashSet<>();
+        docs.forEach(doc -> listed.add(String.valueOf(doc.get("uuid"))));
+        testIndexes(build).keySet().stream().filter(listed::contains).forEach(out::add);
         return out;
+    }
+
+    // The build's test indexes, each with the production index doc's UUID it stands in for; none without the tool.
+    private Map<String, String> testIndexes(final String build) {
+        return testIndexesProvider == null
+                ? Map.of()
+                : testIndexesProvider.get().testIndexes(build);
     }
 
     // What the layout says of the test feeds kept, for the user and the agent: never promoted, nothing to offer.
     private static String testFeedNote(final List<PromotionLayout.Step> plan, final Set<String> testFeeds) {
         final List<String> kept = plan.stream()
                 .filter(step -> PromotionLayout.KEEP.equals(step.action())
+                                && FeedDoc.TYPE.equals(step.doc().get("type"))
                                 && testFeeds.contains(String.valueOf(step.doc().get("uuid"))))
                 .map(step -> String.valueOf(step.doc().get("name")))
                 .toList();
@@ -1009,6 +1058,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             ofType(docs, FeedDoc.TYPE).stream()
                     .filter(feed -> !groupOutput(build, feed))
                     .forEach(feed -> buildFeeds.add(String.valueOf(feed.get("uuid"))));
+            final Map<String, String> testIndexes = testIndexes(build);
             for (final PromotionLayout.Step step : plan) {
                 final String name = String.valueOf(step.doc().get("name"));
                 doing = "restoring production settings on '" + name + "'";
@@ -1019,6 +1069,12 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                         // build): in production they go into the input's feed.
                         done.add("'" + name + "' writes its Events into its input's feed again (the build's test "
                                  + "feed was for the build only)");
+                    }
+                    if (testIndexesProvider != null && testIndexesProvider.get().restoreIndex(uuid, testIndexes)) {
+                        // It indexed into the build's test index: in production it indexes into the index that
+                        // stood in for.
+                        done.add("'" + name + "' indexes into its production index again (the build's test index "
+                                 + "was for the build only)");
                     }
                 }
             }

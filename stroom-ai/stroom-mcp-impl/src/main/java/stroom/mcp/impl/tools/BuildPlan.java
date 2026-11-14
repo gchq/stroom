@@ -852,7 +852,8 @@ public class BuildPlan {
                 : hasMapping(xslts, "translation") || !translation.isEmpty()
                         ? null
                         : Boolean.FALSE);
-        done.put(SOURCE_TYPES, sourceTypesDone(surveyState, of(byType, DocumentationDoc.TYPE), sources, assessment));
+        done.put(SOURCE_TYPES, sourceTypesDone(build, surveyState, of(byType, DocumentationDoc.TYPE), sources,
+                assessment));
         done.put("classify", facts.classified(docs)
                 ? Boolean.TRUE
                 : hasMapping(xslts, "translation") || !translation.isEmpty()
@@ -1647,7 +1648,8 @@ public class BuildPlan {
     // The source types step: not needed (null) for a feed of one source, which never sees it; to do once the
     // survey's field is confirmed (or a registry is beside the feed) until the registry is written in the build and,
     // but for an assessment, the user has chosen the build's scope.
-    private Boolean sourceTypesDone(final Map<String, Object> surveyState,
+    private Boolean sourceTypesDone(final String build,
+                                    final Map<String, Object> surveyState,
                                     final List<Map<String, Object>> documentation,
                                     final List<String> sources,
                                     final boolean assessment) {
@@ -1662,7 +1664,10 @@ public class BuildPlan {
         if (!aggregated) {
             return null;
         }
-        return registry && (assessment || said.get(SourceTypeProfiles.SCOPE) != null);
+        // The scope is in the survey state once surveyed; record_source_types before the build's survey keeps it in
+        // the build's registry alone (seen in an eval: the step stayed to do, and every next offered it again).
+        return registry && (assessment || said.get(SourceTypeProfiles.SCOPE) != null
+                            || facts.scopeRecorded(build, sources));
     }
 
     private static Set<String> skipped(final Kinds kinds,

@@ -563,9 +563,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final Map<String, Object> state = kindsChanged
                 ? null
                 : surveyed;
-        final Map<String, Object> keptSources = surveyed == null
+        final Map<String, Object> keptSources = withRegistryScope(build, feed, surveyed == null
                 ? Map.of()
-                : JsonValues.mapOrEmpty(surveyed.get(SourceTypeProfiles.STATE_KEY));
+                : JsonValues.mapOrEmpty(surveyed.get(SourceTypeProfiles.STATE_KEY)));
         final Set<String> dropped = read == null || state == null
                 ? Set.of()
                 : droppedShapes(read, state);
@@ -780,6 +780,11 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             if (profiles != null) {
                 counted.putAll(profiles.toState(partSizes(profiles)));
             }
+            if (scoped) {
+                // The build's scope, kept in the survey state with the field it reads (seeded from the build's
+                // registry when record_source_types came before the survey).
+                counted.put(SourceTypeProfiles.SCOPE, keptSources.get(SourceTypeProfiles.SCOPE));
+            }
             result.put(SourceTypeProfiles.STATE_KEY, counted);
         } else if (build == null) {
             noteAggregated(result, feed, heads);
@@ -907,6 +912,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final Map<String, Object> counts = profiles.toState(partSizes(profiles));
         final Map<String, Object> counted = new LinkedHashMap<>(sourcesKept(surveyed.sources(), field));
         counted.putAll(counts);
+        if (field.equals(surveyed.sources().get(SourceTypeProfiles.FIELD))
+            && surveyed.sources().get(SourceTypeProfiles.SCOPE) != null) {
+            counted.put(SourceTypeProfiles.SCOPE, surveyed.sources().get(SourceTypeProfiles.SCOPE));
+        }
         result.put(SourceTypeProfiles.STATE_KEY, counted);
         final Search search = new Search(row, named, older, shapes.passedOver());
         final Map<String, Object> found = found(search, reading, rowProfile(surveyed.sources(), counts, rows, row),
@@ -2071,6 +2080,50 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             return Math.min(size, want);
         }
         return (int) Math.min(size, (long) Math.ceil((double) want * size / inScope));
+    }
+
+    /// The survey's source types as kept, with the build's scope where the survey keeps none and the build's own
+    /// registry has one this build chose: record_source_types may come before the build's first survey (seen in an
+    /// eval of a later build on a promoted aggregated feed: the group was chosen first, the survey was unscoped,
+    /// and the plan's source types step stayed to do), and the survey reads through the scope whichever came first.
+    ///
+    /// @param build   The build, or null.
+    /// @param feed    The feed.
+    /// @param sources The survey state's source types, or empty.
+    /// @return The source types, the scope (with the registry's rows) and its field added where seeded.
+    Map<String, Object> withRegistryScope(final String build,
+                                          final String feed,
+                                          final Map<String, Object> sources) {
+        if (build == null || sources.get(SourceTypeProfiles.SCOPE) != null
+            || Boolean.FALSE.equals(sources.get("aggregated"))) {
+            return sources;
+        }
+        final Optional<SourceTypeRegistries.Found> found;
+        try {
+            found = besideFeed.registry(build, feed).filter(registry -> !registry.promoted());
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No registry read for feed {}: {}", feed, e.getMessage()));
+            return sources;
+        }
+        if (found.isEmpty()) {
+            return sources;
+        }
+        final Map<String, Object> state = found.get().state();
+        final Map<String, Object> scope = JsonValues.mapOrEmpty(state.get(SourceTypeProfiles.SCOPE));
+        final String field = JsonValues.text(state.get(SourceTypeProfiles.FIELD));
+        final Object keptField = sources.get(SourceTypeProfiles.FIELD);
+        if (scope.isEmpty() || !build.equals(JsonValues.text(scope.get(SourceTypeScope.BUILD)))
+            || NullSafe.isBlankString(field) || (keptField != null && !field.equals(keptField))) {
+            return sources;
+        }
+        final Map<String, Object> seeded = new LinkedHashMap<>(sources);
+        if (keptField == null) {
+            seeded.putAll(sourcesChosen(field, REGISTRY));
+        }
+        final Map<String, Object> kept = new LinkedHashMap<>(scope);
+        kept.put(SourceTypeScope.ROWS, SourceTypeScope.kept(SourceTypeRegistry.rows(state)));
+        seeded.put(SourceTypeProfiles.SCOPE, kept);
+        return seeded;
     }
 
     // The source type field of the feed's registry (the build's, else the one beside the feed); empty when it has

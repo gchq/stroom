@@ -431,6 +431,25 @@ class IndexFields {
         return addFields(new DocRef(LuceneIndexDoc.TYPE, doc.getUuid(), doc.getName()), doc.getName(), plan);
     }
 
+    /// Lucene: copies every field one index doc has that another lacks, as it has it (a build's test index made as
+    /// the mirror of a production index, [BuildTestIndexes]).
+    ///
+    /// @param from The Lucene Index doc the fields are copied from.
+    /// @param to   The Lucene Index doc they are added to.
+    /// @return The names of the fields added.
+    List<String> copyLuceneFields(final DocRef from, final DocRef to) {
+        final Set<String> have = new TreeSet<>();
+        luceneFields(to).forEach(field -> have.add(field.getFldName()));
+        final List<String> added = new ArrayList<>();
+        for (final IndexFieldImpl field : luceneFields(from)) {
+            if (have.add(field.getFldName())) {
+                indexResourceProvider.get().addField(new AddField(to, field));
+                added.add(field.getFldName());
+            }
+        }
+        return added;
+    }
+
     // The plan's fields the Lucene index doc lacks, added.
     private Map<String, Object> addFields(final DocRef ref, final String indexName, final FieldPlan plan) {
         final Set<String> have = new TreeSet<>();

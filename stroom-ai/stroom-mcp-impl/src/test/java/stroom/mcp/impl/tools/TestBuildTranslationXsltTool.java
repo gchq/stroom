@@ -588,6 +588,55 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
+    void theUsersLatestWordOnTheDomainWinsOverTheAnswerKept() {
+        // Seen in an eval: "Split" answered in the form, the user then said in the chat to keep the Ids whole; the
+        // agent's changes took the split out, and the answer kept with the XSLT split them again on every save.
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("{\"input\": \"json\",",
+                "{\"input\": \"json\", \"json_layout\": \"lines\","), Map.class);
+        final String sample = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "ACME\\\\alice"}
+                """;
+        world.forms = true;
+        world.answers.put("Split the domain off", DomainSplits.SPLIT);
+        final Map<String, Object> split = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "N", "sample", sample));
+        final String uuid = String.valueOf(map(split.get("saved")).get("uuid"));
+        assertThat(keptJson(uuid)).contains("strip_domain");
+
+        // The changes undo the split (the Id whole, its Domain taken out): kept whole, and not split again.
+        final Map<String, Object> undone = world.call(tool, Map.of("uuid", uuid, "sample", sample, "changes",
+                Map.of("events", List.of(Map.of("name", "logon", "fields", List.of(
+                        Map.of("path", "EventDetail/Authenticate/User/Id", "field", "user"),
+                        Map.of("path", "EventDetail/Authenticate/User/Domain", "remove", true)))))));
+        assertThat(undone).as(String.valueOf(undone)).containsKey("saved");
+        assertThat(list(undone.get("changes_applied"))).noneMatch(line -> String.valueOf(line).contains(
+                "the domain split off"));
+        assertThat(keptJson(uuid)).doesNotContain("strip_domain", "User/Domain");
+        assertThat(world.call(tool, Map.of("mapping", mapping, "uuid", uuid, "sample", sample)))
+                .doesNotContainKey("changes_applied");
+        assertThat(keptJson(uuid)).doesNotContain("strip_domain");
+        assertThat(world.asked).hasSize(1);
+
+        // domain_split as the user said it: Split again, then Keep, which takes the split out itself.
+        world.call(tool, Map.of("uuid", uuid, "sample", sample, "domain_split", DomainSplits.SPLIT));
+        assertThat(keptJson(uuid)).contains("strip_domain");
+        final Map<String, Object> kept = world.call(tool, Map.of("uuid", uuid, "sample", sample, "domain_split",
+                DomainSplits.KEEP));
+        assertThat(list(kept.get("changes_applied"))).anyMatch(line -> String.valueOf(line).startsWith(
+                "the users' Ids kept whole, as the user said"));
+        assertThat(keptJson(uuid)).doesNotContain("strip_domain", "User/Domain");
+        assertThat(world.asked).hasSize(1);
+        assertThat(String.valueOf(world.call(tool, Map.of("uuid", uuid, "sample", sample, "domain_split", "maybe"))
+                .get("error")))
+                .contains("domain_split is 'Split' or 'Keep as is'");
+    }
+
+    private String keptJson(final String uuid) {
+        return JsonUtil.writeValueAsString(KeptMapping.readMapping(world.xslt(uuid).getDescription())
+                .orElseThrow().payload(), false);
+    }
+
+    @Test
     void aSystemNameOrEnvironmentLeftAsAPlaceholderIsNotSaved() {
         // Seen in testing: the source's name went in as the System/Name, and the user was never asked for either.
         final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("\"value\": \"Acme\"",

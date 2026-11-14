@@ -653,6 +653,26 @@ class StroomBuildFacts implements BuildFacts {
     }
 
     @Override
+    public boolean scopeRecorded(final String build, final List<String> feeds) {
+        if (registriesProvider == null || build == null) {
+            return false;
+        }
+        try {
+            final SourceTypeRegistries registries = registriesProvider.get();
+            return feeds.stream()
+                    .map(feed -> registries.registry(build, feed))
+                    .flatMap(Optional::stream)
+                    .filter(found -> !found.promoted())
+                    .map(found -> JsonValues.mapOrEmpty(found.state().get(SourceTypeProfiles.SCOPE)))
+                    .anyMatch(scope -> build.equals(JsonValues.text(scope.get(SourceTypeScope.BUILD))));
+        } catch (final RuntimeException e) {
+            // Advice: the plan goes on as if no scope were recorded.
+            LOGGER.debug("Unable to read the registry of {} in build {}", feeds, build, e);
+            return false;
+        }
+    }
+
+    @Override
     public List<Map<String, Object>> processingFilters(final String pipelineUuid) {
         final ProcessorFilterAccess.Filters filters = processorFilterAccess.filtersOf(
                 new DocRef(PipelineDoc.TYPE, pipelineUuid));

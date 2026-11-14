@@ -151,6 +151,14 @@ interface BuildFacts {
         return false;
     }
 
+    /// @param build A build.
+    /// @param feeds The existing feeds it works from.
+    /// @return Whether the build's own registry of one of them holds the scope this build chose (record_source_types
+    /// writes it there, whether or not the build has surveyed the feed yet).
+    default boolean scopeRecorded(final String build, final List<String> feeds) {
+        return false;
+    }
+
     /// @param pipelineUuid A pipeline.
     /// @return Its processor filters, as processing_status gives them (each with `enabled` and `finished`).
     List<Map<String, Object>> processingFilters(String pipelineUuid);

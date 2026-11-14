@@ -58,13 +58,44 @@ class TestPassedOverRecords {
                 SteppingWorld.step(7, 0, 2, "<Events/>"));
 
         assertThat(sifted.passedOver()).isTrue();
-        assertThat(sifted.markers()).containsExactly(other);
+        assertThat(sifted.markers()).isEmpty();
         assertThat(kept.passedOver()).isFalse();
+        assertThat(kept.markers()).containsExactly(other);
         assertThat(passed.count()).isEqualTo(1);
         assertThat(passed.bySourceType()).isEqualTo(Map.of("SharePoint", 1));
         final Map<String, Object> result = new LinkedHashMap<>();
         passed.addTo(result);
         assertThat(result).containsEntry(PassedOverRecords.RECORDS_PASSED_OVER, 1);
+    }
+
+    @Test
+    void aPassedOverRecordKeepsOnlyItsErrors() {
+        final PassedOverRecords passed = PassedOverRecords.of(GROUP);
+        final ErrorTriage.Marker truncated = ErrorTriage.marker("WARNING", "jsonParser",
+                "String value truncated to length 10000, original length: 25486", null);
+        final ErrorTriage.Marker warn = ErrorTriage.marker("WARN", "jsonParser", "Another warning", null);
+        final ErrorTriage.Marker error = ErrorTriage.marker("ERROR", "jsonParser", "Unexpected character", null);
+        final ErrorTriage.Marker fatal = ErrorTriage.marker("FATAL_ERROR", "pipeline", "Stream broken", null);
+
+        final PassedOverRecords.Sifted sifted = passed.sift(List.of(truncated, LINE, warn, error, fatal),
+                SteppingWorld.passedOver(7, 0, 1, SteppingWorld.azureRecord("SharePoint")));
+
+        assertThat(sifted.passedOver()).isTrue();
+        assertThat(sifted.markers()).containsExactly(error, fatal);
+    }
+
+    @Test
+    void aRecordNotPassedOverKeepsItsWarnings() {
+        final PassedOverRecords passed = PassedOverRecords.of(GROUP);
+        final ErrorTriage.Marker truncated = ErrorTriage.marker("WARNING", "jsonParser",
+                "String value truncated to length 10000, original length: 25486", null);
+
+        final PassedOverRecords.Sifted sifted = passed.sift(List.of(truncated),
+                SteppingWorld.step(7, 0, 2, "<Events/>"));
+
+        assertThat(sifted.passedOver()).isFalse();
+        assertThat(sifted.markers()).containsExactly(truncated);
+        assertThat(passed.count()).isZero();
     }
 
     @Test

@@ -77,10 +77,11 @@ class TestSurveyFeedTool {
     private final BuildMemory memory = new BuildMemory();
     // The plan's next step isn't what these tests are about: the result as the survey gave it.
     private final BuildPlan plan = Mockito.mock(BuildPlan.class);
+    private final SourceTypeRegistries registries = besideFeed();
     private final SurveyFeedTool tool = new SurveyFeedTool(streamReader, feedNames, world.guard(),
             new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)), consent,
             new FewerStreams(securityContext),
-            world.documentAccess, auditLog, besideFeed(), memory, () -> plan);
+            world.documentAccess, auditLog, registries, memory, () -> plan);
 
     TestSurveyFeedTool() {
         Mockito.when(plan.withNext(any(), any(), any())).thenAnswer(invocation -> invocation.getArgument(2));
@@ -862,6 +863,63 @@ class TestSurveyFeedTool {
         assertThat((String) scoped.get("coverage")).contains("within the scope: build 'acme-v1' covers Security");
         assertThat(SurveyDoc.readFor(surveyState(), 8L)).containsExactly("Security");
         assertThat(SurveyDoc.readFor(surveyState(), 7L)).containsExactly(SourceTypeScope.ALL);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aScopeRecordedBeforeTheBuildsFirstSurveyScopesIt() {
+        // Seen in an eval of a later build on a promoted aggregated feed: record_source_types came before survey_feed,
+        // the survey was unscoped and the plan's source types step stayed to do.
+        sampleFeedInABuild();
+        final Map<String, Object> registry = new LinkedHashMap<>();
+        registry.put("field", "source");
+        registry.put("rows", sourceRows());
+        registry.put("scope", Map.of("build", "acme-v1", "group", "Security", "source_types", List.of("Security"),
+                "by", "user"));
+        Mockito.when(registries.registry(eq("acme-v1"), eq("ACME-VPN"))).thenReturn(Optional.of(
+                new SourceTypeRegistries.Found(new FeedSampling.SurveyRecord("r", "ACME-VPN source types", ""),
+                        false, registry)));
+        stream(8, "ACME-VPN", 0, wrappedLines(60), false);
+
+        final Map<String, Object> scoped = json(call("{\"stream_ids\": [8], \"max_streams\": 1, "
+                                                     + "\"build\": \"acme-v1\", \"source_type_field\": "
+                                                     + "\"source\"}"));
+
+        assertThat(scoped).containsEntry("records_read", 20);
+        assertThat(String.valueOf(scoped.get("shapes"))).contains("Security").doesNotContain("Database");
+        final Map<String, Object> kept = (Map<String, Object>) ((Map<String, Object>) surveyState()
+                .get("source_types")).get("scope");
+        assertThat(kept).containsEntry("build", "acme-v1").containsEntry("source_types", List.of("Security"));
+        assertThat(SourceTypeScope.rowsOf(kept.get("rows"))).extracting(SourceTypeRows.Row::name)
+                .containsExactly("Security", "Database", "Integration");
+        assertThat(SurveyDoc.readFor(surveyState(), 8L)).containsExactly("Security");
+    }
+
+    @Test
+    void anotherBuildsOrAPromotedRegistrysScopeIsNotSeeded() {
+        final Map<String, Object> registry = new LinkedHashMap<>();
+        registry.put("field", "source");
+        registry.put("rows", sourceRows());
+        registry.put("scope", Map.of("build", "acme-v0", "source_types", List.of("Security")));
+        Mockito.when(registries.registry(eq("acme-v1"), eq("ACME-VPN"))).thenReturn(Optional.of(
+                new SourceTypeRegistries.Found(new FeedSampling.SurveyRecord("r", "n", ""), false, registry)));
+        assertThat(tool.withRegistryScope("acme-v1", "ACME-VPN", Map.of())).isEmpty();
+
+        final Map<String, Object> own = new LinkedHashMap<>(registry);
+        own.put("scope", Map.of("build", "acme-v1", "source_types", List.of("Security")));
+        Mockito.when(registries.registry(eq("acme-v1"), eq("ACME-VPN"))).thenReturn(Optional.of(
+                new SourceTypeRegistries.Found(new FeedSampling.SurveyRecord("r", "n", ""), true, own)));
+        assertThat(tool.withRegistryScope("acme-v1", "ACME-VPN", Map.of())).isEmpty();
+
+        Mockito.when(registries.registry(eq("acme-v1"), eq("ACME-VPN"))).thenReturn(Optional.of(
+                new SourceTypeRegistries.Found(new FeedSampling.SurveyRecord("r", "n", ""), false, own)));
+        // A survey reading by another field, or one source, keeps what it has.
+        assertThat(tool.withRegistryScope("acme-v1", "ACME-VPN", Map.of("field", "other")))
+                .isEqualTo(Map.of("field", "other"));
+        assertThat(tool.withRegistryScope("acme-v1", "ACME-VPN", Map.of("aggregated", false)))
+                .isEqualTo(Map.of("aggregated", false));
+        assertThat(tool.withRegistryScope("acme-v1", "ACME-VPN", Map.of())).containsKey("scope")
+                .containsEntry("field", "source");
     }
 
     @Test

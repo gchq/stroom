@@ -57,6 +57,8 @@ final class FakeBuildFacts implements BuildFacts {
     // Whether classify_kinds has settled every kind (settled unless a test says not).
     boolean classified = true;
     Map<String, Object> survey;
+    // The build whose own registry holds the scope it chose, or null.
+    String scopeRecordedBy;
     List<String> checks = List.of();
     String keptXslt;
     List<Map<String, Object>> filters = List.of();
@@ -162,6 +164,11 @@ final class FakeBuildFacts implements BuildFacts {
     @Override
     public List<String> openSlots(final String pipelineUuid) {
         return List.of();
+    }
+
+    @Override
+    public boolean scopeRecorded(final String build, final List<String> feeds) {
+        return build != null && build.equals(scopeRecordedBy) && !feeds.isEmpty();
     }
 
     @Override

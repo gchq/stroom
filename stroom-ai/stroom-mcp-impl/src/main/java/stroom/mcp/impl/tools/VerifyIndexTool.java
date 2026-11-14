@@ -55,6 +55,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -104,6 +105,7 @@ class VerifyIndexTool extends AbstractBuiltInTool {
     private final BuildRecords records;
     private final PipelineShapes pipelineShapes;
     private final EventsExpectations expectations;
+    private Provider<BuildTestIndexes> testIndexesProvider;
 
     @Inject
     VerifyIndexTool(final IndexChecks checks,
@@ -128,6 +130,12 @@ class VerifyIndexTool extends AbstractBuiltInTool {
         this.records = records;
         this.pipelineShapes = pipelineShapes;
         this.expectations = expectations;
+    }
+
+    /// @param testIndexes The build's test indexes, searched in place of the production indexes they stand in for.
+    @Inject
+    void setTestIndexes(final Provider<BuildTestIndexes> testIndexes) {
+        this.testIndexesProvider = testIndexes;
     }
 
     @Override
@@ -275,8 +283,13 @@ class VerifyIndexTool extends AbstractBuiltInTool {
 
     private Map<String, Object> verify(final ToolCall call, final ToolCallContext context) {
         final String build = required(call, BUILD_ARG);
-        final String indexUuid = required(call, INDEX_UUID_ARG);
+        final String askedUuid = required(call, INDEX_UUID_ARG);
         final String backend = backend(call);
+        // A production index the build's pipeline indexed in place of: the build's test index is what it wrote to.
+        final Optional<DocRef> testIndex = testIndexesProvider == null
+                ? Optional.empty()
+                : testIndexesProvider.get().searchedFor(build, askedUuid);
+        final String indexUuid = testIndex.map(DocRef::getUuid).orElse(askedUuid);
         final List<Long> streamIds = StartOnboardingTool.streamIds(call, STREAM_IDS_ARG);
         if (streamIds.isEmpty()) {
             throw new ToolRefusal("Give stream_ids: the Events streams that were indexed.");
@@ -326,9 +339,12 @@ class VerifyIndexTool extends AbstractBuiltInTool {
         // The build's index, or one from elsewhere that the build's own indexing pipeline writes to (a new version
         // writing through the existing index doc): the dashboard is the build's, and promoted with it (seen in
         // production: a new version's verification left no dashboard to promote).
-        final boolean ours = contents.stream().anyMatch(doc -> doc.uuid().equals(indexUuid))
-                             || contents.stream().anyMatch(doc -> PipelineDoc.TYPE.equals(doc.type())
-                                                                  && doc.uuid().equals(pipelineUuid));
+        // A test index is searched through an unsaved dashboard: a saved one would be promoted searching the test
+        // index, which stays in the workspace.
+        final boolean ours = testIndex.isEmpty()
+                             && (contents.stream().anyMatch(doc -> doc.uuid().equals(indexUuid))
+                                 || contents.stream().anyMatch(doc -> PipelineDoc.TYPE.equals(doc.type())
+                                                                      && doc.uuid().equals(pipelineUuid)));
         // The build's verification dashboard of this index, whatever it was named, changed rather than another made
         // (seen in chat 177: "<base> -VERIFY", named by the agent, then "<base> V1-VERIFY", by the index doc's name).
         final Optional<WriteGuard.BuildDoc> existing = verificationDashboard(contents, indexUuid,
@@ -420,6 +436,11 @@ class VerifyIndexTool extends AbstractBuiltInTool {
         result.put("dashboard", shown);
         ignoredName(call, name).ifPresent(note -> result.put("dashboard_name_ignored", note));
         result.putAll(searchedResult);
+        testIndex.ifPresent(test -> result.put("test_index", "Searched the build's test index " + test.getName()
+                                                             + ": the build's pipeline indexes into it in place of "
+                                                             + "the production index, which the build leaves as "
+                                                             + "it is (promotion adds the build's fields to it). "
+                                                             + "No dashboard is saved for a test index."));
         if (Boolean.TRUE.equals(searchedResult.get("passed"))) {
             final List<String> recorded = recordVerified(contents, docType, indexUuid, index.indexName(), streamIds);
             if (!recorded.isEmpty()) {
