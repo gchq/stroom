@@ -18,6 +18,7 @@ package stroom.receive.rules.shared;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.TypedBuilder;
+import stroom.docs.shared.NotDocumented;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
@@ -36,6 +37,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@NotDocumented(reason = "Users are not aware of this document type")
 @JsonPropertyOrder({
         "type",
         "uuid",

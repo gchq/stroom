@@ -31,15 +31,13 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@Description(
-        """
+@Description("""
         Defines a Plan B store used to hold trace logs, i.e. the spans that make up each trace as it \
         passes between services.
         Spans are grouped into their traces as they arrive, and the traces are kept so that they can be \
         queried and analysed by a Pathways document.
 
-        Data is loaded into the store using the {{< pipe-elm "PlanBFilter" >}} pipeline element.
-        """)
+        Data is loaded into the store using the PlanBFilter pipeline element.""")
 @JsonPropertyOrder({
         "type",
         "uuid",
@@ -76,8 +74,19 @@ public class TracesDoc extends AbstractPlanBDoc {
             @JsonProperty("stateType") final StateType stateType,
             @JsonProperty("settings") final AbstractPlanBSettings settings,
             @JsonProperty("hasSharedFileStoreData") final Boolean hasSharedFileStoreData) {
-        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser,
-                description, stateType == null ? StateType.TRACE : stateType, settings);
+        super(TYPE,
+                uuid,
+                name,
+                version,
+                createTimeMs,
+                updateTimeMs,
+                createUser,
+                updateUser,
+                description,
+                stateType == null
+                        ? StateType.TRACE
+                        : stateType,
+                settings);
         if (settings != null && !(settings instanceof TraceSettings)) {
             throw new IllegalArgumentException(
                     "TracesDoc requires TraceSettings, got: " +

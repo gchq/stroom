@@ -32,10 +32,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 
-@Description(
-        "Defines the connection details for a single Kafka cluster.\n" +
-        "This Kafka Configuration Document can then be used by one or more " +
-        "{{< pipe-elm \"StandardKafkaProducer\" >}} pipeline elements.")
+@Description("""
+        Defines the connection details for a single Kafka cluster.
+        This Kafka Configuration Document can then be used by one or more _StandardKafkaProducer_ pipeline elements.""")
 @JsonPropertyOrder({
         "type",
         "uuid",
