@@ -82,6 +82,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.LongStream;
 
@@ -158,6 +159,11 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     static final String BUILD_ARG = "build";
     static final String SOURCE_TYPE_FIELD_ARG = "source_type_field";
     static final String AGGREGATED_ARG = "aggregated";
+    static final String FIND_ARG = "find";
+    /// The most of a feed's streams, newest first, a call with `find` picks from (those surveyed before left out).
+    static final int FIND_STREAMS = 500;
+    // The most source type values said where a find's streams held none of the row's records.
+    private static final int VALUES_SAID = 5;
 
     /// The most characters read of a part, asked for.
     static final int MAX_CHARS = 5_000_000;
@@ -337,6 +343,12 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                         .addBooleanProperty(AGGREGATED_ARG, "True when the user says the feed aggregates several "
                                                             + "sources: the survey looks harder for the field "
                                                             + "that tells them apart, and asks the user.")
+                        .addStringProperty(FIND_ARG, "With build: a source type registry row's name (e.g. one the "
+                                                     + "user nominated that the survey hasn't met). Reads the "
+                                                     + "feed's streams not surveyed yet, newest first (or just "
+                                                     + "stream_ids), for that row's records until it has a few, "
+                                                     + "and counts them into the build's survey; says which "
+                                                     + "streams held them.")
                         .build())
                 .build();
     }
@@ -351,7 +363,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             }
             final List<Meta> chosen = metas(request.streamIds());
             final String feed = feed(call, context, request, chosen);
-            final Integer fewer = confirmFewerStreams(call, context, feed, request, chosen);
+            // A search for one source type's records reads as many streams as it takes: no fewer to agree to.
+            final Integer fewer = request.find() == null
+                    ? confirmFewerStreams(call, context, feed, request, chosen)
+                    : null;
             return JsonResults.of(withinTimeLimit(context, () -> survey(call, context, request, feed, chosen,
                     fewer)));
         } catch (final ToolRefusal e) {
@@ -384,7 +399,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 stringArg(call, KIND_FIELD_ARG),
                 stringArg(call, ACCEPT_ARG),
                 stringArg(call, SOURCE_TYPE_FIELD_ARG),
-                "true".equalsIgnoreCase(NullSafe.string(stringArg(call, AGGREGATED_ARG)).strip()));
+                "true".equalsIgnoreCase(NullSafe.string(stringArg(call, AGGREGATED_ARG)).strip()),
+                NullSafe.isBlankString(stringArg(call, FIND_ARG))
+                        ? null
+                        : stringArg(call, FIND_ARG).strip());
     }
 
     // The streams named, by id.
@@ -539,6 +557,15 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final Set<String> dropped = read == null || state == null
                 ? Set.of()
                 : droppedShapes(read, state);
+        if (request.find() != null) {
+            if (givenKinds != null || request.sourceTypeField() != null) {
+                throw new ToolRefusal(FIND_ARG + " reads with the build's survey's own kind field and source type "
+                                      + "field: call " + NAME + " without " + KIND_FIELD_ARG + " and "
+                                      + SOURCE_TYPE_FIELD_ARG + ".");
+            }
+            return findSourceType(context, request, feed, chosen, new Surveyed(record, surveyed, keptSources,
+                    keptKinds, gone, dropped));
+        }
         if (request.acceptAsIs() != null) {
             return acceptAsIs(call, context, request, feed, record, state, fewer);
         }
@@ -594,16 +621,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         // kinds of event; and in Ask Stroom AI, a one-stream feed read to its 334th record of 1,000 was called
         // covered.
         final boolean exhausted = chosen.isEmpty() && streams.size() < request.maxStreams();
-        final boolean whole = !chosen.isEmpty() || exhausted;
-        final Limits limits = new Limits(orDefault(request.maxChars(), whole
-                ? FeedSampling.SAMPLE_CHARS
-                : FeedSampling.FEED_CHARS), orDefault(request.maxParts(), whole
-                // Streams read whole are read through every part: seen in testing, a feed's latest streams uploaded
-                // again as one stream of five parts was surveyed through three.
-                ? MAX_PARTS
-                : FEED_PARTS), orDefault(request.maxRecords(), whole
-                ? FeedSampling.SAMPLE_RECORDS
-                : FeedSampling.FEED_RECORDS), whole);
+        final Limits limits = limits(request, !chosen.isEmpty() || exhausted);
         final SurveyRecords kept = new SurveyRecords(build, record, state, request.examples(), fewer);
         if (streams.isEmpty() && !skip.isEmpty()) {
             final Map<String, Object> result = new LinkedHashMap<>();
@@ -712,7 +730,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         pending.forEach(part -> continuing.add(part.stream()));
         final Reading reading = read(context, progress, feed, streams.stream()
                 .filter(meta -> !continuing.contains(meta.getId()))
-                .toList(), shapes, limits, peeked, profiles, scopes);
+                .toList(), shapes, limits, peeked, profiles, scopes, done -> false);
         if (reading.firstChunk() == null && pending.isEmpty()) {
             if (reading.stopped()) {
                 throw new ToolTimeoutException();
@@ -752,6 +770,278 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             noteAggregated(result, feed, heads);
         }
         return withSourcesSaid(keep(context, kept, result, shapes.shapes()), build, feed);
+    }
+
+    // How much of each stream a call reads: a sample's streams, and a feed's last, read whole.
+    private static Limits limits(final Request request, final boolean whole) {
+        return new Limits(orDefault(request.maxChars(), whole
+                ? FeedSampling.SAMPLE_CHARS
+                : FeedSampling.FEED_CHARS), orDefault(request.maxParts(), whole
+                // Streams read whole are read through every part: seen in testing, a feed's latest streams uploaded
+                // again as one stream of five parts was surveyed through three.
+                ? MAX_PARTS
+                : FEED_PARTS), orDefault(request.maxRecords(), whole
+                ? FeedSampling.SAMPLE_RECORDS
+                : FeedSampling.FEED_RECORDS), whole);
+    }
+
+    // A search for one registry row's records (find=; asked for by the user: a source type they nominated, which the
+    // survey hadn't met, had no way to be found). The feed's streams not surveyed for the build yet, newest first (or
+    // just the streams named), are read through a scope of that row alone, matched as the registry matches (the
+    // first row wins), until a few of its records are found or the streams or the call's time run out. Its records
+    // count into the build's survey as any survey reading does, so the row's profile fills in and its kinds of event
+    // can be classified; each stream read is signed for the row alone, so a later survey reads it again for the
+    // others. It asks nothing: the kind and source type fields are the survey's (or the registry's).
+    private Map<String, Object> findSourceType(final ToolCallContext context,
+                                               final Request request,
+                                               final String feed,
+                                               final List<Meta> chosen,
+                                               final Surveyed surveyed) {
+        final String build = request.build();
+        if (build == null) {
+            throw new ToolRefusal(FIND_ARG + " needs build: the build whose survey the records found count into.");
+        }
+        final List<SourceTypeRows.Row> rows = registryRows(build, feed);
+        if (rows.isEmpty()) {
+            throw new ToolRefusal("Feed '" + feed + "' has no source type registry (in build '" + build + "' or "
+                                  + "beside the feed), so there is no row '" + request.find() + "' to find: "
+                                  + "record_source_types writes the registry, with the rows the user names.");
+        }
+        final SourceTypeRows.Row row = rows.stream()
+                .filter(candidate -> candidate.name().equals(request.find()))
+                .findFirst()
+                .or(() -> rows.stream().filter(candidate -> candidate.name().equalsIgnoreCase(request.find()))
+                        .findFirst())
+                .orElseThrow(() -> new ToolRefusal("Feed '" + feed + "''s source type registry has no row '"
+                                                   + request.find() + "': its rows are " + rows.stream()
+                                                           .map(SourceTypeRows.Row::name).toList() + ". Give "
+                                                   + "one of them, or add the row with record_source_types "
+                                                   + "first."));
+        final String field = findField(build, feed, surveyed.sources());
+        final Map<String, Object> state = surveyed.state();
+        final Set<Long> before = new TreeSet<>(request.skipStreamIds());
+        if (state != null) {
+            JsonValues.listOrEmpty(state.get("streams_read")).forEach(id -> before.add(((Number) id).longValue()));
+        }
+        final boolean named = !chosen.isEmpty();
+        final List<Meta> streams;
+        final boolean older;
+        if (named) {
+            streams = chosen.stream().filter(meta -> !request.skipStreamIds().contains(meta.getId())).toList();
+            older = false;
+        } else {
+            final ExpressionOperator live = ExpressionOperator.builder().op(Op.AND)
+                    .addTextTerm(MetaFields.FEED, Condition.EQUALS, feed)
+                    .addTextTerm(MetaFields.TYPE, Condition.EQUALS, request.streamType())
+                    .addOperator(FeedSampling.notDeleted())
+                    .build();
+            final int most = before.size() + FIND_STREAMS;
+            final List<Meta> newest = find(live, most, true);
+            older = newest.size() >= most;
+            streams = newest.stream()
+                    .filter(meta -> !before.contains(meta.getId()))
+                    .limit(FIND_STREAMS)
+                    .toList();
+        }
+        final Map<String, Object> keptProfile = rowProfile(surveyed.sources(), Map.of(), rows, row);
+        if (streams.isEmpty() && (named || before.isEmpty())) {
+            throw new ToolRefusal("No " + request.streamType() + " streams in feed '" + feed + "' to search");
+        }
+        if (streams.isEmpty()) {
+            return nothingLeftToSearch(feed, row, before.size(), keptProfile);
+        }
+        final Set<String> known = new LinkedHashSet<>(request.knownSignatures());
+        if (state != null) {
+            JsonValues.mapOrEmpty(state.get("shapes")).keySet().forEach(signature -> known.add(String.valueOf(
+                    signature)));
+        }
+        known.removeAll(surveyed.dropped());
+        final Shapes shapes = new Shapes(new ArrayList<>(known), request.examples());
+        if (!surveyed.kinds().isEmpty()) {
+            shapes.useKindFields(JsonValues.strings(surveyed.kinds().get("fields")));
+        }
+        final SourceTypeProfiles profiles = new SourceTypeProfiles(field);
+        shapes.keepSourceValues(parsed -> SourceTypeFields.valueOf(parsed, field));
+        final StreamScopes scopes = new StreamScopes(shapes, new SourceTypeScope(build, field, rows,
+                List.of(row.name())), null, Map.of(), profiles);
+        final Limits limits = limits(request, named);
+        // The streams named are read whole; the feed's until the row has as many records as a shape keeps examples.
+        final Reading reading = read(context, CallProgress.of(context), feed, streams, shapes, limits, Map.of(),
+                profiles, scopes, done -> !named && done.recordsRead >= request.examples());
+        if (reading.firstChunk() == null) {
+            if (reading.stopped()) {
+                throw new ToolTimeoutException();
+            }
+            throw new ToolRefusal("Nothing readable in the streams of '" + feed + "' searched for source type '"
+                                  + row.name() + "': " + whyNothingReadable(reading));
+        }
+        final Map<String, Object> result = result(new Outcome(feed, span(streams), chosen, false, !known.isEmpty(),
+                state, streams.size(), streams.size(), limits), reading, shapes, context);
+        // The survey's coverage is left as it was: a search for one source type doesn't judge it.
+        result.remove("coverage");
+        result.put("saturated", state != null && JsonValues.truthy(state.get("saturated")));
+        if (state != null && state.get(SurveyDoc.ACCEPTED) != null) {
+            result.put(SurveyDoc.ACCEPTED, state.get(SurveyDoc.ACCEPTED));
+        }
+        final Map<String, Object> signed = new LinkedHashMap<>();
+        reading.streamsRead().forEach(stream -> signed.put(String.valueOf(stream), List.of(row.name())));
+        if (!signed.isEmpty()) {
+            result.put(SurveyDoc.SCOPE_READ, signed);
+        }
+        noteGone(result, surveyed.gone(), surveyed.dropped());
+        final Map<String, Object> counts = profiles.toState(partSizes(profiles));
+        final Map<String, Object> counted = new LinkedHashMap<>(sourcesKept(surveyed.sources(), field));
+        counted.putAll(counts);
+        result.put(SourceTypeProfiles.STATE_KEY, counted);
+        final Search search = new Search(row, named, older, shapes.passedOver());
+        final Map<String, Object> found = found(search, reading, rowProfile(surveyed.sources(), counts, rows, row),
+                counts);
+        result.put(FIND_ARG, found);
+        result.put("hint", findHint(feed, build, search, reading, found));
+        final Map<String, Object> kept = keep(context, new SurveyRecords(build, surveyed.record(), state,
+                request.examples(), null), result, shapes.shapes());
+        return withSourcesSaid(kept, build, feed);
+    }
+
+    // The source type field a search reads by: the survey's, else the registry's; refused when there is neither, or
+    // the user said the feed is one source.
+    private String findField(final String build, final String feed, final Map<String, Object> sources) {
+        if (sources.get(SourceTypeProfiles.FIELD) instanceof final String field && !field.isBlank()) {
+            return field;
+        }
+        if (Boolean.FALSE.equals(sources.get("aggregated"))) {
+            throw new ToolRefusal("The build's survey has feed '" + feed + "' as one source (no source type field), "
+                                  + "so there is no source type to find. If the user says it aggregates several, "
+                                  + "call " + NAME + " with " + SOURCE_TYPE_FIELD_ARG + " as they say first.");
+        }
+        return registryField(build, feed).orElseThrow(() -> new ToolRefusal(
+                "No source type field is known for feed '" + feed + "': survey it with build='" + build + "' first "
+                + "(the survey finds the field and asks the user), then " + FIND_ARG + "."));
+    }
+
+    // The source type decision the survey keeps (its field, who chose it, when), or the registry's field.
+    private static Map<String, Object> sourcesKept(final Map<String, Object> sources, final String field) {
+        if (!field.equals(sources.get(SourceTypeProfiles.FIELD))) {
+            return sourcesChosen(field, REGISTRY);
+        }
+        final Map<String, Object> decision = new LinkedHashMap<>();
+        for (final String key : List.of(SourceTypeProfiles.FIELD, "aggregated", SourceTypeProfiles.BY, "at")) {
+            if (sources.get(key) != null) {
+                decision.put(key, sources.get(key));
+            }
+        }
+        return decision;
+    }
+
+    // The row's profile from the survey's counts with this call's added: how many of its records were read, and what
+    // that rests on.
+    private static Map<String, Object> rowProfile(final Map<String, Object> kept,
+                                                  final Map<String, Object> call,
+                                                  final List<SourceTypeRows.Row> rows,
+                                                  final SourceTypeRows.Row row) {
+        final Map<String, Object> merged = SourceTypeProfiles.merge(kept.isEmpty()
+                ? null
+                : kept, call);
+        final Map<String, Object> summary = SourceTypeProfiles.summarise(merged, rows).getOrDefault(row.name(),
+                Map.of());
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("records_read", summary.getOrDefault("records_read", 0L));
+        if (summary.get("records_estimate") != null) {
+            out.put("records_estimate", summary.get("records_estimate"));
+        }
+        out.put("rests_on", merged.get("records") instanceof final Number records && records.longValue() > 0
+                ? summary.get("rests_on")
+                : "not seen: no survey records read");
+        return out;
+    }
+
+    // Every stream the build hasn't surveyed was read before this call: none left to search.
+    private static Map<String, Object> nothingLeftToSearch(final String feed,
+                                                           final SourceTypeRows.Row row,
+                                                           final int surveyed,
+                                                           final Map<String, Object> profile) {
+        final long records = ((Number) profile.get("records_read")).longValue();
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("feed", feed);
+        result.put("streams_read", List.of());
+        result.put("records_read", 0);
+        result.put(FIND_ARG, entry("source_type", row.name(), "match", row.said(), "found", records > 0,
+                "streams_read", 0, "profile", profile));
+        result.put("hint", "No stream of feed '" + feed + "' is left to search: the build's survey has read every "
+                           + "one (" + surveyed + "), and met " + records + " record(s) of source type '"
+                           + row.name() + "'." + (records > 0
+                ? ""
+                : " It may not have arrived in the feed yet: a discovery index, or a later survey, would show it "
+                  + "once it does. Tell the user so."));
+        return result;
+    }
+
+    // What the search found: the row, whether its records were found, the streams that held them (with when they
+    // were made, and how many of its records each), and the row's profile now.
+    private static Map<String, Object> found(final Search search,
+                                             final Reading reading,
+                                             final Map<String, Object> profile,
+                                             final Map<String, Object> counts) {
+        final List<Map<String, Object>> holding = reading.perStream.stream()
+                .filter(stream -> stream.get("records") instanceof final Number records && records.longValue() > 0)
+                .map(stream -> entry("stream", stream.get("stream"), "created", stream.get("created"), "records",
+                        stream.get("records")))
+                .toList();
+        final Map<String, Object> out = entry("source_type", search.row().name(), "match", search.row().said(),
+                "found", reading.recordsRead > 0, "records_found", reading.recordsRead, "streams_read",
+                reading.streamsRead().size(), "records_of_other_source_types", search.passedOver());
+        out.put("streams_holding", holding);
+        if (reading.recordsRead == 0) {
+            final Map<String, Long> values = SourceTypeProfiles.valueCounts(counts);
+            final List<String> top = values.entrySet().stream()
+                    .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                    .limit(VALUES_SAID)
+                    .map(value -> value.getKey() + " (" + value.getValue() + ")")
+                    .toList();
+            out.put("values_held", top);
+        }
+        out.put("profile", profile);
+        return out;
+    }
+
+    // What the agent tells the user of a search, and does next, in plain words.
+    private static String findHint(final String feed,
+                                   final String build,
+                                   final Search search,
+                                   final Reading reading,
+                                   final Map<String, Object> found) {
+        final String name = search.row().name();
+        final int read = reading.streamsRead().size();
+        final long others = search.passedOver();
+        if (reading.recordsRead > 0) {
+            final List<Object> streams = JsonValues.maps(found.get("streams_holding")).stream()
+                    .map(stream -> stream.get("stream"))
+                    .toList();
+            return "Found " + reading.recordsRead + " record(s) of source type '" + name + "' in stream(s) "
+                   + streams + " (" + read + " stream(s) read). They now count in the build's survey, so '" + name
+                   + "' can be classified and translated like the other source types: tell the user where they "
+                   + "were found, then carry on with the build's plan.";
+        }
+        if (search.named()) {
+            return "The stream(s) given hold no record of source type '" + name + "' (" + search.row().said() + ") in "
+                   + "the " + others + " record(s) read; the source type values they hold are in "
+                   + "find.values_held. Tell the user, and ask for a stream that holds it, or offer to search the "
+                   + "feed for it: " + NAME + " feed='" + feed + "' build='" + build + "' " + FIND_ARG + "='" + name
+                   + "'.";
+        }
+        if (reading.stopped() || search.older()) {
+            final String why = reading.stopped()
+                    ? "this session's time limit for a call stopped the search"
+                    : "the feed has older streams still to read";
+            return "No record of source type '" + name + "' yet in the " + read + " stream(s) read, newest first ("
+                   + others + " record(s) of other source types); " + why + ". Call " + NAME + " feed='" + feed
+                   + "' build='" + build + "' " + FIND_ARG + "='" + name + "' again to carry on: the streams read "
+                   + "are skipped.";
+        }
+        return "Not found: none of the " + read + " stream(s) read (every stream of the feed the build hadn't "
+               + "surveyed, " + others + " record(s)) holds a record of source type '" + name + "' ("
+               + search.row().said() + "). It may not have arrived in the feed yet: a discovery index, or a later "
+               + "survey, would show it once it does. Tell the user so.";
     }
 
     // The source type field, as the user chose it: given now (source_type_field), kept by the survey, or found in
@@ -1380,7 +1670,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                 + "read again.");
     }
 
-    // Each stream's head, its records added to the shapes.
+    // Each stream's head, its records added to the shapes, until `enough` says the reading has what it is for.
     private Reading read(final ToolCallContext context,
                          final CallProgress progress,
                          final String feed,
@@ -1389,7 +1679,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                          final Limits limits,
                          final Map<Long, RawHead> peeked,
                          final SourceTypeProfiles profiles,
-                         final StreamScopes scopes) {
+                         final StreamScopes scopes,
+                         final Predicate<Reading> enough) {
         final Reading reading = new Reading();
         reading.peeked.putAll(peeked);
         reading.scopes = scopes;
@@ -1412,7 +1703,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 progress.nowAndThen("Reading stream " + meta.getId() + " (" + n + " of " + streams.size() + "): "
                                     + reading.recordsRead + " records read so far");
                 readStream(reading, meta, shapes, limits);
-                if (reading.stopped()) {
+                if (reading.stopped() || enough.test(reading)) {
                     break;
                 }
             }
@@ -2231,6 +2522,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     /// @param acceptAsIs      The user's going ahead with the survey as it is, or null.
     /// @param sourceTypeField The source type field the user gave (or `none`), or null.
     /// @param aggregated      True when the user said the feed aggregates sources.
+    /// @param find            The registry row whose records are looked for, or null.
     private record Request(String feed,
                            String streamType,
                            List<Long> streamIds,
@@ -2246,7 +2538,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                            String kindField,
                            String acceptAsIs,
                            String sourceTypeField,
-                           boolean aggregated) {
+                           boolean aggregated,
+                           String find) {
 
     }
 
@@ -2287,6 +2580,33 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                   String field,
                                   Map<String, Object> early,
                                   boolean changed) {
+
+    }
+
+    /// What the build's survey kept, as a call reads it.
+    ///
+    /// @param record  The build's survey doc, or null.
+    /// @param state   Its state (streams since deleted left out), or null.
+    /// @param sources Its source types (field, counts, scope), or empty.
+    /// @param kinds   Its kind fields, or empty.
+    /// @param gone    Streams it read that have been deleted since.
+    /// @param dropped Shapes seen only in those streams.
+    private record Surveyed(SurveyRecord record,
+                            Map<String, Object> state,
+                            Map<String, Object> sources,
+                            Map<String, Object> kinds,
+                            Set<Long> gone,
+                            Set<String> dropped) {
+
+    }
+
+    /// A search for one registry row's records.
+    ///
+    /// @param row        The row.
+    /// @param named      True when the streams were named (stream_ids), not picked from the feed.
+    /// @param older      True when the feed has older streams than those picked.
+    /// @param passedOver The records of other source types read past.
+    private record Search(SourceTypeRows.Row row, boolean named, boolean older, long passedOver) {
 
     }
 

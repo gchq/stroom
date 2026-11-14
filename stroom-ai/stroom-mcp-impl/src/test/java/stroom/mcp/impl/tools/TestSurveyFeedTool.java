@@ -46,6 +46,7 @@ import org.mockito.Mockito;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -863,6 +864,204 @@ class TestSurveyFeedTool {
 
         assertThat(scoped).containsEntry("records_read", 10).doesNotContainKey("read_again");
         assertThat((Map<String, Object>) scoped.get("scope")).containsEntry("records_passed_over", 18);
+    }
+
+    @Test
+    void findIsRefusedWithoutABuildARegistryRowOrASourceTypeField() {
+        sampleFeedInABuild();
+        final SurveyFeedTool finder = withRegistry(registry("source", sourceRows()));
+        assertThat(finder.execute(BuildToolCalls.call(SurveyFeedTool.NAME, "{\"feed\": \"ACME-VPN\", "
+                                                                           + "\"find\": \"Security\"}"),
+                BuildToolCalls.context()).text()).contains("find needs build");
+        assertThat(finder.execute(BuildToolCalls.call(SurveyFeedTool.NAME, "{\"feed\": \"ACME-VPN\", "
+                                                                           + "\"build\": \"acme-v1\", "
+                                                                           + "\"find\": \"PowerBI\"}"),
+                BuildToolCalls.context()).text()).contains("has no row 'PowerBI'", "[Security, Database, "
+                                                                                  + "Integration]");
+        // No registry at all.
+        assertThat(call("{\"feed\": \"ACME-VPN\", \"build\": \"acme-v1\", \"find\": \"Security\"}").text())
+                .contains("has no source type registry");
+        // A registry with no field, and no survey to say one.
+        final ToolResult noField = withRegistry(registry(null, sourceRows())).execute(BuildToolCalls.call(
+                SurveyFeedTool.NAME, "{\"feed\": \"ACME-VPN\", \"build\": \"acme-v1\", \"find\": \"Security\"}"),
+                BuildToolCalls.context());
+        assertThat(noField.text()).contains("No source type field is known");
+        Mockito.verify(streamReader, Mockito.never()).readHead(anyLong(), anyInt(), anyInt());
+    }
+
+    @Test
+    void findReadsTheNewestStreamsUntilItHasEnoughOfTheRowsRecordsAndCountsThemIntoTheSurvey() {
+        sampleFeedInABuild();
+        newestFirst(12, 11, 10);
+        stream(12, "ACME-VPN", 3_000, sourceLines(30, "Database", "Integration"), false);
+        stream(11, "ACME-VPN", 2_000, sourceLines(30, "Security", "Database"), false);
+        stream(10, "ACME-VPN", 1_000, sourceLines(30, "Security"), false);
+        final SurveyFeedTool finder = withRegistry(registry("source", sourceRows()));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "unused"));
+
+        final Map<String, Object> result = json(finder.execute(BuildToolCalls.call(SurveyFeedTool.NAME,
+                "{\"feed\": \"ACME-VPN\", \"build\": \"acme-v1\", \"find\": \"Security\"}"), user.context()));
+
+        // Newest first, stopping at the first stream that held enough: the oldest isn't read.
+        assertThat(result.get("streams_read")).isEqualTo(List.of(12, 11));
+        Mockito.verify(streamReader, Mockito.never()).readHead(eq(10L), anyInt(), anyInt());
+        final Map<String, Object> found = (Map<String, Object>) result.get("find");
+        assertThat(found).containsEntry("found", true).containsEntry("records_found", 15)
+                .containsEntry("streams_read", 2).containsEntry("records_of_other_source_types", 45);
+        assertThat((List<Map<String, Object>>) found.get("streams_holding")).singleElement()
+                .satisfies(stream -> assertThat(stream).containsEntry("stream", 11).containsEntry("records", 15)
+                        .containsKey("created"));
+        assertThat((Map<String, Object>) found.get("profile")).containsEntry("records_read", 15);
+        assertThat((String) result.get("hint")).startsWith("Found 15 record(s) of source type 'Security' in "
+                                                           + "stream(s) [11]");
+        // Nothing asked: the kind and source type fields are the survey's, or the registry's.
+        assertThat(user.shown()).isEmpty();
+        // Counted into the build's survey: the row's shapes, every source type's counts, each stream signed for
+        // the row alone so a later survey reads it again for the others.
+        final Map<String, Object> state = surveyState();
+        assertThat(String.valueOf(state.get("shapes"))).contains("Security").doesNotContain("Database");
+        assertThat((Map<String, Object>) ((Map<String, Object>) state.get("source_types")).get("values"))
+                .containsKeys("Security", "Database", "Integration");
+        assertThat(SurveyDoc.readFor(state, 11L)).containsExactly("Security");
+        assertThat(SurveyDoc.readFor(state, 12L)).containsExactly("Security");
+    }
+
+    @Test
+    void findMatchesAsTheRegistryDoesTheFirstRowWinning() {
+        // Database records match both rows: the narrower first row takes them, so they aren't the wider row's.
+        sampleFeedInABuild();
+        newestFirst(12);
+        stream(12, "ACME-VPN", 0, sourceLines(30, "Database", "Integration", "Security"), false);
+        final SurveyFeedTool finder = withRegistry(registry("source", List.of(
+                row("Database", SourceTypeRows.VALUE, "Database"),
+                row("Back end", SourceTypeRows.PATTERN, "^(Database|Integration)$"),
+                row("Security", SourceTypeRows.VALUE, "Security"))));
+
+        final Map<String, Object> result = json(finder.execute(BuildToolCalls.call(SurveyFeedTool.NAME,
+                "{\"feed\": \"ACME-VPN\", \"build\": \"acme-v1\", \"find\": \"back END\"}"),
+                BuildToolCalls.context()));
+
+        assertThat((Map<String, Object>) result.get("find")).containsEntry("source_type", "Back end")
+                .containsEntry("records_found", 10);
+        assertThat(String.valueOf(result.get("shapes"))).contains("Integration").doesNotContain("Database",
+                "Security");
+    }
+
+    @Test
+    void findInStreamsGivenThatDontHoldTheRowSaysSoAndWhatTheyHold() {
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, sourceLines(30, "Database", "Database", "Integration"), false);
+        final SurveyFeedTool finder = withRegistry(registry("source", sourceRows()));
+
+        final Map<String, Object> result = json(finder.execute(BuildToolCalls.call(SurveyFeedTool.NAME,
+                "{\"stream_ids\": [7], \"build\": \"acme-v1\", \"find\": \"Security\"}"),
+                BuildToolCalls.context()));
+
+        final Map<String, Object> found = (Map<String, Object>) result.get("find");
+        assertThat(found).containsEntry("found", false).containsEntry("records_found", 0)
+                .containsEntry("values_held", List.of("Database (20)", "Integration (10)"));
+        assertThat((Map<String, Object>) found.get("profile")).containsEntry("records_read", 0);
+        assertThat((String) result.get("hint")).startsWith("The stream(s) given hold no record of source type "
+                                                           + "'Security' (= Security) in the 30 record(s) read")
+                .contains("ask for a stream that holds it", "find='Security'");
+    }
+
+    @Test
+    void findThatReadsEveryStreamWithoutFindingTheRowSaysItMayNotHaveArrived() {
+        sampleFeedInABuild();
+        newestFirst(12, 11);
+        stream(12, "ACME-VPN", 0, sourceLines(30, "Database"), false);
+        stream(11, "ACME-VPN", 0, sourceLines(30, "Integration"), false);
+        final SurveyFeedTool finder = withRegistry(registry("source", sourceRows()));
+        final String args = "{\"feed\": \"ACME-VPN\", \"build\": \"acme-v1\", \"find\": \"Security\"}";
+
+        final Map<String, Object> result = json(finder.execute(BuildToolCalls.call(SurveyFeedTool.NAME, args),
+                BuildToolCalls.context()));
+
+        assertThat((Map<String, Object>) result.get("find")).containsEntry("found", false)
+                .containsEntry("streams_read", 2);
+        assertThat((String) result.get("hint")).startsWith("Not found: none of the 2 stream(s) read")
+                .contains("60 record(s)", "may not have arrived");
+        // Asked again: every stream has been read for the build.
+        final Map<String, Object> again = json(finder.execute(BuildToolCalls.call(SurveyFeedTool.NAME, args),
+                BuildToolCalls.context()));
+        assertThat((String) again.get("hint")).startsWith("No stream of feed 'ACME-VPN' is left to search")
+                .contains("may not have arrived");
+    }
+
+    @Test
+    void findStoppedByTheCallsTimeLimitCarriesOnFromTheStreamsItHadNotRead() {
+        sampleFeedInABuild();
+        newestFirst(12, 11);
+        stream(12, "ACME-VPN", 0, sourceLines(30, "Database"), false);
+        stream(11, "ACME-VPN", 0, sourceLines(30, "Security"), false);
+        Mockito.when(streamReader.readHead(eq(12L), anyInt(), anyInt())).thenAnswer(invocation -> {
+            Thread.sleep(80);
+            return new StreamReader.RawHead(sourceLines(30, "Database"), false, 1);
+        });
+        final SurveyFeedTool finder = withRegistry(registry("source", sourceRows()));
+        final String args = "{\"feed\": \"ACME-VPN\", \"build\": \"acme-v1\", \"find\": \"Security\"}";
+        final ToolCallContext limited = ToolCallContext.builder(session())
+                .userQuestions(UserQuestions.NONE)
+                .timeLimit(Duration.ofMillis(50))
+                .build();
+
+        final Map<String, Object> stopped = json(finder.execute(BuildToolCalls.call(SurveyFeedTool.NAME, args),
+                limited));
+        assertThat(stopped.get("streams_read")).isEqualTo(List.of(12));
+        assertThat((String) stopped.get("hint")).contains("time limit for a call stopped the search",
+                "again to carry on");
+
+        final Map<String, Object> resumed = json(finder.execute(BuildToolCalls.call(SurveyFeedTool.NAME, args),
+                BuildToolCalls.context()));
+        assertThat(resumed.get("streams_read")).isEqualTo(List.of(11));
+        assertThat((Map<String, Object>) resumed.get("find")).containsEntry("found", true);
+    }
+
+    // The feed's streams, as a search newest first finds them.
+    private void newestFirst(final long... ids) {
+        Mockito.when(streamReader.find(any(), anyInt(), anyBoolean())).thenReturn(new ResultPage<>(
+                Arrays.stream(ids)
+                        .mapToObj(id -> new MetaRow(meta(id, "ACME-VPN", id * 1_000), null, Map.of()))
+                        .toList()));
+    }
+
+    private SurveyFeedTool withRegistry(final Map<String, Object> state) {
+        final SourceTypeRegistries registered = Mockito.mock(SourceTypeRegistries.class);
+        Mockito.when(registered.registry(any(), anyString())).thenReturn(Optional.of(
+                new SourceTypeRegistries.Found(null, false, state)));
+        return new SurveyFeedTool(streamReader, feedNames, world.guard(),
+                new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)),
+                consent, new FewerStreams(securityContext), world.documentAccess, auditLog, registered, memory);
+    }
+
+    private static Map<String, Object> registry(final String field, final List<Map<String, Object>> rows) {
+        final Map<String, Object> state = new LinkedHashMap<>();
+        if (field != null) {
+            state.put("field", field);
+        }
+        state.put("rows", rows);
+        return state;
+    }
+
+    private static List<Map<String, Object>> sourceRows() {
+        return List.of(row("Security", SourceTypeRows.VALUE, "Security"),
+                row("Database", SourceTypeRows.VALUE, "Database"),
+                row("Integration", SourceTypeRows.VALUE, "Integration"));
+    }
+
+    private static Map<String, Object> row(final String name, final String match, final String value) {
+        return Map.of("name", name, "match", match, "value", value);
+    }
+
+    // JSON lines with a source field, the sources taking turns.
+    private static String sourceLines(final int count, final String... sources) {
+        return IntStream.range(0, count)
+                .mapToObj(i -> "{\"app\": \"acme\", \"source\": \"" + sources[i % sources.length]
+                               + "\", \"action\": \"" + (i % 2 == 0
+                        ? "start"
+                        : "stop") + "\", \"n\": " + i + "}\n")
+                .collect(Collectors.joining());
     }
 
     // The scope the build's source types step records: these source types, matched by their own names.
