@@ -166,12 +166,14 @@ class FetchEventsTool extends AbstractWorkspaceTool {
                                                               + "it.")
                         .addIntegerProperty(PART_ARG, "With streamId: the zero-based part of a raw stream of "
                                                       + "several (a file each), as step_records and "
-                                                      + "review_coverage give it (default 0).")
+                                                      + "review_coverage give it (default 0); with childType, "
+                                                      + "the first part whose child is read.")
                         .addIntegerProperty(RECORD_COUNT_ARG, "With streamId: how many records (default "
                                                               + DEFAULT_RECORD_COUNT + ", at most "
                                                               + MAX_RECORD_COUNT + ").")
                         .addStringProperty(CHILD_TYPE_ARG, "With streamId: read a child part instead, e.g. 'Meta "
-                                                           + "Data' (receipt headers) or 'Context'.")
+                                                           + "Data' (receipt headers) or 'Context': a record "
+                                                           + "per part, the part's own.")
                         .addIntegerProperty(MAX_CHARS_ARG, "With streamId: characters of record data to return: "
                                                            + "leave the default (60,000) unless the user asks for "
                                                            + "more, for long records; up to 200,000.")
@@ -324,9 +326,13 @@ class FetchEventsTool extends AbstractWorkspaceTool {
                                     final int limit) {
         List<String> records;
         StreamReader.Fetched first;
+        // A child held a record a part (Meta Data, Context) is read by part: the part asked for, else firstRecord.
+        final int start = childType != null && part > 0
+                ? part
+                : firstRecord;
         try {
-            final StreamReader.Records read = streamReader.readRecords(streamId, firstRecord, recordCount,
-                    childType, limit);
+            final StreamReader.Records read = streamReader.readRecords(streamId, start, recordCount, childType,
+                    limit);
             records = read.records();
             first = read.first();
         } catch (final StreamReader.StreamReadException e) {
@@ -355,6 +361,13 @@ class FetchEventsTool extends AbstractWorkspaceTool {
                 : null;
         if (report != null) {
             result.put("undecodable_bytes", report);
+        }
+        if (childType != null && !first.segmented()) {
+            final Map<String, Object> byPart = childByPart(streamId, childType, start, records, first.totalItems());
+            result.putAll(byPart);
+            if (byPart.containsKey("hint")) {
+                return result;
+            }
         }
         if (childType == null && !first.segmented()) {
             // A raw stream: Stroom holds each part as one record, whatever it holds.
@@ -393,14 +406,37 @@ class FetchEventsTool extends AbstractWorkspaceTool {
             result.put("hint", "Record data was trimmed at " + StreamReader.thousands(limit) + " characters: read "
                                + "fewer records at a time, or, if the user asks for more, maxChars (up to "
                                + "200,000).");
-        } else if (records.size() < recordCount && firstRecord + records.size() < total) {
+        } else if (records.size() < recordCount && start + records.size() < total) {
             // The size limit was reached before the next whole record: the rest from where this stops.
-            final int next = firstRecord + records.size();
+            final int next = start + records.size();
             result.put("next_first_record", next);
             result.put("hint", records.size() + " whole records fit in " + StreamReader.thousands(limit)
                                + " characters (a limit of characters, not of records); read on with firstRecord="
                                + next + ". survey_feed reads a stream's records without this limit.");
         }
+        return result;
+    }
+
+    // What to say of a child read by part: the parts its records are, or, past the last part, that it has no more.
+    private static Map<String, Object> childByPart(final long streamId,
+                                                   final String childType,
+                                                   final int start,
+                                                   final List<String> records,
+                                                   final Long parts) {
+        final Map<String, Object> result = new LinkedHashMap<>();
+        final long count = Objects.requireNonNullElse(parts, 1L);
+        result.put("first_record", start);
+        if (count <= 1) {
+            return result;
+        }
+        result.put("parts", count);
+        if (records.isEmpty()) {
+            result.put("hint", "Stream " + streamId + " has " + count + " part(s), each with its own '" + childType
+                               + "': part (or firstRecord) runs from 0 to " + (count - 1) + ".");
+            return result;
+        }
+        result.put("records_are", "'" + childType + "' of part(s) " + start + " to " + (start + records.size() - 1)
+                                  + ", a record a part (record n is part n), each as that part was received");
         return result;
     }
 

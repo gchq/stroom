@@ -837,7 +837,7 @@ class TestToolOutputReferences {
                 storeAttributes.getOrDefault(invocation.<Long>getArgument(0), Map.of()));
         Mockito.when(attributeMapFactory.getAttributeMapForPart(Mockito.anyLong(), Mockito.anyLong()))
                 .thenAnswer(invocation -> new AttributeMap(storeParts.get(invocation.<Long>getArgument(0))
-                        .get(invocation.<Long>getArgument(1).intValue())));
+                        .get(invocation.<Long>getArgument(1).intValue() - 1)));
         Mockito.when(store.openSource(Mockito.anyLong())).thenAnswer(invocation -> {
             final Source source = Mockito.mock(Source.class);
             Mockito.when(source.count()).thenReturn((long) storeParts.get(invocation.<Long>getArgument(0)).size());

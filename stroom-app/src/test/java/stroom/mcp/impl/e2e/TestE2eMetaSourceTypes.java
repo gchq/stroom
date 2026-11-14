@@ -99,6 +99,7 @@ class TestE2eMetaSourceTypes extends AbstractE2eTest {
         final long otherRecords = records(aggregates, false);
         assertThat(directoryRecords).isPositive();
         assertThat(otherRecords).isGreaterThan(directoryRecords);
+        eachPartsHeadersAreReadAsThePartWasReceived(streams, aggregates);
 
         final String build = "walk-windows-1";
         json("start_build", args("build", build, "feeds", List.of(FEED)));
@@ -182,6 +183,42 @@ class TestE2eMetaSourceTypes extends AbstractE2eTest {
     }
 
     // --- the steps ---
+
+    // fetch_events childType 'Meta Data' and stream_meta parts:true give each part's own receipt headers. Seen (eval
+    // 59): every part read as part 0's headers, and stream_meta's parts "couldn't be read from the stream store".
+    private void eachPartsHeadersAreReadAsThePartWasReceived(final List<Long> streams,
+                                                             final List<List<Map<String, Object>>> aggregates) {
+        for (int s = 0; s < streams.size(); s++) {
+            final List<Map<String, Object>> parts = aggregates.get(s);
+            for (int part = 0; part < parts.size(); part++) {
+                final Map<String, Object> read = json("fetch_events", args("streamId", streams.get(s),
+                        "childType", StreamTypeNames.META, "part", part, "recordCount", 1));
+                assertThat(strings(read, "records")).as("part %s of stream %s", part, streams.get(s))
+                        .singleElement().asString()
+                        .contains("RemoteHost:" + ((Map<String, Object>) parts.get(part).get("meta"))
+                                .get("RemoteHost"));
+            }
+            // A range of parts, a record each, in order.
+            final List<String> all = strings(json("fetch_events", args("streamId", streams.get(s),
+                    "childType", StreamTypeNames.META, "recordCount", 10)), "records");
+            assertThat(all).hasSize(parts.size());
+            for (int part = 0; part < parts.size(); part++) {
+                final Object roles = ((Map<String, Object>) parts.get(part).get("meta")).get(ROLES);
+                if (roles != null) {
+                    assertThat(all.get(part)).contains(ROLES + ":" + roles);
+                } else {
+                    // A workstation sends no roles.
+                    assertThat(all.get(part)).doesNotContain(ROLES);
+                }
+            }
+        }
+        final String table = replyText("stream_meta", args("feeds", List.of(FEED), "parts", true,
+                "attributes", List.of(ROLES, "RemoteHost")));
+        dump("stream_meta parts", table);
+        assertThat(table).doesNotContain("couldn't be read");
+        aggregates.stream().flatMap(List::stream).forEach(part -> assertThat(table)
+                .contains("| " + ((Map<String, Object>) part.get("meta")).get("RemoteHost") + " |"));
+    }
 
     // classify_kinds as the agent does it with the user: each kind the rules name as they make it, the rest Unknown.
     private void classified(final String build, final List<Long> streams) {

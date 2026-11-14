@@ -129,6 +129,10 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     // The answers suggested when the mapping translates kinds the user confirmed otherwise.
     private static final String KEEP_CHANGE = "Keep the mapping's change";
     private static final String FOLLOW_CONFIRMED = "Follow what I confirmed";
+    // The block the user's answer to that form is kept in for the session, by the form's id (its review_id).
+    private static final String CONFIRMED_ANSWERED = "confirmed kinds answered";
+    // The most characters of the user's words quoted back to them in a form.
+    private static final int MOST_WORDS_QUOTED = 300;
     private static final int DEFAULT_RECORDS = 50;
     private static final int MAX_RECORDS = 1000;
 
@@ -839,14 +843,14 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         final TranslationMapping mapping = checked(b);
         final List<String> warnings = TranslationBuilds.warnings(b.result);
         List<String> samples = request.samples();
+        // An aggregated feed's build with a scope: the mapping is checked against the scope's records alone, those of
+        // other source types left out as they are read, and only the scope's confirmed kinds are compared with it.
+        // A source type group's: its own source types alone, of the build's scope.
+        final Optional<SourceTypeScope> scope = b.group == null
+                ? builds.scope(request.build())
+                : Optional.of(new SourceTypeScope(b.build, b.group.field(), SourceTypeRegistry.rows(
+                        b.group.registry().found().state()), b.group.sourceTypes()));
         if (samples == null && !request.streamIds().isEmpty()) {
-            // An aggregated feed's build with a scope: the mapping is checked against the scope's records alone,
-            // those of other source types left out as they are read.
-            // A source type group's: its own source types alone, of the build's scope.
-            final Optional<SourceTypeScope> scope = b.group == null
-                    ? builds.scope(request.build())
-                    : Optional.of(new SourceTypeScope(b.build, b.group.field(), SourceTypeRegistry.rows(
-                            b.group.registry().found().state()), b.group.sourceTypes()));
             final SampleStreamTexts.Texts read = sampleStreamTexts.read(request.streamIds());
             final SampleStreamTexts.Scoped scoped = scope.map(found -> sampleStreamTexts.scoped(read, found))
                     .orElse(null);
@@ -909,7 +913,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 ? Map.of()
                 : builds.notesInBuild(request.build());
         final Map<String, Object> check = MappingSampleCheck.check(mapping, samples, splitter, b.schema, inferred,
-                clock, JsonValues.maps(notes.get("events")), JsonValues.strings(notes.get(SourceNotes.DROPPED)));
+                clock, JsonValues.maps(notes.get("events")), JsonValues.strings(notes.get(SourceNotes.DROPPED)),
+                scope.orElse(null));
         b.lost = (List<ConfirmedKinds.Lost>) check.remove(MappingSampleCheck.CONFIRMED_LOST);
         b.lost.forEach(one -> warnings.add(lostWarning(one)));
         b.qualified = (List<LocalCheck.QualifiedIds>) check.remove(MappingSampleCheck.DOMAIN_QUALIFIED);
@@ -1304,6 +1309,12 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     // Action Other became Logon, unsaid): shown in the chat, then a short form, keep the change or follow what they
     // confirmed. What they keep is kept with the XSLT, so it is asked once; without forms the warnings are left for
     // the agent to put to them.
+    //
+    // Any other answer is the user's own words, for the agent to act on; and the same form (the same kinds, each
+    // still translated as it was) is not put to them again once answered. Seen (evals 58 and 59): a user who typed
+    // their own answer was asked the identical form five to eight times, the mapping unchanged in between, until the
+    // agent wrote the XSLT by hand. Asked again unchanged, words that chose neither answer are put to them once as a
+    // choice of the two; an answer to follow what they confirmed is a refusal saying to act on it.
     private Optional<Map<String, Object>> agreeConfirmedChanged(final ToolCall call,
                                                                 final ToolCallContext context,
                                                                 final Build b) {
@@ -1328,25 +1339,32 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 ? check.get("records")
                 : "?";
         final String shown = ConfirmedKinds.markdown(asking, records);
-        if (!Consent.wasReviewed(request.reviewed(), shown)) {
+        final String formId = Consent.reviewId(shown);
+        final String earlier = UnsavedChoices.recalled(context, request.target(), CONFIRMED_ANSWERED).get(formId);
+        final Optional<String> answer;
+        if (earlier != null) {
+            answer = answeredBefore(call, context, asking, earlier);
+        } else if (!Consent.wasReviewed(request.reviewed(), shown)) {
             final Map<String, Object> review = new LinkedHashMap<>();
             review.put("status", "needs_review");
             review.put("show_user", shown);
-            review.put("review_id", Consent.reviewId(shown));
+            review.put("review_id", formId);
             review.put("hint", "Show the user show_user in the chat exactly as it is (markdown), then, in the same "
                                + "turn, without waiting for a reply, call build_translation_xslt again with the same "
-                               + "arguments plus reviewed='" + Consent.reviewId(shown) + "' (its review_id): a short "
+                               + "arguments plus reviewed='" + formId + "' (its review_id): a short "
                                + "form asks them to keep the mapping's change or follow what they confirmed."
                                + Consent.reviewNote(request.reviewed()));
             return Optional.of(review);
+        } else {
+            answer = consent.answer(call, context, NAME,
+                    "This mapping translates kinds you confirmed otherwise, as shown in the chat.",
+                    "Keep the mapping's change, or follow what you confirmed", List.of(KEEP_CHANGE, FOLLOW_CONFIRMED));
         }
-        final Optional<String> answer = consent.answer(call, context, NAME,
-                "This mapping translates kinds you confirmed otherwise, as shown in the chat.",
-                "Keep the mapping's change, or follow what you confirmed", List.of(KEEP_CHANGE, FOLLOW_CONFIRMED));
         if (answer.isEmpty()) {
             return Optional.empty();
         }
-        if (answer.get().equalsIgnoreCase(KEEP_CHANGE)) {
+        final String given = answer.get();
+        if (startsWith(given, KEEP_CHANGE)) {
             final Map<String, String> kept = ConfirmedKinds.keys(asking);
             b.confirmedChanges.putAll(kept);
             UnsavedChoices.remember(context, request.target(), TranslationBuilds.CONFIRMED_CHANGED,
@@ -1354,11 +1372,43 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             dropAgreedLost(b);
             return Optional.empty();
         }
+        UnsavedChoices.remember(context, request.target(), CONFIRMED_ANSWERED, Map.of(formId, given));
+        return Optional.of(followOrTheirWords(asking, given));
+    }
+
+    // The same form answered before, the mapping translating its kinds as it did then: not asked again. Words that
+    // chose neither answer are put to the user once more as a choice of the two (empty without forms, refused); an
+    // answer that chose to follow what they confirmed is refused, saying to act on it.
+    private Optional<String> answeredBefore(final ToolCall call,
+                                            final ToolCallContext context,
+                                            final List<ConfirmedKinds.Lost> asking,
+                                            final String earlier) {
+        if (!startsWith(earlier, FOLLOW_CONFIRMED)) {
+            final Optional<String> chosen = consent.choose(call, context, NAME, "You answered: \""
+                            + Consent.heading(earlier, MOST_WORDS_QUOTED) + "\". Of the kinds shown in the chat "
+                            + "that this mapping translates otherwise than you confirmed, which does that mean?",
+                    List.of(KEEP_CHANGE, FOLLOW_CONFIRMED), "Keep the mapping's change, or follow what you confirmed");
+            if (chosen.isPresent()) {
+                return chosen;
+            }
+        }
+        throw new ToolRefusal("Nothing saved, and not asked again: the user already answered this question for "
+                              + "these kinds (" + ToolText.list(asking.stream().map(ConfirmedKinds.Lost::kind)
+                .distinct().toList()) + "), and the mapping still translates them as it did. Their answer: \""
+                              + earlier + "\". Act on it: change the mapping so each kind's rule writes what they "
+                              + "confirmed, or, where their answer leaves a kind out of this build (e.g. a source "
+                              + "type parked for a later build), drop it; then call again. A changed mapping is "
+                              + "checked afresh.");
+    }
+
+    // What the agent is told when the user chose to follow what they confirmed, or answered in their own words.
+    private static Map<String, Object> followOrTheirWords(final List<ConfirmedKinds.Lost> asking, final String given) {
+        final boolean follow = startsWith(given, FOLLOW_CONFIRMED);
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("ok", false);
         result.put("saved", null);
-        if (!answer.get().equalsIgnoreCase(FOLLOW_CONFIRMED)) {
-            result.put("user_says", answer.get());
+        if (!given.equalsIgnoreCase(FOLLOW_CONFIRMED)) {
+            result.put("user_says", given);
         }
         result.put("confirmed", asking.stream()
                 .map(one -> one.kind() + " (" + one.field() + "=" + one.value() + "): confirmed as " + one.wanted()
@@ -1366,11 +1416,24 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                         ? ""
                         : " in rule '" + one.rule() + "'"))
                 .toList());
-        result.put("hint", "Nothing saved. " + (result.containsKey("user_says")
-                ? "Do what the user says (user_says) with these kinds"
-                : "The user wants what they confirmed followed: change the mapping so a rule takes each of these "
-                  + "kinds and writes what they confirmed") + ", then build and save again.");
-        return Optional.of(result);
+        final String again = " Called again with the mapping unchanged, this question is not put to the user again.";
+        result.put("hint", "Nothing saved. " + (follow
+                ? "The user wants what they confirmed followed" + (result.containsKey("user_says")
+                        ? ", as they say (user_says)"
+                        : "") + ": change the mapping so a rule takes each of these kinds and writes what they "
+                  + "confirmed (or, where they leave a kind out of this build, drop it), then build and save "
+                  + "again." + again
+                : "The user answered in their own words (user_says), choosing neither suggested answer. Act on "
+                  + "them for each kind in confirmed: where they say how it is translated, change its rule to "
+                  + "that; where they leave it out of this build (e.g. a source type parked for a later build), "
+                  + "drop it. Then build and save again: a changed mapping is checked afresh. If their words don't "
+                  + "change the mapping, call again with it unchanged: they are asked once more, to pick keep or "
+                  + "follow."));
+        return result;
+    }
+
+    private static boolean startsWith(final String text, final String prefix) {
+        return text.regionMatches(true, 0, prefix, 0, prefix.length());
     }
 
     // The warnings for the changes the user agreed to: answered, they are not the agent's to act on.

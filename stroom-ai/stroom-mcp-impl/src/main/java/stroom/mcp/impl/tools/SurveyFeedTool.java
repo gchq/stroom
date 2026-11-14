@@ -67,6 +67,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -189,6 +190,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     private final AiAuditLog auditLog;
     private final SourceTypeRegistries besideFeed;
     private final BuildMemory memory;
+    private final Provider<BuildPlan> plan;
 
     @Inject
     SurveyFeedTool(final StreamReader streamReader,
@@ -200,7 +202,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                    final DocumentAccess documentAccess,
                    final AiAuditLog auditLog,
                    final SourceTypeRegistries besideFeed,
-                   final BuildMemory memory) {
+                   final BuildMemory memory,
+                   final Provider<BuildPlan> plan) {
         this.streamReader = streamReader;
         this.feedNames = feedNames;
         this.guard = guard;
@@ -211,6 +214,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         this.auditLog = auditLog;
         this.besideFeed = besideFeed;
         this.memory = memory;
+        this.plan = plan;
     }
 
     @Override
@@ -371,8 +375,12 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             final Integer fewer = request.find() == null
                     ? confirmFewerStreams(call, context, feed, request, chosen)
                     : null;
-            return JsonResults.of(withinTimeLimit(context, () -> survey(call, context, request, feed, chosen,
-                    fewer)));
+            final Map<String, Object> surveyed = withinTimeLimit(context, () -> survey(call, context, request, feed,
+                    chosen, fewer));
+            // A build's survey is a step of its plan (surveyed, then covered for an existing feed): what comes next.
+            return JsonResults.of(request.build() == null || request.find() != null
+                    ? surveyed
+                    : plan.get().withNext(context, request.build(), surveyed));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         } catch (final ToolTimeoutException e) {

@@ -75,12 +75,15 @@ class TestSurveyFeedTool {
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     private final Consent consent = new Consent(() -> auditLog);
     private final BuildMemory memory = new BuildMemory();
+    // The plan's next step isn't what these tests are about: the result as the survey gave it.
+    private final BuildPlan plan = Mockito.mock(BuildPlan.class);
     private final SurveyFeedTool tool = new SurveyFeedTool(streamReader, feedNames, world.guard(),
             new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)), consent,
             new FewerStreams(securityContext),
-            world.documentAccess, auditLog, besideFeed(), memory);
+            world.documentAccess, auditLog, besideFeed(), memory, () -> plan);
 
     TestSurveyFeedTool() {
+        Mockito.when(plan.withNext(any(), any(), any())).thenAnswer(invocation -> invocation.getArgument(2));
         Mockito.when(world.documentAccess.canViewData()).thenReturn(true);
         Mockito.when(feedNames.resolve(anyString(), anyString(), any(), any()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -678,7 +681,8 @@ class TestSurveyFeedTool {
         // A node restarted (its memory empty), with no form to ask in: the build's survey record still says so.
         final SurveyFeedTool restarted = new SurveyFeedTool(streamReader, feedNames, world.guard(),
                 new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)),
-                consent, new FewerStreams(securityContext), world.documentAccess, auditLog, besideFeed(), memory);
+                consent, new FewerStreams(securityContext), world.documentAccess, auditLog, besideFeed(), memory,
+                () -> plan);
         final ToolResult again = restarted.execute(BuildToolCalls.call(SurveyFeedTool.NAME, args),
                 BuildToolCalls.context());
         assertThat(again.text()).doesNotContain("Not done: Survey feed 'ACME-VPN' only 3 stream(s)");
@@ -746,7 +750,8 @@ class TestSurveyFeedTool {
                 new SourceTypeRegistries.Found(null, true, Map.of("field", "source"))));
         final SurveyFeedTool withRegistry = new SurveyFeedTool(streamReader, feedNames, world.guard(),
                 new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)),
-                consent, new FewerStreams(securityContext), world.documentAccess, auditLog, registered, memory);
+                consent, new FewerStreams(securityContext), world.documentAccess, auditLog, registered, memory,
+                () -> plan);
         final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "unused"));
 
         final Map<String, Object> surveyed = json(withRegistry.execute(BuildToolCalls.call(SurveyFeedTool.NAME,
@@ -1086,7 +1091,8 @@ class TestSurveyFeedTool {
                 new SourceTypeRegistries.Found(null, false, state)));
         return new SurveyFeedTool(streamReader, feedNames, world.guard(),
                 new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)),
-                consent, new FewerStreams(securityContext), world.documentAccess, auditLog, registered, memory);
+                consent, new FewerStreams(securityContext), world.documentAccess, auditLog, registered, memory,
+                () -> plan);
     }
 
     private static Map<String, Object> registry(final String field, final List<Map<String, Object>> rows) {

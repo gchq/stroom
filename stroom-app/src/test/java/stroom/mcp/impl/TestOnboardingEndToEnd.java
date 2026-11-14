@@ -147,8 +147,12 @@ class TestOnboardingEndToEnd extends AbstractAiIntegrationTest {
                 built.pipelineUuid(), (String) documented.get("uuid"))) {
             assertThat(folderOf(uuid)).as(uuid).isEqualTo(PROMOTED_FOLDER);
         }
-        // The emptied build folder is gone, and the pipeline's filter for its feed is handed over disabled.
-        assertThat(findFolder(BUILD_FOLDER)).isEmpty();
+        // The build folder stays, holding the sample's survey doc (a survey doc always stays in the build) with the
+        // build's record, and the pipeline's filter for its feed is handed over disabled.
+        final ExplorerNode buildFolder = findFolder(BUILD_FOLDER).orElseThrow();
+        assertThat(securityContext.asProcessingUserResult(() -> explorerNodeService.getChildren(
+                buildFolder.getDocRef())).stream().map(ExplorerNode::getName).toList())
+                .contains(FEED + " - Survey");
         assertThat((List<Map<String, Object>>) promoted.get("processing_filters"))
                 .singleElement()
                 .satisfies(filter -> assertThat(filter)
@@ -157,7 +161,7 @@ class TestOnboardingEndToEnd extends AbstractAiIntegrationTest {
                         .containsEntry("enabled", false));
         assertThat((List<String>) promoted.get("promoted"))
                 .startsWith("created folder System/Acme", "created folder " + PROMOTED_FOLDER)
-                .contains("removed the build's workspace folder, now empty");
+                .doesNotContain("removed the build's workspace folder, now empty");
     }
 
     @Test
@@ -329,10 +333,20 @@ class TestOnboardingEndToEnd extends AbstractAiIntegrationTest {
         assertThat(converter).containsEntry("type", "TextConverter").containsEntry("name", CONVERTER);
         final String converterUuid = (String) converter.get("uuid");
         assertThat(folderOf(converterUuid)).isEqualTo(EVENTS_FOLDER);
-        assertNextStep(converter, "classify");
+        assertNextStep(converter, "surveyed");
+
+        // The sample surveyed, as the plan asks before the kinds are classified: its call names the build's own
+        // sample streams.
+        final Map<String, Object> surveyCall = map(map(converter, "next"), "call");
+        assertThat(surveyCall).containsEntry("tool", "survey_feed");
+        assertThat(map(surveyCall, "arguments")).containsEntry("feed", FEED).containsEntry("build", BUILD)
+                .containsEntry("stream_ids", List.of(rawStreamId));
+        final Map<String, Object> surveyed = client.json("survey_feed", map(surveyCall, "arguments"));
+        dump("survey_feed", surveyed);
+        assertNextStep(surveyed, "classify");
 
         // The kinds of event classified with the user before the draft, as the plan asks: here, none to classify.
-        final Map<String, Object> classified = classify(map(map(converter, "next"), "call"));
+        final Map<String, Object> classified = classify(map(map(surveyed, "next"), "call"));
         assertNextStep(classified, "translation");
 
         // The mapping drafted from the sample, settled as the user decides, generated and saved with it.
@@ -389,7 +403,7 @@ class TestOnboardingEndToEnd extends AbstractAiIntegrationTest {
         assertThat(map(listed, "source_notes")).containsEntry("name", BUILD + " source notes");
         assertThat(client.forms()).hasSize(forms);
         assertThat((String) map(listed, "next").get("progress"))
-                .endsWith("done: feed, samples, converter, classify");
+                .endsWith("done: feed, samples, converter, surveyed, classify");
         return listed;
     }
 

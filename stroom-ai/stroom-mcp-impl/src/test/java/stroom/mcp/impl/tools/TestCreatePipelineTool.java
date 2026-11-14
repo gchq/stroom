@@ -440,7 +440,7 @@ class TestCreatePipelineTool {
         assertThat(tool.confirmsItself()).isTrue();
         assertThat(pipelines.copyTool().confirmsItself()).isTrue();
         assertThat(pipelines.updateTool().confirmsItself()).isFalse();
-        assertThat(tool.definition().description()).startsWith("Onboarding step 6 of 17 (pipeline): ");
+        assertThat(tool.definition().description()).startsWith("Onboarding step 7 of 18 (pipeline): ");
     }
 
     @Test

@@ -597,7 +597,7 @@ Fetches the source events behind the rows of a table with StreamId and EventId c
 {
   "properties" : {
     "childType" : {
-      "description" : "With streamId: read a child part instead, e.g. 'Meta Data' (receipt headers) or 'Context'.",
+      "description" : "With streamId: read a child part instead, e.g. 'Meta Data' (receipt headers) or 'Context': a record per part, the part's own.",
       "type" : "string"
     },
     "firstRecord" : {
@@ -617,7 +617,7 @@ Fetches the source events behind the rows of a table with StreamId and EventId c
       "type" : "string"
     },
     "part" : {
-      "description" : "With streamId: the zero-based part of a raw stream of several (a file each), as step_records and review_coverage give it (default 0).",
+      "description" : "With streamId: the zero-based part of a raw stream of several (a file each), as step_records and review_coverage give it (default 0); with childType, the first part whose child is read.",
       "type" : "integer"
     },
     "path" : {

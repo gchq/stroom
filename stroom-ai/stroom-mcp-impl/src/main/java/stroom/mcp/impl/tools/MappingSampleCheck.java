@@ -29,6 +29,7 @@ import stroom.ai.impl.tools.generation.SharedFunctions;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.Placeholders;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.XmlTree;
@@ -129,6 +130,32 @@ final class MappingSampleCheck {
                                      final Clock clock,
                                      final List<Map<String, Object>> events,
                                      final List<String> dropped) {
+        return check(mapping, samples, splitter, schema, inferred, clock, events, dropped, null);
+    }
+
+    /// As the others, the confirmed kinds compared only within the build's source type scope.
+    ///
+    /// @param mapping  The mapping.
+    /// @param samples  The sample's texts.
+    /// @param splitter The Data Splitter spec that reads text, or null.
+    /// @param schema   The event-logging schema.
+    /// @param inferred True if the spec was inferred from the sample rather than given.
+    /// @param clock    The clock the check's time is read against.
+    /// @param events   The catalogue events of the build's source notes.
+    /// @param dropped  The dropped kinds' keys ([stroom.ai.impl.tools.draft.SourceNotes#DROPPED]).
+    /// @param scope    The build's (or its group's) source type scope, or null for none: kinds confirmed for
+    ///                 source types outside it, and records of those, are not compared ([ConfirmedKinds#lost]).
+    /// @return As the others.
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    static Map<String, Object> check(final TranslationMapping mapping,
+                                     final List<String> samples,
+                                     final SplitterSpec splitter,
+                                     final EventSchema schema,
+                                     final boolean inferred,
+                                     final Clock clock,
+                                     final List<Map<String, Object>> events,
+                                     final List<String> dropped,
+                                     final SourceTypeScope scope) {
         final Instant deadline = clock.instant().plus(CHECK_TIME);
         final LocalCheck.SampleRecords found = LocalCheck.sampleRecords(mapping, samples, splitter);
         final Map<String, Object> check = new LinkedHashMap<>(LocalCheck.checkMapping(mapping, found.records()));
@@ -178,7 +205,7 @@ final class MappingSampleCheck {
         check.put("warnings", warnings);
         check.put(DOMAIN_QUALIFIED, qualified);
         check.put(PLACEHOLDERS, placeholders);
-        check.put(CONFIRMED_LOST, ConfirmedKinds.lost(mapping, found.records(), events));
+        check.put(CONFIRMED_LOST, ConfirmedKinds.lost(mapping, found.records(), events, scope));
         if (NullSafe.isNonEmptyString(found.note())) {
             check.put("note", found.note());
         }

@@ -55,6 +55,13 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         createFeed(BUILD, FEED);
         final long stream = upload(FEED, sample());
         final List<Long> raw = List.of(stream);
+        // ### Not before the survey, which alone finds an aggregated feed's source type field (evals 58 and 59: the
+        // agent classified its own uploads straight away, and the feed's source types were never found).
+        assertThat(stepState(BUILD, "surveyed")).isEqualTo("to do");
+        assertThat(refusal("classify_kinds", args("build", BUILD, "source", "Records app", "stream_ids", raw)))
+                .contains("Survey first: survey_feed feed=" + FEED + " build=" + BUILD + " stream_ids=" + raw);
+        surveyed(BUILD, FEED, raw);
+        assertThat(stepState(BUILD, "surveyed")).isEqualTo("done");
 
         // ### Listed: four kinds, kept as still to classify, and the plan's next step until they are.
         final Map<String, Object> listed = json("classify_kinds", args("build", BUILD, "source", "Records app",
@@ -133,6 +140,7 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         final String feed = "E2E-CLASSIFY-" + shape.toUpperCase();
         createFeed(build, feed);
         final List<Long> raw = List.of(upload(feed, shaped(shape)));
+        surveyed(build, feed, raw);
 
         final Map<String, Object> listed = json("classify_kinds", args("build", build, "source", "Records app",
                 "stream_ids", raw));
@@ -191,6 +199,7 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         final String build = "e2e-classify-notes";
         createFeed(build, "E2E-CLASSIFY-NOTES");
         final List<Long> raw = List.of(upload("E2E-CLASSIFY-NOTES", sample()));
+        surveyed(build, "E2E-CLASSIFY-NOTES", raw);
         agreed("record_source_notes", args("build", build, "source", build, "summary", "A records app's audit log.",
                 "fields", List.of(), "events", List.of()));
 
@@ -217,6 +226,7 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         final String build = "e2e-classify-amend";
         createFeed(build, "E2E-CLASSIFY-AMEND");
         final List<Long> raw = List.of(upload("E2E-CLASSIFY-AMEND", sample()));
+        surveyed(build, "E2E-CLASSIFY-AMEND", raw);
         json("classify_kinds", args("build", build, "source", "Records app", "stream_ids", raw));
         json("classify_kinds", args("build", build, "proposals", JsonUtil.readValue(PROPOSALS, List.class)));
         client.answeringWith(form -> new ElicitResult(ElicitResult.Action.ACCEPT,
@@ -255,6 +265,7 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         final String build = "e2e-classify-early";
         createFeed(build, "E2E-CLASSIFY-EARLY");
         final List<Long> raw = List.of(upload("E2E-CLASSIFY-EARLY", sample()));
+        surveyed(build, "E2E-CLASSIFY-EARLY", raw);
         json("classify_kinds", args("build", build, "source", "Records app", "stream_ids", raw));
         final int forms = client.forms().size();
         final Map<String, Object> shown = json("classify_kinds", args("build", build, "confirm", true,
@@ -276,6 +287,7 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
                 "Nov  6 09:30:05 web2 config reloaded from disk",
                 "Nov  6 09:30:09 web1 disk 80% full on the data volume",
                 "Nov  6 09:30:13 web3 worker restarted by the supervisor")) + "\n"));
+        surveyed(build, "E2E-CLASSIFY-CATCHALL", raw);
         final Map<String, Object> splitter = JsonUtil.readValue("""
                 {"kind": "alternatives", "parts": [{"kind": "syslog", "variant": "syslog"},
                  {"kind": "key_value", "delimiter": " ", "variant": "key_value"}]}""", Map.class);
@@ -315,6 +327,7 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
                 "2026-11-06T09:00:02Z jump01 sudo: bob : TTY=pts/0 ; PWD=/home/bob ; USER=root ; COMMAND=/bin/ls",
                 "2026-11-06T09:00:03Z web01 kernel: Out of memory: Killed process 1039 (java)",
                 "2026-11-06T09:00:04Z db01 systemd-logind[88]: New session 42 of user carol.")) + "\n"));
+        surveyed(build, "E2E-CLASSIFY-COARSE", raw);
         final Map<String, Object> coarse = Map.of("kind", "regex", "pattern", "^(\\S+) (\\S+) (.*)$", "names",
                 List.of("ts", "host", "message"));
         final Map<String, Object> listed = json("classify_kinds", args("build", build, "source", "Mixed",
@@ -337,8 +350,13 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
 
     // The state of the build's classify step, as build_status shows it.
     private String classifyState(final String build) {
+        return stepState(build, "classify");
+    }
+
+    // The state of one of the build's steps, as build_status shows it.
+    private String stepState(final String build, final String name) {
         return list(json("build_status", args("build", build, "full", true)), "steps").stream()
-                .filter(step -> "classify".equals(step.get("step")))
+                .filter(step -> name.equals(step.get("step")))
                 .map(step -> String.valueOf(step.get("state")))
                 .findFirst()
                 .orElse("none");
@@ -352,6 +370,7 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         final String build = "e2e-classify-saved";
         createFeed(build, "E2E-CLASSIFY-SAVED");
         final List<Long> raw = List.of(upload("E2E-CLASSIFY-SAVED", sample()));
+        surveyed(build, "E2E-CLASSIFY-SAVED", raw);
         final Map<String, Object> saved = json("build_data_splitter", args("stream_ids", raw, "save_as",
                 "E2E-CLASSIFY-SAVED", "build", build));
         dump("build_data_splitter", saved);
@@ -376,6 +395,7 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
                     i % 25, i % 4));
         }
         final List<Long> raw = List.of(upload("E2E-CLASSIFY-MANY", String.join("\n", lines) + "\n"));
+        surveyed(build, "E2E-CLASSIFY-MANY", raw);
         final Map<String, Object> listed = json("classify_kinds", args("build", build, "source", "Records app",
                 "stream_ids", raw));
         final List<Map<String, Object>> kinds = list(listed, "to_classify");

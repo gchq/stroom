@@ -373,6 +373,67 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
+    void theUsersOwnWordsAreActedOnAndTheSameFormIsNotPutToThemAgain() {
+        // Seen (evals 58 and 59): the user typed their own answer to "keep the mapping's change or follow what you
+        // confirmed"; each call after, the mapping unchanged, showed the same table and asked the same form, five to
+        // eight times, until the agent wrote the XSLT by hand.
+        confirmedStatusAsLogoff();
+        final Map<String, Object> kept = keptAsUnknown();
+        final Map<String, Object> shown = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N",
+                "sample", SAMPLE));
+        world.forms = true;
+        final String words = "Status checks are a later build's: leave them out of this one";
+        world.answers.put("This mapping translates kinds you confirmed otherwise", words);
+        final Map<String, Object> again = Map.of("mapping", kept, "build", "acme-v1", "name", "N", "sample", SAMPLE,
+                "reviewed", shown.get("review_id"));
+
+        // Their words, for the agent to act on: what they mean for each kind, and that nothing is asked again.
+        final Map<String, Object> said = world.call(tool, again);
+        assertThat(said).containsEntry("ok", false).containsEntry("user_says", words);
+        assertThat((String) said.get("hint")).contains("in their own words", "choosing neither", "drop it",
+                "asked once more, to pick keep or follow");
+        assertThat(world.asked).filteredOn(intro -> intro.startsWith("This mapping translates")).hasSize(1);
+
+        // Called again unchanged: not the same form, but once, a choice of the two answers, their words quoted.
+        world.answers.put("You answered", "Follow what I confirmed");
+        final Map<String, Object> chosen = world.call(tool, again);
+        assertThat(chosen).containsEntry("ok", false).doesNotContainKey("user_says");
+        assertThat((String) chosen.get("hint")).startsWith("Nothing saved. The user wants what they confirmed "
+                                                           + "followed");
+        assertThat(world.asked).filteredOn(intro -> intro.startsWith("This mapping translates")).hasSize(1);
+        assertThat(world.asked).filteredOn(intro -> intro.startsWith("You answered: \"" + words + "\"")).hasSize(1);
+
+        // And again, still unchanged, with or without the review: refused, saying to act on their answer; no form,
+        // and not the table to show again.
+        final int asked = world.asked.size();
+        for (final Map<String, Object> call : List.of(again, Map.<String, Object>of("mapping", kept, "build",
+                "acme-v1", "name", "N", "sample", SAMPLE))) {
+            final Map<String, Object> refused = world.call(tool, call);
+            assertThat((String) refused.get("error")).contains("not asked again", "status check",
+                    "Their answer: \"Follow what I confirmed\"", "Act on it");
+        }
+        assertThat(world.asked).hasSize(asked);
+    }
+
+    @Test
+    void anAnswerStartingWithASuggestedOneIsThatAnswer() {
+        confirmedStatusAsLogoff();
+        final Map<String, Object> kept = keptAsUnknown();
+        final Map<String, Object> shown = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N",
+                "sample", SAMPLE));
+        world.forms = true;
+        world.answers.put("This mapping translates kinds you confirmed otherwise", "follow what I confirmed: status "
+                                                                                  + "checks are logoffs");
+
+        final Map<String, Object> followed = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name",
+                "N", "sample", SAMPLE, "reviewed", shown.get("review_id")));
+
+        assertThat(followed).containsEntry("user_says", "follow what I confirmed: status checks are logoffs");
+        assertThat((String) followed.get("hint")).startsWith("Nothing saved. The user wants what they confirmed "
+                                                             + "followed, as they say (user_says)");
+    }
+
+    @Test
     void keepingUnknownNeedsTheUsersConfirmationBeforeSaving() {
         final Map<String, Object> kept = keptAsUnknown();
         // Seen in VS Code: asked with "no sample records checked", the user couldn't see what went to Unknown.

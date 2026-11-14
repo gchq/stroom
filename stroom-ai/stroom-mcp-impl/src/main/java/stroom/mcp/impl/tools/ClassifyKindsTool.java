@@ -164,6 +164,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private static final String HINT = "hint";
     // Why a build on existing feeds classified without the survey.
     private static final String SURVEY = "survey";
+    // The most of the build's own sample streams named in the refusal to classify before a survey.
+    private static final int MOST_SURVEY_STREAMS = 20;
     private static final String TABLE = "table";
     private static final String RECORDED = "recorded";
     private static final String SOURCE_NOTES = "source_notes";
@@ -391,21 +393,37 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         return plan.withNext(context, build, result);
     }
 
-    // A build working from existing feeds classifies only once survey_feed has run for it: the survey finds the
-    // kinds of event over the feed's streams and, for an aggregated feed, its source type field, which nothing else
-    // looks for (seen in chat 176: the survey failed, the agent classified from profile_sample instead, and the
-    // feed's source types were never found). Refused until then; once a survey for the build was refused for
-    // nothing readable, it goes on, and says so (returned). Empty for a build with a survey, or of its own samples.
+    // A build classifies only once survey_feed has run for it, whether it works from existing feeds or from samples
+    // of its own: the survey finds the kinds of event over the streams and, for an aggregated feed, its source type
+    // field, which nothing else looks for (seen in chat 176: the survey failed, the agent classified from
+    // profile_sample instead, and the feed's source types were never found; seen in evals 58 and 59: the agent
+    // classified its own uploads straight away, and an aggregated feed was never recognised). Refused until then;
+    // once a survey for the build was refused for nothing readable, it goes on, and says so (returned). Empty for a
+    // build with a survey, or with no streams to survey (neither a feed it works from nor samples of its own).
     private Optional<String> unsurveyed(final String build) {
-        if (plan.worksFrom(build).isEmpty() || !builds.surveyStatesInBuild(build).isEmpty()) {
+        if (!builds.surveyStatesInBuild(build).isEmpty()) {
+            return Optional.empty();
+        }
+        final List<String> sources = plan.worksFrom(build);
+        final List<Long> samples = sources.isEmpty()
+                ? plan.rawSampleStreams(build, MOST_SURVEY_STREAMS)
+                : List.of();
+        if (sources.isEmpty() && samples.isEmpty()) {
             return Optional.empty();
         }
         final Map<String, String> unreadable = plan.unreadableSurveys(build);
         if (unreadable.isEmpty()) {
-            throw new ToolRefusal("Survey the feed first: survey_feed feed=<the feed> build=" + build + ". The "
-                                  + "survey finds the kinds of event over the feed's streams and any source type "
-                                  + "field (an aggregated feed, whose source types are built a group at a time); "
-                                  + NAME + " classifies the kinds it finds.");
+            final List<String> feeds = sources.isEmpty()
+                    ? plan.inputFeeds(build)
+                    : sources;
+            final String feed = feeds.isEmpty()
+                    ? "<the feed>"
+                    : feeds.getFirst();
+            throw new ToolRefusal("Survey first: survey_feed feed=" + feed + " build=" + build + (samples.isEmpty()
+                    ? ""
+                    : " stream_ids=" + samples) + ". The survey finds the kinds of event over the streams and any "
+                                  + "source type field (an aggregated feed, whose source types are built a group at "
+                                  + "a time), quickly on a small sample; " + NAME + " classifies the kinds it finds.");
         }
         final List<String> said = new ArrayList<>();
         unreadable.forEach((feed, why) -> said.add("'" + feed + "': " + why));

@@ -68,7 +68,11 @@ class TestBuildPlan {
         assertThat(steps.indexOf("processed")).isLessThan(steps.indexOf("unmapped"));
         assertThat(steps.indexOf("unmapped")).isLessThan(steps.indexOf("validated"));
         assertThat(steps.indexOf("documented")).isLessThan(steps.indexOf("index"));
-        assertThat(BuildPlan.onboardingChecklist()).hasSize(17);
+        assertThat(BuildPlan.onboardingChecklist()).hasSize(18);
+        // The samples surveyed before their kinds are classified: the survey alone finds an aggregated feed.
+        assertThat(steps.indexOf("converter")).isLessThan(steps.indexOf("surveyed"));
+        assertThat(steps.indexOf("surveyed")).isLessThan(steps.indexOf("source_types"));
+        assertThat(steps.indexOf("source_types")).isLessThan(steps.indexOf("classify"));
     }
 
     @Test
@@ -321,7 +325,7 @@ class TestBuildPlan {
 
     @Test
     void theCoreToolsCarryTheirPlanStep() {
-        assertThat(BuildPlan.onboardingLabel("create_pipeline")).isEqualTo("Onboarding step 6 of 17 (pipeline): ");
+        assertThat(BuildPlan.onboardingLabel("create_pipeline")).isEqualTo("Onboarding step 7 of 18 (pipeline): ");
         assertThat(BuildPlan.onboardingLabel("start_onboarding")).isEqualTo("Onboarding start: ");
         assertThat(BuildPlan.onboardingLabel("build_status")).isEqualTo("Onboarding, any step: ");
         assertThat(BuildPlan.onboardingLabel("locate_event")).isEmpty();
@@ -401,6 +405,34 @@ class TestBuildPlan {
         facts.docs = List.of(FakeBuildFacts.doc("Feed", "f", "ACME"), FakeBuildFacts.doc("XSLT", "x", "ACME-T"));
         facts.mappings = Map.of("x", FakeBuildFacts.kept("translation", Map.of()));
         assertThat(states(plan.status("b", null)).get("classify")).isEqualTo("not needed");
+    }
+
+    @Test
+    void theSamplesAreSurveyedBeforeTheirKindsAreClassified() {
+        // Seen (evals 58 and 59): the agent classified its own uploads straight away, and the aggregated feed they
+        // came from, which only the survey recognises, was never found.
+        facts.classified = false;
+        facts.ownRaw = List.of(7L);
+        facts.docs = new ArrayList<>(List.of(FakeBuildFacts.doc("Feed", "f", "ACME")));
+        assertThat(states(plan.status("b", null)).get("surveyed")).isEqualTo("to do");
+        final BuildPlan.NextCall call = BuildPlan.nextCall("surveyed", BuildPlan.CallArgs.of("b", List.of("ACME"),
+                List.of(7L), List.of(), null, null));
+        assertThat(call.call()).isEqualTo(Map.of("tool", "survey_feed", "arguments", Map.of("feed", "ACME",
+                "build", "b", "stream_ids", List.of(7L))));
+
+        // Surveyed, or the survey refused for nothing readable (classify_kinds then goes on, saying so): done.
+        facts.docs.add(FakeBuildFacts.doc("Documentation", "s", "ACME" + StroomBuildFacts.SURVEY));
+        assertThat(states(plan.status("b", null)).get("surveyed")).isEqualTo("done");
+        facts.docs.removeLast();
+        final BuildMemory memory = new BuildMemory();
+        memory.surveyUnreadable("b", "ACME", "stream 7: nothing could be split");
+        assertThat(states(new BuildPlan(facts, world.guard(), consent, memory).status("b", null)).get("surveyed"))
+                .isEqualTo("done");
+
+        // A build whose translation is written already has no need of it, as of the classify step.
+        facts.docs = List.of(FakeBuildFacts.doc("Feed", "f", "ACME"), FakeBuildFacts.doc("XSLT", "x", "ACME-T"));
+        facts.mappings = Map.of("x", FakeBuildFacts.kept("translation", Map.of()));
+        assertThat(states(plan.status("b", null)).get("surveyed")).isEqualTo("not needed");
     }
 
     @Test

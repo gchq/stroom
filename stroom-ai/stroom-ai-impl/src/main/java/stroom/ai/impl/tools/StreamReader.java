@@ -237,20 +237,33 @@ public class StreamReader {
                                final int count,
                                final String childType,
                                final int budget) {
-        Fetched fetched = fetch(streamId, first, childType);
+        Fetched fetched = fetch(streamId, 0, first, childType);
         if (!fetched.errors().isEmpty()) {
             throw couldNotRead(streamId, String.join("; ", fetched.errors()));
         }
-        final Fetched firstFetched = fetched;
         final long total = Math.max(1, fetched.totalItems() == null
                 ? 1
                 : fetched.totalItems());
+        // A child the data viewer holds as one record a part (e.g. Meta Data, each part's receipt headers): its
+        // records are the stream's parts, read by part. Seen: fetch_events childType 'Meta Data' gave part 0's
+        // headers for every firstRecord and part asked, of a five-part stream whose parts came from five hosts.
+        final boolean byPart = childType != null && !fetched.segmented();
+        if (byPart && first >= total) {
+            return new Records(List.of(), fetched);
+        }
+        if (byPart && first > 0) {
+            fetched = fetch(streamId, first, 0, childType);
+            if (!fetched.errors().isEmpty()) {
+                throw couldNotRead(streamId, String.join("; ", fetched.errors()));
+            }
+        }
+        final Fetched firstFetched = fetched;
         final List<String> records = new ArrayList<>();
         int used = 0;
         long index = first;
         while (true) {
             final String whole = NullSafe.string(fetched.data());
-            if (fetched.segmented() && !records.isEmpty() && whole.length() > budget - used) {
+            if ((fetched.segmented() || byPart) && !records.isEmpty() && whole.length() > budget - used) {
                 // An event cut at the budget is not well-formed XML: seen validated as "attributes construct
                 // error". It is left for the next page (first_record) rather than returned cut; only a first
                 // record is ever cut.
@@ -262,10 +275,12 @@ public class StreamReader {
                     : data);
             used += data.length();
             index++;
-            if (records.size() >= count || index >= total || used >= budget || !fetched.segmented()) {
+            if (records.size() >= count || index >= total || used >= budget || !(fetched.segmented() || byPart)) {
                 return new Records(records, firstFetched);
             }
-            fetched = fetch(streamId, index, childType);
+            fetched = byPart
+                    ? fetch(streamId, index, 0, childType)
+                    : fetch(streamId, 0, index, childType);
         }
     }
 
@@ -274,8 +289,18 @@ public class StreamReader {
     /// @param childType A child part to read instead, or null.
     /// @return What the data viewer gives for one record, as text.
     public Fetched fetch(final long streamId, final long record, final String childType) {
+        return fetch(streamId, 0, record, childType);
+    }
+
+    /// @param streamId  The stream.
+    /// @param part      The zero-based index of the part.
+    /// @param record    The zero-based index of the record within the part (of a segmented stream; the data
+    ///                  viewer gives a part of any other stream as one record).
+    /// @param childType A child part to read instead, or null.
+    /// @return What the data viewer gives for one record, as text.
+    public Fetched fetch(final long streamId, final long part, final long record, final String childType) {
         final SourceLocation location = SourceLocation.builder(streamId)
-                .withPartIndex(0L)
+                .withPartIndex(part)
                 .withRecordIndex(record)
                 .withChildStreamType(childType)
                 .build();

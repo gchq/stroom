@@ -93,9 +93,16 @@ class TestStreamMetaTool {
         Mockito.when(metaService.findRows(Mockito.any())).thenAnswer(invocation -> new ResultPage<>(rows));
         Mockito.when(attributeMapFactory.getAttributes(Mockito.anyLong())).thenAnswer(invocation ->
                 storeAttributes.getOrDefault(invocation.<Long>getArgument(0), Map.of()));
+        // As the stream store: parts are numbered from one, and part 0 is refused.
         Mockito.when(attributeMapFactory.getAttributeMapForPart(Mockito.anyLong(), Mockito.anyLong()))
-                .thenAnswer(invocation -> new AttributeMap(storeParts.get(invocation.<Long>getArgument(0))
-                        .get(invocation.<Long>getArgument(1).intValue())));
+                .thenAnswer(invocation -> {
+                    final long partNo = invocation.<Long>getArgument(1);
+                    if (partNo < 1) {
+                        throw new IllegalArgumentException("Part number is one based");
+                    }
+                    return new AttributeMap(storeParts.get(invocation.<Long>getArgument(0))
+                            .get((int) partNo - 1));
+                });
         Mockito.when(store.openSource(Mockito.anyLong())).thenAnswer(invocation -> {
             final Source source = Mockito.mock(Source.class);
             Mockito.when(source.count()).thenReturn((long) storeParts.get(invocation.<Long>getArgument(0)).size());

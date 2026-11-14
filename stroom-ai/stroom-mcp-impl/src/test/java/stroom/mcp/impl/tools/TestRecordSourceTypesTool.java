@@ -359,6 +359,26 @@ class TestRecordSourceTypesTool {
         assertThat(written.getLast()).contains("∈ Directory Services", "an item of the value read as a list");
         assertThat(SourceTypeRegistry.rows(SourceTypeRegistry.read(written.getLast()))).contains(
                 new SourceTypeRows.Row("Directory", SourceTypeRows.MEMBER, "Directory Services", ","));
+        // The reply's rows say each match as the table and the registry do. Seen (eval 59): a list-member row given
+        // back to the agent as '= Active Directory Domain Services', a value it isn't.
+        assertThat(JsonValues.maps(result.get("rows")))
+                .extracting(row -> row.get("name") + " " + row.get("match"))
+                .contains("Directory ∈ Directory Services", "PegaDB = PegaDB")
+                .noneMatch(said -> said.startsWith("Directory ="));
+        assertThat((String) result.get("table")).contains("| ∈ Directory Services |");
+    }
+
+    @Test
+    void aPatternRowIsGivenBackWithItsSign() {
+        final List<String> rows = new ArrayList<>(OTHERS);
+        rows.add("Mail ~ ^/var/log/mail/");
+
+        final Map<String, Object> result = recorded(BuildToolCalls.context(), Map.of("rows", rows));
+
+        assertThat(result).as("%s", result).doesNotContainKey("error");
+        assertThat(JsonValues.maps(result.get("rows")))
+                .extracting(row -> row.get("name") + " " + row.get("match"))
+                .contains("Mail ~ ^/var/log/mail/", "PegaDB = PegaDB");
     }
 
     @Test

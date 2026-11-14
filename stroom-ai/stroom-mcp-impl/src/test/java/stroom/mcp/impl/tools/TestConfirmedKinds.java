@@ -17,6 +17,8 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.sample.SourceTypeRows;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
@@ -121,6 +123,42 @@ class TestConfirmedKinds {
             assertThat(one.writes()).isEqualTo("Unknown");
             assertThat(one.value()).isEqualTo("~^Failed password for");
         });
+    }
+
+    @Test
+    void kindsOfSourceTypesOutsideAGroupBuildsScopeAreNotCompared() {
+        // Seen (eval 58): a group build of PegaIntegration alone was asked, five to eight times, to keep or follow
+        // the kinds the user confirmed for PegaDB and the other source types parked for later builds.
+        final List<Object> records = List.of(
+                Map.of("sourcetype", "PegaDB", "action", "query"),
+                Map.of("sourcetype", "PegaDB", "action", "query"),
+                Map.of("sourcetype", "PegaIntegration", "action", "GetCustomer"));
+        final TranslationMapping mapping = mapping("""
+                [{"name": "getcustomer", "when": [{"field": "action", "equals": "GetCustomer"}],
+                  "fields": [{"path": "EventDetail/View/Action", "value": "View"}]}]""");
+        // Confirmed by source type (the scope's own field), and by another field within PegaDB's records.
+        final Map<String, Object> pegaDb = confirmed("PegaDB", "PegaDB", "Process", "");
+        pegaDb.put("field", "sourcetype");
+        final Map<String, Object> query = confirmed("database query", "query", "Search", "");
+        final Map<String, Object> integration = confirmed("PegaIntegration", "PegaIntegration", "Process", "");
+        integration.put("field", "sourcetype");
+        final List<Map<String, Object>> events = List.of(pegaDb, query, integration);
+        final SourceTypeScope scope = new SourceTypeScope("pega-2", "sourcetype", List.of(
+                new SourceTypeRows.Row("PegaDB", SourceTypeRows.VALUE, "PegaDB"),
+                new SourceTypeRows.Row("PegaIntegration", SourceTypeRows.VALUE, "PegaIntegration")),
+                List.of("PegaIntegration"));
+
+        // Without the scope, every kind is compared.
+        assertThat(ConfirmedKinds.lost(mapping, records, events)).extracting(ConfirmedKinds.Lost::kind)
+                .containsExactly("PegaDB", "database query", "PegaIntegration");
+        // Within it, only the group's own: PegaDB's kinds and records are another build's.
+        assertThat(ConfirmedKinds.lost(mapping, records, events, scope)).singleElement().satisfies(one -> {
+            assertThat(one.kind()).isEqualTo("PegaIntegration");
+            assertThat(one.records()).isEqualTo(1);
+        });
+        // A scope of every source type (none chosen) narrows nothing.
+        assertThat(ConfirmedKinds.lost(mapping, records, events, new SourceTypeScope("pega-2", "sourcetype",
+                List.of(), null))).hasSize(3);
     }
 
     @Test

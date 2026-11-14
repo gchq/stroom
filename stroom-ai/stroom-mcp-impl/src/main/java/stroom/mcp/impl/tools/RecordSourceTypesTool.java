@@ -1060,9 +1060,9 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
         result.put("registry", Entries.of("type", "Documentation", "uuid", written.uuid(), "name",
                 written.name()));
         result.put("rows", JsonValues.maps(registry.get("rows")).stream()
-                .map(row -> Entries.of("name", row.get("name"), "match", ("pattern".equals(row.get("match"))
-                        ? "~ "
-                        : "= ") + row.get("value"), "status", row.get("status"), "reason",
+                // As the table and the registry say it: a list-member row by its item (∈), not as a value (=).
+                .map(row -> Entries.of("name", row.get("name"), "match", said(row), "status", row.get("status"),
+                        "reason",
                         JsonValues.mapOrEmpty(row.get("decided")).get("reason"), "records_read",
                         JsonValues.mapOrEmpty(row.get("profile")).get("records_read"), "share_percent",
                         JsonValues.mapOrEmpty(row.get("profile")).get("share_percent"), "suggested_category",
