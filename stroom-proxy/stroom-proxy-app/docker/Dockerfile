@@ -39,10 +39,11 @@ RUN echo "http_proxy: $http_proxy" && \
         jq \
         curl \
         su-exec \
-        tini \
-        'brotli-libs>=1.2.1-r0'
-
-        #'expat>=2.10.0-r0'
+        tini && \
+    apk add --upgrade --no-cache \
+        brotli-libs \
+        expat \
+        zlib
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
