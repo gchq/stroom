@@ -32,6 +32,8 @@ import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.generation.SourceTypeModule;
+import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.validation.OutputSchemas;
 import stroom.ai.impl.tools.validation.XmlTrees;
@@ -527,6 +529,26 @@ class PipelineStepping {
     /// in it checks that output.
     UnvalidatedOutput unvalidatedOutput(final SteppedPipeline pipeline) {
         return UnvalidatedOutput.of(outputSchemas, pipeline);
+    }
+
+    /// @param pipeline The pipeline about to be walked.
+    /// @return A count of the records a source type group's pipeline passes over, telling their source types by the
+    /// group's rows where its XSLT keeps a group's mapping (records are counted either way).
+    PassedOverRecords passedOver(final SteppedPipeline pipeline) {
+        try {
+            final SourceTypeModule module = keptMappings.keptMapping(pipeline.ref().getUuid())
+                    .filter(kept -> XsltSaves.TRANSLATION.equals(kept.kind()))
+                    .map(kept -> TranslationMapping.parse(kept.payload().get("mapping")))
+                    .map(TranslationMapping::module)
+                    .filter(SourceTypeModule::isGroup)
+                    .orElse(null);
+            return PassedOverRecords.of(module);
+        } catch (final RuntimeException e) {
+            // Only the source types go untold: never fail the step over it.
+            LOGGER.debug(() -> LogUtil.message("Couldn't read pipeline {}'s group mapping: {}",
+                    pipeline.ref().getUuid(), e.getMessage()));
+            return PassedOverRecords.of(null);
+        }
     }
 
     /// A blocking group when a build's own pipeline writes EventDetail/Unknown from an XSLT saved without a

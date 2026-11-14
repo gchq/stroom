@@ -425,6 +425,48 @@ class TestStepSampleTool {
         assertThat(tool.confirmsItself()).isFalse();
     }
 
+    @Test
+    void recordsAGroupsPipelinePassesOverAreNotErrorsAndAreCountedBySourceType() {
+        // Seen in chat 177 (Azure audit, group M365 Messaging): 304 of 500 records "with errors", 238 of them only
+        // the group's pass-over line for SharePoint and other workloads; the agent had to explain them away.
+        world.keepsAGroupMapping();
+        world.stepper = (stream, at) -> switch ((int) at.getRecordIndex()) {
+            case 0 -> SteppingWorld.stepFrom(stream, 0, 0, SteppingWorld.azureRecord("ExchangeOnline"), AN_EVENT);
+            case 1, 2 -> SteppingWorld.passedOver(stream, 0, at.getRecordIndex(),
+                    SteppingWorld.azureRecord("SharePoint"));
+            case 3 -> SteppingWorld.passedOver(stream, 0, 3, SteppingWorld.azureRecord("PowerBI"));
+            default -> null;
+        };
+
+        final Map<String, Object> result = stepSample("{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7]}");
+
+        assertThat(List.of(result.get("records_stepped"), result.get("records_with_errors"), result.get("verdict")))
+                .containsExactly(4, 0, "clean");
+        assertThat(result.get(PassedOverRecords.RECORDS_PASSED_OVER)).isEqualTo(3);
+        assertThat(result.get(PassedOverRecords.BY_SOURCE_TYPE)).isEqualTo(Map.of("SharePoint", 2,
+                "(no source type)", 1));
+        assertThat(groups(result)).isEmpty();
+        assertThat(String.valueOf(result.get(PassedOverRecords.NOTE))).contains("not errors");
+    }
+
+    @Test
+    void aGroupsPipelinePassingOverEveryRecordIsNotCleanButSaysWhy() {
+        // Nothing the group translates was stepped: not the "no record produced an Event" of a namespace fault.
+        world.stepper = (stream, at) -> at.getRecordIndex() < 2
+                ? SteppingWorld.passedOver(stream, 0, at.getRecordIndex(), SteppingWorld.azureRecord("SharePoint"))
+                : null;
+
+        final Map<String, Object> result = stepSample("{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7]}");
+
+        assertThat(result.get("verdict")).isEqualTo("blocking");
+        assertThat(result.get("records_with_errors")).isEqualTo(0);
+        assertThat(groups(result)).singleElement().satisfies(group -> {
+            assertThat(group.get("reason")).isEqualTo("No record of the group's source types was stepped");
+            // No group mapping kept: counted, the source type not told.
+            assertThat(firstMessage(group)).contains(PassedOverRecords.NOT_TOLD + " 2");
+        });
+    }
+
     private void unknownThenAnEvent() {
         world.stepper = (stream, at) -> switch ((int) at.getRecordIndex()) {
             case 0 -> SteppingWorld.step(stream, 0, 0, "<Events xmlns=\"event-logging:3\"><Event><EventDetail>"

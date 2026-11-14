@@ -63,7 +63,7 @@ class IndexDocumentation {
     private final DocumentPlaces places;
     private final DocumentWrites writes;
     private final PipelineShapes pipelineShapes;
-    private final Consent consent;
+    private final DocumentAgreements agreements;
     private final IndexSurveys indexSurveys;
     private final IndexFields indexFields;
     private final EventVersions eventVersions;
@@ -75,7 +75,7 @@ class IndexDocumentation {
     /// @param places         Finds the index doc's folder and the doc beside it.
     /// @param writes         Writes the Documentation doc.
     /// @param pipelineShapes Reads the build's pipelines.
-    /// @param consent        Asks the user to confirm the index doc.
+    /// @param agreements     Asks the user to confirm the index doc, once a session for the same target.
     /// @param indexSurveys   Surveys the index through Stroom.
     /// @param indexFields    Looks again for fields a feeding pipeline writes.
     /// @param eventVersions  The event-logging schema, for descriptions.
@@ -87,7 +87,7 @@ class IndexDocumentation {
                        final DocumentPlaces places,
                        final DocumentWrites writes,
                        final PipelineShapes pipelineShapes,
-                       final Consent consent,
+                       final DocumentAgreements agreements,
                        final IndexSurveys indexSurveys,
                        final IndexFields indexFields,
                        final EventVersions eventVersions,
@@ -98,7 +98,7 @@ class IndexDocumentation {
         this.places = places;
         this.writes = writes;
         this.pipelineShapes = pipelineShapes;
-        this.consent = consent;
+        this.agreements = agreements;
         this.indexSurveys = indexSurveys;
         this.indexFields = indexFields;
         this.eventVersions = eventVersions;
@@ -143,7 +143,12 @@ class IndexDocumentation {
         asked.put("promoted (once you agree)", beside != null
                 ? "written back into the existing Documentation '" + ref.getName() + "' beside it, after a backup"
                 : "beside the index doc, in " + folder + ", unless you choose another folder");
-        consent.require(call, context, Consent.Request.confirmation(
+        // Once a session for this doc, folder and build: seen in chat 177, asked four times for one index doc, a
+        // round of descriptions or a call made again each asking afresh. Another doc or folder asks again.
+        final String target = request.build() + "\n" + ref.getUuid() + "\n" + folder + "\n" + (beside == null
+                ? ""
+                : beside.getUuid());
+        agreements.require(call, context, target, Consent.Request.confirmation(
                 WriteDocumentationTool.NAME, "Document the existing " + (ElasticIndexDoc.TYPE.equals(ref.getType())
                         ? "Elastic Index"
                         : "Lucene Index") + " doc '" + ref.getName() + "' (" + folder + ")", asked));

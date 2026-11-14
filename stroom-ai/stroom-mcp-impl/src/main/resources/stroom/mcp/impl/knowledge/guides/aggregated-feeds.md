@@ -121,7 +121,9 @@ A user who doesn't want a pipeline per group treats the feed as a normal source:
 ## Stepping, processing and coverage
 
 * Step and process a group's pipeline as any events pipeline: records of other source types give no Event and are
-  not faults. An unsaved group's code is stepped as `draft_code` for its pipeline's XSLT element, as any
+  not faults. Stepping counts them apart (`records_passed_over`, by source type), never in `records_with_errors`.
+  Check a group's translation with values of its own source types' records: the survey's shapes and locations say
+  their `source_types`. An unsaved group's code is stepped as `draft_code` for its pipeline's XSLT element, as any
   translation's.
 * Processing logs, once a document, `Passed over N record(s) not of this group's source types` (INFO): the other
   groups', parked, dropped and new source types alike, never warned of. These are counts, not errors: don't fix
@@ -166,7 +168,9 @@ is held while a clash remains, and refuses a plan naming another group's index n
 ## Promotion and later builds
 
 * Promotion moves the modules, the registry (always; the survey doc stays in the build) and any group output
-  feed beside the feed, the group pipelines where its destinations say; its review shows the pipeline changes
+  feed beside the feed (in a folder of the source's own where the feed's folder holds other sources' folders; the
+  build's test feed is never promoted: don't offer it), the group pipelines where its destinations say; its
+  review shows the pipeline changes
   (reference data each group pipeline lacks, only ever added) and the index changes (fields added, forward only).
 * One open build per aggregated feed: another is refused, naming the open one. Finish (promote) or abandon it first.
 * A later build changes promoted modules through working copies (imported by the build's own modules, so the chain

@@ -61,7 +61,8 @@ final class DocumentationWorld {
     final PendingDocumentation pendingDocs = new PendingDocumentation();
 
     final IndexDocumentation indexDocumentation = new IndexDocumentation(docs, world.documentAccess, places, writes,
-            pipelineShapes, translation.consent, indexSurveys, indexFields, translation.eventVersions,
+            pipelineShapes, new DocumentAgreements(translation.consent), indexSurveys, indexFields,
+            translation.eventVersions,
             world.guard(), pendingDocs);
 
     /// Whether a kept mapping is still what its XSLT is: as it is, unless a test says.

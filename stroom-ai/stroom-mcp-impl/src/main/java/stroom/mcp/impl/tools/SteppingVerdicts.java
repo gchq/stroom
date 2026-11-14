@@ -205,6 +205,28 @@ final class SteppingVerdicts {
         return blocking("No record produced an Event", element, keys.size(), message, keys);
     }
 
+    /// The verdict when a source type group's pipeline passed over every record stepped: nothing it translates was
+    /// checked, so the step can't be clean (the records passed over are not errors themselves).
+    ///
+    /// @param element    The XSLT's element.
+    /// @param keys       The records stepped.
+    /// @param passedOver The records passed over, by source type.
+    /// @return A blocking group.
+    static Map<String, Object> allPassedOver(final String element,
+                                             final List<String> keys,
+                                             final PassedOverRecords passedOver) {
+        final String message = "Every one of the " + keys.size() + " records stepped was passed over by the "
+                               + "group's pipeline (" + String.join(", ", passedOver.bySourceType().entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> entry.getKey() + " " + entry.getValue())
+                .toList())
+                               + "): none is of its source types, so nothing it translates was checked. Step "
+                               + "streams or records of the group's source types (survey_feed's locations for "
+                               + "them).";
+        return blocking("No record of the group's source types was stepped", element, keys.size(), message, keys);
+    }
+
     /// A blocking group of the pipeline's own element, as triage gives groups, with the records it is of.
     ///
     /// @param reason  Why it blocks.

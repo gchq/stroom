@@ -454,6 +454,9 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         final Map<String, Object> surveyed = json("survey_feed", args("feed", feed, "build", first));
         assertThat(map(surveyed, "source_types")).as("the source type field found: %s", surveyed.get("source_types"))
                 .containsEntry("field", family.field());
+        // Each shape says the source types its records are of (seen in chat 177: a group's translation checked with
+        // another source type's value).
+        assertThat(list(surveyed, "shapes")).allSatisfy(shape -> assertThat(shape).containsKey("source_types"));
         final Map<String, Object> shown = json("record_source_types", args("build", first, "feed", feed,
                 "system_name", tag, "environment", "Prod"));
         assertThat(shown).containsEntry("status", "needs_review");
@@ -579,6 +582,15 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         for (final String pipeline : passed.keySet()) {
             final Map<String, Object> stepped = stepSample(pipeline, List.of(laterStream));
             assertThat(stepped).as("stepped clean: %s", stepped).containsEntry("verdict", "clean");
+            // The other source types' records are counted apart, by source type, never as records with errors
+            // (seen in chat 177: 304 of 500 "with errors", 238 of them only passed over).
+            final List<String> own = pipeline.equals(secondPipeline)
+                    ? secondTypes
+                    : List.of(firstType);
+            assertThat(((Number) stepped.get("records_passed_over")).longValue()).as("passed over: %s", stepped)
+                    .isPositive();
+            assertThat(map(stepped, "passed_over_by_source_type")).doesNotContainKeys(own.toArray(String[]::new));
+            assertThat(String.valueOf(stepped.get("groups"))).doesNotContain(XsltGenerator.PASSED_OVER_END);
             final Map<String, Object> done = processed(pipeline, List.of(stream, laterStream));
             for (final Map<String, Object> each : list(done, "streams")) {
                 final String logged = streamText(ids(each, "errors").getFirst());

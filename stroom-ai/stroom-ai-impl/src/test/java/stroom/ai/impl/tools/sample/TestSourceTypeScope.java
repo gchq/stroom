@@ -50,6 +50,20 @@ class TestSourceTypeScope {
     }
 
     @Test
+    void anExampleIsInTheScopeByItsOwnRecordAndOneNotToldIsKept() {
+        // A shape of the scope's can hold another source type's records (the same fields): each example is told.
+        assertThat(MAIL.exampleInScope(Map.of("text", "{\"path\": \"/var/log/mail/maillog\"}"))).isTrue();
+        assertThat(MAIL.exampleInScope(Map.of("text", "{\"path\": \"/var/log/secure\"}"))).isFalse();
+        // Not JSON, or no scope: kept.
+        assertThat(MAIL.exampleInScope(Map.of("text", "path=/var/log/secure"))).isTrue();
+        assertThat(new SourceTypeScope(null, "path", ROWS, null).exampleInScope(Map.of("text",
+                "{\"path\": \"/var/log/secure\"}"))).isTrue();
+        // A part's meta attribute isn't in an example's text: kept.
+        assertThat(new SourceTypeScope("b1", "meta:Role", ROWS, List.of("mail")).exampleInScope(Map.of("text",
+                "{\"path\": \"/var/log/secure\"}"))).isTrue();
+    }
+
+    @Test
     void theScopeIsTheBuildsThatChoseIt() {
         final Map<String, Object> sources = sources(scope("b1", List.of("mail"), SourceTypeScope.kept(ROWS)));
 

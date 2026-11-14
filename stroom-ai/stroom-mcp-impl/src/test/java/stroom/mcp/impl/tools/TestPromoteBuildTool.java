@@ -112,6 +112,89 @@ class TestPromoteBuildTool {
     }
 
     @Test
+    void theBuildsTestFeedIsNeverPromotedWhateverTheDestinationsSay() {
+        // Seen in chat 177: the build's test feed was in the layout (under Events), and the agent asked the user
+        // whether to promote it.
+        exists("System/Feeds/Acme");
+        listed(doc(FeedDoc.TYPE, "t", "ACME" + OutputFeeds.TEST_FEED, "Events"), doc(PipelineDoc.TYPE, "ev",
+                "ACME-Events", "Events"));
+
+        final String layout = String.valueOf(review(Map.of("t", "System/Feeds/Acme", "Feed", "System/Feeds/Acme",
+                "Pipeline", "System/Feeds/Acme"), null).get("layout"));
+
+        assertThat(layout).doesNotContain("ACME-MCP-TEST  (Feed)")
+                .contains("Left in the workspace: ACME-MCP-TEST (Feed)")
+                .endsWith("The build's test feed ACME-MCP-TEST stays in the build's workspace: it holds only the "
+                          + "sample's Events and is never promoted.");
+    }
+
+    @Test
+    void aSourceDirectlyInAParentOfSourcesGetsAFolderOfItsOwn() {
+        // Seen in chat 177: the feed sat directly in /Feeds, its siblings each in a folder of their own; the
+        // registry went to /Feeds/<feed>, the output feed and notes to /Feeds, and the rest to /Feeds/Events and
+        // /Feeds/Indexing, role folders every source would share.
+        final BuildWorld.Node feeds = world.folder("System/Feeds");
+        world.add(FeedDoc.TYPE, "NETSKOPE", world.folder("System/Feeds/Netskope").uuid, "n");
+        world.add(FeedDoc.TYPE, "AZURE", feeds.uuid, "az");
+        Mockito.when(docs.pipelineIndex.named(FeedDoc.TYPE, "AZURE", 20))
+                .thenReturn(List.of(new DocRef(FeedDoc.TYPE, "az", "AZURE")));
+        docs.facts.sources = List.of("AZURE");
+        listed(doc(FeedDoc.TYPE, "t", "AZURE" + OutputFeeds.TEST_FEED, null),
+                doc(PipelineDoc.TYPE, "ev", "AZURE Messaging", "Events"),
+                doc(XsltDoc.TYPE, "x", "AZURE Messaging", "Events"),
+                doc(PipelineDoc.TYPE, "ix", "AZURE Messaging Indexing", "Indexing"),
+                doc(DocumentationDoc.TYPE, "r", "AZURE source types", null),
+                doc(DocumentationDoc.TYPE, "sn", "azure source notes", null));
+        final String expected = "System/Feeds/AZURE/  (new)\n"
+                                + "├── Events/  (new)\n"
+                                + "│   ├── AZURE Messaging  (Pipeline)\n"
+                                + "│   └── AZURE Messaging  (XSLT)\n"
+                                + "├── Indexing/  (new)\n"
+                                + "│   └── AZURE Messaging Indexing  (Pipeline)\n"
+                                + "├── AZURE source types  (Documentation)\n"
+                                + "└── azure source notes  (Documentation)";
+
+        // The parent of the sources given by type, as the agent gave it: a folder of the source's own in it.
+        assertThat(String.valueOf(review(Map.of("Pipeline", "/Feeds", "XSLT", "/Feeds"), null).get("layout")))
+                .startsWith(expected);
+        // None given: named all at once as before, the folder of its own suggested.
+        assertThat(docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(Map.of("build", BUILD,
+                "destinations", Map.of())))).contains("The others have one: System/Feeds/AZURE.",
+                "The source's own folder, as its siblings have one: System/Feeds/AZURE");
+        // A folder given for one document is where it goes, as given.
+        assertThat(String.valueOf(review(Map.of("Pipeline", "/Feeds", "XSLT", "/Feeds", "ix",
+                "/Feeds/Elsewhere"), null).get("layout")))
+                .contains("Elsewhere/");
+    }
+
+    @Test
+    void aPipelinesDocumentationGoesWhereThePipelineGoesWhenGivenByUuid() {
+        // A pipeline given a folder by uuid (a parent of sources): its Documentation goes beside it, not by type into
+        // the source's own folder.
+        final BuildWorld.Node feeds = world.folder("System/Feeds");
+        world.add(FeedDoc.TYPE, "NETSKOPE", world.folder("System/Feeds/Netskope").uuid, "n");
+        world.add(FeedDoc.TYPE, "AZURE", feeds.uuid, "az");
+        Mockito.when(docs.pipelineIndex.named(FeedDoc.TYPE, "AZURE", 20))
+                .thenReturn(List.of(new DocRef(FeedDoc.TYPE, "az", "AZURE")));
+        docs.facts.sources = List.of("AZURE");
+        listed(doc(PipelineDoc.TYPE, "ev", "AZURE Messaging", "Events"),
+                doc(DocumentationDoc.TYPE, "d", "AZURE Messaging", "Events"),
+                doc(PipelineDoc.TYPE, "ix", "AZURE Messaging Indexing", "Indexing"),
+                doc(DocumentationDoc.TYPE, "di", "AZURE Messaging Indexing", "Indexing"));
+
+        final String layout = String.valueOf(review(Map.of("ev", "/Feeds", "Pipeline", "/Feeds",
+                "Documentation", "/Feeds"), null).get("layout"));
+
+        assertThat(layout).isEqualTo("System/Feeds/\n"
+                                     + "├── AZURE Messaging  (Documentation)\n"
+                                     + "├── AZURE Messaging  (Pipeline)\n"
+                                     + "└── AZURE/  (new)\n"
+                                     + "    └── Indexing/  (new)\n"
+                                     + "        ├── AZURE Messaging Indexing  (Documentation)\n"
+                                     + "        └── AZURE Messaging Indexing  (Pipeline)");
+    }
+
+    @Test
     void aDashboardOnAnIndexFromElsewhereGoesWithTheBuildsIndexingPipeline() {
         // Seen in production: a new indexing version verified through the existing index doc; its dashboard had no
         // place.
