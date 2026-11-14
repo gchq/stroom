@@ -18,6 +18,12 @@ package stroom.mcp.impl.e2e;
 
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.shared.AiToolAccess;
+import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.OutputStreamProvider;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
 import stroom.docref.DocRef;
 import stroom.documentation.impl.DocumentationStore;
 import stroom.documentation.shared.DocumentationDoc;
@@ -31,6 +37,9 @@ import stroom.index.impl.IndexShardManager.IndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.mcp.impl.McpTestClient;
 import stroom.mcp.impl.McpTestClients;
+import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -83,6 +92,7 @@ import org.xml.sax.InputSource;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
@@ -160,6 +170,8 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
     private ExplorerService explorerService;
     @Inject
     private MetaService metaService;
+    @Inject
+    private Store store;
     @Inject
     private XsltStore xsltStore;
     @Inject
@@ -760,6 +772,58 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
     /// @return The ids of its unlocked streams, oldest first.
     List<Long> streamIdsOf(final String feed) {
         return streamsOf(feed).stream().map(Meta::getId).sorted().toList();
+    }
+
+    /// A stream of parts stored in a feed, as Stroom's receiver stores what a proxy aggregated: each part its text and
+    /// the receipt headers it came with.
+    ///
+    /// @param feed  The feed.
+    /// @param parts Each part's receipt headers and text.
+    /// @return The Raw Events stream's id.
+    long storeParts(final String feed, final List<Map.Entry<Map<String, String>, String>> parts) {
+        return securityContext.asProcessingUserResult(() -> {
+            final MetaProperties properties = MetaProperties.builder()
+                    .feedName(feed)
+                    .typeName(StreamTypeNames.RAW_EVENTS)
+                    .createMs(System.currentTimeMillis())
+                    .build();
+            try (final Target target = store.openTarget(properties)) {
+                for (final Map.Entry<Map<String, String>, String> part : parts) {
+                    try (final OutputStreamProvider provider = target.next()) {
+                        try (final OutputStream data = provider.get()) {
+                            data.write(part.getValue().getBytes(StandardCharsets.UTF_8));
+                        }
+                        final AttributeMap attributes = new AttributeMap();
+                        part.getKey().forEach(attributes::put);
+                        try (final OutputStream meta = provider.get(StreamTypeNames.META)) {
+                            AttributeMapUtil.write(attributes, meta);
+                        }
+                    }
+                }
+                return target.getMeta().getId();
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+    }
+
+    /// @param id A stream's id.
+    /// @return Its text, as Stroom stores it: every part's, in order.
+    String storedText(final long id) {
+        return securityContext.asProcessingUserResult(() -> {
+            try (final Source source = store.openSource(id)) {
+                final StringBuilder out = new StringBuilder();
+                for (long part = 0; part < source.count(); part++) {
+                    try (final InputStreamProvider provider = source.get(part);
+                            final InputStream in = provider.get()) {
+                        out.append(new String(in.readAllBytes(), StandardCharsets.UTF_8));
+                    }
+                }
+                return out.toString();
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
     }
 
     /// @param parentId A stream's id.

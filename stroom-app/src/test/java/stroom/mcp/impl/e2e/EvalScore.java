@@ -16,6 +16,9 @@
 
 package stroom.mcp.impl.e2e;
 
+import stroom.ai.impl.tools.sample.SourceTypeRegistry;
+import stroom.ai.impl.tools.sample.SourceTypeRows;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -38,7 +41,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 /// A case's score, and the scoring of a case's Events against what the case expects: the record count, the event types,
-/// the paths every event has, values some event holds, values and types none may hold, and Data where it belongs.
+/// the paths every event has, values some event holds, values and types none may hold, and Data where it belongs; and
+/// for an aggregated feed's case, its build's source types ([#scoreSourceTypes]).
 @SuppressWarnings("unchecked")
 final class EvalScore {
 
@@ -55,6 +59,8 @@ final class EvalScore {
     private Set<String> eventTypes = Set.of();
     private List<String> missingTypes = List.of();
     private List<String> missingPaths = List.of();
+    // The source type checks, each with whether it passed: none for a case that isn't an aggregated feed's.
+    private final List<Map<String, Object>> sourceTypeChecks = new ArrayList<>();
 
     /// @param caseId The case.
     EvalScore(final String caseId) {
@@ -151,6 +157,116 @@ final class EvalScore {
                  && forbidden.isEmpty() && !misplaced;
     }
 
+    /// Scores an aggregated feed's build against the case's `expected.source_types`, from the build's end state: its
+    /// registry (`<feed> source types`) and what its group's pipeline logged processing the feed. Each check given is
+    /// made, and a failed one is a problem:
+    ///
+    /// - `field`: the registry's source type field (`meta:<Attribute>` for a stream meta attribute).
+    /// - `group`: the build's source type group (the registry's scope): `values` are values of the field whose
+    ///   records the group must take (the first row matching each, the rows tried in order, is one of the group's
+    ///   source types), `others` values it must not, so the group is exactly the source types of those values
+    ///   whatever the rows are named; `name` (any case) what the user called it.
+    /// - `rows`: rows the registry must have, each by its `match` (`value`, `pattern` or `member`) and `value`
+    ///   (the value, the anchored pattern or the list's item), and its `status` if given.
+    /// - `passed_over`: the records the group's pipeline passed over, as its INFO lines count them, with no ERROR or
+    ///   FATAL line logged: the other source types' records are not errors, nor worked round.
+    ///
+    /// @param evalCase    The case.
+    /// @param registry    The build's registry, as [SourceTypeRegistry#read] reads it, or null for none.
+    /// @param passedOver  The records the group's pipeline logged as passed over, or null if it processed nothing.
+    /// @param errorLines  The ERROR and FATAL lines it logged.
+    void scoreSourceTypes(final Map<String, Object> evalCase,
+                          final Map<String, Object> registry,
+                          final Long passedOver,
+                          final int errorLines) {
+        final Map<String, Object> expected = maps(maps(evalCase.get("expected")).get("source_types"));
+        if (expected.isEmpty()) {
+            return;
+        }
+        if (registry == null) {
+            check("registry", false, "the build has no source type registry");
+            return;
+        }
+        if (expected.get("field") != null) {
+            final String field = String.valueOf(registry.get("field"));
+            check("field", expected.get("field").equals(field), "the registry's source type field is " + field
+                                                                + ", expected " + expected.get("field"));
+        }
+        final Map<String, Object> group = maps(expected.get("group"));
+        if (!group.isEmpty()) {
+            scoreGroup(group, registry);
+        }
+        final List<Map<String, Object>> rows = (List<Map<String, Object>>) registry.getOrDefault("rows", List.of());
+        for (final Map<String, Object> row : (List<Map<String, Object>>) expected.getOrDefault("rows", List.of())) {
+            final String wanted = row.get("match") + " " + row.get("value") + (row.get("status") != null
+                    ? " (" + row.get("status") + ")"
+                    : "");
+            final boolean held = rows.stream().anyMatch(actual -> holds(actual, row));
+            final List<String> actual = rows.stream()
+                    .map(each -> each.get("name") + ": " + each.get("match") + " " + each.get("value") + " ("
+                                 + each.get("status") + ")")
+                    .toList();
+            check("row " + wanted, held, "the registry has no row " + wanted + "; its rows: " + actual);
+        }
+        if (expected.get("passed_over") instanceof final Number count) {
+            check("passed_over", passedOver != null && passedOver == count.longValue() && errorLines == 0,
+                    "the group's pipeline passed over " + passedOver + " record(s), expected " + count + ", and "
+                    + "logged " + errorLines + " ERROR or FATAL line(s)");
+        }
+    }
+
+    /// @return Whether every source type check passed (true for a case with none).
+    boolean sourceTypes() {
+        return sourceTypeChecks.stream().allMatch(check -> Boolean.TRUE.equals(check.get("passed")));
+    }
+
+    // The group: the values whose records it takes, and those it doesn't, by the registry's rows in order.
+    private void scoreGroup(final Map<String, Object> group, final Map<String, Object> registry) {
+        final Map<String, Object> scope = maps(registry.get("scope"));
+        final List<String> inGroup = strings(scope.get("source_types"));
+        final List<SourceTypeRows.Row> rows = SourceTypeRegistry.rows(registry);
+        final List<String> notTaken = new ArrayList<>();
+        for (final String value : strings(group.get("values"))) {
+            if (SourceTypeRows.first(rows, value).filter(row -> inGroup.contains(row.name())).isEmpty()) {
+                notTaken.add(value);
+            }
+        }
+        final List<String> taken = new ArrayList<>();
+        for (final String value : strings(group.get("others"))) {
+            if (SourceTypeRows.first(rows, value).filter(row -> inGroup.contains(row.name())).isPresent()) {
+                taken.add(value);
+            }
+        }
+        final String groupName = String.valueOf(scope.get("group"));
+        check("group source types", notTaken.isEmpty() && taken.isEmpty(), "the group " + groupName + " "
+                                                                             + inGroup + " doesn't take "
+                                                                             + notTaken + " and takes " + taken
+                                                                             + ", which it shouldn't");
+        if (group.get("name") != null) {
+            check("group name", String.valueOf(group.get("name")).equalsIgnoreCase(groupName),
+                    "the group is called " + groupName + ", expected " + group.get("name"));
+        }
+    }
+
+    // Whether a registry row is the one expected: its match and value, and its status if one is expected.
+    private static boolean holds(final Map<String, Object> actual, final Map<String, Object> expected) {
+        return Objects.equals(expected.get("match"), actual.get("match"))
+               && Objects.equals(expected.get("value"), actual.get("value"))
+               && (expected.get("status") == null || Objects.equals(expected.get("status"), actual.get("status")));
+    }
+
+    // A source type check: kept, and a problem if it failed.
+    private void check(final String check, final boolean passed, final String problem) {
+        final Map<String, Object> made = new LinkedHashMap<>();
+        made.put("check", check);
+        made.put("passed", passed);
+        if (!passed) {
+            made.put("problem", problem);
+            problems.add(problem);
+        }
+        sourceTypeChecks.add(made);
+    }
+
     /// @param problem A problem found with the case's build.
     void problem(final String problem) {
         problems.add(problem);
@@ -214,6 +330,9 @@ final class EvalScore {
         map.put("missing_types", missingTypes);
         map.put("missing_paths", missingPaths);
         map.put("problems", List.copyOf(problems));
+        if (!sourceTypeChecks.isEmpty()) {
+            map.put("source_type_checks", List.copyOf(sourceTypeChecks));
+        }
         map.put("notes", List.copyOf(notes));
         return map;
     }

@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
@@ -62,8 +63,41 @@ class TestEvalSamples {
     }
 
     @Test
+    void aCaseFileMayBeASliceOfATestResource() {
+        final List<EvalCases.SampleFile> files = EvalCases.files(EvalCases.load("56_jsonl_azure_audit_aggregated"));
+
+        assertThat(files).singleElement().satisfies(file -> {
+            assertThat(file.name()).isEqualTo("m365-audit.json");
+            final String text = new String(file.data(), StandardCharsets.UTF_8);
+            assertThat(text.lines()).hasSize(400);
+            assertThat(text).startsWith("{\"CreationTime\": ").endsWith("}\n");
+            // A record holding a line or paragraph separator is still one line.
+            assertThat(text.lines().filter(line -> line.contains("\u2028"))).isNotEmpty();
+        });
+    }
+
+    @Test
+    void aCaseWhoseDataIsInTheFeedHasStreamsOfPartsAndShowsTheFirstParts() {
+        final Map<String, Object> evalCase = EvalCases.load("59_jsonl_windows_meta_roles");
+
+        final List<List<EvalCases.StreamPart>> streams = EvalCases.streams(evalCase);
+
+        assertThat(streams).hasSize(2).allSatisfy(parts -> assertThat(parts).hasSize(5));
+        assertThat(streams.getFirst().getFirst().meta()).containsEntry("WindowsServerInstalledServedRoles",
+                "DNS Server, Active Directory Domain Services, File Server");
+        assertThat(streams.stream().flatMap(List::stream).mapToLong(part -> part.text().lines().count()).sum())
+                .isEqualTo(196);
+        assertThat(EvalCases.files(evalCase)).isEmpty();
+        assertThat(EvalCases.samples(evalCase)).singleElement().satisfies(sample -> {
+            assertThat(sample).startsWith("Part headers: {").contains("WindowsServerInstalledServedRoles");
+            assertThat(sample.lines().filter(line -> line.startsWith("Part headers: "))).hasSize(3);
+        });
+        assertThat(EvalCases.streams(EvalCases.load("01_csv_vpn"))).isEmpty();
+    }
+
+    @Test
     void theCasesAreAllThere() {
-        assertThat(EvalCases.IDS).hasSize(55).doesNotHaveDuplicates();
+        assertThat(EvalCases.IDS).hasSize(59).doesNotHaveDuplicates();
         assertThat(EvalCases.load("35_xml_fragments_secretserver_messages"))
                 .containsEntry("id", "35_xml_fragments_secretserver_messages")
                 .containsKeys("request", "expected", "reference", "sample");
