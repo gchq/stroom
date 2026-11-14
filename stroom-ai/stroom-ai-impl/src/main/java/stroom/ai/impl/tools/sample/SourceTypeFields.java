@@ -176,7 +176,9 @@ public final class SourceTypeFields {
     public static String messageField(final Map<String, Object> record) {
         String longest = null;
         for (final Map.Entry<String, Object> entry : record.entrySet()) {
-            if (!(entry.getValue() instanceof final String text) || text.isBlank()) {
+            // A part's meta attribute laid over its records (a source type field) is never their message.
+            if (!(entry.getValue() instanceof final String text) || text.isBlank()
+                || SourceTypeMeta.isMeta(entry.getKey())) {
                 continue;
             }
             if (ToolText.search(Shapes.MESSAGE, ToolText.lastPart(entry.getKey(), '.'))) {

@@ -16,11 +16,14 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -64,5 +67,35 @@ class TestSampleStreamTexts {
 
         assertThatThrownBy(() -> SampleStreamTexts.inScope(texts, DB)).isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("None of the sample's records is in build 'b''s scope (db)");
+    }
+
+    @Test
+    void aScopeByAPartsMetaKeepsOrLeavesOutEachPartWholeByItsOwnValue() {
+        final StreamReader reader = Mockito.mock(StreamReader.class);
+        Mockito.when(reader.partAttributes(9L, 0)).thenReturn(Map.of("Roles", "DNS Server, Directory Services"));
+        Mockito.when(reader.partAttributes(9L, 1)).thenReturn(Map.of("Roles", "File Server"));
+        Mockito.when(reader.partAttributes(9L, 2)).thenReturn(Map.of());
+        final SampleStreamTexts sampleTexts = new SampleStreamTexts(reader, Mockito.mock(DocumentAccess.class));
+        final SourceTypeScope directory = new SourceTypeScope("b", "meta:Roles", List.of(new SourceTypeRows.Row(
+                "Directory", SourceTypeRows.MEMBER, "Directory Services", ",")), List.of("Directory"));
+        final Map<String, String> texts = new LinkedHashMap<>();
+        // XML, which a record field's scope reads whole: kept or left out by its part's value.
+        texts.put("stream 9 part 0", "<Events><Event><Id>1</Id></Event><Event><Id>2</Id></Event></Events>\n");
+        texts.put("stream 9 part 1", "<Events><Event><Id>3</Id></Event></Events>\n");
+        texts.put("stream 9 part 2", "<Events><Event><Id>4</Id></Event></Events>\n");
+
+        final SampleStreamTexts.Scoped scoped = sampleTexts.scoped(new SampleStreamTexts.Texts(texts, List.of()),
+                directory);
+
+        assertThat(scoped.texts().texts()).containsOnlyKeys("stream 9 part 0");
+        assertThat(scoped.said()).containsEntry("records_in_scope", 2).containsEntry("records_left_out",
+                Map.of(SourceTypeScope.UNMATCHED, 2));
+        assertThat(String.valueOf(scoped.said().get("note"))).contains("left out whole");
+        assertThat(SampleStreamTexts.partOf("stream 9 part 2")).hasValueSatisfying(part -> {
+            assertThat(part.stream()).isEqualTo(9L);
+            assertThat(part.part()).isEqualTo(2);
+        });
+        assertThat(SampleStreamTexts.partOf("stream 7")).hasValueSatisfying(part -> assertThat(part.part())
+                .isZero());
     }
 }

@@ -248,7 +248,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         // Sample streams of an aggregated feed's build with a scope: read through it, so the rules drafted are the
         // scope's (records of other source types left out as they are read).
         final SampleStreamTexts.Scoped scoped = given == null
-                ? builds.scope(build).map(scope -> SampleStreamTexts.inScope(sampleStreamTexts.read(streamIds), scope))
+                ? builds.scope(build).map(scope -> sampleStreamTexts.scoped(sampleStreamTexts.read(streamIds), scope))
                         .orElse(null)
                 : null;
         final Map<String, String> samples = scoped != null

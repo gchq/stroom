@@ -105,6 +105,21 @@ class XsltRuns extends GenerationFixtures {
                                 final String xml,
                                 final Map<String, String> imports,
                                 final List<String> logged) {
+        return transform(xslt, xml, imports, logged, Map.of());
+    }
+
+    /// @param xslt     An XSLT.
+    /// @param xml      The records.
+    /// @param imports  The documents its imports name, by href, as Stroom resolves them by name.
+    /// @param logged   Where what it logs (stroom:log) goes, each `LEVEL message`; null to log nothing.
+    /// @param partMeta The meta attributes of the part the records are of (what stroom:meta reads), beside the
+    ///                 stream's own.
+    /// @return What it writes.
+    static XmlElement transform(final String xslt,
+                                final String xml,
+                                final Map<String, String> imports,
+                                final List<String> logged,
+                                final Map<String, String> partMeta) {
         String code = xslt;
         if (logged != null) {
             code = code.replace("</xsl:stylesheet>", "<xsl:function name=\"stroom:record-no\"><xsl:sequence "
@@ -125,6 +140,7 @@ class XsltRuns extends GenerationFixtures {
             // stroom:meta, as a stream received and created at RECEIVED gives it.
             final Map<String, String> meta = new HashMap<>(Map.of("ReceivedTime", RECEIVED, "CreatedTime", RECEIVED,
                     "RemoteAddress", REMOTE_ADDRESS));
+            meta.putAll(partMeta);
             processor.registerExtensionFunction(new KeptValueStub("meta", meta));
             final XsltCompiler compiler = processor.newXsltCompiler();
             compiler.setURIResolver((href, base) -> imports.containsKey(href)

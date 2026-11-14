@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.SourceTypeMeta;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 
 import java.util.ArrayList;
@@ -54,7 +55,9 @@ import java.util.regex.Pattern;
 /// @param systemName  `system_name`: a group's EventSource/System/Name, passed to the common module's System part
 ///                    where it takes one; null for the common module's default.
 /// @param field       The feed's source type field, which a group reads to tell its records from the rest, or null
-///                    for the common module.
+///                    for the common module: a record's field, or a part's meta attribute (`meta:<Attribute>`,
+///                    [stroom.ai.impl.tools.sample.SourceTypeMeta]), read once a part, the part's records passed
+///                    over whole where it isn't the group's.
 /// @param rows        A group's: the registry's rows, in the order they are tried (every row, so a record is of the
 ///                    source type its value first matches, as the tools judge it); none for the common module.
 public record SourceTypeModule(String kind,
@@ -80,8 +83,9 @@ public record SourceTypeModule(String kind,
     /// feed writes one way from the wrapper's fields. A shared call's element is a part too.
     public static final List<String> PART_ROOTS = List.of("EventTime", "EventSource/System", "EventSource/Generator",
             "EventSource/Device");
-    // How a row matches a value: exactly, or by an anchored pattern.
-    private static final List<String> MATCHES = List.of(SourceTypeRows.VALUE, SourceTypeRows.PATTERN);
+    // How a row matches a value: exactly, by an anchored pattern, or by a list's item.
+    private static final List<String> MATCHES = List.of(SourceTypeRows.VALUE, SourceTypeRows.PATTERN,
+            SourceTypeRows.MEMBER);
     private static final Pattern NCNAME = Pattern.compile("[A-Za-z_][\\w.-]*", Pattern.UNICODE_CHARACTER_CLASS);
 
     /// Fills in empty lists for null ones.
@@ -144,6 +148,17 @@ public record SourceTypeModule(String kind,
     /// @return True for the feed's common module.
     public boolean isCommon() {
         return COMMON.equals(kind);
+    }
+
+    /// @return True for a group whose source type field is a part's meta attribute: a part's records are all of one
+    /// source type, so a part not of the group's is passed over whole, its records never judged one by one.
+    public boolean byPart() {
+        return isGroup() && SourceTypeMeta.isMeta(field);
+    }
+
+    /// @return The rows as the tools try them.
+    public List<SourceTypeRows.Row> toolRows() {
+        return rows.stream().map(Row::toolRow).toList();
     }
 
     /// The same module importing other documents: the generator writes whichever set of UUIDs it is given (a
@@ -292,11 +307,34 @@ public record SourceTypeModule(String kind,
 
     /// A registry row, as a group tries it: the record is of the source type whose row its value first matches.
     ///
-    /// @param name  The source type's name.
-    /// @param match `value` (the value exactly) or `pattern` (an anchored regular expression, matched by XPath's
-    ///              `matches()`).
-    /// @param value The value, or the pattern.
-    public record Row(String name, String match, String value) {
+    /// @param name      The source type's name.
+    /// @param match     `value` (the value exactly), `pattern` (an anchored regular expression, matched by XPath's
+    ///                  `matches()`) or `member` (an item of the value read as a list, split by XPath's `tokenize()`).
+    /// @param value     The value, the pattern, or the item.
+    /// @param separator A `member` row's list separator; null for another (or the default, `,`).
+    public record Row(String name, String match, String value, String separator) {
+
+        /// A row matching a value exactly or by a pattern.
+        ///
+        /// @param name  The source type's name.
+        /// @param match `value`, `pattern` (or `member`, split on `,`).
+        /// @param value The value, the pattern, or the item.
+        public Row(final String name, final String match, final String value) {
+            this(name, match, value, null);
+        }
+
+        /// @param row A row as the tools keep it.
+        /// @return It as a group tries it.
+        public static Row of(final SourceTypeRows.Row row) {
+            return new Row(row.name(), row.match(), row.value(), SourceTypeRows.MEMBER.equals(row.match())
+                    ? row.separatorOrDefault()
+                    : null);
+        }
+
+        /// @return It as the tools try it.
+        public SourceTypeRows.Row toolRow() {
+            return new SourceTypeRows.Row(name, match, value, separator);
+        }
 
         /// Reads one from JSON-like values, every error collected.
         ///
@@ -310,7 +348,7 @@ public record SourceTypeModule(String kind,
                 return null;
             }
             final Row row = new Row(fields.requiredString("name"), fields.requiredLiteral("match", MATCHES),
-                    fields.requiredString("value"));
+                    fields.requiredString("value"), fields.optionalString("separator"));
             return fields.ok()
                     ? row
                     : null;
@@ -323,6 +361,7 @@ public record SourceTypeModule(String kind,
                     .put("name", name, null)
                     .put("match", match, null)
                     .put("value", value, null)
+                    .put("separator", separator, null)
                     .build());
         }
     }

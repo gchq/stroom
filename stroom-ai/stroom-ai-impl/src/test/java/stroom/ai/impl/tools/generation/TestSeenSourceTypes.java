@@ -82,6 +82,37 @@ class TestSeenSourceTypes extends XsltRuns {
         assertThat(watched.seenSourceTypes().seen("PowerBI")).isFalse();
     }
 
+    @Test
+    void aPartsMetaAttributeIsReadOnceADocumentAndAListHoldingAnItemSeenIsSeen() {
+        final SeenSourceTypes seen = SeenSourceTypes.ofRows("meta:ServedRoles", List.of(
+                new SourceTypeRows.Row("Directory", SourceTypeRows.MEMBER, "Directory Services", ","),
+                new SourceTypeRows.Row("Web", SourceTypeRows.VALUE, "Web Server")));
+        final TranslationMapping mapping = TranslationMapping.fromJson(json(MAPPING)).withSeenSourceTypes(seen);
+        final XsltGenerator.Generated generated = XsltGenerator.generate(mapping, SCHEMA, "4.1.0");
+        assertThat(generated.problems()).isEmpty();
+        assertThat(generated.xslt()).contains("stroom:meta('ServedRoles')");
+
+        for (final String known : List.of("DNS Server, Directory Services", "Web Server", "")) {
+            final List<String> logged = new ArrayList<>();
+            final XmlElement events = transform(generated.xslt(), records(), Map.of(), logged,
+                    Map.of("ServedRoles", known));
+            assertThat(children(events, "Event")).hasSize(8);
+            assertThat(logged).as(known).noneSatisfy(line -> assertThat(line)
+                    .contains(XsltGenerator.UNSEEN_SOURCE_TYPE));
+        }
+        final List<String> logged = new ArrayList<>();
+        transform(generated.xslt(), records(), Map.of(), logged, Map.of("ServedRoles", "File Server, DNS Server"));
+        // One value a part, however many records: logged once.
+        assertThat(logged).filteredOn(line -> line.contains(XsltGenerator.UNSEEN_SOURCE_TYPE)).containsExactly(
+                "INFO " + XsltGenerator.UNSEEN_SOURCE_TYPE + "File Server, DNS Server"
+                + XsltGenerator.UNSEEN_SOURCE_TYPE_IN + "meta:ServedRoles" + XsltGenerator.UNSEEN_SOURCE_TYPE_END);
+
+        assertThat(TranslationMapping.fromJson(mapping.toJson(DumpMode.COMPACT)).seenSourceTypes()).isEqualTo(seen);
+        assertThat(seen.members()).containsExactly("Directory Services");
+        assertThat(seen.seen("File Server ,Directory Services")).isTrue();
+        assertThat(seen.seen("File Server")).isFalse();
+    }
+
     private static String unseen(final String value) {
         return "INFO " + XsltGenerator.UNSEEN_SOURCE_TYPE + value + XsltGenerator.UNSEEN_SOURCE_TYPE_IN + "Workload"
                + XsltGenerator.UNSEEN_SOURCE_TYPE_END;

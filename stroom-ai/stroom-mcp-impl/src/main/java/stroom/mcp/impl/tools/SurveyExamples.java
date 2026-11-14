@@ -93,7 +93,8 @@ final class SurveyExamples {
                     ? ""
                     : head.header() + "\n") + String.join("\n", further) + "\n";
             int count = further.size();
-            if (scope != null) {
+            // A scope told by a part's meta has left out the parts not of it already: this one's records are all its.
+            if (scope != null && !scope.byPart()) {
                 final SourceTypeScope.Filtered filtered = scope.filter(scoped);
                 if (filtered.filtered()) {
                     scoped = filtered.text();

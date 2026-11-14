@@ -131,6 +131,111 @@ class TestSourceTypeRows {
         assertThat(SourceTypeRows.escape("a.b(c)")).isEqualTo("a\\.b\\(c\\)");
     }
 
+    @Test
+    void aListMemberRowMatchesAnItemExactlyOnceStripped() {
+        final SourceTypeRows.Row directory = new SourceTypeRows.Row("Directory", SourceTypeRows.MEMBER,
+                "Directory Services", ",");
+
+        assertThat(directory.matches("DNS Server, Directory Services, File Server")).isTrue();
+        assertThat(directory.matches(" Directory Services ")).isTrue();
+        assertThat(directory.matches("DNS Server,Directory Services")).isTrue();
+        // An exact item: not part of one, not another case, not another separator's list.
+        assertThat(directory.matches("DNS Server, Directory Services Lite")).isFalse();
+        assertThat(directory.matches("directory services")).isFalse();
+        assertThat(directory.matches("DNS Server; Directory Services")).isFalse();
+        assertThat(directory.matches("")).isFalse();
+        assertThat(new SourceTypeRows.Row("Directory", SourceTypeRows.MEMBER, "Directory Services", ";")
+                .matches("DNS Server; Directory Services")).isTrue();
+        assertThat(directory.said()).isEqualTo("∈ Directory Services");
+        assertThat(SourceTypeRows.items("a |b||  c ", "|")).containsExactly("a", "b", "c");
+    }
+
+    @Test
+    void aRowIsWrittenWithEqualsTildeOrAnItemSignOrItsAsciiWord() {
+        assertThat(SourceTypeRows.parse("Dir ∈ Directory Services")).contains(new SourceTypeRows.Row("Dir",
+                SourceTypeRows.MEMBER, "Directory Services"));
+        assertThat(SourceTypeRows.parse("Dir in Directory Services")).contains(new SourceTypeRows.Row("Dir",
+                SourceTypeRows.MEMBER, "Directory Services"));
+        // The signs come before the word: a name holding ' in ' takes one of them.
+        assertThat(SourceTypeRows.parse("Sign in = SignIn")).contains(new SourceTypeRows.Row("Sign in",
+                SourceTypeRows.VALUE, "SignIn"));
+        assertThat(SourceTypeRows.parse("Logged in ∈ Logon")).contains(new SourceTypeRows.Row("Logged in",
+                SourceTypeRows.MEMBER, "Logon"));
+        assertThat(SourceTypeRows.parse("mail ~ ^/var/log/mail/")).contains(MAIL);
+        assertThat(SourceTypeRows.parse("just a name")).isEmpty();
+        // The separator is read from the values seen.
+        assertThat(SourceTypeRows.withSeparator(List.of(SourceTypeRows.parse("Dir in Directory Services")
+                .orElseThrow()), SourceTypeRows.separator(List.of("a; b", "c")))).singleElement()
+                .extracting(SourceTypeRows.Row::separator).isEqualTo(";");
+        assertThat(SourceTypeRows.separator(List.of("a", "b"))).isEqualTo(SourceTypeRows.DEFAULT_SEPARATOR);
+    }
+
+    @Test
+    void listValuesAreProposedARowAnItemTheRarestFirst() {
+        final SourceTypeRows.Proposal proposal = SourceTypeRows.propose(counts(
+                "DNS Server, File Server", 500L,
+                "File Server", 300L,
+                "DNS Server, Directory Services, File Server", 40L,
+                "Directory Services, DNS Server", 10L));
+
+        assertThat(proposal.lists()).isTrue();
+        assertThat(proposal.patterns()).isFalse();
+        // Directory Services is rarest, so a controller's list (with DNS and File Server too) is its; DNS Server
+        // takes the rest of its lists; File Server those holding only it.
+        assertThat(proposal.rows()).extracting(row -> row.row().name() + " " + row.row().said())
+                .containsExactly("Directory Services ∈ Directory Services", "DNS Server ∈ DNS Server",
+                        "File Server ∈ File Server");
+        assertThat(proposal.rows()).extracting(SourceTypeRows.Proposed::records).containsExactly(50L, 500L, 300L);
+        assertThat(proposal.rows()).allSatisfy(row -> assertThat(row.row().separator()).isEqualTo(","));
+        final List<SourceTypeRows.Row> rows = proposal.rows().stream().map(SourceTypeRows.Proposed::row).toList();
+        assertThat(SourceTypeRows.problems(rows, counts("DNS Server, File Server", 1L, "File Server", 1L,
+                "DNS Server, Directory Services, File Server", 1L).keySet())).isEmpty();
+    }
+
+    @Test
+    void valuesThatArentListsAreNotProposedItems() {
+        // Too few lists, or items that never repeat (free text with commas).
+        assertThat(SourceTypeRows.propose(counts("PegaDB", 300L, "PegaRULES", 100L, "Pega, Batch", 5L)).lists())
+                .isFalse();
+        assertThat(SourceTypeRows.propose(counts("a, b", 3L, "c, d", 2L)).lists()).isFalse();
+    }
+
+    @Test
+    void aListRowEveryValueOfWhichAnEarlierRowTakesCanNeverMatch() {
+        final SourceTypeRows.Row dns = new SourceTypeRows.Row("DNS", SourceTypeRows.MEMBER, "DNS Server", ",");
+        final SourceTypeRows.Row directory = new SourceTypeRows.Row("Directory", SourceTypeRows.MEMBER,
+                "Directory Services", ",");
+        final List<String> seen = List.of("DNS Server, Directory Services", "DNS Server");
+
+        // Every list holding Directory Services holds DNS Server: after DNS, Directory is never reached.
+        assertThat(SourceTypeRows.problems(List.of(dns, directory), seen)).singleElement().asString()
+                .contains("'Directory' can never match", "'DNS'");
+        assertThat(SourceTypeRows.problems(List.of(directory, dns), seen)).isEmpty();
+        // The same item twice, whatever the values.
+        assertThat(SourceTypeRows.problems(List.of(dns, new SourceTypeRows.Row("DNS again", SourceTypeRows.MEMBER,
+                "DNS Server", ",")), List.of())).singleElement().asString().contains("'DNS again' can never match");
+        // A whole value, after an item it holds.
+        assertThat(SourceTypeRows.problems(List.of(dns, new SourceTypeRows.Row("pair", SourceTypeRows.VALUE,
+                "DNS Server, Directory Services")), List.of())).singleElement().asString()
+                .contains("'pair' can never match");
+        // An item holding the separator, or none.
+        assertThat(SourceTypeRows.problems(List.of(new SourceTypeRows.Row("x", SourceTypeRows.MEMBER, "a, b",
+                ",")), List.of())).singleElement().asString().contains("holds the list's separator");
+        assertThat(SourceTypeRows.problems(List.of(new SourceTypeRows.Row("x", SourceTypeRows.MEMBER, "",
+                ",")), List.of())).singleElement().asString().contains("needs an item");
+    }
+
+    @Test
+    void aListRowIsKeptWithItsSeparator() {
+        final SourceTypeRows.Row row = new SourceTypeRows.Row("Dir", SourceTypeRows.MEMBER, "Directory Services",
+                ";");
+
+        assertThat(row.toMap()).containsEntry("separator", ";").containsEntry("match", "member");
+        assertThat(SourceTypeRows.Row.of(row.toMap())).isEqualTo(row);
+        assertThat(SourceTypeRows.Row.of(MAIL.toMap())).isEqualTo(MAIL);
+        assertThat(MAIL.toMap()).doesNotContainKey("separator");
+    }
+
     private static Map<String, Long> counts(final Object... valuesAndCounts) {
         final Map<String, Long> out = new LinkedHashMap<>();
         for (int i = 0; i < valuesAndCounts.length; i += 2) {

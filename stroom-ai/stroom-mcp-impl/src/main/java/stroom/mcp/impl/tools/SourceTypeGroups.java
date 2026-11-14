@@ -33,6 +33,7 @@ import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.generation.XsltNames;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
+import stroom.ai.impl.tools.sample.SourceTypeMeta;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
@@ -342,8 +343,7 @@ class SourceTypeGroups {
     // The registry's rows, in the order they are tried, as a group tells its records by them.
     private static List<SourceTypeModule.Row> rows(final Map<String, Object> state) {
         return JsonValues.maps(state.get("rows")).stream()
-                .map(row -> new SourceTypeModule.Row(JsonValues.text(row.get("name")), JsonValues.text(row.get(
-                        "match")), JsonValues.text(row.get("value"))))
+                .map(row -> SourceTypeModule.Row.of(SourceTypeRows.Row.of(row)))
                 .toList();
     }
 
@@ -1384,7 +1384,8 @@ class SourceTypeGroups {
         final List<SharedTemplate> shared = new ArrayList<>(common.shared());
         shared.addAll(group.shared());
         final TranslationMapping effective = group.withCommonAndShared(entries, shared).withModule(null);
-        if (field == null || field.isBlank()) {
+        if (field == null || field.isBlank() || SourceTypeMeta.isMeta(field)) {
+            // None, or a part's meta attribute: no field of the records.
             return effective;
         }
         // The source type field is read to tell the group's records from the rest, not a field the group leaves

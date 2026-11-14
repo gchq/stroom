@@ -628,7 +628,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         // other source types left out as they are read.
         final SampleStreamTexts.Texts read = sampleStreamTexts.read(streams);
         final Optional<SourceTypeScope> scope = builds.scope(build);
-        final SampleStreamTexts.Scoped scoped = scope.map(found -> SampleStreamTexts.inScope(read, found))
+        final SampleStreamTexts.Scoped scoped = scope.map(found -> sampleStreamTexts.scoped(read, found))
                 .orElse(null);
         final Map<String, String> samples = scoped == null
                 ? read.texts()

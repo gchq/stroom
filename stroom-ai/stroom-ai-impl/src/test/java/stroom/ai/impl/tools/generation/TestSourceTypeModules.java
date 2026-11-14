@@ -50,6 +50,10 @@ class TestSourceTypeModules extends XsltRuns {
             new SourceTypeModule.Row("Mail", SourceTypeRows.PATTERN, "^Mail/"),
             new SourceTypeModule.Row("PegaIntegration", SourceTypeRows.VALUE, "PegaIntegration"),
             new SourceTypeModule.Row("PegaDB", SourceTypeRows.VALUE, "PegaDB"));
+    // A list's items: the rarer first, so a controller that is also a name server is a controller.
+    private static final List<SourceTypeModule.Row> SERVED_ROWS = List.of(
+            new SourceTypeModule.Row("Directory", SourceTypeRows.MEMBER, "Directory Services", ","),
+            new SourceTypeModule.Row("DNS", SourceTypeRows.MEMBER, "DNS Server", ","));
 
     @Test
     void aGroupIsItsPipelinesWholeXsltTranslatingItsOwnSourceTypesAlone() {
@@ -340,6 +344,74 @@ class TestSourceTypeModules extends XsltRuns {
     }
 
     @Test
+    void aGroupByAPartsMetaPassesOverAWholePartNotOfItsOwnAndARecordGroupJudgesEachRecord() {
+        final Modules modules = modules();
+        final TranslationMapping directory = groupOf("PEGA directory", "pega_directory", List.of("Directory"),
+                SERVED_ROWS, "meta:ServedRoles", modules.commonMapping());
+        final XsltGenerator.Generated generated = XsltGenerator.generate(directory, SCHEMA, "4.1.0");
+        assertThat(generated.problems()).isEmpty();
+        // Read once a part from its meta: no template passing records over one by one.
+        assertThat(generated.xslt()).contains("stroom:meta('ServedRoles')",
+                        "<xsl:variable name=\"pega_directory_part_in_group\" "
+                        + "select=\"mcp:pega_directory_in_group()\"/>",
+                        "tokenize($value, ',')")
+                .doesNotContain("*[not(mcp:pega_directory_in_group(.))]", "@key='meta:ServedRoles'");
+        assertThat(ModuleChecks.groupProblems(generated.xslt())).isEmpty();
+
+        // A controller's part: every record its own.
+        final List<String> ownLog = new ArrayList<>();
+        final XmlElement own = transform(generated.xslt(), records(), modules.imports(), ownLog,
+                Map.of("ServedRoles", "DNS Server, Directory Services ,File Server"));
+        assertThat(invalid(own, XSD)).isEmpty();
+        assertThat(children(own, "Event")).hasSize(8);
+        assertThat(ownLog).noneSatisfy(line -> assertThat(line).contains(XsltGenerator.PASSED_OVER));
+        // Another server's part, and a part without the attribute: passed over whole, counted.
+        for (final Map<String, String> other : List.of(Map.of("ServedRoles", "DNS Server, File Server"),
+                Map.<String, String>of())) {
+            final List<String> logged = new ArrayList<>();
+            final XmlElement passed = transform(generated.xslt(), records(), modules.imports(), logged, other);
+            assertThat(children(passed, "Event")).isEmpty();
+            assertThat(logged).filteredOn(line -> line.contains(XsltGenerator.PASSED_OVER))
+                    .containsExactly(passedOver(8));
+        }
+
+        // The same rows on a record's field: each record judged, a record passed over by the template that reads
+        // its number.
+        final TranslationMapping byRecord = groupOf("PEGA directory", "pega_directory", List.of("Directory"),
+                SERVED_ROWS, "sourcetype", modules.commonMapping());
+        final String perRecord = XsltGenerator.generate(byRecord, SCHEMA, "4.1.0").xslt();
+        assertThat(perRecord).contains("*[not(mcp:pega_directory_in_group(.))]")
+                .doesNotContain("stroom:meta('ServedRoles')", "part_in_group");
+    }
+
+    @Test
+    void aListsItemIsMatchedByAGroupAsTheToolsMatchIt() {
+        // The Java rows and XPath's tokenize() read the same items: stripped, exact, on the row's separator.
+        final List<String> values = List.of("Directory Services, DNS Server", "DNS Server",
+                "DNS Server ,  Directory Services ", "Directory Services Lite", "directory services",
+                "File Server;Directory Services", "Directory Services");
+        final List<SourceTypeRows.Row> rows = SERVED_ROWS.stream().map(SourceTypeModule.Row::toolRow).toList();
+        final long expected = values.stream()
+                .map(value -> SourceTypeRows.first(rows, SourceTypeFields.valueOf(Map.of("sourcetype", value),
+                        "sourcetype")))
+                .filter(row -> row.isPresent() && "Directory".equals(row.get().name()))
+                .count();
+        assertThat(expected).isEqualTo(3);
+
+        final Modules modules = modules();
+        final TranslationMapping directory = groupOf("PEGA directory", "pega_directory", List.of("Directory"),
+                SERVED_ROWS, "sourcetype", modules.commonMapping());
+        final StringBuilder xml = new StringBuilder("<map xmlns=\"http://www.w3.org/2013/XSL/json\">");
+        values.forEach(value -> xml.append(record("2026-11-10T00:00:05.000Z", value, "select 1")));
+        final List<String> logged = new ArrayList<>();
+        final XmlElement events = transform(XsltGenerator.generate(directory, SCHEMA, "4.1.0").xslt(),
+                xml.append("</map>").toString(), modules.imports(), logged);
+
+        assertThat(children(events, "Event")).hasSize((int) expected);
+        assertThat(logged).contains(passedOver(values.size() - (int) expected));
+    }
+
+    @Test
     void aGroupsModuleIsKeptWithItsMappingRowsAndAll() {
         final TranslationMapping security = securityMapping(commonMapping());
         final TranslationMapping read = TranslationMapping.fromJson(security.toJson(DumpMode.COMPACT));
@@ -423,6 +495,16 @@ class TestSourceTypeModules extends XsltRuns {
                                                    final List<String> sourceTypes,
                                                    final List<SourceTypeModule.Row> rows,
                                                    final TranslationMapping common) {
+        return groupOf(name, mode, sourceTypes, rows, "sourcetype", common);
+    }
+
+    // A group whose events say only what its records are, telling its records by the field given.
+    private static TranslationMapping groupOf(final String name,
+                                              final String mode,
+                                              final List<String> sourceTypes,
+                                              final List<SourceTypeModule.Row> rows,
+                                              final String field,
+                                              final TranslationMapping common) {
         final TranslationMapping mapping = TranslationMapping.fromJson(json("""
                 {"input": "json", "json_layout": "lines",
                  "common": [{"path": "EventSource/Generator", "value": "Pega"}],
@@ -432,7 +514,7 @@ class TestSourceTypeModules extends XsltRuns {
                                         {"path": "EventDetail/Unknown/Data", "data_name": "message",
                                          "field": "message"}]}]}"""));
         return mapping.withModule(new SourceTypeModule(SourceTypeModule.GROUP, name, mode, sourceTypes, COMMON_HREF,
-                null, SourceTypeModule.commonParts(common), null, "sourcetype", rows));
+                null, SourceTypeModule.commonParts(common), null, field, rows));
     }
 
     // JSON lines as Stroom's JSON parser gives them, its root map around the records.

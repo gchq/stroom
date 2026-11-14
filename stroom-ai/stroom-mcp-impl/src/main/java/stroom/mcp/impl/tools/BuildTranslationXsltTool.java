@@ -796,8 +796,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         } else if (b.mapping.seenSourceTypes() != null) {
             final SeenSourceTypes seen = b.mapping.seenSourceTypes();
             b.result.put("seen_source_types", "The survey found source type field " + seen.field() + ": the "
-                                              + (seen.values().size() + seen.patterns().size()) + " value(s) and "
-                                              + "pattern(s) seen are kept with the mapping, and the XSLT logs (INFO, "
+                                              + (seen.values().size() + seen.patterns().size()
+                                                 + seen.members().size()) + " value(s), pattern(s) and list "
+                                              + "item(s) seen are kept with the mapping, and the XSLT logs (INFO, "
                                               + "once a stream) a value outside them, so review_coverage reports it "
                                               + "(unseen_source_types) and the user can survey the feed again.");
         }
@@ -843,7 +844,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                     : Optional.of(new SourceTypeScope(b.build, b.group.field(), SourceTypeRegistry.rows(
                             b.group.registry().found().state()), b.group.sourceTypes()));
             final SampleStreamTexts.Texts read = sampleStreamTexts.read(request.streamIds());
-            final SampleStreamTexts.Scoped scoped = scope.map(found -> SampleStreamTexts.inScope(read, found))
+            final SampleStreamTexts.Scoped scoped = scope.map(found -> sampleStreamTexts.scoped(read, found))
                     .orElse(null);
             final SampleStreamTexts.Texts texts = scoped == null
                     ? read

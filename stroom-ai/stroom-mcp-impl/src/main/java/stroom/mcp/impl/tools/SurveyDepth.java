@@ -148,6 +148,8 @@ final class SurveyDepth {
         final Character quote = RecordSplitter.DELIMITED.equals(part.format())
                 ? '"'
                 : null;
+        // The part's records are judged with its own meta (a source type field read from it).
+        shapes.at(part.stream(), part.part());
         while (!whole && readTo < target && !timeIsUp.getAsBoolean()) {
             final int count = (int) Math.min(BATCH, target - readTo);
             final RecordStream.Read read = reader.rawRecords(part.stream(), part.part(), quote,

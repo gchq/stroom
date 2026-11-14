@@ -76,7 +76,7 @@ class TestClassifyKindsTool {
 
     private final BuildWorld world = new BuildWorld();
     private final HeldSchemas heldSchemas = Mockito.mock(HeldSchemas.class);
-    private final SampleStreamTexts sampleStreamTexts = Mockito.mock(SampleStreamTexts.class);
+    private final SampleStreamTexts sampleStreamTexts = SampleStreamTextsMocks.mock();
     private final Consent consent = new Consent(() -> Mockito.mock(AiAuditLog.class));
     private final BuildPlan plan = new BuildPlan(new FakeBuildFacts(), world.guard(), consent, new BuildMemory());
     private final EventVersions eventVersions = new EventVersions(heldSchemas, consent, new BuildMemory(),

@@ -36,8 +36,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /// Sample streams' raw text, read in place of text sent by the client, so a sample passes through the model once
 /// (upload_sample) however many tools then read it.
@@ -48,6 +52,9 @@ class SampleStreamTexts {
     /// What is said to a user without the View Data permission.
     static final String NO_VIEW_DATA = "You don't have permission to view data, so the sample streams can't be "
                                        + "read.";
+
+    // A text's name: its stream, and its part where the stream has several.
+    private static final Pattern TEXT_NAME = Pattern.compile("stream (\\d+)(?: part (\\d+))?");
 
     /// The most parts of a stream read, as survey_feed reads at most.
     static final int MAX_PARTS = 20;
@@ -150,13 +157,53 @@ class SampleStreamTexts {
     /// @return The scope's texts, and what was left out, said for the agent.
     /// @throws ToolRefusal if no text holds a record of the scope.
     static Scoped inScope(final Texts texts, final SourceTypeScope scope) {
+        return inScope(texts, scope, name -> Map.of());
+    }
+
+    /// As [#inScope(Texts, SourceTypeScope)], where the scope's source type field may be a part's meta attribute
+    /// ([SourceTypeScope#byPart()]): each text, a part of a stream, is kept or left out whole by its part's value,
+    /// whatever its format.
+    ///
+    /// @param texts The texts read ([#read]).
+    /// @param scope The build's scope.
+    /// @return The scope's texts, and what was left out, said for the agent.
+    /// @throws ToolRefusal if no text holds a record of the scope.
+    Scoped scoped(final Texts texts, final SourceTypeScope scope) {
+        if (!scope.byPart()) {
+            return inScope(texts, scope);
+        }
+        final PartAttributes attributes = new PartAttributes(streamReader);
+        return inScope(texts, scope, name -> partOf(name)
+                .map(part -> attributes.fields(scope.field(), part.stream(), part.part()))
+                .orElse(Map.of()));
+    }
+
+    /// @param name A text's name, as [#read] gives it: `stream <id>`, or `stream <id> part <n>`.
+    /// @return The stream and part it is of; empty for a name not given so.
+    static Optional<Cut> partOf(final String name) {
+        final Matcher found = TEXT_NAME.matcher(name == null
+                ? ""
+                : name);
+        if (!found.matches()) {
+            return Optional.empty();
+        }
+        return Optional.of(new Cut(name, Long.parseLong(found.group(1)), found.group(2) == null
+                ? 0
+                : Integer.parseInt(found.group(2))));
+    }
+
+    // The texts read through the scope, each part's fields laid over its records (a source type field read from a
+    // part's meta), by the text's name.
+    private static Scoped inScope(final Texts texts,
+                                  final SourceTypeScope scope,
+                                  final Function<String, Map<String, Object>> partFields) {
         final Map<String, String> kept = new LinkedHashMap<>();
         final List<String> notes = new ArrayList<>(texts.notes());
         final Map<String, Integer> leftOut = new TreeMap<>();
         final List<String> whole = new ArrayList<>();
         int records = 0;
         for (final Map.Entry<String, String> entry : texts.texts().entrySet()) {
-            final SourceTypeScope.Filtered filtered = scope.filter(entry.getValue());
+            final SourceTypeScope.Filtered filtered = scope.filter(entry.getValue(), partFields.apply(entry.getKey()));
             if (!filtered.filtered()) {
                 whole.add(entry.getKey());
                 kept.put(entry.getKey(), entry.getValue());
@@ -185,8 +232,10 @@ class SampleStreamTexts {
         said.put("records_in_scope", records);
         said.put("records_left_out", leftOut);
         said.put("note", "Read through the build's scope: only records of " + scope.said() + " (by '"
-                         + scope.field() + "') are in the sample; the others were left out as they were read, so "
-                         + "the kinds and rules here are the scope's.");
+                         + scope.field() + "') are in the sample; the others were left out as they were read"
+                         + (scope.byPart()
+                ? " (each part kept or left out whole, by its stream meta attribute)"
+                : "") + ", so the kinds and rules here are the scope's.");
         final List<Cut> cut = texts.cut().stream().filter(part -> kept.containsKey(part.name())).toList();
         return new Scoped(new Texts(kept, notes, cut), said);
     }

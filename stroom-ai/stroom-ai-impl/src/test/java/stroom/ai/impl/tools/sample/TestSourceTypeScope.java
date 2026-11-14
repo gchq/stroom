@@ -196,6 +196,34 @@ class TestSourceTypeScope {
         assertThat(SourceTypeScope.withValue(null, null)).isEmpty();
     }
 
+    @Test
+    void aScopeByAPartsMetaKeepsOrLeavesOutTheWholePartWhateverItsFormat() {
+        final SourceTypeScope directory = new SourceTypeScope("b1", "meta:ServedRoles", List.of(
+                new SourceTypeRows.Row("Directory", SourceTypeRows.MEMBER, "Directory Services", ","),
+                new SourceTypeRows.Row("DNS", SourceTypeRows.MEMBER, "DNS Server", ",")), List.of("Directory"));
+        final String text = line("/a", "one") + line("/b", "two") + line("/c", "three");
+        final String xml = "<Events><Event><Id>1</Id></Event><Event><Id>2</Id></Event></Events>\n";
+
+        assertThat(directory.byPart()).isTrue();
+        assertThat(MAIL.byPart()).isFalse();
+        final SourceTypeScope.Filtered kept = directory.filter(text, SourceTypeMeta.partFields("meta:ServedRoles",
+                Map.of("servedroles", "DNS Server, Directory Services")));
+        assertThat(kept.text()).isEqualTo(text);
+        assertThat(kept.kept()).isEqualTo(3);
+        assertThat(kept.filtered()).isTrue();
+        // XML, which a record field's scope can't read record by record, kept whole by its part's value too.
+        assertThat(directory.filter(xml, SourceTypeMeta.partFields("meta:ServedRoles", Map.of("ServedRoles",
+                "Directory Services"))).text()).isEqualTo(xml);
+        final SourceTypeScope.Filtered other = directory.filter(text, SourceTypeMeta.partFields("meta:ServedRoles",
+                Map.of("ServedRoles", "DNS Server")));
+        assertThat(other.text()).isEmpty();
+        assertThat(other.passedOver()).containsExactly(Map.entry("DNS", 3));
+        assertThat(directory.filter(text, Map.of()).passedOver()).containsExactly(Map.entry(
+                SourceTypeScope.UNMATCHED, 3));
+        // A record field's scope reads the records, whatever the part carries.
+        assertThat(MAIL.filter(text, Map.of("path", "/var/log/mail/x")).kept()).isZero();
+    }
+
     private static String line(final String path, final String message) {
         return "{\"path\": \"" + path + "\", \"message\": \"" + message + "\"}\n";
     }

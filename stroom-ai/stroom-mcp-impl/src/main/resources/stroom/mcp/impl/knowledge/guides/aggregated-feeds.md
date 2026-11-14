@@ -8,9 +8,17 @@ sources the user picks for it, any number of them (ExchangeOnline and MicrosoftT
 Terms:
 
 * **Source type field**: the one field that tells the sources apart, at any depth (`event.source`). Never a
-  combination: a second field that tells kinds apart within a source is a kind field, as usual.
-* **Source type**: the records one registry row matches: a value of that field exactly (`= Billing`), or an
-  anchored pattern on it (`~ ^/var/log/mail/`) where the values are many paths or names.
+  combination: a second field that tells kinds apart within a source is a kind field, as usual. Or, only where the
+  user names it, a stream meta attribute: `source_type_field=meta:<Attribute>` (a header each part of a stream
+  carries, as `stroom:meta()` reads it), for a feed whose source is said by a header rather than a record's field.
+  Every record of a part has the part's value, so a group passes over a whole part not of its own at once: the
+  earliest cull inside Stroom, as a processor filter can't read a part's headers. The survey never looks for one
+  itself. A feed's registry has one field, all meta or all a record's.
+* **Source type**: the records one registry row matches: a value of that field exactly (`= Billing`), an anchored
+  pattern on it (`~ ^/var/log/mail/`) where the values are many paths or names, or an item of a value that is a list
+  (`∈ Mail Server`, in ASCII `in`: `Mail in Mail Server`), split on the separator the values use (`,` `;`
+  `|`), each item stripped and compared exactly. Rows are tried in order: of a list holding several rows' items, the
+  first row's takes the record, so put the rarer, more telling item first.
 * **Registry**: `<feed> source types`, a Documentation doc made in the build and promoted beside the feed. One row a
   source type, tried in order (the first match wins), each with its status: `translated`, `parked` (for a later
   build), `dropped` (never, on the user's word) or `new` (met after the registry was made).
@@ -43,7 +51,8 @@ At promotion the survey doc always stays in the build (nobody is asked); the reg
    of an audit trail or of operational traffic, and a suggested category) and returns a table (`needs_review`). Show
    the table in the chat; the agent suggests, the user chooses.
 2. Called again with `reviewed=<review_id>`: where the values are many paths or names, the proposed patterns are put
-   to the user in a form (narrower before wider: `^/var/log/mail/audit/` before `^/var/log/mail/`); then the group
+   to the user in a form (narrower before wider: `^/var/log/mail/audit/` before `^/var/log/mail/`); where they are
+   lists, a row an item, rarest first; then the group
    form: which source types go in this build's group (a yes each) and the group's name, which you suggest with
    `group=<name>` and the user keeps or changes. Rows the user confirmed are given back as `rows=` and not asked again.
    It writes the registry, the scope naming the group; the source types not chosen are `parked` for a later build.

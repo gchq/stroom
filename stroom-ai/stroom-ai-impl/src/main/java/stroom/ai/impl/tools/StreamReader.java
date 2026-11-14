@@ -30,6 +30,8 @@ import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.feed.api.FeedProperties;
+import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -472,6 +474,33 @@ public class StreamReader {
             return in.size();
         } catch (final IOException | RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("Unable to read stream {}: {}", streamId, e.getMessage()), e);
+            throw couldNotRead(streamId, e.getMessage());
+        }
+    }
+
+    /// The meta attributes one part of a stream carries: its receipt headers, what `stroom:meta()` reads while the
+    /// part is processed or stepped. Each part of a stream proxy aggregated from many sources carries its own.
+    ///
+    /// @param streamId The stream.
+    /// @param part     The zero-based index of the part.
+    /// @return Its attributes by name, in the order held; none when the part carries none.
+    /// @throws StreamReadException if the stream can't be read, or the user doesn't have the View Data permission.
+    public Map<String, String> partAttributes(final long streamId, final int part) {
+        requireViewData(streamId);
+        try (final Source source = storeProvider.get().openSource(streamId);
+                final InputStreamProvider provider = source.get(part)) {
+            final AttributeMap attributes = new AttributeMap();
+            try (final SegmentInputStream in = provider.get(StreamTypeNames.META)) {
+                if (in != null) {
+                    AttributeMapUtil.read(in, attributes);
+                }
+            }
+            final Map<String, String> out = new LinkedHashMap<>();
+            attributes.forEach(out::put);
+            return out;
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to read the meta of stream {} part {}: {}", streamId, part,
+                    e.getMessage()), e);
             throw couldNotRead(streamId, e.getMessage());
         }
     }
