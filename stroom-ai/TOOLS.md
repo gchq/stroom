@@ -2788,7 +2788,8 @@ kept still reads (see `SurveyDoc` under "Sample analysis").
   are read whole, else 3: seen in testing, a feed's latest streams uploaded again as one stream of five parts was
   surveyed through three), `max_records_per_stream` (10 to 10,000), `examples_per_shape` (1 to 10,
   default 2), `build`; as the user said: `kind_field`, `read_deeper` (no forms), `accept_as_is`,
-  `source_type_field` (`none` for one source), `aggregated` (below); `find` (a registry row's name, below).
+  `source_type_field` (`none` for one source; `meta:<Attribute>` for a stream meta attribute, below), `aggregated`
+  (below); `find` (a registry row's name, below).
 * **Returns**: `feed`, `format`, `time_range`, `streams_read`, `records_read`, `records_in` (an XML document's root
   with its namespace, which the examples inherit), `saturated`, `coverage`, `per_stream` (each stream's records,
   parts, `head_only`, `new_shapes`, `windows`, and any undecodable bytes), `quoted_newlines`, `kinds` (each field
@@ -2830,6 +2831,21 @@ value, and names `record_source_types`. A survey with no build notes a likely fi
 assessment build (`no_build`). A build that then translates the feed whole, with no source type group, keeps the values
 the survey read with its mapping, and its XSLT logs a value outside them once a stream (`build_translation_xslt`, a
 feed translated whole).
+
+**A stream meta attribute as the source type field.** Only where the user names it, `source_type_field=meta:<Attribute>`
+(never found unasked): the attribute each part of a stream carries in its meta (its receipt headers, what
+`stroom:meta()` reads while the part is processed or stepped; `SourceTypeMeta`), for a feed whose source is said by
+a header, not a record's field (a proxy's aggregate of many hosts' parts, each with its own headers). The parts of
+the streams to be read are checked, up to 200 (`PartAttributes`): the attribute is spelt as the first part carrying
+it spells it (any case given); none carrying it is refused, naming the attributes they do carry, commonest first,
+with how many parts carry each. Each part's meta is read once (`StreamReader.partAttributes`) and laid over each of
+its records under the field's name (`Shapes.usePartFields`, never in their signatures), so the profiles, scope,
+`find=`, `record_source_types` and the registry work on meta values unchanged; a part without the attribute is of no
+source type. A feed's registry has one field: all meta or all a record's. A scope by a meta field keeps or leaves out
+a whole part by its value, whatever its format, XML too (`SourceTypeScope.filter(text, partFields)`;
+`SampleStreamTexts.scoped` for classify_kinds, draft_translation_mapping and build_translation_xslt's sample check);
+`review_coverage` tells a kind's source type by the meta of the raw stream's first part of the pipeline's source
+types (a record's part isn't logged).
 
 **A build's scope.** Once the build's scope is chosen (`source_types.scope`, kept by `record_source_types` with the
 rows it was chosen by: `SourceTypeScope`), only the scope's records make shapes (`Shapes.scope`): a record is the
@@ -2874,10 +2890,19 @@ Processing · write · checks View and Edit · confirms itself · chat group bui
 The plan's `source_types` step for an aggregated feed. Rows come from the values the survey counted: a value each,
 or, where the values are many structured ones or share containers (paths, URLs, dotted names), anchored patterns a
 container, narrower before wider, a common root's own values kept as rows of their own; patterns are put to the user
-(`Use these patterns` / `One source type per value`). Rows given (`name = value`, `name ~ ^pattern`) are checked:
-anchored, at most 200 characters, no repeated group of repeats, names once, and none that an earlier row always
-matches first. A registry already in the build, or beside the feed, is carried on from: its rows and statuses kept,
-values it lacks added as `new`. Rows given again keep the registry's translated or placed rows (those with a group
+(`Use these patterns` / `One source type per value`). Where the values are lists (at least two, and 30% of them, hold
+one of `,` `;` `|`, the commonest; their items repeat across values; at most 40 items, each at most 80 characters),
+a list-member row an item is proposed instead, the rarest item first (a list holding a rare and a common item is the
+rare one's), an item no value reaches first left out, and put to the user (`Use these list items` / `One source type
+per value`). Rows given (`name = value`, `name ~ ^pattern`, `name ∈ item`, or in ASCII `name in item`: the first of
+` = `, ` ~ `, ` ∈ ` divides name from match, ` in ` only where none is there) are checked: anchored, at most 200
+characters, no repeated group of repeats, names once, an item without the separator or white space at its ends, and
+none that an earlier row always matches first (an item after the same item, a whole value after an item it holds, a
+row every value of which an earlier row takes). A list-member row (`match: member`, `SourceTypeRows.MEMBER`) matches a
+value split on its `separator` (inferred from the values seen, kept on the row), each item stripped of XML's white
+space and compared exactly (case and all). A registry already in the build, or beside the feed, is carried on from:
+its rows and statuses kept, values it lacks added as `new` (a row a value; where its rows are a list's items, a row for
+the value's rarest item no row has). Rows given again keep the registry's translated or placed rows (those with a group
 or pipeline) they leave out, each where it was in the order; `remove` drops rows by name. Removing a translated or
 placed row, or a changed value or pattern on a translated row, is confirmed by the user in one form (plain text,
 listed as `to_confirm` in the review), and refused for a translated row where no form can be shown; a translated row
@@ -2927,7 +2952,7 @@ over. The review is bound to the table (`Consent.wasReviewed`): other rows, or c
   user a stream id they know, or a search, both `survey_feed find=`), `hint`, `next`.
 * **Refuses**: no `feed`; another build open on the feed (one open build per aggregated feed, under
   `start_onboarding`); no source type field known (`survey_feed` first); no values counted; a row that is neither
-  `name = value` nor `name ~ ^pattern`; rows that can't be used (`These rows can't be used: ...`); a patterns answer
+  `name = value`, `name ~ ^pattern` nor `name ∈ item` (`name in item`); rows that can't be used (`These rows can't be used: ...`); a patterns answer
   that is neither; a scope naming a source type not offered; `scope` without `group`; with forms, no `group` to
   suggest; a group with no name, or a new one with no source type chosen (`scope=[]` naming a new group, or no group); `dropped` without `drop_reason`, or naming no source type
   of the registry.
@@ -4381,8 +4406,13 @@ generator writes them otherwise) and common module first, then the group importi
 registry's rows for the group's source types set `translated` with `group` and `group_xslt`.
 
 The group carries a snapshot of every registry row when saved (its kept mapping's `module.rows`), tries them in order
-(`=` a value, `matches()` an anchored pattern, checked in Java's and XPath's dialects alike), and translates a record
-whose first matching row is one of its own source types. It reads a record's source type value as the tools do
+(`=` a value, `matches()` an anchored pattern, checked in Java's and XPath's dialects alike, `∈` an item of the value
+split by `tokenize()` on the row's separator, each item stripped, compared exactly, as `SourceTypeRows.items` reads
+them), and translates a record whose first matching row is one of its own source types. A group whose field is a
+stream meta attribute (`meta:<Attribute>`, `SourceTypeModule.byPart`) reads it once a document (a document is of one
+part, and `stroom:meta()` reads the part's, in stepping and processing alike): a part of the group's has every record
+handed to the group's mode; any other part's records are passed over whole, never judged one by one (no pass-over
+template), and counted in the same INFO line. A group on a record's field judges each record as below. It reads a record's source type value as the tools do
 (`SourceTypeFields.valueOf`): stripped of the white space around it, and no value for `-`, `null`, `none` or `n/a`
 (any case), so processing and the survey count the same records as each source type. Every other record (another
 group's, parked, dropped, or a value no row matches) is passed over, its record's number read so the group's log

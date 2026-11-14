@@ -90,6 +90,8 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
     static final String ENVIRONMENT_ARG = "environment";
     // The answers to the proposed patterns.
     static final String USE_PATTERNS = "Use these patterns";
+    // The answer using the proposed list items.
+    static final String USE_ITEMS = "Use these list items";
     static final String ONE_PER_VALUE = "One source type per value";
     // Who decided a status that no one chose: an assessment registers every source type as parked.
     private static final String ASSESSED = "assessment";
@@ -165,7 +167,8 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                              + "chosen source types to it, or, none chosen, changes it alone. Then it writes the "
                              + "feed's registry ('<feed> source types') in the build. An assessment build writes the "
                              + "registry without a scope. Where the field's values are many paths or names, it "
-                             + "proposes anchored patterns, confirmed by the user. Rows given again keep the "
+                             + "proposes anchored patterns, and where they are lists (`DNS, File Server`), a row "
+                             + "an item; either confirmed by the user. Rows given again keep the "
                              + "registry's translated and placed rows they leave out; remove= drops a row, and "
                              + "removing a translated or placed row, or changing a translated row's value or "
                              + "pattern, is confirmed by the user in a form.")
@@ -179,8 +182,14 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                                                  + "order tried, each 'name = value' (exactly) or "
                                                                  + "'name ~ ^pattern' (an anchored regular "
                                                                  + "expression on the field's value), e.g. 'mail "
-                                                                 + "audit ~ ^/var/log/mail/audit/'. Narrower before "
-                                                                 + "wider. Without it, rows are proposed from the "
+                                                                 + "audit ~ ^/var/log/mail/audit/', or 'name ∈ "
+                                                                 + "item' (ASCII: 'name in item'): a value that is "
+                                                                 + "a list (its separator read from the values seen) "
+                                                                 + "holding the item exactly, e.g. 'Mail ∈ Mail "
+                                                                 + "Server'. Narrower before wider; the first row "
+                                                                 + "matching takes a record, so of a list holding "
+                                                                 + "several rows' items, the earlier row's. Without "
+                                                                 + "it, rows are proposed from the "
                                                                  + "values the survey saw. A registry's translated "
                                                                  + "or placed rows left out are kept (remove= "
                                                                  + "drops one); a translated row's changed value or "
@@ -193,8 +202,8 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                                                    + "form (refused for a translated row where no "
                                                                    + "form can be shown)."))
                         .addStringProperty(PATTERNS_ARG, "Only when the client shows no forms: the user's answer "
-                                                         + "to the proposed patterns ('use' them, or 'exact': a "
-                                                         + "source type per value).")
+                                                         + "to the proposed patterns or list items ('use' them, or "
+                                                         + "'exact': a source type per value).")
                         .addProperty(SCOPE_ARG, stringArraySchema("Only when the client shows no forms: the "
                                                                   + "source types the user chose for this build's "
                                                                   + "group, by name (with group). [] with an "
@@ -304,10 +313,7 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
             result.put("table", table);
             result.put("review_id", Consent.reviewId(table));
             // The rows as confirmed, for the next call to give back, so the user isn't asked about them again.
-            result.put(ROWS_ARG, rows.rows().stream().map(row -> row.name() + (SourceTypeRows.PATTERN.equals(
-                    row.match())
-                    ? " ~ "
-                    : " = ") + row.value()).toList());
+            result.put(ROWS_ARG, rows.rows().stream().map(row -> row.name() + " " + row.said()).toList());
             if (!edits.confirmations().isEmpty()) {
                 result.put("to_confirm", edits.confirmations());
             }
@@ -456,16 +462,12 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                       final Map<String, Object> before) {
         final List<String> given = stringListArg(call, ROWS_ARG);
         if (!given.isEmpty()) {
-            return new Rows(given.stream().map(RecordSourceTypesTool::parseRow).toList(), null);
+            // A list's item is matched on the separator the values seen are lists by.
+            return new Rows(SourceTypeRows.withSeparator(given.stream().map(RecordSourceTypesTool::parseRow)
+                    .toList(), SourceTypeRows.separator(values.keySet())), null);
         }
         if (!before.isEmpty()) {
-            final List<SourceTypeRows.Row> out = new ArrayList<>(SourceTypeRegistry.rows(before));
-            values.entrySet().stream()
-                    .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                    .filter(entry -> SourceTypeRows.first(out, entry.getKey()).isEmpty())
-                    .forEach(entry -> out.add(new SourceTypeRows.Row(entry.getKey(), SourceTypeRows.VALUE,
-                            entry.getKey())));
-            return new Rows(out, null);
+            return new Rows(withValuesSeen(SourceTypeRegistry.rows(before), values), null);
         }
         if (values.isEmpty()) {
             throw new ToolRefusal("The survey of feed '" + feed + "' has counted no records by '" + field + "' yet: "
@@ -474,14 +476,19 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
         final SourceTypeRows.Proposal proposal = SourceTypeRows.propose(values);
         final List<SourceTypeRows.Row> proposed = proposal.rows().stream().map(SourceTypeRows.Proposed::row)
                 .toList();
-        if (!proposal.patterns()) {
+        if (!proposal.patterns() && !proposal.lists()) {
             return new Rows(proposed, null);
         }
         final String given2 = stringArg(call, PATTERNS_ARG);
         final Optional<String> answer = given2 != null
                 ? Optional.of(given2)
-                : consent.answer(call, context, NAME, patternsIntro(feed, field, proposal),
-                        "Use these patterns, or one source type per value?", List.of(USE_PATTERNS, ONE_PER_VALUE));
+                : proposal.lists()
+                        ? consent.answer(call, context, NAME, itemsIntro(feed, field, proposal),
+                                "Use these list items, or one source type per value?", List.of(USE_ITEMS,
+                                        ONE_PER_VALUE))
+                        : consent.answer(call, context, NAME, patternsIntro(feed, field, proposal),
+                                "Use these patterns, or one source type per value?", List.of(USE_PATTERNS,
+                                        ONE_PER_VALUE));
         if (answer.isEmpty()) {
             final Map<String, Object> result = new LinkedHashMap<>();
             result.put("status", NEEDS_USER);
@@ -490,10 +497,13 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                     .map(row -> Entries.of("name", row.row().name(), "match", row.row().said(), "values",
                             row.values(), "records", row.records()))
                     .toList());
-            result.put("hint", "The values of '" + field + "' are many paths or names: these patterns are proposed, "
-                               + "each covering the values shown, tried in order (narrower first). Ask the user in "
-                               + "the chat whether to use them, or have a source type per value, then call " + NAME
-                               + " again with " + PATTERNS_ARG + "='use' or 'exact' (or " + ROWS_ARG
+            result.put("hint", (proposal.lists()
+                    ? "The values of '" + field + "' are lists: a source type an item is proposed, rarest first "
+                      + "(a record whose list holds several is the first row's), each covering the values shown. "
+                    : "The values of '" + field + "' are many paths or names: these patterns are proposed, "
+                      + "each covering the values shown, tried in order (narrower first). ")
+                               + "Ask the user in the chat whether to use them, or have a source type per value, then "
+                               + "call " + NAME + " again with " + PATTERNS_ARG + "='use' or 'exact' (or " + ROWS_ARG
                                + " as they say).");
             return new Rows(List.of(), result);
         }
@@ -506,12 +516,12 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                             entry.getKey())));
             return new Rows(exact, null);
         }
-        if (said.startsWith("use") || said.startsWith("yes") || said.contains("pattern")) {
+        if (said.startsWith("use") || said.startsWith("yes") || said.contains("pattern") || said.contains("item")) {
             return new Rows(proposed, null);
         }
         throw new ToolRefusal("The user's answer ('" + answer.get().strip() + "') is neither: ask them in the chat "
                               + "how to match the source types, and call " + NAME + " again with " + ROWS_ARG
-                              + " as they say ('name = value' or 'name ~ ^pattern', in order).");
+                              + " as they say ('name = value', 'name ~ ^pattern' or 'name ∈ item', in order).");
     }
 
     // The rows as they will be: those given (or proposed), with the registry's translated and placed rows they leave
@@ -597,8 +607,7 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                 final int at = follows == null
                         ? 0
                         : out.stream().map(SourceTypeRows.Row::name).toList().indexOf(follows) + 1;
-                out.add(at, new SourceTypeRows.Row(name, JsonValues.text(was.get("match")),
-                        JsonValues.text(was.get("value"))));
+                out.add(at, SourceTypeRows.Row.of(was));
             }
             if (out.stream().anyMatch(row -> row.name().equals(name))) {
                 after = name;
@@ -629,11 +638,63 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
         return row != null && (row.get("group") != null || row.get("pipeline") != null);
     }
 
-    // A registry row's match, as the user gives one: `= value` or `~ pattern`.
+    // A registry row's match, as the user gives one: `= value`, `~ pattern` or `∈ item`.
     private static String said(final Map<String, Object> row) {
-        return (SourceTypeRows.PATTERN.equals(row.get("match"))
-                ? "~ "
-                : "= ") + JsonValues.text(row.get("value"));
+        return SourceTypeRows.Row.of(row).said();
+    }
+
+    /// The registry's rows with a row added for each value the survey saw that none matches, commonest first: a value
+    /// a row, or, where the registry's rows are a list's items, a row for the value's rarest item (over the values
+    /// seen) that no row has, so the value is matched and no row added is one no value reaches.
+    ///
+    /// @param rows   The registry's rows, in order.
+    /// @param values The records the survey saw with each value.
+    /// @return The rows, those added after the registry's.
+    static List<SourceTypeRows.Row> withValuesSeen(final List<SourceTypeRows.Row> rows,
+                                                   final Map<String, Long> values) {
+        final List<SourceTypeRows.Row> out = new ArrayList<>(rows);
+        final Optional<SourceTypeRows.Row> listed = rows.stream()
+                .filter(row -> SourceTypeRows.MEMBER.equals(row.match()))
+                .findFirst();
+        final Map<String, Long> itemRecords = new LinkedHashMap<>();
+        listed.ifPresent(row -> values.forEach((value, records) -> SourceTypeRows.items(value,
+                row.separatorOrDefault()).forEach(item -> itemRecords.merge(item, records, Long::sum))));
+        values.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .forEach(entry -> {
+                    if (SourceTypeRows.first(out, entry.getKey()).isPresent()) {
+                        return;
+                    }
+                    final Optional<String> item = listed.flatMap(row -> SourceTypeRows.items(entry.getKey(),
+                                    row.separatorOrDefault()).stream()
+                            .filter(candidate -> out.stream().noneMatch(had -> had.name().equals(candidate)))
+                            .min(Comparator.comparing((String candidate) -> itemRecords.getOrDefault(candidate, 0L))
+                                    .thenComparing(Comparator.naturalOrder())));
+                    out.add(item.isPresent()
+                            ? new SourceTypeRows.Row(item.get(), SourceTypeRows.MEMBER, item.get(),
+                            listed.get().separatorOrDefault())
+                            : new SourceTypeRows.Row(entry.getKey(), SourceTypeRows.VALUE, entry.getKey()));
+                });
+        return out;
+    }
+
+    // The form's message: each list item proposed with the values and records it covers, in plain text.
+    private static String itemsIntro(final String feed,
+                                     final String field,
+                                     final SourceTypeRows.Proposal proposal) {
+        final String separator = proposal.rows().isEmpty()
+                ? SourceTypeRows.DEFAULT_SEPARATOR
+                : proposal.rows().getFirst().row().separatorOrDefault();
+        final List<String> lines = new ArrayList<>();
+        int n = 1;
+        for (final SourceTypeRows.Proposed row : proposal.rows()) {
+            lines.add(n++ + ". " + row.row().name() + " " + row.row().said() + ": " + row.records() + " records ("
+                      + row.values().size() + " value(s))");
+        }
+        return "The values of '" + field + "' in feed '" + feed + "' are lists (split on '" + separator + "'): a "
+               + "source type is proposed for each item, tried in this order, rarest first; a record whose list "
+               + "holds several items is of the first row's. A value none matches later is a new source type.\n"
+               + String.join("\n", lines);
     }
 
     // The form's message: each pattern with the values and records it covers, in plain text.
@@ -654,19 +715,12 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                + "value none matches later is a new source type.\n" + String.join("\n", lines);
     }
 
-    // A row as the user gave it: `name = value` or `name ~ ^pattern`.
+    // A row as the user gave it: `name = value`, `name ~ ^pattern`, or `name ∈ item` (`name in item`).
     private static SourceTypeRows.Row parseRow(final String given) {
-        final int tilde = given.indexOf(" ~ ");
-        final int equals = given.indexOf(" = ");
-        if (tilde > 0 && (equals < 0 || tilde < equals)) {
-            return new SourceTypeRows.Row(given.substring(0, tilde).strip(), SourceTypeRows.PATTERN,
-                    given.substring(tilde + 3).strip());
-        }
-        if (equals > 0) {
-            return new SourceTypeRows.Row(given.substring(0, equals).strip(), SourceTypeRows.VALUE,
-                    given.substring(equals + 3).strip());
-        }
-        throw new ToolRefusal("Row '" + given + "' is neither 'name = value' nor 'name ~ ^pattern'.");
+        return SourceTypeRows.parse(given).orElseThrow(() -> new ToolRefusal("Row '" + given + "' is none of "
+                                                                             + "'name = value', 'name ~ ^pattern' "
+                                                                             + "and 'name ∈ item' ('name in "
+                                                                             + "item')."));
     }
 
     // Each row's profile: from the survey's counts, else the registry beside the feed's own (carried over).
@@ -730,6 +784,9 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
             entry.put("name", row.name());
             entry.put("match", row.match());
             entry.put("value", row.value());
+            if (SourceTypeRows.MEMBER.equals(row.match())) {
+                entry.put("separator", row.separatorOrDefault());
+            }
             entry.put("system_name", firstSet(systemNames.get(row.name()), was.get("system_name"), null));
             entry.put("status", was.get("status"));
             entry.put("decided", was.get("decided"));

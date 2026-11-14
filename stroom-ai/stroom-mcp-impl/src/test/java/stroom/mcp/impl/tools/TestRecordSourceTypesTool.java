@@ -346,6 +346,40 @@ class TestRecordSourceTypesTool {
         assertThat(result).as("%s", result).doesNotContainKey("unseen_source_types");
     }
 
+    @Test
+    void aListMemberRowIsWrittenWithItsSeparatorAndShownWithItsSign() {
+        final List<String> rows = new ArrayList<>(OTHERS);
+        rows.add("Directory in Directory Services");
+
+        final Map<String, Object> result = recorded(BuildToolCalls.context(), Map.of("rows", rows));
+
+        assertThat(result).as("%s", result).doesNotContainKey("error");
+        assertThat(rowNamed("Directory")).containsEntry("match", SourceTypeRows.MEMBER)
+                .containsEntry("value", "Directory Services").containsEntry("separator", ",");
+        assertThat(written.getLast()).contains("∈ Directory Services", "an item of the value read as a list");
+        assertThat(SourceTypeRegistry.rows(SourceTypeRegistry.read(written.getLast()))).contains(
+                new SourceTypeRows.Row("Directory", SourceTypeRows.MEMBER, "Directory Services", ","));
+    }
+
+    @Test
+    void valuesSeenThatNoListRowMatchesAreGivenARowForTheirRarestItem() {
+        final List<SourceTypeRows.Row> rows = List.of(new SourceTypeRows.Row("Directory", SourceTypeRows.MEMBER,
+                "Directory Services", ","));
+        final Map<String, Long> values = new LinkedHashMap<>();
+        values.put("DNS Server, File Server", 5L);
+        values.put("File Server", 3L);
+        values.put("Directory Services, DNS Server", 2L);
+
+        final List<SourceTypeRows.Row> seen = RecordSourceTypesTool.withValuesSeen(rows, values);
+
+        assertThat(seen).extracting(row -> row.name() + " " + row.said()).containsExactly(
+                "Directory ∈ Directory Services", "DNS Server ∈ DNS Server", "File Server ∈ File Server");
+        assertThat(SourceTypeRows.problems(seen, values.keySet())).isEmpty();
+        // Rows of whole values where the registry's rows aren't a list's items.
+        assertThat(RecordSourceTypesTool.withValuesSeen(ROWS, Map.of("other", 1L))).last()
+                .isEqualTo(new SourceTypeRows.Row("other", SourceTypeRows.VALUE, "other"));
+    }
+
     private static Map<String, Object> profiled(final String name, final long records, final String status) {
         final Map<String, Object> row = row(name, status);
         row.put("profile", Map.of("records_read", records));

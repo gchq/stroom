@@ -89,7 +89,7 @@ final class TranslationWorld {
     final XsltCompileCheck compileCheck = Mockito.mock(XsltCompileCheck.class);
     final AgentInstructions agentInstructions = Mockito.mock(AgentInstructions.class);
     final StreamReader streamReader = Mockito.mock(StreamReader.class);
-    final SampleStreamTexts sampleStreamTexts = Mockito.mock(SampleStreamTexts.class);
+    final SampleStreamTexts sampleStreamTexts = SampleStreamTextsMocks.mock();
     final PipelineStepping stepping = Mockito.mock(PipelineStepping.class);
     final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
     final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);

@@ -25,6 +25,7 @@ import stroom.ai.impl.tools.generation.SourceTypeModule;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.RecordSplitter;
+import stroom.ai.impl.tools.sample.SourceTypeMeta;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
@@ -152,11 +153,15 @@ class SourceTypeCoverage {
         final Set<String> newValues = new LinkedHashSet<>();
         final SourceTypeScope reader = new SourceTypeScope(build, field, rows, null);
         final Map<Long, RecordSplitter.Chunk> read = new LinkedHashMap<>();
+        final PartAttributes attributes = new PartAttributes(streamReader);
         for (int i = 0; i < groups.size(); i++) {
             final Map<String, Object> group = groups.get(i);
-            final Map<String, Object> parsed = i < MAX_KINDS
+            final Map<String, Object> example = i < MAX_KINDS
                     ? exampleRecord(group, read)
                     : null;
+            final Map<String, Object> parsed = i < MAX_KINDS && reader.byPart()
+                    ? partView(group, example, scope, reader, attributes)
+                    : example;
             if (parsed == null) {
                 missed.add(group);
                 continue;
@@ -235,8 +240,7 @@ class SourceTypeCoverage {
         }
         return module == null
                 ? List.of()
-                : module.rows().stream().map(row -> new SourceTypeRows.Row(row.name(), row.match(), row.value()))
-                        .toList();
+                : module.toolRows();
     }
 
     // What the pipeline is judged against: a group's source types, else the build's scope; null for neither.
@@ -357,6 +361,34 @@ class SourceTypeCoverage {
         return chunk == null
                 ? null
                 : chunk.parsedAt(record.intValue());
+    }
+
+    // A kind's example record with its part's meta laid over it, where the source type field is a part's meta
+    // attribute. The record's part isn't logged, so the part is the raw stream's first of the pipeline's source types
+    // (a group's rules only ever see its own parts' records), else its first part.
+    private static Map<String, Object> partView(final Map<String, Object> group,
+                                                final Map<String, Object> example,
+                                                final SourceTypeScope scope,
+                                                final SourceTypeScope reader,
+                                                final PartAttributes attributes) {
+        final List<Map<String, Object>> examples = JsonValues.maps(group.get("examples"));
+        if (examples.isEmpty() || !(examples.getFirst().get("raw_stream") instanceof final Number raw)) {
+            return example;
+        }
+        Map<String, Object> first = null;
+        for (int part = 0; part < SampleStreamTexts.MAX_PARTS; part++) {
+            final Map<String, Object> fields = attributes.fields(reader.field(), raw.longValue(), part);
+            if (first == null) {
+                first = fields;
+            }
+            if (scope == null || scope.inScope(fields)) {
+                return SourceTypeMeta.withPart(example, fields);
+            }
+            if (attributes.of(raw.longValue(), part).isEmpty() && part > 0) {
+                break;
+            }
+        }
+        return SourceTypeMeta.withPart(example, first);
     }
 
     // A raw stream's records, split as the survey splits them; null when it can't be read.

@@ -42,6 +42,7 @@ import stroom.ai.impl.tools.sample.RecordSplitter;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.Shapes;
 import stroom.ai.impl.tools.sample.SourceTypeFields;
+import stroom.ai.impl.tools.sample.SourceTypeMeta;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
@@ -337,9 +338,12 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                         .addStringProperty(SOURCE_TYPE_FIELD_ARG, "Only what the user said: the field that says "
                                                                   + "which source each record of an aggregated "
                                                                   + "feed came from (e.g. 'sourcetype', "
-                                                                  + "'event.Workload'), or 'none' when they say the "
-                                                                  + "feed is one source. Unasked, the build's survey "
-                                                                  + "finds a candidate itself and asks them.")
+                                                                  + "'event.Workload'), 'meta:<Attribute>' for a "
+                                                                  + "stream meta attribute (a header each part of a "
+                                                                  + "stream carries, as stroom:meta reads it), or "
+                                                                  + "'none' when they say the feed is one source. "
+                                                                  + "Unasked, the build's survey finds a candidate "
+                                                                  + "itself and asks them (never a meta attribute).")
                         .addBooleanProperty(AGGREGATED_ARG, "True when the user says the feed aggregates several "
                                                             + "sources: the survey looks harder for the field "
                                                             + "that tells them apart, and asks the user.")
@@ -661,7 +665,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final Map<Long, RawHead> peeked = new LinkedHashMap<>();
         final Heads heads = new Heads(() -> peekRecords(streams.getFirst(), limits, peeked));
         // An aggregated feed's source type field first: the kinds of event are told apart within its source types.
-        final SourceDecision sources = decideSources(call, context, request, feed, keptSources, heads);
+        final PartAttributes attributes = new PartAttributes(streamReader);
+        final SourceDecision sources = decideSources(call, context, request, feed, keptSources, heads,
+                new Asked(streams.stream().map(Meta::getId).toList(), limits.maxParts(), attributes));
         if (sources.early() != null) {
             return sources.early();
         }
@@ -709,8 +715,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 : new SourceTypeProfiles(sources.field());
         if (profiles != null) {
             shapes.observe(profiles::add);
-            final String field = sources.field();
-            shapes.keepSourceValues(parsed -> SourceTypeFields.valueOf(parsed, field));
+            keepSourceValues(shapes, sources.field(), attributes);
         }
         // The scope chosen for another field, or before the field changed, isn't this survey's.
         final boolean scoped = scope != null && scope.field().equals(sources.field()) && !sources.changed();
@@ -861,7 +866,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             shapes.useKindFields(JsonValues.strings(surveyed.kinds().get("fields")));
         }
         final SourceTypeProfiles profiles = new SourceTypeProfiles(field);
-        shapes.keepSourceValues(parsed -> SourceTypeFields.valueOf(parsed, field));
+        keepSourceValues(shapes, field, new PartAttributes(streamReader));
         final StreamScopes scopes = new StreamScopes(shapes, new SourceTypeScope(build, field, rows,
                 List.of(row.name())), null, Map.of(), profiles);
         final Limits limits = limits(request, named);
@@ -1044,15 +1049,26 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                + "survey, would show it once it does. Tell the user so.";
     }
 
+    // Each shape keeps the source type field's values its records had; a field read from a part's meta has the
+    // part's attributes laid over each of its records, so the profiles and scopes read it as a record's.
+    private static void keepSourceValues(final Shapes shapes, final String field, final PartAttributes attributes) {
+        shapes.keepSourceValues(parsed -> SourceTypeFields.valueOf(parsed, field));
+        if (SourceTypeMeta.isMeta(field)) {
+            shapes.usePartFields((stream, part) -> attributes.fields(field, stream, part));
+        }
+    }
+
     // The source type field, as the user chose it: given now (source_type_field), kept by the survey, or found in
     // the first stream's head and put to the user in a form (or, with no forms, a needs_source_type_field result:
-    // nothing surveyed yet). A survey with no build only reads, so nothing is asked.
+    // nothing surveyed yet). A survey with no build only reads, so nothing is asked. A part's meta attribute is
+    // taken only where the user names it (meta:<Attribute>), checked against the parts of the streams to be read.
     private SourceDecision decideSources(final ToolCall call,
                                          final ToolCallContext context,
                                          final Request request,
                                          final String feed,
                                          final Map<String, Object> kept,
-                                         final Heads heads) {
+                                         final Heads heads,
+                                         final Asked asked) {
         final String keptField = kept.get(SourceTypeProfiles.FIELD) instanceof final String field
                 ? field
                 : null;
@@ -1062,7 +1078,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             if (saysOneSource(given)) {
                 return new SourceDecision(sourcesChosen(null, "user"), null, null, keptField != null);
             }
-            final String field = spelt(given, heads.get()).orElseThrow(() -> new ToolRefusal(
+            final String field = SourceTypeMeta.isMeta(given)
+                    ? asked.attributes().field(given, asked.streams(), asked.maxParts())
+                    : spelt(given, heads.get()).orElseThrow(() -> new ToolRefusal(
                     SOURCE_TYPE_FIELD_ARG + " '" + given + "' names no field of the records: they have "
                     + new TreeSet<>(fieldsOf(heads.get())) + ". Ask the user which one they meant."));
             return new SourceDecision(sourcesChosen(field, "user"), field, null,
@@ -1084,7 +1102,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         // from this head (seen in an e2e walk: the newest stream, a fifth of its records given a new source type,
         // put Operation before Workload, and the build's scope matched none of the sample's records).
         final Optional<String> registered = registryField(request.build(), feed)
-                .flatMap(field -> spelt(field, heads.get()));
+                .flatMap(field -> SourceTypeMeta.isMeta(field)
+                        ? Optional.of(field)
+                        : spelt(field, heads.get()));
         if (registered.isPresent()) {
             return new SourceDecision(sourcesChosen(registered.get(), REGISTRY), registered.get(), null, false);
         }
@@ -1769,6 +1789,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 part++;
                 continue;
             }
+            // The part's records are judged with its own meta (a source type field read from it).
+            shapes.at(meta.getId(), part);
             if (reading.format != null && !chunk.format().equals(reading.format)) {
                 reading.perStream.add(entry("stream", meta.getId(), "part", part, "note",
                         "reads as " + chunk.format() + ", not " + reading.format + "; skipped"));
@@ -2739,6 +2761,15 @@ class SurveyFeedTool extends AbstractBuiltInTool {
 
     // What a part's windows gave: how many were read, their records, the shapes new among them, and where their
     // records are (each [first, count]).
+    /// What a source type field the user names is checked against: the streams to be read, as far as they are read.
+    ///
+    /// @param streams    The streams to be read.
+    /// @param maxParts   The most parts read of a stream.
+    /// @param attributes Their parts' meta attributes, read once each.
+    private record Asked(List<Long> streams, int maxParts, PartAttributes attributes) {
+
+    }
+
     private record WindowsRead(int windows, int records, int newShapes, List<List<Long>> ranges) {
 
     }

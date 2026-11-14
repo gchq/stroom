@@ -129,11 +129,10 @@ public final class SourceTypeScope {
     }
 
     /// @param rows Rows.
-    /// @return Them as the scope keeps them: `name`, `match`, `value` each.
+    /// @return Them as the scope keeps them: `name`, `match`, `value` each (and a list-member row's `separator`).
     public static List<Map<String, Object>> kept(final List<SourceTypeRows.Row> rows) {
         final List<Map<String, Object>> out = new ArrayList<>();
-        rows.forEach(row -> out.add(SampleProfiler.map("name", row.name(), "match", row.match(), "value",
-                row.value())));
+        rows.forEach(row -> out.add(row.toMap()));
         return out;
     }
 
@@ -141,8 +140,7 @@ public final class SourceTypeScope {
     /// @return The rows, in order.
     public static List<SourceTypeRows.Row> rowsOf(final Object kept) {
         final List<SourceTypeRows.Row> out = new ArrayList<>();
-        JsonValues.maps(kept).forEach(row -> out.add(new SourceTypeRows.Row(JsonValues.text(row.get("name")),
-                JsonValues.text(row.get("match")), JsonValues.text(row.get("value")))));
+        JsonValues.maps(kept).forEach(row -> out.add(SourceTypeRows.Row.of(row)));
         return out;
     }
 
@@ -282,6 +280,36 @@ public final class SourceTypeScope {
             return new Filtered(text, kept.size(), Map.of(), true);
         }
         return new Filtered(written(chunk, kept, text), kept.size(), passedOver, true);
+    }
+
+    /// As [#filter(String)], for a text that is one part of a stream: where the source type field is the part's meta
+    /// attribute ([SourceTypeMeta]), the part is kept whole or left out whole by its value, whatever its format;
+    /// otherwise its records are judged one by one, as [#filter(String)] does.
+    ///
+    /// @param text       A part's text.
+    /// @param partFields The part's fields laid over its records ([SourceTypeMeta#partFields]): none when it doesn't
+    ///                   carry the attribute.
+    /// @return The text of the scope's records, how many were kept, and those left out by source type.
+    public Filtered filter(final String text, final Map<String, Object> partFields) {
+        if (!byPart()) {
+            return filter(text);
+        }
+        final RecordSplitter.Chunk chunk = names == null
+                ? null
+                : split(text);
+        final int records = Math.max(1, chunk == null
+                ? 0
+                : chunk.records().size());
+        if (inScope(partFields)) {
+            return new Filtered(text, records, Map.of(), true);
+        }
+        return new Filtered("", 0, Map.of(sourceType(partFields).orElse(UNMATCHED), records), true);
+    }
+
+    /// @return True if the source type field is a part's meta attribute ([SourceTypeMeta]): a part's records are
+    /// all of one source type.
+    public boolean byPart() {
+        return SourceTypeMeta.isMeta(field);
     }
 
     /// The scope's share of the records the survey read: the records of its source types (by the rows) over all.

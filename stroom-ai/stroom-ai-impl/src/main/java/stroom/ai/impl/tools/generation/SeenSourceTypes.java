@@ -27,35 +27,67 @@ import java.util.Objects;
 /// survey confirmed a source type field. The translation logs (INFO), once a stream for each, a value of the field
 /// that none of these matches, so the user is prompted to survey the feed again ([XsltGenerator#UNSEEN_SOURCE_TYPE]).
 /// Values are read as the tools read them: stripped of XML's white space, and `-`, `null`, `none` and `n/a` no value.
+/// A field that is a part's meta attribute (`meta:<Attribute>`) is read once a document, by `stroom:meta()`.
 ///
-/// @param field    The source type field.
-/// @param values   The values seen, matched exactly: the survey's, or the registry's rows matching a value.
-/// @param patterns Anchored patterns a value seen matches: the registry's rows matching by a pattern.
-public record SeenSourceTypes(String field, List<String> values, List<String> patterns) {
+/// @param field     The source type field.
+/// @param values    The values seen, matched exactly: the survey's, or the registry's rows matching a value.
+/// @param patterns  Anchored patterns a value seen matches: the registry's rows matching by a pattern.
+/// @param members   Items a value seen holds, read as a list: the registry's list-member rows.
+/// @param separator What the list-member rows split a value on; null for none (or the default, `,`).
+public record SeenSourceTypes(String field,
+                              List<String> values,
+                              List<String> patterns,
+                              List<String> members,
+                              String separator) {
 
     /// Fills in empty lists for null ones.
     public SeenSourceTypes {
         values = List.copyOf(Objects.requireNonNullElse(values, List.of()));
         patterns = List.copyOf(Objects.requireNonNullElse(patterns, List.of()));
+        members = List.copyOf(Objects.requireNonNullElse(members, List.of()));
+    }
+
+    /// The values and patterns seen, no list's items.
+    ///
+    /// @param field    The source type field.
+    /// @param values   The values seen, matched exactly.
+    /// @param patterns Anchored patterns a value seen matches.
+    public SeenSourceTypes(final String field, final List<String> values, final List<String> patterns) {
+        this(field, values, patterns, List.of(), null);
     }
 
     /// @param field The source type field.
     /// @param rows  The registry's rows.
-    /// @return The rows' values and patterns as those seen.
+    /// @return The rows' values, patterns and list items as those seen.
     public static SeenSourceTypes ofRows(final String field, final List<SourceTypeRows.Row> rows) {
+        final List<SourceTypeRows.Row> members = rows.stream()
+                .filter(row -> SourceTypeRows.MEMBER.equals(row.match()))
+                .toList();
         return new SeenSourceTypes(field,
                 rows.stream().filter(row -> SourceTypeRows.VALUE.equals(row.match())).map(SourceTypeRows.Row::value)
                         .toList(),
                 rows.stream().filter(row -> SourceTypeRows.PATTERN.equals(row.match()))
-                        .map(SourceTypeRows.Row::value).toList());
+                        .map(SourceTypeRows.Row::value).toList(),
+                members.stream().map(SourceTypeRows.Row::value).toList(),
+                members.isEmpty()
+                        ? null
+                        : members.getFirst().separatorOrDefault());
+    }
+
+    /// @return What the list-member rows split a value on.
+    public String separatorOrDefault() {
+        return separator == null || separator.isEmpty()
+                ? SourceTypeRows.DEFAULT_SEPARATOR
+                : separator;
     }
 
     /// @param value A value of the field, as the tools read it ("" for none).
-    /// @return True if it is one seen: none, or one a value or pattern matches.
+    /// @return True if it is one seen: none, or one a value, pattern or list item matches.
     public boolean seen(final String value) {
         return value == null || value.isEmpty() || values.contains(value)
                || patterns.stream().anyMatch(pattern -> new SourceTypeRows.Row("", SourceTypeRows.PATTERN, pattern)
-                .matches(value));
+                .matches(value))
+               || SourceTypeRows.items(value, separatorOrDefault()).stream().anyMatch(members::contains);
     }
 
     /// Reads one from JSON-like values: lax types, defaults and the model's own checks, every error collected.
@@ -70,7 +102,7 @@ public record SeenSourceTypes(String field, List<String> values, List<String> pa
             return null;
         }
         final SeenSourceTypes seen = new SeenSourceTypes(fields.requiredString("field"), fields.strings("values"),
-                fields.strings("patterns"));
+                fields.strings("patterns"), fields.strings("members"), fields.optionalString("separator"));
         return fields.ok()
                 ? seen
                 : null;
@@ -83,6 +115,8 @@ public record SeenSourceTypes(String field, List<String> values, List<String> pa
                 .put("field", field, null)
                 .put("values", values, List.of())
                 .put("patterns", patterns, List.of())
+                .put("members", members, List.of())
+                .put("separator", separator, null)
                 .build();
     }
 }

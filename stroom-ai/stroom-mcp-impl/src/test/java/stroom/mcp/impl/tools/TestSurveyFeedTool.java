@@ -802,6 +802,36 @@ class TestSurveyFeedTool {
     }
 
     @Test
+    void aStreamMetaAttributeNamedAsTheSourceTypeFieldIsReadForEachPartAndCountedByItsValue() {
+        sampleFeedInABuild();
+        final Meta meta = meta(9, "ACME-VPN", 0);
+        Mockito.when(streamReader.meta(9L)).thenReturn(meta);
+        Mockito.when(streamReader.partCount(9L)).thenReturn(3);
+        final List<Map<String, String>> parts = List.of(Map.of("Feed", "ACME-VPN", "ServedRoles",
+                "DNS Server, Directory Services"), Map.of("Feed", "ACME-VPN", "ServedRoles", "File Server"),
+                Map.of("Feed", "ACME-VPN"));
+        for (int part = 0; part < parts.size(); part++) {
+            Mockito.when(streamReader.readHead(eq(9L), eq(part), anyInt())).thenReturn(new StreamReader.RawHead(
+                    eventLines("host" + part, 10 + part), false, 3));
+            Mockito.when(streamReader.partAttributes(9L, part)).thenReturn(parts.get(part));
+        }
+
+        // Named in any case: spelt as the parts spell it; each part's records counted by its value.
+        final Map<String, Object> surveyed = json(call("{\"stream_ids\": [9], \"max_streams\": 1, "
+                                                       + "\"build\": \"acme-v1\", "
+                                                       + "\"source_type_field\": \"meta:servedroles\"}"));
+        final Map<String, Object> sources = (Map<String, Object>) surveyed.get("source_types");
+        assertThat(sources).containsEntry("field", "meta:ServedRoles").containsEntry("by", "user");
+        assertThat((Map<String, Object>) sources.get("records_read_by_value"))
+                .containsEntry("DNS Server, Directory Services", 10).containsEntry("File Server", 11);
+
+        // An attribute no part carries: refused, saying which they do.
+        assertThat(call("{\"stream_ids\": [9], \"max_streams\": 1, \"build\": \"acme-v1\", "
+                        + "\"source_type_field\": \"meta:Roles\"}").text())
+                .contains("'meta:Roles'", "none of the 3 part(s) read", "Feed (3 parts)", "ServedRoles (2 parts)");
+    }
+
+    @Test
     void aBuildsScopeIsSurveyedAloneTheOtherSourceTypesOnlyCounted() {
         sampleFeedInABuild();
         stream(7, "ACME-VPN", 0, wrappedLines(60), false);
@@ -1083,6 +1113,16 @@ class TestSurveyFeedTool {
     private Map<String, Object> surveyState() {
         return SurveyDoc.readState(new SurveyDocuments(world.guard(), world.documentAccess,
                 new DocumentWrites(world.documentAccess)).load("acme-v1", "ACME-VPN").orElseThrow().text());
+    }
+
+    // Event lines of one host, of a few kinds.
+    private static String eventLines(final String host, final int count) {
+        final StringBuilder out = new StringBuilder();
+        for (int i = 0; i < count; i++) {
+            out.append("{\"host\": \"").append(host).append("\", \"EventID\": ").append(4624 + i % 3)
+                    .append(", \"user\": \"u").append(i).append("\"}\n");
+        }
+        return out.toString();
     }
 
     // JSON lines wrapped with a source field, each source's messages in a format of its own.

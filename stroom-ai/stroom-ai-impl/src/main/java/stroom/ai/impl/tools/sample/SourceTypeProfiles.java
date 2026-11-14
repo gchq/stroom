@@ -154,7 +154,9 @@ public final class SourceTypeProfiles {
         final Map<String, Object> fieldsOf = parsed == null
                 ? Map.of()
                 : parsed;
-        fieldsOf.keySet().forEach(name -> countCapped(fields, name, 1, MAX_FIELDS * 2));
+        // A part's meta attribute laid over its records (a source type field) is no field of theirs.
+        fieldsOf.keySet().stream().filter(name -> !SourceTypeMeta.isMeta(name))
+                .forEach(name -> countCapped(fields, name, 1, MAX_FIELDS * 2));
         final String found = SourceTypeFields.valueOf(parsed, field);
         final String value = found == null
                 ? ""

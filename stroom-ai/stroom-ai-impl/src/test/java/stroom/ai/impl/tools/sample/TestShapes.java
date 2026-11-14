@@ -103,6 +103,36 @@ class TestShapes {
     }
 
     @Test
+    void aPartsFieldsAreLaidOverItsRecordsForTheScopeAndTheSourceValuesNeverForTheirShapes() {
+        final RecordSplitter.Chunk chunk = RecordSplitter.split("{\"a\": \"x\", \"action\": \"login\"}\n"
+                                                                + "{\"a\": \"y\", \"action\": \"login\"}\n");
+        final Shapes plain = new Shapes();
+        plain.add(chunk, 0, 1L, 0);
+        final Shapes shapes = new Shapes();
+        final Map<String, Object> seen = new LinkedHashMap<>();
+        shapes.observe((parsed, text, stream, part, record) -> seen.put(stream + ":" + part, parsed.get("meta:Role")));
+        shapes.keepSourceValues(parsed -> SourceTypeFields.valueOf(parsed, "meta:Role"));
+        shapes.usePartFields((stream, part) -> part == 0
+                ? Map.of("meta:Role", "Directory")
+                : Map.of());
+        shapes.scope(parsed -> "Directory".equals(SourceTypeFields.valueOf(parsed, "meta:Role")));
+
+        shapes.at(1L, 1);
+        assertThat(shapes.inScope(chunk, 0)).isFalse();
+        shapes.at(1L, 0);
+        assertThat(shapes.inScope(chunk, 0)).isTrue();
+        shapes.add(chunk, 0, 1L, 0);
+        shapes.add(chunk, 1, 1L, 1);
+
+        assertThat(shapes.passedOver()).isEqualTo(1);
+        assertThat(seen).containsEntry("1:0", "Directory").containsEntry("1:1", null);
+        // Signed as its records are, the part's field no field of theirs.
+        assertThat(shapes.shapes().keySet()).isEqualTo(plain.shapes().keySet());
+        assertThat(shapes.shapes().values()).singleElement().satisfies(shape -> assertThat(shape)
+                .containsEntry(Shapes.SOURCE_VALUES, List.of("Directory")));
+    }
+
+    @Test
     void maskingHidesVariableParts() {
         assertThat(Shapes.mask("user \"Bob Smith\" from 10.1.2.3:443 took 250ms id 0x1f2e3d4c5b6a7980"))
                 .containsExactly("user", "<s>", "from", "<ip>", "took", "<n>", "id", "<hex>");

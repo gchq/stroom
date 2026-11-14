@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -109,6 +110,12 @@ public final class Shapes {
     private Function<Map<String, Object>, String> sourceValue;
     // The records the scope passed over.
     private long passedOver;
+    // The fields of each part laid over its records (a source type field read from a part's meta), or null.
+    private BiFunction<Long, Integer, Map<String, Object>> partFields;
+    // The part being read, and its fields.
+    private long atStream = -1;
+    private int atPart = -1;
+    private Map<String, Object> atFields = Map.of();
 
     /// Shapes with none known, keeping two examples each.
     public Shapes() {
@@ -177,11 +184,41 @@ public final class Shapes {
         this.sourceValue = value;
     }
 
+    /// Lays each part's fields over its records from now on, as the scope, the observer and the source type values
+    /// read them (never as they are signed): a source type field read from a part's meta ([SourceTypeMeta]).
+    ///
+    /// @param fields A part's fields, by stream and part, read once a part; null for none.
+    public void usePartFields(final BiFunction<Long, Integer, Map<String, Object>> fields) {
+        this.partFields = fields;
+        this.atStream = -1;
+        this.atPart = -1;
+        this.atFields = Map.of();
+    }
+
+    /// The part whose records are judged from now on ([#inScope]): set by [#add] too.
+    ///
+    /// @param streamId The stream.
+    /// @param part     The part.
+    public void at(final long streamId, final int part) {
+        if (partFields == null || streamId == atStream && part == atPart) {
+            return;
+        }
+        atStream = streamId;
+        atPart = part;
+        atFields = Objects.requireNonNullElse(partFields.apply(streamId, part), Map.of());
+    }
+
     /// @param chunk A part's records.
     /// @param index A record's index.
     /// @return True if the record makes shapes: there is no scope, or it is in the scope.
     public boolean inScope(final RecordSplitter.Chunk chunk, final int index) {
-        return scope == null || scope.test(chunk.parsedAt(index));
+        return scope == null || scope.test(view(chunk, index));
+    }
+
+    // A record's fields as the scope, the observer and the source type values read them: the part's laid over its
+    // own.
+    private Map<String, Object> view(final RecordSplitter.Chunk chunk, final int index) {
+        return SourceTypeMeta.withPart(chunk.parsedAt(index), atFields);
     }
 
     /// @return The records added that the scope passed over.
@@ -447,12 +484,13 @@ public final class Shapes {
                        final long streamId,
                        final int part,
                        final long firstRecord) {
+        at(streamId, part);
         if (!inScope(chunk, index)) {
             // Outside the build's scope: counted by source type, never signed (a text template signed would widen
             // the scope's templates).
             passedOver++;
             if (observer != null) {
-                observer.added(chunk.parsedAt(index), chunk.records().get(index), streamId, part,
+                observer.added(view(chunk, index), chunk.records().get(index), streamId, part,
                         firstRecord + index);
             }
             return false;
@@ -472,13 +510,13 @@ public final class Shapes {
                     SampleProfiler.map("stream", streamId, "part", part, "record", recordNumber(firstRecord + index))));
         }
         if (sourceValue != null) {
-            final String value = sourceValue.apply(chunk.parsedAt(index));
+            final String value = sourceValue.apply(view(chunk, index));
             if (value != null) {
                 shape.put(SOURCE_VALUES, SourceTypeScope.withValue((List<String>) shape.get(SOURCE_VALUES), value));
             }
         }
         if (observer != null) {
-            observer.added(chunk.parsedAt(index), text, streamId, part, firstRecord + index);
+            observer.added(view(chunk, index), text, streamId, part, firstRecord + index);
         }
         return isNew;
     }

@@ -18,6 +18,7 @@ package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.sample.SourceTypeFields;
+import stroom.ai.impl.tools.sample.SourceTypeMeta;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
@@ -126,6 +127,8 @@ public final class XsltGenerator {
     /// The end of an [#UNSEEN_SOURCE_TYPE] line.
     public static final String UNSEEN_SOURCE_TYPE_END = ", not seen when this feed was surveyed: survey the feed "
                                                         + "again to cover it";
+    // XML's white space around a value, as XPath's replace() strips it (and SourceTypeFields.valueOf).
+    private static final String XML_SPACE_AROUND = "'^[ \\t\\n\\r]+|[ \\t\\n\\r]+$'";
     // The rule the common module's parts are written from: the wrapper's entries alone.
     private static final String COMMON_RULE = "common";
     // The field names a template's xpaths read, Data Splitter's and JSON's: data[@name='x'], *[@key='x'].
@@ -2253,7 +2256,11 @@ public final class XsltGenerator {
                                                              + String.join(", ", module.sourceTypes())
                                                              + "): each record of its source types, in mode "
                                                              + recordMode())));
-            groupPassOver(sheet);
+            if (!module.byPart()) {
+                // A part's meta attribute tells a whole part at once (the root template): no record is passed over
+                // one by one.
+                groupPassOver(sheet);
+            }
         }
         XmlElement recordTemplate = sheet.addElement(XSL, "template", "match", "*", "mode", recordMode());
         final XmlElement eventTemplate = recordTemplate;
@@ -2344,9 +2351,7 @@ public final class XsltGenerator {
                 .filter(type -> !names.contains(type))
                 .forEach(type -> out.add(group + " translates source type '" + type + "', which the registry has no "
                                          + "row for"));
-        final List<SourceTypeRows.Row> rows = module.rows().stream()
-                .map(row -> new SourceTypeRows.Row(row.name(), row.match(), row.value()))
-                .toList();
+        final List<SourceTypeRows.Row> rows = module.toolRows();
         // Checked against the rows' own values: what both dialects must agree on.
         final List<String> values = module.rows().stream()
                 .filter(row -> SourceTypeRows.VALUE.equals(row.match()))
@@ -2367,16 +2372,34 @@ public final class XsltGenerator {
     // The group's root template: the Events, each record handed to the group's mode (its own translated, the rest
     // passed over, in document order, so each record's number is read in turn), and the records passed over counted
     // in one INFO line, once a document.
+    // A group whose source type field is a part's meta attribute reads it once a document (a document is of one
+    // part, and stroom:meta() reads the part's): a part of the group's has every record handed to its mode, any other
+    // part's records are passed over whole, counted, none judged one by one.
     private void groupRoot(final XmlElement sheet, final String version) {
         final String records = recordsSelect(m);
         final XmlElement root = sheet.addElement(XSL, "template", "match", rootMatch(m));
         final XmlElement events = root.addElement(ns, "Events", "Version", version);
         events.set(MappingFacts.XSI, "schemaLocation", schemaLocation(schema, version));
-        events.addElement(XSL, "apply-templates", "select", records, "mode", recordMode());
         final String passed = own(XsltNames.styleName("passed-over", style.naming()));
-        events.addElement(XSL, "variable", "name", passed, "select", "count((" + records + ")[not("
-                                                                     + groupFunction("in-group") + "(.))])");
-        events.addElement(XSL, "if", "test", "$" + passed + " gt 0")
+        final XmlElement passing;
+        if (module.byPart()) {
+            events.append(new XmlComment(XsltComments.comment("The part's source type, read once from its meta ("
+                                                              + SourceTypeMeta.attribute(module.field()) + "): a "
+                                                              + "part not of the group's is passed over whole")));
+            final String inGroup = own(XsltNames.styleName("part-in-group", style.naming()));
+            events.addElement(XSL, "variable", "name", inGroup, "select", groupFunction("in-group") + "()");
+            final XmlElement choose = events.addElement(XSL, "choose");
+            choose.addElement(XSL, "when", "test", "$" + inGroup)
+                    .addElement(XSL, "apply-templates", "select", records, "mode", recordMode());
+            passing = choose.addElement(XSL, "otherwise");
+            passing.addElement(XSL, "variable", "name", passed, "select", "count((" + records + "))");
+        } else {
+            events.addElement(XSL, "apply-templates", "select", records, "mode", recordMode());
+            passing = events;
+            passing.addElement(XSL, "variable", "name", passed, "select", "count((" + records + ")[not("
+                                                                          + groupFunction("in-group") + "(.))])");
+        }
+        passing.addElement(XSL, "if", "test", "$" + passed + " gt 0")
                 .addElement(XSL, "sequence", "select", "stroom:log('INFO', concat(" + XPathText.literal(PASSED_OVER)
                                                        + ", $" + passed + ", " + XPathText.literal(PASSED_OVER_END)
                                                        + "))");
@@ -2398,41 +2421,87 @@ public final class XsltGenerator {
     // value, ~ an anchored pattern), its value of the source type field as the tools read it, and whether it is one
     // of the group's.
     private void groupFunctions(final XmlElement sheet) {
+        // A part's meta attribute is read once a part, so the functions take no record.
+        final boolean byPart = module.byPart();
         final XmlElement inGroup = sheet.addElement(XSL, "function", "name", groupFunction("in-group"), "as",
                 "xs:boolean");
-        inGroup.append(new XmlComment(XsltComments.comment("True for a record of the group's source types")));
-        inGroup.addElement(XSL, "param", "name", "record", "as", "element()");
-        inGroup.addElement(XSL, "sequence", "select", groupFunction("source-type") + "($record) = ("
-                                                      + literals(module.sourceTypes()) + ")");
+        inGroup.append(new XmlComment(XsltComments.comment(byPart
+                ? "True for a part of the group's source types"
+                : "True for a record of the group's source types")));
+        if (!byPart) {
+            inGroup.addElement(XSL, "param", "name", "record", "as", "element()");
+        }
+        inGroup.addElement(XSL, "sequence", "select", groupFunction("source-type") + (byPart
+                ? "()"
+                : "($record)") + " = (" + literals(module.sourceTypes()) + ")");
         final XmlElement type = sheet.addElement(XSL, "function", "name", groupFunction("source-type"), "as",
                 "xs:string");
-        type.append(new XmlComment(XsltComments.comment("The source type a record is of: the first registry row its "
-                                                        + module.field() + " matches (= a value, ~ an anchored "
-                                                        + "pattern), '' for none")));
-        type.addElement(XSL, "param", "name", "record", "as", "element()");
-        type.addElement(XSL, "variable", "name", "value", "select", groupFunction("source-type-value") + "($record)");
+        type.append(new XmlComment(XsltComments.comment("The source type " + (byPart
+                ? "a part"
+                : "a record") + " is of: the first registry row its " + module.field() + " matches (= a value, ~ an "
+                                                        + "anchored pattern, " + SourceTypeRows.MEMBER_SIGN + " an "
+                                                        + "item of a list), '' for none")));
+        if (!byPart) {
+            type.addElement(XSL, "param", "name", "record", "as", "element()");
+        }
+        type.addElement(XSL, "variable", "name", "value", "select", groupFunction("source-type-value") + (byPart
+                ? "()"
+                : "($record)"));
         final XmlElement choose = type.addElement(XSL, "choose");
         for (final SourceTypeModule.Row row : module.rows()) {
-            final String test = SourceTypeRows.PATTERN.equals(row.match())
-                    ? "matches($value, " + XPathText.literal(row.value()) + ")"
-                    : "$value = " + XPathText.literal(row.value());
-            choose.addElement(XSL, "when", "test", test).addElement(XSL, "sequence", "select",
-                    XPathText.literal(row.name()));
+            choose.addElement(XSL, "when", "test", rowTest(row.match(), row.value(), row.separator()))
+                    .addElement(XSL, "sequence", "select", XPathText.literal(row.name()));
         }
         choose.addElement(XSL, "otherwise").addElement(XSL, "sequence", "select", "''");
         // As the tools read it (SourceTypeFields.valueOf): stripped of XML's white space around it, '' for none or a
         // nil value, so processing and the survey count the same records as each source type.
-        final XmlElement value = sheet.addElement(XSL, "function", "name", groupFunction("source-type-value"), "as",
-                "xs:string");
-        value.append(new XmlComment(XsltComments.comment("A record's " + module.field() + " as the tools read it: "
-                                                         + "stripped, and '' for none or a nil value")));
-        value.addElement(XSL, "param", "name", "record", "as", "element()");
-        value.addElement(XSL, "variable", "name", "stripped", "select", "replace(string(($record/"
-                                                                        + XPathText.fieldText(m.input(),
-                module.field()) + ")[1]), '^[ \\t\\n\\r]+|[ \\t\\n\\r]+$', '')");
+        sourceValueFunction(sheet, groupFunction("source-type-value"), module.field());
+    }
+
+    // A function reading the source type field's value as the tools read it (SourceTypeFields.valueOf): stripped of
+    // XML's white space around it, '' for none or a nil value. A record's field takes the record; a part's meta
+    // attribute (stroom:meta(), the current part's) takes none.
+    private void sourceValueFunction(final XmlElement sheet, final String name, final String field) {
+        final String attribute = SourceTypeMeta.attribute(field);
+        final XmlElement value = sheet.addElement(XSL, "function", "name", name, "as", "xs:string");
+        value.append(new XmlComment(XsltComments.comment((attribute == null
+                ? "A record's " + field
+                : "The part's meta attribute " + attribute) + " as the tools read it: stripped, and '' for none or "
+                                                         + "a nil value")));
+        final String read;
+        if (attribute == null) {
+            value.addElement(XSL, "param", "name", "record", "as", "element()");
+            read = "string(($record/" + XPathText.fieldText(m.input(), field) + ")[1])";
+        } else {
+            read = "string(stroom:meta(" + XPathText.literal(attribute) + "))";
+        }
+        value.addElement(XSL, "variable", "name", "stripped", "select", "replace(" + read + ", " + XML_SPACE_AROUND
+                                                                        + ", '')");
         value.addElement(XSL, "sequence", "select", "if (lower-case($stripped) = ("
                                                     + literals(SourceTypeFields.NIL_VALUES)
                                                     + ")) then '' else $stripped");
+    }
+
+    // A registry row's test of $value: equal to the value, matched by the anchored pattern, or a list holding the
+    // item (split on the separator, each item stripped of XML's white space, compared exactly), as the tools match it
+    // (SourceTypeRows.Row.matches).
+    private static String rowTest(final String match, final String value, final String separator) {
+        if (SourceTypeRows.PATTERN.equals(match)) {
+            return "matches($value, " + XPathText.literal(value) + ")";
+        }
+        if (SourceTypeRows.MEMBER.equals(match)) {
+            return "some $item in " + itemsOf("$value", separator) + " satisfies $item = " + XPathText.literal(value);
+        }
+        return "$value = " + XPathText.literal(value);
+    }
+
+    // A list value's items, each stripped of XML's white space, as SourceTypeRows.items reads them.
+    private static String itemsOf(final String value, final String separator) {
+        final String split = SourceTypeRows.escape(separator == null || separator.isEmpty()
+                ? SourceTypeRows.DEFAULT_SEPARATOR
+                : separator);
+        return "(for $part in tokenize(" + value + ", " + XPathText.literal(split) + ") return replace($part, "
+               + XML_SPACE_AROUND + ", ''))";
     }
 
     // --- a whole translation on a feed whose survey confirmed a source type field: values it didn't see ---
@@ -2447,8 +2516,10 @@ public final class XsltGenerator {
     // stroom:put key a value), after the records are translated as any other.
     private void logUnseenSourceTypes(final XmlElement events) {
         final String field = m.seenSourceTypes().field();
-        final String values = "distinct-values((" + recordsSelect(m) + ")/" + seenFunction("source-type-value")
-                              + "(.))";
+        // A part's meta attribute: one value a document, read once.
+        final String values = SourceTypeMeta.isMeta(field)
+                ? "(" + seenFunction("source-type-value") + "())"
+                : "distinct-values((" + recordsSelect(m) + ")/" + seenFunction("source-type-value") + "(.))";
         final XmlElement each = events.addElement(XSL, "for-each", "select", values + "[. ne '' and not("
                                                                              + seenFunction("seen-source-type")
                                                                              + "(.))]");
@@ -2464,17 +2535,7 @@ public final class XsltGenerator {
     // read it, and whether a value is one seen (equal to a value, or matching an anchored pattern).
     private void seenFunctions(final XmlElement sheet) {
         final SeenSourceTypes seen = m.seenSourceTypes();
-        final XmlElement value = sheet.addElement(XSL, "function", "name", seenFunction("source-type-value"), "as",
-                "xs:string");
-        value.append(new XmlComment(XsltComments.comment("A record's " + seen.field() + " as the tools read it: "
-                                                         + "stripped, and '' for none or a nil value")));
-        value.addElement(XSL, "param", "name", "record", "as", "element()");
-        value.addElement(XSL, "variable", "name", "stripped", "select", "replace(string(($record/"
-                                                                        + XPathText.fieldText(m.input(),
-                seen.field()) + ")[1]), '^[ \\t\\n\\r]+|[ \\t\\n\\r]+$', '')");
-        value.addElement(XSL, "sequence", "select", "if (lower-case($stripped) = ("
-                                                    + literals(SourceTypeFields.NIL_VALUES)
-                                                    + ")) then '' else $stripped");
+        sourceValueFunction(sheet, seenFunction("source-type-value"), seen.field());
         final XmlElement known = sheet.addElement(XSL, "function", "name", seenFunction("seen-source-type"), "as",
                 "xs:boolean");
         known.append(new XmlComment(XsltComments.comment("True for a value of " + seen.field() + " seen when the "
@@ -2485,6 +2546,10 @@ public final class XsltGenerator {
             tests.add("$value = (" + literals(seen.values()) + ")");
         }
         seen.patterns().forEach(pattern -> tests.add("matches($value, " + XPathText.literal(pattern) + ")"));
+        if (!seen.members().isEmpty()) {
+            tests.add("(some $item in " + itemsOf("$value", seen.separator()) + " satisfies $item = ("
+                      + literals(seen.members()) + "))");
+        }
         known.addElement(XSL, "sequence", "select", tests.isEmpty()
                 ? "false()"
                 : String.join(" or ", tests));

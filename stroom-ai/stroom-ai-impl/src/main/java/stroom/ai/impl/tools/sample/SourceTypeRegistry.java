@@ -31,12 +31,14 @@ import java.util.regex.Pattern;
 /// (`<!-- stroom-mcp source types {...} -->`), never shown as text. Its format is what is stored, so it changes only
 /// in ways a registry already kept still reads.
 ///
-/// The block is JSON: `feed`, `field` (the source type field), `field_by`, `environment` and `system_name` (the
+/// The block is JSON: `feed`, `field` (the source type field: a record's, or `meta:<Attribute>` for a part's meta
+/// attribute, [SourceTypeMeta]), `field_by`, `environment` and `system_name` (the
 /// feed's, the default for each row), `updated`, `scope` (the build that chose it, `group` (the build's one source type
 /// group), `source_types`, `by`, `at`), and
-/// `rows` in the order they are tried, each `name`, `match` (`value` or `pattern`), `value` (the value, or the
-/// pattern), `system_name`, `status` (`translated`, `parked`, `dropped` or `new`), `decided` (`by`, `at`, `reason`),
-/// `group`, `pipeline` and `output_feed` (empty until a source type group handles it; `group_xslt` names the group's
+/// `rows` in the order they are tried, each `name`, `match` (`value`, `pattern` or `member`), `value` (the value, the
+/// pattern, or a list's item), `separator` (a `member` row's: what the list is split on), `system_name`, `status`
+/// (`translated`, `parked`, `dropped` or `new`), `decided` (`by`, `at`, `reason`), `group`, `pipeline` and
+/// `output_feed` (empty until a source type group handles it; `group_xslt` names the group's
 /// XSLT, `uuid` and `name`, once build_translation_xslt saves it), `references` (the reference data its group looks
 /// up: `feed` and `loader_pipeline`) and `profile`.
 ///
@@ -101,11 +103,8 @@ public final class SourceTypeRegistry {
     /// @return Its rows, in the order they are tried.
     public static List<SourceTypeRows.Row> rows(final Map<String, Object> registry) {
         final List<SourceTypeRows.Row> out = new ArrayList<>();
-        JsonValues.listOrEmpty(registry.get("rows")).forEach(item -> {
-            final Map<String, Object> row = JsonValues.mapOrEmpty(item);
-            out.add(new SourceTypeRows.Row(JsonValues.text(row.get("name")), JsonValues.text(row.get("match")),
-                    JsonValues.text(row.get("value"))));
-        });
+        JsonValues.listOrEmpty(registry.get("rows")).forEach(item -> out.add(SourceTypeRows.Row.of(
+                JsonValues.mapOrEmpty(item))));
         return out;
     }
 
@@ -118,8 +117,8 @@ public final class SourceTypeRegistry {
         final List<Map<String, Object>> rows = JsonValues.maps(registry.get("rows"));
         final List<String> lines = new ArrayList<>(List.of("# " + docName(feed), "", account(registry, rows), "",
                 "Rows are tried in order: the first whose match fits a record's " + code(registry.get("field"))
-                + " value takes it (= a value exactly, ~ an anchored pattern on the value). Shares are estimates "
-                + "from the records the survey read.", "",
+                + " value takes it (= a value exactly, ~ an anchored pattern on the value" + listSaid(rows) + ")."
+                + metaSaid(registry.get("field")) + " Shares are estimates from the records the survey read.", "",
                 "| # | Source type | Match | System | Records | Bytes | Message | Top kinds | Signals | Suggested | "
                 + "Status | Examples | Decided |",
                 "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"));
@@ -128,9 +127,7 @@ public final class SourceTypeRegistry {
             final Map<String, Object> profile = JsonValues.mapOrEmpty(row.get("profile"));
             final Map<String, Object> decided = JsonValues.mapOrEmpty(row.get("decided"));
             lines.add("| " + n++ + " | " + cell(row.get("name")) + " | "
-                      + cell(("pattern".equals(row.get("match"))
-                    ? "~ "
-                    : "= ") + JsonValues.text(row.get("value"))) + " | "
+                      + cell(SourceTypeRows.Row.of(row).said()) + " | "
                       + cell(firstSet(row.get("system_name"), registry.get("system_name"), "-")) + " | "
                       + cell(records(profile)) + " | " + cell(percent(profile.get("bytes_share_percent"))) + " | "
                       + cell(formats(profile)) + " | " + cell(kinds(profile)) + " | " + cell(signals(profile))
@@ -150,6 +147,26 @@ public final class SourceTypeRegistry {
                 "Read and written by the Stroom AI tools; do not edit.", "",
                 OPEN + block(registry) + " -->", ""));
         return String.join("\n", lines);
+    }
+
+    // How a list-member row matches, where the registry has one: by its item of the value read as a list.
+    private static String listSaid(final List<Map<String, Object>> rows) {
+        return rows.stream()
+                .filter(row -> SourceTypeRows.MEMBER.equals(row.get("match")))
+                .findFirst()
+                .map(row -> ", " + SourceTypeRows.MEMBER_SIGN + " an item of the value read as a list split on '"
+                            + SourceTypeRows.Row.of(row).separatorOrDefault() + "', exactly once stripped")
+                .orElse("");
+    }
+
+    // Where the field is a part's meta attribute: every record of a part has the part's value.
+    private static String metaSaid(final Object field) {
+        final String attribute = SourceTypeMeta.attribute(JsonValues.text(field));
+        return attribute == null
+                ? ""
+                : " The field is the stream meta attribute " + code(attribute) + " (stroom:meta): each part of a "
+                  + "stream has one value for all its records, so a source type group passes over a whole part at "
+                  + "once.";
     }
 
     // The account of the feed: its field, how many source types, which in what state and why.
