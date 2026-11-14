@@ -101,18 +101,21 @@ final class RenderXslt {
     /// @param name    The name's path in an entry.
     /// @return Its masks and its names, as two XPath sequences, one item an entry.
     static List<String> lookedUpTable(final String entries, final String mask, final String name) {
-        return List.of("(" + entries + ") ! string(" + anyNamespace(mask) + ")",
-                "(" + entries + ") ! string(" + anyNamespace(name) + ")");
+        return List.of("(" + entries + ") ! string(" + itemPath(mask) + ")",
+                "(" + entries + ") ! string(" + itemPath(name) + ")");
     }
 
-    // A path below a reference value, its elements matched in any namespace (the value's elements are in none, or in
-    // the namespace of the data they were copied from).
-    private static String anyNamespace(final String path) {
+    // A path below a table's item, as copied into a reference value from XML or from JSON alike: each named step, in
+    // JSON as Stroom reads it (an element with a key: a JSON object's `mask` is `<string key="mask">`), the element
+    // with that key; else the element of that name in any namespace (the value's elements are in none, or in the
+    // namespace of the XML they were copied from). An attribute, `.`, `*` and a prefixed name are as given.
+    private static String itemPath(final String path) {
         return ToolText.split(ToolText.strip(path, "/"), "/").stream()
                 .filter(step -> !step.isEmpty())
                 .map(step -> step.contains(":") || step.startsWith("@") || ".".equals(step) || "*".equals(step)
                         ? step
-                        : "*:" + step)
+                        : "*[if (@key) then @key = " + XPathText.literal(step) + " else local-name() = "
+                          + XPathText.literal(step) + "]")
                 .collect(Collectors.joining("/"));
     }
 

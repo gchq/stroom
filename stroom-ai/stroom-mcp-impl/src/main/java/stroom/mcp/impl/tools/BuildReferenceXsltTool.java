@@ -143,9 +143,10 @@ class BuildReferenceXsltTool extends AbstractBuiltInTool {
                   + "with combinedParser.textConverter (if the feed is text) and translationFilter.xslt; "
                   + "create_processor_filter on the Raw Reference stream; wait_for_processing "
                   + "output_type='Reference'. Then give the events pipeline references=[{feed, loader_pipeline}]. "
-                  + "Context data (input 'xml', read from each stream's Context child): create_pipeline from the "
-                  + "context loader template (find_reference_data's context_loader_template) with "
-                  + "translationFilter.xslt and combinedParser.type 'XML', and give the events pipeline "
+                  + "Context data (input 'xml' or 'json', read from each stream's Context child): create_pipeline "
+                  + "from the context loader template (find_reference_data's context_loader_template) with "
+                  + "translationFilter.xslt and combinedParser.type 'XML' or 'JSON' (as the input), and give the "
+                  + "events pipeline "
                   + "references=[{stream_type: 'Context', loader_pipeline}]; nothing is processed first.");
         return result;
     }

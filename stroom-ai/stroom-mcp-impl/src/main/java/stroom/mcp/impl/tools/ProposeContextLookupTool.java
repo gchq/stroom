@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /// `propose_context_lookup` - how a feed's records are enriched from the context data each stream part carries
 /// (its `Context` child), when the user asks for it: the context's entries and their fields, the key (the entry fields,
@@ -114,8 +115,10 @@ class ProposeContextLookupTool extends AbstractBuiltInTool {
                 .parameters(ObjectSchema.builder()
                         .addProperty(STREAM_IDS_ARG, stringArraySchema("Sample streams whose parts carry context "
                                                                        + "data."))
-                        .addStringProperty(ENTRIES_ARG, "The context entries' element path below its root, e.g. "
-                                                        + "'Event'; default: the root's most common child.")
+                        .addStringProperty(ENTRIES_ARG, "XML context: the entries' element path below its root, "
+                                                        + "e.g. 'Event' (default: the root's most common child). "
+                                                        + "JSON: one object's array of entries, e.g. 'events' "
+                                                        + "(default: its longest), or '.' for the object itself.")
                         .addStringProperty(MAP_ARG, "The reference map's name (default " + DEFAULT_MAP + ").")
                         .addProperty(KEY_FIELDS_ARG, stringArraySchema("A key to use instead of the one found: "
                                                                        + "the entry fields, e.g. ['@Source', "
@@ -129,8 +132,8 @@ class ProposeContextLookupTool extends AbstractBuiltInTool {
                                                                    + "'EventDetail/Description'.")
                                         .addStringProperty("data_name", "For a path ending in Data, its Name.")
                                         .addStringProperty("from", "The entry value's path in an entry, e.g. "
-                                                                   + "'Description'; for mask_names the table "
-                                                                   + "items' path, e.g. 'Flags/Flag'.")
+                                                                   + "'Description'; for mask_names the table's "
+                                                                   + "path (entry_tables), e.g. 'Flags/Flag'.")
                                         .addEnumProperty("render", ContextProposal.RENDERS, "text: as it is; "
                                                 + "fill_template: a template whose numbered placeholders the "
                                                 + "record's values fill; mask_names: the record's bit mask as the "
@@ -145,7 +148,8 @@ class ProposeContextLookupTool extends AbstractBuiltInTool {
                                         .addStringProperty("mask", "mask_names: the record's field holding the "
                                                                    + "mask.")
                                         .addStringProperty("mask_field", "mask_names: a table item's mask, e.g. "
-                                                                         + "'@Mask'.")
+                                                                         + "'@Mask' (left out for a JSON object "
+                                                                         + "keyed by mask).")
                                         .addStringProperty("name_field", "mask_names: a table item's name, e.g. "
                                                                          + "'@Name'.")
                                         .addBooleanProperty("repeat", "mask_names: one element (Data) a name.")
@@ -190,6 +194,12 @@ class ProposeContextLookupTool extends AbstractBuiltInTool {
                 final ContextLookups.Context read = ContextLookups.entries(contextText, entriesPath);
                 if (first == null) {
                     first = read;
+                } else if (!Objects.equals(first.jsonLayout(), read.jsonLayout())
+                           || first.json() && !first.path().equals(read.path())) {
+                    // One loader reads every part's context: they must be laid out alike.
+                    throw new ToolRefusal("The parts' context data is laid out differently (" + first.describe()
+                                          + "; part " + part + " of stream " + streamId + ": " + read.describe()
+                                          + "): one context loader reads them all");
                 }
                 final String raw = streamReader.rawText(streamId, part, MAX_CHARS).text();
                 parts.add(new Part(streamId, part, read.entries(), ContextLookups.records(raw, MAX_RECORDS)));
@@ -208,7 +218,7 @@ class ProposeContextLookupTool extends AbstractBuiltInTool {
         final List<Key> keys = ContextLookups.keys(parts, contextFields, eventFields);
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("parts", parts.size());
-        result.put("entries", first.root() + "/" + first.path());
+        result.put("entries", first.describe());
         result.put("entry_fields", entryFields(parts));
         result.put("entry_tables", entryTables(parts));
         result.put("keys", keys.stream().map(Key::toMap).toList());
@@ -251,12 +261,16 @@ class ProposeContextLookupTool extends AbstractBuiltInTool {
         result.remove("previews");
         result.put("confirmed", true);
         result.put("reference_mapping", ContextProposal.referenceMapping(map, first, key, outputs));
-        result.put("mapping_entries", ContextProposal.mappingEntries(map, key, outputs));
+        result.put("mapping_entries", ContextProposal.mappingEntries(map, first, key, outputs));
         result.put("reference", reference);
         result.put("hint", "1. build_reference_xslt mapping=reference_mapping, save_xslt it in the build. 2. "
                            + "create_pipeline from find_reference_data's context_loader_template, its "
-                           + "translationFilter.xslt that XSLT and combinedParser.type 'XML' (set_properties): the "
-                           + "context loader. 3. Add mapping_entries to the "
+                           + "translationFilter.xslt that XSLT and combinedParser.type '" + (first.json()
+                ? "JSON"
+                : "XML") + "' (set_properties; no text converter" + (first.json()
+                ? ", and no other parser property: its JSON reader wraps the data in a root map, which "
+                  + "reference_mapping's records allow for"
+                : "") + "): the context loader. 3. Add mapping_entries to the "
                            + "translation's mapping (build_translation_xslt). 4. Give the events pipeline "
                            + "references=[reference] with loader_pipeline the context loader (create_pipeline or "
                            + "update_pipeline). 5. step_sample: records whose key finds no entry, placeholders left "

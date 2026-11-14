@@ -35,8 +35,12 @@ import java.util.regex.Pattern;
 /// each, else joined by the entry's `separator` (default `, `).
 ///
 /// The table is static (`names`) or read for the record from reference data (`lookup`, its `path` giving the table's
-/// entries, each with a `mask` and a `name`: the paths, relative to the entry, of its mask and its name). Set bits no
-/// named mask covers, and a value that isn't such a number, are reported by stepping (a warning naming the record).
+/// entries, each with a `mask` and a `name`: the paths, relative to the entry, of its mask and its name). The entries
+/// may be copied from XML (`@Mask`, `Mask`) or from JSON as Stroom reads it (an array's objects, `mask` reading the
+/// item's `<string key="mask">`; or an object keyed by mask, each item a `<string key="0x1">Read</string>`, read with
+/// mask `@key` and name `.`): a named step is read as an element of that name or a JSON value of that key alike. Set
+/// bits no named mask covers, and a value that isn't such a number, are reported by stepping (a warning naming the
+/// record).
 ///
 /// @param names  Mask -> name, e.g. `{"0x4": "Write"}`, or null.
 /// @param lookup Or the table from reference data, e.g. `{map, key_fields, path: "flags/Flag"}`, or null.

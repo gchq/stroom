@@ -77,17 +77,22 @@ from its template"): work out the details from the data, then confirm them with 
 2. **The proposal**: `propose_context_lookup stream_ids=[...]` reads each part's context entries and records and
    finds the key: the entry fields (up to 3) whose values pick out exactly one entry for most records, with the
    record fields that match them, and its match rate. It lists `entry_fields` and `entry_tables` (lists inside an
-   entry, such as a flag table of mask and name). Propose `outputs` for what the user asked, each `{path, from,
+   entry, such as a flag table of mask and name). The context may be XML (each entry an element; `entries` is their
+   path below the root) or JSON: an array of objects, JSON lines, or one object wrapping its entries (`entries` is the
+   array's dotted key path, found if left out; `.` reads the object itself as the one entry). A JSON entry's fields
+   are dotted paths (`info.name`); its tables are arrays of objects and objects keyed by mask (`{"0x1": "Read"}`). Propose `outputs` for what the user asked, each `{path, from,
    render}`: `text` (the entry's value as it is), `fill_template` (a template whose numbered placeholders the
    record's `values` fill in order; give `pattern`, a regex whose first group is the number, inferred from the
    templates if left out) or `mask_names` (the record's `mask`, a bit mask, as the names of the table's masks it
-   holds; `mask_field` and `name_field` are a table item's paths; `repeat` for one element a name). The reply
+   holds; `mask_field` and `name_field` are a table item's paths, e.g. `@Mask` or a JSON object's `mask`, left out
+   for a JSON object keyed by mask; `repeat` for one element a name). The reply
    previews each for sample records, before and after, as a table: show it, then call again with `confirm=true`;
    the user agrees in a short form.
-3. **The context loader**: the confirmed reply's `reference_mapping` goes to `build_reference_xslt` (input `xml`, the
-   map's `key_fields`), saved with `save_xslt`, then `create_pipeline` from `find_reference_data`'s
-   `context_loader_template` with that XSLT (`translationFilter.xslt`) and `combinedParser.type` `XML` in
-   `set_properties` (XML needs no text converter). Nothing is processed: the loader reads each stream's context as the
+3. **The context loader**: the confirmed reply's `reference_mapping` goes to `build_reference_xslt` as it is (input
+   `xml` or `json`, the map's `key_fields`), saved with `save_xslt`, then `create_pipeline` from
+   `find_reference_data`'s `context_loader_template` with that XSLT (`translationFilter.xslt`) and
+   `combinedParser.type` `XML` or `JSON`, as the context is, in `set_properties` (neither needs a text converter, nor
+   JSON any other property: its reader wraps the data in a root map, which the mapping allows for). Nothing is processed: the loader reads each stream's context as the
    stream is processed.
 4. **The lookups**: add the reply's `mapping_entries` to the translation's mapping (lookups with `key_fields`, the
    same fields in the same order as the loader's; `fill_template`; `mask_names` with a lookup of the copied table),

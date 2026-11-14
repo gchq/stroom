@@ -5,9 +5,15 @@
 # both parts, and one template is worded differently in each part, so a lookup that read another part's context would
 # write a different description.
 #
+# The same entries are also written as JSON context data (TestE2eContextLookups' JSON variant): one object wrapping an
+# array of entries, the event id and version JSON numbers, the keywords both a table of {mask, name} objects and an
+# object keyed by mask. The records, and so what each should say, are the same; writing it draws nothing from the
+# seeded random numbers, so the XML files are as they were.
+#
 # Usage: python3 context-lookups-generator.py <dir>
-# Writes <dir>/context-parts.json ([{sample, context}], one per part) and <dir>/context-expected.json (per part, per
-# record: description, keyword names and opcode name, computed here independently of Stroom and the tools).
+# Writes <dir>/context-parts.json ([{sample, context}], one per part, XML context), <dir>/context-parts-json.json (the
+# same samples, JSON context) and <dir>/context-expected.json (per part, per record: description, keyword names and
+# opcode name, computed here independently of Stroom and the tools).
 import json, os, random, re, sys, datetime as dt
 
 out = sys.argv[1]
@@ -97,6 +103,19 @@ def context(part):
     return "\n".join(lines) + "\n"
 
 
+def json_context(part):
+    # The same entries as context(part), as JSON.
+    entries = []
+    for key in EVENTS:
+        provider, event_id, version = key
+        _, opcode, opcode_name, task, _, _ = EVENTS[key]
+        entries.append({"provider": provider, "event_id": int(event_id), "version": int(version),
+                        "description": template(key, part), "opcode": opcode_name, "task": task,
+                        "keywords": [{"mask": mask, "name": name} for mask, name in KEYWORDS[provider]],
+                        "keyword_names": {mask: name for mask, name in KEYWORDS[provider]}})
+    return json.dumps({"source": "context-lookups-generator", "events": entries}, indent=1, ensure_ascii=False) + "\n"
+
+
 def filled(text, values):
     return re.sub(r"%(\d+)", lambda m: values[int(m.group(1)) - 1] if 1 <= int(m.group(1)) <= len(values)
                   else m.group(0), text)
@@ -113,6 +132,7 @@ def names(mask, table):
 
 
 parts = []
+json_parts = []
 expected = []
 record_id = 1000
 t = dt.datetime(2026, 11, 14, 9, 0, 0)
@@ -140,10 +160,14 @@ for part, keys in enumerate(PART_EVENTS):
                        "keywords": names(mask, KEYWORDS[provider]), "opcode": opcode_name})
     events.append("</Events>")
     parts.append({"sample": "\n".join(events) + "\n", "context": context(part)})
+    json_parts.append({"sample": "\n".join(events) + "\n", "context": json_context(part)})
     expected.append(wanted)
 
 with open(os.path.join(out, "context-parts.json"), "w", encoding="utf-8") as f:
     json.dump(parts, f, indent=1, ensure_ascii=False)
+    f.write("\n")
+with open(os.path.join(out, "context-parts-json.json"), "w", encoding="utf-8") as f:
+    json.dump(json_parts, f, indent=1, ensure_ascii=False)
     f.write("\n")
 with open(os.path.join(out, "context-expected.json"), "w", encoding="utf-8") as f:
     json.dump(expected, f, indent=1, ensure_ascii=False)
