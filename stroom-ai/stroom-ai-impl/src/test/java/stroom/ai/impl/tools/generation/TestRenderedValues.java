@@ -16,10 +16,15 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.pipeline.xml.converter.json.JSONParserFactory;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.xml.sax.InputSource;
 
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.math.BigInteger;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -28,6 +33,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.sax.SAXSource;
+import javax.xml.transform.stream.StreamResult;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -284,6 +293,73 @@ class TestRenderedValues extends XsltRuns {
     }
 
     @Test
+    void jsonContextIsLoadedAndLookedUpAsXmlIsWithBothShapesOfMaskTable() {
+        // Context data as JSON, read by Stroom's own JSON reader (its root map added, as a CombinedParser's is): an
+        // object wrapping its entries, numbers among the key, a table of {mask, name} objects and one keyed by mask.
+        final String context = stroomXml("""
+                {"source": "test", "entries": [
+                  {"source": "P1", "id": 7, "version": 0, "text": "Hello %1", "step": "Start",
+                   "flags": [{"mask": "0x1", "name": "One"}, {"mask": "0x8000000000000000", "name": "Top"}],
+                   "named": {"0x1": "One", "9223372036854775808": "Top"}},
+                  {"source": "P1", "id": 7, "version": 1, "text": "Hi %1, version 1", "step": "Stop",
+                   "flags": [{"mask": 2, "name": "Two"}], "named": {"0x2": "Two"}},
+                  {"source": " P2 ", "id": 7, "version": 0, "text": "Other", "step": "Info", "flags": [],
+                   "named": {}}]}""");
+        // As propose_context_lookup writes it for this context.
+        final ReferenceMapping reference = ReferenceMapping.fromJson(json("""
+                {"input": "json", "json_layout": "lines",
+                 "record": "/map/map/array[@key = 'entries']/map | /map/array[@key = 'entries']/map",
+                 "maps": [{"name": "ENTRY_INFO", "key_fields": ["source", "id", "version"],
+                  "values": [{"element": "text", "field": "text"}, {"element": "step", "field": "step"},
+                             {"element": "flags", "xpath": "*[@key='flags']/*", "copy": true},
+                             {"element": "named", "xpath": "*[@key='named']/*", "copy": true}]}]}"""));
+        final Map<String, String> values = loaded(reference, context);
+        assertThat(values.keySet()).as("the loader's keys, as the Java key is made of the JSON values")
+                .containsExactly("ENTRY_INFO\n" + LookupKeys.key(List.of("P1", "7", "0")),
+                        "ENTRY_INFO\n" + LookupKeys.key(List.of("P1", "7", "1")),
+                        "ENTRY_INFO\n" + LookupKeys.key(List.of("P2", "7", "0")));
+
+        final Map<String, Object> key = Map.of("map", "ENTRY_INFO", "key_fields", List.of("src", "id", "ver"));
+        final List<Object> fields = new ArrayList<>(LOGON);
+        fields.add(Map.of("path", "EventDetail/Description", "lookup", keyed(key, "path", "text"),
+                "fill_template", Map.of("pattern", PLACEHOLDER, "xpath", "tokenize(data[@name='args']/@value, ';')")));
+        fields.add(Map.of("path", "EventDetail/Authenticate/Data", "data_name", "step",
+                "lookup", keyed(key, "path", "step")));
+        fields.add(Map.of("path", "EventDetail/Authenticate/Data", "data_name", "flag", "field", "mask",
+                "repeat", true, "mask_names", Map.of("lookup", keyed(key, "path", "flags/*"), "mask", "mask",
+                        "name", "name")));
+        fields.add(Map.of("path", "EventDetail/Authenticate/Data", "data_name", "named", "field", "mask",
+                "separator", "|", "mask_names", Map.of("lookup", keyed(key, "path", "named/*"), "mask", "@key",
+                        "name", ".")));
+        final XsltGenerator.Generated events = XsltGenerator.generate(mapping(with("events",
+                List.of(rule("logon", List.of(equalsCondition("action", "login")), fields), otherRule()))),
+                SCHEMA, "4.1.0");
+        assertThat(events.ok()).as(String.valueOf(events.problems())).isTrue();
+
+        final XmlElement v0 = lookedUp(events.xslt(), values, "P1", "7", "0", "bob", "0x8000000000000001");
+        assertThat(text(v0, "EventDetail/Description")).isEqualTo("Hello bob");
+        assertThat(data(v0, "step")).containsExactly("Start");
+        assertThat(data(v0, "flag")).as("an array's objects, by their mask and name keys")
+                .containsExactly("One", "Top");
+        assertThat(data(v0, "named")).as("an object keyed by mask, bit 63 as a decimal key")
+                .containsExactly("One|Top");
+        final XmlElement top = lookedUp(events.xslt(), values, "P1", "7", "0", "bob", "0x8000000000000000");
+        assertThat(data(top, "flag")).as("bit 63 alone").containsExactly("Top");
+        assertThat(data(top, "named")).containsExactly("Top");
+        final XmlElement v1 = lookedUp(events.xslt(), values, "P1", "7", "1", "bob", "2");
+        assertThat(text(v1, "EventDetail/Description")).isEqualTo("Hi bob, version 1");
+        assertThat(data(v1, "flag")).as("a mask written as a JSON number").containsExactly("Two");
+        assertThat(data(v1, "named")).containsExactly("Two");
+        final XmlElement empty = lookedUp(events.xslt(), values, "P2", "7", "0", "bob", "0x1");
+        assertThat(data(empty, "step")).containsExactly("Info");
+        assertThat(data(empty, "flag")).as("an empty table names nothing").isEmpty();
+
+        assertThat(RenderXslt.lookedUpTable("$items", "mask", "name").getFirst())
+                .as("one item path reads an XML element and a JSON value alike")
+                .contains("@key = 'mask'", "local-name() = 'mask'");
+    }
+
+    @Test
     void aLookupKeyIsOneOfFieldXpathOrKeyFields() {
         assertThatThrownBy(() -> entryOf(Map.of("path", "EventSource/User/Name", "lookup", Map.of("map", "M",
                 "field", "a", "key_fields", List.of("a", "b"))))).hasMessageContaining("exactly one of field, xpath "
@@ -305,6 +381,33 @@ class TestRenderedValues extends XsltRuns {
     private static Map<String, Object> fillEntry(final String pattern) {
         return Map.of("path", "EventDetail/Description", "field", "template",
                 "fill_template", Map.of("pattern", pattern, "field", "args"));
+    }
+
+    // Each reference the loader writes, its value's XML by map and key, as the lookup stub reads them.
+    private static Map<String, String> loaded(final ReferenceMapping reference, final String input) {
+        final ReferenceGenerator.Generated loader = ReferenceGenerator.generate(reference);
+        assertThat(loader.ok()).as(String.valueOf(loader.problems())).isTrue();
+        final XmlElement data = transform(loader.xslt(), input);
+        final Map<String, String> values = new LinkedHashMap<>();
+        for (final XmlElement found : data.iterElements(ReferenceGenerator.REF, "reference")) {
+            final String map = found.childElements(ReferenceGenerator.REF, "map").getFirst().text();
+            final String key = found.childElements(ReferenceGenerator.REF, "key").getFirst().text();
+            final XmlElement value = found.childElements(ReferenceGenerator.REF, "value").getFirst();
+            values.put(map + "\n" + key, XmlSerialiser.toXml(value.childElements().getFirst()));
+        }
+        return values;
+    }
+
+    // JSON as XML, as Stroom's JSON reader writes it (with its root map, as a CombinedParser of type JSON reads it).
+    private static String stroomXml(final String json) {
+        try {
+            final StringWriter out = new StringWriter();
+            TransformerFactory.newInstance().newTransformer().transform(new SAXSource(new JSONParserFactory()
+                    .getParser(), new InputSource(new StringReader(json))), new StreamResult(out));
+            return out.toString();
+        } catch (final TransformerException e) {
+            throw new IllegalStateException(e.getMessage(), e);
+        }
     }
 
     private static Map<String, Object> keyed(final Map<String, Object> lookup, final String key, final Object value) {

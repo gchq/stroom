@@ -32,7 +32,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /// How a stream's records pick out entries of their part's context data: the entries read from the context (XML,
-/// each entry an element, its fields XML paths relative to it), the records' fields read alike, and the key, the
+/// each entry an element, its fields XML paths relative to it; or JSON, each entry an object, its fields dotted key
+/// paths, [ContextJson]), the records' fields read alike, and the key, the
 /// combination of up to [LookupKeys#MAX_FIELDS] entry fields whose values pick out exactly one entry for most
 /// records. Each part's records are matched against that part's own context, as a Context lookup reads them.
 ///
@@ -61,18 +62,23 @@ final class ContextLookups {
         // Static only.
     }
 
-    /// @param context The context data: an XML document.
-    /// @param entries The entries' path below its root element (`/`-separated names), or null for the root's most
-    ///                common child.
+    /// @param context The context data: an XML document, or JSON (read as [ContextJson] says).
+    /// @param entries XML: the entries' path below its root element (`/`-separated names), or null for the root's
+    ///                most common child. JSON: the entries' array's key path in one object, or null to find it.
     /// @return The context's entries, and where they are.
-    /// @throws ToolRefusal if the context isn't XML, or holds no such entries.
+    /// @throws ToolRefusal if the context is neither XML nor JSON, or holds no such entries.
     static Context entries(final String context, final String entries) {
+        final String text = context.strip();
+        if (text.startsWith("{") || text.startsWith("[")) {
+            return ContextJson.entries(text, entries);
+        }
         final XmlTree.Element root;
         try {
             root = XmlTree.parse(context);
         } catch (final XmlTree.XmlException e) {
-            throw new ToolRefusal("The context data isn't one XML document (" + e.getMessage() + "): context "
-                                  + "lookups read XML context data, each entry an element");
+            throw new ToolRefusal("The context data isn't one XML document (" + e.getMessage() + ") or JSON: "
+                                  + "context lookups read XML context data, each entry an element, or JSON, each "
+                                  + "entry an object");
         }
         String path = entries == null || entries.isBlank()
                 ? commonChild(root)
@@ -99,7 +105,7 @@ final class ContextLookups {
         for (final XmlTree.Element element : found) {
             out.add(entry(element));
         }
-        return new Context(root.localName(), root.namespace(), path, out);
+        return new Context(root.localName(), root.namespace(), path, out, null);
     }
 
     /// @param text One part's raw text.
@@ -123,9 +129,12 @@ final class ContextLookups {
             final Map<String, Object> parsed = chunk.parsedAt(i);
             final Map<String, List<String>> fields = new LinkedHashMap<>();
             if (parsed != null) {
+                // A JSON array's items are the field's values, in order (a template's values, say).
                 parsed.forEach((name, value) -> fields.put(name, value == null
                         ? List.of()
-                        : List.of(String.valueOf(value))));
+                        : value instanceof final List<?> items
+                                ? items.stream().map(String::valueOf).toList()
+                                : List.of(String.valueOf(value))));
             }
             out.add(fields);
         }
@@ -415,18 +424,34 @@ final class ContextLookups {
 
     /// A part's context data.
     ///
-    /// @param root      The root element's name.
-    /// @param namespace Its namespace, or null.
-    /// @param path      The entries' path below the root.
-    /// @param entries   The entries.
-    record Context(String root, String namespace, String path, List<Entry> entries) {
+    /// @param root       XML: the root element's name; JSON: null.
+    /// @param namespace  XML: its namespace, or null.
+    /// @param path       XML: the entries' path below the root; JSON: the entries' array's key path (dotted) in a
+    ///                   [ContextJson#WRAPPED] object, else empty.
+    /// @param entries    The entries.
+    /// @param jsonLayout JSON: how the entries are laid out ([ContextJson#ARRAY], [ContextJson#LINES],
+    ///                   [ContextJson#WRAPPED] or [ContextJson#OBJECT]); XML: null.
+    record Context(String root, String namespace, String path, List<Entry> entries, String jsonLayout) {
 
+        /// @return True if the context data is JSON.
+        boolean json() {
+            return jsonLayout != null;
+        }
+
+        /// @return Where its entries are, as the agent is told.
+        String describe() {
+            return json()
+                    ? ContextJson.describe(this)
+                    : root + "/" + path;
+        }
     }
 
     /// One context entry.
     ///
-    /// @param fields Its fields that come up once, by XML path relative to it (`@Id`, `Info/Name`).
-    /// @param tables Its lists (a list element's items, each its fields by path relative to the item), by path.
+    /// @param fields Its fields that come up once, by XML path relative to it (`@Id`, `Info/Name`), or by JSON's
+    ///               dotted key path (`Id`, `Info.Name`).
+    /// @param tables Its lists (a list element's items, a JSON array's objects or a JSON object keyed by mask, each
+    ///               item its fields by path relative to it), by path.
     record Entry(Map<String, String> fields, Map<String, List<Map<String, String>>> tables) {
 
     }

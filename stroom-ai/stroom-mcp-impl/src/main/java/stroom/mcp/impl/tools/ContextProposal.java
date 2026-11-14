@@ -84,8 +84,8 @@ final class ContextProposal {
             String pattern = text(map.get("pattern"));
             final String values = text(map.get("values"));
             final String mask = text(map.get("mask"));
-            final String maskField = text(map.get("mask_field"));
-            final String nameField = text(map.get("name_field"));
+            String maskField = text(map.get("mask_field"));
+            String nameField = text(map.get("name_field"));
             if (FILL_TEMPLATE.equals(render)) {
                 if (values == null) {
                     throw new ToolRefusal(where + ": fill_template needs values, the record's field (or xpath) "
@@ -95,10 +95,18 @@ final class ContextProposal {
                     pattern = inferPattern(parts, from);
                 }
             }
+            if (MASK_NAMES.equals(render) && maskField == null && nameField == null && keyedTable(parts, from)) {
+                // A JSON object keyed by mask: its keys are the masks, its values the names.
+                maskField = ContextJson.KEY;
+                nameField = ContextJson.VALUE;
+            }
             if (MASK_NAMES.equals(render) && (mask == null || maskField == null || nameField == null)) {
                 throw new ToolRefusal(where + ": mask_names needs mask (the record's field holding the bit mask), "
                                       + "and mask_field and name_field (the paths of a table item's mask and name, "
-                                      + "e.g. '@Mask' and '@Name'); from is the table's items' path in the entry");
+                                      + "e.g. '@Mask' and '@Name', or 'mask' and 'name' in a JSON array's objects; "
+                                      + "left out for a JSON object keyed by mask); from is the table's path in the "
+                                      + "entry (an XML list's items, e.g. 'Flags/Flag', or a JSON table's key, e.g. "
+                                      + "'flags')");
             }
             out.add(new Output(path, text(map.get("data_name")), from, render, pattern, values, mask, maskField,
                     nameField, Boolean.TRUE.equals(map.get("repeat")) || "true".equals(text(map.get("repeat"))),
@@ -163,7 +171,11 @@ final class ContextProposal {
             final Map<String, Object> value = new LinkedHashMap<>();
             value.put("element", output.element());
             if (MASK_NAMES.equals(output.render())) {
-                value.put("xpath", output.from());
+                // The table's items copied: an XML list's items, or a JSON table's items as Stroom's JSON reader
+                // writes them (an array's maps, or a keyed object's values, each with its key).
+                value.put("xpath", context.json()
+                        ? ContextJson.selector(output.from()) + "/*"
+                        : output.from());
                 value.put("copy", true);
             } else {
                 value.put("field", output.from());
@@ -175,20 +187,33 @@ final class ContextProposal {
         mapEntry.put("key_fields", key.contextFields());
         mapEntry.put("values", values);
         final Map<String, Object> out = new LinkedHashMap<>();
-        out.put("input", "xml");
-        out.put("record", "*/" + context.path());
-        if (context.namespace() != null && !context.namespace().isEmpty()) {
-            out.put("xml_namespace", context.namespace());
+        if (context.json()) {
+            out.put("input", "json");
+            out.put("json_layout", ContextJson.jsonLayout(context));
+            final String record = ContextJson.recordPath(context);
+            if (record != null) {
+                out.put("record", record);
+            }
+        } else {
+            out.put("input", "xml");
+            out.put("record", "*/" + context.path());
+            if (context.namespace() != null && !context.namespace().isEmpty()) {
+                out.put("xml_namespace", context.namespace());
+            }
         }
         out.put("maps", List.of(mapEntry));
         return out;
     }
 
     /// @param map     The map's name.
+    /// @param context The context's entries and where they are: a JSON table's items are read by their keys.
     /// @param key     The key.
     /// @param outputs The outputs.
     /// @return The translation's mapping entries that fill them, for build_translation_xslt.
-    static List<Map<String, Object>> mappingEntries(final String map, final Key key, final List<Output> outputs) {
+    static List<Map<String, Object>> mappingEntries(final String map,
+                                                    final ContextLookups.Context context,
+                                                    final Key key,
+                                                    final List<Output> outputs) {
         final List<Map<String, Object>> out = new ArrayList<>();
         for (final Output output : outputs) {
             final Map<String, Object> entry = new LinkedHashMap<>();
@@ -206,9 +231,16 @@ final class ContextProposal {
                     entry.put("separator", output.separator());
                 }
                 final Map<String, Object> names = new LinkedHashMap<>();
-                names.put("lookup", lookup(map, key, output.element() + "/" + lastStep(output.from())));
-                names.put("mask", output.maskField());
-                names.put("name", output.nameField());
+                if (context.json()) {
+                    // The copied items, whatever their element (a map, or a keyed object's string or number).
+                    names.put("lookup", lookup(map, key, output.element() + "/*"));
+                    names.put("mask", ContextJson.itemPath(output.maskField()));
+                    names.put("name", ContextJson.itemPath(output.nameField()));
+                } else {
+                    names.put("lookup", lookup(map, key, output.element() + "/" + lastStep(output.from())));
+                    names.put("mask", output.maskField());
+                    names.put("name", output.nameField());
+                }
                 entry.put("mask_names", names);
             } else {
                 entry.put("lookup", lookup(map, key, output.element()));
@@ -232,6 +264,19 @@ final class ContextProposal {
         lookup.put("key_fields", key.eventFields());
         lookup.put("path", path);
         return lookup;
+    }
+
+    // Whether the entries' table at a path is a JSON object keyed by mask (its items each a key and a value).
+    private static boolean keyedTable(final List<Part> parts, final String from) {
+        for (final Part part : parts) {
+            for (final Entry entry : part.entries()) {
+                final List<Map<String, String>> items = entry.tables().get(from);
+                if (items != null && !items.isEmpty()) {
+                    return items.getFirst().keySet().equals(Set.of(ContextJson.KEY, ContextJson.VALUE));
+                }
+            }
+        }
+        return false;
     }
 
     // The placeholder pattern most of the entries' templates hold, of those commonly written; %(\d+) when none.

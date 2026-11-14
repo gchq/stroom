@@ -4824,9 +4824,12 @@ pipeline reference and its mapping reads the map with `lookup`.
 
 * **Context data**: `input: 'xml'` reads XML records (fields are XML paths relative to a record, root `/` and record
   `*/*` by default, `xml_namespace` the records' default namespace), as a context loader reads a stream's Context
-  child. A map's `key_fields` (1 to 3) makes its key as a lookup's `key_fields` does (`LookupKeys`: each value
-  normalised, joined by U+241F), and a value part's `copy: true` copies the nodes it selects (a table of items for
-  `mask_names`) into its element.
+  child; JSON context data is `input: 'json'` as for a JSON reference feed (`json_layout`, dotted fields, `record`
+  for entries wrapped in an object). A map's `key_fields` (1 to 3) makes its key as a lookup's `key_fields` does
+  (`LookupKeys`: each value normalised, joined by U+241F), and a value part's `copy: true` copies the nodes it
+  selects (a table of items for `mask_names`) into its element. From JSON input they are copied in no namespace
+  (`ReferenceGenerator.PLAIN_COPY`, each element keeping its `key`): Stroom's reference store refused the JSON
+  namespace copied with them ("Duplicate namespace attribute entry" reading the value back, seen in e2e).
 * **Arguments**: `mapping` (required; object or JSON text: input, root, record, maps with name, key (or key_xpath or
   key_fields) and value parts, imports, drop rules, xml_namespace); `schema_version` (default: the highest version of
   the reference-data schemas this
@@ -4846,10 +4849,17 @@ the user) · confirms itself · chat group build · Classes: `ProposeContextLook
 
 Only on the user's request (the survey never looks at context data): how a feed's records are enriched from the
 context data each stream part carries. For each part of the `stream_ids` (up to 20 a stream) it reads the Context
-child (XML; each entry an element at `entries` below the root, by default the root's most common child) and the
-part's records (`RecordSplitter`; an XML record's fields its XML paths relative to it). Each entry's fields are the
-paths that come up once in it; a list element's items (children of one name, each with fields of its own) are its
-tables (`entry_tables`, for `mask_names`). The key (`ContextLookups.keys`) is found by value sets: an entry field
+child and the part's records (`RecordSplitter`; an XML record's fields its XML paths relative to it, a JSON record's
+its dotted paths, an array's items its values). XML context: each entry an element at `entries` below the root, by
+default the root's most common child; an entry's fields are the paths that come up once in it, and a list element's
+items (children of one name, each with fields of its own) are its tables (`entry_tables`, for `mask_names`). JSON
+context (`ContextJson`, told by its first character): an array of objects, JSON lines, one object wrapping its
+entries (the array at `entries`, a dotted key path, by default its array holding the most objects, three levels deep
+at most), or one object holding no such array (or `entries` `.`) as the one entry; every part's must be laid out
+alike, as one loader reads them. An entry's fields are its scalars by dotted path (numbers as written, nulls and
+arrays of scalars left out); its tables are its arrays of objects and its objects keyed by mask (every key a non-zero
+mask, every value a scalar), whose items are `{"@key": mask, ".": name}`, so a mask_names output of one needs no
+`mask_field` or `name_field`. The key (`ContextLookups.keys`) is found by value sets: an entry field
 every entry has is paired with the record field most of whose values are among its values (then the one covering
 most of its values, then the same name); combinations of up to 3 paired fields that tell every part's entries apart
 are counted against that part's records, smallest first, stopping at a size where one matches every record. Each
@@ -4861,10 +4871,14 @@ mask_field?, name_field?, repeat?, separator?}`) it previews each for two sample
 are) with the Java stand-ins of the generated functions (`FillTemplate.fill`, `MaskNames.named`), as a table for the
 chat (`needs_showing`); a template's pattern left out is the commonest of `%(\d+)`, `\{(\d+)\}` and `\$(\d+)` in
 its entries. Called again with `confirm=true`, the user agrees in a short plain-text form (the key, its match rate,
-the outputs' count), and the reply gives `reference_mapping` (for build_reference_xslt: input xml, the map's
-`key_fields`, a value element per output, a mask table copied whole), `mapping_entries` (for build_translation_xslt:
-lookups with the matching `key_fields`, `fill_template`, `mask_names` with a lookup of the copied table) and
-`reference` (`{stream_type: 'Context', loader_pipeline}`), with the steps after.
+the outputs' count), and the reply gives `reference_mapping` (for build_reference_xslt: input xml, or json with its
+`json_layout` (`array`, else `lines`) and, for wrapped entries, `record` where Stroom's JSON reader puts them with its
+root map or without; the map's `key_fields`, a value element per output, a mask table copied whole: an XML list's
+items, a JSON table's items `*[@key='t']/*`), `mapping_entries` (for build_translation_xslt: lookups with the
+matching `key_fields`, `fill_template`, `mask_names` with a lookup of the copied table, a JSON table's at `t/*` with
+its item paths `/`-separated) and `reference` (`{stream_type: 'Context', loader_pipeline}`), with the steps after:
+the hint names the loader's `combinedParser.type`, `XML` or `JSON` as the context is (a CombinedParser's JSON reader
+always adds its root map; no other property is needed).
 
 * **Arguments**: `stream_ids` (required), `entries`, `map` (default `CONTEXT_ENTRY`), `key_fields` and
   `event_key_fields` (together), `outputs`, `confirm`.
@@ -4872,9 +4886,11 @@ lookups with the matching `key_fields`, `fill_template`, `mask_names` with a loo
   item), `keys` (up to 3, best first: `key_fields`, `event_key_fields`, `matched`, `records`, `match_rate`); with
   outputs `previews` (`stream`, `part`, `record`, `key`, and per output `before`, `after`, `reported`), `status`
   `needs_showing` and `table`; confirmed, `reference_mapping`, `mapping_entries`, `reference`.
-* **Refuses**: no stream ids; no part with a Context child; context data that isn't one XML document or has no
-  entries at the path; `key_fields` without `event_key_fields` (or of different lengths, or over 3); an output without
-  path, from or a known render, a fill_template without values, a mask_names without mask, mask_field and name_field;
+* **Refuses**: no stream ids; no part with a Context child; context data that is neither one XML document nor JSON,
+  or has no entries at the path (JSON: no objects, `entries` for an array or JSON lines); parts whose JSON context is
+  laid out differently; `key_fields` without `event_key_fields` (or of different lengths, or over 3); an output without
+  path, from or a known render, a fill_template without values, a mask_names without mask, mask_field and name_field
+  (but for a JSON table keyed by mask);
   the user declining the form.
 
 ## Documentation, CEF and coverage
@@ -6121,7 +6137,9 @@ lookup whose key has a different number of fields than a loader of its map write
 `fill_template` (`FillTemplate`: a placeholder regex whose first group is the number, and a field or xpath giving the
 values in order) fills the entry's input, a template, with `mcp:fill-template` (`xsl:analyze-string`; a placeholder
 with no value, or a match whose group isn't a number, is left as written). `mask_names` (`MaskNames`: a static
-`names` table or a looked-up one, its items' `mask` and `name` paths) writes the names of the masks an unsigned
+`names` table or a looked-up one, its items' `mask` and `name` paths, each named step an element of that name or, for
+an element with a `key` attribute (JSON as Stroom reads it, copied by a JSON loader), the one of that key; `@key` and
+`.` read a JSON object keyed by mask) writes the names of the masks an unsigned
 64-bit value (decimal or `0x` hex) holds, with `mcp:mask-names`: XPath has no bitwise operators, so the value is an
 `xs:integer` split into set bits by halving (`mcp:set-bits`), exact for bit 63; a mask names the value when all its
 bits are set; names in the table's order, each once, one element each with `repeat` else joined by `separator`. Both

@@ -139,7 +139,7 @@ class TestContextLookups {
                 .containsExactly("text", "flag", "step");
         assertThat(read.maps().getFirst().values().get(1).copy()).isTrue();
 
-        final List<Map<String, Object>> entries = ContextProposal.mappingEntries("M", key, outputs);
+        final List<Map<String, Object>> entries = ContextProposal.mappingEntries("M", context, key, outputs);
         assertThat(entries.get(0)).containsEntry("lookup", Map.of("map", "M", "key_fields", key.eventFields(),
                 "path", "text")).containsEntry("fill_template", Map.of("pattern", "%(\\d+)", "field", "Data/V"));
         assertThat(entries.get(1)).containsEntry("field", "Sys/Flags").containsEntry("repeat", true)

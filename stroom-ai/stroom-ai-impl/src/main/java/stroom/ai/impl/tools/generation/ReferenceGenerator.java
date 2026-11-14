@@ -42,6 +42,9 @@ public final class ReferenceGenerator {
     /// The reference-data schema version written by default.
     public static final String DEFAULT_VERSION = "2.0.1";
 
+    /// The mode a JSON table is copied in: its elements in no namespace, each keeping its `key`.
+    public static final String PLAIN_COPY = "plain-copy";
+
     private static final String XSL = XmlTrees.XSL;
     private static final Map<String, String> INPUT_NAMESPACE = Map.of("data_splitter", "records:2", "json",
             "http://www.w3.org/2013/XSL/json");
@@ -129,6 +132,9 @@ public final class ReferenceGenerator {
         for (final ReferenceMap map : mapping.maps()) {
             writeMap(mapping, map, recordTemplate);
         }
+        if (copiesJson(mapping)) {
+            sheet.append(plainCopyTemplate());
+        }
         return new Generated(true, List.of(), XmlSerialiser.toPrettyDocument(sheet),
                 mapping.maps().stream().map(ReferenceMap::name).toList());
     }
@@ -163,6 +169,11 @@ public final class ReferenceGenerator {
                     : parent.addElement(XSL, "element", "name", part.element(), "namespace", "");
             if (part.value() != null) {
                 holder.setText(part.value());
+            } else if (part.copy() && "json".equals(mapping.input())) {
+                // JSON's nodes, in no namespace: Stroom's reference store refused the JSON namespace copied with
+                // them ("Duplicate namespace attribute entry" reading the value back).
+                holder.addElement(XSL, "apply-templates", "select", orSelector(mapping, part.xpath(), part.field()),
+                        "mode", PLAIN_COPY);
             } else if (part.copy()) {
                 // The nodes themselves (a table of entries), for a lookup's path to read.
                 holder.addElement(XSL, "copy-of", "select", orSelector(mapping, part.xpath(), part.field()),
@@ -171,6 +182,20 @@ public final class ReferenceGenerator {
                 holder.addElement(XSL, "value-of", "select", orSelector(mapping, part.xpath(), part.field()));
             }
         }
+    }
+
+    private static boolean copiesJson(final ReferenceMapping mapping) {
+        return "json".equals(mapping.input()) && mapping.maps().stream()
+                .anyMatch(map -> map.values().stream().anyMatch(ReferenceValue::copy));
+    }
+
+    // Copies an element and what it holds in no namespace, its attributes (a JSON value's key) as they are.
+    private static XmlElement plainCopyTemplate() {
+        final XmlElement template = XmlElement.create(XSL, "template", "match", "*", "mode", PLAIN_COPY);
+        final XmlElement element = template.addElement(XSL, "element", "name", "{local-name()}", "namespace", "");
+        element.addElement(XSL, "copy-of", "select", "@*");
+        element.addElement(XSL, "apply-templates", "mode", PLAIN_COPY);
+        return template;
     }
 
     // An XPath given, or else the field's selector.

@@ -37,11 +37,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// Context reference, a clean step and processing; then every Event holds the description, keyword names and opcode
 /// name expected, each part's from its own context (one template is worded differently in each part's context, and
 /// a provider's version changes between the parts).
+///
+/// The JSON variant walks the same records with the same entries as JSON context data (one object wrapping an array of
+/// entries, the event id and version JSON numbers), read by a loader whose CombinedParser is of type JSON, and names
+/// the keywords from both shapes of JSON table: an array of {mask, name} objects and an object keyed by mask.
 @SuppressWarnings("unchecked")
 class TestE2eContextLookups extends AbstractE2eTest {
-
-    private static final String BUILD = "e2e-context";
-    private static final String FEED = "E2E-CONTEXT";
     private static final String NS = "http://schemas.microsoft.com/win/2004/08/events/event";
     private static final List<Map<String, Object>> COMMON = List.of(
             Map.of("path", "EventTime/TimeCreated", "field", "System/TimeCreated/@SystemTime",
@@ -51,14 +52,47 @@ class TestE2eContextLookups extends AbstractE2eTest {
             Map.of("path", "EventSource/Generator", "value", "context-lookups"),
             Map.of("path", "EventSource/Device/HostName", "field", "System/Computer"));
 
+    private static final Variant XML = new Variant("e2e-context", "E2E-CONTEXT", "context/context-parts.json", "XML",
+            List.of("@Provider", "@EventID", "@Version"), List.of("Keywords/Keyword"), List.of(
+            Map.of("path", "EventDetail/Description", "from", "Description", "render", "fill_template",
+                    "values", "EventData/Data"),
+            Map.of("path", "EventDetail/Alert/Data", "data_name", "KeywordName", "from", "Keywords/Keyword",
+                    "render", "mask_names", "mask", "System/Keywords", "mask_field", "@Mask",
+                    "name_field", "@Name", "repeat", true),
+            Map.of("path", "EventDetail/Alert/Data", "data_name", "OpCodeName", "from", "Opcode",
+                    "render", "text")));
+    private static final Variant JSON = new Variant("e2e-context-json", "E2E-CONTEXT-JSON",
+            "context/context-parts-json.json", "JSON", List.of("provider", "event_id", "version"),
+            List.of("keywords", "keyword_names"), List.of(
+            Map.of("path", "EventDetail/Description", "from", "description", "render", "fill_template",
+                    "values", "EventData/Data"),
+            Map.of("path", "EventDetail/Alert/Data", "data_name", "KeywordName", "from", "keywords",
+                    "render", "mask_names", "mask", "System/Keywords", "mask_field", "mask",
+                    "name_field", "name", "repeat", true),
+            Map.of("path", "EventDetail/Alert/Data", "data_name", "OpCodeName", "from", "opcode",
+                    "render", "text"),
+            Map.of("path", "EventDetail/Alert/Data", "data_name", "KeywordNames", "from", "keyword_names",
+                    "render", "mask_names", "mask", "System/Keywords")));
+
     @Test
     void eachPartsEventsAreDescribedFromItsOwnContext() {
-        final List<Map<String, Object>> parts = JsonUtil.readValue(textResource("context/context-parts.json"),
-                List.class);
+        walk(XML);
+    }
+
+    @Test
+    void eachPartsEventsAreDescribedFromItsOwnJsonContext() {
+        walk(JSON);
+    }
+
+    // The walk, upload to processed Events, every Event checked against the generator's expectations.
+    private void walk(final Variant variant) {
+        final String build = variant.build();
+        final String feed = variant.feed();
+        final List<Map<String, Object>> parts = JsonUtil.readValue(textResource(variant.parts()), List.class);
         final List<List<Map<String, Object>>> expected = JsonUtil.readValue(
                 textResource("context/context-expected.json"), List.class);
-        createFeed(BUILD, FEED);
-        final Map<String, Object> uploaded = json("upload_sample", args("feed", FEED, "parts", parts));
+        createFeed(build, feed);
+        final Map<String, Object> uploaded = json("upload_sample", args("feed", feed, "parts", parts));
         dump("upload_sample", uploaded);
         assertThat(uploaded).containsEntry("parts", 2).containsEntry("context", true);
         final long stream = number(uploaded.get("stream_id"));
@@ -70,21 +104,13 @@ class TestE2eContextLookups extends AbstractE2eTest {
         final Map<String, Object> found = json("propose_context_lookup", args("stream_ids", List.of(stream)));
         dump("propose_context_lookup", found);
         final Map<String, Object> key = list(found, "keys").getFirst();
-        assertThat((List<String>) key.get("key_fields")).containsExactlyInAnyOrder("@Provider", "@EventID",
-                "@Version");
+        assertThat((List<String>) key.get("key_fields")).containsExactlyInAnyOrderElementsOf(variant.keyFields());
         assertThat((List<String>) key.get("event_key_fields")).containsExactlyInAnyOrder("System/Provider/@Name",
                 "System/EventID", "System/Version");
         assertThat(key).containsEntry("match_rate", "100%").containsEntry("records", 24);
-        assertThat(map(found, "entry_tables")).containsKey("Keywords/Keyword");
+        assertThat(map(found, "entry_tables")).containsKeys(variant.tables().toArray(String[]::new));
 
-        final List<Map<String, Object>> outputs = List.of(
-                Map.of("path", "EventDetail/Description", "from", "Description", "render", "fill_template",
-                        "values", "EventData/Data"),
-                Map.of("path", "EventDetail/Alert/Data", "data_name", "KeywordName", "from", "Keywords/Keyword",
-                        "render", "mask_names", "mask", "System/Keywords", "mask_field", "@Mask",
-                        "name_field", "@Name", "repeat", true),
-                Map.of("path", "EventDetail/Alert/Data", "data_name", "OpCodeName", "from", "Opcode",
-                        "render", "text"));
+        final List<Map<String, Object>> outputs = variant.outputs();
         final Map<String, Object> shown = json("propose_context_lookup", args("stream_ids", List.of(stream),
                 "outputs", outputs));
         dump("propose_context_lookup outputs", shown);
@@ -99,6 +125,10 @@ class TestE2eContextLookups extends AbstractE2eTest {
             assertThat(filled.get(0).get("after")).as("the preview's description").isEqualTo(
                     List.of(wanted.get("description")));
             assertThat(filled.get(1).get("after")).as("the preview's keyword names").isEqualTo(wanted.get("keywords"));
+            if (variant == JSON) {
+                assertThat(filled.get(3).get("after")).as("the preview's keyword names, keyed by mask")
+                        .isEqualTo(List.of(String.join(", ", (List<String>) wanted.get("keywords"))));
+            }
         }
 
         final Map<String, Object> confirmed = agreed("propose_context_lookup", args("stream_ids", List.of(stream),
@@ -108,15 +138,17 @@ class TestE2eContextLookups extends AbstractE2eTest {
 
         // The context loader: its XSLT from the confirmed reference mapping, a child of the context loader template.
         final Map<String, Object> code = json("build_reference_xslt", args("mapping",
-                confirmed.get("reference_mapping"), "build", BUILD));
+                confirmed.get("reference_mapping"), "build", build));
         assertThat(code).as("reference XSLT: %s", code.get("problems")).containsEntry("ok", true);
-        final String loaderXslt = saveXslt(BUILD, FEED + "-Context", (String) code.get("xslt"));
+        final String loaderXslt = saveXslt(build, feed + "-Context", (String) code.get("xslt"));
         final Map<String, Object> template = map(json("find_reference_data", args()), "context_loader_template");
         assertThat(template).as("Stroom's standard Context Data, found by what it is").isNotNull();
-        final String loader = uuidOf(agreed("create_pipeline", args("build", BUILD, "name", FEED + "-Context",
+        assertThat(String.valueOf(confirmed.get("hint"))).as("the loader's parser type")
+                .contains("combinedParser.type '" + variant.parserType() + "'");
+        final String loader = uuidOf(agreed("create_pipeline", args("build", build, "name", feed + "-Context",
                 "template_uuid", template.get("uuid"), "set_properties",
                 List.of(docProperty("translationFilter", "xslt", loaderXslt, "XSLT"),
-                        valueProperty("combinedParser", "type", "XML")))));
+                        valueProperty("combinedParser", "type", variant.parserType())))));
 
         // The translation, its lookups keyed as the loader keys the map.
         final Map<String, Object> rule = new LinkedHashMap<>();
@@ -136,7 +168,7 @@ class TestE2eContextLookups extends AbstractE2eTest {
         mapping.put("common", COMMON);
         mapping.put("events", List.of(rule));
         final Map<String, Object> saved = agreed("build_translation_xslt", args("mapping", mapping,
-                "stream_ids", List.of(stream), "build", BUILD, "name", FEED + "-Events", "schema_version", VERSION));
+                "stream_ids", List.of(stream), "build", build, "name", feed + "-Events", "schema_version", VERSION));
         dump("build_translation_xslt", saved);
         assertThat(saved).as("saved: %s", saved.get("problems")).containsEntry("ok", true);
         assertThat(String.valueOf(saved.get("warnings"))).as("the lookup's key and the loader's agree")
@@ -144,7 +176,7 @@ class TestE2eContextLookups extends AbstractE2eTest {
 
         final Map<String, Object> reference = new LinkedHashMap<>(map(confirmed, "reference"));
         reference.put("loader_pipeline", loader);
-        final String events = uuidOf(agreed("create_pipeline", args("build", BUILD, "name", FEED + "-Events",
+        final String events = uuidOf(agreed("create_pipeline", args("build", build, "name", feed + "-Events",
                 "template_uuid", templateUuid("translation", "Event Data (XML)"), "references", List.of(reference))));
         final Map<String, Object> stepped = stepSample(events, List.of(stream));
         dump("step_sample", stepped);
@@ -170,7 +202,7 @@ class TestE2eContextLookups extends AbstractE2eTest {
                         ? String.valueOf(fieldsOf.get("data"))
                         : String.valueOf(record);
                 for (final Element event : children(parse(text).getDocumentElement(), "Event")) {
-                    checked.add(check(event, byRecord));
+                    checked.add(check(event, byRecord, variant == JSON));
                 }
             }
             first += records.size();
@@ -179,8 +211,10 @@ class TestE2eContextLookups extends AbstractE2eTest {
     }
 
     // An Event against what the generator expects of its record: the description rendered, the keyword names, the
-    // opcode's name.
-    private static String check(final Element event, final Map<String, Map<String, Object>> byRecord) {
+    // opcode's name; and, from the JSON table keyed by mask, the keyword names joined.
+    private static String check(final Element event,
+                                final Map<String, Map<String, Object>> byRecord,
+                                final boolean keyedNames) {
         final Map<String, List<String>> data = new LinkedHashMap<>();
         for (final Element found : descendants(event, "Data")) {
             data.computeIfAbsent(found.getAttribute("Name"), ignored -> new ArrayList<>())
@@ -195,6 +229,26 @@ class TestE2eContextLookups extends AbstractE2eTest {
                 .isEqualTo(wanted.get("keywords"));
         assertThat(data.get("OpCodeName")).as("record %s's opcode name", recordId)
                 .containsExactly((String) wanted.get("opcode"));
+        if (keyedNames) {
+            assertThat(data.get("KeywordNames")).as("record %s's keyword names, keyed by mask", recordId)
+                    .containsExactly(String.join(", ", (List<String>) wanted.get("keywords")));
+        }
         return recordId;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // One variant of the walk: its build and feed, its parts, the loader's parser type, the key's context fields, the
+    // entry tables and the outputs proposed.
+    private record Variant(String build,
+                           String feed,
+                           String parts,
+                           String parserType,
+                           List<String> keyFields,
+                           List<String> tables,
+                           List<Map<String, Object>> outputs) {
+
     }
 }
