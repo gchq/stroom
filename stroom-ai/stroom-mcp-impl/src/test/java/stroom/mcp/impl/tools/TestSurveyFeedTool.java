@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.sample.FeedSampling;
 import stroom.ai.impl.tools.sample.RecordStream;
 import stroom.ai.impl.tools.sample.SampleProfiler;
+import stroom.ai.impl.tools.sample.Shapes;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SurveyDoc;
@@ -856,6 +857,29 @@ class TestSurveyFeedTool {
         assertThat((String) scoped.get("coverage")).contains("within the scope: build 'acme-v1' covers Security");
         assertThat(SurveyDoc.readFor(surveyState(), 8L)).containsExactly("Security");
         assertThat(SurveyDoc.readFor(surveyState(), 7L)).containsExactly(SourceTypeScope.ALL);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void eachShapeAndLocationOfAnAggregatedFeedSaysItsSourceTypes() {
+        // Seen in chat 177: the survey's examples spanned every source type, nothing saying which a value was of,
+        // and the agent checked its group's translation with a SharePoint record's address.
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, wrappedLines(60), false);
+
+        final Map<String, Object> surveyed = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
+                                                       + "\"build\": \"acme-v1\", "
+                                                       + "\"source_type_field\": \"source\"}"));
+
+        final List<Map<String, Object>> shapes = (List<Map<String, Object>>) surveyed.get("shapes");
+        assertThat(shapes).isNotEmpty().allSatisfy(shape -> assertThat(shape).containsKey("source_types"));
+        assertThat(shapes).anySatisfy(shape -> assertThat(shape.get("source_types"))
+                .isEqualTo(List.of("Security")));
+        assertThat((List<Map<String, Object>>) surveyed.get("locations"))
+                .allSatisfy(location -> assertThat(location).containsKey("source_types"));
+        assertThat(SurveyFeedTool.sourceTypesOf(Map.of(Shapes.SOURCE_VALUES, List.of("/var/log/mail/a", "x")),
+                new SourceTypeScope(null, "path", List.of(new SourceTypeRows.Row("mail", SourceTypeRows.PATTERN,
+                        "^/var/log/mail/")), null))).containsExactly("mail", "x");
     }
 
     @Test

@@ -752,7 +752,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 ? deepen(call, context, request, feed, reading, shapes, pending, earlier)
                 : List.of();
         final Map<String, Object> result = result(new Outcome(feed, span, chosen, exhausted, !known.isEmpty(),
-                state, streams.size(), request.maxStreams(), limits), reading, shapes, context);
+                state, streams.size(), request.maxStreams(), limits), reading, shapes, context, scopes.scope != null
+                ? scopes.scope
+                : scopes.reader);
         noteDepth(result, reading, depth);
         noteScope(result, scopes, reading, depth, keptSources, profiles);
         settleInPart(call, context, request, result, reading, depth, state, !chosen.isEmpty() || exhausted);
@@ -881,7 +883,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                   + row.name() + "': " + whyNothingReadable(reading));
         }
         final Map<String, Object> result = result(new Outcome(feed, span(streams), chosen, false, !known.isEmpty(),
-                state, streams.size(), streams.size(), limits), reading, shapes, context);
+                state, streams.size(), streams.size(), limits), reading, shapes, context, scopes.scope);
         // The survey's coverage is left as it was: a search for one source type doesn't judge it.
         result.remove("coverage");
         result.put("saturated", state != null && JsonValues.truthy(state.get("saturated")));
@@ -2157,10 +2159,15 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     }
 
     // The call's result.
+    // An aggregated feed's shapes and locations each say the source types their records are of (by the rows of
+    // `naming`, the scope's or the registry's; the source type field's values where there are none). Seen in chat
+    // 177: the agent checked its group's translation with an address from a SharePoint record, outside the group,
+    // as nothing said which source type an example was of, and the check found nothing.
     private Map<String, Object> result(final Outcome outcome,
                                        final Reading reading,
                                        final Shapes shapes,
-                                       final ToolCallContext context) {
+                                       final ToolCallContext context,
+                                       final SourceTypeScope naming) {
         final List<Map<String, Object>> found = new ArrayList<>(shapes.shapes().values().stream()
                 .filter(shape -> count(shape) > 0)
                 .toList());
@@ -2215,10 +2222,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         if (!kinds.isEmpty()) {
             result.put("kinds", kinds);
         }
-        result.put("shapes", shapesShown(found, counts, drop));
+        result.put("shapes", shapesShown(found, counts, drop, naming));
         result.put("new_shapes", newShapes.size());
         // Records of a kind left untranslated are stepped too, expecting no Event.
-        result.put("locations", locations(toStep, drop));
+        result.put("locations", locations(toStep, drop, naming));
         result.put("hint", FeedSampling.hint(saturated, !newShapes.isEmpty(), outcome.known()));
         return result;
     }
@@ -2276,7 +2283,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     @SuppressWarnings("unchecked")
     private static List<Map<String, Object>> shapesShown(final List<Map<String, Object>> found,
                                                          final Map<String, Long> counts,
-                                                         final Map<String, String> drop) {
+                                                         final Map<String, String> drop,
+                                                         final SourceTypeScope naming) {
         final List<Map<String, Object>> shown = new ArrayList<>();
         int withMore = 0;
         for (final Map<String, Object> shape : found.subList(0, Math.min(60, found.size()))) {
@@ -2291,6 +2299,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                             ? null
                             : head(String.valueOf(examples.getFirst().get("text")), 500),
                     "locations", examples.stream().map(example -> example.get("location")).toList());
+            final List<String> sourceTypes = sourceTypesOf(shape, naming);
+            if (!sourceTypes.isEmpty()) {
+                entry.put(SourceTypeScope.SOURCE_TYPES, sourceTypes);
+            }
             // More of the shape's records where their text differs (work package E9: the agent classifies a kind
             // better from several of its records), for the commonest shapes, kept short.
             final List<String> more = examples.stream().skip(1)
@@ -2315,14 +2327,19 @@ class SurveyFeedTool extends AbstractBuiltInTool {
 
     @SuppressWarnings("unchecked")
     private static List<Map<String, Object>> locations(final List<Map<String, Object>> toStep,
-                                                       final Map<String, String> drop) {
+                                                       final Map<String, String> drop,
+                                                       final SourceTypeScope naming) {
         final List<Map<String, Object>> locations = new ArrayList<>();
         for (final Map<String, Object> shape : toStep) {
             final String signature = signature(shape);
+            final List<String> sourceTypes = sourceTypesOf(shape, naming);
             for (final Map<String, Object> example : (List<Map<String, Object>>) shape.get("examples")) {
                 final Map<String, Object> location = new LinkedHashMap<>((Map<String, Object>) example.get(
                         "location"));
                 location.put("shape", signature);
+                if (!sourceTypes.isEmpty()) {
+                    location.put(SourceTypeScope.SOURCE_TYPES, sourceTypes);
+                }
                 if (drop.containsKey(signature)) {
                     location.put("expect", "none");
                 }
@@ -2330,6 +2347,23 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             }
         }
         return locations;
+    }
+
+    /// The source types an aggregated feed's shape's records are of: the source type field's values they had
+    /// ([Shapes#SOURCE_VALUES]), each named by the first of the rows that matches it, or as itself where there are
+    /// no rows or none matches.
+    ///
+    /// @param shape  A shape found.
+    /// @param naming The scope or registry whose rows name the values, or null.
+    /// @return The source types, in the order first met; none for a feed with no source type field.
+    static List<String> sourceTypesOf(final Map<String, Object> shape, final SourceTypeScope naming) {
+        final Set<String> named = new LinkedHashSet<>();
+        for (final String value : JsonValues.strings(shape.get(Shapes.SOURCE_VALUES))) {
+            named.add(naming == null
+                    ? value
+                    : SourceTypeRows.first(naming.rows(), value).map(SourceTypeRows.Row::name).orElse(value));
+        }
+        return List.copyOf(named);
     }
 
     // Writes the survey into the build's survey doc (creating it the first time).

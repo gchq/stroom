@@ -225,6 +225,21 @@ public final class SourceTypeScope {
                 : names.stream().sorted(ToolText::compare).toList();
     }
 
+    /// Whether one of a kept shape's examples is a record of the scope: by its text parsed. A shape's records can be
+    /// of several source types (the same fields in the scope's and another's), so a shape in the scope can hold an
+    /// example of another source type. One whose source can't be told from its text (not JSON, or a source type
+    /// field read from a part's meta) is kept.
+    ///
+    /// @param example An example, as the survey state keeps it (`text`, `location`).
+    /// @return True unless it is told to be of a source type outside the scope.
+    public boolean exampleInScope(final Map<?, ?> example) {
+        if (names == null || byPart() || example == null) {
+            return true;
+        }
+        final Map<String, Object> parsed = parsedRecord(JsonValues.text(example.get("text")));
+        return parsed == null || inScope(parsed);
+    }
+
     /// Whether a shape the survey kept is one of the scope's: by the source type field's values its records had
     /// (`source_values`), else by its examples' records parsed; a shape whose source can't be told is kept.
     ///

@@ -176,7 +176,8 @@ class StepSampleTool extends AbstractBuiltInTool {
 
     /// The sample stepped: `pipeline`, `records_stepped`, `records_with_errors`, `draft_code_used`, the triage
     /// (`verdict`, `groups_by_class`, `groups`, each group with its `records`), `first_record_output`, and any `hint`,
-    /// `stopped_early`, `record` and `next`.
+    /// `stopped_early`, `record` and `next`. A source type group's pipeline's records passed over are no errors:
+    /// `records_passed_over`, `passed_over_by_source_type` and `passed_over_note` say them.
     ///
     /// @throws ToolTimeoutException if the call is cancelled.
     Map<String, Object> stepSample(final ToolCall call,
@@ -244,7 +245,8 @@ class StepSampleTool extends AbstractBuiltInTool {
                         final int cap,
                         final Integer perStreamLimit,
                         final boolean keepOutputs) {
-        final Walked walked = new Walked(keepOutputs, stepping.unvalidatedOutput(pipeline));
+        final Walked walked = new Walked(keepOutputs, stepping.unvalidatedOutput(pipeline),
+                stepping.passedOver(pipeline));
         final String outputElement = pipeline.outputElement();
         final CallProgress progress = CallProgress.of(context);
         int n = 0;
@@ -304,15 +306,19 @@ class StepSampleTool extends AbstractBuiltInTool {
                                final SteppingResult result,
                                final String key) {
         final String output = SteppingWalks.output(result, outputElement);
-        final List<ErrorTriage.Marker> found = new ArrayList<>(SteppingWalks.markers(result, key));
+        // A source type group's pipeline passes over the records of the feed's other source types: counted apart,
+        // never errors.
+        final PassedOverRecords.Sifted sifted = walked.passedOver.sift(SteppingWalks.markers(result, key), result);
+        final List<ErrorTriage.Marker> found = new ArrayList<>(sifted.markers());
         found.addAll(SteppingVerdicts.emptyOutput(result, outputElement, key));
         found.addAll(walked.unvalidated.markers(output, key));
         walked.markers.addAll(found);
-        walked.records.add(new Stepped(key, found.size()));
+        walked.records.add(new Stepped(key, found.size(), sifted.passedOver()));
         if (walked.keepOutputs) {
             walked.outputs.add(output);
         }
-        if (SteppingVerdicts.writesEvents(output)) {
+        // A record passed over writes an empty Events on purpose: no sign the group's templates select nothing.
+        if (!sifted.passedOver() && SteppingVerdicts.writesEvents(output)) {
             walked.wroteEvents++;
             if (EventXml.countEvents(output) > 0) {
                 walked.wroteAnEvent++;
@@ -350,12 +356,21 @@ class StepSampleTool extends AbstractBuiltInTool {
                                         final Walked walked) {
         final String outputElement = pipeline.outputElement();
         final List<String> keys = walked.records.stream().map(Stepped::record).toList();
+        // The records the group's pipeline translates: those it didn't pass over.
+        final List<String> judged = walked.records.stream()
+                .filter(stepped -> !stepped.passedOver())
+                .map(Stepped::record)
+                .toList();
         final Map<String, Object> summary = stepping.triage(walked.markers, pipeline, walked.records.size());
         SteppingVerdicts.listRecords(summary, walked.markers);
         SteppingVerdicts.block(summary, stepping.unagreedUnknown(pipeline, outputElement, walked.unknown,
                 walked.records.size(), draftCode, SteppingVerdicts.whatUnknownHolds(walked.unknownOutputs)));
-        if (!keys.isEmpty() && walked.wroteEvents == keys.size() && walked.wroteAnEvent == 0) {
-            SteppingVerdicts.block(summary, SteppingVerdicts.noEvents(outputElement, keys));
+        if (!judged.isEmpty() && walked.wroteEvents == judged.size() && walked.wroteAnEvent == 0) {
+            SteppingVerdicts.block(summary, SteppingVerdicts.noEvents(outputElement, judged));
+        }
+        if (judged.isEmpty() && !keys.isEmpty()) {
+            SteppingVerdicts.block(summary, SteppingVerdicts.allPassedOver(outputElement, keys,
+                    walked.passedOver));
         }
         if (!keys.isEmpty() && walked.wroteReference == keys.size() && walked.wroteAReference == 0) {
             SteppingVerdicts.block(summary, SteppingVerdicts.noReference(outputElement, keys));
@@ -364,6 +379,7 @@ class StepSampleTool extends AbstractBuiltInTool {
         result.put("pipeline", pipeline.name());
         result.put("records_stepped", keys.size());
         result.put("records_with_errors", walked.records.stream().filter(r -> r.errors() > 0).count());
+        walked.passedOver.addTo(result);
         result.put("draft_code_used", PipelineStepping.draftCodeUsed(draftCode));
         result.putAll(summary);
         result.put("first_record_output", walked.firstOutput);
@@ -460,9 +476,10 @@ class StepSampleTool extends AbstractBuiltInTool {
 
     /// One record stepped.
     ///
-    /// @param record Its key, e.g. `7:3`.
-    /// @param errors How many errors it met.
-    record Stepped(String record, int errors) {
+    /// @param record     Its key, e.g. `7:3`.
+    /// @param errors     How many errors it met (a source type group's pass-over line is none).
+    /// @param passedOver True if a source type group's pipeline passed it over: not of the group's source types.
+    record Stepped(String record, int errors, boolean passedOver) {
 
     }
 
@@ -493,13 +510,18 @@ class StepSampleTool extends AbstractBuiltInTool {
         private final List<String> outputs = new ArrayList<>();
         // Checks each record's output where no schema filter in the pipeline does.
         private final UnvalidatedOutput unvalidated;
+        // The records a source type group's pipeline passed over.
+        private final PassedOverRecords passedOver;
 
         // Stopped before the call's time ran out.
         private boolean cut;
 
-        private Walked(final boolean keepOutputs, final UnvalidatedOutput unvalidated) {
+        private Walked(final boolean keepOutputs,
+                       final UnvalidatedOutput unvalidated,
+                       final PassedOverRecords passedOver) {
             this.keepOutputs = keepOutputs;
             this.unvalidated = unvalidated;
+            this.passedOver = passedOver;
         }
     }
 }

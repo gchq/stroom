@@ -21,6 +21,7 @@ import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.tools.AcceptedErrors;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ErrorTriage;
+import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.SessionLimits;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.StreamReader;
@@ -29,6 +30,11 @@ import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.impl.tools.generation.DumpMode;
+import stroom.ai.impl.tools.generation.SourceTypeModule;
+import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.validation.OutputSchemas;
 import stroom.ai.impl.tools.validation.SchemaErrors;
 import stroom.docref.DocRef;
@@ -285,6 +291,42 @@ final class SteppingWorld {
         }
         return new SteppingResult("s", null, null, new StepLocation(stream, part, record),
                 new SharedStepData(null, elements), null, true, null, false, true);
+    }
+
+    /// @return A step that found the record, a source type group's translation filter reading the input and
+    /// passing the record over: an empty Events, and its INFO line of the records passed over.
+    static SteppingResult passedOver(final long stream, final long part, final long record, final String input) {
+        final Indicators indicators = new Indicators();
+        indicators.add(new StoredError(Severity.INFO, new DefaultLocation(1, 1), new ElementId("translationFilter"),
+                XsltGenerator.PASSED_OVER + 1 + XsltGenerator.PASSED_OVER_END));
+        final Map<String, SharedElementData> elements = new LinkedHashMap<>();
+        elements.put("translationFilter", new SharedElementData(input,
+                "<Events xmlns=\"event-logging:3\" Version=\"4.1.0\"/>", indicators, false, false, true));
+        return new SteppingResult("s", null, null, new StepLocation(stream, part, record),
+                new SharedStepData(null, elements), null, true, null, false, true);
+    }
+
+    /// Keeps a source type group's mapping with the pipeline's XSLT: the group `M365 Messaging`, translating
+    /// ExchangeOnline and MicrosoftTeams of a feed whose source type field is `Workload`, the feed's other source
+    /// type SharePoint.
+    void keepsAGroupMapping() {
+        final List<SourceTypeModule.Row> rows = List.of(
+                new SourceTypeModule.Row("ExchangeOnline", SourceTypeRows.VALUE, "ExchangeOnline"),
+                new SourceTypeModule.Row("MicrosoftTeams", SourceTypeRows.VALUE, "MicrosoftTeams"),
+                new SourceTypeModule.Row("SharePoint", SourceTypeRows.VALUE, "SharePoint"));
+        final TranslationMapping mapping = TranslationMapping.parse(Map.of("input", "json", "events",
+                List.of(Map.of("name", "x")))).withModule(new SourceTypeModule(SourceTypeModule.GROUP,
+                "M365 Messaging", "m365_messaging", List.of("ExchangeOnline", "MicrosoftTeams"), null, null, null,
+                null, "Workload", rows));
+        Mockito.when(keptMappings.keptMapping(anyString())).thenReturn(Optional.of(new KeptMapping.Kept(
+                XsltSaves.TRANSLATION, Map.of("mapping", mapping.toJson(DumpMode.COMPACT)))));
+    }
+
+    /// @return A JSON record as Stroom's JSON parser gives it to the XSLT, of the source type (its `Workload`).
+    static String azureRecord(final String workload) {
+        return "<?xml version=\"1.1\" encoding=\"UTF-8\"?><map xmlns=\"http://www.w3.org/2013/XSL/json\">"
+               + "<string key=\"Workload\">" + workload + "</string><string key=\"ClientIP\">10.0.0.1</string>"
+               + "</map>";
     }
 
     /// @return A step that found no record, with the error on the translation filter (when not null).

@@ -68,6 +68,8 @@ class StepRecordsTool extends AbstractBuiltInTool {
     static final String DRAFT_CODE_ARG = "draft_code";
     static final String EXPECT_NONE = "none";
     static final String EXPECT_EVENT = "event";
+    /// A record's key when a source type group's pipeline passed it over.
+    static final String PASSED_OVER = "passed_over";
 
     private final PipelineStepping stepping;
     private final int maxSampleRecords;
@@ -178,7 +180,9 @@ class StepRecordsTool extends AbstractBuiltInTool {
 
     /// The records stepped: `pipeline`, `records_stepped`, `records_with_errors`, `records_not_found`,
     /// `shapes_not_clean`, `left_untranslated_as_intended`, `draft_code_used`, the triage (`verdict`,
-    /// `groups_by_class`, `groups`) and `records` (the first 100), and any `hint`, `stopped_early` and `record`.
+    /// `groups_by_class`, `groups`) and `records` (the first 100), and any `hint`, `stopped_early` and `record`. A
+    /// source type group's pipeline's records passed over are no errors: `records_passed_over`,
+    /// `passed_over_by_source_type`, `passed_over_note` and `shapes_passed_over` say them.
     ///
     /// @throws ToolTimeoutException if the call is cancelled.
     Map<String, Object> stepRecords(final ToolCall call,
@@ -207,7 +211,7 @@ class StepRecordsTool extends AbstractBuiltInTool {
                         final SteppedPipeline pipeline,
                         final List<Location> locations,
                         final Map<String, String> draftCode) {
-        final Walked walked = new Walked(stepping.unvalidatedOutput(pipeline));
+        final Walked walked = new Walked(stepping.unvalidatedOutput(pipeline), stepping.passedOver(pipeline));
         final CallProgress progress = CallProgress.of(context);
         progress.say("Stepping " + locations.size() + " records through " + pipeline.name());
         int at = 0;
@@ -266,7 +270,10 @@ class StepRecordsTool extends AbstractBuiltInTool {
             walked.records.add(entry);
             return;
         }
-        List<ErrorTriage.Marker> found = new ArrayList<>(SteppingWalks.markers(result, key));
+        // A source type group's pipeline passes over the records of the feed's other source types: counted apart,
+        // never errors, and no Event is right for them.
+        final PassedOverRecords.Sifted sifted = walked.passedOver.sift(SteppingWalks.markers(result, key), result);
+        List<ErrorTriage.Marker> found = new ArrayList<>(sifted.markers());
         found.addAll(SteppingVerdicts.emptyOutput(result, outputElement, key));
         final String output = SteppingWalks.output(result, outputElement);
         found.addAll(walked.unvalidated.markers(output, key));
@@ -285,13 +292,16 @@ class StepRecordsTool extends AbstractBuiltInTool {
                                                                        + " Event(s), but its kind is left "
                                                                        + "untranslated", null).withRecord(key));
             }
-        } else if (events == 0 && found.isEmpty() && !SteppingVerdicts.sendsOn(output)) {
+        } else if (events == 0 && found.isEmpty() && !SteppingVerdicts.sendsOn(output) && !sifted.passedOver()) {
             found.add(ErrorTriage.marker("WARNING", outputElement, "The record produced no Event", null)
                     .withRecord(key));
         }
         walked.markers.addAll(found);
         entry.put("events", events);
         entry.put("errors", found.size());
+        if (sifted.passedOver()) {
+            entry.put(PASSED_OVER, true);
+        }
         if (EXPECT_NONE.equals(location.expect())) {
             entry.put("expect", EXPECT_NONE);
         }
@@ -320,15 +330,26 @@ class StepRecordsTool extends AbstractBuiltInTool {
         final List<String> uncovered = List.copyOf(new TreeSet<>(records.stream()
                 .filter(r -> r.get("shape") != null
                              && (errors(r) > 0 || (Integer.valueOf(0).equals(r.get("events"))
-                                                   && !EXPECT_NONE.equals(r.get("expect")))))
+                                                   && !EXPECT_NONE.equals(r.get("expect"))
+                                                   && !passedOver(r))))
+                .map(r -> String.valueOf(r.get("shape")))
+                .toList()));
+        // A shape whose example the group's pipeline passed over is another source type's: not this pipeline's to
+        // cover, but said, in case the agent took it for one of the group's.
+        final List<String> shapesPassedOver = List.copyOf(new TreeSet<>(records.stream()
+                .filter(r -> r.get("shape") != null && passedOver(r))
                 .map(r -> String.valueOf(r.get("shape")))
                 .toList()));
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("pipeline", pipeline.name());
         result.put("records_stepped", records.size() - missing.size());
         result.put("records_with_errors", records.stream().filter(r -> errors(r) > 0).count());
+        walked.passedOver.addTo(result);
         result.put("records_not_found", missing);
         result.put("shapes_not_clean", uncovered);
+        if (!shapesPassedOver.isEmpty()) {
+            result.put("shapes_passed_over", shapesPassedOver);
+        }
         result.put("left_untranslated_as_intended", records.stream()
                 .filter(r -> EXPECT_NONE.equals(r.get("expect")) && errors(r) == 0)
                 .count());
@@ -352,6 +373,10 @@ class StepRecordsTool extends AbstractBuiltInTool {
             stepping.rememberClean(ref, draftCode, result, locations.stream().map(Location::stream).toList());
         }
         return result;
+    }
+
+    private static boolean passedOver(final Map<String, Object> record) {
+        return Boolean.TRUE.equals(record.get(PASSED_OVER));
     }
 
     private static int errors(final Map<String, Object> record) {
@@ -459,11 +484,14 @@ class StepRecordsTool extends AbstractBuiltInTool {
         private final List<String> unknownOutputs = new ArrayList<>();
         // Checks each record's output where no schema filter in the pipeline does.
         private final UnvalidatedOutput unvalidated;
+        // The records a source type group's pipeline passed over.
+        private final PassedOverRecords passedOver;
         // Stopped before the call's time ran out.
         private boolean cut;
 
-        private Walked(final UnvalidatedOutput unvalidated) {
+        private Walked(final UnvalidatedOutput unvalidated, final PassedOverRecords passedOver) {
             this.unvalidated = unvalidated;
+            this.passedOver = passedOver;
         }
     }
 }

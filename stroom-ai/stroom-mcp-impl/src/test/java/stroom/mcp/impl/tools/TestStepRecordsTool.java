@@ -172,6 +172,32 @@ class TestStepRecordsTool {
         assertThat(result.text()).startsWith("locations[0] needs stream and record");
     }
 
+    @Test
+    void aRecordAGroupsPipelinePassesOverHasNoErrorAndLeavesItsShapeClean() {
+        // A group's pipeline passes over the feed's other source types: no "produced no Event" warning, no error,
+        // and the shape (another source type's) said apart rather than left not clean.
+        world.keepsAGroupMapping();
+        world.stepper = (stream, at) -> at.getRecordIndex() == 3
+                ? SteppingWorld.passedOver(stream, 0, 3, SteppingWorld.azureRecord("SharePoint"))
+                : SteppingWorld.step(stream, 0, at.getRecordIndex(), AN_EVENT);
+
+        final Map<String, Object> result = stepRecords("{\"pipeline_uuid\": \"p-1\", \"locations\": ["
+                                                       + "{\"stream\": 7, \"record\": 1, \"shape\": \"s1\"},"
+                                                       + "{\"stream\": 7, \"record\": 3, \"shape\": \"s2\"}]}");
+
+        assertThat(List.of(result.get("records_with_errors"), result.get("verdict"), result.get("shapes_not_clean")))
+                .containsExactly(0, "clean", List.of());
+        assertThat(result.get("shapes_passed_over")).isEqualTo(List.of("s2"));
+        assertThat(result.get(PassedOverRecords.BY_SOURCE_TYPE)).isEqualTo(Map.of("SharePoint", 1));
+        assertThat(records(result).get(1)).containsEntry(StepRecordsTool.PASSED_OVER, true)
+                .containsEntry("errors", 0);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Map<String, Object>> records(final Map<String, Object> result) {
+        return (List<Map<String, Object>>) result.get("records");
+    }
+
     private Map<String, Object> stepRecords(final String arguments) {
         final ToolResult result = new StepRecordsTool(world.stepping()).execute(BuildToolCalls.call(
                 StepRecordsTool.NAME, arguments), world.context());

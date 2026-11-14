@@ -111,6 +111,29 @@ class TestStroomBuildFacts {
     }
 
     @Test
+    void aScopesShapeHandsOnOnlyTheScopesExamples() {
+        // Seen in chat 177: a shape of the messaging group's held a SharePoint record too (the same fields), and
+        // the agent checked the group's translation with its address, which the group's pipeline passes over.
+        final Map<String, Object> state = new LinkedHashMap<>();
+        state.put("saturated", true);
+        state.put("streams_read", List.of(5L));
+        state.put("shapes", Map.of("audit", Map.of("count", 2L, Shapes.SOURCE_VALUES, List.of("ExchangeOnline",
+                "SharePoint"), "examples", List.of(
+                Map.of("text", "{\"Workload\": \"SharePoint\", \"ClientIP\": \"10.0.0.9\"}", "location",
+                        Map.of("stream", 5L, "part", 0, "record", 0)),
+                Map.of("text", "{\"Workload\": \"ExchangeOnline\", \"ClientIP\": \"10.0.0.1\"}", "location",
+                        Map.of("stream", 5L, "part", 0, "record", 1))))));
+        state.put(SourceTypeProfiles.STATE_KEY, Map.of("field", "Workload", "records", 2, "values", Map.of(),
+                "scope", Map.of("build", "b", "source_types", List.of("ExchangeOnline"))));
+
+        final Map<String, Object> survey = StroomBuildFacts.combine(List.of(state)).orElseThrow();
+
+        assertThat((List<?>) survey.get("locations")).singleElement()
+                .isEqualTo(Map.of("stream", 5L, "part", 0, "record", 1));
+        assertThat(String.valueOf(survey.get("sample"))).contains("10.0.0.1").doesNotContain("10.0.0.9");
+    }
+
+    @Test
     void theSourceFeedsOfABuildWhoseDocsAreNoCopiesAreFound() {
         // Seen in an integration test: every upload_sample to a build's feed failed, as no doc in the build was a
         // working copy or a version, and requireNonNullElse refused the two nulls.

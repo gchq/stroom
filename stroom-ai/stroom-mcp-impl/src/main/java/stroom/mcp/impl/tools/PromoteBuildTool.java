@@ -85,6 +85,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     static final List<String> WRITTEN_BACK = List.of("data", "converterType", "documentation", "description");
 
     private static final String KEEP = "keep";
+    // What becomes of a build's test feed.
+    private static final String TEST_FEED_KEPT = "left in the workspace: the build's test feed, never promoted";
     static final String OVERWRITE_ORIGINAL = "Overwrite production with the working copy";
     static final String KEEP_ORIGINAL = "Keep production as it is";
     // In a working copy's record entry: what the user chose for an original changed since, and at which version.
@@ -209,7 +211,10 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                              + "in the chat; once the user confirms it (or after the destinations they asked for), "
                              + "call again with reviewed=<its review_id> for a short approval bound to that layout. "
                              + "Documents with no destination are named all at once, to ask the user about "
-                             + "together. New documents are moved to their destination folders (UUIDs are kept, so "
+                             + "together. A build's documents go in a folder of the source's own: a folder given by "
+                             + "type that holds other sources' folders becomes <it>/<feed>, as the siblings have. The "
+                             + "build's test feed is never promoted: don't offer it. New documents are moved to their "
+                             + "destination folders (UUIDs are kept, so "
                              + "filters and references keep working); a new version of a production pipeline "
                              + "(copy_pipeline) goes in a version subfolder beside its predecessor, with its index, "
                              + "documentation and dashboard; destination folders that don't exist yet are created "
@@ -287,12 +292,19 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         // pipelines' filters name the feeds it works from (seen in VS Code: the promoted filter selected the test
         // feed).
         final List<String> sources = facts.sourceFeeds(build, docs);
+        // The build's test feeds stay in the workspace, whatever the destinations say.
+        final Set<String> testFeeds = testFeeds(build, docs);
+        // The folder of the source's own its documents go in: the feed's, or one named for it where the feed's
+        // folder is a parent of sources (the siblings' convention).
+        final SourceFolders sourceFolders = new SourceFolders(guard, documentAccess);
+        final Source source = source(build, docs, destinations, sources, testFeeds, sourceFolders);
         // A feed's source type registry goes beside the feed; its survey doc stays in the build.
-        final Map<String, String> besideFeeds = besideFeeds(docs, destinations);
+        final Map<String, String> besideFeeds = besideFeeds(docs, destinations, sourceFolders);
         // An aggregated feed's modules and a group's output feed of its own: beside the feed.
-        modulesBeside(build, docs, destinations, versions.proposed()).forEach(besideFeeds::putIfAbsent);
+        modulesBeside(build, docs, destinations, versions.proposed(), sourceFolders)
+                .forEach(besideFeeds::putIfAbsent);
         final List<PromotionLayout.Step> plan = plan(docs, destinations, versions.proposed(), joins, sources,
-                besideFeeds);
+                besideFeeds, new Placed(testFeeds, source, sourceFolders));
         // Before the layout is shown, so it shows what the user chose (found reviewing the change: asked after
         // the review, a copy kept still showed as written back).
         askAboutChangedOriginals(call, context, build, plan);
@@ -370,7 +382,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 ? List.of()
                 : feedIndexesProvider.get().changes(build, docs);
         final List<String> indexSaid = indexChanges.stream().map(FeedIndexDecisions.IndexChange::said).toList();
-        final String tree = layout.promotionTree(plan, creating);
+        final String tree = layout.promotionTree(plan, creating) + testFeedNote(plan, testFeeds);
         // The question applies: documents of several roles.
         final boolean roles = rolesMoved.size() > 1;
         if (!Consent.wasReviewed(reviewed, tree)) {
@@ -488,7 +500,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                             final Map<String, String> proposed,
                                             final Map<String, String> joins,
                                             final List<String> sources,
-                                            final Map<String, String> besideFeeds) {
+                                            final Map<String, String> besideFeeds,
+                                            final Placed given) {
         final List<PromotionLayout.Step> plan = new ArrayList<>();
         // Every document with no destination, said at once.
         final List<Map<String, Object>> unplaced = new ArrayList<>();
@@ -501,6 +514,10 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 plan.add(new PromotionLayout.Step(doc, PromotionLayout.DISCARD, "deleted after write-back", null));
             } else if (copyOf != null) {
                 plan.add(new PromotionLayout.Step(doc, PromotionLayout.WRITE_BACK, String.valueOf(copyOf), null));
+            } else if (given.testFeeds().contains(uuid)) {
+                // Seen in chat 177: the build's test feed was in the layout, and the agent asked the user whether to
+                // promote it. It holds only the sample's Events: never promoted, whatever the destinations say.
+                plan.add(new PromotionLayout.Step(doc, PromotionLayout.KEEP, TEST_FEED_KEPT, null));
             } else if (!destinations.containsKey(uuid) && KEEP.equals(besideFeeds.get(uuid))) {
                 plan.add(new PromotionLayout.Step(doc, PromotionLayout.KEEP, "left in the workspace: a survey doc "
                                                                              + "stays in its build", null));
@@ -522,7 +539,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 plan.add(new PromotionLayout.Step(doc, PromotionLayout.KEEP, "left in the workspace: a test feed",
                         null));
             } else {
-                final Placing placing = target(doc, docs, destinations, proposed);
+                final Placing placing = target(doc, docs, destinations, proposed, given.source());
                 if (placing.target() == null) {
                     unplaced.add(doc);
                     continue;
@@ -531,6 +548,11 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 if (!destinations.containsKey(uuid) && !FeedDoc.TYPE.equals(type) && joins.containsKey(target)) {
                     // With the version it belongs to.
                     target = joins.get(target);
+                } else if (!destinations.containsKey(uuid) && !placing.besideProduction()
+                           && !proposed.containsKey(uuid) && given.source() != null) {
+                    // In a folder of the source's own, never straight into a parent of other sources (whose role
+                    // subfolders every source would share).
+                    target = given.folders().ownFolder(target, given.source().name());
                 }
                 plan.add(new PromotionLayout.Step(doc, PromotionLayout.MOVE, target,
                         !destinations.containsKey(uuid) && !placing.besideProduction()
@@ -538,6 +560,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                 : null));
             }
         }
+        besideWhatItDocuments(plan, destinations);
         if (!unplaced.isEmpty()) {
             // Seen (Delinea SecretServer): raised one document at a time, the Dashboard's, then the TextConverter's,
             // a failed call each.
@@ -551,9 +574,41 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                   + "the user wants it; a folder is an explorer path, e.g. /Feeds/Events/Acme"
                                   + (placed.isEmpty()
                     ? ""
-                    : ". The others have one: " + String.join(", ", placed)) + ". Nothing was changed.");
+                    : ". The others have one: " + String.join(", ", placed))
+                                  + (given.source() == null
+                    ? ""
+                    : ". The source's own folder, as its siblings have one: " + given.source().own()
+                      + " (a parent of other sources given by type is read as it)") + ". Nothing was changed.");
         }
         return plan;
+    }
+
+    // A pipeline's or index's Documentation (or evaluation report), not given a destination of its own, goes
+    // wherever the document it documents goes, its role subfolder too: a folder given by uuid, a version folder,
+    // or the source's own folder alike (never placed by type apart from it).
+    private static void besideWhatItDocuments(final List<PromotionLayout.Step> plan,
+                                              final Map<String, String> destinations) {
+        final Map<String, PromotionLayout.Step> documented = new LinkedHashMap<>();
+        for (final PromotionLayout.Step step : plan) {
+            final Object type = step.doc().get("type");
+            if (PromotionLayout.MOVE.equals(step.action())
+                && (PipelineDoc.TYPE.equals(type) || INDEX_TYPES.contains(String.valueOf(type)))) {
+                documented.putIfAbsent(String.valueOf(step.doc().get("name")), step);
+            }
+        }
+        plan.replaceAll(step -> {
+            final String name = String.valueOf(step.doc().get("name"));
+            final String named = name.endsWith(WriteDocumentationTool.EVALUATION)
+                    ? name.substring(0, name.length() - WriteDocumentationTool.EVALUATION.length())
+                    : name;
+            final PromotionLayout.Step of = documented.get(named);
+            if (of == null || !PromotionLayout.MOVE.equals(step.action())
+                || !DocumentationDoc.TYPE.equals(step.doc().get("type"))
+                || destinations.containsKey(String.valueOf(step.doc().get("uuid")))) {
+                return step;
+            }
+            return new PromotionLayout.Step(step.doc(), PromotionLayout.MOVE, of.target(), of.role());
+        });
     }
 
     // Where each new survey doc and source type registry goes, by uuid: `keep` for a survey doc, which stays in the
@@ -562,7 +617,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     // in the build, it held the promoted build open on the feed for ever. One whose feed has no folder yet is placed
     // as before.
     private Map<String, String> besideFeeds(final List<Map<String, Object>> docs,
-                                            final Map<String, String> destinations) {
+                                            final Map<String, String> destinations,
+                                            final SourceFolders folders) {
         final Map<String, String> out = new LinkedHashMap<>();
         for (final Map<String, Object> doc : docs) {
             final String name = String.valueOf(doc.get("name"));
@@ -586,7 +642,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 continue;
             }
             final String feed = name.substring(0, name.length() - SourceTypeRegistry.SUFFIX.length());
-            feedFolder(feed, docs, destinations).ifPresent(folder -> out.put(uuid, folder));
+            feedFolder(feed, docs, destinations).ifPresent(folder -> out.put(uuid, folders.ownFolder(folder, feed)));
         }
         return out;
     }
@@ -598,14 +654,16 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     private Map<String, String> modulesBeside(final String build,
                                               final List<Map<String, Object>> docs,
                                               final Map<String, String> destinations,
-                                              final Map<String, String> proposed) {
+                                              final Map<String, String> proposed,
+                                              final SourceFolders folders) {
         final Optional<String> feed = docs.stream()
                 .filter(doc -> DocumentationDoc.TYPE.equals(doc.get("type")))
                 .map(doc -> String.valueOf(doc.get("name")))
                 .filter(name -> name.endsWith(SourceTypeRegistry.SUFFIX))
                 .map(name -> name.substring(0, name.length() - SourceTypeRegistry.SUFFIX.length()))
                 .findFirst();
-        final Optional<String> folder = feed.flatMap(name -> feedFolder(name, docs, destinations));
+        final Optional<String> folder = feed.flatMap(name -> feedFolder(name, docs, destinations)
+                .map(found -> folders.ownFolder(found, name)));
         if (folder.isEmpty()) {
             return Map.of();
         }
@@ -652,19 +710,24 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     private Placing target(final Map<String, Object> doc,
                            final List<Map<String, Object>> docs,
                            final Map<String, String> destinations,
-                           final Map<String, String> proposed) {
+                           final Map<String, String> proposed,
+                           final Source source) {
         final String uuid = String.valueOf(doc.get("uuid"));
         final String type = String.valueOf(doc.get("type"));
         final String name = String.valueOf(doc.get("name"));
         String target = firstGiven(destinations.get(uuid), proposed.get(uuid), destinations.get(type));
         if (target == null && DocumentationDoc.TYPE.equals(type)
             && (name.endsWith(" source notes") || name.contains(" reference - "))) {
-            // The source's notes and reference documents: beside the feed, where later work on it looks.
+            // The source's notes and reference documents: beside the feed, where later work on it looks (in the
+            // source's own folder, as its registry is: seen in chat 177, the notes went to the parent of the
+            // sources while the registry went to the source's folder).
             final List<Map<String, Object>> feeds = ofType(docs, FeedDoc.TYPE);
-            target = feeds.size() == 1
-                    ? firstGiven(destinations.get(String.valueOf(feeds.getFirst().get("uuid"))),
-                    destinations.get(FeedDoc.TYPE))
-                    : null;
+            target = source != null && source.own() != null
+                    ? source.own()
+                    : feeds.size() == 1
+                            ? firstGiven(destinations.get(String.valueOf(feeds.getFirst().get("uuid"))),
+                            destinations.get(FeedDoc.TYPE))
+                            : null;
         }
         if (target == null && DocumentationDoc.TYPE.equals(type)) {
             // The documentation of a pipeline promoted with it: wherever that pipeline goes.
@@ -681,25 +744,103 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (target == null && DashboardDoc.TYPE.equals(type)) {
             target = dashboardTarget(doc, docs, destinations, proposed);
         }
-        boolean besideProduction = false;
         if (target == null && DocumentationDoc.TYPE.equals(type)) {
-            // The documentation of a production pipeline (an in-place change's) or an existing index: beside it.
-            // An evaluation report goes beside the pipeline it evaluates.
-            final String named = name.endsWith(WriteDocumentationTool.EVALUATION)
-                    ? name.substring(0, name.length() - WriteDocumentationTool.EVALUATION.length())
-                    : name;
-            final List<DocRef> outside = new ArrayList<>();
-            for (final String kind : List.of(PipelineDoc.TYPE, ElasticIndexDoc.TYPE, LuceneIndexDoc.TYPE)) {
-                places.named(kind, named).stream()
-                        .filter(found -> !BuildDocumentation.inBuild(docs, found.getUuid()))
-                        .forEach(outside::add);
+            target = besideProductionDoc(docs, name);
+            if (target != null) {
+                return new Placing(target, true);
             }
-            target = outside.size() == 1
-                    ? places.folderOf(outside.getFirst()).orElse(null)
-                    : null;
-            besideProduction = target != null;
         }
-        return new Placing(target, besideProduction);
+        return new Placing(target, false);
+    }
+
+    // The documentation of a production pipeline (an in-place change's) or an existing index: beside it. An
+    // evaluation report goes beside the pipeline it evaluates. Null when there is none (or several).
+    private String besideProductionDoc(final List<Map<String, Object>> docs, final String name) {
+        final String named = name.endsWith(WriteDocumentationTool.EVALUATION)
+                ? name.substring(0, name.length() - WriteDocumentationTool.EVALUATION.length())
+                : name;
+        final List<DocRef> outside = new ArrayList<>();
+        for (final String kind : List.of(PipelineDoc.TYPE, ElasticIndexDoc.TYPE, LuceneIndexDoc.TYPE)) {
+            places.named(kind, named).stream()
+                    .filter(found -> !BuildDocumentation.inBuild(docs, found.getUuid()))
+                    .forEach(outside::add);
+        }
+        return outside.size() == 1
+                ? places.folderOf(outside.getFirst()).orElse(null)
+                : null;
+    }
+
+    // The build's test feeds: named as the tools name one (OutputFeeds.TEST_FEED), or recorded as the Events
+    // output of the feeds the build works from (not a source type group's own output feed).
+    private Set<String> testFeeds(final String build, final List<Map<String, Object>> docs) {
+        final Set<String> out = new LinkedHashSet<>();
+        for (final Map<String, Object> feed : ofType(docs, FeedDoc.TYPE)) {
+            final String uuid = String.valueOf(feed.get("uuid"));
+            if (feed.get("working_copy_of") != null) {
+                continue;
+            }
+            final Map<String, Object> entry = buildRecords.entry(build, uuid);
+            final boolean named = String.valueOf(feed.get("name")).toUpperCase(Locale.ROOT)
+                    .endsWith(OutputFeeds.TEST_FEED);
+            final boolean recorded = entry.get(BuildFeeds.OUTPUT_FOR) != null
+                                     && entry.get(BuildFeeds.GROUP_OUTPUT) == null;
+            if (named || recorded) {
+                out.add(uuid);
+            }
+        }
+        return out;
+    }
+
+    // What the layout says of the test feeds kept, for the user and the agent: never promoted, nothing to offer.
+    private static String testFeedNote(final List<PromotionLayout.Step> plan, final Set<String> testFeeds) {
+        final List<String> kept = plan.stream()
+                .filter(step -> PromotionLayout.KEEP.equals(step.action())
+                                && testFeeds.contains(String.valueOf(step.doc().get("uuid"))))
+                .map(step -> String.valueOf(step.doc().get("name")))
+                .toList();
+        return kept.isEmpty()
+                ? ""
+                : "\n\nThe build's test feed " + String.join(", ", kept) + " stays in the build's workspace: it holds "
+                  + "only the sample's Events and is never promoted.";
+    }
+
+    // The source the build's documents are of (the feed it works from, its registry's, or its only new feed) and
+    // the folder of its own they go in; null when there is none, or its folder isn't known yet.
+    private Source source(final String build,
+                          final List<Map<String, Object>> docs,
+                          final Map<String, String> destinations,
+                          final List<String> sources,
+                          final Set<String> testFeeds,
+                          final SourceFolders folders) {
+        String name = sources.isEmpty()
+                ? null
+                : sources.getFirst();
+        if (name == null) {
+            name = ofType(docs, DocumentationDoc.TYPE).stream()
+                    .map(doc -> String.valueOf(doc.get("name")))
+                    .filter(named -> named.endsWith(SourceTypeRegistry.SUFFIX))
+                    .map(named -> named.substring(0, named.length() - SourceTypeRegistry.SUFFIX.length()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (name == null) {
+            final List<String> feeds = ofType(docs, FeedDoc.TYPE).stream()
+                    .filter(feed -> feed.get("working_copy_of") == null
+                                    && !testFeeds.contains(String.valueOf(feed.get("uuid")))
+                                    && !groupOutput(build, feed))
+                    .map(feed -> String.valueOf(feed.get("name")))
+                    .toList();
+            name = feeds.size() == 1
+                    ? feeds.getFirst()
+                    : null;
+        }
+        if (name == null) {
+            return null;
+        }
+        final String feed = name;
+        return feedFolder(feed, docs, destinations)
+                .map(folder -> new Source(feed, folders.ownFolder(folder, feed)))
+                .orElse(null);
     }
 
     // A verification dashboard: wherever the index it searches goes (seen in VS Code: promotion stopped for want
@@ -1268,6 +1409,23 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     /// @param target           Its folder, or null if none is known.
     /// @param besideProduction True if beside a production document, where no role subfolder is kept.
     private record Placing(String target, boolean besideProduction) {
+
+    }
+
+    /// The source a build's documents are of.
+    ///
+    /// @param name The source feed's name.
+    /// @param own  The folder of the source's own its documents go in, normalised.
+    private record Source(String name, String own) {
+
+    }
+
+    /// What decides where a build's documents go, beside the destinations.
+    ///
+    /// @param testFeeds The build's test feeds, by UUID: never promoted.
+    /// @param source    The source, or null.
+    /// @param folders   Tells a folder of the source's own from a parent of sources.
+    private record Placed(Set<String> testFeeds, Source source, SourceFolders folders) {
 
     }
 

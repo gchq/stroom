@@ -532,9 +532,13 @@ class StroomBuildFacts implements BuildFacts {
                 for (final Object shape : shapes.values()) {
                     if (shape instanceof final Map<?, ?> map && map.get("examples") instanceof final List<?> list
                         && scope.map(found -> found.shapeInScope(map)).orElse(true)) {
+                        // A shape of the scope's can hold another source type's records too (the same
+                        // fields): only the scope's examples are handed on (seen in chat 177: a value of a
+                        // SharePoint record used to check a messaging group's translation found nothing).
                         list.stream()
                                 .filter(Map.class::isInstance)
                                 .map(Map.class::cast)
+                                .filter(example -> scope.map(found -> found.exampleInScope(example)).orElse(true))
                                 .forEach(examples::add);
                     }
                 }

@@ -503,6 +503,11 @@ class EvaluatePipelineTool extends AbstractBuiltInTool {
                 : "stream_ids");
         stepping.put("records_stepped", verdict.get("records_stepped"));
         stepping.put("records_with_errors", verdict.get("records_with_errors"));
+        if (verdict.get(PassedOverRecords.RECORDS_PASSED_OVER) != null) {
+            // A source type group's records of other source types: not errors.
+            stepping.put(PassedOverRecords.RECORDS_PASSED_OVER, verdict.get(PassedOverRecords.RECORDS_PASSED_OVER));
+            stepping.put(PassedOverRecords.BY_SOURCE_TYPE, verdict.get(PassedOverRecords.BY_SOURCE_TYPE));
+        }
         stepping.put("groups_by_class", verdict.get("groups_by_class"));
         stepping.put("groups", compact(groups, true));
         if (groups.size() > GROUPS) {
