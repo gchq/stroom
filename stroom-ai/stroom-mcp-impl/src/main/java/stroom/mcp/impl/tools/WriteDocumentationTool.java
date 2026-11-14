@@ -84,6 +84,10 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
     // A link to a document, as the chat writes one: [name](?action=open-doc&docType=<type>&docUuid=<uuid>).
     private static final Pattern DOCUMENT_LINK = Pattern.compile(
             "\\?action=open-doc&docType=([^&\\s)]+)&docUuid=([^&\\s)]+)");
+    // A link to a document by its UUID alone, as the chat lets the model write one (the chat fills in the type):
+    // ?action=open-doc&docUuid=<uuid>.
+    private static final Pattern UNTYPED_DOCUMENT_LINK = Pattern.compile(
+            "\\?action=open-doc&docUuid=([^&\\s)]+)");
 
     private final BuildDocumentation docs;
     private final FieldMappingSections sections;
@@ -283,16 +287,25 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                                   + "action element. Save the XSLT from its mapping there.");
         }
         String markdown = NullSafe.string(rawArg(call, MARKDOWN_ARG));
-        final String documented = NullSafe.nonBlankStringElse(stringArg(call, INDEX_UUID_ARG),
-                stringArg(call, PIPELINE_UUID_ARG));
-        if (markdown.isBlank() && documented != null) {
+        // The index's, else the pipeline's; either may be left out (NullSafe.nonBlankStringElse requires a non-null
+        // default, so it isn't used here: seen in testing, a call with neither failed with a NullPointerException).
+        final String documented = NullSafe.isNonBlankString(stringArg(call, INDEX_UUID_ARG))
+                ? stringArg(call, INDEX_UUID_ARG)
+                : stringArg(call, PIPELINE_UUID_ARG);
+        if (markdown.isBlank() && documented == null) {
+            // Seen in testing: field_descriptions sent alone, with neither the pipeline nor the markdown.
+            throw new ToolRefusal("Give " + PIPELINE_UUID_ARG + " (or " + INDEX_UUID_ARG + "): the pipeline the "
+                                  + "documentation is for, as in the call that asked for the descriptions. Nothing "
+                                  + "was written.");
+        }
+        if (markdown.isBlank()) {
             // Only descriptions given: the markdown of the call that asked for them (seen: refused, then sent whole
             // again).
             markdown = pendingDocs.of(context.session(), documented)
                     .map(PendingDocumentation.Pending::markdown)
                     .orElse("");
         }
-        final String body = DocumentationVersions.bodyOf(DocumentationText.sectionLevels(markdown));
+        final String body = typedLinks(DocumentationVersions.bodyOf(DocumentationText.sectionLevels(markdown)));
         if (body.isBlank()) {
             throw new ToolRefusal("The documentation is empty: give the full text in markdown, with the sections in "
                                   + "stroom://guide");
@@ -738,6 +751,33 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         return value == null
                 ? null
                 : String.valueOf(value);
+    }
+
+    // Links to documents by UUID alone, each given its document's type: Stroom opens a document from a link only
+    // with both (seen in testing: the template's and the XSLT's links in a pipeline's documentation opened nothing,
+    // the chat having told the model it may leave the type out, as the chat fills it in for its own answers). A
+    // UUID no document the user can open has is refused, as a broken link is.
+    private String typedLinks(final String body) {
+        final Matcher link = UNTYPED_DOCUMENT_LINK.matcher(body);
+        final StringBuilder out = new StringBuilder();
+        final Set<String> unknown = new LinkedHashSet<>();
+        while (link.find()) {
+            final String uuid = link.group(1);
+            final Optional<DocRef> docRef = documentAccess.findDocRef(uuid);
+            if (docRef.isEmpty()) {
+                unknown.add(uuid);
+            }
+            link.appendReplacement(out, Matcher.quoteReplacement(docRef
+                    .map(found -> "?action=open-doc&docType=" + found.getType() + "&docUuid=" + found.getUuid())
+                    .orElse(link.group())));
+        }
+        link.appendTail(out);
+        if (!unknown.isEmpty()) {
+            throw new ToolRefusal("These links name no document the user can open: " + String.join(", ", unknown)
+                                  + ". Copy each UUID from a tool's result (never type one), or leave the link "
+                                  + "out, and call again.");
+        }
+        return out.toString();
     }
 
     // Links to documents the user can't open: seen in testing, a feed's UUID typed by hand with a digit doubled, its
