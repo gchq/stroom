@@ -17,8 +17,10 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
+import stroom.mcp.impl.BundledKnowledge;
 
 import org.junit.jupiter.api.Test;
 
@@ -35,6 +37,24 @@ class TestIndexPlans {
             PlannedField.of("user.name", "keyword", "EventSource/User/Id"),
             PlannedField.of("source.ip", "ip",
                     "EventDetail/Network/*/Source/IPAddress | EventSource/Device/IPAddress")));
+
+    @Test
+    void coreFieldsMostEventsLeaveEmptyAreNamedWithTheirPaths() {
+        // Seen in chat 177: event.action empty in 2,233 of 2,457 documents, and nothing said so.
+        final FieldPlan plan = FieldPlan.of("elasticsearch", "acme", "@timestamp", List.of(
+                PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
+                PlannedField.of("event.action", "keyword", "EventDetail/Send/Action"),
+                PlannedField.of("user.name", "keyword", "EventSource/User/Id"),
+                PlannedField.of("acme.ticket", "keyword", "EventDetail/Send/Data"))).withConvention("ecs", List.of());
+        final Map<String, Double> populated = Map.of("EventTime/TimeCreated", 100.0, "EventDetail/Send/Action", 9.1,
+                "EventSource/User/Id", 80.0, "EventDetail/Send/Data", 2.0);
+        final EcsSchema ecs = EcsSchema.from(new BundledKnowledge()).orElseThrow();
+
+        assertThat(IndexPlans.mostlyEmptyCore(plan, populated, ecs))
+                .containsExactly("event.action <- EventDetail/Send/Action: in 9.1% of events read");
+        // Without a convention, only the time field is core.
+        assertThat(IndexPlans.mostlyEmptyCore(plan.withConvention(null, List.of()), populated, ecs)).isEmpty();
+    }
 
     @Test
     void aDraftedPlansFieldsAreShownToTheUserAsATable() {

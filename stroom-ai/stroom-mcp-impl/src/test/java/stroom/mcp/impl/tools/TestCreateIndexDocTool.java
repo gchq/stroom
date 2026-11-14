@@ -30,6 +30,7 @@ import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.datasource.FieldType;
+import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.shared.ResultPage;
 
@@ -175,6 +176,50 @@ class TestCreateIndexDocTool {
         final Map<String, Object> noPlan = lucene(null);
         assertThat(refused(noPlan)).contains("The build already has Lucene index doc 'ACME-INDEX'")
                 .contains("give plan=");
+    }
+
+    @Test
+    void aClusterWhoseConnectionTestFailsIsRefusedNamingThoseThatPass() {
+        // Seen in chat 177: the doc was made on ES_PROD, then its connection test failed ("missing authentication
+        // credentials"), and the doc was stuck there.
+        world.cluster("prod", "ES_PROD");
+        Mockito.when(world.clusterTests.test(any())).thenAnswer(invocation ->
+                "prod".equals(invocation.<ElasticClusterDoc>getArgument(0).getUuid())
+                        ? new TestResult(false, "missing authentication credentials")
+                        : new TestResult(true, "ES_DEV 8.15"));
+        final Map<String, Object> arguments = elastic("acme-v1");
+        arguments.put("cluster_uuid", "prod");
+
+        assertThat(refused(arguments)).isEqualTo("Stroom's connection test of cluster 'ES_PROD' failed: "
+                                                 + "missing authentication credentials. Clusters whose test passes: "
+                                                 + "'ES_DEV' (cluster_uuid=dev). Ask the user which cluster to use, "
+                                                 + "then call again with its cluster_uuid.");
+        assertThat(world.world.docs.values()).noneMatch(doc -> doc instanceof ElasticIndexDoc);
+    }
+
+    @Test
+    void theBuildsOwnElasticIndexDocNamedAgainMovesToAnotherCluster() {
+        // Seen in chat 177: made again on ES_DEV, it was refused as a name the build already had, and the user edited
+        // the doc's cluster by hand.
+        final DocRef prod = world.cluster("prod", "ES_PROD");
+        world.elasticIndex("ix-doc", "ACME-ES", "acme-v1", prod, true);
+        world.processing.pipeline(new DocRef(PipelineDoc.TYPE, "ix", "ACME-Indexing"), true, "");
+        world.processing.layers("ix", world.processing.layer("ix", "xsltFilter", "XSLTFilter",
+                        "elasticIndexingFilter", "ElasticIndexingFilter")
+                .property("elasticIndexingFilter", "indexName", "acme-v1")
+                .property("elasticIndexingFilter", "cluster", prod));
+
+        final Map<String, Object> moved = call(elastic("acme-v1"), world.forms(question -> Map.of("value", true)));
+
+        assertThat(world.asked).singleElement().asString().startsWith("Change the cluster of Elastic Index doc "
+                                                                      + "'ACME-ES' from 'ES_PROD' to 'ES_DEV'");
+        assertThat(moved.get("uuid")).isEqualTo("ix-doc");
+        assertThat(moved.get("changed")).isEqualTo("cluster from 'ES_PROD' to 'ES_DEV'");
+        assertThat(((ElasticIndexDoc) world.world.docs.get("ix-doc")).getClusterRef().getUuid()).isEqualTo("dev");
+        assertThat(String.valueOf(moved.get("pipelines_changed"))).contains("ACME-Indexing");
+        assertThat(PipelineDocs.addedProperties(world.processing.pipelineDoc("ix")).getLast().getValue()
+                .getEntity().getUuid()).isEqualTo("dev");
+        assertThat(world.world.docs.values().stream().filter(doc -> doc instanceof ElasticIndexDoc)).hasSize(1);
     }
 
     private static Map<String, Object> lucene(final FieldPlan plan) {

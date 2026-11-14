@@ -930,9 +930,19 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
     /// @param name The document's name.
     /// @return The document.
     DocRef liveElasticCluster(final ElasticTestNode node, final String name) {
+        return elasticCluster(name, node.getUrl());
+    }
+
+    /// An Elastic Cluster document connecting to a URL, beside the standard templates: one nothing answers at, for
+    /// a cluster whose connection test fails.
+    ///
+    /// @param name The document's name.
+    /// @param url  Its connection URL.
+    /// @return The document.
+    DocRef elasticCluster(final String name, final String url) {
         final ExplorerNode created = create(ElasticClusterDoc.TYPE, name, templateFolder());
         final ElasticConnectionConfig connection = new ElasticConnectionConfig();
-        connection.setConnectionUrls(List.of(node.getUrl()));
+        connection.setConnectionUrls(List.of(url));
         asUser(admin, () -> elasticClusterStore.writeDocument(elasticClusterStore.readDocument(created.getDocRef())
                 .copy()
                 .connection(connection)

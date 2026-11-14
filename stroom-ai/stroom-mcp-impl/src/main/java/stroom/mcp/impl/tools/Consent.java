@@ -36,6 +36,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -454,7 +455,18 @@ public class Consent {
         String withLinks = linked(head, documents);
         final List<String> lines = new ArrayList<>();
         final List<String> linkedLines = new ArrayList<>();
+        // The lines shown in full, whatever their length (Listed), within what a form may hold.
+        final List<Boolean> inFull = new ArrayList<>();
         NullSafe.map(details).forEach((key, value) -> {
+            inFull.add(value instanceof Listed);
+            if (value instanceof final Listed listed) {
+                final String line = "- " + key + ":" + String.join("", listed.stream()
+                        .map(item -> "\n  - " + item)
+                        .toList());
+                lines.add(line);
+                linkedLines.add(line);
+                return;
+            }
             final String shown = shortDetail(value);
             lines.add("- " + key + ": " + shown);
             linkedLines.add("- " + key + ": " + documents.stream()
@@ -463,9 +475,17 @@ public class Consent {
                     .map(Consent::docLink)
                     .orElse(shown));
         });
+        // Characters of the lines shown in full, which the other lines' limit leaves out.
+        int full = 0;
         for (int i = 0; i < lines.size(); i++) {
             final String line = lines.get(i);
-            if (message.length() + line.length() + 30 > FORM_MESSAGE_LIMIT) {
+            final int counted = inFull.get(i)
+                    ? message.length()
+                    : message.length() - full;
+            if (counted + line.length() + 30 > (inFull.get(i)
+                    ? LINKED_MESSAGE_LIMIT
+                    : FORM_MESSAGE_LIMIT)
+                || message.length() + line.length() + 30 > LINKED_MESSAGE_LIMIT) {
                 final int shown = i;
                 LOGGER.warn(() -> LogUtil.message(
                         "Form for '{}' cut: {} of its {} details shown",
@@ -479,6 +499,9 @@ public class Consent {
                     : "\n";
             message += gap + line;
             withLinks += gap + linkedLines.get(i);
+            if (inFull.get(i)) {
+                full += gap.length() + line.length();
+            }
         }
         return within(withLinks, message, "");
     }
@@ -858,6 +881,30 @@ public class Consent {
 
     /// The user declined a form that asked for an answer ([#answer]): a refusal, told apart from a form closed or run
     /// out unanswered, which isn't one.
+    /// A form detail's values shown in full, one per line, not cut to a line as other details are: for what the
+    /// user must see whole to agree to it (seen in chat 177: a verification dashboard's columns, cut with "…", so
+    /// the user couldn't see what they approved). A list for everything else (digests, JSON), so it is kept as any
+    /// list is.
+    public static final class Listed extends AbstractList<String> {
+
+        private final List<String> values;
+
+        /// @param values The values, each shown on a line of its own.
+        public Listed(final List<String> values) {
+            this.values = List.copyOf(NullSafe.list(values));
+        }
+
+        @Override
+        public String get(final int index) {
+            return values.get(index);
+        }
+
+        @Override
+        public int size() {
+            return values.size();
+        }
+    }
+
     static final class Declined extends ToolRefusal {
 
         /// @param message What the agent is told.

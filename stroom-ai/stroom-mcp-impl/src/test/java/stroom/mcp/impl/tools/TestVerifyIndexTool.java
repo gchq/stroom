@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.TableComponentSettings;
+import stroom.docref.DocRef;
 import stroom.query.api.Column;
 import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.datasource.QueryField;
@@ -53,7 +54,7 @@ class TestVerifyIndexTool {
             }),
             world.indexFields, indexSearches, world.plans, world.world.documentAccess, world.world.guard(),
             world.processing.feeds.consent, world.processing.feeds.plan, world.world.records(),
-            world.world.pipelineShapes);
+            world.world.pipelineShapes, new EventsExpectations(world.processing.feeds.streamReader));
 
     TestVerifyIndexTool() {
         Mockito.when(world.queryService.findFields(any())).thenReturn(new ResultPage<>(List.of(
@@ -154,6 +155,28 @@ class TestVerifyIndexTool {
         assertThat(world.world.nodes.get(made.getUuid()).parent)
                 .isEqualTo(world.world.folder("System/" + BuildWorld.WORKSPACE + "/" + IndexingWorld.BUILD
                                               + "/Indexing").uuid);
+    }
+
+    @Test
+    void theBuildsVerificationDashboardOfTheIndexIsReusedWhateverItWasNamed() {
+        // Seen in chat 177: "<base> -VERIFY", named by the agent, then "<base> V1-VERIFY", by the index doc's name,
+        // and the first's columns changed four more times.
+        index(true);
+        final DocRef made = world.world.inBuild(IndexingWorld.BUILD, DashboardDoc.TYPE, "ACME -VERIFY", "dash");
+        world.world.docs.put(made.getUuid(), DashboardDoc.builder().uuid("dash").name("ACME -VERIFY").version("v0")
+                .dashboardConfig(IndexChecks.dashboardConfig(new DocRef(ElasticIndexDoc.TYPE, "i", "ACME-ES"),
+                        List.of("@timestamp"), "@timestamp", null))
+                .build());
+
+        final Map<String, Object> verified = call(args(", \"dashboard_name\": \"ACME V1-VERIFY\""), agreeing());
+
+        assertThat(world.asked).singleElement().asString()
+                .startsWith("Change the columns of dashboard 'ACME -VERIFY'")
+                // Every column, one per line, never cut.
+                .contains("- columns (newest first):\n  - @timestamp\n  - user.name\n");
+        assertThat(world.world.created).isEmpty();
+        assertThat(((Map<?, ?>) verified.get("dashboard")).get("uuid")).isEqualTo("dash");
+        assertThat(String.valueOf(verified.get("dashboard_name_ignored"))).startsWith("'ACME V1-VERIFY' not used");
     }
 
     @Test

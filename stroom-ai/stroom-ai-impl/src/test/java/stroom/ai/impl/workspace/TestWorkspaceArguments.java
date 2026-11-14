@@ -219,6 +219,19 @@ class TestWorkspaceArguments {
     }
 
     @Test
+    void testAPlaceholderInPlaceOfAPathIsSaidToBeOne() {
+        // Seen in chat 177: create_index_doc's plan given as {"$workspace": "PENDING"}, answered "'PENDING' is not
+        // in the workspace", which the agent couldn't act on.
+        final Expansion expansion = workspaceArguments.expand(CHAT_ID, "{\"plan\":{\"$workspace\":\"PENDING\"}}");
+
+        assertThat(expansion.error()).isEqualTo("plan: 'PENDING' isn't a workspace path, so there is no file to put "
+                                                + "in. A $workspace reference is replaced by a workspace file's "
+                                                + "content (e.g. \"/outputs/plan.json\"); give the value itself "
+                                                + "instead, or leave the argument out when there is none yet.");
+        Mockito.verify(workspace, Mockito.never()).size(Mockito.anyInt(), Mockito.any());
+    }
+
+    @Test
     void testAFileLargerThanTheLimitIsRefused() {
         limits = limits(10L);
         file("/outputs/big.txt", "x".repeat(11));

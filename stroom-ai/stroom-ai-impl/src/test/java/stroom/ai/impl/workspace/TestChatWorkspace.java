@@ -136,6 +136,18 @@ class TestChatWorkspace {
     }
 
     @Test
+    void testADirectoryIsSaidToBeOne() {
+        // Seen in chat 177: grep on a directory said "There is no file", and the agent took it for missing.
+        workspace.write(chat.getId(), WorkspacePath.parse("/outputs/turn-1/call-2.txt"), "a\n", null);
+
+        assertThatThrownBy(() -> workspace.readLines(chat.getId(), WorkspacePath.parse("/outputs/turn-1"), 0, 10))
+                .hasMessage("/outputs/turn-1 is a directory (1 file(s) below it), not a file. List it with ls "
+                            + "/outputs/turn-1/ and give a file's path.");
+        assertThatThrownBy(() -> workspace.readLines(chat.getId(), WorkspacePath.parse("/outputs/turn-2"), 0, 10))
+                .hasMessageStartingWith("There is no file /outputs/turn-2.");
+    }
+
+    @Test
     void testAChatOnlyReachesItsOwnWorkspace() {
         final WorkspacePath path = WorkspacePath.parse("/outputs/secret.txt");
         workspace.write(otherChat.getId(), path, "secret", null);

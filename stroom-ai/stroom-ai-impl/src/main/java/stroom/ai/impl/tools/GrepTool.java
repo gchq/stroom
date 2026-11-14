@@ -108,7 +108,10 @@ class GrepTool extends AbstractWorkspaceTool {
                 ? WorkspacePath.parse(outArg)
                 : null;
 
-        final List<WorkspacePath> files = path.isFile()
+        // A directory named without its trailing slash is searched as one (seen in chat 177: grep on
+        // /outputs/turn-49169 said "There is no file", twice, and the agent took the directory for missing).
+        final boolean file = path.isFile() && (workspace.find(path).isPresent() || workspace.list(path).isEmpty());
+        final List<WorkspacePath> files = file
                 ? List.of(path)
                 : workspace.list(path).stream()
                         .filter(entry -> entry.unavailable() == null)

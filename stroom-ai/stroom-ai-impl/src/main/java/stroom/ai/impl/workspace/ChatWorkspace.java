@@ -120,10 +120,20 @@ public class ChatWorkspace {
             throw new WorkspaceException(path + " is a directory. Give the path of a file.");
         }
         final int fileId = find(chatId, path)
-                .orElseThrow(() -> new WorkspaceException("There is no file " + path + ". List the workspace "
-                                                          + "to see what there is."));
+                .orElseThrow(() -> noFile(chatId, path));
         workspaceStore.checkAvailable(fileId);
         return fileId;
+    }
+
+    // No file at the path: a directory, when files lie below it (seen: grep on /outputs/turn-1 said "There is no
+    // file", and the agent took the directory for missing).
+    private WorkspaceException noFile(final int chatId, final WorkspacePath path) {
+        final int below = list(chatId, path).size();
+        if (below > 0) {
+            return new WorkspaceException(path + " is a directory (" + below + " file(s) below it), not a file. "
+                                          + "List it with ls " + path + "/ and give a file's path.");
+        }
+        return new WorkspaceException("There is no file " + path + ". List the workspace to see what there is.");
     }
 
     /// @return The file's id, if the chat has a file at the path.

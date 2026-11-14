@@ -606,6 +606,41 @@ class TestWriteDocumentationTool {
     }
 
     @Test
+    void theSameIndexDocIsConfirmedOnceASessionAndAnotherAsksAgain() {
+        // Seen in chat 177: "Document the existing Elastic Index doc ..." asked four times for one index doc in one
+        // session, each call (a round of descriptions, say) asking afresh.
+        for (final String uuid : List.of("i", "j")) {
+            world.world.inBuild(BUILD, ElasticIndexDoc.TYPE, "MAIL-" + uuid, uuid);
+            world.world.docs.put(uuid, ElasticIndexDoc.builder().uuid(uuid).name("MAIL-" + uuid).version("v0")
+                    .indexName("mail-" + uuid).build());
+        }
+        final Map<String, Object> survey = new LinkedHashMap<>();
+        survey.put("index", Map.of("name", "MAIL"));
+        survey.put("backend", "elasticsearch");
+        survey.put("index_name", "mail-v1");
+        survey.put("time_field", "@timestamp");
+        survey.put("fields", List.of(Map.of("name", "sender", "type", "keyword"),
+                Map.of("name", "subject", "type", "text")));
+        survey.put("documents", List.of(Map.of("sender", List.of("jane.doe@mail.com"), "subject", List.of("Hi"))));
+        Mockito.when(world.indexSurveys.surveyIndex(any(), any(), anyInt(), anyBoolean())).thenReturn(survey);
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+        final String call = "{\"build\": \"bb\", \"index_itself\": true, \"change\": \"Created\", \"markdown\": "
+                            + "\"## Purpose and data\\n\\nMail.\\n\", \"index_uuid\": ";
+
+        // A round of descriptions, then another: the user confirmed the doc once.
+        assertThat(asked(world.call(tool, user.context(), call + "\"i\", \"field_descriptions\": {\"sender\": "
+                                                          + "\"Who sent it.\"}}"))).containsExactly("subject");
+        world.call(tool, user.context(), call + "\"i\", \"field_descriptions\": {\"subject\": \"Its subject.\"}}");
+        assertThat(user.forms()).hasSize(1);
+
+        // Another index doc is another target: asked again.
+        world.call(tool, user.context(), call + "\"j\", \"field_descriptions\": {\"sender\": \"Who.\", "
+                                         + "\"subject\": \"What.\"}}");
+        assertThat(user.forms()).hasSize(2);
+        assertThat(user.forms().getLast().get("summary")).asString().contains("'MAIL-j'");
+    }
+
+    @Test
     void aLayoutIsOneOfThoseThereAre() {
         assertThat(world.refusal(tool, context, "{\"build\": \"bb\", \"pipeline_uuid\": \"p\", \"markdown\": \"x\", "
                                                 + "\"field_mapping_layout\": \"wide\"}"))
