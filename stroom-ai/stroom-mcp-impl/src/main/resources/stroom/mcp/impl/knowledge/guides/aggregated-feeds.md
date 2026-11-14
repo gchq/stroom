@@ -59,6 +59,11 @@ translated row can't be renamed: add the new row and remove the old one. A row n
 is refused. Without forms, `patterns=`, `scope=`, `group=` (required with `scope=`) and `reason=` carry the user's
 answers; `scope=[]` with an existing group's name changes that group alone (refused for a new group).
 
+A row the user names that the survey hasn't met (`unseen_source_types`) can be found two ways, as the user prefers:
+a stream they know holds it (`survey_feed build= feed= stream_ids=[id] find=<row>`), or a search of the feed's
+streams not surveyed yet, newest first (`survey_feed build= feed= find=<row>`; call again to carry on). Its records
+then count in the build's survey like any other source type's.
+
 ## Building a group
 
 One build makes one group, its scope's: `build_translation_xslt` builds it with its own mapping, drafted from the

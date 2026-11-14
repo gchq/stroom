@@ -312,6 +312,126 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         assertThat(rows.get("AzureActiveDirectory")).containsEntry("status", SourceTypeRegistry.PARKED);
     }
 
+    @Test
+    void aNominatedSourceTypeTheSurveyHasntMetIsFoundInTheNewestStreamsThatHoldIt() {
+        // Asked for by the user: a source type they named, not in the streams surveyed, had no way to be found.
+        final String feed = "E2E-WALK-FIND";
+        final String build = "walk-find";
+        createFeed("walk-find-src", feed);
+        upload(feed, TestE2eSourceTypeGroups.lines("azure-audit/azure-audit-1.json", RECORDS));
+        json("start_build", args("build", build, "feeds", List.of(feed)));
+        json("survey_feed", args("feed", feed, "build", build));
+        final Map<String, Object> written = nominated(build, feed, "PowerBI", List.of(), "Directory");
+        assertThat(strings(written, "unseen_source_types")).containsExactly("PowerBI");
+        assertThat(String.valueOf(written.get("hint"))).contains("stream_ids=[<id>] find='<name>'",
+                "survey_feed feed='" + feed + "' build='" + build + "' find='<name>'");
+
+        // Data holding it arrives later; the newest stream holds none of it.
+        final String later = TestE2eSourceTypeGroups.lines("azure-audit/azure-audit-2.json", LATER_RECORDS);
+        final long older = send(feed, withNewSourceType(later, "Workload", "PowerBI"));
+        final long holding = send(feed, withNewSourceType(later, "Workload", "PowerBI"));
+        final long newest = send(feed, later);
+
+        final Map<String, Object> found = json("survey_feed", args("feed", feed, "build", build, "find",
+                "PowerBI"));
+        dump("survey_feed find", found);
+        final Map<String, Object> search = map(found, "find");
+        // Newest first, stopping at the first stream that held it: the older one isn't read.
+        assertThat(search).containsEntry("found", true);
+        assertThat(number(search.get("records_found"))).isEqualTo(LATER_RECORDS / 5);
+        assertThat(ids(found, "streams_read")).containsExactly(newest, holding).doesNotContain(older);
+        assertThat(list(search, "streams_holding")).singleElement().satisfies(stream -> {
+            assertThat(number(stream.get("stream"))).isEqualTo(holding);
+            assertThat(number(stream.get("records"))).isEqualTo(LATER_RECORDS / 5);
+            assertThat(stream).containsKey("created");
+        });
+        assertThat(number(map(search, "profile").get("records_read"))).isEqualTo(LATER_RECORDS / 5);
+        assertThat(String.valueOf(found.get("hint"))).startsWith("Found " + LATER_RECORDS / 5 + " record(s) of "
+                                                                 + "source type 'PowerBI' in stream(s) [" + holding
+                                                                 + "]");
+
+        // The stream the user names, holding none: said plainly, with the values it holds.
+        final Map<String, Object> none = json("survey_feed", args("feed", feed, "build", build, "find", "PowerBI",
+                "stream_ids", List.of(newest)));
+        assertThat(map(none, "find")).containsEntry("found", false).containsKey("values_held");
+        assertThat(String.valueOf(none.get("hint"))).contains("hold no record of source type 'PowerBI'");
+    }
+
+    @Test
+    void aNominatedSourceTypeInAGroupBeforeItIsSeenIsCaughtByTheGroupsCatchAllWhenItArrives() {
+        final String feed = "E2E-WALK-UNSEEN";
+        final String build = "walk-unseen";
+        final String group = "Directory and reports";
+        final String text = TestE2eSourceTypeGroups.lines("azure-audit/azure-audit-1.json", RECORDS);
+        createFeed("walk-unseen-src", feed);
+        final long stream = upload(feed, text);
+        json("start_build", args("build", build, "feeds", List.of(feed)));
+        json("survey_feed", args("feed", feed, "build", build));
+        final Map<String, Object> written = nominated(build, feed, "PowerBI", List.of("AzureActiveDirectory",
+                "PowerBI"), group);
+        assertThat(strings(written, "scope")).containsExactly("AzureActiveDirectory", "PowerBI");
+        assertThat(strings(written, "unseen_source_types")).containsExactly("PowerBI");
+
+        // The group's rules end in a catch-all (no conditions after a rule with them).
+        final Map<String, Object> rules = TestE2eSourceTypeGroups.jsonValue("""
+                {"common_added": [{"path": "EventSource/Device/Name", "value": "Microsoft 365"}],
+                 "events": [
+                  {"name": "logon_failed", "when": [{"field": "Operation", "equals": "UserLoginFailed"}],
+                   "fields": [{"path": "EventDetail/TypeId", "value": "LogonFailed"},
+                              {"path": "EventDetail/Authenticate/Action", "value": "Logon"},
+                              {"path": "EventDetail/Authenticate/User/Id", "field": "UserId"},
+                              {"path": "EventDetail/Authenticate/Outcome/Success", "value": "false"}]},
+                  {"name": "logon",
+                   "fields": [{"path": "EventDetail/TypeId", "field": "Operation"},
+                              {"path": "EventDetail/Authenticate/Action", "value": "Logon"},
+                              {"path": "EventDetail/Authenticate/User/Id", "field": "UserId"},
+                              {"path": "EventDetail/Authenticate/Outcome/Success", "value": "true"}]}]}""");
+        classified(build, List.of(stream), rules);
+        group(build, feed, group, List.of("AzureActiveDirectory", "PowerBI"), rules, stream);
+        final String pipeline = uuidOf(agreed("create_pipeline", args("build", build, "group", group,
+                "template_uuid", templateUuid("translation", "Event Data (JSON)"))));
+        events(pipeline, List.of(stream));
+
+        // Its records arrive: the group's, not passed over; the catch-all takes them and says so.
+        final long reports = send(feed, withSourceType(withSourceType(TestE2eSourceTypeGroups.lines(
+                "azure-audit/azure-audit-2.json", LATER_RECORDS), "Workload", "PowerBI", 1), "Operation",
+                "ViewReport", 1));
+        final Map<String, Object> done = process(pipeline, List.of(reports));
+        dump("process unseen", done);
+        final Map<String, Object> processedStream = list(done, "streams").getFirst();
+        final String logged = streamText(ids(processedStream, "errors").getFirst());
+        assertThat(logged).contains(XsltGenerator.CAUGHT.replace("{rule}", "logon"), "ViewReport");
+        assertThat(TestE2eSourceTypeGroups.passedOver(logged)).isZero();
+        assertThat(TestE2eSourceTypeGroups.count(streamText(ids(processedStream, "events").getFirst()), "<Event>"))
+                .isEqualTo(LATER_RECORDS);
+    }
+
+    // record_source_types with a row the user names that the survey hasn't met: the table shown with it, then the
+    // group chosen (these source types, by this name).
+    private Map<String, Object> nominated(final String build,
+                                          final String feed,
+                                          final String row,
+                                          final List<String> scope,
+                                          final String group) {
+        final Map<String, Object> shown = json("record_source_types", args("build", build, "feed", feed,
+                "system_name", "Microsoft 365", "environment", "Prod"));
+        final List<String> rows = new ArrayList<>(strings(shown, "rows"));
+        rows.add(row + " = " + row);
+        final Map<String, Object> withRow = json("record_source_types", args("build", build, "feed", feed,
+                "system_name", "Microsoft 365", "environment", "Prod", "rows", rows));
+        assertThat(withRow).containsEntry("status", "needs_review");
+        assertThat(String.valueOf(withRow.get("table"))).contains(row);
+        client.answeringWith(answering(scope.isEmpty()
+                ? List.of(rowName(withRow, "AzureActiveDirectory"))
+                : scope, null));
+        final Map<String, Object> written = json("record_source_types", args("build", build, "feed", feed,
+                "system_name", "Microsoft 365", "environment", "Prod", "reviewed", withRow.get("review_id"),
+                "rows", withRow.get("rows"), "group", group));
+        dump("record_source_types " + build, written);
+        assertThat(written).as("written: %s", written).containsKey("registry");
+        return written;
+    }
+
     // --- the walk ---
 
     private void walk(final Family family) {
@@ -656,9 +776,11 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
             proposal.put("event_detail", "Unknown");
             proposal.put("from_user", true);
             for (final Map<String, Object> rule : list(rules, "events")) {
-                final boolean forKind = list(rule, "when").stream()
-                        .anyMatch(when -> kind.get("field").equals(when.get("field"))
-                                          && kind.get("value").equals(String.valueOf(when.get("equals"))));
+                // A rule with no conditions (a catch-all) takes the kinds the rules before it leave.
+                final List<Map<String, Object>> when = list(rule, "when");
+                final boolean forKind = when.isEmpty() || when.stream()
+                        .anyMatch(test -> kind.get("field").equals(test.get("field"))
+                                          && kind.get("value").equals(String.valueOf(test.get("equals"))));
                 if (forKind) {
                     for (final Map<String, Object> field : list(rule, "fields")) {
                         final String[] path = String.valueOf(field.get("path")).split("/");
@@ -669,6 +791,8 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
                             }
                         }
                     }
+                    // The first rule that takes the kind, as the XSLT's rules are tried.
+                    break;
                 }
             }
             proposals.add(proposal);
@@ -795,13 +919,18 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
 
     // Every fifth record given this value of the source type field, as a source the feed starts carrying.
     private static String withNewSourceType(final String text, final String field, final String value) {
+        return withSourceType(text, field, value, 5);
+    }
+
+    // Every `every`th record (from the first) given this value of a field.
+    private static String withSourceType(final String text, final String field, final String value, final int every) {
         final List<String> lines = text.lines().toList();
         final StringBuilder out = new StringBuilder();
         final String key = "\"" + field + "\": \"";
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
             final int at = line.indexOf(key);
-            if (i % 5 == 0 && at >= 0) {
+            if (i % every == 0 && at >= 0) {
                 final int start = at + key.length();
                 line = line.substring(0, start) + value + line.substring(line.indexOf('"', start));
             }

@@ -313,6 +313,45 @@ class TestRecordSourceTypesTool {
         assertThat(rowNamed("PegaSecurityEvent")).containsEntry("status", SourceTypeRegistry.TRANSLATED);
     }
 
+    @Test
+    void aNominatedRowTheSurveyHasntMetIsOfferedToBeFound() {
+        final List<String> rows = new ArrayList<>(OTHERS);
+        rows.add("PowerBI = PowerBI");
+
+        final Map<String, Object> result = called(BuildToolCalls.context(), Map.of("rows", rows, "scope",
+                List.of("PegaDB", "PowerBI"), "group", "PEGA back end"));
+
+        assertThat(result).as("%s", result).containsEntry("unseen_source_types", List.of("PowerBI"));
+        assertThat(String.valueOf(result.get("hint"))).contains("read no record of [PowerBI] yet",
+                "two ways to find one", "survey_feed feed='PEGA' build='pega-v2' stream_ids=[<id>] find='<name>'",
+                "survey_feed feed='PEGA' build='pega-v2' find='<name>'");
+        assertThat(JsonValues.mapOrEmpty(rowNamed("PowerBI").get("profile"))).containsEntry("records_read", 0L);
+    }
+
+    @Test
+    void onlyRowsNominatedOrInTheGroupAndNotDroppedAreUnseen() {
+        final Map<String, Object> registry = Map.of("rows", List.of(
+                profiled("New", 0, null), profiled("Parked", 0, SourceTypeRegistry.PARKED),
+                profiled("Grouped", 0, SourceTypeRegistry.PARKED), profiled("Dropped", 0, SourceTypeRegistry.DROPPED),
+                profiled("Seen", 5, null)));
+        final Map<String, Object> before = Map.of("rows", List.of(row("Parked", SourceTypeRegistry.PARKED),
+                row("Grouped", SourceTypeRegistry.PARKED), row("Dropped", SourceTypeRegistry.PARKED)));
+
+        assertThat(RecordSourceTypesTool.unseen(registry, before, List.of("Grouped"))).containsExactly("New",
+                "Grouped");
+        assertThat(RecordSourceTypesTool.unseen(registry, before, List.of())).containsExactly("New");
+        // Seen, nothing offered.
+        final Map<String, Object> result = called(BuildToolCalls.context(), Map.of("rows", OTHERS, "scope",
+                List.of("PegaDB"), "group", "PEGA back end"));
+        assertThat(result).as("%s", result).doesNotContainKey("unseen_source_types");
+    }
+
+    private static Map<String, Object> profiled(final String name, final long records, final String status) {
+        final Map<String, Object> row = row(name, status);
+        row.put("profile", Map.of("records_read", records));
+        return row;
+    }
+
     // The tool called twice, as the agent does: the table shown, then the scope given.
     private Map<String, Object> recorded(final ToolCallContext context, final Map<String, Object> given) {
         final Map<String, Object> args = new LinkedHashMap<>(given);

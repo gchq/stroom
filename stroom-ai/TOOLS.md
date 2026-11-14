@@ -2788,7 +2788,7 @@ kept still reads (see `SurveyDoc` under "Sample analysis").
   are read whole, else 3: seen in testing, a feed's latest streams uploaded again as one stream of five parts was
   surveyed through three), `max_records_per_stream` (10 to 10,000), `examples_per_shape` (1 to 10,
   default 2), `build`; as the user said: `kind_field`, `read_deeper` (no forms), `accept_as_is`,
-  `source_type_field` (`none` for one source), `aggregated` (below).
+  `source_type_field` (`none` for one source), `aggregated` (below); `find` (a registry row's name, below).
 * **Returns**: `feed`, `format`, `time_range`, `streams_read`, `records_read`, `records_in` (an XML document's root
   with its namespace, which the examples inherit), `saturated`, `coverage`, `per_stream` (each stream's records,
   parts, `head_only`, `new_shapes`, `windows`, and any undecodable bytes), `quoted_newlines`, `kinds` (each field
@@ -2846,6 +2846,20 @@ is read again for the scope's source types it wasn't read for (`read_again`), it
 profiles twice. Shapes keep the source type field's values their records had (`source_values`). The result's `scope`
 gives the build, the source types, their share of the records the survey counted (an estimate) and the records
 passed over; `coverage` ends with the scope and its share. A scope chosen by another build is not read through.
+
+**Finding a source type (`find`).** With a build, `find=<row>` looks for one registry row's records (the build's
+registry, else the one beside the feed; refused for a row it lacks, with no build, or with no source type field, and
+with `kind_field` or `source_type_field`, as it reads with the survey's own). It reads the feed's streams the build's
+survey hasn't read, newest first (up to 500 a call), or just `stream_ids`, through a scope of that row alone matched
+as the registry matches (the first row winning), until the row has `examples_per_shape` records (streams named are
+all read), the streams run out, or the call's time does. Its records count into the build's survey as any survey
+reading's (shapes, source type counts); each stream read is signed for the row alone, so a later survey reads it
+again for the others; saturation and acceptance are left as they were, and nothing is asked. The result's `find`
+gives `source_type`, `match`, `found`, `records_found`, `streams_read`, `records_of_other_source_types`,
+`streams_holding` (each `stream`, `created`, `records`), `values_held` (the five commonest values, when none was
+found) and the row's `profile` now; the hint says, plainly, where they were found, that the streams given held none,
+to call again to carry on (time out, or older streams left), or that none was found and the source type may not have
+arrived yet. `record_source_types` offers it for rows the survey hasn't met (`unseen_source_types`).
 
 **The survey doc stays in its build.** Promotion leaves a build's survey doc in the workspace (decided 2026-11-13;
 nothing asks where it goes), so a later build or survey of the feed starts its survey afresh; a later build still
@@ -2909,7 +2923,8 @@ over. The review is bound to the table (`Consent.wasReviewed`): other rows, or c
   `groups` (the source types for the scope and the registry's groups, without forms); or `feed`, `field`, `registry`
   (`type`, `uuid`, `name`), `rows` (each `name`, `match`, `status`, `reason`, `records_read`, `share_percent`,
   `suggested_category`, `confidence`), `table`, `scope`, `group`, `joins` (an existing group named), `coverage_restarted`,
-  `hint`, `next`.
+  `unseen_source_types` (rows nominated, or in the group, with no record read and not dropped: the hint offers the
+  user a stream id they know, or a search, both `survey_feed find=`), `hint`, `next`.
 * **Refuses**: no `feed`; another build open on the feed (one open build per aggregated feed, under
   `start_onboarding`); no source type field known (`survey_feed` first); no values counted; a row that is neither
   `name = value` nor `name ~ ^pattern`; rows that can't be used (`These rows can't be used: ...`); a patterns answer

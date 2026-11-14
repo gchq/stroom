@@ -41,6 +41,7 @@ import jakarta.inject.Inject;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -291,6 +292,7 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                + "(any number of source types, one pipeline) a build (start_build feeds=['" + feed
                                + "']: it surveys the feed afresh, and " + NAME + " offers the registry's parked "
                                + "source types for its group).");
+            offerToFind(result, build, feed, unseen(registry, before, List.of()));
             return plan.withNext(context, build, result);
         }
         final Object reviewed = argsMap(call).get(REVIEWED_ARG);
@@ -384,6 +386,7 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                            + scope.get().group() + "', " + groupTypes + ". build_translation_xslt builds "
                            + "it (group and source_types default to these); a build makes one group, so another "
                            + "is a later build's, after this one is promoted. Carry on with the plan (next).");
+        offerToFind(result, build, feed, unseen(registry, before, groupTypes));
         return plan.withNext(context, build, result);
     }
 
@@ -404,6 +407,43 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
             survey.remove(SurveyDoc.ACCEPTED);
         }
         return uncovered;
+    }
+
+    /// The rows of a registry written that the survey has read no record of, and that the user would want found: those
+    /// new to the registry (nominated by the user), and those in the build's group; never a dropped one.
+    ///
+    /// @param registry The registry written.
+    /// @param before   The registry before (empty when there was none).
+    /// @param group    The source types of the build's group, or none.
+    /// @return Their names, in the registry's order.
+    static List<String> unseen(final Map<String, Object> registry,
+                               final Map<String, Object> before,
+                               final Collection<String> group) {
+        final Set<String> known = new LinkedHashSet<>();
+        JsonValues.maps(before.get("rows")).forEach(row -> known.add(JsonValues.text(row.get("name"))));
+        return JsonValues.maps(registry.get("rows")).stream()
+                .filter(row -> !SourceTypeRegistry.DROPPED.equals(row.get("status")))
+                .filter(row -> JsonValues.mapOrEmpty(row.get("profile")).get("records_read")
+                                       instanceof final Number read && read.longValue() == 0)
+                .map(row -> JsonValues.text(row.get("name")))
+                .filter(name -> !known.contains(name) || group.contains(name))
+                .toList();
+    }
+
+    // Rows the survey hasn't met: the agent offers the user two ways to find their records, in plain words.
+    private static void offerToFind(final Map<String, Object> result,
+                                    final String build,
+                                    final String feed,
+                                    final List<String> unseen) {
+        if (unseen.isEmpty()) {
+            return;
+        }
+        result.put("unseen_source_types", unseen);
+        result.put("hint", result.get("hint") + " The survey has read no record of " + unseen + " yet. Offer the "
+                           + "user two ways to find one: they give the ID of a stream that holds it (survey_feed "
+                           + "feed='" + feed + "' build='" + build + "' stream_ids=[<id>] find='<name>'), or a "
+                           + "search of the feed's streams, newest first (survey_feed feed='" + feed + "' build='"
+                           + build + "' find='<name>'). One source type a call.");
     }
 
     // The registry's rows: as the user gave them, those of the registry beside the feed (values it lacks added),
