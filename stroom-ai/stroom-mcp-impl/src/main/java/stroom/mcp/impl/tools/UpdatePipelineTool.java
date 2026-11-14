@@ -142,7 +142,9 @@ class UpdatePipelineTool extends AbstractBuiltInTool {
             set.add(String.valueOf(outcome.get("set")));
         }
         if (!references.isEmpty()) {
-            final Map<String, Object> outcome = writes.setPipelineReferences(context, pipelineUuid, references);
+            final String build = plan.buildOf(new DocRef(PipelineDoc.TYPE, pipelineUuid, null)).orElse(null);
+            final Map<String, Object> outcome = writes.setPipelineReferences(context, pipelineUuid,
+                    ReferenceRequest.contextFeedsFilled(references, plan.inputFeeds(build)));
             result.put("name", outcome.get("name"));
             result.put("type", PipelineDoc.TYPE);
             result.put("reference_data", outcome.get("reference_data"));

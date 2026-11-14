@@ -462,6 +462,25 @@ public class BuildPlan {
         return facts.sourceFeeds(build, facts.buildDocs(build));
     }
 
+    /// @param build A build, or null.
+    /// @return The feeds whose streams the build's events pipelines read: the existing feeds it works from, else its
+    /// own feeds but its test feeds; none for no build.
+    public List<String> inputFeeds(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return List.of();
+        }
+        final List<Map<String, Object>> docs = facts.buildDocs(build);
+        final List<String> sources = facts.sourceFeeds(build, docs);
+        if (!sources.isEmpty()) {
+            return sources;
+        }
+        return docs.stream()
+                .filter(doc -> FeedDoc.TYPE.equals(doc.get("type")))
+                .map(doc -> String.valueOf(doc.get("name")))
+                .filter(name -> !name.endsWith(OutputFeeds.TEST_FEED))
+                .toList();
+    }
+
     /// @param build A build.
     /// @return Each feed whose survey for the build was refused because nothing could be read, with why; empty when
     /// none was.

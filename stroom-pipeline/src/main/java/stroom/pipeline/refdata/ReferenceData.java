@@ -301,7 +301,7 @@ public class ReferenceData {
         LOGGER.trace(() -> LogUtil.message(
                 "getNestedStreamEventList called, pipe: {}, feed: {}, streamType: {}, map: {}, key: {}",
                 pipelineReference.getName(),
-                NullSafe.get(pipelineReference.getFeed(), DocRef::getName),
+                pipelineReference.getFeed().getName(),
                 pipelineReference.getStreamType(),
                 mapName,
                 keyName));
@@ -409,7 +409,7 @@ public class ReferenceData {
                         mapName,
                         mapAvailability,
                         refStreamDefinition.getStreamId(),
-                        NullSafe.get(pipelineReference.getFeed(), DocRef::getName),
+                        pipelineReference.getFeed().getName(),
                         pipelineReference.getPipeline().getName(),
                         mapAvailability.isLookupRequired()));
     }

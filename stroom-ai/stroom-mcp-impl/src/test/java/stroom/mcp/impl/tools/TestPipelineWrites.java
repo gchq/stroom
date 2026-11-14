@@ -528,17 +528,21 @@ class TestPipelineWrites {
     }
 
     @Test
-    void contextDataIsAttachedWithItsLoaderAndNoFeed() {
+    void contextDataIsAttachedWithItsLoaderAndTheBuildsFeed() {
         final DocRef loader = pipelines.productionPipeline("ctx-loader", "Context Loader", null,
                 PipelineLayers.layer("ctx-loader")).asDocRef();
         pipelines.buildPipeline("p", "Acme-Events", null, PipelineLayers.layer("p").chain("xmlParser",
                 "XMLParser", "translationFilter", "XSLTFilter"));
-        final List<PipelineWrites.ReferenceRequest> references = PipelineWrites.ReferenceRequest.listOf(
+        final List<PipelineWrites.ReferenceRequest> given = PipelineWrites.ReferenceRequest.listOf(
                 List.of(Map.of("stream_type", "context", "loader_pipeline", "Context Loader")), "references");
-        assertThat(references).singleElement().satisfies(reference -> {
+        assertThat(given).singleElement().satisfies(reference -> {
             assertThat(reference.isContext()).isTrue();
             assertThat(reference.feed()).isNull();
         });
+        pipelines.feeds.feedAt("System/Feeds", "Acme-Events", "f-events");
+        // The feed the build's pipelines read is named, as Stroom's lookup logs expect one.
+        final List<PipelineWrites.ReferenceRequest> references = PipelineWrites.ReferenceRequest.contextFeedsFilled(
+                given, List.of("Acme-Events"));
 
         final Map<String, Object> added = writes.setPipelineReferences(BuildToolCalls.context(), "p", references);
 
@@ -546,11 +550,47 @@ class TestPipelineWrites {
         assertThat(pipelines.pipelineDoc("p").getPipelineData().getAddedPipelineReferences())
                 .singleElement()
                 .satisfies(reference -> {
-                    assertThat(reference.getFeed()).isNull();
+                    assertThat(reference.getFeed().getName()).isEqualTo("Acme-Events");
                     assertThat(reference.getPipeline().getUuid()).isEqualTo(loader.getUuid());
                     assertThat(reference.getStreamType()).isEqualTo("Context");
                 });
         Mockito.verify(pipelines.referenceData, Mockito.never()).resolveLoader(Mockito.any());
+    }
+
+    @Test
+    void aContextReferenceWithoutAFeedIsRefusedWhereTheBuildReadsNoneOrSeveral() {
+        final List<PipelineWrites.ReferenceRequest> given = PipelineWrites.ReferenceRequest.listOf(
+                List.of(Map.of("stream_type", "Context", "loader_pipeline", "Context Loader")), "references");
+        assertThat(PipelineWrites.ReferenceRequest.contextFeedsFilled(given, List.of("A", "B")))
+                .singleElement().satisfies(reference -> assertThat(reference.feed()).isNull());
+        assertThat(PipelineWrites.ReferenceRequest.contextFeedsFilled(given, List.of()))
+                .singleElement().satisfies(reference -> assertThat(reference.feed()).isNull());
+        // A reference feed's reference is never given a feed.
+        assertThat(PipelineWrites.ReferenceRequest.contextFeedsFilled(List.of(new PipelineWrites.ReferenceRequest(
+                "REF", null, null)), List.of("A"))).singleElement()
+                .satisfies(reference -> assertThat(reference.feed()).isEqualTo("REF"));
+        pipelines.productionPipeline("ctx-loader", "Context Loader", null, PipelineLayers.layer("ctx-loader"));
+
+        assertThatThrownBy(() -> writes.referenceEntries(Layout.of(List.of(layer("t", PipelineLayers.layer("t")
+                        .chain("xmlParser", "XMLParser", "translationFilter", "XSLTFilter").data()))), given))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("A Context reference needs feed");
+    }
+
+    @Test
+    void aGroupsKeptContextReferenceStaysContextAndNamesTheGroupsFeed() {
+        final PipelineWrites.ReferenceRequest context = PipelineWrites.ReferenceRequest.kept(Map.of(
+                "stream_type", "Context", "loader_pipeline", "Context Loader"), "translationFilter", "AGG-FEED");
+        assertThat(context.isContext()).isTrue();
+        assertThat(context.feed()).isEqualTo("AGG-FEED");
+        assertThat(context.element()).isEqualTo("translationFilter");
+        final PipelineWrites.ReferenceRequest kept = PipelineWrites.ReferenceRequest.kept(Map.of(
+                "stream_type", "Context", "feed", "OTHER", "loader_pipeline", "L"), null, "AGG-FEED");
+        assertThat(kept.feed()).isEqualTo("OTHER");
+        final PipelineWrites.ReferenceRequest reference = PipelineWrites.ReferenceRequest.kept(Map.of(
+                "feed", "REF"), null, "AGG-FEED");
+        assertThat(reference.isContext()).isFalse();
+        assertThat(reference.feed()).isEqualTo("REF");
     }
 
     @Test
