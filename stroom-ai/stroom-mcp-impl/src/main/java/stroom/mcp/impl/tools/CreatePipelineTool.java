@@ -397,15 +397,14 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         refuseImportedModules(properties);
         // A source type group's pipeline: its output feed and the reference data the group looks up.
         final Optional<SourceTypeGroups.GroupRun> group = groupRun(build, properties);
-        final List<ReferenceRequest> requested = new ArrayList<>(request.references());
+        final List<ReferenceRequest> requested = new ArrayList<>(ReferenceRequest.contextFeedsFilled(
+                request.references(), group.map(run -> List.of(run.feed())).orElseGet(() -> plan.inputFeeds(build))));
         if (group.isPresent()) {
             refuseRunElsewhere(build, group.get());
             properties.addAll(groupFeed(group.get(), merged, properties, filled));
             if (requested.isEmpty()) {
-                group.get().references().forEach(reference -> requested.add(new ReferenceRequest(
-                        JsonValues.text(reference.get("feed")), reference.get("loader_pipeline") == null
-                        ? null
-                        : JsonValues.text(reference.get("loader_pipeline")), null)));
+                group.get().references().forEach(reference -> requested.add(ReferenceRequest.kept(reference, null,
+                        group.get().feed())));
             }
         }
         final List<PipelineReference> references = new ArrayList<>(writes.referenceEntries(merged, requested));

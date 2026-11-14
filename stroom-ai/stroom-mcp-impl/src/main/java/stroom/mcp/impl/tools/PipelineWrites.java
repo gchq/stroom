@@ -720,11 +720,16 @@ class PipelineWrites {
                                           + "context_loader_template, with the XSLT build_reference_xslt wrote for "
                                           + "the context data)");
                 }
+                // Stroom names the feed in its lookup logs and expects one there (a reference without one fails
+                // those logs), so it is always set: given, or the one feed the build's pipelines read.
+                if (reference.feed() == null) {
+                    throw new ToolRefusal("A Context reference needs feed: the feed whose streams carry the context "
+                                          + "data (the lookups still read each stream's own Context child; Stroom "
+                                          + "names the feed in its lookup logs)");
+                }
                 out.add(new PipelineReference(element, "pipelineReference",
                         docRefByName(PipelineDoc.TYPE, reference.loaderPipeline()),
-                        reference.feed() == null
-                                ? null
-                                : docRefByName(FeedDoc.TYPE, reference.feed()), StreamTypeNames.CONTEXT));
+                        docRefByName(FeedDoc.TYPE, reference.feed()), StreamTypeNames.CONTEXT));
                 continue;
             }
             final String loader = reference.loaderPipeline() != null
@@ -1214,9 +1219,10 @@ class PipelineWrites {
     record ReferenceRequest(String feed, String loaderPipeline, String element, String streamType) {
 
         /// How a reference's arguments are described.
-        static final String FEED = "The reference feed's name. With stream_type 'Context', none is needed (the "
-                                   + "data is each stream's own Context child); one given is only named in "
-                                   + "Stroom's logs.";
+        static final String FEED = "The reference feed's name. With stream_type 'Context', the feed whose streams "
+                                   + "carry the context data (the lookups read each stream's own Context child; "
+                                   + "Stroom names the feed in its logs): left out, the build's feed where it reads "
+                                   + "one.";
         static final String STREAM_TYPE = "'Context' for context data: the lookups read each events stream's own "
                                           + "Context child (each part its own), loaded by loader_pipeline (required: "
                                           + "a child of the context loader template, find_reference_data's "
@@ -1234,6 +1240,34 @@ class PipelineWrites {
         /// @param element        The XSLT element that does the lookups, or null.
         ReferenceRequest(final String feed, final String loaderPipeline, final String element) {
             this(feed, loaderPipeline, element, null);
+        }
+
+        /// @param references References as given.
+        /// @param feeds      The feeds the build's pipelines read.
+        /// @return The references, each Context one given no feed given the build's feed where it reads just one.
+        static List<ReferenceRequest> contextFeedsFilled(final List<ReferenceRequest> references,
+                                                         final List<String> feeds) {
+            return references.stream()
+                    .map(reference -> reference.isContext() && reference.feed() == null && feeds.size() == 1
+                            ? new ReferenceRequest(feeds.getFirst(), reference.loaderPipeline(), reference.element(),
+                            reference.streamType())
+                            : reference)
+                    .toList();
+        }
+
+        /// @param reference A reference as the registry keeps it (`feed`, `loader_pipeline`, `stream_type`).
+        /// @param element   The XSLT element doing the lookups, or null for the pipeline's translation step.
+        /// @param feed      The feed a Context reference names when it keeps none (the group's feed).
+        /// @return It as a request.
+        static ReferenceRequest kept(final Map<String, Object> reference, final String element, final String feed) {
+            final boolean context = StreamTypeNames.CONTEXT.equalsIgnoreCase(NullSafe.string(
+                    text(reference.get("stream_type"))));
+            final String keptFeed = text(reference.get("feed"));
+            return new ReferenceRequest(keptFeed == null && context
+                    ? feed
+                    : keptFeed, text(reference.get("loader_pipeline")), element, context
+                    ? StreamTypeNames.CONTEXT
+                    : null);
         }
 
         /// @return True if the reference is to context data (each stream's own Context child).

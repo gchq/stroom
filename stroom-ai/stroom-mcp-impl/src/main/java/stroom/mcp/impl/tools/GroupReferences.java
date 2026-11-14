@@ -16,7 +16,6 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.JsonValues;
 import stroom.docref.DocRef;
 import stroom.mcp.impl.tools.PipelineWrites.ReferenceRequest;
 import stroom.pipeline.shared.PipelineDoc;
@@ -136,10 +135,7 @@ class GroupReferences {
                                     final String element,
                                     final SourceTypeGroups.GroupRun group) {
         final List<ReferenceRequest> wanted = group.references().stream()
-                .map(reference -> new ReferenceRequest(JsonValues.text(reference.get("feed")),
-                        reference.get("loader_pipeline") == null
-                                ? null
-                                : JsonValues.text(reference.get("loader_pipeline")), element))
+                .map(reference -> ReferenceRequest.kept(reference, element, group.feed()))
                 .toList();
         if (wanted.isEmpty()) {
             return Optional.empty();

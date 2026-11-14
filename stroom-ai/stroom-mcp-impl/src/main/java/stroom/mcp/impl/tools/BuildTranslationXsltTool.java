@@ -1817,6 +1817,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 if (reference.loaderPipeline() != null) {
                     kept.put("loader_pipeline", reference.loaderPipeline());
                 }
+                if (reference.isContext()) {
+                    kept.put("stream_type", reference.streamType());
+                }
                 out.add(kept);
             }
             return out;

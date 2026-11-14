@@ -3948,7 +3948,7 @@ Shared behaviour:
   refused (`references[0].feed is required: ...`); a pipeline with no XSLT step to attach it to too. With
   `stream_type: 'Context'` the reference reads each events stream's own Context child (Stroom core,
   `ReferenceData.getValueFromNestedContextStream`: each part its own, nothing processed first): `loader_pipeline` is
-  required (the context loader, a child of `context_loader_template`), `feed` optional (only named in Stroom's logs).
+  required (the context loader, a child of `context_loader_template`), `feed` the feed whose streams carry the context: left out, the one feed the build's pipelines read (`BuildPlan.inputFeeds`; a group's, its feed), and refused when there is none or several. Stroom names it in its lookup logs and expects one there, so it is always set (core Stroom left unchanged).
   Stepping doesn't wait for a Context reference (`PipelineStepping.refuseUnloadedReferences`), nor does the plan
   (`StroomBuildFacts.referencedFeeds`), and `keep_references` carries it (`CurrentTranslations.ownReferences`).
   A context loader is made from `context_loader_template` with `combinedParser.type` `XML` (or `JSON`) in
