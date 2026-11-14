@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.e2e;
 
+import stroom.ai.impl.tools.indexing.FeedIndexes;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 
@@ -35,6 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -42,7 +44,9 @@ import javax.xml.parsers.ParserConfigurationException;
 
 /// A case's score, and the scoring of a case's Events against what the case expects: the record count, the event types,
 /// the paths every event has, values some event holds, values and types none may hold, and Data where it belongs; and
-/// for an aggregated feed's case, its build's source types ([#scoreSourceTypes]).
+/// for an aggregated feed's case, its build's source types ([#scoreSourceTypes]); for a case that starts from another
+/// case's promoted build, what it changed of that build ([#scoreLaterBuild]); and the forms the user was asked
+/// ([#scoreForms]).
 @SuppressWarnings("unchecked")
 final class EvalScore {
 
@@ -168,6 +172,7 @@ final class EvalScore {
     ///   whatever the rows are named; `name` (any case) what the user called it.
     /// - `rows`: rows the registry must have, each by its `match` (`value`, `pattern` or `member`) and `value`
     ///   (the value, the anchored pattern or the list's item), and its `status` if given.
+    /// - `groups`: the registry's source type groups, exactly (the groups its rows name, any order).
     /// - `passed_over`: the records the group's pipeline passed over, as its INFO lines count them, with no ERROR or
     ///   FATAL line logged: the other source types' records are not errors, nor worked round.
     ///
@@ -197,6 +202,15 @@ final class EvalScore {
             scoreGroup(group, registry);
         }
         final List<Map<String, Object>> rows = (List<Map<String, Object>>) registry.getOrDefault("rows", List.of());
+        if (expected.get("groups") != null) {
+            final Set<String> groups = new TreeSet<>();
+            rows.stream().map(row -> row.get("group")).filter(Objects::nonNull).forEach(g -> groups.add(
+                    String.valueOf(g)));
+            check("groups", groups.equals(new TreeSet<>(strings(expected.get("groups")))), "the registry's groups "
+                                                                                           + "are " + groups
+                                                                                           + ", expected "
+                                                                                           + expected.get("groups"));
+        }
         for (final Map<String, Object> row : (List<Map<String, Object>>) expected.getOrDefault("rows", List.of())) {
             final String wanted = row.get("match") + " " + row.get("value") + (row.get("status") != null
                     ? " (" + row.get("status") + ")"
@@ -212,6 +226,113 @@ final class EvalScore {
             check("passed_over", passedOver != null && passedOver == count.longValue() && errorLines == 0,
                     "the group's pipeline passed over " + passedOver + " record(s), expected " + count + ", and "
                     + "logged " + errorLines + " ERROR or FATAL line(s)");
+        }
+    }
+
+    /// Scores a later build against the promoted build it started from (a case's `setup`), from the build's end state:
+    ///
+    /// - `source_types.pipeline`: `new` where the group's rows (those of `source_types.group.values`) name a pipeline
+    ///   other than the setup group's, `same` where they name the setup group's own (after a working copy of it is
+    ///   promoted, no new version made).
+    /// - `source_types.index.fields_added`: the registry's index of the group has fields this build added.
+    /// - `unchanged`: the setup group's pipeline, XSLT and index as the setup left them.
+    /// - `separate_index`: the build's Events were found in an index other than the setup group's.
+    ///
+    /// @param evalCase  The case.
+    /// @param registry  The registry scored, as [SourceTypeRegistry#read] reads it, or null for none.
+    /// @param before    What the setup left.
+    /// @param now       The setup group's documents as they are now ([Before#snapshot]'s keys).
+    /// @param build     The build.
+    /// @param indexUsed The UUID of the index the build's Events were found in, or null if none.
+    void scoreLaterBuild(final Map<String, Object> evalCase,
+                         final Map<String, Object> registry,
+                         final Before before,
+                         final Map<String, String> now,
+                         final String build,
+                         final String indexUsed) {
+        final Map<String, Object> expected = maps(evalCase.get("expected"));
+        final Map<String, Object> sourceTypes = maps(expected.get("source_types"));
+        final List<Map<String, Object>> rows = registry == null
+                ? List.of()
+                : (List<Map<String, Object>>) registry.getOrDefault("rows", List.of());
+        if (sourceTypes.get("pipeline") instanceof final String wanted) {
+            final List<String> values = strings(maps(sourceTypes.get("group")).get("values"));
+            final List<String> pipelines = new ArrayList<>();
+            final List<SourceTypeRows.Row> parsed = registry == null
+                    ? List.of()
+                    : SourceTypeRegistry.rows(registry);
+            for (final String value : values) {
+                final String name = SourceTypeRows.first(parsed, value).map(SourceTypeRows.Row::name).orElse(null);
+                final Object pipeline = rows.stream()
+                        .filter(row -> Objects.equals(name, row.get("name")))
+                        .map(row -> maps(row.get("pipeline")).get("uuid"))
+                        .findFirst()
+                        .orElse(null);
+                pipelines.add(String.valueOf(pipeline));
+            }
+            final boolean passed = !pipelines.isEmpty() && ("same".equals(wanted)
+                    ? pipelines.stream().allMatch(before.pipeline()::equals)
+                    : pipelines.stream().noneMatch(p -> "null".equals(p) || before.pipeline().equals(p)));
+            check("pipeline " + wanted, passed, "the group's rows name pipeline(s) " + pipelines + ", expected "
+                                                + ("same".equals(wanted)
+                    ? "the setup's " + before.pipeline()
+                    : "a new one, not the setup's " + before.pipeline()));
+        }
+        if (Boolean.TRUE.equals(maps(sourceTypes.get("index")).get("fields_added"))) {
+            final String group = String.valueOf(maps(sourceTypes.get("group")).get("name"));
+            final Map<String, Object> index = registry == null
+                    ? Map.of()
+                    : maps(FeedIndexes.indexOfGroup(registry, group));
+            final Map<String, Object> addedBy = maps(index.get("added_by"));
+            check("index fields added", addedBy.containsValue(build), "the index of group " + group + " ("
+                                                                      + index.get("index") + ") has no field "
+                                                                      + "added by " + build + ": " + addedBy);
+        }
+        if (Boolean.TRUE.equals(expected.get("unchanged"))) {
+            for (final Map.Entry<String, String> entry : before.snapshot().entrySet()) {
+                check("unchanged " + entry.getKey(), Objects.equals(entry.getValue(), now.get(entry.getKey())),
+                        "the setup group " + before.group() + "'s " + entry.getKey() + " changed");
+            }
+        }
+        if (Boolean.TRUE.equals(expected.get("separate_index"))) {
+            check("separate index", indexUsed != null && !indexUsed.equals(before.index()), "the build's Events "
+                                                                                           + "were found in "
+                                                                                           + (indexUsed == null
+                    ? "no index"
+                    : "index " + indexUsed) + ", expected one of their own, not the setup group's "
+                                                                                           + before.index());
+        }
+    }
+
+    /// Scores the forms the user was shown in the build against the case's `expected.forms`: `asked`, each a form
+    /// that must have been shown (its `message`, a regular expression found in the form's message) and, where an
+    /// `answer` is given, answered with a value starting with it; `not_asked`, regular expressions no form's message
+    /// may hold.
+    ///
+    /// @param evalCase The case.
+    /// @param forms    The forms shown, in order: each its `message` and the `content` it was answered with.
+    void scoreForms(final Map<String, Object> evalCase, final List<Map<String, Object>> forms) {
+        final Map<String, Object> expected = maps(maps(evalCase.get("expected")).get("forms"));
+        for (final Map<String, Object> asked : (List<Map<String, Object>>) expected.getOrDefault("asked",
+                List.of())) {
+            final Pattern message = Pattern.compile(String.valueOf(asked.get("message")));
+            final String answer = (String) asked.get("answer");
+            final List<Map<String, Object>> shown = forms.stream()
+                    .filter(form -> message.matcher(String.valueOf(form.get("message"))).find())
+                    .toList();
+            final boolean answered = answer == null || shown.stream().anyMatch(form -> maps(form.get("content"))
+                    .values().stream().anyMatch(value -> String.valueOf(value).startsWith(answer)));
+            check("form " + message + " asked", !shown.isEmpty() && answered, shown.isEmpty()
+                    ? "no form asked '" + message + "'"
+                    : "the form '" + message + "' wasn't answered '" + answer + "…': " + shown.stream()
+                            .map(form -> form.get("content"))
+                            .toList());
+        }
+        for (final String notAsked : strings(expected.get("not_asked"))) {
+            final Pattern message = Pattern.compile(notAsked);
+            final boolean asked = forms.stream()
+                    .anyMatch(form -> message.matcher(String.valueOf(form.get("message"))).find());
+            check("form " + notAsked + " not asked", !asked, "a form asked '" + notAsked + "', which none should");
         }
     }
 
@@ -280,6 +401,11 @@ final class EvalScore {
     /// @param indexed Whether the events were indexed and found by the verification searches.
     void indexed(final boolean indexed) {
         this.indexed = indexed;
+    }
+
+    /// @return Whether the events were indexed and found by the verification searches.
+    boolean indexed() {
+        return indexed;
     }
 
     /// @return Whether the Events hold what the case expects.
@@ -496,5 +622,17 @@ final class EvalScore {
         return value instanceof final Map<?, ?> map
                 ? (Map<String, Object>) map
                 : Map.of();
+    }
+
+    // --------------------------------------------------------------------------------
+
+    /// What a case's setup left for the case's own build (a promoted build of a source type group).
+    ///
+    /// @param group    The setup's source type group.
+    /// @param pipeline Its pipeline's UUID.
+    /// @param index    Its index's UUID.
+    /// @param snapshot Its pipeline, XSLT and index as the setup left them, by name, each as text to compare.
+    record Before(String group, String pipeline, String index, Map<String, String> snapshot) {
+
     }
 }

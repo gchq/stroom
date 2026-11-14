@@ -1,0 +1,124 @@
+name: Microsoft 365 unified audit log, a later build (OneDrive joins the promoted Messaging group)
+template: Event Data (JSON)
+capabilities: [aggregated_feeds, source_types, later_builds]
+# A later build on an aggregated feed: case 56 built and promoted first (its feed, data, registry beside the feed, the
+# Messaging group's pipeline, XSLT and index), then the user asks for OneDrive to join the Messaging group. The
+# traps: a new group made instead of joining Messaging; the change-vs-new-version question not put to the user (it
+# is theirs: they say change it) or their answer not followed (a new version copied instead of a working copy);
+# Messaging's existing rules lost from its mapping; the other workloads' records taken for errors; the build left
+# unpromoted, so production never takes OneDrive. Its Events go into Messaging's own index, which gains OneDrive's
+# fields at promotion.
+setup: {from_case: 56}
+promote: true
+request: >
+  Our Microsoft 365 audit log is onboarded already: its feed carries every workload's records, and the Messaging
+  group (Exchange Online and Teams) is built and promoted. Add the OneDrive records to the Messaging group, so its
+  pipeline translates them too and they are indexed in the Messaging index with the rest of the group. Promote the
+  build when it's done.
+user_knows: >
+  OneDrive joins the existing Messaging group; no new group. Messaging then holds ExchangeOnline, MicrosoftTeams and
+  OneDrive. SharePoint and AzureActiveDirectory stay parked for later builds. When asked whether the change goes to
+  the Messaging pipeline in production or to a new version of it: change it (its working copy written back at
+  promotion), no new version. The Workload field says which workload a record came from, as before. The other
+  workloads' records being passed over by the Messaging pipeline is expected; they are not errors. Promote the
+  build, keeping its documents where the feed's other documents are. The system is Microsoft 365.
+  Users' Ids stay whole, with their domain (sam.taylor@contoso.example), as Messaging writes them.
+expected:
+  records: 192
+  event_types: [View, Send, Create|Update, Delete|Move]
+  paths: [EventTime/TimeCreated, EventSource/User/Id]
+  values:
+    EventSource/User/Id: [sam.taylor@contoso.example, priya.nair@contoso.example, anja.michel@contoso.example]
+    EventSource/Generator: [ExchangeOnline, MicrosoftTeams, OneDrive]
+  forbidden_values:
+    EventDetail/TypeId: [UserLoggedIn, UserLoginFailed, Add member to role., Reset user password.]
+    EventSource/Generator: [SharePoint, AzureActiveDirectory]
+  source_types:
+    # Scored on the registry beside the feed, after promotion.
+    promoted: true
+    field: Workload
+    group:
+      name: Messaging
+      values: [ExchangeOnline, MicrosoftTeams, OneDrive]
+      others: [SharePoint, AzureActiveDirectory]
+    groups: [Messaging]
+    pipeline: same
+    rows:
+      - {match: value, value: SharePoint, status: parked}
+      - {match: value, value: AzureActiveDirectory, status: parked}
+    passed_over: 208
+    index: {fields_added: true}
+  forms:
+    asked:
+      - {message: "go in this build's source type group"}
+      - {message: "runs in pipeline", answer: "Change "}
+    not_asked: ["Which field says which source"]
+reference:
+  pipeline: change
+  source_types:
+    group: Messaging
+    source_types: [OneDrive]
+  mapping:
+    input: json
+    json_layout: lines
+    common:
+      - {path: EventTime/TimeCreated, field: CreationTime, time_format: "yyyy-MM-dd'T'HH:mm:ss", timezone: UTC}
+      - {path: EventSource/System/Name, value: Microsoft 365}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: Workload}
+      - {path: EventSource/Device/Name, value: Microsoft 365}
+      - {path: EventSource/User/Id, field: UserId}
+      - {path: EventSource/Client/IPAddress, field: ClientIP}
+      - {path: EventDetail/TypeId, field: Operation}
+    events:
+      - name: mail_read
+        when: [{field: Operation, equals: MailItemsAccessed}]
+        fields:
+          - {path: EventDetail/View/Object/Type, value: Mailbox}
+          - {path: EventDetail/View/Object/Id, field: event.MailboxOwnerUPN}
+      - name: mail_send
+        when: [{field: Operation, equals: Send}]
+        fields:
+          - {path: EventDetail/Send/Source/User/EmailAddress, field: UserId}
+          - {path: EventDetail/Send/Destination/User/EmailAddress, field: event.Item.Recipients, repeat: true}
+          - {path: EventDetail/Send/Payload/Email/Name, field: event.Item.Subject}
+      - name: inbox_rule
+        when: [{field: Operation, equals: New-InboxRule}]
+        fields:
+          - {path: EventDetail/Create/Object/Type, value: Inbox rule}
+          - {path: EventDetail/Create/Object/Id, field: event.MailboxOwnerUPN}
+      - name: mail_deleted
+        when: [{field: Operation, equals: MoveToDeletedItems}]
+        fields:
+          - {path: EventDetail/Delete/Object/Type, value: Email}
+          - {path: EventDetail/Delete/Object/Id, field: event.MailboxOwnerUPN}
+          - {path: EventDetail/Delete/Data, data_name: folder, field: event.Folder.Path}
+      - name: teams_message
+        when: [{field: Operation, equals: MessageSent}]
+        fields:
+          - {path: EventDetail/Send/Source/User/EmailAddress, field: UserId}
+          - {path: EventDetail/Send/Destination/User/EmailAddress, field: event.Recipients, repeat: true}
+          - {path: EventDetail/Send/Data, data_name: team, field: event.TeamName}
+      - name: team_member_added
+        when: [{field: Operation, equals: TeamMemberAdded}]
+        fields:
+          - {path: EventDetail/Update/After/Object/Type, value: Team}
+          - {path: EventDetail/Update/After/Object/Id, field: event.TeamName}
+      - name: meeting
+        when: [{field: Operation, equals: MeetingParticipantDetail}]
+        fields:
+          - {path: EventDetail/View/Object/Type, value: Teams meeting}
+          - {path: EventDetail/View/Object/Id, field: event.MeetingDetailId}
+      - name: file_read
+        when: [{field: Operation, one_of: [FileAccessed, FileDownloaded]}]
+        fields:
+          - {path: EventDetail/View/Object/Type, value: File}
+          - {path: EventDetail/View/Object/Id, field: event.ObjectId}
+          - {path: EventDetail/View/Object/Name, field: event.SourceFileName}
+      - name: file_changed
+        when: [{field: Operation, one_of: [FileModified, SharingSet]}]
+        fields:
+          - {path: EventDetail/Update/After/Object/Type, value: File}
+          - {path: EventDetail/Update/After/Object/Id, field: event.ObjectId}
+          - {path: EventDetail/Update/After/Object/Name, field: event.SourceFileName}
+          - {path: EventDetail/Update/Data, data_name: shared_with, field: event.TargetUserOrGroupName}

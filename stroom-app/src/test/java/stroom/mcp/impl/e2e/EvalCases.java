@@ -57,7 +57,8 @@ final class EvalCases {
             "48_jsonl_damaged_lines", "49_jsonl_soap_payload", "50_kv_mail_repeated_keys", "51_kv_unicode_ansi",
             "52_postgres_multiline_sql", "53_cri_container_partial_lines", "54_jsonl_session_times",
             "55_kv_two_event_times", "56_jsonl_azure_audit_aggregated", "57_jsonl_collector_paths",
-            "58_jsonl_pega_wrapper", "59_jsonl_windows_meta_roles");
+            "58_jsonl_pega_wrapper", "59_jsonl_windows_meta_roles", "60_jsonl_azure_audit_new_group",
+            "61_jsonl_azure_audit_join_group");
 
     // What a case whose data is in the feed already shows of it: the first stream's first parts, each part's first
     // lines.
@@ -86,9 +87,27 @@ final class EvalCases {
         }
     }
 
+    /// The case a case starts from (`setup: {from_case: 56}`): built with its reference solution and promoted before
+    /// the case's own build starts, so the case finds that build's feed, data and documents in place.
+    ///
+    /// @param evalCase The case.
+    /// @return The case it starts from, or null for a case that starts from an empty Stroom.
+    static Map<String, Object> setup(final Map<String, Object> evalCase) {
+        if (!(evalCase.get("setup") instanceof final Map<?, ?> setup) || setup.get("from_case") == null) {
+            return null;
+        }
+        final String number = String.format("%02d", ((Number) setup.get("from_case")).intValue());
+        return load(IDS.stream()
+                .filter(id -> id.startsWith(number + "_"))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No evaluation case " + number + " to start "
+                                                             + evalCase.get("id") + " from")));
+    }
+
     /// The case's sample texts (`samples`, else its one `sample`), or for a case whose samples are files on the user's
     /// disk, what the user shows of each: its first lines; or for a case whose data is in the feed already
-    /// (`streams`), its first stream's first parts: each part's receipt headers and first lines.
+    /// (`streams`), its first stream's first parts: each part's receipt headers and first lines; or for a case with
+    /// none of these that starts from another ([#setup]), that case's.
     ///
     /// @param evalCase The case.
     /// @return Its samples.
@@ -112,6 +131,10 @@ final class EvalCases {
                 part.text().lines().limit(SHOWN_PART_LINES).forEach(line -> sb.append(line).append('\n'));
             }
             shown.add(sb.toString());
+        }
+        final Map<String, Object> setup = setup(evalCase);
+        if (shown.isEmpty() && setup != null) {
+            return samples(setup);
         }
         return shown;
     }
