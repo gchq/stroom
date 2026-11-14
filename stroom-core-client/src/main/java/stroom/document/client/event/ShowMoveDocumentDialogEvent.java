@@ -28,13 +28,27 @@ public class ShowMoveDocumentDialogEvent extends GwtEvent<ShowMoveDocumentDialog
 
     private static Type<Handler> TYPE;
     private final List<ExplorerNode> explorerNodeList;
+    private final ExplorerNode destinationFolder;
 
-    private ShowMoveDocumentDialogEvent(final List<ExplorerNode> explorerNodeList) {
+    private ShowMoveDocumentDialogEvent(final List<ExplorerNode> explorerNodeList,
+                                        final ExplorerNode destinationFolder) {
         this.explorerNodeList = explorerNodeList;
+        this.destinationFolder = destinationFolder;
     }
 
     public static void fire(final HasHandlers handlers, final List<ExplorerNode> explorerNodeList) {
-        handlers.fireEvent(new ShowMoveDocumentDialogEvent(explorerNodeList));
+        handlers.fireEvent(new ShowMoveDocumentDialogEvent(explorerNodeList, null));
+    }
+
+    /// Shows the move dialog with `destinationFolder` already chosen, e.g. after a drag and drop.
+    ///
+    /// @param handlers          The source of the event.
+    /// @param explorerNodeList  The nodes to move.
+    /// @param destinationFolder The folder to initially select as the destination.
+    public static void fire(final HasHandlers handlers,
+                            final List<ExplorerNode> explorerNodeList,
+                            final ExplorerNode destinationFolder) {
+        handlers.fireEvent(new ShowMoveDocumentDialogEvent(explorerNodeList, destinationFolder));
     }
 
     public static Type<Handler> getType() {
@@ -56,6 +70,12 @@ public class ShowMoveDocumentDialogEvent extends GwtEvent<ShowMoveDocumentDialog
 
     public List<ExplorerNode> getExplorerNodeList() {
         return explorerNodeList;
+    }
+
+    /// @return The folder to initially select as the destination, or null to default to the parent
+    /// of the first node.
+    public ExplorerNode getDestinationFolder() {
+        return destinationFolder;
     }
 
     public interface Handler extends EventHandler {
