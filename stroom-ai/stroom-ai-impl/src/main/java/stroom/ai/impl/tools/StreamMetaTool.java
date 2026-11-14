@@ -996,7 +996,10 @@ class StreamMetaTool extends AbstractWorkspaceTool {
                 final List<Map<String, String>> parts = new ArrayList<>();
                 for (long part = 0; part < Math.min(count, MAX_PARTS_PER_STREAM); part++) {
                     ToolDeadline.check();
-                    parts.add(caseInsensitive(attributeMapFactoryProvider.get().getAttributeMapForPart(id, part)));
+                    // The store numbers parts from one, and refuses part 0. Seen: stream_meta parts:true gave no
+                    // part's values, every multi-part stream "couldn't be read from the stream store".
+                    parts.add(caseInsensitive(
+                            attributeMapFactoryProvider.get().getAttributeMapForPart(id, part + 1)));
                 }
                 return parts;
             } catch (final ToolTimeoutException e) {

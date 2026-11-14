@@ -542,6 +542,19 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         return out;
     }
 
+    /// `survey_feed` of a build's own sample streams: the plan's surveyed step, which classify_kinds waits for.
+    ///
+    /// @param build   The build.
+    /// @param feed    The feed the streams are in.
+    /// @param streams The sample streams.
+    /// @return The survey's answer.
+    Map<String, Object> surveyed(final String build, final String feed, final List<?> streams) {
+        final Map<String, Object> survey = json("survey_feed", args("feed", feed, "build", build, "stream_ids",
+                streams));
+        assertThat(survey).as("survey_feed of %s", streams).doesNotContainKey("error");
+        return survey;
+    }
+
     /// `classify_kinds` (the plan's classify step) answered as a user would who confirms, for each kind, what the
     /// draft itself makes of it: its action element and Action. For tests of what follows, whose drafts stay as they
     /// were.

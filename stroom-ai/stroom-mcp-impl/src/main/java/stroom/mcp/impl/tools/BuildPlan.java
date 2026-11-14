@@ -105,6 +105,10 @@ public class BuildPlan {
     private static final String COVERED = "covered";
     // The step an aggregated feed's source types are profiled and scoped by.
     private static final String SOURCE_TYPES = "source_types";
+    // The step the build's samples (or the feed it works from) are surveyed by, before the kinds are classified:
+    // the survey alone finds an aggregated feed's source type field. Seen (evals 58 and 59): the agent went straight
+    // to classify_kinds on its own uploads, and an aggregated feed was never recognised.
+    static final String SURVEYED = "surveyed";
     // The kind of build that only assesses a feed: its plan ends once its source type registry is written.
     private static final String ASSESSMENT = "assessment";
     // The steps an assessment takes.
@@ -117,6 +121,10 @@ public class BuildPlan {
                                  + "the sample text (for XML fragments: the wrapper, as the environment writes "
                                  + "them; stroom://guide/data-splitter)",
                     "build_data_splitter stream_ids=<the sample streams>, save_text_converter"),
+            List.of(SURVEYED, "The samples (or the feed the build works from) surveyed: their formats, kinds of "
+                              + "event and any source type field, as of an aggregated feed, whose source types are "
+                              + "built a group at a time (quick on a small sample)",
+                    "survey_feed build=... feed=... (stream_ids=<the sample streams> for the build's own)"),
             List.of(SOURCE_TYPES, "An aggregated feed's source types: the source type field confirmed (by the "
                                   + "survey), each source type profiled and the registry written, the user choosing "
                                   + "in a form which go in the build's one source type group and its name, the rest "
@@ -836,6 +844,14 @@ public class BuildPlan {
         // A copied pipeline's XSLT is there already, with its mapping or written by hand.
         // Asked for by the user (work package E8): before the draft; not needed once the build has a translation
         // (saved from a mapping, written by hand, or a copied pipeline's).
+        // Done once surveyed, or once a survey for the build was refused for nothing readable (classify_kinds then
+        // goes on, saying so); not needed once the build has a translation (saved from a mapping, or a copied
+        // pipeline's), as the classify step isn't.
+        done.put(SURVEYED, surveyed || !memory.unreadableSurveys(build).isEmpty()
+                ? Boolean.TRUE
+                : hasMapping(xslts, "translation") || !translation.isEmpty()
+                        ? null
+                        : Boolean.FALSE);
         done.put(SOURCE_TYPES, sourceTypesDone(surveyState, of(byType, DocumentationDoc.TYPE), sources, assessment));
         done.put("classify", facts.classified(docs)
                 ? Boolean.TRUE
@@ -1150,6 +1166,14 @@ public class BuildPlan {
                     + "the chat. From then on give tools stream_ids, not the text");
             case "converter" -> call("build_data_splitter", args("stream_ids", raw, "build", build, "save_as",
                     "<converter name>"), "it saves the converter once every line parses");
+            // The build's own samples by their ids; a feed it works from as the survey picks its streams.
+            case SURVEYED -> call("survey_feed", args.sources().isEmpty()
+                            ? args("feed", args.feeds().isEmpty()
+                                    ? "<the feed>"
+                                    : args.feeds().getFirst(), "build", build, "stream_ids", raw)
+                            : args("feed", args.sources().getFirst(), "build", build),
+                    "it reads the records for their formats and kinds of event, and asks the user to confirm a "
+                    + "source type field if the feed looks aggregated; then carry on with the plan (next)");
             case SOURCE_TYPES -> call("record_source_types", args("build", build, "feed", args.sources().isEmpty()
                             ? args.feeds().isEmpty()
                                     ? "<the feed>"
@@ -1554,7 +1578,8 @@ public class BuildPlan {
 
     private static List<Map<String, Object>> steps(final Map<String, Boolean> done, final Set<String> skipped) {
         // Not needed when their state is null: a converter for a format that needs none, a template for Lucene.
-        final Set<String> notNeeded = Set.of("converter", SOURCE_TYPES, "classify", "index_template", "covered");
+        final Set<String> notNeeded = Set.of("converter", SURVEYED, SOURCE_TYPES, "classify", "index_template",
+                "covered");
         final List<Map<String, Object>> steps = new ArrayList<>();
         for (final Map<String, Object> item : checklist()) {
             final String step = String.valueOf(item.get("step"));
@@ -1649,8 +1674,8 @@ public class BuildPlan {
                                        final boolean cefBuild) {
         // A discovery build indexes its raw streams: no events pipeline at all (a converter only for delimited text).
         final Set<String> skipped = new HashSet<>(kinds.discovery()
-                ? Set.of("classify", "translation", "pipeline", "stepped", "processed", "unmapped", "validated",
-                        "documented")
+                ? Set.of(SURVEYED, "classify", "translation", "pipeline", "stepped", "processed", "unmapped",
+                        "validated", "documented")
                 : Set.of());
         if (!kinds.reference()) {
             skipped.addAll(stepsOf(STAGE_REFERENCE));
@@ -1909,6 +1934,7 @@ public class BuildPlan {
         map.put("upload_sample", "samples");
         map.put("profile_sample", "start");
         map.put("build_data_splitter", "converter");
+        map.put("survey_feed", SURVEYED);
         map.put("save_text_converter", "converter");
         map.put("draft_translation_mapping", "translation");
         map.put("build_translation_xslt", "translation");

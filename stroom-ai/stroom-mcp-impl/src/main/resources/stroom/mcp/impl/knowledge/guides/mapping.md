@@ -6,7 +6,8 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 
 ## Rules
 
-- Before drafting, `classify_kinds` (the plan's `classify` step): it lists the kinds of event the user's
+- Before drafting, once the samples are surveyed (`survey_feed`, the plan's `surveyed` step, which `classify_kinds`
+  waits for: only the survey recognises an aggregated feed), `classify_kinds` (the plan's `classify` step): it lists the kinds of event the user's
   documentation doesn't cover; propose each from its records and what you know of the source, with a short `title`
   and the `product` it comes from, saying how sure you are; show the table it gives back in your reply, as it is (in Stroom AI's chat, the
   chat shows it itself: don't repeat it), then call it

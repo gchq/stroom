@@ -79,6 +79,9 @@ final class StreamWorld {
     final Map<Long, List<String>> errors = new HashMap<>();
     /// The receipt headers of each stream, by id.
     final Map<Long, String> headers = new HashMap<>();
+    /// The receipt headers of each part of a stream of several parts, by stream id (else [#headers] are its one
+    /// part's).
+    final Map<Long, List<String>> partHeaders = new HashMap<>();
     /// The encoding of each feed, by name; UTF-8 if not given.
     final Map<String, String> encodings = new HashMap<>();
     /// The longest a raw stream's text is given by the data viewer, as its page of characters.
@@ -174,6 +177,16 @@ final class StreamWorld {
                     : problems);
         }
         if (StreamTypeNames.META.equals(childType)) {
+            // As the data viewer gives a non-segmented child: a part a record, picked by the part index (the
+            // record index is ignored), the total its parts.
+            final List<String> byPart = partHeaders.get(id);
+            if (byPart != null) {
+                final int part = (int) request.getSourceLocation().getPartIndex();
+                return part < byPart.size()
+                        ? result(row, byPart.get(part), byPart.size(), DataType.NON_SEGMENTED, null)
+                        : result(row, null, byPart.size(), DataType.NON_SEGMENTED,
+                                List.of("Part " + part + " not found"));
+            }
             return result(row, headers.get(id), 1, DataType.NON_SEGMENTED, null);
         }
         final List<String> recordTexts = records.get(id);

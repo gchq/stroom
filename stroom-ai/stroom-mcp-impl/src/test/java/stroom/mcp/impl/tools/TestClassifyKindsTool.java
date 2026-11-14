@@ -122,7 +122,7 @@ class TestClassifyKindsTool {
 
         final String refused = gated.execute(BuildToolCalls.call(ClassifyKindsTool.NAME, args),
                 BuildToolCalls.context()).text();
-        assertThat(refused).contains("Survey the feed first: survey_feed feed=<the feed> build=acme")
+        assertThat(refused).contains("Survey first: survey_feed feed=AZURE-AUDIT build=acme.")
                 .contains("any source type field (an aggregated feed");
 
         // The survey refused, nothing in the feed readable: classified from the samples, saying so.
@@ -142,6 +142,36 @@ class TestClassifyKindsTool {
                 ClassifyKindsTool.NAME, args), BuildToolCalls.context()).text());
         assertThat(list(surveyed.get("to_classify"))).hasSize(3);
         assertThat(surveyed).doesNotContainKey("survey");
+    }
+
+    @Test
+    void aBuildOfItsOwnSamplesClassifiesOnceTheyAreSurveyed() {
+        // Seen (evals 58 and 59): the agent classified the build's own uploads straight away, and the aggregated
+        // feed they came from, which only the survey recognises, was never found.
+        final FakeBuildFacts facts = new FakeBuildFacts();
+        facts.ownRaw = List.of(7L);
+        facts.docs.add(FakeBuildFacts.doc("Feed", "f", "ACME-OWN"));
+        final BuildMemory memory = new BuildMemory();
+        final TranslationBuilds builds = Mockito.mock(TranslationBuilds.class);
+        final ClassifyKindsTool gated = new ClassifyKindsTool(notesTool, sampleStreamTexts, consent,
+                new BuildPlan(facts, world.guard(), consent, memory), builds, now::get);
+        final String args = "{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}";
+
+        final String refused = gated.execute(BuildToolCalls.call(ClassifyKindsTool.NAME, args),
+                BuildToolCalls.context()).text();
+        assertThat(refused).contains("Survey first: survey_feed feed=ACME-OWN build=acme stream_ids=[7].");
+
+        Mockito.when(builds.surveyStatesInBuild("acme")).thenReturn(List.of(Map.of("feed", "ACME-OWN")));
+        final Map<String, Object> surveyed = BuildToolCalls.json(gated.execute(BuildToolCalls.call(
+                ClassifyKindsTool.NAME, args), BuildToolCalls.context()).text());
+        assertThat(list(surveyed.get("to_classify"))).hasSize(3);
+
+        // A build with no streams to survey (neither a feed it works from nor samples of its own) goes on.
+        final ClassifyKindsTool none = new ClassifyKindsTool(notesTool, sampleStreamTexts, consent,
+                new BuildPlan(new FakeBuildFacts(), world.guard(), consent, memory),
+                Mockito.mock(TranslationBuilds.class), now::get);
+        assertThat(list(BuildToolCalls.json(none.execute(BuildToolCalls.call(ClassifyKindsTool.NAME, args),
+                BuildToolCalls.context()).text()).get("to_classify"))).hasSize(3);
     }
 
     @Test

@@ -141,6 +141,57 @@ class TestFetchEventsTool {
     }
 
     @Test
+    void eachPartsReceiptHeadersAreReadForThePartAskedFor() {
+        // Seen (eval 59): fetch_events childType 'Meta Data' gave part 0's headers (dc01) for every firstRecord
+        // and part asked of a five-part stream, though it said total_records 5; the agent never saw the other
+        // hosts' roles.
+        world.addRaw(7, "{\"a\":1}\n");
+        final List<String> hosts = List.of("dc01", "fs01", "ws-0142", "web01", "ws-0187");
+        world.partHeaders.put(7L, hosts.stream()
+                .map(host -> "Feed:" + StreamWorld.FEED + "\nRemoteHost:" + host + ".corp.example\n")
+                .toList());
+
+        final Map<String, Object> third = tool.readRecords(7, 0, 2, 1, StreamTypeNames.META, 60_000);
+        assertThat(records(third)).singleElement().asString().contains("RemoteHost:ws-0142.corp.example");
+        assertThat(third.get("first_record")).isEqualTo(2);
+
+        final Map<String, Object> byPart = tool.readRecords(7, 4, 0, 1, StreamTypeNames.META, 60_000);
+        assertThat(records(byPart)).singleElement().asString().contains("RemoteHost:ws-0187.corp.example");
+        assertThat(byPart.get("first_record")).isEqualTo(4);
+
+        // A range of parts, each its own.
+        final Map<String, Object> all = tool.readRecords(7, 0, 0, 10, StreamTypeNames.META, 60_000);
+        assertThat(records(all)).hasSize(5);
+        for (int i = 0; i < hosts.size(); i++) {
+            assertThat(records(all).get(i)).contains("RemoteHost:" + hosts.get(i) + ".corp.example");
+        }
+        assertThat(all.get("parts")).isEqualTo(5L);
+        assertThat((String) all.get("records_are")).contains("part(s) 0 to 4").contains("record n is part n");
+        assertThat(all).doesNotContainKey("next_first_record");
+
+        // From the middle, read on where the range stops.
+        final Map<String, Object> some = tool.readRecords(7, 0, 2, 2, StreamTypeNames.META, 60_000);
+        assertThat(records(some)).hasSize(2);
+        assertThat(records(some).get(1)).contains("web01");
+
+        // Past the last part, says what there is.
+        final Map<String, Object> past = tool.readRecords(7, 0, 5, 1, StreamTypeNames.META, 60_000);
+        assertThat(records(past)).isEmpty();
+        assertThat((String) past.get("hint")).contains("runs from 0 to 4");
+    }
+
+    @Test
+    void theReceiptHeadersOfAStreamOfOnePartAreItsOwn() {
+        world.addRaw(7, "{\"a\":1}\n");
+        world.headers.put(7L, "Feed:" + StreamWorld.FEED + "\nRemoteHost:solo\n");
+
+        final Map<String, Object> read = tool.readRecords(7, 0, 5, StreamTypeNames.META, 60_000);
+
+        assertThat(records(read)).singleElement().asString().contains("RemoteHost:solo");
+        assertThat(read).doesNotContainKeys("parts", "hint");
+    }
+
+    @Test
     void aStreamStroomWontShowAsTextIsReadThroughItsBytesSayingWhatWasReplaced() {
         world.addRaw(7, "");
         world.bytes.put(7L, TestStreamCharsets.MIXED);

@@ -22,6 +22,8 @@ import stroom.ai.impl.tools.generation.EventRule;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.sample.SourceTypeRows;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
@@ -59,10 +61,28 @@ final class ConfirmedKinds {
     static List<Lost> lost(final TranslationMapping mapping,
                            final List<Object> records,
                            final List<Map<String, Object>> events) {
+        return lost(mapping, records, events, null);
+    }
+
+    /// As [#lost(TranslationMapping, List, List)], within a source type scope: a kind confirmed for a source type
+    /// outside it (its field the scope's, its value another source type's), and the records of other source types,
+    /// are not this build's to compare. Seen (eval 58): a group build of PegaIntegration alone was asked to keep or
+    /// follow the kinds confirmed for PegaDB, PegaRULES and the other source types parked for later builds.
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
+    /// @param events  The catalogue events of the build's source notes.
+    /// @param scope   The build's (or its group's) source type scope, or null for none.
+    /// @return As the other, of the scope's kinds and records alone.
+    static List<Lost> lost(final TranslationMapping mapping,
+                           final List<Object> records,
+                           final List<Map<String, Object>> events,
+                           final SourceTypeScope scope) {
         final List<Map<String, Object>> confirmed = events.stream()
                 .filter(event -> RecordSourceNotesTool.USER_CONFIRMED.equals(event.get("basis")))
                 .filter(event -> NullSafe.isNonBlankString(text(event.get("field")))
                                  && (event.get("value") != null || SourceNotes.isPattern(event)))
+                .filter(event -> !outOfScope(scope, text(event.get("field")), text(event.get("value"))))
                 .toList();
         // Each record's rule is worked out only when there is something to check it against.
         if (confirmed.isEmpty() || records.isEmpty() || NullSafe.isNonBlankString(mapping.forEach())) {
@@ -87,6 +107,10 @@ final class ConfirmedKinds {
             // The rule each of the kind's records goes to, counted.
             final Map<String, Integer> byRule = new LinkedHashMap<>();
             for (int n = 0; n < records.size(); n++) {
+                if (scope != null && outOfScope(scope, scope.field(),
+                        valueOf(records.get(n), extracted.get(n), scope.field()))) {
+                    continue;
+                }
                 final String held = valueOf(records.get(n), extracted.get(n), field);
                 final boolean ofKind = pattern
                         ? SourceNotes.matches(event, held)
@@ -243,6 +267,19 @@ final class ConfirmedKinds {
             }
         }
         return null;
+    }
+
+    // True when a value of the field is the scope's source type field's and names a source type outside the scope
+    // (or none); false without a scope, for another field, or with no value to tell by (kept, as it can't be told).
+    private static boolean outOfScope(final SourceTypeScope scope, final String field, final String value) {
+        if (scope == null || scope.names() == null || NullSafe.isBlankString(value)
+            || !field.equals(scope.field())) {
+            return false;
+        }
+        return SourceTypeRows.first(scope.rows(), value)
+                .map(SourceTypeRows.Row::name)
+                .filter(scope.names()::contains)
+                .isEmpty();
     }
 
     private static String valueOf(final Object record, final Map<String, String> extracted, final String field) {
