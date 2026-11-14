@@ -19,5 +19,8 @@
  "50_kv_mail_repeated_keys/mx01-delivery.log": "b8fab0c40ae7730b9b517cbfebf4d32bceeae54e58edd4683e8040f759b8226b",
  "51_kv_unicode_ansi/app-terminal.log": "da3e1faebc274a4713c62f809118174463297bdc6ba3607d6a3f0fce4a55a3a9",
  "52_postgres_multiline_sql/postgresql-2026-10-11.log": "78dbb9705f3800e6898e71ca0cbb984b059cd75a9f49649158265959877e1f32",
- "53_cri_container_partial_lines/api-7d9f_0.log": "4699fe8a92eece14f66ea8c8584bf581ebc67402754cb07fe4e5a8d60420ae65"
+ "53_cri_container_partial_lines/api-7d9f_0.log": "4699fe8a92eece14f66ea8c8584bf581ebc67402754cb07fe4e5a8d60420ae65",
+ "56_jsonl_azure_audit_aggregated/m365-audit.json": "d8455400756c0eb69ee117410fa20440229f385ac53a70686114b3487b6aa013",
+ "57_jsonl_collector_paths/collector.json": "87dad68d170f3553ab176f9c4adf5aff82db8848dd6216f07193250e755aa303",
+ "58_jsonl_pega_wrapper/pega.json": "a376c0e59924cdc38ef23d5f0bebf6ea02e04af7ad7bf2d6b38db6330c23b1ef"
 }

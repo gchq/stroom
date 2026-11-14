@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.e2e;
 
+import stroom.util.json.JsonUtil;
 import stroom.util.yaml.YamlUtil;
 
 import java.io.IOException;
@@ -55,8 +56,13 @@ final class EvalCases {
             "44_custom_tilde_delimited", "45_jsonl_gelf", "46_jsonl_ecs_input", "47_kv_fortios_native",
             "48_jsonl_damaged_lines", "49_jsonl_soap_payload", "50_kv_mail_repeated_keys", "51_kv_unicode_ansi",
             "52_postgres_multiline_sql", "53_cri_container_partial_lines", "54_jsonl_session_times",
-            "55_kv_two_event_times");
+            "55_kv_two_event_times", "56_jsonl_azure_audit_aggregated", "57_jsonl_collector_paths",
+            "58_jsonl_pega_wrapper", "59_jsonl_windows_meta_roles");
 
+    // What a case whose data is in the feed already shows of it: the first stream's first parts, each part's first
+    // lines.
+    private static final int SHOWN_PARTS = 3;
+    private static final int SHOWN_PART_LINES = 3;
     // The Secret Server export is made of case 35's records.
     private static final String SECRET_SERVER_KINDS = "35_xml_fragments_secretserver_messages";
 
@@ -81,7 +87,8 @@ final class EvalCases {
     }
 
     /// The case's sample texts (`samples`, else its one `sample`), or for a case whose samples are files on the user's
-    /// disk, what the user shows of each: its first lines.
+    /// disk, what the user shows of each: its first lines; or for a case whose data is in the feed already
+    /// (`streams`), its first stream's first parts: each part's receipt headers and first lines.
     ///
     /// @param evalCase The case.
     /// @return Its samples.
@@ -96,11 +103,22 @@ final class EvalCases {
         for (final SampleFile file : files(evalCase)) {
             shown.add(String.join("\n", new String(file.data(), file.charset()).lines().limit(6).toList()) + "\n");
         }
+        final List<List<StreamPart>> streams = streams(evalCase);
+        if (shown.isEmpty() && !streams.isEmpty()) {
+            final StringBuilder sb = new StringBuilder();
+            for (final StreamPart part : streams.getFirst().subList(0, Math.min(SHOWN_PARTS,
+                    streams.getFirst().size()))) {
+                sb.append("Part headers: ").append(part.meta()).append('\n');
+                part.text().lines().limit(SHOWN_PART_LINES).forEach(line -> sb.append(line).append('\n'));
+            }
+            shown.add(sb.toString());
+        }
         return shown;
     }
 
-    /// A case's sample files on the user's disk, as bytes: each `text` in its `encoding` (UTF-8 unless given), or made
-    /// by its generator ([EvalSamples]).
+    /// A case's sample files on the user's disk, as bytes: each `text` in its `encoding` (UTF-8 unless given), made
+    /// by its generator ([EvalSamples]), or a slice of a test resource next to the e2e tests (`resource`, from line
+    /// `from`, 0 unless given, `lines` lines, all unless given), e.g. one of the aggregated feeds' samples.
     ///
     /// @param evalCase The case.
     /// @return Its files, none if its samples are texts.
@@ -109,7 +127,13 @@ final class EvalCases {
         for (final Map<String, Object> file : (List<Map<String, Object>>) evalCase.getOrDefault("files",
                 List.of())) {
             final String name = (String) file.get("name");
-            if (file.get("generate") instanceof final Map<?, ?> spec) {
+            if (file.get("resource") instanceof final String resource) {
+                final String text = slice(resource, ((Number) file.getOrDefault("from", 0)).intValue(),
+                        file.get("lines") instanceof final Number lines
+                                ? lines.intValue()
+                                : Integer.MAX_VALUE);
+                files.add(new SampleFile(name, text.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8));
+            } else if (file.get("generate") instanceof final Map<?, ?> spec) {
                 final String text = EvalSamples.generate((Map<String, Object>) spec,
                         (String) load(SECRET_SERVER_KINDS).get("sample"));
                 files.add(new SampleFile(name, text.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8));
@@ -123,12 +147,61 @@ final class EvalCases {
         return files;
     }
 
+    /// A case's data already in the feed when the user asks (`streams`: a test resource next to the e2e tests, as
+    /// `aggregated/windows-meta/windows-meta.json` lays it out: `streams`, each a list of parts, each part its
+    /// receipt headers, `meta`, and its records, `lines`), as a proxy aggregates them: streams of several parts, each
+    /// part with the headers it was received with. The cases' tests store them in the case's feed before the build
+    /// starts, each part's `Feed` header set to the feed's name.
+    ///
+    /// @param evalCase The case.
+    /// @return Its streams, each a list of parts; none if it has no `streams`.
+    static List<List<StreamPart>> streams(final Map<String, Object> evalCase) {
+        if (!(evalCase.get("streams") instanceof final Map<?, ?> spec)) {
+            return List.of();
+        }
+        final Map<String, Object> laidOut = JsonUtil.readValue(slice((String) spec.get("resource"), 0,
+                Integer.MAX_VALUE), Map.class);
+        final List<List<StreamPart>> streams = new ArrayList<>();
+        for (final List<Map<String, Object>> parts : (List<List<Map<String, Object>>>) laidOut.get("streams")) {
+            final List<StreamPart> stream = new ArrayList<>();
+            for (final Map<String, Object> part : parts) {
+                final Map<String, String> meta = new LinkedHashMap<>();
+                ((Map<String, Object>) part.get("meta")).forEach((key, value) -> meta.put(key,
+                        String.valueOf(value)));
+                stream.add(new StreamPart(meta, String.join("\n", (List<String>) part.get("lines")) + "\n"));
+            }
+            streams.add(stream);
+        }
+        return streams;
+    }
+
+    // So many lines of a test resource next to the e2e tests, from a line, each ending in a new line.
+    private static String slice(final String resource, final int from, final int lines) {
+        try (final InputStream in = EvalCases.class.getResourceAsStream(resource)) {
+            if (in == null) {
+                throw new IllegalStateException("No test resource " + resource);
+            }
+            final String text = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            return String.join("\n", text.lines().skip(from).limit(lines).toList()) + "\n";
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     /// A sample file on the user's disk.
     ///
     /// @param name    Its name.
     /// @param data    Its bytes.
     /// @param charset Its encoding.
     record SampleFile(String name, byte[] data, Charset charset) {
+
+    }
+
+    /// A part of a stream in the feed.
+    ///
+    /// @param meta The receipt headers it came with.
+    /// @param text Its records.
+    record StreamPart(Map<String, String> meta, String text) {
 
     }
 }

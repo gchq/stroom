@@ -130,6 +130,74 @@ class TestEvalScore {
         assertThat((List<String>) score.toMap().get("problems")).containsExactly("0 of 0 Events records invalid");
     }
 
+    @Test
+    void anAggregatedFeedsBuildIsScoredFromItsRegistryAndWhatItsGroupsPipelineLogged() {
+        final EvalScore score = new EvalScore("c");
+
+        score.scoreSourceTypes(expecting(Map.of("source_types", Map.of("field", "LogFilePath",
+                "group", Map.of("name", "web server", "values", List.of("/var/log/httpd/access_log",
+                        "/var/log/httpd/error_log"), "others", List.of("/var/log/mail/maillog",
+                        "/opt/gateway/logs/gw.log")),
+                "rows", List.of(Map.of("match", "pattern", "value", "^/opt/gateway/logs/", "status", "parked")),
+                "passed_over", 240))), registry(), 240L, 0);
+
+        assertThat(score.sourceTypes()).isTrue();
+        assertThat((List<String>) score.toMap().get("problems")).isEmpty();
+        assertThat((List<Map<String, Object>>) score.toMap().get("source_type_checks"))
+                .extracting(check -> check.get("check"))
+                .containsExactly("field", "group source types", "group name", "row pattern ^/opt/gateway/logs/ "
+                                                                              + "(parked)", "passed_over");
+    }
+
+    @Test
+    void whatIsWrongWithTheSourceTypesIsSaid() {
+        final EvalScore score = new EvalScore("c");
+
+        // Expected: the group takes the mail log too, a row the registry lacks, more passed over.
+        score.scoreSourceTypes(expecting(Map.of("source_types", Map.of("field", "Path",
+                "group", Map.of("name", "Web", "values", List.of("/var/log/httpd/access_log",
+                        "/var/log/mail/maillog"), "others", List.of("/var/log/httpd/error_log")),
+                "rows", List.of(Map.of("match", "member", "value", "Mail")),
+                "passed_over", 100))), registry(), 240L, 2);
+
+        assertThat(score.sourceTypes()).isFalse();
+        assertThat((List<String>) score.toMap().get("problems")).containsExactly(
+                "the registry's source type field is LogFilePath, expected Path",
+                "the group Web server [Web server] doesn't take [/var/log/mail/maillog] and takes "
+                + "[/var/log/httpd/error_log], which it shouldn't",
+                "the group is called Web server, expected Web",
+                "the registry has no row member Mail; its rows: [Web server: pattern ^/var/log/httpd/ (translated), "
+                + "Mail: pattern ^/var/log/mail/ (parked), Gateway: pattern ^/opt/gateway/logs/ (parked)]",
+                "the group's pipeline passed over 240 record(s), expected 100, and logged 2 ERROR or FATAL line(s)");
+    }
+
+    @Test
+    void noRegistryOrNoSourceTypesExpected() {
+        final EvalScore none = new EvalScore("c");
+        none.scoreSourceTypes(expecting(Map.of("source_types", Map.of("field", "Workload"))), null, null, 0);
+        assertThat(none.sourceTypes()).isFalse();
+        assertThat((List<String>) none.toMap().get("problems"))
+                .containsExactly("the build has no source type registry");
+
+        // A case that isn't an aggregated feed's: nothing checked.
+        final EvalScore plain = new EvalScore("c");
+        plain.scoreSourceTypes(expecting(Map.of("records", 1)), null, null, 0);
+        assertThat(plain.sourceTypes()).isTrue();
+        assertThat(plain.toMap()).doesNotContainKey("source_type_checks");
+    }
+
+    // A registry as SourceTypeRegistry reads it: the collector's paths, its scope the web server group.
+    private static Map<String, Object> registry() {
+        return Map.of("field", "LogFilePath",
+                "rows", List.of(
+                        Map.of("name", "Web server", "match", "pattern", "value", "^/var/log/httpd/",
+                                "status", "translated"),
+                        Map.of("name", "Mail", "match", "pattern", "value", "^/var/log/mail/", "status", "parked"),
+                        Map.of("name", "Gateway", "match", "pattern", "value", "^/opt/gateway/logs/",
+                                "status", "parked")),
+                "scope", Map.of("group", "Web server", "source_types", List.of("Web server")));
+    }
+
     private static List<String> problems(final List<Map<String, Object>> data, final List<String> records) {
         final EvalScore score = new EvalScore("c");
         score.scoreEvents(expecting(Map.of("records", records.size(), "event_types", List.of(), "paths", List.of(),

@@ -1,0 +1,80 @@
+name: Log collector feed (JSON lines, each record the file it was read from, told apart by LogFilePath)
+template: Event Data (JSON)
+capabilities: [aggregated_feeds, source_types, patterns, mixed_formats]
+# An aggregated feed: a log collector's records (aggregated/collector-paths, made by aggregated-feeds-generator.py;
+# its first 400 lines), each the line it read and the file it read it from, LogFilePath: Apache's access_log and
+# error_log, Postfix's maillog, a mail audit log, sshd's /var/log/secure and an application's dated log. The paths
+# are many structured values, so the source types are patterns (`^/var/log/httpd/`), narrower before wider
+# (`^/var/log/mail/audit/` before `^/var/log/mail/`). The user wants the web server logs in this build (160 records,
+# two message formats, access and error) and names a source type the sample doesn't hold: the API gateway's logs,
+# anything under /opt/gateway/logs/, which must be kept as a nominated row (parked; the agent offers to find it, by a
+# stream the user knows or a search, survey_feed find=). The other 240 records are passed over, counted, not errors.
+request: >
+  Onboard our log collector's feed (a JSON lines file on my disk). The collector ships lines from many log files on
+  our Linux hosts, and LogFilePath says which file each line came from. In this build I want only the web server logs
+  (Apache's access and error logs, under /var/log/httpd/) as one group; the rest can wait. We'll also be sending the API
+  gateway's logs soon, anything under /opt/gateway/logs/, so please keep that as a source type of its own too, for a
+  later build. Index the web server events.
+user_knows: >
+  LogFilePath says which source a record came from. The group for this build is the web server logs: everything under
+  /var/log/httpd/ (access_log and error_log); call it Web server. Every other file is for later builds (parked). The
+  API gateway's logs (anything under /opt/gateway/logs/) are not in this sample and haven't arrived yet; no stream
+  holds them yet, so there is nothing to search for now; keep it as a source type for later. Records of other files
+  being passed over by the group's pipeline is expected; they are not errors. The system is the Linux estate's log
+  collector.
+expected:
+  records: 160
+  event_types: []
+  paths: [EventTime/TimeCreated]
+  values:
+    EventSource/Client/IPAddress|EventDetail/*/Source/Device/IPAddress|EventDetail/*/*/Source/Device/IPAddress:
+      [10.0.4.82]
+  source_types:
+    field: LogFilePath
+    group:
+      values: [/var/log/httpd/access_log, /var/log/httpd/error_log]
+      others: [/var/log/mail/maillog, /var/log/mail/audit/mailaudit.log, /var/log/secure,
+               /opt/app/logs/app-2026-11-10.log, /opt/gateway/logs/gateway.log]
+    rows:
+      - {match: pattern, value: "^/opt/gateway/logs/", status: parked}
+    passed_over: 240
+files:
+  - {name: collector.json, resource: aggregated/collector-paths/collector-paths-1.json, lines: 400}
+reference:
+  source_types:
+    field: LogFilePath
+    system_name: Linux hosts
+    rows: ["Web server ~ ^/var/log/httpd/", "Mail audit ~ ^/var/log/mail/audit/", "Mail ~ ^/var/log/mail/",
+           "Secure = /var/log/secure", "Application ~ ^/opt/app/logs/", "API gateway ~ ^/opt/gateway/logs/"]
+    group: Web server
+    source_types: [Web server]
+  mapping:
+    input: json
+    json_layout: lines
+    extract:
+      - {field: message, regex: '^(\S+) \S+ (\S+) \[[^\]]+\] "(\S+) (\S+) [^"]*" (\d{3}) (\d+|-).*$',
+         names: [client, remote_user, method, url, status, bytes]}
+      - {field: message, regex: '^\[[^\]]+\] \[(\w+)\] \[client (\S+)\] (.*)$', names: [level, error_client, error]}
+    common:
+      - {path: EventTime/TimeCreated, field: '@timestamp', time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
+      - {path: EventSource/System/Name, value: Apache HTTP Server}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: LogFilePath}
+      - {path: EventSource/Device/HostName, field: host.name}
+      - {path: EventSource/Client/IPAddress, any_of: [client, error_client]}
+    events:
+      - name: access
+        when: [{field: LogFilePath, equals: /var/log/httpd/access_log}]
+        fields:
+          - {path: EventDetail/TypeId, value: HTTP request}
+          - {path: EventDetail/View/Resource/URL, field: url}
+          - {path: EventDetail/View/Resource/HTTPMethod, field: method}
+          - {path: EventDetail/View/Resource/ResponseCode, field: status}
+          - {path: EventDetail/View/Data, data_name: bytes, field: bytes}
+      - name: error
+        when: [{field: LogFilePath, equals: /var/log/httpd/error_log}]
+        fields:
+          - {path: EventDetail/TypeId, value: HTTP error}
+          - {path: EventDetail/Alert/Type, value: Error}
+          - {path: EventDetail/Alert/Severity, field: level, map: {error: Major, warn: Minor, notice: Info}, default: Info}
+          - {path: EventDetail/Alert/Description, field: error}
