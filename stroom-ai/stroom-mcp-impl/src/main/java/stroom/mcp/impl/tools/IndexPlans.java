@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.fielddoc.IndexFieldDocs;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.FieldPlan;
+import stroom.ai.impl.tools.indexing.FieldPlans;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.validation.EventSchema;
@@ -236,6 +237,10 @@ class IndexPlans {
             }
             reply.put("field_mapping", IndexFieldDocs.indexFieldMappingMarkdown(plan, populated, null, null,
                     FieldDocs.BY_EVENT_TYPE, null));
+            final List<String> sparse = mostlyEmptyCore(plan, populated, ecs);
+            if (!sparse.isEmpty()) {
+                reply.put("core_fields_mostly_empty", sparse);
+            }
         }
         if (plan.discovery() == null) {
             final List<String> unknown = IndexingHelpers.plannedNotInSchema(plan, eventSchema(plan));
@@ -259,6 +264,10 @@ class IndexPlans {
                 ? " ecs_check: the plan mixes names ECS has no place for with ECS's own: ask the user, for each, "
                   + "whether to rename it (its ECS name, or under the source's own namespace) or keep it as it is "
                   + "(custom_namespaces), before saving. Seen in testing: flat and ECS names mixed in one template."
+                : "") + (reply.containsKey("core_fields_mostly_empty")
+                ? " core_fields_mostly_empty: core fields of the convention (and the time field) that most events "
+                  + "read leave empty: tell the user, naming each one's Events path, and ask whether to read it from "
+                  + "another path (one the events of that kind have) or keep it as it is."
                 : "") + (reply.containsKey("fields_not_in_schema")
                 ? " fields_not_in_schema: the Events schema has no element at their source, so no Event can "
                   + "hold it: correct the source to a path the Events have (summarise_streams' path_population), or "
@@ -327,6 +336,34 @@ class IndexPlans {
     /// @return The bundled ECS schema, or null if none is bundled.
     EcsSchema ecs() {
         return EcsSchema.from(knowledge).orElse(null);
+    }
+
+    /// The core fields of the plan's convention (ECS's `level: core`), and its time field, that some events read
+    /// populate but most leave empty (seen in chat 177: event.action empty in 2,233 of 2,457 documents, and nothing
+    /// said so). One no event populates is `fields_not_in_sample` already.
+    ///
+    /// @param plan      A plan.
+    /// @param populated How often the sample populates each event path (%).
+    /// @param ecs       The ECS schema, or null.
+    /// @return Each as `name <- source: in n% of events read`.
+    static List<String> mostlyEmptyCore(final FieldPlan plan,
+                                        final Map<String, Double> populated,
+                                        final EcsSchema ecs) {
+        final List<String> out = new ArrayList<>();
+        final boolean ecsPlan = ecs != null && "ecs".equalsIgnoreCase(NullSafe.string(plan.convention()));
+        for (final PlannedField field : plan.leafFields()) {
+            final boolean core = field.name().equals(plan.timeField())
+                                 || (ecsPlan && ecs.field(field.name()) != null
+                                     && "core".equals(ecs.field(field.name()).get("level")));
+            if (!core || field.source().startsWith("@")) {
+                continue;
+            }
+            final Double share = FieldPlans.populationOf(field.source(), populated);
+            if (share != null && share > 0 && share < 100.0 - EventsExpectations.MOSTLY_EMPTY) {
+                out.add(field.name() + " <- " + field.source() + ": in " + share + "% of events read");
+            }
+        }
+        return out;
     }
 
     /// @param plan A plan.

@@ -18,6 +18,7 @@ package stroom.ai.impl.workspace;
 
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -217,7 +218,7 @@ public class WorkspaceArguments {
     // Reads a file, or the jq query's result of it, as JSON if it is JSON and as text otherwise.
     private JsonNode read(final int chatId, final String rawPath, final String query, final String where) {
         try {
-            final WorkspacePath path = WorkspacePath.parse(rawPath);
+            final WorkspacePath path = referencedPath(rawPath);
             // Refuses a file that is missing, expired or whose source document the user can no longer read.
             final long size = workspace.size(chatId, path);
             final long limit = workspace.limits().getMaxToolArgumentBytes();
@@ -232,6 +233,20 @@ public class WorkspaceArguments {
         } catch (final WorkspaceException e) {
             throw new WorkspaceException(where + ": " + e.getMessage());
         }
+    }
+
+    // The path a reference names. One that isn't a workspace path at all is a placeholder, not a file: said so, as a
+    // reference puts a file's content in (seen in chat 177: plan={"$workspace": "PENDING"} for a plan not made yet,
+    // answered "'PENDING' is not in the workspace", which the agent couldn't act on).
+    private static WorkspacePath referencedPath(final String rawPath) {
+        final String raw = NullSafe.string(rawPath).strip();
+        if (!raw.startsWith("/") && !raw.contains("/")) {
+            throw new WorkspaceException("'" + raw + "' isn't a workspace path, so there is no file to put in. A "
+                                         + REFERENCE_KEY + " reference is replaced by a workspace file's content "
+                                         + "(e.g. \"/outputs/plan.json\"); give the value itself instead, or leave "
+                                         + "the argument out when there is none yet.");
+        }
+        return WorkspacePath.parse(raw);
     }
 
     private static JsonNode readWhole(final WorkspacePath path, final Path file) {

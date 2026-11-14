@@ -420,7 +420,9 @@ class TestE2eLuceneIndexing extends AbstractE2eTest {
                 Map.of("exact", List.of(Map.of("field", "Success", "value", "false")))));
         dump("verify_index v2", result.get("checks"));
         assertThat(result).as("v2 finds the one failed logon by the new field").containsEntry("passed", true);
-        assertThat(((List<Map<String, Object>>) result.get("checks")).get(1)).containsEntry("returned", 1);
+        // Counted from the Events now (a count, as a long), not taken from the rows found.
+        assertThat(((List<Map<String, Object>>) result.get("checks")).get(1)).containsEntry("returned", 1L)
+                .containsEntry("expected", 1L);
         final Map<String, Object> recheck = new LinkedHashMap<>(verification(csv.build(), uuidOf(v1.index()),
                 v1.events(), List.of("StreamId", "UserId"), Map.of()));
         recheck.put("dashboard_name", v1.index().get("name") + "-RECHECK");

@@ -816,7 +816,8 @@ listed with why. At most 200 entries, with a count of the rest.
 Core · read-only · Classes: `ReadFileTool`
 
 Reads lines of a workspace file, numbered from 1, each in full so code can be copied exactly; only a line too long
-for a whole read is cut short.
+for a whole read is cut short. A path with files below it is answered as a directory, to list with `ls`, not as no
+file (`ChatWorkspace.fileId`; so for every tool reading a workspace file).
 
 * **Arguments**: `path`; `startLine` (default 1, or negative to count back from the end: -20 reads the last 20);
   `lineCount` (default 100, at most the lines per read).
@@ -827,7 +828,8 @@ for a whole read is cut short.
 
 Core · read-only · Classes: `GrepTool`, `SafePattern`
 
-Finds the lines of a workspace file, or of every file in a directory (at most 100), that contain some text, matched
+Finds the lines of a workspace file, or of every file in a directory (at most 100; named with or without its
+trailing slash: seen in chat 177, `/outputs/turn-49169` answered "There is no file"), that contain some text, matched
 literally unless `regex` is true. When nothing matches literally, `regex` wasn't given and the text looks like a
 regular expression (e.g. `a|b`), it is searched again as one and the result says so: agents sent such patterns
 again and again without `regex`, each time matching nothing. With `regex=false` given, it isn't retried, but a miss
@@ -2544,7 +2546,7 @@ destinations; unlocked by Manage Processors (the promoted pipelines' filters are
 approve) · confirms itself · chat group build · Classes: `PromoteBuildTool`, `PromotionLayout`, `PromotionProcessing`,
 `DocumentPlaces`, `DocumentWrites`, `WriteGuard`, `BuildRecords`, `BuildChecks`, `Consent`, `IndexingRuns`,
 `OutputFeeds`, `XsltHistory`, `DocumentationVersions`, `SurveyDocuments`, `SourceTypeGroups`, `GroupReferences`,
-`FeedIndexDecisions`
+`FeedIndexDecisions`, `SourceFolders`
 
 An aggregated feed's indexes (`FeedIndexDecisions.changes`, `apply`): each indexing plan kept in the build is
 matched to its source type group and output feed (as `draft_index_mapping` recorded them in the build record's
@@ -2604,9 +2606,13 @@ Where each document goes (`plan`):
   just deleted. A copy whose original was changed since it was taken is put to the user first (below).
 * `keep` for a document UUID leaves it in the workspace (seen: a test feed made while fixing had nowhere to go but
   production, and the agent never promoted the fix). A build on existing feeds keeps its feeds there unless given a
-  folder, as does any `-MCP-TEST` feed.
+  folder. The build's test feed (named `-MCP-TEST`, or recorded `output_for` the feeds it works from) always stays,
+  whatever the destinations say, and the layout ends saying so (`testFeedNote`): seen in chat 177, the test feed
+  listed under Events and the agent asked the user whether to promote it.
 * Otherwise a destination by document UUID, then the version folder proposed for a new version, then by type. Source
-  notes and reference docs go beside the build's only feed; a pipeline's documentation goes with that pipeline; a
+  notes and reference docs go beside the build's only feed; a pipeline's (or index's) documentation, unless given a
+  destination by its own UUID, goes wherever that document's step goes, role subfolder too (given by UUID, a
+  version folder or the source's own folder: `besideWhatItDocuments`); a
   verification dashboard goes where the index it searches goes, or with the build's indexing pipeline when the index
   is from outside the build (seen in VS Code: promotion stopped for want of the dashboard's destination); the
   documentation of a production pipeline or existing index goes beside it.
@@ -2617,6 +2623,15 @@ Where each document goes (`plan`):
   other documents aren't split (seen in testing: with the version always put beside its predecessor, TWITTER's V1.1
   pipeline went under /Feeds/Twitter while its XSLT and documentation went to System/MCP Testing/Twitter, the folder
   given for their type).
+* **A folder of the source's own** (`SourceFolders`): the source is the feed the build works from, else its
+  registry's feed, else its one new feed. Where that feed's folder is a parent of sources (a subfolder of it, not a
+  role or version subfolder, holds a feed: the siblings' convention), the build's documents go in
+  `<that folder>/<feed name>`: its registry, modules, group output feeds and source notes, and any document placed
+  by type (or by a pipeline's, an index's) rather than by its UUID, a version folder or beside a production
+  document. So no role subfolder is made directly under a parent of other sources. Seen in chat 177: the Azure feed
+  directly in `/Feeds`, Netskope and Delinea each in a folder of their own; the registry went to
+  `/Feeds/Azure-Audit-V1.0-EVENTS`, the output feed and notes to `/Feeds`, the rest to `/Feeds/Events` and
+  `/Feeds/Indexing`. A refusal for documents with no destination suggests the source's own folder.
 * Role subfolders (`Events`/`Records`, `Indexing`, `CEF`, `Reference`) are kept under each destination only when
   documents of more than one role move, unless `role_subfolders=false`.
 
@@ -2812,7 +2827,10 @@ kept still reads (see `SurveyDoc` under "Sample analysis").
   seen: a 790 KB survey regrouped by x-type and x-action with jq), `shapes` (up to 60:
   `signature`, `new`, `count`, `share_percent`, `streams`, `example` up to 500 characters, `more_examples` (up to
   two more records whose text differs, 300 characters each, for the first 20 shapes), `locations`), `new_shapes`,
-  `locations` (stream, part, record, shape, for `step_records`; only new shapes once some are known), `hint`. With a
+  `locations` (stream, part, record, shape, for `step_records`; only new shapes once some are known), `hint`. On an
+  aggregated feed each shape and location also gives `source_types`: the source types its records are of (their
+  source type field's values named by the scope's or registry's rows, the values themselves before there are any;
+  seen in chat 177, a SharePoint record's address used to check a messaging group's translation). With a
   build, the survey doc's details too, and on an aggregated feed `source_types` (`field`, `by`,
   `records_read_by_value` (the 20 commonest), `registry`: the call that writes it; or `aggregated: false`) and, with
   a scope, `scope` (`build`, `source_types`, `share_percent`, `records_passed_over`, `note`) and `read_again`. Or
@@ -3605,7 +3623,7 @@ a part. With `draft_code`, it tries a change without saving it.
 
 Processing · read-only (records a clean verdict in the build record) · requires Stepping; unlocked further by View
 Data; checks View on the pipeline · takes a run slot · Classes: `StepSampleTool`, `PipelineStepping`,
-`SteppingVerdicts`, `BuildRecords`
+`SteppingVerdicts`, `PassedOverRecords`, `BuildRecords`
 
 The correctness check before processing. Steps every record of the sample streams, stream by stream, each stream
 walked in one session, and returns one verdict for the whole sample: error groups triaged with the records they
@@ -3632,6 +3650,15 @@ promotion and returns the plan's `next`.
     columns `col1`..., and processing then wrote no Reference stream with nothing saying why). No record stepped at
     all is never clean (`nothingStepped`), and an element that fails before the first record (an XSLT that doesn't
     compile) is reported.
+  * A source type group's pipeline passes over the feed's other source types' records with its INFO line
+    (`XsltGenerator.PASSED_OVER`): `PassedOverRecords` takes that line out of a record's markers, so such a record
+    is not one `with_errors` and never in the triage or the verdict; the result gives `records_passed_over`,
+    `passed_over_by_source_type` (told from the XSLT's input by the group's rows kept with its mapping;
+    `(not told from the step)` without one) and `passed_over_note`. The no-Event check reads only the records not
+    passed over; every record passed over is blocking (`SteppingVerdicts.allPassedOver`: nothing the group
+    translates was checked). Seen in chat 177: 304 of 500 records "with errors", 238 only passed over, explained
+    away by the agent. `step_records` marks such a record `passed_over: true` (no "no Event" warning), leaves its
+    shape out of `shapes_not_clean` and names it in `shapes_passed_over`; `evaluate_pipeline` carries the counts.
   * A JSON parser with its root map (`addRootObject` not false), every stream stepped as one record, and the first
     stream's head a JSON array: a review group says each array is one record (a large one outlasts stepping) and to
     set `addRootObject` false with `update_pipeline` and match `/array/map`. The head is read only for a user with
@@ -4943,7 +4970,14 @@ tool generates two sections in it and keeps the version control:
   aggregated feed's group pipeline, whose one XSLT is its source type group's (keeping its mapping), is documented
   as a translation (`FieldMappingSections.groupLine`, `withCommonParts`): the section opens saying the XSLT is group
   'x''s, translating its source types and passing over the feed's others, and names the feed's registry for what
-  becomes of every source type; the common module's parts it calls are shown as common fields.
+  becomes of every source type; the common module's parts it calls are shown as common fields. An indexing
+  pipeline's section (planned, or discovery) ends with what reprocessing does, from its own indexing filter
+  (`IndexReprocessing`): Elasticsearch writes each document as a bulk `create` with no id (Elasticsearch assigns
+  it), and a reprocess processor filter first deletes the stream's documents by StreamId when `purgeOnReprocess` is
+  true (the default; said otherwise when the pipeline sets it false), a stream processed again outside one being
+  indexed twice; Lucene only adds documents, so a stream indexed again is there twice until its shards are deleted.
+  Seen in chat 177: the agent wrote "The document _id is <StreamId>-<EventId>, so re-indexing the same Events
+  stream replaces its documents".
 * **Reference maps** is generated for a reference data pipeline (`PipelineShapes` stage `reference`; its XSLT, made
   by build_reference_xslt or by hand, keeps no mapping) in place of the agent's own section of that name
   (`FieldMappingSections.referenceMapsSection`): the pipeline is stepped over `stream_ids` (its Raw Reference
@@ -5016,7 +5050,9 @@ tool generates two sections in it and keeps the version control:
   * `evaluation=true` keeps the markdown as its own doc, `<pipeline> - Evaluation`, beside the pipeline once
     promoted (an earlier one updated through a working copy), nothing generated, the pipeline's documentation left
     as it is: saved as the documentation it would have replaced it at promotion.
-  * **An existing index** (`IndexDocumentation`): the user confirms the index doc in a form; the section comes
+  * **An existing index** (`IndexDocumentation`): the user confirms the index doc in a form, once a session for
+    the same build, index doc, folder and doc beside it (`DocumentAgreements`; seen in chat 177, asked four times
+    for one index doc, each call asking afresh), another target asking again; the section comes
     from a survey of the index through Stroom; an index this build made is documented through its indexing pipeline
     unless `index_itself`; fields its feeding pipelines write that the index lacks refuse the call unless
     `document_missing_fields`. `stream_ids` given are ignored (and said to be).
@@ -5378,7 +5414,10 @@ stream (records:2) must be drafted with `input: delimited`, which reads each dat
   has the source, and the translation that wrote the Events doesn't write it: the user chooses to leave it out, have
   the translation write it, or keep it), `fields_rare` (no event read has the source, but the translation writes it:
   kept, as a sample can't show a path is never populated; seen: a byte count early in its stream said to be one the
-  index never gets), `field_mapping` (the Field mapping section's Markdown), `ecs_check` where it departs from ECS, `from_example`
+  index never gets), `field_mapping` (the Field mapping section's Markdown), `core_fields_mostly_empty` (core
+  fields of the convention, ECS `level: core`, and the time field, that some events read populate but fewer than
+  half: `name <- path: in n% of events read`, for the user; `IndexPlans.mostlyEmptyCore`; seen in chat 177:
+  event.action empty in 2,233 of 2,457 documents), `ecs_check` where it departs from ECS, `from_example`
   (notes on naming, shared fields and the kept example), `shared_from_pipelines`, `ecs_data_elements`, `replaced`
   (with `replaces=`: `{xslt, fields, not_in_draft, hint}`, the fields the old index wrote that the draft doesn't
   cover by source, each with its source and how often the sample populates it), `warnings`, `hint`. A discovery
@@ -5455,7 +5494,13 @@ must be one the user may view · confirms itself · Classes: `CreateIndexDocTool
 
 Makes the build's index doc in its folder (role Indexing): a Lucene Index in a volume group (partitioned by month,
 one shard per partition) with the plan's fields, or an Elastic Index doc on an existing Elastic Cluster doc naming
-the index or data stream, its cluster then tested. The user confirms the backend, names and target in a form, and
+the index or data stream. The cluster's connection is tested before anything is made: one whose test fails is
+refused with the test's message and the clusters whose test passes, for the agent to ask the user (seen in chat 177:
+made on ES_PROD, its test then failed with "missing authentication credentials"). Named again with another
+`cluster_uuid`, the build's own Elastic Index doc moves to that cluster once the user confirms ("Change the cluster
+of Elastic Index doc ..."), with the build's pipelines writing to it that name a cluster (`BuildIndexes.setCluster`);
+the reply has `changed` and `pipelines_changed` (seen in chat 177: refused as a name the build has, and the user
+edited the doc by hand). The user confirms the backend, names and target in a form, and
 may correct the doc name and (Elasticsearch) the index name there; the reply carries the names as made (seen in Ask
 Stroom AI: the reply kept the name from before the user's edit, and the agent offered it back to them). With a plan,
 the form's `fields` line refers to the table `draft_index_mapping` showed ("12 field(s), as the index field plan
@@ -5676,12 +5721,16 @@ confirms itself · takes a run slot · Classes: `VerifyIndexTool`, `IndexChecks`
 `MisleadingSearches`, `BuildRecords`
 
 Verifies indexed events through Stroom, not by querying the backend. It makes a verification dashboard on the index
-doc (`<index>-VERIFY` by default, role folder Indexing, `WriteGuard.createFilled`) once the user confirms its
+doc (`<index doc name>-VERIFY`, always: `dashboard_name` is no longer taken, a different one is answered with
+`dashboard_name_ignored`; role folder Indexing, `WriteGuard.createFilled`) once the user confirms its
 columns: a query on the time field from the sample's earliest event (rounded back to a 30-day boundary) through the
 end of today, run on open; a table of the user's fields, newest first, with `StreamId` and `EventId` as hidden
 columns; and a text pane on the selected row's record, with stepping and no extraction pipeline. It is laid out as
 Stroom's UI lays one out (sized panes, the config's own size, constraints, model version and time range): without
-them the search API ran the dashboard but the UI showed it empty. An existing `-VERIFY` dashboard is laid out again
+them the search API ran the dashboard but the UI showed it empty. The build's verification dashboard of the index
+is reused whatever it was named (`verificationDashboard`: the one of that name, else a `-VERIFY` dashboard whose query
+is on the index; seen in chat 177: `<base> -VERIFY`, named by the agent, then `<base> V1-VERIFY`). The form lists every
+column, one per line, never cut (`Consent.Listed`; seen in chat 177: the list cut with "…"). An existing dashboard is laid out again
 if needed, and its columns changed once the user confirms. The dashboard is the build's when the index is, or when
 `pipeline_uuid` is the build's own pipeline writing to it (seen in production: a new version's verification left no
 dashboard to promote); any other index is searched through an unsaved dashboard.
@@ -5690,7 +5739,21 @@ Then the test searches (`IndexChecks.runTestSearches`), each of the sample's str
 index may hold millions of other documents (a check of the whole index answered for them, and sorting made Stroom
 read every match): every document of the streams (the count must match `expected_documents`, retried every 5 s
 while the index catches up, stopping early when two counts agree or Stroom couldn't finish counting); an exact
-match per `exact` item; the time range; and any further `searches`. A stream of more than 10,000 events is checked
+match per `exact` item; the time range; and any further `searches`. Each exact match and search (EQUALS with
+wildcards, NOT_EQUALS, IN, and number ranges) is counted from the Events themselves (`EventsExpectations`,
+`PlannedValues`): each field read by the source path the plan kept with the indexing XSLT gives it (the given
+pipeline's, else the build's own pipeline writing to the index), as the XSLT writes it (drop_when, stand-ins, the
+outcome transform, one value joined or several each), over each stream's first 1,000 events (2,000 in all), and the
+index searched over the same events (a whole stream by StreamId, a longer one by EventId as well). It passes only
+when the index finds as many (`expected`, `expected_from`); an `expected` given that differs is reported as the
+assertion's error (`assertion`), not the index's; an exact value no event holds fails, saying so. A check the Events
+can't count (a field the XSLT computes or Stroom writes, analysed text, a date, objects made distinct by a key,
+CONTAINS, MATCHES_REGEX) is `independent: false` and doesn't count towards `passed`. Seen in chat 177: the agent's
+asserted counts were wrong four times, then it took every expected count from the index itself and reran until
+23/23 passed. `expected_counts` says where the counts came from (given, without a kept plan). `findings` names the
+core fields of the convention (ECS `level: core`, and the time field) empty in more than half the events read, with
+their Events paths, for the user (seen in chat 177: event.action empty in 2,233 of 2,457 documents); a mostly empty
+time field fails. A stream of more than 10,000 events is checked
 by its first and last 1,000 and none past its last (asked for by the user: a 100,000-record stream was counted
 seven times over); a count Stroom hadn't finished in time is unproven, not a failure. Given `pipeline_uuid`, each
 check's lowest-EventId hit is traced back to its record by stepping the pipeline at the hit's StreamId and EventId
@@ -5711,8 +5774,8 @@ indexed, over an index of the Events it replaced. `checks=false`, when the user 
 with no searches; nothing is marked verified.
 
 * **Arguments**: `build`, `index_uuid`, `backend`, `stream_ids`, `expected_documents`, `fields` (the table's
-  columns, as the index names them) (required); `exact` (`{field, value}` each); `time_range` (`{field, from, to,
-  expected}`); `dashboard_name`; `retries` (0 to 20, default 6); `searches` (`{field, condition, value, expected}`,
+  columns, as the index names them) (required); `exact` (`{field, value}` each, `expected` compared with the
+  Events' count); `time_range` (`{field, from, to, expected}`); `retries` (0 to 20, default 6); `searches` (`{field, condition, value, expected}`,
   conditions as a dashboard's, default EQUALS); `pipeline_uuid`; `checks` (default true).
 * **Returns**: `dashboard` (`uuid`, `name`, `saved`, `link` when saved, and the design), `passed`, `checks` (each
   with `check`, `pass`, `returned` or `parts`, `errors`, `sample`, `trace`, or `checked: earlier in this session`),
@@ -5793,7 +5856,9 @@ pass back, as a model holding one could approve its own call. A form closed or r
 call again when the user is back", not a refusal (asked for by the user: an agent took a cancel for "did not agree").
 `consent.choose(...)` and `chooseEach(...)` ask the user to pick options. Forms are kept short: the message is cut to
 600 characters (each detail to 160) with the rest left to the chat, because a 2,000-character template confirmation
-was declined by the client as too long. A choice form too large to show at all is not shown: `choose` returns empty
+was declined by the client as too long. A detail given as `Consent.Listed` is shown whole, one value per line, within
+1,500 characters, for what the user must see in full to agree to (a verification dashboard's columns: seen in chat
+177, cut with "…"). A choice form too large to show at all is not shown: `choose` returns empty
 and the agent asks in the chat (seen: a stand-ins form with a question for each of about 150
 values, and a hand-edit question naming every field of a wide mapping). `Consent.reviewId(shown)` and `wasReviewed`
 bind a `needs_review` reply to what it showed (promotion layouts, index templates, records kept as Unknown). Every

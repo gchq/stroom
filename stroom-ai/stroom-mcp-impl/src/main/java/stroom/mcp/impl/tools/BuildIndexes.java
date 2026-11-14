@@ -25,6 +25,7 @@ import stroom.ai.impl.tools.indexing.IndexingHelpers.Destination;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
+import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -193,6 +194,40 @@ class BuildIndexes {
         guard.checkInBuild(session, new DocRef(PipelineDoc.TYPE, doc.getUuid(), doc.getName()));
         pipelineDocs.write(PipelineDocs.withProperty(doc, pipeline.element(), "indexName",
                 new PipelinePropertyValue(indexName)));
+    }
+
+    /// Points a build's pipeline at a cluster (its own property, over its templates'), where it sets one of its own
+    /// or inherits one other than it: used when the build's Elastic Index doc moves to another cluster, so the
+    /// pipeline writes where the doc reads.
+    ///
+    /// @param session  The session, for the audit of a refusal.
+    /// @param pipeline The pipeline.
+    /// @param cluster  The Elastic Cluster doc.
+    /// @return True if the pipeline was changed; false when it already used that cluster or names none.
+    /// @throws ToolRefusal if the pipeline isn't the build's own.
+    boolean setCluster(final ToolSession session, final Destination pipeline, final DocRef cluster) {
+        final Object current = pipelineShapes.merged(pipeline.uuid()).properties()
+                .get(new MergedPipeline.ElementProperty(pipeline.element(), "cluster"));
+        if (!(current instanceof final Map<?, ?> doc) || cluster.getUuid().equals(doc.get("uuid"))) {
+            return false;
+        }
+        final PipelineDoc pipelineDoc = pipelineDocs.read(pipeline.uuid());
+        guard.checkInBuild(session, new DocRef(PipelineDoc.TYPE, pipelineDoc.getUuid(), pipelineDoc.getName()));
+        pipelineDocs.write(PipelineDocs.withProperty(pipelineDoc, pipeline.element(), "cluster",
+                new PipelinePropertyValue(cluster)));
+        return true;
+    }
+
+    /// @return The Elastic Cluster docs the user can view, at most [#CLUSTER_LOOKUP]; none when they can't be
+    /// listed.
+    List<DocRef> clusters() {
+        try {
+            final List<DocRef> refs = pipelineIndex.list(ElasticClusterDoc.TYPE);
+            return List.copyOf(refs.subList(0, Math.min(CLUSTER_LOOKUP, refs.size())));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to list the clusters: {}", e.getMessage()));
+            return List.of();
+        }
     }
 
     /// @return The one Elastic Cluster doc the environment's Elastic Index docs use; empty when they use several,

@@ -34,12 +34,14 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
+import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
@@ -101,6 +103,7 @@ class VerifyIndexTool extends AbstractBuiltInTool {
     private final BuildPlan plan;
     private final BuildRecords records;
     private final PipelineShapes pipelineShapes;
+    private final EventsExpectations expectations;
 
     @Inject
     VerifyIndexTool(final IndexChecks checks,
@@ -112,7 +115,8 @@ class VerifyIndexTool extends AbstractBuiltInTool {
                     final Consent consent,
                     final BuildPlan plan,
                     final BuildRecords records,
-                    final PipelineShapes pipelineShapes) {
+                    final PipelineShapes pipelineShapes,
+                    final EventsExpectations expectations) {
         this.checks = checks;
         this.indexFields = indexFields;
         this.indexSearches = indexSearches;
@@ -123,6 +127,7 @@ class VerifyIndexTool extends AbstractBuiltInTool {
         this.plan = plan;
         this.records = records;
         this.pipelineShapes = pipelineShapes;
+        this.expectations = expectations;
     }
 
     @Override
@@ -164,6 +169,7 @@ class VerifyIndexTool extends AbstractBuiltInTool {
         final ObjectSchema exact = ObjectSchema.builder()
                 .addStringProperty("field", "The index's field.")
                 .addStringProperty("value", "A value from stepped documents.")
+                .addIntegerProperty("expected", "Leave out: the tool counts the documents from the Events.")
                 .required("field", "value")
                 .build();
         final ObjectSchema search = ObjectSchema.builder()
@@ -172,8 +178,10 @@ class VerifyIndexTool extends AbstractBuiltInTool {
                                                 + " (default EQUALS).")
                 .addStringProperty("value", "BETWEEN: 'from,to'; IN: values separated by commas; EQUALS takes * "
                                             + "wildcards.")
-                .addIntegerProperty("expected", "Rows it must return; none: at least one; 0: none (e.g. another "
-                                                + "case).")
+                .addIntegerProperty("expected", "Leave out where the tool counts it from the Events (EQUALS, "
+                                                + "NOT_EQUALS, IN and number ranges on a field the plan reads from "
+                                                + "the Events). Otherwise rows it must return; none: at least one; "
+                                                + "0: none.")
                 .required("field")
                 .build();
         return ToolDefinition.builder()
@@ -183,10 +191,17 @@ class VerifyIndexTool extends AbstractBuiltInTool {
                              + "dashboard on the index doc, then the test searches: the sample stream ids, an exact "
                              + "match on each key field, a time range and any further searches, each of the "
                              + "sample's streams only (the rest of the index never answers for them); with the "
-                             + "indexing pipeline, each hit traced back to the record it came from. Passes when "
-                             + "every check returns what it should. A stream of more than 10,000 events is checked "
-                             + "by its first and last 1,000 and none past its last, not counted whole; a count "
-                             + "Stroom hadn't finished in time is unproven, not a failure: call again. The dashboard "
+                             + "indexing pipeline, each hit traced back to the record it came from. Each exact "
+                             + "match and search is counted from the Events themselves, by the Events path the "
+                             + "plan kept with the indexing XSLT reads the field from (the streams' first 1,000 "
+                             + "events each), and passes only when the index finds as many: never give expected "
+                             + "counts of your own, nor ones read from the index. A check the Events can't count "
+                             + "(a computed or analysed field, CONTAINS) is independent: false and doesn't count "
+                             + "towards passing. findings names core fields of the convention empty in most "
+                             + "events: tell the user. Passes when every check returns what it should. A stream "
+                             + "of more than 10,000 events is checked by its first and last 1,000 and none past "
+                             + "its last, not counted whole; a count Stroom hadn't finished in time is unproven, "
+                             + "not a failure: call again. The dashboard "
                              + "(created once per build, for an index the build made, after the user confirms its "
                              + "columns) has a query on the time field from the sample's earliest event (rounded "
                              + "back to a 30-day boundary) through the end of today, a table of the user's fields "
@@ -218,7 +233,6 @@ class VerifyIndexTool extends AbstractBuiltInTool {
                         .addProperty(TIME_RANGE_ARG, ObjectSchema.builder()
                                 .description("{'field': ..., 'from': ISO, 'to': ISO, 'expected': n}")
                                 .build())
-                        .addStringProperty(DASHBOARD_NAME_ARG, "Defaults to the index name with a -VERIFY suffix.")
                         .addIntegerProperty(RETRIES_ARG, "Retries while the index catches up (0 to " + MAX_RETRIES
                                                          + "; default " + DEFAULT_RETRIES + ").")
                         .addProperty(SEARCHES_ARG, ArraySchema.builder()
@@ -303,8 +317,6 @@ class VerifyIndexTool extends AbstractBuiltInTool {
             IndexChecks.searchable(backend, List.of(), Set.of(), List.of(), Map.of(), null, unindexed, null);
         }
 
-        final String name = NullSafe.nonBlankStringElse(stringArg(call, DASHBOARD_NAME_ARG),
-                index.name() + "-VERIFY");
         final List<String> fields = ToolArgs.strings(call, FIELDS_ARG).stream()
                 .filter(field -> !IndexChecks.IDS.contains(field))
                 .toList();
@@ -317,9 +329,11 @@ class VerifyIndexTool extends AbstractBuiltInTool {
         final boolean ours = contents.stream().anyMatch(doc -> doc.uuid().equals(indexUuid))
                              || contents.stream().anyMatch(doc -> PipelineDoc.TYPE.equals(doc.type())
                                                                   && doc.uuid().equals(pipelineUuid));
-        final Optional<WriteGuard.BuildDoc> existing = contents.stream()
-                .filter(doc -> DashboardDoc.TYPE.equals(doc.type()) && doc.name().equals(name))
-                .findFirst();
+        // The build's verification dashboard of this index, whatever it was named, changed rather than another made
+        // (seen in chat 177: "<base> -VERIFY", named by the agent, then "<base> V1-VERIFY", by the index doc's name).
+        final Optional<WriteGuard.BuildDoc> existing = verificationDashboard(contents, indexUuid,
+                dashboardName(index.name()));
+        final String name = existing.map(WriteGuard.BuildDoc::name).orElse(dashboardName(index.name()));
         // The window starts at the sample's earliest event: found by searching its streams first, oldest first,
         // saving nothing. Seen in testing: the dashboard's own table, newest first, read the 100 newest, and the
         // window hid a third of the sample's events.
@@ -384,9 +398,13 @@ class VerifyIndexTool extends AbstractBuiltInTool {
                                + "to pass.");
             return result;
         }
+        final Optional<FieldPlan> keptPlan = keptPlan(contents, pipelineUuid, docType, indexUuid, index.indexName());
         final Map<String, Object> searchedResult = PipelineStepping.withinTimeLimit(context, () -> {
+            final EventsExpectations.Sample events = keptPlan.map(kept -> expectations.read(kept, streamIds))
+                    .orElse(null);
             final Map<String, Object> found = checks.runTestSearches(context, searchedWith, streamIds, expected,
-                    exact, timeRange, retries, searches, pipelineUuid);
+                    exact, timeRange, retries, searches, pipelineUuid, events);
+            expectationsSaid(found, events);
             if (NullSafe.isNonBlankString(pipelineUuid)) {
                 lacking(found, pipelineUuid, source, streamIds, index);
             }
@@ -400,6 +418,7 @@ class VerifyIndexTool extends AbstractBuiltInTool {
         shown.putAll(design);
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("dashboard", shown);
+        ignoredName(call, name).ifPresent(note -> result.put("dashboard_name_ignored", note));
         result.putAll(searchedResult);
         if (Boolean.TRUE.equals(searchedResult.get("passed"))) {
             final List<String> recorded = recordVerified(contents, docType, indexUuid, index.indexName(), streamIds);
@@ -409,6 +428,62 @@ class VerifyIndexTool extends AbstractBuiltInTool {
             }
         }
         return result;
+    }
+
+    /// @param indexDocName The index doc's name.
+    /// @return The name of its verification dashboard: the index doc's name with `-VERIFY`, always (seen in chat
+    /// 177: a name the agent made up, dropping part of the index doc's, beside the one the tool made).
+    static String dashboardName(final String indexDocName) {
+        return indexDocName + "-VERIFY";
+    }
+
+    /// The build's verification dashboard of an index: the one named as [#dashboardName] names it, else a
+    /// `-VERIFY` dashboard whose query is on the index (one made under another name earlier).
+    ///
+    /// @param contents  The build's documents.
+    /// @param indexUuid The index doc.
+    /// @param name      The dashboard's name, as [#dashboardName] gives it.
+    /// @return The dashboard, if the build has one.
+    Optional<WriteGuard.BuildDoc> verificationDashboard(final List<WriteGuard.BuildDoc> contents,
+                                                        final String indexUuid,
+                                                        final String name) {
+        final List<WriteGuard.BuildDoc> dashboards = contents.stream()
+                .filter(doc -> DashboardDoc.TYPE.equals(doc.type()))
+                .toList();
+        final Optional<WriteGuard.BuildDoc> named = dashboards.stream()
+                .filter(doc -> doc.name().equals(name))
+                .findFirst();
+        if (named.isPresent()) {
+            return named;
+        }
+        return dashboards.stream()
+                .filter(doc -> doc.name().endsWith("-VERIFY"))
+                .filter(doc -> documentAccess.read(doc.docRef(), DashboardDoc.class)
+                        .map(DashboardDoc::getDashboardConfig)
+                        .filter(config -> queries(config, indexUuid))
+                        .isPresent())
+                .findFirst();
+    }
+
+    // A dashboard_name given that isn't the dashboard's: said, as the name always comes from the index doc.
+    private Optional<String> ignoredName(final ToolCall call, final String name) {
+        final String given = stringArg(call, DASHBOARD_NAME_ARG);
+        if (NullSafe.isBlankString(given) || given.strip().equals(name)) {
+            return Optional.empty();
+        }
+        return Optional.of("'" + given.strip() + "' not used: the verification dashboard is named after the index "
+                           + "doc, and the build's one for this index is reused ('" + name + "')");
+    }
+
+    // Whether a dashboard's query searches the index.
+    private static boolean queries(final DashboardConfig config, final String indexUuid) {
+        for (final ComponentConfig component : NullSafe.list(config.getComponents())) {
+            if (component.getSettings() instanceof final QueryComponentSettings query
+                && query.getDataSource() != null && indexUuid.equals(query.getDataSource().getUuid())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // Which fields are addresses (Elasticsearch), or text (Lucene): a search that would mislead on them is
@@ -457,6 +532,75 @@ class VerifyIndexTool extends AbstractBuiltInTool {
                     NAME, "Change the columns of dashboard '" + name + "'", design));
             write(doc.copy().dashboardConfig(IndexChecks.dashboardConfig(source, fields, timeField, window)).build());
         }
+    }
+
+    // Where the checks' counts came from, and the core fields most events hold no value for (seen in chat 177:
+    // event.action empty in 2,233 of 2,457 documents, and nothing said so): a finding for the user, a failure only
+    // for the time field, which every document needs.
+    @SuppressWarnings("unchecked")
+    private void expectationsSaid(final Map<String, Object> found, final EventsExpectations.Sample events) {
+        if (events == null || !events.any()) {
+            found.put("expected_counts", "given, not counted from the Events: no plan is kept with the indexing "
+                                         + "XSLT (pipeline_uuid names the indexing pipeline), or no events were read"
+                                         + (events == null || events.unread().isEmpty()
+                    ? ""
+                    : " (" + String.join("; ", events.unread()) + ")"));
+            return;
+        }
+        found.put("expected_counts", "from the Events: " + events.said()
+                                     + (events.unread().isEmpty()
+                ? ""
+                : "; not read: " + String.join("; ", events.unread())));
+        final List<Map<String, Object>> empty = events.mostlyEmpty(plans.ecs());
+        if (empty.isEmpty()) {
+            return;
+        }
+        found.put("findings", Map.of("core_fields_mostly_empty", empty, "next", "Tell the user which core fields "
+                                     + "most events leave empty, and the Events path each is read from: the "
+                                     + "translation may not write it for most kinds of event, or the plan reads it "
+                                     + "from the wrong path. Ask whether to map it from another path, or leave it "
+                                     + "as it is."));
+        empty.stream().filter(finding -> Boolean.TRUE.equals(finding.get("required"))).forEach(finding -> {
+            final Map<String, Object> check = new LinkedHashMap<>();
+            check.put("check", "the time field " + finding.get("field") + " has a value");
+            check.put("pass", false);
+            check.put("empty_in", finding.get("empty_in"));
+            check.put("source", finding.get("source"));
+            ((List<Map<String, Object>>) found.get("checks")).add(check);
+            found.put("passed", false);
+        });
+    }
+
+    // The plan kept with the indexing XSLT: the pipeline's given, else the build's own pipeline writing to the
+    // index. None for a discovery plan, which reads raw data, not Events.
+    private Optional<FieldPlan> keptPlan(final List<WriteGuard.BuildDoc> contents,
+                                         final String pipelineUuid,
+                                         final String docType,
+                                         final String indexUuid,
+                                         final String indexName) {
+        final List<String> candidates = new ArrayList<>();
+        if (NullSafe.isNonBlankString(pipelineUuid)) {
+            candidates.add(pipelineUuid);
+        } else {
+            for (final WriteGuard.BuildDoc doc : contents) {
+                if (!PipelineDoc.TYPE.equals(doc.type())) {
+                    continue;
+                }
+                try {
+                    if (IndexDocs.writesTo(pipelineShapes.merged(doc.uuid()).properties(), docType, indexUuid,
+                            indexName)) {
+                        candidates.add(doc.uuid());
+                    }
+                } catch (final RuntimeException e) {
+                    // One Stroom can't load writes nowhere.
+                }
+            }
+        }
+        return candidates.stream()
+                .map(plans::kept)
+                .flatMap(Optional::stream)
+                .filter(kept -> kept.discovery() == null)
+                .findFirst();
     }
 
     // Every field the pipeline writes for these Events must be in the index (asked for by the user: an index that
@@ -573,6 +717,10 @@ class VerifyIndexTool extends AbstractBuiltInTool {
             check.put("value", map.get("value") == null
                     ? ""
                     : String.valueOf(map.get("value")));
+            if (map.get("expected") != null) {
+                // Compared with the Events' count, which decides.
+                check.put("expected", String.valueOf(map.get("expected")));
+            }
             exact.add(check);
         }
         return exact;

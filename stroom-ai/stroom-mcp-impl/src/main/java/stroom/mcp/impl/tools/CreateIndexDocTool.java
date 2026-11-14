@@ -140,7 +140,11 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
                              + "or an Elastic Index doc on an existing Elastic Cluster doc pointing at the index or "
                              + "data stream, tested against the cluster. The user confirms the backend, name and "
                              + "target. Given the name of the build's Lucene index doc again, with plan=, it adds "
-                             + "the plan's fields the index lacks (then reprocess_streams the Events).")
+                             + "the plan's fields the index lacks (then reprocess_streams the Events). An Elastic "
+                             + "cluster whose connection test fails is refused, naming those that pass: ask the user "
+                             + "which to use. Given the name of the build's own Elastic Index doc again with another "
+                             + "cluster_uuid, it moves that doc (and the build's pipelines writing to it) to that "
+                             + "cluster, once the user confirms.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(BUILD_ARG, CreateFeedTool.BUILD_DESCRIPTION)
                         .addEnumProperty(BACKEND_ARG, FieldPlans.BACKENDS, "The index's backend.")
@@ -153,7 +157,8 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
                                 .description("Lucene: the field plan from draft_index_mapping; its fields are added "
                                              + "to the index doc (keywords as TEXT with the KEYWORD analyzer). "
                                              + "Elasticsearch fields come from the index template. Omitted: the one "
-                                             + "drafted for this index in the session.")
+                                             + "drafted for this index in the session. The plan object itself, "
+                                             + "never a placeholder: leave it out when there is none.")
                                 .build())
                         .required(BUILD_ARG, BACKEND_ARG, NAME_ARG, TIME_FIELD_ARG)
                         .build())
@@ -239,6 +244,17 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
                                       + "(find_elastic_clusters lists them)");
             }
             cluster = cluster(clusterUuid);
+            final Optional<WriteGuard.BuildDoc> own = guard.folderContents(build).stream()
+                    .filter(doc -> ElasticIndexDoc.TYPE.equals(doc.type()) && doc.name().equals(proposedName))
+                    .findFirst();
+            final ElasticIndexDoc ownDoc = own.flatMap(doc -> documentAccess.read(doc.docRef(),
+                    ElasticIndexDoc.class)).orElse(null);
+            if (ownDoc != null && !cluster.getUuid().equals(NullSafe.get(ownDoc.getClusterRef(), DocRef::getUuid))) {
+                // Seen in chat 177: the doc made on ES_PROD, whose test then failed, and nothing could move it to
+                // ES_DEV (made again, it was refused as a name the build has), so the user edited it by hand.
+                return changeCluster(call, context, build, ownDoc, cluster);
+            }
+            refuseUntested(cluster);
             target.put("cluster", cluster.getName() + why);
             target.put("index name", indexName);
             refuseUnnamedPipeline(build, indexName);
@@ -368,6 +384,93 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
                            + "Events through the indexing pipeline (with the XSLT saved from this plan) so they have "
                            + "the new ones, then verify_index.");
         return plan.withNext(context, build, result);
+    }
+
+    // The build's own Elastic Index doc, named again with another cluster: its cluster changed, once the user
+    // confirms, with the build's pipelines writing to it pointed at that cluster too where they name one.
+    private Map<String, Object> changeCluster(final ToolCall call,
+                                              final ToolCallContext context,
+                                              final String build,
+                                              final ElasticIndexDoc existing,
+                                              final ElasticClusterDoc cluster) {
+        refuseUntested(cluster);
+        final String from = NullSafe.getOrElse(existing.getClusterRef(), DocRef::getName, "none");
+        final Map<String, Object> details = new LinkedHashMap<>();
+        details.put("build", build);
+        details.put("index doc", existing.getName());
+        details.put("index name", existing.getIndexName());
+        details.put("cluster now", from);
+        details.put("cluster after", cluster.getName());
+        consent.require(call, context, Consent.Request.confirmation(NAME, "Change the cluster of Elastic Index doc '"
+                                                                          + existing.getName() + "' from '" + from
+                                                                          + "' to '" + cluster.getName() + "'",
+                details));
+        guard.checkInBuild(context.session(), new DocRef(ElasticIndexDoc.TYPE, existing.getUuid(),
+                existing.getName()));
+        final DocRef clusterRef = new DocRef(ElasticClusterDoc.TYPE, cluster.getUuid(), cluster.getName());
+        final ElasticIndexDoc doc = write(ElasticIndexDoc.class, ElasticIndexDoc.TYPE, readDoc(new DocRef(
+                ElasticIndexDoc.TYPE, existing.getUuid(), existing.getName()), ElasticIndexDoc.class).copy()
+                .clusterRef(clusterRef)
+                .build());
+        final List<String> pipelines = new ArrayList<>();
+        for (final Destination pipeline : buildIndexes.destinations(build)) {
+            if (IndexingHelpers.writesToIndex(pipeline.indexName(), doc.getIndexName())
+                && buildIndexes.setCluster(context.session(), pipeline, clusterRef)) {
+                pipelines.add(pipeline.name());
+            }
+        }
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("type", ElasticIndexDoc.TYPE);
+        result.put("uuid", doc.getUuid());
+        result.put("name", doc.getName());
+        result.put("cluster", cluster.getName());
+        result.put("index name", doc.getIndexName());
+        result.put("changed", "cluster from '" + from + "' to '" + cluster.getName() + "'");
+        if (!pipelines.isEmpty()) {
+            result.put("pipelines_changed", ToolText.list(pipelines) + " now write to cluster '" + cluster.getName()
+                                            + "' too");
+        }
+        result.put("test", test(cluster));
+        return plan.withNext(context, build, result);
+    }
+
+    // The cluster's connection is tested before an index doc is made on it (seen in chat 177: made on ES_PROD, whose
+    // test then failed with "missing authentication credentials"): one that fails is refused, naming the clusters
+    // whose test passes, for the agent to ask the user.
+    private void refuseUntested(final ElasticClusterDoc cluster) {
+        final TestResult tested = tested(cluster);
+        if (tested.ok()) {
+            return;
+        }
+        final List<String> passing = new ArrayList<>();
+        for (final DocRef ref : buildIndexes.clusters()) {
+            if (ref.getUuid().equals(cluster.getUuid())) {
+                continue;
+            }
+            documentAccess.read(ref, ElasticClusterDoc.class)
+                    .filter(other -> tested(other).ok())
+                    .ifPresent(other -> passing.add("'" + other.getName() + "' (cluster_uuid=" + other.getUuid()
+                                                    + ")"));
+        }
+        throw new ToolRefusal("Stroom's connection test of cluster '" + cluster.getName() + "' failed: "
+                              + tested.message() + ". " + (passing.isEmpty()
+                ? "No other cluster's test passes either: ask the user to have the cluster's connection fixed in "
+                  + "Stroom (its Elastic Cluster doc), then call again."
+                : "Clusters whose test passes: " + String.join(", ", passing) + ". Ask the user which cluster to "
+                  + "use, then call again with its cluster_uuid."));
+    }
+
+    // The connection test's result; one that can't run is a failure, saying why.
+    private TestResult tested(final ElasticClusterDoc cluster) {
+        try {
+            final TestResult tested = elasticClusterTestsProvider.get().test(cluster);
+            return tested == null
+                    ? new TestResult(false, "the test gave no result")
+                    : tested;
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to test cluster {}", cluster.getUuid()), e);
+            return new TestResult(false, PipelineShapes.reason(e));
+        }
     }
 
     // Refused for a name none of the build's indexing pipelines writes to while one writes to no doc yet: that

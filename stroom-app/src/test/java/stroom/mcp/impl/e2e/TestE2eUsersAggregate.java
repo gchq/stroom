@@ -203,6 +203,14 @@ class TestE2eUsersAggregate extends AbstractE2eTest {
         assertThat((List<Map<String, Object>>) hit.get("users")).as("the document's users, as indexed")
                 .extracting(user -> user.get("login")).containsExactly("bob", "carol", "dave");
 
+        // A cluster whose connection test fails is refused before any doc is made, naming those that pass (seen in
+        // chat 177: the doc made on ES_PROD, then its test failed, and nothing could move it).
+        final DocRef unreachable = elasticCluster(FIXTURE_CLUSTER + " (unreachable)", "http://localhost:1");
+        assertThat(refusal("create_index_doc", args("build", mail.build(), "backend", "elasticsearch", "name", index,
+                "time_field", "@timestamp", "index_name", index, "cluster_uuid", unreachable.getUuid())))
+                .contains("Stroom's connection test of cluster '" + unreachable.getName() + "' failed")
+                .contains("'" + cluster.getName() + "' (cluster_uuid=" + cluster.getUuid() + ")");
+
         // Searched through Stroom, each hit traced to its record; every field the pipeline writes in the index.
         final String indexDoc = uuidOf(agreed("create_index_doc", args("build", mail.build(), "backend",
                 "elasticsearch", "name", index, "time_field", "@timestamp", "index_name", index, "cluster_uuid",
@@ -220,6 +228,15 @@ class TestE2eUsersAggregate extends AbstractE2eTest {
         assertThat(checks).as("every check passes: %s", checks).allSatisfy(check ->
                 assertThat(check).containsEntry("pass", true));
 
+        // Named again with another cluster, the build's own doc moves to it, with the pipeline writing to it.
+        final DocRef second = liveElasticCluster(node, FIXTURE_CLUSTER + " (second)");
+        final Map<String, Object> moved = agreed("create_index_doc", args("build", mail.build(), "backend",
+                "elasticsearch", "name", index, "time_field", "@timestamp", "index_name", index, "cluster_uuid",
+                second.getUuid()));
+        assertThat(moved).as("the doc moved: %s", moved).containsEntry("uuid", indexDoc)
+                .containsEntry("changed", "cluster from '" + cluster.getName() + "' to '" + second.getName() + "'");
+        assertThat(String.valueOf(moved.get("pipelines_changed"))).contains(index + " - Indexing");
+
         // Documented: the users' items as fields of the index.
         final Map<String, Object> written = agreed("write_documentation", args("build", mail.build(),
                 "pipeline_uuid", pipeline, "markdown", "## Purpose and data\n\nEmails sent, by the users each names."
@@ -227,6 +244,11 @@ class TestE2eUsersAggregate extends AbstractE2eTest {
                 List.of(mail.events())));
         assertThat(String.valueOf(written.get("field_mapping"))).contains("users.login", "users.email",
                 "users.organisation");
+        // What reprocessing does, from the pipeline's indexing filter, never a document id scheme (seen in chat 177:
+        // "The document _id is <StreamId>-<EventId>").
+        assertThat(String.valueOf(written.get("field_mapping")))
+                .contains("Stroom writes each document as a bulk `create` with no id")
+                .contains("A reprocess processor filter first deletes the index's documents of each stream");
     }
 
     @Test

@@ -24,6 +24,9 @@ import stroom.ai.impl.tools.StreamReader.Fetched;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.indexing.EcsSchema;
+import stroom.ai.impl.tools.indexing.FieldPlan;
+import stroom.ai.impl.tools.indexing.PlannedField;
+import stroom.ai.impl.tools.indexing.PlannedValues;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardConfig;
@@ -337,6 +340,80 @@ class TestIndexChecks {
         assertThat(steppingWorld.steps).isEmpty();
         assertThat(((Map<?, ?>) one.getFirst().get("trace")).get("traced")).isNull();
         assertThat(one.getFirst().get("pass")).isEqualTo(false);
+    }
+
+    @Test
+    void exactMatchesAndSearchesAreCountedFromTheEventsNotTheAgent() {
+        // Seen in chat 177: the agent's asserted counts were wrong four times, then it took every expected count
+        // from the index itself, and the index was verified against itself.
+        final FieldPlan plan = FieldPlan.of("elasticsearch", "web", "@timestamp", List.of(
+                PlannedField.of("user.name", "keyword", "EventSource/User/Id"),
+                PlannedField.of("message", "text", "EventDetail/Description")));
+        final List<String> records = List.of(user("alice"), user("alice"), user("bob"));
+        final EventsExpectations.Sample sample = new EventsExpectations.Sample(plan, List.of(
+                new EventsExpectations.Part(6L, 3, true, PlannedValues.of(plan, records))), List.of());
+        // The index holds alice twice and bob once, as the Events do; it finds nothing for carol.
+        answer(probe -> {
+            if (counting(probe)) {
+                return found(List.of(Map.of("All", "all", "Count", "3")), true);
+            }
+            final ExpressionItem last = probe.expression().getChildren().getLast();
+            final String value = last instanceof final ExpressionTerm term && "user.name".equals(term.getField())
+                    ? term.getValue()
+                    : "";
+            final int n = switch (value) {
+                case "alice" -> 2;
+                case "bob" -> 1;
+                default -> 0;
+            };
+            final List<Map<String, String>> rows = new ArrayList<>();
+            for (int i = 1; i <= n; i++) {
+                rows.add(Map.of("StreamId", "6", "EventId", String.valueOf(i), "user.name", value));
+            }
+            return found(rows, true);
+        });
+        events(Map.of(6L, 3L));
+        final Map<String, String> exact = new LinkedHashMap<>();
+        exact.put("field", "user.name");
+        exact.put("value", "alice");
+        exact.put("expected", "5");
+
+        final Map<String, Object> result = checks.runTestSearches(steppingWorld.context(), dashboard(), List.of(6L),
+                3, List.of(exact), null, 0, List.of(new SearchCheck("user.name", "EQUALS", "bob", 7L, null),
+                        search("message", "CONTAINS", "denied")), null, sample);
+
+        final List<?> made = (List<?>) result.get("checks");
+        final Map<?, ?> alice = (Map<?, ?>) made.get(1);
+        assertThat(alice.get("expected")).isEqualTo(2L);
+        assertThat(alice.get("returned")).isEqualTo(2L);
+        assertThat(alice.get("pass")).isEqualTo(true);
+        assertThat(String.valueOf(alice.get("expected_from"))).isEqualTo("the Events: EventSource/User/Id, in "
+                                                                         + "stream 6 (3 events indexed)");
+        // The count given was wrong, not the index.
+        assertThat(String.valueOf(alice.get("assertion"))).startsWith("the expected 5 given was wrong: the Events "
+                                                                      + "hold 2.");
+        final Map<?, ?> bob = (Map<?, ?>) made.get(2);
+        assertThat(bob.get("pass")).isEqualTo(true);
+        assertThat(String.valueOf(bob.get("assertion"))).startsWith("the expected 7 given was wrong");
+        // A search the Events can't count doesn't count either way.
+        final Map<?, ?> message = (Map<?, ?>) made.get(3);
+        assertThat(message.get("independent")).isEqualTo(false);
+        assertThat(message.get("pass")).isEqualTo(false);
+        assertThat(String.valueOf(message.get("not_independent"))).contains("CONTAINS isn't counted");
+        assertThat(result.get("passed")).isEqualTo(true);
+
+        // An index that holds fewer than the Events fails, whatever was asserted.
+        final Map<String, String> carol = Map.of("field", "user.name", "value", "carol");
+        final Map<String, Object> missing = checks.runTestSearches(steppingWorld.context(), dashboard(),
+                List.of(6L), 3, List.of(carol), null, 0, List.of(), null, sample);
+        assertThat(missing.get("passed")).isEqualTo(false);
+        assertThat(String.valueOf(((Map<?, ?>) ((List<?>) missing.get("checks")).get(1)).get("why")))
+                .contains("'carol' is in none of the Events read");
+    }
+
+    private static String user(final String id) {
+        return "<Events xmlns=\"event-logging:3\"><Event><EventSource><User><Id>" + id + "</Id></User>"
+               + "</EventSource></Event></Events>";
     }
 
     @Test

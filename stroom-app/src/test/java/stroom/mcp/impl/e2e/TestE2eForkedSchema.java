@@ -223,6 +223,7 @@ class TestE2eForkedSchema extends AbstractE2eTest {
         dump("verify_index", verified.get("checks"));
         assertThat(verified).as("both Events indexed and found, each traced to its event")
                 .containsEntry("passed", true);
+        countedFromTheEvents(verified, "alice");
         agreed("write_documentation", Map.of("build", BUILD, "pipeline_uuid", indexingUuid, "change", "Created",
                 "stream_ids", List.of(eventsId), "markdown", "# " + indexName + " - Indexing\n\n## Output\n\n"
                                                             + "Lucene index " + indexName + ".\n"));
@@ -617,6 +618,7 @@ class TestE2eForkedSchema extends AbstractE2eTest {
             dump("verify_index elasticsearch", verified.get("checks"));
             assertThat(verified).as("found through Stroom: %s", verified.get("checks"))
                     .containsEntry("passed", true);
+            countedFromTheEvents(verified, "alice");
         } finally {
             node.request("DELETE", "/_data_stream/" + index, null);
             node.deleteIndices(index + "*");
@@ -693,6 +695,23 @@ class TestE2eForkedSchema extends AbstractE2eTest {
                + "version=\"3.0\"><xsl:import href=\"" + shared + "\"/><xsl:template match=\"/\"><Events "
                + "Version=\"" + VERSION + "\"><Event><EventDetail><TypeId>t</TypeId></EventDetail></Event></Events>"
                + "</xsl:template></xsl:stylesheet>";
+    }
+
+    // The exact check's expected count is the Events' own, read in the fork's namespace by the plan's path, not one
+    // given or read from the index (seen in chat 177: the index verified against itself).
+    @SuppressWarnings("unchecked")
+    private static void countedFromTheEvents(final Map<String, Object> verified, final String value) {
+        final List<Map<String, Object>> checks = (List<Map<String, Object>>) verified.get("checks");
+        assertThat(checks).filteredOn(check -> String.valueOf(check.get("check")).endsWith("= " + value))
+                .as("the exact check, counted from the Events: %s", checks)
+                .singleElement()
+                .satisfies(check -> {
+                    assertThat(String.valueOf(check.get("expected_from"))).startsWith("the Events: "
+                                                                                      + "EventSource/User/Id");
+                    assertThat(String.valueOf(check.get("expected"))).isEqualTo("1");
+                    assertThat(String.valueOf(check.get("returned"))).isEqualTo("1");
+                });
+        assertThat(String.valueOf(verified.get("expected_counts"))).startsWith("from the Events: stream ");
     }
 
     // The name a plan gives the field from a source path.

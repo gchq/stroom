@@ -103,6 +103,8 @@ class IndexChecks {
     static final long ENDS = 1_000;
     /// The columns kept hidden on a verification dashboard, for its text pane and for tracing hits.
     static final List<String> IDS = List.of("StreamId", "EventId");
+    /// The key of a check that is false when the Events give no count for it.
+    static final String INDEPENDENT = "independent";
     /// The conditions a search takes, as a dashboard's.
     static final List<String> CONDITIONS = List.of("EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH",
             "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO",
@@ -398,6 +400,41 @@ class IndexChecks {
                                         final int retries,
                                         final List<SearchCheck> searches,
                                         final String pipelineUuid) {
+        return runTestSearches(context, dashboard, streamIds, expected, exact, timeRange, retries, searches,
+                pipelineUuid, null);
+    }
+
+    /// As [#runTestSearches(ToolCallContext, Dashboard, List, long, List, Map, int, List, String)], with each exact
+    /// match and search counted from the Events as well ([EventsExpectations]): it passes only when the index finds
+    /// as many documents as the Events hold, whatever count was asserted (seen in chat 177: the agent's asserted
+    /// counts were wrong four times, then it took every expected count from the index itself). A check of a field
+    /// the Events can't give the count of is `independent: false`, and doesn't count towards `passed`.
+    ///
+    /// @param context      The call.
+    /// @param dashboard    The verification dashboard (saved or not).
+    /// @param streamIds    The Events streams indexed.
+    /// @param expected     The Events records in them.
+    /// @param exact        Exact-match checks, each `{field, value, expected?}`.
+    /// @param timeRange    `{field, from, to, expected}`, or null.
+    /// @param retries      Retries while the index catches up.
+    /// @param searches     Any other searches.
+    /// @param pipelineUuid The indexing pipeline, or null.
+    /// @param events       The Events read for the counts, or null when there is no plan to read them by.
+    /// @return As the other gives.
+    /// @throws ToolTimeoutException if the call is cancelled.
+    Map<String, Object> runTestSearches(final ToolCallContext context,
+                                        final Dashboard dashboard,
+                                        final List<Long> streamIds,
+                                        final long expected,
+                                        final List<Map<String, String>> exact,
+                                        final Map<String, Object> timeRange,
+                                        final int retries,
+                                        final List<SearchCheck> searches,
+                                        final String pipelineUuid,
+                                        final EventsExpectations.Sample events) {
+        final EventsExpectations.Sample counted = events != null && events.any()
+                ? events
+                : null;
         final CallProgress progress = CallProgress.of(context);
         final String label = NullSafe.nonBlankStringElse(dashboard.source().getName(), dashboard.name());
         final Dashboard unsorted = dashboard.unsorted();
@@ -413,7 +450,7 @@ class IndexChecks {
                 progress)));
         for (final Map<String, String> item : exact) {
             planned.add(Map.entry("exact " + item.get("field") + "=" + item.get("value"),
-                    () -> exactMatch(context, unsorted, byStream, item, label)));
+                    () -> exactMatch(context, unsorted, byStream, item, label, counted)));
         }
         if (timeRange != null) {
             planned.add(Map.entry("time " + ToolJson.dumpsSortedKeys(timeRange),
@@ -423,7 +460,7 @@ class IndexChecks {
             planned.add(Map.entry("search " + search.field() + " " + search.condition() + " " + search.value() + " "
                                   + (search.expected() == null
                     ? "None"
-                    : search.expected()), () -> other(context, unsorted, byStream, search, label)));
+                    : search.expected()), () -> other(context, unsorted, byStream, search, label, counted)));
         }
         final List<Map<String, Object>> checks = new ArrayList<>();
         for (final Map.Entry<String, Supplier<Map<String, Object>>> check : planned) {
@@ -454,7 +491,11 @@ class IndexChecks {
             }
         }
         final Map<String, Object> result = new LinkedHashMap<>();
-        result.put("passed", checks.stream().allMatch(check -> Boolean.TRUE.equals(check.get("pass")))
+        // A check the Events can't give the count of doesn't count either way (asked for by the user: an
+        // expectation the index answered for itself is no verification).
+        result.put("passed", checks.stream()
+                                     .filter(check -> !Boolean.FALSE.equals(check.get(INDEPENDENT)))
+                                     .allMatch(check -> Boolean.TRUE.equals(check.get("pass")))
                              && unfinished.isEmpty());
         result.put("checks", checks);
         if (!unfinished.isEmpty()) {
@@ -530,9 +571,17 @@ class IndexChecks {
                                            final Dashboard dashboard,
                                            final ExpressionOperator byStream,
                                            final Map<String, String> item,
-                                           final String label) {
+                                           final String label,
+                                           final EventsExpectations.Sample events) {
         final String field = item.get("field");
         final String value = NullSafe.string(item.get("value"));
+        final EventsExpectations.Expectation expectation = events == null
+                ? null
+                : events.expect(field, "EQUALS", value);
+        if (expectation != null && expectation.count() != null) {
+            return countedCheck(context, dashboard, events, expectation, field, "EQUALS", value,
+                    asserted(item.get("expected")), true, label);
+        }
         final Found res = search(context, dashboard, scoped(byStream, term(field, Condition.EQUALS, value)), PAGE,
                 "Searching " + label + ": " + field + " = " + value);
         // A value as a dashboard shows a field of several values ("retry, timeout"): the index holds each value on
@@ -551,9 +600,99 @@ class IndexChecks {
                              + "the index holds each on its own: search one of them, e.g. '"
                              + ToolText.strip(value.split(",", -1)[0], " []") + "'");
         }
+        notIndependent(check, expectation);
         check.put("_rows", res.rows());
         check.put("_spec", spec(field, "EQUALS", value));
         return check;
+    }
+
+    // A check whose count the Events give: the index's count of the same events must be it. An asserted count that
+    // disagrees is the assertion's error, not the index's.
+    private Map<String, Object> countedCheck(final ToolCallContext context,
+                                             final Dashboard dashboard,
+                                             final EventsExpectations.Sample events,
+                                             final EventsExpectations.Expectation expectation,
+                                             final String field,
+                                             final String condition,
+                                             final String value,
+                                             final Long asserted,
+                                             final boolean needsAny,
+                                             final String label) {
+        final ExpressionOperator expression = scoped(events.scope(), term(field, Condition.valueOf(condition),
+                value));
+        final String doing = ("Searching " + label + ": " + field + " " + condition + " " + value).stripTrailing();
+        final Found res = search(context, dashboard, expression, PAGE, doing);
+        long n = res.rows().size();
+        boolean countedAll = true;
+        final List<Object> errors = new ArrayList<>(res.errors());
+        if (n >= PAGE) {
+            // A page is full: the number is counted, not the rows of the first page.
+            final Counted counted = count(context, dashboard, expression, doing);
+            countedAll = counted.complete();
+            errors.addAll(counted.errors());
+            n = counted.count() == null
+                    ? n
+                    : counted.count();
+        }
+        final long wanted = expectation.count();
+        final Map<String, Object> check = new LinkedHashMap<>();
+        check.put("check", ("EQUALS".equals(condition) && needsAny
+                ? field + " = " + value
+                : field + " " + condition + " " + value).stripTrailing());
+        check.put("expected", wanted);
+        check.put("expected_from", "the Events: " + expectation.source() + ", in " + events.said());
+        check.put("returned", n);
+        check.put("pass", countedAll && n == wanted && errors.isEmpty() && (!needsAny || wanted > 0));
+        check.put("errors", errors);
+        check.put("sample", res.rows().subList(0, Math.min(2, res.rows().size())));
+        if (asserted != null && asserted != wanted) {
+            check.put("assertion", "the expected " + asserted + " given was wrong: the Events hold " + wanted
+                                   + ". The index is checked against the Events, not the count given: don't "
+                                   + "give counts, the tool counts them");
+        }
+        if (needsAny && wanted == 0) {
+            check.put("why", "'" + value + "' is in none of the Events read (" + expectation.source() + "): an "
+                             + "exact check needs a value they hold, from stepped documents");
+        } else if (countedAll && n != wanted) {
+            check.put("why", "the index finds " + n + " of the events read, but the Events hold " + wanted + " with "
+                             + "this " + field + ": the index doesn't hold what the Events do (not reindexed since "
+                             + "a change, or written otherwise than the plan says)");
+        }
+        if (!countedAll) {
+            check.put("unproven", cutOff(n));
+        }
+        check.put("_rows", res.rows());
+        check.put("_spec", spec(field, condition, value));
+        return check;
+    }
+
+    // A check the Events give no count for: said, and not counted towards passing.
+    private static void notIndependent(final Map<String, Object> check,
+                                       final EventsExpectations.Expectation expectation) {
+        if (expectation == null) {
+            return;
+        }
+        check.put(INDEPENDENT, false);
+        check.put("not_independent", expectation.why() + ": its count can't be checked against the Events, so it "
+                                     + "doesn't count towards passing");
+    }
+
+    // A count given with a check, or null for none (or one that isn't a whole number).
+    private static Long asserted(final Object value) {
+        if (value instanceof final Number number) {
+            return number.longValue();
+        }
+        final String text = value == null
+                ? ""
+                : String.valueOf(value).strip();
+        if (text.isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(text);
+        } catch (final NumberFormatException e) {
+            return null;
+        }
     }
 
     private Map<String, Object> inTimeRange(final ToolCallContext context,
@@ -588,7 +727,19 @@ class IndexChecks {
                                       final Dashboard dashboard,
                                       final ExpressionOperator byStream,
                                       final SearchCheck search,
-                                      final String label) {
+                                      final String label,
+                                      final EventsExpectations.Sample events) {
+        final EventsExpectations.Expectation expectation = events == null
+                ? null
+                : events.expect(search.field(), search.condition(), search.value());
+        if (expectation != null && expectation.count() != null) {
+            final Map<String, Object> check = countedCheck(context, dashboard, events, expectation, search.field(),
+                    search.condition(), search.value(), search.expected(), false, label);
+            if (search.searchedAs() != null) {
+                check.put("searched_as", search.searchedAs());
+            }
+            return check;
+        }
         final ExpressionOperator expression = scoped(byStream, term(search.field(),
                 Condition.valueOf(search.condition()), search.value()));
         final String doing = ("Searching " + label + ": " + search.field() + " " + search.condition() + " "
@@ -619,6 +770,7 @@ class IndexChecks {
         if (search.searchedAs() != null) {
             check.put("searched_as", search.searchedAs());
         }
+        notIndependent(check, expectation);
         check.put("_rows", res.rows());
         check.put("_spec", spec(search.field(), search.condition(), search.value()));
         return check;
@@ -1216,7 +1368,9 @@ class IndexChecks {
                                       final String timeField,
                                       final String window) {
         final Map<String, Object> design = new LinkedHashMap<>();
-        design.put("columns (newest first)", fields);
+        // Every column, one per line, never cut (seen in chat 177: the list cut with "…", so the user couldn't see
+        // what they approved).
+        design.put("columns (newest first)", new Consent.Listed(fields));
         final List<String> hidden = new ArrayList<>(IDS);
         if (timeField != null && !fields.contains(timeField)) {
             hidden.add(timeField);

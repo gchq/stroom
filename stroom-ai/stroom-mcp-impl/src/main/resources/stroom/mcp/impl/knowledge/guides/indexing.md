@@ -225,6 +225,15 @@ it indexed before). A build's own Lucene index (no other pipeline of the build w
 by the server once the user approves; any other, the user deletes its shards first. A promoted indexing pipeline's
 filter carries `before_enabling`, the same thing to do before the user enables it.
 
+How Stroom writes documents, which documentation must state as it is, never as a guess: no document id is derived
+from the event, so never claim an `_id` scheme (`<StreamId>-<EventId>` or any other). Elasticsearch: each document is
+a bulk `create` with no id, Elasticsearch assigning one. A reprocess processor filter first deletes the index's
+documents of each stream it reprocesses (by StreamId) when the indexing filter's `purgeOnReprocess` is true (the
+default), then indexes the stream afresh; a stream processed again outside a reprocess filter, or with
+`purgeOnReprocess` false, is indexed again beside its earlier documents (twice). Lucene: each event's document is
+added to the index's shards and none is ever deleted by indexing, reprocessed or not, so a stream indexed again is
+there twice until the shards holding it are deleted. `write_documentation` states this from the pipeline's settings.
+
 One index name throughout: the Elastic Index doc names it, the indexing pipeline writes to it, and the index
 template is named after it and matches it (a name built from values, `{_suffix}`, has them as wildcards in the
 pattern). `create_indexing_pipeline` refuses an `index_name` the doc doesn't name, and the template tools refuse an
@@ -236,7 +245,11 @@ in the index doc's form goes to the build's pipelines too. Index docs and pipeli
 ## Verifying
 
 Verify through Stroom, not by querying the backend: `verify_index` makes the dashboard once and runs the test
-searches: the sample stream ids, an exact match on each key field, and a time range. With `pipeline_uuid` it also
+searches: the sample stream ids, an exact match on each key field, and a time range. It counts what each exact match
+and search must find from the Events themselves, by the path the plan reads the field from (`expected_from`): never
+give counts of your own, nor ones read from the index, which only verifies the index against itself. A check the
+Events can't count is `independent: false` and doesn't count towards passing; `findings` names core fields empty in
+most events, to tell the user with their Events paths. With `pipeline_uuid` it also
 checks that every field the pipeline writes for those Events is in the index (Stroom lists it for the index doc);
 one that isn't fails verification: tell the user, who reindexes or has you check again in a minute.
 Each check's hit with the lowest EventId is traced too: the pipeline is stepped at record index EventId - 1 of the

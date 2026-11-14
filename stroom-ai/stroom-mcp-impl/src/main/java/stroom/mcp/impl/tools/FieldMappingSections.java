@@ -562,8 +562,8 @@ class FieldMappingSections {
             documents = IndexFieldDocs.indexDocuments(outputs);
             arrays = IndexFieldDocs.objectArrays(outputs);
         }
-        return (IndexFieldDocs.discoveryFieldMarkdown(plan, documents, arrays) + agreedLine(pipeline))
-                       .stripTrailing() + "\n\n" + docMark(kept);
+        return (IndexFieldDocs.discoveryFieldMarkdown(plan, documents, arrays) + agreedLine(pipeline)
+                + reprocessingNote(pipeline)).stripTrailing() + "\n\n" + docMark(kept);
     }
 
     @SuppressWarnings("unchecked")
@@ -626,7 +626,7 @@ class FieldMappingSections {
         String section = IndexFieldDocs.indexFieldMappingMarkdown(plan, population, summary == null
                 ? null
                 : IndexingInputs.byAction(summary), documents, fromIndex, schema, layout, described)
-                         + agreedLine(pipeline);
+                         + agreedLine(pipeline) + reprocessingNote(pipeline);
         if (stepped != null && stepped.stopped()) {
             section = section.stripTrailing() + "\n\n" + stoppedNote(stepped.outputs().size()) + "\n";
         }
@@ -635,6 +635,22 @@ class FieldMappingSections {
             section = section.stripTrailing() + "\n\nNote: " + capitalised(beforeDiffers(drift.get())) + "\n";
         }
         return section;
+    }
+
+    // How Stroom writes the pipeline's documents and what reprocessing does, from its indexing filter's settings
+    // (IndexReprocessing): the agent claimed a document id scheme Stroom doesn't have. None for a pipeline Stroom
+    // can't merge.
+    private String reprocessingNote(final PipelineDoc pipeline) {
+        try {
+            final String note = IndexReprocessing.note(pipelineShapes.merged(pipeline.getUuid()));
+            return note.isEmpty()
+                    ? ""
+                    : "\n" + note + "\n";
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No reprocessing note for {}: {}", pipeline.getName(),
+                    e.getMessage()));
+            return "";
+        }
     }
 
     // A nicety: a pipeline Stroom can't merge gives none.

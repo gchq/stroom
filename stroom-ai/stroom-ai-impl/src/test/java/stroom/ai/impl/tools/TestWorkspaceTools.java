@@ -314,6 +314,15 @@ class TestWorkspaceTools {
                 .contains("(100 matching lines in all; 97 not shown.");
         // A directory searches every file in it.
         assertThat(run(tool, "{\"path\":\"/\",\"pattern\":\"fw1 |\"}")).isEqualTo("/attachments/7.md:3: | fw1 | 3 |");
+        // Named without its trailing slash too (seen in chat 177: grep on /outputs/turn-49169 said "There is no
+        // file", and the agent took the directory for missing).
+        workspace.write(chatId, WorkspacePath.parse("/outputs/turn-1/call-2.txt"), "fw9 here\n", null);
+        assertThat(run(tool, "{\"path\":\"/outputs/turn-1\",\"pattern\":\"fw9\"}"))
+                .isEqualTo("1: fw9 here");
+        // read_file says a directory is one, and to list it.
+        assertThat(run(new ReadFileTool(workspace), "{\"path\":\"/outputs/turn-1\"}"))
+                .startsWith("Error: /outputs/turn-1 is a directory (1 file(s) below it), not a file. List it with "
+                            + "ls");
     }
 
     @Test
