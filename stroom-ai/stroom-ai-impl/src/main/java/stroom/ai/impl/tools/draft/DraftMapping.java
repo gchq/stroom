@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.FieldHomes;
 import stroom.ai.impl.tools.generation.Pairs;
 import stroom.ai.impl.tools.generation.ZoneSource;
+import stroom.ai.impl.tools.sample.JsonStringValues;
 import stroom.ai.impl.tools.sample.KindFields;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SampleTexts;
@@ -971,6 +972,16 @@ public final class DraftMapping {
                 if (spec == null) {
                     notes.add("The text's format could not be inferred (" + fmt + "): build_data_splitter with a "
                               + "regex spec first, then name its fields here.");
+                }
+            }
+            if ("json".equals(mapping.get("input"))) {
+                // Read by Stroom's JSONParser: what it would cut, or the XML writer leave unescaped, is said here
+                // before processing, not found in a Warning or a stream that isn't well-formed after it.
+                for (final String key : List.of(JsonStringValues.LONG_STRINGS_NOTE,
+                        JsonStringValues.NUL_STRINGS_NOTE)) {
+                    if (info.get(key) instanceof final String note) {
+                        notes.add(note);
+                    }
                 }
             }
         }

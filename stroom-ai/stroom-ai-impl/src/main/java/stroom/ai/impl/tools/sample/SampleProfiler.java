@@ -39,7 +39,8 @@ import java.util.regex.Pattern;
 /// `json array`, `json object`, `json lines`, `delimited`, `cef`, `syslog rfc5424`, `syslog rfc3164`, `cri`,
 /// `multi-line text`, `key=value` or `unknown text`), `records`, `fields` (each `field`, `fill_rate`, `type` and
 /// `examples`), `suggested_parser`, and what the format needs (`text_converter`, `parser_properties`,
-/// `xslt_input`, `delimiter`, `has_header`, `columns`, `malformed_lines`, `note`...).
+/// `xslt_input`, `delimiter`, `has_header`, `columns`, `malformed_lines`, `note`...), and for JSON the string
+/// values Stroom's JSONParser would cut or the XML writer leave unescaped ([JsonStringValues]).
 public final class SampleProfiler {
 
     /// One XML document.
@@ -754,7 +755,8 @@ public final class SampleProfiler {
         final Map<String, Object> result = new LinkedHashMap<>();
         final Map<String, Object> files = new LinkedHashMap<>();
         final List<String> kept = List.of("format", "records", "lines", "note", "delimiter", "has_header",
-                "record_element", "namespace", "event_logging", "malformed_lines", "malformed_note");
+                "record_element", "namespace", "event_logging", "malformed_lines", "malformed_note",
+                JsonStringValues.LONG_STRINGS, JsonStringValues.NUL_STRINGS);
         profiles.forEach((n, p) -> {
             final Map<String, Object> summary = new LinkedHashMap<>();
             p.forEach((k, v) -> {
@@ -780,6 +782,11 @@ public final class SampleProfiler {
             if (first.containsKey(key)) {
                 result.put(key, first.get(key));
             }
+        }
+        // A note on long or NUL-holding string values from whichever file has it (each file's list is in files).
+        for (final String key : List.of(JsonStringValues.LONG_STRINGS_NOTE, JsonStringValues.NUL_STRINGS_NOTE)) {
+            profiles.values().stream().filter(p -> p.containsKey(key)).findFirst()
+                    .ifPresent(p -> result.put(key, p.get(key)));
         }
         result.put("hint", differences.isEmpty()
                 ? "The files agree; upload each as its own stream and step them all."
@@ -1391,6 +1398,7 @@ public final class SampleProfiler {
                                         + "for_each='" + key + "' (a translation template with a JSONParser: "
                                         + "find_pipeline_templates)");
             found.putAll(jsonSetupWrapped(key));
+            JsonStringValues.addTo(found, items);
             return found;
         }
         final List<Object> jsonLines = new ArrayList<>();
@@ -1437,7 +1445,10 @@ public final class SampleProfiler {
                     "suggested_parser", "JSONParser, one object per line (a translation template with one: "
                                         + "find_pipeline_templates)");
             found.putAll(jsonSetup("lines"));
-            if (!bad.isEmpty()) {
+            if (bad.isEmpty()) {
+                // Only for Stroom's JSONParser: lines read by a Data Splitter are parsed by json-to-xml() instead.
+                JsonStringValues.addTo(found, jsonLines);
+            } else {
                 // Seen on the local Stroom: a line cut short stopped the JSONParser with a fatal error, and every
                 // record after it in the stream was lost.
                 found.putAll(jsonSetup("lines_with_bad"));
@@ -1471,6 +1482,7 @@ public final class SampleProfiler {
             final Map<String, Object> found = with(result, "format", JSON_ARRAY, "records", data.size(),
                     "fields", inventory(records), "suggested_parser", JSON_PARSER);
             found.putAll(jsonSetup("array"));
+            JsonStringValues.addTo(found, data);
             return found;
         } catch (final ToolJson.JsonDecodeException e) {
             final List<Object> head = arrayHead(text, maxRecords);
@@ -1480,6 +1492,7 @@ public final class SampleProfiler {
                         "note", "the array is cut short here: these are its first records",
                         "suggested_parser", JSON_PARSER);
                 found.putAll(jsonSetup("array"));
+                JsonStringValues.addTo(found, head);
                 return found;
             }
             return null;
