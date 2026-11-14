@@ -76,7 +76,7 @@ public class StreamEventMap {
                 }
             } catch (final InterruptedException e) {
                 LOGGER.debug(e::getMessage, e);
-                throw new UncheckedInterruptedException(e);
+                throw UncheckedInterruptedException.create(e);
             }
         }
     }
@@ -104,7 +104,7 @@ public class StreamEventMap {
                 }
             } catch (final InterruptedException e) {
                 LOGGER.debug(e::getMessage, e);
-                throw new UncheckedInterruptedException(e);
+                throw UncheckedInterruptedException.create(e);
             }
         }
     }
@@ -152,7 +152,7 @@ public class StreamEventMap {
             }
         } catch (final InterruptedException e) {
             LOGGER.debug(e::getMessage, e);
-            throw new UncheckedInterruptedException(e);
+            throw UncheckedInterruptedException.create(e);
         }
     }
 
@@ -209,7 +209,7 @@ public class StreamEventMap {
             return eventSet;
         } catch (final InterruptedException e) {
             LOGGER.debug(e::getMessage, e);
-            throw new UncheckedInterruptedException(e);
+            throw UncheckedInterruptedException.create(e);
         }
     }
 
