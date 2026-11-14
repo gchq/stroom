@@ -122,7 +122,8 @@ class TestRecordSourceTypesTool {
         assertThat(String.valueOf(refused.get("error"))).contains("PegaSecurityEvent", "translated", "form");
         assertThat(written).isEmpty();
 
-        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+        // Agrees to the change, and ticks a source type in the scope form (scope is the form's where one can show).
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true, "i1", true));
         final Map<String, Object> removed = recorded(user.context(), args);
         assertThat(removed).as("%s", removed).doesNotContainKey("error");
         assertThat(rows().stream().map(row -> row.get("name")).toList()).containsExactly("PegaIntegration",
@@ -138,7 +139,8 @@ class TestRecordSourceTypesTool {
         assertThat(String.valueOf(recorded(BuildToolCalls.context(), Map.of("rows", changed)).get("error")))
                 .contains("PegaSecurityEvent", "translated", "form");
         assertThat(written).isEmpty();
-        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+        // Agrees to the change, and ticks a source type in the scope form (scope is the form's where one can show).
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true, "i1", true));
         assertThat(recorded(user.context(), Map.of("rows", changed))).doesNotContainKey("error");
         assertThat(rowNamed("PegaSecurityEvent")).containsEntry("match", SourceTypeRows.PATTERN)
                 .containsEntry("value", "^PegaSecurity").containsEntry("status", SourceTypeRegistry.TRANSLATED);
@@ -148,6 +150,20 @@ class TestRecordSourceTypesTool {
         renamed.addFirst("Security = PegaSecurityEvent");
         assertThat(String.valueOf(recorded(user.context(), Map.of("rows", renamed)).get("error")))
                 .contains("rename", "PegaSecurityEvent", "Security", "remove");
+    }
+
+    @Test
+    void aScopeTheAgentGivesDoesNotSkipTheFormWhereOneCanBeShown() {
+        // Seen in an eval: scope=["OneDrive"] passed with forms available wrote the group unasked.
+        final GroupUser user = new GroupUser(List.of("PegaIntegration", "PegaDB"), "PEGA back end");
+
+        final Map<String, Object> result = called(user.context(), Map.of("group", "PEGA integration",
+                "scope", List.of("PegaDB")));
+
+        assertThat(user.intros()).as("the scope form is asked").hasSize(1);
+        assertThat(result).as("%s", result).doesNotContainKey("error")
+                .containsEntry("group", "PEGA back end")
+                .containsEntry("scope", List.of("PegaIntegration", "PegaDB"));
     }
 
     @Test

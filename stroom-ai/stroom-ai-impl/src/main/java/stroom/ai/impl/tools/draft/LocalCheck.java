@@ -1664,13 +1664,22 @@ public final class LocalCheck {
                 if (pool.stream().anyMatch(r -> valueOf(r, name) != null)) {
                     return;
                 }
+                final String what = pool == items && hasText(mapping.forEach())
+                        ? "sample items"
+                        : "sample records";
+                if (seen.contains(name)) {
+                    // The sample has the field, empty (null) in every record: not a slip to correct (seen: "did you
+                    // mean ['AppAccessContext.IssuedAtTime']" said of that very field), its element left out.
+                    warnings.add("field '" + name + "' (used for " + used.getFirst() + (used.size() > 1
+                            ? " and more"
+                            : "") + ") is empty in all " + pool.size() + " " + what + ": its element is left out "
+                                 + "of every event of the sample");
+                    return;
+                }
                 final List<String> close = seen.isEmpty()
                         ? List.of()
                         : CloseMatches.closeMatches(name, seen, 3, 0.6);
                 suggested.addAll(close);
-                final String what = pool == items && hasText(mapping.forEach())
-                        ? "sample items"
-                        : "sample records";
                 final String message = "field '" + name + "' (used for " + used.getFirst() + (used.size() > 1
                         ? " and more"
                         : "") + ") is in none of the " + pool.size() + " " + what

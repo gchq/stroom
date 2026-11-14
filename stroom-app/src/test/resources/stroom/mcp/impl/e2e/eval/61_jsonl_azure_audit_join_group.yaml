@@ -47,7 +47,7 @@ expected:
       - {match: value, value: SharePoint, status: parked}
       - {match: value, value: AzureActiveDirectory, status: parked}
     passed_over: 208
-    index: {fields_added: true}
+    index: {fields_added: when_needed}
   forms:
     asked:
       - {message: "go in this build's source type group"}
