@@ -97,9 +97,9 @@ is a later build's, after this one is promoted.
 **Every group has a pipeline of its own**, `<feed> <group>`, its one XSLT the group's. Each pipeline reads every
 stream of the feed (processor filters choose streams, not records) and passes over the other groups' records; the user
 accepts that cost for groups isolated from each other (their own processor filter, priority, reprocessing and errors).
-When a build saves a new group, a form asks **where its Events go**: the feed's Events (the default, sharing the
-feed's index) or an output feed of its own (with an index of its own). Without forms, the call is refused until
-`own_output_feed=true|false` carries the user's answer. For a group whose pipeline is promoted, the first save in a
+When a build saves a new group, a form asks **where its Events go**: into the same feed (the default) or an output
+feed of its own. Without forms, the call is refused until `own_output_feed=true|false` carries the user's answer.
+Either way the group's index is its own (below). For a group whose pipeline is promoted, the first save in a
 build asks whether the change goes to **that pipeline** (through working copies) or to **a new version** of it
 (`copy_pipeline`, kept for history); without forms, `pipeline=change|new_version`. `group.group_next` says what
 follows. Source types added to a group in a later build join its pipeline and output feed (said in `group.notes`). A
@@ -146,13 +146,22 @@ source type field gets none of this.
 
 ## Indexes
 
-Groups writing to the same Events feed share its index; a group with an output feed of its own has its own. The
-first build's backend and field naming are the feed's shared decisions, kept in the registry: later builds inherit
-them (`get_field_conventions` asks nothing), and another backend or index name is refused unless the user asks
-(`change_shared=true`, confirmed in a form). `draft_index_mapping` plans the union of every group whose pipeline
-writes to that output feed (`feed_index` says which). A field already indexed with another type, or another meaning,
-is put to the user in one form: a field of another name, or a new index version; promotion is held while a clash
-remains.
+**Each source type group has an index of its own**, even where its Events go into the same feed as other groups':
+its indexing pipeline's processor filter selects only the Events its group's pipeline wrote
+(`create_processor_filter source_pipeline_uuid=<the group's pipeline>`, a `Pipeline` condition beside the feed's;
+promotion keeps it, naming the original where the build processed through a working copy). Don't ask the user
+whether groups share an index. Name a group's index like the feed's others, with the group in it
+(`get_field_conventions` suggests one, `index_name`); a name another group's index has is refused. The first build's
+backend and field naming are the feed's shared decisions, kept in the registry: later builds inherit them
+(`get_field_conventions` asks nothing), and another backend, or another name for a group's recorded index, is refused
+unless the user asks (`change_shared=true`, confirmed in a form). `feed_index` in `draft_index_mapping`'s reply says
+the group, its output feed and its index.
+
+Only when the user asks for one index with another group's Events ("in the same index as group X"), draft with
+`share_index_with=<that group, or its index>` and that index's name: the plan is then the union of the groups'
+fields, and a field already indexed with another type, or another meaning, is put to the user in one form (a field of
+another name, or a new index version). A later build of a group checks its own index's fields the same way. Promotion
+is held while a clash remains, and refuses a plan naming another group's index not shared at the user's word.
 
 ## Promotion and later builds
 
@@ -167,4 +176,5 @@ remains.
   which reruns only that group (Stroom supersedes that pipeline's Events streams; their documents stay in the index).
   A new version of the group's pipeline (`copy_pipeline`) can take the feed's earlier streams without touching the
   old version's Events (Stroom supersedes output per pipeline); where both write to one index, it holds both
-  versions' documents for the period. Reprocessing is the user's.
+  versions' documents for the period. A group's indexing filter names the pipeline whose Events it reads: the new
+  version's Events are indexed only by a filter naming the new version (`source_pipeline_uuid=`). Say so. Reprocessing is the user's.

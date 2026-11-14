@@ -2547,14 +2547,24 @@ approve) · confirms itself · chat group build · Classes: `PromoteBuildTool`, 
 `FeedIndexDecisions`
 
 An aggregated feed's indexes (`FeedIndexDecisions.changes`, `apply`): each indexing plan kept in the build is
-matched to its output feed (as `draft_index_mapping` recorded it in the build record's `output_feeds`, else by the
-index the registry records). A plan with a field the output feed's index has otherwise (another type, or another
-meaning) holds the promotion, refused with each clash and to resolve them through `draft_index_mapping`'s form. The
-review and the approval form list `index_changes` (the fields each index gains, forward only, or an index recorded
-or replaced by a new version); once approved, the registry records each output feed's index (`indexes`: `index`,
-`backend`, `index_doc`, `fields`, `added_by`, `groups`) and the feed's shared backend and naming where none were
-recorded, and a Lucene index doc beside the feed gains the fields it lacks (`IndexFields.addPromotedLuceneFields`).
-An Elasticsearch index's fields come from its template, the cluster admin's to commit. Nothing is reindexed.
+matched to its source type group and output feed (as `draft_index_mapping` recorded them in the build record's
+`index_groups`, else the build's scope group and its output feed). Each group has an index of its own (decided
+2026-11-14): a plan naming another group's index that `draft_index_mapping` didn't share at the user's word
+(`share_index_with`) holds the promotion, as does a plan with a field its index has otherwise (another type, or
+another meaning), refused with each clash and to resolve them through `draft_index_mapping`'s form. The review and
+the approval form list `index_changes` (`index <name> (group <g>, feed <f>): ...`: the fields each index gains,
+forward only, or an index recorded or replaced by a new version); once approved, the registry records each group's
+index (`indexes`, by index name: `index`, `backend`, `index_doc`, `fields`, `added_by`, `groups`, `output_feeds`,
+`replaces`; a group leaving an index for a new version or a shared one is taken off it, and an index left with no
+group dropped) and the feed's shared backend and naming where none were recorded, and a Lucene index doc beside the
+feed gains the fields it lacks (`IndexFields.addPromotedLuceneFields`). An Elasticsearch index's fields come from its
+template, the cluster admin's to commit. Nothing is reindexed. A registry recorded before 2026-11-14 (indexes by
+output feed) is read by each entry's `index` and `groups`, and rewritten by index name.
+
+The promoted indexing pipelines' filters keep their sample filters' `Pipeline` condition (the Events of the source
+pipeline only, whatever feed): one naming a working copy of a pipeline (deleted at promotion, its original going on)
+names the original instead (`PromotionProcessing.toOriginals`), so a group's index goes on reading only its group's
+Events.
 
 A feed's survey doc (`besideFeeds`) always stays in the build (`keep`, decided 2026-11-13: nobody is asked, and the
 review doesn't offer to move it); its source type registry always goes beside the feed (`keep` for it is refused).
@@ -4444,8 +4454,9 @@ word). A group XSLT's `uuid` alone regenerates it as the group it is (its kept m
 
 **Where its Events go** (`placement`). Saving a new group (none of its rows placed or translated yet) asks the user
 in a form before anything is saved: the group gets a pipeline of its own (`<feed> <group>`, recorded on its rows
-then, so the group counts as placed), and "Where do the Events of group 'x' go?" (the feed's Events, sharing its
-index, the default; or an output feed of its own, with an index of its own). Without forms the call is refused,
+then, so the group counts as placed), and "Where do the Events of group 'x' go?" ("Into the same feed (<feed>)", the
+default; or "To an output feed of its own (made next)"; the group's index is its own either way, decided
+2026-11-14). Without forms the call is refused,
 nothing saved, until `own_output_feed=true|false` says the user's answer; given for a group already placed, it is
 ignored, said in `group.notes`. Source types added to a group already placed join its pipeline and output feed, said
 in `group.notes`, with no form. A source type another group translates is refused (a source type belongs to one
@@ -5247,7 +5258,10 @@ machine block (`indexing`: `backend`, `naming`, `decided`); a later build with n
 them (copied into its build record, `shared_from` naming the feed) and gets `status: chosen` with `settled` saying
 where they are kept, nothing asked. A `backend` other than the shared one is refused, naming the registry, unless
 `change_shared=true` (the user asked): then they confirm it in a form, it replaces the registry's, and the naming is
-asked again.
+asked again. Once one of the feed's indexes is recorded, a build whose group has none yet also gets `index_name`: each
+group has an index of its own, named like the feed's first with the group in it (`FeedIndexes.groupIndexName`: the
+other group's name in it replaced, else the group's added before the version, `stroom-pega-security-v1` to
+`stroom-pega-mail-v1`).
 
 * **Arguments**: `name` (profile: `ecs` or `stroom-flat` as bundled); `backend` (`lucene` or `elasticsearch`);
   `change_shared` (only when the user asks to change an aggregated feed's shared backend);
@@ -5256,7 +5270,8 @@ asked again.
 * **Returns**: `status: not_yet` with `next` and `hint`; or `needs_guidance` with `options` (Elasticsearch) or
   `profiles` (descriptions), `indexing_templates` where known, and `hint`; or `status: chosen` with `choice`,
   `backend`, `how` or `convention`, `like_index` (when one index was picked), `settled` (what the user decided in
-  forms and must not be asked again, and what is still open, e.g. the cluster) and `hint`. With `name`: `name`,
+  forms and must not be asked again, and what is still open, e.g. the cluster), `index_name` (an aggregated feed's
+  later group: the name suggested for its own index) and `hint`. With `name`: `name`,
   `profile` (its YAML as JSON: description, structure, field_map, reference_index_docs), `reference_fields` (each
   reference index doc's fields and Stroom types, up to 500 each; one Stroom can't list says why), and for `ecs` the
   schema's `version` and `field_sets`, plus `ecs_fields` when asked.
@@ -5348,8 +5363,9 @@ stream (records:2) must be drafted with `input: delimited`, which reads each dat
   `meta`, `drop`, `unpack_json`, `ignore_above` 1024, `total_fields_limit` 2000, `stand_ins`); `without_example`
   (Elasticsearch, user has no example); `replaces` (the old indexing XSLT's uuid, or its pipeline's);
   `custom_namespaces` (ECS); `changes` (amend instead of drafting); `pipeline_uuid` (with `changes`, the pipeline
-  whose kept plan to amend); `change_shared` (only when the user asks: an aggregated feed's output feed in another
-  index or backend than the shared one, below). `plan`, `discovery`, `extra_fields` and `shared` may be given as JSON
+  whose kept plan to amend); `change_shared` (only when the user asks: an aggregated feed's group in another index
+  than its own (a new version) or backend than the shared one, below); `share_index_with` (only when the user asks
+  for one index with another group of the aggregated feed: that group's name or its index's). `plan`, `discovery`, `extra_fields` and `shared` may be given as JSON
   text.
 * **Returns**: `status: needs_showing` and `table` first (`IndexPlans.withShownPlan`): the plan's fields as a
   Markdown table (`#`, field, type, source path; an object field's parts a row each), which Stroom AI's chat shows
@@ -5405,19 +5421,27 @@ stream (records:2) must be drafted with `input: delimited`, which reads each dat
     into a loop.
 
 * **Aggregated feeds** (`FeedIndexDecisions.forPlan`, `FeedIndexes`): for Events of an output feed of the build's
-  registry (the feed's own, its test feed standing in for it, or a group's own output feed), one index per output
-  feed, shared by every group writing to it. The plan is that index's: another `index_name` is refused (naming the
-  index and the registry) unless `change_shared=true` (the user asked: a new version, confirmed in a form), and an
-  index name another output feed's index has is refused. The paths each group routed to the output feed writes
-  (its mapping, kept with its XSLT) are planned whether or not the sample has them (`group_paths`), and the fields
-  the index has (recorded at earlier promotions) are added where the plan lacks them: the union of the groups'
-  fields. A field the index has with another type, or of the same type read from another path or described
+  registry (the feed's own, its test feed standing in for it, or a group's own output feed), the plan is for the
+  index of the source type group whose pipeline wrote them (the stream's meta `Pipeline`, matched to the registry
+  rows' `pipeline.uuid`; else the build's scope group). Each group has an index of its own by default (decided
+  2026-11-14), even where several groups' Events go into one feed: its indexing pipeline's processor filter selects
+  only its group's pipeline's Events (`create_processor_filter source_pipeline_uuid=`), so nobody is asked whether
+  groups share one. An `index_name` another group's index has (recorded, or chosen in the build) is refused, naming
+  a name of the group's own (`FeedIndexes.groupIndexName`) and `share_index_with`; once the group's index is
+  recorded, another name is refused unless `change_shared=true` (the user asked: a new version, confirmed in a form).
+  Only with `share_index_with=<group or index>` (the user asked for one index with another group: it must be
+  recorded, else refused listing the feed's indexes) is the plan that index's: the paths each of its groups' mappings
+  write (kept with their XSLTs) are planned whether or not the sample has them (`group_paths`), and the fields the
+  index has (recorded at earlier promotions) are added where the plan lacks them, the union of the groups' fields.
+  Without it, only the group's own mapping's paths, and its own index's recorded fields (a later build of the group).
+  A field the index has with another type, or of the same type read from another path or described
   otherwise (a field's meaning: its description where both have one, else what it reads), is a clash: all of them
   put to the user in one form of short plain text, each with its two answers (another type: rename this build's
-  field to `<name>_<group>`, or a new index version `<index>-v2` with every group's fields; another meaning: one
-  field read from both paths, or renamed). The reply's `feed_index` says the `output_feed`, its `groups`, the
-  `index`, `inherited_fields`, `clashes_resolved`, `new_version_of` (with `new_version_hint` when the user chose a
-  new version in the form) and where it is `kept`; without forms the clashes come back in it as `index_clashes`,
+  field to `<name>_<group>`, or a new index version `<index>-v2` with the index's fields; another meaning: one
+  field read from both paths, or renamed). The reply's `feed_index` says the `output_feed`, the `group`, the index's
+  `groups`, `shared_with` and `moves_from` (shared at the user's word), the `index`, `inherited_fields`,
+  `clashes_resolved`, `new_version_of` (with `new_version_hint` when the user chose a new version in the form) and
+  where it is `kept`; without forms the clashes come back in it as `index_clashes`,
   with `clash_hint` on how to apply them by `changes=`. Amending (`changes=`) is checked the same way. The
   `backend` is the feed's shared one (refused otherwise, as `get_field_conventions` refuses it).
 
@@ -5448,8 +5472,8 @@ second index).
   `test` (`{"result": {"ok", "message"}}` or `{"error"}`) and `pipelines_renamed` when the user changed the index
   name; Lucene: `fields` (`{index, added, already_present}`, or a note that the index indexes nothing until it has
   the plan's fields). With the build's `next`.
-* **Refuses**: an aggregated feed's output feed's index an earlier build made (recorded in the registry with its
-  document beside the feed): promotion adds a later build's fields to it, so no second doc is made;
+* **Refuses**: an aggregated feed's index an earlier build made (recorded in the registry with its document beside
+  the feed, a group's own or shared): promotion adds a later build's fields to it, so no second doc is made;
   a bad `backend`; Elasticsearch with no index name (from `index_name` or the plan) or no cluster (none
   given, and the existing Elastic Index docs use more than one, or none); a `cluster_uuid` that is an Elastic Index
   doc (`... is the Elastic Index doc 'x', not an Elastic Cluster: its cluster is 'y' (cluster_uuid=...)`, seen when

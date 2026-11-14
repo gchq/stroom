@@ -103,6 +103,23 @@ class PromotionProcessing {
     List<Entry> promotionProcessing(final List<DocRef> pipelines,
                                     final List<String> sources,
                                     final List<String> testFeeds) {
+        return promotionProcessing(pipelines, sources, testFeeds, Map.of());
+    }
+
+    /// As [#promotionProcessing(List, List, List)], an indexing pipeline's Events source that is a working copy of a
+    /// promoted pipeline named by its original: the copy only steps and processes in the build, and is deleted at
+    /// promotion, while the original goes on writing the Events (an aggregated feed's group pipeline changed through
+    /// working copies, its group's index reading only its Events).
+    ///
+    /// @param pipelines The pipelines promoted.
+    /// @param sources   The build's source feeds.
+    /// @param testFeeds The build's test feeds.
+    /// @param originals The original of each of the build's working copies of a pipeline, by the copy's UUID.
+    /// @return A filter to make for each, in order.
+    List<Entry> promotionProcessing(final List<DocRef> pipelines,
+                                    final List<String> sources,
+                                    final List<String> testFeeds,
+                                    final Map<String, String> originals) {
         final Set<String> tests = new HashSet<>();
         testFeeds.forEach(feed -> tests.add(feed.toLowerCase(Locale.ROOT)));
         final List<Entry> plan = new ArrayList<>();
@@ -116,7 +133,7 @@ class PromotionProcessing {
                         : streamProcessing.metas(ids);
                 for (final Meta meta : metas) {
                     targets.putIfAbsent(new FeedAndType(meta.getFeedName(), meta.getTypeName()),
-                            ProcessorFilterWrites.pipelineTerms(expression));
+                            toOriginals(ProcessorFilterWrites.pipelineTerms(expression), originals));
                 }
             }
             if (!pipelineOutputs.isIndexing(pipeline.getUuid())) {
@@ -157,6 +174,27 @@ class PromotionProcessing {
                     });
         }
         return plan;
+    }
+
+    /// @param terms     A filter's Pipeline conditions.
+    /// @param originals The original of each working copy of a pipeline, by the copy's UUID.
+    /// @return The conditions, one naming a working copy naming its original instead (the name kept).
+    static List<ExpressionTerm> toOriginals(final List<ExpressionTerm> terms, final Map<String, String> originals) {
+        if (originals.isEmpty()) {
+            return terms;
+        }
+        final List<ExpressionTerm> out = new ArrayList<>();
+        for (final ExpressionTerm term : terms) {
+            final String uuid = NullSafe.get(term.getDocRef(), DocRef::getUuid);
+            final String original = uuid == null
+                    ? null
+                    : originals.get(uuid);
+            out.add(original == null
+                    ? term
+                    : ProcessorFilterWrites.pipelineTerm(new DocRef(term.getDocRef().getType(), original,
+                            term.getDocRef().getName())));
+        }
+        return out;
     }
 
     /// Feed-wide filters for promoted pipelines, created disabled for the user. No minimum stream creation time (asked

@@ -102,6 +102,33 @@ class TestPromotionProcessing {
     }
 
     @Test
+    void anIndexReadingAWorkingCopysEventsReadsItsOriginalsOncePromoted() {
+        // An aggregated feed's group pipeline changed through a working copy: the copy is deleted at promotion and
+        // the original goes on writing the group's Events, which its index alone reads.
+        w.pipeline(IP, true, null);
+        w.layers("ip", w.layer("ip", "xsltFilter", "XSLTFilter"));
+        final DocRef copy = new DocRef("Pipeline", "wc", "Acme-Events");
+        w.filter("ip", 4, true, ExpressionOperator.builder().op(Op.AND)
+                .addOperator(ExpressionOperator.builder().op(Op.OR).addTerm(ProcessorFilterWrites.term("Id", 8))
+                        .build())
+                .addTerm(ProcessorFilterWrites.pipelineTerm(copy))
+                .build(), null);
+        w.stream(8, "ACME-MCP-TEST", "Events", "wc", null);
+
+        final List<PromotionProcessing.Entry> plan = w.promotion.promotionProcessing(List.of(IP), List.of("ACME"),
+                List.of("ACME-MCP-TEST"), Map.of("wc", "tp"));
+
+        assertThat(plan).singleElement().satisfies(entry -> {
+            assertThat(entry.feed()).isNull();
+            assertThat(entry.streamType()).isEqualTo("Events");
+            assertThat(ProcessorFilterWrites.pipelineUuids(entry.extraTerms())).containsExactly("tp");
+        });
+        // Without a working copy, the term is kept as it was.
+        assertThat(PromotionProcessing.toOriginals(List.of(PIPELINE_TERM), Map.of("wc", "tp")))
+                .containsExactly(PIPELINE_TERM);
+    }
+
+    @Test
     void aPromotedIndexingPipelinesIndexStartsFreshBeforeItsFilterIsEnabled() {
         // Asked for by the user: no NOT over the streams the build indexed; the index is dropped first instead.
         w.pipeline(IP, true, ProcessingWorld.withAgreed(ProcessingWorld.agreed(
