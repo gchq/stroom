@@ -19,6 +19,7 @@ package stroom.data.store.impl;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataInfoSection.Entry;
 import stroom.data.shared.UploadDataRequest;
+import stroom.data.shared.UploadFeedSource;
 import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.DataNotFoundException;
 import stroom.data.store.api.DataService;
@@ -65,6 +66,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
@@ -72,6 +74,7 @@ import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.StringUtil;
 import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
@@ -84,6 +87,7 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -217,10 +221,7 @@ class DataServiceImpl implements DataService {
     @Override
     public ResourceKey upload(final UploadDataRequest request) {
 
-        // Feed names are unique so just get the first
-        final DocRef feedDocRef = docFinder.findByName(FeedDoc.TYPE, request.getFeedName())
-                .stream()
-                .findFirst()
+        final DocRef feedDocRef = findFeed(request.getFeedName())
                 .orElseThrow(() ->
                         new RuntimeException("Unable to find feed document with name " + request.getFeedName()));
 
@@ -234,13 +235,21 @@ class DataServiceImpl implements DataService {
                 // Import file.
                 final Path tempFile = resourceStore.getTempFile(request.getKey());
 
+                // The zip's .meta/.manifest entries decide the feeds, so check all of them
+                // before anything is written.
+                if (UploadFeedSource.ZIP_FEEDS.equals(request.getFeedSource())
+                    && DataUploadTaskHandler.isZipFile(request.getFileName())) {
+                    checkZipFeeds(tempFile, request.getFeedName());
+                }
+
                 dataUploadTaskHandlerProvider.uploadData(
                         request.getFileName(),
                         tempFile,
                         request.getFeedName(),
                         request.getStreamTypeName(),
                         request.getEffectiveMs(),
-                        request.getMetaData());
+                        request.getMetaData(),
+                        request.getFeedSource());
 
             } finally {
                 // Delete the import if it was successful
@@ -249,6 +258,67 @@ class DataServiceImpl implements DataService {
 
             return request.getKey();
         });
+    }
+
+    private Optional<DocRef> findFeed(final String feedName) {
+        // Feed names are unique so just get the first
+        return docFinder.findByName(FeedDoc.TYPE, feedName)
+                .stream()
+                .findFirst();
+    }
+
+    /// Checks that every feed named in a zip's `.meta`/`.manifest` entries exists and that the
+    /// current user can edit it. Feeds the user can't see are reported as not existing.
+    ///
+    /// @throws EntityServiceException If any of the feeds don't exist. The message lists every
+    ///                                missing feed and every feed the user can't edit.
+    /// @throws PermissionException    If all the feeds exist but the user can't edit some of them.
+    private void checkZipFeeds(final Path zipFile, final String defaultFeedName) {
+        final Set<String> feedNames;
+        try {
+            feedNames = ZipFeedNameReader.readFeedNames(zipFile, defaultFeedName);
+        } catch (final IOException e) {
+            throw new EntityServiceException("Unable to read the feed names in the zip: " + e.getMessage());
+        }
+
+        final List<String> missingFeedNames = new ArrayList<>();
+        final List<String> noPermissionFeedNames = new ArrayList<>();
+        for (final String feedName : feedNames) {
+            final Optional<DocRef> optFeedDocRef = findFeed(feedName);
+            if (optFeedDocRef.isEmpty()) {
+                missingFeedNames.add(feedName);
+            } else if (!securityContext.hasDocumentPermission(optFeedDocRef.get(), DocumentPermission.EDIT)) {
+                noPermissionFeedNames.add(feedName);
+            }
+        }
+
+        final List<String> problems = new ArrayList<>();
+        if (!missingFeedNames.isEmpty()) {
+            problems.add(LogUtil.message("The zip names {} {} {} exist on this system: {}",
+                    missingFeedNames.size(),
+                    StringUtil.plural("feed", missingFeedNames),
+                    StringUtil.plural("that doesn't", "that don't", missingFeedNames),
+                    quoteFeedNames(missingFeedNames)));
+        }
+        if (!noPermissionFeedNames.isEmpty()) {
+            problems.add(LogUtil.message("You do not have permission to update {} {} named in the zip: {}",
+                    noPermissionFeedNames.size(),
+                    StringUtil.plural("feed", noPermissionFeedNames),
+                    quoteFeedNames(noPermissionFeedNames)));
+        }
+
+        if (!missingFeedNames.isEmpty()) {
+            throw new EntityServiceException(String.join("\n", problems));
+        } else if (!noPermissionFeedNames.isEmpty()) {
+            throw new PermissionException(securityContext.getUserRef(), String.join("\n", problems));
+        }
+    }
+
+    private static String quoteFeedNames(final List<String> feedNames) {
+        // Quote the names so that a blank feed name in a .meta is still visible in the message.
+        return feedNames.stream()
+                .map(feedName -> "'" + feedName + "'")
+                .collect(Collectors.joining(", "));
     }
 
     @Override
