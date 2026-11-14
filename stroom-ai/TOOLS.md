@@ -2702,7 +2702,9 @@ environment was an event-logging:3 one).
 * **Arguments**: `sample` (one file's text), `samples` (several files: a list, or a map by file name), `stream_ids`
   (read instead of text). Text is about 10 records and at most 8,000 characters a file.
 * **Returns**: the profile (`format`, `records`, `fields`, `suggested_parser`, `text_converter`, ...; with several
-  files, `files` and `differences`), `read` notes for streams, `sample_note` for pasted text over 20,000 characters.
+  files, `files` and `differences`), `read` notes for streams, `sample_note` for pasted text over 20,000 characters;
+  for JSON read by the JSONParser, `long_strings`/`long_strings_note` and `nul_strings`/`nul_strings_note`
+  (`JsonStringValues`).
 * **Refuses**: nothing given; a sample that is a path, attachment reference, cut-short file or broken-up text; stream
   ids without View Data or older than their feed; text that starts as JSON but isn't valid JSON, with where and why
   (seen: a FortiOS file retyped by the agent with `\+`, profiled as key=value).
@@ -5873,6 +5875,16 @@ fragment wrapper (`FragmentWrappers`).
   of JSON lines is still JSON lines, read through a Data Splitter with `json_fields`, as Stroom's JSONParser stops at
   the first bad line. Kubernetes CRI logs get `record_end`. Several files are profiled together with `files` and
   `differences`. Text that starts as JSON and doesn't parse is refused with where and why.
+* **`JsonStringValues`**: for JSON the JSONParser reads (not JSON lines read by a Data Splitter), the string values
+  it wouldn't pass on as they are: the longest over its default `stringTruncateLength`, 10,000 (`long_strings`, up
+  to 5 fields: `field` as a dotted path with `[]` for array items, `length`, `record`), which it cuts with a
+  Warning, and the fields holding a NUL (`nul_strings`), which Stroom's XML writer takes for its escape switch
+  (`preventEscapeSwitching` false by default), writing the text after it unescaped. Each comes with a note
+  (`long_strings_note`: ask the user, raise `jsonParser.stringTruncateLength` or cap the field in the mapping, leave
+  `maxStringLength` alone; `nul_strings_note`: `transform: strip_control`), which `draft_translation_mapping` adds
+  to its `notes`. Seen: audit mail bodies of 20,000 to 46,000 characters cut with a Warning, the agent lowering
+  `maxStringLength` instead (every body an Error), and NULs in them leaving `&nbsp;` and a form feed unescaped
+  in the Events streams. The pipeline's own `stringTruncateLength` is not read: the draft has no pipeline.
 * **`TimePatterns`**: a `stroom:format-date` pattern inferred from a value, read left to right into pattern letters,
   and any pattern (inferred or the model's) turned back into a regex and tried on the sample's values before the XSLT
   is stepped, because a wrong pattern makes `stroom:format-date` fail silently and leaves TimeCreated empty.

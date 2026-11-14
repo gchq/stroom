@@ -48,6 +48,25 @@ field, `json`) with `json_fields: ["json"]`, in the Event Data (Text) template, 
 no values: drop it by name with `drop_when` (`json.time` `present: false`) and tell the user how many there were.
 `create_pipeline` shows the format as `json lines (some not JSON)`.
 
+## Long string values
+
+The JSONParser has two length properties; they do different things:
+
+| Property | Default | A longer string |
+| --- | --- | --- |
+| `stringTruncateLength` | 10000 | is cut at this length, with a Warning: "String value truncated to length N, original length: M" |
+| `maxStringLength` | 100000000 | is an Error |
+
+`profile_sample` and `draft_translation_mapping` name string values over 10,000 characters (`long_strings`: field,
+length, record). Ask the user whether the field must be kept whole. If it must, raise
+`jsonParser.stringTruncateLength` past the longest value (`update_pipeline` `set_properties`, `{"element":
+"jsonParser", "name": "stringTruncateLength", "value": 50000}`); if not, cap it in the mapping (an `xpath` with
+`substring(..., 1, 4000)`) and leave the parser's default. Never lower `maxStringLength`: it turns every long value
+into an Error.
+
+A value holding a NUL (`\u0000` in the JSON, `nul_strings`) switches the XML writer's escaping off until the next
+NUL, so the Events stream is not well-formed: map the field with `transform: strip_control`.
+
 ## Addressing fields
 
 Declare `xmlns:json="http://www.w3.org/2013/XSL/json"` and match `json:map` and `json:string[@key='ts']`, or set
