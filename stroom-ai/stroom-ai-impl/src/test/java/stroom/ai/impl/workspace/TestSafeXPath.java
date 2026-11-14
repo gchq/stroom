@@ -56,6 +56,23 @@ class TestSafeXPath {
     }
 
     @Test
+    void testWhiteSpaceBeforeTheDeclarationIsLeftOut() throws IOException {
+        // Seen in testing: a step's output written with a new line before its XML declaration was refused.
+        final Path file = tempDir.resolve("stepped.xml");
+        Files.writeString(file, "\n  <?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<a>b</a>\n");
+        final List<String> results = new ArrayList<>();
+        SafeXPath.evaluate(SafeXPath.compile("string(/a)", Map.of()), SafeXPath.parse(file), false, results::add);
+        assertThat(results).containsExactly("b");
+        assertThat(SafeXPath.leadingSpaceRemoved("\uFEFF \n<a/>")).isEqualTo("<a/>");
+        assertThat(SafeXPath.leadingSpaceRemoved("  text")).isEqualTo("  text");
+        // A file that isn't XML says why, without a DOCTYPE note that doesn't apply.
+        assertThatThrownBy(() -> evaluate("<a>", "string(/a)", Map.of(), false))
+                .isInstanceOf(WorkspaceException.class)
+                .hasMessageStartingWith("The file is not XML that can be read")
+                .hasMessageNotContaining("DOCTYPE");
+    }
+
+    @Test
     void testExternalEntitiesAreRefused() throws IOException {
         final Path secret = tempDir.resolve("secret.txt");
         Files.writeString(secret, "TOP SECRET");

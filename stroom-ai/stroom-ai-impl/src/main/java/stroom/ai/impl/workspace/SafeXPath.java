@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.workspace;
 
+import stroom.util.shared.NullSafe;
 import stroom.util.xml.SAXParserFactoryFactory;
 
 import net.sf.saxon.Configuration;
@@ -36,8 +37,9 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.StringReader;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -110,16 +112,36 @@ public final class SafeXPath {
     /// @return The document.
     /// @throws WorkspaceException if it is not well-formed XML, or has a DOCTYPE.
     public static XdmNode parse(final Path file) {
-        try (final InputStream inputStream = Files.newInputStream(file)) {
+        try {
+            // White space before the XML declaration is left out (seen: a step's output written to a file with a
+            // new line first was refused, "The processing instruction target matching [xX][mM][lL] is not
+            // allowed").
+            final String text = leadingSpaceRemoved(Files.readString(file, StandardCharsets.UTF_8));
             final DocumentBuilder builder = PROCESSOR.newDocumentBuilder();
             builder.setDTDValidation(false);
-            return builder.build(new SAXSource(secureReader(), new InputSource(inputStream)));
+            return builder.build(new SAXSource(secureReader(), new InputSource(new StringReader(text))));
         } catch (final SaxonApiException e) {
-            throw new WorkspaceException("The file is not XML that can be read: " + e.getMessage()
-                                         + " (DOCTYPE declarations are not allowed.)");
+            final String message = NullSafe.string(e.getMessage());
+            throw new WorkspaceException("The file is not XML that can be read: " + message
+                                         + (message.contains("DOCTYPE")
+                    ? " (DOCTYPE declarations are not allowed.)"
+                    : ""));
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    /// @param text A file's text.
+    /// @return It without a byte order mark or white space before its first markup, where it starts with `<` after
+    /// them; else as it is.
+    static String leadingSpaceRemoved(final String text) {
+        int at = 0;
+        while (at < text.length() && (text.charAt(at) == '\uFEFF' || Character.isWhitespace(text.charAt(at)))) {
+            at++;
+        }
+        return at < text.length() && text.charAt(at) == '<'
+                ? text.substring(at)
+                : text;
     }
 
     /// @return An XML reader that refuses a DOCTYPE and never loads anything from outside the document.

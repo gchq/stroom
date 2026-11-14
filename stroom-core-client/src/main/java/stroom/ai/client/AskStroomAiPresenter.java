@@ -178,11 +178,13 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class AskStroomAiPresenter
@@ -2489,12 +2491,49 @@ public class AskStroomAiPresenter
         if (heldUserActions.isEmpty()) {
             return;
         }
-        final List<AiChatMessage> held = new ArrayList<>(heldUserActions.values());
+        final List<AiChatMessage> held = withoutRepeats(new ArrayList<>(heldUserActions.values()));
         heldUserActions.clear();
         final Element markdownContainer = getView().getMarkdownContainer().getElement();
         final long nowMs = System.currentTimeMillis();
         held.forEach(msg -> appendUserActionsCard(markdownContainer, msg, nowMs));
         scrollToBottom();
+    }
+
+    // The held steps, a step offered again later in the turn shown once, where it was last offered (seen: a
+    // document written three times, and three cards each offering to open it). A card is left out only when every
+    // step on it is offered again later.
+    private static List<AiChatMessage> withoutRepeats(final List<AiChatMessage> held) {
+        final Set<String> later = new HashSet<>();
+        final List<AiChatMessage> kept = new ArrayList<>();
+        for (int i = held.size() - 1; i >= 0; i--) {
+            final AiChatMessage msg = held.get(i);
+            final List<String> ids = actionIds(msg);
+            if (ids.isEmpty() || !later.containsAll(ids)) {
+                kept.add(0, msg);
+            }
+            later.addAll(ids);
+        }
+        return kept;
+    }
+
+    // The ids of a message's steps; none when any step has none (it is then always shown).
+    private static List<String> actionIds(final AiChatMessage msg) {
+        final JSONArray actions = AiToolMessages.getArray(msg.getMessage(), "userActions");
+        final List<String> ids = new ArrayList<>();
+        if (actions == null) {
+            return ids;
+        }
+        for (int i = 0; i < actions.size(); i++) {
+            final JSONObject action = actions.get(i).isObject();
+            final String id = action == null
+                    ? null
+                    : AiToolMessages.getString(action.toString(), "id");
+            if (NullSafe.isBlankString(id)) {
+                return new ArrayList<>();
+            }
+            ids.add(id);
+        }
+        return ids;
     }
 
     private void appendUserActionsCard(final Element markdownContainer, final AiChatMessage msg, final long nowMs) {

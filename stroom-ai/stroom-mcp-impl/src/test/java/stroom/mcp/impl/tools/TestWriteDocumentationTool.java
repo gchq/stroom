@@ -130,6 +130,43 @@ class TestWriteDocumentationTool {
     }
 
     @Test
+    void descriptionsSentWithoutThePipelineAreRefusedPlainly() {
+        // Seen in testing: field_descriptions sent alone (no pipeline_uuid, no markdown) failed with a
+        // NullPointerException.
+        final Map<String, Object> args = new LinkedHashMap<>(Map.of("build", BUILD,
+                "field_descriptions", Map.of("EventDetail/Description", "What happened."),
+                "stream_ids", List.of(5)));
+
+        assertThat(world.refusal(tool, context, DocumentationWorld.args(args)))
+                .startsWith("Give pipeline_uuid (or index_uuid)")
+                .contains("Nothing was written.");
+    }
+
+    @Test
+    void aLinkByUuidAloneIsWrittenWithItsDocumentsTypeAndAnUnknownOneIsRefused() {
+        // Seen in testing: the template's and the XSLT's links in a pipeline's documentation, written by UUID
+        // alone as the chat allows, opened nothing.
+        world.pipeline(BUILD, "Acme", "p");
+        Mockito.when(world.keptMappings.keptXslt("p")).thenReturn(Optional.of(kept("translation",
+                Map.of("mapping", Map.of()))));
+        Mockito.when(world.sections.fieldMappingSection(any(), anyString(), any(), any(), any(), anyString(), any()))
+                .thenReturn("The generated section.");
+        final Map<String, Object> args = new LinkedHashMap<>(Map.of("build", BUILD, "pipeline_uuid", "p",
+                "markdown", "# Acme\n\n## Purpose and data\n\nRun by [Acme](?action=open-doc&docUuid=p).\n",
+                "stream_ids", List.of(5)));
+
+        final Map<String, Object> made = world.call(tool, context, DocumentationWorld.args(args));
+
+        assertThat(world.world.body(String.valueOf(made.get("uuid"))))
+                .contains("[Acme](?action=open-doc&docType=Pipeline&docUuid=p)")
+                .doesNotContain("?action=open-doc&docUuid=");
+
+        args.put("markdown", "# Acme\n\n## Purpose and data\n\n[Gone](?action=open-doc&docUuid=no-such-doc).\n");
+        assertThat(world.refusal(tool, context, DocumentationWorld.args(args)))
+                .startsWith("These links name no document the user can open: no-such-doc.");
+    }
+
+    @Test
     void theDocIsWrittenBesideThePipelineTitledWithItsErrorsAndItsChangePending() {
         world.pipeline(BUILD, "Acme", "p");
         Mockito.when(world.keptMappings.keptXslt("p")).thenReturn(Optional.of(kept("translation",
