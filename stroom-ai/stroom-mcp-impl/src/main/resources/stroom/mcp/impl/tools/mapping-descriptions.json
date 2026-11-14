@@ -258,6 +258,14 @@
    "description": "Output when the field is empty (or, with map, matches no key). Without it the element is left out in that case.",
    "model": null
   },
+  "fill_template": {
+   "description": "The input is a template (a message text) whose numbered placeholders are filled from the record's values in order: {pattern (a regex, its first group the number, e.g. '%(\\d+)'), field or xpath giving the values, e.g. 'Args/Arg'}. A placeholder with no value is left as written and stepping warns. With lookup, the template comes from reference or context data.",
+   "model": "FillTemplate"
+  },
+  "mask_names": {
+   "description": "The input is a bit mask (unsigned, up to 64 bits, decimal or 0x hex), written as the names of the masks it holds: {names: {mask: name}} or {lookup: {map, key_fields, path to the table's items}, mask: item's mask path, name: item's name path}. With repeat one element (Data) a name, else joined by separator (default ', '). Bits no name covers are warned of in stepping.",
+   "model": "MaskNames"
+  },
   "data_name": {
    "description": "For a path ending in Data: the Data element's Name.",
    "model": null
@@ -294,6 +302,10 @@
   },
   "path": {
    "description": "Path below the map's value when it holds elements, e.g. 'department'; omit for a text value.",
+   "model": null
+  },
+  "key_fields": {
+   "description": "Or the input fields whose values make the key, in order (1 to 3), e.g. ['Header/Source', 'Header/Id']: each value stripped, joined as build_reference_xslt's key_fields joins them, so the map's loader must name as many fields.",
    "model": null
   }
  },
@@ -408,6 +420,38 @@
   },
   "scope": {
    "description": "'record' to read the field from the record, not from the enclosing item.",
+   "model": null
+  }
+ },
+ "FillTemplate": {
+  "pattern": {
+   "description": "The placeholder regex (XPath), its first group the number from 1, e.g. '%(\\d+)' (so %10 is the tenth value) or '%%|%(\\d+)' to keep an escaped %%.",
+   "model": null
+  },
+  "field": {
+   "description": "The input field giving the values in order.",
+   "model": null
+  },
+  "xpath": {
+   "description": "Or an XPath relative to the record giving them in order.",
+   "model": null
+  }
+ },
+ "MaskNames": {
+  "names": {
+   "description": "A static table, mask -> name, e.g. {'0x1': 'Read', '0x8000000000000000': 'Top'}.",
+   "model": null
+  },
+  "lookup": {
+   "description": "Or the table from reference or context data: the lookup's path gives its items, e.g. 'flags/Flag'.",
+   "model": "Lookup"
+  },
+  "mask": {
+   "description": "With lookup: an item's mask, e.g. '@Mask'.",
+   "model": null
+  },
+  "name": {
+   "description": "With lookup: an item's name, e.g. '@Name'.",
    "model": null
   }
  }

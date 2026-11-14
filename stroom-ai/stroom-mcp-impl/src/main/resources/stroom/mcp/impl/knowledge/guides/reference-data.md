@@ -64,6 +64,43 @@ How it fits together:
 and pipeline that load it, the loader to name, and which pipelines use it. Reuse those before creating new
 reference data; `describe_template` shows how sibling pipelines attach them.
 
+## Context data
+
+Some sources send, with each file of events, context data describing them (a Context child of each stream part:
+message templates, flag names, the names of codes). It is read only when the user asks for it; the survey never looks
+at it. The user's guidance may be broad ("look up the keywords and opcode from the context, render the description
+from its template"): work out the details from the data, then confirm them with the user before saving.
+
+1. **The sample with its context**: `upload_sample sample=... context=...`, or `parts=[{sample, context}, ...]` for
+   one stream of several parts, each with its own context (a file on disk: a zip of `NNN.dat` and `NNN.ctx` pairs,
+   sent with `files`). `fetch_events streamId=... childType='Context'` reads a part's context.
+2. **The proposal**: `propose_context_lookup stream_ids=[...]` reads each part's context entries and records and
+   finds the key: the entry fields (up to 3) whose values pick out exactly one entry for most records, with the
+   record fields that match them, and its match rate. It lists `entry_fields` and `entry_tables` (lists inside an
+   entry, such as a flag table of mask and name). Propose `outputs` for what the user asked, each `{path, from,
+   render}`: `text` (the entry's value as it is), `fill_template` (a template whose numbered placeholders the
+   record's `values` fill in order; give `pattern`, a regex whose first group is the number, inferred from the
+   templates if left out) or `mask_names` (the record's `mask`, a bit mask, as the names of the table's masks it
+   holds; `mask_field` and `name_field` are a table item's paths; `repeat` for one element a name). The reply
+   previews each for sample records, before and after, as a table: show it, then call again with `confirm=true`;
+   the user agrees in a short form.
+3. **The context loader**: the confirmed reply's `reference_mapping` goes to `build_reference_xslt` (input `xml`, the
+   map's `key_fields`), saved with `save_xslt`, then `create_pipeline` from `find_reference_data`'s
+   `context_loader_template` with that XSLT (`translationFilter.xslt`) and `combinedParser.type` `XML` in
+   `set_properties` (XML needs no text converter). Nothing is processed: the loader reads each stream's context as the
+   stream is processed.
+4. **The lookups**: add the reply's `mapping_entries` to the translation's mapping (lookups with `key_fields`, the
+   same fields in the same order as the loader's; `fill_template`; `mask_names` with a lookup of the copied table),
+   and give the events pipeline `references=[{"stream_type": "Context", "loader_pipeline": "<the loader>"}]` (no
+   feed needed). Each part's lookups read that part's own context.
+5. **Step**: stepping warns of a record whose key finds no entry (Stroom's lookup warning), a placeholder left
+   unfilled, and set bits no name covers.
+
+A key of several fields (`key_fields`) is each field's value, stripped, joined by an unlikely separator (U+241F);
+build_reference_xslt and build_translation_xslt make it alike, and build_translation_xslt warns when a lookup's key
+has a different number of fields than its map's loader writes. `key_fields` works for any reference map, not only
+context data.
+
 ## Dictionaries
 
 A Dictionary doc is plain text, one entry per line. `save_dictionary` makes one in the build (and

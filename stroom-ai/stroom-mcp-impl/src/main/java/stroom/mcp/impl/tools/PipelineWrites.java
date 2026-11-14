@@ -26,6 +26,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.ModuleChecks;
 import stroom.ai.impl.tools.generation.SourceTypeModule;
+import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.feed.shared.FeedDoc;
@@ -51,6 +52,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -326,6 +328,10 @@ class PipelineWrites {
             }
             final List<WriteGuard.BuildDoc> candidates;
             final String docType;
+            if ("textConverter".equals(slot.property()) && readsWithoutConverter(properties, slot.element())) {
+                // A CombinedParser told to read XML or JSON (context data, say) needs no text converter.
+                continue;
+            }
             if ("textConverter".equals(slot.property())) {
                 candidates = docs.stream().filter(doc -> TextConverterDoc.TYPE.equals(doc.type())).toList();
                 final DocRef was = prior.get(slot.element() + ".textConverter");
@@ -704,6 +710,23 @@ class PipelineWrites {
             if (element == null) {
                 throw new ToolRefusal("The pipeline has no XSLT step to attach reference data to");
             }
+            if (reference.isContext()) {
+                // Read from each stream's own Context child, by the loader that turns it into reference data: no
+                // reference feed to find a loader by, and nothing processed first. A feed, if given, is only named
+                // in Stroom's logs.
+                if (reference.loaderPipeline() == null) {
+                    throw new ToolRefusal("A Context reference needs loader_pipeline: the context loader (a child of "
+                                          + "the context loader template, find_reference_data's "
+                                          + "context_loader_template, with the XSLT build_reference_xslt wrote for "
+                                          + "the context data)");
+                }
+                out.add(new PipelineReference(element, "pipelineReference",
+                        docRefByName(PipelineDoc.TYPE, reference.loaderPipeline()),
+                        reference.feed() == null
+                                ? null
+                                : docRefByName(FeedDoc.TYPE, reference.feed()), StreamTypeNames.CONTEXT));
+                continue;
+            }
             final String loader = reference.loaderPipeline() != null
                     ? reference.loaderPipeline()
                     : referenceData.resolveLoader(reference.feed());
@@ -711,6 +734,15 @@ class PipelineWrites {
                     docRefByName(FeedDoc.TYPE, reference.feed()), "Reference"));
         }
         return out;
+    }
+
+    // Whether the properties given set the parser's type to one it reads with no text converter (XML, JSON).
+    private static boolean readsWithoutConverter(final List<PropertyValue> properties, final String element) {
+        return properties.stream().anyMatch(property -> element.equals(property.element())
+                                                        && "type".equals(property.name())
+                                                        && property.value() != null
+                                                        && List.of("xml", "json").contains(String.valueOf(
+                property.value()).strip().toLowerCase(Locale.ROOT)));
     }
 
     /// Refuses a property on a schema filter: validation is the template's, there to catch output that is wrong.
@@ -1177,15 +1209,37 @@ class PipelineWrites {
     /// @param loaderPipeline The loader pipeline's name or UUID, or null for the one other pipelines load the feed
     ///                       with, else the environment's only loader.
     /// @param element        The XSLT element that does the lookups, or null for the pipeline's translation step.
-    record ReferenceRequest(String feed, String loaderPipeline, String element) {
+    /// @param streamType     `Context` for context data: read from each stream's own Context child by the loader
+    ///                       (no reference feed); null (or `Reference`) for a reference feed.
+    record ReferenceRequest(String feed, String loaderPipeline, String element, String streamType) {
 
         /// How a reference's arguments are described.
-        static final String FEED = "The reference feed's name.";
+        static final String FEED = "The reference feed's name. With stream_type 'Context', none is needed (the "
+                                   + "data is each stream's own Context child); one given is only named in "
+                                   + "Stroom's logs.";
+        static final String STREAM_TYPE = "'Context' for context data: the lookups read each events stream's own "
+                                          + "Context child (each part its own), loaded by loader_pipeline (required: "
+                                          + "a child of the context loader template, find_reference_data's "
+                                          + "context_loader_template). Leave it out for a reference feed.";
         static final String LOADER_PIPELINE = "The loader pipeline's name or UUID. Left out: the one other "
                                               + "pipelines already load this feed with, else the environment's "
                                               + "only loader (find_reference_data lists them); no name is assumed.";
         static final String ELEMENT = "The XSLT element that does the lookups; defaults to the pipeline's "
                                       + "translation step.";
+
+        /// A reference to a reference feed.
+        ///
+        /// @param feed           The reference feed's name.
+        /// @param loaderPipeline The loader pipeline's name or UUID, or null.
+        /// @param element        The XSLT element that does the lookups, or null.
+        ReferenceRequest(final String feed, final String loaderPipeline, final String element) {
+            this(feed, loaderPipeline, element, null);
+        }
+
+        /// @return True if the reference is to context data (each stream's own Context child).
+        boolean isContext() {
+            return StreamTypeNames.CONTEXT.equalsIgnoreCase(NullSafe.string(streamType));
+        }
 
         /// Reads the references a call gives: a list, one reference, the list as JSON text, or a feed's name.
         ///
@@ -1206,12 +1260,21 @@ class PipelineWrites {
                         ? found
                         : Map.of();
                 final String feed = text(map.get("feed"));
-                if (feed == null) {
+                final String streamType = text(map.get("stream_type"));
+                final boolean context = StreamTypeNames.CONTEXT.equalsIgnoreCase(NullSafe.string(streamType));
+                if (streamType != null && !context && !"Reference".equalsIgnoreCase(streamType)) {
+                    throw new ToolRefusal(argument + "[" + i + "].stream_type is 'Context' (context data) or left "
+                                          + "out (a reference feed), not '" + streamType + "'");
+                }
+                if (feed == null && !context) {
                     throw new ToolRefusal(argument + "[" + i + "].feed is required: a reference is {feed, "
-                                          + "loader_pipeline, element}, from find_reference_data");
+                                          + "loader_pipeline, element}, from find_reference_data (or "
+                                          + "{stream_type: 'Context', loader_pipeline} for context data)");
                 }
                 references.add(new ReferenceRequest(feed, text(map.get("loader_pipeline")),
-                        text(map.get("element"))));
+                        text(map.get("element")), context
+                        ? StreamTypeNames.CONTEXT
+                        : null));
             }
             return references;
         }

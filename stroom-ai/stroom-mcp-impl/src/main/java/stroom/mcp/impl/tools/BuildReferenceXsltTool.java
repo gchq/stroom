@@ -128,7 +128,7 @@ class BuildReferenceXsltTool extends AbstractBuiltInTool {
             final List<String> imports = new ArrayList<>(mapping.imports());
             required.forEach(r -> imports.add(r.href()));
             mapping = new ReferenceMapping(mapping.input(), mapping.jsonLayout(), mapping.root(), mapping.record(),
-                    mapping.maps(), imports, mapping.dropWhen());
+                    mapping.maps(), imports, mapping.dropWhen(), mapping.xmlNamespace());
         }
         final ReferenceGenerator.Generated generated = ReferenceGenerator.generate(mapping, version);
         final Map<String, Object> result = new LinkedHashMap<>(generated.toMap());
@@ -142,7 +142,11 @@ class BuildReferenceXsltTool extends AbstractBuiltInTool {
                   + "create_pipeline from the reference-data template (find_pipeline_templates stage=reference) "
                   + "with combinedParser.textConverter (if the feed is text) and translationFilter.xslt; "
                   + "create_processor_filter on the Raw Reference stream; wait_for_processing "
-                  + "output_type='Reference'. Then give the events pipeline references=[{feed, loader_pipeline}].");
+                  + "output_type='Reference'. Then give the events pipeline references=[{feed, loader_pipeline}]. "
+                  + "Context data (input 'xml', read from each stream's Context child): create_pipeline from the "
+                  + "context loader template (find_reference_data's context_loader_template) with "
+                  + "translationFilter.xslt and combinedParser.type 'XML', and give the events pipeline "
+                  + "references=[{stream_type: 'Context', loader_pipeline}]; nothing is processed first.");
         return result;
     }
 

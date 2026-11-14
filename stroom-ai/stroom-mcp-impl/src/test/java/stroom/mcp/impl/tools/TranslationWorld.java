@@ -186,7 +186,7 @@ final class TranslationWorld {
     BuildTranslationXsltTool buildTool() {
         return new BuildTranslationXsltTool(docs, builds, eventVersions, requiredImports, consent,
                 sampleStreamTexts, stepping, agentInstructions, () -> auditLog, currentTranslations, groups,
-                Clock.systemUTC());
+                Mockito.mock(LookupKeyCounts.class), Clock.systemUTC());
     }
 
     /// @return draft_translation_mapping, wired on the world.

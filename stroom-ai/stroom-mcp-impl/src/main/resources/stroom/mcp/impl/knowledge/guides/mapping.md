@@ -82,7 +82,7 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 | `value` | A constant |
 | `xpath` | A computed value, relative to the record (never starting `//` or `/`) |
 | `meta` | A stream meta attribute |
-| `lookup: {map, field}` | A reference data lookup |
+| `lookup: {map, field}` | A reference data lookup; `key_fields: [a, b]` in place of `field` for a key of several fields (reference-data guide) |
 
 | Modifier | |
 | --- | --- |
@@ -96,6 +96,8 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 | `time_fallback` | A stream meta time written when the time won't parse: see below |
 | `meta_fallback` | Stream meta attributes tried in order (e.g. `["RemoteHost", "RemoteAddress"]`) for a record whose input gives no value; only as the user chose (a stand-in left out of a required element's only source) |
 | `data_name`, `data_parent` | A `Data` entry: see below |
+| `fill_template` | The input is a template with numbered placeholders, filled from the record's values in order: `{"pattern": "%(\\d+)", "xpath": "Args/Arg"}` (reference-data guide, Context data) |
+| `mask_names` | The input is a bit mask, written as the names of the masks it holds: `{"names": {"0x1": "Read"}}` or a looked-up table; with `repeat` one element a name (reference-data guide) |
 
 ## Times
 

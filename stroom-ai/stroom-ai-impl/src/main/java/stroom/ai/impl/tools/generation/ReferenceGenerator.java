@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /// Generates a reference-data XSLT: the translation of a reference feed (a user list, an asset register) into the
@@ -77,23 +78,32 @@ public final class ReferenceGenerator {
         namespaces.put("stroom", "stroom");
         final XmlElement sheet = XmlElement.create(XSL, "stylesheet", namespaces);
         sheet.set("version", "3.0");
-        sheet.set("xpath-default-namespace", INPUT_NAMESPACE.get(mapping.input()));
+        sheet.set("xpath-default-namespace", "xml".equals(mapping.input())
+                ? Objects.requireNonNullElse(mapping.xmlNamespace(), "")
+                : INPUT_NAMESPACE.get(mapping.input()));
         sheet.set("exclude-result-prefixes", "stroom");
         // Imports come first in a stylesheet.
         for (final String href : new LinkedHashSet<>(mapping.imports())) {
             sheet.addElement(XSL, "import", "href", href);
         }
         final boolean splitter = "data_splitter".equals(mapping.input());
+        final boolean xml = "xml".equals(mapping.input());
         final String rootMatch = mapping.root() != null
                 ? mapping.root()
                 : splitter
                         ? "records"
                         : "/";
-        final String records = mapping.record() != null
-                ? mapping.record()
-                : splitter
-                        ? "record"
-                        : XsltGenerator.JSON_RECORDS.get(mapping.jsonLayout());
+        final String records;
+        if (mapping.record() != null) {
+            records = mapping.record();
+        } else if (splitter) {
+            records = "record";
+        } else if (xml) {
+            // The root element's children, each a record.
+            records = "*/*";
+        } else {
+            records = XsltGenerator.JSON_RECORDS.get(mapping.jsonLayout());
+        }
         final XmlElement rootTemplate = sheet.addElement(XSL, "template", "match", rootMatch);
         final XmlElement data = rootTemplate.addElement(REF, "referenceData", "version", schemaVersion);
         data.set(MappingFacts.XSI, "schemaLocation", REF + " file://reference-data-v" + schemaVersion + ".xsd");
@@ -124,8 +134,19 @@ public final class ReferenceGenerator {
     }
 
     private static void writeMap(final ReferenceMapping mapping, final ReferenceMap map, final XmlElement template) {
-        final String key = orSelector(mapping, map.keyXpath(), map.key());
-        final XmlElement guard = template.addElement(XSL, "if", "test", "normalize-space(" + key + ")");
+        final String key;
+        final String test;
+        if (map.keyFields() != null && map.keyFields().size() > 1) {
+            // Made as a lookup's key_fields makes it: one definition, so the two can't drift apart.
+            key = LookupKeys.keyText(map.keyFields().stream().map(field -> selector(mapping, field)).toList());
+            test = "normalize-space(translate(" + key + ", " + LookupKeys.separatorText() + ", ''))";
+        } else {
+            key = map.keyFields() != null
+                    ? selector(mapping, map.keyFields().getFirst())
+                    : orSelector(mapping, map.keyXpath(), map.key());
+            test = "normalize-space(" + key + ")";
+        }
+        final XmlElement guard = template.addElement(XSL, "if", "test", test);
         final XmlElement reference = guard.addElement(REF, "reference");
         reference.addElement(REF, "map").setText(map.name());
         reference.addElement(REF, "key").addElement(XSL, "value-of", "select", key);
@@ -142,6 +163,10 @@ public final class ReferenceGenerator {
                     : parent.addElement(XSL, "element", "name", part.element(), "namespace", "");
             if (part.value() != null) {
                 holder.setText(part.value());
+            } else if (part.copy()) {
+                // The nodes themselves (a table of entries), for a lookup's path to read.
+                holder.addElement(XSL, "copy-of", "select", orSelector(mapping, part.xpath(), part.field()),
+                        "copy-namespaces", "no");
             } else {
                 holder.addElement(XSL, "value-of", "select", orSelector(mapping, part.xpath(), part.field()));
             }
@@ -157,6 +182,10 @@ public final class ReferenceGenerator {
 
     private static String selector(final ReferenceMapping mapping, final String field) {
         final List<String> steps = new ArrayList<>();
+        if ("xml".equals(mapping.input())) {
+            // An XML path relative to the record, as given.
+            return field;
+        }
         if ("data_splitter".equals(mapping.input())) {
             for (final String part : field.split("/", -1)) {
                 steps.add("data[@name=" + XPathText.literal(part) + "]");

@@ -120,6 +120,22 @@ class XsltRuns extends GenerationFixtures {
                                 final Map<String, String> imports,
                                 final List<String> logged,
                                 final Map<String, String> partMeta) {
+        return transform(xslt, xml, imports, logged, partMeta, List.of());
+    }
+
+    /// @param xslt      An XSLT.
+    /// @param xml       The records.
+    /// @param imports   The documents its imports name, by href, as Stroom resolves them by name.
+    /// @param logged    Where what it logs (stroom:log) goes, each `LEVEL message`; null to log nothing.
+    /// @param partMeta  The meta attributes of the part the records are of (what stroom:meta reads).
+    /// @param functions Stand-ins for more of Stroom's functions (stroom:lookup, say).
+    /// @return What it writes.
+    static XmlElement transform(final String xslt,
+                                final String xml,
+                                final Map<String, String> imports,
+                                final List<String> logged,
+                                final Map<String, String> partMeta,
+                                final List<ExtensionFunctionDefinition> functions) {
         String code = xslt;
         if (logged != null) {
             code = code.replace("</xsl:stylesheet>", "<xsl:function name=\"stroom:record-no\"><xsl:sequence "
@@ -133,6 +149,7 @@ class XsltRuns extends GenerationFixtures {
                 processor.registerExtensionFunction(new LogStub(logged));
             }
             processor.registerExtensionFunction(new FormatDateStub());
+            functions.forEach(processor::registerExtensionFunction);
             // One map for the run (the stream), as Stroom's TaskScopeMap holds put values for one pipeline process.
             final Map<String, String> kept = new HashMap<>();
             processor.registerExtensionFunction(new KeptValueStub("put", kept));

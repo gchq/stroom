@@ -138,6 +138,39 @@ class ReferenceData {
         return loaders;
     }
 
+    /// Templates for a context loader: a pipeline adding a ReferenceDataFilter of its own whose XSLT a child supplies
+    /// (Stroom's standard 'Context Data'), whatever it is called. A child of one, given the XSLT build_reference_xslt
+    /// writes for the context data, turns each stream's Context child into reference data, as a pipeline reference
+    /// of stream type Context names it.
+    ///
+    /// @param index Every pipeline the user can view.
+    /// @return Each such template as `{uuid, name, child_must_supply}`.
+    List<Map<String, Object>> contextLoaderTemplates(final Map<String, Entry> index) {
+        final List<Map<String, Object>> templates = new ArrayList<>();
+        for (final Entry pipeline : index.values()) {
+            final boolean addsLoader = NullSafe.list(NullSafe.get(pipeline.own(), PipelineData::getAddedElements))
+                    .stream()
+                    .map(PipelineElement::getType)
+                    .anyMatch(LOADER_TYPE::equals);
+            if (!addsLoader) {
+                continue;
+            }
+            final Shape shape;
+            try {
+                shape = pipelineShapes.shape(pipeline.uuid());
+            } catch (final PipelineUnreadableException e) {
+                continue;
+            }
+            if ("loader".equals(shape.stage())
+                && shape.childMustSupply().stream().anyMatch(slot -> "xslt".equals(slot.get("property")))) {
+                final Map<String, Object> template = ref(pipeline.uuid(), pipeline.name());
+                template.put("child_must_supply", shape.childMustSupply());
+                templates.add(template);
+            }
+        }
+        return templates;
+    }
+
     /// @param index Every pipeline the user can view.
     /// @return The pipelines that add reference loaders of their own.
     static List<Entry> referencing(final Map<String, Entry> index) {

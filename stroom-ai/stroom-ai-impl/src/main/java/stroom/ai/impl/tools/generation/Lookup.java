@@ -18,20 +18,36 @@ package stroom.ai.impl.tools.generation;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 /// Reference data: what `stroom:lookup()` finds for a key in a map a reference loader provides
 /// (`find_reference_data` lists the maps). The pipeline must name the loader as a pipeline reference
 /// (`create_pipeline` references, or `update_pipeline (references=...)`); a key the map lacks gives no value, so the
 /// element is left out (or `default`).
 ///
-/// @param map   The map name, e.g. `USER_TO_DEPARTMENT`.
-/// @param field Input field holding the key (or a name from extract).
-/// @param xpath Or an XPath giving the key.
-/// @param path  Path below the map's value when it holds elements, e.g. `department`; null for a text value.
+/// @param map       The map name, e.g. `USER_TO_DEPARTMENT`.
+/// @param field     Input field holding the key (or a name from extract).
+/// @param xpath     Or an XPath giving the key.
+/// @param path      Path below the map's value when it holds elements, e.g. `department`; null for a text value.
+/// @param keyFields `key_fields`: or the input fields whose values make the key, in order (see [LookupKeys]); one is
+///                  the same as field. The map's loader must make its key from as many fields
+///                  (build_reference_xslt's `key_fields`). Null when the key is field or xpath.
 public record Lookup(String map,
                      String field,
                      String xpath,
-                     String path) {
+                     String path,
+                     List<String> keyFields) {
+
+    /// A lookup keyed by one field or xpath.
+    ///
+    /// @param map   The map name.
+    /// @param field Input field holding the key.
+    /// @param xpath Or an XPath giving the key.
+    /// @param path  Path below the map's value, or null.
+    public Lookup(final String map, final String field, final String xpath, final String path) {
+        this(map, field, xpath, path, null);
+    }
 
     /// Reads one from JSON-like values: lax types, defaults and the model's own checks, every error collected.
     ///
@@ -45,12 +61,19 @@ public record Lookup(String map,
             return null;
         }
         final Lookup lookup = new Lookup(fields.requiredString("map"), fields.optionalString("field"),
-                fields.optionalString("xpath"), fields.optionalString("path"));
+                fields.optionalString("xpath"), fields.optionalString("path"), fields.optionalStrings("key_fields"));
         if (!fields.ok()) {
             return null;
         }
-        if ((lookup.field == null) == (lookup.xpath == null)) {
-            fields.valueError("lookup '" + lookup.map + "': give exactly one of field or xpath for the key");
+        final long keys = Stream.of(lookup.field, lookup.xpath, lookup.keyFields).filter(Objects::nonNull).count();
+        if (keys != 1) {
+            fields.valueError("lookup '" + lookup.map + "': give exactly one of field, xpath or key_fields for the "
+                              + "key");
+            return null;
+        }
+        final String problem = LookupKeys.problem(lookup.keyFields, "lookup '" + lookup.map + "'");
+        if (problem != null) {
+            fields.valueError(problem);
             return null;
         }
         return lookup;
@@ -64,6 +87,17 @@ public record Lookup(String map,
                 .put("field", field, null)
                 .put("xpath", xpath, null)
                 .put("path", path, null)
+                .putIfSet("key_fields", keyFields)
                 .build();
+    }
+
+    /// @return The input fields the key is made of, in order: key_fields, or field alone; empty for an xpath key.
+    public List<String> keyFieldNames() {
+        if (keyFields != null) {
+            return keyFields;
+        }
+        return field == null
+                ? List.of()
+                : List.of(field);
     }
 }

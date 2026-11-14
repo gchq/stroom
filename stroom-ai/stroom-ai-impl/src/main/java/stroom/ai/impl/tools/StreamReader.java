@@ -61,6 +61,7 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -456,6 +457,54 @@ public class StreamReader {
             }
         }
         return new RawHead(text, truncated, (int) Math.min(Integer.MAX_VALUE, parts));
+    }
+
+    /// The text of one part's child stream (its `Context`, say), decoded with its feed's encoding.
+    ///
+    /// @param streamId  The stream.
+    /// @param part      The zero-based index of the part.
+    /// @param childType The child stream type, e.g. `Context`.
+    /// @param maxChars  The most characters.
+    /// @return The child's text, and whether it was cut short; empty when the part has no such child.
+    /// @throws StreamReadException if the stream can't be read, or the user doesn't have the View Data permission.
+    public Optional<RawText> childText(final long streamId,
+                                       final int part,
+                                       final String childType,
+                                       final int maxChars) {
+        requireViewData(streamId);
+        final int maxBytes = (int) Math.min(Integer.MAX_VALUE - 8L, (long) maxChars * MAX_BYTES_PER_CHAR);
+        final byte[] bytes;
+        final String encoding;
+        try (final Source source = storeProvider.get().openSource(streamId)) {
+            encoding = encoding(source.getMeta());
+            try (final InputStreamProvider provider = source.get(part)) {
+                final InputStream in = provider.get(childType);
+                if (in == null) {
+                    return Optional.empty();
+                }
+                try (in) {
+                    bytes = in.readNBytes(maxBytes + 1);
+                }
+            }
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to read the {} of stream {}: {}", childType, streamId,
+                    e.getMessage()), e);
+            throw couldNotRead(streamId, e.getMessage());
+        }
+        if (bytes.length == 0) {
+            return Optional.empty();
+        }
+        final boolean moreBytes = bytes.length > maxBytes;
+        String text = StreamCharsets.decode(moreBytes
+                ? Arrays.copyOf(bytes, maxBytes)
+                : bytes, encoding, !moreBytes).text();
+        if (!text.isEmpty() && text.charAt(0) == '\uFEFF') {
+            text = text.substring(1);
+        }
+        final boolean truncated = moreBytes || text.length() > maxChars;
+        return Optional.of(new RawText(truncated
+                ? text.substring(0, Math.min(text.length(), maxChars))
+                : text, truncated));
     }
 
     /// The size of one part of a raw stream, in bytes as stored (before decoding), to tell how much of it a survey

@@ -174,7 +174,10 @@ public final class MappingFacts {
                 names.addAll(entry.join());
             }
             if (entry.lookup() != null) {
-                names.add(entry.lookup().field());
+                names.addAll(entry.lookup().keyFieldNames());
+            }
+            if (entry.fillTemplate() != null) {
+                names.add(entry.fillTemplate().valuesField());
             }
         }
         conditions.forEach(condition -> names.add(condition.field()));

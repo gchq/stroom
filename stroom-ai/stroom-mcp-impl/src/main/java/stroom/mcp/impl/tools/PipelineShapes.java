@@ -65,9 +65,11 @@ class PipelineShapes {
 
     /// The property that makes each element type do something; unset means a child must supply it.
     static final Map<String, List<String>> KEY_PROPERTIES = keyProperties();
-    /// The build subfolder a pipeline of each stage belongs in.
+    /// The build subfolder a pipeline of each stage belongs in: a loader (a context loader, made in a build) with the
+    /// reference data.
     static final Map<String, String> STAGE_ROLES = Map.of("translation", "Events", "records", "Records",
-            "indexing", "Indexing", "discovery", "Indexing", "reference", "Reference", "forwarding", "CEF");
+            "indexing", "Indexing", "discovery", "Indexing", "reference", "Reference", "forwarding", "CEF",
+            "loader", "Reference");
 
     private static final Map<String, String> INDEXING = Map.of("IndexingFilter", "lucene",
             "ElasticIndexingFilter", "elasticsearch");

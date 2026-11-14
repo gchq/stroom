@@ -1621,8 +1621,8 @@ public final class LocalCheck {
                 if (entry.join() != null) {
                     names.addAll(entry.join());
                 }
-                if (entry.lookup() != null && hasText(entry.lookup().field())) {
-                    names.add(entry.lookup().field());
+                if (entry.lookup() != null) {
+                    entry.lookup().keyFieldNames().stream().filter(LocalCheck::hasText).forEach(names::add);
                 }
                 names.forEach(name -> want(wanted, name, entry.scope(), entry.path()));
             }

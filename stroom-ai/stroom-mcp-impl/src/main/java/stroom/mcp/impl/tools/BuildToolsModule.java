@@ -62,6 +62,7 @@ public class BuildToolsModule extends AbstractModule {
                 .addBinding(EvaluatePipelineTool.class)
                 .addBinding(CreateFeedTool.class)
                 .addBinding(UploadSampleTool.class)
+                .addBinding(ProposeContextLookupTool.class)
                 .addBinding(RecordSourceNotesTool.class)
                 .addBinding(ClassifyKindsTool.class)
                 .addBinding(CreateProcessorFilterTool.class)

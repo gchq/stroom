@@ -418,6 +418,9 @@ class StroomBuildFacts implements BuildFacts {
     public List<String> referencedFeeds(final String pipelineUuid) {
         return documentAccess.read(new DocRef(PipelineDoc.TYPE, pipelineUuid), PipelineDoc.class)
                 .map(pipeline -> CurrentTranslations.ownReferences(pipeline).stream()
+                        // Context data comes with each stream: no reference feed to wait for.
+                        .filter(reference -> !StreamTypeNames.CONTEXT.equals(reference.getStreamType())
+                                             && reference.getFeed() != null)
                         .map(reference -> reference.getFeed().getName())
                         .filter(NullSafe::isNonBlankString)
                         .distinct()

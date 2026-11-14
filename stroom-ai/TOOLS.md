@@ -233,6 +233,7 @@ document in a build folder also needs Create there.
 | `processing_status` | A pipeline's processor filters and their progress | processing | yes | processing | Manage Processors | | View | |
 | `profile_sample` | Profiles raw sample data: format, fields and timestamps | processing | yes | build | | View Data | View | |
 | `promote_build` | Moves a build into place, with backups, once the user approves the layout | content | no | build | | Manage Processors | View, Edit, Delete | confirms |
+| `propose_context_lookup` | On the user's request: how records are enriched from their parts' context data (the key, its match rate, a preview), then the pieces that build it | content | no | build | View Data | | | confirms |
 | `propose_index_template` | Builds the final Elasticsearch index template for the cluster admin to apply | indexing | no | indexing | Stepping | | View, Edit | slot, confirms |
 | `rebuild_mapping` | Rebuilds a translation's kept mapping from its XSLT | content | no | build | | Stepping | View, Edit | slot, confirms |
 | `record_source_notes` | Keeps vendor reference documentation, and notes made from it, in the build | content | no | build | | | View, Edit | build |
@@ -2391,7 +2392,9 @@ the other end: the lookups an XSLT makes.
 
 * **Arguments**: none.
 * **Returns**: `maps` (each `map`, `key`, `value`, `ranges`, `xslt`, `loaded_by`, `feeds`, `used_by`, `loader`),
-  `references_in_use`, `loaders`, `reference_data_template` (`uuid`, `name`, `path`, `child_must_supply`), any
+  `references_in_use`, `loaders`, `reference_data_template` (`uuid`, `name`, `path`, `child_must_supply`),
+  `context_loader_template` (`ReferenceData.contextLoaderTemplates`: a pipeline adding its own `ReferenceDataFilter`
+  whose XSLT a child supplies, Stroom's standard `Context Data`; `uuid`, `name`, `child_must_supply`; null if none), any
   `unreadable`, and a `hint` on wiring a lookup or building new reference data (or a Dictionary for a small static
   table).
 * **Notes**: one document Stroom can't give (deleted since it was listed, a pipeline it can no longer load) is listed
@@ -3057,8 +3060,14 @@ Files exist because a model's file reader cuts text (VS Code's `read_file` cuts 
 one-line JSON file arrived as three records, the last completed with made-up values; another agent uploaded 2 of each
 file's 985 records).
 
-* **Arguments**: `feed` (required), `sample` or `files`, `headers` (extra receipt headers, readable with
-  `stroom:meta()`), `stream_type` (Raw Events, or Raw Reference), `effective_time` (reference data; default
+* **Context data** (`context` with `sample`, or `parts` = `[{sample, context}]`; only when the user gives it or asks
+  to enrich from it): the parts are packed as Stroom's receipt takes data with child streams, a zip of `NNN.dat` and
+  `NNN.ctx` pairs (`ContextSamples`), and sent as `sample-with-context.zip` through `FeedUploads.send`: one stream, a
+  part per pair, each with its `Context` child. A file on the user's disk with context data is such a zip, sent with
+  `files`. The reply has `parts` and `context: true`, and points to `fetch_events childType='Context'` and
+  `propose_context_lookup`.
+* **Arguments**: `feed` (required), `sample` or `files`, `context`, `parts`, `headers` (extra receipt headers,
+  readable with `stroom:meta()`), `stream_type` (Raw Events, or Raw Reference), `effective_time` (reference data; default
   `2000-01-01T00:00:00.000Z`, so it covers sample events uploaded before it; seen: without one a reference upload took
   effect after the events, whose lookups then found nothing).
 * **Returns**: text: `feed`, `receipt_id`, `stream_id`, and what was sent, with `next`; or `stream_id` absent and a
@@ -3932,11 +3941,20 @@ Shared behaviour:
 * **Validation is the template's** (`PipelineWrites.keepValidation`): a property on a schema filter is refused
   (`... validate the pipeline's output against its schema; their settings are not changed here. Fix the output
   instead ...`); output that fails validation is what to fix. Checked by `create_pipeline` and `update_pipeline`.
-* **References** (`references`) are `{feed, loader_pipeline, element}` (`PipelineWrites.ReferenceRequest`): `feed`
-  required, the loader by name or UUID (default the one other pipelines load that feed with, else the environment's
-  only loader: `ReferenceData.resolveLoader`), the element default the pipeline's translation XSLT step. A feed's
-  name alone is read as `{feed: <name>}`. A reference without a feed is refused (`references[0].feed is required:
-  ...`); a pipeline with no XSLT step to attach it to too. A feed is found by `FeedNames.exact`; a feed name that is
+* **References** (`references`) are `{feed, loader_pipeline, element, stream_type}`
+  (`PipelineWrites.ReferenceRequest`): `feed` required, the loader by name or UUID (default the one other pipelines
+  load that feed with, else the environment's only loader: `ReferenceData.resolveLoader`), the element default the
+  pipeline's translation XSLT step. A feed's name alone is read as `{feed: <name>}`. A reference without a feed is
+  refused (`references[0].feed is required: ...`); a pipeline with no XSLT step to attach it to too. With
+  `stream_type: 'Context'` the reference reads each events stream's own Context child (Stroom core,
+  `ReferenceData.getValueFromNestedContextStream`: each part its own, nothing processed first): `loader_pipeline` is
+  required (the context loader, a child of `context_loader_template`), `feed` optional (only named in Stroom's logs).
+  Stepping doesn't wait for a Context reference (`PipelineStepping.refuseUnloadedReferences`), nor does the plan
+  (`StroomBuildFacts.referencedFeeds`), and `keep_references` carries it (`CurrentTranslations.ownReferences`).
+  A context loader is made from `context_loader_template` with `combinedParser.type` `XML` (or `JSON`) in
+  `set_properties`: a parser told so needs no text converter (`PipelineWrites.readsWithoutConverter`), where one
+  left to the build's documents is refused without one. A loader-stage pipeline goes in the build's `Reference`
+  subfolder (`PipelineShapes.STAGE_ROLES`). A feed is found by `FeedNames.exact`; a feed name that is
   no feed's here gets `FeedNames.notFound`'s advice that the user may mean another Stroom cluster.
 * **JSON arrays**: when the build's sample is a JSON array, or the translation XSLT's mapping reads one,
   `jsonParser.addRootObject` is set false unless already set (`PipelineWrites.jsonArrayParser`), so each item is a
@@ -4804,8 +4822,14 @@ each record and map, a `<reference>` with the map name, key and value in referen
 (`ReferenceGenerator.generate`). Saves nothing: save_xslt saves it. The events pipeline then names the feed as a
 pipeline reference and its mapping reads the map with `lookup`.
 
-* **Arguments**: `mapping` (required; object or JSON text: input, root, record, maps with name, key and value
-  parts, imports, drop rules); `schema_version` (default: the highest version of the reference-data schemas this
+* **Context data**: `input: 'xml'` reads XML records (fields are XML paths relative to a record, root `/` and record
+  `*/*` by default, `xml_namespace` the records' default namespace), as a context loader reads a stream's Context
+  child. A map's `key_fields` (1 to 3) makes its key as a lookup's `key_fields` does (`LookupKeys`: each value
+  normalised, joined by U+241F), and a value part's `copy: true` copies the nodes it selects (a table of items for
+  `mask_names`) into its element.
+* **Arguments**: `mapping` (required; object or JSON text: input, root, record, maps with name, key (or key_xpath or
+  key_fields) and value parts, imports, drop rules, xml_namespace); `schema_version` (default: the highest version of
+  the reference-data schemas this
   Stroom holds, compared as versions (`stroom.util.shared.Version`) whatever order they are listed in, else the
   generator's default; found reviewing the tools: the last listed was taken); `build` (the imports standing
   instructions require of reference XSLTs there are added).
@@ -4813,6 +4837,45 @@ pipeline reference and its mapping reads the map with `lookup`.
   and a `hint` with the steps after (save_xslt, create_pipeline from the reference template, a processor filter on
   the Raw Reference stream, wait_for_processing, then the events pipeline's `references`).
 * **Refuses**: no mapping; one that isn't a reference mapping.
+
+### `propose_context_lookup`
+
+content · read-only until confirmed · requires View Data (the sample streams and their Context children are read as
+the user) · confirms itself · chat group build · Classes: `ProposeContextLookupTool`, `ContextLookups`,
+`ContextProposal`, `StreamReader.childText`
+
+Only on the user's request (the survey never looks at context data): how a feed's records are enriched from the
+context data each stream part carries. For each part of the `stream_ids` (up to 20 a stream) it reads the Context
+child (XML; each entry an element at `entries` below the root, by default the root's most common child) and the
+part's records (`RecordSplitter`; an XML record's fields its XML paths relative to it). Each entry's fields are the
+paths that come up once in it; a list element's items (children of one name, each with fields of its own) are its
+tables (`entry_tables`, for `mask_names`). The key (`ContextLookups.keys`) is found by value sets: an entry field
+every entry has is paired with the record field most of whose values are among its values (then the one covering
+most of its values, then the same name); combinations of up to 3 paired fields that tell every part's entries apart
+are counted against that part's records, smallest first, stopping at a size where one matches every record. Each
+part's records are matched against that part's own context, as a Context lookup reads them. `key_fields` with
+`event_key_fields` counts a key given instead.
+
+With `outputs` (each `{path, data_name?, from, render: text | fill_template | mask_names, pattern?, values?, mask?,
+mask_field?, name_field?, repeat?, separator?}`) it previews each for two sample records (from as many parts as there
+are) with the Java stand-ins of the generated functions (`FillTemplate.fill`, `MaskNames.named`), as a table for the
+chat (`needs_showing`); a template's pattern left out is the commonest of `%(\d+)`, `\{(\d+)\}` and `\$(\d+)` in
+its entries. Called again with `confirm=true`, the user agrees in a short plain-text form (the key, its match rate,
+the outputs' count), and the reply gives `reference_mapping` (for build_reference_xslt: input xml, the map's
+`key_fields`, a value element per output, a mask table copied whole), `mapping_entries` (for build_translation_xslt:
+lookups with the matching `key_fields`, `fill_template`, `mask_names` with a lookup of the copied table) and
+`reference` (`{stream_type: 'Context', loader_pipeline}`), with the steps after.
+
+* **Arguments**: `stream_ids` (required), `entries`, `map` (default `CONTEXT_ENTRY`), `key_fields` and
+  `event_key_fields` (together), `outputs`, `confirm`.
+* **Returns**: `parts`, `entries`, `entry_fields` (each with a sample value), `entry_tables` (each with a sample
+  item), `keys` (up to 3, best first: `key_fields`, `event_key_fields`, `matched`, `records`, `match_rate`); with
+  outputs `previews` (`stream`, `part`, `record`, `key`, and per output `before`, `after`, `reported`), `status`
+  `needs_showing` and `table`; confirmed, `reference_mapping`, `mapping_entries`, `reference`.
+* **Refuses**: no stream ids; no part with a Context child; context data that isn't one XML document or has no
+  entries at the path; `key_fields` without `event_key_fields` (or of different lengths, or over 3); an output without
+  path, from or a known render, a fill_template without values, a mask_names without mask, mask_field and name_field;
+  the user declining the form.
 
 ## Documentation, CEF and coverage
 
@@ -6027,7 +6090,7 @@ The translation XSLT generator and what works with it, in `stroom-ai-impl`, used
 draft_translation_mapping, save_xslt, rebuild_mapping, write_documentation and the build checks.
 
 **The mapping** (`TranslationMapping`, `EventRule`, `FieldMapping`, `Condition`, `Lookup`, `Extraction`,
-`KeyValuePairs`, `DropRule`, `XsltStyle`, `SharedTemplate`, `SharedFunctions`): plain records whose JSON is read and
+`KeyValuePairs`, `DropRule`, `XsltStyle`, `SharedTemplate`, `SharedFunctions`, `FillTemplate`, `MaskNames`): plain records whose JSON is read and
 written by hand (`ModelReader`), so the stored form is exactly the one kept in XSLT descriptions. `fromJson` /
 `parse` validate with lax types, defaults and each model's own checks; every error is a `MappingError` (`loc`,
 `type`, `msg`, `input`) in a `MappingValidationException`, which `MappingProblems` turns into the problems the agent
@@ -6049,6 +6112,22 @@ Data inside Data. A group (`for_each`, `as`, `fields`; and `item` in its fields,
 description of every key of the mapping's models (`TranslationMapping`, `EventRule`, `FieldMapping` and the rest),
 from which `MappingProblems` says what a key left out is. Nothing generates it: a key added to a model, or changed,
 needs its description added or changed there by hand.
+
+**Composite keys and rendered values**: a lookup's `key_fields` (1 to 3 input fields) and a reference map's
+`key_fields` make one key alike (`LookupKeys.keyText`, written by both generators: each field's first value
+normalised, joined by U+241F SYMBOL FOR UNIT SEPARATOR, written `codepoints-to-string(9247)`; one field is a plain key,
+as `field` and `key` write it). `LookupKeys.partCount` reads a loader's key back, so build_translation_xslt warns of a
+lookup whose key has a different number of fields than a loader of its map writes (`LookupKeyCounts`).
+`fill_template` (`FillTemplate`: a placeholder regex whose first group is the number, and a field or xpath giving the
+values in order) fills the entry's input, a template, with `mcp:fill-template` (`xsl:analyze-string`; a placeholder
+with no value, or a match whose group isn't a number, is left as written). `mask_names` (`MaskNames`: a static
+`names` table or a looked-up one, its items' `mask` and `name` paths) writes the names of the masks an unsigned
+64-bit value (decimal or `0x` hex) holds, with `mcp:mask-names`: XPath has no bitwise operators, so the value is an
+`xs:integer` split into set bits by halving (`mcp:set-bits`), exact for bit 63; a mask names the value when all its
+bits are set; names in the table's order, each once, one element each with `repeat` else joined by `separator`. Both
+log a warning naming the record (`RenderXslt`): placeholders left unfilled, set bits no name covers, a value that is no
+mask; a key a map lacks is Stroom's own lookup warning. `RenderXslt` writes the functions only when the mapping uses
+them, so other XSLTs are unchanged to the byte.
 
 **The generator** (`XsltGenerator.generate`, with `EventTrees` and `EventNode` for each rule's element tree and the
 checks): an XSLT with the right input namespace, a template per record that picks the event kind, elements in

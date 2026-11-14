@@ -143,6 +143,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     private final Provider<AiAuditLog> auditLogProvider;
     private final CurrentTranslations currentTranslations;
     private final SourceTypeGroups groups;
+    private final LookupKeyCounts lookupKeyCounts;
     private final Clock clock;
 
     @Inject
@@ -156,9 +157,10 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                              final AgentInstructions agentInstructions,
                              final Provider<AiAuditLog> auditLogProvider,
                              final CurrentTranslations currentTranslations,
-                             final SourceTypeGroups groups) {
+                             final SourceTypeGroups groups,
+                             final LookupKeyCounts lookupKeyCounts) {
         this(translationDocs, builds, eventVersions, requiredImports, consent, sampleStreamTexts, stepping,
-                agentInstructions, auditLogProvider, currentTranslations, groups, Clock.systemUTC());
+                agentInstructions, auditLogProvider, currentTranslations, groups, lookupKeyCounts, Clock.systemUTC());
     }
 
     /// As the injected constructor, with the clock the sample check's time is read against, for tests.
@@ -173,6 +175,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                              final Provider<AiAuditLog> auditLogProvider,
                              final CurrentTranslations currentTranslations,
                              final SourceTypeGroups groups,
+                             final LookupKeyCounts lookupKeyCounts,
                              final Clock clock) {
         this.translationDocs = translationDocs;
         this.builds = builds;
@@ -185,6 +188,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         this.auditLogProvider = auditLogProvider;
         this.currentTranslations = currentTranslations;
         this.groups = groups;
+        this.lookupKeyCounts = lookupKeyCounts;
         this.clock = clock;
     }
 
@@ -873,6 +877,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         if (!request.streamIds().isEmpty()) {
             warnings.addAll(builds.metaNotSent(mapping, request.streamIds()));
         }
+        warnings.addAll(lookupKeyCounts.mismatches(mapping));
         warnings.addAll(TranslationBuilds.zoneNotKept(mapping));
         warnings.addAll(TranslationBuilds.zoneUnknown(mapping));
         SplitterSpec splitter = request.splitter();
