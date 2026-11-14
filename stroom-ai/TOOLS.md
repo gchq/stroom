@@ -3262,7 +3262,16 @@ Processing · write · requires Manage Processors; checks View and Edit; only fo
 build's own Lucene index needs Manage Index Shards; unlocked by View Data (reading why Elasticsearch refused earlier
 runs; without it the index is taken to hold what they sent) · confirms itself · chat group processing · Classes:
 `CreateProcessorFilterTool`, `ProcessorFilterWrites`, `ProcessingSources`, `ProcessingApprovals`, `IndexingRuns`,
-`IndexTemplateAgreements`, `OutputFeeds`, `PipelineOutputs`, `UserActionEntries`
+`IndexTemplateAgreements`, `OutputFeeds`, `PipelineOutputs`, `UserActionEntries`, `BuildTestIndexes`
+
+A build pipeline whose indexing filter names a Lucene index outside the build (a working copy or new version of a
+production indexing pipeline) is pointed at a test index in the build first, `<INDEX>-MCP-TEST`, mirroring the
+production index's settings and fields plus the pipeline's kept plan's, so a build never writes into a production
+index (seen in an eval: a working copy's test run put 192 documents into the live index). `verify_index` on the
+production index searches the test index. Processing a copy of an Elasticsearch indexing pipeline that writes to a
+production index is refused: step it clean instead. At promotion the test index stays in the workspace, the pipeline
+is written back pointed at production, and the production index gains the plan's missing fields (said in the
+review's `index_changes`), for any build.
 
 Creates a processor filter on a pipeline in a build (`ProcessorFilterWrites.managedPipeline`), through Stroom's
 `ProcessorFilterService` as the user, as the data browser's Process action makes one. Feeds and pipelines are named
@@ -4381,6 +4390,11 @@ in the build folder (Create) or changed (Edit) · changes only its build · take
 `BuildTranslationXsltTool`, `TranslationBuilds`, `TranslationDocs`, `MappingSampleCheck`, `MappingProblems`,
 `DomainSplits`, `PlaceholderChoices`, `UnsavedChoices`, `SentMappings`, `RequiredImports`, `CurrentTranslations`,
 `Consent`, `XsltGenerator`, `MappingChanges`, `ConfirmedKinds`
+
+`domain_split` (Split / Keep as is) is the user's latest answer to splitting the domain off users' Ids, and wins over
+one recorded earlier; Keep also removes a split the mapping already has, as does a change removing the Domain a split
+wrote. For a source type group, the feed's promoted groups' answer is applied unasked when they agree (a
+`domain_split` note); the user is asked, with the disagreement, when they don't or none has answered.
 
 Writes the event-logging translation XSLT from a field mapping, and with `build` and `name` (or `uuid`) saves it
 with the mapping kept in its description, returning the document rather than the code, so the XSLT need not pass

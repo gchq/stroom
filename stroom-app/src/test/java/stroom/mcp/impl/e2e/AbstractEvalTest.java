@@ -43,7 +43,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -100,7 +99,6 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     private static final int BLOCK = 50;
     private static final Pattern SAMPLED_VALUES = Pattern.compile("Sample values are what the [1-9]\\d* documents");
     private static final Pattern ERROR_LINE = Pattern.compile("\\b(ERROR|FATAL)\\b");
-    private static final Pattern UNKNOWN_FIELD = Pattern.compile("WARN: Attempt to index unknown field: (\\S+)");
     // The options of the form that asks where a change to a promoted group's pipeline goes.
     private static final String PIPELINE_FORM = "runs in pipeline";
     private static final Map<String, String> PIPELINE_OPTIONS = Map.of("change", "Change ", "new_version",
@@ -718,20 +716,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         final Map<String, Object> verified = agreed("verify_index", args("build", build, "index_uuid", index,
                 "backend", "lucene", "stream_ids", events, "expected_documents", score.events(),
                 "fields", List.of("StreamId", "EventId", plan.get("time_field"))));
-        // A joined group's index gains the plan's new fields only at promotion (forward only): until then its
-        // indexing warns of each as unknown, which fails the gate though every document is indexed.
-        final List<String> logged = loggedProblems(gate, Integer.MAX_VALUE);
-        final List<String> planned = list(plan, "fields").stream().map(field -> (String) field.get("name")).toList();
-        final boolean onlyPromotedFields = joins && !logged.isEmpty() && logged.stream().allMatch(line -> {
-            final Matcher unknown = UNKNOWN_FIELD.matcher(line);
-            return unknown.find() && planned.contains(unknown.group(1));
-        });
-        if (onlyPromotedFields) {
-            score.note("the index gains the build's fields at promotion; indexed in the build without them: "
-                       + logged.stream().map(line -> line.replaceAll(".*: ", "")).distinct().toList());
-        }
-        final boolean indexed = ("pass".equals(gate.get("gate")) || onlyPromotedFields)
-                                && Boolean.TRUE.equals(verified.get("passed"));
+        // A joined group's working copy indexes into the build's test index, which has the plan's new fields: the
+        // production index is left as it is until promotion.
+        final boolean indexed = "pass".equals(gate.get("gate")) && Boolean.TRUE.equals(verified.get("passed"));
         score.indexed(indexed);
         final Map<String, Object> documented = agreed("write_documentation", args("build", build,
                 "pipeline_uuid", pipeline, "markdown", DOC_SKELETON, "change", "Created", "stream_ids", events));

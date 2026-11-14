@@ -522,6 +522,30 @@ class TestSourceTypeGroups {
     }
 
     @Test
+    void aLaterGroupWritesItsUsersIdsAsTheFeedsPromotedGroupsDo() {
+        // Seen in an eval: a later build's group was asked again whether to split the domain off users' Ids, "Split"
+        // first, though the feed's promoted group kept them whole; one feed's groups got different Id formats.
+        promotedGroup();
+        final Map<String, Object> db = new LinkedHashMap<>(args(security(), "PEGA db", List.of("PegaDB")));
+        db.put("sample", "{\"timestamp\": \"2026-09-28T10:00:00.000Z\", \"hostname\": \"h1\", "
+                         + "\"sourcetype\": \"PegaDB\", \"app\": \"pega\", \"message\": \"{\\\"eventType\\\": "
+                         + "\\\"login\\\", \\\"operatorId\\\": \\\"ACME\\\\\\\\bob\\\"}\"}\n");
+        final Map<String, Object> saved = world.call(tool, db);
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        assertThat(world.asked).noneMatch(form -> form.startsWith("Split the domain off"));
+        assertThat(String.valueOf(saved.get("domain_split"))).contains("Not asked", DomainSplits.KEEP,
+                "PEGA security");
+        assertThat(JsonValues.listOrEmpty(saved.get("warnings"))).noneMatch(w -> String.valueOf(w).contains(
+                "domain-qualified"));
+        final XsltDoc xslt = world.xslt(xsltsInBuild().get("PEGA db"));
+        assertThat(KeptMapping.readBlock(xslt.getDescription(), TranslationBuilds.DOMAIN_CHOSEN).orElseThrow())
+                .containsValue(DomainSplits.KEEP);
+        assertThat(String.valueOf(KeptMapping.readMapping(xslt.getDescription()).orElseThrow().payload()))
+                .doesNotContain("strip_domain");
+    }
+
+    @Test
     void aNewVersionOfAGroupsPromotedPipelineGetsANewVersionOfItsXslt() {
         final String original = promotedGroup();
         world.forms = true;

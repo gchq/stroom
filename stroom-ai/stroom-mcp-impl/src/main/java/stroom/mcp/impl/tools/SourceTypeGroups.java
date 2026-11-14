@@ -46,6 +46,9 @@ import stroom.docstore.api.DocumentActionHandler;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -60,6 +63,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.Predicate;
 
 /// An aggregated feed's source type groups, as `build_translation_xslt group=` builds them: each group the XSLT of a
@@ -75,6 +80,8 @@ import java.util.function.Predicate;
 /// importing the copy, so stepping in the build runs the copies; promotion points them all at the originals again
 /// ([#toOriginals]) before the copies are written back.
 class SourceTypeGroups {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SourceTypeGroups.class);
 
     /// What a feed's common module is named after: `<feed> common`.
     static final String COMMON_SUFFIX = " common";
@@ -1034,6 +1041,51 @@ class SourceTypeGroups {
         registries.writeRegistry(context.session(), build, registry.feed(), registry.found(),
                 SourceTypeRegistry.render(state));
         return types;
+    }
+
+    /// The answers the feed's promoted source type groups give the question whether to split the domain off users'
+    /// Ids: a feed-level answer, so one feed's groups write their Ids one way (seen in an eval: a later build's
+    /// group was asked again, "Split" first, though the feed's promoted group kept the Ids whole). Each promoted
+    /// group's XSLT and the feed's common module is read: the answers kept with it, else what its kept mapping
+    /// writes for these fields' Ids. The build's own documents are not read: their answers are the caller's.
+    ///
+    /// @param build  The build.
+    /// @param plan   The group's plan, whose registry names the feed's group XSLTs and modules.
+    /// @param fields The fields whose values carry a domain in this build's sample.
+    /// @return Each answer given ([DomainSplits#SPLIT], [DomainSplits#KEEP]), with the documents giving it; empty
+    /// when none has answered.
+    Map<String, List<String>> domainAnswers(final String build, final Plan plan, final Set<String> fields) {
+        final Map<String, Object> state = plan.registry().found().state();
+        final Set<String> uuids = new LinkedHashSet<>();
+        JsonValues.maps(state.get("rows")).forEach(row ->
+                uuids.add(JsonValues.text(JsonValues.mapOrEmpty(row.get(GROUP_XSLT)).get("uuid"))));
+        JsonValues.mapOrEmpty(state.get(MODULES)).values().forEach(module ->
+                uuids.add(JsonValues.text(JsonValues.mapOrEmpty(module).get("uuid"))));
+        final Map<String, List<String>> answers = new TreeMap<>();
+        for (final String uuid : uuids) {
+            if (uuid.isEmpty() || inBuild(build, uuid)) {
+                continue;
+            }
+            try {
+                documentAccess.read(new DocRef(XsltDoc.TYPE, uuid), XsltDoc.class).ifPresent(xslt -> {
+                    final Set<String> given = new TreeSet<>();
+                    KeptMapping.readBlock(xslt.getDescription(), TranslationBuilds.DOMAIN_CHOSEN)
+                            .ifPresent(kept -> kept.values().forEach(answer -> given.add(String.valueOf(answer))));
+                    if (given.isEmpty()) {
+                        KeptMapping.readMapping(xslt.getDescription())
+                                .filter(kept -> "translation".equals(kept.kind()))
+                                .ifPresent(kept -> given.addAll(DomainSplits.answersIn(kept.payload().get("mapping"),
+                                        fields)));
+                    }
+                    given.forEach(answer -> answers.computeIfAbsent(answer, key -> new ArrayList<>())
+                            .add(xslt.getName()));
+                });
+            } catch (final RuntimeException e) {
+                // Advice: an XSLT that can't be read gives no answer, and the user is asked.
+                LOGGER.debug(() -> LogUtil.message("No domain answer read from XSLT {}: {}", uuid, e.getMessage()));
+            }
+        }
+        return answers;
     }
 
     // A module of the feed: the build's of that name (its own, or its working copy), else the promoted one the

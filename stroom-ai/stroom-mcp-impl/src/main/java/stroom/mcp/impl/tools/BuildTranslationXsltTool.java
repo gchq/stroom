@@ -85,9 +85,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /// `build_translation_xslt` - writes the event-logging translation XSLT from a field mapping instead of by hand, and
 /// with build and name (or uuid) saves it with its mapping. The mapping is checked against the schema, compiled as
@@ -125,6 +127,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     static final String PIPELINE_ARG = "pipeline";
     static final String OWN_OUTPUT_FEED_ARG = "own_output_feed";
     static final String REFERENCES_ARG = "references";
+    static final String DOMAIN_SPLIT_ARG = "domain_split";
 
     // The answers suggested when the mapping translates kinds the user confirmed otherwise.
     private static final String KEEP_CHANGE = "Keep the mapping's change";
@@ -412,6 +415,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                                                  + "a new group: true when the user wants its "
                                                                  + "Events in an output feed of its own, false for "
                                                                  + "the same feed. Otherwise asked in a form.")
+                        .addEnumProperty(DOMAIN_SPLIT_ARG, List.of(DomainSplits.SPLIT, DomainSplits.KEEP),
+                                "Only on the user's word in the chat: split the domain off users' Ids, or keep them "
+                                + "whole. The latest word, over an answer kept with the XSLT or the feed's groups'.")
                         .addProperty(REFERENCES_ARG, CreatePipelineTool.referencesSchema("With group: the reference "
                                                                                         + "data the group's lookups "
                                                                                         + "read (find_reference_"
@@ -479,6 +485,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
         keepUnmappedLoggingOff(b);
         planGroup(context, b);
+        unsplitDomains(b);
         generate(context, b);
         if (!TranslationBuilds.problems(b.result).isEmpty()) {
             // Fast: what the schema says is wrong comes back before the sample is read and checked (seen: minutes
@@ -1534,7 +1541,18 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         if (b.qualified == null || b.qualified.isEmpty()) {
             return false;
         }
-        final Map<String, String> before = agreedSoFar(context, request, TranslationBuilds.DOMAIN_CHOSEN);
+        final Map<String, String> before = new LinkedHashMap<>(agreedSoFar(context, request,
+                TranslationBuilds.DOMAIN_CHOSEN));
+        // The latest word wins: the user's answer as the call gives it, or the call's changes undoing a split (seen
+        // in an eval: the user said in the chat to keep the Ids whole, and the "Split" kept with the XSLT split them
+        // again on every save).
+        for (final LocalCheck.QualifiedIds found : b.qualified) {
+            if (request.domainSplit() != null) {
+                before.put(DomainSplits.key(found), request.domainSplit());
+            } else if (DomainSplits.undoneIn(request.changes(), found)) {
+                before.put(DomainSplits.key(found), DomainSplits.KEEP);
+            }
+        }
         if (!ok(b) || (request.build() == null && request.uuid() == null)) {
             // Not asked now, but what the user answered before still answers the warning (seen in testing: asked
             // again on each round of fixing other problems).
@@ -1549,10 +1567,27 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         final List<LocalCheck.QualifiedIds> unasked = b.qualified.stream()
                 .filter(found -> !before.containsKey(DomainSplits.key(found)))
                 .toList();
-        final Optional<String> answer = unasked.isEmpty()
-                ? Optional.empty()
-                : consent.choose(call, context, NAME, DomainSplits.question(unasked),
-                        List.of(DomainSplits.SPLIT, DomainSplits.KEEP), null);
+        // An aggregated feed's groups write their users' Ids one way: the feed's answer, where its groups (and this
+        // XSLT for other fields) agree, is applied unasked; the user is asked where they differ or none has answered.
+        final Map<String, List<String>> feedAnswers = unasked.isEmpty()
+                ? Map.of()
+                : feedDomainAnswers(b, unasked, before);
+        final Optional<String> answer;
+        if (unasked.isEmpty()) {
+            answer = Optional.empty();
+        } else if (feedAnswers.size() == 1) {
+            answer = Optional.of(feedAnswers.keySet().iterator().next());
+            b.domainNote = "Not asked: the users' Ids are written as the feed's groups write them (" + answer.get()
+                           + ", as in " + ToolText.list(feedAnswers.get(answer.get())) + "). Only if the user "
+                           + "says otherwise in the chat, call again with " + DOMAIN_SPLIT_ARG + " as they say.";
+        } else {
+            answer = consent.choose(call, context, NAME, DomainSplits.question(unasked) + (feedAnswers.isEmpty()
+                    ? ""
+                    : " The feed's groups differ: " + feedAnswers.entrySet().stream()
+                            .map(entry -> entry.getKey() + " in " + ToolText.list(entry.getValue()))
+                            .collect(Collectors.joining("; ")) + "."),
+                    List.of(DomainSplits.SPLIT, DomainSplits.KEEP), null);
+        }
         TranslationMapping mapping = b.mapping;
         final List<String> done = new ArrayList<>();
         for (final LocalCheck.QualifiedIds found : b.qualified) {
@@ -1588,6 +1623,48 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         applied.addAll(done);
         b.applied = applied;
         return true;
+    }
+
+    // The user said in the chat to keep their Ids whole (domain_split Keep): a split the mapping has is undone, so
+    // the sample check finds the Ids again and the answer is kept for them.
+    private static void unsplitDomains(final Build b) {
+        if (!DomainSplits.KEEP.equals(b.request.domainSplit())) {
+            return;
+        }
+        final DomainSplits.Split unsplit = DomainSplits.unsplit(b.mapping);
+        if (unsplit.done().isEmpty()) {
+            return;
+        }
+        b.mapping = unsplit.mapping();
+        final List<String> applied = new ArrayList<>(NullSafe.list(b.applied));
+        unsplit.done().forEach(line -> applied.add("the users' Ids kept whole, as the user said: " + line));
+        b.applied = applied;
+    }
+
+    // The answers the feed's groups give the domain question, with this XSLT's own answers for its other Ids: a
+    // group's build only. Any other XSLT asks again for a field going into other Ids, as before.
+    private Map<String, List<String>> feedDomainAnswers(final Build b,
+                                                        final List<LocalCheck.QualifiedIds> unasked,
+                                                        final Map<String, String> before) {
+        final Map<String, List<String>> answers = new TreeMap<>();
+        if (b.group == null) {
+            return answers;
+        }
+        final Set<String> fields = new LinkedHashSet<>();
+        b.qualified.forEach(found -> fields.add(found.field()));
+        groups.domainAnswers(b.build, b.group, fields).forEach((answer, docs) ->
+                answers.computeIfAbsent(answer, key -> new ArrayList<>()).addAll(docs));
+        final Set<String> asked = new LinkedHashSet<>();
+        unasked.forEach(found -> asked.add(DomainSplits.key(found)));
+        before.forEach((key, answer) -> {
+            if (!asked.contains(key) && List.of(DomainSplits.SPLIT, DomainSplits.KEEP).contains(answer)) {
+                final List<String> docs = answers.computeIfAbsent(answer, k -> new ArrayList<>());
+                if (!docs.contains("this XSLT")) {
+                    docs.add("this XSLT");
+                }
+            }
+        });
+        return answers;
     }
 
     // Values in the sample that look like stand-ins for none ('-', 'N/A', ...) are put to the user, before saving, all
@@ -1705,6 +1782,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     private static void withChanges(final Build b) {
         if (b.applied != null && !b.applied.isEmpty()) {
             b.result.put("changes_applied", b.applied);
+        }
+        if (b.domainNote != null) {
+            b.result.put(DOMAIN_SPLIT_ARG, b.domainNote);
         }
         if (b.basedOn != null) {
             b.result.put("changes_applied_to", b.basedOn);
@@ -1826,7 +1906,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                    List<String> sourceTypes,
                    String pipeline,
                    Boolean ownOutputFeed,
-                   List<Map<String, Object>> references) {
+                   List<Map<String, Object>> references,
+                   String domainSplit) {
 
         /// Reads a call's arguments.
         ///
@@ -1865,7 +1946,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                     ToolArgs.raw(call, OWN_OUTPUT_FEED_ARG) == null
                             ? null
                             : ToolArgs.flag(call, OWN_OUTPUT_FEED_ARG),
-                    references(ToolArgs.raw(call, REFERENCES_ARG)));
+                    references(ToolArgs.raw(call, REFERENCES_ARG)),
+                    DomainSplits.answerOf(tool.stringArg(call, DOMAIN_SPLIT_ARG)).orElse(null));
         }
 
         // The reference data a group's lookups read, as the registry keeps them; null when none were given.
@@ -1960,6 +2042,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         private SourceTypeGroups.Plan group;
         // What placing a group said of the arguments it was given (one ignored, say).
         private final List<String> placementNotes = new ArrayList<>();
+        // Said when the domain question was answered by the feed's groups, not asked.
+        private String domainNote;
         private String build;
 
         private Build(final Request request) {

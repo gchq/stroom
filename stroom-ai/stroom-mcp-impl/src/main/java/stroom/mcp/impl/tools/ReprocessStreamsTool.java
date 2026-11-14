@@ -193,6 +193,8 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
                                   + "step needs stepping again." + clean.said());
         }
         sources.buildFeedsOnly(ref, streamIds, null);
+        // A build's indexing pipeline indexes into the build's test index, never a production one.
+        final List<BuildTestIndexes.TestIndex> testIndexes = sources.buildIndexesOnly(ref);
         final ProcessingSources.EventsSource source = sources.eventsSource(call, context, pipeline,
                 stringArg(call, CreateProcessorFilterTool.SOURCE_PIPELINE_UUID_ARG), streamIds,
                 ProcessorFilters.EVENTS);
@@ -205,6 +207,8 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
             details.put("only Events from pipeline", source.pipeline().getName());
         }
         details.put("earlier outputs", "superseded: Stroom marks them deleted once the new ones are written");
+        testIndexes.forEach(test -> details.put("indexes into", "test index " + test.name() + " in the build, not "
+                                                                + "the production index " + test.productionName()));
         ExpressionOperator expression = ProcessorFilterWrites.anyOf(streamIds);
         if (source.pipeline() != null) {
             expression = ProcessorFilterWrites.allOf(List.of(expression,

@@ -438,6 +438,132 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
                 .containsExactly(feed);
     }
 
+    @Test
+    void aWorkingCopyOfAProductionIndexingPipelineIndexesIntoTheBuildsTestIndexNotTheProductionOne() {
+        // Seen in an eval (case 61): a later build's working copy of the group's indexing pipeline, processed in the
+        // build, indexed the sample's Events into the live production index, each document without the build's new
+        // fields, and the documents could not be taken out again.
+        final String feed = "E2E-PEGA-IDX-WC";
+        final String folder = "E2E Feeds/PegaIdxWc";
+        final String securityIndex = "e2e-pega-wc-pega-security";
+        createFeed("pega-idx-wc-src", feed);
+        final String text = TestE2eSourceTypeGroups.lines("pega/pega-1.json", 1500);
+        final long stream = upload(feed, text);
+        promote("pega-idx-wc-src", Map.of("Feed", folder));
+        final String template = templateUuid("translation", "Event Data (JSON)");
+        final String indexing = templateUuid("indexing", "Indexing");
+
+        // The first build: the security group, its Events indexed into its own index, promoted.
+        final String first = "pega-idx-wc-1";
+        json("start_build", args("build", first, "feeds", List.of(feed)));
+        client.answeringWith(TestE2eSourceTypeGroups.scopeOf(List.of("PegaSecurityEvent"), null));
+        json("survey_feed", args("feed", feed, "build", first));
+        recordSourceTypes(first, feed, SECURITY);
+        group(first, feed, SECURITY, "PegaSecurityEvent", TestE2eSourceTypeGroups.securityMapping(), stream);
+        final String security = uuidOf(agreed("create_pipeline", args("build", first, "group", SECURITY,
+                "template_uuid", template)));
+        final List<Long> securityEvents = events(security, stream);
+        client.answeringWith(choosing(STROOM_FLAT));
+        json("get_field_conventions", args());
+        client.answeringWith(McpTestClient::agree);
+        final Map<String, Object> securityPlan = map(draft("lucene", securityIndex, securityEvents, null, null),
+                "plan");
+        final String indexDoc = uuidOf(agreed("create_index_doc", args("build", first, "backend", "lucene",
+                "name", securityIndex, "time_field", securityPlan.get("time_field"))));
+        final String securityXslt = uuidOf(json("save_xslt", args("build", first, "name", securityIndex + "-XSLT",
+                "index_plan", securityPlan)));
+        final String securityIndexing = indexed(first, securityIndex, indexing, securityXslt, indexDoc,
+                securityEvents, security);
+        promote(first, Map.of("Pipeline", folder, "XSLT", folder, "Index", folder));
+        final long count = eventCount(securityEvents);
+        assertThat(count).isPositive();
+        assertThat(documents(indexDoc)).isEqualTo(count);
+
+        // A later build: a working copy of the group's indexing pipeline, its XSLT given a field the production
+        // index lacks, stepped and processed over the sample's Events.
+        final String later = "pega-idx-wc-2";
+        final Map<String, Object> copied = agreed("copy_pipeline", args("build", later, "source_uuid",
+                securityIndexing, "new_name", securityIndex + " - Indexing", "working_copy", true));
+        final String copy = uuidOf(copied);
+        final String copyXslt = list(copied, "copied_documents").stream()
+                .filter(doc -> "XSLT".equals(doc.get("type")))
+                .map(doc -> (String) doc.get("uuid"))
+                .findFirst()
+                .orElseThrow();
+        final Map<String, Object> widened = new LinkedHashMap<>(securityPlan);
+        final List<Map<String, Object>> fields = new ArrayList<>(list(securityPlan, "fields"));
+        fields.add(Map.of("name", "WorkingCopyOnly", "type", "keyword", "source", "EventSource/Generator"));
+        widened.put("fields", fields);
+        json("save_xslt", args("build", later, "uuid", copyXslt, "index_plan", widened));
+        assertThat(luceneFields(new DocRef(LuceneIndexDoc.TYPE, indexDoc))).doesNotContain("WorkingCopyOnly");
+        assertThat(stepSample(copy, securityEvents)).containsEntry("verdict", "clean");
+        final Map<String, Object> filter = agreed("create_processor_filter", args("pipeline_uuid", copy,
+                "stream_ids", securityEvents, "source_pipeline_uuid", security));
+        dump("create_processor_filter working copy", filter);
+        final Map<String, Object> test = list(filter, "test_index").getFirst();
+        assertThat(test).containsEntry("name", securityIndex + "-MCP-TEST")
+                .containsEntry("made", true);
+        final String testIndex = (String) test.get("uuid");
+        assertThat(String.valueOf(filter.get("test_index_note"))).contains("never written to by the build");
+        processAll();
+        flushIndexShards();
+        final Map<String, Object> gate = json("wait_for_processing", args("pipeline_uuid", copy, "stream_ids",
+                securityEvents, "expect_events", false, "timeout_seconds", 10));
+        assertThat(gate).as("no unknown fields: %s", gate).containsEntry("gate", "pass");
+
+        // The production index is unchanged: the sample's documents are in the build's test index, which mirrors
+        // the production index with the build's new field.
+        assertThat(documents(indexDoc)).as("the production index's documents").isEqualTo(count);
+        assertThat(documents(testIndex)).as("the build's test index's documents").isEqualTo(count);
+        assertThat(folderOf(testIndex)).contains(later);
+        assertThat(luceneFields(new DocRef(LuceneIndexDoc.TYPE, testIndex))).contains("WorkingCopyOnly")
+                .containsAll(luceneFields(new DocRef(LuceneIndexDoc.TYPE, indexDoc)));
+        // verify_index given the production index searches the test index.
+        final Map<String, Object> verified = agreed("verify_index", args("build", later, "index_uuid", indexDoc,
+                "backend", "lucene", "stream_ids", securityEvents, "expected_documents", count,
+                "fields", List.of("StreamId", "EventId", securityPlan.get("time_field")), "pipeline_uuid", copy));
+        dump("verify_index working copy", verified);
+        assertThat(verified).containsEntry("passed", true).containsKey("test_index");
+        assertThat(map(verified, "dashboard")).containsEntry("saved", false);
+
+        // Promoted: the review says the production index gains the plan's new field (no registry in this build:
+        // any build's indexing, not only an aggregated feed's group), the copy's XSLT is written back over the
+        // original, the test index is left in the workspace, and the production index's documents are still the
+        // first build's alone.
+        final Map<String, Object> laterDestinations = Map.of("Pipeline", folder, "XSLT", folder, "Index", folder);
+        final Map<String, Object> review = json("promote_build", args("build", later, "destinations",
+                laterDestinations));
+        assertThat(review).containsEntry("status", "needs_review");
+        assertThat(String.valueOf(review.get("index_changes"))).contains("index " + securityIndex,
+                "adds WorkingCopyOnly", "forward only");
+        promote(later, laterDestinations);
+        assertThat(documents(indexDoc)).isEqualTo(count);
+        assertThat(folderOf(testIndex)).contains(later);
+        assertThat(readXslt(securityXslt).getDescription()).contains("WorkingCopyOnly");
+        assertThat(luceneFields(new DocRef(LuceneIndexDoc.TYPE, indexDoc))).contains("WorkingCopyOnly");
+
+        // Production indexing of a new stream, through the promoted pipelines: no field unknown to the index, and the
+        // new field searchable.
+        final long next = storeParts(feed, List.of(Map.entry(Map.of(), text)));
+        feedFilter(feed, "Raw Events", security);
+        processAll();
+        feedFilter(feed, "Events", securityIndexing);
+        processAll();
+        flushIndexShards();
+        final List<String> logged = streamsOf(feed).stream()
+                .filter(meta -> "Error".equals(meta.getTypeName())
+                                && securityIndexing.equals(meta.getPipelineUuid()))
+                .map(meta -> storedText(meta.getId()))
+                .toList();
+        assertThat(logged).as("production indexing after stream %s", next)
+                .noneMatch(errors -> errors.contains("unknown field"));
+        final Map<String, Object> found = json("search_events", args("index", indexDoc, "where",
+                List.of(Map.of("field", "WorkingCopyOnly", "value", "Pega")), "limit", 3, "allStreams", true,
+                "timeFrom", "2000-01-01T00:00:00.000Z"));
+        dump("search_events WorkingCopyOnly", found);
+        assertThat(number(found.get("total"))).as("documents with the new field").isPositive();
+    }
+
     // --- the steps ---
 
     // build_translation_xslt group=: the group saved with its mapping, its pipeline as the user chose it.
@@ -483,7 +609,8 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
     }
 
     // The group's indexing pipeline, stepped clean and processing its sample Events (from its group's pipeline only).
-    private void indexed(final String build,
+    // Returns the indexing pipeline's UUID.
+    private String indexed(final String build,
                            final String index,
                            final String template,
                            final String xslt,
@@ -498,6 +625,7 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
                 "source_pipeline_uuid", source));
         processAll();
         flushIndexShards();
+        return pipeline;
     }
 
     // The documents a Lucene index holds, over its shards still in use.

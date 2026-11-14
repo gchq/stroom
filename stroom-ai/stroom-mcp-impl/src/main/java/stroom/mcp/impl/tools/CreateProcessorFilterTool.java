@@ -48,6 +48,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /// `create_processor_filter` - creates a processor filter for Stroom to process streams through a pipeline in a build:
 /// the sample stream ids, or a feed's streams.
@@ -254,6 +255,8 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
             throw new ToolRefusal(uncovered.get());
         }
         final Optional<OutputFeeds.OutputFeed> output = sources.buildFeedsOnly(ref, streamIds, feed);
+        // A build's indexing pipeline indexes into the build's test index, never a production one.
+        final List<BuildTestIndexes.TestIndex> testIndexes = sources.buildIndexesOnly(ref);
         final String createdAfter = stringArg(call, CREATED_AFTER_ARG);
         if (feed != null && createdAfter == null) {
             throw new ToolRefusal("A feed-wide filter needs created_after, so it does not reprocess the feed's "
@@ -292,6 +295,8 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
         // test_feed=true"): what declining is for, not how the agent does it.
         output.ifPresent(feedOut -> details.put("events go to", "test feed " + feedOut.name() + " in the build (to "
                                                                 + "use another name, decline and say which)"));
+        testIndexes.forEach(test -> details.put("indexes into", "test index " + test.name() + " in the build, not "
+                                                                + "the production index " + test.productionName()));
         if (pipelineOutputs.sendsToKafka(pipelineUuid)) {
             // Stepping sends nothing; processing does: the destination (ArcSight, say) receives these records.
             details.put("sends", "each processed Event as a Kafka record, through the pipeline's KafkaConfig: the "
@@ -340,6 +345,11 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
             common.put("output_feed", feedOut.name());
             common.put("output_note", ProcessingApprovals.outputNote(feedOut));
         });
+        if (!testIndexes.isEmpty()) {
+            common.put("test_index", testIndexes.stream().map(BuildTestIndexes.TestIndex::toMap).toList());
+            common.put("test_index_note", testIndexes.stream().map(BuildTestIndexes.TestIndex::said)
+                    .collect(Collectors.joining(" ")));
+        }
         final Run run = new Run(pipeline, ref, expression, priority, scope, destination, lucene, details, common,
                 clear, streamIds);
         if (approvals.reprocessRuns(pipelineUuid)) {

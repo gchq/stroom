@@ -34,6 +34,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -66,6 +67,7 @@ class ProcessingSources {
     private final BuildPlan plan;
     private final FeedNames feedNames;
     private final OutputFeeds outputFeeds;
+    private Provider<BuildTestIndexes> testIndexesProvider;
 
     /// @param pipelineOutputs  Says whether a pipeline indexes.
     /// @param streamProcessing Reads streams' meta as the user.
@@ -95,6 +97,27 @@ class ProcessingSources {
         this.plan = plan;
         this.feedNames = feedNames;
         this.outputFeeds = outputFeeds;
+    }
+
+    /// @param testIndexes Points a build's indexing pipeline at the build's test indexes ([BuildTestIndexes]).
+    @Inject
+    void setTestIndexes(final Provider<BuildTestIndexes> testIndexes) {
+        this.testIndexesProvider = testIndexes;
+    }
+
+    /// Indexing pipelines of a build index into the build's own indexes only: one naming a production index is
+    /// pointed at the build's test index standing in for it ([BuildTestIndexes]), before it processes anything.
+    ///
+    /// @param pipeline The pipeline.
+    /// @return The test indexes it now writes to; none for a pipeline that doesn't index, is in no build, or writes
+    /// only to the build's own indexes.
+    /// @throws ToolRefusal for a copy of a production Elasticsearch indexing pipeline, which is stepped, not
+    ///                     processed, in the build.
+    List<BuildTestIndexes.TestIndex> buildIndexesOnly(final DocRef pipeline) {
+        if (testIndexesProvider == null || !pipelineOutputs.isIndexing(pipeline.getUuid())) {
+            return List.of();
+        }
+        return testIndexesProvider.get().redirect(pipeline);
     }
 
     /// For an indexing pipeline reading Events: the events pipeline they must come from, checked.

@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.draft.LocalCheck.QualifiedIds;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.TranslationMapping;
@@ -24,7 +25,12 @@ import stroom.ai.impl.tools.validation.EventSchema;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /// A user's Id whose values carry a domain (`domain.com\sam.lee`, `sam.lee@domain.com`), split as the user agrees:
@@ -50,6 +56,76 @@ final class DomainSplits {
                 .collect(Collectors.joining(", "));
         return "Split the domain off the users' Ids from " + fields + "? E.g. " + example + ": the Id "
                + account(example) + ", the Domain " + domain(example) + ".";
+    }
+
+    /// The user's answer as a call gives it (`domain_split`, what they said in the chat): the latest word, over any
+    /// answer kept with the XSLT.
+    ///
+    /// @param given The argument, or null.
+    /// @return [#SPLIT] or [#KEEP]; empty when not given.
+    /// @throws ToolRefusal if it is neither.
+    static Optional<String> answerOf(final String given) {
+        if (given == null || given.isBlank()) {
+            return Optional.empty();
+        }
+        final String said = given.strip().toLowerCase(Locale.ROOT);
+        if (said.startsWith("split")) {
+            return Optional.of(SPLIT);
+        }
+        if (said.startsWith("keep")) {
+            return Optional.of(KEEP);
+        }
+        throw new ToolRefusal("domain_split is '" + SPLIT + "' or '" + KEEP + "', as the user said, not '" + given
+                              + "'");
+    }
+
+    /// Whether a call's changes undo a split of a field's Ids: they remove the Domain written beside one of its Ids
+    /// (seen in an eval: the user said in the chat to keep the Ids whole, the agent's changes took the split out,
+    /// and the answer kept with the XSLT split them again on every save).
+    ///
+    /// @param changes The call's changes, or null.
+    /// @param found   A field whose values carry a domain.
+    /// @return True if they do.
+    static boolean undoneIn(final Object changes, final QualifiedIds found) {
+        if (!(changes instanceof final Map<?, ?> map)) {
+            return false;
+        }
+        final List<Map<String, Object>> entries = new ArrayList<>(entries(map.get("common")));
+        entries(map.get("events")).forEach(rule -> entries.addAll(entries(rule.get("fields"))));
+        final List<String> domains = found.paths().stream()
+                .filter(path -> path.endsWith("Id"))
+                .map(DomainSplits::domainPath)
+                .toList();
+        return entries.stream().anyMatch(entry -> Boolean.TRUE.equals(entry.get("remove"))
+                                                  && domains.contains(String.valueOf(entry.get("path"))));
+    }
+
+    /// The answer a mapping kept with an XSLT gives the question for these fields: [#SPLIT] where an Id it writes
+    /// from one of them is given `strip_domain`, [#KEEP] where one is written whole.
+    ///
+    /// @param mapping A kept translation mapping (`common`, `events` with their `fields`).
+    /// @param fields  The fields whose values carry a domain.
+    /// @return The answers it gives (none, one, or both where its Ids differ).
+    static Set<String> answersIn(final Object mapping, final Set<String> fields) {
+        final Set<String> answers = new TreeSet<>();
+        if (!(mapping instanceof final Map<?, ?> map)) {
+            return answers;
+        }
+        final List<Map<String, Object>> entries = new ArrayList<>(entries(map.get("common")));
+        entries(map.get("events")).forEach(rule -> entries.addAll(entries(rule.get("fields"))));
+        for (final Map<String, Object> entry : entries) {
+            final String path = String.valueOf(entry.get("path"));
+            if (!path.endsWith("User/Id") || !fields.contains(String.valueOf(entry.get("field")))) {
+                continue;
+            }
+            final Object transform = entry.get("transform");
+            if ("strip_domain".equals(transform)) {
+                answers.add(SPLIT);
+            } else if (transform == null) {
+                answers.add(KEEP);
+            }
+        }
+        return answers;
     }
 
     /// @param found A field whose values carry a domain.
@@ -80,6 +156,55 @@ final class DomainSplits {
         return new Split(TranslationMapping.fromJson(json), List.copyOf(done));
     }
 
+    /// The split undone, as the user said in the chat (`domain_split` Keep): each user's Id given `strip_domain`
+    /// written whole again, and the Domain written beside it from the same field with `domain` taken out.
+    ///
+    /// @param mapping The mapping.
+    /// @return The mapping with its users' Ids whole, with what was done (none when nothing was split).
+    @SuppressWarnings("unchecked")
+    static Split unsplit(final TranslationMapping mapping) {
+        final Map<String, Object> json = new LinkedHashMap<>(mapping.toJson(DumpMode.COMPACT));
+        final List<String> done = new ArrayList<>();
+        json.put("common", unsplitIn(entries(json.get("common")), done));
+        final List<Map<String, Object>> rules = new ArrayList<>();
+        for (final Map<String, Object> rule : entries(json.get("events"))) {
+            final Map<String, Object> copy = new LinkedHashMap<>(rule);
+            copy.put("fields", unsplitIn(entries(rule.get("fields")), done));
+            rules.add(copy);
+        }
+        json.put("events", rules);
+        return done.isEmpty()
+                ? new Split(mapping, List.of())
+                : new Split(TranslationMapping.fromJson(json), List.copyOf(done));
+    }
+
+    private static List<Map<String, Object>> unsplitIn(final List<Map<String, Object>> entries,
+                                                       final List<String> done) {
+        final List<Map<String, Object>> out = new ArrayList<>();
+        for (final Map<String, Object> entry : entries) {
+            final String path = String.valueOf(entry.get("path"));
+            if (path.endsWith("User/Id") && "strip_domain".equals(entry.get("transform"))) {
+                final Map<String, Object> whole = new LinkedHashMap<>(entry);
+                whole.remove("transform");
+                out.add(whole);
+                record(done, path + ": written whole");
+            } else if (path.endsWith("User/Domain") && "domain".equals(entry.get("transform"))
+                       && entries.stream().anyMatch(id -> idPathOf(path).equals(id.get("path"))
+                                                          && "strip_domain".equals(id.get("transform"))
+                                                          && Objects.equals(id.get("field"), entry.get("field")))) {
+                record(done, path + ": taken out");
+            } else {
+                out.add(entry);
+            }
+        }
+        return out;
+    }
+
+    // The Id beside a Domain.
+    private static String idPathOf(final String domainPath) {
+        return domainPath.substring(0, domainPath.length() - "Domain".length()) + "Id";
+    }
+
     // One list of entries (the common ones, or a rule's), split; `also` are entries that are written as well.
     private static List<Map<String, Object>> splitIn(final List<Map<String, Object>> entries,
                                                      final List<Map<String, Object>> also,
@@ -97,8 +222,7 @@ final class DomainSplits {
             final Map<String, Object> id = new LinkedHashMap<>(entry);
             id.put("transform", "strip_domain");
             out.add(id);
-            final String domainPath = ((String) path).substring(0, ((String) path).length() - "Id".length())
-                                      + "Domain";
+            final String domainPath = domainPath((String) path);
             if (mapped(entries, domainPath) || mapped(also, domainPath) || !inSchema(schema, domainPath)) {
                 record(done, path + ": strip_domain");
                 continue;
@@ -111,6 +235,11 @@ final class DomainSplits {
             record(done, path + ": strip_domain, and " + domainPath + " from '" + found.field() + "' (domain)");
         }
         return out;
+    }
+
+    // The Domain beside an Id.
+    private static String domainPath(final String idPath) {
+        return idPath.substring(0, idPath.length() - "Id".length()) + "Domain";
     }
 
     private static void record(final List<String> done, final String said) {
@@ -133,7 +262,7 @@ final class DomainSplits {
     }
 
     @SuppressWarnings("unchecked")
-    private static List<Map<String, Object>> entries(final Object given) {
+    static List<Map<String, Object>> entries(final Object given) {
         final List<Map<String, Object>> out = new ArrayList<>();
         if (given instanceof final List<?> list) {
             list.stream().filter(Map.class::isInstance).forEach(item -> out.add((Map<String, Object>) item));

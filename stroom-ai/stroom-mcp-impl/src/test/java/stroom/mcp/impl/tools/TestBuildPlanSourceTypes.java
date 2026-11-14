@@ -71,6 +71,24 @@ class TestBuildPlanSourceTypes {
     }
 
     @Test
+    void theScopeRecordedBeforeTheBuildsSurveyCountsTheStepDone() {
+        // record_source_types before survey_feed: the registry and its scope are in the build, no survey state yet,
+        // the group's translation saved (as in the eval: next offered record_source_types after each step).
+        facts.sources = List.of("ACME");
+        facts.docs.add(FakeBuildFacts.doc("Documentation", "r", "ACME source types"));
+        facts.docs.add(FakeBuildFacts.doc("XSLT", "x", "ACME Identity"));
+        facts.mappings.put("x", FakeBuildFacts.kept("translation", Map.of()));
+        assertThat(state(status(), "source_types")).isEqualTo("to do");
+        facts.scopeRecordedBy = "other";
+        assertThat(state(status(), "source_types")).isEqualTo("to do");
+        facts.scopeRecordedBy = "b";
+        assertThat(state(status(), "source_types")).isEqualTo("done");
+        // And once surveyed, unscoped so far: still done.
+        surveyed(Map.of("field", "sourcetype"));
+        assertThat(state(status(), "source_types")).isEqualTo("done");
+    }
+
+    @Test
     void anAssessmentEndsAtTheRegistry() {
         facts.kind = "assessment";
         facts.sources = List.of("ACME");

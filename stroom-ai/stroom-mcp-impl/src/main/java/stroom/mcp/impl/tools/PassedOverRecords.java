@@ -85,7 +85,8 @@ final class PassedOverRecords {
     }
 
     /// Takes a group's pass-over line out of one record's markers, counting the record as passed over when it had
-    /// one, by the source type the input of the element that logged it tells.
+    /// one, by the source type the input of the element that logged it tells. A record passed over keeps only its
+    /// ERROR and FATAL markers (see [#breaksTheStream(ErrorTriage.Marker)]).
     ///
     /// @param markers What the record's step met.
     /// @param result  The step, whose elements' inputs tell the record's source type.
@@ -105,7 +106,22 @@ final class PassedOverRecords {
         }
         count++;
         bySourceType.merge(sourceType(SteppingWalks.input(result, element)), 1, Integer::sum);
-        return new Sifted(left, true);
+        return new Sifted(left.stream()
+                .filter(PassedOverRecords::breaksTheStream)
+                .toList(), true);
+    }
+
+    /// Whether a marker of a record the group passes over still counts against the group: an ERROR or FATAL can
+    /// break the stream whoever's record it is, but a WARNING or INFO (a parser's note on a long value of another
+    /// group's source type, say) is about data that isn't this group's and is left out.
+    ///
+    /// Seen in testing: an Identity group's step_sample verdict was `review` from two jsonParser "String value
+    /// truncated" warnings on Exchange and Teams records it passes over, and its processor filter was refused.
+    ///
+    /// @param marker A marker of a record passed over.
+    /// @return True if it is kept.
+    static boolean breaksTheStream(final ErrorTriage.Marker marker) {
+        return !"WARNING".equals(marker.severity()) && !"INFO".equals(marker.severity());
     }
 
     /// @return How many records were passed over.
@@ -137,7 +153,8 @@ final class PassedOverRecords {
                 .map(entry -> entry.getKey() + " " + entry.getValue())
                 .toList())
                + "). They are left to the other groups' pipelines: not errors, and not counted in "
-               + "records_with_errors or the verdict.";
+               + "records_with_errors or the verdict. Their warnings are left out too (about data of other "
+               + "groups' source types); only an ERROR or FATAL on one of them is kept.";
     }
 
     // The source type of the record an element read, by the group's rows.
