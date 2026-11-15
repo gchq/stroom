@@ -115,9 +115,11 @@ field_map:
   EventSource/User/UserDetails/Role: {name: user.roles, type: keyword}
   EventDetail/TypeId: {name: event.code, type: keyword}
   EventDetail/Description: {name: message, type: text}
-  # What happened, whichever the action element: its Action, and its Outcome (no Outcome is success in event-logging,
-  # so the field is left out rather than guessed). Its reason: the Outcome's Description, else its Reason.
-  EventDetail/*/Action: {name: event.action, type: keyword}
+  # What happened, whichever the action element: its Action (else, for the many actions with none - View, Send,
+  # Create... - the event's TypeId: fallback is read where the event has no value at the path), and its Outcome (no
+  # Outcome is success in event-logging, so the field is left out rather than guessed). Its reason: the Outcome's
+  # Description, else its Reason.
+  EventDetail/*/Action: {name: event.action, type: keyword, fallback: EventDetail/TypeId}
   EventDetail/*/Outcome/Success: {name: event.outcome, type: keyword, transform: outcome}
   EventDetail/*/Outcome/Description: {name: event.reason, type: keyword}
   EventDetail/*/Outcome/Reason: {name: event.reason, type: keyword}

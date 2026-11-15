@@ -416,10 +416,172 @@ class TestRecordSourceTypesTool {
                 .isEqualTo(new SourceTypeRows.Row("other", SourceTypeRows.VALUE, "other"));
     }
 
+    @Test
+    void aSettingsOnlyCallOnceTheScopeIsRecordedAsksNeitherTheTableNorTheScopeForm() {
+        // Seen in chat 178: environment and system_names recorded from earlier answers asked the whole scope form.
+        scoped("PEGA back end", List.of("PegaIntegration", "PegaDB"));
+        final GroupUser user = new GroupUser(List.of("PegaDB"), "Other");
+
+        final Map<String, Object> result = once(user.context(), Map.of("group", "PEGA back end",
+                "environment", "Test", "system_names", Map.of("PegaDB", "Pega Database")));
+
+        assertThat(result).as("%s", result).doesNotContainKey("error")
+                .doesNotContainEntry("status", "needs_review")
+                .containsEntry("group", "PEGA back end")
+                .containsEntry("scope", List.of("PegaIntegration", "PegaDB"));
+        assertThat(user.intros()).as("no form").isEmpty();
+        final Map<String, Object> registry = SourceTypeRegistry.read(written.getLast());
+        assertThat(registry).containsEntry("environment", "Test");
+        assertThat(rowNamed("PegaDB")).containsEntry("system_name", "Pega Database")
+                .containsEntry("status", SourceTypeRegistry.PARKED);
+        assertThat(JsonValues.mapOrEmpty(registry.get("scope"))).containsEntry("build", BUILD)
+                .containsEntry("group", "PEGA back end")
+                .containsEntry("source_types", List.of("PegaIntegration", "PegaDB"));
+        assertThat(String.valueOf(result.get("hint"))).contains("isn't asked again", "next");
+
+        // No group given at all: the recorded one stands.
+        final Map<String, Object> noGroup = once(user.context(), Map.of("environment", "Prod"));
+        assertThat(noGroup).as("%s", noGroup).containsEntry("group", "PEGA back end");
+        assertThat(user.intros()).isEmpty();
+    }
+
+    @Test
+    void unchangedRowsGivenAgainOnceTheScopeIsRecordedAskNothing() {
+        scoped("PEGA back end", List.of("PegaIntegration", "PegaDB"));
+        final GroupUser user = new GroupUser(List.of("PegaDB"), "Other");
+
+        // The translated row left out is kept in its place: the rows come to the registry's.
+        final Map<String, Object> result = once(user.context(), Map.of("rows", OTHERS, "group", "PEGA back end",
+                "scope", List.of("PegaDB", "pegaintegration")));
+
+        assertThat(result).as("%s", result).doesNotContainKey("error")
+                .doesNotContainEntry("status", "needs_review")
+                .containsEntry("scope", List.of("PegaIntegration", "PegaDB"));
+        assertThat(user.intros()).isEmpty();
+        assertThat(written).hasSize(1);
+    }
+
+    @Test
+    void anotherGroupNameOnceTheScopeIsRecordedIsARenameTheUserConfirms() {
+        // Seen in chat 178: a typo fixed in the group's name asked the whole scope form again.
+        scoped("PEGA bak end", List.of("PegaIntegration", "PegaDB"));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final Map<String, Object> result = once(user.context(), Map.of("rows", OTHERS, "group", "PEGA back end"));
+
+        assertThat(result).as("%s", result).doesNotContainKey("error")
+                .containsEntry("group", "PEGA back end")
+                .containsEntry("renamed_from", "PEGA bak end")
+                .containsEntry("scope", List.of("PegaIntegration", "PegaDB"));
+        assertThat(user.shown()).hasSize(1);
+        assertThat(user.shown().getFirst()).contains("Rename group 'PEGA bak end' to 'PEGA back end'?")
+                .doesNotContain("go in this build's source type group");
+        assertThat(JsonValues.mapOrEmpty(SourceTypeRegistry.read(written.getLast()).get("scope")))
+                .containsEntry("group", "PEGA back end")
+                .containsEntry("source_types", List.of("PegaIntegration", "PegaDB"));
+        assertThat(JsonValues.mapOrEmpty(rowNamed("PegaDB").get("decided")).get("reason")).asString()
+                .contains("'PEGA back end'");
+    }
+
+    @Test
+    void aRenameDeclinedWritesNothingAndWithoutFormsTheNameGivenIsTheUsers() {
+        scoped("PEGA bak end", List.of("PegaIntegration", "PegaDB"));
+
+        final Map<String, Object> declined = once(BuildToolCalls.declining().context(), Map.of("group",
+                "PEGA back end"));
+        assertThat(declined).containsKey("error");
+        assertThat(written).isEmpty();
+
+        final Map<String, Object> renamed = once(BuildToolCalls.context(), Map.of("group", "PEGA back end"));
+        assertThat(renamed).as("%s", renamed).containsEntry("group", "PEGA back end")
+                .containsEntry("renamed_from", "PEGA bak end");
+        assertThat(JsonValues.mapOrEmpty(SourceTypeRegistry.read(written.getLast()).get("scope")))
+                .containsEntry("group", "PEGA back end");
+    }
+
+    @Test
+    void aBuiltOrPromotedGroupIsNotRenamed() {
+        // The build joined the existing group: its XSLT and pipeline carry its name.
+        scoped("PEGA security", List.of("PegaSecurityEvent", "PegaDB"));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final Map<String, Object> refused = once(user.context(), Map.of("group", "PEGA sec"));
+
+        assertThat(String.valueOf(refused.get("error"))).contains("'PEGA security'", "keeps its name",
+                "Nothing was written");
+        assertThat(user.shown()).isEmpty();
+        assertThat(written).isEmpty();
+    }
+
+    @Test
+    void otherSourceTypesOnceTheScopeIsRecordedAskTheScopeFormAgain() {
+        scoped("PEGA back end", List.of("PegaIntegration", "PegaDB"));
+        final GroupUser user = new GroupUser(List.of("PegaDB"), "");
+
+        final Map<String, Object> result = called(user.context(), Map.of("group", "PEGA back end",
+                "scope", List.of("PegaDB")));
+
+        assertThat(user.intros()).as("the scope form").hasSize(1);
+        assertThat(user.intros().getFirst()).contains("go in this build's source type group");
+        assertThat(result).as("%s", result).containsEntry("scope", List.of("PegaDB"));
+    }
+
+    @Test
+    void anotherExistingGroupNamedOnceTheScopeIsRecordedAsksTheScopeFormAgain() {
+        scoped("PEGA back end", List.of("PegaIntegration", "PegaDB"));
+        final GroupUser user = new GroupUser(List.of("PegaDB"), "");
+
+        final Map<String, Object> shown = once(user.context(), Map.of("group", "PEGA security"));
+        assertThat(shown).containsEntry("status", "needs_review");
+
+        final Map<String, Object> result = called(user.context(), Map.of("group", "PEGA security"));
+        assertThat(user.intros()).hasSize(1);
+        assertThat(result).as("%s", result).containsEntry("scope", List.of("PegaSecurityEvent", "PegaDB"));
+    }
+
+    @Test
+    void changedRowsOnceTheScopeIsRecordedAreReviewedAgain() {
+        scoped("PEGA back end", List.of("PegaIntegration", "PegaDB"));
+        final List<String> rows = new ArrayList<>(OTHERS);
+        rows.add("PowerBI = PowerBI");
+
+        final Map<String, Object> shown = once(BuildToolCalls.context(), Map.of("rows", rows,
+                "group", "PEGA back end"));
+
+        assertThat(shown).as("%s", shown).containsEntry("status", "needs_review");
+        assertThat(String.valueOf(shown.get("table"))).contains("PowerBI");
+        assertThat(written).isEmpty();
+    }
+
     private static Map<String, Object> profiled(final String name, final long records, final String status) {
         final Map<String, Object> row = row(name, status);
         row.put("profile", Map.of("records_read", records));
         return row;
+    }
+
+    // The build's registry with this build's scope recorded: the group and its source types (those not translated
+    // parked in it).
+    private void scoped(final String group, final List<String> sourceTypes) {
+        final Map<String, Object> state = registry();
+        JsonValues.maps(state.get("rows")).stream()
+                .filter(row -> sourceTypes.contains(row.get("name"))
+                               && SourceTypeRegistry.PARKED.equals(row.get("status")))
+                .forEach(row -> row.put("decided", Map.of("by", "user", "at", "then", "reason",
+                        "in the scope of build '" + BUILD + "': translated once its source type group '" + group
+                        + "' is built")));
+        state.put("scope", Map.of("build", BUILD, "group", group, "source_types", sourceTypes, "by", "user",
+                "at", "then"));
+        Mockito.when(registries.registry(BUILD, FEED)).thenReturn(Optional.of(new SourceTypeRegistries.Found(
+                new SurveyRecord("r", "PEGA source types", ""), false, state)));
+    }
+
+    // The tool called once, with these args.
+    private Map<String, Object> once(final ToolCallContext context, final Map<String, Object> given) {
+        final Map<String, Object> args = new LinkedHashMap<>(given);
+        args.put("build", BUILD);
+        args.put("feed", FEED);
+        return result(tool.execute(BuildToolCalls.call(RecordSourceTypesTool.NAME,
+                JsonUtil.writeValueAsString(args, false)), context));
     }
 
     // The tool called twice, as the agent does: the table shown, then the scope given.

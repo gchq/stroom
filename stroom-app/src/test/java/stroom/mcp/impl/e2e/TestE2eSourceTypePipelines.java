@@ -223,9 +223,10 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
         final String pipeline = uuidOf(agreed("create_pipeline", args("build", first, "group", SECURITY,
                 "template_uuid", template)));
         promote(first, Map.of("Pipeline", folder));
-        // The modules beside the feed, with the registry and the group's pipeline.
-        assertThat(folderOf(securityUuid)).isEqualTo(folderOf(commonUuid)).endsWith("PegaWc");
-        assertThat(folderOf(pipeline)).endsWith("PegaWc");
+        // The common module and helpers beside the feed, with the registry; the group's XSLT and pipeline in the
+        // group's folder there.
+        assertThat(folderOf(commonUuid)).endsWith("PegaWc");
+        assertThat(folderOf(securityUuid)).isEqualTo(folderOf(pipeline)).endsWith("PegaWc/" + SECURITY);
         assertThat(documentsIn("System/" + folder, "XSLT", feed + " helpers")).hasSize(1);
 
         // A later build changes the security group alone: its scope names the group, no source type added; the
@@ -287,7 +288,8 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
                 "Event")).hasSize(1);
         promote(next, Map.of("Pipeline", folder));
         assertThat(readXslt(integrationUuid).getData()).contains("uuid='" + commonUuid + "'");
-        assertThat(folderOf(integrationUuid)).isEqualTo(folderOf(securityUuid));
+        assertThat(folderOf(integrationUuid)).isEqualTo(folderOf(integrationPipeline))
+                .endsWith("PegaWc/" + INTEGRATION);
         final Map<String, Object> registry = SourceTypeRegistry.read(documentation(documentsIn("System/" + folder,
                 "Documentation", feed + SourceTypeRegistry.SUFFIX).getFirst().getUuid()));
         assertThat(jsonOf(registry)).contains(securityUuid, integrationUuid, pipeline, integrationPipeline)
@@ -327,9 +329,9 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
         // registry beside the feed names the new version for the group's rows.
         promote(last, Map.of("Pipeline", folder));
         final String versionFolder = folderOf(versionPipeline);
-        assertThat(versionFolder).endsWith("PegaWc/v2");
+        assertThat(versionFolder).endsWith("PegaWc/" + SECURITY + "/v2");
         assertThat(folderOf(securityVersion)).isEqualTo(versionFolder);
-        assertThat(folderOf(pipeline)).endsWith("PegaWc").isEqualTo(folderOf(securityUuid));
+        assertThat(folderOf(pipeline)).endsWith("PegaWc/" + SECURITY).isEqualTo(folderOf(securityUuid));
         assertThat(folderOf(commonUuid)).endsWith("PegaWc");
         assertThat(readXslt(securityUuid).getData()).contains("LoginV2", "uuid='" + commonUuid + "'")
                 .doesNotContain("LoginV3");

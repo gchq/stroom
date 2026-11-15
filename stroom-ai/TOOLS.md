@@ -2632,6 +2632,16 @@ Where each document goes (`plan`):
   directly in `/Feeds`, Netskope and Delinea each in a folder of their own; the registry went to
   `/Feeds/Azure-Audit-V1.0-EVENTS`, the output feed and notes to `/Feeds`, the rest to `/Feeds/Events` and
   `/Feeds/Indexing`. A refusal for documents with no destination suggests the source's own folder.
+* **An aggregated feed's group** (`group`, `GroupPlace`; asked for by the user 2026-11-15): a build of a source
+  type group (named by its XSLT's `mcp:module kind="group"` marker, a working copy's too, else the build's scope)
+  puts the group's documents in `<source's own folder>/<group>`: its new XSLT and output feed of its own, and every
+  document with a role placed in the source's own folder (pipelines, index, indexing XSLT, documentation, dashboard),
+  under their role subfolders: e.g. `/Feeds/Azure-Audit-V1.0-EVENTS/M365 Messaging/Events/` (the pipeline, the
+  group's XSLT, their documentation) and `.../M365 Messaging/Indexing/`. The feed's shared documents (registry,
+  common module, helpers, source notes) stay in the source's own folder; a document given another folder keeps it, a
+  version goes in its version folder, a working copy is written back in place. A build of no group (and an
+  assessment) is placed as before. Seen in chat 178: the group's XSLT at the feed's folder beside the common module
+  and helpers, apart from its pipeline.
 * Role subfolders (`Events`/`Records`, `Indexing`, `CEF`, `Reference`) are kept under each destination only when
   documents of more than one role move, unless `role_subfolders=false`.
 
@@ -5374,7 +5384,10 @@ read is asked for alone.
 
 The plan starts with `StreamId` (`@StreamId`) and `EventId` (`@EventId`), then the profile's `field_map` entries
 whose path the sample populates (a name once, from the first populated of its paths, so a Network source address
-comes from whichever action the event records). The event's action element (Alert, Authenticate, Process, Update;
+comes from whichever action the event records). An entry with a `fallback` path reads it where the event has none
+at its own (`FieldPlans.orElse`: `A | B[not(../../A)]`, one value an event): ECS's `event.action` is an action's
+`Action`, else the event's `TypeId` (asked for by the user: View, Send, Create and the like have no Action, and seen
+in chat 178 event.action was written by no event, never mapped, and a search on it refused). The event's action element (Alert, Authenticate, Process, Update;
 not Network, not Data) adds up to 20 fields of its own by default, as users asked for them every time; under ECS
 these go under the first `custom_namespaces` entry (default: one named after the index), not a top-level group per
 action (seen: `authenticate.*`, `copy.*` drafted and passed). Under ECS a Data element whose name is an ECS field's
@@ -5439,9 +5452,9 @@ stream (records:2) must be drafted with `input: delimited`, which reads each dat
   the translation write it, or keep it), `fields_rare` (no event read has the source, but the translation writes it:
   kept, as a sample can't show a path is never populated; seen: a byte count early in its stream said to be one the
   index never gets), `field_mapping` (the Field mapping section's Markdown), `core_fields_mostly_empty` (core
-  fields of the convention, ECS `level: core`, and the time field, that some events read populate but fewer than
-  half: `name <- path: in n% of events read`, for the user; `IndexPlans.mostlyEmptyCore`; seen in chat 177:
-  event.action empty in 2,233 of 2,457 documents), `ecs_check` where it departs from ECS, `from_example`
+  fields of the convention, ECS `level: core`, and the time field, that fewer than half the events read populate:
+  `name <- path: in n% of events read`, or `in no event read`, for the user; `IndexPlans.mostlyEmptyCore`; seen in
+  chat 177: event.action empty in 2,233 of 2,457 documents; in chat 178, in every one), `ecs_check` where it departs from ECS, `from_example`
   (notes on naming, shared fields and the kept example), `shared_from_pipelines`, `ecs_data_elements`, `replaced`
   (with `replaces=`: `{xslt, fields, not_in_draft, hint}`, the fields the old index wrote that the draft doesn't
   cover by source, each with its source and how often the sample populates it), `warnings`, `hint`. A discovery
@@ -5776,8 +5789,9 @@ CONTAINS, MATCHES_REGEX) is `independent: false` and doesn't count towards `pass
 asserted counts were wrong four times, then it took every expected count from the index itself and reran until
 23/23 passed. `expected_counts` says where the counts came from (given, without a kept plan). `findings` names the
 core fields of the convention (ECS `level: core`, and the time field) empty in more than half the events read, with
-their Events paths, for the user (seen in chat 177: event.action empty in 2,233 of 2,457 documents); a mostly empty
-time field fails. A stream of more than 10,000 events is checked
+their Events paths, for the user (seen in chat 177: event.action empty in 2,233 of 2,457 documents), and those of
+an Elasticsearch index Stroom doesn't list however many events hold them (`not_in_index`: no document gave it a
+value, so it was never mapped; seen in chat 178); a mostly empty time field fails. A stream of more than 10,000 events is checked
 by its first and last 1,000 and none past its last (asked for by the user: a 100,000-record stream was counted
 seven times over); a count Stroom hadn't finished in time is unproven, not a failure. Given `pipeline_uuid`, each
 check's lowest-EventId hit is traced back to its record by stepping the pipeline at the hit's StreamId and EventId

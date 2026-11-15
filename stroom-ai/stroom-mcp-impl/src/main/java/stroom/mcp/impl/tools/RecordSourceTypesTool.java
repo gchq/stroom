@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /// `record_source_types` - the plan's source types step for an aggregated feed: each source type the build's survey
 /// counted is profiled (by the registry's rows, so a pattern's source type is one), the profiles are shown to the
@@ -171,7 +172,10 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                              + "an item; either confirmed by the user. Rows given again keep the "
                              + "registry's translated and placed rows they leave out; remove= drops a row, and "
                              + "removing a translated or placed row, or changing a translated row's value or "
-                             + "pattern, is confirmed by the user in a form.")
+                             + "pattern, is confirmed by the user in a form. Once the build's scope is chosen, a "
+                             + "call keeping its rows and source types writes the settings given (system_names, "
+                             + "environment) at once, and another group name is a rename the user confirms; only "
+                             + "changed rows show the table again, and changed source types the scope form.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(BUILD_ARG, "The build.")
                         .addStringProperty(FEED_ARG, "The surveyed feed.")
@@ -210,12 +214,14 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                                                   + "existing group's name changes that group "
                                                                   + "alone (refused for a new group). Where a "
                                                                   + "form can be shown it is ignored: the form "
-                                                                  + "asks the user."))
+                                                                  + "asks the user (once the scope is chosen, "
+                                                                  + "other source types ask it again)."))
                         .addStringProperty(GROUP_ARG, "The name of this build's source type group, for its source "
                                                       + "types (e.g. 'Messaging'): with forms, your suggestion, "
                                                       + "which the user keeps or changes in the form; without, "
                                                       + "the name the user gave. An existing group's name adds the "
-                                                      + "source types to that group.")
+                                                      + "source types to that group. Once the scope is chosen, "
+                                                      + "another new name renames its group, as the user confirms.")
                         .addStringProperty(REASON_ARG, "Why the other source types are left for later, in the "
                                                        + "user's words (no forms; default 'left for a later "
                                                        + "build').")
@@ -305,6 +311,16 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                + "source types for its group).");
             offerToFind(result, build, feed, unseen(registry, before, List.of()));
             return plan.withNext(context, build, result);
+        }
+        // The build's scope chosen already, and the call leaving its rows and source types as they are: neither the
+        // table nor the scope form again (seen in chat 178: the form asked three times in one build, for a typo in
+        // the group's name and for the per-source-type settings).
+        final Optional<Map<String, Object>> recorded = recordedScope(build, before, sources);
+        if (recorded.isPresent() && edits.rows().equals(SourceTypeRegistry.rows(before))
+            && stringListArg(call, REMOVE_ARG).isEmpty() && stringListArg(call, DROPPED_ARG).isEmpty()
+            && keepsSourceTypes(call, registry, recorded.get())) {
+            return kept(call, context, new Recorded(build, feed, field, existing, surveyDoc, survey, sources),
+                    registry, recorded.get(), table);
         }
         final Object reviewed = argsMap(call).get(REVIEWED_ARG);
         if (!Consent.wasReviewed(reviewed, table)) {
@@ -396,6 +412,125 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                            + "is a later build's, after this one is promoted. Carry on with the plan (next).");
         offerToFind(result, build, feed, unseen(registry, before, groupTypes));
         return plan.withNext(context, build, result);
+    }
+
+    // The scope this build recorded: the registry's, else the survey state's (written together); empty when this
+    // build has none yet (a scope from an earlier build is that build's, and this one's is still to choose).
+    private static Optional<Map<String, Object>> recordedScope(final String build,
+                                                               final Map<String, Object> before,
+                                                               final Map<String, Object> sources) {
+        return Stream.of(before.get(SourceTypeProfiles.SCOPE), sources.get(SourceTypeProfiles.SCOPE))
+                .map(JsonValues::mapOrEmpty)
+                .filter(scope -> build.equals(JsonValues.text(scope.get(SourceTypeScope.BUILD))))
+                .filter(scope -> !JsonValues.text(scope.get(SCOPE_GROUP)).isBlank()
+                                 && !JsonValues.listOrEmpty(scope.get(SourceTypeScope.SOURCE_TYPES)).isEmpty())
+                .findFirst();
+    }
+
+    // The group the call names: the recorded one where it names none, an existing group's own name where it names
+    // one (any case), else as given.
+    private String namedGroup(final ToolCall call,
+                              final Map<String, Object> registry,
+                              final String recorded) {
+        final String given = NullSafe.string(stringArg(call, GROUP_ARG)).strip();
+        return given.isEmpty() || given.equals(recorded)
+                ? recorded
+                : groupNamed(registryGroups(registry), given);
+    }
+
+    // Whether the call leaves the recorded scope's source types as they are: it names no other existing group (that
+    // would join it), and gives no scope, or one whose group comes to the same source types.
+    private boolean keepsSourceTypes(final ToolCall call,
+                                     final Map<String, Object> registry,
+                                     final Map<String, Object> recorded) {
+        final String was = JsonValues.text(recorded.get(SCOPE_GROUP));
+        final String group = namedGroup(call, registry, was);
+        if (!group.equals(was) && registryGroups(registry).contains(group)) {
+            return false;
+        }
+        if (argsMap(call).get(SCOPE_ARG) == null) {
+            return true;
+        }
+        final Set<String> would = new LinkedHashSet<>();
+        groupRows(registry, group).forEach(name -> would.add(name.toLowerCase(Locale.ROOT)));
+        stringListArg(call, SCOPE_ARG).forEach(name -> would.add(name.strip().toLowerCase(Locale.ROOT)));
+        final Set<String> had = new LinkedHashSet<>();
+        JsonValues.listOrEmpty(recorded.get(SourceTypeScope.SOURCE_TYPES))
+                .forEach(name -> had.add(JsonValues.text(name).toLowerCase(Locale.ROOT)));
+        return would.equals(had);
+    }
+
+    // The recorded scope kept: the registry written with the call's settings (System Names, Environment), and the
+    // group renamed where the call names it otherwise (confirmed by the user in a short form; without forms the
+    // name given is the user's, as the scope's is). A group built or promoted already keeps its name.
+    private Map<String, Object> kept(final ToolCall call,
+                                     final ToolCallContext context,
+                                     final Recorded at,
+                                     final Map<String, Object> registry,
+                                     final Map<String, Object> recorded,
+                                     final String table) {
+        final String was = JsonValues.text(recorded.get(SCOPE_GROUP));
+        final String group = namedGroup(call, registry, was);
+        final List<String> types = JsonValues.listOrEmpty(recorded.get(SourceTypeScope.SOURCE_TYPES)).stream()
+                .map(JsonValues::text)
+                .toList();
+        final boolean renamed = !group.equals(was);
+        final String now = SurveyDoc.at(Instant.now());
+        final Map<String, Object> scope = new LinkedHashMap<>(recorded);
+        scope.remove(SourceTypeScope.ROWS);
+        if (renamed) {
+            if (placedRow(registry, was).isPresent()) {
+                throw new ToolRefusal("Group '" + was + "' is built or promoted already (its XSLT, pipeline and "
+                                      + "where its Events go carry its name), so it keeps its name: it isn't renamed "
+                                      + "to '" + group + "'. Call " + NAME + " without " + GROUP_ARG + " (or with '"
+                                      + was + "') to record the other settings. Nothing was written.");
+            }
+            if (context.userQuestions().canAsk()) {
+                final Map<String, Object> details = new LinkedHashMap<>();
+                details.put("feed", at.feed());
+                details.put("source_types", types);
+                consent.require(call, context, Consent.Request.confirmation(NAME, "Rename group '" + was + "' to '"
+                                                                                  + group + "'?", details));
+            }
+            scope.put(SCOPE_GROUP, group);
+            scope.put("at", now);
+            final Set<String> chosen = new LinkedHashSet<>(types);
+            offered(registry).stream()
+                    .filter(row -> chosen.contains(JsonValues.text(row.get("name"))))
+                    .forEach(row -> decide(row, SourceTypeRegistry.PARKED, "user", now, inScope(at.build(), group)));
+        }
+        registry.put(SourceTypeProfiles.SCOPE, scope);
+        final SurveyRecord written = registries.writeRegistry(context.session(), at.build(), at.feed(), at.existing(),
+                SourceTypeRegistry.render(registry));
+        if (renamed && at.surveyDoc().isPresent() && at.survey() != null
+            && at.sources().get(SourceTypeProfiles.SCOPE) != null) {
+            final Map<String, Object> sources = new LinkedHashMap<>(at.sources());
+            final Map<String, Object> surveyScope = new LinkedHashMap<>(JsonValues.mapOrEmpty(sources.get(
+                    SourceTypeProfiles.SCOPE)));
+            surveyScope.put(SCOPE_GROUP, group);
+            surveyScope.put("at", now);
+            sources.put(SourceTypeProfiles.SCOPE, surveyScope);
+            at.survey().put(SourceTypeProfiles.STATE_KEY, sources);
+            surveyDocuments.write(context.session(), at.surveyDoc().get(), SurveyDoc.render(at.survey()));
+        }
+        final Map<String, Object> result = written(at.feed(), at.field(), registry, written, table);
+        result.put("scope", types);
+        result.put(GROUP_ARG, group);
+        if (renamed) {
+            result.put("renamed_from", was);
+        }
+        result.put("hint", "The registry is written" + (renamed
+                ? ", group '" + was + "' renamed '" + group + "'"
+                : " with the settings given") + ". The build's scope stands as the user chose it: source type group '"
+                           + group + "', " + types + "; it isn't asked again. Don't show the table again. Carry on "
+                           + "with the plan (next).");
+        return plan.withNext(context, at.build(), result);
+    }
+
+    // A source type's reason in the scope of a build.
+    private static String inScope(final String build, final String group) {
+        return "in the scope of build '" + build + "': translated once its source type group '" + group
+               + "' is built";
     }
 
     /// Whether a scope adds source types some stream the survey read wasn't read for: if so the survey is no longer
@@ -969,8 +1104,7 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
         for (final Map<String, Object> row : offered(registry)) {
             final String name = JsonValues.text(row.get("name"));
             decide(row, SourceTypeRegistry.PARKED, "user", now, chosen.contains(name)
-                    ? "in the scope of build '" + build + "': translated once its source type group '"
-                      + scope.group() + "' is built"
+                    ? inScope(build, scope.group())
                     : scope.reason().isBlank()
                             ? "left for a later build"
                             : scope.reason());
@@ -1123,6 +1257,25 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
     /// @param reason Why the others wait, in their words.
     /// @param group  The group's name: an existing group's adds the source types to it.
     private record Scope(List<String> chosen, String reason, String group) {
+
+    }
+
+    /// What a call kept to the recorded scope writes to.
+    ///
+    /// @param build     The build.
+    /// @param feed      The surveyed feed.
+    /// @param field     The source type field.
+    /// @param existing  The registry found, or null.
+    /// @param surveyDoc The build's survey doc, if any.
+    /// @param survey    Its state, or null.
+    /// @param sources   Its source types state (empty when none).
+    private record Recorded(String build,
+                            String feed,
+                            String field,
+                            SourceTypeRegistries.Found existing,
+                            Optional<SurveyRecord> surveyDoc,
+                            Map<String, Object> survey,
+                            Map<String, Object> sources) {
 
     }
 

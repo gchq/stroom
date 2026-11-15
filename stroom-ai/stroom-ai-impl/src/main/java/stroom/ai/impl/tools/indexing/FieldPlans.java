@@ -112,18 +112,22 @@ public final class FieldPlans {
     /// (EventDetail/Network/*/Source/Device/IPAddress names the source address of a Permit, a Deny, a Connect...),
     /// and `//` for any elements between (EventDetail//Object/Name names View/Object/Name and
     /// Export/Source/Object/Name). Seen: an agent's EventDetail//Object/Name taken as matching nothing, its paths
-    /// reported as not mapped.
+    /// reported as not mapped. An absence test (`TypeId[not(...)]`, as [#orElse] writes) names the path it tests.
     ///
     /// @param source A plan field's source.
     /// @param path   An event path, e.g. `EventDetail/View/Object/Name`.
     /// @return True if the source names it.
     public static boolean sourceMatches(final String source, final String path) {
-        if (!wild(source)) {
-            return source.equals(path);
-        }
         final List<String> branches = branches(source);
         if (branches.size() > 1) {
             return branches.stream().anyMatch(branch -> sourceMatches(branch, path));
+        }
+        final String plain = withoutAbsenceTests(source);
+        if (!plain.equals(source)) {
+            return sourceMatches(plain, path);
+        }
+        if (!wild(source)) {
+            return source.equals(path);
         }
         if (!source.contains("//")) {
             final String[] want = ToolText.strip(source, "/").split("/", -1);
@@ -142,6 +146,48 @@ public final class FieldPlans {
                 ? "(?:[^/]+/)*"
                 : "") + descendants(ToolText.strip(source, "/"));
         return Pattern.compile(regex, Pattern.DOTALL).matcher(ToolText.strip(path, "/")).matches();
+    }
+
+    /// A source reading one path, else (for an event without it) another: a union of the first and the second
+    /// where the event has no first, so each event gives one of them. Asked for by the user: ECS's event.action from
+    /// an action's Action, else from the event's TypeId, as most actions have no Action element.
+    ///
+    /// @param path     The path read first, relative to the Event (e.g. `EventDetail/*/Action`).
+    /// @param fallback The path read where the event has none of the first (e.g. `EventDetail/TypeId`).
+    /// @return The source, e.g. `EventDetail/*/Action | EventDetail/TypeId[not(../../EventDetail/*/Action)]`.
+    public static String orElse(final String path, final String fallback) {
+        // From the fallback's element back up to the Event, where the first path starts.
+        final String up = "../".repeat(steps(fallback).size());
+        return path + " | " + fallback + "[not(" + up + path + ")]";
+    }
+
+    // A source with its absence tests ([not(...)], as orElse writes) left out: a test narrows which elements are
+    // read, not the path they are at.
+    private static String withoutAbsenceTests(final String source) {
+        final StringBuilder out = new StringBuilder();
+        int i = 0;
+        while (i < source.length()) {
+            if (source.startsWith("[not(", i)) {
+                int depth = 0;
+                int j = i;
+                for (; j < source.length(); j++) {
+                    final char ch = source.charAt(j);
+                    if (ch == '[') {
+                        depth++;
+                    } else if (ch == ']') {
+                        depth--;
+                        if (depth == 0) {
+                            break;
+                        }
+                    }
+                }
+                i = j + 1;
+            } else {
+                out.append(source.charAt(i));
+                i++;
+            }
+        }
+        return out.toString();
     }
 
     // The source as a regex: '*' one element, '//' any elements between, the rest as it is.

@@ -169,10 +169,11 @@ is held while a clash remains, and refuses a plan naming another group's index n
 
 ## Promotion and later builds
 
-* Promotion moves the modules, the registry (always; the survey doc stays in the build) and any group output
-  feed beside the feed (in a folder of the source's own where the feed's folder holds other sources' folders; the
-  build's test feed is never promoted: don't offer it), the group pipelines where its destinations say; its
-  review shows the pipeline changes
+* Promotion moves the common module, helpers and the registry (always; the survey doc stays in the build) beside
+  the feed (in a folder of the source's own where the feed's folder holds other sources' folders; the build's test
+  feed is never promoted: don't offer it), and the group's own documents into `<that folder>/<group>/`: its output
+  feed there, its pipeline, XSLT and documentation in `Events/`, its index, indexing pipeline and dashboard in
+  `Indexing/` (a later build of the feed into its own group's folder). Its review shows the pipeline changes
   (reference data each group pipeline lacks, only ever added) and the index changes (fields added, forward only).
 * One open build per aggregated feed: another is refused, naming the open one. Finish (promote) or abandon it first.
 * A later build changes promoted modules through working copies (imported by the build's own modules, so the chain

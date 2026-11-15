@@ -266,8 +266,8 @@ class IndexPlans {
                   + "(custom_namespaces), before saving. Seen in testing: flat and ECS names mixed in one template."
                 : "") + (reply.containsKey("core_fields_mostly_empty")
                 ? " core_fields_mostly_empty: core fields of the convention (and the time field) that most events "
-                  + "read leave empty: tell the user, naming each one's Events path, and ask whether to read it from "
-                  + "another path (one the events of that kind have) or keep it as it is."
+                  + "read leave empty (or all of them): tell the user, naming each one's Events path, and ask whether "
+                  + "to read it from another path (one the events of that kind have) or keep it as it is."
                 : "") + (reply.containsKey("fields_not_in_schema")
                 ? " fields_not_in_schema: the Events schema has no element at their source, so no Event can "
                   + "hold it: correct the source to a path the Events have (summarise_streams' path_population), or "
@@ -340,12 +340,13 @@ class IndexPlans {
 
     /// The core fields of the plan's convention (ECS's `level: core`), and its time field, that some events read
     /// populate but most leave empty (seen in chat 177: event.action empty in 2,233 of 2,457 documents, and nothing
-    /// said so). One no event populates is `fields_not_in_sample` already.
+    /// said so), and those the plan carries though no event read populates them (seen in chat 178: event.action
+    /// written by no event, so Elasticsearch never mapped it, and nothing said so until a search on it failed).
     ///
     /// @param plan      A plan.
     /// @param populated How often the sample populates each event path (%).
     /// @param ecs       The ECS schema, or null.
-    /// @return Each as `name <- source: in n% of events read`.
+    /// @return Each as `name <- source: in n% of events read`, or `in no event read`.
     static List<String> mostlyEmptyCore(final FieldPlan plan,
                                         final Map<String, Double> populated,
                                         final EcsSchema ecs) {
@@ -359,7 +360,9 @@ class IndexPlans {
                 continue;
             }
             final Double share = FieldPlans.populationOf(field.source(), populated);
-            if (share != null && share > 0 && share < 100.0 - EventsExpectations.MOSTLY_EMPTY) {
+            if (share == null || share == 0) {
+                out.add(field.name() + " <- " + field.source() + ": in no event read");
+            } else if (share < 100.0 - EventsExpectations.MOSTLY_EMPTY) {
                 out.add(field.name() + " <- " + field.source() + ": in " + share + "% of events read");
             }
         }
