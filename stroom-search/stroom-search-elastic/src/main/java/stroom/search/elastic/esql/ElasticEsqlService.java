@@ -84,7 +84,8 @@ import java.util.stream.Collectors;
 /// The caller's commands ([EsqlPipeline]) follow a `FROM` written from the document's index name, and the rows are
 /// capped. A Stroom expression and a time range on the document's time field are made into Query DSL as a search
 /// makes them ([SearchExpressionQueryBuilder]), and given as the request's `filter`, which Elasticsearch applies
-/// before the commands. Clusters older than 8.14, the first with ES|QL generally available, are refused.
+/// before the commands. The documents of streams the user can't see are left out, as a search leaves out their hits
+/// ([EsqlStreamFilter]). Clusters older than 8.14, the first with ES|QL generally available, are refused.
 public class ElasticEsqlService implements ElasticEsql {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticEsqlService.class);
@@ -109,6 +110,7 @@ public class ElasticEsqlService implements ElasticEsql {
     private final Provider<AiService> aiServiceProvider;
     private final IndexFieldCache indexFieldCache;
     private final WordListProvider wordListProvider;
+    private final EsqlStreamFilter streamFilter;
 
     /// @param securityContext             Checks Use on the index doc, and reads the docs it needs.
     /// @param elasticIndexStore           Reads the index doc.
@@ -118,6 +120,7 @@ public class ElasticEsqlService implements ElasticEsql {
     /// @param aiServiceProvider           Used by the filter's query builder, as for a search.
     /// @param indexFieldCache             The index's fields, for the filter's query builder.
     /// @param wordListProvider            Dictionaries the filter names.
+    /// @param streamFilter                Leaves out the documents of streams the user can't see.
     @Inject
     public ElasticEsqlService(final SecurityContext securityContext,
                               final ElasticIndexStore elasticIndexStore,
@@ -126,7 +129,8 @@ public class ElasticEsqlService implements ElasticEsql {
                               final Provider<ElasticSearchConfig> elasticSearchConfigProvider,
                               final Provider<AiService> aiServiceProvider,
                               final IndexFieldCache indexFieldCache,
-                              final WordListProvider wordListProvider) {
+                              final WordListProvider wordListProvider,
+                              final EsqlStreamFilter streamFilter) {
         this.securityContext = securityContext;
         this.elasticIndexStore = elasticIndexStore;
         this.elasticClusterStore = elasticClusterStore;
@@ -135,6 +139,7 @@ public class ElasticEsqlService implements ElasticEsql {
         this.aiServiceProvider = aiServiceProvider;
         this.indexFieldCache = indexFieldCache;
         this.wordListProvider = wordListProvider;
+        this.streamFilter = streamFilter;
     }
 
     @Override
@@ -191,21 +196,25 @@ public class ElasticEsqlService implements ElasticEsql {
             }
             return elasticClientCache.contextResult(cluster.getConnection(), client -> {
                 final String version = checkVersion(client);
+                final EsqlStreamFilter.Excluded excluded = streamFilter.exclude(client, indexDoc, indexName, filter,
+                        deadline);
+                final Query visible = and(filter, excluded.query());
                 final String query = limited.pipeline().query(indexName);
-                final Response response = run(client, query, filter, version, deadline, timeLimit);
+                final Response response = run(client, query, visible, version, deadline, timeLimit);
                 final boolean truncated = response.rows().size() >= limited.limit();
                 Long total = null;
                 String totalNote = null;
                 if (request.countTotal() && truncated) {
                     try {
-                        total = count(client, pipeline.forTotal().query(indexName), filter, version, deadline,
+                        total = count(client, pipeline.forTotal().query(indexName), visible, version, deadline,
                                 timeLimit);
                     } catch (final Refusal e) {
                         totalNote = "The total couldn't be counted: " + e.getMessage();
                     }
                 }
                 return new Result(query, indexName, response.columns(), response.rows(), response.tookMs(),
-                        limited.limit(), joinNotes(capNote, limited.note()), truncated, total, totalNote, version);
+                        limited.limit(), joinNotes(capNote, limited.note()), truncated, pipeline.groups(), total,
+                        totalNote, excluded.streams(), version);
             });
         });
     }
@@ -276,6 +285,17 @@ public class ElasticEsqlService implements ElasticEsql {
         if (timeRange != null && (NullSafe.isNonBlankString(timeRange.getFrom())
                                   || NullSafe.isNonBlankString(timeRange.getTo()))) {
             filters.add(timeRangeQuery(indexDoc, timeRange, dateTimeSettings));
+        }
+        return and(filters.toArray(new Query[0]));
+    }
+
+    // All the queries given, as one filter, or null for none.
+    private static Query and(final Query... queries) {
+        final List<Query> filters = new ArrayList<>();
+        for (final Query query : queries) {
+            if (query != null) {
+                filters.add(query);
+            }
         }
         if (filters.isEmpty()) {
             return null;

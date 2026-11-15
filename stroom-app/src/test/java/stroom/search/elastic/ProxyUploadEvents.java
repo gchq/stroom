@@ -26,6 +26,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.IntPredicate;
 
 /// Synthetic web proxy events, each an upload by a user to a site domain of some bytes, indexed directly into
 /// Elasticsearch: for the ES|QL tests, which check grouped answers against totals worked out here from the same
@@ -33,7 +34,8 @@ import java.util.Map;
 ///
 /// Fields: `@timestamp` (one minute apart from [#START]), `user.name` and `url.domain` (keyword), `bytes` (long),
 /// `event.action` (`allowed` or `blocked`, keyword), `message` (text, with a `message.keyword` sub-field), and
-/// `StreamId` and `EventId` (long), as Stroom indexes them.
+/// `StreamId` and `EventId` (long), as Stroom indexes them. The events are shared among the streams given, in turn,
+/// which must be in Stroom for a search to find their events.
 public final class ProxyUploadEvents {
 
     /// The time of the first event.
@@ -68,20 +70,25 @@ public final class ProxyUploadEvents {
     /// @param node      The node.
     /// @param indexName The index to create.
     /// @param count     How many events.
-    public static void seed(final ElasticTestNode node, final String indexName, final int count) {
+    /// @param streamIds The streams the events are in, in turn: event `i` is in stream `i % streamIds.size()`.
+    public static void seed(final ElasticTestNode node,
+                            final String indexName,
+                            final int count,
+                            final List<Long> streamIds) {
         node.createIndex(indexName, INDEX_BODY);
         for (int from = 0; from < count; from += BATCH) {
             final ArrayNode batch = JsonUtil.getMapper().createArrayNode();
             for (int i = from; i < Math.min(count, from + BATCH); i++) {
-                batch.add(document(i));
+                batch.add(document(i, streamIds));
             }
             node.bulkIndex(indexName, batch);
         }
     }
 
-    /// @param i The event's number, from 0.
+    /// @param i         The event's number, from 0.
+    /// @param streamIds The streams the events are in, in turn.
     /// @return The event as a document, with its `_id`.
-    public static ObjectNode document(final int i) {
+    public static ObjectNode document(final int i, final List<Long> streamIds) {
         final ObjectNode doc = JsonUtil.getMapper().createObjectNode();
         doc.put("_id", String.valueOf(i));
         doc.put("@timestamp", time(i).toString());
@@ -92,8 +99,8 @@ public final class ProxyUploadEvents {
                 ? "blocked"
                 : "allowed");
         doc.put("message", "POST https://" + domain(i) + "/upload/" + i + " by " + user(i));
-        doc.put("StreamId", 1 + i / 1_000);
-        doc.put("EventId", 1 + i % 1_000);
+        doc.put("StreamId", streamIds.get(i % streamIds.size()));
+        doc.put("EventId", 1 + i / streamIds.size());
         return doc;
     }
 
@@ -129,14 +136,15 @@ public final class ProxyUploadEvents {
 
     /// The total bytes of each user and domain pair, the most first (ties by user, then domain).
     ///
-    /// @param count How many events there are.
-    /// @param from  The first event to count.
-    /// @param to    The event after the last to count.
+    /// @param count    How many events there are.
+    /// @param included Whether to count an event, by its number.
     /// @return The totals, keyed by `user|domain`.
-    public static Map<String, Long> totalsByUserAndDomain(final int count, final int from, final int to) {
+    public static Map<String, Long> totalsByUserAndDomain(final int count, final IntPredicate included) {
         final Map<String, Long> totals = new LinkedHashMap<>();
-        for (int i = Math.max(0, from); i < Math.min(count, to); i++) {
-            totals.merge(user(i) + "|" + domain(i), bytes(i), Long::sum);
+        for (int i = 0; i < count; i++) {
+            if (included.test(i)) {
+                totals.merge(user(i) + "|" + domain(i), bytes(i), Long::sum);
+            }
         }
         final Map<String, Long> sorted = new LinkedHashMap<>();
         totals.entrySet().stream()
