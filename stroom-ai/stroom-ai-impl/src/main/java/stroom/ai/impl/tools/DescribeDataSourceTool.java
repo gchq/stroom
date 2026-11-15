@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.api.ElasticEsql;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.indexing.PlannedField;
@@ -26,6 +27,7 @@ import stroom.docref.DocRef;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
@@ -60,6 +62,7 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
     private final AgentInstructions agentInstructions;
     private final DataSourceDocumentation dataSourceDocumentation;
     private final AiAuditLog auditLog;
+    private Provider<ElasticEsql> elasticEsqlProvider;
 
     @Inject
     DescribeDataSourceTool(final ChatWorkspace workspace,
@@ -177,6 +180,10 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
             sb.append("(Only the first ").append(MAX_FIELDS).append(" fields are given.)\n");
         }
         MisleadingSearches.backendOf(dataSource).ifPresent(backend -> sb.append(searchingNote(backend, values)));
+        if (ElasticIndexDoc.TYPE.equals(dataSource.getType()) && elasticEsqlProvider != null) {
+            elasticEsqlProvider.get().esqlVersion(dataSource)
+                    .ifPresent(version -> sb.append(esqlNote(version, values)));
+        }
         sb.append(contextNote(context, dataSource));
         return ToolResult.text(sb.toString().stripTrailing());
     }
@@ -311,6 +318,26 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
             }
         }
         return out;
+    }
+
+    /// @param elasticEsqlProvider Says whether ES|QL can be used on an Elastic Index, so aggregations are steered to
+    ///                            esql_query.
+    @Inject
+    void setElasticEsql(final Provider<ElasticEsql> elasticEsqlProvider) {
+        this.elasticEsqlProvider = elasticEsqlProvider;
+    }
+
+    /// The line for an Elastic Index whose cluster takes ES|QL: aggregations go to esql_query, with an example from
+    /// the index's own fields.
+    ///
+    /// @param version The cluster's version.
+    /// @param fields  The index's fields.
+    /// @return The note, on a line of its own.
+    static String esqlNote(final String version, final List<QueryField> fields) {
+        return "Aggregations on this index (Elasticsearch " + version + "): use esql_query, which Elasticsearch "
+               + "answers itself" + EsqlHints.examplePipeline(fields)
+                       .map(pipeline -> ", e.g. pipeline '" + pipeline + "'")
+                       .orElse("") + ".\n";
     }
 
     /// What a search of a Lucene or Elastic index through Stroom gets wrong without an error (found against Stroom

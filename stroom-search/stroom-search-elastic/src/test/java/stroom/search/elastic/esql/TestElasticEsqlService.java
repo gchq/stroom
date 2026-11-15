@@ -306,6 +306,17 @@ class TestElasticEsqlService {
     }
 
     @Test
+    void testEsqlVersion() {
+        assertThat(service.esqlVersion(INDEX_REF)).contains("9.5.3");
+        stubVersion("8.13.0");
+        assertThat(service.esqlVersion(INDEX_REF)).isEmpty();
+        when(securityContext.hasDocumentPermission(INDEX_REF, DocumentPermission.USE)).thenReturn(false);
+        stubVersion("9.5.3");
+        assertThat(service.esqlVersion(INDEX_REF)).isEmpty();
+        assertThat(service.esqlVersion(null)).isEmpty();
+    }
+
+    @Test
     void testVersions() {
         assertThat(ElasticEsqlService.atLeast("8.14.0", ElasticEsqlService.MIN_VERSION)).isTrue();
         assertThat(ElasticEsqlService.atLeast("8.14.0-SNAPSHOT", ElasticEsqlService.MIN_VERSION)).isTrue();

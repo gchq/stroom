@@ -23,6 +23,8 @@ import stroom.ai.api.ElasticEsql.Refusal;
 import stroom.ai.api.ElasticEsql.Request;
 import stroom.ai.api.ElasticEsql.Result;
 import stroom.ai.impl.BuiltInToolWorld;
+import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.TableEngine;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.QueryField;
@@ -193,6 +195,39 @@ class TestEsqlQueryTool {
         assertThat(EsqlQueryTool.rowsNote(new Result("FROM i", "i", List.of(), List.of(), 1, 10, null, false,
                 false, null, null, 2, "9.5.3")))
                 .contains("The documents of 2 streams you can't see, or no longer in Stroom, were left out");
+    }
+
+    @Test
+    void describeDataSourceSteersAggregationsToEsqlQuery() {
+        assertThat(DescribeDataSourceTool.esqlNote("9.5.3", List.of(QueryField.createKeyword("user.name"),
+                QueryField.createLong("bytes"))))
+                .isEqualTo("Aggregations on this index (Elasticsearch 9.5.3): use esql_query, which Elasticsearch "
+                           + "answers itself, e.g. pipeline '| STATS n = COUNT(*), total = SUM(bytes) BY user.name "
+                           + "| SORT total DESC | LIMIT 10'.\n");
+    }
+
+    @Test
+    void theTableToolSaysWhenEsqlQueryWouldHaveGrouped() {
+        final DataSourceAccess dataSourceAccess = Mockito.mock(DataSourceAccess.class);
+        Mockito.when(dataSourceAccess.find("elastic-index-uuid")).thenReturn(List.of(
+                BuiltInToolWorld.ELASTIC_INDEX));
+        Mockito.when(dataSourceAccess.find("index-uuid")).thenReturn(List.of(BuiltInToolWorld.INDEX));
+        final TableTool tool = new TableTool(Mockito.mock(ChatWorkspace.class),
+                Mockito.mock(ColumnSummariser.class));
+        tool.setDataSourceAccess(dataSourceAccess);
+        final TableEngine.Query grouped = new TableEngine.Query(List.of(), List.of(), List.of(), List.of("UserId"),
+                List.of(), false, false, List.of(), null);
+        final TableEngine.Query rows = new TableEngine.Query(List.of(), List.of(), List.of(), List.of(), List.of(),
+                false, false, List.of(), null);
+
+        assertThat(tool.esqlNote("elastic-index-uuid", grouped, 5_000))
+                .contains("These 5000 rows were read from ElasticIndex 'Test elastic index'")
+                .contains("esql_query would have done that in Elasticsearch");
+        // Few rows, rows not grouped, or not an Elastic Index: nothing to say.
+        assertThat(tool.esqlNote("elastic-index-uuid", grouped, 50)).isEmpty();
+        assertThat(tool.esqlNote("elastic-index-uuid", rows, 5_000)).isEmpty();
+        assertThat(tool.esqlNote("index-uuid", grouped, 5_000)).isEmpty();
+        assertThat(tool.esqlNote(null, grouped, 5_000)).isEmpty();
     }
 
     @Test

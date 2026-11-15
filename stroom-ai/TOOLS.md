@@ -1194,6 +1194,10 @@ written from the doc, so a query never names another index.
   are and whether they were cut short; over `/mcp`, the same as JSON (`columns`, `rows`, `row_count`, `limit`,
   `truncated`, `grouped`, `total_groups` or `total_rows`, `note`). Either way the rows are written to
   `/outputs/esql/esql-<time>.md` for the table tool. Audited as a Search event (`AiAuditLog.searched`).
+* **Steered to**: `describe_data_source` gives an Elastic Index on a cluster taking ES|QL a line with an example
+  pipeline from its own fields (`EsqlHints`); `run_stroomql` gives, after an aggregation on an Elastic Index that
+  translates exactly (`StroomQlToEsql`), the equivalent pipeline and how many documents Stroom read; the table tool
+  notes when 1,000 rows or more of an Elastic Index were read only to be grouped.
 * **Refuses**: a doc that isn't an Elastic Index (a Lucene index or another data source: use `run_stroomql`); a
   command not allowed; an unknown field (with the index's fields most like it, and `describe_data_source`); a text
   field grouped by when it has a keyword sub-field (group by the sub-field); a cluster older than 8.14 (use

@@ -67,6 +67,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -217,6 +218,30 @@ public class ElasticEsqlService implements ElasticEsql {
                         totalNote, excluded.streams(), version);
             });
         });
+    }
+
+    @Override
+    public Optional<String> esqlVersion(final DocRef index) {
+        try {
+            if (index == null || !securityContext.hasDocumentPermission(index, DocumentPermission.USE)) {
+                return Optional.empty();
+            }
+            return securityContext.useAsReadResult(() -> {
+                final ElasticIndexDoc indexDoc = elasticIndexStore.readDocument(index);
+                if (indexDoc == null || indexDoc.getClusterRef() == null) {
+                    return Optional.<String>empty();
+                }
+                final ElasticClusterDoc cluster = elasticClusterStore.readDocument(indexDoc.getClusterRef());
+                if (cluster == null) {
+                    return Optional.<String>empty();
+                }
+                return elasticClientCache.contextResult(cluster.getConnection(), client ->
+                        Optional.of(checkVersion(client)));
+            });
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("ES|QL can't be used on {}: {}", index, e.getMessage()), e);
+            return Optional.empty();
+        }
     }
 
     // Refuses a grouping by a text field that has a keyword sub-field: grouping by the sub-field is what's meant, and

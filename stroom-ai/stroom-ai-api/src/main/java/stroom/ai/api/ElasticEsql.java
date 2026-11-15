@@ -24,6 +24,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /// Runs an ES|QL query on the index of an Elastic Index document, as the user: totals, top N and grouped questions
 /// answered by Elasticsearch itself, rather than by scrolling every document through Stroom. It only reads: nothing
@@ -46,6 +47,14 @@ public interface ElasticEsql {
     /// @throws Refusal saying why it wasn't run, or why Elasticsearch refused it, with what to do instead.
     /// @throws stroom.util.shared.PermissionException if the user may not use the Elastic Index document.
     Result query(Request request);
+
+    /// Whether ES|QL can be used on an Elastic Index document's index, for saying so before a query: the user may
+    /// use the document and its cluster is 8.14 or later. Never fails: a document that can't be read or a cluster
+    /// that can't be reached is empty.
+    ///
+    /// @param index The Elastic Index document.
+    /// @return The cluster's version, or empty if ES|QL can't be used on it, or that isn't known.
+    Optional<String> esqlVersion(DocRef index);
 
 
     // --------------------------------------------------------------------------------

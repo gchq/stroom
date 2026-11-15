@@ -33,6 +33,7 @@ import stroom.ai.impl.workspace.TableEngine.Result;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiToolCategory;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.concurrent.LazyValue;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
@@ -82,12 +83,24 @@ class TableTool extends AbstractWorkspaceTool {
      */
     static final int FAILURES_BEFORE_FALLBACK = 2;
 
+    /// The rows of an Elastic Index read for a table grouped or totalled here that make it worth saying esql_query
+    /// would have done it in Elasticsearch.
+    static final int ESQL_NOTE_ROWS = 1_000;
+
     private final ColumnSummariser columnSummariser;
+    private DataSourceAccess dataSourceAccess;
 
     @Inject
     TableTool(final ChatWorkspace workspace, final ColumnSummariser columnSummariser) {
         super(workspace);
         this.columnSummariser = columnSummariser;
+    }
+
+    /// @param dataSourceAccess Finds the data source a table came from, to say when grouping its rows here would
+    ///                         have been done by Elasticsearch with esql_query.
+    @Inject
+    void setDataSourceAccess(final DataSourceAccess dataSourceAccess) {
+        this.dataSourceAccess = dataSourceAccess;
     }
 
     @Override
@@ -349,7 +362,8 @@ class TableTool extends AbstractWorkspaceTool {
                                + result.rows().size() + " row(s)."
                                + CurrentResultsTool.coverage(workspace, path, result.rowsRead())
                                        .map(coverage -> " " + coverage)
-                                       .orElse("");
+                                       .orElse("")
+                               + esqlNote(workspace.sourceDocUuid(path), query, result.rowsRead());
         if (out != null) {
             writeTable(workspace, out, result, workspace.sourceDocUuid(path));
             return "Wrote the result to " + out + ". " + summary + " The first rows:\n\n"
@@ -357,6 +371,27 @@ class TableTool extends AbstractWorkspaceTool {
         }
         return summary + "\n\n" + markdown(context, result.columns(), result.rows(),
                 limits(context).getMaxLinesPerRead());
+    }
+
+    /// The note for many rows of an Elastic Index grouped or totalled here, which esql_query would have done in
+    /// Elasticsearch without reading the rows.
+    ///
+    /// @param sourceDocUuid The document the table came from, or null.
+    /// @param query         The table query.
+    /// @param rowsRead      How many rows it read.
+    /// @return The note, starting with a space, or empty.
+    String esqlNote(final String sourceDocUuid, final Query query, final long rowsRead) {
+        if (dataSourceAccess == null || sourceDocUuid == null || rowsRead < ESQL_NOTE_ROWS
+            || (query.groupBy().isEmpty() && query.aggregates().isEmpty())) {
+            return "";
+        }
+        return dataSourceAccess.find(sourceDocUuid).stream()
+                .filter(docRef -> ElasticIndexDoc.TYPE.equals(docRef.getType()))
+                .findFirst()
+                .map(docRef -> " These " + rowsRead + " rows were read from " + DataSourceAccess.describe(docRef)
+                               + " to be grouped or totalled here: esql_query would have done that in "
+                               + "Elasticsearch, without reading the rows.")
+                .orElse("");
     }
 
     private static String markdown(final ToolCallContext context,

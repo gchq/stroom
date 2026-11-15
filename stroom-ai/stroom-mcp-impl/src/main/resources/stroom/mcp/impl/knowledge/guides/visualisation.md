@@ -199,6 +199,10 @@ list every setting. Look at the chart's kind, its table's columns and its render
 next steps it supports with `ask_user`, recommending one. Make each specific to the data: name the column, the
 period or the node, e.g. "Find the groups among the 42 people messaging each other, and who links them".
 
+Which tool answers which question: totals, counts, top N and grouped or bucketed questions (by user, by hour) on an
+Elasticsearch index, `esql_query` (Elasticsearch aggregates them); row-level results, Lucene indexes, views and other
+data sources, or Stroom's own expression functions, `run_stroomql`.
+
 - **Network graph**
   - Clusters: `nodeColours` cluster, a `set_vis_settings` change. It colours the groups of nodes more linked to
     each other than to the rest (found with the Leiden method), names each after its most connected member (e.g.
