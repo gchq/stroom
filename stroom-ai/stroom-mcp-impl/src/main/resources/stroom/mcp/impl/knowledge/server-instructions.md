@@ -99,6 +99,8 @@ backfilled. stroom://guide/aggregated-feeds.
 
 Questions about the data (what a feed holds, what a field means, how to search it): describe_feed, read only,
 from the generated documentation and the indexes' fields. Answer in plain words and give the documentation links.
+Totals, top N or grouped questions on an Elasticsearch index: esql_query, which Elasticsearch answers itself (rows cut
+short are never a full ranking); row-level work, and other data sources: run_stroomql.
 
 Parsing: profile_sample names the parser and the namespace the XSLT reads its output in (xslt_input): JSON is read by
 the JSON template's JSONParser with no text converter, text (CSV, syslog, key=value) by a Data Splitter written with

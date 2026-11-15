@@ -122,6 +122,9 @@ public class ContextAssembler {
             the pipelines that feed it), not from its name alone. Go ahead \
             without asking only if they named the data source, the attached tab's query already reads one, or just \
             one fits.
+            - For totals, top N and grouped questions on an Elastic Index, use esql_query (Elasticsearch works \
+            them out); run_stroomql for row-level work and other data sources. Rows cut short are never a full \
+            ranking: say how many groups there are in all.
             - "Query" can mean two things. If it isn't clear whether the user wants you to run a search and give \
             them the results (run_stroomql), or to set up a Query document they can run themselves \
             (propose_query), ask them with ask_user before writing it. "Show me", "how many" or "find" mean run \

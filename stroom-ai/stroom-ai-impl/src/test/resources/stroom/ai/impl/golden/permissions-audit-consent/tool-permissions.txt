@@ -239,6 +239,13 @@ Needs: Use (document)
 - nothing: REFUSED or limited: The query doesn't name a data source you can use: check its 'from' clause against list_data_sources.
 - admin: runs (the same as with everything)
 
+## esql_query {"index":"elastic-index-uuid","pipeline":"| STATS n = COUNT(*) BY UserId | SORT n DESC | LIMIT 2"}
+Needs: Use (document)
+- everything: runs: Ran the ES|QL query on ElasticIndex 'Test elastic index' (uuid elastic-index-uuid) (Elasticsearch 9.5.3, 4 ms):
+- without Use (document): REFUSED or limited: Error: No Elastic Index doc with uuid or name 'elastic-index-uuid' that you can use. list_data_sources gives those you can.
+- nothing: REFUSED or limited: Error: No Elastic Index doc with uuid or name 'elastic-index-uuid' that you can use. list_data_sources gives those you can.
+- admin: runs (the same as with everything)
+
 ## search_events {"index":"index-uuid","where":[{"field":"UserId","value":"alice"}]}
 Needs: Use (document)
 - everything: runs: {"index":{"type":"Index","uuid":"index-uuid","name":"Test index","backend":"lucene"},"searched":["UserId EQUALS alice"],"total":0,"hits":[],"by_stream":[],"errors":["Stroom's dashboard search gave no …

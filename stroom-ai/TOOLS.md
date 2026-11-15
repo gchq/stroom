@@ -142,6 +142,7 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 | `document_info` | A document's type, path, tags, history, version and dependencies | core | yes | | | | View | |
 | `document_links` | Follows dependency links (dependants or dependencies) from documents | core | yes | | | Manage Processors | View | |
 | `elastic_index_templates` | An Elastic Index's index template and its component templates, read from its cluster | indexing | yes | indexing | | | View | |
+| `esql_query` | Totals, top N and grouped answers on an Elastic Index's index, worked out by Elasticsearch (ESQL) | search | yes | | | | Use | slot |
 | `explain_processing` | Why processing isn't happening, or is slow, link by link from nodes and jobs to each filter's tasks and priority | processing | yes | processing | Manage Processors | Manage Jobs, Manage Nodes, View System Info | View | |
 | `explain_retention` | How long data is kept and why: retention rules in order, the rule keeping a feed or stream, what would go now | processing | yes | processing | | Manage Policies, Manage Jobs | | |
 | `fetch_events` | Fetches the events behind StreamId/EventId rows into an XML file, or reads a stream's records | search | yes | | View Data | | | slot |
@@ -284,6 +285,7 @@ Several tools cover neighbouring ground. Which does what:
   `summarise_streams kind=errors` triages Error streams against the error rules (`ErrorTriage`).
 * **Events in an index**: `search_events` with `index` searches an index as a dashboard does and gives
   StreamId/EventId hits and the streams holding them; `run_stroomql` runs any StroomQL into a table;
+  `esql_query` answers totals, top N and grouped questions on an Elastic Index with ES|QL, in Elasticsearch;
   `describe_data_source` says which searches on an index would mislead. There is no `find_events` tool.
 * **Reference data**: `find_reference_data` lists every map in the environment; `xslt_lookups` starts from given
   XSLTs or pipelines and analyses their lookups.
@@ -1160,6 +1162,43 @@ for every row the cap allows, with each row's stream and event ids. `StreamId` a
   has, so `LuceneTextFields` reads them from the index's own field list (`IndexResource.findFields`, as the user,
   up to 2,000 fields), the TEXT fields only. If they can't be read, the check goes on without them. Found reviewing
   the tools: none were passed, so a CONTAINS on a keyword field ran and found nothing.
+
+### `esql_query`
+
+search · read-only · Use on the Elastic Index doc (`DataSourceAccess`, and again by `ElasticEsqlService`) · takes a
+run slot · Classes: `EsqlQueryTool`, `stroom.ai.api.ElasticEsql`, `ElasticEsqlService`, `EsqlPipeline`
+
+Runs an ES|QL query on an Elastic Index doc's index, as the user, through Stroom's Elasticsearch module, so a total,
+top N or grouped question is aggregated by Elasticsearch rather than by scrolling every document through Stroom's
+coprocessors, as `run_stroomql` does. The model gives `pipeline`, the commands after `FROM`; `FROM <index name>` is
+written from the doc, so a query never names another index.
+
+* **Commands**: `EsqlPipeline` reads the pipeline with a small lexer (strings, triple-quoted strings, backtick names,
+  `//` and nested `/* */` comments, brackets) and splits it on top-level `|` only. Each stage's first word is its
+  command: WHERE, EVAL, STATS, SORT, LIMIT, KEEP, DROP, RENAME, DISSECT, GROK and MV_EXPAND are allowed; FROM,
+  ROW, SHOW, TS, ENRICH, LOOKUP JOIN, FORK, INLINESTATS, COMPLETION, RERANK and anything unknown are refused, as
+  are a top-level `;`, an unterminated string or comment and unbalanced brackets. Each stage is sent on its own
+  line, so a trailing `//` comment can't hide what is added.
+* **Rows**: the lowest LIMIT after the last STATS or MV_EXPAND bounds the rows; with none, or one over the cap,
+  `LIMIT <cap>` is added. The cap is `limit` (default `stroom.elastic.search.esqlRowLimit`, 1,000), at most 10,000.
+  The rows are truncated when they reach it; then a second query (the pipeline without its trailing SORT and
+  LIMIT, then `STATS stroom_total_rows = COUNT(*)`) counts the rows, or groups, in all.
+* **Filter**: `where` (as `search_events` takes it, checked against the index's fields and `MisleadingSearches`)
+  and `timeFrom`/`timeTo` (on the doc's time field) become Query DSL through `SearchExpressionQueryBuilder`, as for
+  a search, sent as the ES|QL request's `filter`.
+* **Streams**: as a Stroom search drops hits whose stream the user can't see (View on its feed) or that is no
+  longer in Stroom, `EsqlStreamFilter` finds the index's distinct `StreamId`s under the filter, looks them up as
+  the user, and leaves the others' documents out (`excluded_streams` in the result). An index without `StreamId`
+  is queried as it is.
+* **Returns**: in the chat, Markdown: the query run, the first 100 rows, and a note of how many rows (groups) there
+  are and whether they were cut short; over `/mcp`, the same as JSON (`columns`, `rows`, `row_count`, `limit`,
+  `truncated`, `grouped`, `total_groups` or `total_rows`, `note`). Either way the rows are written to
+  `/outputs/esql/esql-<time>.md` for the table tool. Audited as a Search event (`AiAuditLog.searched`).
+* **Refuses**: a doc that isn't an Elastic Index (a Lucene index or another data source: use `run_stroomql`); a
+  command not allowed; an unknown field (with the index's fields most like it, and `describe_data_source`); a text
+  field grouped by when it has a keyword sub-field (group by the sub-field); a cluster older than 8.14 (use
+  `run_stroomql`); a query over the time limit (`esqlTimeout`, and the session's query time limit), which is
+  cancelled; partial results (`allow_partial_results=false` from 8.18).
 
 ### `current_results`
 
