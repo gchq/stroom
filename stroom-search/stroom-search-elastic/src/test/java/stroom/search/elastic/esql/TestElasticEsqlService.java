@@ -22,6 +22,8 @@ import stroom.ai.api.ElasticEsql.Refusal;
 import stroom.ai.api.ElasticEsql.Request;
 import stroom.ai.api.ElasticEsql.Result;
 import stroom.docref.DocRef;
+import stroom.meta.api.MetaService;
+import stroom.meta.shared.Meta;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.TimeRange;
@@ -39,6 +41,7 @@ import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.ResultPage;
 import stroom.util.time.StroomDuration;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -60,6 +63,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -97,6 +101,8 @@ class TestElasticEsqlService {
     private ElasticClusterStore elasticClusterStore;
     @Mock
     private ElasticClientCache elasticClientCache;
+    @Mock
+    private MetaService metaService;
 
     private ElasticsearchClient client;
     private MockIndexFieldCache indexFieldCache;
@@ -129,7 +135,8 @@ class TestElasticEsqlService {
                 () -> config,
                 null,
                 indexFieldCache,
-                null);
+                null,
+                new EsqlStreamFilter(() -> metaService));
         stubVersion("9.5.3");
     }
 
@@ -181,6 +188,7 @@ class TestElasticEsqlService {
         assertThat(result.limit()).isEqualTo(2);
         assertThat(result.limitNote()).isNull();
         assertThat(result.truncated()).isTrue();
+        assertThat(result.grouped()).isTrue();
         assertThat(result.totalRows()).isEqualTo(42);
         final List<LoggedRequest> requests = ELASTIC.findAll(WireMock.postRequestedFor(
                 WireMock.urlPathEqualTo(QUERY_PATH)));
@@ -406,6 +414,52 @@ class TestElasticEsqlService {
     }
 
     @Test
+    void testStreamsTheUserCantSeeAreLeftOut() {
+        when(elasticIndexStore.readDocument(INDEX_REF)).thenReturn(withStreamIds(createIndex(INDEX_NAME)));
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo("/" + INDEX_NAME + "/_search"))
+                .willReturn(ElasticWireMock.elasticResponse(200, """
+                        {"took": 1, "timed_out": false,
+                         "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0},
+                         "hits": {"total": {"value": 30, "relation": "eq"}, "max_score": null, "hits": []},
+                         "aggregations": {"composite#streams": {"after_key": {"id": 3}, "buckets": [
+                           {"key": {"id": 1}, "doc_count": 10}, {"key": {"id": 2}, "doc_count": 10},
+                           {"key": {"id": 3}, "doc_count": 10}]}}}""")));
+        // Stream 2 is on a feed the user can't view, and stream 3 is deleted: only stream 1 is found.
+        when(metaService.find(any())).thenReturn(ResultPage.createUnboundedList(List.of(
+                Meta.builder().id(1L).feedName("PROXY").typeName("Events").build())));
+        stubQuery(GROUPED);
+
+        final Result result = service.query(request("| STATS c = COUNT(*)"));
+
+        assertThat(result.excludedStreams()).isEqualTo(2);
+        final String filter = onlyQueryBody().path("filter").toString();
+        assertThat(filter).contains("must_not").contains("\"StreamId\"").contains("[2,3]");
+        final String streamsQuery = ELASTIC.findAll(WireMock.postRequestedFor(
+                WireMock.urlPathEqualTo("/" + INDEX_NAME + "/_search"))).getFirst().getBodyAsString();
+        assertThat(streamsQuery).contains("\"composite\"").contains("\"field\":\"StreamId\"");
+    }
+
+    @Test
+    void testNoStreamsLeftOutWhenAllCanBeSeen() {
+        when(elasticIndexStore.readDocument(INDEX_REF)).thenReturn(withStreamIds(createIndex(INDEX_NAME)));
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo("/" + INDEX_NAME + "/_search"))
+                .willReturn(ElasticWireMock.elasticResponse(200, """
+                        {"took": 1, "timed_out": false,
+                         "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0},
+                         "hits": {"total": {"value": 10, "relation": "eq"}, "max_score": null, "hits": []},
+                         "aggregations": {"composite#streams": {"buckets": [
+                           {"key": {"id": 1}, "doc_count": 10}]}}}""")));
+        when(metaService.find(any())).thenReturn(ResultPage.createUnboundedList(List.of(
+                Meta.builder().id(1L).feedName("PROXY").typeName("Events").build())));
+        stubQuery(GROUPED);
+
+        final Result result = service.query(request("| STATS c = COUNT(*)"));
+
+        assertThat(result.excludedStreams()).isZero();
+        assertThat(onlyQueryBody().has("filter")).isFalse();
+    }
+
+    @Test
     void testTypedValues() {
         final ElasticEsqlService.Response response = ElasticEsqlService.parse(json("""
                 {"took": 1, "columns": [
@@ -460,6 +514,12 @@ class TestElasticEsqlService {
 
     private static JsonNode json(final String text) {
         return MAPPER.readTree(text);
+    }
+
+    private static ElasticIndexDoc withStreamIds(final ElasticIndexDoc doc) {
+        final List<ElasticIndexField> fields = new ArrayList<>(doc.getFields());
+        fields.add(ElasticIndexField.builder().fldName("StreamId").fldType(FieldType.ID).nativeType("long").build());
+        return doc.copy().fields(fields).build();
     }
 
     private static ElasticIndexDoc createIndex(final String indexName) {
