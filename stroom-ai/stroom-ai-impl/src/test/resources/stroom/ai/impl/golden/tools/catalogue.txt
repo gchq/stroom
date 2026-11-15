@@ -1,10 +1,10 @@
 # The built-in tools the model is shown
 
-Built-in tools: 56
+Built-in tools: 57
 
 ## Offered in each mode (in a chat with no MCP servers)
 
-### AGENT (47 tool(s))
+### AGENT (48 tool(s))
 activate_administration
 activate_build
 activate_dashboards
@@ -17,6 +17,7 @@ describe_data_source
 document_documentation
 document_info
 document_links
+esql_query
 fetch_events
 find_in_content
 folder_contents
@@ -53,7 +54,7 @@ write_file
 xpath
 xslt_lookups
 
-### ASK (43 tool(s))
+### ASK (44 tool(s))
 activate_administration
 activate_build
 activate_dashboards
@@ -65,6 +66,7 @@ describe_data_source
 document_documentation
 document_info
 document_links
+esql_query
 fetch_events
 find_in_content
 folder_contents
@@ -98,7 +100,7 @@ wc
 xpath
 xslt_lookups
 
-### PLAN (43 tool(s))
+### PLAN (44 tool(s))
 activate_administration
 activate_build
 activate_dashboards
@@ -110,6 +112,7 @@ describe_data_source
 document_documentation
 document_info
 document_links
+esql_query
 fetch_events
 find_in_content
 folder_contents
@@ -509,6 +512,77 @@ For administrators reviewing or reproducing the Elasticsearch templates of an El
     }
   },
   "required" : [ "uuid" ],
+  "type" : "object"
+}
+
+================================================================================
+## esql_query
+
+isReadOnly: true
+readsUntrustedContent: true
+boundsItsOutput: true
+strict: null
+metadata: { }
+offered in modes: AGENT, ASK, PLAN
+
+### Description
+
+Runs an ES|QL query on an Elastic Index doc's index, as the user, answered by Elasticsearch itself: use it for totals, counts, top N and grouped questions on Elasticsearch indexes (e.g. which users uploaded the most, by site domain); use run_stroomql for row-level work or any other data source. Give pipeline: the commands after FROM, e.g. '| WHERE event.action == "allowed" | STATS total = SUM(bytes) BY user.name, url.domain | SORT total DESC | LIMIT 10'. FROM and the index are written for you. Allowed: WHERE, EVAL, STATS ... BY, SORT, LIMIT, KEEP, DROP, RENAME, DISSECT, GROK, MV_EXPAND. Field names are the index's own (describe_data_source gives them); group by a keyword field, not text. Without a LIMIT in the pipeline, one is added (limit). The result says when the rows were cut short and how many rows (groups) there are in all: never call cut-short rows a full ranking or a total. Refused for a Lucene index or a cluster older than 8.14, saying what to use instead. The rows are written to a table in the workspace too, for the table tool.
+
+### Parameters
+
+{
+  "properties" : {
+    "index" : {
+      "description" : "The Elastic Index doc's uuid or name, as list_data_sources gives it.",
+      "type" : "string"
+    },
+    "limit" : {
+      "description" : "The most rows (default 1000, at most 10000); a LIMIT in the pipeline lowers it.",
+      "type" : "integer"
+    },
+    "out" : {
+      "description" : "A .md file in /outputs/ for the rows (default /outputs/esql/esql-<time>.md).",
+      "type" : "string"
+    },
+    "pipeline" : {
+      "description" : "The ES|QL commands after FROM, each after '|'.",
+      "type" : "string"
+    },
+    "timeFrom" : {
+      "description" : "Optional: from this time on the index's time field (ISO 8601, or Stroom's day()-7d).",
+      "type" : "string"
+    },
+    "timeTo" : {
+      "description" : "Optional: up to this time (ISO 8601, or Stroom's now()).",
+      "type" : "string"
+    },
+    "where" : {
+      "description" : "Optional: conditions every document must meet, all of them, as search_events takes them; applied before the pipeline, as Stroom searches apply them.",
+      "items" : {
+        "description" : "One condition, as a person would set it on a dashboard.",
+        "properties" : {
+          "condition" : {
+            "description" : "The condition (default EQUALS).",
+            "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL" ],
+            "type" : "string"
+          },
+          "field" : {
+            "description" : "The index's field.",
+            "type" : "string"
+          },
+          "value" : {
+            "description" : "BETWEEN: 'from,to'; IN: values separated by commas; EQUALS takes * wildcards.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "field" ],
+        "type" : "object"
+      },
+      "type" : "array"
+    }
+  },
+  "required" : [ "index", "pipeline" ],
   "type" : "object"
 }
 

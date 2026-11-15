@@ -650,6 +650,42 @@ event-logging path and how to search it per backend.
 `describe_data_source` gives a data source's documentation (its Documentation tab, the same-named doc beside it, and
 its pipelines' docs), to help choose data sources and StroomQL fields.
 
+### ES|QL analysis (built 2026-11-15)
+
+`esql_query` answers totals, top N and grouped questions on an Elastic Index (e.g. which users uploaded the most, by
+site domain) with ES|QL, aggregated by Elasticsearch, where `run_stroomql` scrolls every document through Stroom's
+coprocessors (a sliced scroll in `ElasticSearchTaskHandler`). Stroom AI only: StroomQL, dashboards and Stroom's
+searches are unchanged. Decided with the user:
+
+* **Core service.** `ElasticEsqlService` in stroom-search-elastic, bound as `stroom.ai.api.ElasticEsql` (as
+  `ElasticIndexTemplates` is), additive. It checks Use on the Elastic Index doc as a search does, and queries with
+  its cluster's connection. The caller audits (`AiAuditLog.searched`, a Search event).
+* **Only the commands after FROM.** `FROM <index name>` is written from the doc. `EsqlPipeline` lexes the text
+  (strings, backtick names, `//` and nested `/* */` comments, brackets) and splits on top-level `|` only, so a pipe
+  or a command word in a string or comment never makes a stage. Allowed: WHERE, EVAL, STATS ... BY, SORT, LIMIT,
+  KEEP, DROP, RENAME, DISSECT, GROK and MV_EXPAND (allowed: it reads nothing else, and the row cap bounds its
+  rows); FROM, ENRICH, LOOKUP JOIN, FORK, INLINESTATS, ROW, SHOW, TS, COMPLETION, RERANK, a top-level `;` and
+  anything unknown are refused. Each stage goes on its own line, so a trailing line comment can't hide the cap.
+* **Filter.** A Stroom expression (`where`, as search_events takes it) and a time range on the doc's time field go
+  through `SearchExpressionQueryBuilder`, unchanged, into the ES|QL request's `filter`.
+* **Streams as a search sees them.** A Stroom search looks up each hit's stream (View on its feed, unlocked) and
+  drops the hits it can't find; Elasticsearch can't. So `EsqlStreamFilter` reads the distinct `StreamId`s under the
+  filter (a `composite` aggregation, at most 100,000), looks them up as the user (`MetaService.find`, batches of
+  1,000), and gives those not found to the query as `must_not` terms (at most 65,536); the result counts them.
+  Found writing the parity test: events of streams not in Stroom were in ES|QL's totals and not in run_stroomql's.
+* **Caps.** Rows: the lowest LIMIT after the last STATS or MV_EXPAND, else `LIMIT n` added (n is `limit`, default
+  `stroom.elastic.search.esqlRowLimit` 1,000, at most 10,000). Time: `esqlTimeout` (2 minutes) and the session's
+  query time limit; a query past it is cancelled. Partial results are refused (`allow_partial_results=false`
+  from 8.18). Clusters older than 8.14 are refused, naming run_stroomql.
+* **Never a false full ranking.** Rows that reach the cap are truncated; then a second query (the pipeline without
+  its trailing SORT and LIMIT, then `STATS stroom_total_rows = COUNT(*)`) counts the groups or rows in all. It
+  costs a second aggregation, run only when truncated; if it fails the total is said to be unknown.
+* **Refusals name the fix**: unknown field (the index's fields most like it, describe_data_source), a text field in
+  BY with a keyword sub-field (group by the sub-field, found from the doc's fields), a Lucene index or an old
+  cluster (run_stroomql).
+* **Result.** Markdown in the chat, JSON over `/mcp` (columns with ES|QL types, typed rows, `truncated`, `grouped`,
+  `total_groups`/`total_rows`), the rows also written to `/outputs/esql/` for the table tool.
+
 ### Explain processing, retention and volumes
 
 See [explain_processing](#explain_processing-built-2026-10-28).
@@ -3226,6 +3262,7 @@ behaviour; the settled ones are listed here with the section that records them.
 | --- | --- | --- |
 | 2026-11-15 | Group pipelines no longer log passed-over records (an INFO line made an Error stream per raw stream per group in production): stepping and review_coverage work them out from the feed's registry. The unreadable-survey note is kept in the build record (a restart or another node had lost it). The survey cleans its input as Stroom does, so raw control characters in JSON lines no longer make a feed unreadable. A form answered while its run was still unwinding to waiting is no longer refused (the wide-sample race). step_sample and step_records step a stream's Context child (`child_type`), so a context loader can be stepped. | Builds and onboarding, Processing, stepping and documentation |
 | 2026-11-15 | Constant index fields, only on the user's request (`type: constant`, a value, no source): Elasticsearch maps `constant_keyword` and the XSLT doesn't write it; Lucene a keyword written on every document; an example template's `constant_keyword` fields kept. Generated documentation escapes HTML: values from the data as code spans or escaped text, and raw tags in the written markdown outside code (Documentation renders unsanitised HTML; the tools' own comments and `<br>` kept). describe_data_source `field=` finds one field however the user words it (`FieldMatches`: words in any order, misspellings, descriptions), several close ones ranked, never a silent guess. | Indexing, Processing, stepping and documentation |
+| 2026-11-15 | ES\|QL for aggregation questions on Elasticsearch (asked for by the user): esql_query, over a core `ElasticEsqlService` (Use checked, the cluster's connection), takes only the commands after FROM (an allow-list, read by a lexer, not a regex), Stroom's filter as Query DSL, the documents of streams the user can't see left out (as a search drops their hits), rows capped (1,000 default, 10,000 most), cancelled after its time limit, refused before 8.14; a truncated grouped answer counts its groups with a second query. Stroom AI only: StroomQL and dashboards unchanged. | Further use cases |
 | 2026-11-15 | From chat 178: once a build's scope is recorded, record_source_types doesn't ask it again for a call that leaves the source types and rows as they are: settings (environment, system names) are written without a form, a different group name for the same source types is a rename with a one-line confirm (refused for a group already built or promoted, whose documents carry its name); changing source types or rows still asks. ECS `event.action` falls back to `EventDetail/TypeId` where an event has no Action (the user's choice: the action elements used had none, so the field was empty in every event); the mostly-empty core field finding also reports a core field no event writes, or the index doesn't list. An aggregated feed's build is promoted to `<base>/<feed>/<group>/<role>` (the user's default): the group's XSLT with its pipeline, the registry, common, helpers and source notes beside the feed. | Builds and onboarding, Indexing |
 | 2026-11-15 | A sample value in a documentation table is shown on one line as code: white space run together, backticks as quotes, cut with an ellipsis (seen: a mail body's HTML and CRLF line ends broke the table's rows). Inside a code span nothing else is escaped: showdown escapes it. | Processing, stepping and documentation |
 | 2026-11-15 | From eval case 61: a source type group's save takes its kept source types plus those the build's scope joins to it (seen: the promoted XSLT's two, OneDrive left out, so the sample, the XSLT's test, the registry and the passed-over set all missed it); `source_types` given that leave out one the scope puts in the group are refused. A call with no changes starts from the mapping a refused call left (marked unsaved), not the saved one (seen: the OneDrive rules dropped). A save naming the promoted group XSLT goes to the build's working copy of it. | Translation, Builds and onboarding |

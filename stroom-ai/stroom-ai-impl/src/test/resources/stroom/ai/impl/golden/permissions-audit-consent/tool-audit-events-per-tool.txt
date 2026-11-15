@@ -157,6 +157,29 @@
     }
   }
 
+## esql_query {"index":"elastic-index-uuid","pipeline":"| STATS n = COUNT(*) BY UserId | SORT n DESC | LIMIT 2"}
+- audit: searched(1, DocRef{type='ElasticIndex', uuid='elastic-index-uuid', name='Test elastic index'}, "FROM test-events\n| STATS n = COUNT(*) BY UserId\n| SORT n DESC\n| LIMIT 2", 2, "ES|QL query by the esql_query tool")
+- event: AskStroomAi.search "Ask Stroom AI read search results in chat 1: ES|QL query by the esql_query tool"
+  SearchEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "ES|QL query by the esql_query tool"
+    }, {
+      "name" : "DataSourceUuid",
+      "value" : "elastic-index-uuid"
+    } ],
+    "dataSources" : {
+      "dataSource" : [ "ElasticIndex 'Test elastic index'" ]
+    },
+    "query" : {
+      "raw" : "FROM test-events\n| STATS n = COUNT(*) BY UserId\n| SORT n DESC\n| LIMIT 2"
+    },
+    "totalResults" : 2
+  }
+
 ## explain_processing {"pipeline_uuid":"pipeline-uuid"}
 - audit: documentsSearched(1, "processing of Test pipeline", [DocRef{type='Pipeline', uuid='pipeline-uuid', name='Test pipeline'}], {}, "Processing explained by the explain_processing tool")
 - event: AskStroomAi.search "Ask Stroom AI searched in chat 1: Processing explained by the explain_processing tool"

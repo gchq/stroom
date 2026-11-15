@@ -18,6 +18,7 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.api.CodeChangeStepper;
+import stroom.ai.api.ElasticEsql;
 import stroom.ai.api.ElasticIndexTemplates;
 import stroom.ai.api.ElasticIndexTemplates.ComponentTemplate;
 import stroom.ai.api.ElasticIndexTemplates.IndexTemplate;
@@ -236,6 +237,8 @@ public final class BuiltInToolWorld implements AutoCloseable {
             Map.entry("table", "{\"help\":true}"),
             Map.entry("pipeline", "{\"steps\":[]}"),
             Map.entry("run_stroomql", json(Map.of("query", STROOMQL))),
+            Map.entry("esql_query", json(Map.of("index", "elastic-index-uuid", "pipeline",
+                    "| STATS n = COUNT(*) BY UserId | SORT n DESC | LIMIT 2"))),
             Map.entry("summarise_column", "{\"path\":\"/outputs/a.csv\",\"column\":\"UserId\"}"),
             Map.entry("document_info", "{\"uuid\":\"xslt-uuid\"}"),
             Map.entry("read_document", "{\"uuid\":\"xslt-uuid\"}"),
@@ -297,6 +300,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final GlobalConfigReader globalConfigReader = Mockito.mock(GlobalConfigReader.class);
     private final ElasticIndexTemplates elasticIndexTemplates = Mockito.mock(ElasticIndexTemplates.class);
+    private final ElasticEsql elasticEsql = Mockito.mock(ElasticEsql.class);
     /// The workspace's files, by path.
     private final Map<String, String> files = new LinkedHashMap<>();
     private final Map<String, DocRef> docRefs = new LinkedHashMap<>();
@@ -330,6 +334,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
         stubChat();
         stubConfig();
         stubElasticIndexTemplates();
+        stubElasticEsql();
         Mockito.when(nodeInfo.getThisNodeName()).thenReturn("node1");
         Mockito.when(nodeService.findNodeNames(Mockito.any())).thenReturn(List.of("node1"));
         Mockito.when(executorProvider.get()).thenReturn(executorService);
@@ -350,6 +355,11 @@ public final class BuiltInToolWorld implements AutoCloseable {
     /// @return The audit log the tools and the agent loop record to (a spy over the real one).
     public AiAuditLog auditLog() {
         return auditLog;
+    }
+
+    /// @return The ES|QL queries of Elastic Indexes (a mock, giving events by user cut short at two of three).
+    public ElasticEsql elasticEsql() {
+        return elasticEsql;
     }
 
     /// @return Where the audit log logs its events (a mock that records them).
@@ -600,6 +610,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 bind(ResultStoreManager.class).toInstance(Mockito.mock(ResultStoreManager.class));
                 bind(CodeChangeStepper.class).toInstance(Mockito.mock(CodeChangeStepper.class));
                 bind(ElasticIndexTemplates.class).toInstance(elasticIndexTemplates);
+                bind(ElasticEsql.class).toInstance(elasticEsql);
                 bind(AttributeMapFactory.class).toInstance(Mockito.mock(AttributeMapFactory.class));
                 bind(DataService.class).toInstance(Mockito.mock(DataService.class));
                 bind(FeedProperties.class).toInstance(Mockito.mock(FeedProperties.class));
@@ -849,6 +860,24 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 .thenReturn(OverrideValue.unSet(String.class));
     }
 
+    // An ES|QL query of the Elastic Index: events by user, cut short at two of three groups.
+    private void stubElasticEsql() {
+        Mockito.when(elasticEsql.query(Mockito.any())).thenReturn(new ElasticEsql.Result(
+                "FROM test-events\n| STATS n = COUNT(*) BY UserId\n| SORT n DESC\n| LIMIT 2",
+                "test-events",
+                List.of(new ElasticEsql.Column("n", "long"), new ElasticEsql.Column("UserId", "keyword")),
+                List.of(List.of(5L, "alice"), List.of(3L, "bob")),
+                4,
+                2,
+                null,
+                true,
+                true,
+                3L,
+                null,
+                0,
+                "9.5.3"));
+    }
+
     // The Elastic Index's templates: one index template, composed of two component templates.
     private void stubElasticIndexTemplates() {
         Mockito.when(elasticIndexTemplates.read(Mockito.any())).thenReturn(new IndexTemplates(
@@ -920,10 +949,16 @@ public final class BuiltInToolWorld implements AutoCloseable {
 
     private void stubQueries() {
         Mockito.when(dataSourceRegistry.getDataSourceDocRefs()).thenReturn(List.of(INDEX));
-        Mockito.when(dataSourceRegistry.findDataSourceByUuid(Mockito.anyString())).thenAnswer(invocation ->
-                INDEX.getUuid().equals(invocation.getArgument(0))
-                        ? Optional.of(INDEX)
-                        : Optional.empty());
+        Mockito.when(dataSourceRegistry.findDataSourceByUuid(Mockito.anyString())).thenAnswer(invocation -> {
+            final String uuid = invocation.getArgument(0);
+            if (INDEX.getUuid().equals(uuid)) {
+                return Optional.of(INDEX);
+            }
+            // Found by its uuid only, so the data source listings don't change with it.
+            return ELASTIC_INDEX.getUuid().equals(uuid)
+                    ? Optional.of(ELASTIC_INDEX)
+                    : Optional.empty();
+        });
         Mockito.when(dataSourceRegistry.fetchDocumentation(Mockito.any())).thenReturn(Optional.empty());
         Mockito.when(dataSourceRegistry.getDataSourceProvider(Mockito.anyString())).thenReturn(Optional.empty());
         Mockito.when(queryService.getReferencedDataSource(Mockito.anyString())).thenReturn(Optional.of(INDEX));
@@ -963,7 +998,9 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 .replaceAll("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z", "<time>")
                 .replaceAll("\\b\\d{2}:\\d{2}:\\d{2}Z", "<time>")
                 .replaceAll("\\b\\d{4}-\\d{2}-\\d{2}\\b", "<date>")
-                .replaceAll("\\b1[6-9]\\d{11}\\b", "<epoch-ms>");
+                .replaceAll("\\b1[6-9]\\d{11}\\b", "<epoch-ms>")
+                // A file named for when it was written, e.g. esql-20261115-080132.md.
+                .replaceAll("\\b\\d{8}-\\d{6}\\b", "<file-time>");
     }
 
     /// @param value Anything Jackson can write.
