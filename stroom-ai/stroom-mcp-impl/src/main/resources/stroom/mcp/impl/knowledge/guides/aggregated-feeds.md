@@ -114,6 +114,8 @@ source type belongs to one group: one another group translates is refused.
   pipeline in the build with its working copies (the import chain pointed at the build's copies; a build processes
   only its own pipelines, so this is also how a promoted group's pipeline takes the build's later data);
   `working_copy=false` after a `new_version` answer makes the new version, and the group's registry rows move to it.
+  Copying the pipeline of the group the build changes before the question is answered asks it there instead (the
+  same form; without forms, `pipeline=change|new_version`), and the answer decides the copy, not `working_copy`.
 
 A user who doesn't want a pipeline per group treats the feed as a normal source: `build_translation_xslt` without
 `group=`, one mapping for every source type, surveyed and translated in its entirety (below).

@@ -497,21 +497,33 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
             }
         }
         final String stamp = docs.today();
-        if (!request.accepting().isEmpty()) {
+        // Errors already recorded as benign in the doc (the same element and kind of message) are not put to the user
+        // again (seen in testing: the agent gave the same accept_errors in a later call that only widened field
+        // descriptions, and the user was asked to accept them a second time).
+        final List<AcceptedErrors.Entry> recordedBefore = previous == null
+                ? List.of()
+                : AcceptedErrors.readAccepted(writes.text(previous));
+        final List<Accepted> accepting = new ArrayList<>();
+        final List<String> alreadyRecorded = new ArrayList<>();
+        for (final Accepted a : request.accepting()) {
+            if (AcceptedErrors.recorded(recordedBefore, entryOf(a, stamp))) {
+                alreadyRecorded.add(acceptedSaid(a));
+            } else {
+                accepting.add(a);
+            }
+        }
+        if (!accepting.isEmpty()) {
             // The user says these are benign: confirmed by them, as the agent cannot decide it for them.
             final Map<String, Object> details = new LinkedHashMap<>();
-            details.put("errors", request.accepting().stream()
-                    .map(a -> NullSafe.nonBlankStringElse(a.element(), "any element") + ": "
-                              + (NullSafe.isNonEmptyString(a.matches())
-                            ? a.matches()
-                            : first(a.example(), 200)) + " -- " + a.reason())
+            details.put("errors", accepting.stream()
+                    .map(WriteDocumentationTool::acceptedSaid)
                     .toList());
             consent.require(call, context, Consent.Request.confirmation(
-                    NAME, "Record " + request.accepting().size() + " kind(s) of error as benign for pipeline '"
+                    NAME, "Record " + accepting.size() + " kind(s) of error as benign for pipeline '"
                           + pipeline.getName() + "', so they are not raised again", details));
         }
-        final List<AcceptedErrors.Entry> newEntries = request.accepting().stream()
-                .map(a -> AcceptedErrors.entry(a.element(), a.example(), a.reason(), stamp, a.matches()))
+        final List<AcceptedErrors.Entry> newEntries = accepting.stream()
+                .map(a -> entryOf(a, stamp))
                 .toList();
         final List<Map<String, Object>> errors = docs.errorGroups(pipelineUuid, streamIds);
         final DocRef existing = placed.existing();
@@ -544,6 +556,11 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         result.put("uuid", doc.getUuid());
         result.put("name", doc.getName());
         result.put("written", BuildDocumentation.written(existing, beside));
+        if (!alreadyRecorded.isEmpty()) {
+            result.put("accept_errors_already_recorded", "Already recorded as benign in the documentation, so not "
+                                                         + "put to the user again: " + alreadyRecorded
+                                                         + ". Give accept_errors only for errors not yet accepted.");
+        }
         if (placed.copyOf() == null && !BuildDocumentation.inBuild(placed.inBuild(), pipelineUuid) && beside != null) {
             // Not the build's plan (it has no pipeline of its own to make): what happens to this doc.
             final Map<String, Object> copied = new LinkedHashMap<>();
@@ -806,6 +823,20 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
 
     private static String first(final String text, final int count) {
         return text.substring(0, Math.min(count, text.length()));
+    }
+
+    // An accepted error as the doc keeps it.
+    private static AcceptedErrors.Entry entryOf(final Accepted accepted, final String stamp) {
+        return AcceptedErrors.entry(accepted.element(), accepted.example(), accepted.reason(), stamp,
+                accepted.matches());
+    }
+
+    // An accepted error as the user is shown it: its element, the kind of message, and why it is benign.
+    private static String acceptedSaid(final Accepted accepted) {
+        return NullSafe.nonBlankStringElse(accepted.element(), "any element") + ": "
+               + (NullSafe.isNonEmptyString(accepted.matches())
+                ? accepted.matches()
+                : first(accepted.example(), 200)) + " -- " + accepted.reason();
     }
 
     private static ObjectSchema acceptedError() {

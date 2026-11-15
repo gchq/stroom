@@ -30,6 +30,7 @@ import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,6 +38,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestCopyPipelineTool {
 
     private static final String BUILD = PipelineWorld.BUILD;
+    private static final String CHANGE = "Change ACME-V1 - Indexing (its working copy is written back over it at "
+                                         + "promotion)";
     private static final DocRef TEMPLATE = new DocRef(PipelineDoc.TYPE, PipelineWorld.TEMPLATE_UUID,
             "Event Data (Text)");
 
@@ -139,6 +142,104 @@ class TestCopyPipelineTool {
         assertThat(pipelines.world.records().entry(BUILD, xsltCopy.getUuid()))
                 .containsEntry("copy_of", "x1")
                 .containsEntry(BuildRecords.COPY_OF_VERSION, "v0");
+    }
+
+    @Test
+    void aGroupsPromotedPipelineIsCopiedAsTheUserChoosesNotAsTheFlagSays() {
+        // Seen in eval case 61: copy_pipeline working_copy=true on the Messaging group's promoted pipeline, before
+        // build_translation_xslt asked; the user saw only "working copy: True", the agent's choice.
+        source();
+        final SourceTypeGroups groups = groups(new SourceTypeGroups.PromotedGroup("Acme", "ACME-V1 - Indexing",
+                null, false));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true, "choice", CHANGE));
+
+        final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"" + BUILD + "\", \"source_uuid\": "
+                                                                 + "\"p1\", \"new_name\": \"ACME-V1 - Indexing\", "
+                                                                 + "\"working_copy\": false}", user.context()));
+
+        // The plain-words question first, then the copy's confirmation.
+        assertThat(user.shown()).hasSize(2);
+        assertThat(user.shown().getFirst()).startsWith("Group 'Acme' runs in pipeline ACME-V1 - Indexing, in "
+                                                       + "production. This build changes the group");
+        assertThat(user.shown().getLast()).containsIgnoringCase("- working copy: true");
+        assertThat(made).containsEntry("working_copy", true);
+        assertThat(String.valueOf(made.get("note"))).contains("working_copy=false was overridden");
+        assertThat(pipelines.world.records().entry(BUILD, String.valueOf(made.get("uuid"))))
+                .containsEntry("copy_of", "p1");
+        Mockito.verify(groups).rememberPipelineChoice(BUILD, "Acme", SourceTypeGroups.CHANGE);
+    }
+
+    @Test
+    void aGroupsPipelineChoiceRecordedIsFollowedWithoutAsking() {
+        source();
+        final SourceTypeGroups groups = groups(new SourceTypeGroups.PromotedGroup("Acme", "ACME-V1 - Indexing",
+                SourceTypeGroups.NEW_VERSION, false));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        // A new version needs a name of its own.
+        assertThat(call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": \"ACME-V1 - "
+                        + "Indexing\", \"working_copy\": true}", user.context()).text())
+                .startsWith("The user chose a new version of ACME-V1 - Indexing").contains("new_name");
+        final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"" + BUILD + "\", \"source_uuid\": "
+                                                                 + "\"p1\", \"new_name\": \"ACME-V2 - Indexing\", "
+                                                                 + "\"working_copy\": true}", user.context()));
+
+        assertThat(user.shown()).singleElement().asString().startsWith("Copy pipeline");
+        assertThat(made).containsEntry("working_copy", false);
+        assertThat(pipelines.world.records().entry(BUILD, String.valueOf(made.get("uuid"))))
+                .containsEntry("version_of", "p1");
+        Mockito.verify(groups, Mockito.never()).rememberPipelineChoice(Mockito.any(), Mockito.any(),
+                Mockito.any());
+    }
+
+    @Test
+    void withoutFormsTheAgentIsToldToAskTheUserTheGroupsPipelineChoice() {
+        source();
+        final SourceTypeGroups groups = groups(new SourceTypeGroups.PromotedGroup("Acme", "ACME-V1 - Indexing",
+                null, false));
+
+        final ToolResult refused = call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", "
+                                        + "\"new_name\": \"ACME-V1 - Indexing\", \"working_copy\": true}",
+                BuildToolCalls.context());
+
+        assertThat(refused.isError()).isTrue();
+        assertThat(refused.text()).contains("runs in pipeline ACME-V1 - Indexing, in production: ask the user",
+                "pipeline=");
+        Mockito.verify(groups, Mockito.never()).rememberPipelineChoice(Mockito.any(), Mockito.any(),
+                Mockito.any());
+        assertThat(call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": \"ACME-V1 - "
+                        + "Indexing\", \"pipeline\": \"sideways\"}", BuildToolCalls.context()).text())
+                .startsWith("pipeline is one of");
+
+        // The user's answer, passed by the agent: recorded, then the copy confirmed as usual.
+        call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": \"ACME-V1 - Indexing\", "
+             + "\"pipeline\": \"change\"}", BuildToolCalls.context());
+        Mockito.verify(groups).rememberPipelineChoice(BUILD, "Acme", SourceTypeGroups.CHANGE);
+    }
+
+    @Test
+    void anotherPipelineIsCopiedAsTheFlagSays() {
+        // No group's, or a group the build has decided already (it has a copy of its XSLT): today's behaviour.
+        source();
+        groups(new SourceTypeGroups.PromotedGroup("Acme", "ACME-V1 - Indexing", null, true));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"" + BUILD + "\", \"source_uuid\": "
+                                                                 + "\"p1\", \"new_name\": \"ACME-V1 - Indexing\", "
+                                                                 + "\"working_copy\": true, \"pipeline\": "
+                                                                 + "\"new_version\"}", user.context()));
+
+        assertThat(user.shown()).singleElement().asString().startsWith("Copy pipeline");
+        assertThat(made).containsEntry("working_copy", true);
+        assertThat(String.valueOf(made.get("note"))).contains("pipeline was ignored");
+    }
+
+    // The tool's source type groups: the pipeline p1 the group given, as the registry names it.
+    private SourceTypeGroups groups(final SourceTypeGroups.PromotedGroup group) {
+        final SourceTypeGroups groups = Mockito.mock(SourceTypeGroups.class);
+        Mockito.when(groups.promotedGroup(BUILD, "p1")).thenReturn(Optional.of(group));
+        tool.setGroups(() -> groups);
+        return groups;
     }
 
     private void source() {

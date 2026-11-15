@@ -1225,32 +1225,30 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             }
             return null;
         }
+        final String group = b.group.group();
+        // Asked already (by copy_pipeline, copying the group's pipeline before the group was saved): the user's
+        // choice, recorded for the build.
+        final Optional<String> recorded = groups.recordedPipelineChoice(b.build, group);
+        if (recorded.isPresent()) {
+            return recorded.get();
+        }
         final String name = JsonValues.text(promoted.get().get("name"));
-        final Map<String, String> options = new LinkedHashMap<>();
-        options.put("Change " + name + " (its working copy is written back over it at promotion)",
-                SourceTypeGroups.CHANGE);
-        options.put("A new version of " + name + " (copy_pipeline; " + name + " runs on until the new one replaces "
-                    + "it)", SourceTypeGroups.NEW_VERSION);
-        final Optional<String> chosen = consent.choose(call, context, NAME, "Group '" + b.group.group() + "' runs in "
-                                                                            + "pipeline " + name + ", in "
-                                                                            + "production. This build changes the "
-                                                                            + "group: change that pipeline, or make "
-                                                                            + "a new version of it.",
-                List.copyOf(options.keySet()), "What does the change to group '" + b.group.group() + "' go to?");
+        final Optional<String> chosen = SourceTypeGroups.askPipelineChoice(consent, call, context, NAME, group,
+                name);
+        final String choice;
         if (chosen.isPresent()) {
-            return options.get(chosen.get());
-        }
-        if (request.pipeline() == null) {
-            throw new ToolRefusal("Group '" + b.group.group() + "' runs in pipeline " + name + ", in production: ask "
-                                  + "the user whether this change goes to that pipeline or to a new version of it ("
-                                  + String.join("; ", options.keySet()) + "), then call again with " + PIPELINE_ARG
-                                  + "=" + ToolText.list(SourceTypeGroups.PIPELINE_CHOICES) + ". Nothing was saved.");
-        }
-        if (!SourceTypeGroups.PIPELINE_CHOICES.contains(request.pipeline())) {
+            choice = chosen.get();
+        } else if (request.pipeline() == null) {
+            final String argument = PIPELINE_ARG + "=" + ToolText.list(SourceTypeGroups.PIPELINE_CHOICES);
+            throw new ToolRefusal(SourceTypeGroups.pipelineChoiceAsked(group, name, argument));
+        } else if (!SourceTypeGroups.PIPELINE_CHOICES.contains(request.pipeline())) {
             throw new ToolRefusal(PIPELINE_ARG + " is one of " + ToolText.list(SourceTypeGroups.PIPELINE_CHOICES)
                                   + ", not " + ToolText.repr(request.pipeline()) + ". Nothing was saved.");
+        } else {
+            choice = request.pipeline();
         }
-        return request.pipeline();
+        groups.rememberPipelineChoice(b.build, group, choice);
+        return choice;
     }
 
     // What the agent does next for a group placed now (its pipeline made, its output feed first where it has one of

@@ -522,6 +522,50 @@ class TestSourceTypeGroups {
     }
 
     @Test
+    void aPipelineChoiceRecordedByCopyPipelineIsNotAskedAgainWhenTheGroupIsSaved() {
+        // Seen in eval case 61: the group's pipeline copied before the group was saved; copy_pipeline now asks and
+        // records the choice, which build_translation_xslt follows without asking again.
+        final String original = promotedGroup();
+        // Not the group the build's scope names: copied only to run it, nothing to decide.
+        assertThat(world.groups.promotedGroup(BUILD, "o-pipeline")).isEmpty();
+        scoped("PEGA security", List.of("PegaSecurityEvent"));
+        assertThat(world.groups.promotedGroup(BUILD, "o-pipeline")).contains(new SourceTypeGroups.PromotedGroup(
+                "PEGA security", "PEGA PEGA security", null, false));
+        // A pipeline no row names is no group's.
+        assertThat(world.groups.promotedGroup(BUILD, "other")).isEmpty();
+
+        world.groups.rememberPipelineChoice(BUILD, "PEGA security", SourceTypeGroups.NEW_VERSION);
+        assertThat(world.groups.promotedGroup(BUILD, "o-pipeline").map(SourceTypeGroups.PromotedGroup::recorded))
+                .contains(SourceTypeGroups.NEW_VERSION);
+        world.forms = true;
+        final Map<String, Object> again = new LinkedHashMap<>(args(security(), "PEGA security",
+                List.of("PegaSecurityEvent")));
+        again.remove("own_output_feed");
+        final Map<String, Object> saved = world.call(tool, again);
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        assertThat(world.asked).noneMatch(form -> form.contains("runs in pipeline"));
+        final String version = xsltsInBuild().get("PEGA security");
+        assertThat(world.world.records().entry(BUILD, version)).containsEntry("version_of", original);
+        // Copied now: decided by the copy.
+        assertThat(world.groups.promotedGroup(BUILD, "o-pipeline").map(SourceTypeGroups.PromotedGroup::copied))
+                .contains(true);
+    }
+
+    @Test
+    void aPipelineChoiceMadeWhenTheGroupIsSavedIsRecordedForCopyPipeline() {
+        promotedGroup();
+        final Map<String, Object> again = new LinkedHashMap<>(args(security(), "PEGA security",
+                List.of("PegaSecurityEvent")));
+        again.remove("own_output_feed");
+        again.put("pipeline", "change");
+
+        assertThat(world.call(tool, again).get("problems")).isEqualTo(List.of());
+
+        assertThat(world.groups.recordedPipelineChoice(BUILD, "PEGA security")).contains(SourceTypeGroups.CHANGE);
+    }
+
+    @Test
     void aLaterGroupWritesItsUsersIdsAsTheFeedsPromotedGroupsDo() {
         // Seen in an eval: a later build's group was asked again whether to split the domain off users' Ids, "Split"
         // first, though the feed's promoted group kept them whole; one feed's groups got different Id formats.

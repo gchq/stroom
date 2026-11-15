@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
@@ -64,6 +65,7 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     static final String RENAME_ARG = "rename";
     static final String SET_PROPERTIES_ARG = "set_properties";
     static final String WORKING_COPY_ARG = "working_copy";
+    static final String PIPELINE_ARG = "pipeline";
 
     private final PipelineWrites writes;
     private final PipelineDocs pipelineDocs;
@@ -165,7 +167,13 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                         .addBooleanProperty(WORKING_COPY_ARG, "True when the copy will be written back over the "
                                                               + "original on promotion (an in-place change); "
                                                               + "False for a new version that is promoted "
-                                                              + "alongside it.")
+                                                              + "alongside it. For a source type group's "
+                                                              + "promoted pipeline the user's choice decides it, "
+                                                              + "not this flag.")
+                        .addEnumProperty(PIPELINE_ARG, SourceTypeGroups.PIPELINE_CHOICES,
+                                "Only for a source type group's promoted pipeline, where no form can be shown: "
+                                + "what the user said the build's change to the group goes to, 'change' (a "
+                                + "working copy) or 'new_version'. Asked in a form otherwise.")
                         .required(BUILD_ARG, SOURCE_UUID_ARG, NEW_NAME_ARG)
                         .build())
                 .build();
@@ -189,7 +197,6 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         final Map<String, String> rename = PipelineArguments.textMap(argsMap(call).get(RENAME_ARG), RENAME_ARG);
         final List<PropertyValue> changes = PropertyValue.listOf(argsMap(call).get(SET_PROPERTIES_ARG),
                 SET_PROPERTIES_ARG);
-        final boolean workingCopy = ToolArgs.flag(call, WORKING_COPY_ARG);
         final PipelineDoc source = pipelineDocs.read(sourceUuid);
         final String reason = templates.templateReason(sourceUuid);
         if (reason != null) {
@@ -200,6 +207,8 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                                   + "new version or a working copy of a source's own pipeline (e.g. "
                                   + "Acme-Door-V1.2-Events).");
         }
+        final List<String> notes = new ArrayList<>();
+        final boolean workingCopy = workingCopy(call, context, build, sourceUuid, source, newName, notes);
         final List<DocRef> owned = owned(source, changes);
         final Map<String, String> names = new LinkedHashMap<>();
         for (final DocRef entity : owned) {
@@ -277,7 +286,76 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         result.put("copy_of", source.getName());
         result.put("working_copy", workingCopy);
         result.put("copied_documents", copies.values().stream().map(MergedPipeline::docRef).toList());
+        if (!notes.isEmpty()) {
+            result.put("note", String.join("; ", notes));
+        }
         return plan.withNext(context, build, result);
+    }
+
+    // Whether the copy is a working copy (written back over the original at promotion) or a new version. For a
+    // source type group's promoted pipeline it is the user's choice, not the agent's flag (seen in eval case 61: the
+    // agent copied the Messaging pipeline as a working copy before build_translation_xslt asked, and the user was
+    // only shown a technical copy form): put to them in the form build_translation_xslt asks, unless the build has
+    // recorded it or copied the group's XSLT already; recorded, so neither tool asks again.
+    private boolean workingCopy(final ToolCall call,
+                                final ToolCallContext context,
+                                final String build,
+                                final String sourceUuid,
+                                final PipelineDoc source,
+                                final String newName,
+                                final List<String> notes) {
+        final boolean flagged = ToolArgs.flag(call, WORKING_COPY_ARG);
+        final Optional<SourceTypeGroups.PromotedGroup> promoted = groupsProvider == null
+                ? Optional.empty()
+                : groupsProvider.get().promotedGroup(build, sourceUuid);
+        if (promoted.isEmpty() || promoted.get().copied()) {
+            if (stringArg(call, PIPELINE_ARG) != null) {
+                notes.add(PIPELINE_ARG + " was ignored: '" + source.getName() + "' is not a source type group's "
+                          + "promoted pipeline whose change is still to be decided");
+            }
+            return flagged;
+        }
+        final SourceTypeGroups.PromotedGroup group = promoted.get();
+        final String choice = group.recorded() != null
+                ? group.recorded()
+                : chosen(call, context, build, group);
+        final boolean asChosen = SourceTypeGroups.CHANGE.equals(choice);
+        if (!asChosen && newName.equals(source.getName())) {
+            throw new ToolRefusal("The user chose a new version of " + group.pipeline() + " (recorded for the "
+                                  + "build): give the new version a name of its own (" + NEW_NAME_ARG + "), and "
+                                  + "call again. Nothing was copied.");
+        }
+        if (argsMap(call).containsKey(WORKING_COPY_ARG) && flagged != asChosen) {
+            notes.add(WORKING_COPY_ARG + "=" + flagged + " was overridden: the user chose " + (asChosen
+                    ? "to change " + group.pipeline() + " (a working copy)"
+                    : "a new version of " + group.pipeline()));
+        }
+        return asChosen;
+    }
+
+    // What the user chooses a change to a group's promoted pipeline goes to: asked in the form, else what the agent
+    // passes as their answer; recorded for the build.
+    private String chosen(final ToolCall call,
+                          final ToolCallContext context,
+                          final String build,
+                          final SourceTypeGroups.PromotedGroup group) {
+        final Optional<String> asked = SourceTypeGroups.askPipelineChoice(consent, call, context, NAME,
+                group.group(), group.pipeline());
+        final String given = stringArg(call, PIPELINE_ARG);
+        final String choice;
+        if (asked.isPresent()) {
+            choice = asked.get();
+        } else if (given == null) {
+            throw new ToolRefusal(SourceTypeGroups.pipelineChoiceAsked(group.group(), group.pipeline(),
+                    PIPELINE_ARG + "=" + ToolText.list(SourceTypeGroups.PIPELINE_CHOICES)));
+        } else if (!SourceTypeGroups.PIPELINE_CHOICES.contains(given)) {
+            throw new ToolRefusal(PIPELINE_ARG + " is one of " + ToolText.list(SourceTypeGroups.PIPELINE_CHOICES)
+                                  + ", not " + ToolText.repr(given) + ". Nothing was copied.");
+        } else {
+            choice = given;
+        }
+        groupsProvider.get().rememberPipelineChoice(build, group.group(), choice);
+        return choice;
     }
 
     // The XSLTs and text converters the pipeline's own layer names, but not those set_properties replaces: a copy

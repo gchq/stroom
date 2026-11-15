@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
@@ -515,6 +516,128 @@ class SourceTypeGroups {
             return Optional.empty();
         }
         return placed;
+    }
+
+    /// The source type group a promoted pipeline runs, where it is the group the build changes (its scope's), with
+    /// how far the build has decided what its change goes to: copy_pipeline of the group's promoted pipeline puts the
+    /// change-or-new-version choice to the user, as build_translation_xslt does.
+    ///
+    /// @param build        A build.
+    /// @param pipelineUuid A pipeline.
+    /// @return The group, the pipeline's name, the user's choice recorded for the build (or null), and whether the
+    /// build has a copy of the group's XSLT already (a working copy or a new version's: decided by it); empty for a
+    /// pipeline no row of the build's registry names, one of the build's own, or one of a group the build's scope
+    /// doesn't name.
+    Optional<PromotedGroup> promotedGroup(final String build, final String pipelineUuid) {
+        final Optional<Registry> registry = buildRegistry(build);
+        if (registry.isEmpty() || guard.buildOf(new DocRef(PipelineDoc.TYPE, pipelineUuid)).isPresent()) {
+            return Optional.empty();
+        }
+        final Map<String, Object> state = registry.get().found().state();
+        final Optional<Map<String, Object>> row = JsonValues.maps(state.get("rows")).stream()
+                .filter(each -> pipelineUuid.equals(JsonValues.text(JsonValues.mapOrEmpty(each.get(PIPELINE))
+                        .get("uuid"))))
+                .filter(each -> !JsonValues.text(each.get("group")).isEmpty())
+                .findFirst();
+        if (row.isEmpty()) {
+            return Optional.empty();
+        }
+        final String group = JsonValues.text(row.get().get("group"));
+        if (scopedGroup(build, state).filter(group::equals).isEmpty()) {
+            // Not the group the build changes (its scope's): another group's pipeline, copied only to run it in the
+            // build.
+            return Optional.empty();
+        }
+        final String xslt = groupXslt(state, group);
+        final boolean copied = !xslt.isEmpty() && (inBuild(build, xslt) || copyInBuild(build, xslt).isPresent()
+                                                   || versionInBuild(build, xslt).isPresent());
+        final String name = JsonValues.text(JsonValues.mapOrEmpty(row.get().get(PIPELINE)).get("name"));
+        return Optional.of(new PromotedGroup(group, name.isEmpty()
+                ? pipelineUuid
+                : name, recordedPipelineChoice(build, group).orElse(null), copied));
+    }
+
+    /// @param build A build.
+    /// @param group A source type group.
+    /// @return What the user chose the build's change to the group's promoted pipeline goes to ([#CHANGE] or
+    /// [#NEW_VERSION]), as recorded; empty when not recorded.
+    Optional<String> recordedPipelineChoice(final String build, final String group) {
+        return records.groupPipelineChoice(build, group).filter(PIPELINE_CHOICES::contains);
+    }
+
+    /// Records what the user chose the build's change to a group's promoted pipeline goes to, so it is not asked
+    /// again (by copy_pipeline or build_translation_xslt).
+    ///
+    /// @param build  A build.
+    /// @param group  The group.
+    /// @param choice [#CHANGE] or [#NEW_VERSION].
+    void rememberPipelineChoice(final String build, final String group, final String choice) {
+        records.rememberGroupPipelineChoice(build, group, choice);
+    }
+
+    /// Puts to the user what a change to a group whose pipeline is promoted goes to: that pipeline (through working
+    /// copies), or a new version of it. The one form for it, whichever tool asks (build_translation_xslt saving the
+    /// group, or copy_pipeline copying its pipeline).
+    ///
+    /// @param consent  Asks the user.
+    /// @param call     The call asking.
+    /// @param context  The call's context.
+    /// @param tool     The tool asking.
+    /// @param group    The group.
+    /// @param pipeline The name of the group's promoted pipeline.
+    /// @return [#CHANGE] or [#NEW_VERSION]; empty when no form can be shown (the agent then asks in the chat).
+    static Optional<String> askPipelineChoice(final Consent consent,
+                                              final ToolCall call,
+                                              final ToolCallContext context,
+                                              final String tool,
+                                              final String group,
+                                              final String pipeline) {
+        final Map<String, String> options = pipelineChoiceOptions(pipeline);
+        return consent.choose(call, context, tool, "Group '" + group + "' runs in pipeline " + pipeline + ", in "
+                                                   + "production. This build changes the group: change that "
+                                                   + "pipeline, or make a new version of it.",
+                        List.copyOf(options.keySet()), "What does the change to group '" + group + "' go to?")
+                .map(options::get);
+    }
+
+    /// @param group    The group.
+    /// @param pipeline The name of its promoted pipeline.
+    /// @param argument How the agent passes the user's answer, e.g. `pipeline=change|new_version`.
+    /// @return What the agent is told where no form can be shown: ask the user in the chat, then call again.
+    static String pipelineChoiceAsked(final String group, final String pipeline, final String argument) {
+        return "Group '" + group + "' runs in pipeline " + pipeline + ", in production: ask the user whether this "
+               + "change goes to that pipeline or to a new version of it (" + String.join("; ",
+                pipelineChoiceOptions(pipeline).keySet()) + "), then call again with " + argument + ". Nothing was "
+               + "saved.";
+    }
+
+    // The choices of what a change to a group's promoted pipeline goes to, as the user reads them, each to what it
+    // is recorded as.
+    private static Map<String, String> pipelineChoiceOptions(final String pipeline) {
+        final Map<String, String> options = new LinkedHashMap<>();
+        options.put("Change " + pipeline + " (its working copy is written back over it at promotion)", CHANGE);
+        options.put("A new version of " + pipeline + " (copy_pipeline; " + pipeline + " runs on until the new one "
+                    + "replaces it)", NEW_VERSION);
+        return options;
+    }
+
+    // The registry of the build's aggregated feed: the one the build holds, else the one beside a feed the build
+    // works from; empty when there is none (or another build is open on it).
+    private Optional<Registry> buildRegistry(final String build) {
+        try {
+            return Optional.of(registry(build, List.of()));
+        } catch (final ToolRefusal e) {
+            LOGGER.debug(() -> LogUtil.message("No registry in build {}: {}", build, e.getMessage()));
+        }
+        try {
+            final List<String> feeds = JsonValues.strings(records.load(build).get(BuildRecords.SOURCE_FEEDS));
+            return feeds.isEmpty()
+                    ? Optional.empty()
+                    : Optional.of(registry(build, feeds));
+        } catch (final ToolRefusal e) {
+            LOGGER.debug(() -> LogUtil.message("No registry for build {}'s feeds: {}", build, e.getMessage()));
+            return Optional.empty();
+        }
     }
 
     /// @param feed  An aggregated feed's name.
@@ -1466,6 +1589,18 @@ class SourceTypeGroups {
     /// @param feed  The feed's name.
     /// @param found Its registry.
     record Registry(String feed, SourceTypeRegistries.Found found) {
+
+    }
+
+
+    /// A source type group whose pipeline is promoted, and how far a build has decided what its change goes to.
+    ///
+    /// @param group    The group's name.
+    /// @param pipeline The name of its pipeline, as the registry names it.
+    /// @param recorded What the user chose the build's change goes to ([#CHANGE] or [#NEW_VERSION]), or null when
+    ///                 not recorded.
+    /// @param copied   True if the build has a copy of the group's XSLT (a working copy or a new version's).
+    record PromotedGroup(String group, String pipeline, String recorded, boolean copied) {
 
     }
 

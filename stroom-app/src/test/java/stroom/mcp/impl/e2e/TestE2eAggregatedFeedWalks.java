@@ -695,22 +695,31 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
                 "reviewed", shown.get("review_id"), "rows", shown.get("rows"), "group", firstName));
         assertThat(scoped).containsEntry("group", firstName).containsKey("joins");
         assertThat(strings(scoped, "scope")).containsExactly(firstType);
-        // The group and its source types are the scope's: none given.
+        // The group's pipeline copied first, before the group is saved (seen in eval case 61: the agent's
+        // working_copy=true made the user's choice, and they saw only the copy's technical form): copy_pipeline puts
+        // the change-or-new-version question to the user itself and copies as they chose (Change, the first
+        // option: a working copy, whatever the agent's flag said); build_translation_xslt doesn't ask again.
         final int changeBefore = client.forms().size();
+        final Map<String, Object> copied = agreed("copy_pipeline", args("build", third, "source_uuid",
+                firstPipeline, "new_name", feed + " " + firstName, "working_copy", false));
+        assertThat(copied).containsEntry("working_copy", true);
+        assertThat(String.valueOf(copied.get("note"))).contains("working_copy=false was overridden");
+        final String running = uuidOf(copied);
+        // The group and its source types are the scope's: none given.
         final Map<String, Object> changed = agreed("build_translation_xslt", args("build", third, "feeds",
                 List.of(feed), "schema_version", VERSION, "stream_ids", List.of(stream), "mapping",
                 TestE2eSourceTypeGroups.jsonValue(jsonOf(firstSaved.mapping()).replace("\"LogonFailed\"",
                         "\"LogonFailedV2\""))));
         assertThat(changed).as("changed: %s", changed.get("problems")).containsEntry("ok", true);
         assertThat(map(changed, "group")).containsEntry("name", firstName);
-        assertThat(formsSince(changeBefore)).anySatisfy(form -> assertThat(form.message())
-                .contains("'" + firstName + "'", PIPELINE_FORM, feed + " " + firstName));
+        assertThat(formsSince(changeBefore).stream().filter(form -> form.message().contains(PIPELINE_FORM)))
+                .singleElement()
+                .satisfies(form -> assertThat(form.message()).contains("'" + firstName + "'",
+                        feed + " " + firstName));
         final String original = uuidOf(map(firstSaved.group(), "xslt"));
         final String copy = uuidOf(map(map(changed, "group"), "xslt"));
         assertThat(copy).isNotEqualTo(original);
         assertThat(readXslt(copy).getData()).contains("LogonFailedV2");
-        final String running = uuidOf(agreed("copy_pipeline", args("build", third, "source_uuid", firstPipeline,
-                "new_name", feed + " " + firstName, "working_copy", true)));
         final int failedAt = TestE2eSourceTypeGroups.indexOf(later.lines().toList(), "\"UserLoginFailed\"", null);
         assertThat(translationOutput(running, laterStream, failedAt)).contains("LogonFailedV2");
         promote(third, Map.of("Pipeline", folder, "XSLT", folder, "Documentation", folder));

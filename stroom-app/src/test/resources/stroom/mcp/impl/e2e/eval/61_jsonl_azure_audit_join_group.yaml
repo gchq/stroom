@@ -19,9 +19,10 @@ user_knows: >
   OneDrive joins the existing Messaging group; no new group. Messaging then holds ExchangeOnline, MicrosoftTeams and
   OneDrive. SharePoint and AzureActiveDirectory stay parked for later builds. When asked whether the change goes to
   the Messaging pipeline in production or to a new version of it: change it (its working copy written back at
-  promotion), no new version. The Workload field says which workload a record came from, as before. The other
-  workloads' records being passed over by the Messaging pipeline is expected; they are not errors. Promote the
-  build, keeping its documents where the feed's other documents are. The system is Microsoft 365.
+  promotion), no new version. The Workload field says which workload a record came from, as before; Operation is
+  what was done within a workload, so it tells the kinds of event apart. The other workloads' records being passed
+  over by the Messaging pipeline is expected; they are not errors. Promote the build, keeping its documents where
+  the feed's other documents are. The system is Microsoft 365.
   Users' Ids stay whole, with their domain (sam.taylor@contoso.example), as Messaging writes them.
 expected:
   records: 192
