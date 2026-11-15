@@ -130,8 +130,9 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                 .name(NAME)
                 .description(ToolDescription.builder()
                         .general("Runs an ES|QL query on an Elastic Index doc's index, as the user, answered by "
-                                 + "Elasticsearch itself: use it for totals, counts, top N and grouped questions "
-                                 + "on Elasticsearch indexes (e.g. which users uploaded the most, by site domain)")
+                                 + "Elasticsearch itself: use it for totals, counts, top N and grouped or bucketed "
+                                 + "questions on Elasticsearch indexes (e.g. which users uploaded the most, by site "
+                                 + "domain; events per hour with BUCKET(@timestamp, 1 hour))")
                         .chatOnly("; use run_stroomql for row-level work or any other data source")
                         .general(". Give pipeline: the commands after FROM, e.g. '| WHERE event.action == "
                                  + "\"allowed\" | STATS total = SUM(bytes) BY user.name, url.domain | SORT total "

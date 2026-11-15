@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.api.ElasticEsql;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.EventsFile;
@@ -35,6 +36,7 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchRequestSource.SourceType;
+import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
@@ -42,6 +44,7 @@ import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.resource.api.ResourceStore;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -63,6 +66,7 @@ import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -85,6 +89,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
     private final Provider<ResourceStore> resourceStoreProvider;
     private final AgentSearches agentSearches;
     private LuceneTextFields luceneTextFields;
+    private Provider<ElasticEsql> elasticEsqlProvider;
 
     @Inject
     RunStroomQlTool(final ChatWorkspace workspace,
@@ -103,6 +108,13 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
     @Inject
     void setLuceneTextFields(final LuceneTextFields luceneTextFields) {
         this.luceneTextFields = luceneTextFields;
+    }
+
+    /// @param elasticEsqlProvider Runs ES|QL on an Elastic Index, for the hint that an aggregation there is
+    ///                            better done by esql_query (with how many documents Stroom read for it).
+    @Inject
+    void setElasticEsql(final Provider<ElasticEsql> elasticEsqlProvider) {
+        this.elasticEsqlProvider = elasticEsqlProvider;
     }
 
     @Override
@@ -139,6 +151,11 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                         .general(". Use eval (e.g. 'eval Rate = Bytes / Duration') to work values out in the query, "
                                  + "in Stroom's expression language")
                         .chatOnly(", as the table tool's expressions are")
+                        .general(". It is right for row-level results, Lucene indexes, views and other data sources, "
+                                 + "and Stroom's own expression functions; on an Elasticsearch index, totals, top N "
+                                 + "and grouped questions are answered faster by Elasticsearch with ES|QL")
+                        .chatOnly(" (esql_query), as a StroomQL query reads every matching document through "
+                                  + "Stroom to group them")
                         .general(". Add a limit to the query for large results. If more than one data source could "
                                  + "hold what the user asked for, ask them which to use")
                         .chatOnly(" with ask_user")
@@ -218,7 +235,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                 response = queryService.search(searchRequest.copy().queryKey(response.getQueryKey()).build());
             }
             return ToolResult.text(results(workspace, searchRequest, response, started, out, sourceDocUuid, limited,
-                    maxRows));
+                    maxRows) + esqlHint(queryService, dataSource, given, context));
         } finally {
             // The search is the agent's own, and is never left running, e.g. when the time limit is reached.
             agentSearches.destroy(queryKey);
@@ -274,6 +291,52 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                         luceneText, MisleadingSearches.unindexed(dataSource, fields,
                                 searches.stream().map(MisleadingSearches.Search::field).toList()))
                 .map(refusal -> refusal + ". In StroomQL, EQUALS is = and NOT_EQUALS is !=.");
+    }
+
+    // For an aggregation on an Elastic Index that translates exactly to ES|QL: the esql_query pipeline that gives the
+    // same rows with the grouping done in Elasticsearch, and how many documents Stroom read to group them here.
+    // Nothing for anything else, or if ES|QL can't run on the index's cluster.
+    private String esqlHint(final QueryService queryService,
+                            final DocRef dataSource,
+                            final String query,
+                            final ToolCallContext context) {
+        if (elasticEsqlProvider == null || dataSource == null || !ElasticIndexDoc.TYPE.equals(dataSource.getType())) {
+            return "";
+        }
+        final Map<String, FieldType> types = new HashMap<>();
+        try {
+            NullSafe.list(NullSafe.get(queryService.findFields(new FindFieldCriteria(new PageRequest(0,
+                            IndexEvents.MAX_FIELDS), FindFieldCriteria.DEFAULT_SORT_LIST, dataSource, null, null)),
+                    ResultPage::getValues)).forEach(field -> types.put(field.getFldName(), field.getFldType()));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to list the index's fields: {}", e.getMessage()), e);
+            return "";
+        }
+        final Optional<StroomQlToEsql.Translation> translation = StroomQlToEsql.translate(query, types);
+        if (translation.isEmpty()) {
+            return "";
+        }
+        String read = "";
+        try {
+            final String where = translation.get().where();
+            final ElasticEsql.Result counted = elasticEsqlProvider.get().query(new ElasticEsql.Request(dataSource,
+                    (where.isEmpty()
+                            ? ""
+                            : where + " ") + "| STATS documents = COUNT(*)", null, null, 1, timeLimit(context),
+                    false));
+            if (!counted.rows().isEmpty() && counted.rows().getFirst().getFirst() instanceof final Number number) {
+                read = " Stroom read " + number.longValue() + " documents from Elasticsearch to group them here.";
+            }
+        } catch (final ElasticEsql.Refusal e) {
+            if (e.reason() == ElasticEsql.Reason.CLUSTER_TOO_OLD) {
+                return "";
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to count the documents read: {}", e.getMessage()), e);
+        }
+        return "\n\nThis is an aggregation on an Elasticsearch index." + read + " esql_query gives the same rows with "
+               + "the grouping done in Elasticsearch: index '" + dataSource.getUuid() + "', pipeline '"
+               + translation.get().pipeline() + "'.";
     }
 
     // Writes the results of a search that has finished to the workspace, and says what they hold.

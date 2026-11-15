@@ -76,6 +76,8 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
 
     private ElasticTestNode node;
     private String indexName;
+    // What run_stroomql last said.
+    private String lastStroomQl;
 
     @BeforeEach
     void setUpNode() {
@@ -112,6 +114,19 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
         // The same question through Stroom: every document read back and grouped by Stroom's coprocessors.
         final Map<String, Long> viaStroom = stroomQlTotals(index);
         assertThat(top(viaStroom, 10)).containsExactlyEntriesOf(expected);
+        // run_stroomql says esql_query would have grouped them in Elasticsearch, and how many documents it read.
+        assertThat(lastStroomQl).contains("This is an aggregation on an Elasticsearch index. Stroom read "
+                                          + inStroomCount(EVENTS) + " documents from Elasticsearch to group them")
+                .contains("pipeline '| STATS total = SUM(bytes) BY user.name, url.domain "
+                          + "| KEEP user.name, url.domain, total'");
+        // The translated pipeline is valid ES|QL, and gives the same totals.
+        final Map<String, Object> translated = json("esql_query", args("index", index.getUuid(), "pipeline",
+                "| STATS total = SUM(bytes) BY user.name, url.domain | KEEP user.name, url.domain, total"));
+        assertThat(number(translated, "row_count")).isEqualTo(viaStroom.size());
+        // describe_data_source steers aggregations to esql_query, with an example from the index's fields.
+        assertThat(McpTestClient.text(client.call("describe_data_source", args("data_source", index.getUuid()))))
+                .contains("Aggregations on this index (Elasticsearch 9.")
+                .contains("use esql_query");
     }
 
     @Test
@@ -217,12 +232,12 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
 
     // Each user and domain's total bytes, through run_stroomql, the most first.
     private Map<String, Long> stroomQlTotals(final DocRef index) {
-        final String text = McpTestClient.text(client.call("run_stroomql", args("query",
+        lastStroomQl = McpTestClient.text(client.call("run_stroomql", args("query",
                 "from \"" + index.getName() + "\"\n"
                 + "group by user.name, url.domain\n"
                 + "select user.name, url.domain, sum(bytes) as total")));
-        final Matcher matcher = RESULTS_PATH.matcher(text);
-        assertThat(matcher.find()).as("run_stroomql wrote its results: %s", text).isTrue();
+        final Matcher matcher = RESULTS_PATH.matcher(lastStroomQl);
+        assertThat(matcher.find()).as("run_stroomql wrote its results: %s", lastStroomQl).isTrue();
         final String file = McpTestClient.text(client.call("read_file", args("path", matcher.group(1),
                 "count", 1_000)));
         final List<List<String>> rows = new ArrayList<>();
