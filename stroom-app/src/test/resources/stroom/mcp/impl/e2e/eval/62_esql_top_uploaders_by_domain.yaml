@@ -5,8 +5,8 @@ capabilities: [elasticsearch, esql, aggregation]
 # Java by EvalProxyUploads) behind the Elastic Index doc "Proxy uploads". The answer is a multi-key aggregation:
 # STATS SUM BY user and domain, SORT DESC, LIMIT. The traps: run_stroomql reading every document through Stroom to
 # group them where esql_query has Elasticsearch group them; the ranking given from rows cut short without saying how
-# many pairs there are; a text or wrong field grouped by. The answer is the last esql_query call's rows, worked out
-# by the generator.
+# many pairs there are; a text or wrong field grouped by. The answer is an accepted esql_query call's rows, worked
+# out by the generator.
 elastic_index: {name: Proxy uploads}
 request: >
   Which users have uploaded the most data, by site domain? Use the "Proxy uploads" Elasticsearch index. Give me the

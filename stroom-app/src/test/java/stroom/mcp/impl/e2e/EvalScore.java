@@ -451,14 +451,17 @@ final class EvalScore {
     /// Scores a question's answer (a case of kind `question`, [EvalCases#isQuestion]) from the tool calls made:
     ///
     /// * `expected.tools_used`: each tool was called at least once;
-    /// * the last call of `expected.answer.tool` (default `esql_query`) was accepted, refusals before it recovered
-    ///   from (how many there were is noted);
-    /// * `expected.answer.rows`: the last accepted call's rows hold the expected rows (in order when
-    ///   `ordered: true`, else in any order), and no others. A row matches when each expected value is one of its
-    ///   values, whatever the columns are called: a string exactly, or as the start of a date (`2026-01-02` matches
-    ///   `2026-01-02T00:00:00.000Z`); a number within `tolerance` of it (a fraction of it, default 0.001), or 0.05
-    ///   for one given with decimals, as an answer rounded to one place is;
-    /// * `expected.answer.total_groups`: the call's `total_groups` (or its row count, if not cut short).
+    /// * a call of `expected.answer.tool` (default `esql_query`) was accepted (how many were refused is noted);
+    /// * `expected.answer.rows`: an accepted call's rows hold the expected rows (in order when `ordered: true`,
+    ///   else in any order), and no others. The first accepted call that matches is the answer, whatever calls came
+    ///   after it (an agent may answer from one call, then run others to check or add to it), and which call it was
+    ///   is noted; if none matches, the problem is said of the last accepted call. A row matches when each expected
+    ///   value is one of its values, whatever the columns are called: a string exactly, or as the start of a date
+    ///   (`2026-01-02` matches `2026-01-02T00:00:00.000Z`); a number within `tolerance` of it (a fraction of it,
+    ///   default 0.001), or 0.05 for one given with decimals, as an answer rounded to one place is. The rows must be
+    ///   the query's: a value worked out in the agent's reply (a conversion, a cut-off) doesn't count;
+    /// * `expected.answer.total_groups`: the `total_groups` of any accepted call that gives it, or the answer
+    ///   call's row count, if it wasn't cut short.
     ///
     /// @param evalCase The case.
     /// @param calls    The tool calls made, in order.
@@ -482,32 +485,57 @@ final class EvalScore {
         }
         final long refused = tries.stream().filter(ToolUse::refused).count();
         note(tool + ": " + refused + " of " + tries.size() + " call(s) refused");
-        final ToolUse last = tries.getLast();
-        questionCheck("last " + tool + " accepted", !last.refused(), "the last " + tool + " call was refused: "
-                                                                     + last.text());
-        if (last.refused()) {
+        final List<ToolUse> accepted = tries.stream().filter(call -> !call.refused()).toList();
+        questionCheck(tool + " accepted", !accepted.isEmpty(), "every " + tool + " call was refused, the last: "
+                                                               + tries.getLast().text());
+        if (accepted.isEmpty()) {
             return;
         }
-        final List<List<Object>> rows = rows(last.result().get("rows"));
+        ToolUse answerCall = accepted.getLast();
         final List<List<Object>> wanted = rows(answer.get("rows"));
         if (!wanted.isEmpty()) {
             final double tolerance = answer.get("tolerance") instanceof final Number number
                     ? number.doubleValue()
                     : 0.001;
             final boolean ordered = Boolean.TRUE.equals(answer.get("ordered"));
-            final String mismatch = mismatch(wanted, rows, ordered, tolerance);
+            final ToolUse matching = accepted.stream()
+                    .filter(call -> mismatch(wanted, rows(call.result().get("rows")), ordered, tolerance) == null)
+                    .findFirst()
+                    .orElse(null);
+            if (matching != null) {
+                answerCall = matching;
+                note("answer rows from " + tool + " call " + (tries.indexOf(matching) + 1) + " of " + tries.size());
+            }
+            final String mismatch = mismatch(wanted, rows(answerCall.result().get("rows")), ordered, tolerance);
             questionCheck("answer rows", mismatch == null, "the answer's rows " + mismatch);
         }
         if (answer.get("total_groups") instanceof final Number total) {
-            final Object given = last.result().containsKey("total_groups")
-                    ? last.result().get("total_groups")
-                    : (Boolean.TRUE.equals(last.result().get("truncated"))
-                            ? null
-                            : rows.size());
-            questionCheck("total groups", given instanceof final Number number
-                                          && number.longValue() == total.longValue(),
-                    "the total groups were " + given + ", expected " + total);
+            final List<Object> given = totalGroups(answerCall, accepted);
+            final Object said = given.size() > 1
+                    ? given
+                    : given.stream().findFirst().orElse(null);
+            questionCheck("total groups", given.stream().anyMatch(value -> value instanceof final Number number
+                                                                         && number.longValue() == total.longValue()),
+                    "the total groups were " + said + ", expected " + total);
         }
+    }
+
+    // The total groups the calls give: the answer call's total_groups (or its row count, if it wasn't cut short),
+    // then each other accepted call's total_groups.
+    private static List<Object> totalGroups(final ToolUse answerCall, final List<ToolUse> accepted) {
+        final List<Object> given = new ArrayList<>();
+        final Map<String, Object> result = answerCall.result();
+        if (result.get("total_groups") != null) {
+            given.add(result.get("total_groups"));
+        } else if (!Boolean.TRUE.equals(result.get("truncated"))) {
+            given.add(rows(result.get("rows")).size());
+        }
+        for (final ToolUse call : accepted) {
+            if (call != answerCall && call.result().get("total_groups") != null) {
+                given.add(call.result().get("total_groups"));
+            }
+        }
+        return given;
     }
 
     // Why the rows don't hold what is wanted, or null if they do.
