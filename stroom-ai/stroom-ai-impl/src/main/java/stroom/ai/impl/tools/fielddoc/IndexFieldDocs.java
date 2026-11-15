@@ -594,13 +594,13 @@ public final class IndexFieldDocs {
                 final List<String> values = distinctNonEmpty(allValues(documents, f.name()));
                 cells.add(!values.isEmpty()
                         ? values.subList(0, Math.min(3, values.size())).stream()
-                                  .map(v -> "`" + ToolText.head(v, 40) + "`")
+                                  .map(v -> FieldDocs.sampleValue(v, 40))
                                   .collect(Collectors.joining(", ")) + (values.size() > 3
                                 ? " (+" + (values.size() - 3) + ")"
                                 : "")
                         : !fromIndex.isEmpty()
                                 ? fromIndex.stream()
-                                          .map(v -> "`" + ToolText.head(v, 40) + "`")
+                                          .map(v -> FieldDocs.sampleValue(v, 40))
                                           .collect(Collectors.joining(", ")) + " (from the index)"
                                 : noValues(f, shared, population, documents.size(), indexValues));
             }

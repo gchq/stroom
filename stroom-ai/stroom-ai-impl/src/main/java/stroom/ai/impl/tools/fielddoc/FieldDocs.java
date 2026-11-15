@@ -28,6 +28,7 @@ import stroom.ai.impl.tools.generation.Lookup;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -69,6 +70,8 @@ public final class FieldDocs {
             "@StreamId", "The id of the Events stream the event came from.",
             "@EventId", "The event's number in its stream; with StreamId, it identifies the event.");
 
+    // White space of any kind, run together in a sample value shown on one line.
+    private static final Pattern WHITE_SPACE = Pattern.compile("[\\s\\u2028\\u2029\\u0085]+");
     private static final Pattern ACTION_STEP = Pattern.compile(
             "^(EventDetail/)(?!(?:TypeId|Description|Classification|Purpose|Data)\\b)([^/\\[]+)(?=/)");
     private static final Pattern DESCRIPTIONS = Pattern.compile("<!-- stroom-mcp field descriptions\\n(.*?)\\n-->",
@@ -536,6 +539,19 @@ public final class FieldDocs {
                 : null;
     }
 
+    /// @param value A sample value, as the data holds it.
+    /// @param most  The most characters shown.
+    /// @return It as inline code in a table cell, on one line: its white space (new lines, carriage returns, line
+    /// separators, tabs) run together as one space, backticks shown as quotes, cut to `most` characters with an
+    /// ellipsis (seen: a mail body's HTML and CRLF line ends broke a documentation table's rows).
+    static String sampleValue(final String value, final int most) {
+        final String flat = WHITE_SPACE.matcher(NullSafe.string(value)).replaceAll(" ").strip().replace('`', '\'');
+        final String shown = ToolText.head(flat, most);
+        return "`" + shown + (shown.length() < flat.length()
+                ? "…"
+                : "") + "`";
+    }
+
     /// @param text Text.
     /// @return It as a table cell: its pipes escaped, its lines as `<br>`.
     static String cell(final String text) {
@@ -588,7 +604,7 @@ public final class FieldDocs {
             return "(none in the sample)";
         }
         return distinct.subList(0, Math.min(3, distinct.size())).stream()
-                       .map(v -> "`" + ToolText.head(v, 40) + "`")
+                       .map(v -> sampleValue(v, 40))
                        .collect(Collectors.joining(", ")) + (distinct.size() > 3
                 ? " (+" + (distinct.size() - 3) + ")"
                 : "");

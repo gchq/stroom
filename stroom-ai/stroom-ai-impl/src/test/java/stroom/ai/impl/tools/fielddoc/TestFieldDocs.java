@@ -36,6 +36,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestFieldDocs {
 
     @Test
+    void aSampleValueIsShownOnOneLineAsCodeWhateverItHolds() {
+        // Seen in an index's documentation: a mail body's HTML and CRLF line ends broke the table's rows.
+        assertThat(FieldDocs.sampleValue("<html><head><meta charset=\"utf-8\"></head>", 60))
+                .isEqualTo("`<html><head><meta charset=\"utf-8\"></head>`");
+        assertThat(FieldDocs.sampleValue("Hi Anja,\r\n\r\nCan you confirm the roster", 40))
+                .isEqualTo("`Hi Anja, Can you confirm the roster`");
+        assertThat(FieldDocs.sampleValue("a\u2028b\tc", 40)).isEqualTo("`a b c`");
+        assertThat(FieldDocs.sampleValue("the `regex` was", 40)).isEqualTo("`the 'regex' was`");
+        assertThat(FieldDocs.sampleValue("x".repeat(50), 40)).isEqualTo("`" + "x".repeat(40) + "…`");
+        assertThat(FieldDocs.cell(FieldDocs.sampleValue("a\r\nb | c", 40))).doesNotContain("\n", "\r")
+                .contains("\\|");
+    }
+
+    @Test
     void groupsWithRoughlyTheSameFieldsAreShownTogether() {
         // Asked for by the user: Send and Receive, say, under one heading; a path's action element counts as any.
         final Map<String, Set<String>> signatures = new LinkedHashMap<>();
