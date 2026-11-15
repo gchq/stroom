@@ -70,9 +70,6 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
             | SORT total DESC, user.name, url.domain
             | LIMIT 10""";
     private static final Pattern RESULTS_PATH = Pattern.compile("The results are in (\\S+\\.md)\\.");
-    private static final String STREAMS_NOTE = "Counts and sums come straight from Elasticsearch and may include "
-                                               + "documents from streams the user can't see or that have been "
-                                               + "deleted, so they can differ from run_stroomql and dashboards.";
 
     @Inject
     private ElasticIndexStore elasticIndexStore;
@@ -112,7 +109,7 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
         assertThat(number(esql, "limit")).isEqualTo(10);
         assertThat(number(esql, "total_groups")).isEqualTo(all.size());
         assertThat((String) esql.get("note")).contains("so these are the first 10 of " + all.size() + " groups")
-                .endsWith(STREAMS_NOTE);
+                .doesNotContain("streams the user can't see");
         assertThat(esql).doesNotContainKey("excluded_streams");
         assertThat((String) esql.get("query")).startsWith("FROM " + indexName + "\n");
 
@@ -151,9 +148,6 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
             }
         }
         assertThat(longs((List<List<Object>>) esql.get("rows"))).containsExactly(List.of((long) EVENTS, total));
-        assertThat((String) esql.get("note")).endsWith(STREAMS_NOTE);
-        assertThat(McpTestClient.text(client.call("esql_query", args("index", index.getUuid(), "pipeline",
-                "| STATS n = COUNT(*)")))).contains(STREAMS_NOTE);
         // A Stroom search leaves out the hits of the stream not in Stroom.
         final Map<String, Long> viaStroom = stroomQlTotals(index);
         assertThat(viaStroom.values().stream().mapToLong(Long::longValue).sum())

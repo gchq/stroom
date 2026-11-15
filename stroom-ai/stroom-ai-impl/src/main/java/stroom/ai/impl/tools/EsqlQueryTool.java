@@ -70,8 +70,8 @@ import java.util.TreeSet;
 /// scrolling every document through Stroom as run_stroomql does. The model gives the commands after `FROM`; the
 /// index is the doc's. The rows are written to the workspace as a table and shown (Markdown in the chat, JSON over
 /// MCP), with whether they were cut short and, if so, how many rows (groups) there are in all. The documents'
-/// streams aren't looked up, as a Stroom search looks up its hits' (for speed, the user's choice), so every result
-/// says its counts and sums may differ from run_stroomql's and dashboards' ([#STREAMS_NOTE]).
+/// streams aren't looked up, as a Stroom search looks up its hits' (for speed, the user's choice): the tool's
+/// description says its counts and sums may differ from run_stroomql's and dashboards'.
 class EsqlQueryTool extends AbstractWorkspaceTool {
 
     static final String NAME = "esql_query";
@@ -81,10 +81,6 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
     static final String TIME_FROM_ARG = "timeFrom";
     static final String TIME_TO_ARG = "timeTo";
     static final String LIMIT_ARG = "limit";
-    /// Said with every result: the documents' streams aren't looked up, as a Stroom search looks them up.
-    static final String STREAMS_NOTE = "Counts and sums come straight from Elasticsearch and may include documents "
-                                       + "from streams the user can't see or that have been deleted, so they can "
-                                       + "differ from run_stroomql and dashboards.";
     /// The most rows shown in the result; the rest are in the table file.
     static final int SHOWN_ROWS = 100;
     private static final int FIELDS_NAMED = 60;
@@ -427,7 +423,6 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
         if (!cells.isEmpty()) {
             sb.append(" The rows are in ").append(out).append('.');
         }
-        sb.append("\n\n").append(STREAMS_NOTE);
         return sb.toString();
     }
 
@@ -507,7 +502,7 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                     ? "total_groups"
                     : "total_rows", result.totalRows());
         }
-        map.put("note", rowsNote(result) + " " + STREAMS_NOTE);
+        map.put("note", rowsNote(result));
         if (!result.rows().isEmpty()) {
             map.put("table", out.toString());
         }
