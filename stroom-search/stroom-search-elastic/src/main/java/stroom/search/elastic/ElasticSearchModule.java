@@ -17,12 +17,14 @@
 package stroom.search.elastic;
 
 import stroom.ai.api.ElasticClusterTests;
+import stroom.ai.api.ElasticEsql;
 import stroom.ai.api.ElasticIndexPresence;
 import stroom.ai.api.ElasticIndexTemplates;
 import stroom.docstore.api.DocumentStoreBinder;
 import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
+import stroom.search.elastic.esql.ElasticEsqlService;
 import stroom.search.elastic.indexing.ElasticIndexingElementModule;
 import stroom.search.elastic.search.ElasticIndexQueryResourceImpl;
 import stroom.search.elastic.search.ElasticSearchProvider;
@@ -55,6 +57,7 @@ public class ElasticSearchModule extends AbstractModule {
         bind(ElasticIndexTemplates.class).to(AiElasticIndexTemplates.class);
         bind(ElasticClusterTests.class).to(AiElasticClusterTests.class);
         bind(ElasticIndexPresence.class).to(AiElasticIndexPresence.class);
+        bind(ElasticEsql.class).to(ElasticEsqlService.class);
 
         SuggestionsServiceBinder.create(binder())
                 .bind(ElasticIndexDoc.TYPE, ElasticSuggestionsQueryHandler.class);
