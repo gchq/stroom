@@ -420,7 +420,9 @@ class VerifyIndexTool extends AbstractBuiltInTool {
                     .orElse(null);
             final Map<String, Object> found = checks.runTestSearches(context, searchedWith, streamIds, expected,
                     exact, timeRange, retries, searches, pipelineUuid, events);
-            expectationsSaid(found, events);
+            expectationsSaid(found, events, typed.isEmpty()
+                    ? null
+                    : typed.keySet());
             if (NullSafe.isNonBlankString(pipelineUuid)) {
                 lacking(found, pipelineUuid, source, streamIds, index);
             }
@@ -556,10 +558,13 @@ class VerifyIndexTool extends AbstractBuiltInTool {
     }
 
     // Where the checks' counts came from, and the core fields most events hold no value for (seen in chat 177:
-    // event.action empty in 2,233 of 2,457 documents, and nothing said so): a finding for the user, a failure only
-    // for the time field, which every document needs.
+    // event.action empty in 2,233 of 2,457 documents, and nothing said so), or that the index doesn't list (an
+    // Elasticsearch index's fields as Stroom lists them; null when not known): a finding for the user, a failure
+    // only for the time field, which every document needs.
     @SuppressWarnings("unchecked")
-    private void expectationsSaid(final Map<String, Object> found, final EventsExpectations.Sample events) {
+    private void expectationsSaid(final Map<String, Object> found,
+                                  final EventsExpectations.Sample events,
+                                  final Set<String> listed) {
         if (events == null || !events.any()) {
             found.put("expected_counts", "given, not counted from the Events: no plan is kept with the indexing "
                                          + "XSLT (pipeline_uuid names the indexing pipeline), or no events were read"
@@ -572,15 +577,15 @@ class VerifyIndexTool extends AbstractBuiltInTool {
                                      + (events.unread().isEmpty()
                 ? ""
                 : "; not read: " + String.join("; ", events.unread())));
-        final List<Map<String, Object>> empty = events.mostlyEmpty(plans.ecs());
+        final List<Map<String, Object>> empty = events.mostlyEmpty(plans.ecs(), listed);
         if (empty.isEmpty()) {
             return;
         }
         found.put("findings", Map.of("core_fields_mostly_empty", empty, "next", "Tell the user which core fields "
-                                     + "most events leave empty, and the Events path each is read from: the "
-                                     + "translation may not write it for most kinds of event, or the plan reads it "
-                                     + "from the wrong path. Ask whether to map it from another path, or leave it "
-                                     + "as it is."));
+                                     + "most events (or all: not_in_index, never searchable) leave empty, and the "
+                                     + "Events path each is read from: the translation may not write it for most "
+                                     + "kinds of event, or the plan reads it from the wrong path. Ask whether to "
+                                     + "map it from another path, or leave it as it is."));
         empty.stream().filter(finding -> Boolean.TRUE.equals(finding.get("required"))).forEach(finding -> {
             final Map<String, Object> check = new LinkedHashMap<>();
             check.put("check", "the time field " + finding.get("field") + " has a value");

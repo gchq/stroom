@@ -336,6 +336,19 @@ class EventsExpectations {
         /// @param ecs The ECS schema, or null.
         /// @return Each such field: `field`, `source`, `empty_in`, and `required` for the time field.
         List<Map<String, Object>> mostlyEmpty(final EcsSchema ecs) {
+            return mostlyEmpty(ecs, null);
+        }
+
+        /// As [#mostlyEmpty(EcsSchema)], with the fields the index lists: a core field of the plan it doesn't list
+        /// (no document gave it a value, so Elasticsearch never mapped it) is a finding too, however many events
+        /// hold it. Seen in chat 178: event.action written by no event, unmapped, and a search on it refused before
+        /// anything said so.
+        ///
+        /// @param ecs    The ECS schema, or null.
+        /// @param listed The fields the index lists, or null when they aren't known.
+        /// @return Each such field: `field`, `source`, `empty_in`, `not_in_index` for one the index doesn't list,
+        /// and `required` for the time field.
+        List<Map<String, Object>> mostlyEmpty(final EcsSchema ecs, final Set<String> listed) {
             final int indexed = indexed();
             final List<Map<String, Object>> out = new ArrayList<>();
             if (indexed == 0) {
@@ -346,6 +359,7 @@ class EventsExpectations {
                 if (!required && !core(field.name(), plan, ecs)) {
                     continue;
                 }
+                final boolean unlisted = listed != null && !listed.isEmpty() && !listed.contains(field.name());
                 long empty = 0;
                 String source = null;
                 boolean known = true;
@@ -360,14 +374,19 @@ class EventsExpectations {
                             .filter(values -> values.stream().allMatch(String::isBlank))
                             .count();
                 }
-                if (!known || 100.0 * empty / indexed <= MOSTLY_EMPTY) {
+                if (!unlisted && (!known || 100.0 * empty / indexed <= MOSTLY_EMPTY)) {
                     continue;
                 }
                 final Map<String, Object> finding = new LinkedHashMap<>();
                 finding.put("field", field.name());
-                finding.put("source", source);
-                finding.put("empty_in", ToolText.thousands(empty) + " of " + ToolText.thousands(indexed)
-                                        + " events read");
+                finding.put("source", NullSafe.nonBlankStringElse(source, field.source()));
+                if (known) {
+                    finding.put("empty_in", ToolText.thousands(empty) + " of " + ToolText.thousands(indexed)
+                                            + " events read");
+                }
+                if (unlisted) {
+                    finding.put("not_in_index", "the index doesn't list it: no document has a value for it");
+                }
                 if (required) {
                     finding.put("required", true);
                 }

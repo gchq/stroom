@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
@@ -165,6 +166,77 @@ class TestPromoteBuildTool {
         assertThat(String.valueOf(review(Map.of("Pipeline", "/Feeds", "XSLT", "/Feeds", "ix",
                 "/Feeds/Elsewhere"), null).get("layout")))
                 .contains("Elsewhere/");
+    }
+
+    @Test
+    void anAggregatedFeedsGroupGetsAFolderOfItsOwnBesideTheFeedsSharedDocuments() {
+        // Asked for by the user: <feed>/<group>/<role>, the group's XSLT with its pipeline (seen at the feed's folder
+        // beside the common module and helpers), the feed's shared documents beside the feed.
+        final String feed = "Azure-Audit-V1.0-EVENTS";
+        final BuildWorld.Node feeds = world.folder("System/Feeds");
+        world.add(FeedDoc.TYPE, "NETSKOPE", world.folder("System/Feeds/Netskope").uuid, "n");
+        world.add(FeedDoc.TYPE, feed, feeds.uuid, "az");
+        Mockito.when(docs.pipelineIndex.named(FeedDoc.TYPE, feed, 20))
+                .thenReturn(List.of(new DocRef(FeedDoc.TYPE, "az", feed)));
+        docs.facts.sources = List.of(feed);
+        module("gx", feed + " M365 Messaging", "group", "M365 Messaging");
+        module("cx", feed + " common", "common", null);
+        module("hx", feed + " helpers", "helpers", null);
+        final DocRef output = world.inBuild(BUILD, FeedDoc.TYPE, "AZURE-M365-MESSAGING-EVENTS", "of");
+        world.records().update(BUILD, output, entry -> entry.put(BuildFeeds.GROUP_OUTPUT, "M365 Messaging"));
+        world.inBuild(BUILD, DashboardDoc.TYPE, "Azure M365 Messaging-VERIFY", "dash");
+        world.docs.put("dash", DashboardDoc.builder().uuid("dash").name("Azure M365 Messaging-VERIFY").version("v0")
+                .dashboardConfig(DashboardConfig.builder().components(List.of(ComponentConfig.builder()
+                        .type("query").id("query").name("Query")
+                        .settings(QueryComponentSettings.builder()
+                                .dataSource(new DocRef(ElasticIndexDoc.TYPE, "ei")).build())
+                        .build())).build())
+                .build());
+        listed(doc(FeedDoc.TYPE, "t", feed + OutputFeeds.TEST_FEED, null),
+                doc(FeedDoc.TYPE, "of", "AZURE-M365-MESSAGING-EVENTS", null),
+                doc(XsltDoc.TYPE, "gx", feed + " M365 Messaging", "Events"),
+                doc(XsltDoc.TYPE, "cx", feed + " common", "Events"),
+                doc(XsltDoc.TYPE, "hx", feed + " helpers", "Events"),
+                doc(PipelineDoc.TYPE, "ev", "Azure M365 Messaging", "Events"),
+                doc(DocumentationDoc.TYPE, "evd", "Azure M365 Messaging", "Events"),
+                doc(ElasticIndexDoc.TYPE, "ei", "Azure M365 Messaging Index", "Indexing"),
+                doc(DocumentationDoc.TYPE, "eid", "Azure M365 Messaging Index", "Indexing"),
+                doc(PipelineDoc.TYPE, "ix", "Azure M365 Messaging Indexing", "Indexing"),
+                doc(XsltDoc.TYPE, "ixx", "Azure M365 Messaging Indexing", "Indexing"),
+                doc(DocumentationDoc.TYPE, "ixd", "Azure M365 Messaging Indexing", "Indexing"),
+                doc(DashboardDoc.TYPE, "dash", "Azure M365 Messaging-VERIFY", "Indexing"),
+                doc(DocumentationDoc.TYPE, "r", feed + " source types", null),
+                doc(DocumentationDoc.TYPE, "sn", feed + " source notes", null));
+        final Map<String, Object> destinations = Map.of("Pipeline", "/Feeds", "XSLT", "/Feeds", "ElasticIndex",
+                "/Feeds", "Documentation", "/Feeds", "Dashboard", "/Feeds");
+
+        assertThat(review(destinations, null).get("layout")).isEqualTo(
+                "System/Feeds/Azure-Audit-V1.0-EVENTS/  (new)\n"
+                + "├── M365 Messaging/  (new)\n"
+                + "│   ├── AZURE-M365-MESSAGING-EVENTS  (Feed)\n"
+                + "│   ├── Events/  (new)\n"
+                + "│   │   ├── Azure M365 Messaging  (Documentation)\n"
+                + "│   │   ├── Azure M365 Messaging  (Pipeline)\n"
+                + "│   │   └── Azure-Audit-V1.0-EVENTS M365 Messaging  (XSLT)\n"
+                + "│   └── Indexing/  (new)\n"
+                + "│       ├── Azure M365 Messaging Index  (Documentation)\n"
+                + "│       ├── Azure M365 Messaging Index  (ElasticIndex)\n"
+                + "│       ├── Azure M365 Messaging Indexing  (Documentation)\n"
+                + "│       ├── Azure M365 Messaging Indexing  (Pipeline)\n"
+                + "│       ├── Azure M365 Messaging Indexing  (XSLT)\n"
+                + "│       └── Azure M365 Messaging-VERIFY  (Dashboard)\n"
+                + "├── Azure-Audit-V1.0-EVENTS common  (XSLT)\n"
+                + "├── Azure-Audit-V1.0-EVENTS helpers  (XSLT)\n"
+                + "├── Azure-Audit-V1.0-EVENTS source notes  (Documentation)\n"
+                + "└── Azure-Audit-V1.0-EVENTS source types  (Documentation)\n\n"
+                + "Left in the workspace: Azure-Audit-V1.0-EVENTS-MCP-TEST (Feed)\n\n"
+                + "The build's test feed Azure-Audit-V1.0-EVENTS-MCP-TEST stays in the build's workspace: it holds "
+                + "only the sample's Events and is never promoted.");
+        // Flat when the user says so: the group's folder kept, its role subfolders not.
+        assertThat(String.valueOf(review(destinations, false).get("layout")))
+                .contains("├── M365 Messaging/  (new)\n│   ├── AZURE-M365-MESSAGING-EVENTS  (Feed)\n"
+                          + "│   ├── Azure M365 Messaging  (Documentation)\n")
+                .doesNotContain("Events/").doesNotContain("Indexing/");
     }
 
     @Test
@@ -626,6 +698,18 @@ class TestPromoteBuildTool {
             args.put("reviewed", reviewed);
         }
         return args;
+    }
+
+    // A module XSLT in the build, marked as the generator marks it.
+    private void module(final String uuid, final String name, final String kind, final String group) {
+        world.inBuild(BUILD, XsltDoc.TYPE, name, uuid);
+        world.docs.put(uuid, XsltDoc.builder().uuid(uuid).name(name).version("v0")
+                .data("<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:mcp=\""
+                      + MappingFacts.MCP_NS + "\" version=\"3.0\"><mcp:module kind=\"" + kind + "\""
+                      + (group == null
+                        ? ""
+                        : " name=\"" + group + "\" mode=\"m365\"") + "/></xsl:stylesheet>")
+                .build());
     }
 
     // The folders, made.

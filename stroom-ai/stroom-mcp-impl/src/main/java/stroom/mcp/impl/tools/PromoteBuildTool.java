@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.generation.CodeDiff;
 import stroom.ai.impl.tools.generation.ModuleChecks;
+import stroom.ai.impl.tools.generation.SourceTypeModule;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
@@ -231,9 +232,11 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                              + "documentation and dashboard; destination folders that don't exist yet are created "
                              + "first. A working copy is written back over its original after the original is "
                              + "backed up to <workspace>/backups, then the copy is deleted. The build's workspace "
-                             + "folder is removed afterwards if nothing is left in it. An aggregated feed's modules "
-                             + "(helpers, common module, source type groups) and a group's output feed go beside the "
-                             + "feed, with its registry; working copies of modules are written back with every "
+                             + "folder is removed afterwards if nothing is left in it. An aggregated feed's helpers "
+                             + "and common module go beside the feed, with its registry and source notes; a source "
+                             + "type group's documents (its XSLT, output feed, pipelines, index, documentation and "
+                             + "dashboard) in <feed's folder>/<group>/, under their role subfolders (Events, "
+                             + "Indexing); working copies of modules are written back with every "
                              + "module importing the originals again (each group importing the common module, "
                              + "which imports the helpers), and each pipeline running a group's XSLT gains the "
                              + "reference data the group looks up (a pipeline change, in the approval). What "
@@ -297,7 +300,12 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (docs.isEmpty()) {
             throw new ToolRefusal("Build '" + build + "' has no documents");
         }
-        final PromotionLayout.VersionFolders versions = layout.versionFolders(docs, destinations);
+        // An aggregated feed's build's source type group: its documents in a folder of its own beside the feed.
+        final Map<String, ModuleChecks.Marker> markers = markers(docs);
+        final GroupPlace group = group(build, docs, markers);
+        final PromotionLayout.VersionFolders versions = layout.versionFolders(docs, destinations, group == null
+                ? null
+                : group.name());
         final Map<String, String> joins = PromotionLayout.joining(versions.beside());
         // A build on data already in Stroom: its own feeds are test feeds, which stay in the workspace, and its
         // pipelines' filters name the feeds it works from (seen in VS Code: the promoted filter selected the test
@@ -311,11 +319,12 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         final Source source = source(build, docs, destinations, sources, testFeeds, sourceFolders);
         // A feed's source type registry goes beside the feed; its survey doc stays in the build.
         final Map<String, String> besideFeeds = besideFeeds(docs, destinations, sourceFolders);
-        // An aggregated feed's modules and a group's output feed of its own: beside the feed.
-        modulesBeside(build, docs, destinations, versions.proposed(), sourceFolders)
+        // An aggregated feed's modules and a group's output feed of its own: beside the feed (the group's own in its
+        // group's folder there).
+        modulesBeside(build, docs, destinations, versions.proposed(), sourceFolders, markers)
                 .forEach(besideFeeds::putIfAbsent);
         final List<PromotionLayout.Step> plan = plan(docs, destinations, versions.proposed(), joins, sources,
-                besideFeeds, new Placed(testFeeds, source, sourceFolders));
+                besideFeeds, new Placed(testFeeds, source, sourceFolders, group));
         // Before the layout is shown, so it shows what the user chose (found reviewing the change: asked after
         // the review, a copy kept still showed as written back).
         askAboutChangedOriginals(call, context, build, plan);
@@ -566,12 +575,23 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                                                              + "stays in its build", null));
             } else if (!destinations.containsKey(uuid) && besideFeeds.containsKey(uuid)) {
                 String target = String.join("/", WriteGuard.folderParts(besideFeeds.get(uuid)));
+                // The group's own XSLT and output feed: in the group's folder beside the feed, its XSLT in the
+                // Events folder with its pipeline (asked for by the user: seen placed at the feed's folder, beside
+                // the common module and helpers, apart from its pipeline).
+                final boolean groups = given.group() != null && given.group().docs().contains(uuid);
+                if (groups) {
+                    target = target + "/" + given.group().name();
+                }
+                String role = groups && XsltDoc.TYPE.equals(type)
+                        ? (String) doc.get("role")
+                        : null;
                 if (doc.get("version_of") != null && joins.containsKey(target)) {
                     // A new version of a group's XSLT goes in its pipeline's version folder, not beside the old one
                     // (seen in e2e: two XSLTs of one name in the feed's folder, the new pipeline's in v2/).
                     target = joins.get(target);
+                    role = null;
                 }
-                plan.add(new PromotionLayout.Step(doc, PromotionLayout.MOVE, target, null));
+                plan.add(new PromotionLayout.Step(doc, PromotionLayout.MOVE, target, role));
             } else if (KEEP.equals(NullSafe.string(destinations.get(uuid)).strip().toLowerCase(Locale.ROOT))) {
                 // Seen (fix_errors, Haiku): a test feed the agent made had nowhere to go but production, and with no
                 // way to leave it out the agent never promoted the fix.
@@ -596,6 +616,11 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                     // In a folder of the source's own, never straight into a parent of other sources (whose role
                     // subfolders every source would share).
                     target = given.folders().ownFolder(target, given.source().name());
+                    if (given.group() != null && doc.get("role") != null && target.equals(given.source().own())) {
+                        // An aggregated feed's build: its source type group's documents in a folder of the group's
+                        // own in the feed's (asked for by the user), the feed's shared documents beside the feed.
+                        target = target + "/" + given.group().name();
+                    }
                 }
                 plan.add(new PromotionLayout.Step(doc, PromotionLayout.MOVE, target,
                         !destinations.containsKey(uuid) && !placing.besideProduction()
@@ -698,7 +723,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                               final List<Map<String, Object>> docs,
                                               final Map<String, String> destinations,
                                               final Map<String, String> proposed,
-                                              final SourceFolders folders) {
+                                              final SourceFolders folders,
+                                              final Map<String, ModuleChecks.Marker> markers) {
         final Optional<String> feed = docs.stream()
                 .filter(doc -> DocumentationDoc.TYPE.equals(doc.get("type")))
                 .map(doc -> String.valueOf(doc.get("name")))
@@ -716,15 +742,70 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             if (destinations.containsKey(uuid) || proposed.containsKey(uuid) || doc.get("working_copy_of") != null) {
                 continue;
             }
-            final boolean module = XsltDoc.TYPE.equals(doc.get("type"))
-                                   && documentAccess.read(ref(doc), XsltDoc.class)
-                                           .flatMap(xslt -> ModuleChecks.marker(NullSafe.string(xslt.getData())))
-                                           .isPresent();
-            if (module || (FeedDoc.TYPE.equals(doc.get("type")) && groupOutput(build, doc))) {
+            if (markers.containsKey(uuid) || (FeedDoc.TYPE.equals(doc.get("type")) && groupOutput(build, doc))) {
                 out.put(uuid, folder.get());
             }
         }
         return out;
+    }
+
+    // The group named by the mark of one of the build's group XSLTs: new ones, or working copies.
+    private static Optional<String> markedGroup(final List<Map<String, Object>> docs,
+                                                final Map<String, ModuleChecks.Marker> markers,
+                                                final boolean copies) {
+        return docs.stream()
+                .filter(doc -> (doc.get("working_copy_of") != null) == copies)
+                .map(doc -> markers.get(String.valueOf(doc.get("uuid"))))
+                .filter(marker -> marker != null && SourceTypeModule.GROUP.equals(marker.kind()))
+                .map(ModuleChecks.Marker::name)
+                .filter(NullSafe::isNonBlankString)
+                .findFirst();
+    }
+
+    // The module mark of each of the build's XSLTs that has one (its helpers, common module or group), by UUID.
+    private Map<String, ModuleChecks.Marker> markers(final List<Map<String, Object>> docs) {
+        final Map<String, ModuleChecks.Marker> out = new LinkedHashMap<>();
+        for (final Map<String, Object> doc : ofType(docs, XsltDoc.TYPE)) {
+            documentAccess.read(ref(doc), XsltDoc.class)
+                    .flatMap(xslt -> ModuleChecks.marker(NullSafe.string(xslt.getData())))
+                    .ifPresent(marker -> out.put(String.valueOf(doc.get("uuid")), marker));
+        }
+        return out;
+    }
+
+    // An aggregated feed's build's source type group (a build makes one): its name, by the build's scope, else by
+    // its new group XSLT's mark, else a working copy's (a build joining a group); and the documents of the group's
+    // own that go beside the feed (its new XSLT and its output feed of its own), in its folder there. Null for a
+    // build of no group: its documents are placed as before. Seen in e2e: by the first mark found, a second group's
+    // build took the first group's name from the copy of its XSLT the build held.
+    private GroupPlace group(final String build,
+                             final List<Map<String, Object>> docs,
+                             final Map<String, ModuleChecks.Marker> markers) {
+        Optional<String> name = groupsProvider == null
+                ? Optional.empty()
+                : groupsProvider.get().scopedGroup(build, List.of());
+        if (name.isEmpty()) {
+            name = markedGroup(docs, markers, false).or(() -> markedGroup(docs, markers, true));
+        }
+        if (name.isEmpty()) {
+            return null;
+        }
+        final Set<String> own = new LinkedHashSet<>();
+        for (final Map<String, Object> doc : docs) {
+            final String uuid = String.valueOf(doc.get("uuid"));
+            if (doc.get("working_copy_of") != null) {
+                continue;
+            }
+            final ModuleChecks.Marker marker = markers.get(uuid);
+            // Another group's XSLT the build holds is placed as a module is, beside the feed.
+            if ((marker != null && SourceTypeModule.GROUP.equals(marker.kind())
+                 && name.get().equals(NullSafe.string(marker.name()).strip()))
+                || (FeedDoc.TYPE.equals(doc.get("type")) && groupOutput(build, doc))) {
+                own.add(uuid);
+            }
+        }
+        // A folder's name: a slash in the group's name would make it two.
+        return new GroupPlace(name.get().strip().replace('/', '-'), own);
     }
 
     // A feed made in the build as a source type group's output feed of its own.
@@ -1504,7 +1585,16 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     /// @param testFeeds The build's test feeds, by UUID: never promoted.
     /// @param source    The source, or null.
     /// @param folders   Tells a folder of the source's own from a parent of sources.
-    private record Placed(Set<String> testFeeds, Source source, SourceFolders folders) {
+    /// @param group     An aggregated feed's build's source type group, or null.
+    private record Placed(Set<String> testFeeds, Source source, SourceFolders folders, GroupPlace group) {
+
+    }
+
+    /// An aggregated feed's build's source type group, whose documents go in a folder of its own in the feed's.
+    ///
+    /// @param name The group's name: its folder's.
+    /// @param docs The documents of its own placed beside the feed (its XSLT, its output feed), by UUID.
+    private record GroupPlace(String name, Set<String> docs) {
 
     }
 

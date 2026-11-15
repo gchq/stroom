@@ -66,6 +66,20 @@ class PromotionLayout {
     /// @param destinations The destinations given, by type or document UUID.
     /// @return Each new version's folder by document UUID, and the version folders by predecessor's folder.
     VersionFolders versionFolders(final List<Map<String, Object>> docs, final Map<String, String> destinations) {
+        return versionFolders(docs, destinations, null);
+    }
+
+    /// As [#versionFolders(List, Map)], for an aggregated feed's build of a source type group: a predecessor in the
+    /// group's folder (`<feed>/<group>`, or its role subfolder) is beside a destination given for the feed's folder
+    /// too, as promotion puts the group's documents in its folder there.
+    ///
+    /// @param docs         The build's documents.
+    /// @param destinations The destinations given, by type or document UUID.
+    /// @param group        The build's source type group's folder name, or null for a build of none.
+    /// @return Each new version's folder by document UUID, and the version folders by predecessor's folder.
+    VersionFolders versionFolders(final List<Map<String, Object>> docs,
+                                  final Map<String, String> destinations,
+                                  final String group) {
         final Map<String, String> out = new LinkedHashMap<>();
         final Map<String, Set<String>> beside = new LinkedHashMap<>();
         for (final Map<String, Object> doc : docs) {
@@ -92,7 +106,9 @@ class PromotionLayout {
                     ? parent + "/" + found.getLast()
                     : folder + "/" + found.getLast();
             final String typeGiven = destinations.get(String.valueOf(doc.get("type")));
-            if (typeGiven != null && !placesMeant(folder, version).contains(normalised(typeGiven))) {
+            if (typeGiven != null && !placesMeant(folder, version).contains(normalised(typeGiven))
+                && !groupParent(folder, group).map(PromotionLayout::normalised)
+                    .filter(normalised(typeGiven)::equals).isPresent()) {
                 continue;
             }
             out.put(uuid, version);
@@ -270,6 +286,20 @@ class PromotionLayout {
             meant.add(parentOf(folder));
         }
         return meant.stream().map(PromotionLayout::normalised).toList();
+    }
+
+    // The folder holding a group's folder, where the predecessor is in it (or in a role subfolder of it).
+    private static Optional<String> groupParent(final String folder, final String group) {
+        if (group == null || !folder.contains("/")) {
+            return Optional.empty();
+        }
+        String at = folder;
+        if (WriteGuard.ROLES.contains(at.substring(at.lastIndexOf('/') + 1))) {
+            at = parentOf(at);
+        }
+        return at.contains("/") && at.substring(at.lastIndexOf('/') + 1).equals(group)
+                ? Optional.of(parentOf(at))
+                : Optional.empty();
     }
 
     private static String normalised(final String place) {

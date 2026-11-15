@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.generation.FieldGroup;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.indexing.Discovery;
 import stroom.ai.impl.tools.indexing.FieldPlan;
+import stroom.ai.impl.tools.indexing.FieldPlans;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
@@ -171,13 +172,36 @@ class TestDraftIndexMappingTool {
 
     @Test
     @SuppressWarnings("unchecked")
+    void followingEcsEventActionIsTheTypeIdOfEventsWhoseActionHasNoActionElement() {
+        // Seen in chat 178: View, Send, Create and Move have no Action, so event.action was never written,
+        // Elasticsearch never mapped it, and verify_index refused a search on it. The user chose its TypeId.
+        world.populated(ordered("EventTime/TimeCreated", 100, "EventSource/User/Id", 100, "EventDetail/TypeId", 100,
+                "EventDetail/Send/Source/Device/IPAddress", 60, "EventDetail/View/Resource/URL", 40), Map.of());
+
+        final Map<String, Object> result = draft("ecs-mail-v1", Map.of("convention", "ecs", "without_example",
+                true), agreeing());
+
+        assertThat(field(result, "event.action").get("source")).isEqualTo(FieldPlans.orElse("EventDetail/*/Action",
+                "EventDetail/TypeId"));
+        assertThat(field(result, "event.code").get("source")).isEqualTo("EventDetail/TypeId");
+        assertThat((List<String>) result.get("convention_paths_not_in_sample")).contains("EventDetail/*/Outcome/"
+                                                                                        + "Success");
+        assertThat(result).doesNotContainKey("core_fields_mostly_empty");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void followingEcsWhatHappenedAndDataElementsAreNamedAsEcsNamesThem() {
         // Asked by the user: the full ECS schema, not only the profile's few names.
         world.populated(POPULATED, Map.of("EventDetail/Network/Permit/Data", Map.of("user_agent_original", 35.0,
                 "session_id", 35.0)));
         final Map<String, Object> result = draft("ecs-firewall-v1", Map.of("convention", "ecs", "without_example",
                 true), agreeing());
-        assertThat(field(result, "event.action").get("source")).isEqualTo("EventDetail/*/Action");
+        // An action's Action, else (most actions have none) the event's TypeId: asked for by the user.
+        assertThat(field(result, "event.action").get("source")).isEqualTo("EventDetail/*/Action | "
+                                                                          + "EventDetail/TypeId[not(../../"
+                                                                          + "EventDetail/*/Action)]");
+        assertThat(field(result, "event.code").get("source")).isEqualTo("EventDetail/TypeId");
         assertThat(field(result, "event.outcome").get("transform")).isEqualTo("outcome");
         assertThat(field(result, "process.command_line").get("type")).isEqualTo("keyword");
         final List<String> names = fieldNames(result);

@@ -111,6 +111,8 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
     private static final int DISCOVERY_CHARS = 100_000;
     private static final Pattern XML_START = Pattern.compile("(?=<\\?xml)");
     private static final String RECORDS = "records:2";
+    // A convention path's spec: the path read where the event has none at the path itself.
+    private static final String FALLBACK = "fallback";
 
     private final AgentKnowledge knowledge;
     private final GetFieldConventionsTool conventions;
@@ -560,14 +562,22 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             }
             // A name is planned once, from the first of its paths the sample populates (the client's address,
             // else the source address of whichever Network action the event records).
+            // A path with a fallback reads the fallback where the event has none (ECS's event.action: an action's
+            // Action, else the event's TypeId; asked for by the user, as most actions have no Action).
             final String name = String.valueOf(spec.get("name"));
-            if (holds(path, populated) && fields.stream().noneMatch(f -> f.name().equals(name))) {
-                fields.add(new PlannedField(name, String.valueOf(spec.get("type")), path, null,
+            final String fallback = spec.get(FALLBACK) == null
+                    ? null
+                    : String.valueOf(spec.get(FALLBACK));
+            final boolean held = holds(path, populated) || (fallback != null && holds(fallback, populated));
+            if (held && fields.stream().noneMatch(f -> f.name().equals(name))) {
+                fields.add(new PlannedField(name, String.valueOf(spec.get("type")), fallback == null
+                        ? path
+                        : FieldPlans.orElse(path, fallback), null,
                         spec.get("transform") == null
                                 ? null
                                 : String.valueOf(spec.get("transform")), false));
                 mapped.add(path);
-            } else if (holds(path, populated)) {
+            } else if (held) {
                 mapped.add(path);
             } else {
                 unused.add(path);

@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.FieldPlan;
+import stroom.ai.impl.tools.indexing.FieldPlans;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.mcp.impl.BundledKnowledge;
 
@@ -54,6 +55,27 @@ class TestIndexPlans {
                 .containsExactly("event.action <- EventDetail/Send/Action: in 9.1% of events read");
         // Without a convention, only the time field is core.
         assertThat(IndexPlans.mostlyEmptyCore(plan.withConvention(null, List.of()), populated, ecs)).isEmpty();
+    }
+
+    @Test
+    void aCoreFieldNoEventReadPopulatesIsNamedToo() {
+        // Seen in chat 178: event.action in the plan, written by no event, and nothing said so until a search on it
+        // failed (Elasticsearch never mapped it).
+        final FieldPlan plan = FieldPlan.of("elasticsearch", "acme", "@timestamp", List.of(
+                PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
+                PlannedField.of("event.action", "keyword", "EventDetail/*/Action"),
+                PlannedField.of("acme.ticket", "keyword", "EventDetail/Send/Data"))).withConvention("ecs", List.of());
+        final Map<String, Double> populated = Map.of("EventTime/TimeCreated", 100.0, "EventDetail/TypeId", 100.0);
+        final EcsSchema ecs = EcsSchema.from(new BundledKnowledge()).orElseThrow();
+
+        assertThat(IndexPlans.mostlyEmptyCore(plan, populated, ecs))
+                .containsExactly("event.action <- EventDetail/*/Action: in no event read");
+        // Read from the TypeId where an event has no Action: every event has it.
+        final FieldPlan fallback = FieldPlan.of("elasticsearch", "acme", "@timestamp", List.of(
+                PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
+                PlannedField.of("event.action", "keyword", FieldPlans.orElse("EventDetail/*/Action",
+                        "EventDetail/TypeId")))).withConvention("ecs", List.of());
+        assertThat(IndexPlans.mostlyEmptyCore(fallback, populated, ecs)).isEmpty();
     }
 
     @Test

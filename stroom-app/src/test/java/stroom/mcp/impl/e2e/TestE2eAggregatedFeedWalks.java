@@ -509,7 +509,8 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
                 firstPlan.get("time_field")));
         json("save_xslt", args("build", first, "name", index + "-XSLT", "index_plan", firstPlan));
         promote(first, Map.of("Pipeline", folder, "XSLT", folder, "Index", folder, "Documentation", folder));
-        assertThat(folderOf(firstPipeline)).startsWith("System/" + folder);
+        // The group's documents in a folder of its own beside the feed (asked for by the user).
+        assertThat(folderOf(firstPipeline)).startsWith("System/" + folder + "/" + firstName);
         // The registry beside the feed; the survey doc stays in the build, nobody asked where it goes (decided
         // 2026-11-13).
         assertThat(documentsIn("System/" + folder, "Documentation", feed + SourceTypeRegistry.SUFFIX)).hasSize(1);
@@ -663,7 +664,9 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         // An index each: the first group's and the second's, wherever their Events go.
         assertThat(FeedIndexes.groupsOf(FeedIndexes.indexNamed(registry, index))).containsExactly(firstName);
         assertThat(FeedIndexes.groupsOf(FeedIndexes.indexNamed(registry, secondIndex))).containsExactly(secondName);
-        assertThat(folderOf(secondPipeline)).isEqualTo(folderOf(firstPipeline));
+        // Each group's pipeline in its own group's folder beside the feed.
+        assertThat(folderOf(secondPipeline)).startsWith("System/" + folder + "/" + secondName)
+                .isNotEqualTo(folderOf(firstPipeline));
         assertThat(jsonOf(registry)).doesNotContain(firstRunning);
         if (family.changesFirst()) {
             changeFirst(family, feed, folder, firstName, firstType, firstSaved, firstPipeline, stream, laterStream,

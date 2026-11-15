@@ -80,6 +80,25 @@ class TestFieldPlans {
     }
 
     @Test
+    void aPathWithAFallbackReadsTheFallbackOnlyWhereTheEventHasNone() {
+        // Asked for by the user: ECS's event.action from an action's Action, else the event's TypeId.
+        final String source = FieldPlans.orElse("EventDetail/*/Action", "EventDetail/TypeId");
+
+        assertThat(source).isEqualTo("EventDetail/*/Action | EventDetail/TypeId[not(../../EventDetail/*/Action)]");
+        assertThat(FieldPlans.branches(source)).containsExactly("EventDetail/*/Action",
+                "EventDetail/TypeId[not(../../EventDetail/*/Action)]");
+        // It names both paths, its absence test aside.
+        assertThat(FieldPlans.sourceMatches(source, "EventDetail/View/Action")).isTrue();
+        assertThat(FieldPlans.sourceMatches(source, "EventDetail/TypeId")).isTrue();
+        assertThat(FieldPlans.sourceMatches(source, "EventDetail/Description")).isFalse();
+        assertThat(FieldPlans.sourceMatches(FieldPlans.orElse("EventSource/User/Id", "EventSource/User/Name"),
+                "EventSource/User/Name")).isTrue();
+        // Populated wherever either is (an event has one Action at most, and a TypeId).
+        assertThat(FieldPlans.populationOf(source, Map.of("EventDetail/TypeId", 100.0))).isEqualTo(100.0);
+        assertThat(FieldPlans.populationOf(source, Map.of("EventDetail/Description", 100.0))).isNull();
+    }
+
+    @Test
     void aDescendantSourceNamesEveryPathBelowIt() {
         // Seen in Ask Stroom AI: EventDetail//Object/Name in the plan, and View/Object/Name, Delete/Object/Name and
         // the rest reported as populated paths not mapped; the agent went investigating fields it had already

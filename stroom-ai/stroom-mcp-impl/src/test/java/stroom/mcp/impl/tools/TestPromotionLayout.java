@@ -78,6 +78,23 @@ class TestPromotionLayout {
     }
 
     @Test
+    void aGroupsNewVersionGoesBesideItsPredecessorInTheGroupsFolderWhenTheFeedsFolderIsGiven() {
+        // Seen in e2e: with the group's pipeline in <feed>/<group>/Events, the feed's folder given by type was taken
+        // as a folder elsewhere, and the new version went in the group's folder, not a version folder.
+        world.add(PipelineDoc.TYPE, "PEGA security", world.folder("System/Feeds/Pega/PEGA security/Events").uuid,
+                "old");
+        final List<Map<String, Object>> docs = List.of(
+                FakeBuildFacts.doc(PipelineDoc.TYPE, "new", "PEGA security v2", "version_of", "old"));
+
+        assertThat(layout.versionFolders(docs, Map.of(PipelineDoc.TYPE, "/Feeds/Pega"), "PEGA security").proposed())
+                .isEqualTo(Map.of("new", "System/Feeds/Pega/PEGA security/Events/v2"));
+        // Another group's build, or none: the feed's folder is elsewhere, as before.
+        assertThat(layout.versionFolders(docs, Map.of(PipelineDoc.TYPE, "/Feeds/Pega"), "PEGA other").proposed())
+                .isEmpty();
+        assertThat(layout.versionFolders(docs, Map.of(PipelineDoc.TYPE, "/Feeds/Pega")).proposed()).isEmpty();
+    }
+
+    @Test
     void theLayoutIsATreeOfTheDestinationFoldersWithNewOnesMarked() {
         world.add(PipelineDoc.TYPE, "ACME-V1.0-Events", world.folder("System/Feeds/Events/Acme").uuid, "prod");
         final List<PromotionLayout.Step> plan = List.of(

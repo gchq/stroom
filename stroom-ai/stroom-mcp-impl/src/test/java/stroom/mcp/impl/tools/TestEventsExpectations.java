@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.StreamReader.Fetched;
 import stroom.ai.impl.tools.StreamReader.Records;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.FieldPlan;
+import stroom.ai.impl.tools.indexing.FieldPlans;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.mcp.impl.BundledKnowledge;
 
@@ -30,6 +31,7 @@ import org.mockito.Mockito;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -48,6 +50,11 @@ class TestEventsExpectations {
                + "<EventDetail><Send>" + (action == null
                 ? ""
                 : "<Action>" + action + "</Action>") + "</Send></EventDetail></Event></Events>";
+    }
+
+    // An event with a TypeId, and an Action where one is given.
+    private static String typed(final String typeId, final String action) {
+        return event("alice", action).replace("<EventDetail>", "<EventDetail><TypeId>" + typeId + "</TypeId>");
     }
 
     private static FieldPlan plan() {
@@ -132,6 +139,47 @@ class TestEventsExpectations {
 
         assertThat(empty).containsExactly(Map.of("field", "event.action", "source", "EventDetail/*/Action",
                 "empty_in", "3 of 4 events read"));
+    }
+
+    @Test
+    void anActionWithoutAnActionElementIsCountedByItsTypeId() {
+        // Asked for by the user: event.action from an action's Action, else from the event's TypeId (most actions,
+        // View, Send, Create..., have no Action, and event.action was empty for every event).
+        stream(6L, 3L, List.of(typed("MailSent", "Send"), typed("MailItemsAccessed", null),
+                typed("MailItemsAccessed", null)));
+        final FieldPlan plan = FieldPlan.of("elasticsearch", "acme", "@timestamp", List.of(
+                PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
+                PlannedField.of("event.action", "keyword", FieldPlans.orElse("EventDetail/*/Action",
+                        "EventDetail/TypeId")))).withConvention("ecs", List.of());
+        final EcsSchema ecs = EcsSchema.from(new BundledKnowledge()).orElseThrow();
+
+        final EventsExpectations.Sample sample = expectations.read(plan, List.of(6L));
+
+        assertThat(sample.expect("event.action", "EQUALS", "Send").count()).isEqualTo(1L);
+        assertThat(sample.expect("event.action", "EQUALS", "MailItemsAccessed").count()).isEqualTo(2L);
+        // The TypeId of an event with an Action isn't its action.
+        assertThat(sample.expect("event.action", "EQUALS", "MailSent").count()).isEqualTo(0L);
+        assertThat(sample.mostlyEmpty(ecs)).isEmpty();
+    }
+
+    @Test
+    void aCoreFieldTheIndexDoesNotListIsFoundHoweverManyEventsHoldIt() {
+        // Seen in chat 178: event.action written by no event, so Elasticsearch never mapped it, and a search on it
+        // was refused before anything said so.
+        stream(6L, 2L, List.of(event("a", "Send"), event("b", "Send")));
+        final EcsSchema ecs = EcsSchema.from(new BundledKnowledge()).orElseThrow();
+        final EventsExpectations.Sample sample = expectations.read(plan(), List.of(6L));
+
+        final List<Map<String, Object>> empty = sample.mostlyEmpty(ecs, Set.of("@timestamp", "user.name", "bytes"));
+
+        assertThat(empty).singleElement().satisfies(finding -> {
+            assertThat(finding).containsEntry("field", "event.action").containsEntry("source", "EventDetail/*/Action")
+                    .containsEntry("empty_in", "0 of 2 events read");
+            assertThat(String.valueOf(finding.get("not_in_index"))).contains("the index doesn't list it");
+        });
+        // Listed (or not known): only the mostly empty.
+        assertThat(sample.mostlyEmpty(ecs, Set.of("@timestamp", "user.name", "event.action"))).isEmpty();
+        assertThat(sample.mostlyEmpty(ecs, null)).isEmpty();
     }
 
     @Test
