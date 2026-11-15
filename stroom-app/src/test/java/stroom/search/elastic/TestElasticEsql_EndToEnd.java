@@ -48,13 +48,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// Runs ES|QL queries through [ElasticEsql] on a real Elasticsearch node, on an index of synthetic proxy upload
 /// events ([ProxyUploadEvents]), checking each answer against the totals worked out from the same events. The events
-/// are in three streams in turn, two in Stroom and one not, whose events are left out of every answer, as a Stroom
-/// search leaves them out. See [ElasticTestNode] for how the node is found.
+/// are in three streams in turn, two in Stroom and one not: as the documents' streams aren't looked up (for speed),
+/// the events of the stream not in Stroom are in every answer, though a Stroom search would leave them out. See
+/// [ElasticTestNode] for how the node is found.
 class TestElasticEsql_EndToEnd extends AbstractCoreIntegrationTest {
 
     private static final int EVENTS = 2_000;
-    // The events in the two streams in Stroom.
-    private static final long IN_STROOM = 1_334;
     private static final String TOP_UPLOADERS = """
             | STATS total = SUM(bytes) BY user.name, url.domain
             | SORT total DESC, user.name, url.domain
@@ -77,7 +76,7 @@ class TestElasticEsql_EndToEnd extends AbstractCoreIntegrationTest {
         indexName = ElasticTestNode.createIndexName("esql");
         final long first = stream();
         final long second = stream();
-        // A stream that isn't in Stroom (deleted, say): every third event.
+        // A stream that isn't in Stroom (deleted, say), whose events are still counted: every third event.
         ProxyUploadEvents.seed(node, indexName, EVENTS, List.of(first, second, second + 1_000));
         final DocRef clusterRef = helper.createCluster(node);
         indexRef = helper.createIndexDoc(clusterRef, indexName, "@timestamp", 100);
@@ -97,15 +96,14 @@ class TestElasticEsql_EndToEnd extends AbstractCoreIntegrationTest {
         assertThat(result.columns()).containsExactly(new Column("total", "long"),
                 new Column("user.name", "keyword"), new Column("url.domain", "keyword"));
         assertThat(asTotals(result)).containsExactlyEntriesOf(top(
-                ProxyUploadEvents.totalsByUserAndDomain(EVENTS, TestElasticEsql_EndToEnd::inStroom), 10));
+                ProxyUploadEvents.totalsByUserAndDomain(EVENTS, i -> true), 10));
         assertThat(result.limit()).isEqualTo(10);
         assertThat(result.truncated()).isTrue();
         // Every user and domain pair: the number of groups the top 10 are taken from.
         assertThat(result.totalRows()).isEqualTo(
-                (long) ProxyUploadEvents.totalsByUserAndDomain(EVENTS, TestElasticEsql_EndToEnd::inStroom).size());
+                (long) ProxyUploadEvents.totalsByUserAndDomain(EVENTS, i -> true).size());
         assertThat(result.query()).startsWith("FROM " + indexName + "\n");
         assertThat(result.version()).startsWith("9.");
-        assertThat(result.excludedStreams()).isEqualTo(1);
     }
 
     @Test
@@ -124,7 +122,7 @@ class TestElasticEsql_EndToEnd extends AbstractCoreIntegrationTest {
         long count = 0;
         long total = 0;
         for (int i = 0; i < 600; i++) {
-            if ("alice".equals(ProxyUploadEvents.user(i)) && !ProxyUploadEvents.blocked(i) && inStroom(i)) {
+            if ("alice".equals(ProxyUploadEvents.user(i)) && !ProxyUploadEvents.blocked(i)) {
                 count++;
                 total += ProxyUploadEvents.bytes(i);
             }
@@ -142,7 +140,8 @@ class TestElasticEsql_EndToEnd extends AbstractCoreIntegrationTest {
         assertThat(result.limit()).isEqualTo(5);
         assertThat(result.limitNote()).contains("LIMIT 5 was added");
         assertThat(result.truncated()).isTrue();
-        assertThat(result.totalRows()).isEqualTo(IN_STROOM);
+        // Every event, those of the stream not in Stroom included: a Stroom search would find two thirds of them.
+        assertThat(result.totalRows()).isEqualTo(EVENTS);
     }
 
     @Test
@@ -181,7 +180,7 @@ class TestElasticEsql_EndToEnd extends AbstractCoreIntegrationTest {
                 });
         final Result result = esql.query(new Request(indexRef, "| STATS c = COUNT(*) BY message.keyword", null,
                 null, 3, null, true));
-        assertThat(result.totalRows()).isEqualTo(IN_STROOM);
+        assertThat(result.totalRows()).isEqualTo(EVENTS);
     }
 
     private long stream() {
@@ -190,11 +189,6 @@ class TestElasticEsql_EndToEnd extends AbstractCoreIntegrationTest {
                 .typeName(StreamTypeNames.EVENTS)
                 .createMs(Instant.now().toEpochMilli())
                 .build(), Status.UNLOCKED).getId();
-    }
-
-    // Whether an event is in one of the streams in Stroom.
-    private static boolean inStroom(final int i) {
-        return i % 3 != 2;
     }
 
     private static Map<String, Long> asTotals(final Result result) {

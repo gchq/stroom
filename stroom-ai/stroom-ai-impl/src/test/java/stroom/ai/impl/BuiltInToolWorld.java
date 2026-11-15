@@ -874,7 +874,6 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 true,
                 3L,
                 null,
-                0,
                 "9.5.3"));
     }
 
