@@ -1188,13 +1188,12 @@ written from the doc, so a query never names another index.
   a search, sent as the ES|QL request's `filter`.
 * **Streams**: not looked up, for speed (agents ask many queries in turn; the user's choice). A Stroom search
   drops hits whose stream the user can't see (View on its feed) or that is no longer in Stroom; `esql_query`
-  doesn't, so every result (and the description) says: counts and sums come straight from Elasticsearch and may
-  include documents from streams the user can't see or that have been deleted, so they can differ from
-  `run_stroomql` and dashboards. Use on the Elastic Index doc is still checked, and the query audited.
+  doesn't, so its description says counts and sums come straight from Elasticsearch and may include documents from
+  streams the user can't see or that have been deleted (results carry no note of it, the user's choice). Use on the
+  Elastic Index doc is still checked, and the query audited.
 * **Returns**: in the chat, Markdown: the query run, the first 100 rows, and a note of how many rows (groups) there
-  are and whether they were cut short, then the streams note; over `/mcp`, the same as JSON (`columns`, `rows`,
-  `row_count`, `limit`, `truncated`, `grouped`, `total_groups` or `total_rows`, `note`, which ends with the streams
-  note). Either way the rows are written to
+  are and whether they were cut short; over `/mcp`, the same as JSON (`columns`, `rows`, `row_count`, `limit`,
+  `truncated`, `grouped`, `total_groups` or `total_rows`, `note`). Either way the rows are written to
   `/outputs/esql/esql-<time>.md` for the table tool. Audited as a Search event (`AiAuditLog.searched`).
 * **Steered to**: the description, the server instructions and the chat prompt tell the agent to work out derived
   values and cut-offs in the query (EVAL for a conversion, WHERE after STATS for a threshold), not in its reply, so

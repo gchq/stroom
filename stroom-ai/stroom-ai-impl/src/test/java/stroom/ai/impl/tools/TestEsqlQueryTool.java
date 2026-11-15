@@ -192,17 +192,14 @@ class TestEsqlQueryTool {
 
     @Test
     void everyResultSaysItsCountsMayIncludeStreamsTheUserCantSee() {
-        // The documents' streams aren't looked up (for speed), so the answer can differ from a Stroom search's.
+        // The documents' streams aren't looked up (for speed, the user's choice): the description says so, and the
+        // result carries no note of it.
         try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
             final String output = world.run(EsqlQueryTool.NAME, BuiltInToolWorld.json(Map.of(
                     "index", "elastic-index-uuid", "pipeline", GROUPED)));
 
-            assertThat(output).endsWith("\n\n" + EsqlQueryTool.STREAMS_NOTE);
+            assertThat(output).doesNotContain("streams the user can't see");
         }
-        assertThat(EsqlQueryTool.STREAMS_NOTE)
-                .isEqualTo("Counts and sums come straight from Elasticsearch and may include documents from "
-                           + "streams the user can't see or that have been deleted, so they can differ from "
-                           + "run_stroomql and dashboards.");
         assertThat(new EsqlQueryTool(null, null, null, null, null).definition().description())
                 .contains("may include documents from streams the user can't see or that have been deleted, so "
                           + "they can differ from Stroom searches (run_stroomql) and dashboards");
