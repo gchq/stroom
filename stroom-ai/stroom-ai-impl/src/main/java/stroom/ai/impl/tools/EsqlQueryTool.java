@@ -69,7 +69,9 @@ import java.util.TreeSet;
 /// module ([ElasticEsql]): totals, top N and grouped questions answered by Elasticsearch itself, rather than by
 /// scrolling every document through Stroom as run_stroomql does. The model gives the commands after `FROM`; the
 /// index is the doc's. The rows are written to the workspace as a table and shown (Markdown in the chat, JSON over
-/// MCP), with whether they were cut short and, if so, how many rows (groups) there are in all.
+/// MCP), with whether they were cut short and, if so, how many rows (groups) there are in all. The documents'
+/// streams aren't looked up, as a Stroom search looks up its hits' (for speed, the user's choice), so every result
+/// says its counts and sums may differ from run_stroomql's and dashboards' ([#STREAMS_NOTE]).
 class EsqlQueryTool extends AbstractWorkspaceTool {
 
     static final String NAME = "esql_query";
@@ -79,6 +81,10 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
     static final String TIME_FROM_ARG = "timeFrom";
     static final String TIME_TO_ARG = "timeTo";
     static final String LIMIT_ARG = "limit";
+    /// Said with every result: the documents' streams aren't looked up, as a Stroom search looks them up.
+    static final String STREAMS_NOTE = "Counts and sums come straight from Elasticsearch and may include documents "
+                                       + "from streams the user can't see or that have been deleted, so they can "
+                                       + "differ from run_stroomql and dashboards.";
     /// The most rows shown in the result; the rest are in the table file.
     static final int SHOWN_ROWS = 100;
     private static final int FIELDS_NAMED = 60;
@@ -146,8 +152,12 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                                  + "STATS for a threshold on a total (e.g. '| WHERE hours > 8'). Without a LIMIT in "
                                  + "the pipeline, one is added (limit). The result says when the rows were cut "
                                  + "short and how many rows (groups) there are in all: never call cut-short rows a "
-                                 + "full ranking or a total. Refused for a Lucene index or a cluster older than "
-                                 + "8.14, saying what to use instead.")
+                                 + "full ranking or a total. Counts and sums come straight from Elasticsearch and "
+                                 + "may include documents from streams the user can't see or that have been "
+                                 + "deleted, so they can differ from Stroom searches")
+                        .chatOnly(" (run_stroomql)")
+                        .general(" and dashboards. Refused for a Lucene index or a cluster older than 8.14, saying "
+                                 + "what to use instead.")
                         .chatOnly(" The rows are written to a table in the workspace too, for the table tool.")
                         .build())
                 .parameters(ObjectSchema.builder()
@@ -417,6 +427,7 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
         if (!cells.isEmpty()) {
             sb.append(" The rows are in ").append(out).append('.');
         }
+        sb.append("\n\n").append(STREAMS_NOTE);
         return sb.toString();
     }
 
@@ -434,12 +445,6 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                 : "s").append('.');
         if (result.limitNote() != null) {
             sb.append(' ').append(result.limitNote());
-        }
-        if (result.excludedStreams() > 0) {
-            sb.append(" The documents of ").append(result.excludedStreams()).append(result.excludedStreams() == 1
-                    ? " stream"
-                    : " streams").append(" you can't see, or no longer in Stroom, were left out, as a Stroom "
-                                         + "search leaves them out.");
         }
         if (result.truncated()) {
             sb.append(" They reached the limit (").append(result.limit()).append("), so they are cut short");
@@ -497,15 +502,12 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
         map.put("limit", result.limit());
         map.put("truncated", result.truncated());
         map.put("grouped", result.grouped());
-        if (result.excludedStreams() > 0) {
-            map.put("excluded_streams", result.excludedStreams());
-        }
         if (result.totalRows() != null) {
             map.put(result.grouped()
                     ? "total_groups"
                     : "total_rows", result.totalRows());
         }
-        map.put("note", rowsNote(result));
+        map.put("note", rowsNote(result) + " " + STREAMS_NOTE);
         if (!result.rows().isEmpty()) {
             map.put("table", out.toString());
         }

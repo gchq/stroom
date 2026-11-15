@@ -191,10 +191,21 @@ class TestEsqlQueryTool {
     }
 
     @Test
-    void streamsLeftOutAreSaid() {
-        assertThat(EsqlQueryTool.rowsNote(new Result("FROM i", "i", List.of(), List.of(), 1, 10, null, false,
-                false, null, null, 2, "9.5.3")))
-                .contains("The documents of 2 streams you can't see, or no longer in Stroom, were left out");
+    void everyResultSaysItsCountsMayIncludeStreamsTheUserCantSee() {
+        // The documents' streams aren't looked up (for speed), so the answer can differ from a Stroom search's.
+        try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
+            final String output = world.run(EsqlQueryTool.NAME, BuiltInToolWorld.json(Map.of(
+                    "index", "elastic-index-uuid", "pipeline", GROUPED)));
+
+            assertThat(output).endsWith("\n\n" + EsqlQueryTool.STREAMS_NOTE);
+        }
+        assertThat(EsqlQueryTool.STREAMS_NOTE)
+                .isEqualTo("Counts and sums come straight from Elasticsearch and may include documents from "
+                           + "streams the user can't see or that have been deleted, so they can differ from "
+                           + "run_stroomql and dashboards.");
+        assertThat(new EsqlQueryTool(null, null, null, null, null).definition().description())
+                .contains("may include documents from streams the user can't see or that have been deleted, so "
+                          + "they can differ from Stroom searches (run_stroomql) and dashboards");
     }
 
     @Test
@@ -247,7 +258,7 @@ class TestEsqlQueryTool {
                                  final boolean grouped,
                                  final Long total) {
         return new Result("FROM i", "i", List.of(new Column("n", "long")), rows, 1, limit, null, truncated,
-                grouped, total, null, 0, "9.5.3");
+                grouped, total, null, "9.5.3");
     }
 
     private static Request request(final BuiltInToolWorld world) {

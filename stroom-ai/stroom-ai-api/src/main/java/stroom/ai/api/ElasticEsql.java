@@ -33,8 +33,11 @@ import java.util.Optional;
 ///
 /// The caller gives only the commands after `FROM` (e.g. `| WHERE ... | STATS ... BY ...`): `FROM` and the index
 /// are written from the document, so a query can't reach another index. Only commands that work on the rows already
-/// read are allowed. As a Stroom search drops the hits of streams the user can't see, the documents of those streams
-/// are left out. The caller audits the query, as Stroom audits a search where it is asked for.
+/// read are allowed. The caller audits the query, as Stroom audits a search where it is asked for.
+///
+/// Unlike a Stroom search, which drops the hits of streams the user can't see or that are no longer in Stroom, a
+/// query doesn't look its documents' streams up (for speed, as agents ask many in turn): its counts and sums come
+/// straight from Elasticsearch, so they can differ from a search's or a dashboard's. The caller says so.
 public interface ElasticEsql {
 
     /// The most rows a query may return, as Elasticsearch's own cap (`esql.query.result_truncation_max_size`).
@@ -144,8 +147,6 @@ public interface ElasticEsql {
     /// @param totalRows   How many rows the query gives without its limits (for `STATS ... BY`, the number of
     ///                    groups), counted only when asked and truncated; else null.
     /// @param totalNote   Why the total isn't known when it was asked for, or null.
-    /// @param excludedStreams How many streams' documents were left out, as a Stroom search leaves them out: streams
-    ///                        the user may not see (their feed), or no longer in Stroom (deleted, or never there).
     /// @param version     The cluster's version.
     record Result(String query,
                   String indexName,
@@ -158,7 +159,6 @@ public interface ElasticEsql {
                   boolean grouped,
                   Long totalRows,
                   String totalNote,
-                  int excludedStreams,
                   String version) {
 
         /// Copies the lists, so the result can't be changed.

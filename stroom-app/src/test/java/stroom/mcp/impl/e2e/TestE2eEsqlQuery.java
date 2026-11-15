@@ -51,8 +51,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /// `esql_query` over `/mcp` on a real Stroom and Elasticsearch, driving the REAL tools: an index of synthetic proxy
 /// upload events ([ProxyUploadEvents]), the grouped question "which users uploaded the most bytes, by site domain,
-/// top 10" answered by Elasticsearch, and the same answer from `run_stroomql` over the same index (parity); a `FROM`
-/// that would reach another index, refused; and rows cut short, with how many there are in all.
+/// top 10" answered by Elasticsearch, and the same answer from `run_stroomql` over the same index (parity, every
+/// stream in Stroom); the documents of a stream not in Stroom, counted by `esql_query` (which doesn't look streams
+/// up, for speed) but not by `run_stroomql`, as every `esql_query` result says; a `FROM` that would reach another
+/// index, refused; and rows cut short, with how many there are in all.
 ///
 /// The node is [ElasticTestNode]'s (`STROOM_TEST_ELASTIC_URL`): skipped without one unless
 /// `STROOM_TEST_ELASTIC_REQUIRED=true`. The index made there is removed after each test.
@@ -68,6 +70,9 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
             | SORT total DESC, user.name, url.domain
             | LIMIT 10""";
     private static final Pattern RESULTS_PATH = Pattern.compile("The results are in (\\S+\\.md)\\.");
+    private static final String STREAMS_NOTE = "Counts and sums come straight from Elasticsearch and may include "
+                                               + "documents from streams the user can't see or that have been "
+                                               + "deleted, so they can differ from run_stroomql and dashboards.";
 
     @Inject
     private ElasticIndexStore elasticIndexStore;
@@ -94,21 +99,21 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
 
     @Test
     void theTopUploadersByDomainMatchRunStroomQl() {
-        final DocRef index = seededIndex(EVENTS);
+        final DocRef index = seededIndex(EVENTS, false);
 
         final Map<String, Object> esql = json("esql_query", args("index", index.getUuid(), "pipeline",
                 TOP_UPLOADERS));
         dump("esql_query", esql);
 
-        final Map<String, Long> expected = top(ProxyUploadEvents.totalsByUserAndDomain(EVENTS, this::inStroom), 10);
+        final Map<String, Long> all = ProxyUploadEvents.totalsByUserAndDomain(EVENTS, i -> true);
+        final Map<String, Long> expected = top(all, 10);
         assertThat(totals((List<List<Object>>) esql.get("rows"))).containsExactlyEntriesOf(expected);
         assertThat(esql).containsEntry("truncated", true).containsEntry("grouped", true);
         assertThat(number(esql, "limit")).isEqualTo(10);
-        assertThat(number(esql, "total_groups"))
-                .isEqualTo(ProxyUploadEvents.totalsByUserAndDomain(EVENTS, this::inStroom).size());
-        assertThat((String) esql.get("note")).contains("so these are the first 10 of 77 groups")
-                .contains("The documents of 1 stream you can't see, or no longer in Stroom, were left out");
-        assertThat(number(esql, "excluded_streams")).isEqualTo(1);
+        assertThat(number(esql, "total_groups")).isEqualTo(all.size());
+        assertThat((String) esql.get("note")).contains("so these are the first 10 of " + all.size() + " groups")
+                .endsWith(STREAMS_NOTE);
+        assertThat(esql).doesNotContainKey("excluded_streams");
         assertThat((String) esql.get("query")).startsWith("FROM " + indexName + "\n");
 
         // The same question through Stroom: every document read back and grouped by Stroom's coprocessors.
@@ -116,7 +121,7 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
         assertThat(top(viaStroom, 10)).containsExactlyEntriesOf(expected);
         // run_stroomql says esql_query would have grouped them in Elasticsearch, and how many documents it read.
         assertThat(lastStroomQl).contains("This is an aggregation on an Elasticsearch index. Stroom read "
-                                          + inStroomCount(EVENTS) + " documents from Elasticsearch to group them")
+                                          + EVENTS + " documents from Elasticsearch to group them")
                 .contains("pipeline '| STATS total = SUM(bytes) BY user.name, url.domain "
                           + "| KEEP user.name, url.domain, total'");
         // The translated pipeline is valid ES|QL, and gives the same totals.
@@ -130,8 +135,35 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
     }
 
     @Test
+    void theDocumentsOfAStreamNotInStroomAreCountedByEsqlQueryButNotRunStroomQl() {
+        final DocRef index = seededIndex(EVENTS, true);
+
+        final Map<String, Object> esql = json("esql_query", args("index", index.getUuid(), "pipeline",
+                "| STATS n = COUNT(*), total = SUM(bytes)"));
+
+        // esql_query doesn't look the documents' streams up (for speed): every event is counted, and it says so.
+        long total = 0;
+        long visibleTotal = 0;
+        for (int i = 0; i < EVENTS; i++) {
+            total += ProxyUploadEvents.bytes(i);
+            if (inStroom(i)) {
+                visibleTotal += ProxyUploadEvents.bytes(i);
+            }
+        }
+        assertThat(longs((List<List<Object>>) esql.get("rows"))).containsExactly(List.of((long) EVENTS, total));
+        assertThat((String) esql.get("note")).endsWith(STREAMS_NOTE);
+        assertThat(McpTestClient.text(client.call("esql_query", args("index", index.getUuid(), "pipeline",
+                "| STATS n = COUNT(*)")))).contains(STREAMS_NOTE);
+        // A Stroom search leaves out the hits of the stream not in Stroom.
+        final Map<String, Long> viaStroom = stroomQlTotals(index);
+        assertThat(viaStroom.values().stream().mapToLong(Long::longValue).sum())
+                .isEqualTo(visibleTotal)
+                .isLessThan(total);
+    }
+
+    @Test
     void aFromThatWouldReachAnotherIndexIsRefused() {
-        final DocRef index = seededIndex(100);
+        final DocRef index = seededIndex(100, false);
 
         final CallToolResult refused = client.call("esql_query", args("index", index.getUuid(), "pipeline",
                 "| FROM .security* | STATS c = COUNT(*)"));
@@ -150,21 +182,21 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
 
     @Test
     void rowsCutShortSayHowManyThereAre() {
-        final DocRef index = seededIndex(EVENTS);
+        final DocRef index = seededIndex(EVENTS, false);
 
         final Map<String, Object> result = json("esql_query", args("index", index.getUuid(), "pipeline",
                 "| KEEP user.name, bytes | SORT bytes DESC", "limit", 5));
 
         assertThat(result).containsEntry("truncated", true).containsEntry("grouped", false);
         assertThat(number(result, "row_count")).isEqualTo(5);
-        assertThat(number(result, "total_rows")).isEqualTo(inStroomCount(EVENTS));
+        assertThat(number(result, "total_rows")).isEqualTo(EVENTS);
         assertThat((String) result.get("note")).contains("The query had no LIMIT, so LIMIT 5 was added")
-                .contains("there are " + inStroomCount(EVENTS) + " rows in all");
+                .contains("there are " + EVENTS + " rows in all");
     }
 
     @Test
     void aWhereAndTimeRangeNarrowTheDocuments() {
-        final DocRef index = seededIndex(EVENTS);
+        final DocRef index = seededIndex(EVENTS, false);
 
         final Map<String, Object> result = json("esql_query", args("index", index.getUuid(), "pipeline",
                 "| STATS total = SUM(bytes)", "where", List.of(Map.of("field", "user.name", "value", "alice")),
@@ -172,7 +204,7 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
 
         long total = 0;
         for (int i = 0; i < 600; i++) {
-            if ("alice".equals(ProxyUploadEvents.user(i)) && inStroom(i)) {
+            if ("alice".equals(ProxyUploadEvents.user(i))) {
                 total += ProxyUploadEvents.bytes(i);
             }
         }
@@ -184,7 +216,7 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
     @Test
     @PerformanceTest
     void timeTheGroupedQuestion() {
-        final DocRef index = seededIndex(TIMED_EVENTS);
+        final DocRef index = seededIndex(TIMED_EVENTS, false);
         // Once each first, so neither pays for a cold start.
         json("esql_query", args("index", index.getUuid(), "pipeline", TOP_UPLOADERS));
         stroomQlTotals(index);
@@ -204,8 +236,9 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
     }
 
     // An Elastic Index doc beside the standard templates, on an index of that many events, in STREAMS streams in
-    // Stroom and, every STREAMS + 1th event, one not in Stroom (deleted, say), whose events no search finds.
-    private DocRef seededIndex(final int events) {
+    // Stroom and, if notInStroom, every STREAMS + 1th event in one not in Stroom (deleted, say), whose events no
+    // Stroom search finds.
+    private DocRef seededIndex(final int events, final boolean notInStroom) {
         final List<Long> streams = new ArrayList<>();
         asUser(admin, () -> {
             for (int i = 0; i < STREAMS; i++) {
@@ -216,7 +249,9 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
                         .build(), Status.UNLOCKED).getId());
             }
         });
-        streams.add(streams.getLast() + 1_000);
+        if (notInStroom) {
+            streams.add(streams.getLast() + 1_000);
+        }
         ProxyUploadEvents.seed(node, indexName, events, streams);
         final DocRef cluster = liveElasticCluster(node, "E2E ES|QL cluster " + indexName);
         final ExplorerNode created = create(ElasticIndexDoc.TYPE, "E2E proxy uploads " + indexName,
@@ -276,19 +311,9 @@ class TestE2eEsqlQuery extends AbstractE2eTest {
         return totals;
     }
 
-    // Whether an event is in one of the streams in Stroom.
+    // Whether an event is in one of the streams in Stroom, when there is one not in Stroom.
     private boolean inStroom(final int i) {
         return i % (STREAMS + 1) != STREAMS;
-    }
-
-    private long inStroomCount(final int events) {
-        long count = 0;
-        for (int i = 0; i < events; i++) {
-            if (inStroom(i)) {
-                count++;
-            }
-        }
-        return count;
     }
 
     private static long number(final Map<String, Object> result, final String key) {
