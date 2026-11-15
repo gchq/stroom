@@ -343,4 +343,72 @@ class TestEvalScore {
         return "<Events xmlns=\"event-logging:3\"><Event>" + time + "<EventDetail>" + detail
                + "</EventDetail></Event></Events>";
     }
+
+    @Test
+    void aQuestionAnsweredWithTheExpectedRowsPasses() {
+        final EvalScore score = new EvalScore("q");
+
+        score.scoreQuestion(question(true), List.of(
+                new EvalScore.ToolUse("describe_data_source", false, Map.of(), "fields"),
+                new EvalScore.ToolUse("esql_query", true, Map.of(), "Error: Unknown column [usr]"),
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                        List.of(300, "alice", "box.com"), List.of("bob", 200.0, "github.com")),
+                        "truncated", true, "total_groups", 12), "ok")));
+
+        assertThat(score.passed()).as(score.summary()).isTrue();
+        assertThat(score.toMap()).containsKey("question_checks");
+        assertThat((List<String>) score.toMap().get("notes")).contains("esql_query: 1 of 2 call(s) refused");
+    }
+
+    @Test
+    void aQuestionsAnswerIsItsLastAcceptedCallsRowsInOrder() {
+        final EvalScore wrongOrder = new EvalScore("q");
+        wrongOrder.scoreQuestion(question(true), List.of(new EvalScore.ToolUse("esql_query", false, Map.of("rows",
+                List.of(List.of("bob", "github.com", 200), List.of("alice", "box.com", 300)), "total_groups", 12),
+                "ok")));
+        assertThat(wrongOrder.passed()).isFalse();
+        assertThat(wrongOrder.summary()).contains("row 1 was [bob, github.com, 200]");
+
+        // In any order when the case says so.
+        final EvalScore anyOrder = new EvalScore("q");
+        anyOrder.scoreQuestion(question(false), List.of(new EvalScore.ToolUse("esql_query", false, Map.of("rows",
+                List.of(List.of("bob", "github.com", 200), List.of("alice", "box.com", 300)), "total_groups", 12),
+                "ok")));
+        assertThat(anyOrder.passed()).as(anyOrder.summary()).isTrue();
+    }
+
+    @Test
+    void aQuestionFailsWithoutTheToolOrWhenItsLastCallIsRefused() {
+        final EvalScore other = new EvalScore("q");
+        other.scoreQuestion(question(true), List.of(new EvalScore.ToolUse("run_stroomql", false, Map.of(), "ok")));
+        assertThat(other.passed()).isFalse();
+        assertThat(other.summary()).contains("esql_query was not used");
+
+        final EvalScore refused = new EvalScore("q");
+        refused.scoreQuestion(question(true), List.of(new EvalScore.ToolUse("esql_query", true, Map.of(),
+                "Error: FROM isn't allowed")));
+        assertThat(refused.summary()).contains("the last esql_query call was refused");
+
+        final EvalScore total = new EvalScore("q");
+        total.scoreQuestion(question(true), List.of(new EvalScore.ToolUse("esql_query", false, Map.of("rows",
+                List.of(List.of("alice", "box.com", 300), List.of("bob", "github.com", 200)), "truncated", true),
+                "ok")));
+        assertThat(total.summary()).contains("the total groups were null, expected 12");
+    }
+
+    @Test
+    void valuesMatchAsDaysAndRoundedNumbers() {
+        assertThat(EvalScore.mismatch(List.of(List.of("2026-01-02", "box.com", 52.8)),
+                List.of(List.of("2026-01-02T00:00:00.000Z", "box.com", 52.83)), true, 0.001)).isNull();
+        assertThat(EvalScore.mismatch(List.of(List.of("2026-01-02", 52.8)),
+                List.of(List.of("2026-01-02T00:00:00.000Z", 52.9)), true, 0.001)).isNotNull();
+        assertThat(EvalScore.mismatch(List.of(List.of(1000)), List.of(List.of(1000), List.of(5)), false, 0.001))
+                .startsWith("were 2, expected 1");
+    }
+
+    private static Map<String, Object> question(final boolean ordered) {
+        return Map.of("kind", "question", "expected", Map.of("tools_used", List.of("esql_query"), "answer",
+                Map.of("ordered", ordered, "total_groups", 12, "rows", List.of(
+                        List.of("alice", "box.com", 300), List.of("bob", "github.com", 200)))));
+    }
 }

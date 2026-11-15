@@ -58,7 +58,8 @@ final class EvalCases {
             "52_postgres_multiline_sql", "53_cri_container_partial_lines", "54_jsonl_session_times",
             "55_kv_two_event_times", "56_jsonl_azure_audit_aggregated", "57_jsonl_collector_paths",
             "58_jsonl_pega_wrapper", "59_jsonl_windows_meta_roles", "60_jsonl_azure_audit_new_group",
-            "61_jsonl_azure_audit_join_group");
+            "61_jsonl_azure_audit_join_group", "62_esql_top_uploaders_by_domain", "63_esql_daily_uploads_by_domain",
+            "64_esql_unsanctioned_uploads_mb");
 
     // What a case whose data is in the feed already shows of it: the first stream's first parts, each part's first
     // lines.
@@ -85,6 +86,16 @@ final class EvalCases {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    /// Whether a case is a question about data already in Stroom (`kind: question`): answered, not built, with its
+    /// data indexed into Elasticsearch before the user asks (`elastic_index`), and scored on the tools used and the
+    /// answer ([EvalScore#scoreQuestion]).
+    ///
+    /// @param evalCase The case.
+    /// @return True for a question.
+    static boolean isQuestion(final Map<String, Object> evalCase) {
+        return "question".equals(evalCase.get("kind"));
     }
 
     /// The case a case starts from (`setup: {from_case: 56}`): built with its reference solution and promoted before

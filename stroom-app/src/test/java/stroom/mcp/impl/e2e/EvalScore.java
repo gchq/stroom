@@ -54,12 +54,16 @@ final class EvalScore {
     private static final Set<String> DETAIL_META = Set.of("TypeId", "Description", "Classification", "Purpose");
     // source_types.index.fields_added: scored only as the group's index recorded, fields being added when needed.
     private static final String WHEN_NEEDED = "when_needed";
+    private static final Pattern DAY = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
 
     private final String caseId;
     private final List<String> problems = new ArrayList<>();
     private final List<String> notes = new ArrayList<>();
     private boolean stage1;
     private boolean indexed;
+    // A question's checks (a case of kind `question`), each with whether it passed: none for any other case.
+    private final List<Map<String, Object>> questionChecks = new ArrayList<>();
+    private boolean question;
     private int events;
     private int validEvents;
     private Set<String> eventTypes = Set.of();
@@ -438,7 +442,170 @@ final class EvalScore {
     /// @return Whether the case passed: its Events as expected and indexed (with no hints for a reference run),
     /// and no other problem found (its documentation, stepping).
     boolean passed() {
+        if (question) {
+            return problems.isEmpty();
+        }
         return stage1 && indexed && problems.isEmpty() && missingTypes.isEmpty() && missingPaths.isEmpty();
+    }
+
+    /// Scores a question's answer (a case of kind `question`, [EvalCases#isQuestion]) from the tool calls made:
+    ///
+    /// * `expected.tools_used`: each tool was called at least once;
+    /// * the last call of `expected.answer.tool` (default `esql_query`) was accepted, refusals before it recovered
+    ///   from (how many there were is noted);
+    /// * `expected.answer.rows`: the last accepted call's rows hold the expected rows (in order when
+    ///   `ordered: true`, else in any order), and no others. A row matches when each expected value is one of its
+    ///   values, whatever the columns are called: a string exactly, or as the start of a date (`2026-01-02` matches
+    ///   `2026-01-02T00:00:00.000Z`); a number within `tolerance` of it (a fraction of it, default 0.001), or 0.05
+    ///   for one given with decimals, as an answer rounded to one place is;
+    /// * `expected.answer.total_groups`: the call's `total_groups` (or its row count, if not cut short).
+    ///
+    /// @param evalCase The case.
+    /// @param calls    The tool calls made, in order.
+    void scoreQuestion(final Map<String, Object> evalCase, final List<ToolUse> calls) {
+        question = true;
+        final Map<String, Object> expected = maps(evalCase.get("expected"));
+        final Set<String> called = new LinkedHashSet<>();
+        calls.forEach(call -> called.add(call.name()));
+        for (final String tool : strings(expected.get("tools_used"))) {
+            questionCheck("used " + tool, called.contains(tool), tool + " was not used (used: " + called + ")");
+        }
+        final Map<String, Object> answer = maps(expected.get("answer"));
+        if (answer.isEmpty()) {
+            return;
+        }
+        final String tool = String.valueOf(answer.getOrDefault("tool", "esql_query"));
+        final List<ToolUse> tries = calls.stream().filter(call -> tool.equals(call.name())).toList();
+        if (tries.isEmpty()) {
+            questionCheck("answer", false, "no " + tool + " call to take the answer from");
+            return;
+        }
+        final long refused = tries.stream().filter(ToolUse::refused).count();
+        note(tool + ": " + refused + " of " + tries.size() + " call(s) refused");
+        final ToolUse last = tries.getLast();
+        questionCheck("last " + tool + " accepted", !last.refused(), "the last " + tool + " call was refused: "
+                                                                     + last.text());
+        if (last.refused()) {
+            return;
+        }
+        final List<List<Object>> rows = rows(last.result().get("rows"));
+        final List<List<Object>> wanted = rows(answer.get("rows"));
+        if (!wanted.isEmpty()) {
+            final double tolerance = answer.get("tolerance") instanceof final Number number
+                    ? number.doubleValue()
+                    : 0.001;
+            final boolean ordered = Boolean.TRUE.equals(answer.get("ordered"));
+            final String mismatch = mismatch(wanted, rows, ordered, tolerance);
+            questionCheck("answer rows", mismatch == null, "the answer's rows " + mismatch);
+        }
+        if (answer.get("total_groups") instanceof final Number total) {
+            final Object given = last.result().containsKey("total_groups")
+                    ? last.result().get("total_groups")
+                    : (Boolean.TRUE.equals(last.result().get("truncated"))
+                            ? null
+                            : rows.size());
+            questionCheck("total groups", given instanceof final Number number
+                                          && number.longValue() == total.longValue(),
+                    "the total groups were " + given + ", expected " + total);
+        }
+    }
+
+    // Why the rows don't hold what is wanted, or null if they do.
+    static String mismatch(final List<List<Object>> wanted,
+                           final List<List<Object>> rows,
+                           final boolean ordered,
+                           final double tolerance) {
+        if (rows.size() != wanted.size()) {
+            return "were " + rows.size() + ", expected " + wanted.size() + ": " + rows;
+        }
+        final List<List<Object>> left = new ArrayList<>(rows);
+        for (int i = 0; i < wanted.size(); i++) {
+            final List<Object> want = wanted.get(i);
+            if (ordered) {
+                if (!rowMatches(want, rows.get(i), tolerance)) {
+                    return "row " + (i + 1) + " was " + rows.get(i) + ", expected " + want;
+                }
+            } else {
+                final List<Object> found = left.stream()
+                        .filter(row -> rowMatches(want, row, tolerance))
+                        .findFirst()
+                        .orElse(null);
+                if (found == null) {
+                    return "had no row " + want + " (rows: " + rows + ")";
+                }
+                left.remove(found);
+            }
+        }
+        return null;
+    }
+
+    // Each wanted value is one of the row's values, each value matched once.
+    private static boolean rowMatches(final List<Object> want, final List<Object> row, final double tolerance) {
+        final List<Object> left = new ArrayList<>(row);
+        for (final Object value : want) {
+            final Object found = left.stream()
+                    .filter(candidate -> valueMatches(value, candidate, tolerance))
+                    .findFirst()
+                    .orElse(null);
+            if (found == null) {
+                return false;
+            }
+            left.remove(found);
+        }
+        return true;
+    }
+
+    private static boolean valueMatches(final Object want, final Object value, final double tolerance) {
+        if (want instanceof final Number number) {
+            final Double actual = value instanceof final Number given
+                    ? Double.valueOf(given.doubleValue())
+                    : parse(value);
+            if (actual == null) {
+                return false;
+            }
+            final double expected = number.doubleValue();
+            final double allowed = want instanceof Double || want instanceof Float
+                    ? Math.max(0.05, Math.abs(expected) * tolerance)
+                    : Math.abs(expected) * tolerance;
+            return Math.abs(actual - expected) <= allowed;
+        }
+        final String expected = String.valueOf(want);
+        final String actual = String.valueOf(value);
+        return expected.equals(actual)
+               || (DAY.matcher(expected).matches() && actual.startsWith(expected));
+    }
+
+    private static Double parse(final Object value) {
+        try {
+            return value == null
+                    ? null
+                    : Double.valueOf(String.valueOf(value).replace(",", ""));
+        } catch (final NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private static List<List<Object>> rows(final Object value) {
+        final List<List<Object>> rows = new ArrayList<>();
+        if (value instanceof final List<?> list) {
+            for (final Object row : list) {
+                if (row instanceof final List<?> cells) {
+                    rows.add(new ArrayList<>(cells));
+                }
+            }
+        }
+        return rows;
+    }
+
+    private void questionCheck(final String check, final boolean passed, final String problem) {
+        final Map<String, Object> made = new LinkedHashMap<>();
+        made.put("check", check);
+        made.put("passed", passed);
+        if (!passed) {
+            made.put("problem", problem);
+            problems.add(problem);
+        }
+        questionChecks.add(made);
     }
 
     /// @return The score as `print_score` prints it, with its problems.
@@ -475,6 +642,9 @@ final class EvalScore {
         map.put("problems", List.copyOf(problems));
         if (!sourceTypeChecks.isEmpty()) {
             map.put("source_type_checks", List.copyOf(sourceTypeChecks));
+        }
+        if (!questionChecks.isEmpty()) {
+            map.put("question_checks", List.copyOf(questionChecks));
         }
         map.put("notes", List.copyOf(notes));
         return map;
@@ -639,6 +809,18 @@ final class EvalScore {
         return value instanceof final Map<?, ?> map
                 ? (Map<String, Object>) map
                 : Map.of();
+    }
+
+    // --------------------------------------------------------------------------------
+
+    /// One tool call of a question's answer.
+    ///
+    /// @param name    The tool.
+    /// @param refused True if it was refused or failed.
+    /// @param result  Its result as JSON (for esql_query, its `rows`, `truncated`, `total_groups`...); empty if none.
+    /// @param text    Its text, for saying why it was refused.
+    record ToolUse(String name, boolean refused, Map<String, Object> result, String text) {
+
     }
 
     // --------------------------------------------------------------------------------

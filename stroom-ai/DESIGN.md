@@ -685,6 +685,19 @@ searches are unchanged. Decided with the user:
   cluster (run_stroomql).
 * **Result.** Markdown in the chat, JSON over `/mcp` (columns with ES|QL types, typed rows, `truncated`, `grouped`,
   `total_groups`/`total_rows`), the rows also written to `/outputs/esql/` for the table tool.
+* **Nudges.** The descriptions say which tool fits (esql_query: totals, top N, grouped or bucketed questions on
+  Elasticsearch; run_stroomql: row-level results, Lucene, views, Stroom's functions), as do the chat's guidance,
+  the server instructions and the visualisation guide. describe_data_source gives an Elastic Index on a cluster
+  taking ES|QL an example pipeline from its own fields. run_stroomql, after an aggregation on an Elastic Index,
+  gives the equivalent esql_query pipeline and how many documents Stroom read for it, but only for what translates
+  exactly (`StroomQlToEsql`: `=` on keyword or number fields, number ranges, one group by, count, sum, min, max,
+  average, sort and limit; never `!=`, which matches documents without the field in Stroom, nor wildcards, dates
+  or text fields). The table tool notes when 1,000 rows or more of an Elastic Index were read only to be grouped.
+* **Evaluation.** Cases 62 to 64 are questions (`kind: question`), not builds: a top-N by two keys, a day-bucketed
+  count and sum over a date range, and a filtered, computed threshold (MB), on 10,000 seeded proxy upload events
+  (`esql/proxy-uploads-generator.py`, made in Java by `EvalProxyUploads`). They are scored on the tools used, the
+  last esql_query call accepted (refusals counted), and its rows against the answer the generator works out
+  (`EvalScore.scoreQuestion`); TestE2eEvalReference runs each case's reference ES|QL.
 
 ### Explain processing, retention and volumes
 
