@@ -732,6 +732,8 @@ appConfig:
       maxNestedElementDepth: 10
       retryCount: 5
     search:
+      esqlRowLimit: 1000
+      esqlTimeout: "PT2M"
       fieldStatsMaxSampleSize: 50000
       fieldStatsSampleSize: 5000
       highlight: true
