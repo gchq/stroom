@@ -140,11 +140,14 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                                  + "STATS ... BY, SORT, LIMIT, KEEP, DROP, RENAME, DISSECT, GROK, MV_EXPAND. Field "
                                  + "names are the index's own")
                         .chatOnly(" (describe_data_source gives them)")
-                        .general("; group by a keyword field, not text. Without a LIMIT in the pipeline, one is "
-                                 + "added (limit). The result says when the rows were cut short and how many rows "
-                                 + "(groups) there are in all: never call cut-short rows a full ranking or a "
-                                 + "total. Refused for a Lucene index or a cluster older than 8.14, saying what to "
-                                 + "use instead.")
+                        .general("; group by a keyword field, not text. Work out derived values and cut-offs "
+                                 + "in the query, not in your reply, so its rows are the answer: EVAL for a "
+                                 + "conversion (e.g. '| EVAL hours = ROUND(seconds / 3600.0, 1)'), WHERE after "
+                                 + "STATS for a threshold on a total (e.g. '| WHERE hours > 8'). Without a LIMIT in "
+                                 + "the pipeline, one is added (limit). The result says when the rows were cut "
+                                 + "short and how many rows (groups) there are in all: never call cut-short rows a "
+                                 + "full ranking or a total. Refused for a Lucene index or a cluster older than "
+                                 + "8.14, saying what to use instead.")
                         .chatOnly(" The rows are written to a table in the workspace too, for the table tool.")
                         .build())
                 .parameters(ObjectSchema.builder()
