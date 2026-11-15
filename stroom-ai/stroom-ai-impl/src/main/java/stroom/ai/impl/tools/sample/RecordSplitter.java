@@ -81,7 +81,10 @@ public final class RecordSplitter {
     /// @throws RuntimeException if the part can't be split (a JSON line that doesn't parse among JSON lines, say):
     /// the caller says it couldn't split the part.
     public static Chunk split(final String text, final int maxRecords, final boolean truncated) {
-        final String trimmed = ToolText.lstrip(text, "﻿\r\n ");
+        // Read as Stroom's parsers read it (as the dry run does): the characters XML 1.0 doesn't allow taken out
+        // first. Seen: JSON lines holding a raw form feed and NUL inside a string failed to parse, and the survey
+        // called the feed unreadable, where Stroom processed it.
+        final String trimmed = ToolText.lstrip(StroomInput.asParsed(text), "﻿\r\n ");
         final String head = trimmed.isEmpty()
                 ? ""
                 : trimmed.substring(0, 1);
@@ -135,7 +138,7 @@ public final class RecordSplitter {
         if (!SampleProfiler.MIXED_LINES.equals(format)) {
             return split(text, maxRecords, truncated);
         }
-        List<String> lines = ToolText.nonBlankLines(ToolText.lstrip(text, "﻿\r\n "));
+        List<String> lines = ToolText.nonBlankLines(ToolText.lstrip(StroomInput.asParsed(text), "﻿\r\n "));
         if (truncated && !lines.isEmpty() && !text.endsWith("\n") && !text.endsWith("\r")) {
             lines = lines.subList(0, lines.size() - 1);
         }

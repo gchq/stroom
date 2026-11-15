@@ -137,7 +137,7 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 | `config_properties` | Searches, gets and lists system properties, with overrides and their sources; secrets masked | administration | yes | administration | Manage Properties | | | |
 | `current_results` | Snapshots the results table of the attached query or dashboard tab as a workspace table | search | yes | | | | Use | chat |
 | `delete_file` | Deletes a file in the workspace's `/outputs/` | core | no | | | | | trusted |
-| `describe_data_source` | A data source's fields, conditions, documentation and AGENTS docs, and an index's searches that would mislead | search | yes | | | | View, Use | |
+| `describe_data_source` | A data source's fields, conditions, documentation and AGENTS docs, and an index's searches that would mislead; or one field, named loosely | search | yes | | | | View, Use | |
 | `document_documentation` | A document's Documentation tab | core | yes | | | | View | |
 | `document_info` | A document's type, path, tags, history, version and dependencies | core | yes | | | | View | |
 | `document_links` | Follows dependency links (dependants or dependencies) from documents | core | yes | | | Manage Processors | View | |
@@ -1073,9 +1073,21 @@ instead (`DescribeDataSourceTool.searchingNote`):
   nothing on a text field. IN finds nothing when a value holds a space.
 * **Either**: IN takes values separated by commas, and a field that isn't queryable is found by no search.
 
-* **Arguments**: `data_source` (required; name or uuid).
+With `field`, one field is described alone, as the user names it (`FieldMatches`, loosely: "Recipient ID" finds
+`Email/Recipient/Id` or `email.recipient.id`). The words given and each field name are split into words ignoring
+case, separators (`/ . _ -`, spaces) and camelCase, in any order; a field naming only some of the words ranks by how
+many it covers; a misspelt word (4 letters or more) matches a close one; words run together or apart match
+(`username`, `user name`); where no name matches, the words that say which (not "the", "who"...) are looked for in
+the fields' descriptions ("who received it"). One clear match is described: its type, conditions, whether it can be
+queried, its source path (from the index plan kept with a feeding pipeline's indexing XSLT, else the documentation's
+From column), its description and sample values (from the documentation's field table row) and the AGENTS lines
+naming it. Several as close are listed, ranked, each with why it matched, for the client to ask the user: never a
+silent guess. None gives the closest few by name.
+
+* **Arguments**: `data_source` (required; name or uuid); `field` (optional; the user's words for one field).
 * **Returns**: text: what the data source is, its time field, its fields, the searching note, its documentation and
-  its AGENTS docs. The documentation and AGENTS docs are given even when no fields can be seen.
+  its AGENTS docs. The documentation and AGENTS docs are given even when no fields can be seen. With `field`, the
+  one field, the several that could be meant, or the closest by name.
 * **Refuses**: no such usable data source (`NOT_FOUND`); an ambiguous name.
 * **Notes**: audit-logged as a view of the data source.
 
@@ -3669,11 +3681,16 @@ promotion and returns the plan's `next`.
     columns `col1`..., and processing then wrote no Reference stream with nothing saying why). No record stepped at
     all is never clean (`nothingStepped`), and an element that fails before the first record (an XSLT that doesn't
     compile) is reported.
-  * A source type group's pipeline passes over the feed's other source types' records with its INFO line
-    (`XsltGenerator.PASSED_OVER`): `PassedOverRecords` takes that line out of a record's markers, so such a record
-    is not one `with_errors` and never in the triage or the verdict; the result gives `records_passed_over`,
-    `passed_over_by_source_type` (told from the XSLT's input by the group's rows kept with its mapping;
-    `(not told from the step)` without one) and `passed_over_note`. The no-Event check reads only the records not
+  * A source type group's pipeline passes over the feed's other source types' records, logging nothing of them (a
+    line a document made Stroom write an Error stream for every raw stream each group processed).
+    `PassedOverRecords` tells them as the group's XSLT does, from the registry kept with the group's mapping: the
+    source type field's value of the XSLT's input (a part's meta, read by the record's stream and part, for a
+    `meta:` field), the rows tried in order, the first match winning (value, pattern and list-member rows); a
+    record the pipeline wrote an Event for is never one. Such a record is not one `with_errors` (only its ERROR and
+    FATAL markers kept) and never in the triage or the verdict; the result gives `records_passed_over`,
+    `passed_over_by_source_type` and `passed_over_note`. The INFO line older group XSLTs log
+    (`XsltGenerator.PASSED_OVER`) is taken out of a record's markers, and marks one passed over where no group
+    mapping is kept (`(not told from the step)`). The no-Event check reads only the records not
     passed over; every record passed over is blocking (`SteppingVerdicts.allPassedOver`: nothing the group
     translates was checked). Seen in chat 177: 304 of 500 records "with errors", 238 only passed over, explained
     away by the agent. `step_records` marks such a record `passed_over: true` (no "no Event" warning), leaves its
@@ -4501,14 +4518,17 @@ them), and translates a record whose first matching row is one of its own source
 stream meta attribute (`meta:<Attribute>`, `SourceTypeModule.byPart`) reads it once a document (a document is of one
 part, and `stroom:meta()` reads the part's, in stepping and processing alike): a part of the group's has every record
 handed to the group's mode; any other part's records are passed over whole, never judged one by one (no pass-over
-template), and counted in the same INFO line. A group on a record's field judges each record as below. It reads a record's source type value as the tools do
+template). A group on a record's field judges each record as below. It reads a record's source type value as the tools do
 (`SourceTypeFields.valueOf`): stripped of the white space around it, and no value for `-`, `null`, `none` or `n/a`
 (any case), so processing and the survey count the same records as each source type. Every other record (another
 group's, parked, dropped, or a value no row matches) is passed over, its record's number read so the group's log
-lines name the right records, and counted: `Passed over N record(s) not of this group's source types` (INFO, once a
-document Stroom hands it; a stream may be several), never warned of. A group's held message that doesn't parse (a
+lines name the right records, never logged nor warned of: an INFO line a document of the records passed over
+(`XsltGenerator.PASSED_OVER`, written by group XSLTs generated before 2026-11-15) made Stroom write an Error stream
+for every raw stream each group processed in production. The tools tell the records passed over from the registry
+instead (`PassedOverRecords` in stepping, `SourceTypeCoverage` in review_coverage); the older line stays triaged
+benign. A group's held message that doesn't parse (a
 truncated SOAP body) is logged (WARN) a record each, `<mode>: <field> did not parse as XML ...`; its event is still
-written. Both are triaged benign, never holding a clean step. Its comments are written through
+written, triaged benign, never holding a clean step. Its comments are written through
 `XsltComments.comment`, so a name holding `--` (or more) still makes a well-formed comment. A group's names are its
 own when they are its mode, or its mode followed by a separator (`_`, `-`, or a capital or digit starting a camelCase
 word). A group XSLT's `uuid` alone regenerates it as the group it is (its kept mapping holds `module`).
@@ -5022,6 +5042,16 @@ tool generates two sections in it and keeps the version control:
   the errors the user accepted as benign with their reasons (`AcceptedErrors`), kept with the doc so triage doesn't
   raise them again. The agent's own sections on errors stay as written.
 
+Stroom renders a Documentation doc's Markdown with showdown, unsanitised (a sandboxed frame: no scripts, but HTML,
+images and links render), so no markup from the data or the agent reaches it (`MarkdownHtml`). In the generated
+sections each value from the data (sample values, examples, kind and rule names, source type groups, conditions'
+values) is inline code (`FieldDocs.sampleValue`, its backticks shown as quotes) or escaped (`&lt;` `&gt;` `&amp;`).
+And the whole doc as written (the agent's markdown with the generated sections and the change line) has every tag
+outside code spans and fenced code blocks escaped (`MarkdownHtml.escapeTags`): `<` starting a tag, comment,
+processing instruction or CDATA section becomes `&lt;`. The tools' own `<br>` line breaks, their hidden
+`<!-- stroom-mcp … -->` blocks (to the first `-->`, as a browser ends a comment) and autolinks are kept. Seen in
+the Azure audit sample: mail bodies' HTML, an XSLT fragment and a CDATA section in a subject.
+
 * **Arguments**: `build` (required); `pipeline_uuid` or `index_uuid`; `markdown`; `change`; `stream_ids`;
   `accept_errors` (a list of `{element, example, reason, matches}`, one object, or JSON text); `field_descriptions`
   (`{field: description}`, or JSON text); `field_mapping_layout` (`by_event_type` or `compact`; else an AGENTS
@@ -5192,10 +5222,18 @@ kind). What it is judged against:
   (`source_types.group`, `group_source_types`), whatever the build's scope. A kind of a source type another group
   translates (the registry's `translated` rows of another group) is left to that group's pipeline, never missed:
   `other_groups` (each kind with `translated_by`, `group 'y', pipeline '...'`), and `source_types.other_groups` by
-  source type. A kind of any other source type outside the group is passed over (`passed_over`). The group's own INFO
-  lines (`Passed over N record(s) not of this group's source types`, `CoverageReads.SourceTypeLines`) are summed over
-  every document and stream read: `source_types.processing.passed_over` (`records`, `raw_streams`), said in
-  `tell_user`.
+  source type. A kind of any other source type outside the group is passed over (`passed_over`). The records the
+  group's pipeline passed over in processing are told from the raw streams it processed in the call's range of Ids
+  (the parents of its Events streams with an Id after `continue_from`, up to the last Error stream read, so each
+  falls in one call; `CoverageReads.processedRaws`, at most `SourceTypeCoverage.MAX_PROCESSED_RAWS`, 50, a call):
+  each part of each raw stream read whole (to `SourceTypeCoverage.MAX_COUNTED_CHARS`, 64,000,000 characters, far
+  past a sample's: a sample's cut counted 717 of 818 in e2e), split into its records, and those of a source type
+  outside the group (by the
+  registry's rows, the first match winning; a part's meta for a `meta:` field) counted:
+  `source_types.processing.passed_over` (`records`, `raw_streams` holding any, `by_source_type`,
+  `raw_streams_read`, and a `note` where parts were cut short, unread or not readable record by record), said in
+  `tell_user`. The group's XSLT logs nothing of them; an older group XSLT's INFO line of them
+  (`CoverageReads.SourceTypeLines`) is taken out and not counted.
 * **A whole translation**: the build's scope, where it has one (kinds outside it `passed_over`; `tell_user` starts
   with the scope and its share of the records the survey read); kinds of a source type a group translates are left to
   that group's pipeline as above. Its INFO lines of values its survey didn't see (`New source type 'X' in <field>,
@@ -5427,6 +5465,17 @@ whether the index is a data stream); without forms the reply lists `timestamp_ca
 are also checked for stand-ins for none, with four treatments (missing, null, empty string, as written). A Records
 stream (records:2) must be drafted with `input: delimited`, which reads each data element as a field by its name
 (seen: profiled as XML it offered only `data@value`, and the agent indexed name/value lists).
+
+A constant field holds the same value in every document, only on the user's request (never by default):
+`{"name": ..., "type": "constant", "value": ...}` with no source, in `extra_fields` or `changes.fields`
+(`PlannedField.constant`). Elasticsearch: the template maps it `constant_keyword` with its `value` (`PlanTemplates`,
+never left to ecs@mappings), and the indexing XSLT doesn't write it (`ElasticDocument`). Lucene: a keyword field
+(TEXT, KEYWORD analyzer) the indexing XSLT writes with the value in every record (`IndexingXslt`, the value escaped
+and its braces doubled). verify_index counts every indexed event as holding it (`PlannedValues`), so an exact check
+on it expects every document; the documentation's field tables show `constant `value` (every document)`. A
+template built from the user's example keeps the example's `constant_keyword` fields that have a value, though the
+pipeline doesn't write them (Elasticsearch fills them), and says so in its notes; a planned constant keeps its own
+value over the example's mapping of the name (`FromExample`).
 
 * **Arguments**: `backend` and `index_name` (required); `convention` (none for discovery); `events_stream_ids`
   (Events streams, or a discovery index's raw streams; required to draft from Events); `extra_fields` (planned

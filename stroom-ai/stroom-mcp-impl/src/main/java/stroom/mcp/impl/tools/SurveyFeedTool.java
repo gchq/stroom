@@ -189,7 +189,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     private final DocumentAccess documentAccess;
     private final AiAuditLog auditLog;
     private final SourceTypeRegistries besideFeed;
-    private final BuildMemory memory;
+    private final Provider<BuildRecords> buildRecords;
     private final Provider<BuildPlan> plan;
 
     @Inject
@@ -202,7 +202,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                    final DocumentAccess documentAccess,
                    final AiAuditLog auditLog,
                    final SourceTypeRegistries besideFeed,
-                   final BuildMemory memory,
+                   final Provider<BuildRecords> buildRecords,
                    final Provider<BuildPlan> plan) {
         this.streamReader = streamReader;
         this.feedNames = feedNames;
@@ -213,7 +213,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         this.documentAccess = documentAccess;
         this.auditLog = auditLog;
         this.besideFeed = besideFeed;
-        this.memory = memory;
+        this.buildRecords = buildRecords;
         this.plan = plan;
     }
 
@@ -749,10 +749,13 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 throw new ToolTimeoutException();
             }
             final String why = whyNothingReadable(reading);
-            // Kept for the build, so classify_kinds can go on without the survey, saying why it had none.
-            memory.surveyUnreadable(request.build(), feed, why);
+            // Kept in the build's record (not this node's memory: a restart, or another node, still sees it), so
+            // classify_kinds can go on without the survey, saying why it had none.
+            buildRecords.get().rememberUnreadableSurvey(request.build(), feed, why);
             throw new ToolRefusal("Nothing readable in the sampled streams of '" + feed + "': " + why);
         }
+        // Read now: an earlier survey's note that nothing was readable no longer holds.
+        buildRecords.get().forgetUnreadableSurvey(request.build(), feed);
         if (reading.format == null && state != null) {
             reading.format = String.valueOf(state.get("format"));
         }

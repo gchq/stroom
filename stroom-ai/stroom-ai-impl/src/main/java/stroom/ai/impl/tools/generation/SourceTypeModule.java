@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 /// * a **source type group**'s (`group`): the XSLT of the group's own pipeline, writing `<Events>`: each record of its
 ///   source types (the registry's rows tried in order, as the tools try them) translated by its templates in a mode
 ///   of its own, writing its whole Event, the feed's common module's named templates called for the parts every
-///   group writes one way; every other record passed over, counted;
+///   group writes one way; every other record passed over, unlogged (the tools tell them from the registry);
 /// * the feed's **common module** (`common`): a named template a part (EventTime, EventSource's System, Generator and
 ///   Device, and the site's shared calls), generated from the wrapper's entries (the mapping's `common`).
 ///

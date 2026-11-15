@@ -821,6 +821,37 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
     }
 
     /// @param id A stream's id.
+    /// @return Each of its parts as Stroom stores it, in order: its text and its meta attributes (what
+    /// `stroom:meta()` reads).
+    List<StoredPart> storedParts(final long id) {
+        return securityContext.asProcessingUserResult(() -> {
+            try (final Source source = store.openSource(id)) {
+                final List<StoredPart> out = new ArrayList<>();
+                for (long part = 0; part < source.count(); part++) {
+                    try (final InputStreamProvider provider = source.get(part)) {
+                        final String text;
+                        try (final InputStream in = provider.get()) {
+                            text = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+                        }
+                        final AttributeMap attributes = new AttributeMap();
+                        try (final InputStream in = provider.get(StreamTypeNames.META)) {
+                            if (in != null) {
+                                AttributeMapUtil.read(in, attributes);
+                            }
+                        }
+                        final Map<String, String> meta = new LinkedHashMap<>();
+                        attributes.forEach(meta::put);
+                        out.add(new StoredPart(text, meta));
+                    }
+                }
+                return out;
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+    }
+
+    /// @param id A stream's id.
     /// @return Its text, as Stroom stores it: every part's, in order.
     String storedText(final long id) {
         return securityContext.asProcessingUserResult(() -> {
@@ -1337,6 +1368,17 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
                 .toList();
     }
 
+    /// The records a source type group's pipeline passed over in processing, as review_coverage tells them from the
+    /// raw streams it processed (by the registry's rows): its XSLT logs nothing of them.
+    ///
+    /// @param pipeline The group's pipeline's UUID.
+    /// @return `source_types.processing.passed_over.records` of its review.
+    long passedOverInProcessing(final String pipeline) {
+        final Map<String, Object> review = json("review_coverage", args("pipeline_uuid", pipeline, "follow_on",
+                false));
+        return number(map(map(map(review, "source_types"), "processing"), "passed_over").get("records"));
+    }
+
     /// @param value A JSON number.
     /// @return It as a long.
     static long number(final Object value) {
@@ -1560,6 +1602,14 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
     /// @param converter The Data Splitter, or null for none.
     /// @param xslt      The hand-written XSLT.
     record Case(String format, String template, String sample, String converter, String xslt) {
+
+    }
+
+    /// One part of a stream, as Stroom stores it.
+    ///
+    /// @param text       Its text.
+    /// @param attributes Its meta attributes.
+    record StoredPart(String text, Map<String, String> attributes) {
 
     }
 

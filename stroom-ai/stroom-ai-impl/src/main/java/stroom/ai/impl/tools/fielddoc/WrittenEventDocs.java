@@ -173,11 +173,11 @@ public final class WrittenEventDocs {
         });
         final List<String> lines = new ArrayList<>(List.of("", "### Event types", ""));
         for (final List<String> types : FieldDocs.similarGroups(signatures)) {
-            lines.add("#### " + String.join(", ", types));
+            lines.add("#### " + MarkdownHtml.text(String.join(", ", types)));
             lines.add("");
             lines.add(types.stream()
                     .map(type -> (types.size() > 1
-                            ? type + ": "
+                            ? MarkdownHtml.text(type) + ": "
                             : "") + byType.get(type).size() + " of the sample's " + total + " events")
                     .collect(Collectors.joining("; ")) + ".");
             lines.add("");
@@ -219,9 +219,9 @@ public final class WrittenEventDocs {
                     .map(entry -> "`" + entry.getKey().xpath().substring("EventDetail/".length()) + "` = "
                                   + (entry.getValue().isEmpty()
                             ? "(empty)"
-                            : "\"" + entry.getValue().getFirst() + "\""))
+                            : FieldDocs.sampleValue(entry.getValue().getFirst(), 80)))
                     .collect(Collectors.joining("\n"));
-            lines.add(FieldDocs.row("**" + type + "**", String.valueOf(events.size()), detail));
+            lines.add(FieldDocs.row("**" + MarkdownHtml.text(type) + "**", String.valueOf(events.size()), detail));
         });
         return lines;
     }

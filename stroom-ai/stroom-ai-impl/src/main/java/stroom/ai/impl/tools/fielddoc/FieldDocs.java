@@ -70,6 +70,9 @@ public final class FieldDocs {
             "@StreamId", "The id of the Events stream the event came from.",
             "@EventId", "The event's number in its stream; with StreamId, it identifies the event.");
 
+    /// The most characters of a value [#shown] gives.
+    static final int SHOWN_LENGTH = 120;
+
     // White space of any kind, run together in a sample value shown on one line.
     private static final Pattern WHITE_SPACE = Pattern.compile("[\\s\\u2028\\u2029\\u0085]+");
     private static final Pattern ACTION_STEP = Pattern.compile(
@@ -112,9 +115,9 @@ public final class FieldDocs {
     /// `condition_text` (the kept mapping's own, [KeptMapping#conditionText(Map)]).
     ///
     /// @param condition A rule's condition.
-    /// @return It for a reader, e.g. `` `action` = login ``.
+    /// @return It for a reader, e.g. `` `action` = login ``, a value from the data escaped (never markup).
     public static String conditionText(final Condition condition) {
-        return KeptMapping.conditionText(condition.toJson(DumpMode.ALL));
+        return MarkdownHtml.text(KeptMapping.conditionText(condition.toJson(DumpMode.ALL)));
     }
 
     /// @param conditions A rule's conditions.
@@ -130,7 +133,7 @@ public final class FieldDocs {
     /// @return Its source, e.g. `` `host`, or "unknown" when empty ``.
     public static String sourceText(final FieldMapping entry) {
         if (entry.value() != null) {
-            return "\"" + entry.value() + "\"";
+            return "\"" + MarkdownHtml.text(entry.value()) + "\"";
         }
         String text;
         final Lookup lookup = entry.lookup();
@@ -577,14 +580,15 @@ public final class FieldDocs {
     }
 
     /// @param values The values.
-    /// @param quote  True to quote each.
-    /// @return The first few, each on its own line, and how many more.
+    /// @param quote  True to show each as code (cut to [#SHOWN_LENGTH] characters), else as text, escaped.
+    /// @return The first few, each on its own line, and how many more. A value from the data is never markup: a mail
+    /// body's HTML is shown as text, not rendered.
     static String shown(final List<String> values, final boolean quote) {
         final List<String> out = new ArrayList<>();
         for (final String value : values.subList(0, Math.min(values.size(), VALUES_SHOWN))) {
             out.add(quote
-                    ? "\"" + value + "\""
-                    : value);
+                    ? sampleValue(value, SHOWN_LENGTH)
+                    : MarkdownHtml.text(value));
         }
         final int more = values.size() - VALUES_SHOWN;
         if (more > 0) {

@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
+import stroom.ai.impl.tools.fielddoc.MarkdownHtml;
 import stroom.ai.impl.tools.generation.XmlElement;
 
 import java.util.ArrayList;
@@ -347,9 +348,8 @@ public final class CefDocs {
 
     // A table cell: its pipes escaped, its lines run together.
     private static String cell(final String text) {
-        return (text == null
-                ? ""
-                : text).replace("|", "\\|").replace("\n", " ");
+        // A value from the data (an example) is never markup: escaped, as showdown renders HTML.
+        return MarkdownHtml.text(text).replace("|", "\\|").replace("\n", " ");
     }
 
     // The line before its second-last pipe.

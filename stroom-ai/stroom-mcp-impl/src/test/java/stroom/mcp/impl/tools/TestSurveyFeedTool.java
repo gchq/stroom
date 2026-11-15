@@ -74,14 +74,13 @@ class TestSurveyFeedTool {
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     private final Consent consent = new Consent(() -> auditLog);
-    private final BuildMemory memory = new BuildMemory();
     // The plan's next step isn't what these tests are about: the result as the survey gave it.
     private final BuildPlan plan = Mockito.mock(BuildPlan.class);
     private final SourceTypeRegistries registries = besideFeed();
     private final SurveyFeedTool tool = new SurveyFeedTool(streamReader, feedNames, world.guard(),
             new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)), consent,
             new FewerStreams(securityContext),
-            world.documentAccess, auditLog, registries, memory, () -> plan);
+            world.documentAccess, auditLog, registries, world::records, () -> plan);
 
     TestSurveyFeedTool() {
         Mockito.when(plan.withNext(any(), any(), any())).thenAnswer(invocation -> invocation.getArgument(2));
@@ -567,6 +566,20 @@ class TestSurveyFeedTool {
     }
 
     @Test
+    void jsonLinesHoldingRawControlCharactersAreReadAsStroomReadsThem() {
+        // Seen: JSON lines with a raw form feed and NUL inside a string were called unreadable by the survey, where
+        // Stroom's parser takes them out and processed every record.
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, "{\"a\": \"x\fy\", \"b\": 1}\n{\"a\": \"p\0q\", \"b\": 2}\n"
+                                 + "{\"a\": \"z\", \"b\": 3}\n", false);
+
+        final Map<String, Object> result = json(call("{\"stream_ids\": [7]}"));
+
+        assertThat(result.get("format")).isEqualTo("json lines");
+        assertThat(result.get("records_read")).isEqualTo(3);
+    }
+
+    @Test
     void nothingReadableSaysWhyEachStreamCouldntBeReadAndIsKeptForTheBuild() {
         sampleFeedInABuild();
         for (long id = 1; id <= 7; id++) {
@@ -581,9 +594,19 @@ class TestSurveyFeedTool {
                                      + "Stroom couldn't read it: volume 1 gone; stream 2 part 0:")
                 .contains("volume 5 gone; and 2 more")
                 .doesNotContain("volume 6 gone");
-        assertThat(memory.unreadableSurveys("acme-v1")).containsOnlyKeys("ACME-VPN");
-        assertThat(memory.unreadableSurveys("acme-v1").get("ACME-VPN")).startsWith("stream 1 part 0: ");
-        assertThat(memory.unreadableSurveys("other")).isEmpty();
+        // In the build's record, not this node's memory: a restart, or another node, still sees it.
+        final BuildRecords restarted = new BuildRecords(world::guard, world.documentAccess,
+                new DocumentWrites(world.documentAccess), () -> world.explorerService, world.pipelineShapes);
+        assertThat(restarted.unreadableSurveys("acme-v1")).containsOnlyKeys("ACME-VPN");
+        assertThat(restarted.unreadableSurveys("acme-v1").get("ACME-VPN")).startsWith("stream 1 part 0: ");
+        assertThat(restarted.unreadableSurveys("other")).isEmpty();
+
+        // Surveyed again once readable: the note goes.
+        Mockito.reset(streamReader);
+        Mockito.when(streamReader.find(any(), anyInt(), anyBoolean())).thenReturn(ResultPage.empty());
+        stream(1, "ACME-VPN", 0, "{\"a\": 1, \"b\": \"x\"}\n{\"a\": 2, \"b\": \"y\"}\n", false);
+        call("{\"stream_ids\": [1], \"build\": \"acme-v1\"}");
+        assertThat(restarted.unreadableSurveys("acme-v1")).isEmpty();
     }
 
     @Test
@@ -682,8 +705,8 @@ class TestSurveyFeedTool {
         // A node restarted (its memory empty), with no form to ask in: the build's survey record still says so.
         final SurveyFeedTool restarted = new SurveyFeedTool(streamReader, feedNames, world.guard(),
                 new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)),
-                consent, new FewerStreams(securityContext), world.documentAccess, auditLog, besideFeed(), memory,
-                () -> plan);
+                consent, new FewerStreams(securityContext), world.documentAccess, auditLog, besideFeed(),
+                world::records, () -> plan);
         final ToolResult again = restarted.execute(BuildToolCalls.call(SurveyFeedTool.NAME, args),
                 BuildToolCalls.context());
         assertThat(again.text()).doesNotContain("Not done: Survey feed 'ACME-VPN' only 3 stream(s)");
@@ -751,7 +774,7 @@ class TestSurveyFeedTool {
                 new SourceTypeRegistries.Found(null, true, Map.of("field", "source"))));
         final SurveyFeedTool withRegistry = new SurveyFeedTool(streamReader, feedNames, world.guard(),
                 new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)),
-                consent, new FewerStreams(securityContext), world.documentAccess, auditLog, registered, memory,
+                consent, new FewerStreams(securityContext), world.documentAccess, auditLog, registered, world::records,
                 () -> plan);
         final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "unused"));
 
@@ -1149,7 +1172,7 @@ class TestSurveyFeedTool {
                 new SourceTypeRegistries.Found(null, false, state)));
         return new SurveyFeedTool(streamReader, feedNames, world.guard(),
                 new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)),
-                consent, new FewerStreams(securityContext), world.documentAccess, auditLog, registered, memory,
+                consent, new FewerStreams(securityContext), world.documentAccess, auditLog, registered, world::records,
                 () -> plan);
     }
 

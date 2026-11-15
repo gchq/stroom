@@ -71,7 +71,25 @@ public class SteppingWalks {
                      final long streamId,
                      final Map<String, String> code,
                      final Duration timeLimit) {
-        return new Walk(steppingServiceProvider.get(), pipeline, streamId, code, timeLimit);
+        return open(pipeline, streamId, code, timeLimit, null);
+    }
+
+    /// As [#open(PipelineDoc, long, Map, Duration)], stepping one of the stream's child streams in place of its
+    /// data: Stroom's stepping reads that child of each part as the pipeline's input, e.g. a stream's Context
+    /// through a context loader pipeline.
+    ///
+    /// @param pipeline        The pipeline, as saved.
+    /// @param streamId        The stream to walk.
+    /// @param code            Code to step with in place of some elements' saved code, by element id, or null.
+    /// @param timeLimit       The longest one step may take.
+    /// @param childStreamType The child stream to step (e.g. `Context`), or null for the stream's data.
+    /// @return A walk, to close when done.
+    public Walk open(final PipelineDoc pipeline,
+                     final long streamId,
+                     final Map<String, String> code,
+                     final Duration timeLimit,
+                     final String childStreamType) {
+        return new Walk(steppingServiceProvider.get(), pipeline, streamId, code, timeLimit, childStreamType);
     }
 
     /// The errors one step met, each element's and the pipeline's own, as triage markers.
@@ -137,18 +155,22 @@ public class SteppingWalks {
         private final long streamId;
         private final Map<String, String> code;
         private final Duration timeLimit;
+        // The child stream stepped in place of the stream's data, or null.
+        private final String childStreamType;
         private String sessionUuid;
 
         private Walk(final SteppingService steppingService,
                      final PipelineDoc pipeline,
                      final long streamId,
                      final Map<String, String> code,
-                     final Duration timeLimit) {
+                     final Duration timeLimit,
+                     final String childStreamType) {
             this.steppingService = steppingService;
             this.pipeline = pipeline;
             this.streamId = streamId;
             this.code = NullSafe.map(code);
             this.timeLimit = timeLimit;
+            this.childStreamType = childStreamType;
         }
 
         /// @return The stream's first record, stepped.
@@ -215,6 +237,7 @@ public class SteppingWalks {
             return PipelineStepRequest.builder()
                     .sessionUuid(sessionUuid)
                     .criteria(new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(streamId)))
+                    .childStreamType(childStreamType)
                     .stepLocation(location)
                     .stepType(stepType)
                     .pipelineDoc(pipeline)

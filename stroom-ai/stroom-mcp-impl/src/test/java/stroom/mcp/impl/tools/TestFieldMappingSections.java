@@ -126,7 +126,7 @@ class TestFieldMappingSections {
 
         assertThat(section).startsWith("Counts are of 2 sample records (2 of stream 5).")
                 .contains("### Common fields", "`EventTime/TimeCreated`", "#### login", "#### file-read",
-                        "`EventDetail/Authenticate/Action`", "\"/etc/hosts\"");
+                        "`EventDetail/Authenticate/Action`", "`/etc/hosts`");
         // Stepped with the XSLT as saved, not code of the tool's own.
         Mockito.verify(stepping).outputs(any(), any(), eq(List.of(5L)), eq("translationFilter"), eq(null),
                 anyInt());
@@ -155,7 +155,7 @@ class TestFieldMappingSections {
                 List.of(5L), FieldDocs.BY_EVENT_TYPE, new Descriptions());
 
         assertThat(section).contains("The XSLT was written by hand", "#### logon, logoff",
-                        "\"Logon\"", "\"Logoff\"")
+                        "`Logon`", "`Logoff`")
                 .contains("Note: Its XSLT was saved as written by hand.");
     }
 

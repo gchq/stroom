@@ -388,6 +388,8 @@ public final class EcsSchema {
         types.put("date", JsonValues.nullSafeSet("date"));
         types.put("boolean", JsonValues.nullSafeSet("boolean"));
         types.put("ip", JsonValues.nullSafeSet("ip"));
+        // Last, so an ECS type is still read as a keyword: a constant the user asked for fits a keyword field.
+        types.put(PlannedField.CONSTANT, JsonValues.nullSafeSet("constant_keyword", "keyword"));
         return Collections.unmodifiableMap(types);
     }
 

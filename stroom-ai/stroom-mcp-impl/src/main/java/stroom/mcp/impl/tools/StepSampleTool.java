@@ -108,6 +108,8 @@ class StepSampleTool extends AbstractBuiltInTool {
                                                                     + "of each stream (default " + PER_STREAM
                                                                     + ", unless max_records is given: processing "
                                                                     + "then checks every record).")
+                        .addEnumProperty(PipelineStepping.CHILD_TYPE_ARG, PipelineStepping.CHILD_TYPES,
+                                PipelineStepping.CHILD_TYPE_DESCRIPTION)
                         .required(PIPELINE_UUID_ARG, STREAM_IDS_ARG)
                         .build())
                 .build();
@@ -202,8 +204,10 @@ class StepSampleTool extends AbstractBuiltInTool {
     /// @param maxRecords       The most records to step, or null for the limit.
     /// @param recordsPerStream The most records to step of each stream, or null for the default.
     /// @param keepOutputs      True to keep each record's output.
-    /// @return The verdict, as [#stepSample] gives it, and each record's output (none unless kept).
+    /// @return The verdict, as [#stepSample] gives it, and each record's output (none unless kept). The call's
+    /// `child_type` ([PipelineStepping#childType]) steps each part's child stream (its Context) in place of its data.
     /// @throws ToolTimeoutException if the call is cancelled.
+    /// @throws ToolRefusal if the call names a child stream that can't be stepped.
     Sampled sampled(final ToolCall call,
                     final ToolCallContext context,
                     final String pipelineUuid,
@@ -213,6 +217,7 @@ class StepSampleTool extends AbstractBuiltInTool {
                     final Integer recordsPerStream,
                     final boolean keepOutputs) {
         stepping.checkCanStep();
+        final String childType = PipelineStepping.childType(call);
         stepping.checkDrafts(call, context, pipelineUuid, draftCode);
         final SteppedPipeline pipeline = stepping.load(pipelineUuid);
         pipeline.refuseMistyped();
@@ -228,6 +233,7 @@ class StepSampleTool extends AbstractBuiltInTool {
         final Walked walked;
         try {
             walked = PipelineStepping.withinTimeLimit(context, () -> walk(context, pipeline, streamIds, draftCode,
+                    childType,
                     cap, perStreamLimit, keepOutputs));
         } finally {
             stepping.audit(context, streamIds, "Stepped stream(s) through " + pipeline.name() + " with the " + NAME
@@ -242,6 +248,7 @@ class StepSampleTool extends AbstractBuiltInTool {
                         final SteppedPipeline pipeline,
                         final List<Long> streamIds,
                         final Map<String, String> draftCode,
+                        final String childType,
                         final int cap,
                         final Integer perStreamLimit,
                         final boolean keepOutputs) {
@@ -263,7 +270,7 @@ class StepSampleTool extends AbstractBuiltInTool {
             // Told when each stream starts, and while one is stepped only now and then, never at every record.
             progress.say("Stepping stream " + streamId + " (" + n + " of " + streamIds.size() + ") through "
                          + pipeline.name() + ": up to " + limit + " records");
-            try (final Walk walk = stepping.open(pipeline, streamId, draftCode)) {
+            try (final Walk walk = stepping.open(pipeline, streamId, draftCode, childType)) {
                 SteppingResult result = walk.first();
                 if (!PipelineStepping.isFound(result)) {
                     // An element that fails before the first record (an XSLT that doesn't compile, say) reports it
@@ -275,7 +282,7 @@ class StepSampleTool extends AbstractBuiltInTool {
                     walked.perStream.merge(streamId, 1, Integer::sum);
                     final StepLocation location = result.getFoundLocation();
                     final String key = SteppingWalks.recordKey(streamId, location);
-                    record(walked, pipeline, outputElement, result, key);
+                    record(walked, pipeline, outputElement, result, key, location);
                     progress.nowAndThen("Stepping stream " + streamId + " (" + n + " of " + streamIds.size()
                                         + "): " + (walked.records.size() - streamStart) + " of up to " + limit
                                         + " records stepped");
@@ -304,11 +311,13 @@ class StepSampleTool extends AbstractBuiltInTool {
                                final SteppedPipeline pipeline,
                                final String outputElement,
                                final SteppingResult result,
-                               final String key) {
+                               final String key,
+                               final StepLocation location) {
         final String output = SteppingWalks.output(result, outputElement);
         // A source type group's pipeline passes over the records of the feed's other source types: counted apart,
         // never errors.
-        final PassedOverRecords.Sifted sifted = walked.passedOver.sift(SteppingWalks.markers(result, key), result);
+        final PassedOverRecords.Sifted sifted = walked.passedOver.sift(SteppingWalks.markers(result, key), result,
+                location);
         final List<ErrorTriage.Marker> found = new ArrayList<>(sifted.markers());
         found.addAll(SteppingVerdicts.emptyOutput(result, outputElement, key));
         found.addAll(walked.unvalidated.markers(output, key));
@@ -477,7 +486,7 @@ class StepSampleTool extends AbstractBuiltInTool {
     /// One record stepped.
     ///
     /// @param record     Its key, e.g. `7:3`.
-    /// @param errors     How many errors it met (a source type group's pass-over line is none).
+    /// @param errors     How many errors it met (of a record passed over, only ERROR and FATAL).
     /// @param passedOver True if a source type group's pipeline passed it over: not of the group's source types.
     record Stepped(String record, int errors, boolean passedOver) {
 

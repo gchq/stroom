@@ -214,6 +214,12 @@ final class IndexingXslt {
             if (plan.writtenBy(field.name()) != null) {
                 continue;
             }
+            if (field.isConstant()) {
+                // The one value the user asked for, in every record: Lucene has no field filled by its mapping.
+                groups.computeIfAbsent("", key -> new ArrayList<>()).add("      <data name=\"" + field.name()
+                        + "\" value=\"" + constantValue(field.constant()) + "\" />");
+                continue;
+            }
             final String first = FieldPlans.steps(field.source()).getFirst();
             // One data element per value: a field of several (repeated Data elements, say) is multi-valued in
             // Lucene, not one value of them joined by spaces (seen: two ports indexed as "80 443").
@@ -234,6 +240,12 @@ final class IndexingXslt {
         groups.forEach((key, lines) -> parts.add(new Part(key, !key.isEmpty(), lines)));
         parts.add(new Part("", false, plan.shared().stream().map(use -> call(use, "      ")).toList()));
         return parts;
+    }
+
+    // A constant as a literal result element's attribute value: escaped, and its braces doubled, as an attribute
+    // value template reads { and } as an expression's.
+    private static String constantValue(final String value) {
+        return XmlSerialiser.escapeAttribute(value).replace("{", "{{").replace("}", "}}");
     }
 
     /// @param use    A shared XSLT's named template.

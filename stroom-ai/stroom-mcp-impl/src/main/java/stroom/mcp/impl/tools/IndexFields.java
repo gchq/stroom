@@ -294,7 +294,8 @@ class IndexFields {
                     .orElse(pipelineUuid);
             for (final PlannedField field : plan.leafFields()) {
                 final Double share = FieldPlans.populationOf(field.source(), population);
-                if (field.source().startsWith("@") || (share != null && share > 0)) {
+                // A constant is in every document: Elasticsearch fills it, Lucene's XSLT writes it.
+                if (field.isConstant() || field.source().startsWith("@") || (share != null && share > 0)) {
                     written.add(field.name());
                 }
             }

@@ -108,6 +108,8 @@ final class SteppingWorld {
     final List<String> said = new ArrayList<>();
     /// Each walk opened: the stream, and the code it was opened with.
     final List<Map.Entry<Long, Map<String, String>>> opened = new ArrayList<>();
+    /// The child stream each walk opened stepped in place of the data (`data` for none), in order.
+    final List<String> openedChildTypes = new ArrayList<>();
     /// Each walk's steps, in the order made: `FIRST`, `LAST`, `FORWARD <record>` or `REFRESH <part>:<record>`.
     final List<String> steps = new ArrayList<>();
     final List<SteppingWalks.Walk> walks = new ArrayList<>();
@@ -145,6 +147,13 @@ final class SteppingWorld {
         Mockito.when(plan.withNext(any(), any(), any())).thenAnswer(inv -> inv.getArgument(2));
         Mockito.when(steppingWalks.open(any(), anyLong(), any(), any())).thenAnswer(inv -> walk(
                 inv.getArgument(1), inv.getArgument(2)));
+        Mockito.when(steppingWalks.open(any(), anyLong(), any(), any(), any())).thenAnswer(inv -> {
+            final String childType = inv.getArgument(4);
+            openedChildTypes.add(childType == null
+                    ? "data"
+                    : childType);
+            return walk(inv.getArgument(1), inv.getArgument(2));
+        });
     }
 
     /// Makes the template an indexing one with no schema filter, as Stroom's own Indexing template is: its XSLT
@@ -294,11 +303,28 @@ final class SteppingWorld {
     }
 
     /// @return A step that found the record, a source type group's translation filter reading the input and
-    /// passing the record over: an empty Events, and its INFO line of the records passed over.
+    /// passing the record over: an empty Events, nothing logged (as a group's XSLT is generated now).
     static SteppingResult passedOver(final long stream, final long part, final long record, final String input) {
+        return passedOver(stream, part, record, input, new Indicators());
+    }
+
+    /// @return A step that found the record, a group's translation filter generated before 2026-11-15 reading the
+    /// input and passing the record over: an empty Events, and its INFO line of the records passed over.
+    static SteppingResult passedOverLogged(final long stream,
+                                           final long part,
+                                           final long record,
+                                           final String input) {
         final Indicators indicators = new Indicators();
         indicators.add(new StoredError(Severity.INFO, new DefaultLocation(1, 1), new ElementId("translationFilter"),
                 XsltGenerator.PASSED_OVER + 1 + XsltGenerator.PASSED_OVER_END));
+        return passedOver(stream, part, record, input, indicators);
+    }
+
+    private static SteppingResult passedOver(final long stream,
+                                             final long part,
+                                             final long record,
+                                             final String input,
+                                             final Indicators indicators) {
         final Map<String, SharedElementData> elements = new LinkedHashMap<>();
         elements.put("translationFilter", new SharedElementData(input,
                 "<Events xmlns=\"event-logging:3\" Version=\"4.1.0\"/>", indicators, false, false, true));

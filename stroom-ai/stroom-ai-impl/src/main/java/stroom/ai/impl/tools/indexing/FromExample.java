@@ -50,6 +50,8 @@ final class FromExample {
     private final List<String> styled = new ArrayList<>();
     private final List<String> aliased = new ArrayList<>();
     private final List<String> toEcs = new ArrayList<>();
+    private final List<String> constants = new ArrayList<>();
+    private final List<String> constantsOwn = new ArrayList<>();
 
     /// @param planned    The plan's template body.
     /// @param example    The example template's body, or an index's mapping as `{template: {mappings}}`.
@@ -132,6 +134,9 @@ final class FromExample {
         final boolean byComponent = composedOf.contains(EcsSchema.COMPONENT)
                                     && (dynamicOn || ecsBase || include.contains(EcsSchema.COMPONENT));
         leaves.forEach((path, spec) -> place(path, spec, fromComponents, inExample, styles, byComponent));
+        if (!discovery) {
+            keepConstants(inExample, leaves);
+        }
         final List<String> named = every.entrySet().stream()
                 .filter(entry -> !"object".equals(entry.getValue().get("type")))
                 .map(Map.Entry::getKey)
@@ -188,7 +193,17 @@ final class FromExample {
                 ? text
                 : "";
         final Map<String, Object> given = inExample.get(path);
-        if (fromComponents.containsKey(path)
+        if ("constant_keyword".equals(type) && spec.get("value") != null
+            && (given == null || !spec.get("value").equals(given.get("value")))) {
+            // A constant the user asked for: its value is the plan's, whatever the example or a component maps
+            // under its name, so the documents hold what the plan (and verify_index) says.
+            fields.put(path, spec);
+            if (given == null && !fromComponents.containsKey(path)) {
+                added.add(path);
+            } else {
+                constantsOwn.add(path);
+            }
+        } else if (fromComponents.containsKey(path)
             || (byComponent && given == null && ecs.leftToComponent(path, type))) {
             left.add(path);
             if (!fromComponents.containsKey(path)) {
@@ -226,6 +241,20 @@ final class FromExample {
             fields.put(path, spec);
             added.add(path);
         }
+    }
+
+    // The example's constant_keyword fields with a value, though the pipeline doesn't write them: Elasticsearch gives
+    // every document the value from the mapping (asked for by the user: an example's organisation field, dropped
+    // as not written by the pipeline). One without a value takes the first document's, and none writes it.
+    private void keepConstants(final Map<String, Map<String, Object>> inExample,
+                               final Map<String, Map<String, Object>> leaves) {
+        inExample.forEach((path, spec) -> {
+            if (!leaves.containsKey(path) && !fields.containsKey(path)
+                && "constant_keyword".equals(spec.get("type")) && spec.get("value") != null) {
+                fields.put(path, spec);
+                constants.add(path);
+            }
+        });
     }
 
     // The example's mapping is ecs@mappings' own for the field: its type, and for a keyword ignore_above 1024.
@@ -376,8 +405,16 @@ final class FromExample {
         if (typed) {
             notes.add("objects declared \"type\": \"object\", as the example declares them");
         }
+        if (!constantsOwn.isEmpty()) {
+            notes.add("constants the user asked for, with the plan's value over the example's mapping: "
+                      + ToolText.list(constantsOwn));
+        }
+        if (!constants.isEmpty()) {
+            notes.add("constant_keyword fields of the example, kept though the pipeline doesn't write them "
+                      + "(Elasticsearch gives every document their value): " + ToolText.list(constants));
+        }
         final List<String> leftOut = inExample.entrySet().stream()
-                .filter(entry -> !leaves.containsKey(entry.getKey())
+                .filter(entry -> !leaves.containsKey(entry.getKey()) && !constants.contains(entry.getKey())
                                  && !"object".equals(entry.getValue().get("type"))
                                  && inExample.keySet().stream().noneMatch(o -> o.startsWith(entry.getKey() + ".")))
                 .map(Map.Entry::getKey)

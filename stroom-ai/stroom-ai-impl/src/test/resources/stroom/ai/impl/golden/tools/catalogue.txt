@@ -350,7 +350,7 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-Gives a data source's fields: each field's type, the conditions it supports and whether it can be queried, and the data source's time field. Use it to check the field names in a StroomQL query (from "<data source name>" ...) or a search of an index. Also gives its documentation, which says what its fields hold when their names don't (e.g. the field mapping of the pipeline that feeds it): use it to choose a data source and its fields. The AGENTS docs that apply where the data source is are given too: follow what they say about its fields, e.g. which field holds the acting user. For a Lucene or Elastic index, it says which searches through Stroom would mislead (e.g. CONTAINS on Elasticsearch finds nothing), and what to search instead. To find an event the user describes in an index, use search_events with index.
+Gives a data source's fields: each field's type, the conditions it supports and whether it can be queried, and the data source's time field. Use it to check the field names in a StroomQL query (from "<data source name>" ...) or a search of an index. Also gives its documentation, which says what its fields hold when their names don't (e.g. the field mapping of the pipeline that feeds it): use it to choose a data source and its fields. The AGENTS docs that apply where the data source is are given too: follow what they say about its fields, e.g. which field holds the acting user. For a Lucene or Elastic index, it says which searches through Stroom would mislead (e.g. CONTAINS on Elasticsearch finds nothing), and what to search instead. With field=, one field as the user names it (loosely: 'Recipient ID' finds Email/Recipient/Id): its type, conditions, source path, description, sample values and the AGENTS lines naming it; where several fields could be meant, they are listed for the user to choose. To find an event the user describes in an index, use search_events with index.
 
 ### Parameters
 
@@ -358,6 +358,10 @@ Gives a data source's fields: each field's type, the conditions it supports and 
   "properties" : {
     "data_source" : {
       "description" : "The data source's name or uuid, as list_data_sources gives it.",
+      "type" : "string"
+    },
+    "field" : {
+      "description" : "Optional: one field, in the user's words (e.g. 'Recipient ID' or 'who received it'), to describe it alone. Several close matches are listed: ask the user which they mean, never pick one yourself.",
       "type" : "string"
     }
   },

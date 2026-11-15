@@ -111,9 +111,10 @@ public final class XsltGenerator {
     public static final String NOT_PARSED = " did not parse as ";
     /// The end of a [#NOT_PARSED] line, before the record's number.
     public static final String NOT_PARSED_END = " (truncated, or not that format): its values are left out: record ";
-    /// Logged (INFO) by a source type group, once a document, for the records it passed over (any other source type's,
-    /// or none's): this, the count, then [#PASSED_OVER_END]. Stroom hands an XSLT a stream in several documents, so a
-    /// stream's count is the sum of its lines.
+    /// What a source type group's XSLT generated before 2026-11-15 logged (INFO), once a document, for the records it
+    /// passed over: this, the count, then [#PASSED_OVER_END]. No longer written: a line a document made Stroom write an
+    /// Error stream for every raw stream each group processed. The build tools tell the records passed over from the
+    /// feed's registry instead; the line is still taken out of what older XSLTs log, never counted as a fault.
     public static final String PASSED_OVER = "Passed over ";
     /// The end of a [#PASSED_OVER] line.
     public static final String PASSED_OVER_END = " record(s) not of this group's source types";
@@ -2466,39 +2467,28 @@ public final class XsltGenerator {
     }
 
     // The group's root template: the Events, each record handed to the group's mode (its own translated, the rest
-    // passed over, in document order, so each record's number is read in turn), and the records passed over counted
-    // in one INFO line, once a document.
+    // passed over, in document order, so each record's number is read in turn). Nothing is logged of the records
+    // passed over: a line a document made Stroom write an Error stream for every raw stream each group processed (the
+    // build tools tell them from the feed's registry instead).
     // A group whose source type field is a part's meta attribute reads it once a document (a document is of one
     // part, and stroom:meta() reads the part's): a part of the group's has every record handed to its mode, any other
-    // part's records are passed over whole, counted, none judged one by one.
+    // part's records are passed over whole, none judged one by one.
     private void groupRoot(final XmlElement sheet, final String version) {
         final String records = recordsSelect(m);
         final XmlElement root = sheet.addElement(XSL, "template", "match", rootMatch(m));
         final XmlElement events = root.addElement(ns, "Events", "Version", version);
         events.set(MappingFacts.XSI, "schemaLocation", schemaLocation(schema, version));
-        final String passed = own(XsltNames.styleName("passed-over", style.naming()));
-        final XmlElement passing;
         if (module.byPart()) {
             events.append(new XmlComment(XsltComments.comment("The part's source type, read once from its meta ("
                                                               + SourceTypeMeta.attribute(module.field()) + "): a "
                                                               + "part not of the group's is passed over whole")));
             final String inGroup = own(XsltNames.styleName("part-in-group", style.naming()));
             events.addElement(XSL, "variable", "name", inGroup, "select", groupFunction("in-group") + "()");
-            final XmlElement choose = events.addElement(XSL, "choose");
-            choose.addElement(XSL, "when", "test", "$" + inGroup)
+            events.addElement(XSL, "if", "test", "$" + inGroup)
                     .addElement(XSL, "apply-templates", "select", records, "mode", recordMode());
-            passing = choose.addElement(XSL, "otherwise");
-            passing.addElement(XSL, "variable", "name", passed, "select", "count((" + records + "))");
         } else {
             events.addElement(XSL, "apply-templates", "select", records, "mode", recordMode());
-            passing = events;
-            passing.addElement(XSL, "variable", "name", passed, "select", "count((" + records + ")[not("
-                                                                          + groupFunction("in-group") + "(.))])");
         }
-        passing.addElement(XSL, "if", "test", "$" + passed + " gt 0")
-                .addElement(XSL, "sequence", "select", "stroom:log('INFO', concat(" + XPathText.literal(PASSED_OVER)
-                                                       + ", $" + passed + ", " + XPathText.literal(PASSED_OVER_END)
-                                                       + "))");
     }
 
     // A record of any other source type (or none): not written, its number read as the group's records' are, so
@@ -2508,7 +2498,7 @@ public final class XsltGenerator {
         final XmlElement template = sheet.addElement(XSL, "template", "match", "*[not(" + groupFunction("in-group")
                                                                                + "(.))]", "mode", recordMode(),
                 "priority", "1");
-        template.append(new XmlComment(" Not of this group's source types: not written, counted "));
+        template.append(new XmlComment(" Not of this group's source types: not written "));
         template.addElement(XSL, "variable", "name", RECORD_NO, "select", "stroom:record-no()");
         template.addElement(XSL, "sequence", "select", READ_RECORD_NO);
     }

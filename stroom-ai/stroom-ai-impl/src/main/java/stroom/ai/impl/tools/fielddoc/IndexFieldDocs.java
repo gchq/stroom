@@ -304,7 +304,7 @@ public final class IndexFieldDocs {
                                 : ""));
                     }
                 }
-                lines.add("#### " + String.join(", ", group));
+                lines.add("#### " + MarkdownHtml.text(String.join(", ", group)));
                 lines.add("");
                 if (!shares.isEmpty()) {
                     lines.add("In " + String.join(", ", shares) + " of the sample's events.");
@@ -581,16 +581,21 @@ public final class IndexFieldDocs {
             final List<String> cells = new ArrayList<>(List.of("`" + f.name() + "`",
                     FieldDocs.fieldDescription(what, perDocument), shownType(plan, f.type()), shared != null
                             ? "shared template `" + shared.template() + "` of `" + shared.href() + "`"
-                            : "`" + f.source() + "`"));
+                            : f.isConstant()
+                                    ? constantSaid(f)
+                                    : "`" + f.source() + "`"));
             if (sampled) {
                 final Double pct = FieldPlans.populationOf(f.source(), population);
-                cells.add(f.source().startsWith("@") || shared != null
+                cells.add(f.isConstant() || f.source().startsWith("@") || shared != null
                         ? "always"
                         : pct != null
                                 ? ToolText.formatG(pct) + "% of events"
                                 : "not in the sample");
             }
-            if (documents != null) {
+            if (documents != null && f.isConstant()) {
+                // Elasticsearch fills it from the mapping: the documents written from the sample don't hold it.
+                cells.add(FieldDocs.sampleValue(f.constant(), 40) + " (every document)");
+            } else if (documents != null) {
                 final List<String> values = distinctNonEmpty(allValues(documents, f.name()));
                 cells.add(!values.isEmpty()
                         ? values.subList(0, Math.min(3, values.size())).stream()
@@ -810,9 +815,11 @@ public final class IndexFieldDocs {
                 values = FieldDocs.values(perDocument.stream().flatMap(List::stream).toList());
             }
             rows.add(new IndexRow(source, List.of("`" + f + "`", description, ToolText.str(field.get("type")),
-                    !source.isEmpty()
-                            ? "`" + source + "`"
-                            : "(not recorded)", held, values)));
+                    plan != null && plan.isConstant()
+                            ? constantSaid(plan)
+                            : !source.isEmpty()
+                                    ? "`" + source + "`"
+                                    : "(not recorded)", held, values)));
         }
         // Written by a feeding pipeline's plan, but not in the fields Stroom lists for the index: only documented
         // when the user chose to (write_documentation refuses otherwise), and said as such rather than left out.
@@ -829,6 +836,11 @@ public final class IndexFieldDocs {
         }
         lines.addAll(indexTables(rows, head, layout, null));
         return String.join("\n", lines) + "\n";
+    }
+
+    // A constant field's From cell: the value the user asked for, held in every document.
+    private static String constantSaid(final PlannedField field) {
+        return "constant " + FieldDocs.sampleValue(field.constant(), 80) + " (every document)";
     }
 
     /// `not_listed`: fields a feeding pipeline's plan writes that Stroom doesn't list for the index.

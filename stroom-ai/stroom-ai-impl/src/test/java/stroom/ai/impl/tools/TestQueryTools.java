@@ -28,6 +28,7 @@ import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.shared.Dependency;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
@@ -462,6 +463,93 @@ class TestQueryTools {
     }
 
     // A pipeline whose Elastic indexing filter writes to an Elasticsearch index by name.
+    @Test
+    void describeDataSourceGivesOneFieldTheUserNamesLooselyWithAllThatIsKnownOfIt() {
+        // As write_documentation documents a pipeline, and as save_xslt keeps the index plan with its XSLT.
+        final DocRef pipeline = new DocRef("Pipeline", "pipe-uuid", "Mail indexing");
+        final DocRef pipelineDoc = new DocRef(DocumentationDoc.TYPE, "pipe-doc-uuid", "Mail indexing");
+        final DocRef xslt = new DocRef(XsltDoc.TYPE, "xslt-uuid", "Mail indexing XSLT");
+        Mockito.when(dependencyService.fetchDependencies(Mockito.argThat(criteria ->
+                        criteria != null && "touuid:=linux-uuid".equals(criteria.getPartialName())), Mockito.any()))
+                .thenReturn(ResultPage.createUnboundedList(List.of(new Dependency(pipeline, LINUX, true))));
+        Mockito.when(documentAccess.canView(pipeline)).thenReturn(true);
+        Mockito.when(documentAccess.path(pipeline)).thenReturn("/Pipelines");
+        Mockito.when(documentAccess.path(pipelineDoc)).thenReturn("/Pipelines");
+        Mockito.when(docFinder.findByName(DocumentationDoc.TYPE, "Mail indexing", false))
+                .thenReturn(List.of(pipelineDoc));
+        Mockito.when(documentAccess.read(pipelineDoc, DocumentationDoc.class)).thenReturn(Optional.of(documentation(
+                "pipe-doc-uuid", """
+                        | Index field | Description | Type | From (event-logging path) | Sample values |
+                        | --- | --- | --- | --- | --- |
+                        | `Email/Sender/Id` | The user who sent the email. | keyword | `EventSource/User/Id` \
+                        | `alice` |
+                        | `Email/Recipient/Id` | The user who received the email. | keyword \
+                        | `EventDetail/Send/Destination/User/Id` | `bob`, `carol` |
+                        | `Email/Recipient/Name` | The recipient's display name. | keyword | `x` | `Bob B` |
+                        """)));
+        Mockito.when(documentAccess.read(pipeline, PipelineDoc.class)).thenReturn(Optional.of(PipelineDoc.builder()
+                .uuid("pipe-uuid").name("Mail indexing")
+                .pipelineData(new PipelineDataBuilder()
+                        .addProperty(new PipelineProperty("xsltFilter", "xslt", new PipelinePropertyValue(xslt)))
+                        .build())
+                .build()));
+        final Map<String, Object> plan = Map.of("backend", "lucene", "index_name", "Linux events",
+                "time_field", "EventTime", "fields", List.of(
+                        Map.of("name", "Email/Recipient/Id", "type", "keyword",
+                                "source", "EventDetail/Send/Destination/User/Id"),
+                        Map.of("name", "Email/Sender/Id", "type", "keyword", "source", "EventSource/User/Id")));
+        Mockito.when(documentAccess.read(xslt, XsltDoc.class)).thenReturn(Optional.of(XsltDoc.builder()
+                .uuid("xslt-uuid").name("Mail indexing XSLT")
+                .description(KeptMapping.withMapping("", "index", plan)).build()));
+        agents("## Fields\n- Email.Recipient.Id is the mailbox the message was delivered to.\n"
+               + "- Use Email/Sender/Id for the actioning user.\n");
+        Mockito.when(queryService.findFields(Mockito.any())).thenReturn(new ResultPage<>(List.of(
+                QueryField.builder().fldName("Email/Sender/Id").fldType(FieldType.TEXT)
+                        .conditionSet(ConditionSet.DEFAULT_TEXT).queryable(true).build(),
+                QueryField.builder().fldName("Email/Recipient/Id").fldType(FieldType.TEXT)
+                        .conditionSet(ConditionSet.DEFAULT_TEXT).queryable(true).build(),
+                QueryField.builder().fldName("Email/Recipient/Name").fldType(FieldType.TEXT)
+                        .conditionSet(ConditionSet.DEFAULT_TEXT).queryable(true).build())));
+
+        final String one = run(describeTool(), "{\"data_source\":\"linux-uuid\",\"field\":\"Recipient ID\"}");
+
+        assertThat(one)
+                .startsWith("Index 'Linux events' (uuid linux-uuid)")
+                .contains("Field: Email/Recipient/Id (")
+                .contains("matched as its name has every word (recipient, id)")
+                .contains("- conditions: ")
+                .contains("- source: EventDetail/Send/Destination/User/Id (the index plan kept with pipeline "
+                          + "[Mail indexing]")
+                .contains("- description: The user who received the email.")
+                .contains("- sample values: `bob`, `carol`")
+                .contains("- AGENTS lines naming it (follow them):")
+                .contains("Email.Recipient.Id is the mailbox the message was delivered to.")
+                .doesNotContain("actioning user")
+                // Only the field: not every field, nor the whole documentation.
+                .doesNotContain("Fields (3)")
+                .doesNotContain("Email/Recipient/Name");
+
+        // Named by what its description says.
+        assertThat(run(describeTool(), "{\"data_source\":\"linux-uuid\",\"field\":\"who received it\"}"))
+                .contains("Field: Email/Recipient/Id (")
+                .contains("matched as its description has received");
+
+        // Several as close: all listed, with why, for the user to choose.
+        assertThat(run(describeTool(), "{\"data_source\":\"linux-uuid\",\"field\":\"recipient\"}"))
+                .contains("Several fields could be 'recipient'. Ask the user which they mean (don't pick one "
+                          + "yourself)")
+                .contains("1. Email/Recipient/Id (")
+                .contains("2. Email/Recipient/Name (")
+                .contains("its name has every word (recipient)")
+                .contains("The recipient's display name.")
+                .doesNotContain("Field: ");
+
+        // None: the closest by name.
+        assertThat(run(describeTool(), "{\"data_source\":\"linux-uuid\",\"field\":\"Hostname\"}"))
+                .contains("No field matches 'Hostname'. The closest by name: ")
+                .contains("call without field= for every field");
+    }
+
     private static PipelineDoc writingTo(final DocRef pipeline, final String indexName) {
         return PipelineDoc.builder()
                 .uuid(pipeline.getUuid())

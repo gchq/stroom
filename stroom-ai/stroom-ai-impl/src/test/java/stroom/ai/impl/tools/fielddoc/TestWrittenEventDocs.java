@@ -58,18 +58,18 @@ class TestWrittenEventDocs {
         // Every type has these; an IP address only some have is each one's own.
         assertThat(common).contains("`EventTime/TimeCreated`", "`EventSource/System/Name`",
                 "`EventSource/Device/HostName`").doesNotContain("IPAddress");
-        assertThat(common).contains("\"acme-host\"");
+        assertThat(common).contains("`acme-host`");
 
         // Login and logout write the same fields: one section, with each one's count.
         final String authenticate = between(section, "#### login, logout", "####");
         assertThat(authenticate).contains("login: 1 of the sample's 5 events; logout: 1 of the sample's 5 events.")
                 .contains("`EventDetail/TypeId`", "`EventDetail/Authenticate/Action`",
-                        "`EventDetail/Authenticate/User/Id`", "\"Logon\"", "\"Logoff\"")
+                        "`EventDetail/Authenticate/User/Id`", "`Logon`", "`Logoff`")
                 .contains("`EventSource/Device/IPAddress`");
         final String fileRead = between(section, "#### file-read", "####");
         assertThat(fileRead).contains("2 of the sample's 5 events.")
-                .contains("`EventDetail/View/Document/File/Path`", "\"/etc/hosts\"")
-                .contains("`EventDetail/View/Data[@Name='size']/@Value`", "\"120\"")
+                .contains("`EventDetail/View/Document/File/Path`", "`/etc/hosts`")
+                .contains("`EventDetail/View/Data[@Name='size']/@Value`", "`120`")
                 .contains("`EventSource/Device/IPAddress`");
         assertThat(section).contains("#### Network")
                 .contains("`EventDetail/Network/Open/Source/Device/IPAddress`");
@@ -114,7 +114,7 @@ class TestWrittenEventDocs {
 
         assertThat(section).contains("### Common fields", "| Event type | Events | EventDetail |")
                 .contains("| **login** | 1 |", "| **file-read** | 2 |")
-                .contains("`View/Document/File/Path` = \"/etc/hosts\"")
+                .contains("`View/Document/File/Path` = `/etc/hosts`")
                 .doesNotContain("#### ");
     }
 

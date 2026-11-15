@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.DocumentationText;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.fielddoc.IndexFieldDocs;
+import stroom.ai.impl.tools.fielddoc.MarkdownHtml;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.validation.EventSchema;
@@ -321,8 +322,8 @@ class IndexDocumentation {
                                      final String change) {
         final DocumentationDoc doc = writes.documentation(target);
         final String old = BuildRecords.bodyText(doc);
-        return writes.write(BuildRecords.withBodyText(doc, docs.withChange(context.session(),
-                DocumentationText.titled(text, doc.getName()), old, change, null)));
+        return writes.write(BuildRecords.withBodyText(doc, MarkdownHtml.escapeTags(docs.withChange(context.session(),
+                DocumentationText.titled(text, doc.getName()), old, change, null))));
     }
 
     private EventSchema schema(final ToolCallContext context, final String build) {

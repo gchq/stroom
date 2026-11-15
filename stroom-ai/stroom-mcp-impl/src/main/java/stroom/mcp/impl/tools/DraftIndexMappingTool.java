@@ -103,6 +103,11 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
     static final String CUSTOM_NAMESPACES_ARG = "custom_namespaces";
     static final String CHANGES_ARG = "changes";
     static final String PIPELINE_UUID_ARG = "pipeline_uuid";
+    /// What a constant field is, as the arguments taking fields say it: only on the user's request.
+    static final String CONSTANT_FIELD = "Only when the user asks for one: a field holding the same value in every "
+                                         + "document, {\"name\": ..., \"type\": \"constant\", \"value\": ...} "
+                                         + "with no source (Elasticsearch maps it constant_keyword, Lucene indexes "
+                                         + "it as a keyword written in every document).";
 
     // At most this many fields of an action's own are planned by default.
     private static final int ACTION_FIELDS = 20;
@@ -224,7 +229,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                         .addProperty(EXTRA_FIELDS_ARG, objects("Fields the user asked for beyond the convention's map "
                                                                + "(ECS: one of the source's own under its custom "
                                                                + "namespace). To add one to a plan already drafted: "
-                                                               + "changes=, not a new draft."))
+                                                               + "changes=, not a new draft. " + CONSTANT_FIELD))
                         .addProperty(DROP_WHEN_ARG, stringArraySchema("XPath tests on an Event for events the user "
                                                                       + "wants kept out of the index, e.g. "
                                                                       + "\"EventDetail/TypeId = 'Heartbeat'\"; any "
@@ -291,7 +296,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                                              + "replaces the field of that name whole, or is added; {\"name\": ..., "
                                              + "\"remove\": true} removes one; any other key (drop_when, "
                                              + "custom_namespaces...) replaces it. events_stream_ids, if given, "
-                                             + "re-checks unmapped paths.")
+                                             + "re-checks unmapped paths. " + CONSTANT_FIELD)
                                 .build())
                         .addStringProperty(PIPELINE_UUID_ARG, "With changes: the indexing pipeline whose kept plan to "
                                                               + "amend, when it wasn't drafted in this session.")

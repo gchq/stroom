@@ -493,7 +493,7 @@ public class BuildPlan {
     /// @return Each feed whose survey for the build was refused because nothing could be read, with why; empty when
     /// none was.
     Map<String, String> unreadableSurveys(final String build) {
-        return memory.unreadableSurveys(build);
+        return facts.unreadableSurveys(build);
     }
 
     /// @param build A build.
@@ -847,7 +847,7 @@ public class BuildPlan {
         // Done once surveyed, or once a survey for the build was refused for nothing readable (classify_kinds then
         // goes on, saying so); not needed once the build has a translation (saved from a mapping, or a copied
         // pipeline's), as the classify step isn't.
-        done.put(SURVEYED, surveyed || !memory.unreadableSurveys(build).isEmpty()
+        done.put(SURVEYED, surveyed || !facts.unreadableSurveys(build).isEmpty()
                 ? Boolean.TRUE
                 : hasMapping(xslts, "translation") || !translation.isEmpty()
                         ? null

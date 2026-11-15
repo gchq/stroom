@@ -34,6 +34,7 @@ import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.DocumentationText;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
+import stroom.ai.impl.tools.fielddoc.MarkdownHtml;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
@@ -924,15 +925,15 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
             // written.
             final String text = KeptMapping.replaceSection(request.body(), "Errors",
                     BuildDocumentation.errorsSection(errors, accepted), true);
-            return writes.write(BuildRecords.withBodyText(doc, docs.withChange(context.session(),
-                    DocumentationText.titled(text, doc.getName()), old, change, kept)));
+            return writes.write(BuildRecords.withBodyText(doc, MarkdownHtml.escapeTags(docs.withChange(
+                    context.session(), DocumentationText.titled(text, doc.getName()), old, change, kept))));
         }
 
         private DocumentationDoc writeReport(final DocRef ref, final String body) {
             final DocumentationDoc doc = writes.documentation(ref);
             final String old = BuildRecords.bodyText(doc);
-            return writes.write(BuildRecords.withBodyText(doc, docs.withChange(context.session(),
-                    DocumentationText.titled(body, doc.getName()), old, change, null)));
+            return writes.write(BuildRecords.withBodyText(doc, MarkdownHtml.escapeTags(docs.withChange(
+                    context.session(), DocumentationText.titled(body, doc.getName()), old, change, null))));
         }
     }
 }

@@ -114,10 +114,9 @@ class TestClassifyKindsTool {
         // feed's source type field, which only the survey looks for, was never found.
         final FakeBuildFacts facts = new FakeBuildFacts();
         facts.sources = List.of("AZURE-AUDIT");
-        final BuildMemory memory = new BuildMemory();
         final TranslationBuilds builds = Mockito.mock(TranslationBuilds.class);
         final ClassifyKindsTool gated = new ClassifyKindsTool(notesTool, sampleStreamTexts, consent,
-                new BuildPlan(facts, world.guard(), consent, memory), builds, now::get);
+                new BuildPlan(facts, world.guard(), consent, new BuildMemory()), builds, now::get);
         final String args = "{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}";
 
         final String refused = gated.execute(BuildToolCalls.call(ClassifyKindsTool.NAME, args),
@@ -125,9 +124,9 @@ class TestClassifyKindsTool {
         assertThat(refused).contains("Survey first: survey_feed feed=AZURE-AUDIT build=acme.")
                 .contains("any source type field (an aggregated feed");
 
-        // The survey refused, nothing in the feed readable: classified from the samples, saying so.
-        memory.surveyUnreadable("acme", "AZURE-AUDIT", "stream 1 part 0: could not split records: Unterminated "
-                                                        + "string");
+        // The survey refused, nothing in the feed readable (kept in the build's record): classified from the
+        // samples, saying so.
+        facts.unreadableSurveys.put("AZURE-AUDIT", "stream 1 part 0: could not split records: Unterminated string");
         final Map<String, Object> unsurveyed = BuildToolCalls.json(gated.execute(BuildToolCalls.call(
                 ClassifyKindsTool.NAME, args), BuildToolCalls.context()).text());
         assertThat(list(unsurveyed.get("to_classify"))).hasSize(3);

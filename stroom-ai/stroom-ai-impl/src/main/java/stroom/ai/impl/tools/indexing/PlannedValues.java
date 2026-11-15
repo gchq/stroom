@@ -145,6 +145,14 @@ public final class PlannedValues {
                                    + "template's, or one the XSLT computes): its value can't be read from the "
                                    + "Events");
         }
+        if (field.get().isConstant()) {
+            // The value the user asked for, in every document: Elasticsearch fills it from the mapping, Lucene's
+            // indexing XSLT writes it.
+            final List<List<String>> every = events.stream()
+                    .map(event -> List.of(field.get().constant()))
+                    .toList();
+            return new Written(constantSource(field.get()), every, null);
+        }
         final String why = notTheEventsOwn(field.get(), asSearched);
         if (why != null) {
             return Written.unknown(why);
@@ -173,6 +181,12 @@ public final class PlannedValues {
             out.add(asWritten(field.get(), values, asNull));
         }
         return new Written(field.get().source(), out, null);
+    }
+
+    /// @param field A constant field.
+    /// @return Where its values come from, as a finding says it.
+    public static String constantSource(final PlannedField field) {
+        return "the constant '" + field.constant() + "', in every document";
     }
 
     // The values the XSLT writes from those the source selects.

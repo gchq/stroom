@@ -415,7 +415,7 @@ public final class EventFieldDocs {
             }
             said.add(line + ".");
         }
-        final List<String> lines = new ArrayList<>(List.of("#### " + String.join(", ", names), "",
+        final List<String> lines = new ArrayList<>(List.of("#### " + MarkdownHtml.text(String.join(", ", names)), "",
                 String.join(" ", said), ""));
         lines.addAll(FieldDocs.head(head));
         // One row per field, the groups' own paths and sources together.
@@ -687,7 +687,8 @@ public final class EventFieldDocs {
         for (final EventRule rule : c.mapping().events()) {
             if (rule.drop()) {
                 final String conditions = FieldDocs.conditionsText(rule.when());
-                final List<String> cells = new ArrayList<>(List.of("**" + rule.name() + "**\n" + (conditions.isEmpty()
+                final List<String> cells = new ArrayList<>(List.of("**" + MarkdownHtml.text(rule.name()) + "**\n"
+                        + (conditions.isEmpty()
                         ? "every record"
                         : conditions), "", "Left untranslated on purpose"));
                 if (sample.sampled()) {
@@ -738,12 +739,12 @@ public final class EventFieldDocs {
                 line += values.isEmpty()
                         ? " = (empty)"
                         : " = " + values.subList(0, Math.min(values.size(), FieldDocs.VALUES_SHOWN)).stream()
-                                .map(v -> "\"" + v + "\"")
+                                .map(v -> FieldDocs.sampleValue(v, 80))
                                 .collect(Collectors.joining(", "));
             }
             detailLines.add(line);
         }
-        final List<String> cells = new ArrayList<>(List.of("**" + rule.name() + "**\n" + when,
+        final List<String> cells = new ArrayList<>(List.of("**" + MarkdownHtml.text(rule.name()) + "**\n" + when,
                 fromAndValues(c, fields.get(new FieldKey("EventDetail/TypeId", null)),
                         new FieldKey("EventDetail/TypeId", null), events),
                 fromAndValues(c, fields.get(new FieldKey("EventDetail/Description", null)),

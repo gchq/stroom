@@ -150,6 +150,23 @@ class TestE2eContextLookups extends AbstractE2eTest {
                 List.of(docProperty("translationFilter", "xslt", loaderXslt, "XSLT"),
                         valueProperty("combinedParser", "type", variant.parserType())))));
 
+        // The loader stepped on its own: each part's Context child stepped in place of its data, as Stroom loads it,
+        // every entry a reference.
+        final Map<String, Object> loaded = json("step_sample", args("pipeline_uuid", loader, "stream_ids",
+                List.of(stream), "child_type", "Context"));
+        dump("step_sample context", loaded);
+        assertThat(loaded).as("the context stepped clean: %s", loaded.get("groups")).containsEntry("verdict",
+                "clean");
+        assertThat(number(loaded.get("records_stepped"))).isPositive();
+        assertThat(String.valueOf(loaded.get("first_record_output"))).contains("<reference>", "<map>");
+        final Map<String, Object> secondPart = json("step_records", args("pipeline_uuid", loader, "child_type",
+                "Context", "locations", List.of(Map.of("stream", stream, "part", 1, "record", 0))));
+        dump("step_records context", secondPart);
+        assertThat(secondPart).as("the second part's context: %s", secondPart.get("groups"))
+                .containsEntry("verdict", "clean");
+        assertThat(list(secondPart, "records")).singleElement().satisfies(record -> assertThat(record)
+                .containsEntry("record", stream + ":1:0").doesNotContainKey("found"));
+
         // The translation, its lookups keyed as the loader keys the map.
         final Map<String, Object> rule = new LinkedHashMap<>();
         rule.put("name", "event");

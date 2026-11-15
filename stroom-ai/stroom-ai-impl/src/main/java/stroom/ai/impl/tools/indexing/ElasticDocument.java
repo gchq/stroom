@@ -88,7 +88,10 @@ final class ElasticDocument {
     @SuppressWarnings("unchecked")
     private Map<String, Object> tree() {
         final List<Object> items = new ArrayList<>();
-        plan.fields().stream().filter(f -> plan.writtenBy(f.name()) == null).forEach(items::add);
+        // A constant isn't written: Elasticsearch fills it from the mapping (constant_keyword with its value).
+        plan.fields().stream()
+                .filter(f -> plan.writtenBy(f.name()) == null && !f.isConstant())
+                .forEach(items::add);
         items.addAll(plan.shared());
         final Set<String> names = new HashSet<>();
         items.forEach(item -> names.add(nameOf(item)));

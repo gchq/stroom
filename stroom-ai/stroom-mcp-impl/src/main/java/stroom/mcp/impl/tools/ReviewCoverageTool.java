@@ -90,8 +90,9 @@ import java.util.TreeSet;
 /// On an aggregated feed ([SourceTypeCoverage]) the kinds found are judged against what the pipeline translates: a
 /// source type group's pipeline against its group's source types (kinds of another group's source types left to
 /// that group's pipeline, the rest outside the group passed over), a whole translation against the build's scope.
-/// A group's lines of records passed over are summed; a whole translation's lines of source type values its survey
-/// didn't see are reported, for the user to survey the feed again. A source type met in a kind missed that the
+/// A group's records passed over are counted from the raw streams it processed (its XSLT logs nothing of them); a
+/// whole translation's lines of source type values its survey didn't see are reported, for the user to survey the
+/// feed again. A source type met in a kind missed that the
 /// registry lacks is added to the build's registry as `new` (the one write, and only in a build).
 ///
 /// Read as the user. It takes a run slot, says where it is, stops at once when its thread is interrupted, and
@@ -170,7 +171,8 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
                              + "cluster's admin must do before the streams are indexed again. On an aggregated "
                              + "feed, a source type group's pipeline is judged against its group's source types "
                              + "(another group's left to that group's pipeline, other_groups; the rest passed over, "
-                             + "not missed) and the records it passed over are summed; a whole translation is "
+                             + "not missed) and the records it passed over are counted from the raw streams it "
+                             + "processed; a whole translation is "
                              + "judged against the build's scope, and the source type values its survey didn't see "
                              + "are reported (unseen_source_types: suggest surveying the feed again). Source types "
                              + "the registry lacks, in the kinds missed, are added to the build's registry as new; "
@@ -359,8 +361,14 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         final List<Map<String, Object>> found = new ArrayList<>(byKey.values());
         found.sort(Comparator.comparingInt(g -> -size(g)));
         // An aggregated feed: the kinds of source types outside the build's scope are passed over, not missed.
+        // A group's records passed over in processing are told from the raw streams it processed in this call's
+        // range of Ids: its XSLT logs nothing of them.
+        final CoverageReads.ProcessedRaws processed = mapping != null && mapping.module() != null
+                                                      && mapping.module().isGroup()
+                ? reads.processedRaws(pipeline, after, more, SourceTypeCoverage.MAX_PROCESSED_RAWS)
+                : null;
         final Optional<SourceTypeCoverage.Judged> judged = sourceTypes.judge(context.session(), pipeline, mapping,
-                found, logged.sourceTypes());
+                found, logged.sourceTypes(), processed);
         final List<Map<String, Object>> groups = judged.map(SourceTypeCoverage.Judged::missed).orElse(found);
         if (mapping != null) {
             // A few raw records for examples; the grouping itself needs none.

@@ -48,7 +48,9 @@ final class PlanTemplates {
         final Map<String, Object> properties = new LinkedHashMap<>();
         // A field of objects is mapped as its items: users.login under users, an object array's own mapping.
         for (final PlannedField field : plan.leafFields()) {
-            if (component && ecs != null && ecs.leftToComponent(field.name(), field.type())) {
+            // A constant is mapped here, with its value, whatever the component would make of its name.
+            if (component && ecs != null && !field.isConstant()
+                && ecs.leftToComponent(field.name(), field.type())) {
                 continue;
             }
             if (!plan.subobjects()) {
@@ -106,6 +108,10 @@ final class PlanTemplates {
     private static Map<String, Object> typed(final PlannedField field) {
         final Map<String, Object> spec = new LinkedHashMap<>();
         spec.put("type", FieldPlans.ELASTIC.get(field.type()));
+        if (field.isConstant()) {
+            // Elasticsearch gives every document the value: the indexing XSLT doesn't write it.
+            spec.put("value", field.constant());
+        }
         return spec;
     }
 

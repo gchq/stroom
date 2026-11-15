@@ -321,9 +321,11 @@ class IndexPlans {
         for (int i = 0; i < fields.size(); i++) {
             final PlannedField field = fields.get(i);
             lines.add("| " + (i + 1) + " | " + cell(field.name()) + " | " + NullSafe.string(field.type()) + " | "
-                      + (JsonValues.truthy(field.source())
-                    ? cell(field.source())
-                    : "-") + " |");
+                      + (field.isConstant()
+                    ? "constant " + cell(field.constant()) + " (every document)"
+                    : JsonValues.truthy(field.source())
+                            ? cell(field.source())
+                            : "-") + " |");
         }
         return String.join("\n", lines);
     }
@@ -356,7 +358,7 @@ class IndexPlans {
             final boolean core = field.name().equals(plan.timeField())
                                  || (ecsPlan && ecs.field(field.name()) != null
                                      && "core".equals(ecs.field(field.name()).get("level")));
-            if (!core || field.source().startsWith("@")) {
+            if (!core || field.isConstant() || field.source().startsWith("@")) {
                 continue;
             }
             final Double share = FieldPlans.populationOf(field.source(), populated);

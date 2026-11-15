@@ -402,6 +402,7 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         final Map<String, Object> processedStream = list(done, "streams").getFirst();
         final String logged = streamText(ids(processedStream, "errors").getFirst());
         assertThat(logged).contains(XsltGenerator.CAUGHT.replace("{rule}", "logon"), "ViewReport");
+        // Nothing logged of records passed over (none here: they are the group's).
         assertThat(TestE2eSourceTypeGroups.passedOver(logged)).isZero();
         assertThat(TestE2eSourceTypeGroups.count(streamText(ids(processedStream, "events").getFirst()), "<Event>"))
                 .isEqualTo(LATER_RECORDS);
@@ -482,7 +483,7 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         final String firstPipeline = uuidOf(made);
         final List<Long> firstEvents = events(firstPipeline, List.of(stream));
 
-        // Coverage: the group's own lines summed, every other record passed over; no kind missed.
+        // Coverage: every other record passed over, told from the raw stream by the registry; no kind missed.
         final Map<String, Object> firstReview = json("review_coverage", args("pipeline_uuid", firstPipeline,
                 "follow_on", false));
         dump("review_coverage " + first, firstReview);
@@ -594,19 +595,17 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
             assertThat(String.valueOf(stepped.get("groups"))).doesNotContain(XsltGenerator.PASSED_OVER_END);
             final Map<String, Object> done = processed(pipeline, List.of(stream, laterStream));
             for (final Map<String, Object> each : list(done, "streams")) {
-                final String logged = streamText(ids(each, "errors").getFirst());
+                final List<Long> errors = ids(each, "errors");
+                final String logged = errors.isEmpty()
+                        ? ""
+                        : streamText(errors.getFirst());
                 assertThat(logged.lines().filter(line -> line.contains(family.newValue()))).as(pipeline).isEmpty();
                 assertThat(logged.lines().filter(line -> line.contains("WARN") && line.contains("source type")))
                         .isEmpty();
-                final String input = String.valueOf(each.get("input"));
-                final String raw = input.equals(String.valueOf(laterStream))
-                        ? later
-                        : text;
-                final List<String> types = pipeline.equals(secondPipeline)
-                        ? secondTypes
-                        : List.of(firstType);
-                assertThat(TestE2eSourceTypeGroups.passedOver(logged)).as("passed over in %s", input)
-                        .isEqualTo(raw.lines().count() - records(raw, family, types, written));
+                // Nothing logged of the records passed over (a line a document made Stroom write an Error stream
+                // for every raw stream each group processed): review_coverage tells them from the raw streams.
+                assertThat(TestE2eSourceTypeGroups.passedOver(logged)).as("passed over in %s", each.get("input"))
+                        .isZero();
             }
         }
         if (family.secondOwnFeed()) {

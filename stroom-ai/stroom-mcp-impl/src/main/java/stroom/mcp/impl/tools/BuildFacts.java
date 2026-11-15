@@ -36,6 +36,11 @@ interface BuildFacts {
     /// @return Its documents (not its record), in a stable order: by type, name and UUID.
     List<Map<String, Object>> buildDocs(String build);
 
+    /// @param build A build's name.
+    /// @return Each feed whose survey for the build was refused because nothing could be read, with why, as its
+    /// record keeps them ([BuildRecords#unreadableSurveys]); empty when none was.
+    Map<String, String> unreadableSurveys(String build);
+
     /// @param docs A build's documents.
     /// @return Whether classify_kinds has settled every kind of event: its source notes say none is still to classify.
     boolean classified(List<Map<String, Object>> docs);

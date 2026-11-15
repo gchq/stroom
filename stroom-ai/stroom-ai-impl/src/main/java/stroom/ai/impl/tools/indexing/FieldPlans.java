@@ -35,10 +35,11 @@ public final class FieldPlans {
             "boolean", "ip");
     /// The backends.
     public static final List<String> BACKENDS = List.of("lucene", "elasticsearch");
-    /// Each logical type as a Lucene index doc's field type and analyzer. Lucene has no working KEYWORD field type:
-    /// a keyword is TEXT with the KEYWORD analyzer (found against Stroom 7.13).
+    /// Each logical type (and `constant`, [PlannedField#CONSTANT]) as a Lucene index doc's field type and analyzer.
+    /// Lucene has no working KEYWORD field type: a keyword is TEXT with the KEYWORD analyzer (found against Stroom
+    /// 7.13). A constant is a keyword the indexing XSLT writes in every document.
     public static final Map<String, List<String>> LUCENE = lucene();
-    /// Each logical type as an Elasticsearch mapping type.
+    /// Each logical type (and `constant`, [PlannedField#CONSTANT]) as an Elasticsearch mapping type.
     public static final Map<String, String> ELASTIC = elastic();
     /// Elasticsearch's metadata fields: a document holding one at its top level is rejected.
     public static final List<String> ES_METADATA = List.of("_id", "_index", "_source", "_routing", "_ignored",
@@ -289,6 +290,7 @@ public final class FieldPlans {
         types.put("double", List.of("DOUBLE", "KEYWORD"));
         types.put("boolean", List.of("TEXT", "KEYWORD"));
         types.put("ip", List.of("TEXT", "KEYWORD"));
+        types.put(PlannedField.CONSTANT, List.of("TEXT", "KEYWORD"));
         return Collections.unmodifiableMap(types);
     }
 
@@ -302,6 +304,7 @@ public final class FieldPlans {
         types.put("double", "double");
         types.put("boolean", "boolean");
         types.put("ip", "ip");
+        types.put(PlannedField.CONSTANT, "constant_keyword");
         return Collections.unmodifiableMap(types);
     }
 }

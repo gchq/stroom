@@ -129,8 +129,8 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
         assertThat(mainStepped).as("stepped clean: %s", mainStepped).containsEntry("verdict", "clean")
                 .doesNotContainKey("record");
 
-        // The security group's pipeline: its Events into the feed's; every other record passed over, counted,
-        // never warned of.
+        // The security group's pipeline: its Events into the feed's; every other record passed over, never logged
+        // nor warned of, counted by review_coverage.
         final Map<String, Object> mainDone = list(process(main, List.of(stream)), "streams").getFirst();
         final List<Long> mainEvents = ids(mainDone, "events");
         assertThat(mainEvents).hasSize(1);
@@ -139,8 +139,13 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
                                                                                       + "-INTEGRATION-EVENTS");
         assertThat(TestE2eSourceTypeGroups.count(streamText(mainEvents.getFirst()), "<Event>"))
                 .isEqualTo(securityRecords);
-        final String mainLog = streamText(ids(mainDone, "errors").getFirst());
-        assertThat(TestE2eSourceTypeGroups.passedOver(mainLog)).isEqualTo(total - securityRecords);
+        final List<Long> mainErrors = ids(mainDone, "errors");
+        final String mainLog = mainErrors.isEmpty()
+                ? ""
+                : streamText(mainErrors.getFirst());
+        // Nothing logged of the records passed over: review_coverage tells them from the raw stream.
+        assertThat(TestE2eSourceTypeGroups.passedOver(mainLog)).isZero();
+        assertThat(passedOverInProcessing(main)).isEqualTo(total - securityRecords);
         assertThat(mainLog.lines().filter(line -> line.contains("WARN") && line.contains("PegaIntegration")))
                 .isEmpty();
         promote(build, Map.of("Pipeline", folder));
@@ -195,8 +200,11 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
         assertThat(meta(ownEvents.getFirst()).getFeedName()).isEqualTo(outputFeed);
         assertThat(TestE2eSourceTypeGroups.count(streamText(ownEvents.getFirst()), "<Event>"))
                 .isEqualTo(integrationRecords);
-        final String ownLog = streamText(ids(ownDone, "errors").getFirst());
-        assertThat(TestE2eSourceTypeGroups.passedOver(ownLog)).isEqualTo(total - integrationRecords);
+        final List<Long> ownErrors = ids(ownDone, "errors");
+        assertThat(TestE2eSourceTypeGroups.passedOver(ownErrors.isEmpty()
+                ? ""
+                : streamText(ownErrors.getFirst()))).isZero();
+        assertThat(passedOverInProcessing(own)).isEqualTo(total - integrationRecords);
     }
 
     @Test

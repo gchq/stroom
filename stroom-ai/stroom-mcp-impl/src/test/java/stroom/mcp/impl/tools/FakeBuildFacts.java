@@ -69,6 +69,8 @@ final class FakeBuildFacts implements BuildFacts {
     final List<String> columns = List.of();
     Function<String, Map<String, Object>> profiler = text -> profileOf("json lines");
     RuntimeException docsFail;
+    // Each feed whose survey read nothing, with why, as the build's record keeps them.
+    Map<String, String> unreadableSurveys = new LinkedHashMap<>();
 
     /// @return A build's document, as the plan lists them.
     static Map<String, Object> doc(final String type, final String uuid, final String name, final Object... extra) {
@@ -101,6 +103,11 @@ final class FakeBuildFacts implements BuildFacts {
     @Override
     public boolean classified(final List<Map<String, Object>> docs) {
         return classified;
+    }
+
+    @Override
+    public Map<String, String> unreadableSurveys(final String build) {
+        return Map.copyOf(unreadableSurveys);
     }
 
     @Override
