@@ -695,9 +695,11 @@ searches are unchanged. Decided with the user:
   or text fields). The table tool notes when 1,000 rows or more of an Elastic Index were read only to be grouped.
 * **Evaluation.** Cases 62 to 64 are questions (`kind: question`), not builds: a top-N by two keys, a day-bucketed
   count and sum over a date range, and a filtered, computed threshold (MB), on 10,000 seeded proxy upload events
-  (`esql/proxy-uploads-generator.py`, made in Java by `EvalProxyUploads`). They are scored on the tools used, the
-  last esql_query call accepted (refusals counted), and its rows against the answer the generator works out
-  (`EvalScore.scoreQuestion`); TestE2eEvalReference runs each case's reference ES|QL.
+  (`esql/proxy-uploads-generator.py`, made in Java by `EvalProxyUploads`). They are scored on the tools used, an
+  esql_query call accepted (refusals counted), and the rows of the first accepted call that matches the answer the
+  generator works out, whatever calls came after it (the call is noted); the total groups from any accepted call
+  that gives them (`EvalScore.scoreQuestion`). The rows must be the query's: a conversion or cut-off made in the
+  reply fails. TestE2eEvalReference runs each case's reference ES|QL.
 
 ### Explain processing, retention and volumes
 

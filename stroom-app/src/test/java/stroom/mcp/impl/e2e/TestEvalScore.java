@@ -361,7 +361,7 @@ class TestEvalScore {
     }
 
     @Test
-    void aQuestionsAnswerIsItsLastAcceptedCallsRowsInOrder() {
+    void aQuestionsAnswerIsAnAcceptedCallsRowsInOrder() {
         final EvalScore wrongOrder = new EvalScore("q");
         wrongOrder.scoreQuestion(question(true), List.of(new EvalScore.ToolUse("esql_query", false, Map.of("rows",
                 List.of(List.of("bob", "github.com", 200), List.of("alice", "box.com", 300)), "total_groups", 12),
@@ -378,7 +378,7 @@ class TestEvalScore {
     }
 
     @Test
-    void aQuestionFailsWithoutTheToolOrWhenItsLastCallIsRefused() {
+    void aQuestionFailsWithoutTheToolOrWhenEveryCallIsRefused() {
         final EvalScore other = new EvalScore("q");
         other.scoreQuestion(question(true), List.of(new EvalScore.ToolUse("run_stroomql", false, Map.of(), "ok")));
         assertThat(other.passed()).isFalse();
@@ -387,13 +387,82 @@ class TestEvalScore {
         final EvalScore refused = new EvalScore("q");
         refused.scoreQuestion(question(true), List.of(new EvalScore.ToolUse("esql_query", true, Map.of(),
                 "Error: FROM isn't allowed")));
-        assertThat(refused.summary()).contains("the last esql_query call was refused");
+        assertThat(refused.summary())
+                .contains("every esql_query call was refused, the last: Error: FROM isn't allowed");
 
         final EvalScore total = new EvalScore("q");
         total.scoreQuestion(question(true), List.of(new EvalScore.ToolUse("esql_query", false, Map.of("rows",
                 List.of(List.of("alice", "box.com", 300), List.of("bob", "github.com", 200)), "truncated", true),
                 "ok")));
         assertThat(total.summary()).contains("the total groups were null, expected 12");
+    }
+
+    @Test
+    void anEarlierAcceptedCallThatMatchesIsTheAnswerWhateverCameAfter() {
+        // As case 62 on Haiku: the answer from the second call, then a count of the pairs, which gives no
+        // total_groups and one row.
+        final EvalScore score = new EvalScore("q");
+        score.scoreQuestion(question(true), List.of(
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(List.of(9021, "allowed")),
+                        "truncated", false), "ok"),
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                        List.of("alice", "box.com", 300), List.of("bob", "github.com", 200)),
+                        "truncated", true, "total_groups", 12), "ok"),
+                new EvalScore.ToolUse("esql_query", true, Map.of(), "Error: Unknown column [pair]"),
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(List.of(12)),
+                        "truncated", false), "ok")));
+
+        assertThat(score.passed()).as(score.summary()).isTrue();
+        assertThat((List<String>) score.toMap().get("notes"))
+                .contains("esql_query: 1 of 4 call(s) refused", "answer rows from esql_query call 2 of 4");
+    }
+
+    @Test
+    void theTotalGroupsMayComeFromAnotherAcceptedCall() {
+        // The answer call cut short without a total; a later call over the same groups gives it.
+        final EvalScore score = new EvalScore("q");
+        score.scoreQuestion(question(true), List.of(
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                        List.of("alice", "box.com", 300), List.of("bob", "github.com", 200)),
+                        "truncated", true), "ok"),
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(List.of("alice", "box.com", 300)),
+                        "truncated", true, "total_groups", 12), "ok")));
+        assertThat(score.passed()).as(score.summary()).isTrue();
+
+        // None gives the expected total: every total given is said.
+        final EvalScore wrong = new EvalScore("q");
+        wrong.scoreQuestion(question(true), List.of(
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                        List.of("alice", "box.com", 300), List.of("bob", "github.com", 200)),
+                        "truncated", true, "total_groups", 11), "ok"),
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(List.of(1)),
+                        "truncated", true, "total_groups", 40), "ok")));
+        assertThat(wrong.passed()).isFalse();
+        assertThat(wrong.summary()).contains("the total groups were [11, 40], expected 12");
+    }
+
+    @Test
+    void anAnswerWorkedOutInTheReplyAndNotTheQueryFails() {
+        // As case 64 on Haiku: the bytes summed for every user, the MB and the cut-off left to the reply.
+        final Map<String, Object> mb = Map.of("kind", "question", "expected", Map.of("answer", Map.of(
+                "ordered", true, "rows", List.of(List.of("erin", 397.1), List.of("carol", 245.2)))));
+        final EvalScore score = new EvalScore("q");
+        score.scoreQuestion(mb, List.of(
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(List.of(1446, "files.example.com")),
+                        "truncated", false), "ok"),
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                        List.of(397114256, 826, "erin"), List.of(245201352, 1017, "carol"),
+                        List.of(111835605, 902, "dave")), "truncated", false), "ok")));
+
+        assertThat(score.passed()).isFalse();
+        assertThat(score.summary()).contains("the answer's rows were 3, expected 2");
+        assertThat((List<String>) score.toMap().get("notes")).noneMatch(note -> note.startsWith("answer rows from"));
+
+        // Converted and cut in the query, it passes.
+        final EvalScore inQuery = new EvalScore("q");
+        inQuery.scoreQuestion(mb, List.of(new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                List.of("erin", 397.1), List.of("carol", 245.2)), "truncated", false), "ok")));
+        assertThat(inQuery.passed()).as(inQuery.summary()).isTrue();
     }
 
     @Test
