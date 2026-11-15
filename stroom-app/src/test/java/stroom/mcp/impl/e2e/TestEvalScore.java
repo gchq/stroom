@@ -250,6 +250,36 @@ class TestEvalScore {
     }
 
     @Test
+    void aLaterBuildThatNeverFinishedFailsWithAPlainProblem() {
+        // Seen in eval case 61: the build never saved its group, so the joining source type's row was still
+        // parked, with no pipeline, and scoring threw a NullPointerException.
+        final EvalScore.Before before = new EvalScore.Before("Web", "p-web", "i-web", Map.of());
+        final Map<String, Object> evalCase = expecting(Map.of("source_types", Map.of(
+                "group", Map.of("name", "Web", "values", List.of("/var/log/httpd/access_log",
+                        "/var/log/mail/maillog")),
+                "pipeline", "same")));
+        final Map<String, Object> registry = Map.of("field", "LogFilePath",
+                "rows", List.of(
+                        Map.of("name", "Web server", "match", "pattern", "value", "^/var/log/httpd/",
+                                "status", "translated", "group", "Web", "pipeline", Map.of("uuid", "p-web")),
+                        Map.of("name", "Mail", "match", "pattern", "value", "^/var/log/mail/", "status",
+                                "parked")));
+
+        final EvalScore unfinished = new EvalScore("c");
+        unfinished.scoreLaterBuild(evalCase, registry, before, Map.of(), "eval-61", null);
+
+        assertThat(unfinished.sourceTypes()).isFalse();
+        assertThat((List<String>) unfinished.toMap().get("problems")).containsExactly(
+                "the group's rows name pipeline(s) [p-web, null], expected the setup's p-web");
+        // No setup pipeline recorded either: still a plain problem.
+        final EvalScore noSetup = new EvalScore("c");
+        noSetup.scoreLaterBuild(evalCase, registry, new EvalScore.Before("Web", null, null, Map.of()), Map.of(),
+                "eval-61", null);
+        assertThat((List<String>) noSetup.toMap().get("problems")).singleElement().asString()
+                .startsWith("the group's rows name pipeline(s) [p-web, null]");
+    }
+
+    @Test
     void theFormsAskedAndNotAskedAreScored() {
         final Map<String, Object> evalCase = expecting(Map.of("forms", Map.of(
                 "asked", List.of(Map.of("message", "runs in pipeline", "answer", "Change ")),

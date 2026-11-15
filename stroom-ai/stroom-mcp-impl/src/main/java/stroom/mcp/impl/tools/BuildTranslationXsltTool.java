@@ -400,7 +400,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                         .addProperty(SOURCE_TYPES_ARG, stringArraySchema("For a group: the registry's source types "
                                                                          + "it translates; default the build's "
                                                                          + "scope's, with those the group "
-                                                                         + "translates already."))
+                                                                         + "translates already; given, it "
+                                                                         + "holds every one the scope puts in "
+                                                                         + "the group."))
                         .addEnumProperty(PIPELINE_ARG, SourceTypeGroups.PIPELINE_CHOICES, "With group, only where "
                                                                                          + "no form can be shown, "
                                                                                          + "for a group whose "
@@ -468,7 +470,12 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             // yet kept as the mapping later changes merged into, so the agent's next changes (written against the
             // mapping before them) were refused as removing what "the mapping does not have".
             if (b.sent != null && b.mapping != null) {
-                SentMappings.remember(context, request.target(), b.sent);
+                if (b.saved == null) {
+                    // Nothing saved: its changes are what a call naming the XSLT alone starts from next.
+                    SentMappings.rememberUnsaved(context, request.target(), b.sent);
+                } else {
+                    SentMappings.remember(context, request.target(), b.sent);
+                }
             }
         }
     }
@@ -553,7 +560,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                                                          + MappingProblems.ESCAPING);
                 }
             }
-            final TranslationBuilds.Base base = builds.mappingToChange(context, request.target(), request.uuid(),
+            final TranslationBuilds.Base base = builds.mappingToChange(context, request.target(), keptFrom(request),
                     request.build(), request.name());
             b.basedOn = base.basedOn();
             final MappingChanges.Applied applied = MappingChanges.applyChanges(base.mapping(), changes,
@@ -566,10 +573,12 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                       + "sent before, or uuid= a saved XSLT alone to regenerate it from the mapping "
                                       + "kept with it");
             }
-            // Regenerated from the mapping kept with the XSLT, as the generator writes it now (seen: an agent asked
-            // to restyle an XSLT sent its 1,400-line kept mapping back whole, after a first attempt written from
-            // memory).
-            final TranslationBuilds.Kept kept = builds.keptMapping(context, request.target(), request.uuid());
+            // Regenerated from the mapping in hand, as the generator writes it now (seen: an agent asked to restyle
+            // an XSLT sent its 1,400-line kept mapping back whole, after a first attempt written from memory): the
+            // one sent last this session (seen in eval case 61: source_types given alone, after changes that were
+            // refused, took the saved mapping and lost the rules they added), else the one kept with the XSLT, the
+            // build's working copy's for a promoted XSLT.
+            final TranslationBuilds.Kept kept = builds.keptMapping(context, request.target(), keptFrom(request));
             given = kept.mapping();
             b.version = kept.schemaVersion();
             b.change = NullSafe.nonBlankStringElse(b.change, "Regenerated from its mapping");
@@ -600,6 +609,15 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         } catch (final MappingValidationException e) {
             return Optional.of(refusedMapping(given, e, unknownKeys, request));
         }
+    }
+
+    // The XSLT whose kept mapping a call starts from: the build's working copy (or new version) of a promoted XSLT
+    // given as uuid, which holds what the build changed of it; else the uuid given.
+    private String keptFrom(final Request request) {
+        if (request.uuid() == null || !NullSafe.isNonBlankString(request.build())) {
+            return request.uuid();
+        }
+        return groups.buildCopyOf(request.build(), request.uuid()).orElse(request.uuid());
     }
 
     // A mapping that doesn't validate: a draft for a list of fields given with a sample, else what is wrong.
@@ -738,12 +756,13 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         final String group = NullSafe.nonBlankStringElse(request.group(), kept == null
                 ? scoped
                 : kept.name());
-        final List<String> types = !request.sourceTypes().isEmpty() || kept == null
-                ? request.sourceTypes()
-                : kept.sourceTypes();
+        // A saved group's source types are its kept mapping's, joined by the scope's where the scope names it.
+        final List<String> keptTypes = kept == null
+                ? List.of()
+                : NullSafe.list(kept.sourceTypes());
         final SourceTypeGroups.Registry registry = groups.registry(build, request.feeds());
-        b.group = groups.plan(build, registry, group, types, b.mapping.withModule(null).withSeenSourceTypes(null),
-                b.schema, b.version);
+        b.group = groups.plan(build, registry, group, request.sourceTypes(), keptTypes,
+                b.mapping.withModule(null).withSeenSourceTypes(null), b.schema, b.version);
         b.mapping = b.group.groupMapping();
     }
 
@@ -1095,7 +1114,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 b.result.put("xslt", xslt);
             }
             name = NullSafe.nonBlankStringElse(name, b.group.group());
-            if (target == null) {
+            if (target == null || !groups.isInBuild(b.build, target)) {
+                // A group's promoted XSLT given as uuid is changed through the build's copy of it, never in place.
                 target = groups.groupTarget(context, b.build, b.group, name, choice).orElse(null);
             }
         }
@@ -1162,6 +1182,11 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         SentMappings.remember(context, uuid, b.mapping.toJson(DumpMode.COMPACT));
         if (uuid.equals(request.target())) {
             // What was saved is what changes start from next, not what was sent before it.
+            b.sent = null;
+        } else if (request.uuid() != null) {
+            // Saved in the build's copy of the promoted XSLT given: the next call naming it starts from what was
+            // saved too.
+            SentMappings.remember(context, request.target(), b.mapping.toJson(DumpMode.COMPACT));
             b.sent = null;
         }
         for (final String key : List.of("next", "done")) {

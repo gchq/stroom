@@ -266,16 +266,19 @@ final class EvalScore {
                     : SourceTypeRegistry.rows(registry);
             for (final String value : values) {
                 final String name = SourceTypeRows.first(parsed, value).map(SourceTypeRows.Row::name).orElse(null);
+                // A row with no pipeline yet (a build that never finished: its source type still parked) is
+                // "null", not a NullPointerException from findFirst on a null uuid (seen in eval case 61).
                 final Object pipeline = rows.stream()
                         .filter(row -> Objects.equals(name, row.get("name")))
-                        .map(row -> maps(row.get("pipeline")).get("uuid"))
                         .findFirst()
+                        .map(row -> maps(row.get("pipeline")).get("uuid"))
                         .orElse(null);
                 pipelines.add(String.valueOf(pipeline));
             }
+            final String setupPipeline = String.valueOf(before.pipeline());
             final boolean passed = !pipelines.isEmpty() && ("same".equals(wanted)
-                    ? pipelines.stream().allMatch(before.pipeline()::equals)
-                    : pipelines.stream().noneMatch(p -> "null".equals(p) || before.pipeline().equals(p)));
+                    ? pipelines.stream().allMatch(setupPipeline::equals)
+                    : pipelines.stream().noneMatch(p -> "null".equals(p) || setupPipeline.equals(p)));
             check("pipeline " + wanted, passed, "the group's rows name pipeline(s) " + pipelines + ", expected "
                                                 + ("same".equals(wanted)
                     ? "the setup's " + before.pipeline()
