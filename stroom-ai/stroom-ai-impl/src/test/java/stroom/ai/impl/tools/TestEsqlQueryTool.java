@@ -191,6 +191,66 @@ class TestEsqlQueryTool {
     }
 
     @Test
+    void refusalsEndWithOneFullStop() {
+        final List<QueryField> fields = List.of(QueryField.createText("event.code"));
+
+        assertThat(EsqlQueryTool.refusal(new Refusal(Reason.COMMAND_NOT_ALLOWED, "The ES|QL command MV isn't "
+                                                                                 + "allowed here. Only these "
+                                                                                 + "commands are allowed."), fields))
+                .endsWith("are allowed.")
+                .doesNotContain("..");
+        assertThat(EsqlQueryTool.refusal(new Refusal(Reason.UNKNOWN_FIELD, "Elasticsearch refused the query: line "
+                                                                           + "3:62: Unknown column [event.action], "
+                                                                           + "did you mean [event.code]?",
+                List.of("event.action")), fields))
+                .contains("did you mean [event.code]? Not fields of the index: event.action")
+                .doesNotContain("?.");
+    }
+
+    @Test
+    void aBackslashInAStringIsExplained() {
+        // As Elasticsearch 9.5.3 refuses '"a\.example"'.
+        final String refused = EsqlQueryTool.refusal(new Refusal(Reason.REFUSED, "Elasticsearch refused the query: "
+                                                                                 + "line 2:113: token recognition "
+                                                                                 + "error at: '\".*(partner|"
+                                                                                 + "fabrikam)\\.'"), List.of());
+
+        assertThat(refused).contains(EsqlQueryTool.BACKSLASH_HINT);
+        assertThat(EsqlQueryTool.refusal(new Refusal(Reason.REFUSED, "Elasticsearch refused the query: line 5:51: "
+                                                                     + "token recognition error at: '='"), List.of()))
+                .doesNotContain(EsqlQueryTool.BACKSLASH_HINT);
+    }
+
+    @Test
+    void warningsAreShownWithTheMultiValueHint() {
+        try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
+            Mockito.when(world.elasticEsql().query(Mockito.any())).thenReturn(result(List.of(), 1000, false,
+                    false, null, List.of("Line 2:9: evaluation of [t == \"a@x\"] failed, treating result as null. "
+                                         + "Only first 20 failures recorded.",
+                            "Line 2:9: java.lang.IllegalArgumentException: single-value function encountered "
+                            + "multi-value")));
+
+            final String output = world.run(EsqlQueryTool.NAME, BuiltInToolWorld.json(Map.of(
+                    "index", "elastic-index-uuid", "pipeline", "| WHERE t == \"a@x\"")));
+
+            assertThat(output)
+                    .contains("Elasticsearch warned:\n- Line 2:9: evaluation of [t == \"a@x\"] failed")
+                    .contains("- Line 2:9: java.lang.IllegalArgumentException: single-value function")
+                    .contains(EsqlQueryTool.MULTI_VALUE_HINT)
+                    .contains("No rows.");
+        }
+    }
+
+    @Test
+    void otherWarningsAreShownWithoutTheHint() {
+        final String note = EsqlQueryTool.warningsNote(result(List.of(), 10, false, false, null,
+                List.of("Line 2:3: something else")));
+
+        assertThat(note).isEqualTo("Elasticsearch warned:\n- Line 2:3: something else");
+        assertThat(EsqlQueryTool.warningsNote(result(List.of(), 10, false, false, null))).isEmpty();
+    }
+
+    @Test
     void everyResultSaysItsCountsMayIncludeStreamsTheUserCantSee() {
         // The documents' streams aren't looked up (for speed, the user's choice): the description says so, and the
         // result carries no note of it.
@@ -202,7 +262,8 @@ class TestEsqlQueryTool {
         }
         assertThat(new EsqlQueryTool(null, null, null, null, null).definition().description())
                 .contains("may include documents from streams the user can't see or that have been deleted, so "
-                          + "they can differ from Stroom searches (run_stroomql) and dashboards");
+                          + "they can differ from Stroom searches (run_stroomql) and dashboards: when the user "
+                          + "needs figures that match those exactly, use a Stroom search (run_stroomql).");
     }
 
     @Test
@@ -254,8 +315,17 @@ class TestEsqlQueryTool {
                                  final boolean truncated,
                                  final boolean grouped,
                                  final Long total) {
+        return result(rows, limit, truncated, grouped, total, List.of());
+    }
+
+    private static Result result(final List<List<Object>> rows,
+                                 final int limit,
+                                 final boolean truncated,
+                                 final boolean grouped,
+                                 final Long total,
+                                 final List<String> warnings) {
         return new Result("FROM i", "i", List.of(new Column("n", "long")), rows, 1, limit, null, truncated,
-                grouped, total, null, "9.5.3");
+                grouped, total, null, "9.5.3", warnings);
     }
 
     private static Request request(final BuiltInToolWorld world) {

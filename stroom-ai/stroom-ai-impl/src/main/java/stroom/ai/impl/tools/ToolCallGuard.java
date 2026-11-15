@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.EnumSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.util.json.JsonUtil;
@@ -208,6 +209,7 @@ public class ToolCallGuard {
         }
         final Map<String, ToolSchema> properties = NullSafe.getOrElse(tool.definition().parameters(),
                 ObjectSchema::properties, Map.of());
+        final List<String> unfolded = unfolded(arguments, properties);
         final List<String> readAs = new ArrayList<>();
         properties.forEach((key, property) -> {
             if (property instanceof final EnumSchema choice) {
@@ -229,6 +231,10 @@ public class ToolCallGuard {
             mended += value.count();
         }
         final List<String> notes = new ArrayList<>();
+        if (!unfolded.isEmpty()) {
+            notes.add("Read the text of " + String.join(", ", unfolded) + " as the arguments it held: give each "
+                      + "argument on its own, its list or object as JSON, not inside another's text.");
+        }
         if (!ignored.isEmpty()) {
             notes.add("Ignored unknown argument(s) " + ignored + ": this tool takes "
                       + new TreeSet<>(properties.keySet()) + ".");
@@ -243,6 +249,43 @@ public class ToolCallGuard {
                 ? new Read(call, List.of())
                 : new Read(new ToolCall(call.id(), call.name(), JsonUtil.writeValueAsString(arguments, false)),
                         List.copyOf(notes));
+    }
+
+    /// Unfolds arguments a model wrote inside another's text. Seen (a small model, the table tool): eval given as
+    /// the text `[{"as": "t", ...}], "limit": 5, "path": "/outputs/topics.md"}`, the rest of the call after the
+    /// list, so the tool was refused for no path, again and again. Only a list or object argument is unfolded, and
+    /// only when its text, read as `{"<name>": <text>`, is a JSON object: its value is then the argument, and the
+    /// other arguments it held are added, unless given already. Plain JSON text is left to the tool.
+    ///
+    /// @param arguments  The call's arguments; changed in place.
+    /// @param properties The tool's arguments, by name.
+    /// @return The names of the arguments unfolded, in order; empty for none.
+    static List<String> unfolded(final Map<String, Object> arguments, final Map<String, ToolSchema> properties) {
+        final List<String> unfolded = new ArrayList<>();
+        for (final String name : List.copyOf(arguments.keySet())) {
+            final ToolSchema property = properties.get(name);
+            if (!(property instanceof ArraySchema || property instanceof ObjectSchema)
+                || !(arguments.get(name) instanceof final String text)) {
+                continue;
+            }
+            final String stripped = text.strip();
+            if (!(stripped.startsWith("[") || stripped.startsWith("{")) || !stripped.endsWith("}")) {
+                continue;
+            }
+            final Map<String, Object> held = arguments("{" + JsonUtil.writeValueAsString(name, false) + ": "
+                                                       + stripped);
+            if (held == null || !held.containsKey(name)) {
+                continue;
+            }
+            arguments.put(name, held.get(name));
+            held.forEach((other, value) -> {
+                if (!other.equals(name)) {
+                    arguments.putIfAbsent(other, value);
+                }
+            });
+            unfolded.add(name);
+        }
+        return unfolded;
     }
 
     /// @param value   A value given for a choice.

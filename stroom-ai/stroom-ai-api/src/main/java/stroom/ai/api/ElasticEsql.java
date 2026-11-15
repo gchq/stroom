@@ -148,6 +148,9 @@ public interface ElasticEsql {
     ///                    groups), counted only when asked and truncated; else null.
     /// @param totalNote   Why the total isn't known when it was asked for, or null.
     /// @param version     The cluster's version.
+    /// @param warnings    What Elasticsearch warned of while running the query, in its own words (e.g. that a
+    ///                    function met a multi-valued field, so gave null), without the limit it added; empty for
+    ///                    none.
     record Result(String query,
                   String indexName,
                   List<Column> columns,
@@ -159,10 +162,14 @@ public interface ElasticEsql {
                   boolean grouped,
                   Long totalRows,
                   String totalNote,
-                  String version) {
+                  String version,
+                  List<String> warnings) {
 
         /// Copies the lists, so the result can't be changed.
         public Result {
+            warnings = warnings == null
+                    ? List.of()
+                    : List.copyOf(warnings);
             columns = columns == null
                     ? List.of()
                     : List.copyOf(columns);

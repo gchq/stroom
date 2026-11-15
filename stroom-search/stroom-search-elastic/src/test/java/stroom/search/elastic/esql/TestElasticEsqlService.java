@@ -82,6 +82,7 @@ class TestElasticEsqlService {
     private static final DocRef INDEX_REF = new DocRef(ElasticIndexDoc.TYPE, "index-uuid", "Proxy Logs");
     private static final DocRef CLUSTER_REF = new DocRef(ElasticClusterDoc.TYPE, "cluster-uuid", "Cluster");
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final String WARNING_AGENT = "299 Elasticsearch-9.5.3-367ec317ec5f668dd864d41be06052a567102fec ";
     private static final String GROUPED = """
             {"took": 12, "is_partial": false,
              "columns": [{"name": "total", "type": "long"}, {"name": "user", "type": "keyword"}],
@@ -443,6 +444,54 @@ class TestElasticEsqlService {
 
         assertThat(response.rows().getFirst()).containsExactly(1L, 2.5, true,
                 new BigInteger("18446744073709551615"), List.of("a", "b"), null, "2026-01-01T00:00:00.000Z");
+    }
+
+    @Test
+    void testWarningsPassedOn() {
+        // As Elasticsearch 9.5.3 answers a comparison on a multi-valued field: the row is dropped, with warnings.
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(QUERY_PATH))
+                .atPriority(5)
+                .willReturn(ElasticWireMock.elasticResponse(200, GROUPED).withHeader("Warning",
+                        WARNING_AGENT + "\"No limit defined, adding default limit of [1000]\"",
+                        WARNING_AGENT + "\"Line 2:9: evaluation of [t == \\\"a@x\\\"] failed, treating result as "
+                        + "null. Only first 20 failures recorded.\"",
+                        WARNING_AGENT + "\"Line 2:9: java.lang.IllegalArgumentException: single-value function "
+                        + "encountered multi-value\"")));
+
+        final Result result = service.query(request("| WHERE t == \"a@x\" | STATS total = COUNT(*) BY user"));
+
+        assertThat(result.warnings()).containsExactly(
+                "Line 2:9: evaluation of [t == \"a@x\"] failed, treating result as null. Only first 20 failures "
+                + "recorded.",
+                "Line 2:9: java.lang.IllegalArgumentException: single-value function encountered multi-value");
+    }
+
+    @Test
+    void testNoWarnings() {
+        stubQuery(GROUPED);
+
+        final Result result = service.query(request("| STATS total = COUNT(*) BY user"));
+
+        assertThat(result.warnings()).isEmpty();
+    }
+
+    @Test
+    void testWarningsCleanedUp() {
+        final List<String> headers = new ArrayList<>();
+        headers.add(WARNING_AGENT + "\"No limit defined, adding default limit of [1000]\"");
+        headers.add("text alone");
+        headers.add("text alone");
+        headers.add("taken out, still escaped: [t == \\\"x\\\"]");
+        headers.add(WARNING_AGENT + "\"with a date\" \"Sat, 15 Nov 2026 12:00:00 GMT\"");
+        headers.add("  ");
+        for (int i = 0; i < 20; i++) {
+            headers.add("warning " + i);
+        }
+
+        assertThat(ElasticEsqlService.warnings(headers))
+                .hasSize(ElasticEsqlService.MAX_WARNINGS)
+                .startsWith("text alone", "taken out, still escaped: [t == \"x\"]", "with a date", "warning 0");
+        assertThat(ElasticEsqlService.warnings(null)).isEmpty();
     }
 
     @Test

@@ -51,6 +51,7 @@ import co.elastic.clients.elasticsearch.esql.ElasticsearchEsqlAsyncClient;
 import co.elastic.clients.elasticsearch.esql.EsqlFormat;
 import co.elastic.clients.elasticsearch.esql.QueryRequest;
 import co.elastic.clients.json.JsonData;
+import co.elastic.clients.transport.TransportOptions;
 import co.elastic.clients.transport.endpoints.BinaryResponse;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -71,6 +72,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -103,6 +105,14 @@ public class ElasticEsqlService implements ElasticEsql {
     private static final Pattern PROBLEMS_PREFIX = Pattern.compile("^Found \\d+ problems?\\s*", Pattern.MULTILINE);
     private static final Set<String> TEXT_TYPES = Set.of("text", "match_only_text");
     private static final String KEYWORD_TYPE = "keyword";
+    /// The most warnings passed on from one query.
+    static final int MAX_WARNINGS = 10;
+    // A warning header: code, agent, then the text in quotes (and maybe a date).
+    private static final Pattern WARNING_HEADER = Pattern.compile(
+            "^\\d{3} \\S+ \"((?:[^\"\\\\]|\\\\.)*)\"(?: \"[^\"]*\")?$");
+    private static final Pattern ESCAPED = Pattern.compile("\\\\(.)");
+    // The warning that Elasticsearch added a limit, which isn't news: the query always has one.
+    private static final Pattern ADDED_LIMIT = Pattern.compile("^No limit defined, adding default limit");
 
     private final SecurityContext securityContext;
     private final ElasticIndexStore elasticIndexStore;
@@ -209,7 +219,7 @@ public class ElasticEsqlService implements ElasticEsql {
                 }
                 return new Result(query, indexName, response.columns(), response.rows(), response.tookMs(),
                         limited.limit(), joinNotes(capNote, limited.note()), truncated, pipeline.groups(), total,
-                        totalNote, version);
+                        totalNote, version, response.warnings());
             });
         });
     }
@@ -425,11 +435,19 @@ public class ElasticEsqlService implements ElasticEsql {
         if (remainingMs <= 0) {
             throw timedOut(timeLimit);
         }
+        // Elasticsearch gives warnings in response headers, not the body: e.g. that a comparison met a
+        // multi-valued field, so gave null and dropped the row. They are kept, so the caller can say so; the
+        // request never fails for them.
+        final List<String> warnings = new CopyOnWriteArrayList<>();
+        final TransportOptions options = client._transportOptions().with(builder -> builder.onWarnings(found -> {
+            warnings.addAll(NullSafe.list(found));
+            return false;
+        }));
         final CompletableFuture<BinaryResponse> future = new ElasticsearchEsqlAsyncClient(client._transport(),
-                client._transportOptions()).query(queryRequest);
+                options).query(queryRequest);
         try (final BinaryResponse response = future.get(remainingMs, TimeUnit.MILLISECONDS);
                 final InputStream content = response.content()) {
-            return parse(MAPPER.readTree(content));
+            return parse(MAPPER.readTree(content)).withWarnings(warnings(warnings));
         } catch (final TimeoutException e) {
             // Cancelling the request closes its connection, and Elasticsearch cancels a query whose connection
             // closes.
@@ -505,7 +523,38 @@ public class ElasticEsqlService implements ElasticEsql {
             }
             rows.add(values);
         }
-        return new Response(columns, rows, json.path("took").asLong(0));
+        return new Response(columns, rows, json.path("took").asLong(0), List.of());
+    }
+
+    /// The warnings to pass on, in Elasticsearch's own words: the text of each warning header, unescaped, without
+    /// the one saying a limit was added, each once, at most [#MAX_WARNINGS].
+    ///
+    /// @param headers The warnings as the client gave them: whole headers (`299 Elasticsearch-9.5.3-... "text"`)
+    ///                or their text alone.
+    /// @return The warnings.
+    static List<String> warnings(final List<String> headers) {
+        final Set<String> warnings = new LinkedHashSet<>();
+        for (final String header : NullSafe.list(headers)) {
+            final String text = warningText(header);
+            if (!text.isEmpty() && !ADDED_LIMIT.matcher(text).find()) {
+                warnings.add(text);
+            }
+            if (warnings.size() >= MAX_WARNINGS) {
+                break;
+            }
+        }
+        return List.copyOf(warnings);
+    }
+
+    private static String warningText(final String header) {
+        // The client gives the text taken out of the header, still escaped as in the header; whole headers are
+        // read too.
+        final String stripped = NullSafe.trim(header);
+        final Matcher matcher = WARNING_HEADER.matcher(stripped);
+        final String text = matcher.matches()
+                ? matcher.group(1)
+                : stripped;
+        return ESCAPED.matcher(text).replaceAll("$1").strip();
     }
 
     private static Object value(final JsonNode node) {
@@ -550,8 +599,14 @@ public class ElasticEsqlService implements ElasticEsql {
     ///
     /// @param columns Its columns.
     /// @param rows    Its rows.
-    /// @param tookMs  How long Elasticsearch took.
-    record Response(List<Column> columns, List<List<Object>> rows, long tookMs) {
+    /// @param tookMs   How long Elasticsearch took.
+    /// @param warnings What Elasticsearch warned of (see [#warnings(List)]).
+    record Response(List<Column> columns, List<List<Object>> rows, long tookMs, List<String> warnings) {
 
+        /// @param warnings What Elasticsearch warned of.
+        /// @return This response, with those warnings.
+        Response withWarnings(final List<String> warnings) {
+            return new Response(columns, rows, tookMs, warnings);
+        }
     }
 }

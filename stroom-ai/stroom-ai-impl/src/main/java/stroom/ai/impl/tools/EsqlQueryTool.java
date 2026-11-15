@@ -64,6 +64,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 /// `esql_query` - runs an ES|QL query on an Elastic Index doc's index, as the user, through Stroom's Elasticsearch
 /// module ([ElasticEsql]): totals, top N and grouped questions answered by Elasticsearch itself, rather than by
@@ -87,6 +88,19 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
     private static final int MAX_FIELDS = 2_000;
     private static final DateTimeFormatter FILE_TIME = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
     private static final String FIELDS_HINT = "describe_data_source gives the index's fields";
+    // Elasticsearch's warning that a single-value function or comparison met a multi-valued field.
+    static final String MULTI_VALUE_WARNING = "single-value function encountered multi-value";
+    static final String MULTI_VALUE_HINT = "A field the query compares or passes to a function holds several "
+                                           + "values in some documents: there the comparison or function gives "
+                                           + "null, so WHERE drops those documents and EVAL gives null for them. "
+                                           + "MV_EXPAND the field first to test each value (e.g. '| MV_EXPAND "
+                                           + "recipient | WHERE recipient == \"x\"'), or use an MV_ function "
+                                           + "(e.g. MV_COUNT, MV_FIRST).";
+    // Elasticsearch's refusal of a backslash that isn't one of the escapes a "..." string takes.
+    private static final Pattern BACKSLASH_IN_STRING = Pattern.compile("token recognition error at: '\"[^']*\\\\");
+    static final String BACKSLASH_HINT = "In a \"...\" string a backslash starts an escape (\\t, \\n, \\r, \\\", "
+                                         + "\\\\ only): double it for a regex (\"a\\\\.b\"), or write the string "
+                                         + "in triple quotes, which keep it as typed (\"\"\"a\\.b\"\"\").";
 
     private final Provider<ElasticEsql> elasticEsqlProvider;
     private final DataSourceAccess dataSourceAccess;
@@ -142,7 +156,10 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                                  + "STATS ... BY, SORT, LIMIT, KEEP, DROP, RENAME, DISSECT, GROK, MV_EXPAND. Field "
                                  + "names are the index's own")
                         .chatOnly(" (describe_data_source gives them)")
-                        .general("; group by a keyword field, not text. Work out derived values and cut-offs "
+                        .general("; group by a keyword field, not text. A field with several values in a "
+                                 + "document (e.g. a list of recipients): a comparison or function on it gives null "
+                                 + "there (the result says so), so MV_EXPAND it first; STATS ... BY it counts the "
+                                 + "document once under each value. Work out derived values and cut-offs "
                                  + "in the query, not in your reply, so its rows are the answer: EVAL for a "
                                  + "conversion (e.g. '| EVAL hours = ROUND(seconds / 3600.0, 1)'), WHERE after "
                                  + "STATS for a threshold on a total (e.g. '| WHERE hours > 8'). Without a LIMIT in "
@@ -152,7 +169,10 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                                  + "may include documents from streams the user can't see or that have been "
                                  + "deleted, so they can differ from Stroom searches")
                         .chatOnly(" (run_stroomql)")
-                        .general(" and dashboards. Refused for a Lucene index or a cluster older than 8.14, saying "
+                        .general(" and dashboards: when the user needs figures that match those exactly, use a "
+                                 + "Stroom search")
+                        .chatOnly(" (run_stroomql)")
+                        .general(". Refused for a Lucene index or a cluster older than 8.14, saying "
                                  + "what to use instead.")
                         .chatOnly(" The rows are written to a table in the workspace too, for the table tool.")
                         .build())
@@ -351,7 +371,7 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
         final String message = refusal.getMessage();
         final Set<String> names = new LinkedHashSet<>(fields.stream().map(QueryField::getFldName).toList());
         return switch (refusal.reason()) {
-            case UNKNOWN_FIELD -> message + ". Not fields of the index: " + said(refusal.names(), names) + ". "
+            case UNKNOWN_FIELD -> sentence(message) + " Not fields of the index: " + said(refusal.names(), names) + ". "
                                   + FIELDS_HINT + (names.isEmpty()
                     ? "."
                     : "; they include: " + String.join(", ", new TreeSet<>(names).stream()
@@ -360,10 +380,37 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                                   + "each value whole, which is what to group by.";
             case CLUSTER_TOO_OLD -> message + ". Use run_stroomql instead, which works on any version.";
             case TIMEOUT -> message + ", or ask for less (a narrower STATS, or a LIMIT).";
-            case COMMAND_NOT_ALLOWED, INVALID -> message + ".";
+            case COMMAND_NOT_ALLOWED, INVALID -> sentence(message);
             case NOT_FOUND -> DataSourceAccess.NOT_FOUND;
-            default -> message + ".";
+            case REFUSED -> BACKSLASH_IN_STRING.matcher(message).find()
+                    ? sentence(message) + " " + BACKSLASH_HINT
+                    : sentence(message);
+            default -> sentence(message);
         };
+    }
+
+    // The message as a sentence: a full stop added unless it ends with one already, or with '?' or '!'.
+    private static String sentence(final String message) {
+        final String stripped = NullSafe.trim(message);
+        return stripped.endsWith(".") || stripped.endsWith("?") || stripped.endsWith("!")
+                ? stripped
+                : stripped + ".";
+    }
+
+    /// What Elasticsearch warned of while running the query, with what to do about a multi-valued field.
+    ///
+    /// @param result What the query gave.
+    /// @return The note, or empty if there were no warnings.
+    static String warningsNote(final Result result) {
+        if (result.warnings().isEmpty()) {
+            return "";
+        }
+        final StringBuilder sb = new StringBuilder("Elasticsearch warned:");
+        result.warnings().forEach(warning -> sb.append("\n- ").append(warning));
+        if (result.warnings().stream().anyMatch(warning -> warning.contains(MULTI_VALUE_WARNING))) {
+            sb.append("\n").append(MULTI_VALUE_HINT);
+        }
+        return sb.toString();
     }
 
     // The unknown names, each with the index's fields most like it.
@@ -414,6 +461,10 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
             sb.append("Filtered before the pipeline by:").append(searched.replace("\n", "\n- ")).append("\n");
         }
         sb.append('\n');
+        final String warned = warningsNote(result);
+        if (!warned.isEmpty()) {
+            sb.append(warned).append("\n\n");
+        }
         if (cells.isEmpty()) {
             sb.append("No rows.");
         } else {
@@ -503,6 +554,10 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                     : "total_rows", result.totalRows());
         }
         map.put("note", rowsNote(result));
+        if (!result.warnings().isEmpty()) {
+            map.put("warnings", result.warnings());
+            map.put("warnings_note", warningsNote(result));
+        }
         if (!result.rows().isEmpty()) {
             map.put("table", out.toString());
         }
