@@ -63,6 +63,16 @@ public final class TableExpression {
     private static final Pattern UNKNOWN_FUNCTION = Pattern.compile("Unknown function '([^']+)'");
     // E.g. "Invalid number of parameters supplied for 'year' function".
     private static final Pattern FUNCTION_NAMED = Pattern.compile("for '([^']+)' function");
+    // A quoted string in an expression, '' being a quote inside one.
+    private static final Pattern QUOTED = Pattern.compile("'(?:[^']|'')*'");
+    // A column named in an expression, e.g. ${not found}.
+    private static final Pattern COLUMN = Pattern.compile("\\$\\{[^}]*}");
+    // and, or, not or like written between values (not called as a function), or == for equality.
+    private static final Pattern INFIX = Pattern.compile("(?i)(?:\\b(?:and|or|not|like)\\b(?!\\s*\\()|==)");
+    /// What is said of an expression that can't be read and writes and, or, not, like or == between values.
+    static final String INFIX_HINT = " Here and, or and not are functions, not words between values: write "
+                                     + "or(a, b), and(a, b), not(a). Equality is = (not ==). There is no like: use "
+                                     + "contains(${column}, 'part') or include(${column}, 'regex').";
 
     private final String text;
     private final Expression expression;
@@ -98,7 +108,7 @@ public final class TableExpression {
             expression = new ExpressionParser(new ParamFactory(new HashMap<>())).parse(CONTEXT, fieldIndex, text);
         } catch (final RuntimeException | ParseException e) {
             throw new ExpressionException("The expression '" + text + "' can't be read: " + e.getMessage()
-                                         + suggestion(e.getMessage()));
+                                         + suggestion(e.getMessage()) + infixHint(text));
         }
         if (expression == null) {
             throw new ExpressionException("Give an expression.");
@@ -133,7 +143,7 @@ public final class TableExpression {
             expression = new ExpressionParser(new ParamFactory(new HashMap<>())).parse(CONTEXT, fieldIndex, text);
         } catch (final RuntimeException | ParseException e) {
             return Optional.of("The expression '" + text + "' can't be read: " + e.getMessage()
-                               + suggestion(e.getMessage()));
+                               + suggestion(e.getMessage()) + infixHint(text));
         }
         if (expression == null) {
             return Optional.of("Give an expression.");
@@ -246,6 +256,14 @@ public final class TableExpression {
         return closest.isEmpty()
                 ? ""
                 : " Did you mean " + String.join(" or ", closest) + "? Use help for what a function takes.";
+    }
+
+    // The infix hint, for an expression that writes and, or, not, like or == between values outside its strings.
+    private static String infixHint(final String text) {
+        final String outsideStrings = COLUMN.matcher(QUOTED.matcher(text).replaceAll("''")).replaceAll("c");
+        return INFIX.matcher(outsideStrings).find()
+                ? INFIX_HINT
+                : "";
     }
 
     /// Rows worked out together, e.g. a group's, for an expression with an aggregate.

@@ -183,6 +183,30 @@ class TestElasticEsql_EndToEnd extends AbstractCoreIntegrationTest {
         assertThat(result.totalRows()).isEqualTo(EVENTS);
     }
 
+    @Test
+    void testAComparisonOnAMultiValuedFieldIsWarnedOf() {
+        // One more event whose user.name has two values: Elasticsearch gives null for a comparison on it, so
+        // WHERE drops it, and says so only in a warning header, which must come through.
+        final ElasticTestNode.Response indexed = node.request("POST", "/" + indexName + "/_doc?refresh=true", """
+                {"@timestamp": "2026-01-01T00:00:00.000Z", "user": {"name": ["alice", "zed"]}}""");
+        assertThat(indexed.isSuccess()).as(indexed.body()).isTrue();
+
+        final Result compared = esql.query(new Request(indexRef, "| WHERE user.name == \"zed\" | STATS n = COUNT(*)",
+                null, null, null, null, false));
+
+        assertThat(compared.rows()).containsExactly(List.of(0L));
+        assertThat(compared.warnings())
+                .anySatisfy(warning -> assertThat(warning).contains("single-value function encountered multi-value"))
+                .noneSatisfy(warning -> assertThat(warning).contains("No limit defined"));
+
+        final Result expanded = esql.query(new Request(indexRef, "| MV_EXPAND user.name | WHERE user.name == \"zed\" "
+                                                                 + "| STATS n = COUNT(*)", null, null, null, null,
+                false));
+
+        assertThat(expanded.rows()).containsExactly(List.of(1L));
+        assertThat(expanded.warnings()).isEmpty();
+    }
+
     private long stream() {
         return metaService.create(MetaProperties.builder()
                 .feedName("ESQL-E2E")

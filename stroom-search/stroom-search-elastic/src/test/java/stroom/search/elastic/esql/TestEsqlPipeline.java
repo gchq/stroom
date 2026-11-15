@@ -94,6 +94,18 @@ class TestEsqlPipeline {
     }
 
     @Test
+    void testMvExpandWithASpaceSaysHowItIsWritten() {
+        assertThatThrownBy(() -> EsqlPipeline.parse("| WHERE a == 1 | mv expand tags | STATS c = COUNT(*) BY tags"))
+                .isInstanceOf(Refusal.class)
+                .satisfies(e -> assertThat(((Refusal) e).reason()).isEqualTo(Reason.INVALID))
+                .hasMessageContaining("'mv expand' at")
+                .hasMessageContaining("is written MV_EXPAND, with an underscore");
+        // MV alone is still an unknown command.
+        assertThatThrownBy(() -> EsqlPipeline.parse("| MV tags"))
+                .hasMessageContaining("The ES|QL command MV isn't allowed here");
+    }
+
+    @Test
     void testFromRefusalSaysWhy() {
         assertThatThrownBy(() -> EsqlPipeline.parse("FROM logs-* | STATS c = COUNT(*)"))
                 .hasMessageContaining("FROM is written for you: give only the commands after it");

@@ -274,6 +274,12 @@ final class EsqlPipeline {
                                                           + " isn't an ES|QL command. " + allowedList());
         }
         final String command = first.text().toUpperCase(Locale.ROOT);
+        if ("MV".equals(command) && tokens.size() > 1 && "EXPAND".equalsIgnoreCase(tokens.get(1).text())) {
+            // Seen: an agent writing MV EXPAND, refused as a command MV.
+            throw new Refusal(Reason.INVALID, "'" + first.text() + " " + tokens.get(1).text() + "' at "
+                                              + position(first) + " is written MV_EXPAND, with an underscore: e.g. "
+                                              + "'| MV_EXPAND tags'", List.of("MV EXPAND"));
+        }
         if (!ALLOWED.contains(command)) {
             final String said = ("LOOKUP".equals(command) || "INLINE".equals(command)) && tokens.size() > 1
                     ? command + " " + tokens.get(1).text().toUpperCase(Locale.ROOT)

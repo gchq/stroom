@@ -16,7 +16,9 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolSchema.StringSchema;
 import stroom.ai.shared.AiToolCategory;
 import stroom.util.json.JsonUtil;
 
@@ -57,6 +59,58 @@ class TestToolCallGuard {
         assertThat(result.text()).isEqualTo("{\"argument_notes\":[\"Ignored unknown argument(s) "
                                             + "[save_text_converter]: this tool takes [sample].\"],"
                                             + "\"inferred\":true}");
+    }
+
+    @Test
+    void argumentsFoldedIntoAnotherArgumentsTextAreUnfolded() {
+        // Seen (a small model, the table tool): the rest of the call written inside eval's text, refused for no
+        // path five times.
+        final StroomTool tool = table();
+
+        final ToolResult result = call(tool, JsonUtil.writeValueAsString(Map.of("eval",
+                "[{\"as\": \"t\", \"expression\": \"contains(${text}, 'roster')\"}], \"limit\": 5, "
+                + "\"path\": \"/outputs/topics.md\"}"), false));
+
+        assertThat(JsonUtil.readValue(calls.getFirst(), Map.class)).isEqualTo(Map.of(
+                "eval", List.of(Map.of("as", "t", "expression", "contains(${text}, 'roster')")),
+                "limit", 5,
+                "path", "/outputs/topics.md"));
+        assertThat(result.text()).isEqualTo("done Read the text of eval as the arguments it held: give each "
+                                            + "argument on its own, its list or object as JSON, not inside "
+                                            + "another's text.");
+    }
+
+    @Test
+    void anArgumentGivenAlreadyIsKeptOverOneFoldedIntoAnothersText() {
+        final StroomTool tool = table();
+
+        call(tool, JsonUtil.writeValueAsString(Map.of(
+                "aggregates", "[{\"function\": \"count\", \"as\": \"n\"}], \"groupBy\": [\"code\"], "
+                              + "\"path\": \"/outputs/other.md\"}",
+                "path", "/outputs/given.md"), false));
+
+        assertThat(JsonUtil.readValue(calls.getFirst(), Map.class)).isEqualTo(Map.of(
+                "aggregates", List.of(Map.of("function", "count", "as", "n")),
+                "groupBy", List.of("code"),
+                "path", "/outputs/given.md"));
+    }
+
+    @Test
+    void plainJsonTextAndTextArgumentsAreLeftToTheTool() {
+        final StroomTool tool = table();
+        final String plainList = "[{\"function\": \"count\", \"as\": \"n\"}]";
+        final String textLikeJson = "[1], \"limit\": 5}";
+
+        final ToolResult result = call(tool, JsonUtil.writeValueAsString(Map.of(
+                "aggregates", plainList, "path", textLikeJson), false));
+
+        assertThat(JsonUtil.readValue(calls.getFirst(), Map.class))
+                .isEqualTo(Map.of("aggregates", plainList, "path", textLikeJson));
+        assertThat(result.text()).isEqualTo("done");
+        // Text that, read as the argument's start, isn't JSON is left too.
+        final Map<String, Object> arguments = new HashMap<>(Map.of("eval", "[{\"as\": }], \"limit\": 5}"));
+        assertThat(ToolCallGuard.unfolded(arguments, table().definition().parameters().properties())).isEmpty();
+        assertThat(arguments).containsOnlyKeys("eval");
     }
 
     @Test
@@ -244,6 +298,17 @@ class TestToolCallGuard {
         // A lone lead byte's character, as in ordinary text.
         assertThat(MojibakeRepair.repair("Ã and Â").count()).isZero();
         assertThat(MojibakeRepair.repair(null).text()).isNull();
+    }
+
+    // A tool taking lists, a number and a path, as the table tool does.
+    private StroomTool table() {
+        return tool("table", ObjectSchema.builder()
+                .addProperty("eval", ArraySchema.builder().items(ObjectSchema.builder().build()).build())
+                .addProperty("aggregates", ArraySchema.builder().items(ObjectSchema.builder().build()).build())
+                .addProperty("groupBy", ArraySchema.builder().items(StringSchema.builder().build()).build())
+                .addIntegerProperty("limit", "The most rows.")
+                .addStringProperty("path", "The table.")
+                .build(), call -> ToolResult.text("done"));
     }
 
     private StroomTool translation() {

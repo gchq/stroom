@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestTableExpression {
 
@@ -88,5 +89,34 @@ class TestTableExpression {
         assertThat(TableExpression.dashboardProblem("cuont()", List.of("UserId")))
                 .hasValueSatisfying(problem -> assertThat(problem).contains("Unknown function 'cuont'"));
         assertThat(TableExpression.dashboardProblem(" ", List.of("UserId"))).contains("Give an expression.");
+    }
+
+    @Test
+    void infixAndOrLikeAndDoubleEqualsAreExplained() {
+        // As written in a chat: and, or, like and == aren't operators here.
+        final List<String> header = List.of("text", "tgt", "n");
+        for (final String text : List.of(
+                "if(contains(${text}, 'roster') or contains(${text}, 'Lunch'), 1, 0)",
+                "if(${text} like '*contoso.example', 0, 1)",
+                "if(${tgt} == 'j.smith@partner.example', 'external', 'internal')",
+                "if(contains(${text}, 'a') AND contains(${text}, 'b'), 1, 0)")) {
+            assertThatThrownBy(() -> TableExpression.compile(text, header))
+                    .isInstanceOf(ExpressionException.class)
+                    .hasMessageContaining("can't be read")
+                    .hasMessageContaining(TableExpression.INFIX_HINT);
+        }
+        // The function forms are read.
+        TableExpression.compile("if(or(contains(${text}, 'roster'), contains(${text}, 'Lunch')), 1, 0)", header);
+        TableExpression.compile("if(${tgt} = 'x', 1, 0)", header);
+    }
+
+    @Test
+    void theWordsInStringsAndColumnNamesAreNoInfix() {
+        final List<String> header = List.of("not found", "n");
+
+        assertThatThrownBy(() -> TableExpression.compile("concat('this or that' ${not found})", header))
+                .isInstanceOf(ExpressionException.class)
+                .hasMessageContaining("can't be read")
+                .hasMessageNotContaining(TableExpression.INFIX_HINT);
     }
 }

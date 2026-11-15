@@ -874,7 +874,8 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 true,
                 3L,
                 null,
-                "9.5.3"));
+                "9.5.3",
+                List.of()));
     }
 
     // The Elastic Index's templates: one index template, composed of two component templates.

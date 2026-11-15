@@ -123,7 +123,9 @@ public class ContextAssembler {
             without asking only if they named the data source, the attached tab's query already reads one, or just \
             one fits.
             - For totals, top N and grouped questions on an Elastic Index, use esql_query (Elasticsearch works \
-            them out); run_stroomql for row-level work and other data sources. Rows cut short are never a full \
+            them out); run_stroomql for row-level work and other data sources, and when the user needs figures \
+            that match a dashboard or Stroom search exactly (esql_query counts documents of every stream, even \
+            ones they can't see or that were deleted). Rows cut short are never a full \
             ranking: say how many groups there are in all. Compute derived values and cut-offs in the query, not \
             in your reply: EVAL for conversions, WHERE after STATS for thresholds.
             - "Query" can mean two things. If it isn't clear whether the user wants you to run a search and give \
