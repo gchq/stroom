@@ -110,8 +110,8 @@ class TestCoverageReads {
     }
 
     @Test
-    void aGroupsPassedOverLinesAreSummedAndAWholeTranslationsUnseenValuesKeptWithTheirStreams() throws Exception {
-        // As a group's pipeline logs them: its count at the end of each document (two in stream 1); and as a whole
+    void anOlderGroupsPassedOverLinesAreTakenOutAndAWholeTranslationsUnseenValuesKept() throws Exception {
+        // As an older group XSLT logged them: its count at the end of each document (two in stream 1); and as a whole
         // translation logs a value its survey didn't see, once a stream a value.
         Mockito.when(streamSummaries.errorMarkers(Mockito.eq(10L), anyInt())).thenReturn(List.of(
                 info(passedOver(40)),
@@ -131,12 +131,13 @@ class TestCoverageReads {
         // The records the rules missed are read as before; the source type lines apart.
         assertThat(found.records()).extracting(CoverageReads.Logged::raw).containsExactly(1L);
         final CoverageReads.SourceTypeLines lines = found.sourceTypes();
-        assertThat(lines.passedOver()).isEqualTo(45L);
-        assertThat(lines.passedOverStreams()).containsExactly(1L, 2L);
+        // An older group XSLT's lines of the records it passed over are taken out, not counted: the raw streams tell
+        // them now.
         assertThat(lines.unseen()).containsExactly(Map.entry("PowerBI", Set.of(1L, 2L)),
                 Map.entry("Teams", Set.of(1L)));
         assertThat(lines.field()).isEqualTo("Workload");
         assertThat(lines.rawStreams()).containsExactly(1L, 2L);
+        assertThat(new CoverageReads.SourceTypeLines().add(1L, passedOver(4))).isTrue();
     }
 
     @Test

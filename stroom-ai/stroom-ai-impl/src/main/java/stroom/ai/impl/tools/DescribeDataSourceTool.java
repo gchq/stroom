@@ -18,6 +18,7 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.shared.AiToolCategory;
@@ -33,7 +34,13 @@ import stroom.util.shared.ResultPage;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /// `describe_data_source` - a data source's fields, as the query editor's help gives them: each field's type, the
@@ -44,6 +51,7 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
 
     static final String NAME = "describe_data_source";
     static final String DATA_SOURCE_ARG = "data_source";
+    static final String FIELD_ARG = "field";
     /// The most fields given.
     static final int MAX_FIELDS = 1_000;
 
@@ -94,7 +102,11 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
                                  + "where the data source is are given too: follow what they say about its fields, "
                                  + "e.g. which field holds the acting user. For a Lucene or Elastic index, it says "
                                  + "which searches through Stroom would mislead (e.g. CONTAINS on Elasticsearch "
-                                 + "finds nothing), and what to search instead.")
+                                 + "finds nothing), and what to search instead. With field=, one field as the user "
+                                 + "names it (loosely: 'Recipient ID' finds Email/Recipient/Id): its type, "
+                                 + "conditions, source path, description, sample values and the AGENTS lines "
+                                 + "naming it; where several fields could be meant, they are listed for the user to "
+                                 + "choose.")
                         .chatOnly(" To find an event the user describes in an index, use search_events with "
                                   + "index.")
                         .build())
@@ -104,6 +116,10 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
                                 .chatOnly(", as list_data_sources gives it")
                                 .general(".")
                                 .build())
+                        .addStringProperty(FIELD_ARG, "Optional: one field, in the user's words (e.g. 'Recipient "
+                                                      + "ID' or 'who received it'), to describe it alone. Several "
+                                                      + "close matches are listed: ask the user which they mean, "
+                                                      + "never pick one yourself.")
                         .required(DATA_SOURCE_ARG)
                         .build())
                 .build();
@@ -137,6 +153,11 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
             sb.append("It has no fields you can see.");
             return ToolResult.text(sb.append(contextNote(context, dataSource)).toString());
         }
+        final String wanted = stringArg(request, FIELD_ARG);
+        if (NullSafe.isNonBlankString(wanted)) {
+            return ToolResult.text(sb.append(oneField(context, dataSource, values, wanted)).toString()
+                    .stripTrailing());
+        }
         sb.append("Fields (").append(values.size()).append("):\n");
         for (final QueryField field : values) {
             sb.append("- ").append(field.getFldName()).append(" (")
@@ -158,6 +179,138 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
         MisleadingSearches.backendOf(dataSource).ifPresent(backend -> sb.append(searchingNote(backend, values)));
         sb.append(contextNote(context, dataSource));
         return ToolResult.text(sb.toString().stripTrailing());
+    }
+
+    // field=: the field the user's words name, with all that is known of it; or the fields they could name, for the
+    // user to choose; or the closest, when none matches.
+    private String oneField(final ToolCallContext context,
+                            final DocRef dataSource,
+                            final List<QueryField> fields,
+                            final String wanted) {
+        final List<DataSourceDocumentation.Documented> docs = dataSourceDocumentation.find(context.session(),
+                dataSource, "Documentation read by the " + NAME + " tool");
+        final Map<String, Map<String, String>> rows = DataSourceDocumentation.fieldRows(docs);
+        final Map<String, String> descriptions = new LinkedHashMap<>();
+        rows.forEach((name, row) -> NullSafe.consume(column(row, "description"), text ->
+                descriptions.put(name, text)));
+        final Map<String, QueryField> byName = new LinkedHashMap<>();
+        fields.forEach(field -> byName.putIfAbsent(field.getFldName(), field));
+        final FieldMatches.Matched matched = FieldMatches.match(wanted, List.copyOf(byName.keySet()),
+                descriptions);
+        final StringBuilder sb = new StringBuilder();
+        switch (matched.kind()) {
+            case ONE -> {
+                final FieldMatches.Candidate one = matched.candidates().getFirst();
+                sb.append(described(context, dataSource, byName.get(one.name()), rows.get(one.name()), one));
+            }
+            case SEVERAL -> {
+                sb.append("Several fields could be '").append(wanted).append("'. Ask the user which they mean "
+                                                                            + "(don't pick one yourself), then "
+                                                                            + "call again with its name:\n");
+                int n = 1;
+                for (final FieldMatches.Candidate candidate : matched.candidates()) {
+                    final QueryField field = byName.get(candidate.name());
+                    sb.append(n++).append(". ").append(candidate.name()).append(" (")
+                            .append(NullSafe.get(field, QueryField::getFldType, Object::toString)).append("): ")
+                            .append(candidate.why());
+                    final String description = descriptions.get(candidate.name());
+                    if (NullSafe.isNonBlankString(description) && !candidate.why().contains(description)) {
+                        sb.append(". ").append(ToolText.head(description, 160));
+                    }
+                    sb.append('\n');
+                }
+            }
+            case NONE -> sb.append("No field matches '").append(wanted).append("'. The closest by name: ")
+                    .append(String.join(", ", matched.candidates().stream()
+                            .map(FieldMatches.Candidate::name).toList()))
+                    .append(". Ask the user which they mean, or call without field= for every field.\n");
+        }
+        return sb.toString();
+    }
+
+    // One field: its type, conditions, source path, description, sample values and the AGENTS lines naming it.
+    private String described(final ToolCallContext context,
+                             final DocRef dataSource,
+                             final QueryField field,
+                             final Map<String, String> row,
+                             final FieldMatches.Candidate matched) {
+        final StringBuilder sb = new StringBuilder("Field: ").append(field.getFldName()).append(" (")
+                .append(NullSafe.get(field.getFldType(), Object::toString)).append(')');
+        if (!"its name".equals(matched.why())) {
+            sb.append(", matched as ").append(matched.why());
+        }
+        sb.append('\n');
+        sb.append("- queryable: ").append(field.queryable()
+                ? "yes"
+                : "no (found by no search)").append('\n');
+        if (field.getConditionSet() != null) {
+            sb.append("- conditions: ").append(field.getConditionSet()).append('\n');
+        }
+        if (NullSafe.isNonBlankString(field.getDocRefType())) {
+            sb.append("- refers to ").append(field.getDocRefType()).append(" documents\n");
+        }
+        final Optional<DataSourceDocumentation.Planned> planned = dataSourceDocumentation.planned(
+                dataSourceDocumentation.feedingPipelines(dataSource), field.getFldName());
+        final String from = column(row, "from");
+        if (planned.isPresent()) {
+            final PlannedField plannedField = planned.get().field();
+            sb.append("- source: ").append(plannedField.isConstant()
+                    ? "the constant '" + plannedField.constant() + "', in every document"
+                    : plannedField.source())
+                    .append(" (the index plan kept with pipeline ")
+                    .append(context.links().document(planned.get().pipeline())).append(")\n");
+        } else if (NullSafe.isNonBlankString(from)) {
+            sb.append("- source: ").append(from).append(" (its documentation)\n");
+        }
+        final String description = NullSafe.nonBlankStringElse(column(row, "description"),
+                planned.map(p -> p.field().description()).orElse(""));
+        if (NullSafe.isNonBlankString(description)) {
+            sb.append("- description: ").append(description).append('\n');
+        }
+        final String samples = column(row, "sample");
+        if (NullSafe.isNonBlankString(samples)) {
+            sb.append("- sample values: ").append(samples).append('\n');
+        }
+        final List<String> agents = agentLines(context, dataSource, field.getFldName());
+        if (!agents.isEmpty()) {
+            sb.append("- AGENTS lines naming it (follow them):\n");
+            agents.forEach(line -> sb.append("  - ").append(line).append('\n'));
+        }
+        return sb.toString();
+    }
+
+    // The cell of the column whose name starts with the word given (Description, From (event-logging path),
+    // Sample values), or null.
+    private static String column(final Map<String, String> row, final String word) {
+        if (row == null) {
+            return null;
+        }
+        return row.entrySet().stream()
+                .filter(entry -> entry.getKey().toLowerCase(Locale.ROOT).startsWith(word))
+                .map(Map.Entry::getValue)
+                .filter(NullSafe::isNonBlankString)
+                .findFirst()
+                .orElse(null);
+    }
+
+    // The lines of the AGENTS docs that apply where the data source is which name the field: its words in a run
+    // (Email.Recipient.Id for Email/Recipient/Id), or for a name of one word, the word itself.
+    private List<String> agentLines(final ToolCallContext context, final DocRef dataSource, final String name) {
+        final List<String> named = FieldMatches.words(name);
+        final List<String> out = new ArrayList<>();
+        final AgentInstructions.Standing standing = agentInstructions.load(context.session(),
+                "Standing instructions read by the " + NAME + " tool");
+        for (final AgentInstructions.InstructionDoc doc : standing.applyingTo(List.of(
+                agentInstructions.folderOf(dataSource)))) {
+            for (final String line : doc.text().split("\n", -1)) {
+                if (!line.isBlank() && (line.contains(name) || (named.size() > 1
+                                                                && Collections.indexOfSubList(
+                        FieldMatches.words(line), named) >= 0))) {
+                    out.add(line.strip() + " (" + context.links().document(doc.docRef()) + ")");
+                }
+            }
+        }
+        return out;
     }
 
     /// What a search of a Lucene or Elastic index through Stroom gets wrong without an error (found against Stroom

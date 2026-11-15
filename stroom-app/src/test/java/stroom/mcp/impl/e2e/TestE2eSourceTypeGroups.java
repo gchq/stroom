@@ -162,12 +162,14 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
         assertThat(docText).contains("source type group PEGA security's (PegaSecurityEvent)", FEED + " source types",
                 "`EventDetail/Authenticate/User/Id`", "`EventTime/TimeCreated`");
 
-        // Processing: the group's pipeline writes valid Events for its own source type alone; the rest passed over
-        // and counted (once a document: the lines add up to the stream's), and nothing stops.
+        // Processing: the group's pipeline writes valid Events for its own source type alone; the rest passed over,
+        // nothing logged of them (a line a document made Stroom write an Error stream for every raw stream each
+        // group processed): review_coverage tells them from the raw stream by the registry. Nothing stops.
         final Processed securityDone = processed(securityPipeline, stream);
         final long securityRecords = recordsOf(records, "PegaSecurityEvent");
         assertThat(count(securityDone.events(), "<Event>")).isEqualTo(securityRecords);
-        assertThat(passedOver(securityDone.logged())).isEqualTo(total - securityRecords);
+        assertThat(passedOver(securityDone.logged())).isZero();
+        assertThat(passedOverInProcessing(securityPipeline)).isEqualTo(total - securityRecords);
         assertThat(securityDone.logged()).doesNotContain("WARN New source type");
         promote(BUILD, Map.of("Pipeline", FOLDER, "XSLT", FOLDER, "Documentation", FOLDER));
 
@@ -224,7 +226,8 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
         final Processed integrationDone = processed(integrationPipeline, stream);
         final long integrationRecords = recordsOf(records, "PegaIntegration");
         assertThat(count(integrationDone.events(), "<Event>")).isEqualTo(integrationRecords);
-        assertThat(passedOver(integrationDone.logged())).isEqualTo(total - integrationRecords);
+        assertThat(passedOver(integrationDone.logged())).isZero();
+        assertThat(passedOverInProcessing(integrationPipeline)).isEqualTo(total - integrationRecords);
         final long truncated = records.stream().filter(TestE2eSourceTypeGroups::isTruncatedSoap).count();
         assertThat(truncated).isPositive();
         assertThat(count(integrationDone.logged(), "pega_integration: soap" + XsltGenerator.NOT_PARSED + "XML"))
@@ -271,8 +274,9 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
         final Map<String, Object> checked = json("check_events", args("stream_ids", events));
         assertThat(map(checked, "schema")).as("Events valid: %s", checked).containsEntry("valid", true);
         final List<Long> errors = ids(processed, "errors");
-        assertThat(errors).as("the counts logged beside the Events").isNotEmpty();
-        return new Processed(streamText(events.getFirst()), streamText(errors.getFirst()));
+        return new Processed(streamText(events.getFirst()), errors.isEmpty()
+                ? ""
+                : streamText(errors.getFirst()));
     }
 
     private static long recordsOf(final List<String> records, final String sourceType) {
@@ -345,7 +349,8 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
         return line.contains("\"sourcetype\": \"PegaIntegration\"") && !line.endsWith("Envelope>\"}");
     }
 
-    // The records a group's pipeline says it passed over, added up over its lines (one a document).
+    // The records a group's pipeline generated before 2026-11-15 said it passed over, added up over its lines (one a
+    // document): none now, its XSLT logging nothing of them.
     static long passedOver(final String logged) {
         final Matcher matcher = Pattern.compile(Pattern.quote(XsltGenerator.PASSED_OVER) + "(\\d+)"
                                                 + Pattern.quote(XsltGenerator.PASSED_OVER_END) + "$",

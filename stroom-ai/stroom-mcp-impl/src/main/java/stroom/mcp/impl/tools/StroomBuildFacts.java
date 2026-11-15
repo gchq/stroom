@@ -153,6 +153,11 @@ class StroomBuildFacts implements BuildFacts {
     }
 
     @Override
+    public Map<String, String> unreadableSurveys(final String build) {
+        return buildRecords.unreadableSurveys(build);
+    }
+
+    @Override
     public List<Map<String, Object>> buildDocs(final String build) {
         final List<WriteGuard.BuildDoc> contents = guard.folderContents(build);
         final Map<String, Object> kept = contents.isEmpty()

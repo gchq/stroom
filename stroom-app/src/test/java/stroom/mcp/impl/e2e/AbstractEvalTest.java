@@ -17,7 +17,9 @@
 package stroom.mcp.impl.e2e;
 
 import stroom.ai.impl.tools.indexing.FeedIndexes;
+import stroom.ai.impl.tools.sample.SourceTypeMeta;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.index.impl.IndexFieldService;
@@ -463,7 +465,7 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                     : saved.get("registry") != null
                             ? SourceTypeRegistry.read(documentation(uuidOf(map(saved, "registry"))))
                             : null;
-            scoreSourceTypes(evalCase, score, registry, gate);
+            scoreSourceTypes(evalCase, score, registry, gate, group, raws);
             if (setup != null) {
                 final String indexUsed = indexed != null
                         ? indexed.index()
@@ -576,23 +578,47 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         });
     }
 
-    // The group's build scored: the registry given, and what its pipeline logged processing the feed.
+    // The group's build scored: the registry given, the records its pipeline passed over (told as the tools tell
+    // them, by the registry over the raw records, its XSLT logging nothing of them) and what it logged processing
+    // the feed.
     private void scoreSourceTypes(final Map<String, Object> evalCase,
                                   final EvalScore score,
                                   final Map<String, Object> registry,
-                                  final Map<String, Object> gate) {
-        Long passedOver = null;
+                                  final Map<String, Object> gate,
+                                  final String group,
+                                  final List<Long> raws) {
         int errorLines = 0;
         for (final Map<String, Object> stream : list(gate, "streams")) {
             for (final long errors : ids(stream, "errors")) {
                 final String logged = storedText(errors);
-                passedOver = (passedOver == null
-                        ? 0
-                        : passedOver) + TestE2eSourceTypeGroups.passedOver(logged);
                 errorLines += (int) logged.lines().filter(line -> ERROR_LINE.matcher(line).find()).count();
             }
         }
+        final Long passedOver = registry == null || group == null || list(gate, "streams").isEmpty()
+                ? null
+                : passedOver(registry, group, raws);
         score.scoreSourceTypes(evalCase, registry, passedOver, errorLines);
+    }
+
+    // The raw records of source types outside the group, by the registry's source type field and rows (the first
+    // match winning; a part's meta for a meta: field), as review_coverage tells them.
+    private long passedOver(final Map<String, Object> registry, final String group, final List<Long> raws) {
+        final String field = String.valueOf(registry.get("field"));
+        final List<String> types = new ArrayList<>();
+        list(registry, "rows").stream()
+                .filter(row -> group.equalsIgnoreCase(String.valueOf(row.get("group"))))
+                .forEach(row -> types.add(String.valueOf(row.get("name"))));
+        final SourceTypeScope scope = new SourceTypeScope(null, field, SourceTypeRegistry.rows(registry), types);
+        long passed = 0;
+        for (final long raw : raws) {
+            for (final StoredPart part : storedParts(raw)) {
+                final SourceTypeScope.Filtered filtered = scope.byPart()
+                        ? scope.filter(part.text(), SourceTypeMeta.partFields(field, part.attributes()))
+                        : scope.filter(part.text());
+                passed += filtered.passedOver().values().stream().mapToLong(Integer::longValue).sum();
+            }
+        }
+        return passed;
     }
 
     // A stream's parts, each with its receipt headers and the case's feed as its Feed.

@@ -109,6 +109,14 @@ class PipelineStepping {
     static final String DRAFT_CODE_DESCRIPTION = "Unsaved code to step with instead of the saved documents, keyed "
                                                  + "by element id, e.g. {'translationFilter': '<xsl:stylesheet "
                                                  + "...>'}. Nothing is saved.";
+    /// The argument naming a child stream to step in place of the streams' data.
+    static final String CHILD_TYPE_ARG = "child_type";
+    /// The child streams that can be stepped: a stream's context data, through a context loader pipeline.
+    static final List<String> CHILD_TYPES = List.of(StreamTypeNames.CONTEXT);
+    /// The description of `child_type`, as each stepping tool gives it.
+    static final String CHILD_TYPE_DESCRIPTION = "Context to step each stream part's Context child (its context "
+                                                 + "data) in place of its data: for a context loader pipeline, "
+                                                 + "as Stroom loads it. Leave out to step the data.";
     /// The description of `pipeline_uuid`, as each stepping tool gives it.
     static final String PIPELINE_UUID_DESCRIPTION = "UUID of the pipeline to step.";
 
@@ -346,7 +354,39 @@ class PipelineStepping {
     /// @param code     Draft code by element, or null for the saved code.
     /// @return A walk of the stream, in one stepping session, to close when done.
     Walk open(final SteppedPipeline pipeline, final long streamId, final Map<String, String> code) {
-        return steppingWalks.open(pipeline.doc(), streamId, code, STEP_TIME_LIMIT);
+        return open(pipeline, streamId, code, null);
+    }
+
+    /// As [#open(SteppedPipeline, long, Map)], stepping a child stream of each part in place of its data.
+    ///
+    /// @param pipeline  The pipeline.
+    /// @param streamId  The stream.
+    /// @param code      Draft code by element, or null.
+    /// @param childType The child stream to step ([#CHILD_TYPES]), or null for the stream's data.
+    /// @return A walk of the stream, to close when done.
+    Walk open(final SteppedPipeline pipeline,
+              final long streamId,
+              final Map<String, String> code,
+              final String childType) {
+        return steppingWalks.open(pipeline.doc(), streamId, code, STEP_TIME_LIMIT, childType);
+    }
+
+    /// @param call A call.
+    /// @return The child stream it asks to step in place of the streams' data ([#CHILD_TYPE_ARG]), as Stroom names
+    /// it; null for the data.
+    /// @throws ToolRefusal if it names a child stream that can't be stepped.
+    static String childType(final ToolCall call) {
+        final Object given = AbstractBuiltInTool.argsMap(call).get(CHILD_TYPE_ARG);
+        if (given == null || String.valueOf(given).isBlank()) {
+            return null;
+        }
+        return CHILD_TYPES.stream()
+                .filter(type -> type.equalsIgnoreCase(String.valueOf(given).strip()))
+                .findFirst()
+                .orElseThrow(() -> new ToolRefusal(CHILD_TYPE_ARG + " '" + given + "' can't be stepped: give "
+                                                   + String.join(" or ", CHILD_TYPES) + " (a stream's context "
+                                                   + "data, through a context loader pipeline), or leave it out "
+                                                   + "to step the streams' data."));
     }
 
     /// Up to `cap` records stepped, an even share from each stream, then what a short stream left over taken from
@@ -532,8 +572,8 @@ class PipelineStepping {
     }
 
     /// @param pipeline The pipeline about to be walked.
-    /// @return A count of the records a source type group's pipeline passes over, telling their source types by the
-    /// group's rows where its XSLT keeps a group's mapping (records are counted either way).
+    /// @return A count of the records a source type group's pipeline passes over, told from the feed's registry kept
+    /// with the group's mapping (its source type field and rows, the first match winning) where its XSLT keeps one.
     PassedOverRecords passedOver(final SteppedPipeline pipeline) {
         try {
             final SourceTypeModule module = keptMappings.keptMapping(pipeline.ref().getUuid())
@@ -542,12 +582,17 @@ class PipelineStepping {
                     .map(TranslationMapping::module)
                     .filter(SourceTypeModule::isGroup)
                     .orElse(null);
-            return PassedOverRecords.of(module);
+            if (module == null) {
+                return PassedOverRecords.none();
+            }
+            // The group's XSLT is the pipeline's first own XSLT: its input is the record it judges.
+            return PassedOverRecords.of(module, pipeline.defaultOutputs().getFirst(), pipeline.outputElement(),
+                    new PartAttributes(streamReader));
         } catch (final RuntimeException e) {
-            // Only the source types go untold: never fail the step over it.
+            // Only the records passed over go untold: never fail the step over it.
             LOGGER.debug(() -> LogUtil.message("Couldn't read pipeline {}'s group mapping: {}",
                     pipeline.ref().getUuid(), e.getMessage()));
-            return PassedOverRecords.of(null);
+            return PassedOverRecords.none();
         }
     }
 

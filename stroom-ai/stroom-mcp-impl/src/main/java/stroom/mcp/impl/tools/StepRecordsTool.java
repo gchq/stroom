@@ -117,6 +117,8 @@ class StepRecordsTool extends AbstractBuiltInTool {
                         .addProperty(DRAFT_CODE_ARG, ObjectSchema.builder()
                                 .description(PipelineStepping.DRAFT_CODE_DESCRIPTION)
                                 .build())
+                        .addEnumProperty(PipelineStepping.CHILD_TYPE_ARG, PipelineStepping.CHILD_TYPES,
+                                PipelineStepping.CHILD_TYPE_DESCRIPTION)
                         .required(PIPELINE_UUID_ARG, LOCATIONS_ARG)
                         .build())
                 .build();
@@ -182,15 +184,18 @@ class StepRecordsTool extends AbstractBuiltInTool {
     /// `shapes_not_clean`, `left_untranslated_as_intended`, `draft_code_used`, the triage (`verdict`,
     /// `groups_by_class`, `groups`) and `records` (the first 100), and any `hint`, `stopped_early` and `record`. A
     /// source type group's pipeline's records passed over are no errors: `records_passed_over`,
-    /// `passed_over_by_source_type`, `passed_over_note` and `shapes_passed_over` say them.
+    /// `passed_over_by_source_type`, `passed_over_note` and `shapes_passed_over` say them. The call's `child_type`
+    /// ([PipelineStepping#childType]) steps each part's child stream (its Context) in place of its data.
     ///
     /// @throws ToolTimeoutException if the call is cancelled.
+    /// @throws ToolRefusal if the call names a child stream that can't be stepped.
     Map<String, Object> stepRecords(final ToolCall call,
                                     final ToolCallContext context,
                                     final String pipelineUuid,
                                     final List<Location> locations,
                                     final Map<String, String> draftCode) {
         stepping.checkCanStep();
+        final String childType = PipelineStepping.childType(call);
         stepping.checkDrafts(call, context, pipelineUuid, draftCode);
         final List<Location> stepped = locations.subList(0, Math.min(locations.size(), maxSampleRecords));
         final List<Long> streams = new ArrayList<>(new TreeSet<>(locations.stream().map(Location::stream).toList()));
@@ -198,7 +203,8 @@ class StepRecordsTool extends AbstractBuiltInTool {
         pipeline.refuseMistyped();
         final Walked walked;
         try {
-            walked = PipelineStepping.withinTimeLimit(context, () -> walk(context, pipeline, stepped, draftCode));
+            walked = PipelineStepping.withinTimeLimit(context, () -> walk(context, pipeline, stepped, draftCode,
+                    childType));
         } finally {
             stepping.audit(context, streams, "Stepped records through " + pipeline.name() + " with the " + NAME
                                              + " tool");
@@ -210,7 +216,8 @@ class StepRecordsTool extends AbstractBuiltInTool {
     private Walked walk(final ToolCallContext context,
                         final SteppedPipeline pipeline,
                         final List<Location> locations,
-                        final Map<String, String> draftCode) {
+                        final Map<String, String> draftCode,
+                        final String childType) {
         final Walked walked = new Walked(stepping.unvalidatedOutput(pipeline), stepping.passedOver(pipeline));
         final CallProgress progress = CallProgress.of(context);
         progress.say("Stepping " + locations.size() + " records through " + pipeline.name());
@@ -222,7 +229,7 @@ class StepRecordsTool extends AbstractBuiltInTool {
             while (end < locations.size() && locations.get(end).stream() == streamId) {
                 end++;
             }
-            try (final Walk walk = stepping.open(pipeline, streamId, draftCode)) {
+            try (final Walk walk = stepping.open(pipeline, streamId, draftCode, childType)) {
                 for (final Location location : locations.subList(at, end)) {
                     if (PipelineStepping.timeIsUp()) {
                         walked.cut = true;
@@ -272,7 +279,8 @@ class StepRecordsTool extends AbstractBuiltInTool {
         }
         // A source type group's pipeline passes over the records of the feed's other source types: counted apart,
         // never errors, and no Event is right for them.
-        final PassedOverRecords.Sifted sifted = walked.passedOver.sift(SteppingWalks.markers(result, key), result);
+        final PassedOverRecords.Sifted sifted = walked.passedOver.sift(SteppingWalks.markers(result, key), result,
+                new StepLocation(location.stream(), location.part(), location.record()));
         List<ErrorTriage.Marker> found = new ArrayList<>(sifted.markers());
         found.addAll(SteppingVerdicts.emptyOutput(result, outputElement, key));
         final String output = SteppingWalks.output(result, outputElement);
@@ -292,7 +300,10 @@ class StepRecordsTool extends AbstractBuiltInTool {
                                                                        + " Event(s), but its kind is left "
                                                                        + "untranslated", null).withRecord(key));
             }
-        } else if (events == 0 && found.isEmpty() && !SteppingVerdicts.sendsOn(output) && !sifted.passedOver()) {
+        } else if (events == 0 && found.isEmpty() && !SteppingVerdicts.sendsOn(output) && !sifted.passedOver()
+                   && !SteppingVerdicts.writesAReference(output)) {
+            // A reference loader's record (a stream's Context stepped through a context loader, say) writes a
+            // reference, not an Event.
             found.add(ErrorTriage.marker("WARNING", outputElement, "The record produced no Event", null)
                     .withRecord(key));
         }

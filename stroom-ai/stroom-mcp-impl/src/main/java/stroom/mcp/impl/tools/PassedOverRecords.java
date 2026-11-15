@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
+import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResult;
 
 import java.util.ArrayList;
@@ -33,11 +34,16 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 
-/// The records a source type group's pipeline passed over while stepped (its XSLT's INFO line
-/// [XsltGenerator#PASSED_OVER]): records of the feed's other source types, which the group's pipeline is meant to
-/// leave to the other groups. They are not records with errors and never change a verdict: the stepping tools take
-/// their line out of a record's markers and count them here instead, by source type where the record's input tells
-/// it.
+/// The records a source type group's pipeline passed over while stepped: records of the feed's other source types
+/// (or of none), which the group's pipeline is meant to leave to the other groups. They are told as the group's XSLT
+/// tells them, from the feed's registry kept with the group's mapping: the source type field's value of the record
+/// the XSLT read (or of its part's meta, for a `meta:` field), the rows tried in order, the first match winning. They
+/// are not records with errors and never change a verdict: the stepping tools count them here, by source type.
+///
+/// The group's XSLT logs nothing of them (a line a document, as XSLTs generated before 2026-11-15 logged, made
+/// Stroom write an Error stream for every raw stream each group processed); that older line
+/// ([XsltGenerator#PASSED_OVER]) is still taken out of a record's markers, and marks the record passed over where
+/// its source type can't be told.
 ///
 /// Seen in testing: step_sample of an Azure audit group counted 304 of 500 records "with errors", 238 of them only
 /// the group's pass-over line, and the agent had to explain them away.
@@ -49,63 +55,97 @@ final class PassedOverRecords {
     static final String BY_SOURCE_TYPE = "passed_over_by_source_type";
     /// The result's key for what is said of them.
     static final String NOTE = "passed_over_note";
-    /// What a record is counted under when its source type can't be told from the step (no group mapping kept, a
-    /// source type field read from the part's meta, or input that isn't XML).
+    /// What a record is counted under when its source type can't be told from the step (no group mapping kept, or
+    /// input that isn't XML) but an older XSLT's line said it was passed over.
     static final String NOT_TOLD = "(not told from the step)";
 
     private static final Pattern LINE = Pattern.compile(Pattern.quote(XsltGenerator.PASSED_OVER) + "\\d+"
                                                         + Pattern.quote(XsltGenerator.PASSED_OVER_END));
     private static final Pattern DECLARATION = Pattern.compile("^\\s*<\\?xml[^>]*\\?>");
 
-    // The group's rows, to tell a record's source type by; null when they aren't known.
+    // The group's rows and source types, to tell a record's source type by; null when they aren't known.
     private final SourceTypeScope scope;
+    // The XSLT element whose input is the record the group's XSLT judges.
+    private final String inputElement;
+    // The element whose output is what the pipeline writes.
+    private final String outputElement;
+    // The parts' meta, for a source type field read from it; null when not needed.
+    private final PartAttributes attributes;
     private final Map<String, Integer> bySourceType = new TreeMap<>(ToolText::compare);
     private int count;
 
-    private PassedOverRecords(final SourceTypeScope scope) {
+    private PassedOverRecords(final SourceTypeScope scope,
+                              final String inputElement,
+                              final String outputElement,
+                              final PartAttributes attributes) {
         this.scope = scope;
+        this.inputElement = inputElement;
+        this.outputElement = outputElement;
+        this.attributes = attributes;
     }
 
-    /// @param module The group's module kept with the pipeline's XSLT, or null when it keeps none (or not a
-    ///               group's): the records are then counted, their source types not told.
+    /// @param module        The group's module kept with the pipeline's XSLT, or null when it keeps none (or not a
+    ///                      group's): no record is then told passed over, but by an older XSLT's line.
+    /// @param inputElement  The group's XSLT element, whose input is the record it judges.
+    /// @param outputElement The element whose output is what the pipeline writes.
+    /// @param attributes    The parts' meta, read for a source type field of a part's meta (`meta:<Attribute>`).
     /// @return A count of the records passed over, none yet.
-    static PassedOverRecords of(final SourceTypeModule module) {
-        if (module == null || !module.isGroup() || module.field() == null || module.byPart()
-            || module.rows().isEmpty()) {
-            return new PassedOverRecords(null);
+    static PassedOverRecords of(final SourceTypeModule module,
+                                final String inputElement,
+                                final String outputElement,
+                                final PartAttributes attributes) {
+        if (module == null || !module.isGroup() || module.field() == null || module.rows().isEmpty()
+            || module.sourceTypes().isEmpty()) {
+            return none();
         }
         return new PassedOverRecords(new SourceTypeScope(null, module.field(), module.toolRows(),
-                module.sourceTypes()));
+                module.sourceTypes()), inputElement, outputElement, attributes);
+    }
+
+    /// @return A count of the records passed over for a pipeline that isn't a group's: only an older XSLT's line
+    /// tells one.
+    static PassedOverRecords none() {
+        return new PassedOverRecords(null, null, null, null);
     }
 
     /// @param marker A marker a step met.
-    /// @return True if it is a source type group's line of the records it passed over.
+    /// @return True if it is the line a source type group's XSLT generated before 2026-11-15 logged of the records
+    /// it passed over.
     static boolean isPassOver(final ErrorTriage.Marker marker) {
         return marker != null && "INFO".equals(marker.severity()) && LINE.matcher(marker.message()).find();
     }
 
-    /// Takes a group's pass-over line out of one record's markers, counting the record as passed over when it had
-    /// one, by the source type the input of the element that logged it tells. A record passed over keeps only its
-    /// ERROR and FATAL markers (see [#breaksTheStream(ErrorTriage.Marker)]).
+    /// Tells whether one record stepped was passed over by the group's pipeline, counting it by its source type if
+    /// so: a record whose source type (by the registry's rows) is not one of the group's, and that the pipeline wrote
+    /// no Event for. A record passed over keeps only its ERROR and FATAL markers (see
+    /// [#breaksTheStream(ErrorTriage.Marker)]); an older XSLT's line of the records passed over is taken out of
+    /// every record's markers.
     ///
-    /// @param markers What the record's step met.
-    /// @param result  The step, whose elements' inputs tell the record's source type.
+    /// @param markers  What the record's step met.
+    /// @param result   The step, whose XSLT's input is the record.
+    /// @param location Where the record is: its stream and part, for a source type field read from the part's meta.
     /// @return The markers left, and whether the record was passed over.
-    Sifted sift(final List<ErrorTriage.Marker> markers, final SteppingResult result) {
+    Sifted sift(final List<ErrorTriage.Marker> markers, final SteppingResult result, final StepLocation location) {
         final List<ErrorTriage.Marker> left = new ArrayList<>();
-        String element = null;
+        boolean lineSaid = false;
         for (final ErrorTriage.Marker marker : markers) {
             if (isPassOver(marker)) {
-                element = marker.element();
+                lineSaid = true;
             } else {
                 left.add(marker);
             }
         }
-        if (element == null) {
+        final String told = sourceType(result, location);
+        final boolean passedOver = told != null
+                ? !scope.names().contains(told) && !wroteAnEvent(result)
+                : lineSaid;
+        if (!passedOver) {
             return new Sifted(left, false);
         }
         count++;
-        bySourceType.merge(sourceType(SteppingWalks.input(result, element)), 1, Integer::sum);
+        bySourceType.merge(told == null
+                ? NOT_TOLD
+                : told, 1, Integer::sum);
         return new Sifted(left.stream()
                 .filter(PassedOverRecords::breaksTheStream)
                 .toList(), true);
@@ -157,16 +197,34 @@ final class PassedOverRecords {
                + "groups' source types); only an ERROR or FATAL on one of them is kept.";
     }
 
-    // The source type of the record an element read, by the group's rows.
-    private String sourceType(final String input) {
-        if (scope == null || input == null || input.isBlank()) {
-            return NOT_TOLD;
+    // The source type of the record stepped, by the group's rows ([SourceTypeScope#UNMATCHED] for a value no row
+    // matches, or none); null when it can't be told (no group's rows, or input that isn't XML).
+    private String sourceType(final SteppingResult result, final StepLocation location) {
+        if (scope == null) {
+            return null;
+        }
+        if (scope.byPart()) {
+            if (location == null || attributes == null) {
+                return null;
+            }
+            final int part = (int) location.getPartIndex();
+            return scope.sourceType(attributes.fields(scope.field(), location.getMetaId(), part))
+                    .orElse(SourceTypeScope.UNMATCHED);
+        }
+        final String input = SteppingWalks.input(result, inputElement);
+        if (input == null || input.isBlank()) {
+            return null;
         }
         final Map<String, Object> fields = fieldsOf(input);
         if (fields == null) {
-            return NOT_TOLD;
+            return null;
         }
         return scope.sourceType(fields).orElse(SourceTypeScope.UNMATCHED);
+    }
+
+    // Whether the pipeline wrote an Event for the record: then it is the group's, whatever its fields read as here.
+    private boolean wroteAnEvent(final SteppingResult result) {
+        return outputElement != null && EventXml.countEvents(SteppingWalks.output(result, outputElement)) > 0;
     }
 
     /// The fields of a record as an XSLT reads it, flattened to dotted names as the survey names them: JSON read
@@ -209,7 +267,7 @@ final class PassedOverRecords {
     // --------------------------------------------------------------------------------
 
 
-    /// One record's markers, its pass-over line taken out.
+    /// One record's markers, an older XSLT's pass-over line taken out.
     ///
     /// @param markers    The markers left.
     /// @param passedOver True if the group's pipeline passed the record over.

@@ -56,6 +56,10 @@ public class McpElicitations {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(McpElicitations.class);
 
     private static final Duration CHECK_INTERVAL = Duration.ofMillis(500);
+    /// The longest an answer to questions from Stroom AI's own agent waits for the run that asked them to stop for
+    /// them: the form is shown (stored) as the tool call throws, before the run has unwound and stopped.
+    static final Duration RUN_STOP_WAIT = Duration.ofSeconds(10);
+    private static final Duration RUN_STOP_CHECK = Duration.ofMillis(50);
     // Who asks the questions of Stroom AI's own agent.
     private static final String STROOM_AI = "Stroom AI";
 
@@ -65,6 +69,7 @@ public class McpElicitations {
     private final Provider<AiConfig> aiConfigProvider;
     private final AtomicInteger waiting = new AtomicInteger();
     private AnswerLinks answerLinks;
+    private Duration runStopWait = RUN_STOP_WAIT;
 
     @Inject
     McpElicitations(final AiDao aiDao,
@@ -81,6 +86,11 @@ public class McpElicitations {
     @Inject
     void setAnswerLinks(final AnswerLinks answerLinks) {
         this.answerLinks = answerLinks;
+    }
+
+    /// @param runStopWait The longest an answer waits for the run that asked to stop for it ([#RUN_STOP_WAIT]).
+    void setRunStopWait(final Duration runStopWait) {
+        this.runStopWait = runStopWait;
     }
 
     /// Shows a form from an MCP server to the user, and waits for their answer.
@@ -243,7 +253,7 @@ public class McpElicitations {
         // call waiting for it.
         final boolean parked = record.callId() != null;
         final boolean canAnswer = parked
-                ? canCarryOn(chatId, messageId)
+                ? canCarryOnOnceStopped(chatId, messageId)
                 : isWaiting(chatId, AiChatRunStopReason.NEEDS_INPUT);
         // E.g. the node running the tool has stopped, or the user has asked something else since.
         if (!canAnswer) {
@@ -347,6 +357,35 @@ public class McpElicitations {
     private boolean isWaiting(final int chatId, final AiChatRunStopReason reason) {
         return runDao.getActive(chatId)
                 .filter(run -> run.getStatus() == AiChatRunStatus.WAITING_FOR_USER && run.getStopReason() == reason)
+                .isPresent();
+    }
+
+    // As canCarryOn, waiting a little while the chat's run is still running: the questions are stored as the tool
+    // call asking them throws, and the run stops for them only once that has unwound (seen in testing: a form
+    // answered at once was cancelled as "no longer waiting", and the run then waited for an answer it could never
+    // be given). A run that goes on running past the wait is another's work: the answer is refused, as before.
+    private boolean canCarryOnOnceStopped(final int chatId, final int messageId) {
+        final long until = System.currentTimeMillis() + runStopWait.toMillis();
+        while (true) {
+            if (canCarryOn(chatId, messageId)) {
+                return true;
+            }
+            if (!isRunning(chatId) || System.currentTimeMillis() >= until) {
+                return false;
+            }
+            try {
+                Thread.sleep(RUN_STOP_CHECK.toMillis());
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+        }
+    }
+
+    // True if the chat's run is running (not waiting for the user, nor ended).
+    private boolean isRunning(final int chatId) {
+        return runDao.getActive(chatId)
+                .filter(run -> run.getStatus() == AiChatRunStatus.RUNNING)
                 .isPresent();
     }
 

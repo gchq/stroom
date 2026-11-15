@@ -91,8 +91,9 @@ rules:
   # seen in the e2e suite, triaged as "info from an inherited element", which it isn't.
   - {message: 'Caught by rule ', class: benign,
      reason: "A kind of record a catch-all rule took (a rule with no conditions, or fewer than one before it), logged once a stream a kind so review_coverage finds every kind in the whole feed: it is translated as that rule says. Check each against the kinds classified: one no one classified is the user's to classify (classify_kinds)"}
-  # An aggregated feed's source type group (its pipeline's XSLT): the records of other source types passed over and
-  # counted, once a document (XsltGenerator.PASSED_OVER), as the user chose.
+  # An aggregated feed's source type group (its pipeline's XSLT, generated before 2026-11-15): the records of other
+  # source types passed over and counted, once a document (XsltGenerator.PASSED_OVER), as the user chose. Group XSLTs
+  # generated since log nothing of them; the rule stays for those generated before.
   - {message: 'Passed over \d+ record\(s\) not of this group''s source types', class: benign,
      reason: "Records of source types this pipeline's source type group doesn't translate (other groups', parked, dropped or new), passed over as the user chose and counted: not a fault"}
   # A whole translation of a feed whose survey confirmed a source type field: a value the survey didn't see, logged

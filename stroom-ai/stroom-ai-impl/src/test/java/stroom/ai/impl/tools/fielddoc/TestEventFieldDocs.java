@@ -152,22 +152,22 @@ class TestEventFieldDocs {
         final String text = halves[1];
         // Both halves: the mapping and the values the sample's events got, with which kinds had an element.
         assertThat(source).contains("| `EventSource/System/Name` | The name of the system. | \"Acme VPN\" | "
-                                    + "\"Acme VPN\" |", "| `host`, or \"unknown\" when empty | \"unknown\"<br>"
-                                                        + "\"ws01\" |",
-                "| `user` | \"o'neil\"<br>(logon events only) |", "| `EventSource/Client/IPAddress` | ",
+                                    + "`Acme VPN` |", "| `host`, or \"unknown\" when empty | `unknown`<br>"
+                                                        + "`ws01` |",
+                "| `user` | `o'neil`<br>(logon events only) |", "| `EventSource/Client/IPAddress` | ",
                 "| `ip` (logoff) | (no sample record reaches this rule) |");
         final List<List<String>> rows = text.lines()
                 .filter(l -> l.startsWith("| **"))
                 .map(l -> List.of(l.split(" \\| ", -1)).subList(0, 4))
                 .toList();
         assertThat(rows).containsExactly(
-                List.of("| **logon**<br>`action` = login", "\"Logon\"", "`result`<br>\"fail\"", "1 of 2"),
+                List.of("| **logon**<br>`action` = login", "\"Logon\"", "`result`<br>`fail`", "1 of 2"),
                 // TypeId stays LOGON's.
                 List.of("| **logoff**<br>`action` = logout", "\"Logon\"", "", "0 of 2<br>(not in the sample)"),
-                List.of("| **other**<br>any other record", "`action`<br>\"keepalive\"", "", "1 of 2"));
-        assertThat(text).contains("`Authenticate/Action` <- \"Logon\" = \"Logon\"<br>`Authenticate/User/Id` <- "
-                                  + "`user` = \"o'neil\"<br>`Authenticate/Outcome/Success` <- `result`: ok -> "
-                                  + "true, fail -> false = \"false\"");
+                List.of("| **other**<br>any other record", "`action`<br>`keepalive`", "", "1 of 2"));
+        assertThat(text).contains("`Authenticate/Action` <- \"Logon\" = `Logon`<br>`Authenticate/User/Id` <- "
+                                  + "`user` = `o'neil`<br>`Authenticate/Outcome/Success` <- `result`: ok -> "
+                                  + "true, fail -> false = `false`");
         // An event the mapping did not write is reported, not silently dropped.
         final List<XmlElement> withForeign = new ArrayList<>(events);
         withForeign.add(XmlParser.parse("<Event xmlns=\"event-logging:3\"><EventDetail><TypeId>x</TypeId><View/>"
@@ -183,7 +183,7 @@ class TestEventFieldDocs {
         final String types = byType[1];
         assertThat(common.strip()).startsWith("### Common fields");
         assertThat(common).contains("| `EventSource/System/Name` | The name of the system. | \"Acme VPN\" | "
-                                    + "\"Acme VPN\" |", "| `EventSource/User/Id` | An identifier for the user.");
+                                    + "`Acme VPN` |", "| `EventSource/User/Id` | An identifier for the user.");
         // Written by one event type only (logoff's IP), or differently by each: the event type's own.
         assertThat(common).doesNotContain("EventSource/Client/IPAddress", "EventDetail");
         // logon and logoff write roughly the same fields: one section, both named (asked for by the user).
@@ -196,7 +196,7 @@ class TestEventFieldDocs {
         // Each one's source, where they differ; written by one of them: named.
         assertThat(both).contains("| \"Logon\" (logon)<br>\"Logoff\" (logoff) |", "| `ip` (logoff) | (no sample "
                                                                                   + "record reaches this rule) |",
-                "| `EventDetail/Authenticate/Outcome/Success` |", "| \"false\" |");
+                "| `EventDetail/Authenticate/Outcome/Success` |", "| `false` |");
         assertThat(other).contains("| `EventDetail/Unknown/Data[@Name='action']/@Value` | The `action` value recorded "
                                    + "in a Data element of Unknown. | `action` |");
         // Without a sample: no sample column.
@@ -233,7 +233,7 @@ class TestEventFieldDocs {
                 "| `EventDetail/Authenticate/Data[@Name='client']/Data[@Name='session']/@Value` | ",
                 "| `EventDetail/Authenticate/Data[@Name='client']/Data[@Name='tag']/@Value` | ",
                 "| `EventDetail/Authenticate/Data[@Name='client']/Data[@Name='geo']/Data[@Name='result']/@Value` | ",
-                "| \"s1\" |", "| \"vpn\"<br>\"eu\"<br>(several per event) |", "| \"fail\" |")
+                "| `s1` |", "| `vpn`<br>`eu`<br>(several per event) |", "| `fail` |")
                 .contains("Every record: 2 of the sample's 2 events.")
                 .doesNotContain("not written by a rule", "(not in the sample)", "[@Name='client']/@Value`",
                         NOT_IN_THE_MAPPING);

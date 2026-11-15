@@ -33,6 +33,7 @@ import io.modelcontextprotocol.spec.McpSchema.ErrorCodes;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -396,14 +397,46 @@ class TestMcpElicitations {
     @Test
     void askUsersQuestionsCannotBeAnsweredWhileAnotherRunIsWorking() {
         final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        elicitations.setRunStopWait(Duration.ofMillis(300));
         question();
         assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "ask_user", "c1", "Which feed?", FORM))
                 .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
         Mockito.when(runDao.getActive(CHAT_ID)).thenReturn(Optional.of(run));
 
+        // Running past the wait: another's work, not the run that asked about to stop.
         assertThatThrownBy(() -> elicitations.answer(CHAT_ID, cardFor("c1").getId(), "ACCEPT",
                 Map.of("feed", "ACME")))
                 .hasMessageContaining("no longer waiting");
+    }
+
+    @Test
+    void askUsersQuestionsAnsweredBeforeTheirRunHasStoppedForThemAreTaken() throws Exception {
+        // Seen in TestAskStroomAiWideSampleForms, now and then: the form is stored as the tool call throws, and the
+        // user (the test) answered it before the run had unwound and stopped for it. The answer was refused as "no
+        // longer waiting" and the form cancelled, so the run waited for an answer it could never be given.
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        question();
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "ask_user", "c1", "Which feed?", FORM))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        final AtomicReference<AiChatRun> active = new AtomicReference<>(run);
+        Mockito.when(runDao.getActive(CHAT_ID)).thenAnswer(inv -> Optional.of(active.get()));
+        final CompletableFuture<Void> stops = CompletableFuture.runAsync(() -> {
+            try {
+                Thread.sleep(300);
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            active.set(new AiChatRun(9, CHAT_ID, AiChatRunStatus.WAITING_FOR_USER,
+                    AiChatRunStopReason.NEEDS_ANSWERS, 0L, null, false, null));
+        });
+
+        assertThat(elicitations.answer(CHAT_ID, cardFor("c1").getId(), "ACCEPT", Map.of("feed", "ACME"))).isTrue();
+
+        stops.get(5, TimeUnit.SECONDS);
+        assertThat(JsonUtil.readValue(cardFor("c1").getMessage(), ElicitationRecord.class).status())
+                .isEqualTo(ElicitationRecord.Status.ACCEPTED);
+        assertThat(elicitations.askUser(CHAT_ID, "ask_user", "c1", "Which feed?", FORM).content())
+                .isEqualTo(Map.of("feed", "ACME"));
     }
 
     @Test

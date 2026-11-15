@@ -50,6 +50,22 @@ class TestRecordSplitter {
     }
 
     @Test
+    void controlCharactersXmlDoesNotAllowAreTakenOutAsStroomsParserTakesThemOut() {
+        // Seen: JSON lines holding a raw (unescaped) form feed and NUL inside a string didn't parse, and the survey
+        // called the feed unreadable; Stroom's parser takes them out first, and processed every record.
+        final String text = "{\"a\": \"x\fy\", \"b\": 1}\n{\"a\": \"p\0q\", \"b\": 2}\n"
+                            + "{\"a\": \"z\", \"b\": 3}\n";
+
+        final RecordSplitter.Chunk chunk = RecordSplitter.split(text, 1000, false);
+
+        assertThat(chunk.format()).isEqualTo(RecordSplitter.JSON_LINES);
+        assertThat(chunk.records()).hasSize(3);
+        assertThat(chunk.parsedAt(0)).containsEntry("a", "xy");
+        assertThat(chunk.parsedAt(1)).containsEntry("a", "pq");
+        assertThat(String.join("", chunk.records())).doesNotContain("\f", "\0");
+    }
+
+    @Test
     void jsonLinesWhoseValuesHoldLineSeparatorsAreARecordALine() {
         // Seen in chat 176: Azure audit JSON lines split at a \u2028 in a value, each piece failing to parse.
         final String text = "{\"a\": \"x\u2028y\"}\n{\"a\": \"p\u2029q\u0085r\"}\r\n{\"a\": \"z\"}\n";

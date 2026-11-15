@@ -283,6 +283,29 @@ class TestBuildRecords {
     }
 
     @Test
+    void aSurveyThatReadNothingIsKeptInTheRecordForAnyNodeAndForgottenOnceRead() {
+        // Kept in node memory before, a restart or another node lost it, and classify_kinds waited for a survey
+        // that could never be made.
+        records.rememberUnreadableSurvey(BUILD, "ACME", "stream 7 part 0: could not split records");
+        records.rememberUnreadableSurvey(BUILD, "OTHER", "stream 8 part 0: Stroom couldn't read it");
+        records.rememberUnreadableSurvey(null, "ACME", "no build: nothing kept");
+
+        final BuildRecords another = new BuildWorldReader(world).records();
+        assertThat(another.unreadableSurveys(BUILD)).containsExactly(
+                Map.entry("ACME", "stream 7 part 0: could not split records"),
+                Map.entry("OTHER", "stream 8 part 0: Stroom couldn't read it"));
+        assertThat(world.body(recordUuid())).contains("\"" + BuildRecords.UNREADABLE_SURVEYS + "\"");
+        assertThat(another.unreadableSurveys("another-build")).isEmpty();
+        assertThat(another.unreadableSurveys(null)).isEmpty();
+
+        another.forgetUnreadableSurvey(BUILD, "ACME");
+        assertThat(records.unreadableSurveys(BUILD)).containsOnlyKeys("OTHER");
+        records.forgetUnreadableSurvey(BUILD, "OTHER");
+        assertThat(records.unreadableSurveys(BUILD)).isEmpty();
+        assertThat(world.body(recordUuid())).doesNotContain(BuildRecords.UNREADABLE_SURVEYS);
+    }
+
+    @Test
     void anUnreadableRecordIsAnEmptyOne() {
         assertThat(BuildRecords.parse(null)).isEqualTo(BuildRecords.empty());
         assertThat(BuildRecords.parse("```json build-record\nnot json\n```")).isEqualTo(BuildRecords.empty());

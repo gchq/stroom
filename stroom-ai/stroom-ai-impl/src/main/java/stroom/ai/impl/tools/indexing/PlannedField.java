@@ -49,6 +49,10 @@ import java.util.Set;
 /// @param distinctBy  `distinct_by`: with items, the XPath, from each element, of the key the objects are made
 ///                    distinct by: one object per key, the first element with it, in the order first met (an element
 ///                    without one is left out), e.g. `Id` for each user once by login name. Null for every element.
+/// @param constant    `value`, with type `constant`: the one value every document holds, asked for by the user (e.g.
+///                    the organisation's name). Elasticsearch maps it `constant_keyword` with the value, and the
+///                    indexing XSLT doesn't write it; Lucene indexes it as a keyword the indexing XSLT writes with
+///                    the value in every document. Such a field has no source (empty). Null for any other field.
 public record PlannedField(String name,
                            String type,
                            String source,
@@ -56,17 +60,44 @@ public record PlannedField(String name,
                            String transform,
                            boolean multiple,
                            List<PlannedField> items,
-                           String distinctBy) {
+                           String distinctBy,
+                           String constant) {
 
     /// The transforms a field may have.
     public static final List<String> TRANSFORMS = List.of("outcome");
     /// The type of a field whose values are objects ([#items()]).
     public static final String OBJECT = "object";
+    /// The type of a field holding one value in every document ([#constant()]), only on the user's request.
+    public static final String CONSTANT = "constant";
 
-    /// Fills in the defaults for nulls.
+    /// Fills in the defaults for nulls; a constant field has no source.
     public PlannedField {
         description = Objects.requireNonNullElse(description, "");
         items = List.copyOf(Objects.requireNonNullElse(items, List.of()));
+        if (CONSTANT.equals(type)) {
+            source = "";
+        }
+    }
+
+    /// A field that is not a constant.
+    ///
+    /// @param name        Field name in the index.
+    /// @param type        Its logical type, or `object`.
+    /// @param source      XPath from the Event element.
+    /// @param description What it holds.
+    /// @param transform   Its transform, or null.
+    /// @param multiple    Whether the source can hold several values in one event.
+    /// @param items       The fields of each of its objects, or empty.
+    /// @param distinctBy  The key its objects are made distinct by, or null.
+    public PlannedField(final String name,
+                        final String type,
+                        final String source,
+                        final String description,
+                        final String transform,
+                        final boolean multiple,
+                        final List<PlannedField> items,
+                        final String distinctBy) {
+        this(name, type, source, description, transform, multiple, items, distinctBy, null);
     }
 
     /// A field of values, not objects.
@@ -83,7 +114,17 @@ public record PlannedField(String name,
                         final String description,
                         final String transform,
                         final boolean multiple) {
-        this(name, type, source, description, transform, multiple, List.of(), null);
+        this(name, type, source, description, transform, multiple, List.of(), null, null);
+    }
+
+    /// A field holding one value in every document, asked for by the user.
+    ///
+    /// @param name        Field name in the index.
+    /// @param value       The value every document holds.
+    /// @param description What it holds.
+    /// @return The field, of type `constant` with no source.
+    public static PlannedField constant(final String name, final String value, final String description) {
+        return new PlannedField(name, CONSTANT, "", description, null, false, List.of(), null, value);
     }
 
     /// @param name   Field name in the index.
@@ -114,20 +155,36 @@ public record PlannedField(String name,
         if (fields == null) {
             return null;
         }
-        // object only as given: any other type is one of the logical types, refused in the established words,
-        // which list the logical types alone.
-        final List<String> types = OBJECT.equals(fields.input().get("type"))
-                ? List.of(OBJECT)
+        // object and constant only as given: any other type is one of the logical types, refused in the
+        // established words, which list the logical types alone.
+        final Object given = fields.input().get("type");
+        final boolean constant = CONSTANT.equals(given);
+        final List<String> types = OBJECT.equals(given) || constant
+                ? List.of(String.valueOf(given))
                 : FieldPlans.LOGICAL_TYPES;
         final PlannedField field = new PlannedField(
                 fields.requiredString("name"),
                 fields.requiredLiteral("type", types),
-                fields.requiredString("source"),
+                constant
+                        ? fields.string("source", "")
+                        : fields.requiredString("source"),
                 fields.string("description", ""),
                 fields.optionalLiteral("transform", TRANSFORMS),
                 fields.bool("multiple", false),
                 fields.models("items", (value, at) -> read(reader, value, at)),
-                fields.optionalString("distinct_by"));
+                fields.optionalString("distinct_by"),
+                constant
+                        ? fields.requiredString("value")
+                        : null);
+        if (fields.ok() && constant) {
+            final String wrong = constantProblem(fields.input(), field);
+            if (wrong != null) {
+                fields.valueError(wrong);
+            }
+        } else if (fields.ok() && fields.has("value")) {
+            fields.valueError("value is for a field of type constant (one value in every document), not "
+                              + field.type());
+        }
         if (fields.ok()) {
             final String wrong = objectProblem(field);
             if (wrong != null) {
@@ -137,6 +194,21 @@ public record PlannedField(String name,
         return fields.ok()
                 ? field
                 : null;
+    }
+
+    // What is wrong with a constant field, or null: it holds its value, read from nowhere.
+    private static String constantProblem(final Map<String, Object> input, final PlannedField field) {
+        if (!JsonValues.truthy(field.constant())) {
+            return "a field of type constant needs its value: the one value every document holds";
+        }
+        if (JsonValues.truthy(input.get("source"))) {
+            return "a field of type constant holds its value in every document, read from nowhere: leave out its "
+                   + "source";
+        }
+        if (field.transform() != null || field.multiple() || !field.items().isEmpty()) {
+            return "a field of type constant is one value: no transform, multiple or items";
+        }
+        return null;
     }
 
     // What is wrong with a field's items, type and key together, or null.
@@ -166,6 +238,10 @@ public record PlannedField(String name,
         json.put("name", name);
         json.put("type", type);
         json.put("source", source);
+        // Only for a constant: a plan without any is kept as it always has been.
+        if (constant != null) {
+            json.put("value", constant);
+        }
         json.put("description", description);
         json.put("transform", transform);
         json.put("multiple", multiple);
@@ -182,6 +258,11 @@ public record PlannedField(String name,
     /// @return True if its values are objects ([#items()]).
     public boolean isObjects() {
         return !items.isEmpty();
+    }
+
+    /// @return True for a field holding one value in every document ([#constant()]).
+    public boolean isConstant() {
+        return CONSTANT.equals(type);
     }
 
     /// Each item as a field of the index on its own, as an index template maps it and a search reads it: its name
@@ -216,12 +297,12 @@ public record PlannedField(String name,
     /// @param multiple Whether the source can hold several values in one event.
     /// @return This field, marked so.
     public PlannedField withMultiple(final boolean multiple) {
-        return new PlannedField(name, type, source, description, transform, multiple, items, distinctBy);
+        return new PlannedField(name, type, source, description, transform, multiple, items, distinctBy, constant);
     }
 
     /// @param name A new name.
     /// @return This field, under that name.
     public PlannedField withName(final String name) {
-        return new PlannedField(name, type, source, description, transform, multiple, items, distinctBy);
+        return new PlannedField(name, type, source, description, transform, multiple, items, distinctBy, constant);
     }
 }

@@ -111,6 +111,9 @@ public class BuildRecords {
     /// The record's key for the kind of work the build was started as, when it was named: `events`, `discovery`,
     /// `reference` or `assessment` (a feed surveyed and its source types registered, nothing onboarded).
     public static final String KIND = "kind";
+    /// The record's key for the feeds whose survey for the build read nothing, each with why (classify_kinds then
+    /// goes on without the survey, saying so).
+    public static final String UNREADABLE_SURVEYS = "unreadable_surveys";
     // The EventSource/System/Name and Environment the user gave for the build's translation.
     private static final String SYSTEM = "system";
     /// The kinds of work a build may be started as.
@@ -404,6 +407,64 @@ public class BuildRecords {
     public Map<String, Object> rememberKind(final String build, final String kind) {
         final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
         return save(build, found.orElse(null), state -> state.put(KIND, kind));
+    }
+
+    /// @param build A build's name, or null.
+    /// @return Each feed whose survey for the build was refused because nothing in its streams could be read, with
+    /// why; empty when none was (or `build` is null).
+    public Map<String, String> unreadableSurveys(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Map.of();
+        }
+        final Map<String, String> out = new LinkedHashMap<>();
+        if (load(build).get(UNREADABLE_SURVEYS) instanceof final Map<?, ?> kept) {
+            kept.forEach((feed, why) -> out.put(String.valueOf(feed), String.valueOf(why)));
+        }
+        return out;
+    }
+
+    /// Records that the build's survey of a feed was refused because nothing in its streams could be read, so
+    /// classify_kinds, which otherwise waits for the survey, can go on (saying why there was none), whichever node or
+    /// session calls it, and after a restart.
+    ///
+    /// @param build A build's name, or null (nothing is recorded).
+    /// @param feed  The feed surveyed.
+    /// @param why   Why nothing could be read.
+    public void rememberUnreadableSurvey(final String build, final String feed, final String why) {
+        if (NullSafe.isBlankString(build) || NullSafe.isBlankString(feed)) {
+            return;
+        }
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        save(build, found.orElse(null), state -> {
+            final Map<String, Object> kept = state.get(UNREADABLE_SURVEYS) instanceof final Map<?, ?> earlier
+                    ? new LinkedHashMap<>(asMap(earlier))
+                    : new LinkedHashMap<>();
+            kept.put(feed, why);
+            state.put(UNREADABLE_SURVEYS, kept);
+        });
+    }
+
+    /// Forgets that the build's survey of a feed read nothing, once a survey of it reads something: the build then
+    /// has its survey. The record is written only when it held such a note.
+    ///
+    /// @param build A build's name, or null (nothing is changed).
+    /// @param feed  The feed surveyed.
+    public void forgetUnreadableSurvey(final String build, final String feed) {
+        if (NullSafe.isBlankString(build) || !unreadableSurveys(build).containsKey(feed)) {
+            return;
+        }
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        save(build, found.orElse(null), state -> {
+            final Map<String, Object> kept = state.get(UNREADABLE_SURVEYS) instanceof final Map<?, ?> earlier
+                    ? new LinkedHashMap<>(asMap(earlier))
+                    : new LinkedHashMap<>();
+            kept.remove(feed);
+            if (kept.isEmpty()) {
+                state.remove(UNREADABLE_SURVEYS);
+            } else {
+                state.put(UNREADABLE_SURVEYS, kept);
+            }
+        });
     }
 
     /// Drops documents' entries (promoted out of the build); the record goes once it holds nothing.

@@ -163,13 +163,17 @@ class TestE2eMetaSourceTypes extends AbstractE2eTest {
             for (final long id : ids(each, "events")) {
                 events += TestE2eSourceTypeGroups.count(streamText(id), "<Event>");
             }
-            final String logged = streamText(ids(each, "errors").getFirst());
+            final List<Long> errors = ids(each, "errors");
+            final String logged = errors.isEmpty()
+                    ? ""
+                    : streamText(errors.getFirst());
             passed += TestE2eSourceTypeGroups.passedOver(logged);
             assertThat(logged.lines().filter(line -> line.contains("WARN") || line.contains("ERROR"))).isEmpty();
         }
-        // Each controller's record an Event; every other part's passed over whole, counted.
+        // Each controller's record an Event; every other part's passed over whole, nothing logged of them
+        // (review_coverage counts them from the raw streams' parts' meta).
         assertThat(events).isEqualTo(directoryRecords);
-        assertThat(passed).isEqualTo(otherRecords);
+        assertThat(passed).isZero();
 
         final Map<String, Object> review = json("review_coverage", args("pipeline_uuid", pipeline, "follow_on",
                 false));

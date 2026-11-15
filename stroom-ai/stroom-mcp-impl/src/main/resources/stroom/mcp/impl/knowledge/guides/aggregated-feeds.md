@@ -123,17 +123,18 @@ A user who doesn't want a pipeline per group treats the feed as a normal source:
 ## Stepping, processing and coverage
 
 * Step and process a group's pipeline as any events pipeline: records of other source types give no Event and are
-  not faults. Stepping counts them apart (`records_passed_over`, by source type), never in `records_with_errors`.
+  not faults. Stepping tells them by the registry's rows, as the group's XSLT does, and counts them apart
+  (`records_passed_over`, by source type), never in `records_with_errors`.
   Check a group's translation with values of its own source types' records: the survey's shapes and locations say
   their `source_types`. An unsaved group's code is stepped as `draft_code` for its pipeline's XSLT element, as any
   translation's.
-* Processing logs, once a document, `Passed over N record(s) not of this group's source types` (INFO): the other
-  groups', parked, dropped and new source types alike, never warned of. These are counts, not errors: don't fix
-  them.
+* Processing logs nothing of them (the other groups', parked, dropped and new source types alike), so a group's
+  pipeline writes no Error stream for them. An older group XSLT's `Passed over N record(s) not of this group's
+  source types` (INFO) is a count, not an error: don't fix it.
 * `review_coverage` on a group's pipeline judges the kinds missed against the group's source types: a kind of
   another group's source type is left to that group's pipeline (`other_groups`), never missed; others outside the
-  group are `passed_over`. `source_types.processing.passed_over` sums the group's lines over the documents and
-  streams read. A value no row matches, met in a kind missed, goes into the build's registry as `new`; a group's
+  group are `passed_over`. `source_types.processing.passed_over` counts the records of other source types in the
+  raw streams the pipeline processed (`records`, `raw_streams`), told by the registry's rows. A value no row matches, met in a kind missed, goes into the build's registry as `new`; a group's
   pipeline never adds one from processing. Tell the user: a later build on the feed offers the parked and new source
   types.
 

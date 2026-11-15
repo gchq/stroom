@@ -175,12 +175,13 @@ final class EvalScore {
     /// - `rows`: rows the registry must have, each by its `match` (`value`, `pattern` or `member`) and `value`
     ///   (the value, the anchored pattern or the list's item), and its `status` if given.
     /// - `groups`: the registry's source type groups, exactly (the groups its rows name, any order).
-    /// - `passed_over`: the records the group's pipeline passed over, as its INFO lines count them, with no ERROR or
-    ///   FATAL line logged: the other source types' records are not errors, nor worked round.
+    /// - `passed_over`: the records the group's pipeline passed over, told as the tools tell them (the registry's
+    ///   field and rows over the raw records: those of source types outside the group), with no ERROR or FATAL line
+    ///   logged: the other source types' records are not errors, nor worked round.
     ///
     /// @param evalCase    The case.
     /// @param registry    The build's registry, as [SourceTypeRegistry#read] reads it, or null for none.
-    /// @param passedOver  The records the group's pipeline logged as passed over, or null if it processed nothing.
+    /// @param passedOver  The records the group's pipeline passed over, or null if it processed nothing.
     /// @param errorLines  The ERROR and FATAL lines it logged.
     void scoreSourceTypes(final Map<String, Object> evalCase,
                           final Map<String, Object> registry,

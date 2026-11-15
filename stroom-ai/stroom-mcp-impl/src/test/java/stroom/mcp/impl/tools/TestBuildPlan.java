@@ -424,10 +424,10 @@ class TestBuildPlan {
         facts.docs.add(FakeBuildFacts.doc("Documentation", "s", "ACME" + StroomBuildFacts.SURVEY));
         assertThat(states(plan.status("b", null)).get("surveyed")).isEqualTo("done");
         facts.docs.removeLast();
-        final BuildMemory memory = new BuildMemory();
-        memory.surveyUnreadable("b", "ACME", "stream 7: nothing could be split");
-        assertThat(states(new BuildPlan(facts, world.guard(), consent, memory).status("b", null)).get("surveyed"))
-                .isEqualTo("done");
+        // Read from the build's record, so a restart or another node sees it.
+        facts.unreadableSurveys.put("ACME", "stream 7: nothing could be split");
+        assertThat(states(plan.status("b", null)).get("surveyed")).isEqualTo("done");
+        facts.unreadableSurveys.clear();
 
         // A build whose translation is written already has no need of it, as of the classify step.
         facts.docs = List.of(FakeBuildFacts.doc("Feed", "f", "ACME"), FakeBuildFacts.doc("XSLT", "x", "ACME-T"));

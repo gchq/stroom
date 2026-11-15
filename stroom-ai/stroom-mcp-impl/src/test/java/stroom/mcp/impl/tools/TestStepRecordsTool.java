@@ -193,6 +193,21 @@ class TestStepRecordsTool {
                 .containsEntry("errors", 0);
     }
 
+    @Test
+    void aRecordsContextIsSteppedInPlaceOfItsDataWhenAsked() {
+        // A context loader's record writes a reference, not an Event: no "produced no Event" warning.
+        world.stepper = (stream, at) -> SteppingWorld.step(stream, 0, at.getRecordIndex(), "<referenceData "
+                + "xmlns=\"reference-data:2\"><reference><map>ctx</map><key>k</key><value>v</value></reference>"
+                + "</referenceData>");
+
+        final Map<String, Object> result = stepRecords("{\"pipeline_uuid\": \"p-1\", \"child_type\": "
+                                                       + "\"Context\", \"locations\": [{\"stream\": 7, "
+                                                       + "\"record\": 0}]}");
+
+        assertThat(world.openedChildTypes).containsExactly("Context");
+        assertThat(List.of(result.get("records_with_errors"), result.get("verdict"))).containsExactly(0, "clean");
+    }
+
     @SuppressWarnings("unchecked")
     private static List<Map<String, Object>> records(final Map<String, Object> result) {
         return (List<Map<String, Object>>) result.get("records");

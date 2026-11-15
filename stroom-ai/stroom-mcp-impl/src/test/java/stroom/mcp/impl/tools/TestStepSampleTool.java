@@ -426,6 +426,24 @@ class TestStepSampleTool {
     }
 
     @Test
+    void aStreamsContextIsSteppedInPlaceOfItsDataWhenAsked() {
+        // A context loader pipeline reads each part's Context child, as Stroom loads it: stepped through Stroom's
+        // stepping of that child stream.
+        world.stepper = (stream, at) -> at.getRecordIndex() == 0
+                ? SteppingWorld.step(stream, 0, 0, AN_EVENT)
+                : null;
+
+        stepSample("{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7], \"child_type\": \"context\"}");
+        stepSample("{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7]}");
+
+        assertThat(world.openedChildTypes).containsExactly("Context", "data");
+        final ToolResult refused = call("{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7], \"child_type\": "
+                                        + "\"Meta\"}", world.context());
+        assertThat(refused.isError()).isTrue();
+        assertThat(refused.text()).contains("child_type 'Meta' can't be stepped", "Context");
+    }
+
+    @Test
     void recordsAGroupsPipelinePassesOverAreNotErrorsAndAreCountedBySourceType() {
         // Seen in chat 177 (Azure audit, group M365 Messaging): 304 of 500 records "with errors", 238 of them only
         // the group's pass-over line for SharePoint and other workloads; the agent had to explain them away.
@@ -451,9 +469,11 @@ class TestStepSampleTool {
 
     @Test
     void aGroupsPipelinePassingOverEveryRecordIsNotCleanButSaysWhy() {
-        // Nothing the group translates was stepped: not the "no record produced an Event" of a namespace fault.
+        // Nothing the group translates was stepped: not the "no record produced an Event" of a namespace fault. An
+        // XSLT generated before 2026-11-15 logs a line of them, which still tells them with no group mapping kept.
         world.stepper = (stream, at) -> at.getRecordIndex() < 2
-                ? SteppingWorld.passedOver(stream, 0, at.getRecordIndex(), SteppingWorld.azureRecord("SharePoint"))
+                ? SteppingWorld.passedOverLogged(stream, 0, at.getRecordIndex(),
+                SteppingWorld.azureRecord("SharePoint"))
                 : null;
 
         final Map<String, Object> result = stepSample("{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7]}");

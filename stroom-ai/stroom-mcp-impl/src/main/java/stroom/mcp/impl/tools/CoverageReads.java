@@ -80,7 +80,8 @@ class CoverageReads {
             "(?:No event mapping matched record |Kept as Unknown by rule '(.*)': record "
             + "|Caught by rule '(.*)': record )(\\d+)(?: \\((.*)\\))?\\s*$");
     private static final Pattern DATA_NAME = Pattern.compile("Data\\[@Name='([^']+)'\\]");
-    // A source type group's INFO line of the records it passed over in a document (XsltGenerator.PASSED_OVER).
+    // The INFO line of the records it passed over in a document an older source type group XSLT logged
+    // (XsltGenerator.PASSED_OVER).
     private static final Pattern PASSED_OVER_LINE = Pattern.compile(Pattern.quote(XsltGenerator.PASSED_OVER)
                                                                     + "(\\d+)"
                                                                     + Pattern.quote(XsltGenerator.PASSED_OVER_END));
@@ -415,6 +416,39 @@ class CoverageReads {
         return List.copyOf(out);
     }
 
+    /// The raw streams the pipeline processed into the Events streams it wrote with an Id in a range: a review's
+    /// range of Error stream Ids (after the last call's, up to this one's last), so each Events stream falls in one
+    /// call's range only.
+    ///
+    /// @param pipeline The pipeline.
+    /// @param after    The Id the range starts after.
+    /// @param upTo     The last Id in the range, or null for no end.
+    /// @param limit    The most raw streams.
+    /// @return The raw streams (each once), oldest first, and whether there were more than the limit.
+    ProcessedRaws processedRaws(final DocRef pipeline, final long after, final Long upTo, final int limit) {
+        final ExpressionOperator.Builder expression = ExpressionOperator.builder().op(Op.AND)
+                .addDocRefTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipeline)
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.EVENTS)
+                .addIdTerm(MetaFields.ID, Condition.GREATER_THAN, after);
+        if (upTo != null) {
+            expression.addIdTerm(MetaFields.ID, Condition.LESS_THAN_OR_EQUAL_TO, upTo);
+        }
+        final Set<Long> raws = new TreeSet<>();
+        boolean more = false;
+        for (final MetaRow row : rows(streamReader.find(expression.build(), limit + 1, false))) {
+            final Meta meta = row.getMeta();
+            if (meta.getStatus() == Status.DELETED || meta.getParentMetaId() == null) {
+                continue;
+            }
+            if (raws.size() >= limit && !raws.contains(meta.getParentMetaId())) {
+                more = true;
+                break;
+            }
+            raws.add(meta.getParentMetaId());
+        }
+        return new ProcessedRaws(List.copyOf(raws), more);
+    }
+
     /// The newest streams of a type on a feed.
     ///
     /// @param feed  The feed's name.
@@ -515,8 +549,8 @@ class CoverageReads {
     /// @param read    How many of the Error streams were gone through.
     /// @param capped  The raw streams whose Error stream held as many log lines of a severity as Stroom writes
     ///                ([#MAX_WRITTEN_MARKERS]): their counts are short.
-    /// @param sourceTypes What the XSLT logged of an aggregated feed's source types in them: a group's records passed
-    ///                    over, and a whole translation's values its survey didn't see.
+    /// @param sourceTypes What the XSLT logged of an aggregated feed's source types in them: a whole translation's
+    ///                    values its survey didn't see.
     record LoggedRecords(List<Logged> records, int read, List<Long> capped, SourceTypeLines sourceTypes) {
 
         /// Records logged, none of their Error streams capped.
@@ -535,6 +569,14 @@ class CoverageReads {
         LoggedRecords(final List<Logged> records, final int read, final List<Long> capped) {
             this(records, read, capped, new SourceTypeLines());
         }
+    }
+
+    /// The raw streams a pipeline processed, in a review's range.
+    ///
+    /// @param raws The raw streams, oldest first.
+    /// @param more True if there were more than were asked for.
+    record ProcessedRaws(List<Long> raws, boolean more) {
+
     }
 
     /// A kind of Unknown event: its TypeId and the names of the Data it carries.
@@ -556,14 +598,14 @@ class CoverageReads {
 
     }
 
-    /// What a pipeline's XSLT logged of an aggregated feed's source types in the Error streams read: a source type
-    /// group's records passed over (its one line a document, summed over the documents and streams read), and a whole
+    /// What a pipeline's XSLT logged of an aggregated feed's source types in the Error streams read: a whole
     /// translation's values of the source type field its survey didn't see, each with the raw streams it was met in.
+    /// A source type group's records passed over are told from the raw streams instead
+    /// ([SourceTypeCoverage]); the line older group XSLTs logged of them ([XsltGenerator#PASSED_OVER]) is
+    /// taken as one of these and not counted.
     static final class SourceTypeLines {
 
-        private final Set<Long> passedOverStreams = new TreeSet<>();
         private final Map<String, Set<Long>> unseen = new LinkedHashMap<>();
-        private long passedOver;
         private String field;
 
         /// Reads one log line, if it is one of these; other lines are left alone.
@@ -573,12 +615,8 @@ class CoverageReads {
         /// @return True if it was one of these lines.
         boolean add(final Long raw, final String message) {
             final String text = NullSafe.string(message);
-            final Matcher passed = PASSED_OVER_LINE.matcher(text);
-            if (passed.find()) {
-                passedOver += Long.parseLong(passed.group(1));
-                if (raw != null) {
-                    passedOverStreams.add(raw);
-                }
+            if (PASSED_OVER_LINE.matcher(text).find()) {
+                // An older group XSLT's count: the records passed over are told from the raw streams.
                 return true;
             }
             final Matcher found = UNSEEN_LINE.matcher(text);
@@ -591,16 +629,6 @@ class CoverageReads {
                 return true;
             }
             return false;
-        }
-
-        /// @return The records a source type group passed over, summed over the documents and streams read.
-        long passedOver() {
-            return passedOver;
-        }
-
-        /// @return The raw streams whose Error streams said records were passed over.
-        Set<Long> passedOverStreams() {
-            return Collections.unmodifiableSet(passedOverStreams);
         }
 
         /// @return Each value a whole translation's survey didn't see, with up to [#UNSEEN_SOURCE_TYPE_STREAMS] raw
@@ -616,12 +644,12 @@ class CoverageReads {
 
         /// @return True if no such line was read.
         boolean isEmpty() {
-            return passedOverStreams.isEmpty() && passedOver == 0 && unseen.isEmpty();
+            return unseen.isEmpty();
         }
 
         /// @return The raw streams the lines were logged for.
         Set<Long> rawStreams() {
-            final Set<Long> out = new TreeSet<>(passedOverStreams);
+            final Set<Long> out = new TreeSet<>();
             unseen.values().forEach(out::addAll);
             return out;
         }

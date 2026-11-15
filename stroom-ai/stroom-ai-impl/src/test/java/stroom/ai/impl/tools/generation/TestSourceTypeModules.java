@@ -89,7 +89,7 @@ class TestSourceTypeModules extends XsltRuns {
         assertThat(invalid(events, XSD)).isEmpty();
         final List<XmlElement> written = children(events, "Event");
         // Its own source type's records only; the other six (another group's, parked, a value no row matches)
-        // passed over, counted once in one line, never warned of.
+        // passed over, never logged nor warned of.
         assertThat(written).hasSize(2);
         final XmlElement login = written.getFirst();
         // The rule mapping its own time writes its own; the common module's System written with the group's name.
@@ -99,8 +99,9 @@ class TestSourceTypeModules extends XsltRuns {
         assertThat(text(login, "EventSource/Device/HostName")).isEqualTo("app01");
         assertThat(text(login, "EventDetail/Authenticate/User/Id")).isEqualTo("bob");
         assertThat(text(written.get(1), "EventTime/TimeCreated")).isEqualTo("2026-11-10T00:00:02.000Z");
-        assertThat(logged).filteredOn(line -> line.contains(XsltGenerator.PASSED_OVER))
-                .containsExactly(passedOver(6));
+        // Nothing logged of them: a line a document made Stroom write an Error stream for every raw stream each
+        // group processed (the tools tell them from the registry).
+        assertThat(logged).noneSatisfy(line -> assertThat(line).contains(XsltGenerator.PASSED_OVER));
         assertThat(logged).noneSatisfy(line -> assertThat(line).startsWith("WARN"));
         // The wrapper's fields the common module reads, and the source type field the group reads, are no unread
         // fields.
@@ -122,7 +123,7 @@ class TestSourceTypeModules extends XsltRuns {
         assertThat(XmlSerialiser.toXml(written.get(1))).doesNotContain("c-1");
         assertThat(logged).anySatisfy(line -> assertThat(line).startsWith("WARN pega_integration: soap"
                                                                          + XsltGenerator.NOT_PARSED + "XML"));
-        assertThat(logged).contains(passedOver(6));
+        assertThat(logged).noneSatisfy(line -> assertThat(line).contains(XsltGenerator.PASSED_OVER));
     }
 
     @Test
@@ -141,7 +142,7 @@ class TestSourceTypeModules extends XsltRuns {
         assertThat(children(events, "Event")).singleElement()
                 .satisfies(event -> assertThat(text(event, "EventTime/TimeCreated"))
                         .isEqualTo("2026-11-10T00:00:06.500Z"));
-        assertThat(logged).contains(passedOver(7));
+        assertThat(logged).noneSatisfy(line -> assertThat(line).contains(XsltGenerator.PASSED_OVER));
         assertThat(SourceTypeRows.first(ROWS.stream().map(row -> new SourceTypeRows.Row(row.name(), row.match(),
                 row.value())).toList(), "Mail/audit/a.log")).hasValueSatisfying(row -> assertThat(row.name())
                 .isEqualTo("MailAudit"));
@@ -172,7 +173,7 @@ class TestSourceTypeModules extends XsltRuns {
                 xml.append("</map>").toString(), modules.imports(), logged);
 
         assertThat(children(events, "Event")).hasSize(3);
-        assertThat(logged).contains(passedOver(5));
+        assertThat(logged).noneSatisfy(line -> assertThat(line).contains(XsltGenerator.PASSED_OVER));
     }
 
     @Test
@@ -365,14 +366,13 @@ class TestSourceTypeModules extends XsltRuns {
         assertThat(invalid(own, XSD)).isEmpty();
         assertThat(children(own, "Event")).hasSize(8);
         assertThat(ownLog).noneSatisfy(line -> assertThat(line).contains(XsltGenerator.PASSED_OVER));
-        // Another server's part, and a part without the attribute: passed over whole, counted.
+        // Another server's part, and a part without the attribute: passed over whole, nothing logged.
         for (final Map<String, String> other : List.of(Map.of("ServedRoles", "DNS Server, File Server"),
                 Map.<String, String>of())) {
             final List<String> logged = new ArrayList<>();
             final XmlElement passed = transform(generated.xslt(), records(), modules.imports(), logged, other);
             assertThat(children(passed, "Event")).isEmpty();
-            assertThat(logged).filteredOn(line -> line.contains(XsltGenerator.PASSED_OVER))
-                    .containsExactly(passedOver(8));
+            assertThat(logged).noneSatisfy(line -> assertThat(line).contains(XsltGenerator.PASSED_OVER));
         }
 
         // The same rows on a record's field: each record judged, a record passed over by the template that reads
@@ -408,7 +408,7 @@ class TestSourceTypeModules extends XsltRuns {
                 xml.append("</map>").toString(), modules.imports(), logged);
 
         assertThat(children(events, "Event")).hasSize((int) expected);
-        assertThat(logged).contains(passedOver(values.size() - (int) expected));
+        assertThat(logged).noneSatisfy(line -> assertThat(line).contains(XsltGenerator.PASSED_OVER));
     }
 
     @Test
@@ -420,10 +420,6 @@ class TestSourceTypeModules extends XsltRuns {
     }
 
     // --- the feed's modules ---
-
-    private static String passedOver(final int count) {
-        return "INFO " + XsltGenerator.PASSED_OVER + count + XsltGenerator.PASSED_OVER_END;
-    }
 
     private static Modules modules() {
         final TranslationMapping common = commonMapping();

@@ -37,6 +37,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -373,6 +374,15 @@ class TestE2eLuceneIndexing extends AbstractE2eTest {
                 .findFirst()
                 .orElseThrow();
         documentedToTheField(uuidOf(written), fieldNames(plan), Map.of(userField, "alice"));
+
+        // One field named as the user names it (loosely), over /mcp as any client calls describe_data_source: its
+        // source from the plan kept with the pipeline, its description and sample values from the documentation.
+        final String described = replyText("describe_data_source", Map.of("data_source", uuidOf(index),
+                "field", userField.replaceAll("(?<=[a-z])(?=[A-Z])", " ").toLowerCase(Locale.ROOT)));
+        dump("describe_data_source field=", described);
+        assertThat(described).contains("Field: " + userField + " (", "- source: " + SOURCE_USER
+                                                                     + " (the index plan kept with pipeline",
+                "- description: ", "- sample values: ", "`alice`").doesNotContain("Fields (");
         return new Indexed(events, template, index, pipeline, plan);
     }
 

@@ -35,6 +35,7 @@ import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.EventFieldDocs;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.fielddoc.IndexFieldDocs;
+import stroom.ai.impl.tools.fielddoc.MarkdownHtml;
 import stroom.ai.impl.tools.fielddoc.WrittenEventDocs;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.SharedTemplate;
@@ -416,9 +417,10 @@ class FieldMappingSections {
         final String feed = name.endsWith(SourceTypeGroups.COMMON_SUFFIX)
                 ? name.substring(0, name.length() - SourceTypeGroups.COMMON_SUFFIX.length())
                 : null;
-        return "This pipeline's XSLT is source type group " + module.name() + "'s (" + String.join(", ",
-                module.sourceTypes()) + "): it translates those source types' records and passes over the feed's "
-               + "others, counting them. What becomes of every source type is in the feed's registry" + (feed == null
+        return "This pipeline's XSLT is source type group " + MarkdownHtml.text(module.name()) + "'s ("
+               + MarkdownHtml.text(String.join(", ", module.sourceTypes())) + "): it translates those source types' "
+               + "records and passes over the feed's others, counting them. What becomes of every source type is in "
+               + "the feed's registry" + (feed == null
                 ? ""
                 : ", '" + SourceTypeRegistry.docName(feed) + "'") + ".\n\n";
     }

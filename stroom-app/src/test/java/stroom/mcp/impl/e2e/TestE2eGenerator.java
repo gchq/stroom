@@ -192,11 +192,11 @@ class TestE2eGenerator extends AbstractE2eTest {
                                     || field.equals(document + "Data[@Name='link']/@Value")
                                     || field.equals(document + "Data[@Name='mentions']/@Value"));
         assertThat(rows.get(document + "Data[@Name='mentions']/Data[@Name='mention']/@Value").getLast())
-                .contains("\"tim\"", "\"bob\"");
+                .contains("`tim`", "`bob`");
         assertThat(rows.get(document + "Data[@Name='links']/Data[@Name='link']/@Value").getLast())
-                .contains("\"https://t.co/a\"");
+                .contains("`https://t.co/a`");
         assertThat(rows.get(document + "Data[@Name='client']/Data[@Name='geo']/Data[@Name='city']/@Value")
-                .getLast()).contains("\"Leeds\"");
+                .getLast()).contains("`Leeds`");
         assertThat(section).doesNotContain("not written by a rule", "(not in the sample)");
     }
 
@@ -269,7 +269,7 @@ class TestE2eGenerator extends AbstractE2eTest {
                 .split("## Field mapping", 2)[1].split("\n## ", 2)[0]);
         assertThat(rows).hasEntrySatisfying("EventDetail/TypeId", cells -> assertThat(String.join(" | ", cells))
                 .contains("`category`, `action` joined with '-'")
-                .contains("\"User-Login\"", "\"User-Logout\""));
+                .contains("`User-Login`", "`User-Logout`"));
     }
 
     // Each record's Events, each checked valid against the schema and passing the quality checks.

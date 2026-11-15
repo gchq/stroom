@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -56,7 +57,9 @@ import java.util.TreeMap;
 /// * A source type group's pipeline (its XSLT's kept mapping a group's) is judged against the group's source types:
 ///   a kind of a source type another group translates (the registry's `translated` rows of another group) is left
 ///   to that group's pipeline (`other_groups`), never missed; one of any other source type outside the group is
-///   passed over. The group's own line a document of records passed over is summed over the Error streams read.
+///   passed over. The records it passed over in processing are told from the raw streams it processed in the
+///   review's range: each record of a source type outside the group (by the rows, the first match winning; a part's
+///   meta for a `meta:` field), which the group's XSLT writes no Event for and logs nothing of.
 /// * A whole translation is judged against the build's scope, where it has one; a kind of a source type a group
 ///   translates is left to that group's pipeline as above. Its lines of values of the source type field its survey
 ///   didn't see are reported (`unseen_source_types`), a prompt to survey the feed again: nothing is written for them.
@@ -73,6 +76,11 @@ class SourceTypeCoverage {
     static final int MAX_KINDS = 60;
     /// Who decides a row review_coverage adds.
     static final String BY = "review_coverage";
+    /// The most raw streams read in one call to tell the records a group's pipeline passed over in processing.
+    static final int MAX_PROCESSED_RAWS = 50;
+    /// The most characters of a raw stream's part read to count its records passed over: far past a sample's, as
+    /// processing read every record (seen in e2e: a sample's 1,000,000 characters counted 717 of 818).
+    static final int MAX_COUNTED_CHARS = 64_000_000;
     // More records than any raw stream's text read holds: the text is split whole.
     private static final int SPLIT_ALL = 10_000_000;
 
@@ -104,13 +112,16 @@ class SourceTypeCoverage {
     ///                 or null when it keeps none.
     /// @param groups   The kinds found (each `examples` with `raw_stream` and `record`), changed in place: each
     ///                 told's `source_type` set.
-    /// @param lines    What the pipeline's XSLT logged of the source types in the Error streams read.
+    /// @param lines     What the pipeline's XSLT logged of the source types in the Error streams read.
+    /// @param processed The raw streams the pipeline processed in the review's range, for a group's records passed
+    ///                  over; none for a whole translation.
     /// @return The judgement; empty for a feed with no source type field (or one that can't be told).
     Optional<Judged> judge(final ToolSession session,
                            final DocRef pipeline,
                            final TranslationMapping mapping,
                            final List<Map<String, Object>> groups,
-                           final CoverageReads.SourceTypeLines lines) {
+                           final CoverageReads.SourceTypeLines lines,
+                           final CoverageReads.ProcessedRaws processed) {
         final String build = buildOf(pipeline);
         final Map<String, Object> survey = sourceTypesSurvey(build);
         final SourceTypeModule module = mapping != null && mapping.module() != null && mapping.module().isGroup()
@@ -121,7 +132,7 @@ class SourceTypeCoverage {
                 : mapping.seenSourceTypes();
         final String feed = survey != null
                 ? JsonValues.text(survey.get("feed"))
-                : feedOf(groups, lines);
+                : feedOf(groups, lines, processed);
         if (feed == null || feed.isBlank()) {
             return Optional.empty();
         }
@@ -207,8 +218,9 @@ class SourceTypeCoverage {
                     group.get("translated_by")));
             said.put("other_groups", byType);
         }
-        if (module != null || lines.passedOver() > 0) {
-            said.put("processing", processing(lines));
+        if (module != null) {
+            said.put("processing", processing(new SourceTypeScope(build, field, rows, module.sourceTypes()),
+                    processed, attributes));
         }
         if (!lines.unseen().isEmpty()) {
             said.put("unseen_source_types", unseen(lines));
@@ -278,12 +290,95 @@ class SourceTypeCoverage {
         return out;
     }
 
-    // What a group's pipeline logged in processing: the records it passed over (any other source type's, or none's),
-    // summed over the documents and streams read, and the raw streams it said so for.
-    private static Map<String, Object> processing(final CoverageReads.SourceTypeLines lines) {
+    // What a group's pipeline passed over in processing: the records of the raw streams it processed in the
+    // review's range whose source type isn't one of the group's (any other source type's, or none's), told by the
+    // rows as its XSLT tells them, and the raw streams holding any.
+    private Map<String, Object> processing(final SourceTypeScope group,
+                                           final CoverageReads.ProcessedRaws processed,
+                                           final PartAttributes attributes) {
+        final List<Long> raws = processed == null
+                ? List.of()
+                : processed.raws();
+        long records = 0;
+        final Set<Long> streams = new LinkedHashSet<>();
+        final Map<String, Integer> bySourceType = new TreeMap<>();
+        final List<String> notes = new ArrayList<>();
+        final List<Long> notRead = new ArrayList<>();
+        final Set<Long> cut = new LinkedHashSet<>();
+        final Set<Long> whole = new LinkedHashSet<>();
+        int read = 0;
+        for (final long raw : raws.subList(0, Math.min(raws.size(), MAX_PROCESSED_RAWS))) {
+            if (PipelineStepping.timeIsUp()) {
+                break;
+            }
+            final List<StreamReader.RawText> parts = new ArrayList<>();
+            try {
+                // Each part read whole (to a bound far past a sample's): processing read every record of it.
+                final int count = Math.max(1, streamReader.partCount(raw));
+                for (int part = 0; part < count; part++) {
+                    parts.add(streamReader.rawText(raw, part, MAX_COUNTED_CHARS));
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> LogUtil.message("Raw stream {} not read for its records passed over: {}", raw,
+                        e.getMessage()));
+                notRead.add(raw);
+                continue;
+            }
+            read++;
+            for (int part = 0; part < parts.size(); part++) {
+                final StreamReader.RawText text = parts.get(part);
+                if (text.truncated()) {
+                    cut.add(raw);
+                }
+                final SourceTypeScope.Filtered filtered;
+                try {
+                    filtered = group.byPart()
+                            ? group.filter(text.text(), attributes.fields(group.field(), raw, part))
+                            : group.filter(text.text());
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(() -> LogUtil.message("Raw stream {} not split: {}", raw, e.getMessage()));
+                    whole.add(raw);
+                    continue;
+                }
+                if (!filtered.filtered()) {
+                    whole.add(raw);
+                    continue;
+                }
+                for (final Map.Entry<String, Integer> type : filtered.passedOver().entrySet()) {
+                    records += type.getValue();
+                    bySourceType.merge(type.getKey(), type.getValue(), Integer::sum);
+                    streams.add(raw);
+                }
+            }
+        }
         final Map<String, Object> passed = new LinkedHashMap<>();
-        passed.put("records", lines.passedOver());
-        passed.put("raw_streams", lines.passedOverStreams().size());
+        passed.put("records", records);
+        passed.put("raw_streams", streams.size());
+        if (!bySourceType.isEmpty()) {
+            passed.put("by_source_type", bySourceType);
+        }
+        passed.put("raw_streams_read", read);
+        final int unread = raws.size() - read - notRead.size();
+        if (unread > 0 || processed != null && processed.more()) {
+            notes.add("only the first " + read + " raw stream(s) processed in this call's range were read (at most "
+                      + MAX_PROCESSED_RAWS + " a call)");
+        }
+        if (!notRead.isEmpty()) {
+            notes.add("raw stream(s) " + notRead + " could not be read");
+        }
+        if (!cut.isEmpty()) {
+            notes.add("raw stream(s) " + List.copyOf(cut) + " were read only to their first "
+                      + String.format(Locale.ROOT, "%,d", MAX_COUNTED_CHARS) + " characters a part: their records "
+                      + "past it aren't counted");
+        }
+        if (!whole.isEmpty()) {
+            notes.add("raw stream(s) " + List.copyOf(whole) + " can't be read record by record (XML or text): "
+                      + "not counted");
+        }
+        if (!notes.isEmpty()) {
+            passed.put("note", "Told from the raw streams by the registry's rows; " + String.join("; ", notes)
+                               + ".");
+        }
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("passed_over", passed);
         return out;
@@ -320,7 +415,9 @@ class SourceTypeCoverage {
 
     // The feed the kinds' raw streams (else the raw streams the source type lines were logged for) are in; null when
     // none can be read.
-    private String feedOf(final List<Map<String, Object>> groups, final CoverageReads.SourceTypeLines lines) {
+    private String feedOf(final List<Map<String, Object>> groups,
+                          final CoverageReads.SourceTypeLines lines,
+                          final CoverageReads.ProcessedRaws processed) {
         final Set<Long> raws = new LinkedHashSet<>();
         for (final Map<String, Object> group : groups) {
             for (final Map<String, Object> example : JsonValues.maps(group.get("examples"))) {
@@ -330,6 +427,9 @@ class SourceTypeCoverage {
             }
         }
         raws.addAll(lines.rawStreams());
+        if (processed != null) {
+            raws.addAll(processed.raws());
+        }
         for (final Long raw : raws) {
             try {
                 return streamReader.meta(raw).getFeedName();
@@ -486,8 +586,9 @@ class SourceTypeCoverage {
     /// @param said        What review_coverage says of them: `field`, `group` and `group_source_types`, `scope` (its
     ///                    share of the feed), `passed_over` (the kinds' records by source type), `other_groups`
     ///                    (source type to the group translating it), `processing` (a group's `passed_over`
-    ///                    records and raw streams, as its pipeline logged them), `unseen_source_types` (a whole
-    ///                    translation's values its survey didn't see), `new_source_types` and `registry`.
+    ///                    records and raw streams, told from the raw streams it processed),
+    ///                    `unseen_source_types` (a whole translation's values its survey didn't see),
+    ///                    `new_source_types` and `registry`.
     record Judged(List<Map<String, Object>> missed,
                   List<Map<String, Object>> passedOver,
                   List<Map<String, Object>> otherGroups,
