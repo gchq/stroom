@@ -21,6 +21,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.opentest4j.TestAbortedException;
 
 import java.nio.file.Path;
 import java.util.Map;
@@ -32,11 +33,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// would, with no model ([AbstractEvalTest#runReference]).
 ///
 /// A case passes when its Events hold what it expects, they are indexed and found, and nothing else was found
-/// wrong on the way. Each case's score is written to `build/eval-reference/<case>.json`. All 61 take about 25
+/// wrong on the way. Each case's score is written to `build/eval-reference/<case>.json`. All 61 builds take about 25
 /// minutes; `STROOM_EVAL_CASES=12,35` (or `-DtestEvalCases=12,35`) runs only those.
 ///
 /// A case that starts from another (`setup`, [AbstractEvalTest#setUp]) has that case's reference run and promoted
 /// first, then its own reference build on top, scored with what it changed of the setup's build.
+///
+/// A question (`kind: question`, cases 62 to 64) builds nothing: its events are indexed into Elasticsearch and its
+/// reference ES|QL is run with esql_query ([AbstractEvalTest#runQuestionReference]), its answer scored against the
+/// one the case gives, worked out by `esql/proxy-uploads-generator.py`. Skipped without an Elasticsearch node.
 ///
 /// `create_index_doc` adds the fields of the plan drafted for the index in the session, so nothing else sets them;
 /// the processor filters aren't deleted after each case, as each case starts from an empty Stroom.
@@ -55,8 +60,15 @@ class TestE2eEvalReference extends AbstractEvalTest {
         final String feed = "EVAL-" + tag;
         final long startMs = System.currentTimeMillis();
         try {
-            final Setup setup = setUp(evalCase, tag, feed);
-            runReference(evalCase, score, "eval-" + tag, feed, setup);
+            if (EvalCases.isQuestion(evalCase)) {
+                runQuestionReference(evalCase, score);
+            } else {
+                final Setup setup = setUp(evalCase, tag, feed);
+                runReference(evalCase, score, "eval-" + tag, feed, setup);
+            }
+        } catch (final TestAbortedException e) {
+            // No Elasticsearch node for a question's index: skipped, not failed.
+            throw e;
         } catch (final AssertionError | RuntimeException e) {
             // A step failing is the case's problem.
             LOGGER.info(() -> id + " failed at a step", e);

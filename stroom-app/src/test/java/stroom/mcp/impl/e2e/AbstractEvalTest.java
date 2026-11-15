@@ -20,18 +20,26 @@ import stroom.ai.impl.tools.indexing.FeedIndexes;
 import stroom.ai.impl.tools.sample.SourceTypeMeta;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
+import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.index.impl.IndexFieldService;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.mcp.impl.McpTerminal;
 import stroom.mcp.impl.McpTestClient;
+import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaService;
+import stroom.meta.shared.Status;
 import stroom.query.api.datasource.Field;
 import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.search.elastic.ElasticIndexStore;
+import stroom.search.elastic.ElasticTestNode;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.PageRequest;
 
 import com.google.inject.Injector;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.ElicitFormRequest;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import jakarta.inject.Inject;
@@ -43,6 +51,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -106,6 +115,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     private static final Map<String, String> PIPELINE_OPTIONS = Map.of("change", "Change ", "new_version",
             "A new version ");
 
+    // The streams a question's events are in.
+    private static final int QUESTION_STREAMS = 10;
+
     // The forms the user answered in the case's own build: each its message and the answer's content.
     private final List<Map<String, Object>> formsAnswered = new ArrayList<>();
 
@@ -113,6 +125,10 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     private Injector injector;
     @Inject
     private IndexFieldService indexFieldService;
+    @Inject
+    private MetaService metaService;
+    @Inject
+    private ElasticIndexStore elasticIndexStore;
 
     // A filter made disabled (a reference pipeline's) is enabled, as the user would in Stroom.
     @Override
@@ -187,6 +203,66 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                       final String feed,
                       final Setup setup) {
         build(evalCase, score, build, feed, setup, null);
+    }
+
+    /// A question's data, indexed before the user asks (`elastic_index`): its events ([EvalProxyUploads]) in an
+    /// Elasticsearch index of their own, in streams in Stroom, behind an Elastic Index doc of the case's name beside
+    /// the standard templates. Skips the case without an Elasticsearch node ([ElasticTestNode#getOrSkip]).
+    ///
+    /// @param evalCase The case.
+    /// @return The Elastic Index doc, and the index to remove once the case is done.
+    QuestionIndex questionIndex(final Map<String, Object> evalCase) {
+        final ElasticTestNode node = ElasticTestNode.getOrSkip();
+        final Map<String, Object> spec = (Map<String, Object>) evalCase.get("elastic_index");
+        final String indexName = ElasticTestNode.createIndexName("eval-" + String.valueOf(evalCase.get("id"))
+                .split("_", 2)[0]);
+        final List<Long> streams = new ArrayList<>();
+        asUser(admin, () -> {
+            for (int i = 0; i < QUESTION_STREAMS; i++) {
+                streams.add(metaService.create(MetaProperties.builder()
+                        .feedName("EVAL-PROXY-" + indexName.toUpperCase(Locale.ROOT))
+                        .typeName(StreamTypeNames.EVENTS)
+                        .createMs(System.currentTimeMillis())
+                        .build(), Status.UNLOCKED).getId());
+            }
+        });
+        EvalProxyUploads.seed(node, indexName, streams);
+        final DocRef cluster = liveElasticCluster(node, "Eval cluster " + indexName);
+        final ExplorerNode created = create(ElasticIndexDoc.TYPE, String.valueOf(spec.get("name")),
+                templateFolder());
+        asUser(admin, () -> elasticIndexStore.writeDocument(elasticIndexStore.readDocument(created.getDocRef())
+                .copy()
+                .clusterRef(cluster)
+                .indexName(indexName)
+                .timeField("@timestamp")
+                .build()));
+        return new QuestionIndex(node, indexName, created.getDocRef());
+    }
+
+    /// A question's reference answer: its `reference.esql_query` (`pipeline`, and any `timeFrom`, `timeTo`,
+    /// `where` and `limit`) run with esql_query on the question's index, and scored as an agent's answer is
+    /// ([EvalScore#scoreQuestion]).
+    ///
+    /// @param evalCase The case.
+    /// @param score    Its score.
+    void runQuestionReference(final Map<String, Object> evalCase, final EvalScore score) {
+        final QuestionIndex index = questionIndex(evalCase);
+        try {
+            final Map<String, Object> reference = (Map<String, Object>) ((Map<String, Object>) evalCase
+                    .get("reference")).get("esql_query");
+            final Map<String, Object> arguments = new LinkedHashMap<>(reference);
+            arguments.put("index", index.doc().getUuid());
+            final CallToolResult result = client.call("esql_query", arguments);
+            final String text = McpTestClient.text(result);
+            final boolean refused = Boolean.TRUE.equals(result.isError()) || text.startsWith("Error:");
+            final Map<String, Object> json = !refused && result.structuredContent() instanceof final Map<?, ?> map
+                    ? (Map<String, Object>) map
+                    : Map.of();
+            dump("esql_query", json);
+            score.scoreQuestion(evalCase, List.of(new EvalScore.ToolUse("esql_query", refused, json, text)));
+        } finally {
+            index.node().deleteIndices(index.indexName());
+        }
     }
 
     /// The setup group's pipeline, XSLT and index, as they are now: each as text, to compare with what the setup
@@ -876,6 +952,19 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     }
 
     private record Read(List<String> records, Integer total) {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A question's index.
+    ///
+    /// @param node      The Elasticsearch node holding it.
+    /// @param indexName Its name there.
+    /// @param doc       Its Elastic Index doc.
+    record QuestionIndex(ElasticTestNode node, String indexName, DocRef doc) {
 
     }
 }

@@ -1,0 +1,48 @@
+name: Uploads per day per site domain over two days, on an Elasticsearch index (a question, nothing built)
+kind: question
+capabilities: [elasticsearch, esql, aggregation, time_buckets]
+# The proxy upload events of case 62. The answer is time-bucketed: a time range on @timestamp (the tool's
+# timeFrom/timeTo, or a WHERE), then STATS COUNT and SUM BY a day bucket (BUCKET or DATE_TRUNC) and the domain. The
+# traps: the days off by one at the range's ends (the 4th included, or the 2nd left out); days bucketed in a time
+# zone other than UTC; every event read through run_stroomql to be grouped in Stroom.
+elastic_index: {name: Proxy uploads}
+request: >
+  For each site domain, how many uploads were there, and how many bytes uploaded, on each day from 2 January 2026 to
+  3 January 2026 inclusive (UTC)? Use the "Proxy uploads" Elasticsearch index.
+user_knows: >
+  The index is "Proxy uploads". url.domain is the site domain, http.request.bytes the size of each upload in bytes,
+  @timestamp when it was made (UTC). Every upload counts, allowed or blocked. Days are UTC days.
+expected:
+  tools_used: [esql_query]
+  answer:
+    ordered: false
+    rows:
+      - ["2026-01-02", box.com, 170, 36451034]
+      - ["2026-01-02", drive.google.com, 140, 23269693]
+      - ["2026-01-02", dropbox.com, 157, 28385533]
+      - ["2026-01-02", files.example.com, 215, 49030777]
+      - ["2026-01-02", github.com, 132, 31161057]
+      - ["2026-01-02", icloud.com, 80, 22447239]
+      - ["2026-01-02", intranet.example.com, 120, 45543562]
+      - ["2026-01-02", mega.nz, 115, 28097390]
+      - ["2026-01-02", pastebin.com, 101, 18785533]
+      - ["2026-01-02", transfer.sh, 111, 20919121]
+      - ["2026-01-02", wetransfer.com, 99, 25168939]
+      - ["2026-01-03", box.com, 177, 34937243]
+      - ["2026-01-03", drive.google.com, 127, 32830294]
+      - ["2026-01-03", dropbox.com, 169, 29909310]
+      - ["2026-01-03", files.example.com, 204, 46702365]
+      - ["2026-01-03", github.com, 137, 25315816]
+      - ["2026-01-03", icloud.com, 70, 18011478]
+      - ["2026-01-03", intranet.example.com, 125, 24417463]
+      - ["2026-01-03", mega.nz, 108, 19694398]
+      - ["2026-01-03", pastebin.com, 97, 12833634]
+      - ["2026-01-03", transfer.sh, 129, 24240503]
+      - ["2026-01-03", wetransfer.com, 97, 13368087]
+reference:
+  esql_query:
+    timeFrom: "2026-01-02T00:00:00.000Z"
+    timeTo: "2026-01-04T00:00:00.000Z"
+    pipeline: >-
+      | STATS uploads = COUNT(*), total = SUM(http.request.bytes) BY day = BUCKET(@timestamp, 1 day), url.domain
+      | SORT day, url.domain
