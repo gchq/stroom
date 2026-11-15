@@ -400,6 +400,72 @@ class TestSourceTypeGroups {
     }
 
     @Test
+    void aPromotedGroupRegeneratedByUuidTakesTheSourceTypesTheScopeJoinsToIt() {
+        // Seen in eval case 61: OneDrive joined the promoted Messaging group in the build's scope, yet
+        // build_translation_xslt group=Messaging uuid=<its promoted XSLT> took the group's source types from the
+        // XSLT's kept mapping: the sample check read no OneDrive record, and the group's XSLT would pass them over.
+        final String original = promotedGroup();
+        scoped("PEGA security", List.of("PegaSecurityEvent", "PegaDB"));
+        final Map<String, Object> again = new LinkedHashMap<>();
+        again.put("uuid", original);
+        again.put("build", BUILD);
+        again.put("feeds", List.of("PEGA"));
+        again.put("group", "PEGA security");
+        again.put("pipeline", "change");
+
+        final Map<String, Object> saved = world.call(tool, again);
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        assertThat(JsonValues.strings(JsonValues.mapOrEmpty(saved.get("group")).get("source_types")))
+                .containsExactly("PegaSecurityEvent", "PegaDB");
+        // Saved in the build's working copy, not over the promoted XSLT.
+        final String copy = xsltsInBuild().get("PEGA security");
+        assertThat(copy).isNotEqualTo(original);
+        assertThat(world.world.records().entry(BUILD, copy)).containsEntry("copy_of", original);
+        assertThat(ModuleChecks.marker(world.xslt(copy).getData()))
+                .hasValueSatisfying(marker -> assertThat(marker.sourceTypes()).containsExactly("PegaSecurityEvent",
+                        "PegaDB"));
+        assertThat(ModuleChecks.marker(world.xslt(original).getData()))
+                .hasValueSatisfying(marker -> assertThat(marker.sourceTypes()).containsExactly(
+                        "PegaSecurityEvent"));
+        // The registry's rows: PegaDB translated by the group, where it runs.
+        assertThat(rowNamed(written.getLast(), "PegaDB")).containsEntry("status", SourceTypeRegistry.TRANSLATED)
+                .containsEntry("group", "PEGA security");
+        assertThat(JsonValues.mapOrEmpty(rowNamed(written.getLast(), "PegaDB").get("group_xslt")))
+                .containsEntry("uuid", copy);
+        assertThat(rowNamed(written.getLast(), "PegaIntegration")).containsEntry("status",
+                SourceTypeRegistry.PARKED);
+        // Named again by the promoted uuid, the working copy's mapping is the one in hand.
+        final Map<String, Object> regenerated = world.call(tool, again);
+        assertThat(regenerated.get("problems")).as("%s", regenerated).isEqualTo(List.of());
+        assertThat(JsonValues.mapOrEmpty(regenerated.get("saved"))).containsEntry("uuid", copy);
+    }
+
+    @Test
+    void sourceTypesGivenThatLeaveOutOneTheScopePutsInTheGroupAreRefused() {
+        final String original = promotedGroup();
+        scoped("PEGA security", List.of("PegaSecurityEvent", "PegaDB"));
+        final Map<String, Object> given = new LinkedHashMap<>();
+        given.put("uuid", original);
+        given.put("build", BUILD);
+        given.put("feeds", List.of("PEGA"));
+        given.put("group", "PEGA security");
+        given.put("source_types", List.of("PegaSecurityEvent"));
+        given.put("pipeline", "change");
+
+        final Map<String, Object> refused = world.call(tool, given);
+
+        assertThat(String.valueOf(refused.get("error"))).contains("source_types leaves out ['PegaDB']",
+                "group 'PEGA security'", "Leave source_types out", "Nothing was saved");
+        assertThat(xsltsInBuild()).doesNotContainKey("PEGA security");
+        assertThat(rowNamed(written.getLast(), "PegaDB")).containsEntry("status", SourceTypeRegistry.PARKED);
+        // All of them given: saved.
+        given.put("source_types", List.of("PegaSecurityEvent", "PegaDB"));
+        assertThat(world.call(tool, given).get("problems")).isEqualTo(List.of());
+        assertThat(rowNamed(written.getLast(), "PegaDB")).containsEntry("status", SourceTypeRegistry.TRANSLATED);
+    }
+
+    @Test
     void aTranslatedRowWithNoPlacementIsPlacedAsTheUserChooses() {
         final Map<String, Object> own = new LinkedHashMap<>(args(integration(), "PEGA integration",
                 List.of("PegaIntegration")));

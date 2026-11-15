@@ -1183,6 +1183,38 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
+    void aCallWithoutChangesKeepsTheChangesSentBeforeIt() {
+        // Seen in eval case 61: changes adding rules were refused (a field the sample lacked), then a call giving
+        // only source_types, no changes, took the saved XSLT's mapping: the added rules were lost, the kinds they
+        // took counted "taken by no rule", and every later save was refused.
+        final String uuid = keptXslt("acme-v1", "ACME-Events", TranslationWorld.mapping(), null);
+        final Map<String, Object> broken = Map.of("events", List.of(Map.of("name", "logon", "fields", List.of(
+                Map.of("path", "EventDetail/Nope", "value", "x")))));
+        assertThat(world.call(tool, Map.of("uuid", uuid, "changes", broken)).get("ok")).isEqualTo(false);
+
+        final Map<String, Object> again = world.call(tool, Map.of("uuid", uuid));
+
+        // The mapping in hand, the changes refused included: the same problem, nothing saved.
+        assertThat(again.get("ok")).as("%s", again).isEqualTo(false);
+        assertThat(String.valueOf(again.get("problems"))).contains("EventDetail/Nope");
+        assertThat(again).doesNotContainKey("saved");
+        assertThat(keptMapping(uuid).events().getFirst().fields()).noneMatch(entry -> entry.path().contains(
+                "Nope"));
+        // Fixed with changes= on it, then saved: what was saved is the next call's mapping.
+        final Map<String, Object> fixed = world.call(tool, Map.of("uuid", uuid, "changes", Map.of("events",
+                List.of(Map.of("name", "logon", "fields", List.of(Map.of("path", "EventDetail/Nope", "remove",
+                        true))))), "change", "Nope removed"));
+        assertThat(fixed).as("%s", fixed).containsKey("saved");
+        // Once saved, the XSLT's own kept mapping is regenerated, as changed since (an earlier generator's, say).
+        final Map<String, Object> since = TranslationWorld.mapping();
+        since.put("unmatched", "warn");
+        world.world.docs.put(uuid, world.xslt(uuid).copy().description(KeptMapping.withMapping(
+                world.xslt(uuid).getDescription(), "translation", Map.of("mapping", since))).build());
+        assertThat(world.call(tool, Map.of("uuid", uuid))).containsEntry("ok", true).containsKey("saved");
+        assertThat(keptMapping(uuid).unmatched()).isEqualTo("warn");
+    }
+
+    @Test
     void aForkTranslationChangedByUuidInANewSessionStaysInTheFork() {
         // Seen in testing: a change by uuid alone, in a session that remembered no schema choice, fell back to
         // event-logging's document of the version and moved the fork's translation into event-logging:3. The XML

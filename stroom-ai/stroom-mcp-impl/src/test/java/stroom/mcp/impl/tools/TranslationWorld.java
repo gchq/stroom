@@ -348,6 +348,8 @@ final class TranslationWorld {
                 files.containsKey(String.valueOf((Object) inv.getArgument(1)))
                         ? Optional.of(1)
                         : Optional.empty());
+        Mockito.doAnswer(inv -> files.remove(String.valueOf((Object) inv.getArgument(1))))
+                .when(chatWorkspace).delete(Mockito.anyInt(), any(WorkspacePath.class));
         Mockito.when(chatWorkspace.readLines(Mockito.anyInt(), any(WorkspacePath.class), Mockito.anyLong(),
                 Mockito.anyInt())).thenAnswer(inv ->
                 List.of(files.get(String.valueOf((Object) inv.getArgument(1))).split("\n", -1)));

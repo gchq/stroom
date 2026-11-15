@@ -170,15 +170,24 @@ class TranslationBuilds {
                 .orElse(null);
     }
 
-    /// The mapping to regenerate from, and the schema version it was saved for: the one kept with the XSLT (uuid),
-    /// else the one last sent for the build and name.
+    /// The mapping to regenerate from, and the schema version it was saved for: the one last sent for the XSLT this
+    /// session by a call that saved nothing (its changes refused), else the one kept with the XSLT (uuid), else the
+    /// session's draft for the build and name. Seen in eval case 61: a call giving only source_types after changes
+    /// that were refused took the saved XSLT's mapping, so the rules those changes added were lost, and every later
+    /// save refused the kinds they took as "taken by no rule".
     ///
     /// @param context The call's context.
     /// @param target  The XSLT's uuid or `build/name`.
-    /// @param uuid    The XSLT's UUID, or null.
-    /// @return The mapping and its version (null when not known).
+    /// @param uuid    The XSLT whose kept mapping is read (a promoted one's working copy in the build), or null.
+    /// @return The mapping and its version (null when not known: a saved XSLT's own is read for it).
     /// @throws ToolRefusal if there is none.
     Kept keptMapping(final ToolCallContext context, final String target, final String uuid) {
+        // Only one holding changes not saved: what was saved is regenerated from the XSLT's own, which may have
+        // changed since (an earlier generator's, or a hand edit kept by rebuild_mapping).
+        final Optional<Map<String, Object>> unsaved = SentMappings.unsaved(context, target);
+        if (unsaved.isPresent()) {
+            return new Kept(unsaved.get(), null);
+        }
         if (uuid != null) {
             final KeptMapping.Kept kept = keptOrRefuse(uuid, "XSLT " + uuid + " keeps no translation mapping to "
                                                              + "regenerate from: give the whole mapping "

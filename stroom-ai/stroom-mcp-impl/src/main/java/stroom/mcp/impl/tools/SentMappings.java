@@ -51,12 +51,55 @@ final class SentMappings {
         // Static only.
     }
 
-    /// Keeps the mapping as sent for the target.
+    /// Keeps the mapping as sent for the target, as saved (or a draft): no longer one with changes not saved.
     ///
     /// @param context The call's context.
     /// @param target  The XSLT's uuid, `build/name`, or a draft's target; nothing is kept for "".
     /// @param mapping The mapping, as JSON maps and lists.
     static void remember(final ToolCallContext context, final String target, final Map<String, Object> mapping) {
+        remember(context, target, mapping, false);
+    }
+
+    /// Keeps the mapping as sent for the target by a call that saved nothing to it (its changes refused, or no
+    /// save asked for): [#unsaved] gives it back until a save remembers the target's mapping again.
+    ///
+    /// @param context The call's context.
+    /// @param target  The XSLT's uuid, `build/name`, or a draft's target; nothing is kept for "".
+    /// @param mapping The mapping, as JSON maps and lists.
+    static void rememberUnsaved(final ToolCallContext context,
+                                final String target,
+                                final Map<String, Object> mapping) {
+        remember(context, target, mapping, true);
+    }
+
+    /// @param context The call's context.
+    /// @param target  The XSLT's uuid, `build/name`, or a draft's target.
+    /// @return The mapping last sent for it in this session by a call that saved nothing to it, if that is the
+    /// latest: its changes are not in the saved XSLT.
+    static Optional<Map<String, Object>> unsaved(final ToolCallContext context, final String target) {
+        if (NullSafe.isBlankString(target)) {
+            return Optional.empty();
+        }
+        final boolean marked = context.workspace()
+                .map(workspace -> {
+                    try {
+                        return workspace.find(unsavedPath(target)).isPresent();
+                    } catch (final RuntimeException e) {
+                        LOGGER.debug(() -> LogUtil.message("No unsaved mark read for {}: {}", target,
+                                e.getMessage()), e);
+                        return false;
+                    }
+                })
+                .orElse(false);
+        return marked
+                ? sent(context, target)
+                : Optional.empty();
+    }
+
+    private static void remember(final ToolCallContext context,
+                                 final String target,
+                                 final Map<String, Object> mapping,
+                                 final boolean unsaved) {
         if (NullSafe.isBlankString(target) || mapping == null) {
             return;
         }
@@ -66,10 +109,22 @@ final class SentMappings {
         }
         try {
             workspace.get().write(path(target), JsonUtil.writeValueAsString(mapping, false), null);
+            final WorkspacePath mark = unsavedPath(target);
+            if (unsaved) {
+                workspace.get().write(mark, "changes not saved", null);
+            } else if (workspace.get().find(mark).isPresent()) {
+                workspace.get().delete(mark);
+            }
         } catch (final RuntimeException e) {
             // A convenience: changes= then falls back to the mapping saved with the XSLT.
             LOGGER.debug(() -> LogUtil.message("Couldn't keep the mapping sent for {}: {}", target, e.getMessage()), e);
         }
+    }
+
+    // The mark beside a target's mapping saying a call left it with changes not saved.
+    private static WorkspacePath unsavedPath(final String target) {
+        final String path = path(target).path();
+        return WorkspacePath.parse(path.substring(0, path.length() - ".json".length()) + ".unsaved.txt");
     }
 
     /// @param context The call's context.

@@ -288,16 +288,19 @@ class SourceTypeGroups {
     /// @param registry    The feed's registry.
     /// @param group       The group's name.
     /// @param sourceTypes The source types it translates; none for the build's scope's.
+    /// @param keptTypes   The source types the group's saved mapping names (a saved group regenerated or changed),
+    ///                    or none: where the build's scope names the group, the scope's join them.
     /// @param given       The mapping given for the group.
     /// @param schema      The event-logging schema the Events are written in.
     /// @param version     Its version.
     /// @return The plan.
-    /// @throws ToolRefusal if a source type isn't the registry's, or the group is a second one in the build (a build
-    /// makes one source type group).
+    /// @throws ToolRefusal if a source type isn't the registry's, the group is a second one in the build (a build
+    /// makes one source type group), or the source types given leave out one the build's scope puts in the group.
     Plan plan(final String build,
               final Registry registry,
               final String group,
               final List<String> sourceTypes,
+              final List<String> keptTypes,
               final TranslationMapping given,
               final EventSchema schema,
               final String version) {
@@ -305,7 +308,7 @@ class SourceTypeGroups {
         final String feed = registry.feed();
         final String field = JsonValues.text(state.get("field"));
         refuseSecondGroup(build, state, group);
-        final List<String> types = sourceTypes(build, state, group, sourceTypes);
+        final List<String> types = sourceTypes(build, state, group, sourceTypes, keptTypes);
         final String naming = given.style().naming();
         final String mode = XsltNames.styleName(group, naming);
         if (mode.equals(XsltNames.styleName(feed + "-common", naming))) {
@@ -1228,6 +1231,26 @@ class SourceTypeGroups {
                 .orElseGet(() -> new Module(uuid, JsonValues.text(named.get("name")), false));
     }
 
+    /// The build's working copy of a promoted XSLT, else its new version in the build: what the build changes of
+    /// it, and so whose kept mapping a later call in the build starts from.
+    ///
+    /// @param build    The build.
+    /// @param original The promoted XSLT's UUID.
+    /// @return The UUID of the build's copy; empty when the build has none.
+    Optional<String> buildCopyOf(final String build, final String original) {
+        if (build == null || original == null || inBuild(build, original)) {
+            return Optional.empty();
+        }
+        return copyInBuild(build, original).or(() -> versionInBuild(build, original));
+    }
+
+    /// @param build A build.
+    /// @param uuid  An XSLT.
+    /// @return True if the XSLT is in the build's folder.
+    boolean isInBuild(final String build, final String uuid) {
+        return inBuild(build, uuid);
+    }
+
     // The build's working copy of a document.
     private Optional<String> copyInBuild(final String build, final String original) {
         final Map<String, Object> docs = BuildRecords.docs(records.load(build));
@@ -1298,26 +1321,51 @@ class SourceTypeGroups {
 
     // The group's source types: those given, else the build's scope's with those the group translates already (a
     // group named again adds the scope's to its own); each a row of the registry, and translated by no other group.
+    // A saved group's own (its kept mapping's) stand for those it translates, the scope's joining them where the
+    // scope names the group (seen in eval case 61: OneDrive joining the promoted Messaging group was left out, as the
+    // group's kept mapping named only its first two, so the sample check never read a OneDrive record). Source types
+    // given must hold every one the scope puts in the group: the sample, the XSLT and the registry all follow them.
     private List<String> sourceTypes(final String build,
                                      final Map<String, Object> state,
                                      final String group,
-                                     final List<String> given) {
+                                     final List<String> given,
+                                     final List<String> kept) {
         final List<String> names = JsonValues.maps(state.get("rows")).stream()
                 .map(row -> JsonValues.text(row.get("name")))
                 .toList();
+        final boolean scopeNamesGroup = scopedGroup(build, state).filter(group::equals).isPresent();
+        final Set<String> scope = scopedSourceTypes(build, state)
+                .or(() -> builds.scope(build).map(SourceTypeScope::names))
+                .orElse(Set.of());
         final List<String> types = new ArrayList<>(NullSafe.list(given));
         if (types.isEmpty()) {
-            groupRows(state, group).stream()
-                    .filter(row -> SourceTypeRegistry.TRANSLATED.equals(row.get("status")))
-                    .map(row -> JsonValues.text(row.get("name")))
-                    .forEach(types::add);
-            final Set<String> scope = scopedSourceTypes(build, state)
-                    .or(() -> builds.scope(build).map(SourceTypeScope::names))
-                    .orElse(Set.of());
-            names.stream()
+            if (NullSafe.isEmptyCollection(kept)) {
+                groupRows(state, group).stream()
+                        .filter(row -> SourceTypeRegistry.TRANSLATED.equals(row.get("status")))
+                        .map(row -> JsonValues.text(row.get("name")))
+                        .forEach(types::add);
+            } else {
+                types.addAll(kept);
+            }
+            if (NullSafe.isEmptyCollection(kept) || scopeNamesGroup) {
+                names.stream()
+                        .filter(scope::contains)
+                        .filter(name -> !types.contains(name))
+                        .forEach(types::add);
+            }
+        } else if (scopeNamesGroup) {
+            final List<String> missing = names.stream()
                     .filter(scope::contains)
                     .filter(name -> !types.contains(name))
-                    .forEach(types::add);
+                    .toList();
+            if (!missing.isEmpty()) {
+                throw new ToolRefusal("source_types leaves out " + ToolText.list(missing) + ", which the build's "
+                                      + "scope puts in group '" + group + "' (record_source_types): the group "
+                                      + "translates " + ToolText.list(names.stream().filter(name -> types.contains(
+                        name) || missing.contains(name)).toList()) + ". Leave source_types out to take them from "
+                                      + "the scope, or give them all; to leave one out, record_source_types "
+                                      + "changes the scope first. Nothing was saved.");
+            }
         }
         if (types.isEmpty()) {
             throw new ToolRefusal("Give source_types: the registry's source types the group translates (the build "
