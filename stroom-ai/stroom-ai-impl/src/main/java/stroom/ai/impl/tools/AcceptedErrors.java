@@ -161,6 +161,15 @@ public class AcceptedErrors {
         return List.copyOf(keyed.values());
     }
 
+    /// Whether an entry is recorded already: one for the same element and kind of message is among those kept.
+    ///
+    /// @param recorded The entries kept.
+    /// @param entry    An entry to record.
+    /// @return True if one with its element and pattern is kept.
+    public static boolean recorded(final List<Entry> recorded, final Entry entry) {
+        return NullSafe.list(recorded).stream().anyMatch(kept -> kept.key().equals(entry.key()));
+    }
+
     /// @return The accepted entry an error falls under, or null if none.
     public static Entry match(final List<Entry> entries, final String element, final String message) {
         final String seen = ErrorTriage.normalise(message);

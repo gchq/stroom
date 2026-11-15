@@ -4133,15 +4133,23 @@ promoted module the build has a working copy of is pointed at that copy, so the 
 (`working_copy=true`, after the user chose to change the group's pipeline) leaves the registry naming the original. A
 new version (`working_copy=false`, after `pipeline=new_version`): the group's registry rows move to it (`pipeline`:
 its `name` and `uuid`; `source_types` in the result); the current pipeline runs on unchanged until the user retires
-it.
+it. Copying the promoted pipeline of the group the build's scope names, before the build has decided what its change
+goes to (`SourceTypeGroups.promotedGroup`: no choice recorded, no copy of the group's XSLT), puts the change-or-new-
+version question to the user in the form `build_translation_xslt` asks (`SourceTypeGroups.askPipelineChoice`), and
+the answer decides the copy, not `working_copy` (seen in eval case 61: the agent's `working_copy=true` made the
+user's choice). The answer is recorded in the build record (`group_pipeline_choices`), so neither tool asks again;
+without forms the call is refused until `pipeline=change|new_version` carries it. A new version needs a `new_name`
+of its own.
 
 * **Arguments**: `build`, `source_uuid`, `new_name` (required); `rename` (text replacements for the copied
   documents' names, e.g. `{"V1.2": "V1.3"}`; JSON text or a single-quoted literal is read too:
   `PipelineArguments.textMap`); `set_properties` (changes on the copy, e.g. a new `indexName`); `working_copy` (true
   when promotion will write the copy back over the original; false, the default, for a new version promoted
-  alongside it).
+  alongside it; for the build's group's promoted pipeline the user's choice decides it); `pipeline` (`change` or
+  `new_version`: the user's answer, where no form can be shown).
 * **Returns**: `type`, `uuid`, `name`, `copy_of`, `working_copy`, `copied_documents`, `source_types` (a new version
-  of a group's pipeline: the registry rows moved to it), and `next`.
+  of a group's pipeline: the registry rows moved to it), `note` (a `working_copy` the user's choice overrode, or a
+  `pipeline` ignored), and `next`.
 * **Refuses**: a missing required argument; a template (`PipelineTemplates.templateReason`: `... is a template
   (...): templates are inherited, not copied ...`, pointing at `create_pipeline`); an owned document the user can't
   read; the user declining the form, or no form.
@@ -5054,7 +5062,9 @@ tool generates two sections in it and keeps the version control:
     full path still overrides it. Descriptions are kept with the doc with where each field came from, and one is
     asked for again when its source changes (seen: a description outlived the values it described).
   * The build's source notes add a "Source fields" table (`sourceFieldsMarkdown`).
-  * `accept_errors` are recorded only after the user confirms in a form.
+  * `accept_errors` are recorded only after the user confirms in a form. One the doc records already (the same
+    element and kind of message) is not put to the user again, and is said in `accept_errors_already_recorded` (seen
+    in eval case 61: the same error given again in a later call, and the user asked to accept it twice).
   * **Version control**: the title is the doc's name (`DocumentationText.titled`), sections written at `# ` are put
     at `## ` (seen with Haiku: a survey section above the agent's read as empty); an update replaces the body and
     keeps the version-control rows and accepted errors; the change waits, with the build's others, for one row at

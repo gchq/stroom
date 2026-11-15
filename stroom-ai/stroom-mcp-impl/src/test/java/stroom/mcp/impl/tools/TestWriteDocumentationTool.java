@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.AcceptedErrors;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -281,6 +282,48 @@ class TestWriteDocumentationTool {
                 .contains("- `decorationFilter`: No HR record for user svc-backup (2026-10-22): service accounts "
                           + "have none")
                 .contains("<!-- stroom-mcp accepted errors");
+    }
+
+    @Test
+    void anErrorAlreadyRecordedAsBenignIsNotPutToTheUserAgain() {
+        // Seen in eval case 61: the agent gave the same accept_errors in a later call that only widened field
+        // descriptions, and the user was asked to record the same error as benign a second time.
+        world.pipeline(BUILD, "Acme", "p");
+        world.facts.stages.put("p", "other");
+        world.documentation(BUILD, "Acme", "d", "## Purpose and data\n\nx\n\n"
+                                                + AcceptedErrors.block(List.of(AcceptedErrors.entry(
+                "decorationFilter", "No HR record for user svc-backup", "service accounts have none", "2026-10-21",
+                "No HR record for user svc-*"))));
+        final String accepted = "{\"element\": \"decorationFilter\", \"example\": \"No HR record for user "
+                                + "svc-backup\", \"reason\": \"service accounts have none\", \"matches\": \"No HR "
+                                + "record for user svc-*\"}";
+        final String another = "{\"element\": \"xsltFilter\", \"example\": \"Value too long\", \"reason\": "
+                               + "\"ignored field\"}";
+        final String body = "\"## Purpose and data\\n\\nx\\n\\n## Field mapping\\n\\nHand written.\\n\"";
+
+        // The recorded one and a new one: only the new one is put to the user.
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+        final Map<String, Object> made = world.call(tool, user.context(), "{\"build\": \"bb\", "
+                                                                          + "\"pipeline_uuid\": \"p\", "
+                                                                          + "\"markdown\": " + body + ", "
+                                                                          + "\"change\": \"More\", "
+                                                                          + "\"accept_errors\": [" + accepted
+                                                                          + ", " + another + "]}");
+        assertThat(user.shown()).singleElement().asString().contains("Record 1 kind(s) of error")
+                .contains("xsltFilter: Value too long")
+                .doesNotContain("decorationFilter");
+        assertThat(String.valueOf(made.get("accept_errors_already_recorded")))
+                .contains("decorationFilter: No HR record for user svc-*");
+
+        // Only the recorded one: no form at all, even where none can be shown, and the doc is written with both.
+        final Map<String, Object> again = world.call(tool, context, "{\"build\": \"bb\", \"pipeline_uuid\": "
+                                                                    + "\"p\", \"markdown\": " + body + ", "
+                                                                    + "\"change\": \"Again\", \"accept_errors\": ["
+                                                                    + accepted + "]}");
+        assertThat(again).containsKey("accept_errors_already_recorded");
+        assertThat(world.world.body("d"))
+                .contains("- `decorationFilter`: No HR record for user svc-backup (2026-10-21)")
+                .contains("- `xsltFilter`: Value too long");
     }
 
     @Test
