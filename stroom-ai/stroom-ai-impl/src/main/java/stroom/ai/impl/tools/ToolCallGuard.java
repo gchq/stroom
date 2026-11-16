@@ -69,6 +69,14 @@ import java.util.stream.Collectors;
 /// two kinds, no name to save under), told to start again from a clean mapping. The same call (tool and arguments)
 /// failing three times is answered from that failure after, without running it again, for a tool whose answer to
 /// the same arguments can't change. A success resets both.
+///
+/// Repeated reads. Seen in a UniFi OS onboarding chat: the same read_file calls on three /outputs files about 14
+/// times in 70 seconds, and about 15 jq calls on the same file. A read of the workspace or of a data source's fields
+/// gives the same answer until something is written, so from the third identical successful call (tool and
+/// arguments, as failures are compared) in one agent run (or, outside one, the session), with nothing written in
+/// between, the result says so. The call still runs and returns its result: reading again after the context is
+/// compacted is legitimate. Any call that writes to the workspace, or of a tool that may change something, starts
+/// the count again.
 @Singleton
 public class ToolCallGuard {
 
@@ -82,12 +90,19 @@ public class ToolCallGuard {
     static final Duration TTL = Duration.ofMinutes(30);
     /// The most characters of a failure kept to repeat.
     static final int MAX_MESSAGE = 300;
+    /// Identical successful reads, with nothing written in between, from which the result says so.
+    static final int SAME_READ_LIMIT = 3;
 
     // Answered from the last failure only where the same arguments give the same answer: the mapping and drafting
     // tools. Another tool's call may succeed once the user has changed something in Stroom.
     private static final Set<String> SAME_ANSWER = Set.of("build_translation_xslt", "draft_translation_mapping",
             "build_data_splitter", "profile_sample", "check_xslt", "check_events", "validate_events",
             "create_text_converter", "save_text_converter");
+    // Reads whose answer to the same arguments can't change until something is written: the workspace's file
+    // tools, and a data source's fields. (A tool's read-only marker isn't enough: it says the tool changes nothing in
+    // Stroom, and a query's answer changes as data arrives.)
+    private static final Set<String> SAME_UNTIL_WRITTEN = Set.of("read_file", "jq", "grep", "ls", "wc", "xpath",
+            "describe_data_source");
     // Failures that may pass on their own, and are retried as they are: never counted.
     private static final Pattern TRANSIENT = Pattern.compile(
             "call again|timed? ?out|temporar|unavailable|could not connect|connection|\\b50[234]\\b|try again",
@@ -161,6 +176,8 @@ public class ToolCallGuard {
         final ToolResult result = Objects.requireNonNullElseGet(runOnce(name, read.call(), context, runner),
                 () -> ToolResult.text(""));
         final String failure = failure(result);
+        final int sameReads = sameReads(failures, tool, read.call(), context, new CallKey(name, digest),
+                failure == null);
         final ToolResult noted;
         if (failure == null) {
             synchronized (failures) {
@@ -168,7 +185,9 @@ public class ToolCallGuard {
                 failures.problems.remove(name);
                 failures.calls.remove(new CallKey(name, digest));
             }
-            noted = result;
+            noted = sameReads >= SAME_READ_LIMIT
+                    ? withRepeatNote(result, sameReadNote(sameReads, context))
+                    : result;
         } else {
             final String note = failed(failures, name, digest, failure, advice);
             noted = note == null
@@ -176,6 +195,43 @@ public class ToolCallGuard {
                     : withRepeatNote(result, note);
         }
         return withNotes(noted, read.notes());
+    }
+
+    // Counts an identical successful read in the run, the count starting again in a new run and after any write.
+    // How many times it has now been made with nothing written in between, or 0 for a call not counted.
+    private static int sameReads(final SessionFailures failures,
+                                 final StroomTool tool,
+                                 final ToolCall call,
+                                 final ToolCallContext context,
+                                 final CallKey key,
+                                 final boolean succeeded) {
+        final ToolRunContext run = context.runContext().orElse(null);
+        final boolean wrote = !tool.isReadOnly(call) || context.workspace()
+                .map(workspace -> !workspace.written().isEmpty())
+                .orElse(false);
+        synchronized (failures) {
+            if (failures.readsRun != run) {
+                failures.readsRun = run;
+                failures.reads.clear();
+            }
+            if (wrote) {
+                failures.reads.clear();
+                return 0;
+            }
+            if (!succeeded || !SAME_UNTIL_WRITTEN.contains(call.name())) {
+                return 0;
+            }
+            return failures.reads.merge(key, 1, Integer::sum);
+        }
+    }
+
+    // What a read made again, with nothing written since, says.
+    private static String sameReadNote(final int times, final ToolCallContext context) {
+        final String scope = context.runContext().isPresent()
+                ? "turn"
+                : "session";
+        return "You have made this same call " + times + " times in this " + scope + " with the same result; nothing "
+               + "has been written since. Use what it returned, or try something different.";
     }
 
     // A call run, a stack overflow inside it (a regular expression recursing over a long value, say) answered as the
@@ -552,6 +608,9 @@ public class ToolCallGuard {
         private final Map<String, Integer> streaks = new LinkedHashMap<>();
         // The problems a tool's run of failures has met, by tool, each as compared ([#problem(String)]).
         private final Map<String, Set<String>> problems = new LinkedHashMap<>();
+        // Identical successful reads since the last write, in the run they were made in ([#readsRun]).
+        private final Map<CallKey, Integer> reads = new LinkedHashMap<>();
+        private ToolRunContext readsRun;
         private volatile long usedMs;
     }
 }
