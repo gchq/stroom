@@ -131,6 +131,11 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
     /// What every result with sequences says of their number: EQL doesn't find every overlapping match.
     static final String AT_LEAST = "Elasticsearch doesn't find every overlapping match, so these are at least the "
                                    + "sequences there are, not an exact total.";
+    /// What a result with no sequences across several docs adds: the join values may differ between them.
+    static final String NO_MATCH_ACROSS_DOCS = "The join fields must hold the same values in each doc: a user may "
+                                               + "be DOMAIN\\name in one and the bare name or an email in another. "
+                                               + "Check with esql_query on each doc (STATS COUNT(*) BY <field> | "
+                                               + "LIMIT 5), or join on fields that match, e.g. host.";
     static final String CAVEAT = "The sequences come straight from Elasticsearch, as esql_query's counts do: they "
                                  + "may include events of streams the user can't see or that have been deleted, so "
                                  + "a Stroom search may find fewer.";
@@ -322,8 +327,9 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
         final SessionWorkspace workspace = sessionWorkspace(context);
         final Duration timeLimit = timeLimit(context);
         final Instant deadline = Instant.now().plus(timeLimit);
-        final List<GivenStep> given = givenSteps(request);
-        final GivenStep givenUntil = givenUntil(request);
+        final List<String> fieldNotes = new ArrayList<>();
+        final List<GivenStep> given = givenSteps(request, fieldNotes);
+        final GivenStep givenUntil = givenUntil(request, fieldNotes);
 
         // The docs, in the order the steps first name them, each checked and with its fields.
         final List<DocRef> docs = new ArrayList<>();
@@ -351,7 +357,6 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
             fieldsByDoc.put(doc, fields);
         }
         final Target target = target(docs);
-        final List<String> fieldNotes = new ArrayList<>();
         final List<Step> steps = new ArrayList<>();
         for (int i = 0; i < given.size(); i++) {
             steps.add(step(given.get(i), "Step " + (i + 1), byGiven, docs, fieldsByDoc, target, fieldNotes));
@@ -446,7 +451,7 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
     // ------------------------------------------------------------------------------------------------
     // Arguments
 
-    private static List<GivenStep> givenSteps(final ToolCall request) {
+    private static List<GivenStep> givenSteps(final ToolCall request, final List<String> notes) {
         final Object value = argsMap(request).get(STEPS_ARG);
         final List<?> items = value instanceof final List<?> list
                 ? list
@@ -460,7 +465,7 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
             if (!(items.get(i) instanceof final Map<?, ?> map)) {
                 throw new WorkspaceException("Step " + (i + 1) + " isn't an object with index, where and by.");
             }
-            steps.add(givenStep(map, "Step " + (i + 1)));
+            steps.add(givenStep(map, "Step " + (i + 1), notes));
         }
         if (steps.stream().allMatch(GivenStep::missing)) {
             throw new WorkspaceException("Every step is missing=true: at least one step must be an event that "
@@ -469,7 +474,7 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
         return steps;
     }
 
-    private static GivenStep givenUntil(final ToolCall request) {
+    private static GivenStep givenUntil(final ToolCall request, final List<String> notes) {
         final Object value = argsMap(request).get(UNTIL_ARG);
         if (value == null || (value instanceof final String text && text.isBlank())) {
             return null;
@@ -480,14 +485,14 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
         if (!(parsed instanceof final Map<?, ?> map)) {
             throw new WorkspaceException("until is one step: an object with index, where and by.");
         }
-        final GivenStep until = givenStep(map, "The until step");
+        final GivenStep until = givenStep(map, "The until step", notes);
         if (until.missing() || until.runs() > 1 || !until.fields().isEmpty()) {
             throw new WorkspaceException("The until step takes index, where and by only.");
         }
         return until;
     }
 
-    private static GivenStep givenStep(final Map<?, ?> map, final String what) {
+    private static GivenStep givenStep(final Map<?, ?> map, final String what, final List<String> notes) {
         final String index = map.get(INDEX_KEY) == null
                 ? ""
                 : String.valueOf(map.get(INDEX_KEY)).strip();
@@ -506,7 +511,7 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
             throw new WorkspaceException(what + " has missing=true and runs: an event that must not happen can't "
                                          + "repeat. Give one or the other.");
         }
-        final List<String> fields = strings(map.get(FIELDS_KEY));
+        final List<String> fields = names(map.get(FIELDS_KEY), what, FIELDS_KEY, notes);
         if (fields.size() > MAX_STEP_FIELDS) {
             throw new WorkspaceException(what + " asks for " + fields.size() + " fields: show at most "
                                          + MAX_STEP_FIELDS + ".");
@@ -514,7 +519,7 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
         if (missing && !fields.isEmpty()) {
             throw new WorkspaceException(what + " is missing=true, so it has no events to show fields of.");
         }
-        return new GivenStep(index, filters, anyOf, strings(map.get(BY_KEY)), missing, runs, fields);
+        return new GivenStep(index, filters, anyOf, names(map.get(BY_KEY), what, BY_KEY, notes), missing, runs, fields);
     }
 
     // A list of conditions in the where form: where's, or an any_of group's (one level: no group inside).
@@ -601,10 +606,27 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
                 : value != null && "true".equalsIgnoreCase(String.valueOf(value).strip());
     }
 
-    private static List<String> strings(final Object value) {
+    // Field names: a list of strings, or comma-separated text. A list of one-name lists (seen: a small model sent
+    // by as [["username"], ["host"]]) is read as the names, said in notes; any other shape is refused.
+    private static List<String> names(final Object value,
+                                      final String what,
+                                      final String key,
+                                      final List<String> notes) {
         final List<String> items = new ArrayList<>();
         if (value instanceof final List<?> list) {
-            list.stream().filter(Objects::nonNull).forEach(item -> items.add(String.valueOf(item).strip()));
+            for (final Object item : list) {
+                if (item instanceof final String name) {
+                    items.add(name.strip());
+                } else if (item instanceof final List<?> one && one.size() == 1
+                           && one.getFirst() instanceof final String name) {
+                    items.add(name.strip());
+                    notes.add("Read the one-name lists in " + key + " as the names: give field names as strings, e.g. "
+                              + "[\"user\", \"host\"].");
+                } else if (item != null) {
+                    throw new WorkspaceException(what + "'s " + key + ": give field names as strings, e.g. "
+                                                 + "[\"user\", \"host\"].");
+                }
+            }
         } else if (value != null) {
             for (final String item : String.valueOf(value).split(",")) {
                 items.add(item.strip());
@@ -1390,6 +1412,8 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
                         : "ies").append('.');
         if (count > 0) {
             sb.append(' ').append(AT_LEAST);
+        } else if (outcome.docs().size() > 1) {
+            sb.append(' ').append(NO_MATCH_ACROSS_DOCS);
         }
         if (outcome.untimed() > 0) {
             sb.append(' ').append(untimedNote(outcome.untimed(), count));

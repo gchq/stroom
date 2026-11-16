@@ -640,6 +640,54 @@ class TestEqlSequenceTool {
     }
 
     @Test
+    void oneNameListsAreReadAsTheNamesSayingSo() {
+        final Map<String, Object> args = new LinkedHashMap<>();
+        args.put("maxspan", "2m");
+        args.put("steps", List.of(
+                Map.of("index", "Devices", "by", List.of(List.of("user"), List.of("host")),
+                        "fields", List.of(List.of("action"))),
+                Map.of("index", "Sysmon", "by", List.of(List.of("SubjectUserName"), List.of("Computer")))));
+
+        final String output = run(chat(UserQuestions.NONE), args);
+
+        assertThat(request().query()).contains("by user, host").contains("by SubjectUserName, Computer");
+        assertThat(request().fields()).contains("action");
+        assertThat(output).containsOnlyOnce("Read the one-name lists in by as the names: give field names as strings")
+                .containsOnlyOnce("Read the one-name lists in fields as the names");
+    }
+
+    @Test
+    void fieldNamesThatArentStringsAreRefused() {
+        for (final Object by : List.of(List.of(List.of("user", "host")), List.of(Map.of("field", "user")),
+                List.of(List.of()), List.of(42))) {
+            assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "2m", "steps", List.of(
+                    Map.of("index", "Devices", "by", by), step(SYSMON, "SubjectUserName")))))
+                    .contains("Step 1's by: give field names as strings, e.g. [\"user\", \"host\"].");
+        }
+        assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "2m", "steps", List.of(
+                Map.of("index", "Devices", "by", List.of("user"), "fields", List.of(List.of("a", "b"))),
+                step(SYSMON, "SubjectUserName")))))
+                .contains("Step 1's fields: give field names as strings");
+        Mockito.verify(elasticEql, Mockito.never()).search(Mockito.any());
+    }
+
+    @Test
+    void noSequencesAcrossDocsSayTheJoinValuesMustMatch() {
+        sequences.clear();
+
+        assertThat(run(chat(UserQuestions.NONE), args("2m"))).contains("0 sequences found, for 0 entities. "
+                                                                       + EqlSequenceTool.NO_MATCH_ACROSS_DOCS);
+        assertThat(JsonUtil.readValue(run(mcp(), args("2m")), Map.class).get("note").toString())
+                .contains(EqlSequenceTool.NO_MATCH_ACROSS_DOCS);
+        // One doc, or sequences found: no hint.
+        assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "2m", "steps", List.of(step(DEVICES, "user"),
+                step(DEVICES, "user"))))).contains("0 sequences found")
+                .doesNotContain(EqlSequenceTool.NO_MATCH_ACROSS_DOCS);
+        sequences.add(pair("alice", "H1", T0, 40_000, 1));
+        assertThat(run(chat(UserQuestions.NONE), args("2m"))).doesNotContain(EqlSequenceTool.NO_MATCH_ACROSS_DOCS);
+    }
+
+    @Test
     void theDescriptionLeadsWithTheOrderedQuestionsItAnswers() {
         // Seen in acceptance runs on a small model: ordered questions answered by joining esql_query results.
         final String lead = "Use for any 'X, then Y, by the same user/host, within N' question on Elastic Indexes, "
