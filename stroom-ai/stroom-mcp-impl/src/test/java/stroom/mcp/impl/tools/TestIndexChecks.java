@@ -408,7 +408,9 @@ class TestIndexChecks {
                 List.of(6L), 3, List.of(carol), null, 0, List.of(), null, sample);
         assertThat(missing.get("passed")).isEqualTo(false);
         assertThat(String.valueOf(((Map<?, ?>) ((List<?>) missing.get("checks")).get(1)).get("why")))
-                .contains("'carol' is in none of the Events read");
+                .contains("'carol' is in none of the Events read")
+                // What the Events do hold, so the agent can choose a value without searching for one.
+                .endsWith("; the Events hold: `alice` (2), `bob` (1)");
     }
 
     private static String user(final String id) {

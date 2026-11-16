@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
@@ -67,6 +68,9 @@ class EventsExpectations {
     private static final Set<String> RANGES = Set.of("GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN",
             "LESS_THAN_OR_EQUAL_TO", "BETWEEN");
     private static final Set<String> NUMBERS = Set.of("long", "double", "id");
+    // The most values, and the characters of each, shown of those the Events hold.
+    private static final int VALUES_HELD = 5;
+    private static final int HELD_LENGTH = 40;
 
     private final StreamReader streamReader;
 
@@ -327,6 +331,51 @@ class EventsExpectations {
                 }
             }
             return new Expectation(count, source, null);
+        }
+
+        /// The commonest values the Events read hold for a field, for a check of a value they don't hold (seen in a
+        /// UniFi OS chat: four exact checks of values from before a TypeId rewrite failed with only "in none of the
+        /// Events read", and the agent took about 50 calls to find the values they did hold).
+        ///
+        /// @param field The index's field.
+        /// @return E.g. `the Events hold: `a` (54), `b` (31)`, each value cut and on one line; that the source is
+        /// empty in every event read; or null when the field's values can't be read from the Events.
+        String held(final String field) {
+            final Map<String, Long> counts = new LinkedHashMap<>();
+            String source = null;
+            for (final Part part : parts) {
+                final PlannedValues.Written written = part.values().written(field);
+                if (!written.known()) {
+                    return null;
+                }
+                source = written.source();
+                for (final List<String> values : written.perEvent()) {
+                    // An event is counted once for each distinct value it holds.
+                    values.stream()
+                            .filter(value -> !NullSafe.isBlankString(value))
+                            .distinct()
+                            .forEach(value -> counts.merge(value, 1L, Long::sum));
+                }
+            }
+            if (counts.isEmpty()) {
+                return source == null
+                        ? null
+                        : source + " is empty in every Event read";
+            }
+            final List<Map.Entry<String, Long>> commonest = counts.entrySet().stream()
+                    .sorted(Map.Entry.<String, Long>comparingByValue().reversed()
+                            .thenComparing(Map.Entry.comparingByKey()))
+                    .toList();
+            final List<String> shown = commonest.subList(0, Math.min(VALUES_HELD, commonest.size())).stream()
+                    .map(entry -> FieldDocs.sampleValue(entry.getKey(), HELD_LENGTH) + " ("
+                                  + ToolText.thousands(entry.getValue()) + ")")
+                    .toList();
+            final int more = commonest.size() - shown.size();
+            return "the Events hold: " + String.join(", ", shown) + (more > 0
+                    ? " and " + ToolText.thousands(more) + " other value" + (more == 1
+                    ? ""
+                    : "s")
+                    : "");
         }
 
         /// The core fields of the plan's convention (ECS's `level: core`, and the time field) that most events read

@@ -547,7 +547,7 @@ public final class FieldDocs {
     /// @return It as inline code in a table cell, on one line: its white space (new lines, carriage returns, line
     /// separators, tabs) run together as one space, backticks shown as quotes, cut to `most` characters with an
     /// ellipsis (seen: a mail body's HTML and CRLF line ends broke a documentation table's rows).
-    static String sampleValue(final String value, final int most) {
+    public static String sampleValue(final String value, final int most) {
         final String flat = WHITE_SPACE.matcher(NullSafe.string(value)).replaceAll(" ").strip().replace('`', '\'');
         final String shown = ToolText.head(flat, most);
         return "`" + shown + (shown.length() < flat.length()
