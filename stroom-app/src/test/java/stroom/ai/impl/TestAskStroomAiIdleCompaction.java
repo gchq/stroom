@@ -20,8 +20,13 @@ import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
+import stroom.ai.shared.AiChatRunStopReason;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AskStroomAiConfig;
+import stroom.ai.shared.AskStroomAiRequest;
+import stroom.ai.shared.AskStroomAiResponse;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.security.api.SecurityContext;
@@ -38,6 +43,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,6 +54,8 @@ class TestAskStroomAiIdleCompaction extends AbstractAiIntegrationTest {
 
     private static final int WINDOW_TOKENS = 8_000;
     private static final int LARGE_WINDOW_TOKENS = 1_000_000;
+    // The node an idle compaction works on when the question waiting for it, and the Stop, are on this one.
+    private static final String OTHER_NODE = "other-node";
 
     @Inject
     private AiIdleCompaction idleCompaction;
@@ -134,6 +143,115 @@ class TestAskStroomAiIdleCompaction extends AbstractAiIntegrationTest {
         assertThat(model.sideRequests()).isEmpty();
     }
 
+    @Test
+    void oneStopWhileAQuestionWaitsForAnIdleCompactionOnAnotherNodeStopsBothAndTheQuestionIsNotSent() {
+        final DocRef modelRef = asUser(user, () -> fakeModel(LARGE_WINDOW_TOKENS));
+        final AiChat chat = asUser(user, () -> askStroomAIService.createChat());
+        final AiChatRun idle = runDao.createIdleCompactionIfNoneActive(chat.getId(), user.getUuid(), OTHER_NODE)
+                .orElseThrow();
+        final Question question = ask(chat, modelRef, "Which feeds are there?");
+        question.awaitWaiting();
+
+        // One Stop, on this node, as the user's client sends it.
+        final boolean stopped = asUser(user, () -> askStroomAIService.cancelProcessing(chat.getId()));
+
+        assertThat(stopped).isTrue();
+        final AskStroomAiResponse response = question.response();
+        assertThat(response.isStoppedBeforeSending()).isTrue();
+        // The compaction is asked to stop, and no run was started for the question, nor was it stored.
+        final AiChatRun idleNow = runDao.get(idle.getId()).orElseThrow();
+        assertThat(idleNow.getStatus()).isEqualTo(AiChatRunStatus.STOPPING);
+        assertThat(idleNow.getStopReason()).isEqualTo(AiChatRunStopReason.USER);
+        assertThat(runDao.getLatest(chat.getId()).map(AiChatRun::getId)).contains(idle.getId());
+        assertThat(aiService.getMessages(chat.getId())).isEmpty();
+        assertThat(model.agentRequests()).isEmpty();
+        stopOnTheOtherNode(idle);
+    }
+
+    @Test
+    void aQuestionSentAfterAStopWithNoQuestionWaitingIsAskedOnceTheCompactionHasStopped() {
+        final DocRef modelRef = asUser(user, () -> fakeModel(LARGE_WINDOW_TOKENS));
+        final AiChat chat = asUser(user, () -> askStroomAIService.createChat());
+        final AiChatRun idle = runDao.createIdleCompactionIfNoneActive(chat.getId(), user.getUuid(), OTHER_NODE)
+                .orElseThrow();
+        // A Stop with no question waiting stops the compaction alone, as before.
+        assertThat(asUser(user, () -> askStroomAIService.cancelProcessing(chat.getId()))).isTrue();
+        assertThat(runDao.get(idle.getId()).map(AiChatRun::getStatus)).contains(AiChatRunStatus.STOPPING);
+        assertThat(aiService.getMessages(chat.getId())).isEmpty();
+
+        // A question sent while it winds down waits for it, then is asked.
+        final Question question = ask(chat, modelRef, "Which feeds are there?");
+        question.awaitWaiting();
+        stopOnTheOtherNode(idle);
+
+        assertThat(question.response().isStoppedBeforeSending()).isFalse();
+        final List<AiChatMessage> messages = answered(chat.getId());
+        assertThat(messages).extracting(AiChatMessage::getMessageType)
+                .contains(AiMessageType.USER_MESSAGE, AiMessageType.AI_RESPONSE);
+        assertThat(runDao.getLatest(chat.getId()).map(AiChatRun::getId)).isNotEqualTo(Optional.of(idle.getId()));
+    }
+
+    @Test
+    void aQuestionWaitingForAnIdleCompactionThatFinishesIsAskedAsBefore() {
+        final DocRef modelRef = asUser(user, () -> fakeModel(LARGE_WINDOW_TOKENS));
+        final AiChat chat = asUser(user, () -> askStroomAIService.createChat());
+        final AiChatRun idle = runDao.createIdleCompactionIfNoneActive(chat.getId(), user.getUuid(), OTHER_NODE)
+                .orElseThrow();
+        final Question question = ask(chat, modelRef, "Which feeds are there?");
+        question.awaitWaiting();
+
+        runDao.compareAndSetStatus(idle.getId(), Set.of(AiChatRunStatus.RUNNING), AiChatRunStatus.DONE, null, null);
+
+        assertThat(question.response().isStoppedBeforeSending()).isFalse();
+        assertThat(answered(chat.getId())).extracting(AiChatMessage::getMessageType)
+                .contains(AiMessageType.USER_MESSAGE, AiMessageType.AI_RESPONSE);
+    }
+
+    // Asks a question in the background, as the user's client does, as it may wait for an idle compaction.
+    private Question ask(final AiChat chat, final DocRef modelRef, final String text) {
+        final AtomicReference<AskStroomAiResponse> response = new AtomicReference<>();
+        final AtomicReference<Throwable> failure = new AtomicReference<>();
+        final Thread thread = new Thread(() -> {
+            try {
+                response.set(asUser(user, () -> askStroomAIService.askStroomAi(new AskStroomAiRequest(chat,
+                        AskStroomAiConfig.builder().modelRef(modelRef).build(), null, text))));
+            } catch (final Throwable e) {
+                failure.set(e);
+            }
+        }, "question");
+        thread.start();
+        return new Question(thread, response, failure);
+    }
+
+    // The idle compaction's node stops it, keeping the reason it was asked to stop for.
+    private void stopOnTheOtherNode(final AiChatRun idle) {
+        runDao.compareAndSetStatus(idle.getId(), Set.of(AiChatRunStatus.RUNNING, AiChatRunStatus.STOPPING),
+                AiChatRunStatus.STOPPED, AiChatRunStopReason.USER, null);
+    }
+
+    // The chat's messages once its question has been answered and its run has ended.
+    private List<AiChatMessage> answered(final int chatId) {
+        final Instant until = Instant.now().plus(Duration.ofMinutes(2));
+        while (Instant.now().isBefore(until)) {
+            final List<AiChatMessage> messages = aiService.getMessages(chatId);
+            if (messages.stream().anyMatch(message -> message.getMessageType() == AiMessageType.AI_RESPONSE)
+                && !runManager.isRunningHere(chatId)) {
+                return messages;
+            }
+            sleep(100);
+        }
+        throw new AssertionError("Not answered within 2 minutes");
+    }
+
+    private static void sleep(final long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new AssertionError("Interrupted", e);
+        }
+    }
+
     private DocRef fakeModel(final int windowTokens) {
         final DocRef ref = modelStore.createDocument("Fake model");
         final OpenAIModelDoc doc = modelStore.readDocument(ref).copy()
@@ -164,5 +282,37 @@ class TestAskStroomAiIdleCompaction extends AbstractAiIntegrationTest {
             }
         }
         throw new AssertionError("Not compacted within 2 minutes");
+    }
+
+    /// A question asked in the background.
+    private record Question(Thread thread,
+                            AtomicReference<AskStroomAiResponse> responseRef,
+                            AtomicReference<Throwable> failure) {
+
+        /// Waits until the question is waiting for the idle compaction: it polls the run, sleeping between looks.
+        void awaitWaiting() {
+            final Instant until = Instant.now().plus(Duration.ofSeconds(30));
+            // Long enough for its first look at the run, and more.
+            sleep(1_000);
+            while (thread.getState() != Thread.State.TIMED_WAITING) {
+                if (!thread.isAlive() || Instant.now().isAfter(until)) {
+                    throw new AssertionError("The question did not wait for the idle compaction", failure.get());
+                }
+                sleep(20);
+            }
+        }
+
+        /// @return The response to the question, once it has returned.
+        AskStroomAiResponse response() {
+            try {
+                thread.join(Duration.ofSeconds(30));
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new AssertionError("Interrupted", e);
+            }
+            assertThat(thread.isAlive()).as("The question has not returned").isFalse();
+            assertThat(failure.get()).as("The question failed").isNull();
+            return responseRef.get();
+        }
     }
 }

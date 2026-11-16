@@ -72,6 +72,25 @@ class TestAiChatTexts {
     }
 
     @Test
+    void aChatCompactedWhileIdleIsShownAsCompactingNotWorking() {
+        final AiChatStatus idle = new AiChatStatus(1, "t", 0L, AiChatRunStatus.RUNNING, false, false, 0L, null, 0,
+                true);
+        final AiChatStatus stopping = new AiChatStatus(1, "t", 0L, AiChatRunStatus.STOPPING, false, false, 0L, null,
+                0, true);
+
+        assertThat(AiChatTexts.statusNote(idle)).isEqualTo("compacting");
+        assertThat(AiChatTexts.statusNote(stopping)).isEqualTo("compacting");
+        assertThat(AiChatTexts.statusExplanation(idle)).startsWith("Compacting:");
+        // Still the spinner and colour of a chat that is busy, as a run is working on it.
+        assertThat(AiChatTexts.statusIcon(idle)).isEqualTo(SvgImage.SPINNER_SPINNING);
+        assertThat(AiChatTexts.statusColour(idle)).isEqualTo("busy");
+        // An ordinary run, including a compaction the user started, is still shown as working on their question.
+        assertThat(AiChatTexts.statusNote(status(AiChatRunStatus.RUNNING, false, false))).isEqualTo("working");
+        assertThat(AiChatTexts.statusExplanation(status(AiChatRunStatus.RUNNING, false, false)))
+                .isEqualTo("Working on your question.");
+    }
+
+    @Test
     void eachStateHasTheColourOfItsBadge() {
         assertThat(AiChatTexts.statusColour(status(AiChatRunStatus.WAITING_FOR_USER, true, false)))
                 .isEqualTo("needs-you");
@@ -166,7 +185,7 @@ class TestAiChatTexts {
     private static AiChatStatus status(final AiChatRunStatus runStatus,
                                        final boolean unread,
                                        final boolean approveEverything) {
-        return new AiChatStatus(1, "t", 0L, runStatus, unread, approveEverything, 0L, null, 0);
+        return new AiChatStatus(1, "t", 0L, runStatus, unread, approveEverything, 0L, null, 0, false);
     }
 
     @Test

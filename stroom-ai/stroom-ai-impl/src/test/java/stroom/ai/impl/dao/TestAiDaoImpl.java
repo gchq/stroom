@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.dao;
 
+import stroom.ai.impl.AiChatRunDao;
 import stroom.ai.impl.AiDao;
 import stroom.ai.impl.db.AiDbConnProvider;
 import stroom.ai.impl.db.AiDbModule;
@@ -25,6 +26,8 @@ import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiChatRun;
+import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatStatus;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.DocumentReference;
@@ -71,6 +74,8 @@ class TestAiDaoImpl {
 
     @Inject
     private AiDao aiDao;
+    @Inject
+    private AiChatRunDao runDao;
     @Inject
     private AiDbConnProvider aiDbConnProvider;
 
@@ -239,6 +244,37 @@ class TestAiDaoImpl {
         // Marking an earlier message read does not go backwards.
         aiDao.markRead(older.getId(), 1);
         assertThat(aiDao.getChatStatuses("user1", 10).getFirst().isUnread()).isFalse();
+    }
+
+    @Test
+    void aChatBeingCompactedWhileIdleHasAStatusThatSaysSo() {
+        final AiChat idle = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        final AiChat asked = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        final AiChatRun idleRun = runDao.createIdleCompactionIfNoneActive(idle.getId(), "user1", "node1")
+                .orElseThrow();
+        runDao.createIfNoneActive(asked.getId(), "user1", AiChatRunStatus.RUNNING, "node1", null).orElseThrow();
+
+        final Map<Integer, AiChatStatus> statuses = aiDao.getChatStatuses("user1", 10).stream()
+                .collect(Collectors.toMap(AiChatStatus::getChatId, status -> status));
+
+        // Both are busy, but only the idle compaction is shown as compacting.
+        assertThat(statuses.get(idle.getId()).isBusy()).isTrue();
+        assertThat(statuses.get(idle.getId()).isIdleCompaction()).isTrue();
+        assertThat(statuses.get(idle.getId()).isCompacting()).isTrue();
+        assertThat(statuses.get(asked.getId()).isBusy()).isTrue();
+        assertThat(statuses.get(asked.getId()).isIdleCompaction()).isFalse();
+        assertThat(statuses.get(asked.getId()).isCompacting()).isFalse();
+
+        // Once it has ended, it is no longer compacting.
+        runDao.compareAndSetStatus(idleRun.getId(), List.of(AiChatRunStatus.RUNNING), AiChatRunStatus.DONE, null,
+                null);
+        final AiChatStatus ended = aiDao.getChatStatuses("user1", 10).stream()
+                .filter(status -> status.getChatId() == idle.getId())
+                .findFirst()
+                .orElseThrow();
+        assertThat(ended.isIdleCompaction()).isFalse();
+        assertThat(ended.isCompacting()).isFalse();
+        assertThat(ended.getRunStatus()).isEqualTo(AiChatRunStatus.DONE);
     }
 
     @Test

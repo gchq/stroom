@@ -313,6 +313,33 @@ class TestAiChatRunDaoImpl {
     }
 
     @Test
+    void testAStopOfAnIdleCompactionIsSeenByAQuestionWaitingOnAnotherNode() {
+        // The compaction works on node1. The question waiting for it, on another node, reads the run by its id, and
+        // a Stop pressed on any node is recorded in the run's row, so the question sees it whichever node it is on.
+        final AiChatRun idle = runDao.createIdleCompactionIfNoneActive(chat.getId(), "user1", "node1")
+                .orElseThrow();
+        assertThat(runDao.get(idle.getId()).map(AiChatRun::getStopReason)).isEmpty();
+
+        assertThat(runDao.compareAndSetStatus(idle.getId(), Set.of(AiChatRunStatus.RUNNING),
+                AiChatRunStatus.STOPPING, AiChatRunStopReason.USER, null)).isTrue();
+
+        // Seen at once, while node1 has yet to wind the compaction down.
+        final AiChatRun stopping = runDao.get(idle.getId()).orElseThrow();
+        assertThat(stopping.getStatus()).isEqualTo(AiChatRunStatus.STOPPING);
+        assertThat(stopping.getStopReason()).isEqualTo(AiChatRunStopReason.USER);
+        assertThat(stopping.isActive()).isTrue();
+        assertThat(runDao.getActiveIdleCompaction(chat.getId())).contains(stopping);
+
+        // node1 stops it, keeping the reason it was asked to stop for.
+        runDao.compareAndSetStatus(idle.getId(), Set.of(AiChatRunStatus.STOPPING), AiChatRunStatus.STOPPED,
+                AiChatRunStopReason.USER, null);
+        final AiChatRun stopped = runDao.get(idle.getId()).orElseThrow();
+        assertThat(stopped.getStatus()).isEqualTo(AiChatRunStatus.STOPPED);
+        assertThat(stopped.getStopReason()).isEqualTo(AiChatRunStopReason.USER);
+        assertThat(runDao.getActiveIdleCompaction(chat.getId())).isEmpty();
+    }
+
+    @Test
     void testFindIdleChats_aChatWhoseLastMessageIsInTheWindowIsFound() {
         final AiChatMessage last = answered(chat.getId());
 

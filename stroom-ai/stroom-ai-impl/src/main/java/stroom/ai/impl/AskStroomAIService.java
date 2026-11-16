@@ -369,7 +369,11 @@ public class AskStroomAIService {
             // change the run proposed, and later proposals must be made against it as it is now).
             final TabSnapshots.Stored tab = storeTabSnapshot(chatId, request.getTabSnapshot());
             resendTab = tab.resend();
-            askOrSteer(chatId, request, tab);
+            if (!askOrSteer(chatId, request, tab)) {
+                // The user pressed Stop while the message waited for an idle compaction, so it was not sent. The
+                // client gives it back to them to send again.
+                return new AskStroomAiResponse(null, resendTab, true);
+            }
         }
 
         // The answer (if there is a question) is delivered by polling.
@@ -711,13 +715,19 @@ public class AskStroomAIService {
     // idle is not a run the message can steer, and a question can't start while it works: it is waited for, then
     // the question is asked as usual. The job may start one at any moment (e.g. between the wait and the steer, or
     // between the steer finding no run and the start), so it is tried again, a few times, within one overall wait.
-    private void askOrSteer(final int chatId, final AskStroomAiRequest request, final TabSnapshots.Stored tab) {
+    // One Stop pressed while the message waits stops the compaction and drops the message: it is neither stored nor
+    // asked. Returns true if the message was sent (steered a run or started one), false if it was dropped.
+    private boolean askOrSteer(final int chatId, final AskStroomAiRequest request, final TabSnapshots.Stored tab) {
         final long deadlineMs = System.currentTimeMillis() + idleCompactionWait.toMillis();
         for (int attempt = 1; ; attempt++) {
-            waitForIdleCompaction(chatId, deadlineMs);
+            if (waitForIdleCompaction(chatId, deadlineMs) == IdleCompactionWait.STOPPED_BY_USER) {
+                LOGGER.debug(() -> "The user stopped the idle compaction of chat " + chatId
+                                   + " that a message waited for, so the message is not sent");
+                return false;
+            }
             final Steered steered = steer(chatId, request.getMessage(), tab.snapshotId());
             if (steered == Steered.STEERED) {
-                return;
+                return true;
             }
             if (steered == Steered.NO_RUN) {
                 try {
@@ -727,7 +737,7 @@ public class AskStroomAIService {
                         chatTitler.nameFromQuestion(chatId, request.getMessage());
                         answerQuestion(chatId, request);
                     });
-                    return;
+                    return true;
                 } catch (final AiChatRunManager.AiChatBusyException e) {
                     // Any other run keeps today's behaviour.
                     if (runDao.getActiveIdleCompaction(chatId).isEmpty()) {
@@ -746,22 +756,45 @@ public class AskStroomAIService {
     /// meanwhile is asked once it has finished (or been stopped) rather than failing as busy or being left to steer
     /// a run that answers nothing. Package-private for testing.
     ///
+    /// If the user stops the compaction while the question waits, the one Stop is for both: the wait ends as soon
+    /// as the stop is recorded, without waiting for the compaction to wind down, and says so, so that the question
+    /// is not asked. The stop is seen in the run's status and stop reason in the database, so it is seen whichever
+    /// node the Stop, the compaction and this wait are on. A compaction the user had already stopped before the
+    /// question arrived is only waited for, and the question is asked once it has stopped.
+    ///
     /// @param chatId     The chat.
     /// @param deadlineMs The latest time to wait until.
+    /// @return [IdleCompactionWait#STOPPED_BY_USER] if the user stopped the compaction while the question waited,
+    /// otherwise [IdleCompactionWait#ASK] (including when there was nothing to wait for).
     /// @throws AiChatRunManager.AiChatBusyException If the compaction has not finished by the deadline.
-    void waitForIdleCompaction(final int chatId, final long deadlineMs) {
+    IdleCompactionWait waitForIdleCompaction(final int chatId, final long deadlineMs) {
         final AiChatRun idleRun = runDao.getActiveIdleCompaction(chatId).orElse(null);
         if (idleRun == null) {
-            return;
+            return IdleCompactionWait.ASK;
         }
         LOGGER.debug(() -> "A question in chat " + chatId + " waits for idle compaction run " + idleRun.getId());
-        final long deadline = deadlineMs;
-        while (runDao.get(idleRun.getId()).filter(AiChatRun::isActive).isPresent()) {
-            if (System.currentTimeMillis() > deadline) {
+        // A Stop pressed before the question was sent was for the compaction alone.
+        final boolean stoppedBeforeTheQuestion = isStoppedByUser(idleRun);
+        while (true) {
+            final AiChatRun current = runDao.get(idleRun.getId()).orElse(null);
+            if (!stoppedBeforeTheQuestion && isStoppedByUser(current)) {
+                return IdleCompactionWait.STOPPED_BY_USER;
+            }
+            if (current == null || !current.isActive()) {
+                return IdleCompactionWait.ASK;
+            }
+            if (System.currentTimeMillis() > deadlineMs) {
                 throw new AiChatRunManager.AiChatBusyException(chatId, IDLE_COMPACTION_TIMED_OUT);
             }
             ThreadUtil.sleepIgnoringInterrupts(STOP_POLL_INTERVAL.toMillis());
         }
+    }
+
+    // True if the user has asked the run to stop (it may still be stopping), e.g. by pressing Stop.
+    private static boolean isStoppedByUser(final AiChatRun run) {
+        return run != null
+               && run.getStopReason() == AiChatRunStopReason.USER
+               && (run.getStatus() == AiChatRunStatus.STOPPING || run.getStatus() == AiChatRunStatus.STOPPED);
     }
 
     /// Compacts a chat that has been left idle, ahead of its user's return, if it is over the idle threshold (see
@@ -2709,6 +2742,15 @@ public class AskStroomAIService {
         NO_RUN,
         // The run is a compaction started while the chat was idle, which it waits for.
         IDLE_COMPACTION
+    }
+
+    /// What a question that waited for a compaction started while its chat was idle is to do (see
+    /// [#waitForIdleCompaction(int, long)]).
+    enum IdleCompactionWait {
+        /// Be asked: there was no compaction, or it has ended (or had been stopped before the question arrived).
+        ASK,
+        /// Not be sent: the user pressed Stop while it waited, which stops the compaction and drops the question.
+        STOPPED_BY_USER
     }
 
     /// What [#compactWhileIdle] did with an idle chat.

@@ -88,6 +88,9 @@ public final class AiChatTexts {
             return "Needs you: waiting for your answer or approval before it can carry on.";
         } else if (status.getRunStatus() == AiChatRunStatus.QUEUED) {
             return "Queued: waiting for one of your other questions, or other users' questions, to finish.";
+        } else if (status.isCompacting()) {
+            return "Compacting: Stroom AI is making the chat smaller while it is idle. A message sent now waits "
+                   + "for it.";
         } else if (status.isBusy()) {
             return "Working on your question.";
         } else if (status.getRunStatus() == AiChatRunStatus.FAILED) {
@@ -187,6 +190,8 @@ public final class AiChatTexts {
             return "needs you";
         } else if (status.getRunStatus() == AiChatRunStatus.QUEUED) {
             return "queued";
+        } else if (status.isCompacting()) {
+            return "compacting";
         } else if (status.isBusy()) {
             return "working";
         } else if (status.getRunStatus() == AiChatRunStatus.FAILED) {

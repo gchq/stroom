@@ -63,6 +63,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -1014,14 +1015,22 @@ public class AiDaoImpl implements AiDao {
                     .toList();
             final List<Integer> ids = chats.stream().map(r -> r.get(AI_CHAT.ID)).toList();
             final Map<Integer, Byte> runStatuses = new HashMap<>();
-            context.select(AI_CHAT_RUN.FK_AI_CHAT_ID, AI_CHAT_RUN.STATUS)
+            // The chats whose latest run is a compaction started while they were idle, so are shown as compacting
+            // rather than working on a question.
+            final Set<Integer> idleCompactions = new HashSet<>();
+            context.select(AI_CHAT_RUN.FK_AI_CHAT_ID, AI_CHAT_RUN.STATUS, AI_CHAT_RUN.IDLE_COMPACTION)
                     .from(AI_CHAT_RUN)
                     .where(AI_CHAT_RUN.ID.in(DSL.select(DSL.max(AI_CHAT_RUN.ID))
                             .from(AI_CHAT_RUN)
                             .where(AI_CHAT_RUN.FK_AI_CHAT_ID.in(ids))
                             .groupBy(AI_CHAT_RUN.FK_AI_CHAT_ID)))
                     .fetch()
-                    .forEach(r -> runStatuses.put(r.value1(), r.value2()));
+                    .forEach(r -> {
+                        runStatuses.put(r.value1(), r.value2());
+                        if (Boolean.TRUE.equals(r.value3())) {
+                            idleCompactions.add(r.value1());
+                        }
+                    });
             final Map<Integer, Integer> lastMessages = new HashMap<>();
             context.select(AI_CHAT_MESSAGE.FK_AI_CHAT_ID, DSL.max(AI_CHAT_MESSAGE.ID))
                     .from(AI_CHAT_MESSAGE)
@@ -1045,19 +1054,21 @@ public class AiDaoImpl implements AiDao {
                         final int id = r.get(AI_CHAT.ID);
                         final int lastRead = Objects.requireNonNullElse(r.get(AI_CHAT.LAST_READ_MESSAGE_ID), 0);
                         final Byte runStatus = runStatuses.get(id);
+                        final AiChatRunStatus status = runStatus == null
+                                ? null
+                                : AiChatRunStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(runStatus);
                         return new AiChatStatus(
                                 id,
                                 r.get(AI_CHAT.TITLE),
                                 r.get(AI_CHAT.UPDATE_TIME_MS),
-                                runStatus == null
-                                        ? null
-                                        : AiChatRunStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(runStatus),
+                                status,
                                 lastMessages.getOrDefault(id, 0) > lastRead,
                                 Boolean.TRUE.equals(r.get(AI_CHAT.AUTO_APPROVE)),
                                 r.get(AI_CHAT.LAST_OPENED_MS),
                                 AiAgentMode.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
                                         r.get(AI_CHAT.AGENT_MODE), AiAgentMode.AGENT),
-                                lastForms.getOrDefault(id, 0));
+                                lastForms.getOrDefault(id, 0),
+                                status != null && status.isActive() && idleCompactions.contains(id));
                     })
                     .toList();
         });

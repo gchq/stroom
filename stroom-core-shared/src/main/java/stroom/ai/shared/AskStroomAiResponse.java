@@ -28,19 +28,33 @@ public class AskStroomAiResponse {
     private final String message;
     @JsonProperty
     private final boolean tabSnapshotNeeded;
+    @JsonProperty
+    private final boolean stoppedBeforeSending;
 
     public AskStroomAiResponse(final String message) {
-        this(message, false);
+        this(message, false, false);
     }
 
     /// @param message           A message, or null.
     /// @param tabSnapshotNeeded True if only the attached tab's hash was sent, but the server doesn't hold a copy with
     ///                          it, so the next question should send the tab in full.
+    public AskStroomAiResponse(final String message, final boolean tabSnapshotNeeded) {
+        this(message, tabSnapshotNeeded, false);
+    }
+
+    /// @param message              A message, or null.
+    /// @param tabSnapshotNeeded    True if only the attached tab's hash was sent, but the server doesn't hold a copy
+    ///                             with it, so the next question should send the tab in full.
+    /// @param stoppedBeforeSending True if the user pressed Stop while the message waited for a compaction Stroom AI
+    ///                             started while the chat was idle: the compaction was stopped and the message was
+    ///                             not sent (neither stored nor asked), so the user still has it to send.
     @JsonCreator
     public AskStroomAiResponse(@JsonProperty("message") final String message,
-                               @JsonProperty("tabSnapshotNeeded") final Boolean tabSnapshotNeeded) {
+                               @JsonProperty("tabSnapshotNeeded") final Boolean tabSnapshotNeeded,
+                               @JsonProperty("stoppedBeforeSending") final Boolean stoppedBeforeSending) {
         this.message = message;
         this.tabSnapshotNeeded = tabSnapshotNeeded != null && tabSnapshotNeeded;
+        this.stoppedBeforeSending = stoppedBeforeSending != null && stoppedBeforeSending;
     }
 
     public String getMessage() {
@@ -51,5 +65,11 @@ public class AskStroomAiResponse {
     /// whose hash was sent.
     public boolean isTabSnapshotNeeded() {
         return tabSnapshotNeeded;
+    }
+
+    /// @return True if the user pressed Stop while the message waited for a compaction Stroom AI started while the
+    /// chat was idle, so the message was not sent (neither stored nor asked).
+    public boolean isStoppedBeforeSending() {
+        return stoppedBeforeSending;
     }
 }
