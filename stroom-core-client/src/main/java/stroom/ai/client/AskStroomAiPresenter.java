@@ -260,6 +260,9 @@ public class AskStroomAiPresenter
     private static final String CHAT_ID_ATTRIBUTE = "data-chat-id";
     private static final String DELETE_CHAT_ATTRIBUTE = "data-delete-chat-id";
     private static final String RUN_STATUS_ID = "ai-run-status";
+    // The note that a message was not sent, as Stop was pressed while it waited for an idle compaction.
+    private static final String NOT_SENT_ID = "ai-not-sent";
+    private static final String NOT_SENT_TEXT = "Stopped. Your message was not sent.";
     private static final String RESUME_RUN_ATTRIBUTE = "data-resume-run";
     private static final String RETRY_TURN_ATTRIBUTE = "data-retry-turn-id";
     // A message gone to from the overview is picked out for this long.
@@ -4176,6 +4179,7 @@ public class AskStroomAiPresenter
     private void sendMessage(final String message) {
         // The command has been used.
         onCloseCommandReference();
+        removeAllInConversation(NOT_SENT_ID);
         followUps = List.of();
         answerFollowUps = List.of();
         getView().setFollowUps(List.of());
@@ -4211,6 +4215,14 @@ public class AskStroomAiPresenter
             askStroomAiClient.sendMessage(request,
                     response -> {
                         requestInFlight = false;
+                        if (response != null && response.isStoppedBeforeSending()) {
+                            // One Stop stopped the idle compaction the message waited for, and the message, which
+                            // was neither stored nor asked. The tab's hash isn't recorded, so the next message
+                            // sends it in full.
+                            returnUnsentMessage(message);
+                            pollAfterAnswer();
+                            return;
+                        }
                         if (response != null && response.isTabSnapshotNeeded()) {
                             lastSentTabHashes.remove(chatId);
                         } else if (tabSnapshot != null) {
@@ -4493,7 +4505,11 @@ public class AskStroomAiPresenter
         }
         refreshOverview();
         removeLiveAnswer();
-        // Don't leave a day divider with nothing after it.
+        removeTrailingDayDividers(markdownContainer);
+    }
+
+    // Doesn't leave a day divider with nothing after it.
+    private void removeTrailingDayDividers(final Element markdownContainer) {
         Element last = markdownContainer.getLastChild() != null
                 ? markdownContainer.getLastChild().cast()
                 : null;
@@ -4503,6 +4519,36 @@ public class AskStroomAiPresenter
             lastRenderedDay = null;
             last = previous;
         }
+    }
+
+    /// Gives a message back to the user that was not sent because they pressed Stop while it waited for a
+    /// compaction Stroom AI started while the chat was idle: its bubble is taken away, the tables attached to it
+    /// are attached again, its text is put back in the input box (before anything typed since), and a note says
+    /// it was not sent.
+    private void returnUnsentMessage(final String message) {
+        final Element markdownContainer = getView().getMarkdownContainer().getElement();
+        final Element pending = findMessageElement(markdownContainer, PENDING_MESSAGE_ID);
+        if (pending != null) {
+            pending.removeFromParent();
+            removeTrailingDayDividers(markdownContainer);
+        }
+        sendingAttachments.forEach(attachment -> pendingAttachments.put(attachment.getId(), attachment));
+        sendingAttachments = List.of();
+        refreshAttachmentList();
+        // A message that starts with "/" was typed with "//", so it isn't taken for a command when sent again.
+        final String typed = message.startsWith("/")
+                ? "/" + message
+                : message;
+        final String typedSince = NullSafe.string(getView().getMessage());
+        getView().setMessage(typedSince.isEmpty()
+                ? typed
+                : typed + "\n" + typedSince);
+        getView().setSendButtonLoadingState(false);
+        removeAllInConversation(NOT_SENT_ID);
+        final HtmlBuilder hb = new HtmlBuilder();
+        hb.div(div -> div.span(text -> text.append(NOT_SENT_TEXT), Attribute.className("ai-run-status-text")),
+                Attribute.className("ai-message ai-message--run-status"), new Attribute("id", NOT_SENT_ID));
+        appendToContainer(hb);
     }
 
     /**

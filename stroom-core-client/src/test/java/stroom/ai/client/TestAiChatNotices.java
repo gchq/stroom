@@ -59,6 +59,6 @@ class TestAiChatNotices {
     }
 
     private static AiChatStatus status(final AiChatRunStatus runStatus, final boolean unread, final int form) {
-        return new AiChatStatus(1, "t", 0L, runStatus, unread, false, 0L, null, form);
+        return new AiChatStatus(1, "t", 0L, runStatus, unread, false, 0L, null, form, false);
     }
 }

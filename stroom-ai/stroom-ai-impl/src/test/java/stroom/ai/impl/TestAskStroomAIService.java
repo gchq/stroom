@@ -1043,7 +1043,8 @@ class TestAskStroomAIService {
         Mockito.when(securityContext.getUserRef()).thenReturn(UserRef.builder().uuid("u").build());
         Mockito.when(aiDao.getStatusVersion("u")).thenReturn(42L);
         Mockito.when(aiDao.getChatStatuses("u", AskStroomAIService.MAX_CHAT_STATUSES)).thenReturn(List.of(
-                new AiChatStatus(1, "chat", 0L, AiChatRunStatus.WAITING_FOR_USER, true, false, 0L, null, 0)));
+                new AiChatStatus(1, "chat", 0L, AiChatRunStatus.WAITING_FOR_USER, true, false, 0L, null, 0,
+                        false)));
 
         final AiChatStatusResponse first = service().getChatStatuses(0);
         final AiChatStatusResponse unchanged = service().getChatStatuses(42);
@@ -1209,6 +1210,109 @@ class TestAskStroomAIService {
         // Not given to the compaction to steer.
         Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.eq(1),
                 Mockito.eq(AiMessageType.QUEUED_STEER_MESSAGE), Mockito.any(), Mockito.anyString());
+    }
+
+    @Test
+    void testAskStroomAi_oneStopWhileAQuestionWaitsForAnIdleCompactionStopsBothAndTheQuestionIsNotSent() {
+        // Seen: the Stop stopped only the compaction, and the question then started at once, needing a second Stop.
+        final AiChatRun idle = new AiChatRun(7, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        // The Stop is recorded (on whichever node it was pressed) while the compaction winds down.
+        final AiChatRun stopping = new AiChatRun(7, 1, AiChatRunStatus.STOPPING, AiChatRunStopReason.USER, 0L, null,
+                false, null);
+        Mockito.when(runDao.getActiveIdleCompaction(1)).thenReturn(Optional.of(idle));
+        Mockito.when(runDao.get(7)).thenReturn(Optional.of(idle), Optional.of(stopping));
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+        final AskStroomAIService service = service();
+        service.setIdleCompactionWait(java.time.Duration.ofSeconds(5));
+
+        final AskStroomAiResponse response = service.askStroomAi(new AskStroomAiRequest(chat, null, null,
+                "question"));
+
+        assertThat(response.isStoppedBeforeSending()).isTrue();
+        // Not waited for until it has wound down, and never stored or asked.
+        Mockito.verify(runDao, Mockito.times(2)).get(7);
+        Mockito.verify(runManager, Mockito.never()).start(Mockito.anyInt(), Mockito.any());
+        verifyNothingStored();
+    }
+
+    @Test
+    void testAskStroomAi_aQuestionWhoseIdleCompactionStopsBetweenLooksIsNotSentEither() {
+        final AiChatRun idle = new AiChatRun(7, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        final AiChatRun stopped = new AiChatRun(7, 1, AiChatRunStatus.STOPPED, AiChatRunStopReason.USER, 0L, 1L,
+                false, null);
+        Mockito.when(runDao.getActiveIdleCompaction(1)).thenReturn(Optional.of(idle));
+        Mockito.when(runDao.get(7)).thenReturn(Optional.of(idle), Optional.of(stopped));
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+
+        final AskStroomAiResponse response = service().askStroomAi(
+                new AskStroomAiRequest(chat, null, null, "question"));
+
+        assertThat(response.isStoppedBeforeSending()).isTrue();
+        Mockito.verify(runManager, Mockito.never()).start(Mockito.anyInt(), Mockito.any());
+        verifyNothingStored();
+    }
+
+    @Test
+    void testAskStroomAi_aQuestionSentAfterTheIdleCompactionWasStoppedIsAskedOnceItHasStopped() {
+        // The Stop was pressed with no question waiting, so was for the compaction alone, as before.
+        final AiChatRun stopping = new AiChatRun(7, 1, AiChatRunStatus.STOPPING, AiChatRunStopReason.USER, 0L, null,
+                false, null);
+        final AiChatRun stopped = new AiChatRun(7, 1, AiChatRunStatus.STOPPED, AiChatRunStopReason.USER, 0L, 1L,
+                false, null);
+        Mockito.when(runDao.getActiveIdleCompaction(1)).thenReturn(Optional.of(stopping));
+        Mockito.when(runDao.get(7)).thenReturn(Optional.of(stopping), Optional.of(stopped));
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+
+        final AskStroomAiResponse response = service().askStroomAi(
+                new AskStroomAiRequest(chat, null, null, "question"));
+
+        assertThat(response.isStoppedBeforeSending()).isFalse();
+        Mockito.verify(runDao, Mockito.times(2)).get(7);
+        Mockito.verify(runManager).start(Mockito.eq(1), Mockito.any());
+    }
+
+    @Test
+    void testAskStroomAi_anIdleCompactionStoppedForAnyOtherReasonLetsTheQuestionBeAsked() {
+        final AiChatRun idle = new AiChatRun(7, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        final AiChatRun stopped = new AiChatRun(7, 1, AiChatRunStatus.STOPPED, AiChatRunStopReason.RUN_LIMIT, 0L,
+                1L, false, null);
+        Mockito.when(runDao.getActiveIdleCompaction(1)).thenReturn(Optional.of(idle));
+        Mockito.when(runDao.get(7)).thenReturn(Optional.of(idle), Optional.of(stopped));
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+
+        final AskStroomAiResponse response = service().askStroomAi(
+                new AskStroomAiRequest(chat, null, null, "question"));
+
+        assertThat(response.isStoppedBeforeSending()).isFalse();
+        Mockito.verify(runManager).start(Mockito.eq(1), Mockito.any());
+    }
+
+    @Test
+    void testCancelProcessing_aStopAfterTheQuestionHasStartedStopsItsRunAsBefore() {
+        final AiChatRun idle = new AiChatRun(7, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        final AiChatRun done = new AiChatRun(7, 1, AiChatRunStatus.DONE, null, 0L, 1L, false, null);
+        Mockito.when(runDao.getActiveIdleCompaction(1)).thenReturn(Optional.of(idle));
+        Mockito.when(runDao.get(7)).thenReturn(Optional.of(done));
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+        final AskStroomAIService service = service();
+        final AskStroomAiResponse response = service.askStroomAi(new AskStroomAiRequest(chat, null, null,
+                "question"));
+        Mockito.verify(runManager).start(Mockito.eq(1), Mockito.any());
+        Mockito.when(runManager.stop(1, AiChatRunStopReason.USER)).thenReturn(true);
+
+        assertThat(service.cancelProcessing(1)).isTrue();
+
+        assertThat(response.isStoppedBeforeSending()).isFalse();
+        // The question's run is the chat's active run, so it is the one stopped.
+        Mockito.verify(runManager).stop(1, AiChatRunStopReason.USER);
+    }
+
+    // Neither a question nor a steer is stored.
+    private void verifyNothingStored() {
+        Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.any(AiMessageType.class),
+                Mockito.<Integer>any(), Mockito.anyString());
+        Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.any(AiMessageType.class),
+                Mockito.anyString());
     }
 
     @Test

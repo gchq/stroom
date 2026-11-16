@@ -1388,6 +1388,12 @@ the assembled messages, so they see what is sent.
   The run is marked (`ai_chat_run.idle_compaction`), so on any node a question sent meanwhile waits for it (up to two
   minutes, then a clear busy message) and then starts as usual, rather than steering a run that answers nothing.
   _Stop_ works on it; once ended it is not shown as the chat's run (`getLatestShown`), so there is nothing to resume.
+  One _Stop_ pressed while a question waits for it stops both: the waiting question sees the run's `STOPPING`/`STOPPED`
+  status with stop reason `USER` in the database (so on any node), is neither stored nor asked, and the request
+  returns `stoppedBeforeSending`; the client puts the text back in the input box (and its tables back above it) with
+  "Stopped. Your message was not sent." A Stop pressed before the question was sent was for the compaction alone, so
+  that question still waits and is asked. The chat switcher shows such a chat as "compacting" rather than "working"
+  (`AiChatStatus.idleCompaction`, set while the chat's latest run is an active idle compaction).
   The record says `idle`, shown as "Compacted while the chat was idle", and can be undone. A summary's tokens are
   added to the run. Candidates come from one query (`AiDao.findIdleChats`): last message in a window of one hour
   after the idle time, not a compaction, no active run and no idle compaction run since it. At most 50 are measured

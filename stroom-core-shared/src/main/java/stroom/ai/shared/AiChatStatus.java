@@ -50,6 +50,8 @@ public class AiChatStatus {
     private final AiAgentMode agentMode;
     @JsonProperty
     private final int formMessageId;
+    @JsonProperty
+    private final boolean idleCompaction;
 
     /**
      * @param chatId            The chat.
@@ -61,6 +63,8 @@ public class AiChatStatus {
      * @param lastOpenedMs      When the user last looked at it, or 0.
      * @param agentMode         How the agent works in it.
      * @param formMessageId     The id of its newest form (an approval or a question for the user), or 0 if none.
+     * @param idleCompaction    True if its latest run is a compaction Stroom AI started while it was idle, and that
+     *                          run is still active.
      */
     @JsonCreator
     public AiChatStatus(@JsonProperty("chatId") final Integer chatId,
@@ -71,7 +75,8 @@ public class AiChatStatus {
                         @JsonProperty("approveEverything") final Boolean approveEverything,
                         @JsonProperty("lastOpenedMs") final Long lastOpenedMs,
                         @JsonProperty("agentMode") final AiAgentMode agentMode,
-                        @JsonProperty("formMessageId") final Integer formMessageId) {
+                        @JsonProperty("formMessageId") final Integer formMessageId,
+                        @JsonProperty("idleCompaction") final Boolean idleCompaction) {
         this.chatId = Objects.requireNonNullElse(chatId, 0);
         this.title = title;
         this.updateTimeMs = Objects.requireNonNullElse(updateTimeMs, 0L);
@@ -81,6 +86,7 @@ public class AiChatStatus {
         this.lastOpenedMs = Objects.requireNonNullElse(lastOpenedMs, 0L);
         this.agentMode = Objects.requireNonNullElse(agentMode, AiAgentMode.AGENT);
         this.formMessageId = Objects.requireNonNullElse(formMessageId, 0);
+        this.idleCompaction = Objects.requireNonNullElse(idleCompaction, false);
     }
 
     public int getChatId() {
@@ -127,6 +133,19 @@ public class AiChatStatus {
         return formMessageId;
     }
 
+    /// @return True if the chat's latest run is a compaction Stroom AI started while the chat was idle, and it is
+    /// still active (see [#isCompacting()]).
+    public boolean isIdleCompaction() {
+        return idleCompaction;
+    }
+
+    /// @return True if Stroom AI is compacting the chat because it was left idle: a run is working, but on no
+    /// question of the user's. A compaction the user started is an ordinary run, so is not this.
+    @JsonIgnore
+    public boolean isCompacting() {
+        return idleCompaction && isBusy();
+    }
+
     /**
      * @return True if the chat is waiting for the user, e.g. to approve something.
      */
@@ -158,6 +177,7 @@ public class AiChatStatus {
                && lastOpenedMs == that.lastOpenedMs
                && agentMode == that.agentMode
                && formMessageId == that.formMessageId
+               && idleCompaction == that.idleCompaction
                && Objects.equals(title, that.title)
                && runStatus == that.runStatus;
     }
@@ -165,6 +185,6 @@ public class AiChatStatus {
     @Override
     public int hashCode() {
         return Objects.hash(chatId, title, updateTimeMs, runStatus, unread, approveEverything, lastOpenedMs,
-                agentMode, formMessageId);
+                agentMode, formMessageId, idleCompaction);
     }
 }
