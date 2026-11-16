@@ -60,10 +60,13 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// `esql_query` - runs an ES|QL query on an Elastic Index doc's index, as the user, through Stroom's Elasticsearch
@@ -101,6 +104,28 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
     static final String BACKSLASH_HINT = "In a \"...\" string a backslash starts an escape (\\t, \\n, \\r, \\\", "
                                          + "\\\\ only): double it for a regex (\"a\\\\.b\"), or write the string "
                                          + "in triple quotes, which keep it as typed (\"\"\"a\\.b\"\"\").";
+    // ES|QL's refusal of a keyword written where a name is wanted: 'no viable alternative at input 'first =''
+    // (first, last) or 'mismatched input 'by' expecting ...' (the others), as Elasticsearch 9.5.3 gives them.
+    private static final Pattern NO_VIABLE_KEYWORD = Pattern.compile(
+            "no viable alternative at input '(\\w+)\\s*=");
+    private static final Pattern MISMATCHED_KEYWORD = Pattern.compile("mismatched input '(\\w+)' expecting");
+    /// ES|QL's keywords that can't name a column unless in backquotes, as Elasticsearch 9.5.3 refuses them.
+    static final Set<String> RESERVED_WORDS = Set.of("first", "last", "by", "like", "rlike", "in", "and", "or",
+            "not", "null", "true", "false", "on", "with", "where", "desc", "asc", "nulls", "is");
+    // ES|QL has no IF (nor IIF): 'Unknown function [IF]'.
+    private static final Pattern UNKNOWN_IF = Pattern.compile("(?i)Unknown function \\[i?if]");
+    static final String IF_HINT = "ES|QL has no IF function: use CASE(condition, then, else), e.g. "
+                                  + "'| EVAL kind = CASE(bytes > 1000000, \"large\", \"small\")'.";
+    // An RLIKE pattern: a triple-quoted string, or a "..." one.
+    private static final Pattern RLIKE_PATTERN = Pattern.compile(
+            "(?i)\\bRLIKE\\s*(?:\"\"\"(.*?)\"\"\"|\"((?:[^\"\\\\]|\\\\.)*)\")", Pattern.DOTALL);
+    static final String MAX_ROWS_NOTE = ElasticEsql.MAX_ROWS + " rows is the most a query gives, and ES|QL has no "
+                                        + "offset: to see the rest, split the query by time window (timeFrom and "
+                                        + "timeTo) or narrow it.";
+    static final String RLIKE_AT_NOTE = "The pipeline's RLIKE pattern has an unescaped @, which in Elasticsearch's "
+                                        + "regular expressions matches any string, so the rows may be wrong: "
+                                        + "escape it (\"a\\\\@b\", or \"\"\"a\\@b\"\"\") or use LIKE for a simple "
+                                        + "pattern.";
 
     private final Provider<ElasticEsql> elasticEsqlProvider;
     private final DataSourceAccess dataSourceAccess;
@@ -172,8 +197,13 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                         .general(" and dashboards: when the user needs figures that match those exactly, use a "
                                  + "Stroom search")
                         .chatOnly(" (run_stroomql)")
-                        .general(". Refused for a Lucene index or a cluster older than 8.14, saying "
-                                 + "what to use instead.")
+                        .general(". In RLIKE, @ matches any string: escape it, or use LIKE for simple "
+                                 + "patterns. ES|QL has no IF: use CASE(condition, then, else). Patterns: baseline vs "
+                                 + "recent, one STATS with 'COUNT(*) WHERE @timestamp < x' per period; first seen, "
+                                 + "'STATS first_seen = MIN(@timestamp) BY user, value' then WHERE on it; spraying or "
+                                 + "scans, COUNT_DISTINCT(target) BY source; a cold-start guard, WHERE on a history "
+                                 + "count to skip entities with little history. Refused for a Lucene index or a "
+                                 + "cluster older than 8.14, saying what to use instead.")
                         .chatOnly(" The rows are written to a table in the workspace too, for the table tool.")
                         .build())
                 .parameters(ObjectSchema.builder()
@@ -203,7 +233,7 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                         .addStringProperty(TIME_FROM_ARG, "Optional: from this time on the index's time field "
                                                           + "(ISO 8601, or Stroom's day()-7d).")
                         .addStringProperty(TIME_TO_ARG, "Optional: up to this time (ISO 8601, or Stroom's now()).")
-                        .addIntegerProperty(LIMIT_ARG, "The most rows (default 1000, at most "
+                        .addIntegerProperty(LIMIT_ARG, "The most rows (default " + ElasticEsql.MAX_ROWS + ", at most "
                                                        + ElasticEsql.MAX_ROWS + "); a LIMIT in the pipeline "
                                                        + "lowers it.")
                         .addStringProperty(OUT_ARG, ToolDescription.builder()
@@ -252,7 +282,8 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
         final Result result;
         try {
             result = elasticEsqlProvider.get().query(new Request(index, pipeline, filter, timeRange,
-                    intArg(request, LIMIT_ARG), timeLimit(context), true));
+                    Objects.requireNonNullElse(intArg(request, LIMIT_ARG), ElasticEsql.MAX_ROWS), timeLimit(context),
+                    true));
         } catch (final Refusal refusal) {
             throw new WorkspaceException(refusal(refusal, fields));
         } catch (final PermissionException e) {
@@ -275,6 +306,18 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
 
     // The Elastic Index doc: refused, saying what to use instead, for anything else.
     private DocRef index(final String given) {
+        return elasticIndex(dataSourceAccess, given, "ES|QL");
+    }
+
+    /// The Elastic Index doc a uuid or name gives, which the user can use.
+    ///
+    /// @param dataSourceAccess Finds the data sources the user can use.
+    /// @param given            The doc's uuid or name.
+    /// @param language         The query language, for saying it runs on Elasticsearch only, e.g. `ES|QL`.
+    /// @return The doc.
+    /// @throws WorkspaceException if there is none the user can use (naming it), several have the name, or it isn't
+    ///                            an Elastic Index (saying to use run_stroomql).
+    static DocRef elasticIndex(final DataSourceAccess dataSourceAccess, final String given, final String language) {
         final List<DocRef> found = dataSourceAccess.find(given);
         final List<DocRef> elastic = found.stream()
                 .filter(docRef -> ElasticIndexDoc.TYPE.equals(docRef.getType()))
@@ -288,8 +331,8 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
             throw new WorkspaceException(sb.toString());
         } else if (!found.isEmpty()) {
             final DocRef other = found.getFirst();
-            throw new WorkspaceException(DataSourceAccess.describe(other) + " isn't an Elastic Index: ES|QL runs "
-                                         + "on Elasticsearch only. Use run_stroomql for "
+            throw new WorkspaceException(DataSourceAccess.describe(other) + " isn't an Elastic Index: " + language
+                                         + " runs on Elasticsearch only. Use run_stroomql for "
                                          + (LuceneIndexDoc.TYPE.equals(other.getType())
                     ? "a Lucene index."
                     : "it."));
@@ -300,8 +343,15 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
 
     // The fields Stroom lists for the index.
     private List<QueryField> fields(final DocRef index) {
+        return fields(queryServiceProvider.get(), index);
+    }
+
+    /// @param queryService Lists a data source's fields.
+    /// @param index        The index.
+    /// @return The fields Stroom lists for the index, or none if they can't be read.
+    static List<QueryField> fields(final QueryService queryService, final DocRef index) {
         try {
-            final ResultPage<QueryField> found = queryServiceProvider.get().findFields(new FindFieldCriteria(
+            final ResultPage<QueryField> found = queryService.findFields(new FindFieldCriteria(
                     new PageRequest(0, MAX_FIELDS), FindFieldCriteria.DEFAULT_SORT_LIST, index, null, null));
             return NullSafe.list(NullSafe.get(found, ResultPage::getValues)).stream()
                     .filter(field -> field != null && NullSafe.isNonEmptyString(field.getFldName()))
@@ -382,11 +432,85 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
             case TIMEOUT -> message + ", or ask for less (a narrower STATS, or a LIMIT).";
             case COMMAND_NOT_ALLOWED, INVALID -> sentence(message);
             case NOT_FOUND -> DataSourceAccess.NOT_FOUND;
-            case REFUSED -> BACKSLASH_IN_STRING.matcher(message).find()
-                    ? sentence(message) + " " + BACKSLASH_HINT
-                    : sentence(message);
+            case REFUSED -> refused(message);
             default -> sentence(message);
         };
+    }
+
+    // Elasticsearch's refusal, with a hint for the traps that are easy to fall into.
+    private static String refused(final String message) {
+        if (BACKSLASH_IN_STRING.matcher(message).find()) {
+            return sentence(message) + " " + BACKSLASH_HINT;
+        }
+        if (UNKNOWN_IF.matcher(message).find()) {
+            return sentence(message) + " " + IF_HINT;
+        }
+        final String reserved = reservedWord(message);
+        if (reserved != null) {
+            return sentence(message) + " If '" + reserved + "' is meant as a column's name: it is a reserved word in "
+                   + "ES|QL, so rename the column (e.g. " + reserved.toLowerCase(Locale.ROOT) + "_seen) or put it in "
+                   + "backquotes (`" + reserved + "`).";
+        }
+        return sentence(message);
+    }
+
+    // The keyword a refusal says was written where a name was wanted, or null.
+    private static String reservedWord(final String message) {
+        for (final Pattern pattern : List.of(NO_VIABLE_KEYWORD, MISMATCHED_KEYWORD)) {
+            final Matcher matcher = pattern.matcher(message);
+            if (matcher.find() && RESERVED_WORDS.contains(matcher.group(1).toLowerCase(Locale.ROOT))) {
+                return matcher.group(1);
+            }
+        }
+        return null;
+    }
+
+    /// @param pipeline The ES|QL commands after FROM.
+    /// @return True if an RLIKE pattern in it holds an `@` that isn't escaped (`\@`) or in a class (`[@]`), which
+    /// Elasticsearch's regular expressions read as "any string".
+    static boolean unescapedAtInRlike(final String pipeline) {
+        final Matcher matcher = RLIKE_PATTERN.matcher(NullSafe.string(pipeline));
+        while (matcher.find()) {
+            final String regex = matcher.group(1) != null
+                    ? matcher.group(1)
+                    : unescaped(matcher.group(2));
+            boolean escaped = false;
+            int depth = 0;
+            for (final char c : regex.toCharArray()) {
+                if (escaped) {
+                    escaped = false;
+                } else if (c == '\\') {
+                    escaped = true;
+                } else if (c == '[') {
+                    depth++;
+                } else if (c == ']' && depth > 0) {
+                    depth--;
+                } else if (c == '@' && depth == 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // A "..." string's text, its escapes read.
+    private static String unescaped(final String text) {
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < text.length(); i++) {
+            final char c = text.charAt(i);
+            if (c == '\\' && i + 1 < text.length()) {
+                final char next = text.charAt(++i);
+                sb.append(switch (next) {
+                    case 't' -> '\t';
+                    case 'n' -> '\n';
+                    case 'r' -> '\r';
+                    default -> next;
+                });
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 
     // The message as a sentence: a full stop added unless it ends with one already, or with '?' or '!'.
@@ -413,8 +537,10 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
         return sb.toString();
     }
 
-    // The unknown names, each with the index's fields most like it.
-    private static String said(final List<String> unknown, final Set<String> names) {
+    /// @param unknown Names that aren't fields of an index.
+    /// @param names   The index's fields.
+    /// @return The unknown names, each with the index's fields most like it.
+    static String said(final List<String> unknown, final Set<String> names) {
         final List<String> candidates = new ArrayList<>(names);
         final List<String> said = new ArrayList<>();
         for (final String name : unknown) {
@@ -465,6 +591,9 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
         if (!warned.isEmpty()) {
             sb.append(warned).append("\n\n");
         }
+        if (unescapedAtInRlike(result.query())) {
+            sb.append(RLIKE_AT_NOTE).append("\n\n");
+        }
         if (cells.isEmpty()) {
             sb.append("No rows.");
         } else {
@@ -507,6 +636,9 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                                 ? ""
                                 : " (" + result.totalNote() + ")")
                         .append(": don't present them as complete.");
+            }
+            if (result.limit() >= ElasticEsql.MAX_ROWS) {
+                sb.append(" ").append(MAX_ROWS_NOTE);
             }
         }
         return sb.toString();
@@ -557,6 +689,9 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
         if (!result.warnings().isEmpty()) {
             map.put("warnings", result.warnings());
             map.put("warnings_note", warningsNote(result));
+        }
+        if (unescapedAtInRlike(result.query())) {
+            map.put("rlike_note", RLIKE_AT_NOTE);
         }
         if (!result.rows().isEmpty()) {
             map.put("table", out.toString());

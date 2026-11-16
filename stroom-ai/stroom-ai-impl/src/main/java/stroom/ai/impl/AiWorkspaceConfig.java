@@ -44,6 +44,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
     static final int DEFAULT_MAX_EVENT_BYTES = 1024 * 1024;
     static final int DEFAULT_MAX_STREAM_STORE_READS = 500;
     static final long DEFAULT_MAX_TOOL_ARGUMENT_BYTES = 1024 * 1024;
+    static final StroomDuration DEFAULT_EQL_MAXSPAN = StroomDuration.ofMinutes(5);
 
     private final long maxFileBytes;
     private final long maxChatBytes;
@@ -58,6 +59,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
     private final int maxEventBytes;
     private final int maxStreamStoreReads;
     private final long maxToolArgumentBytes;
+    private final StroomDuration eqlDefaultMaxspan;
 
     public AiWorkspaceConfig() {
         maxFileBytes = DEFAULT_MAX_FILE_BYTES;
@@ -73,6 +75,40 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         maxEventBytes = DEFAULT_MAX_EVENT_BYTES;
         maxStreamStoreReads = DEFAULT_MAX_STREAM_STORE_READS;
         maxToolArgumentBytes = DEFAULT_MAX_TOOL_ARGUMENT_BYTES;
+        eqlDefaultMaxspan = DEFAULT_EQL_MAXSPAN;
+    }
+
+    /// The limits, with the default EQL sequence window.
+    ///
+    /// @param maxFileBytes         The largest a workspace file may be, or null for the default.
+    /// @param maxChatBytes         The most a chat's workspace files may hold, or null for the default.
+    /// @param maxUserBytes         The most a user's chat workspaces may hold, or null for the default.
+    /// @param maxLinesPerRead      The most lines a tool returns in one call, or null for the default.
+    /// @param maxCharsPerRead      The most characters a tool returns in one call, or null for the default.
+    /// @param toolTimeLimit        The longest a workspace tool call may run, or null for the default.
+    /// @param queryTimeLimit       The longest a query run by the agent may take, or null for the default.
+    /// @param maxQueryLength       The longest a query run by the agent may be, or null for the default.
+    /// @param maxEventsPerFetch    The most source events fetched in one call, or null for the default.
+    /// @param maxEventBytes        The largest source event fetched, or null for the default.
+    /// @param maxStreamStoreReads  The most streams read from the stream store in one call, or null for the default.
+    /// @param maxQueryRows         The most rows a query run by the agent may return, or null for the default.
+    /// @param maxToolArgumentBytes The largest a tool call's arguments may be, or null for the default.
+    public AiWorkspaceConfig(final Long maxFileBytes,
+                             final Long maxChatBytes,
+                             final Long maxUserBytes,
+                             final Integer maxLinesPerRead,
+                             final Integer maxCharsPerRead,
+                             final StroomDuration toolTimeLimit,
+                             final StroomDuration queryTimeLimit,
+                             final Integer maxQueryLength,
+                             final Integer maxEventsPerFetch,
+                             final Integer maxEventBytes,
+                             final Integer maxStreamStoreReads,
+                             final Integer maxQueryRows,
+                             final Long maxToolArgumentBytes) {
+        this(maxFileBytes, maxChatBytes, maxUserBytes, maxLinesPerRead, maxCharsPerRead, toolTimeLimit,
+                queryTimeLimit, maxQueryLength, maxEventsPerFetch, maxEventBytes, maxStreamStoreReads, maxQueryRows,
+                maxToolArgumentBytes, null);
     }
 
     @JsonCreator
@@ -88,7 +124,8 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                              @JsonProperty("maxEventBytes") final Integer maxEventBytes,
                              @JsonProperty("maxStreamStoreReads") final Integer maxStreamStoreReads,
                              @JsonProperty("maxQueryRows") final Integer maxQueryRows,
-                             @JsonProperty("maxToolArgumentBytes") final Long maxToolArgumentBytes) {
+                             @JsonProperty("maxToolArgumentBytes") final Long maxToolArgumentBytes,
+                             @JsonProperty("eqlDefaultMaxspan") final StroomDuration eqlDefaultMaxspan) {
         this.maxFileBytes = Objects.requireNonNullElse(maxFileBytes, DEFAULT_MAX_FILE_BYTES);
         this.maxChatBytes = Objects.requireNonNullElse(maxChatBytes, DEFAULT_MAX_CHAT_BYTES);
         this.maxUserBytes = Objects.requireNonNullElse(maxUserBytes, DEFAULT_MAX_USER_BYTES);
@@ -103,6 +140,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         this.maxQueryRows = Objects.requireNonNullElse(maxQueryRows, DEFAULT_MAX_QUERY_ROWS);
         this.maxToolArgumentBytes = Objects.requireNonNullElse(maxToolArgumentBytes,
                 DEFAULT_MAX_TOOL_ARGUMENT_BYTES);
+        this.eqlDefaultMaxspan = Objects.requireNonNullElse(eqlDefaultMaxspan, DEFAULT_EQL_MAXSPAN);
     }
 
     @JsonPropertyDescription("The largest a single workspace file may be, in bytes.")
@@ -192,6 +230,14 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         return maxToolArgumentBytes;
     }
 
+    @JsonPropertyDescription("The window an EQL sequence run by the agent (eql_sequence) suggests when the user "
+                             + "hasn't said how far apart its steps may be: the default answer of the question "
+                             + "the user is asked, and the suggestion given over MCP. At most 24 hours.")
+    @JsonProperty("eqlDefaultMaxspan")
+    public StroomDuration getEqlDefaultMaxspan() {
+        return eqlDefaultMaxspan;
+    }
+
     @Override
     public String toString() {
         return "AiWorkspaceConfig{" +
@@ -208,6 +254,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                ", maxEventBytes=" + maxEventBytes +
                ", maxStreamStoreReads=" + maxStreamStoreReads +
                ", maxToolArgumentBytes=" + maxToolArgumentBytes +
+               ", eqlDefaultMaxspan=" + eqlDefaultMaxspan +
                '}';
     }
 }

@@ -677,8 +677,10 @@ searches are unchanged. Decided with the user:
   run_stroomql and dashboards. Use on the Elastic Index doc is still checked, and the query audited. Found writing
   the parity test: events of streams not in Stroom were in ES|QL's totals and not in run_stroomql's; the parity
   test compares on an index whose streams are all in Stroom, and another test asserts the difference.
-* **Caps.** Rows: the lowest LIMIT after the last STATS or MV_EXPAND, else `LIMIT n` added (n is `limit`, default
-  `stroom.elastic.search.esqlRowLimit` 1,000, at most 10,000). Time: `esqlTimeout` (2 minutes) and the session's
+* **Caps.** Rows: the lowest LIMIT after the last STATS or MV_EXPAND, else `LIMIT n` added (n is `limit`; the tool
+  asks for 10,000, the most, when the model gives none, 2026-11-16: only 100 are shown and the rest go to the
+  table, and a cut at 10,000 says to split by time window or narrow the query, as ES|QL has no offset;
+  `stroom.elastic.search.esqlRowLimit` stays the service's own default for other callers). Time: `esqlTimeout` (2 minutes) and the session's
   query time limit; a query past it is cancelled. Partial results are refused (`allow_partial_results=false`
   from 8.18). Clusters older than 8.14 are refused, naming run_stroomql.
 * **Never a false full ranking.** Rows that reach the cap are truncated; then a second query (the pipeline without
@@ -710,6 +712,80 @@ searches are unchanged. Decided with the user:
   generator works out, whatever calls came after it (the call is noted); the total groups from any accepted call
   that gives them (`EvalScore.scoreQuestion`). The rows must be the query's: a conversion or cut-off made in the
   reply fails. TestE2eEvalReference runs each case's reference ES|QL.
+
+* **Traps (2026-11-16, checked on 9.5.3).** A column named with a keyword (`first`, `last`, `by`, ...) is refused
+  as "no viable alternative at input 'first ='" or "mismatched input 'by' expecting ...": the refusal adds that the
+  word is reserved (rename it, or backquote it). `IF(` gives "Unknown function [IF]": the refusal says to use
+  `CASE(condition, then, else)`. In RLIKE, `@` is Lucene's "any string" (`RLIKE "C@"` matched "Copy", no error):
+  the description warns, and a result whose RLIKE pattern has an unescaped `@` (not `\\@` in a "..." string, `\@`
+  in triple quotes, or `[@]`, each checked on 9.5.3) carries a note. The description adds four short analysis
+  patterns: baseline vs recent (`COUNT(*) WHERE` per period in one STATS), first seen (MIN(@timestamp) BY entity,
+  value, then WHERE), COUNT_DISTINCT per entity for spraying or scans, and a cold-start guard.
+
+### EQL sequences (built 2026-11-16)
+
+`eql_sequence` finds ordered hunts across sources at volume ("a USB device plugged in, then a file copied to it";
+"a clipboard copy then PowerShell within 2 minutes by the same user on the same host"; "20 failed logons then a
+success"), run in Elasticsearch as one EQL sequence over one or more Elastic Index docs on one cluster. Decided with
+the user:
+
+* **Structured steps only, no raw EQL (v1).** Each step: its doc (uuid or name, as esql_query finds it), `where`
+  conditions in the search_events form plus `caseInsensitive`, its own join fields `by` (same number and order in
+  every step, each doc's own names), `missing` (`![...]`), `runs` (`with runs=N`, 1 to 100; not with missing),
+  `fields` (at most 5 to show). An optional `until` step. `timeFrom`/`timeTo` as esql_query. `limit` sequences,
+  default 1,000, at most 10,000; a cut says so (EQL returns the latest). `EqlQueryWriter` writes the EQL:
+  EQUALS `==` (`:` case-insensitive), `like`/`like~` with `*`, `cidrMatch` for a CIDR on an IP field; IN `in`/`in~`
+  or `cidrMatch`; CONTAINS/STARTS_WITH/ENDS_WITH as like patterns; MATCHES_REGEX `regex`/`regex~`; ranges and
+  BETWEEN; IS_NULL/IS_NOT_NULL `== null`/`!= null`; numbers bare; names backquoted if odd or an EQL keyword.
+* **Core service (additive).** `ElasticEqlService` in stroom-search-elastic, bound as `stroom.ai.api.ElasticEql`.
+  `target(docs)` checks Use on each doc (a PermissionException names it), and refuses docs on different clusters
+  or with different time fields, naming each doc's; and a cluster older than 7.10. The tool refuses a missing
+  step below 8.8 and runs below 8.7. `search` resolves each doc's index name to concrete indices
+  (`_resolve/index`: aliases' indices, data streams' backing indices) and defines a runtime keyword field
+  `stroom_eql_doc` (painless, from `doc['_index']`) holding each event's doc positions, so a step matches its own
+  doc's events (`stroom_eql_doc == "2"`): EQL can't name `_index` (checked: "Unknown column [_index]"). The
+  search runs async in Elasticsearch with `wait_for_completion_timeout` = the time left and
+  `keep_on_completion=false`; one still running is deleted and refused as a timeout. `filter_path` keeps only the
+  ids, `missing` and `fields` (the time field in epoch ms, StreamId/EventId, join and chosen fields), not each
+  event's `_source`, which the Java client otherwise requires (its required-property check is turned off on that
+  thread while it reads).
+* **maxspan.** From the user's words, at most 24h. Not given: in the chat, a short plain-text form ("Within what
+  time of each other must the steps happen?", one line that a wider window finds more pairs, mostly harmless, and
+  runs slower), the configured default first (`stroom.ai.workspace.eqlDefaultMaxspan`, 5 minutes), then 1 minute,
+  15 minutes, 1 hour and another interval, typed. Over MCP (or while the user is away), refused with that question
+  and the suggestions. The result always says the window and where it came from.
+* **Pre-flight (the heuristic).** Each step that must happen is counted with ES|QL (`| WHERE <the step's
+  conditions> | STATS n = COUNT(*)`, a case-insensitive regex left out) where the cluster takes ES|QL (8.14+),
+  else skipped, saying so. Too big: the sum of the counts at 50,000 events a second, deliberately low, over the
+  query time limit is refused before it runs, with the counts, "narrow the window or the first step", and
+  `runAnyway`. Selective step first: the first step at least 1,000 events and 10 times a later one's, no step
+  missing and neither with runs (moving them would change the meaning): "if the order doesn't matter, put step k
+  first". A step matching fewer events than its runs is noted (it still runs, as counts can be low where fields
+  hold several values). A count timing out is the timeout message.
+* **Result.** The EQL, the window, the counts and advice, a summary per entity (join keys: sequences, first, last,
+  shortest gap first to last event), the sequences as a workspace table (join keys; per step its time, last time
+  and count with runs, chosen fields, StreamId and EventId; the gap after the step before; the span), the caveat
+  that sequences come straight from Elasticsearch (as esql_query's counts), and a StroomQL review query per doc,
+  validated with `QueryService.validateQuery`. Audited per doc (`AiAuditLog.searched`, the count pipelines in the
+  query text).
+* **Review query (settled 2026-11-16).** Exact where it fits: the doc's hit events by stream,
+  `(StreamId = x and EventId in (a, b)) or (StreamId = y and EventId = d)`, `sort by` the time field before
+  `select` (StroomQL's order). It falls back to the doc's join-key values in the window the sequences span only
+  when the exact query wouldn't fit 100 characters inside `maxQueryLength` (10,000), or when the doc's index has no
+  StreamId/EventId fields (filled from outside Stroom: then no exact review, fetch_events or stepping), saying which
+  and that it shows those entities' events in the window, not only the hits; past 100 entities, or still too long,
+  the window alone. A query or dashboard reads one doc, so for several docs the model asks the user which doc to
+  review (ask_user), then offers that one (propose_query, or propose_dashboard with its event preview; no change
+  to propose_dashboard). The tool never calls those itself.
+* **Future (recorded, not built).** INLINE STATS and SAMPLE in `EsqlPipeline`; a join in the `table` tool (kept:
+  Lucene users have no ES|QL/EQL, so it is their only way to combine indexes); multi-doc `esql_query` (the next package); for `eql_sequence`, `sample by`,
+  exclusion lists, and how usual a hit is for the user. CHANGE_POINT is out of scope: it needs a licence.
+* **Future: LOOKUP JOIN enrichment.** `LOOKUP JOIN` in esql_query to enrich rows from small lookup-mode indexes:
+  user to department, role or leaver date (peer-group baselines, leavers); host to criticality; device serial to an
+  approved list; IP to a VPN pool or known-bad list. Each lookup index needs its own Elastic Index doc, with Use
+  checked and the read audited, which is why `EsqlPipeline` refuses LOOKUP today. Open: how the lookup data is
+  loaded and kept current (likely from Stroom reference data or dictionaries), and version checks for the join
+  features used. Preferred to ENRICH.
 
 ### Explain processing, retention and volumes
 

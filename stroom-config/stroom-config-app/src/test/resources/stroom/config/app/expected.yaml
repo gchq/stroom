@@ -124,6 +124,7 @@ appConfig:
     toolGroupThreshold: 24
     unattendedAfter: "PT10M"
     workspace:
+      eqlDefaultMaxspan: "PT5M"
       maxCharsPerRead: 20000
       maxChatBytes: 104857600
       maxEventBytes: 1048576

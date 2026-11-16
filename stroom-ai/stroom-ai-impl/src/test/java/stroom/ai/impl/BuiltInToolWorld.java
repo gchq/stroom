@@ -18,6 +18,7 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.api.CodeChangeStepper;
+import stroom.ai.api.ElasticEql;
 import stroom.ai.api.ElasticEsql;
 import stroom.ai.api.ElasticIndexTemplates;
 import stroom.ai.api.ElasticIndexTemplates.ComponentTemplate;
@@ -239,6 +240,9 @@ public final class BuiltInToolWorld implements AutoCloseable {
             Map.entry("run_stroomql", json(Map.of("query", STROOMQL))),
             Map.entry("esql_query", json(Map.of("index", "elastic-index-uuid", "pipeline",
                     "| STATS n = COUNT(*) BY UserId | SORT n DESC | LIMIT 2"))),
+            Map.entry("eql_sequence", "{\"maxspan\":\"2m\",\"steps\":[{\"index\":\"elastic-index-uuid\","
+                                      + "\"by\":[\"UserId\"],\"where\":[{\"field\":\"UserId\",\"value\":"
+                                      + "\"alice\"}]},{\"index\":\"elastic-index-uuid\",\"by\":[\"UserId\"]}]}"),
             Map.entry("summarise_column", "{\"path\":\"/outputs/a.csv\",\"column\":\"UserId\"}"),
             Map.entry("document_info", "{\"uuid\":\"xslt-uuid\"}"),
             Map.entry("read_document", "{\"uuid\":\"xslt-uuid\"}"),
@@ -301,6 +305,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
     private final GlobalConfigReader globalConfigReader = Mockito.mock(GlobalConfigReader.class);
     private final ElasticIndexTemplates elasticIndexTemplates = Mockito.mock(ElasticIndexTemplates.class);
     private final ElasticEsql elasticEsql = Mockito.mock(ElasticEsql.class);
+    private final ElasticEql elasticEql = Mockito.mock(ElasticEql.class);
     /// The workspace's files, by path.
     private final Map<String, String> files = new LinkedHashMap<>();
     private final Map<String, DocRef> docRefs = new LinkedHashMap<>();
@@ -335,6 +340,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
         stubConfig();
         stubElasticIndexTemplates();
         stubElasticEsql();
+        stubElasticEql();
         Mockito.when(nodeInfo.getThisNodeName()).thenReturn("node1");
         Mockito.when(nodeService.findNodeNames(Mockito.any())).thenReturn(List.of("node1"));
         Mockito.when(executorProvider.get()).thenReturn(executorService);
@@ -360,6 +366,11 @@ public final class BuiltInToolWorld implements AutoCloseable {
     /// @return The ES|QL queries of Elastic Indexes (a mock, giving events by user cut short at two of three).
     public ElasticEsql elasticEsql() {
         return elasticEsql;
+    }
+
+    /// @return The EQL sequences of Elastic Indexes (a mock, giving one sequence of two events by alice).
+    public ElasticEql elasticEql() {
+        return elasticEql;
     }
 
     /// @return Where the audit log logs its events (a mock that records them).
@@ -611,6 +622,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 bind(CodeChangeStepper.class).toInstance(Mockito.mock(CodeChangeStepper.class));
                 bind(ElasticIndexTemplates.class).toInstance(elasticIndexTemplates);
                 bind(ElasticEsql.class).toInstance(elasticEsql);
+                bind(ElasticEql.class).toInstance(elasticEql);
                 bind(AttributeMapFactory.class).toInstance(Mockito.mock(AttributeMapFactory.class));
                 bind(DataService.class).toInstance(Mockito.mock(DataService.class));
                 bind(FeedProperties.class).toInstance(Mockito.mock(FeedProperties.class));
@@ -876,6 +888,23 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 null,
                 "9.5.3",
                 List.of()));
+    }
+
+    // An EQL sequence over the Elastic Index: one sequence of two of alice's events, a minute apart.
+    private void stubElasticEql() {
+        Mockito.when(elasticEql.target(Mockito.any())).thenReturn(new ElasticEql.Target("9.5.3", "EventTime",
+                List.of("test-events")));
+        Mockito.when(elasticEql.search(Mockito.any())).thenAnswer(invocation -> new ElasticEql.Result(
+                invocation.<ElasticEql.Request>getArgument(0).query(),
+                List.of("test-events"),
+                "EventTime",
+                List.of(new ElasticEql.Sequence(List.of("alice"), List.of(
+                        new ElasticEql.Event("test-events", "a", false, Map.of("EventTime", List.of(1_767_225_600_000L),
+                                "StreamId", List.of(1L), "EventId", List.of(1L), "UserId", List.of("alice"))),
+                        new ElasticEql.Event("test-events", "b", false, Map.of("EventTime", List.of(1_767_225_660_000L),
+                                "StreamId", List.of(1L), "EventId", List.of(2L), "UserId", List.of("alice")))))),
+                3,
+                "9.5.3"));
     }
 
     // The Elastic Index's templates: one index template, composed of two component templates.
