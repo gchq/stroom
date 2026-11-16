@@ -451,7 +451,7 @@ class TestDataConnectionExamplePack extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    void keepJoinGivesPeopleInOnCallTeams() {
+    void semiJoinGivesPeopleInOnCallTeams() {
         assertThat(run("Join - people in on-call teams", 2)).containsExactly(
                 List.of("Alice", "Platform"),
                 List.of("Chloe", "Security"),
@@ -460,7 +460,7 @@ class TestDataConnectionExamplePack extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    void dropJoinGivesPeopleInNoKnownTeam() {
+    void antiJoinGivesPeopleInNoKnownTeam() {
         assertThat(run("Join - people in no known team", 2)).containsExactly(List.of("Femi", "Design"));
     }
 

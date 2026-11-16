@@ -16,6 +16,7 @@
 
 package stroom.query.language.token;
 
+import stroom.query.api.JoinType;
 import stroom.query.api.token.ParamToken;
 import stroom.query.api.token.QuotedStringToken;
 import stroom.query.api.token.QuotedStringToken.Builder;
@@ -25,12 +26,14 @@ import stroom.query.api.token.TokenType;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Tokeniser {
 
@@ -45,8 +48,10 @@ public class Tokeniser {
     // A triple-quoted string holds its text as written, with no escapes, so SQL with double quotes
     // and backslashes can be pasted in unchanged.
     private static final char[] TRIPLE_QUOTE = new char[]{'"', '"', '"'};
-    private static final String JOIN_PATTERN = "(?:(?:left|keep|drop)\\s+)?join";
-    private static final String JOIN_WORD = "join";
+    // 'join' with its kind, if any, in every spelling JoinType has, e.g. 'left outer join'.
+    private static final String JOIN_PATTERN = createJoinPattern();
+    // 'as' at the end of plain text, which makes the next word an alias.
+    private static final Pattern ENDS_WITH_AS = Pattern.compile("(?:^|\\s)as\\s+$", Pattern.CASE_INSENSITIVE);
 
     private List<Token> tokens;
 
@@ -146,6 +151,20 @@ public class Tokeniser {
 
         // Tag everything else as a string.
         tokens = categorise(TokenType.STRING, tokens);
+    }
+
+    // Every spelling of every kind of join, longest first so 'left outer join' isn't read as 'left'
+    // followed by something else, with any white space between the words.
+    private static String createJoinPattern() {
+        final List<String> spellings = new ArrayList<>();
+        for (final JoinType type : JoinType.values()) {
+            spellings.add(type.getDisplayValue());
+            spellings.add(type.getLongSpelling());
+        }
+        spellings.sort(Comparator.comparingInt(String::length).reversed());
+        return spellings.stream()
+                .map(spelling -> spelling.replace(" ", "\\s+"))
+                .collect(Collectors.joining("|", "(?:", ")"));
     }
 
     // The pattern of a keyword's text. A join line starts with 'join' or with its kind and 'join', as in
@@ -515,31 +534,61 @@ public class Tokeniser {
         return out;
     }
 
-    // Adds a join keyword token, or turns it back into plain text where a join line can't be. Straight
-    // after 'from', with no data source yet, the word before 'join' in 'Left join' is the data source.
-    // A misplaced join line stays a keyword, so the parser can say it is out of place.
+    // Adds a join keyword token, or turns it back into plain text where a join line can't be. The
+    // first word of a token such as 'Left semi join' is a name rather than part of the kind straight
+    // after 'from', where it is the data source, as in 'from Left join X', and straight after 'as',
+    // where it is an alias, as in 'from X as Anti join Y'. A misplaced join line stays a keyword, so
+    // the parser can say it is out of place.
     private static void addJoin(final Token token,
                                 final ClauseState state,
                                 final boolean looksLikeJoinLine,
                                 final List<Token> out) {
+        final boolean noSourceYet = TokenType.FROM.equals(state.lastKeyword) && !state.valueSinceKeyword;
         final boolean afterSource = TokenType.SQL.equals(state.lastKeyword)
                                     || TokenType.ON.equals(state.lastKeyword)
                                     || TokenType.JOIN.equals(state.lastKeyword)
                                     || (TokenType.FROM.equals(state.lastKeyword) && state.valueSinceKeyword);
         final boolean misplacedJoinLine = !TokenType.FROM.equals(state.lastKeyword) && looksLikeJoinLine;
-        if (afterSource || misplacedJoinLine) {
+        final boolean joinLine = afterSource || misplacedJoinLine;
+
+        final int secondWordStart = getSecondWordStart(token);
+        if (secondWordStart != -1 && (noSourceYet || (joinLine && followsAs(out)))) {
+            addJoiningUnknown(out, new Token(TokenType.UNKNOWN, token.getChars(), token.getStart(),
+                    secondWordStart - 1));
+            out.add(new Token(TokenType.JOIN, token.getChars(), secondWordStart, token.getEnd()));
+            state.keyword(TokenType.JOIN);
+        } else if (joinLine) {
             state.keyword(TokenType.JOIN);
             out.add(token);
-        } else if (TokenType.FROM.equals(state.lastKeyword) && token.getText().length() > JOIN_WORD.length()) {
-            // 'from Left join X': 'Left' is the data source, 'join' starts the join line.
-            final int joinStart = token.getEnd() - JOIN_WORD.length() + 1;
-            addJoiningUnknown(out, new Token(TokenType.UNKNOWN, token.getChars(), token.getStart(), joinStart - 1));
-            out.add(new Token(TokenType.JOIN, token.getChars(), joinStart, token.getEnd()));
-            state.keyword(TokenType.JOIN);
         } else {
             state.valueSinceKeyword = true;
             addJoiningUnknown(out, toUnknown(token, token.getStart()));
         }
+    }
+
+    // The position where the second word of a token starts, or -1 if it has only one word.
+    private static int getSecondWordStart(final Token token) {
+        final char[] chars = token.getChars();
+        int i = token.getStart();
+        while (i <= token.getEnd() && !Character.isWhitespace(chars[i])) {
+            i++;
+        }
+        while (i <= token.getEnd() && Character.isWhitespace(chars[i])) {
+            i++;
+        }
+        return i <= token.getEnd()
+                ? i
+                : -1;
+    }
+
+    // True if the plain text just before ends with 'as', so the next word is an alias.
+    private static boolean followsAs(final List<Token> out) {
+        if (out.isEmpty()) {
+            return false;
+        }
+        final Token previous = out.getLast();
+        return TokenType.UNKNOWN.equals(previous.getTokenType())
+               && ENDS_WITH_AS.matcher(previous.getText()).find();
     }
 
     // True if the join keyword at the index is followed by a source, a word, quoted name or bracket,

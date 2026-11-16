@@ -80,8 +80,8 @@ class TestWindowedJoin extends AbstractJoinSearchTest {
     }
 
     @Test
-    void keepJoinGivesEachMatchedAnchorOnce() throws InterruptedException {
-        final List<List<String>> rows = search("keep join", "after", ANCHOR);
+    void semiJoinGivesEachMatchedAnchorOnce() throws InterruptedException {
+        final List<List<String>> rows = search("semi join", "after", ANCHOR);
 
         assertThat(rows).containsExactlyInAnyOrder(
                 List.of("a", TEN),
@@ -89,8 +89,8 @@ class TestWindowedJoin extends AbstractJoinSearchTest {
     }
 
     @Test
-    void dropJoinGivesEachUnmatchedAnchor() throws InterruptedException {
-        final List<List<String>> rows = search("drop join", "after", ANCHOR);
+    void antiJoinGivesEachUnmatchedAnchor() throws InterruptedException {
+        final List<List<String>> rows = search("anti join", "after", ANCHOR);
 
         assertThat(rows).containsExactlyInAnyOrder(
                 List.of("b", TEN),

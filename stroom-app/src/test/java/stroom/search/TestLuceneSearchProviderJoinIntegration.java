@@ -114,7 +114,7 @@ class TestLuceneSearchProviderJoinIntegration extends AbstractCoreIntegrationTes
     void indexEventsKeptOnlyForUsersInTheCsvAndGrouped() {
         final List<List<String>> rows = search("""
                 from "Test index"
-                keep join "%s" as u on User = u.Name
+                semi join "%s" as u on User = u.Name
                 where EventTime >= 2000-01-01T00:00:00.000Z
                   and EventTime <= 2016-01-02T00:00:00.000Z
                 group by User
@@ -126,12 +126,12 @@ class TestLuceneSearchProviderJoinIntegration extends AbstractCoreIntegrationTes
     }
 
     @Test
-    void keepJoinOnAnIdFieldIsPushedDownToTheIndex() {
+    void semiJoinOnAnIdFieldIsPushedDownToTheIndex() {
         final Map<String, Long> all = eventsPerStream("");
         assertThat(all).as("streams indexed").isNotEmpty();
         final String streamId = all.keySet().iterator().next();
-        final String kept = "keep join \"" + createStreamsCsv(streamId) + "\" as s on StreamId = s.Id";
-        final String noneKept = "keep join \"" + createStreamsCsv(UNKNOWN_STREAM_ID) + "\" as s on StreamId = s.Id";
+        final String kept = "semi join \"" + createStreamsCsv(streamId) + "\" as s on StreamId = s.Id";
+        final String noneKept = "semi join \"" + createStreamsCsv(UNKNOWN_STREAM_ID) + "\" as s on StreamId = s.Id";
 
         assertThat(getPushedDownTerms(kept, streamId)).contains("StreamId in " + streamId);
         assertThat(eventsPerStream(kept)).containsExactlyEntriesOf(Map.of(streamId, all.get(streamId)));
@@ -139,12 +139,12 @@ class TestLuceneSearchProviderJoinIntegration extends AbstractCoreIntegrationTes
     }
 
     @Test
-    void dropJoinOnAnIdFieldIsPushedDownToTheIndex() {
+    void antiJoinOnAnIdFieldIsPushedDownToTheIndex() {
         final Map<String, Long> all = eventsPerStream("");
         assertThat(all).as("streams indexed").isNotEmpty();
         final String streamId = all.keySet().iterator().next();
-        final String dropped = "drop join \"" + createStreamsCsv(streamId) + "\" as s on StreamId = s.Id";
-        final String noneDropped = "drop join \"" + createStreamsCsv(UNKNOWN_STREAM_ID) + "\" as s on StreamId = s.Id";
+        final String dropped = "anti join \"" + createStreamsCsv(streamId) + "\" as s on StreamId = s.Id";
+        final String noneDropped = "anti join \"" + createStreamsCsv(UNKNOWN_STREAM_ID) + "\" as s on StreamId = s.Id";
 
         assertThat(getPushedDownTerms(dropped, streamId)).contains("NOT {StreamId in " + streamId + "}");
         final Map<String, Long> expected = new HashMap<>(all);

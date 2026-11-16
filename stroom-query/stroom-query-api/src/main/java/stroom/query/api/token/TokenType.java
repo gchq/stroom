@@ -84,7 +84,8 @@ public enum TokenType {
     FROM,
     // The native query of a data source that takes one, such as the SQL of a Data Connection.
     SQL,
-    // A join line: 'join', 'left join', 'keep join' or 'drop join', followed by the joined source.
+    // A join line: 'join', 'left join', 'semi join' or 'anti join', or one of their longer spellings,
+    // such as 'left outer join', followed by the joined source.
     JOIN,
     // The keys of a join, as in 'on UserId = hr.Username'. Only a keyword after a join.
     ON,

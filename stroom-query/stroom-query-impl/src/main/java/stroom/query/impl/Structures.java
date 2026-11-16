@@ -124,10 +124,12 @@ class Structures {
                         ```
 
                         The kinds of join are:
-                        * `join` - one row per match; rows with no match are dropped.
-                        * `left join` - one row per match; rows with no match are kept, with blank joined fields.
-                        * `keep join` - each row with at least one match, once, with no joined fields.
-                        * `drop join` - each row with no match, with no joined fields.
+                        * `join` or `inner join` - one row per match; rows with no match are dropped.
+                        * `left join` or `left outer join` - one row per match; rows with no match are
+                          kept, with blank joined fields.
+                        * `semi join` or `left semi join` - each row with at least one match, once, with
+                          no joined fields.
+                        * `anti join` or `left anti join` - each row with no match, with no joined fields.
 
                         The joined fields are named `<alias>.<field>`. The alias is the name after `as`,
                         or the data source's name if there is none.
@@ -151,7 +153,7 @@ class Structures {
 
                         The joined source is searched first and held while the first source is searched,
                         up to 1 million rows or 256 MB (set by administrators). Group or filter it to
-                        join more. A `join` or `keep join` with at most 1,000 keys, on a field the first
+                        join more. A `join` or `semi join` with at most 1,000 keys, on a field the first
                         source can search, also narrows the first source's search to those keys.
 
                         Joins can't be used in streaming or table builder analytic rules.

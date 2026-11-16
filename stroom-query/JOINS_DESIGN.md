@@ -8,8 +8,8 @@ Snapshot of the design document, last updated 2026-11-16
 - **How:** the bounded side (a Data Connection, a small or grouped query) runs first into an LMDB join table, up to 1 million rows. The other side streams through it into the existing result store, so results still arrive incrementally.
 - **Windowed joins too:** event-to-event joins within a time window, such as a logon then an export within 10 minutes, are in this plan as its last stage.
 - **Not DuckDB, for now:** it would add a second query language, end incremental results, and bring a 79 MB native jar that does not run on Stroom's Alpine image as shipped.
-- **Status:** all sixteen decisions made on 2026-11-12; all seven build stages built and committed on 2026-11-12. Three differ from the decisions: the pushdown limit is 1,000 keys, `drop join` is pushed down only on ID and whole-number fields, and windowed joins give their rows once both searches finish.
-- **Revision, 2026-11-16:** semi and anti joins take their standard names, replacing `keep join` and `drop join`. They gain their SQL forms, `where exists`, `where not exists` and `where X in (…)`, and right and full outer joins are added. This is stages 8 to 10, not yet started.
+- **Status:** all sixteen decisions made on 2026-11-12; all seven build stages built and committed on 2026-11-12. Three differ from the decisions: the pushdown limit is 1,000 keys, `anti join` is pushed down only on ID and whole-number fields, and windowed joins give their rows once both searches finish.
+- **Revision, 2026-11-16:** semi and anti joins take their standard names, replacing `keep join` and `drop join`. They gain their SQL forms, `where exists`, `where not exists` and `where X in (…)`, and right and full outer joins are added. This is stages 8 to 10, of which stage 8 was done on 2026-11-16 and stages 9 and 10 are not yet started.
 
 ## How a StroomQL query runs today
 
@@ -32,7 +32,7 @@ Users want to relate rows from two sources in one query, and almost always one s
 | # | Need | Left side | Right side | Kind | Right side size |
 | --- | --- | --- | --- | --- | --- |
 | 1 | Enrich events with owner, department or asset details | Events (index) | Data Connection (HR, CMDB) | left | Small: thousands of rows |
-| 2 | Find events from users who should not exist, or are not leavers | Events | Data Connection or CSV | keep / drop | Small |
+| 2 | Find events from users who should not exist, or are not leavers | Events | Data Connection or CSV | semi / anti | Small |
 | 3 | Compare two summaries, for example logons per user against file exports per user | Grouped query | Grouped query | inner / left | Bounded by the group-by |
 | 4 | A sequence: a logon followed by an export within 10 minutes | Events | Events | inner, within a window | Large unless windowed |
 | 5 | Enrich with values as they were at event time | Events | Plan B or reference data | left, valid at | Looked up by key |
@@ -67,7 +67,7 @@ Case 5 already works today without a join, through Plan B and reference data loo
 
 A join needs one side complete before any joined row is final, but Stroom's stores fill a little at a time and are only complete when every node has finished. Five specifics follow from the code.
 
-- **Results arrive incrementally.** A store reports `complete = false` while nodes are still sending payloads. A row on the left can only be joined, or dropped by a `keep` or `drop` join, once the right side is complete. Otherwise a later right row could change the answer.
+- **Results arrive incrementally.** A store reports `complete = false` while nodes are still sending payloads. A row on the left can only be joined, or dropped by a semi or anti join, once the right side is complete. Otherwise a later right row could change the answer.
 - **Grouped rows are not final until the end.** A group's count keeps changing as payloads merge. A join on a grouped side must wait for that side to finish.
 - **The store has no streaming read.** `LmdbDataStore.fetch()` reads pages under a single read transaction. Reading a whole side means `OffsetRange.UNBOUNDED`, which is still capped by `maxSortedItems` (500,000) and the group-depth sizes (`1000000,100,10,1`).
 - **Rows are grouped on the worker nodes.** A Lucene search groups on each node and ships LMDB payloads, so a join that must happen before grouping has to run on every node, not just the coordinator.
@@ -165,7 +165,7 @@ Case 2 from above, users with logons who are not in HR:
 
 ```text
 from "Windows events"
-drop join "HR Users" as hr on lowerCase(UserId) = hr.Username
+anti join "HR Users" as hr on lowerCase(UserId) = hr.Username
 where EventType = 'Logon'
 group by UserId
 select UserId, count() as Logons
@@ -316,7 +316,7 @@ All sixteen were decided on 2026-11-12. Twelve followed the recommendation; four
 
 ## Work plan
 
-There are seven stages, all on a branch from 7.14. Each stage ends with its tests and an audit before the next starts. Stages 1 to 4 give single-node joins, which already cover Data Connections joined to each other and to Plan B. Stage 5 adds Lucene and Elastic across the cluster, and stage 7 adds windowed event-to-event joins.
+There are ten stages, all on a branch from 7.14. Each stage ends with its tests and an audit before the next starts. Stages 1 to 4 give single-node joins, which already cover Data Connections joined to each other and to Plan B. Stage 5 adds Lucene and Elastic across the cluster, stage 7 adds windowed event-to-event joins, and stages 8 to 10 bring the standard SQL names, the exists and in forms, and right and full outer joins.
 
 1. **Language. Done 2026-11-12.** `JOIN` (its kind is part of the token, as in `left join`) and `ON` in `TokenType` and the clause-order tables; `on` is only a keyword inside a join line, and `from` straight after a bracket starts a bracketed query. `Query` gains `alias`, `sourceTableSettings` and `joins` (`QueryJoin`, `JoinKey`, `JoinWindow`, `JoinType`). `SearchRequestFactory` parses join lines, bracketed queries on either side and windows, and `JoinWhereSplitter` splits `where`. Completion offers data sources after `join`, `sql` only for a joined source that runs SQL, and `on` only after a join line. Streaming and table builder rules refuse joins. Queries with joins are refused at search time until stages 2 and 3. `Highlighting in mode-stroom_query.js colours join kinds, on and within, and joined data sources as after from (approved 2026-11-12)`.
 
@@ -347,7 +347,11 @@ There are seven stages, all on a branch from 7.14. Each stage ends with its test
 
    Done and committed 2026-11-12 (35e722736c). `WindowedJoin` plans the join and probes with the window; `JoinSearchRunner` searches the first source into an anchor table, then the joined source over the merged windows, and gives the joined rows once both are searched (see Windowed event-to-event joins). Tests run fake logon and export sources and join the Lucene test index to itself within a day, checked against plain searches. Testing found that a query with only a `from` alias failed in the stage 6 pushdown; fixed.
    - Tests: results equal a brute-force windowed join over a test set, window edges (exactly 10 minutes), and refusal when the left side is over the cap.
-8. **Standard names.** Rename `keep join` and `drop join` to `semi join` and `anti join` in the tokeniser, `JoinType`, the StroomQL help, the tests, the example pack and `JOINS_DESIGN.md`. Accept `inner join`, `left outer join`, `left semi join` and `left anti join` (decision 18). Tests: tokenising and parsing every spelling, and every pack example run under its new name.
+8. **Standard names. Done 2026-11-16.** Rename `keep join` and `drop join` to `semi join` and `anti join` in the tokeniser, `JoinType`, the StroomQL help, the tests, the example pack and `JOINS_DESIGN.md`. Accept `inner join`, `left outer join`, `left semi join` and `left anti join` (decision 18). Tests: tokenising and parsing every spelling, and every pack example run under its new name.
+
+   `JoinType` is now `INNER`, `LEFT`, `SEMI` and `ANTI`. The tokeniser makes one join token of `inner join`, `left join`, `left outer join`, `semi join`, `left semi join`, `anti join` and `left anti join`, and `JoinLineParser` reads the kind from it, so `left semi join` is a semi join and `left` alone a left join. `keep` and `drop` are now plain words, so `from People keep join Teams ...` fails to parse with no message of its own (decision 21). The StroomQL help lists each kind with its longer spelling, Ace highlights every spelling, the two pack examples use `semi join` and `anti join`, and the unreleased CHANGELOG entry for joins names the new words. Tests: every spelling as one token and as its kind, each longer spelling giving the same join as the short one, `keep` and `drop` refused, and the pack, CSV and Lucene integration tests under the new names.
+
+   Review, 2026-11-16. `JoinType` now holds both spellings of each kind; the tokeniser builds its pattern from them and the parser looks the words up there, refusing any it doesn't know, so a kind added later can't run as an inner join by mistake. A data source or alias named like a kind keeps its name: in `from Left semi join ...` the data source is `Left`, and in `from events as Anti join ...` the alias is `Anti`. Not changed: Ace highlights a kind only when it is on the same line as `join`, as Ace reads one line at a time.
 9. **SQL forms.** `where exists`, `where not exists`, `where X in (from …)` and `where X not in (from …)` (decisions 17 and 19). This means bracketed queries inside `where`, correlation to the first source's fields, a rewrite into a join line before planning, and refusals for the forms that can't be rewritten. Tests: each rewrite, each refusal, the same rows as the equivalent join line, and pack examples for each form.
 10. **Right and full outer joins.** Matched flags in the join table, flags merged from remote nodes, late unmatched rows through `eval`, `filter` and `group by`, no first-source pushdown, and the last-join-line and no-window limits. Tests: the probe and flag merge as unit tests, a Lucene integration test over several nodes, CSV integration tests, and pack examples using Teams' new unmatched team.
 
@@ -355,7 +359,7 @@ A DuckDB engine stays out of this plan; it can be revisited if large-to-large jo
 
 ## Follow-ups
 
-Not started. Each would build on the seven stages without changing the syntax.
+Not started. Each would build on the ten stages without changing the syntax.
 
 - **Stream windowed join rows.** Give `join` and `semi join` rows as the joined source's rows arrive, rather than once both searches finish, and drop the cap on the joined source. This means probing inside the joined source's search on every node, with the anchor table shipped to each node as join tables are now.
 - **Skip a search that can give nothing.** When a `join` or `semi join` side returns no rows, the main source is still searched in full and every row dropped. Stopping early needs a match-nothing condition that every data source reads the same way.

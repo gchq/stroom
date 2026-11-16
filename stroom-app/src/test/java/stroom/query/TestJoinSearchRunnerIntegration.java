@@ -133,15 +133,15 @@ class TestJoinSearchRunnerIntegration extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    void keepAndDropJoins() {
+    void semiAndAntiJoins() {
         final SearchResponse kept = search("""
                 from "%s"
-                keep join "%s" as hr on UserId = hr.Username
+                semi join "%s" as hr on UserId = hr.Username
                 sort by Host
                 select Host""".formatted(events, hr));
         final SearchResponse dropped = search("""
                 from "%s"
-                drop join "%s" as hr on UserId = hr.Username
+                anti join "%s" as hr on UserId = hr.Username
                 select Host""".formatted(events, hr));
 
         assertThat(rows(kept, 1)).containsExactly(List.of("h1"), List.of("h2"), List.of("h4"));

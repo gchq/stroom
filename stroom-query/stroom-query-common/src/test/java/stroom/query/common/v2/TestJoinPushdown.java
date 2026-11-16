@@ -81,8 +81,8 @@ class TestJoinPushdown {
     }
 
     @Test
-    void keepJoinAddsAnInTerm() {
-        final Query query = query(JoinType.KEEP, "${UserId}");
+    void semiJoinAddsAnInTerm() {
+        final Query query = query(JoinType.SEMI, "${UserId}");
 
         final Query pushedDown = joinPushdown.apply(query, List.of(keys("a", "b")), Map.of());
 
@@ -101,7 +101,7 @@ class TestJoinPushdown {
 
     @Test
     void queryWithNoWhereGetsOnlyTheInTerm() {
-        final Query query = query(JoinType.KEEP, "${UserId}").copy().expression(null).build();
+        final Query query = query(JoinType.SEMI, "${UserId}").copy().expression(null).build();
 
         final Query pushedDown = joinPushdown.apply(query, List.of(keys("a")), Map.of());
 
@@ -163,9 +163,9 @@ class TestJoinPushdown {
     }
 
     @Test
-    void dropJoinOnAnIdFieldAddsANotInTerm() {
+    void antiJoinOnAnIdFieldAddsANotInTerm() {
         final Query pushedDown = joinPushdown.apply(
-                query(JoinType.DROP, "${StreamId}"), List.of(keys("1", "22")), Map.of());
+                query(JoinType.ANTI, "${StreamId}"), List.of(keys("1", "22")), Map.of());
 
         final ExpressionOperator added = (ExpressionOperator) pushedDown.getExpression().getChildren().getLast();
         assertThat(added.op()).isEqualTo(Op.NOT);
@@ -173,9 +173,9 @@ class TestJoinPushdown {
     }
 
     @Test
-    void dropJoinOnATextFieldIsNotPushedDown() {
+    void antiJoinOnATextFieldIsNotPushedDown() {
         // A data source that ignores case would drop rows whose case differs, which the join keeps.
-        final Query query = query(JoinType.DROP, "${UserId}");
+        final Query query = query(JoinType.ANTI, "${UserId}");
 
         assertThat(joinPushdown.apply(query, List.of(keys("a")), Map.of())).isSameAs(query);
     }
@@ -186,7 +186,7 @@ class TestJoinPushdown {
         for (int i = 0; i <= JoinPushdown.MAX_KEYS; i++) {
             keys.add(key("u" + i));
         }
-        final Query query = query(JoinType.KEEP, "${UserId}");
+        final Query query = query(JoinType.SEMI, "${UserId}");
 
         assertThat(keys.hasValues()).isFalse();
         assertThat(joinPushdown.apply(query, List.of(keys), Map.of())).isSameAs(query);
@@ -202,20 +202,20 @@ class TestJoinPushdown {
         keys.add(key("u0"));
 
         assertThat(keys.hasValues()).isTrue();
-        assertThat(pushedTerms(joinPushdown.apply(query(JoinType.KEEP, "${UserId}"), List.of(keys), Map.of())))
+        assertThat(pushedTerms(joinPushdown.apply(query(JoinType.SEMI, "${UserId}"), List.of(keys), Map.of())))
                 .hasSize(1);
     }
 
     @Test
     void joinWithNoKeysIsNotPushedDown() {
-        final Query query = query(JoinType.KEEP, "${UserId}");
+        final Query query = query(JoinType.SEMI, "${UserId}");
 
         assertThat(joinPushdown.apply(query, List.of(keys()), Map.of())).isSameAs(query);
     }
 
     @Test
     void keyThatIsNotPlainStopsThePushDown() {
-        final Query query = query(JoinType.KEEP, "${UserId}");
+        final Query query = query(JoinType.SEMI, "${UserId}");
 
         for (final String value : List.of("a b", "a,b", "a*", "a?", "\"a\"", "a\\b")) {
             assertThat(joinPushdown.apply(query, List.of(keys("ok", value)), Map.of()))
@@ -226,7 +226,7 @@ class TestJoinPushdown {
 
     @Test
     void numberFieldNeedsWholeNumberKeys() {
-        final Query query = query(JoinType.KEEP, "${Count}");
+        final Query query = query(JoinType.SEMI, "${Count}");
 
         assertThat(pushedTerms(joinPushdown.apply(query, List.of(keys("1", "-20")), Map.of())))
                 .containsExactly(in("Count", "1,-20"));
@@ -240,7 +240,7 @@ class TestJoinPushdown {
 
     @Test
     void integerFieldNeedsKeysThatAreIntegers() {
-        final Query query = query(JoinType.KEEP, "${Small}");
+        final Query query = query(JoinType.SEMI, "${Small}");
 
         assertThat(pushedTerms(joinPushdown.apply(query, List.of(keys("2147483647", "-2147483648")), Map.of())))
                 .containsExactly(in("Small", "2147483647,-2147483648"));
@@ -252,9 +252,9 @@ class TestJoinPushdown {
         final Query query = Query.builder()
                 .dataSource(EVENTS)
                 .joins(List.of(
-                        new QueryJoin(JoinType.KEEP, "hr", Query.builder().dataSource(HR).build(), null,
+                        new QueryJoin(JoinType.SEMI, "hr", Query.builder().dataSource(HR).build(), null,
                                 List.of(new JoinKey("${UserId}", "${hr.Username}")), null),
-                        new QueryJoin(JoinType.KEEP, "hr2", Query.builder().dataSource(HR).build(), null,
+                        new QueryJoin(JoinType.SEMI, "hr2", Query.builder().dataSource(HR).build(), null,
                                 List.of(new JoinKey("${Count}", "${hr2.Count}")), null)))
                 .build();
 
@@ -267,7 +267,7 @@ class TestJoinPushdown {
     void keysOfJoinsThatCantBePushedDownAreNotCollected() {
         final JoinPushdown.Keys left = JoinPushdown.Keys.forJoin(
                 query(JoinType.LEFT, "${UserId}").getJoins().getFirst());
-        final JoinPushdown.Keys twoKeys = JoinPushdown.Keys.forJoin(new QueryJoin(JoinType.KEEP, "hr", null, null,
+        final JoinPushdown.Keys twoKeys = JoinPushdown.Keys.forJoin(new QueryJoin(JoinType.SEMI, "hr", null, null,
                 List.of(new JoinKey("${UserId}", "${hr.Username}"), new JoinKey("${Host}", "${hr.Host}")), null));
         left.add(key("a"));
         twoKeys.add(key("a"));
@@ -278,10 +278,10 @@ class TestJoinPushdown {
 
     @Test
     void fieldTheDataSourceCannotSearchIsNotPushedDown() {
-        final Query notIndexed = query(JoinType.KEEP, "${NotIndexed}");
-        final Query date = query(JoinType.KEEP, "${EventTime}");
-        final Query noIn = query(JoinType.KEEP, "${NoIn}");
-        final Query unknown = query(JoinType.KEEP, "${Missing}");
+        final Query notIndexed = query(JoinType.SEMI, "${NotIndexed}");
+        final Query date = query(JoinType.SEMI, "${EventTime}");
+        final Query noIn = query(JoinType.SEMI, "${NoIn}");
+        final Query unknown = query(JoinType.SEMI, "${Missing}");
 
         assertThat(joinPushdown.apply(notIndexed, List.of(keys("a")), Map.of())).isSameAs(notIndexed);
         assertThat(joinPushdown.apply(date, List.of(keys("a")), Map.of())).isSameAs(date);
@@ -291,8 +291,8 @@ class TestJoinPushdown {
 
     @Test
     void keyThatIsNotJustAFieldIsNotPushedDown() {
-        final Query expression = query(JoinType.KEEP, "lowerCase(${UserId})");
-        final Query param = query(JoinType.KEEP, "${UserId}");
+        final Query expression = query(JoinType.SEMI, "lowerCase(${UserId})");
+        final Query param = query(JoinType.SEMI, "${UserId}");
 
         assertThat(joinPushdown.apply(expression, List.of(keys("a")), Map.of())).isSameAs(expression);
         assertThat(joinPushdown.apply(param, List.of(keys("a")), Map.of("UserId", "x"))).isSameAs(param);
@@ -302,7 +302,7 @@ class TestJoinPushdown {
     void joinOnSeveralKeysIsNotPushedDown() {
         final Query query = Query.builder()
                 .dataSource(EVENTS)
-                .joins(List.of(new QueryJoin(JoinType.KEEP, "hr", Query.builder().dataSource(HR).build(), null,
+                .joins(List.of(new QueryJoin(JoinType.SEMI, "hr", Query.builder().dataSource(HR).build(), null,
                         List.of(new JoinKey("${UserId}", "${hr.Username}"),
                                 new JoinKey("${Host}", "${hr.Host}")),
                         null)))
@@ -313,7 +313,7 @@ class TestJoinPushdown {
 
     @Test
     void firstSourceAliasIsTakenOffTheField() {
-        final Query query = query(JoinType.KEEP, "${e.UserId}").copy().alias("e").build();
+        final Query query = query(JoinType.SEMI, "${e.UserId}").copy().alias("e").build();
 
         assertThat(pushedTerms(joinPushdown.apply(query, List.of(keys("a")), Map.of())))
                 .containsExactly(in("UserId", "a"));
@@ -326,7 +326,7 @@ class TestJoinPushdown {
                 .joins(List.of(
                         new QueryJoin(JoinType.INNER, "hr", Query.builder().dataSource(HR).build(), null,
                                 List.of(new JoinKey("${UserId}", "${hr.Username}")), null),
-                        new QueryJoin(JoinType.KEEP, "dept", Query.builder().dataSource(HR).build(), null,
+                        new QueryJoin(JoinType.SEMI, "dept", Query.builder().dataSource(HR).build(), null,
                                 List.of(new JoinKey("${hr.Department}", "${dept.Name}")), null)))
                 .build();
 
@@ -337,7 +337,7 @@ class TestJoinPushdown {
     @Test
     void failureToFindTheFieldsLeavesTheQueryAlone() {
         Mockito.when(searchProvider.getFieldInfo(Mockito.any())).thenThrow(new RuntimeException("down"));
-        final Query query = query(JoinType.KEEP, "${UserId}");
+        final Query query = query(JoinType.SEMI, "${UserId}");
 
         assertThat(joinPushdown.apply(query, List.of(keys("a")), Map.of())).isSameAs(query);
     }
@@ -382,7 +382,7 @@ class TestJoinPushdown {
 
     // An empty collector of the keys of a join that might be pushed down.
     private static JoinPushdown.Keys keysOfAJoin() {
-        return JoinPushdown.Keys.forJoin(query(JoinType.KEEP, "${UserId}").getJoins().getFirst());
+        return JoinPushdown.Keys.forJoin(query(JoinType.SEMI, "${UserId}").getJoins().getFirst());
     }
 
     private static JoinPushdown.Keys keys(final String... values) {

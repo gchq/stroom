@@ -1635,7 +1635,7 @@ public class SearchRequestFactory {
             }
         }
 
-        // A join line: 'join', 'left join', 'keep join' or 'drop join', then a data source or a
+        // A join line: 'join', 'left join', 'semi join' or 'anti join', then a data source or a
         // bracketed query, then an optional alias. Its keys follow in an on clause.
         private void processJoin(final KeywordGroup keywordGroup) {
             final JoinType type = JoinLineParser.getJoinType(keywordGroup);
@@ -1820,7 +1820,7 @@ public class SearchRequestFactory {
             tableSettingsBuilder.valueFilter(JoinWhereSplitter.and(postJoin, filterExpression));
         }
 
-        // A keep or drop join adds no fields to the rows, so its fields can only be named in its own
+        // A semi or anti join adds no fields to the rows, so its fields can only be named in its own
         // keys or in where conditions moved into its own search.
         private void checkFieldlessAliasesUnused(final ExpressionOperator postJoin) {
             final List<String> fieldsUsed = new ArrayList<>();

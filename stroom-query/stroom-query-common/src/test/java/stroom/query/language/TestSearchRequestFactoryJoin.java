@@ -40,7 +40,9 @@ import stroom.util.shared.ResultPage;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -87,14 +89,66 @@ class TestSearchRequestFactoryJoin {
 
     @Test
     void joinKindsAreReadFromTheJoinLine() {
-        assertThat(firstJoin("from events left join hr as h on UserId = h.Name select UserId").getType())
-                .isEqualTo(JoinType.LEFT);
-        assertThat(firstJoin("from events keep join hr as h on UserId = h.Name select UserId").getType())
-                .isEqualTo(JoinType.KEEP);
-        assertThat(firstJoin("from events drop join hr as h on UserId = h.Name select UserId").getType())
-                .isEqualTo(JoinType.DROP);
-        assertThat(firstJoin("from events\nLEFT   JOIN hr as h on UserId = h.Name select UserId").getType())
-                .isEqualTo(JoinType.LEFT);
+        final Map<String, JoinType> kinds = new LinkedHashMap<>();
+        kinds.put("join", JoinType.INNER);
+        kinds.put("inner join", JoinType.INNER);
+        kinds.put("left join", JoinType.LEFT);
+        kinds.put("left outer join", JoinType.LEFT);
+        kinds.put("semi join", JoinType.SEMI);
+        kinds.put("left semi join", JoinType.SEMI);
+        kinds.put("anti join", JoinType.ANTI);
+        kinds.put("left anti join", JoinType.ANTI);
+        kinds.put("\nLEFT   OUTER\n JOIN", JoinType.LEFT);
+        kinds.put("Left Semi Join", JoinType.SEMI);
+        kinds.forEach((kind, type) ->
+                assertThat(firstJoin("from events " + kind + " hr as h on UserId = h.Name select UserId").getType())
+                        .as(kind)
+                        .isEqualTo(type));
+    }
+
+    @Test
+    void everySpellingOfAKindGivesTheSameJoin() {
+        // Each kind's longer spelling is only another way of writing it.
+        assertThat(firstJoin("from events inner join hr as h on UserId = h.Name select UserId, h.Dept"))
+                .isEqualTo(firstJoin("from events join hr as h on UserId = h.Name select UserId, h.Dept"));
+        assertThat(firstJoin("from events left outer join hr as h on UserId = h.Name select UserId, h.Dept"))
+                .isEqualTo(firstJoin("from events left join hr as h on UserId = h.Name select UserId, h.Dept"));
+        assertThat(firstJoin("from events left semi join hr as h on UserId = h.Name select UserId"))
+                .isEqualTo(firstJoin("from events semi join hr as h on UserId = h.Name select UserId"));
+        assertThat(firstJoin("from events left anti join hr as h on UserId = h.Name select UserId"))
+                .isEqualTo(firstJoin("from events anti join hr as h on UserId = h.Name select UserId"));
+    }
+
+    @Test
+    void oldJoinKindsAreNotJoins() {
+        // 'keep join' and 'drop join' were renamed to 'semi join' and 'anti join' before joins were
+        // released, so they get no message of their own: the old word is read as part of the data
+        // source's name.
+        for (final String kind : List.of("keep", "drop")) {
+            assertThatThrownBy(() -> create("from events " + kind + " join hr as h on UserId = h.Name select UserId"))
+                    .as(kind)
+                    .isInstanceOf(TokenException.class)
+                    .hasMessageNotContaining("kind of join");
+        }
+    }
+
+    @Test
+    void wordsBeforeJoinThatAreNotAKindAreRefused() {
+        // 'Left' is the data source, leaving 'outer join', which isn't a kind of join.
+        assertThatThrownBy(() -> create("from Left outer join hr as h on UserId = h.Name select UserId"))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining("'outer join' is not a kind of join");
+    }
+
+    @Test
+    void dataSourceOrAliasNamedLikeAJoinKindKeepsItsName() {
+        final SearchRequest fromLeft = create("from Left semi join hr as h on UserId = h.Name select UserId");
+        assertThat(fromLeft.getQuery().getDataSource().getName()).isEqualTo("Left");
+        assertThat(fromLeft.getQuery().getJoins().getFirst().getType()).isEqualTo(JoinType.SEMI);
+
+        final SearchRequest asAnti = create("from events as Anti\njoin hr as h on Anti.UserId = h.Name select UserId");
+        assertThat(asAnti.getQuery().getAlias()).isEqualTo("Anti");
+        assertThat(asAnti.getQuery().getJoins().getFirst().getType()).isEqualTo(JoinType.INNER);
     }
 
     @Test
@@ -307,21 +361,21 @@ class TestSearchRequestFactoryJoin {
     }
 
     @Test
-    void keepJoinFieldsCanOnlyBeUsedInItsKeysOrItsOwnSearch() {
-        // Pushed into the keep join's search, so it means 'keep rows with a match in Sales'.
+    void semiJoinFieldsCanOnlyBeUsedInItsKeysOrItsOwnSearch() {
+        // Pushed into the semi join's search, so it means 'keep rows with a match in Sales'.
         final Query query = create("""
                 from events
-                keep join hr as h on UserId = h.Name
+                semi join hr as h on UserId = h.Name
                 where h.Dept = 'Sales'
                 select UserId""").getQuery();
         assertThat(fields(query.getJoins().getFirst().getQuery().getExpression())).containsExactly("Dept");
 
-        assertThatThrownBy(() -> create("from events keep join hr as h on UserId = h.Name select UserId, h.Dept"))
+        assertThatThrownBy(() -> create("from events semi join hr as h on UserId = h.Name select UserId, h.Dept"))
                 .isInstanceOf(TokenException.class)
                 .hasMessageContaining("can only be used in its own keys");
         assertThatThrownBy(() -> create("""
                 from events
-                keep join hr as h on UserId = h.Name
+                semi join hr as h on UserId = h.Name
                 where Host = 'a' or h.Dept = 'b'
                 select UserId"""))
                 .isInstanceOf(TokenException.class)
@@ -329,24 +383,24 @@ class TestSearchRequestFactoryJoin {
     }
 
     @Test
-    void dropJoinFieldsCanOnlyBeUsedInItsKeys() {
+    void antiJoinFieldsCanOnlyBeUsedInItsKeys() {
         assertThatThrownBy(() -> create("""
                 from events
-                drop join hr as h on UserId = h.Name
+                anti join hr as h on UserId = h.Name
                 where h.Dept = 'x'
                 select UserId"""))
                 .isInstanceOf(TokenException.class)
                 .hasMessageContaining("can only be used in its own keys");
         assertThatThrownBy(() -> create("""
                 from events
-                drop join hr as h on UserId = h.Name
+                anti join hr as h on UserId = h.Name
                 left join depts as d on h.Dept = d.Name
                 select UserId"""))
                 .isInstanceOf(TokenException.class)
                 .hasMessageContaining("can only be used in its own keys");
         assertThatThrownBy(() -> create("""
                 from events
-                drop join hr as h on UserId = h.Name
+                anti join hr as h on UserId = h.Name
                 eval x = h.Dept
                 select UserId"""))
                 .isInstanceOf(TokenException.class)

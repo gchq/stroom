@@ -49,6 +49,15 @@ public class TestTokeniser extends AbstractQueryTest {
         return sb.toString();
     }
 
+    // The text of the only join keyword token in the input.
+    private static String joinText(final String input) {
+        final List<Token> joins = withoutWhitespace(input).stream()
+                .filter(token -> TokenType.JOIN.equals(token.getTokenType()))
+                .toList();
+        assertThat(joins).as(input).hasSize(1);
+        return joins.getFirst().getText();
+    }
+
     private static List<Token> withoutWhitespace(final String input) {
         return Tokeniser.parse(input)
                 .stream()
@@ -164,7 +173,58 @@ public class TestTokeniser extends AbstractQueryTest {
                         TokenType.ON, TokenType.STRING, TokenType.EQUALS, TokenType.STRING,
                         TokenType.SELECT, TokenType.STRING);
         assertThat(tokens.get(2).getText()).isEqualTo("left join");
-        assertThat(withoutWhitespace("from x KEEP\n  JOIN y on a = y.a").get(2).getText()).isEqualTo("KEEP\n  JOIN");
+        assertThat(withoutWhitespace("from x LEFT\n  OUTER JOIN y on a = y.a").get(2).getText())
+                .isEqualTo("LEFT\n  OUTER JOIN");
+    }
+
+    @Test
+    void everySpellingOfAJoinKindIsOneJoinToken() {
+        for (final String kind : List.of("join", "inner join", "left join", "left outer join",
+                "semi join", "left semi join", "anti join", "left anti join")) {
+            final List<Token> tokens = withoutWhitespace("from x " + kind + " y on a = y.a select a");
+
+            assertThat(tokens)
+                    .as(kind)
+                    .extracting(Token::getTokenType)
+                    .startsWith(TokenType.FROM, TokenType.STRING, TokenType.JOIN, TokenType.STRING, TokenType.ON);
+            assertThat(tokens.get(2).getText()).as(kind).isEqualTo(kind);
+        }
+    }
+
+    @Test
+    void oldAndUnknownJoinKindsAreNotPartOfTheJoinToken() {
+        // 'keep join' and 'drop join' were renamed before joins were released, so they are plain words.
+        for (final String kind : List.of("keep", "drop", "right", "full")) {
+            assertThat(joinText("from x " + kind + " join y on a = y.a select a")).as(kind).isEqualTo("join");
+        }
+        // 'outer' is only a kind after 'left'.
+        assertThat(joinText("from x right outer join y on a = y.a")).isEqualTo("join");
+    }
+
+    @Test
+    void dataSourceNamedLikeAJoinKindIsNotPartOfALongerKind() {
+        // 'Left' is the data source, and 'semi join' starts the join line.
+        final List<Token> tokens = withoutWhitespace("from Left semi join y on a = y.a");
+
+        assertThat(tokens)
+                .extracting(Token::getTokenType)
+                .startsWith(TokenType.FROM, TokenType.STRING, TokenType.JOIN, TokenType.STRING, TokenType.ON);
+        assertThat(tokens.get(1).getText()).isEqualTo("Left");
+        assertThat(tokens.get(2).getText()).isEqualTo("semi join");
+    }
+
+    @Test
+    void aliasNamedLikeAJoinKindIsNotPartOfTheKind() {
+        for (final String alias : List.of("Anti", "Semi", "Inner", "Left")) {
+            final List<Token> tokens = withoutWhitespace("from x as " + alias + "\njoin y on a = y.a select a");
+
+            assertThat(tokens).as(alias).extracting(Token::getText).contains(alias);
+            assertThat(joinText("from x as " + alias + "\njoin y on a = y.a select a")).as(alias).isEqualTo("join");
+        }
+        // An alias named like a kind, followed by a kind.
+        assertThat(joinText("from x as Left anti join y on a = y.a")).isEqualTo("anti join");
+        // 'as' only makes an alias of the word straight after it.
+        assertThat(joinText("from x as h left join y on a = y.a")).isEqualTo("left join");
     }
 
     @Test
@@ -209,7 +269,7 @@ public class TestTokeniser extends AbstractQueryTest {
                 .extracting(Token::getTokenType)
                 .contains(TokenType.JOIN, TokenType.ON);
         // After a join line's keys, another join line can start.
-        assertThat(withoutWhitespace("from x join y on a = y.a drop join z on a = z.a select a"))
+        assertThat(withoutWhitespace("from x join y on a = y.a anti join z on a = z.a select a"))
                 .extracting(Token::getTokenType)
                 .containsSubsequence(TokenType.JOIN, TokenType.ON, TokenType.JOIN, TokenType.ON);
     }

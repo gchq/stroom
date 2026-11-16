@@ -56,10 +56,10 @@ import java.util.regex.Pattern;
 /// of the first source that the data source can search with `in`, adds a term to the first source's
 /// query:
 ///
-/// * An inner or keep join adds `Field in (the keys)`, as a row with any other value has no match.
+/// * An inner or semi join adds `Field in (the keys)`, as a row with any other value has no match.
 ///   A data source that matches more loosely than the join, ignoring case for example, only lets
 ///   through rows the join then drops.
-/// * A drop join adds `not (Field in (the keys))`, but only for an ID, integer or long field, where
+/// * An anti join adds `not (Field in (the keys))`, but only for an ID, integer or long field, where
 ///   the data source matches the keys exactly as the join does. For other fields a data source that
 ///   matches more loosely would drop rows the join keeps.
 ///
@@ -190,21 +190,21 @@ public class JoinPushdown {
         }
         LOGGER.debug(() -> LogUtil.message("Trying to push down the {} of '{}' as {} keys of {}",
                 type.getDisplayValue(), join.getAlias(), keys.getValues().size(), field));
-        return createInTerm(query, field, type == JoinType.DROP, keys.getValues(), fields);
+        return createInTerm(query, field, type == JoinType.ANTI, keys.getValues(), fields);
     }
 
-    // An 'in' term, or 'not in' to drop, for the keys on a field of a source, if the source can
+    // An 'in' term, or 'not in' for an anti join, for the keys on a field of a source, if the source can
     // search the field for them as the join matches them.
     private static Optional<ExpressionOperator> createInTerm(final Query sourceQuery,
                                                              final String field,
-                                                             final boolean drop,
+                                                             final boolean anti,
                                                              final Set<String> values,
                                                              final Map<String, QueryField> fields) {
         final QueryField queryField = fields.get(field);
         if (queryField == null || !canSearchWithIn(queryField)) {
             return Optional.empty();
         }
-        if (drop && !isMatchedExactly(queryField.getFldType())) {
+        if (anti && !isMatchedExactly(queryField.getFldType())) {
             return Optional.empty();
         }
         if (!values.stream().allMatch(value -> isPlainKey(queryField.getFldType(), value))) {
@@ -218,7 +218,7 @@ public class JoinPushdown {
                 .value(String.join(",", values))
                 .build();
         return Optional.of(ExpressionOperator.builder()
-                .op(drop
+                .op(anti
                         ? Op.NOT
                         : Op.AND)
                 .addTerm(in)

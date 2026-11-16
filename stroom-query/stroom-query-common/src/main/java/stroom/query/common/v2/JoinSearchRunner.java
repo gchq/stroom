@@ -785,7 +785,7 @@ public class JoinSearchRunner {
             count++;
             final String key = windowedJoin.getLeftKey(anchor);
             final Instant time = windowedJoin.getAnchorTime(anchor);
-            // An anchor with no key matches nothing, but left and drop joins still give it.
+            // An anchor with no key matches nothing, but left and anti joins still give it.
             anchors.add(Objects.requireNonNullElse(key, NO_KEY), anchor);
             if (key != null && time != null) {
                 keys.add(key);

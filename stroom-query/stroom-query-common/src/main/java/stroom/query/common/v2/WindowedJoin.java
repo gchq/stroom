@@ -55,8 +55,8 @@ import java.util.function.Consumer;
 /// - `join` gives one row per anchor and joined row in its window.
 /// - `left join` does the same, then gives each anchor with no joined row in its window, with blank
 ///   joined fields.
-/// - `keep join` gives each anchor with at least one joined row in its window, once.
-/// - `drop join` gives each anchor with no joined row in its window.
+/// - `semi join` gives each anchor with at least one joined row in its window, once.
+/// - `anti join` gives each anchor with no joined row in its window.
 public final class WindowedJoin {
 
     // The field of an anchor row that holds its number, for knowing which anchors matched.
@@ -437,7 +437,7 @@ public final class WindowedJoin {
         }
 
         /// Gives the anchors the kind of join gives once every joined row is done: unmatched ones for
-        /// left and drop joins, with blank joined fields, and matched ones for keep joins.
+        /// left and anti joins, with blank joined fields, and matched ones for semi joins.
         ///
         /// @param consumer Takes each row.
         public void finish(final Consumer<Val[]> consumer) {
@@ -445,7 +445,7 @@ public final class WindowedJoin {
             if (type == JoinType.INNER) {
                 return;
             }
-            final boolean wantMatched = type == JoinType.KEEP;
+            final boolean wantMatched = type == JoinType.SEMI;
             anchors.forEachRow((key, anchor) -> {
                 if (matched.get(getAnchorNumber(anchor)) == wantMatched) {
                     consumer.accept(createJoinedRow(anchor, null));

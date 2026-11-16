@@ -68,12 +68,12 @@ class TestJoinSearchRunner extends AbstractJoinSearchTest {
     }
 
     @Test
-    void keepJoinNarrowsTheSearchOfTheFirstSource() throws InterruptedException {
+    void semiJoinNarrowsTheSearchOfTheFirstSource() throws InterruptedException {
         sourceFields.put("events", List.of(QueryField.createKeyword("UserId"), QueryField.createKeyword("Host")));
         final JoinSearchRunner runner = createRunner(1_000_000);
         final Run run = run(runner, """
                 from events
-                keep join hr on UserId = hr.Username
+                semi join hr on UserId = hr.Username
                 select UserId, Host""", new FakeSources());
         run.awaitSearchStore();
 
@@ -86,13 +86,13 @@ class TestJoinSearchRunner extends AbstractJoinSearchTest {
     }
 
     @Test
-    void dropJoinOnAnIdFieldNarrowsTheSearchOfTheFirstSource() throws InterruptedException {
+    void antiJoinOnAnIdFieldNarrowsTheSearchOfTheFirstSource() throws InterruptedException {
         sourceFields.put("events", List.of(QueryField.createId("UserId"), QueryField.createKeyword("Host")));
         final FakeSources sources = new FakeSources();
         final JoinSearchRunner runner = createRunner(1_000_000);
         final Run run = run(runner, """
                 from events
-                drop join (from hr where Department = 'Sales' select Username) as hr on UserId = hr.Username
+                anti join (from hr where Department = 'Sales' select Username) as hr on UserId = hr.Username
                 select UserId, Host""", sources);
         run.awaitSearchStore();
 
@@ -109,7 +109,7 @@ class TestJoinSearchRunner extends AbstractJoinSearchTest {
         final JoinSearchRunner runner = createRunner(1_000_000);
         final Run run = run(runner, """
                 from events
-                keep join hr on UserId = hr.Username
+                semi join hr on UserId = hr.Username
                 select UserId""", new FakeSources());
         run.awaitSearchStore();
 

@@ -21,19 +21,43 @@ import stroom.docref.HasDisplayValue;
 /// The kind of a StroomQL join, which decides which rows of the first source are kept and whether
 /// the fields of the joined source are added to them.
 public enum JoinType implements HasDisplayValue {
-    /// One row per match; rows of the first source with no match are dropped.
-    INNER("join"),
-    /// One row per match; rows of the first source with no match are kept, with blank joined fields.
-    LEFT("left join"),
+    /// One row per match; rows of the first source with no match are left out.
+    INNER("join", "inner join"),
+    /// One row per match; rows of the first source with no match are given once, with blank joined
+    /// fields.
+    LEFT("left join", "left outer join"),
     /// Each row of the first source with at least one match, once, with no joined fields.
-    KEEP("keep join"),
+    SEMI("semi join", "left semi join"),
     /// Each row of the first source with no match, with no joined fields.
-    DROP("drop join");
+    ANTI("anti join", "left anti join");
 
     private final String displayValue;
+    private final String longSpelling;
 
-    JoinType(final String displayValue) {
+    JoinType(final String displayValue, final String longSpelling) {
         this.displayValue = displayValue;
+        this.longSpelling = longSpelling;
+    }
+
+    /// Gets the kind of join a join line's words spell, as the tokeniser and parser both read them.
+    ///
+    /// @param words The words of the kind and `join`, in lower case and separated by single spaces,
+    ///              e.g. `left outer join`.
+    /// @return The kind of join, or `null` if the words spell none.
+    public static JoinType fromSpelling(final String words) {
+        for (final JoinType type : values()) {
+            if (type.displayValue.equals(words) || type.longSpelling.equals(words)) {
+                return type;
+            }
+        }
+        return null;
+    }
+
+    /// Gets the other way of writing this kind of join, as in SQL.
+    ///
+    /// @return The words, e.g. `left outer join`.
+    public String getLongSpelling() {
+        return longSpelling;
     }
 
     /// Gets the StroomQL words for this kind of join.
@@ -54,10 +78,10 @@ public enum JoinType implements HasDisplayValue {
     /// Finds whether a condition that names only the joined source's fields can be moved into the
     /// joined source's own search without changing the result.
     ///
-    /// @return True for inner and keep joins, where a joined row that fails the condition is dropped
-    /// either way. False for left and drop joins, where moving it would change which rows count as
+    /// @return True for inner and semi joins, where a joined row that fails the condition is dropped
+    /// either way. False for left and anti joins, where moving it would change which rows count as
     /// unmatched.
     public boolean allowsJoinedConditionPushDown() {
-        return this == INNER || this == KEEP;
+        return this == INNER || this == SEMI;
     }
 }

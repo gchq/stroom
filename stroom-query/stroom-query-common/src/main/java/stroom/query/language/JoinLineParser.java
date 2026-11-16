@@ -38,27 +38,33 @@ import java.util.function.Function;
 final class JoinLineParser {
 
     private static final String WITHIN = "within";
+    private static final String JOIN = "join";
 
     private JoinLineParser() {
         // Static methods only.
     }
 
-    /// Gets the kind of a join line from its keyword token, whose text includes the kind, as in
-    /// `left join`.
+    /// Gets the kind of a join line from its keyword token, whose text starts with the kind and
+    /// `join`, as in `left outer join`.
     ///
-    /// @param joinToken The join keyword token or the keyword group it starts.
+    /// @param joinToken The join keyword token or the keyword group it starts, whose text goes on to
+    ///                  the joined source and the rest of the line.
     /// @return The kind of join.
+    /// @throws TokenException If the words before `join` are not a kind of join.
     static JoinType getJoinType(final AbstractToken joinToken) {
-        final String firstWord = joinToken.getText()
-                .trim()
-                .split("\\s+")[0]
-                .toLowerCase(Locale.ROOT);
-        return switch (firstWord) {
-            case "left" -> JoinType.LEFT;
-            case "keep" -> JoinType.KEEP;
-            case "drop" -> JoinType.DROP;
-            default -> JoinType.INNER;
-        };
+        final List<String> words = new ArrayList<>();
+        for (final String word : joinToken.getText().trim().toLowerCase(Locale.ROOT).split("\\s+")) {
+            words.add(word);
+            if (JOIN.equals(word)) {
+                break;
+            }
+        }
+        final String spelling = String.join(" ", words);
+        final JoinType type = JoinType.fromSpelling(spelling);
+        if (type == null) {
+            throw new TokenException(joinToken, "'" + spelling + "' is not a kind of join");
+        }
+        return type;
     }
 
     /// Parses the optional `as <alias>` after the source of a from clause or join line.
@@ -108,7 +114,7 @@ final class JoinLineParser {
     /// @param tokens            The key tokens of the on clause, without any window.
     /// @param errorToken        The token to point an error at when there are no keys.
     /// @param alias             The alias of the join line.
-    /// @param fieldlessAliases  The aliases of earlier keep and drop joins, whose fields don't exist.
+    /// @param fieldlessAliases  The aliases of earlier semi and anti joins, whose fields don't exist.
     /// @param expressionParser  Parses the tokens of one side of a key into its expression text.
     /// @return The keys, never empty.
     static List<JoinKey> parseKeys(final List<AbstractToken> tokens,
@@ -240,7 +246,7 @@ final class JoinLineParser {
         return "Expected on with the keys to join on, " + getKeyExample(alias);
     }
 
-    /// Checks that no field of a keep or drop join is used outside its own keys and search. Such a
+    /// Checks that no field of a semi or anti join is used outside its own keys and search. Such a
     /// join adds no fields to the rows, so the field would never have a value.
     ///
     /// @param fieldsUsed The fields named outside the join lines' keys and searches.
@@ -259,10 +265,10 @@ final class JoinLineParser {
         }
     }
 
-    /// Gets the aliases of the keep and drop joins, which add no fields to the rows.
+    /// Gets the aliases of the semi and anti joins, which add no fields to the rows.
     ///
     /// @param joins The join lines so far.
-    /// @return The aliases of the keep and drop joins among them.
+    /// @return The aliases of the semi and anti joins among them.
     static List<String> getFieldlessAliases(final List<PendingJoin> joins) {
         return joins.stream()
                 .filter(join -> !join.type.addsFields())
@@ -270,14 +276,14 @@ final class JoinLineParser {
                 .toList();
     }
 
-    /// Gets the message for a field of a keep or drop join used where its rows' fields would be needed.
+    /// Gets the message for a field of a semi or anti join used where its rows' fields would be needed.
     ///
-    /// @param alias The alias of the keep or drop join.
+    /// @param alias The alias of the semi or anti join.
     /// @return The message.
     static String getFieldlessMessage(final String alias) {
-        return "The fields of '" + alias + "' can only be used in its own keys, as a keep or drop join adds no "
+        return "The fields of '" + alias + "' can only be used in its own keys, as a semi or anti join adds no "
                + "fields to the rows. To match only some of its rows, filter them in a bracketed query, "
-               + "e.g. keep join (from source where Field = 'x' select Key) as " + alias + " on ...";
+               + "e.g. semi join (from source where Field = 'x' select Key) as " + alias + " on ...";
     }
 
     // An example key for the alias, written so that it tokenises whatever the alias holds.

@@ -32,8 +32,8 @@ import java.util.function.Consumer;
 ///
 /// - `join` passes on one row per match, with the joined fields added, and drops rows with no match.
 /// - `left join` does the same, but passes on rows with no match with blank joined fields.
-/// - `keep join` passes on each row with at least one match, once, as it is.
-/// - `drop join` passes on each row with no match, as it is.
+/// - `semi join` passes on each row with at least one match, once, as it is.
+/// - `anti join` passes on each row with no match, as it is.
 ///
 /// Rows are never changed in place; a row with joined fields added is a copy.
 public final class JoinProbe {
@@ -90,12 +90,12 @@ public final class JoinProbe {
                     consumer.accept(row);
                 }
             }
-            case KEEP -> {
+            case SEMI -> {
                 if (table.hasMatch(key)) {
                     consumer.accept(row);
                 }
             }
-            case DROP -> {
+            case ANTI -> {
                 if (!table.hasMatch(key)) {
                     consumer.accept(row);
                 }

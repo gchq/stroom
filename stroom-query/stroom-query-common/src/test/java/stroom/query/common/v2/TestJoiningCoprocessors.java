@@ -145,7 +145,7 @@ class TestJoiningCoprocessors {
 
     @Test
     void rowsFromAnExtractingSearchAreJoinedToo() {
-        final Query query = query(null, join(JoinType.KEEP, "hr", HR, "${UserId}", "${hr.Username}"));
+        final Query query = query(null, join(JoinType.SEMI, "hr", HR, "${UserId}", "${hr.Username}"));
         final CapturingCoprocessors delegate = new CapturingCoprocessors("UserId", "Host");
         final JoiningCoprocessors coprocessors = create(query, delegate, List.of(HR_ROWS));
 
@@ -222,12 +222,12 @@ class TestJoiningCoprocessors {
                         rows.add(asList(event[0], event[1], null));
                     }
                 }
-                case KEEP -> {
+                case SEMI -> {
                     if (!departments.isEmpty()) {
                         rows.add(asList(event[0], event[1], null));
                     }
                 }
-                case DROP -> {
+                case ANTI -> {
                     if (departments.isEmpty()) {
                         rows.add(asList(event[0], event[1], null));
                     }
