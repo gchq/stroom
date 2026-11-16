@@ -19,9 +19,9 @@ package stroom.search.solr;
 import stroom.search.solr.shared.SolrConnectionConfig;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
 
-import org.apache.solr.client.solrj.impl.CloudHttp2SolrClient;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
-import org.apache.solr.client.solrj.impl.Http2SolrClient;
+import org.apache.solr.client.solrj.jetty.CloudJettySolrClient;
+import org.apache.solr.client.solrj.jetty.HttpJettySolrClient;
 import org.junit.jupiter.api.Test;
 import org.mockito.Answers;
 import org.mockito.MockedConstruction;
@@ -29,7 +29,6 @@ import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -65,7 +64,10 @@ class TestSolrClientFactory {
                 .build();
 
         assertThat(cloudBuilderArguments(config))
-                .containsExactly(ZK_HOSTS, Optional.of("/solr"));
+                .containsExactly(new CloudSolrClient.CloudSolrClientConnection(
+                        true,
+                        ZK_HOSTS,
+                        "/solr"));
     }
 
     @Test
@@ -85,15 +87,15 @@ class TestSolrClientFactory {
     // connected), and returns the arguments the cloud client's builder was made with.
     private static List<Object> cloudBuilderArguments(final SolrConnectionConfig config) {
         final List<List<Object>> arguments = new ArrayList<>();
-        try (final MockedConstruction<Http2SolrClient.Builder> ignored = Mockito.mockConstruction(
-                Http2SolrClient.Builder.class,
+        try (final MockedConstruction<HttpJettySolrClient.Builder> ignored = Mockito.mockConstruction(
+                HttpJettySolrClient.Builder.class,
                 Mockito.withSettings().defaultAnswer(Answers.RETURNS_SELF));
-                final MockedConstruction<CloudSolrClient.Builder> cloudBuilders = Mockito.mockConstruction(
-                        CloudSolrClient.Builder.class,
+                final MockedConstruction<CloudJettySolrClient.Builder> cloudBuilders = Mockito.mockConstruction(
+                        CloudJettySolrClient.Builder.class,
                         Mockito.withSettings().defaultAnswer(Answers.RETURNS_SELF),
                         (mock, context) -> {
                             arguments.add(new ArrayList<>(context.arguments()));
-                            Mockito.doReturn(Mockito.mock(CloudHttp2SolrClient.class)).when(mock).build();
+                            Mockito.doReturn(Mockito.mock(CloudJettySolrClient.class)).when(mock).build();
                         })) {
             new SolrClientFactory().create(config);
             assertThat(cloudBuilders.constructed())

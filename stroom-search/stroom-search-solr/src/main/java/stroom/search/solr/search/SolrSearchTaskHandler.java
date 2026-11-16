@@ -38,10 +38,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
-import org.apache.solr.client.solrj.FastStreamingDocsCallback;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.StreamingResponseCallback;
+import org.apache.solr.client.solrj.response.FastStreamingDocsCallback;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.response.StreamingResponseCallback;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.DataEntry;
@@ -338,10 +338,10 @@ public class SolrSearchTaskHandler {
         @Override
         public String toString() {
             return "DocListInfo{" +
-                    "numFound=" + numFound +
-                    ", start=" + start +
-                    ", maxScore=" + maxScore +
-                    '}';
+                   "numFound=" + numFound +
+                   ", start=" + start +
+                   ", maxScore=" + maxScore +
+                   '}';
         }
     }
 

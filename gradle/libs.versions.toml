@@ -19,6 +19,7 @@ kafka = "3.9.0"
 openai = "4.69.3"
 poi = "6.0.0"
 simple-java-mail = "8.8.0"
+solr = "10.1.0"
 swagger = "2.2.55"
 
 
@@ -181,7 +182,9 @@ saxon-he = { module = "net.sf.saxon:Saxon-HE", version = "9.9.1-8" }
 simple-java-mail = { module = "org.simplejavamail:simple-java-mail", version.ref = "simple-java-mail" }
 simple-java-mail-batch-module = { module = "org.simplejavamail:batch-module", version.ref = "simple-java-mail" }
 slf4j-api = { module = "org.slf4j:slf4j-api" } # version controlled by dropwizard-dependencies
-solrj = { module = "org.apache.solr:solr-solrj", version = "10.1.0" }
+solrj = { module = "org.apache.solr:solr-solrj", version.ref = "solr" }
+solrj-jetty = { module = "org.apache.solr:solr-solrj-jetty", version.ref = "solr" }
+solrj-zookeeper = { module = "org.apache.solr:solr-solrj-zookeeper", version.ref = "solr" }
 # Yes, I know it's Spring, but it doesn't pull in any other deps and is more up to date than github.com/patrickfav/bcrypt
 # and it provides a drop in replacement for JBcrypt that we used to use. Currently only used for BCrypt hashing.
 spring-security-crypto = { module = "org.springframework.security:spring-security-crypto", version = "7.1.1" }
@@ -198,7 +201,7 @@ xerces = { module = "xerces:xercesImpl", version = "2.12.2" }
 zero-allocation-hashing = { module = "net.openhft:zero-allocation-hashing", version = "2026.0" }
 zstd-jni = { module =  "com.github.luben:zstd-jni", version = "1.5.7-8" }
 zxcvbn = { module = "com.nulab-inc:zxcvbn", version = "1.9.0" }
-# Zookeeper is only here to
+# Zookeeper is only here to force a newer version to avoid a CVE.  ZK is pulled in by solr-zookeeper
 zookeeper = { module = "org.apache.zookeeper:zookeeper", version = "3.9.7" }
 
 
