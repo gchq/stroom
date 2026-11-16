@@ -257,7 +257,7 @@ main() {
   echo "Adding ${change_file} to git"
   git add -- "${change_file}"
   echo "Committing changes"
-  git commit --message="${change_text}"
+  git commit --message="${change_text} [no ci]"
   echo "Pushing changes"
   git push origin "${selected_branch}"
   echo "Checking out master"
