@@ -53,9 +53,51 @@ class TestTextScale {
     }
 
     @Test
+    void testRescale_drawsTheSameMediumWidthAgain() {
+        assertThat(TextScale.rescale(252, LARGE, 1.29)).isEqualTo(258);
+        assertThat(TextScale.rescale(258, 1.29, TextScale.MEDIUM)).isEqualTo(200);
+        assertThat(TextScale.rescale(186, SMALL, TextScale.MEDIUM)).isEqualTo(200);
+        assertThat(TextScale.rescale(200, TextScale.MEDIUM, TextScale.MEDIUM)).isEqualTo(200);
+    }
+
+    @Test
     void testParse() {
         assertThat(TextScale.parse(" 1.26")).isEqualTo(LARGE);
         assertThat(TextScale.parse("1")).isEqualTo(TextScale.MEDIUM);
+    }
+
+    @Test
+    void testMeasured_sameWidthIsExactlyThePreference() {
+        // Medium with nothing else set: the text and its medium reference are drawn alike
+        assertThat(TextScale.measured(274, 274, TextScale.MEDIUM)).isEqualTo(TextScale.MEDIUM);
+        // Sub-pixel noise in the widths doesn't move it
+        assertThat(TextScale.measured(274.0000001, 274, TextScale.MEDIUM)).isEqualTo(TextScale.MEDIUM);
+    }
+
+    @Test
+    void testMeasured_widerTextRoundsUpToHundredths() {
+        // Text spacing (WCAG 1.4.12) at medium: about a quarter wider
+        assertThat(TextScale.measured(342.3, 274, TextScale.MEDIUM)).isEqualTo(1.25);
+        assertThat(TextScale.measured(343, 274, TextScale.MEDIUM)).isEqualTo(1.26);
+        // Large, where letters grow more than the font
+        assertThat(TextScale.measured(352, 274, LARGE)).isEqualTo(1.29);
+    }
+
+    @Test
+    void testMeasured_neverBelowThePreference() {
+        // Small, where letters shrink less than the font: the preference's 0.93 stands
+        assertThat(TextScale.measured(250, 274, SMALL)).isEqualTo(SMALL);
+        // Large in a font that grows less than Linux Chrome's Roboto
+        assertThat(TextScale.measured(335, 274, LARGE)).isEqualTo(LARGE);
+    }
+
+    @Test
+    void testMeasured_nothingMeasuredIsThePreference() {
+        // Not laid out yet (e.g. hidden), or the preference unset
+        assertThat(TextScale.measured(0, 0, LARGE)).isEqualTo(LARGE);
+        assertThat(TextScale.measured(300, 0, LARGE)).isEqualTo(LARGE);
+        assertThat(TextScale.measured(Double.NaN, 274, SMALL)).isEqualTo(SMALL);
+        assertThat(TextScale.measured(274, 274, Double.NaN)).isEqualTo(TextScale.MEDIUM);
     }
 
     @ParameterizedTest

@@ -35,6 +35,7 @@ import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.GlobalResizeObserver;
 import stroom.widget.util.client.InputModality;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.TextScaleMeter;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.core.client.GWT;
@@ -222,6 +223,8 @@ public class DataGrid<R> extends Widget
     private boolean frameScheduled;
     private int savedScrollTop;
     private int savedScrollLeft;
+    // The text scale the column widths are drawn at (see followTextScale)
+    private double drawnScale = textScale();
 
     // Listeners added outside GWT's event system.
     private final List<JavaScriptObject> nativeListeners = new ArrayList<>();
@@ -401,7 +404,7 @@ public class DataGrid<R> extends Widget
                              final Column<R, ?> column,
                              final Header<?> header,
                              final ColumnSizing sizing) {
-        columnModel.insert(beforeIndex, column, sizing.scaled(textScale()));
+        columnModel.insert(beforeIndex, column, sizing.scaled(followTextScale()));
         headers.put(column, header);
         // A column made afresh takes back the sort of the one it replaces
         if (sortRebuild.isPending()) {
@@ -472,7 +475,7 @@ public class DataGrid<R> extends Widget
         if (headingListener != null) {
             headingListener.resizeColumn(index, width);
         }
-        columnModel.setWidth(index, TextScale.toDrawn(width, textScale()));
+        columnModel.setWidth(index, TextScale.toDrawn(width, followTextScale()));
         scheduleRender();
     }
 
@@ -483,7 +486,7 @@ public class DataGrid<R> extends Widget
     /// @param width The width in pixels, as drawn.
     void resizeColumnDrawn(final int index, final int width) {
         if (headingListener != null) {
-            headingListener.resizeColumn(index, TextScale.toMedium(width, textScale()));
+            headingListener.resizeColumn(index, TextScale.toMedium(width, drawnScale));
         }
         columnModel.setWidth(index, width);
         scheduleRender();
@@ -496,7 +499,7 @@ public class DataGrid<R> extends Widget
     public void setColumnWidth(final Column<R, ?> column, final int width) {
         final int index = columnModel.indexOf(column);
         if (index != -1) {
-            columnModel.setWidth(index, TextScale.toDrawn(width, textScale()));
+            columnModel.setWidth(index, TextScale.toDrawn(width, followTextScale()));
             scheduleRender();
         }
     }
@@ -518,7 +521,7 @@ public class DataGrid<R> extends Widget
     public void setColumnWidthWithinFill(final Column<R, ?> column, final int width) {
         final int index = columnModel.indexOf(column);
         if (index != -1) {
-            final int drawnWidth = TextScale.toDrawn(width, textScale());
+            final int drawnWidth = TextScale.toDrawn(width, followTextScale());
             final int outerWidth = getElement().getClientWidth();
             if (isAttached() && columnModel.isResolved() && outerWidth > 0) {
                 columnModel.setWidthWithinFill(index, drawnWidth, outerWidth);
@@ -585,13 +588,30 @@ public class DataGrid<R> extends Widget
     /// @param index The column index.
     /// @return The column's current width in pixels at the medium text size (see [TextScale]).
     public int getColumnWidth(final int index) {
-        return TextScale.toMedium(columnModel.getWidth(index), textScale());
+        return TextScale.toMedium(columnModel.getWidth(index), followTextScale());
     }
 
     /// @return The scale of the text size preference: column widths are given at medium and drawn
     /// multiplied by it (see [TextScale]).
     public static double textScale() {
         return TextScale.parse(readTextScale());
+    }
+
+    /// Draw the columns at the page's text scale if it has changed since they were drawn (e.g. the
+    /// text size preference changing, or the scale measured again once fonts load: see
+    /// `TextScaleMeter`), so that they hold the same text as before.
+    ///
+    /// @return The page's text scale.
+    private double followTextScale() {
+        final double scale = textScale();
+        if (scale != drawnScale) {
+            columnModel.rescale(drawnScale, scale, isAttached()
+                    ? getElement().getClientWidth()
+                    : 0);
+            drawnScale = scale;
+            scheduleRender();
+        }
+        return scale;
     }
 
     private static native String readTextScale() /*-{
@@ -620,7 +640,7 @@ public class DataGrid<R> extends Widget
     /// @param width The column's new width in pixels, as drawn.
     void commitColumnResize(final int index, final int width) {
         if (headingListener != null) {
-            headingListener.resizeColumn(index, TextScale.toMedium(width, textScale()));
+            headingListener.resizeColumn(index, TextScale.toMedium(width, drawnScale));
         }
         scheduleRender();
     }
@@ -1924,6 +1944,10 @@ public class DataGrid<R> extends Widget
         // its field's text when its row is drawn again (ValueSpinnerCell) records
         nativeListeners.add(DataGridDom.addListener(getElement(), "input", false,
                 events::dispatch));
+        // Columns follow the text as it grows or shrinks, while shown and when shown again
+        nativeListeners.add(DataGridDom.addListener(Document.get().getDocumentElement(),
+                TextScaleMeter.CHANGE_EVENT, false, e -> followTextScale()));
+        followTextScale();
         scrollbars.attach();
         columnInteractions.attach();
         GlobalResizeObserver.addListener(getElement(), element -> onResize());

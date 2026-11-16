@@ -321,6 +321,12 @@ cd stroom-gwt/stroom-gwt-workbench/test-runner
 node text-fit-diff.mjs --baseline /some/dir/medium-fit.json --actual /some/dir/large-fit.json
 ```
 
+`--text-spacing` shows the stories with the text spacing a user may set for themselves (WCAG
+1.4.12), overriding the page's own (`lib/text-spacing.mjs`): lines 1.5 times the font size apart,
+letters 0.12 times it, words 0.16 times it, and 2 times it after each paragraph. A `--text-fit` run
+with it, compared with one without at the same text size, lists the text the spacing cuts off or
+runs together.
+
 ## Leak check
 
 `-PworkbenchLeakCheck` (the runner's `--leak-check`) also checks each story that passes for memory

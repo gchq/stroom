@@ -47,6 +47,7 @@ import { judgeContentFocus, measureContentFocus } from './lib/focus-check.mjs';
 import { screenshotFile } from './lib/screenshots.mjs';
 import { collectTextFit, writeTextFit } from './lib/text-fit.mjs';
 import { collectTextSizes, fontSize, fontSizeScript, writeTextSizes } from './lib/text-sizes.mjs';
+import { textSpacingScript } from './lib/text-spacing.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_URL = process.env.WORKBENCH_URL ?? 'http://localhost:6008';
@@ -150,6 +151,9 @@ Options:
   --font-size <small|medium|large>
                            Show the stories at this Stroom text size preference (the page's
                            stroom-font-size-* class; default: the workbench's, medium)
+  --text-spacing           Show the stories with the text spacing a user may set (WCAG 1.4.12):
+                           line height 1.5, letter spacing 0.12em, word spacing 0.16em and 2em
+                           after paragraphs, overriding the page's own
   --text-sizes <file>      Write every text each story that passes shows (in any frame), with its
                            computed font size and line height, to the file as JSON. Compare two
                            runs at different --font-size with text-size-diff.mjs, to find the text
@@ -240,6 +244,7 @@ function parseOptions() {
       'forced-colours': { type: 'boolean', default: false },
       'colour-scheme': { type: 'string' },
       'font-size': { type: 'string' },
+      'text-spacing': { type: 'boolean', default: false },
       'text-sizes': { type: 'string' },
       'text-fit': { type: 'string' },
       'leak-check': { type: 'boolean', default: false },
@@ -282,6 +287,7 @@ function parseOptions() {
     forcedColours: values['forced-colours'],
     colourScheme: colourScheme(values['colour-scheme']),
     fontSize: fontSize(values['font-size']),
+    textSpacing: values['text-spacing'],
     textSizes: values['text-sizes'] ? path.resolve(values['text-sizes']) : null,
     textFit: values['text-fit'] ? path.resolve(values['text-fit']) : null,
     leakCheck: values['leak-check'],
@@ -413,6 +419,9 @@ async function runStoryOnce(browser, story, options, attempt) {
     }
     if (options.fontSize) {
       await context.addInitScript(fontSizeScript(options.fontSize));
+    }
+    if (options.textSpacing) {
+      await context.addInitScript(textSpacingScript());
     }
     if (options.fixedTime) {
       await context.clock.setFixedTime(options.fixedTime);
@@ -1012,7 +1021,9 @@ async function main() {
       console.log(`Text sizes: ${TEXT_SIZES.size} stories, in ${options.textSizes}`);
     }
     if (options.textFit) {
-      await writeTextFit(options.textFit, options.fontSize, TEXT_FIT);
+      // Named for its text size, and its text spacing if set, as text-fit-diff.mjs reports them
+      const shown = options.textSpacing ? `${options.fontSize ?? 'page'} with text spacing` : options.fontSize;
+      await writeTextFit(options.textFit, shown, TEXT_FIT);
       console.log(`Text fit: ${TEXT_FIT.size} stories, in ${options.textFit}`);
     }
     if (runError) {

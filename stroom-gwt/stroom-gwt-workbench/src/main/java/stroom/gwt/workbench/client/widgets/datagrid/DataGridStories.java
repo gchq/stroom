@@ -1226,10 +1226,13 @@ public final class DataGridStories {
     /// widths given at the medium text size.
     private static void expectFillWidths(final Play play, final int gridWidth, final int fixed,
                                          final int fillMinimum, final int firstWeight, final int secondWeight) {
-        final int surplus = gridWidth - drawn(fixed) - 2 * drawn(fillMinimum);
+        // None left over when the text is wide enough (e.g. with a user's text spacing) for the
+        // columns to fill the grid already: the fill columns stay at their least
+        final int surplus = Math.max(0, gridWidth - drawn(fixed) - 2 * drawn(fillMinimum));
         final double firstShare = firstWeight / (double) (firstWeight + secondWeight);
         final long first = drawn(fillMinimum) + Math.round(surplus * firstShare);
-        expectDrawnWidths(play, (long) drawn(fixed), first, (long) gridWidth - drawn(fixed) - first);
+        final long second = drawn(fillMinimum) + surplus - (first - drawn(fillMinimum));
+        expectDrawnWidths(play, (long) drawn(fixed), first, second);
     }
 
     /// Expects the header cells to be these widths as drawn, to a pixel (percent columns and fill

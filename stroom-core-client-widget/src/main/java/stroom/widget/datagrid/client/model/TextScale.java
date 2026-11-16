@@ -43,6 +43,14 @@ public final class TextScale {
         return (int) Math.round(width / valid(scale));
     }
 
+    /// @param width A width drawn at one text size, in pixels.
+    /// @param from  The scale it was drawn at.
+    /// @param to    The scale to draw it at instead.
+    /// @return The width drawn at `to`, in whole pixels: the same medium width, drawn again.
+    public static int rescale(final int width, final double from, final double to) {
+        return toDrawn(toMedium(width, from), to);
+    }
+
     /// @param value The value of `--text-scale` (e.g. ` 1.26`), or `null` or blank if it isn't set.
     /// @return The scale it gives, or [#MEDIUM] if it isn't a positive number.
     public static double parse(final String value) {
@@ -54,6 +62,27 @@ public final class TextScale {
         } catch (final NumberFormatException e) {
             return MEDIUM;
         }
+    }
+
+    /// The scale measured in the page: how much wider a text is drawn than at the medium text size,
+    /// which allows for anything that widens text beyond its font size, such as text spacing a user
+    /// sets (WCAG 1.4.12), a platform's font, or letters rounded to whole pixels. Rounded to
+    /// thousandths (so sub-pixel noise in the widths counts for nothing), then up to hundredths
+    /// (so that columns err wide, and round widths stay whole), and never below the preference's
+    /// own scale.
+    ///
+    /// @param width The width of a reference text as the page draws it, in pixels.
+    /// @param mediumWidth The width of the same text at the medium text size, with no spacing.
+    /// @param preference The text size preference's scale (`--text-scale` in `font.css`).
+    /// @return The scale to draw widths at.
+    public static double measured(final double width, final double mediumWidth, final double preference) {
+        final double floor = valid(preference);
+        if (!(width > 0) || !(mediumWidth > 0) || !Double.isFinite(width) || !Double.isFinite(mediumWidth)) {
+            return floor;
+        }
+        final double thousandths = Math.round(width / mediumWidth * 1000);
+        final double hundredths = Math.ceil(thousandths / 10) / 100;
+        return Math.max(floor, hundredths);
     }
 
     private static double valid(final double scale) {

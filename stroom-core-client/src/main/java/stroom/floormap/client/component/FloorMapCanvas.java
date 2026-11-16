@@ -39,6 +39,7 @@ import stroom.floormap.shared.FloorMapTransformationMatrix;
 import stroom.floormap.shared.TypeStyle;
 import stroom.util.client.Console;
 import stroom.widget.component.client.Component;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.text.client.Label;
 import stroom.widget.util.client.AriaUtil;
 import stroom.widget.util.client.CssProperties;
@@ -170,7 +171,8 @@ public class FloorMapCanvas extends Component implements RequiresResize {
     private static final String GLYPH_CAPTION_CLASS = "floor-map-canvas__glyph-caption";
 
     /// Average glyph advance (px) used to estimate a caption's width for collision
-    /// testing, at the caption's 11px font. Deliberately a little generous:
+    /// testing, at the caption's 11px font at the medium text size (multiplied by the
+    /// text size preference's scale, as the caption's font follows it). Deliberately a little generous:
     /// underestimating lets two captions touch, which is the thing being prevented,
     /// whereas overestimating only drops a caption that would just have fitted.
     ///
@@ -179,7 +181,8 @@ public class FloorMapCanvas extends Component implements RequiresResize {
     /// caption, per frame.
     private static final double CAPTION_CHAR_WIDTH_PX = 6.0;
 
-    /// Line box (px) a caption occupies vertically, for collision testing.
+    /// Line box (px) a caption occupies vertically, for collision testing, at the
+    /// medium text size.
     private static final double CAPTION_HEIGHT_PX = 14;
 
     /// How many constant-opacity bands a movement trail is drawn as.
@@ -2324,6 +2327,8 @@ public class FloorMapCanvas extends Component implements RequiresResize {
         }
         final List<FloorMapLabelPlacement.Label> candidates =
                 new ArrayList<>(pendingCaptions.size());
+        // Captions grow with the text size preference
+        final double textScale = DataGrid.textScale();
         for (final PendingCaption caption : pendingCaptions) {
             // Map anchor to screen through the shared projection, so this cannot drift
             // from the one the geometry class uses for bounds and hit-testing.
@@ -2335,8 +2340,8 @@ public class FloorMapCanvas extends Component implements RequiresResize {
                     caption.key,
                     screenX,
                     screenY + caption.halfHeightPx + GLYPH_CAPTION_GAP_PX,
-                    caption.text.length() * CAPTION_CHAR_WIDTH_PX,
-                    CAPTION_HEIGHT_PX,
+                    caption.text.length() * CAPTION_CHAR_WIDTH_PX * textScale,
+                    CAPTION_HEIGHT_PX * textScale,
                     isDimmed(caption, dimmedTypes)
                             ? caption.priority + CAPTION_PRIORITY_DIMMED_PENALTY
                             : caption.priority));

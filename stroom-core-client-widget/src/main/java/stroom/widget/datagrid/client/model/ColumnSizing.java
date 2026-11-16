@@ -165,6 +165,21 @@ public final class ColumnSizing {
                 movable);
     }
 
+    /// Derive a copy of a sizing drawn at one text size ([#scaled]), drawn at another instead.
+    ///
+    /// @param from The scale this sizing was drawn at.
+    /// @param to   The scale to draw it at.
+    /// @return A copy of this sizing with its pixel widths drawn at `to`.
+    public ColumnSizing rescaled(final double from, final double to) {
+        return new ColumnSizing(type,
+                TextScale.rescale(width, from, to),
+                percent,
+                fillWeight,
+                TextScale.rescale(minWidth, from, to),
+                resizable,
+                movable);
+    }
+
     /// @return How the starting width is worked out.
     public ColumnWidthType getType() {
         return type;
