@@ -440,6 +440,82 @@ class TestEventTools {
         assertThat(run(tool, "{\"streamId\":73145,\"recordCount\":2}")).contains("<Event>1</Event>");
     }
 
+    @Test
+    void fetchEventsWritesAnEventsStreamsRecordsAsAnEventsFileSearchEventsReads() {
+        // Seen in a UniFi OS chat: the streamId form joined Events records, each a document with its own XML
+        // declaration, so search_events on the file failed with a raw SAX error.
+        final StreamReader streamReader = Mockito.mock(StreamReader.class);
+        final List<String> segments = streams.get(11L);
+        final List<String> records = List.of(segments.get(0) + segments.get(2) + segments.get(4),
+                segments.get(0) + segments.get(3) + segments.get(4));
+        Mockito.when(streamReader.readRecords(11L, 1, 2, null, FetchEventsTool.MAX_MAX_CHARS))
+                .thenReturn(new StreamReader.Records(records,
+                        new StreamReader.Fetched("ACME", "Events", null, true, 3L, List.of(), List.of())));
+        final FetchEventsTool tool = new FetchEventsTool(workspace, () -> store, () -> securityContext,
+                new AiAuditLog(() -> eventLoggingService), streamReader);
+
+        final String result = run(tool, """
+                {"streamId":11,"firstRecord":1,"recordCount":2,"out":"/outputs/stream.xml"}""");
+
+        assertThat(result).contains("\"records_read\":2").contains("search_events");
+        final String file = read("/outputs/stream.xml");
+        // One declaration, the events file's own; record index 1 is EventId 2, as the table form numbers it.
+        assertThat(file).startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<stroom-events>\n")
+                .contains("<stroom-event streamId=\"11\" eventId=\"2\"><Events xmlns=\"event-logging:3\">")
+                .contains("<stroom-event streamId=\"11\" eventId=\"3\">")
+                .doesNotContain("eventId=\"1\"")
+                .endsWith("</stroom-events>\n");
+        assertThat(file.split("<\\?xml", -1)).hasSize(2);
+        assertThat(run(searchEventsTool(), """
+                {"path":"/outputs/stream.xml","xpath":"//d:HostName","column":"host"}"""))
+                .contains("Searched 2 event(s)");
+        final String fromStream = read("/outputs/search_events.csv");
+        assertThat(fromStream).isEqualTo("StreamId,EventId,host\r\n11,2,fw2\r\n11,3,fw1\r\n");
+        // The same events fetched from a table have the same ids and values.
+        run(fetchTool(), "{\"path\":\"/attachments/5.md\"}");
+        run(searchEventsTool(), """
+                {"path":"/outputs/events.xml","xpath":"//d:HostName","column":"host"}""");
+        assertThat(read("/outputs/search_events.csv")).contains("11,2,fw2\r\n11,3,fw1\r\n");
+    }
+
+    @Test
+    void searchEventsOnAFileThatIsNotAnEventsFileSaysSoPlainly() {
+        // Records joined one after another, each with its own XML declaration, as fetch_events wrote an Events
+        // stream's before: the parser's "processing instruction target matching [xX][mM][lL]" isn't shown.
+        attach("/outputs/joined.xml", HEADER + event("fw1", "Logon", "Success", null) + FOOTER
+                                      + HEADER + event("fw2", "Logon", "Success", null) + FOOTER);
+        // One well-formed document, but not an events file.
+        attach("/outputs/one.xml", HEADER + event("fw1", "Logon", "Success", null) + FOOTER);
+
+        for (final String path : List.of("/outputs/joined.xml", "/outputs/one.xml", "/attachments/5.md")) {
+            assertThat(run(searchEventsTool(), "{\"path\":\"" + path + "\",\"text\":\"fw1\"}"))
+                    .startsWith("Error: This isn't a file fetch_events wrote for events")
+                    .contains("Write the events with fetch_events")
+                    .doesNotContain("processing instruction");
+        }
+    }
+
+    @Test
+    void fetchEventsWritesRawAndChildRecordsAsTheyAre() {
+        final StreamReader streamReader = Mockito.mock(StreamReader.class);
+        Mockito.when(streamReader.readRecords(11L, 0, 1, "Context", FetchEventsTool.MAX_MAX_CHARS))
+                .thenReturn(new StreamReader.Records(List.of("<?xml version=\"1.0\"?><Context/>"),
+                        new StreamReader.Fetched("ACME", "Events", null, true, 1L, List.of(), List.of())));
+        Mockito.when(streamReader.readRecords(11L, 0, 1, null, FetchEventsTool.MAX_MAX_CHARS))
+                .thenReturn(new StreamReader.Records(List.of("a,line,of,text"),
+                        new StreamReader.Fetched("ACME", "Events", null, true, 1L, List.of(), List.of())));
+        final FetchEventsTool tool = new FetchEventsTool(workspace, () -> store, () -> securityContext,
+                new AiAuditLog(() -> eventLoggingService), streamReader);
+
+        run(tool, """
+                {"streamId":11,"recordCount":1,"childType":"Context","out":"/outputs/context.xml"}""");
+        run(tool, """
+                {"streamId":11,"recordCount":1,"out":"/outputs/text.txt"}""");
+
+        assertThat(read("/outputs/context.xml")).isEqualTo("<?xml version=\"1.0\"?><Context/>\n");
+        assertThat(read("/outputs/text.txt")).isEqualTo("a,line,of,text\n");
+    }
+
     private FetchEventsTool fetchTool() {
         return new FetchEventsTool(workspace, () -> store, () -> securityContext,
                 new AiAuditLog(() -> eventLoggingService), Mockito.mock(StreamReader.class));

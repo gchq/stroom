@@ -691,7 +691,7 @@ Fetches the source events behind the rows of a table with StreamId and EventId c
       "type" : "integer"
     },
     "out" : {
-      "description" : "The file in /outputs/ to write the events to (default /outputs/events.xml). With streamId, the records are written there, one after another, instead of being returned (none is written without it).",
+      "description" : "The file in /outputs/ to write the events to (default /outputs/events.xml). With streamId, the records are written there instead of being returned (none is written without it): an Events stream's as from a table, for search_events; others one after another.",
       "type" : "string"
     },
     "part" : {
