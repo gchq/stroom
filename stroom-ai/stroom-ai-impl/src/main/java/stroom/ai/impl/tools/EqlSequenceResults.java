@@ -20,8 +20,14 @@ import stroom.ai.api.ElasticEql.Event;
 import stroom.ai.api.ElasticEql.Sequence;
 import stroom.ai.impl.tools.EqlQueryWriter.Step;
 import stroom.docref.DocRef;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -44,6 +50,8 @@ import java.util.regex.Pattern;
 /// past that, or where the index has no StreamId and EventId, it finds the entities' events in the window the
 /// sequences span, which holds the hits and the entities' other events.
 final class EqlSequenceResults {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EqlSequenceResults.class);
 
     /// The stream id field Stroom indexes every event with.
     static final String STREAM_ID = "StreamId";
@@ -96,7 +104,7 @@ final class EqlSequenceResults {
     }
 
     private static Hit hit(final Event event, final String timeField) {
-        final Long time = number(first(event.fields().get(timeField)));
+        final Long time = epochMillis(first(event.fields().get(timeField)));
         return new Hit(time, text(first(event.fields().get(STREAM_ID))), text(first(event.fields().get(EVENT_ID))),
                 event.fields());
     }
@@ -201,6 +209,14 @@ final class EqlSequenceResults {
         return first == null || last == null
                 ? null
                 : last - first;
+    }
+
+    /// @param rows The sequences.
+    /// @return How many have no time on any of their events, so show empty times.
+    static int untimed(final List<Row> rows) {
+        return (int) rows.stream()
+                .filter(row -> row.firstTime() == null)
+                .count();
     }
 
     /// A summary per entity (the join keys' values): how many sequences, the first and last time, and the shortest
@@ -398,16 +414,34 @@ final class EqlSequenceResults {
                 : values.getFirst();
     }
 
-    private static Long number(final Object value) {
-        if (value instanceof final Number number) {
-            return number.longValue();
-        } else if (value instanceof final String text) {
-            try {
-                return Long.parseLong(text.strip());
-            } catch (final NumberFormatException e) {
-                return null;
-            }
+    /// An event's time as Elasticsearch gives it (format `epoch_millis`): a whole number of milliseconds, as a
+    /// number or as text; a `date_nanos` field gives a decimal (`1768471560123.456`), and a number may come as a
+    /// double or in scientific notation. The fraction of a millisecond is dropped.
+    ///
+    /// @param value The time field's first value, or null.
+    /// @return The time in epoch milliseconds, or null if there is none or it can't be read.
+    static Long epochMillis(final Object value) {
+        if (value == null) {
+            return null;
         }
+        try {
+            final BigDecimal millis = switch (value) {
+                case final Long number -> BigDecimal.valueOf(number);
+                case final Integer number -> BigDecimal.valueOf(number);
+                case final BigDecimal number -> number;
+                case final BigInteger number -> new BigDecimal(number);
+                case final Number number -> new BigDecimal(number.toString());
+                case final String text -> new BigDecimal(text.strip());
+                default -> null;
+            };
+            if (millis != null) {
+                return millis.setScale(0, RoundingMode.FLOOR).longValueExact();
+            }
+        } catch (final NumberFormatException | ArithmeticException e) {
+            // Not a number of milliseconds, or too big for one.
+        }
+        LOGGER.debug(() -> LogUtil.message("Unable to read the event time '{}' ({}) as epoch milliseconds", value,
+                value.getClass().getSimpleName()));
         return null;
     }
 
@@ -491,20 +525,30 @@ final class EqlSequenceResults {
                     min(shortestSpan, rowSpan));
         }
 
+        // Plain if/else on Long: a conditional mixing Long and long unboxes, so two nulls threw a
+        // NullPointerException (seen when an entity's first sequence had no time).
         private static Long min(final Long a, final Long b) {
-            return a == null
-                    ? b
-                    : b == null
-                            ? a
-                            : Math.min(a, b);
+            if (a == null) {
+                return b;
+            } else if (b == null) {
+                return a;
+            } else {
+                return a <= b
+                        ? a
+                        : b;
+            }
         }
 
         private static Long max(final Long a, final Long b) {
-            return a == null
-                    ? b
-                    : b == null
-                            ? a
-                            : Math.max(a, b);
+            if (a == null) {
+                return b;
+            } else if (b == null) {
+                return a;
+            } else {
+                return a >= b
+                        ? a
+                        : b;
+            }
         }
     }
 

@@ -175,10 +175,11 @@ class TestToolPermissionMatrix {
 
         // A tool in a group is offered as the tool that turns its group on.
         assertThat(new TreeSet<>(withEverything)).containsExactlyElementsOf(OfferedToolNames.withNoGroupsOn(all));
-        // All but eql_sequence, which is only offered to a user who can use an Elastic Index (its definition is
-        // large, and it has nothing to search without one).
+        // All but the elastic_hunting group's activator: its one tool, eql_sequence, is only offered to a user who
+        // can use an Elastic Index (its definition is large, and it has nothing to search without one).
+        assertThat(withEverything).contains("activate_elastic_hunting");
         assertThat(withNothing).containsExactlyElementsOf(withEverything.stream()
-                .filter(name -> !"eql_sequence".equals(name))
+                .filter(name -> !"activate_elastic_hunting".equals(name))
                 .toList());
     }
 

@@ -196,30 +196,54 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
         return AiToolCategory.SEARCH;
     }
 
-    // The definition is kept short, as it is sent with every request: the rules a call can break (a literal ? in a
-    // pattern, nested and text fields, runs and missing on older clusters, a Lucene index, docs on different
-    // clusters, a sequence too big to run) are said by the refusal or result that meets them, not here.
+    // The definition is full, as it is offered only once the model turns on its group (elastic_hunting, see
+    // BuiltInToolGroups). The rules a call can break are also said by the refusal or result that meets them.
     @Override
     public ToolDefinition definition() {
         final ObjectSchema condition = ObjectSchema.builder()
-                .addStringProperty("field", (String) null)
-                .addEnumProperty("condition", conditionNames(), "Default EQUALS.")
-                .addStringProperty("value", "BETWEEN 'from,to'; IN and NOT_IN comma-separated; * wildcards; a "
-                                            + "CIDR on an IP field.")
-                .addBooleanProperty(CASE_INSENSITIVE_KEY, null)
-                .addBooleanProperty(LENGTH_KEY, "Compare the string's length (a number).")
+                .description(ToolDescription.builder()
+                        .general("One condition, as a person would set it on a dashboard")
+                        .chatOnly(" (as search_events takes it)")
+                        .general(".")
+                        .build())
+                .addStringProperty("field", "The doc's field.")
+                .addEnumProperty("condition", conditionNames(), "The condition (default EQUALS).")
+                .addStringProperty("value", "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; "
+                                            + "EQUALS takes * wildcards, and a CIDR (10.0.0.0/8) on an IP field.")
+                .addBooleanProperty(CASE_INSENSITIVE_KEY, "True to match text whatever its case.")
+                .addBooleanProperty(LENGTH_KEY, "True to compare the string's length in characters (a whole "
+                                                + "number), e.g. GREATER_THAN 1000 for long command lines.")
                 .required("field")
                 .build();
+        final ArraySchema anyOf = ArraySchema.builder().items(condition)
+                .description("Optional: 2 or more conditions of which at least one must hold (written as one OR "
+                             + "group, beside where's).")
+                .build();
         final ObjectSchema step = ObjectSchema.builder()
-                .addStringProperty(INDEX_KEY, "Elastic Index doc uuid or name.")
+                .description("One step.")
+                .addStringProperty(INDEX_KEY, "The Elastic Index doc's uuid or name.")
                 .addProperty(WHERE_KEY, ArraySchema.builder().items(condition)
-                        .description("All must hold.").build())
-                .addProperty(ANY_OF_KEY, ArraySchema.builder().items(ObjectSchema.builder().build())
-                        .description("Optional: 2 or more conditions like where's, at least one must hold.").build())
-                .addProperty(BY_KEY, stringArraySchema("Join fields: the same number and order in every step."))
-                .addBooleanProperty(MISSING_KEY, "Must NOT happen here.")
-                .addIntegerProperty(RUNS_KEY, "N in a row (default 1).")
-                .addProperty(FIELDS_KEY, stringArraySchema("Up to " + MAX_STEP_FIELDS + " more fields to show."))
+                        .description("Conditions its events meet, all of them.").build())
+                .addProperty(ANY_OF_KEY, anyOf)
+                .addProperty(BY_KEY, stringArraySchema("Its join fields, in the same order and number in every "
+                                                       + "step (e.g. [\"user.name\", \"host.name\"] in one, "
+                                                       + "[\"SubjectUserName\", \"Computer\"] in another)."))
+                .addBooleanProperty(MISSING_KEY, "True if the event must NOT happen here (and then NOT ...).")
+                .addIntegerProperty(RUNS_KEY, "How many times in a row it must happen, e.g. 20 failed logons "
+                                              + "(default 1, at most " + EqlQueryWriter.MAX_RUNS + ").")
+                .addProperty(FIELDS_KEY, stringArraySchema("Up to " + MAX_STEP_FIELDS + " fields of its events to "
+                                                           + "show, beside the join fields and ids."))
+                .required(INDEX_KEY, BY_KEY)
+                .build();
+        final ObjectSchema until = ObjectSchema.builder()
+                .description("Optional: a step that ends a sequence before it is complete: its doc, conditions and "
+                             + "join fields, as a step's (no missing, runs or fields).")
+                .addStringProperty(INDEX_KEY, "The Elastic Index doc's uuid or name.")
+                .addProperty(WHERE_KEY, ArraySchema.builder().items(condition)
+                        .description("Conditions its events meet, all of them.").build())
+                .addProperty(ANY_OF_KEY, anyOf)
+                .addProperty(BY_KEY, stringArraySchema("Its join fields, in the same order and number as the "
+                                                       + "steps'."))
                 .required(INDEX_KEY, BY_KEY)
                 .build();
         return ToolDefinition.builder()
@@ -229,29 +253,59 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
                                  + "Indexes, in one doc or across several, rather than joining the results of "
                                  + "separate queries")
                         .chatOnly(" (esql_query, search_events)")
-                        .general(" by hand. Runs as one EQL sequence in Elasticsearch, over docs on one cluster. "
-                                 + "Give 2 or more steps in order, each with its doc (index), conditions (where; "
-                                 + "any_of), join fields (by: the same entity in each doc's own field names")
-                        .chatOnly(", from describe_data_source")
-                        .general("), missing=true for 'and then NOT ...' and runs=N for N in a row; until for a "
-                                 + "step that ends a sequence. maxspan is from the user's words ('within 2 "
-                                 + "minutes' is 2m, at most 24h)")
+                        .general(" by hand. Finds ordered sequences of events across one or more Elastic Index "
+                                 + "docs on one cluster, matched in Elasticsearch as one EQL sequence: e.g. a USB "
+                                 + "device plugged in then a file copied to it; a clipboard copy then PowerShell "
+                                 + "within 2 minutes by the same user on the same host; 20 failed logons then a "
+                                 + "success. Give steps (2 or more, in order), each with its doc, its where "
+                                 + "conditions (all must hold; NOT_IN for none of a list; length=true to compare a "
+                                 + "string's length), any_of (optional, at least one must hold), its own join "
+                                 + "fields (by, same number and order in every step: the same entity in each doc's "
+                                 + "own names), missing=true for 'and then NOT ...', runs=N for N in a row; until "
+                                 + "for a step that ends a sequence. maxspan: how far apart the first and last "
+                                 + "events may be, from the user's words ('within 2 minutes' is 2m), at most 24h")
                         .chatOnly("; if they didn't say, leave it out and the user is asked")
-                        .general(". The result gives the EQL, the sequences with each event's StreamId/EventId, "
-                                 + "and review queries to offer.")
+                        .general(". Fields are checked against each doc's")
+                        .chatOnly(" (describe_data_source gives them)")
+                        .general(". Each step is counted first: the result says when a later step is far more "
+                                 + "selective, and a sequence too big for the time limit is refused before it runs "
+                                 + "(narrow the window or the first step, or runAnyway=true). The result gives the "
+                                 + "EQL, a summary per entity, the sequences with each step's StreamId/EventId, and "
+                                 + "a validated StroomQL review query per doc, for a saved query")
+                        .chatOnly(" (propose_query)")
+                        .general(" or a dashboard with the event preview")
+                        .chatOnly(" (propose_dashboard)")
+                        .general(". Each reads one doc: when the hunt spans several, ask the user which doc to "
+                                 + "review")
+                        .chatOnly(" (ask_user, the docs as options)")
+                        .general(", then offer that doc's. Sequences come straight from Elasticsearch, as ES|QL "
+                                 + "counts do, and may include streams the user can't see or deleted ones. Refused "
+                                 + "for a Lucene index")
+                        .chatOnly(" (use run_stroomql)")
+                        .general(", docs on different clusters or with different time fields, and nested fields. "
+                                 + "A text field is searched as its keyword subfield (the result says so). A literal "
+                                 + "? can't be in a pattern (EQL reads it as any one character).")
                         .build())
                 .parameters(ObjectSchema.builder()
-                        .addProperty(STEPS_ARG, ArraySchema.builder().items(step).build())
-                        .addProperty(UNTIL_ARG, ObjectSchema.builder()
-                                .description("Optional: a step (index, where, any_of, by) that ends a sequence.")
+                        .addProperty(STEPS_ARG, ArraySchema.builder().items(step)
+                                .description("The steps, 2 or more, in order.").build())
+                        .addProperty(UNTIL_ARG, until)
+                        .addStringProperty(MAXSPAN_ARG, ToolDescription.builder()
+                                .general("How far apart the first and last events may be, e.g. 30s, 2m, 1h (at "
+                                         + "most 24h)")
+                                .chatOnly("; leave it out if the user didn't say, and they are asked")
+                                .general(".")
                                 .build())
-                        .addStringProperty(MAXSPAN_ARG, "e.g. 30s, 2m, 1h.")
-                        .addStringProperty(TIME_FROM_ARG, "Optional: ISO 8601, or Stroom's day()-7d.")
-                        .addStringProperty(TIME_TO_ARG, "Optional: ISO 8601, or Stroom's now().")
-                        .addIntegerProperty(LIMIT_ARG, "The most sequences (default " + DEFAULT_LIMIT + ").")
-                        .addBooleanProperty(RUN_ANYWAY_ARG, "Run though the counts say it won't finish in time.")
+                        .addStringProperty(TIME_FROM_ARG, "Optional: from this time on the docs' time field (ISO "
+                                                          + "8601, or Stroom's day()-7d).")
+                        .addStringProperty(TIME_TO_ARG, "Optional: up to this time (ISO 8601, or Stroom's now()).")
+                        .addIntegerProperty(LIMIT_ARG, "The most sequences (default " + DEFAULT_LIMIT + ", at most "
+                                                       + ElasticEql.MAX_SEQUENCES + ").")
+                        .addBooleanProperty(RUN_ANYWAY_ARG, "True to run even though the counts say it won't finish "
+                                                            + "in the time limit.")
                         .addStringProperty(OUT_ARG, ToolDescription.builder()
-                                .chatOnly("A .md file in /outputs/ (default /outputs/eql/eql-<time>.md).")
+                                .chatOnly("A .md file in /outputs/ for the sequences (default "
+                                          + "/outputs/eql/eql-<time>.md).")
                                 .build())
                         .required(STEPS_ARG)
                         .build())
@@ -381,7 +435,7 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
                 limits(context).getMaxQueryLength());
         final boolean truncated = result.sequences().size() >= limit;
         final Outcome outcome = new Outcome(docs, result, maxspan, maxspanSource, timeRange, limit, limitNote,
-                truncated, preflight, steps, columns, cells, entities, reviews, out,
+                truncated, preflight, steps, columns, cells, entities, EqlSequenceResults.untimed(rows), reviews, out,
                 fieldNotes.stream().distinct().toList());
         final Map<String, Object> structured = structured(outcome);
         return context.session().isChat()
@@ -1337,6 +1391,9 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
         if (count > 0) {
             sb.append(' ').append(AT_LEAST);
         }
+        if (outcome.untimed() > 0) {
+            sb.append(' ').append(untimedNote(outcome.untimed(), count));
+        }
         if (outcome.limitNote() != null) {
             sb.append(' ').append(outcome.limitNote());
         }
@@ -1348,6 +1405,20 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
                                                     + "don't present them as all.");
         }
         return sb.toString();
+    }
+
+    /// @param untimed   How many sequences have no time.
+    /// @param sequences How many sequences there are.
+    /// @return What that means for their times.
+    static String untimedNote(final int untimed, final int sequences) {
+        return untimed + " of the " + sequences + " sequence" + (sequences == 1
+                ? ""
+                : "s") + " came back with no time on " + (untimed == 1
+                ? "its"
+                : "their") + " events (Elasticsearch didn't give the time field), so " + (untimed == 1
+                ? "its"
+                : "their") + " times and gaps are empty: don't read them as quick, and check the events with "
+               + "fetch_events (by StreamId and EventId) before giving times.";
     }
 
     private static Map<String, Object> structured(final Outcome outcome) {
@@ -1386,6 +1457,9 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
         }
         map.put("sequence_count", result.sequences().size());
         map.put("entity_count", outcome.entities().size());
+        if (outcome.untimed() > 0) {
+            map.put("untimed_sequence_count", outcome.untimed());
+        }
         map.put("limit", outcome.limit());
         map.put("truncated", outcome.truncated());
         map.put("note", sequencesNote(outcome));
@@ -1524,6 +1598,7 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
     /// @param columns       The table's columns.
     /// @param cells         The table's rows.
     /// @param entities      The summary per entity.
+    /// @param untimed       How many sequences have no time on any of their events.
     /// @param reviews       The review queries.
     /// @param out           The table's file.
     record Outcome(List<DocRef> docs,
@@ -1539,6 +1614,7 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
                    List<String> columns,
                    List<List<String>> cells,
                    List<Entity> entities,
+                   int untimed,
                    List<ReviewNote> reviews,
                    WorkspacePath out,
                    List<String> fieldNotes) {

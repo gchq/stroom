@@ -48,9 +48,9 @@ import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.StroomDuration;
 
-import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.internal.JsonSchemaElementUtils;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -651,18 +651,46 @@ class TestEqlSequenceTool {
     }
 
     @Test
-    void theDefinitionIsKeptShort() {
-        // It is sent with every request of a chat that offers it: seen at 8,221 characters (description and
-        // schema, as sent), the fourth largest tool. The detail is said where a call meets it.
-        final ToolSpecification specification = LangChain4jTools.specification(tool.definition());
-        final int size = specification.description().length() + JsonUtil.writeValueAsString(
-                JsonSchemaElementUtils.toMap(specification.parameters()), false).length();
+    void untilAndAnyOfListTheirProperties() {
+        // Before, until and the any_of items were objects with no properties listed, which strict providers may
+        // refuse, and which told the model nothing of what goes in them.
+        final Map<String, Object> parameters = JsonSchemaElementUtils.toMap(
+                LangChain4jTools.specification(tool.definition()).parameters());
+        final Map<String, Object> properties = map(parameters.get("properties"));
+        final Map<String, Object> step = map(map(map(properties.get("steps")).get("items")).get("properties"));
+        final Map<String, Object> until = map(properties.get("until"));
+        final Map<String, Object> condition = map(map(step.get("where")).get("items"));
 
-        assertThat(size).isLessThanOrEqualTo(3_000);
+        assertThat(map(until.get("properties"))).containsOnlyKeys("index", "where", "any_of", "by");
+        assertThat(until.get("required")).asInstanceOf(InstanceOfAssertFactories.LIST)
+                .containsExactlyInAnyOrder("index", "by");
+        assertThat(map(map(step.get("any_of")).get("items")).get("properties")).isEqualTo(condition.get("properties"));
+        assertThat(map(map(map(until.get("properties")).get("any_of")).get("items")).get("properties"))
+                .isEqualTo(condition.get("properties"));
+        assertThat(map(map(map(until.get("properties")).get("where")).get("items")).get("properties"))
+                .isEqualTo(condition.get("properties"));
+        assertThat(map(condition.get("properties"))).containsOnlyKeys("field", "condition", "value",
+                "caseInsensitive", "length");
     }
 
     @Test
-    void theRulesLeftOutOfTheDescriptionAreSaidWhereACallMeetsThem() {
+    void theDefinitionIsFullNowItIsOfferedOnlyWhenItsGroupIsOn() {
+        // Offered only once the model turns on elastic_hunting, so the rules and examples are back in it; they are
+        // also said by the refusal or result that meets them (see theRulesAreAlsoSaidWhereACallMeetsThem).
+        final String description = tool.definition().description();
+
+        assertThat(description).contains("20 failed logons then a success")
+                .contains("A literal ? can't be in a pattern")
+                .contains("nested fields")
+                .contains("keyword subfield")
+                .contains("Refused for a Lucene index (use run_stroomql)")
+                .contains("runAnyway=true")
+                .contains("ask the user which doc to review (ask_user, the docs as options)")
+                .contains("can't see");
+    }
+
+    @Test
+    void theRulesAreAlsoSaidWhereACallMeetsThem() {
         // Each is said by the refusal or result that meets it, as the tests here show: a literal ? in a pattern
         // (aLiteralQuestionMarkInAPatternIsRefused), nested and text fields (aNestedFieldIsRefusedUpFront,
         // aTextFieldWithNoKeywordSubfieldIsRefusedNamingItsSubfields), the versions for missing and runs
@@ -670,15 +698,19 @@ class TestEqlSequenceTool {
         // (docsOnDifferentClustersOrTimeFieldsAreRefusedSayingWhatDiffers), the counts and runAnyway
         // (aSequenceTheCountsSayIsTooBigIsRefusedBeforeItRuns), and the caveat and which doc to review (the
         // result, aSequenceAcrossTwoDocsRunsAsOneEqlSequence).
-        final String description = tool.definition().description();
-
-        assertThat(description).doesNotContain("?").doesNotContain("nested").doesNotContain("keyword subfield")
-                .doesNotContain("Lucene").doesNotContain("runAnyway").doesNotContain("which doc to review")
-                .doesNotContain("can't see");
         assertThat(EqlSequenceTool.reviewHint(2)).contains("ask the user which doc to review (ask_user, the docs as "
                                                            + "options), then offer that doc's with propose_query, or "
                                                            + "propose_dashboard for a table with the event preview.");
         assertThat(EqlSequenceTool.reviewHint(1)).contains("offer it with propose_query, or propose_dashboard");
+    }
+
+    @Test
+    void sequencesWithNoTimeAreCounted() {
+        assertThat(EqlSequenceTool.untimedNote(2, 5)).startsWith("2 of the 5 sequences came back with no time on "
+                                                                 + "their events")
+                .contains("their times and gaps are empty");
+        assertThat(EqlSequenceTool.untimedNote(1, 1)).startsWith("1 of the 1 sequence came back with no time on its "
+                                                                 + "events");
     }
 
     @Test
@@ -861,6 +893,12 @@ class TestEqlSequenceTool {
                 .userQuestions(new RecordingQuestions("1 minute"))
                 .limits(SessionLimits.lookedUp(() -> config))
                 .build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> map(final Object value) {
+        assertThat(value).isInstanceOf(Map.class);
+        return (Map<String, Object>) value;
     }
 
 

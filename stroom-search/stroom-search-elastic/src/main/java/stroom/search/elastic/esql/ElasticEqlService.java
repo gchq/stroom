@@ -420,6 +420,7 @@ public class ElasticEqlService implements ElasticEql {
                 EqlSearchResponse.createEqlSearchResponseDeserializer(JsonData._DESERIALIZER));
         EqlSearchResponse<JsonData> response = perform(client, body, endpoint, timeLimit);
         final String id = response.id();
+        boolean polled = false;
         while (Boolean.TRUE.equals(response.isRunning())) {
             if (stopped.getAsBoolean()) {
                 delete(client, id);
@@ -436,6 +437,19 @@ public class ElasticEqlService implements ElasticEql {
             }
             try {
                 response = perform(client, id, pollEndpoint(id, waitMs(deadline)), timeLimit);
+                polled = true;
+            } catch (final Refusal refusal) {
+                delete(client, id);
+                throw refusal;
+            }
+        }
+        if (polled && NullSafe.isNonBlankString(id) && lacksFields(response)) {
+            // Elasticsearch (seen on 9.5.3) leaves every event's fields out of the answer to a poll the search
+            // completes during, though the stored result has them: read that once.
+            LOGGER.debug(() -> LogUtil.message("EQL search {} completed during a poll with no fields on its events, "
+                                               + "so its stored result is read", id));
+            try {
+                response = perform(client, id, pollEndpoint(id, 0), timeLimit);
             } catch (final Refusal refusal) {
                 delete(client, id);
                 throw refusal;
@@ -450,6 +464,18 @@ public class ElasticEqlService implements ElasticEql {
                                                     + "index couldn't be read in time");
         }
         return response;
+    }
+
+    /// @param response A completed search's answer.
+    /// @return True if one of its events that happened has no fields, as Elasticsearch gives every event the time
+    /// field it was asked for.
+    static boolean lacksFields(final EqlSearchResponse<JsonData> response) {
+        if (response.hits() == null) {
+            return false;
+        }
+        return NullSafe.list(response.hits().sequences()).stream()
+                .flatMap(sequence -> NullSafe.list(sequence.events()).stream())
+                .anyMatch(event -> !Boolean.TRUE.equals(event.missing()) && NullSafe.isEmptyMap(event.fields()));
     }
 
     // The request that asks for a running search again, waiting that long at most for it to complete, keeping it
