@@ -20,6 +20,7 @@ import stroom.ai.shared.AiToolCategory;
 import stroom.ai.shared.AiToolSummary;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.service.tool.ToolExecutor;
@@ -47,6 +48,8 @@ public class BuiltInTools {
     static final String BUILD_ENTRY_TOOL = "start_onboarding";
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BuiltInTools.class);
+    // The most chats whose usable tools are kept.
+    private static final int MAX_CHATS = 10_000;
 
     private final Map<ToolSpecification, ToolExecutor> toolMap;
     private final Set<String> readOnlyToolNames;
@@ -56,6 +59,13 @@ public class BuiltInTools {
     private final Map<String, ToolPermissions> permissions;
     private final Map<String, StroomTool> toolsByName;
     private final Map<String, AiToolCategory> categories;
+    // The tools each chat has found usable (see StroomTool#isUsable), the chats used least recently first.
+    private final Map<Integer, Set<String>> usableByChat = new LinkedHashMap<>(16, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry<Integer, Set<String>> eldest) {
+            return size() > MAX_CHATS;
+        }
+    };
     // The knowledge bundled for agents, set by injection where a module bundles it.
     private Optional<AgentKnowledge> knowledge = Optional.empty();
 
@@ -138,6 +148,41 @@ public class BuiltInTools {
         return knowledge.flatMap(AgentKnowledge::buildInstructions)
                 .filter(text -> !text.isBlank())
                 .map(text -> "## Instructions for Stroom's build tools\n\n" + text.strip());
+    }
+
+    /// Whether a chat offers a built-in tool to its user: see [StroomTool#isUsable()], asked as the current user.
+    /// A tool found usable stays so for the rest of the chat (on this node), so the tools the chat is offered, and
+    /// with them the start of every request, stay the same from question to question; one not found usable is
+    /// asked about again as each run starts, so it is offered once the user has something to use it on (e.g. an
+    /// Elastic Index made in the chat). A check that fails offers the tool, which makes its own checks when called.
+    ///
+    /// @param chatId   The chat.
+    /// @param toolName A tool name.
+    /// @return True if the chat offers the tool; true for a name that isn't a built-in tool's.
+    public boolean isUsableInChat(final int chatId, final String toolName) {
+        final StroomTool tool = toolsByName.get(toolName);
+        if (tool == null) {
+            return true;
+        }
+        synchronized (usableByChat) {
+            if (usableByChat.getOrDefault(chatId, Set.of()).contains(toolName)) {
+                return true;
+            }
+        }
+        boolean usable;
+        try {
+            usable = tool.isUsable();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to tell whether '{}' is usable: {}", toolName,
+                    e.getMessage()), e);
+            usable = true;
+        }
+        if (usable) {
+            synchronized (usableByChat) {
+                usableByChat.computeIfAbsent(chatId, key -> new HashSet<>()).add(toolName);
+            }
+        }
+        return usable;
     }
 
     /// @return Every built-in tool, by name.

@@ -375,12 +375,14 @@ class McpAgentChat {
         // In Ask and Plan modes, the model may only use the tools that cannot change anything.
         run.readOnlyMode = Objects.requireNonNullElse(aiDao.getAgentMode(chatId), AiAgentMode.AGENT).isReadOnly();
         run.grants = currentToolGrants.forCurrentUser();
-        run.builtIns = builtInsOffered(run.toolsEnabled, run.readOnlyMode, run.grants);
+        run.builtIns = builtInsOffered(chatId, run.toolsEnabled, run.readOnlyMode, run.grants);
         run.mcpTools = mcpTools(toolset, run.toolsEnabled, run.readOnlyMode, run.grants);
         // Large sets of tools are offered as groups the model turns on when it needs them: those built-in tools
         // only some questions need, and a large set of MCP tools.
         run.toolGroups = ToolGroups.of(run.builtIns, run.mcpTools, toolset, toolGroupThreshold());
         run.conversation = withUnavailableServersNote(messages, toolset.getWarnings());
+        // The guidance on a built-in tool that isn't offered would point the model at a tool it doesn't have.
+        withoutGuidanceForToolsNotOffered(run.conversation, run.builtIns);
         // A run carrying on with the question (e.g. once the user has filled in a form) has its steps from the
         // store: the summary an earlier run wrote of them goes back in, rather than being written again.
         turnSummaries.putBack(chatId, run.conversation);
@@ -400,8 +402,10 @@ class McpAgentChat {
         run.buildInstructions.addIfOffered(run.conversation, run.tools);
     }
 
-    // The built-in tools the run may offer: those the model, the chat's mode and the user's tool policies allow.
-    private Map<ToolSpecification, ToolExecutor> builtInsOffered(final boolean toolsEnabled,
+    // The built-in tools the run may offer: those the model, the chat's mode and the user's tool policies allow,
+    // and that the user has something to use on (see StroomTool#isUsable).
+    private Map<ToolSpecification, ToolExecutor> builtInsOffered(final int chatId,
+                                                                 final boolean toolsEnabled,
                                                                  final boolean readOnlyMode,
                                                                  final ToolGrants grants) {
         final Map<ToolSpecification, ToolExecutor> builtIns = new LinkedHashMap<>();
@@ -417,7 +421,24 @@ class McpAgentChat {
                 .map(category -> grants.offers(category, builtInTools.isReadOnly(specification.name()),
                         builtInTools.hasReadOnlyCalls(specification.name())))
                 .orElse(true));
+        // Asked last, of the tools still offered, as it looks at the user's documents.
+        builtIns.keySet().removeIf(specification -> !builtInTools.isUsableInChat(chatId, specification.name()));
         return builtIns;
+    }
+
+    // Leaves the guidance on the built-in tools the run doesn't offer out of its system prompt.
+    private static void withoutGuidanceForToolsNotOffered(final List<ChatMessage> conversation,
+                                                          final Map<ToolSpecification, ToolExecutor> builtIns) {
+        if (!conversation.isEmpty() && conversation.getFirst() instanceof final SystemMessage systemMessage) {
+            final Set<String> offered = builtIns.keySet().stream()
+                    .map(ToolSpecification::name)
+                    .collect(Collectors.toSet());
+            final String text = ContextAssembler.withoutGuidanceForToolsNotOffered(systemMessage.text(),
+                    offered::contains);
+            if (!text.equals(systemMessage.text())) {
+                conversation.set(0, SystemMessage.from(text));
+            }
+        }
     }
 
     // A call with no tools offered, for a run that has none.

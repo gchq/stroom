@@ -31,6 +31,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -147,6 +150,66 @@ class TestBuiltInTools {
                 .contains("## Instructions for Stroom's build tools\n\nOrder of work: start_onboarding first.");
         // Not offered the build tools (e.g. a read-only policy without Content): not given their instructions.
         assertThat(registry.buildInstructions(Set.of("read_file"))).isEmpty();
+    }
+
+    @Test
+    void aToolFoundUsableInAChatStaysSoAndOneNotFoundUsableIsAskedAboutAgain() {
+        final AtomicBoolean usable = new AtomicBoolean(true);
+        final AtomicInteger asked = new AtomicInteger();
+        final BuiltInTools registry = new BuiltInTools(Set.of(tool("hunt", () -> {
+            asked.incrementAndGet();
+            return usable.get();
+        })), ToolCalls.chatContexts());
+
+        assertThat(registry.isUsableInChat(1, "hunt")).isTrue();
+        usable.set(false);
+        // Kept for the chat, so its tools stay the same from question to question.
+        assertThat(registry.isUsableInChat(1, "hunt")).isTrue();
+        assertThat(asked).hasValue(1);
+
+        // Another chat asks for itself, and asks again while the answer is no.
+        assertThat(registry.isUsableInChat(2, "hunt")).isFalse();
+        assertThat(registry.isUsableInChat(2, "hunt")).isFalse();
+        usable.set(true);
+        assertThat(registry.isUsableInChat(2, "hunt")).isTrue();
+        assertThat(asked).hasValue(4);
+    }
+
+    @Test
+    void aToolWhoseUsabilityCantBeToldIsOffered() {
+        final BuiltInTools registry = new BuiltInTools(Set.of(tool("hunt", () -> {
+            throw new IllegalStateException("no store");
+        })), ToolCalls.chatContexts());
+
+        // It makes its own checks when called.
+        assertThat(registry.isUsableInChat(1, "hunt")).isTrue();
+        // A name that isn't a built-in tool's is for the caller to judge.
+        assertThat(registry.isUsableInChat(1, "not_a_tool")).isTrue();
+    }
+
+    // A tool that does nothing, usable as the supplier says.
+    private static StroomTool tool(final String name, final BooleanSupplier usable) {
+        return new StroomTool() {
+            @Override
+            public AiToolCategory category() {
+                return AiToolCategory.SEARCH;
+            }
+
+            @Override
+            public ToolDefinition definition() {
+                return ToolDefinition.builder().name(name).build();
+            }
+
+            @Override
+            public ToolResult execute(final ToolCall request, final ToolCallContext context) {
+                return ToolResult.text("done");
+            }
+
+            @Override
+            public boolean isUsable() {
+                return usable.getAsBoolean();
+            }
+        };
     }
 
     private static String run(final StroomTool tool, final String argsJson) {

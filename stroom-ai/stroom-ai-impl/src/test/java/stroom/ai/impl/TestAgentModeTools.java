@@ -43,6 +43,7 @@ import stroom.data.store.api.DataService;
 import stroom.data.store.api.FsVolumeStates;
 import stroom.data.store.api.Store;
 import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
 import stroom.docstore.api.ContentIndex;
 import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocDependencyService;
@@ -66,12 +67,15 @@ import stroom.pipeline.xslt.XsltStore;
 import stroom.processor.api.ProcessingDiagnostics;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorTaskService;
+import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.impl.QueryService;
 import stroom.resource.api.ResourceStore;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.task.api.TaskContext;
@@ -90,6 +94,8 @@ import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mockito;
@@ -97,6 +103,7 @@ import org.mockito.Mockito;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -182,8 +189,13 @@ class TestAgentModeTools {
             Map.entry("config_properties", false),
             Map.entry("elastic_index_templates", false)));
 
+    private static final DocRef ELASTIC_INDEX = new DocRef(ElasticIndexDoc.TYPE, "elastic-uuid", "Events");
+
     private final AiService aiService = Mockito.mock(AiService.class);
     private final AiDao aiDao = Mockito.mock(AiDao.class);
+    private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
+    private final DataSourceProviderRegistry dataSourceRegistry = Mockito.mock(DataSourceProviderRegistry.class);
+    private final DataSourceProvider elasticProvider = Mockito.mock(DataSourceProvider.class);
     private final BuiltInTools builtInTools = Guice.createInjector(new BuiltInToolsModule(), new AbstractModule() {
         @Override
         protected void configure() {
@@ -194,7 +206,7 @@ class TestAgentModeTools {
             bind(DashboardBuilder.class).toInstance(Mockito.mock(DashboardBuilder.class));
             bind(ResourceStore.class).toInstance(Mockito.mock(ResourceStore.class));
             bind(Store.class).toInstance(Mockito.mock(Store.class));
-            bind(SecurityContext.class).toInstance(Mockito.mock(SecurityContext.class));
+            bind(SecurityContext.class).toInstance(securityContext);
             bind(TableSummariser.class).toInstance(Mockito.mock(TableSummariser.class));
             bind(AskStroomAiConfig.class).toInstance(new AskStroomAiConfig());
             bind(McpElicitations.class).toInstance(Mockito.mock(McpElicitations.class));
@@ -206,7 +218,7 @@ class TestAgentModeTools {
             bind(AiAuditLog.class).toInstance(Mockito.mock(AiAuditLog.class));
             bind(TabSnapshots.class).toInstance(Mockito.mock(TabSnapshots.class));
             bind(TableDownloader.class).toInstance(Mockito.mock(TableDownloader.class));
-            bind(DataSourceProviderRegistry.class).toInstance(Mockito.mock(DataSourceProviderRegistry.class));
+            bind(DataSourceProviderRegistry.class).toInstance(dataSourceRegistry);
             bind(IndexResource.class).toInstance(Mockito.mock(IndexResource.class));
             bind(DashboardService.class).toInstance(Mockito.mock(DashboardService.class));
             bind(TableAnalysisConfig.class).toInstance(new TableAnalysisConfig());
@@ -248,6 +260,18 @@ class TestAgentModeTools {
         }
     }).getInstance(BuiltInTools.class);
 
+    @BeforeEach
+    void setUp() {
+        // The user can use an Elastic Index, so the tools offered only with one are offered.
+        Mockito.when(dataSourceRegistry.getDataSourceProvider(ElasticIndexDoc.TYPE))
+                .thenReturn(Optional.of(elasticProvider));
+        Mockito.when(elasticProvider.getDataSourceDocRefs()).thenReturn(List.of(ELASTIC_INDEX));
+        Mockito.when(securityContext.hasDocumentPermission(ELASTIC_INDEX, DocumentPermission.USE)).thenReturn(true);
+        Mockito.when(aiService.storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString()))
+                .thenAnswer(invocation -> new AiChatMessage(1000, invocation.getArgument(0), 0L,
+                        invocation.getArgument(1), null, invocation.getArgument(2), 1, null));
+    }
+
     @ParameterizedTest
     @EnumSource(AiAgentMode.class)
     void eachModeIsOfferedTheRightBuiltInTools(final AiAgentMode mode) {
@@ -255,9 +279,56 @@ class TestAgentModeTools {
         assertThat(builtInTools.toolMap().keySet().stream().map(ToolSpecification::name))
                 .containsExactlyInAnyOrderElementsOf(CHANGES_THINGS.keySet());
         Mockito.when(aiDao.getAgentMode(1)).thenReturn(mode);
-        Mockito.when(aiService.storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString()))
-                .thenAnswer(invocation -> new AiChatMessage(1000, 1, 0L, invocation.getArgument(1), null,
-                        invocation.getArgument(2), 1, null));
+
+        final Set<String> offered = offered(firstRequest(1, "system"));
+        // A tool in a group is offered as the tool that turns its group on.
+        final Set<String> expected = OfferedToolNames.withNoGroupsOn(CHANGES_THINGS.entrySet().stream()
+                .filter(entry -> !mode.isReadOnly() || !entry.getValue())
+                .map(Map.Entry::getKey)
+                .toList());
+        assertThat(offered).isEqualTo(expected);
+    }
+
+    @Test
+    void eqlSequenceAndItsGuidanceAreOnlyForAUserWhoCanUseAnElasticIndex() {
+        // Its definition is large, and most users of most chats have no Elastic Index to hunt sequences in.
+        final String systemPrompt = "system\n\n" + ContextAssembler.TOOL_GUIDANCE;
+        final ChatRequest withIndex = firstRequest(1, systemPrompt);
+        Mockito.when(securityContext.hasDocumentPermission(ELASTIC_INDEX, DocumentPermission.USE)).thenReturn(false);
+        final ChatRequest withoutIndex = firstRequest(2, systemPrompt);
+
+        assertThat(offered(withIndex)).contains("eql_sequence", "esql_query");
+        assertThat(systemPrompt(withIndex)).isEqualTo(systemPrompt)
+                .contains(ContextAssembler.EQL_SEQUENCE_GUIDANCE);
+        assertThat(offered(withoutIndex)).doesNotContain("eql_sequence").contains("esql_query");
+        assertThat(systemPrompt(withoutIndex)).doesNotContain("eql_sequence")
+                .contains("For totals, top N and grouped questions on an Elastic Index, use esql_query")
+                .contains("- \"Query\" can mean two things.");
+    }
+
+    @Test
+    void aChatKeepsEqlSequenceOnceOfferedAndOffersItOnceTheUserHasAnElasticIndex() {
+        // Kept, so the tools (and the start of every request) stay the same from question to question; the call
+        // itself checks Use on each doc.
+        assertThat(offered(firstRequest(1, "system"))).contains("eql_sequence");
+        Mockito.when(securityContext.hasDocumentPermission(ELASTIC_INDEX, DocumentPermission.USE)).thenReturn(false);
+        assertThat(offered(firstRequest(1, "system"))).contains("eql_sequence");
+
+        // Not found usable, it is looked for again as each run starts: e.g. once an index is made in the chat.
+        assertThat(offered(firstRequest(2, "system"))).doesNotContain("eql_sequence");
+        Mockito.when(securityContext.hasDocumentPermission(ELASTIC_INDEX, DocumentPermission.USE)).thenReturn(true);
+        assertThat(offered(firstRequest(2, "system"))).contains("eql_sequence");
+    }
+
+    @Test
+    void aUserWithNoElasticIndexStoreIsntOfferedEqlSequence() {
+        Mockito.when(dataSourceRegistry.getDataSourceProvider(ElasticIndexDoc.TYPE)).thenReturn(Optional.empty());
+
+        assertThat(offered(firstRequest(1, "system"))).doesNotContain("eql_sequence");
+    }
+
+    // The first request a run of the chat makes of the model, with the system prompt given.
+    private ChatRequest firstRequest(final int chatId, final String systemPrompt) {
         final ToolConsent toolConsent = Mockito.mock(ToolConsent.class);
         final AiChatRunManager runManager = Mockito.mock(AiChatRunManager.class);
         final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools,
@@ -277,18 +348,19 @@ class TestAgentModeTools {
             }
         };
 
-        agentChat.chat(model, null, 1, List.of(new SystemMessage("system"), new UserMessage("q")),
+        agentChat.chat(model, null, chatId, List.of(new SystemMessage(systemPrompt), new UserMessage("q")),
                 McpToolset.EMPTY, 99, new AtomicBoolean(false), Mockito.mock(TaskContext.class), 1,
                 new StringBuilder(), 0, ContextBudget.UNKNOWN);
+        return requests.getFirst();
+    }
 
-        final Set<String> offered = requests.getFirst().toolSpecifications().stream()
+    private static Set<String> offered(final ChatRequest request) {
+        return request.toolSpecifications().stream()
                 .map(ToolSpecification::name)
                 .collect(Collectors.toCollection(TreeSet::new));
-        // A tool in a group is offered as the tool that turns its group on.
-        final Set<String> expected = OfferedToolNames.withNoGroupsOn(CHANGES_THINGS.entrySet().stream()
-                .filter(entry -> !mode.isReadOnly() || !entry.getValue())
-                .map(Map.Entry::getKey)
-                .toList());
-        assertThat(offered).isEqualTo(expected);
+    }
+
+    private static String systemPrompt(final ChatRequest request) {
+        return ((SystemMessage) request.messages().getFirst()).text();
     }
 }

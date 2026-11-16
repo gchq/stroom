@@ -757,6 +757,13 @@ the user:
   runs slower), the configured default first (`stroom.ai.workspace.eqlDefaultMaxspan`, 5 minutes), then 1 minute,
   15 minutes, 1 hour and another interval, typed. Over MCP (or while the user is away), refused with that question
   and the suggestions. The result always says the window and where it came from.
+* **Offered only where it can be used (2026-11-16).** Its definition was the fourth largest tool's (8,221
+  characters as sent) and offered with every chat request, though most chats never hunt sequences. The chat offers
+  it only to a user who can Use an Elastic Index doc (`StroomTool.isUsable`, the store's list and the permission
+  check, no cluster call: EQL sequences work from 7.10, older than the clusters Stroom's client works with), kept
+  per chat once true, and leaves out the chat guidance bullet that names it when it isn't offered. Over `/mcp` it
+  is always offered, as the server instructions name it for everyone. The definition was cut to about 2,800
+  characters: the rarely needed detail is in the refusals and results that meet it.
 * **Pre-flight (the heuristic; bounded 2026-11-16).** Each step that must happen is counted with ES|QL up to a
   cap, `| WHERE <the step's conditions> | LIMIT 1000001 | STATS n = COUNT(*)` (a case-insensitive regex left out),
   where the cluster takes ES|QL (8.14+), else skipped, saying so; skipped too when the time range has both ends
