@@ -180,7 +180,8 @@ public class TestTokeniser extends AbstractQueryTest {
     @Test
     void everySpellingOfAJoinKindIsOneJoinToken() {
         for (final String kind : List.of("join", "inner join", "left join", "left outer join",
-                "semi join", "left semi join", "anti join", "left anti join")) {
+                "semi join", "left semi join", "anti join", "left anti join", "right join", "right outer join",
+                "full join", "full outer join")) {
             final List<Token> tokens = withoutWhitespace("from x " + kind + " y on a = y.a select a");
 
             assertThat(tokens)
@@ -194,11 +195,12 @@ public class TestTokeniser extends AbstractQueryTest {
     @Test
     void oldAndUnknownJoinKindsAreNotPartOfTheJoinToken() {
         // 'keep join' and 'drop join' were renamed before joins were released, so they are plain words.
-        for (final String kind : List.of("keep", "drop", "right", "full")) {
+        for (final String kind : List.of("keep", "drop", "cross", "natural")) {
             assertThat(joinText("from x " + kind + " join y on a = y.a select a")).as(kind).isEqualTo("join");
         }
-        // 'outer' is only a kind after 'left'.
-        assertThat(joinText("from x right outer join y on a = y.a")).isEqualTo("join");
+        // 'outer' is only a kind after left, right or full, and semi and anti only after left.
+        assertThat(joinText("from x inner outer join y on a = y.a")).isEqualTo("join");
+        assertThat(joinText("from x right semi join y on a = y.a")).isEqualTo("semi join");
     }
 
     @Test

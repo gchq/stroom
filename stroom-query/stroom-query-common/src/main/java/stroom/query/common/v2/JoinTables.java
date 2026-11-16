@@ -99,7 +99,7 @@ public class JoinTables {
                          final List<JoinTable> tables,
                          final UserRef owner) {
         final Registration previous = registrations.put(
-                queryKey, new Registration(query, List.copyOf(tables), owner, new AtomicInteger()));
+                queryKey, new Registration(query, List.copyOf(tables), owner, new AtomicInteger(), false));
         if (previous != null) {
             close(queryKey, previous.tables());
         }
@@ -121,7 +121,7 @@ public class JoinTables {
         final Registration registration = registrations.compute(queryKey, (key, current) -> {
             final Registration held;
             if (current == null) {
-                held = new Registration(query, List.copyOf(tables), owner, new AtomicInteger());
+                held = new Registration(query, List.copyOf(tables), owner, new AtomicInteger(), true);
             } else {
                 alreadyHeld.set(true);
                 held = current;
@@ -206,7 +206,20 @@ public class JoinTables {
     /// @param tables The join tables, one for each join line in order.
     /// @param owner  The user who ran the search.
     /// @param users  The number of coprocessors using the tables.
-    public record Registration(Query query, List<JoinTable> tables, UserRef owner, AtomicInteger users) {
+    /// A search's query and join tables, held for the coprocessors that apply its joins.
+    ///
+    /// @param query  The search's query.
+    /// @param tables The join tables, in the order of the join lines.
+    /// @param owner  The user who ran the search.
+    /// @param users  The number of coprocessors using the tables.
+    /// @param copy   True if the tables were copied from the node that built them, whose own
+    ///               coprocessors give a right or full join's unmatched rows. Coprocessors using a
+    ///               copy only note which rows matched, and send that back.
+    public record Registration(Query query,
+                               List<JoinTable> tables,
+                               UserRef owner,
+                               AtomicInteger users,
+                               boolean copy) {
 
     }
 }

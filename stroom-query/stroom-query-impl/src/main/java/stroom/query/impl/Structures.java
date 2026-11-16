@@ -130,6 +130,18 @@ class Structures {
                         * `semi join` or `left semi join` - each row with at least one match, once, with
                           no joined fields.
                         * `anti join` or `left anti join` - each row with no match, with no joined fields.
+                        * `right join` or `right outer join` - one row per match; rows of the joined source
+                          with no match are given once, with blank fields of the first source.
+                        * `full join` or `full outer join` - one row per match; rows of either source
+                          with no match are given once, with blank fields of the other.
+
+                        A right or full join gives the joined rows with no match once the first source
+                        has been searched, so they come last. It must be the last join line and can't
+                        have a time window. As in SQL, `where` is tested on the joined rows, including
+                        those with blank first-source fields, so it doesn't narrow the first source's
+                        search; use a bracketed query in `from` for that. A warning names any field
+                        `where` tests this way that had no value in any row, such as one the data source
+                        can search but not give.
 
                         The joined fields are named `<alias>.<field>`. The alias is the name after `as`,
                         or the data source's name if there is none.

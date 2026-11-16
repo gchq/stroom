@@ -35,8 +35,19 @@ class TestJoinWhereSplitter {
     private static final List<JoinedSource> HR_LEFT = List.of(new JoinedSource("hr", false));
 
     @Test
+    void firstSourceConditionsStayOnTheJoinedRowsWhenTheyCantBePushedDown() {
+        // As with a right or full join, which gives rows with blank first-source fields.
+        final Split split = JoinWhereSplitter.split(
+                and(term("e.Host"), term("Type"), term("hr.Department")), "e", false, false, HR_INNER);
+
+        assertThat(split.first()).isNull();
+        assertThat(split.joined()).containsOnlyKeys("hr");
+        assertThat(fields(split.postJoin())).containsExactly("e.Host", "Type");
+    }
+
+    @Test
     void noWhereGivesNoConditions() {
-        final Split split = JoinWhereSplitter.split(null, "e", false, HR_INNER);
+        final Split split = JoinWhereSplitter.split(null, "e", false, true, HR_INNER);
 
         assertThat(split.first()).isNull();
         assertThat(split.joined()).isEmpty();
@@ -50,7 +61,7 @@ class TestJoinWhereSplitter {
                 and(term("e.Type"), term("hr.Department")),
                 term("Host"));
 
-        final Split split = JoinWhereSplitter.split(where, "e", false, HR_INNER);
+        final Split split = JoinWhereSplitter.split(where, "e", false, true, HR_INNER);
 
         assertThat(fields(split.first())).containsExactly("Type", "Host");
         assertThat(fields(split.joined().get("hr"))).containsExactly("Department");
@@ -59,7 +70,8 @@ class TestJoinWhereSplitter {
 
     @Test
     void joinedConditionStaysOnJoinedRowsWhenPushDownIsNotAllowed() {
-        final Split split = JoinWhereSplitter.split(and(term("Host"), term("hr.Department")), null, false, HR_LEFT);
+        final Split split = JoinWhereSplitter.split(
+                and(term("Host"), term("hr.Department")), null, false, true, HR_LEFT);
 
         assertThat(fields(split.first())).containsExactly("Host");
         assertThat(split.joined()).isEmpty();
@@ -74,7 +86,7 @@ class TestJoinWhereSplitter {
                 .addTerm(term("hr.Department"))
                 .build();
 
-        final Split split = JoinWhereSplitter.split(or, null, false, HR_INNER);
+        final Split split = JoinWhereSplitter.split(or, null, false, true, HR_INNER);
 
         assertThat(split.first()).isNull();
         assertThat(fields(split.postJoin())).containsExactly("Host", "hr.Department");
@@ -82,7 +94,8 @@ class TestJoinWhereSplitter {
 
     @Test
     void everythingRunsOnJoinedRowsForABracketedFirstSource() {
-        final Split split = JoinWhereSplitter.split(and(term("Host"), term("hr.Department")), "x", true, HR_INNER);
+        final Split split = JoinWhereSplitter.split(
+                and(term("Host"), term("hr.Department")), "x", true, true, HR_INNER);
 
         assertThat(split.first()).isNull();
         assertThat(split.joined()).isEmpty();
@@ -97,7 +110,7 @@ class TestJoinWhereSplitter {
                 new JoinedSource("hr.users", true));
 
         final Split split = JoinWhereSplitter.split(
-                and(term("hr.users.Name"), term("hr.Department")), null, false, joined);
+                and(term("hr.users.Name"), term("hr.Department")), null, false, true, joined);
 
         assertThat(fields(split.joined().get("hr.users"))).containsExactly("Name");
         assertThat(fields(split.joined().get("hr"))).containsExactly("Department");
@@ -105,7 +118,7 @@ class TestJoinWhereSplitter {
 
     @Test
     void fieldThatIsOnlyTheAliasAndADotIsNotJoined() {
-        final Split split = JoinWhereSplitter.split(and(term("hr.")), null, false, HR_INNER);
+        final Split split = JoinWhereSplitter.split(and(term("hr.")), null, false, true, HR_INNER);
 
         assertThat(fields(split.first())).containsExactly("hr.");
     }
@@ -117,7 +130,7 @@ class TestJoinWhereSplitter {
                 .addTerm(term("Type").copy().enabled(false).build())
                 .build();
 
-        final Split split = JoinWhereSplitter.split(where, null, false, HR_INNER);
+        final Split split = JoinWhereSplitter.split(where, null, false, true, HR_INNER);
 
         assertThat(fields(split.first())).containsExactly("Host");
     }

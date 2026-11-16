@@ -33,8 +33,9 @@ import java.util.List;
 /// search's first source, so that node can apply the joins to its own rows.
 ///
 /// The tables are written as a stream: for each join line in order, its alias, its fields, then each
-/// row as its join key and values. The receiving node builds its own tables from the stream, within
-/// its own limits.
+/// row as its number, join key and values. The receiving node builds its own tables from the stream,
+/// within its own limits, keeping each row's number so the rows it finds matched for a right or full
+/// join can be sent back (see [JoiningCoprocessors#writeMatched]).
 public final class JoinTableTransfer {
 
     private JoinTableTransfer() {
@@ -54,8 +55,9 @@ public final class JoinTableTransfer {
             final List<String> fields = table.getFields();
             writer.writeInt(fields.size());
             fields.forEach(writer::writeString);
-            table.forEachRow((key, row) -> {
+            table.forEachNumberedRow((rowNumber, key, row) -> {
                 writer.writeBoolean(true);
+                writer.writeLong(rowNumber);
                 writer.writeString(key);
                 JoinTable.writeRow(writer, row);
             });
@@ -87,8 +89,9 @@ public final class JoinTableTransfer {
                 final JoinTable table = joinTables.create(queryKey, alias, fields);
                 tables.add(table);
                 while (reader.readBoolean()) {
+                    final long rowNumber = reader.readLong();
                     final String key = reader.readString();
-                    table.add(key, ValSerialiser.readArray(reader));
+                    table.add(rowNumber, key, ValSerialiser.readArray(reader));
                 }
                 table.complete();
             }

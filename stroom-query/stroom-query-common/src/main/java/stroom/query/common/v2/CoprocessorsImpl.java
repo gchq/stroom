@@ -17,6 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.docref.DocRef;
+import stroom.query.api.TableSettings;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -24,15 +25,18 @@ import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.Severity;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
@@ -53,6 +57,14 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
     // Run once, when the coprocessors are first cleared, to release the joins' tables. Coprocessors
     // can be cleared more than once, but the tables were only used once.
     private final AtomicReference<Runnable> onClear = new AtomicReference<>();
+    // True if these coprocessors give a right or full join's unmatched rows when they complete: those
+    // of the node that built the join tables, not those of a node with a copy.
+    private volatile boolean givesUnmatchedJoinedRows;
+    // True once the search was stopped or failed, when a right or full join's matches aren't all
+    // known, so its unmatched rows aren't given.
+    private volatile boolean unmatchedJoinedRowsWithheld;
+    // True once a right or full join's unmatched rows have been dealt with, which only happens once.
+    private final AtomicBoolean unmatchedJoinedRowsDone = new AtomicBoolean();
 
     CoprocessorsImpl(final Map<Integer, Coprocessor> coprocessorMap,
                      final Map<String, TableCoprocessor> componentIdCoprocessorMap,
@@ -80,6 +92,12 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
             final Coprocessor coprocessor = coprocessorMap.get(coprocessorId);
             coprocessor.readPayload(input);
         }
+        // A right or full join's rows that the other node's rows matched follow, so they aren't given
+        // as unmatched.
+        final JoiningCoprocessors joins = this.joins;
+        if (joins != null && joins.givesUnmatchedJoinedRows()) {
+            joins.readMatched(input);
+        }
     }
 
     @Override
@@ -91,16 +109,73 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
             output.writeInt(coprocessorId);
             coprocessor.writePayload(output);
         }
+        final JoiningCoprocessors joins = this.joins;
+        if (joins != null && joins.givesUnmatchedJoinedRows()) {
+            joins.writeMatched(output);
+        }
+    }
+
+    // Gives the rows of a right or full join's table that never matched, as the join's last rows, now
+    // that the first source has been searched on every node and its matches are all known. They are
+    // only given once, and not if the search was stopped or failed.
+    private void giveUnmatchedJoinedRows() {
+        final JoiningCoprocessors joins = this.joins;
+        if (joins == null
+            || !givesUnmatchedJoinedRows
+            || !joins.givesUnmatchedJoinedRows()
+            || !unmatchedJoinedRowsDone.compareAndSet(false, true)) {
+            return;
+        }
+        if (unmatchedJoinedRowsWithheld || hasFailed()) {
+            errorConsumer.add(Severity.WARNING, () -> "The joined rows with no match were left out, as the "
+                                                      + "search didn't finish");
+            return;
+        }
+        try {
+            joins.giveUnmatchedJoinedRows(this::acceptUnjoined);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Error giving unmatched joined rows: " + e.getMessage(), e);
+            errorConsumer.add(e);
+        }
+    }
+
+    private boolean hasFailed() {
+        return errorConsumer.getErrorMessages()
+                .stream()
+                .anyMatch(message -> message.getSeverity().greaterThanOrEqual(Severity.ERROR));
     }
 
     /// Makes every row go through a query's joins before the coprocessors. Set this before the
     /// search starts.
     ///
-    /// @param joins   The joins, made with [#getUnjoined()] as their coprocessors.
-    /// @param onClear Run when these coprocessors are cleared, e.g. to delete the joins' tables.
-    void setJoins(final JoiningCoprocessors joins, final Runnable onClear) {
+    /// @param joins                    The joins, made with [#getUnjoined()] as their coprocessors.
+    /// @param onClear                  Run when these coprocessors are cleared, e.g. to delete the joins'
+    ///                                 tables.
+    /// @param givesUnmatchedJoinedRows True if these coprocessors give a right or full join's
+    ///                                 unmatched rows when they complete, as those of the node that
+    ///                                 built the join tables do.
+    void setJoins(final JoiningCoprocessors joins,
+                  final Runnable onClear,
+                  final boolean givesUnmatchedJoinedRows) {
         this.joins = joins;
         this.onClear.set(onClear);
+        this.givesUnmatchedJoinedRows = givesUnmatchedJoinedRows;
+    }
+
+    /// Stops a right or full join's unmatched rows being given when these coprocessors complete, as
+    /// the search was stopped or failed, so not every match is known.
+    void withholdUnmatchedJoinedRows() {
+        unmatchedJoinedRowsWithheld = true;
+    }
+
+    /// Gets the settings of each table these coprocessors fill, as the parsed query made them.
+    ///
+    /// @return The settings.
+    List<TableSettings> getTableSettings() {
+        return componentIdCoprocessorMap.values()
+                .stream()
+                .map(TableCoprocessor::getTableSettings)
+                .toList();
     }
 
     /// Gets a view of these coprocessors that takes rows straight to the coprocessors, without the
@@ -143,6 +218,8 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
         return new CompletionState() {
             @Override
             public void signalComplete() {
+                // A right or full join's unmatched rows are only known once the search is done.
+                giveUnmatchedJoinedRows();
                 for (final Coprocessor coprocessor : coprocessorMap.values()) {
                     getCompletionState(coprocessor).signalComplete();
                 }

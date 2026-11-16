@@ -751,6 +751,7 @@ class stroom.query.api.JoinKey - public java.lang.String stroom.query.api.JoinKe
 class stroom.query.api.JoinKey - public java.lang.String stroom.query.api.JoinKey.toString()
 class stroom.query.api.JoinType - public boolean stroom.query.api.JoinType.addsFields()
 class stroom.query.api.JoinType - public boolean stroom.query.api.JoinType.allowsJoinedConditionPushDown()
+class stroom.query.api.JoinType - public boolean stroom.query.api.JoinType.givesUnmatchedJoinedRows()
 class stroom.query.api.JoinType - public final boolean java.lang.Enum.equals(java.lang.Object)
 class stroom.query.api.JoinType - public final int java.lang.Enum.compareTo(E)
 class stroom.query.api.JoinType - public final int java.lang.Enum.hashCode()

@@ -90,8 +90,112 @@ class TestJoiningCoprocessors {
         final JoiningCoprocessors coprocessors = create(query, delegate, List.of(HR_ROWS));
 
         EVENTS_ROWS.forEach(row -> coprocessors.accept(eventRow(delegate, row)));
+        final List<List<String>> probed = delegate.rows("UserId", "Host", "hr.Department");
+        // A right or full join's rows that never matched come last, in no particular order.
+        coprocessors.giveUnmatchedJoinedRows(delegate);
+        final List<List<String>> all = delegate.rows("UserId", "Host", "hr.Department");
 
-        assertThat(delegate.rows("UserId", "Host", "hr.Department")).isEqualTo(joinByHand(type));
+        assertThat(probed).isEqualTo(joinByHand(type));
+        assertThat(all.subList(probed.size(), all.size()))
+                .containsExactlyInAnyOrderElementsOf(unmatchedByHand(type));
+    }
+
+    @Test
+    void matchesFromEveryNodeAreMergedBeforeTheUnmatchedRowsAreGiven() {
+        final Query query = query(null, join(JoinType.RIGHT, "hr", HR, "${UserId}", "${hr.Username}"));
+        // This node, which gives the unmatched rows, and another that searches some of the first
+        // source, with a copy of the table.
+        final CapturingCoprocessors delegate = new CapturingCoprocessors("UserId", "Host", "hr.Department");
+        final JoiningCoprocessors coprocessors = create(query, delegate, List.of(HR_ROWS));
+        final CapturingCoprocessors otherDelegate = new CapturingCoprocessors("UserId", "Host", "hr.Department");
+        final JoiningCoprocessors other = createCopy(query, otherDelegate, tables.getFirst());
+
+        // 'a' is found here and 'b' on the other node.
+        coprocessors.accept(eventRow(delegate, new String[]{"a", "h1"}));
+        other.accept(eventRow(otherDelegate, new String[]{"b", "h2"}));
+        final Output output = new Output(1024, -1);
+        other.writeMatched(output);
+        coprocessors.readMatched(new Input(output.toBytes()));
+        // Only what changed is sent again, so nothing is sent until there's another match.
+        final Output again = new Output(1024, -1);
+        other.writeMatched(again);
+        assertThat(new Input(again.toBytes()).readInt()).isZero();
+        final int probed = delegate.rows("UserId").size();
+        coprocessors.giveUnmatchedJoinedRows(delegate);
+
+        final List<List<String>> all = delegate.rows("UserId", "Host", "hr.Department");
+        assertThat(all.subList(probed, all.size())).containsExactlyInAnyOrder(
+                asList(null, null, "Blank"),
+                asList(null, null, "Null"),
+                asList(null, null, "Unused"));
+    }
+
+    @Test
+    void aWhereFieldWithAValueOnAnotherNodeGivesNoWarning() {
+        final Query query = query(null, join(JoinType.FULL, "hr", HR, "${UserId}", "${hr.Username}"));
+        final CapturingCoprocessors delegate = new CapturingCoprocessors("UserId", "Host", "hr.Department");
+        final List<JoinPlan> plans = JoinPlan.createAll(query, delegate.getFieldIndex(), new ExpressionContext(),
+                Map.of());
+        final JoiningCoprocessors coprocessors = JoiningCoprocessors.create(
+                delegate, query, plans, List.of(createTable(plans.getFirst(), HR_ROWS)), List.of("Host"));
+        final CapturingCoprocessors otherDelegate = new CapturingCoprocessors("UserId", "Host", "hr.Department");
+        final List<JoinPlan> otherPlans = JoinPlan.createAll(query, otherDelegate.getFieldIndex(),
+                new ExpressionContext(), Map.of());
+        final JoiningCoprocessors other = JoiningCoprocessors.create(
+                otherDelegate, query, otherPlans, List.of(createTable(otherPlans.getFirst(), HR_ROWS)),
+                List.of("Host"));
+
+        // Here, Host never has a value; on the other node it does.
+        coprocessors.accept(eventRow(delegate, new String[]{"a", null}));
+        other.accept(eventRow(otherDelegate, new String[]{"b", "h2"}));
+        final Output output = new Output(1024, -1);
+        other.writeMatched(output);
+        coprocessors.readMatched(new Input(output.toBytes()));
+        coprocessors.giveUnmatchedJoinedRows(delegate);
+
+        assertThat(delegate.errorConsumer.getErrorMessages()).isEmpty();
+    }
+
+    @Test
+    void aWhereFieldWithNoValueGivesAWarningOnlyOnceTheFirstSourceGaveRows() {
+        final Query query = query(null, join(JoinType.RIGHT, "hr", HR, "${UserId}", "${hr.Username}"));
+        final CapturingCoprocessors delegate = new CapturingCoprocessors("UserId", "Host", "hr.Department");
+        final List<JoinPlan> plans = JoinPlan.createAll(query, delegate.getFieldIndex(), new ExpressionContext(),
+                Map.of());
+        final JoiningCoprocessors coprocessors = JoiningCoprocessors.create(
+                delegate, query, plans, List.of(createTable(plans.getFirst(), HR_ROWS)), List.of("Host"));
+
+        // No rows, so nothing to say.
+        coprocessors.giveUnmatchedJoinedRows(row -> {
+        });
+        assertThat(delegate.errorConsumer.getErrorMessages()).isEmpty();
+
+        final CapturingCoprocessors again = new CapturingCoprocessors("UserId", "Host", "hr.Department");
+        final List<JoinPlan> againPlans = JoinPlan.createAll(query, again.getFieldIndex(), new ExpressionContext(),
+                Map.of());
+        final JoiningCoprocessors withRows = JoiningCoprocessors.create(
+                again, query, againPlans, List.of(createTable(againPlans.getFirst(), HR_ROWS)), List.of("Host"));
+        withRows.accept(eventRow(again, new String[]{"a", null}));
+        withRows.giveUnmatchedJoinedRows(row -> {
+        });
+        assertThat(again.errorConsumer.getErrorMessages())
+                .singleElement()
+                .satisfies(message -> assertThat(message.getMessage()).contains("'Host' had no value"));
+    }
+
+    @Test
+    void joinsWithoutUnmatchedRowsWriteNoMatches() {
+        final Query query = query(null, join(JoinType.LEFT, "hr", HR, "${UserId}", "${hr.Username}"));
+        final CapturingCoprocessors delegate = new CapturingCoprocessors("UserId", "hr.Department");
+        final JoiningCoprocessors coprocessors = create(query, delegate, List.of(HR_ROWS));
+        final Output output = new Output(1024, -1);
+
+        coprocessors.writeMatched(output);
+        coprocessors.giveUnmatchedJoinedRows(delegate);
+
+        assertThat(coprocessors.givesUnmatchedJoinedRows()).isFalse();
+        assertThat(output.position()).isZero();
+        assertThat(delegate.rows("UserId")).isEmpty();
     }
 
     @Test
@@ -232,6 +336,29 @@ class TestJoiningCoprocessors {
                         rows.add(asList(event[0], event[1], null));
                     }
                 }
+                case RIGHT -> departments.forEach(department -> rows.add(asList(event[0], event[1], department)));
+                case FULL -> {
+                    departments.forEach(department -> rows.add(asList(event[0], event[1], department)));
+                    if (departments.isEmpty()) {
+                        rows.add(asList(event[0], event[1], null));
+                    }
+                }
+            }
+        }
+        return rows;
+    }
+
+    // The rows of HR_ROWS that no row of EVENTS_ROWS matches, as a right or full join gives them last:
+    // with blank first-source fields, including those with no key.
+    private static List<List<String>> unmatchedByHand(final JoinType type) {
+        final List<List<String>> rows = new ArrayList<>();
+        if (type.givesUnmatchedJoinedRows()) {
+            for (final String[] hr : HR_ROWS) {
+                final boolean matched = isKey(hr[0])
+                                        && EVENTS_ROWS.stream().anyMatch(event -> hr[0].equals(event[0]));
+                if (!matched) {
+                    rows.add(asList(null, null, hr[1]));
+                }
             }
         }
         return rows;
@@ -262,12 +389,56 @@ class TestJoiningCoprocessors {
             for (final String[] source : joinedRows.get(i)) {
                 // The source's rows have fields Username/Name then Department/CostCentre.
                 final Val[] row = storedRow(plan.getStoredFields(), source);
-                table.add(plan.getRightKey(row), row);
+                // As the join search builds a table: a right or full join holds rows with no key too.
+                final String key = plan.getRightKey(row);
+                if (key == null && plan.getJoin().getType().givesUnmatchedJoinedRows()) {
+                    table.addWithoutKey(row);
+                } else {
+                    table.add(key, row);
+                }
             }
             table.complete();
             joinTables.add(table);
         }
         return JoiningCoprocessors.create(delegate, query, plans, joinTables);
+    }
+
+    // A join table of the given rows for a plan, as the join search builds one.
+    private JoinTable createTable(final JoinPlan plan, final List<String[]> rows) {
+        final JoinTable table = new JoinTable(
+                plan.getJoin().getAlias(),
+                plan.getStoredFields(),
+                JoinTestHelper.createLmdbEnvBuilder(tempDir),
+                JoinLimits.DEFAULT);
+        tables.add(table);
+        for (final String[] source : rows) {
+            final Val[] row = storedRow(plan.getStoredFields(), source);
+            final String key = plan.getRightKey(row);
+            if (key == null && plan.getJoin().getType().givesUnmatchedJoinedRows()) {
+                table.addWithoutKey(row);
+            } else {
+                table.add(key, row);
+            }
+        }
+        table.complete();
+        return table;
+    }
+
+    // Joins with a copy of a table, as another node has, its rows keeping their numbers.
+    private JoiningCoprocessors createCopy(final Query query,
+                                           final CapturingCoprocessors delegate,
+                                           final JoinTable source) {
+        final List<JoinPlan> plans = JoinPlan.createAll(
+                query, delegate.getFieldIndex(), new ExpressionContext(), Map.of());
+        final JoinTable copy = new JoinTable(
+                source.getName(),
+                source.getFields(),
+                JoinTestHelper.createLmdbEnvBuilder(tempDir),
+                JoinLimits.DEFAULT);
+        tables.add(copy);
+        source.forEachNumberedRow(copy::add);
+        copy.complete();
+        return JoiningCoprocessors.create(delegate, query, plans, List.of(copy));
     }
 
     // A joined source's row for the fields its table holds. The test sources have a key field then

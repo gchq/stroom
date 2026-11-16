@@ -385,7 +385,7 @@ class TestDataConnectionExamplePack extends AbstractCoreIntegrationTest {
 
     @Test
     void everyQueryIsValidStroomQl() {
-        assertThat(queries).hasSize(18);
+        assertThat(queries).hasSize(20);
         queries.forEach((name, queryDoc) ->
                 assertThatCode(() -> searchRequest(queryDoc.getQuery(), queryDoc.getTimeRange()))
                         .as(name)
@@ -487,6 +487,32 @@ class TestDataConnectionExamplePack extends AbstractCoreIntegrationTest {
                 List.of("Dev", "Analysis"),
                 List.of("Ella", "Platform"),
                 List.of("Gus", "Support"));
+    }
+
+    @Test
+    void rightJoinGivesEveryTeamWithItsPeople() {
+        assertThat(blankForNull(run("Join - teams with their people, with right join", 2))).containsExactly(
+                List.of("Analysis", "Dev"),
+                List.of("Data", "Ben"),
+                List.of("Platform", "Alice"),
+                List.of("Platform", "Ella"),
+                List.of("Research", ""),
+                List.of("Security", "Chloe"),
+                List.of("Support", "Gus"));
+    }
+
+    @Test
+    void fullOuterJoinGivesEveryPersonAndEveryTeam() {
+        assertThat(blankForNull(run("Join - people and teams, with full outer join", 4)))
+                .containsExactlyInAnyOrder(
+                        List.of("Alice", "Platform", "Platform", "6"),
+                        List.of("Ben", "Data", "Data", "4"),
+                        List.of("Chloe", "Security", "Security", "5"),
+                        List.of("Dev", "Analysis", "Analysis", "8"),
+                        List.of("Ella", "Platform", "Platform", "6"),
+                        List.of("Femi", "Design", "", ""),
+                        List.of("Gus", "Support", "Support", "3"),
+                        List.of("", "", "Research", "2"));
     }
 
     @Test

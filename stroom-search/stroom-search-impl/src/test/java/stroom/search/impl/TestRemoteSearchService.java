@@ -52,7 +52,7 @@ class TestRemoteSearchService {
     @BeforeEach
     void setUp() {
         joinTables = Mockito.mock(JoinTables.class);
-        registration = new Registration(Query.builder().build(), List.of(), OWNER, new AtomicInteger());
+        registration = new Registration(Query.builder().build(), List.of(), OWNER, new AtomicInteger(), true);
         Mockito.when(joinTables.acquire(QUERY_KEY)).thenReturn(Optional.of(registration));
         securityContext = Mockito.mock(SecurityContext.class);
         service = new RemoteSearchService(null, null, null, null, null, null, securityContext, joinTables, null);

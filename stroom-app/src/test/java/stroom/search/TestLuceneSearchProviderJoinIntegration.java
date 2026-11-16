@@ -111,6 +111,25 @@ class TestLuceneSearchProviderJoinIntegration extends AbstractCoreIntegrationTes
     }
 
     @Test
+    void indexEventsRightJoinedToACsvGiveTheUserWithNoEventsToo() {
+        final String withGhost = createCsv(
+                List.of(new DataColumn("Name", DataColumnType.TEXT), new DataColumn("Team", DataColumnType.TEXT)),
+                "Name,Team\nuser5,Red\nghost,Green\n");
+        final List<List<String>> rows = search("""
+                from "Test index"
+                right join "%s" as u on User = u.Name
+                group by u.Name, u.Team
+                sort by u.Name
+                select u.Name, u.Team, count() as Events""".formatted(withGhost), 3);
+
+        // The ghost has no events, so its one row comes from the join once the index is searched.
+        assertThat(rows).hasSize(2);
+        assertThat(rows.getFirst()).containsExactly("ghost", "Green", "1");
+        assertThat(rows.get(1).subList(0, 2)).containsExactly("user5", "Red");
+        assertThat(Long.parseLong(rows.get(1).get(2))).isGreaterThan(1);
+    }
+
+    @Test
     void indexEventsKeptOnlyForUsersInTheCsvAndGrouped() {
         final List<List<String>> rows = search("""
                 from "Test index"

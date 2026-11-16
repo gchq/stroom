@@ -18,6 +18,7 @@ package stroom.query.common.v2;
 
 import stroom.query.api.Column;
 import stroom.query.api.ExpressionUtil;
+import stroom.query.api.QueryJoin;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchTaskProgress;
 import stroom.query.api.datasource.QueryField;
@@ -50,6 +51,116 @@ class TestJoinSearchRunner extends AbstractJoinSearchTest {
                 List.of("c", "h3", ""),
                 List.of("a", "h4", "Sales"));
         assertThat(run.searchStore().get().getErrors()).isEmpty();
+    }
+
+    @Test
+    void rightJoinGivesTheJoinedRowsWithNoMatchLast() throws InterruptedException {
+        final JoinSearchRunner runner = createRunner(1_000_000);
+        final Run run = run(runner, """
+                from events
+                right join hr on UserId = hr.Username
+                select UserId, Host, hr.Department""", new FakeSources());
+
+        run.awaitSearchStore();
+        assertThat(rows(run.searchStore().get(), "UserId", "Host", "hr.Department")).containsExactlyInAnyOrder(
+                List.of("a", "h1", "Sales"),
+                List.of("b", "h2", "IT"),
+                List.of("a", "h4", "Sales"),
+                List.of("", "", "Unused"));
+        assertThat(run.searchStore().get().getErrors()).isEmpty();
+    }
+
+    @Test
+    void joinedRowsWithNoMatchAreGivenWhenTheCoprocessorsComplete() throws InterruptedException {
+        // As a provider that completes its coprocessors rather than its store does.
+        final FakeSources sources = new FakeSources();
+        sources.completeCoprocessors("events");
+        final JoinSearchRunner runner = createRunner(1_000_000);
+        final Run run = run(runner, """
+                from events
+                full join hr on UserId = hr.Username
+                select UserId, hr.Department""", sources);
+
+        run.awaitSearchStore();
+        assertThat(rows(run.searchStore().get(), "UserId", "hr.Department")).contains(List.of("", "Unused"));
+    }
+
+    @Test
+    void whereFieldWithNoValueAfterARightJoinGivesAWarning() throws InterruptedException {
+        // The fake events have no Missing field, as a data source that can search a field but not give
+        // it would give none, so where can never match it after the join.
+        final JoinSearchRunner runner = createRunner(1_000_000);
+        final Run run = run(runner, """
+                from events
+                right join hr on UserId = hr.Username
+                where Missing = 'x' and Host = 'h1'
+                select UserId, hr.Department""", new FakeSources());
+
+        run.awaitSearchStore();
+        assertThat(run.searchStore().get().getErrors())
+                .extracting(ErrorMessage::getMessage)
+                .singleElement()
+                .satisfies(message -> {
+                    assertThat(message).contains("'Missing' had no value in any row of the first source");
+                    assertThat(message).contains("bracketed query in from");
+                });
+    }
+
+    @Test
+    void whereFieldsWithValuesAfterARightJoinGiveNoWarning() throws InterruptedException {
+        final JoinSearchRunner runner = createRunner(1_000_000);
+        final Run run = run(runner, """
+                from events
+                right join hr on UserId = hr.Username
+                where Host = 'h1' or hr.Department = 'Unused'
+                select UserId, hr.Department""", new FakeSources());
+
+        run.awaitSearchStore();
+        // Every row is given, as where is the table's to apply when results are read.
+        assertThat(rows(run.searchStore().get(), "UserId", "hr.Department")).hasSize(4);
+        assertThat(run.searchStore().get().getErrors()).isEmpty();
+    }
+
+    @Test
+    void joinedRowsWithNoMatchAreLeftOutWhenTheFirstSourceFails() throws InterruptedException {
+        // The first source's matches aren't known, so every joined row would look unmatched.
+        final FakeSources sources = new FakeSources();
+        sources.fail("events");
+        final JoinSearchRunner runner = createRunner(1_000_000);
+        final Run run = run(runner, """
+                from events
+                right join hr on UserId = hr.Username
+                select UserId, hr.Department""", sources);
+
+        run.awaitSearchStore();
+        final ResultStore store = run.searchStore().get();
+        assertThat(rows(store, "UserId", "hr.Department")).isEmpty();
+        assertThat(store.getErrors())
+                .extracting(ErrorMessage::getMessage)
+                .anySatisfy(message -> assertThat(message).contains("events is down"))
+                .anySatisfy(message -> assertThat(message).contains("joined rows with no match were left out"));
+    }
+
+    @Test
+    void rightJoinThatIsNotLastFailsTheSearch() {
+        // StroomQL refuses this order, so the joins are swapped, as a search request built another
+        // way could have them.
+        final SearchRequest parsed = parse("""
+                from events
+                join hr as h on UserId = h.Username
+                right join hr on UserId = hr.Username
+                select UserId""");
+        final List<QueryJoin> joins = parsed.getQuery().getJoins();
+        final SearchRequest swapped = parsed.copy()
+                .query(parsed.getQuery().copy().joins(List.of(joins.get(1), joins.get(0))).build())
+                .build();
+        final JoinSearchRunner runner = createRunner(1_000_000);
+        final Run run = run(runner, swapped, new FakeSources(), new AtomicReference<>());
+
+        awaitComplete(run.placeholder());
+        assertThat(run.placeholder().getErrors())
+                .extracting(ErrorMessage::getMessage)
+                .anySatisfy(message -> assertThat(message).contains("A right join must be the last join line"));
     }
 
     @Test

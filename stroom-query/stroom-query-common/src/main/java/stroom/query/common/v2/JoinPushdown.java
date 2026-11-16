@@ -56,7 +56,8 @@ import java.util.regex.Pattern;
 /// of the first source that the data source can search with `in`, adds a term to the first source's
 /// query:
 ///
-/// * An inner or semi join adds `Field in (the keys)`, as a row with any other value has no match.
+/// * An inner, semi or right join adds `Field in (the keys)`, as a row with any other value has no
+///   match.
 ///   A data source that matches more loosely than the join, ignoring case for example, only lets
 ///   through rows the join then drops.
 /// * An anti join adds `not (Field in (the keys))`, but only for an ID, integer or long field, where
@@ -342,9 +343,12 @@ public class JoinPushdown {
                     : null);
         }
 
-        // A left join keeps every row, and the keys of a join on several keys can't be one 'in' term.
+        // Left and full joins keep every row of the first source, and the keys of a join on several
+        // keys can't be one 'in' term. A right join, like an inner one, gives only the first source's
+        // rows that match, and which of its own rows matched only depends on those.
         private static boolean mayPushDown(final QueryJoin join) {
-            return join.getType() != JoinType.LEFT && NullSafe.size(join.getKeys()) == 1;
+            final JoinType type = join.getType();
+            return type != JoinType.LEFT && type != JoinType.FULL && NullSafe.size(join.getKeys()) == 1;
         }
 
         /// Adds a join key.

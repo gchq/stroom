@@ -29,7 +29,13 @@ public enum JoinType implements HasDisplayValue {
     /// Each row of the first source with at least one match, once, with no joined fields.
     SEMI("semi join", "left semi join"),
     /// Each row of the first source with no match, with no joined fields.
-    ANTI("anti join", "left anti join");
+    ANTI("anti join", "left anti join"),
+    /// One row per match; rows of the joined source with no match are given once, with blank fields
+    /// of the first source, when the first source has been searched.
+    RIGHT("right join", "right outer join"),
+    /// One row per match; rows of either source with no match are given once, with blank fields of
+    /// the other, those of the joined source when the first source has been searched.
+    FULL("full join", "full outer join");
 
     private final String displayValue;
     private final String longSpelling;
@@ -70,17 +76,25 @@ public enum JoinType implements HasDisplayValue {
 
     /// Finds whether this kind of join adds the joined source's fields to its rows.
     ///
-    /// @return True for inner and left joins.
+    /// @return True for inner, left, right and full joins.
     public boolean addsFields() {
-        return this == INNER || this == LEFT;
+        return this != SEMI && this != ANTI;
+    }
+
+    /// Finds whether this kind of join gives the joined source's rows that never matched, once the
+    /// first source has been searched.
+    ///
+    /// @return True for right and full joins.
+    public boolean givesUnmatchedJoinedRows() {
+        return this == RIGHT || this == FULL;
     }
 
     /// Finds whether a condition that names only the joined source's fields can be moved into the
     /// joined source's own search without changing the result.
     ///
     /// @return True for inner and semi joins, where a joined row that fails the condition is dropped
-    /// either way. False for left and anti joins, where moving it would change which rows count as
-    /// unmatched.
+    /// either way. False for left, anti, right and full joins, where moving it would change which rows
+    /// count as unmatched.
     public boolean allowsJoinedConditionPushDown() {
         return this == INNER || this == SEMI;
     }

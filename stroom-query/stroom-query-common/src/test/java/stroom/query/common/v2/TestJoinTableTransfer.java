@@ -86,6 +86,29 @@ class TestJoinTableTransfer {
     }
 
     @Test
+    void copiedRowsKeepTheirNumbersAndRowsWithNoKey() {
+        final JoinTable hr = table("hr", List.of("Username", "Department"));
+        hr.add("b", JoinTestHelper.row("b", "IT"));
+        hr.addWithoutKey(JoinTestHelper.row("", "Blank"));
+        hr.add("a", JoinTestHelper.row("a", "Sales"));
+        hr.complete();
+
+        final JoinTable copy = copy(List.of(hr)).getFirst();
+        // The other node matches 'a', and this one learns of it by row number.
+        copy.forEachMatchNotingMatched("a", row -> {
+        });
+        final long[] words = copy.getMatched();
+        for (int i = 0; i < words.length; i++) {
+            hr.addMatched(i, words[i]);
+        }
+
+        final List<String> unmatched = new ArrayList<>();
+        hr.forEachUnmatchedRow(row -> unmatched.add(row[1].toString()));
+        assertThat(unmatched).containsExactlyInAnyOrder("IT", "Blank");
+        assertThat(copy.getRowCount()).isEqualTo(3);
+    }
+
+    @Test
     void noTablesCopyToNoTables() {
         assertThat(copy(List.of())).isEmpty();
     }

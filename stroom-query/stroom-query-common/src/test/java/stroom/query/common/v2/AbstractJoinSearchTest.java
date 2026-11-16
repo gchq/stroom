@@ -134,7 +134,15 @@ abstract class AbstractJoinSearchTest {
             final String stroomQl,
             final FakeSources sources,
             final AtomicReference<ResultStore> placeholderHolder) {
-        final SearchRequest request = parse(stroomQl).copy().key(new QueryKey(UUID.randomUUID().toString())).build();
+        return run(runner, parse(stroomQl), sources, placeholderHolder);
+    }
+
+    // Runs a search request, as one built without StroomQL could be.
+    Run run(final JoinSearchRunner runner,
+            final SearchRequest parsed,
+            final FakeSources sources,
+            final AtomicReference<ResultStore> placeholderHolder) {
+        final SearchRequest request = parsed.copy().key(new QueryKey(UUID.randomUUID().toString())).build();
         final ResultStore placeholder = runner.createPlaceholder(request);
         placeholderHolder.set(placeholder);
         createdStores.add(placeholder);
@@ -285,6 +293,7 @@ abstract class AbstractJoinSearchTest {
         final Map<String, Boolean> terminated = new ConcurrentHashMap<>();
         final Map<String, Boolean> failing = new ConcurrentHashMap<>();
         final Map<String, Boolean> warning = new ConcurrentHashMap<>();
+        final Map<String, Boolean> completingCoprocessors = new ConcurrentHashMap<>();
         final Map<String, Runnable> onStart = new ConcurrentHashMap<>();
 
         void holdBack(final String name) {
@@ -310,6 +319,12 @@ abstract class AbstractJoinSearchTest {
 
         void warn(final String name) {
             warning.put(name, true);
+        }
+
+        // Makes the named source's search complete its coprocessors rather than its store, as some
+        // providers do.
+        void completeCoprocessors(final String name) {
+            completingCoprocessors.put(name, true);
         }
 
         // Runs the action while the named source's search is being started, before its store is
@@ -390,7 +405,11 @@ abstract class AbstractJoinSearchTest {
             } catch (final RuntimeException e) {
                 store.addError(e);
             } finally {
-                store.signalComplete();
+                if (completingCoprocessors.getOrDefault(name, false)) {
+                    coprocessors.getCompletionState().signalComplete();
+                } else {
+                    store.signalComplete();
+                }
             }
         }
 

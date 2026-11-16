@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -57,6 +58,10 @@ import java.util.function.Consumer;
 ///
 /// The table holds at most [JoinLimits#maxRows()] rows and [JoinLimits#maxBytes()] bytes. Adding
 /// more fails with a [JoinTableFullException].
+///
+/// For a right or full join, the table also notes which of its rows have matched, so the rows that
+/// never did can be given once the other side has been searched, and holds the rows with no key,
+/// which never match.
 public final class JoinTable implements AutoCloseable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JoinTable.class);
@@ -74,6 +79,9 @@ public final class JoinTable implements AutoCloseable {
     // A buffer for the hash a lookup reads under, one for each thread that looks rows up.
     private static final ThreadLocal<ByteBuffer> PREFIX_BUFFER = ThreadLocal.withInitial(() ->
             ByteBuffer.allocateDirect(Long.BYTES));
+    // The key held with a row that has none. No row looking for matches has it, as a key made from
+    // values is never empty, so these rows are only read by forEachRow.
+    private static final String NO_KEY = "";
 
     private final String name;
     private final List<String> fields;
@@ -85,7 +93,12 @@ public final class JoinTable implements AutoCloseable {
     private ByteBuffer valueBuffer = ByteBuffer.allocateDirect(1024);
     private WriteTxn writeTxn;
     private long rowCount;
+    // The highest row number held. Rows copied from another node keep the numbers they had there.
+    private long maxRowNumber;
     private long byteCount;
+    // One bit for each row number, set once the row has matched, made when a right or full join first
+    // uses it.
+    private volatile AtomicLongArray matched;
     private long uncommittedRows;
     private volatile boolean complete;
     // Reading a closed LMDB environment can crash the JVM, so lookups hold the read lock and close
@@ -124,11 +137,30 @@ public final class JoinTable implements AutoCloseable {
     /// @param row The row's values.
     /// @throws JoinTableFullException If the table would hold more rows or bytes than its limits.
     public void add(final String key, final Val[] row) {
+        if (key != null) {
+            add(rowCount + 1, key, row);
+        }
+    }
+
+    /// Adds a row of the bounded side that has no key, which can never match, but which a right or
+    /// full join still gives once the other side has been searched.
+    ///
+    /// @param row The row's values.
+    /// @throws JoinTableFullException If the table would hold more rows or bytes than its limits.
+    void addWithoutKey(final Val[] row) {
+        add(rowCount + 1, NO_KEY, row);
+    }
+
+    /// Adds a row under the number it has in the table it is copied from, so that which rows have
+    /// matched can be told between the tables.
+    ///
+    /// @param rowNumber The row's number, unique in the table.
+    /// @param key       The row's join key, empty for a row with none.
+    /// @param row       The row's values.
+    /// @throws JoinTableFullException If the table would hold more rows or bytes than its limits.
+    void add(final long rowNumber, final String key, final Val[] row) {
         if (complete) {
             throw new IllegalStateException("The join table for '" + name + "' is already complete");
-        }
-        if (key == null) {
-            return;
         }
         if (row.length > MAX_FIELDS) {
             throw new IllegalArgumentException("A join can use at most " + MAX_FIELDS + " fields of '" + name + "'");
@@ -143,11 +175,12 @@ public final class JoinTable implements AutoCloseable {
             throw new JoinTableFullException(name, limits);
         }
         rowCount++;
+        maxRowNumber = Math.max(maxRowNumber, rowNumber);
         byteCount += KEY_LENGTH + valueLength;
 
         keyBuffer.clear();
         keyBuffer.putLong(hash(key));
-        keyBuffer.putLong(rowCount);
+        keyBuffer.putLong(rowNumber);
         keyBuffer.flip();
         if (valueBuffer.capacity() < valueLength) {
             valueBuffer = ByteBuffer.allocateDirect(Math.max(valueLength, valueBuffer.capacity() * 2));
@@ -182,7 +215,17 @@ public final class JoinTable implements AutoCloseable {
     /// @param consumer Takes each matching row.
     /// @return The number of matching rows.
     public int forEachMatch(final String key, final Consumer<Val[]> consumer) {
-        return readMatches(key, Integer.MAX_VALUE, consumer);
+        return readMatches(key, Integer.MAX_VALUE, consumer, false);
+    }
+
+    /// Calls the consumer with each row held under the key, as [#forEachMatch(String, Consumer)]
+    /// does, and notes that each of them has matched.
+    ///
+    /// @param key      The join key of the row looking for matches, or `null` if it has none.
+    /// @param consumer Takes each matching row.
+    /// @return The number of matching rows.
+    public int forEachMatchNotingMatched(final String key, final Consumer<Val[]> consumer) {
+        return readMatches(key, Integer.MAX_VALUE, consumer, true);
     }
 
     /// Finds whether any row is held under the key, reading only the keys held, not the rows.
@@ -191,18 +234,22 @@ public final class JoinTable implements AutoCloseable {
     ///            nothing matches.
     /// @return True if at least one row is held under the key.
     public boolean hasMatch(final String key) {
-        return readMatches(key, 1, null) > 0;
+        return readMatches(key, 1, null, false) > 0;
     }
 
     // Reads up to the given number of rows held under the key, passing each to the consumer as it is
-    // read, or only counting them if there is no consumer. The rows under the key's hash are read in
-    // one read transaction; those of another key with the same hash are skipped. Any failure is
-    // thrown, as a failed lookup must not look like a key with no matches.
-    private int readMatches(final String key, final int limit, final Consumer<Val[]> consumer) {
+    // read, or only counting them if there is no consumer, and noting that they matched if asked. The
+    // rows under the key's hash are read in one read transaction; those of another key with the same
+    // hash are skipped. Any failure is thrown, as a failed lookup must not look like a key with no
+    // matches.
+    private int readMatches(final String key,
+                            final int limit,
+                            final Consumer<Val[]> consumer,
+                            final boolean noteMatched) {
         if (!complete) {
             throw new IllegalStateException("The join table for '" + name + "' is not complete yet");
         }
-        if (key == null) {
+        if (key == null || NO_KEY.equals(key)) {
             return 0;
         }
         final ByteBuffer prefix = PREFIX_BUFFER.get();
@@ -218,10 +265,14 @@ public final class JoinTable implements AutoCloseable {
                     final LmdbIterable iterable = LmdbIterable.create(readTxn.get(), db.getDbi(), keyRange)) {
                 final Iterator<LmdbEntry> iterator = iterable.iterator();
                 while (count < limit && iterator.hasNext()) {
-                    final ByteBuffer value = iterator.next().getVal();
+                    final LmdbEntry entry = iterator.next();
+                    final ByteBuffer value = entry.getVal();
                     try (final KryoDataReader reader = new KryoDataReader(new ByteBufferInput(value))) {
                         if (key.equals(reader.readString())) {
                             count++;
+                            if (noteMatched) {
+                                noteMatched(getRowNumber(entry.getKey()));
+                            }
                             if (consumer != null) {
                                 consumer.accept(ValSerialiser.readArray(reader));
                             }
@@ -246,6 +297,82 @@ public final class JoinTable implements AutoCloseable {
     ///
     /// @param consumer Takes each row's join key and values.
     public void forEachRow(final BiConsumer<String, Val[]> consumer) {
+        forEachNumberedRow((rowNumber, key, row) -> consumer.accept(key, row));
+    }
+
+    /// Calls the consumer with every row held that has not matched, as a right or full join gives
+    /// them once the other side has been searched.
+    ///
+    /// @param consumer Takes each row's values.
+    public void forEachUnmatchedRow(final Consumer<Val[]> consumer) {
+        forEachNumberedRow((rowNumber, key, row) -> {
+            if (!isMatched(rowNumber)) {
+                consumer.accept(row);
+            }
+        });
+    }
+
+    /// Gets which rows have matched so far, as another node sends them to the node that gives the
+    /// rows that never matched.
+    ///
+    /// @return One bit for each row number, set if the row has matched.
+    public long[] getMatched() {
+        final AtomicLongArray matched = getMatchedArray();
+        final long[] words = new long[matched.length()];
+        for (int i = 0; i < words.length; i++) {
+            words[i] = matched.get(i);
+        }
+        return words;
+    }
+
+    /// Notes rows another node's copy of the table found matched.
+    ///
+    /// @param wordIndex The index of a word of [#getMatched()].
+    /// @param word      The word, whose set bits are rows that matched.
+    public void addMatched(final int wordIndex, final long word) {
+        final AtomicLongArray matched = getMatchedArray();
+        if (wordIndex < 0 || wordIndex >= matched.length()) {
+            throw new IllegalArgumentException("The matched rows of '" + name + "' are for a different table");
+        }
+        matched.accumulateAndGet(wordIndex, word, (a, b) -> a | b);
+    }
+
+    private void noteMatched(final long rowNumber) {
+        getMatchedArray().accumulateAndGet(
+                (int) (rowNumber / Long.SIZE), 1L << (rowNumber % Long.SIZE), (a, b) -> a | b);
+    }
+
+    private boolean isMatched(final long rowNumber) {
+        return (getMatchedArray().get((int) (rowNumber / Long.SIZE)) & (1L << (rowNumber % Long.SIZE))) != 0;
+    }
+
+    private AtomicLongArray getMatchedArray() {
+        if (!complete) {
+            throw new IllegalStateException("The join table for '" + name + "' is not complete yet");
+        }
+        AtomicLongArray matched = this.matched;
+        if (matched == null) {
+            synchronized (this) {
+                matched = this.matched;
+                if (matched == null) {
+                    matched = new AtomicLongArray(Math.toIntExact(maxRowNumber / Long.SIZE + 1));
+                    this.matched = matched;
+                }
+            }
+        }
+        return matched;
+    }
+
+    // The row number held after the key's hash in an LMDB key.
+    private static long getRowNumber(final ByteBuffer lmdbKey) {
+        return lmdbKey.getLong(lmdbKey.position() + Long.BYTES);
+    }
+
+    /// Calls the consumer with every row held, its number and its key, as for copying the table to
+    /// another node.
+    ///
+    /// @param consumer Takes each row's number, join key and values.
+    public void forEachNumberedRow(final RowConsumer consumer) {
         if (!complete) {
             throw new IllegalStateException("The join table for '" + name + "' is not complete yet");
         }
@@ -254,7 +381,7 @@ public final class JoinTable implements AutoCloseable {
         ByteBuffer after = null;
         while (true) {
             final List<RowEntry> batch = readBatch(after);
-            batch.forEach(entry -> consumer.accept(entry.key(), entry.row()));
+            batch.forEach(entry -> consumer.accept(getRowNumber(entry.lmdbKey()), entry.key(), entry.row()));
             if (batch.size() < ROWS_PER_BATCH) {
                 return;
             }
@@ -379,5 +506,21 @@ public final class JoinTable implements AutoCloseable {
     // A row read from the table: its LMDB key, for reading on after it, its join key and its values.
     private record RowEntry(ByteBuffer lmdbKey, String key, Val[] row) {
 
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Takes a row of a join table with its number and key.
+    @FunctionalInterface
+    public interface RowConsumer {
+
+        /// Takes a row.
+        ///
+        /// @param rowNumber The row's number, unique in the table.
+        /// @param key       The row's join key, empty for a row with none.
+        /// @param row       The row's values.
+        void accept(long rowNumber, String key, Val[] row);
     }
 }

@@ -61,6 +61,59 @@ class TestJoinTable {
     }
 
     @Test
+    void matchedRowsAreNotedOnlyWhenAskedAndTheRestAreGiven() {
+        try (final JoinTable table = createTable(JoinLimits.DEFAULT)) {
+            table.add("a", JoinTestHelper.row("a", "1"));
+            table.add("b", JoinTestHelper.row("b", "2"));
+            table.add("a", JoinTestHelper.row("a", "3"));
+            table.addWithoutKey(JoinTestHelper.row("", "4"));
+            table.complete();
+
+            // Looking up without noting leaves every row unmatched.
+            assertThat(table.hasMatch("a")).isTrue();
+            assertThat(matches(table, "b")).hasSize(1);
+            assertThat(unmatched(table)).containsExactlyInAnyOrder("1", "2", "3", "4");
+
+            table.forEachMatchNotingMatched("a", row -> {
+            });
+            // A row with no key is held but never matches.
+            assertThat(matches(table, "")).isEmpty();
+            assertThat(unmatched(table)).containsExactlyInAnyOrder("2", "4");
+        }
+    }
+
+    @Test
+    void matchesFromAnotherTableAreAddedByRowNumber() {
+        try (final JoinTable table = createTable(JoinLimits.DEFAULT);
+                final JoinTable other = createTable(JoinLimits.DEFAULT)) {
+            table.add("a", JoinTestHelper.row("a", "1"));
+            table.add("b", JoinTestHelper.row("b", "2"));
+            table.complete();
+            table.forEachNumberedRow(other::add);
+            other.complete();
+
+            other.forEachMatchNotingMatched("b", row -> {
+            });
+            final long[] words = other.getMatched();
+            for (int i = 0; i < words.length; i++) {
+                table.addMatched(i, words[i]);
+            }
+
+            assertThat(unmatched(table)).containsExactly("1");
+            assertThatThrownBy(() -> table.addMatched(words.length + 5, 1L))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("different table");
+        }
+    }
+
+    // The second value of each row that hasn't matched.
+    private static List<String> unmatched(final JoinTable table) {
+        final List<String> values = new ArrayList<>();
+        table.forEachUnmatchedRow(row -> values.add(row[1].toString()));
+        return values;
+    }
+
+    @Test
     void rowWithNoKeyIsNotHeldAndNoKeyMatchesNothing() {
         try (final JoinTable table = createTable(JoinLimits.DEFAULT)) {
             table.add(null, JoinTestHelper.row("x"));

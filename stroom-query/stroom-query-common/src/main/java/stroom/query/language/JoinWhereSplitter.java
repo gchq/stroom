@@ -43,6 +43,10 @@ import java.util.function.Function;
 /// runs on the joined rows, with its field names as written.
 public final class JoinWhereSplitter {
 
+    /// The start of the name of each hidden column that holds a field a `where` condition on the
+    /// joined rows tests (see [#renameFields]).
+    public static final String POST_JOIN_COLUMN_PREFIX = "__join_where_";
+
     // The owner of fields that belong to the first source. An alias can't be empty, so this never
     // clashes with one.
     private static final String FIRST_SOURCE = "";
@@ -53,15 +57,20 @@ public final class JoinWhereSplitter {
 
     /// Splits a `where` clause.
     ///
-    /// @param where         The `where` clause, or `null` if there is none.
-    /// @param firstAlias    The alias of the first source, or `null` if it has none.
-    /// @param firstIsQuery  True if the first source is a bracketed query, in which case nothing can
-    ///                      be pushed down to it and the whole clause runs on the joined rows.
-    /// @param joinedSources The joined sources, in the order they are joined.
+    /// @param where                The `where` clause, or `null` if there is none.
+    /// @param firstAlias           The alias of the first source, or `null` if it has none.
+    /// @param firstIsQuery         True if the first source is a bracketed query, in which case
+    ///                             nothing can be pushed down to it and the whole clause runs on the
+    ///                             joined rows.
+    /// @param firstPushDownAllowed False if conditions on the first source's fields must run on the
+    ///                             joined rows, as with a right or full join, which gives rows with
+    ///                             blank first-source fields that the conditions must also test.
+    /// @param joinedSources        The joined sources, in the order they are joined.
     /// @return The parts of the clause.
     public static Split split(final ExpressionOperator where,
                               final String firstAlias,
                               final boolean firstIsQuery,
+                              final boolean firstPushDownAllowed,
                               final List<JoinedSource> joinedSources) {
         final List<ExpressionItem> first = new ArrayList<>();
         final Map<String, List<ExpressionItem>> joined = new LinkedHashMap<>();
@@ -80,7 +89,11 @@ public final class JoinWhereSplitter {
                     // Names fields of more than one source.
                     postJoin.add(part);
                 } else if (owner.equals(FIRST_SOURCE)) {
-                    first.add(removePrefix(part, firstAlias));
+                    if (firstPushDownAllowed) {
+                        first.add(removePrefix(part, firstAlias));
+                    } else {
+                        postJoin.add(part);
+                    }
                 } else {
                     final JoinedSource joinedSource = findJoinedSource(owner, joinedSources);
                     if (joinedSource.pushDownAllowed()) {

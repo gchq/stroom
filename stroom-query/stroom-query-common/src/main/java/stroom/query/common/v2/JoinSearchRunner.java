@@ -213,6 +213,7 @@ public class JoinSearchRunner {
             boolean tablesRegistered = false;
             try {
                 checkNoNestedJoins();
+                checkRightAndFullJoins();
                 if (WindowedJoin.isWindowed(query)) {
                     searchWindowed();
                     return;
@@ -290,6 +291,26 @@ public class JoinSearchRunner {
             }
         }
 
+        // A right or full join gives its unmatched rows once every row has been probed, so it must be
+        // the last join line, and can't have a time window, whose rows are joined another way. The
+        // StroomQL parser refuses both too; a search request built another way is checked here.
+        private void checkRightAndFullJoins() {
+            final List<QueryJoin> joins = NullSafe.list(query.getJoins());
+            for (int i = 0; i < joins.size(); i++) {
+                final QueryJoin join = joins.get(i);
+                if (join.getType().givesUnmatchedJoinedRows()) {
+                    if (i < joins.size() - 1) {
+                        throw new IllegalArgumentException("A " + join.getType().getDisplayValue()
+                                                           + " must be the last join line");
+                    }
+                    if (join.getWindow() != null) {
+                        throw new IllegalArgumentException("A " + join.getType().getDisplayValue()
+                                                           + " can't have a time window");
+                    }
+                }
+            }
+        }
+
         // A bracketed query in a search with joins can't have joins of its own yet.
         private void checkNoNestedJoins() {
             final boolean nested = NullSafe.list(query.getJoins())
@@ -311,9 +332,15 @@ public class JoinSearchRunner {
             try {
                 final ResultStore child = searchChild(join.getQuery(), getJoinedTableSettings(join, plan), alias);
                 final List<String> storedFields = plan.getStoredFields();
+                // A right or full join gives rows with no key too, as rows that never matched.
+                final boolean keepsRowsWithoutKey = join.getType().givesUnmatchedJoinedRows();
                 readRows(child, alias, storedFields, row -> {
                     final String key = plan.getRightKey(row);
-                    table.add(key, row);
+                    if (key == null && keepsRowsWithoutKey) {
+                        table.addWithoutKey(row);
+                    } else {
+                        table.add(key, row);
+                    }
                     keys.add(key);
                 });
                 table.complete();

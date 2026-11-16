@@ -327,6 +327,27 @@ final class JoinClauses {
         fieldCountInKeys = fieldIndex.size();
     }
 
+    // A right or full join gives its unmatched rows once every row has been probed, so it must be the
+    // last join line, with no later join to apply to them, and can't have a time window, whose rows
+    // are joined another way.
+    private void checkRightAndFullJoins() {
+        for (int i = 0; i < joins.size(); i++) {
+            final PendingJoin join = joins.get(i);
+            if (join.type.givesUnmatchedJoinedRows()) {
+                final String kind = join.type.getDisplayValue();
+                if (i < joins.size() - 1) {
+                    throw new TokenException(join.token, "A " + kind + " must be the last join line, so it "
+                                                         + "can't be followed by another, or used with where "
+                                                         + "exists, where not exists or in (from ...), which "
+                                                         + "become joins after it");
+                }
+                if (join.window != null) {
+                    throw new TokenException(join.token, "A " + kind + " can't have a time window");
+                }
+            }
+        }
+    }
+
     /// Checks that a join line has had its keys before a clause other than its sql or keys ends it.
     ///
     /// @param keywordGroup The next clause.
@@ -355,11 +376,17 @@ final class JoinClauses {
             return;
         }
 
+        checkRightAndFullJoins();
         final List<JoinedSource> joinedSources = joins.stream()
                 .map(join -> new JoinedSource(join.alias,
                         join.type.allowsJoinedConditionPushDown() && join.bracketedQuery == null))
                 .toList();
-        final Split split = JoinWhereSplitter.split(whereExpression, firstAlias, fromQuery != null, joinedSources);
+        // A right or full join gives rows with blank first-source fields, which where tests too, as in
+        // SQL, so the first source's conditions run on the joined rows rather than in its search.
+        final boolean firstPushDownAllowed = joins.stream()
+                .noneMatch(join -> join.type.givesUnmatchedJoinedRows());
+        final Split split = JoinWhereSplitter.split(
+                whereExpression, firstAlias, fromQuery != null, firstPushDownAllowed, joinedSources);
 
         if (fromQuery != null) {
             final Query innerQuery = fromQuery.query();
@@ -400,7 +427,8 @@ final class JoinClauses {
 
         checkFieldlessAliasesUnused(split.postJoin());
         final ExpressionOperator postJoin = JoinWhereSplitter.renameFields(split.postJoin(), field ->
-                postJoinColumns.computeIfAbsent(field, k -> "__join_where_" + (postJoinColumns.size() + 1) + "__"));
+                postJoinColumns.computeIfAbsent(field, k ->
+                        JoinWhereSplitter.POST_JOIN_COLUMN_PREFIX + (postJoinColumns.size() + 1) + "__"));
         tableSettingsBuilder.valueFilter(JoinWhereSplitter.and(postJoin, filterExpression));
     }
 

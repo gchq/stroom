@@ -149,6 +149,99 @@ class TestJoinSearchRunnerIntegration extends AbstractCoreIntegrationTest {
     }
 
     @Test
+    void rightJoinGivesTheJoinedRowsWithNoMatchToo() {
+        final SearchResponse response = search("""
+                from "%s"
+                right outer join "%s" as hr on UserId = hr.Username
+                sort by hr.Username, Host
+                select hr.Username, Host""".formatted(events, hr));
+
+        assertThat(errors(response)).isEmpty();
+        assertThat(rows(response, 2)).containsExactly(
+                List.of("jbloggs", "h1"),
+                List.of("jbloggs", "h4"),
+                List.of("leaver", ""),
+                List.of("ssmith", "h2"));
+    }
+
+    @Test
+    void fullJoinGivesTheRowsWithNoMatchOfBothSources() {
+        final SearchResponse response = search("""
+                from "%s"
+                full join "%s" as hr on UserId = hr.Username
+                select Host, hr.Username""".formatted(events, hr));
+
+        assertThat(errors(response)).isEmpty();
+        assertThat(rows(response, 2)).containsExactlyInAnyOrder(
+                List.of("h1", "jbloggs"),
+                List.of("h2", "ssmith"),
+                List.of("h3", ""),
+                List.of("h4", "jbloggs"),
+                List.of("", "leaver"));
+    }
+
+    @Test
+    void fullJoinToABracketedFirstSource() {
+        final SearchResponse response = search("""
+                from (from "%s" where Bytes > 150 select UserId, Host) as e
+                full join "%s" as hr on e.UserId = hr.Username
+                select e.Host, hr.Username""".formatted(events, hr));
+
+        assertThat(errors(response)).isEmpty();
+        assertThat(rows(response, 2)).containsExactlyInAnyOrder(
+                List.of("h2", "ssmith"),
+                List.of("h3", ""),
+                List.of("h4", "jbloggs"),
+                List.of("", "leaver"));
+    }
+
+    @Test
+    void whereIsTestedOnTheJoinedRowsWithNoMatchToo() {
+        // The leaver has no events, so its row has a blank Host and fails this.
+        assertThat(rows(search("""
+                from "%s"
+                full join "%s" as hr on UserId = hr.Username
+                where Host = 'h1'
+                select Host, hr.Username""".formatted(events, hr)), 2))
+                .containsExactly(List.of("h1", "jbloggs"));
+        // Only the leaver is inactive, so only its row passes this.
+        assertThat(rows(search("""
+                from "%s"
+                right join "%s" as hr on UserId = hr.Username
+                where hr.Active = false
+                select Host, hr.Username""".formatted(events, hr)), 2))
+                .containsExactly(List.of("", "leaver"));
+    }
+
+    @Test
+    void whereFieldWithNoValueAfterAFullJoinGivesAWarning() {
+        // Events has no Region field, so where can never match it after the join.
+        final SearchResponse response = search("""
+                from "%s"
+                full join "%s" as hr on UserId = hr.Username
+                where Region = 'North'
+                select Host, hr.Username""".formatted(events, hr));
+
+        assertThat(rows(response, 2)).isEmpty();
+        assertThat(response.getErrorMessages())
+                .extracting(ErrorMessage::getMessage)
+                .anySatisfy(message -> assertThat(message).contains("'Region' had no value"));
+    }
+
+    @Test
+    void joinedRowsWithNoMatchAreGrouped() {
+        final SearchResponse response = search("""
+                from "%s"
+                right join "%s" as hr on UserId = hr.Username
+                group by hr.Department
+                sort by hr.Department
+                select hr.Department, count() as people""".formatted(events, hr));
+
+        assertThat(errors(response)).isEmpty();
+        assertThat(rows(response, 2)).containsExactly(List.of("IT", "1"), List.of("Sales", "3"));
+    }
+
+    @Test
     void existsAndInGiveTheSameRowsAsTheirJoins() {
         final String semi = """
                 from "%s" as e

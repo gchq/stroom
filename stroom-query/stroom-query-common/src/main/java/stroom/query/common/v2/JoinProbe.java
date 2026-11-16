@@ -34,6 +34,10 @@ import java.util.function.Consumer;
 /// - `left join` does the same, but passes on rows with no match with blank joined fields.
 /// - `semi join` passes on each row with at least one match, once, as it is.
 /// - `anti join` passes on each row with no match, as it is.
+/// - `right join` does as `join` does, and notes which rows of the table matched, so that once the
+///   rows it is joined to have all been probed, [#forEachUnmatchedRow(Consumer)] gives the rest.
+/// - `full join` does as `left join` does, and notes the rows of the table that matched in the same
+///   way.
 ///
 /// Rows are never changed in place; a row with joined fields added is a copy.
 public final class JoinProbe {
@@ -84,8 +88,8 @@ public final class JoinProbe {
     public void probe(final Val[] row, final Consumer<Val[]> consumer) {
         final String key = plan.getLeftKeys().getKey(row);
         switch (type) {
-            case INNER -> addMatches(row, key, consumer);
-            case LEFT -> {
+            case INNER, RIGHT -> addMatches(row, key, consumer);
+            case LEFT, FULL -> {
                 if (addMatches(row, key, consumer) == 0) {
                     consumer.accept(row);
                 }
@@ -103,18 +107,36 @@ public final class JoinProbe {
         }
     }
 
-    // Passes on a copy of the row for each match, with the match's fields added.
+    /// Gives each row of the table that never matched, with blank fields for the rows it is joined to,
+    /// as a right or full join does once those rows have all been probed.
+    ///
+    /// @param consumer Takes each row.
+    public void forEachUnmatchedRow(final Consumer<Val[]> consumer) {
+        table.forEachUnmatchedRow(match -> consumer.accept(addFields(new Val[rowLength], match)));
+    }
+
+    /// Gets the join line's kind.
+    ///
+    /// @return The kind of join.
+    public JoinType getType() {
+        return type;
+    }
+
+    /// Gets the join line's table.
+    ///
+    /// @return The table.
+    public JoinTable getTable() {
+        return table;
+    }
+
+    // Passes on a copy of the row for each match, with the match's fields added, noting the matches
+    // for a right or full join.
     private int addMatches(final Val[] row, final String key, final Consumer<Val[]> consumer) {
-        final int matchCount = table.forEachMatch(key, match -> {
-            final Val[] joined = Arrays.copyOf(row, Math.max(row.length, rowLength));
-            for (int i = 0; i < targetPositions.length && i < match.length; i++) {
-                final int pos = targetPositions[i];
-                if (pos >= 0) {
-                    joined[pos] = match[i];
-                }
-            }
-            consumer.accept(joined);
-        });
+        final Consumer<Val[]> addMatch = match ->
+                consumer.accept(addFields(Arrays.copyOf(row, Math.max(row.length, rowLength)), match));
+        final int matchCount = type.givesUnmatchedJoinedRows()
+                ? table.forEachMatchNotingMatched(key, addMatch)
+                : table.forEachMatch(key, addMatch);
         if (matchCount > MATCH_WARNING_COUNT && warnedOfManyMatches.compareAndSet(false, true)) {
             errorConsumer.add(Severity.WARNING, () -> "A row matched " + ModelStringUtil.formatCsv(matchCount)
                                                       + " rows of '" + plan.getJoin().getAlias()
@@ -122,5 +144,16 @@ public final class JoinProbe {
                                                       + "Check the keys of the join.");
         }
         return matchCount;
+    }
+
+    // Puts the fields of a row of the table into a row the join gives.
+    private Val[] addFields(final Val[] joined, final Val[] match) {
+        for (int i = 0; i < targetPositions.length && i < match.length; i++) {
+            final int pos = targetPositions[i];
+            if (pos >= 0) {
+                joined[pos] = match[i];
+            }
+        }
+        return joined;
     }
 }

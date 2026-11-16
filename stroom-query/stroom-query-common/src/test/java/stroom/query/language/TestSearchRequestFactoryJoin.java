@@ -98,6 +98,10 @@ class TestSearchRequestFactoryJoin {
         kinds.put("left semi join", JoinType.SEMI);
         kinds.put("anti join", JoinType.ANTI);
         kinds.put("left anti join", JoinType.ANTI);
+        kinds.put("right join", JoinType.RIGHT);
+        kinds.put("right outer join", JoinType.RIGHT);
+        kinds.put("full join", JoinType.FULL);
+        kinds.put("full outer join", JoinType.FULL);
         kinds.put("\nLEFT   OUTER\n JOIN", JoinType.LEFT);
         kinds.put("Left Semi Join", JoinType.SEMI);
         kinds.forEach((kind, type) ->
@@ -117,6 +121,67 @@ class TestSearchRequestFactoryJoin {
                 .isEqualTo(firstJoin("from events semi join hr as h on UserId = h.Name select UserId"));
         assertThat(firstJoin("from events left anti join hr as h on UserId = h.Name select UserId"))
                 .isEqualTo(firstJoin("from events anti join hr as h on UserId = h.Name select UserId"));
+    }
+
+    @Test
+    void rightAndFullJoinsMustBeTheLastJoinLine() {
+        for (final String kind : List.of("right join", "full outer join")) {
+            assertThatThrownBy(() -> create("from events " + kind + " hr as h on UserId = h.Name "
+                                            + "join depts as d on h.Dept = d.Name select UserId"))
+                    .as(kind)
+                    .isInstanceOf(TokenException.class)
+                    .hasMessageContaining("must be the last join line");
+            // An exists or in form becomes a join after the join lines.
+            assertThatThrownBy(() -> create("from events " + kind + " hr as h on UserId = h.Name "
+                                            + "where Host in (from hosts select Name) select UserId"))
+                    .as(kind)
+                    .isInstanceOf(TokenException.class)
+                    .hasMessageContaining("must be the last join line");
+        }
+        // Last, after other join lines, is fine.
+        assertThat(create("from events join depts as d on Dept = d.Name full join hr as h on UserId = h.Name "
+                          + "select UserId").getQuery().getJoins())
+                .extracting(QueryJoin::getType)
+                .containsExactly(JoinType.INNER, JoinType.FULL);
+    }
+
+    @Test
+    void rightAndFullJoinsCantHaveATimeWindow() {
+        assertThatThrownBy(() -> create("""
+                from logons as logon
+                right join exports as export on logon.UserId = export.UserId within 10m after logon.EventTime
+                select logon.UserId"""))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining("can't have a time window");
+    }
+
+    @Test
+    void whereRunsAfterRightAndFullJoins() {
+        // SQL tests where on the joined rows, including those with blank first-source fields, so no
+        // condition goes into either search.
+        for (final String kind : List.of("right join", "full join")) {
+            final SearchRequest request = create("from events " + kind + " hr as h on UserId = h.Name "
+                                                 + "where Host = 'h1' and h.Dept = 'IT' select UserId");
+            assertThat(fields(request.getQuery().getExpression())).as(kind).isEmpty();
+            assertThat(fields(request.getQuery().getJoins().getFirst().getQuery().getExpression()))
+                    .as(kind)
+                    .isEmpty();
+            assertThat(fields(tableSettings(request).getValueFilter())).as(kind).hasSize(2);
+        }
+        // An inner join pushes both down.
+        final SearchRequest inner = create("from events join hr as h on UserId = h.Name "
+                                           + "where Host = 'h1' and h.Dept = 'IT' select UserId");
+        assertThat(fields(inner.getQuery().getExpression())).containsExactly("Host");
+    }
+
+    @Test
+    void rightAndFullJoinsAddTheJoinedFields() {
+        for (final String kind : List.of("right join", "full join")) {
+            assertThat(create("from events " + kind + " hr as h on UserId = h.Name select UserId, h.Dept")
+                    .getQuery().getJoins().getFirst().getType().addsFields())
+                    .as(kind)
+                    .isTrue();
+        }
     }
 
     @Test
