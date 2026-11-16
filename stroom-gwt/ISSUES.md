@@ -1069,6 +1069,12 @@ run, two Pipeline Editor stories in wave 37's), alongside a burst of stories tha
 second attempt. Both came right at 4 workers. To do: the runner could wait for the stylesheets (e.g.
 `document.styleSheets` all loaded, or a known rule applied) before its first screenshot.
 
+**Top Bar Keyboard's screenshot without its tooltip** (16 November 2026, the #3695 final run at
+Medium with the leak check, 4 workers): the story passed, but its screenshot showed the Show Main
+Menu button neither focused nor with its tooltip. It had both at Large, Small and with spacing, and
+on a rerun of the story at Medium with the leak check. A timing flake in the screenshot, not a
+fault; worth a look if it comes back.
+
 ### Sample data installs the old visualisations, with no assets
 
 **Re-checked** (6 November 2026, against the code): the code is as recorded (`SetupSampleData`, `ReleasedContentPacks`; `content-packs.json` now names `v8.0-beta.5` (12 November 2026)), still not run against a database; the splitter overlay and its stories exist. The explorer resized beside a dashboard needs a check in the app.
