@@ -19,7 +19,6 @@ ext.moduleName = 'stroom.data.zip'
 dependencies {
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-task:stroom-task-api')
-    implementation project(':stroom-test-common')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
@@ -27,9 +26,11 @@ dependencies {
     implementation libs.guava
     implementation libs.slf4j.api
 
+    testImplementation project(':stroom-test-common')
+
+    testImplementation libs.bundles.common.test.implementation
     testImplementation libs.guice
     testImplementation libs.vavr
 
-    testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
 }

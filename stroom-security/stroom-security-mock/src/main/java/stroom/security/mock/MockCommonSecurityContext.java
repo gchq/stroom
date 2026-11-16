@@ -18,7 +18,6 @@ package stroom.security.mock;
 
 import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.UserIdentity;
-import stroom.security.impl.BasicUserIdentity;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionSet;
 import stroom.util.shared.UserRef;
@@ -38,7 +37,7 @@ public class MockCommonSecurityContext implements CommonSecurityContext {
             .fullName("Ad Min")
             .build();
 
-    private static final UserIdentity USER_IDENTITY = new BasicUserIdentity(MOCK_ADMIN);
+    private static final UserIdentity USER_IDENTITY = new MockUserIdentity(MOCK_ADMIN);
 
     public static MockCommonSecurityContext getInstance() {
         return INSTANCE;

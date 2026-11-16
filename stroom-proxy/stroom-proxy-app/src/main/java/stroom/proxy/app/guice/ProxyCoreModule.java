@@ -48,9 +48,6 @@ import stroom.receive.common.ReceiveDataRuleSetService;
 import stroom.receive.common.RemoteFeedModule;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.S3EventConsumer;
-import stroom.security.api.SecurityContext;
-import stroom.security.mock.MockSecurityContext;
-import stroom.task.impl.TaskContextModule;
 import stroom.util.BuildInfoProvider;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.entityevent.EntityEventBus;
@@ -71,7 +68,7 @@ public class ProxyCoreModule extends AbstractModule {
         install(new RemoteFeedModule());
 
         install(new EventStoreModule());
-        install(new TaskContextModule());
+//        install(new TaskContextModule());
         install(new ProxyJerseyModule());
         install(new ProxySecurityModule());
         install(new MockCollectionModule());
@@ -94,7 +91,7 @@ public class ProxyCoreModule extends AbstractModule {
         // Proxy binds to the remote impl
         bind(ReceiveDataRuleSetService.class).to(RemoteReceiveDataRuleSetServiceImpl.class);
         bind(RequestHandler.class).to(ProxyRequestHandler.class);
-        bind(SecurityContext.class).to(MockSecurityContext.class);
+//        bind(SecurityContext.class).to(MockSecurityContext.class);
 //        bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
 //        bind(StoreFactory.class).to(StoreFactoryImpl.class);
 //        bind(DocDependencyService.class).to(MockDocDependencyService.class);
