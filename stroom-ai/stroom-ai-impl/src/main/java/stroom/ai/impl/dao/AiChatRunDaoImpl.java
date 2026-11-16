@@ -86,7 +86,7 @@ public class AiChatRunDaoImpl implements AiChatRunDao {
                             final String nodeName,
                             final String sessionIdHash) {
         final Integer id = JooqUtil.contextResult(aiDbConnProvider, context ->
-                insert(context, chatId, userUuid, status, nodeName, sessionIdHash));
+                insert(context, chatId, userUuid, status, nodeName, sessionIdHash, false));
         return get(id).orElseThrow();
     }
 
@@ -96,6 +96,22 @@ public class AiChatRunDaoImpl implements AiChatRunDao {
                                                   final AiChatRunStatus status,
                                                   final String nodeName,
                                                   final String sessionIdHash) {
+        return createIfNoneActive(chatId, userUuid, status, nodeName, sessionIdHash, false);
+    }
+
+    @Override
+    public Optional<AiChatRun> createIdleCompactionIfNoneActive(final int chatId,
+                                                                final String userUuid,
+                                                                final String nodeName) {
+        return createIfNoneActive(chatId, userUuid, AiChatRunStatus.RUNNING, nodeName, null, true);
+    }
+
+    private Optional<AiChatRun> createIfNoneActive(final int chatId,
+                                                   final String userUuid,
+                                                   final AiChatRunStatus status,
+                                                   final String nodeName,
+                                                   final String sessionIdHash,
+                                                   final boolean idleCompaction) {
         final Integer id = JooqUtil.transactionResult(aiDbConnProvider, context -> {
             // Lock the chat so that a run cannot be started by someone else while this one is checked.
             context.select(AI_CHAT.ID)
@@ -111,7 +127,7 @@ public class AiChatRunDaoImpl implements AiChatRunDao {
                     .and(AI_CHAT_RUN.STATUS.in(ACTIVE_STATUSES)));
             return active
                     ? null
-                    : insert(context, chatId, userUuid, status, nodeName, sessionIdHash);
+                    : insert(context, chatId, userUuid, status, nodeName, sessionIdHash, idleCompaction);
         });
         return id == null
                 ? Optional.empty()
@@ -123,7 +139,8 @@ public class AiChatRunDaoImpl implements AiChatRunDao {
                            final String userUuid,
                            final AiChatRunStatus status,
                            final String nodeName,
-                           final String sessionIdHash) {
+                           final String sessionIdHash,
+                           final boolean idleCompaction) {
         final long now = System.currentTimeMillis();
         final Integer id = context
                 .insertInto(AI_CHAT_RUN)
@@ -135,6 +152,7 @@ public class AiChatRunDaoImpl implements AiChatRunDao {
                 .set(AI_CHAT_RUN.STATUS, status.getPrimitiveValue())
                 .set(AI_CHAT_RUN.NODE_NAME, nodeName)
                 .set(AI_CHAT_RUN.SESSION_ID_HASH, sessionIdHash)
+                .set(AI_CHAT_RUN.IDLE_COMPACTION, idleCompaction)
                 .set(AI_CHAT_RUN.HEARTBEAT_MS, now)
                 .set(AI_CHAT_RUN.START_TIME_MS, now)
                 .returning(AI_CHAT_RUN.ID)
@@ -158,6 +176,34 @@ public class AiChatRunDaoImpl implements AiChatRunDao {
                         .select()
                         .from(AI_CHAT_RUN)
                         .where(AI_CHAT_RUN.FK_AI_CHAT_ID.eq(chatId))
+                        .orderBy(AI_CHAT_RUN.ID.desc())
+                        .limit(1)
+                        .fetchOptional())
+                .map(RECORD_TO_RUN);
+    }
+
+    @Override
+    public Optional<AiChatRun> getLatestShown(final int chatId) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                        .select()
+                        .from(AI_CHAT_RUN)
+                        .where(AI_CHAT_RUN.FK_AI_CHAT_ID.eq(chatId))
+                        .and(AI_CHAT_RUN.STATUS.in(ACTIVE_STATUSES)
+                                .or(AI_CHAT_RUN.IDLE_COMPACTION.isFalse()))
+                        .orderBy(AI_CHAT_RUN.ID.desc())
+                        .limit(1)
+                        .fetchOptional())
+                .map(RECORD_TO_RUN);
+    }
+
+    @Override
+    public Optional<AiChatRun> getActiveIdleCompaction(final int chatId) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                        .select()
+                        .from(AI_CHAT_RUN)
+                        .where(AI_CHAT_RUN.FK_AI_CHAT_ID.eq(chatId))
+                        .and(AI_CHAT_RUN.STATUS.in(ACTIVE_STATUSES))
+                        .and(AI_CHAT_RUN.IDLE_COMPACTION.isTrue())
                         .orderBy(AI_CHAT_RUN.ID.desc())
                         .limit(1)
                         .fetchOptional())

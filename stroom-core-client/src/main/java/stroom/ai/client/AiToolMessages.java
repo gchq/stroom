@@ -452,7 +452,10 @@ final class AiToolMessages {
         final String count = getString(json, "messageCount");
         final String before = getString(json, "tokensBefore");
         final String after = getString(json, "tokensAfter");
-        final String title = "Earlier messages compacted" + (count != null
+        // A compaction made before the user came back says so, as they didn't ask for it and no question caused it.
+        final String title = (getBoolean(json, "idle")
+                ? "Compacted while the chat was idle"
+                : "Earlier messages compacted") + (count != null
                 ? ": " + count + " messages"
                 : "");
         return getBoolean(json, "stale")

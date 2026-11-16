@@ -54,6 +54,16 @@ public interface AiChatRunDao {
                                            String nodeName,
                                            String sessionIdHash);
 
+    /// Creates a run that compacts a chat left idle, unless the chat already has an active run, as
+    /// [#createIfNoneActive] does. The run is marked as an idle compaction (see [#getActiveIdleCompaction(int)]).
+    /// It has no HTTP session, and starts running straight away.
+    ///
+    /// @param chatId   The chat the run is for.
+    /// @param userUuid The chat's user.
+    /// @param nodeName The node that will run it.
+    /// @return The new run, or empty if the chat already has an active run.
+    Optional<AiChatRun> createIdleCompactionIfNoneActive(int chatId, String userUuid, String nodeName);
+
     /// @param runId The run's id.
     /// @return The run, if it exists.
     Optional<AiChatRun> get(int runId);
@@ -63,8 +73,18 @@ public interface AiChatRunDao {
     Optional<AiChatRun> getLatest(int chatId);
 
     /// @param chatId The chat.
+    /// @return The chat's most recent run that the user is shown: its active run, else its latest run that was not
+    /// an idle compaction. An idle compaction that has ended (e.g. stopped by the user) answered no question, so
+    /// there is nothing in it to resume.
+    Optional<AiChatRun> getLatestShown(int chatId);
+
+    /// @param chatId The chat.
     /// @return The chat's active run (one that has not ended), if there is one.
     Optional<AiChatRun> getActive(int chatId);
+
+    /// @param chatId The chat.
+    /// @return The chat's active run, if it has one and it is compacting the chat because it was left idle.
+    Optional<AiChatRun> getActiveIdleCompaction(int chatId);
 
     /// Changes a run's status, but only if it is currently one of the expected statuses. A change to an active
     /// status also updates its heartbeat, as whoever made it is working on it now.

@@ -32,6 +32,7 @@ import dev.langchain4j.exception.HttpException;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.output.TokenUsage;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -54,7 +55,7 @@ class TestChatCompactor {
     private final ContextAssembler assembler = new ContextAssembler(
             () -> null, AiConfig::new, null, aiService, null, null, tracker, null, null);
     private final ChatCompactor compactor = new ChatCompactor(aiService, assembler, AiConfig::new, () -> null,
-            new ModelStreamer(aiService));
+            new ModelStreamer(aiService), null);
 
     {
         Mockito.when(tracker.getCorrection(Mockito.anyInt())).thenReturn(Optional.empty());
@@ -111,7 +112,7 @@ class TestChatCompactor {
     @Test
     void testAuto_usesTheStoredCompaction() {
         final List<AiChatMessage> history = new ArrayList<>(turns(5, 400));
-        history.add(compactionMessage(100, new CompactionRecord(30, 0, null, 0, 0, 0, false, false)));
+        history.add(compactionMessage(100, new CompactionRecord(30, 0, null, 0, 0, 0, false, false, false)));
         history(history);
 
         final List<ChatMessage> messages = compactor.assemble(request(), 1, Map.of(), model(100_000), null,
@@ -124,7 +125,7 @@ class TestChatCompactor {
     @Test
     void testStaleCompactionIsIgnored() {
         final List<AiChatMessage> history = new ArrayList<>(turns(5, 400));
-        history.add(compactionMessage(100, new CompactionRecord(30, 0, null, 0, 0, 0, false, true)));
+        history.add(compactionMessage(100, new CompactionRecord(30, 0, null, 0, 0, 0, false, false, true)));
         history(history);
 
         assertThat(ContextAssembler.currentCompaction(history)).isEqualTo(CompactionRecord.NONE);
@@ -266,7 +267,7 @@ class TestChatCompactor {
         final List<AiChatMessage> history = new ArrayList<>(turns(3, 100));
         history.removeLast();
         final List<AiChatMessage> afterwards = new ArrayList<>(history);
-        afterwards.add(compactionMessage(100, new CompactionRecord(10, 10, "S", 0, 0, 0, true, false)));
+        afterwards.add(compactionMessage(100, new CompactionRecord(10, 10, "S", 0, 0, 0, true, false, false)));
         Mockito.when(aiService.getMessages(1)).thenReturn(history, history, afterwards);
         final SummaryModel model = new SummaryModel("S");
 
@@ -317,8 +318,8 @@ class TestChatCompactor {
     void testOnTurnChanged() {
         final List<AiChatMessage> history = new ArrayList<>(turns(3, 100));
         history.add(new AiChatMessage(25, 1, 0L, AiMessageType.TURN_DIGEST, null, "d", 20, null));
-        history.add(compactionMessage(100, new CompactionRecord(10, 0, null, 0, 0, 0, false, false)));
-        history.add(compactionMessage(101, new CompactionRecord(20, 0, null, 0, 0, 0, false, false)));
+        history.add(compactionMessage(100, new CompactionRecord(10, 0, null, 0, 0, 0, false, false, false)));
+        history.add(compactionMessage(101, new CompactionRecord(20, 0, null, 0, 0, 0, false, false, false)));
         history(history);
 
         compactor.onTurnChanged(1, 20);
@@ -353,8 +354,125 @@ class TestChatCompactor {
         assertThat(ChatCompactor.finishedTurns(List.of())).isEmpty();
     }
 
+    @Test
+    void testIdle_underTheIdleThresholdDoesNothing() {
+        final List<AiChatMessage> history = answeredTurns(5, 4_000);
+        history(history);
+        final OpenAIModelDoc model = modelFilledTo(history, 50);
+
+        compactor.assemble(noQuestion(), 1, Map.of(), model, null, CompactionMode.IDLE, null, () -> false);
+
+        assertThat(compactor.isOverIdleThreshold(1, model)).isFalse();
+        Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString());
+    }
+
+    @Test
+    void testIdle_betweenTheIdleAndAutomaticThresholdsOlderTurnsBecomeDigests() {
+        // 5 answered turns, with no question waiting, filling 70% of the budget: under the 80% a question would
+        // compact at, over the 60% an idle chat is compacted at.
+        final List<AiChatMessage> history = answeredTurns(5, 4_000);
+        history(history);
+        final OpenAIModelDoc model = modelFilledTo(history, 70);
+
+        assertThat(compactor.isOverIdleThreshold(1, model)).isTrue();
+        compactor.assemble(noQuestion(), 1, Map.of(), model, null, CompactionMode.AUTO, null, () -> false);
+        Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString());
+
+        compactor.assemble(noQuestion(), 1, Map.of(), model, null, CompactionMode.IDLE, null, () -> false);
+
+        final CompactionRecord stored = storedCompaction();
+        // Every answered turn has finished, and the latest 2 (40 and 50) are kept in full.
+        assertThat(stored.digestsUpToTurnId()).isEqualTo(30);
+        // The digests were enough, so no summary was asked for.
+        assertThat(stored.summaryUpToTurnId()).isZero();
+        assertThat(stored.summary()).isNull();
+        assertThat(stored.idle()).isTrue();
+        assertThat(stored.manual()).isFalse();
+        assertThat(stored.tokensAfter()).isLessThan(stored.tokensBefore());
+    }
+
+    @Test
+    void testIdle_aSummaryIsWrittenOnlyIfTheDigestsAreStillOverTheIdleThreshold() {
+        final AiChatRunManager runManager = Mockito.mock(AiChatRunManager.class);
+        final ChatCompactor withRuns = new ChatCompactor(aiService, assembler, AiConfig::new, () -> null,
+                new ModelStreamer(aiService), () -> runManager);
+        history(answeredTurns(40, 2_000));
+        final SummaryModel model = new SummaryModel("The SUMMARY.");
+
+        withRuns.assemble(noQuestion(), 1, Map.of(), model(8_000), model, CompactionMode.IDLE, null, () -> false);
+
+        final CompactionRecord stored = storedCompaction();
+        assertThat(stored.summary()).isEqualTo("The SUMMARY.");
+        assertThat(stored.summaryUpToTurnId()).isEqualTo(stored.digestsUpToTurnId()).isEqualTo(380);
+        assertThat(stored.idle()).isTrue();
+        // The summary's tokens count towards the run that wrote it.
+        Mockito.verify(runManager).addUsage(1, 120, 30, 0);
+    }
+
+    @Test
+    void testIdle_aModelWithNoKnownWindowIsNeverOverTheIdleThreshold() {
+        history(answeredTurns(40, 2_000));
+
+        assertThat(compactor.isOverIdleThreshold(1, model(0))).isFalse();
+        assertThat(compactor.isOverIdleThreshold(1, null)).isFalse();
+    }
+
+    @Test
+    void testCompactWhileIdle() {
+        final List<AiChatMessage> history = answeredTurns(5, 4_000);
+        final List<AiChatMessage> afterwards = new ArrayList<>(history);
+        afterwards.add(compactionMessage(100, new CompactionRecord(30, 0, null, 0, 0, 0, false, true, false)));
+        // Read before, while and after compacting.
+        Mockito.when(aiService.getMessages(1)).thenReturn(history, history, afterwards);
+        final OpenAIModelDoc model = modelFilledTo(history, 70);
+
+        assertThat(compactor.compactWhileIdle(1, model, null, () -> false)).isTrue();
+
+        assertThat(storedCompaction().idle()).isTrue();
+    }
+
+    @Test
+    void testCompactWhileIdle_nothingToDoUnderTheIdleThreshold() {
+        final List<AiChatMessage> history = answeredTurns(5, 4_000);
+        history(history);
+
+        assertThat(compactor.compactWhileIdle(1, modelFilledTo(history, 40), null, () -> false)).isFalse();
+    }
+
+    @Test
+    void testIdle_aCompactionStoredBeforeIdleCompactionExistedReadsAsNotIdle() {
+        final String stored = "{\"digestsUpToTurnId\":30,\"summaryUpToTurnId\":0,\"tokensBefore\":9000,"
+                              + "\"tokensAfter\":1000,\"messageCount\":6,\"manual\":true,\"stale\":false}";
+
+        final CompactionRecord record = JsonUtil.readValue(stored, CompactionRecord.class);
+
+        assertThat(record.manual()).isTrue();
+        assertThat(record.idle()).isFalse();
+        assertThat(record.digestsUpToTurnId()).isEqualTo(30);
+    }
+
     private void history(final List<AiChatMessage> history) {
         Mockito.when(aiService.getMessages(1)).thenReturn(history);
+    }
+
+    /// @return {@code count} answered turns, with no question waiting, as in a chat left idle.
+    private static List<AiChatMessage> answeredTurns(final int count, final int answerChars) {
+        final List<AiChatMessage> history = new ArrayList<>(turns(count, answerChars));
+        history.removeLast();
+        return history;
+    }
+
+    /// @return A model whose budget the chat fills to {@code percent}, as it stands with no question.
+    private OpenAIModelDoc modelFilledTo(final List<AiChatMessage> history, final int percent) {
+        // Assembled as the compactor does for such a model (with tools, so with the system prompt's tool guidance).
+        final long tokens = assembler.estimateTokens(1, assembler.assemble(noQuestion(), 1, Map.of(), history,
+                CompactionRecord.NONE, ChatCompactor.tablesAsProfiles(model(1))));
+        final long budget = tokens * 100 / percent;
+        return model((int) (budget + AiCompactionConfig.DEFAULT_REPLY_RESERVE_TOKENS));
+    }
+
+    private static AskStroomAiRequest noQuestion() {
+        return new AskStroomAiRequest(null, null, null, "");
     }
 
     private CompactionRecord storedCompaction() {
@@ -406,7 +524,10 @@ class TestChatCompactor {
         @Override
         public ChatResponse doChat(final ChatRequest chatRequest) {
             request = chatRequest;
-            return ChatResponse.builder().aiMessage(AiMessage.from(summary)).build();
+            return ChatResponse.builder()
+                    .aiMessage(AiMessage.from(summary))
+                    .tokenUsage(new TokenUsage(120, 30))
+                    .build();
         }
     }
 }

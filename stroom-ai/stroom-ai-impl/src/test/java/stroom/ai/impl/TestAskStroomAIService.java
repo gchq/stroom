@@ -743,7 +743,7 @@ class TestAskStroomAIService {
     void aFailureMidTurnFailsTheRunSoThatItCanBeResumed() {
         final AiChatRun failed = new AiChatRun(2, 1, AiChatRunStatus.FAILED, AiChatRunStopReason.ANSWER_FAILED, 0L,
                 1L, false, "boom");
-        Mockito.when(runDao.getLatest(1)).thenReturn(Optional.of(failed));
+        Mockito.when(runDao.getLatestShown(1)).thenReturn(Optional.of(failed));
         // The turn had taken steps before the model failed.
         Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
                 message(1, AiMessageType.USER_MESSAGE, "Build me a feed."),
@@ -1060,7 +1060,7 @@ class TestAskStroomAIService {
     @Test
     void testPollMessages_streamedTextIsReportedAsItStandsNotAsNewMessages() {
         final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
-        Mockito.when(runDao.getLatest(1)).thenReturn(Optional.of(running));
+        Mockito.when(runDao.getLatestShown(1)).thenReturn(Optional.of(running));
         Mockito.when(runDao.interruptStale(Mockito.anyLong())).thenReturn(List.of());
         Mockito.when(aiService.getAttachmentsByChatId(1)).thenReturn(List.of());
         Mockito.when(aiService.getWorkingMessage(1)).thenReturn(Optional.empty());
@@ -1086,7 +1086,7 @@ class TestAskStroomAIService {
         final AiChatRun waiting = new AiChatRun(5, 1, AiChatRunStatus.WAITING_FOR_USER,
                 AiChatRunStopReason.NEEDS_INPUT, 0L, null, false, null);
         final AtomicInteger reads = new AtomicInteger();
-        Mockito.when(runDao.getLatest(1)).thenAnswer(invocation -> Optional.of(reads.getAndIncrement() == 0
+        Mockito.when(runDao.getLatestShown(1)).thenAnswer(invocation -> Optional.of(reads.getAndIncrement() == 0
                 ? running
                 : waiting));
         Mockito.when(runDao.interruptStale(Mockito.anyLong())).thenReturn(List.of());
@@ -1108,7 +1108,7 @@ class TestAskStroomAIService {
 
     @Test
     void testPollMessages_nothingIsStreamedWithoutAnActiveRun() {
-        Mockito.when(runDao.getLatest(1)).thenReturn(Optional.empty());
+        Mockito.when(runDao.getLatestShown(1)).thenReturn(Optional.empty());
         Mockito.when(aiService.getAttachmentsByChatId(1)).thenReturn(List.of());
         Mockito.when(aiService.getWorkingMessage(1)).thenReturn(Optional.empty());
         Mockito.when(aiService.getMessagesSince(1, 2)).thenReturn(List.of());
@@ -1121,7 +1121,7 @@ class TestAskStroomAIService {
 
     @Test
     void testPollMessages_watchedFormsAreSentAsTheyNowStand() {
-        Mockito.when(runDao.getLatest(1)).thenReturn(Optional.empty());
+        Mockito.when(runDao.getLatestShown(1)).thenReturn(Optional.empty());
         Mockito.when(aiService.getAttachmentsByChatId(1)).thenReturn(List.of());
         Mockito.when(aiService.getWorkingMessage(1)).thenReturn(Optional.empty());
         Mockito.when(aiService.getMessagesSince(1, 9)).thenReturn(List.of());
@@ -1188,5 +1188,214 @@ class TestAskStroomAIService {
         assertThat(AskStroomAIService.isDebugDetailEnabled(null, off)).isFalse();
         assertThat(AskStroomAIService.isDebugDetailEnabled(null, null))
                 .isEqualTo(AskStroomAiConfig.DEFAULT_ENABLE_DEBUG_DETAIL);
+    }
+
+    @Test
+    void testAskStroomAi_aQuestionDuringAnIdleCompactionWaitsForItThenStartsAsUsual() {
+        // Seen as the reason for idle compaction: without waiting, the question would have steered a run that
+        // answers nothing, and never been answered.
+        final AiChatRun idle = new AiChatRun(7, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        final AiChatRun done = new AiChatRun(7, 1, AiChatRunStatus.DONE, null, 0L, 1L, false, null);
+        Mockito.when(runDao.getActiveIdleCompaction(1)).thenReturn(Optional.of(idle));
+        // Still working the first two times it is looked at, then done.
+        Mockito.when(runDao.get(7)).thenReturn(Optional.of(idle), Optional.of(idle), Optional.of(done));
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+
+        service().askStroomAi(new AskStroomAiRequest(chat, null, null, "question"));
+
+        final InOrder inOrder = Mockito.inOrder(runDao, runManager);
+        inOrder.verify(runDao, Mockito.times(3)).get(7);
+        inOrder.verify(runManager).start(Mockito.eq(1), Mockito.any());
+        // Not given to the compaction to steer.
+        Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.eq(1),
+                Mockito.eq(AiMessageType.QUEUED_STEER_MESSAGE), Mockito.any(), Mockito.anyString());
+    }
+
+    @Test
+    void testAskStroomAi_aQuestionWaitsForAnIdleCompactionOnlySoLong() {
+        final AiChatRun idle = new AiChatRun(7, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        Mockito.when(runDao.getActiveIdleCompaction(1)).thenReturn(Optional.of(idle));
+        Mockito.when(runDao.get(7)).thenReturn(Optional.of(idle));
+        final AskStroomAIService service = service();
+        service.setIdleCompactionWait(java.time.Duration.ofMillis(300));
+
+        assertThatThrownBy(() -> service.askStroomAi(new AskStroomAiRequest(chat, null, null, "question")))
+                .isInstanceOf(AiChatRunManager.AiChatBusyException.class)
+                .hasMessage(AskStroomAIService.IDLE_COMPACTION_TIMED_OUT);
+        Mockito.verify(runManager, Mockito.never()).start(Mockito.anyInt(), Mockito.any());
+    }
+
+    @Test
+    void testAskStroomAi_anIdleCompactionStartingBetweenTheWaitAndTheSteerIsWaitedFor() {
+        // Seen in review: the question was stored as a steer of the idle compaction, which never reads steers, so
+        // it was lost.
+        final AiChatRun idle = new AiChatRun(7, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        final AiChatRun done = new AiChatRun(7, 1, AiChatRunStatus.DONE, null, 0L, 1L, false, null);
+        // None when first waited for; there when the steer looks, and when waited for again; then gone.
+        Mockito.when(runDao.getActiveIdleCompaction(1)).thenReturn(Optional.empty(), Optional.of(idle),
+                Optional.of(idle), Optional.empty());
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(idle), Optional.empty());
+        Mockito.when(runDao.get(7)).thenReturn(Optional.of(done));
+
+        service().askStroomAi(new AskStroomAiRequest(chat, null, null, "question"));
+
+        Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.eq(1),
+                Mockito.eq(AiMessageType.QUEUED_STEER_MESSAGE), Mockito.any(), Mockito.anyString());
+        Mockito.verify(runManager).start(Mockito.eq(1), Mockito.any());
+    }
+
+    @Test
+    void testAskStroomAi_aSteerStoredAsAnIdleCompactionTakesOverIsTakenBack() {
+        // The run being steered finished as the message was stored, and an idle compaction started in its place.
+        final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        final AiChatRun idle = new AiChatRun(7, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        final AiChatRun done = new AiChatRun(7, 1, AiChatRunStatus.DONE, null, 0L, 1L, false, null);
+        final AiChatMessage steer = new AiChatMessage(30, 1, 0L, AiMessageType.QUEUED_STEER_MESSAGE, null, "q",
+                10, null);
+        Mockito.when(aiService.storeMessage(Mockito.eq(1), Mockito.eq(AiMessageType.QUEUED_STEER_MESSAGE),
+                Mockito.any(), Mockito.anyString())).thenReturn(steer);
+        // Waited for: none. Steered: not idle, then idle once the steer is stored. Waited for: there, then gone.
+        Mockito.when(runDao.getActiveIdleCompaction(1)).thenReturn(Optional.empty(), Optional.empty(),
+                Optional.of(idle), Optional.of(idle), Optional.empty());
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(running), Optional.of(idle), Optional.empty());
+        Mockito.when(runDao.get(7)).thenReturn(Optional.of(done));
+
+        service().askStroomAi(new AskStroomAiRequest(chat, null, null, "question"));
+
+        Mockito.verify(aiService).deleteMessage(30);
+        Mockito.verify(runManager).start(Mockito.eq(1), Mockito.any());
+    }
+
+    @Test
+    void testAskStroomAi_anIdleCompactionStartingBetweenTheSteerAndTheStartIsWaitedFor() {
+        // Seen in review: the steer found no run, then the job's idle compaction started, so the question's start
+        // failed as busy.
+        final AiChatRun idle = new AiChatRun(7, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        final AiChatRun done = new AiChatRun(7, 1, AiChatRunStatus.DONE, null, 0L, 1L, false, null);
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+        // None when first waited for; there once the start fails, and when waited for again; then gone.
+        Mockito.when(runDao.getActiveIdleCompaction(1)).thenReturn(Optional.empty(), Optional.of(idle),
+                Optional.of(idle), Optional.empty());
+        Mockito.when(runDao.get(7)).thenReturn(Optional.of(done));
+        Mockito.when(runManager.start(Mockito.eq(1), Mockito.any()))
+                .thenThrow(new AiChatRunManager.AiChatBusyException(1))
+                .thenReturn(new AiChatRun(8, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null));
+
+        service().askStroomAi(new AskStroomAiRequest(chat, null, null, "question"));
+
+        Mockito.verify(runManager, Mockito.times(2)).start(Mockito.eq(1), Mockito.any());
+    }
+
+    @Test
+    void testAskStroomAi_aBusyStartForAnyOtherRunIsNotRetried() {
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+        Mockito.when(runDao.getActiveIdleCompaction(1)).thenReturn(Optional.empty());
+        Mockito.when(runManager.start(Mockito.eq(1), Mockito.any()))
+                .thenThrow(new AiChatRunManager.AiChatBusyException(1));
+
+        assertThatThrownBy(() -> service().askStroomAi(new AskStroomAiRequest(chat, null, null, "question")))
+                .isInstanceOf(AiChatRunManager.AiChatBusyException.class)
+                .hasMessageNotContaining("idle");
+        Mockito.verify(runManager, Mockito.times(1)).start(Mockito.eq(1), Mockito.any());
+    }
+
+    @Test
+    void testAskStroomAi_idleCompactionsThatKeepStartingAreWaitedForOnlySoOften() {
+        // Each time it is waited for, it has ended, but another has started by the time the steer looks.
+        final AiChatRun idle = new AiChatRun(7, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        final AiChatRun done = new AiChatRun(7, 1, AiChatRunStatus.DONE, null, 0L, 1L, false, null);
+        Mockito.when(runDao.getActiveIdleCompaction(1)).thenReturn(Optional.of(idle));
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(idle));
+        Mockito.when(runDao.get(7)).thenReturn(Optional.of(done));
+
+        assertThatThrownBy(() -> service().askStroomAi(new AskStroomAiRequest(chat, null, null, "question")))
+                .isInstanceOf(AiChatRunManager.AiChatBusyException.class)
+                .hasMessage(AskStroomAIService.IDLE_COMPACTION_TIMED_OUT);
+        Mockito.verify(runDao, Mockito.times(AskStroomAIService.MAX_IDLE_COMPACTION_ATTEMPTS)).get(7);
+        Mockito.verify(runManager, Mockito.never()).start(Mockito.anyInt(), Mockito.any());
+        Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.eq(1),
+                Mockito.eq(AiMessageType.QUEUED_STEER_MESSAGE), Mockito.any(), Mockito.anyString());
+    }
+
+    @Test
+    void testAskStroomAi_aQuestionDuringAnyOtherRunDoesNotWait() {
+        final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        Mockito.when(runDao.getActiveIdleCompaction(1)).thenReturn(Optional.empty());
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(running));
+
+        service().askStroomAi(new AskStroomAiRequest(chat, null, null, "also this"));
+
+        // It steers the run, as before.
+        Mockito.verify(runDao, Mockito.never()).get(Mockito.anyInt());
+        Mockito.verify(aiService).storeMessage(Mockito.eq(1), Mockito.eq(AiMessageType.QUEUED_STEER_MESSAGE),
+                Mockito.any(), Mockito.eq("also this"));
+    }
+
+    @Test
+    void testCompactWhileIdle_aChatUnderTheIdleThresholdGetsNoRun() {
+        final OpenAIModelDoc model = OpenAIModelDoc.builder().uuid("m").maxContextWindowTokens(100_000).build();
+        final AskStroomAIService service = Mockito.spy(service());
+        Mockito.doReturn(model).when(service).getModelDocForCompaction(null, 1);
+        Mockito.when(compactor.isOverIdleThreshold(1, model)).thenReturn(false);
+
+        assertThat(service.compactWhileIdle(new AiDao.IdleChat(1, "user1", 11, 0L)))
+                .isEqualTo(AskStroomAIService.IdleCompactionResult.UNDER_THRESHOLD);
+        Mockito.verify(runManager, Mockito.never()).startIdleCompaction(Mockito.anyInt(), Mockito.any());
+    }
+
+    @Test
+    void testCompactWhileIdle_aChatOverTheIdleThresholdIsCompactedInARunUnlessItHasChanged() {
+        final OpenAIModelDoc model = OpenAIModelDoc.builder().uuid("m").maxContextWindowTokens(100_000).build();
+        final AskStroomAIService service = Mockito.spy(service());
+        Mockito.doReturn(model).when(service).getModelDocForCompaction(null, 1);
+        Mockito.when(compactor.isOverIdleThreshold(1, model)).thenReturn(true);
+        final List<Consumer<AiChatRun>> works = new java.util.ArrayList<>();
+        Mockito.when(runManager.startIdleCompaction(Mockito.eq(1), Mockito.any())).thenAnswer(invocation -> {
+            works.add(invocation.getArgument(1));
+            return Optional.of(new AiChatRun(7, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null));
+        });
+        Mockito.when(runManager.stopFlag(1)).thenReturn(new java.util.concurrent.atomic.AtomicBoolean());
+
+        assertThat(service.compactWhileIdle(new AiDao.IdleChat(1, "user1", 11, 0L)))
+                .isEqualTo(AskStroomAIService.IdleCompactionResult.STARTED);
+
+        // Unchanged since it was found: compacted.
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(message(10), message(11)));
+        works.getFirst().accept(null);
+        Mockito.verify(compactor).compactWhileIdle(Mockito.eq(1), Mockito.eq(model), Mockito.any(), Mockito.any());
+
+        // A message since (e.g. compacted by another node's run): left alone.
+        Mockito.clearInvocations(compactor);
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(message(10), message(11), message(12)));
+        works.getFirst().accept(null);
+        Mockito.verify(compactor, Mockito.never()).compactWhileIdle(Mockito.anyInt(), Mockito.any(), Mockito.any(),
+                Mockito.any());
+    }
+
+    @Test
+    void testCompactWhileIdle_aBusyChatIsReportedSoItIsTriedAgain() {
+        final OpenAIModelDoc model = OpenAIModelDoc.builder().uuid("m").maxContextWindowTokens(100_000).build();
+        final AskStroomAIService service = Mockito.spy(service());
+        Mockito.doReturn(model).when(service).getModelDocForCompaction(null, 1);
+        Mockito.when(compactor.isOverIdleThreshold(1, model)).thenReturn(true);
+        Mockito.when(runManager.startIdleCompaction(Mockito.eq(1), Mockito.any())).thenReturn(Optional.empty());
+
+        assertThat(service.compactWhileIdle(new AiDao.IdleChat(1, "user1", 11, 0L)))
+                .isEqualTo(AskStroomAIService.IdleCompactionResult.BUSY);
+    }
+
+    @Test
+    void testCompactWhileIdle_aChatWithNoModelCannotBeCompacted() {
+        final AskStroomAIService service = Mockito.spy(service());
+        Mockito.doThrow(new RuntimeException("No AI model is set.")).when(service)
+                .getModelDocForCompaction(null, 1);
+
+        assertThat(service.compactWhileIdle(new AiDao.IdleChat(1, "user1", 11, 0L)))
+                .isEqualTo(AskStroomAIService.IdleCompactionResult.CANNOT_COMPACT);
+        Mockito.verifyNoInteractions(compactor);
+    }
+
+    private static AiChatMessage message(final int id) {
+        return new AiChatMessage(id, 1, 0L, AiMessageType.AI_RESPONSE, null, "a", 10, null);
     }
 }

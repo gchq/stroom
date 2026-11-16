@@ -170,7 +170,7 @@ class TestModelPromptReference {
                 message(6, AiMessageType.AI_RESPONSE, null, "The latest is stream 1234.\n\nIt has 50 events.", 3),
                 message(7, AiMessageType.COMPACTION_SUMMARY, null, JsonUtil.writeValueAsString(
                         new CompactionRecord(3, 1, "The user asked which firewall feeds there are: FW-A and FW-B.",
-                                9_000, 1_000, 6, false, false), false), 3),
+                                9_000, 1_000, 6, false, false, false), false), 3),
                 message(8, AiMessageType.USER_MESSAGE, null, "Translate it to event-logging XML.", 8),
                 message(9, AiMessageType.AI_RESPONSE, null, "Done: see Feeds/FW-A/Event translation.", 8),
                 message(10, AiMessageType.USER_MESSAGE, null, "Now add a dashboard of failed logons.", 10),

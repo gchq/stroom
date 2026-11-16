@@ -206,6 +206,8 @@ defaults: regenerate it (`GenerateExpectedYaml`) when one changes.
 | `compaction.turnsKeptInFull` | `2` | The latest turns never compacted |
 | `compaction.digestMaxResultRows` | `20` | Tool results of up to this many lines are copied exactly into a compacted turn's digest |
 | `compaction.replyReserveTokens` | `4096` | Tokens of the window kept free for the model's reply |
+| `compaction.idleAfter` | `PT10M` | How long after its last message a chat counts as idle, so the 'AI Chat Idle Compaction' job may compact it before the user returns (empty or zero turns it off) |
+| `compaction.idleThresholdPercent` | `60` | How full an idle chat must be to be compacted while idle (1 to 100); at or above `thresholdPercent`, that is used instead |
 | `elicitationTimeout` | `PT10M` | How long a form from an MCP server's tool waits |
 | `maxChatTitleWords` | `12` | The most words in a chat title the model is asked for |
 | `maxElicitationsPerNode` | `5` | Forms from MCP servers' tools that may wait on a node at once |

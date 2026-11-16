@@ -132,6 +132,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
@@ -188,6 +189,15 @@ public class AskStroomAIService {
      * How long an edit waits for the chat's run to stop.
      */
     static final Duration STOP_WAIT = Duration.ofSeconds(30);
+    /// The longest a question waits for a compaction started while its chat was idle. A summary is one model call,
+    /// so this is ample, and well within the time a proxy in front of Stroom would let the request take.
+    static final Duration IDLE_COMPACTION_WAIT = Duration.ofMinutes(2);
+    /// How many times a question is tried while idle compactions keep starting as it arrives.
+    static final int MAX_IDLE_COMPACTION_ATTEMPTS = 3;
+    static final String IDLE_COMPACTION_TIMED_OUT = "This chat is still being compacted, which Stroom AI started "
+                                                    + "while the chat was idle, and it has not finished in time. "
+                                                    + "Your message has not been sent. Send it again shortly, or "
+                                                    + "stop the compaction and then send it.";
     private static final Duration STOP_POLL_INTERVAL = Duration.ofMillis(200);
     // Messages that are updated in place while a question is worked on, so are reported as they stand by every
     // poll rather than as new messages.
@@ -232,6 +242,7 @@ public class AskStroomAIService {
     private final Provider<AiConfig> aiConfigProvider;
     private final SecurityContext securityContext;
     private Duration stopWait = STOP_WAIT;
+    private Duration idleCompactionWait = IDLE_COMPACTION_WAIT;
     // Null where it isn't injected (in tests), and answers are stored as written.
     private AnswerLinks answerLinks;
     private final McpAgentChat mcpAgentChat;
@@ -358,14 +369,7 @@ public class AskStroomAIService {
             // change the run proposed, and later proposals must be made against it as it is now).
             final TabSnapshots.Stored tab = storeTabSnapshot(chatId, request.getTabSnapshot());
             resendTab = tab.resend();
-            if (!steer(chatId, request.getMessage(), tab.snapshotId())) {
-                runManager.start(chatId, run -> {
-                    aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, tab.snapshotId(),
-                            request.getMessage());
-                    chatTitler.nameFromQuestion(chatId, request.getMessage());
-                    answerQuestion(chatId, request);
-                });
-            }
+            askOrSteer(chatId, request, tab);
         }
 
         // The answer (if there is a question) is delivered by polling.
@@ -696,6 +700,108 @@ public class AskStroomAIService {
         this.stopWait = stopWait;
     }
 
+    /// Sets how long a question waits for a compaction started while its chat was idle. For testing.
+    ///
+    /// @param idleCompactionWait The longest a question waits.
+    void setIdleCompactionWait(final Duration idleCompactionWait) {
+        this.idleCompactionWait = idleCompactionWait;
+    }
+
+    // Steers the chat's run with the message, or starts a run to answer it. A compaction started while the chat was
+    // idle is not a run the message can steer, and a question can't start while it works: it is waited for, then
+    // the question is asked as usual. The job may start one at any moment (e.g. between the wait and the steer, or
+    // between the steer finding no run and the start), so it is tried again, a few times, within one overall wait.
+    private void askOrSteer(final int chatId, final AskStroomAiRequest request, final TabSnapshots.Stored tab) {
+        final long deadlineMs = System.currentTimeMillis() + idleCompactionWait.toMillis();
+        for (int attempt = 1; ; attempt++) {
+            waitForIdleCompaction(chatId, deadlineMs);
+            final Steered steered = steer(chatId, request.getMessage(), tab.snapshotId());
+            if (steered == Steered.STEERED) {
+                return;
+            }
+            if (steered == Steered.NO_RUN) {
+                try {
+                    runManager.start(chatId, run -> {
+                        aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, tab.snapshotId(),
+                                request.getMessage());
+                        chatTitler.nameFromQuestion(chatId, request.getMessage());
+                        answerQuestion(chatId, request);
+                    });
+                    return;
+                } catch (final AiChatRunManager.AiChatBusyException e) {
+                    // Any other run keeps today's behaviour.
+                    if (runDao.getActiveIdleCompaction(chatId).isEmpty()) {
+                        throw e;
+                    }
+                }
+            }
+            LOGGER.debug("An idle compaction started as the question arrived, so it waits for it");
+            if (attempt >= MAX_IDLE_COMPACTION_ATTEMPTS) {
+                throw new AiChatRunManager.AiChatBusyException(chatId, IDLE_COMPACTION_TIMED_OUT);
+            }
+        }
+    }
+
+    /// Waits for the chat's compaction started while it was idle, if it has one working, so that a question asked
+    /// meanwhile is asked once it has finished (or been stopped) rather than failing as busy or being left to steer
+    /// a run that answers nothing. Package-private for testing.
+    ///
+    /// @param chatId     The chat.
+    /// @param deadlineMs The latest time to wait until.
+    /// @throws AiChatRunManager.AiChatBusyException If the compaction has not finished by the deadline.
+    void waitForIdleCompaction(final int chatId, final long deadlineMs) {
+        final AiChatRun idleRun = runDao.getActiveIdleCompaction(chatId).orElse(null);
+        if (idleRun == null) {
+            return;
+        }
+        LOGGER.debug(() -> "A question in chat " + chatId + " waits for idle compaction run " + idleRun.getId());
+        final long deadline = deadlineMs;
+        while (runDao.get(idleRun.getId()).filter(AiChatRun::isActive).isPresent()) {
+            if (System.currentTimeMillis() > deadline) {
+                throw new AiChatRunManager.AiChatBusyException(chatId, IDLE_COMPACTION_TIMED_OUT);
+            }
+            ThreadUtil.sleepIgnoringInterrupts(STOP_POLL_INTERVAL.toMillis());
+        }
+    }
+
+    /// Compacts a chat that has been left idle, ahead of its user's return, if it is over the idle threshold (see
+    /// [ChatCompactor#compactWhileIdle]). It is measured here, cheaply; only a chat over the threshold gets a run, in
+    /// which it is compacted with the model the chat was last answered with (or the default). Must be called as the
+    /// chat's owner, whom the run runs as.
+    ///
+    /// @param idleChat The chat, as found idle.
+    /// @return What was done.
+    public IdleCompactionResult compactWhileIdle(final AiDao.IdleChat idleChat) {
+        final int chatId = idleChat.chatId();
+        final OpenAIModelDoc modelDoc;
+        try {
+            modelDoc = getModelDocForCompaction(null, chatId);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "No model to compact idle chat " + chatId + " with: " + e.getMessage(), e);
+            return IdleCompactionResult.CANNOT_COMPACT;
+        }
+        if (!chatCompactor.isOverIdleThreshold(chatId, modelDoc)) {
+            return IdleCompactionResult.UNDER_THRESHOLD;
+        }
+        final ChatModel chatModel = getChatModel(modelDoc);
+        final Optional<AiChatRun> run = runManager.startIdleCompaction(chatId, started -> {
+            // The chat may have changed since it was found idle, e.g. a question asked, or compacted by a run on
+            // another node that found it too.
+            final int lastMessageId = aiService.getMessages(chatId).stream()
+                    .mapToInt(AiChatMessage::getId)
+                    .max()
+                    .orElse(0);
+            if (lastMessageId != idleChat.lastMessageId()) {
+                LOGGER.debug(() -> "Idle chat " + chatId + " has changed since it was found, so is not compacted");
+                return;
+            }
+            chatCompactor.compactWhileIdle(chatId, modelDoc, chatModel, runManager.stopFlag(chatId)::get);
+        });
+        return run.isPresent()
+                ? IdleCompactionResult.STARTED
+                : IdleCompactionResult.BUSY;
+    }
+
     /**
      * Stops the chat's active run, if it has one, and waits for it to stop.
      *
@@ -758,12 +864,17 @@ public class AskStroomAIService {
      * If the chat has a run working on a question, stores the message for the run to pick up at its next safe
      * point, with the snapshot of the tab the user attached sent with it.
      *
-     * @return True if the message was given to a run, false if there is no run to give it to.
+     * @return Whether the message was given to a run, there is no run to give it to, or the chat's run is a
+     * compaction started while it was idle, which the message must wait for.
      */
-    private boolean steer(final int chatId, final String message, final Integer snapshotId) {
+    private Steered steer(final int chatId, final String message, final Integer snapshotId) {
         final AiChatRun active = runDao.getActive(chatId).orElse(null);
         if (active == null || active.getStatus() == AiChatRunStatus.STOPPING) {
-            return false;
+            return Steered.NO_RUN;
+        }
+        if (runDao.getActiveIdleCompaction(chatId).isPresent()) {
+            // It answers no question and picks up no messages, so the question waits for it.
+            return Steered.IDLE_COMPACTION;
         }
         if (active.getStatus() == AiChatRunStatus.WAITING_FOR_USER
             && active.getStopReason() == AiChatRunStopReason.NEEDS_INPUT) {
@@ -771,7 +882,7 @@ public class AskStroomAIService {
             // puts the form aside, so the tool is told it wasn't answered, and the run carries on with the message.
             aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, snapshotId, message);
             mcpElicitationsProvider.get().supersedePending(chatId);
-            return true;
+            return Steered.STEERED;
         }
         if (active.getStatus() == AiChatRunStatus.WAITING_FOR_USER) {
             // A message sent instead of answering a request for approval denies the calls, with the message as
@@ -781,7 +892,7 @@ public class AskStroomAIService {
                     toolApprovalService.denyAll(pending, "The user sent a message instead: " + message));
             mcpElicitationsProvider.get().supersedePending(chatId);
             carryOn(chatId);
-            return true;
+            return Steered.STEERED;
         }
         // Queued until the run's current step finishes, unless the user sends it now.
         final AiChatMessage steerMessage = aiService.storeMessage(chatId, AiMessageType.QUEUED_STEER_MESSAGE,
@@ -789,10 +900,16 @@ public class AskStroomAIService {
         if (runDao.getActive(chatId).isEmpty()) {
             // The run finished as the message arrived, so it will not see it. Ask it as a question instead.
             aiService.deleteMessage(steerMessage.getId());
-            return false;
+            return Steered.NO_RUN;
+        }
+        if (runDao.getActiveIdleCompaction(chatId).isPresent()) {
+            // The run finished as the message arrived, and an idle compaction started in its place, which would
+            // never pick the message up. The question waits for it instead.
+            aiService.deleteMessage(steerMessage.getId());
+            return Steered.IDLE_COMPACTION;
         }
         LOGGER.debug(() -> "Steering run " + active.getId() + " of chat " + chatId);
-        return true;
+        return Steered.STEERED;
     }
 
     /// Sends a message the user sent to steer the chat's run now, rather than when the run's current step finishes:
@@ -819,7 +936,8 @@ public class AskStroomAIService {
     public AskStroomAiResponse resumeRun(final AskStroomAiRequest request) {
         final Integer chatId = NullSafe.get(request.getAiChat(), AiChat::getId);
         aiService.verifyOwnership(chatId);
-        final AiChatRun previous = runDao.getLatest(chatId).orElse(null);
+        // An idle compaction stopped by the user answered no question, so is not what is resumed.
+        final AiChatRun previous = runDao.getLatestShown(chatId).orElse(null);
         if (!AiChatRunManager.isResumable(previous)) {
             throw new RuntimeException("There is nothing to resume in this chat.");
         }
@@ -2147,12 +2265,14 @@ public class AskStroomAIService {
         // the user, would stop polling without ever showing it.
         // The conversation is complete when no run is active and all attachments have finished
         // downloading.
-        AiChatRun run = runDao.getLatest(chatId).orElse(null);
+        // An idle compaction that has ended isn't shown: stopped, it would offer to resume a question it never
+        // answered.
+        AiChatRun run = runDao.getLatestShown(chatId).orElse(null);
         if (run != null && run.isActive() && !runDao.interruptStale(
                 System.currentTimeMillis() - AiChatRunManager.STALE_AFTER.toMillis()).isEmpty()) {
             // The node working on a run has stopped, possibly this chat's.
             aiService.deleteWorkingMessages(chatId);
-            run = runDao.getLatest(chatId).orElse(null);
+            run = runDao.getLatestShown(chatId).orElse(null);
         }
 
         // Like the WORKING message, the answer and reasoning being streamed are reported as they stand, not as new
@@ -2579,5 +2699,27 @@ public class AskStroomAIService {
         }
         // Replace characters that are illegal in common filesystems with underscores.
         return name.replaceAll("[^a-zA-Z0-9._\\-]", "_").replaceAll("_+", "_");
+    }
+
+    // What became of a message sent to steer the chat's run.
+    private enum Steered {
+        // Given to the run.
+        STEERED,
+        // There is no run to give it to, so it is asked as a question.
+        NO_RUN,
+        // The run is a compaction started while the chat was idle, which it waits for.
+        IDLE_COMPACTION
+    }
+
+    /// What [#compactWhileIdle] did with an idle chat.
+    public enum IdleCompactionResult {
+        /// A run was started to compact it.
+        STARTED,
+        /// It is under the idle threshold (or its model's context window is not known), so needs no compaction.
+        UNDER_THRESHOLD,
+        /// It cannot be compacted: there is no model to compact it with, or its owner can no longer use Stroom.
+        CANNOT_COMPACT,
+        /// It has an active run, or no run slot is free, so it may be tried again later.
+        BUSY
     }
 }

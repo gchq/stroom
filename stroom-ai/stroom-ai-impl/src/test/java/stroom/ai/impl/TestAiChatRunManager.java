@@ -605,4 +605,40 @@ class TestAiChatRunManager {
         Mockito.verify(runDao).compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.STOPPED),
                 eq(AiChatRunStopReason.TERMINATED), isNull());
     }
+
+    @Test
+    void testStartIdleCompaction_runsAsAMarkedRunWithoutTakingTheUserForPresent() {
+        Mockito.when(runDao.createIdleCompactionIfNoneActive(1, "user1", "node1")).thenReturn(Optional.of(run));
+        final AtomicBoolean worked = new AtomicBoolean();
+
+        final Optional<AiChatRun> started = runManager.startIdleCompaction(1, r -> worked.set(true));
+
+        assertThat(started).containsSame(run);
+        assertThat(worked).isTrue();
+        Mockito.verify(runDao).compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.DONE),
+                isNull(), isNull());
+        // The user isn't there: an idle chat being compacted must not make them look present.
+        Mockito.verify(aiDao, Mockito.never()).recordPoll(Mockito.anyInt(), Mockito.anyLong());
+        Mockito.verify(runDao, Mockito.never()).createIfNoneActive(Mockito.anyInt(), any(), any(), any(), any());
+    }
+
+    @Test
+    void testStartIdleCompaction_aBusyChatIsLeftAlone() {
+        Mockito.when(runDao.createIdleCompactionIfNoneActive(1, "user1", "node1")).thenReturn(Optional.empty());
+
+        assertThat(runManager.startIdleCompaction(1, r -> {
+            throw new AssertionError("must not run");
+        })).isEmpty();
+    }
+
+    @Test
+    void testStartIdleCompaction_isNeverQueuedBehindTheUsersRuns() {
+        // The user has all their run slots in use: an idle compaction would only hold up their questions.
+        Mockito.when(runDao.countWorking("user1")).thenReturn(aiConfig.getMaxRunsPerUser());
+
+        assertThat(runManager.startIdleCompaction(1, r -> {
+            throw new AssertionError("must not run");
+        })).isEmpty();
+        Mockito.verify(runDao, Mockito.never()).createIdleCompactionIfNoneActive(Mockito.anyInt(), any(), any());
+    }
 }

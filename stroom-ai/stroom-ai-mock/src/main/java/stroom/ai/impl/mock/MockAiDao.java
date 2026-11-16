@@ -29,6 +29,7 @@ import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -217,6 +218,14 @@ public class MockAiDao implements AiDao {
 
     @Override
     public List<Integer> findChatsNotUpdatedSince(final long timeMs, final int limit) {
+        return List.of();
+    }
+
+    @Override
+    public List<IdleChat> findIdleChats(final long idleBeforeMs,
+                                        final long idleSinceMs,
+                                        final Collection<Integer> excludedMessageIds,
+                                        final int limit) {
         return List.of();
     }
 

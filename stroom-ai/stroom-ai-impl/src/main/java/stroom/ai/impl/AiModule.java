@@ -69,7 +69,13 @@ public class AiModule extends AbstractModule {
                         .description("Removes 'Ask Stroom AI' workspace files and chats that are past their "
                                      + "retention age, sample upload commands that have run out, and the "
                                      + "chats, memory and sample upload commands of deleted users")
-                        .cronSchedule(CronExpressions.EVERY_HOUR.getExpression()));
+                        .cronSchedule(CronExpressions.EVERY_HOUR.getExpression()))
+                .bindJobTo(AiIdleCompactionJob.class, builder -> builder
+                        .name(AiIdleCompaction.JOB_NAME)
+                        .description("Compacts 'Ask Stroom AI' chats that have been left idle and are close to "
+                                     + "their model's context window, so that the user's next question need not "
+                                     + "wait for a compaction (see stroom.ai.compaction.idleAfter)")
+                        .cronSchedule(CronExpressions.EVERY_MINUTE.getExpression()));
 
         // Serves this release's chart adapters for the adapter Script docs, whatever they hold.
         GuiceUtil.buildMultiBinder(binder(), ScriptContentProvider.class)
@@ -89,6 +95,18 @@ public class AiModule extends AbstractModule {
         @Inject
         AiRetentionJob(final AiRetention aiRetention) {
             super(aiRetention::exec);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class AiIdleCompactionJob extends RunnableWrapper {
+
+        @Inject
+        AiIdleCompactionJob(final AiIdleCompaction aiIdleCompaction) {
+            super(aiIdleCompaction::exec);
         }
     }
 }

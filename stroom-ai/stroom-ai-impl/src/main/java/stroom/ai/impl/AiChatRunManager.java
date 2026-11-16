@@ -171,7 +171,32 @@ public class AiChatRunManager {
                             chatId, userUuid, status, nodeInfo.getThisNodeName(), sessionIdHash)
                     .orElseThrow(() -> new AiChatBusyException(chatId));
             LOGGER.debug(() -> "Created " + status + " run " + run.getId() + " for chat " + chatId);
-            schedule(chatId, run, status, userUuid, work);
+            schedule(chatId, run, status, userUuid, work, true);
+            return run;
+        }
+    }
+
+    /// Starts a run that compacts a chat left idle, as the current user (the chat's owner), unless the chat already
+    /// has an active run. Unlike [#start], it is never queued: it starts only if one of the user's and this node's
+    /// run slots is free, so it never holds up the user's questions. A question asked while it works waits for it
+    /// (see [AiChatRunDao#getActiveIdleCompaction(int)]). It can be stopped as any run can.
+    ///
+    /// @param chatId The chat.
+    /// @param work   Compacts the chat, as for [#start].
+    /// @return The new run, or empty if the chat has an active run or no slot is free.
+    public Optional<AiChatRun> startIdleCompaction(final int chatId, final Consumer<AiChatRun> work) {
+        final String userUuid = NullSafe.get(securityContext.getUserRef(), UserRef::getUuid);
+        synchronized (queue) {
+            if (!hasFreeSlot(userUuid)) {
+                LOGGER.debug(() -> "No free run slot to compact idle chat " + chatId);
+                return Optional.empty();
+            }
+            final Optional<AiChatRun> run = runDao.createIdleCompactionIfNoneActive(
+                    chatId, userUuid, nodeInfo.getThisNodeName());
+            run.ifPresent(created -> {
+                LOGGER.debug(() -> "Created idle compaction run " + created.getId() + " for chat " + chatId);
+                schedule(chatId, created, AiChatRunStatus.RUNNING, userUuid, work, false);
+            });
             return run;
         }
     }
@@ -199,7 +224,7 @@ public class AiChatRunManager {
                 throw new AiChatBusyException(chatId);
             }
             LOGGER.debug(() -> "Continuing run " + run.getId() + " of chat " + chatId + " as " + status);
-            schedule(chatId, run, status, userUuid, work);
+            schedule(chatId, run, status, userUuid, work, true);
             return run;
         }
     }
@@ -208,9 +233,12 @@ public class AiChatRunManager {
                           final AiChatRun run,
                           final AiChatRunStatus status,
                           final String userUuid,
-                          final Consumer<AiChatRun> work) {
-        // The user is here, as they have just asked or answered something.
-        aiDao.recordPoll(chatId, 0);
+                          final Consumer<AiChatRun> work,
+                          final boolean userPresent) {
+        if (userPresent) {
+            // The user is here, as they have just asked or answered something.
+            aiDao.recordPoll(chatId, 0);
+        }
 
         // The task is made now, so that it runs as the user asking, whenever it starts.
         final Runnable task = taskContextFactory.context(TASK_NAME, taskContext -> {
@@ -718,8 +746,14 @@ public class AiChatRunManager {
     public static class AiChatBusyException extends RuntimeException {
 
         public AiChatBusyException(final int chatId) {
-            super("This chat is still working on a question. Wait for it to finish or stop it first.");
-            LOGGER.debug(() -> "Chat " + chatId + " is busy");
+            this(chatId, "This chat is still working on a question. Wait for it to finish or stop it first.");
+        }
+
+        /// @param chatId  The chat.
+        /// @param message What the chat is busy with, for the user.
+        public AiChatBusyException(final int chatId, final String message) {
+            super(message);
+            LOGGER.debug(() -> "Chat " + chatId + " is busy: " + message);
         }
     }
 }
