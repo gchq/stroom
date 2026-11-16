@@ -230,13 +230,36 @@ public final class JoinWhereSplitter {
     }
 
     // A copy of the item with '<alias>.' taken off the front of every field name that has it.
+    /// Gets a field's name without an alias, if it starts with it, as in `t.team` for alias `t`.
+    ///
+    /// @param field The field as written.
+    /// @param alias The alias, or `null`.
+    /// @return The field's name without the alias, or as written if it doesn't have it.
+    static String withoutAlias(final String field, final String alias) {
+        return hasPrefix(field, alias)
+                ? field.substring(alias.length() + 1)
+                : field;
+    }
+
+    /// Copies an expression with an alias taken off every field that has it.
+    ///
+    /// @param expression The expression, or `null`.
+    /// @param alias      The alias.
+    /// @return The copy, or `null` if the expression is `null`.
+    static ExpressionOperator withoutAlias(final ExpressionOperator expression, final String alias) {
+        if (expression == null) {
+            return null;
+        }
+        return (ExpressionOperator) removePrefix(expression, alias);
+    }
+
     private static ExpressionItem removePrefix(final ExpressionItem item, final String alias) {
         if (alias == null) {
             return item;
         } else if (item instanceof final ExpressionTerm term) {
             final String field = term.getField();
-            if (field != null && hasPrefix(field, alias)) {
-                return term.copy().field(field.substring(alias.length() + 1)).build();
+            if (field != null) {
+                return term.copy().field(withoutAlias(field, alias)).build();
             }
             return term;
         } else if (item instanceof final ExpressionOperator operator) {

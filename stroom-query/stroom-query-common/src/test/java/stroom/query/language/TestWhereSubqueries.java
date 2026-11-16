@@ -273,6 +273,51 @@ class TestWhereSubqueries {
     }
 
     @Test
+    void orBesideTheComparisonsIsRefused() {
+        // This means 'on_call or (lead and the key)', which can't be split into a key and a search.
+        assertThatThrownBy(() -> create("""
+                from People as p
+                where exists (from Teams as t where t.on_call = true or t.lead = true and t.team = p.team)"""))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining("can't have or at the top level of its where");
+        // In brackets it is one condition of its own, which goes into the search whole.
+        final QueryJoin join = firstJoin("""
+                from People as p
+                where exists (from Teams as t where (t.on_call = true or t.lead = true) and t.team = p.team)""");
+        assertThat(join.getQuery().getExpression().getOp()).isEqualTo(ExpressionOperator.Op.OR);
+        // With nothing taken out, or stays as it was.
+        final QueryJoin inJoin = firstJoin("""
+                from People where team in (from Teams where on_call = true or lead = true select team)""");
+        assertThat(inJoin.getQuery().getExpression().getOp()).isEqualTo(ExpressionOperator.Op.OR);
+    }
+
+    @Test
+    void fieldBeforeInMayBeNamedByTheDataSource() {
+        assertSameRequest(
+                "from People where People.team in (from Teams select team) select name",
+                "from People where team in (from Teams select team) select name");
+    }
+
+    @Test
+    void onlyAFieldCanComeBeforeIn() {
+        assertThatThrownBy(() -> create("from People where upperCase(team) in (from Teams select team)"))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining("Only a field of the first source can come before in");
+        assertThatThrownBy(() -> create("from People where 'x' in (from Teams select team)"))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining("Only a field of the first source can come before in");
+    }
+
+    @Test
+    void aClauseCanOnlyBeGivenOnce() {
+        assertThatThrownBy(() -> create("""
+                from People as p
+                where exists (from Teams as t where t.team = p.team where t.active = true)"""))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining("can only have one where clause");
+    }
+
+    @Test
     void existsMustCompareWithTheFirstSource() {
         assertThatThrownBy(() -> create("from People as p where exists (from Teams as t where t.on_call = true)"))
                 .isInstanceOf(TokenException.class)

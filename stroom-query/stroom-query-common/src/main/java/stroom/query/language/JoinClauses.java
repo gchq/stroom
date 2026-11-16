@@ -201,12 +201,7 @@ final class JoinClauses {
             final ParsedQuery parsedQuery = parser.parseBracketedQuery(bracketedQuery);
             join = new PendingJoin(keywordGroup, type, parsedQuery.query().copy(), parsedQuery);
         } else {
-            final DocRef dataSource = parser.resolveDataSource(source);
-            final Query.Builder joinQueryBuilder = Query.builder()
-                    .dataSource(dataSource)
-                    .params(parser.getParams())
-                    .timeRange(parser.getTimeRange());
-            join = new PendingJoin(keywordGroup, type, joinQueryBuilder, null);
+            join = new PendingJoin(keywordGroup, type, createJoinedQuery(parser.resolveDataSource(source)), null);
         }
 
         final String givenAlias = JoinLineParser.parseAlias(children);
@@ -217,13 +212,26 @@ final class JoinClauses {
         final String alias = givenAlias != null
                 ? givenAlias
                 : join.queryBuilder.build().getDataSource().getName();
-        checkAliasUnused(alias, keywordGroup, "Give this join line its own, e.g. as x");
+        checkAliasUnused(alias, firstAlias, keywordGroup, "Give this join line its own, e.g. as x");
         join.alias = alias;
         pendingJoin = join;
     }
 
-    private void checkAliasUnused(final String alias, final AbstractToken errorToken, final String advice) {
-        if (alias.equals(firstAlias) || joins.stream().anyMatch(other -> other.alias.equals(alias))) {
+    // The search of a joined data source, which shares the params and time range of the query.
+    private Query.Builder createJoinedQuery(final DocRef dataSource) {
+        return Query.builder()
+                .dataSource(dataSource)
+                .params(parser.getParams())
+                .timeRange(parser.getTimeRange());
+    }
+
+    // Refuses an alias that the first source or another join already uses. The first source is
+    // known by its alias, or for the exists and in forms by its data source's name if it has none.
+    private void checkAliasUnused(final String alias,
+                                  final String firstSourceName,
+                                  final AbstractToken errorToken,
+                                  final String advice) {
+        if (alias.equals(firstSourceName) || joins.stream().anyMatch(other -> other.alias.equals(alias))) {
             throw new TokenException(errorToken, "The alias '" + alias + "' is already used in this query. "
                                                  + advice);
         }
@@ -255,10 +263,7 @@ final class JoinClauses {
     private void addSubqueryJoin(final WhereSubqueries.Form form, final String outerName) {
         final WhereSubqueries.InnerQuery inner = WhereSubqueries.readInnerQuery(form);
         final DocRef dataSource = parser.resolveDataSource(inner.source());
-        final Query.Builder joinQueryBuilder = Query.builder()
-                .dataSource(dataSource)
-                .params(parser.getParams())
-                .timeRange(parser.getTimeRange());
+        final Query.Builder joinQueryBuilder = createJoinedQuery(dataSource);
         final PendingJoin join = new PendingJoin(form.errorToken(), form.type(), joinQueryBuilder, null);
         if (inner.sql() != null) {
             join.sqlToken = inner.sql();
@@ -267,13 +272,8 @@ final class JoinClauses {
         final String alias = inner.alias() != null
                 ? inner.alias()
                 : dataSource.getName();
-        final String advice = "Give the bracketed query its own, e.g. (from X as x ...)";
-        // With no alias, the first source's fields are named by its data source's name.
-        if (alias.equals(outerName)) {
-            throw new TokenException(form.errorToken(), "The alias '" + alias + "' is already used in this "
-                                                        + "query. " + advice);
-        }
-        checkAliasUnused(alias, form.errorToken(), advice);
+        checkAliasUnused(alias, outerName, form.errorToken(), "Give the bracketed query its own, "
+                                                              + "e.g. (from X as x ...)");
         join.alias = alias;
 
         final WhereSubqueries.Correlation correlation =
@@ -290,8 +290,7 @@ final class JoinClauses {
         // conditions moved out of where do.
         if (!correlation.rest().isEmpty()) {
             final ExpressionOperator own = ExpressionUtil.simplify(parser.processLogic(correlation.rest()));
-            joinQueryBuilder.expression(JoinWhereSplitter.renameFields(own, field ->
-                    WhereSubqueries.withoutAlias(field, alias)));
+            joinQueryBuilder.expression(JoinWhereSplitter.withoutAlias(own, alias));
         }
         parser.checkNativeQuery(joinQueryBuilder.build(), join.sqlToken, join.token);
         joins.add(join);

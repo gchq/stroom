@@ -148,7 +148,9 @@ public class Tokeniser {
                 currentKeyword = token.getTokenType();
                 out.add(token);
             } else if (TokenType.UNKNOWN.equals(token.getTokenType())) {
-                // The text between brackets is tagged by the clause it is in.
+                // The text between brackets is tagged by the clause it is in. Each piece starts with
+                // the bracket before it, so a word straight after '(' is no more a keyword than it was
+                // when the text was tagged in one piece.
                 final List<Token> pieces = new ArrayList<>();
                 final char[] chars = token.getChars();
                 int pieceStart = token.getStart();
@@ -160,8 +162,7 @@ public class Tokeniser {
                         } else if (!outerKeywords.isEmpty()) {
                             currentKeyword = outerKeywords.removeLast();
                         }
-                        addJoiningUnknown(pieces, new Token(TokenType.UNKNOWN, chars, i, i));
-                        pieceStart = i + 1;
+                        pieceStart = i;
                     }
                 }
                 addLogicalOperators(pieces, chars, pieceStart, token.getEnd(), currentKeyword);

@@ -215,6 +215,11 @@ public class TestTokeniser extends AbstractQueryTest {
         assertThat(withoutWhitespace("from x where (a = 1) select and"))
                 .extracting(Token::getTokenType)
                 .doesNotContain(TokenType.AND);
+        // Straight after a bracket, a word is no more a keyword than it ever was.
+        assertThat(withoutWhitespace("from x where a = f(not) and b = g(or)"))
+                .extracting(Token::getTokenType)
+                .containsOnlyOnce(TokenType.AND)
+                .doesNotContain(TokenType.NOT, TokenType.OR);
     }
 
     @Test

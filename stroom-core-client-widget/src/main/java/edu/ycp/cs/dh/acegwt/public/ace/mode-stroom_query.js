@@ -53,7 +53,7 @@ var StroomQueryHighlightRules = function() {
         },  {
             // A join line, e.g. 'left outer join "HR Users"'. Its kind is only a keyword as part of one.
             token : "keyword",
-            regex : "(?:inner|left(?:\\s+(?:outer|semi|anti))?|semi|anti)\\s+join\\b",
+            regex : "\\b(?:inner|left(?:\\s+(?:outer|semi|anti))?|semi|anti)\\s+join\\b",
             next : "doc-rule" // The joined data source, as after from
         },  {
             token : "keyword",

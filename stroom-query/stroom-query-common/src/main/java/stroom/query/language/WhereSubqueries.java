@@ -27,8 +27,10 @@ import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenType;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /// Finds and reads the SQL forms of semi and anti joins in a StroomQL where clause, which
 /// [SearchRequestFactory] rewrites into join lines:
@@ -130,13 +132,16 @@ final class WhereSubqueries {
                                         final boolean outerHasAlias) {
         final List<KeyFields> keys = new ArrayList<>();
         if (form.field() != null) {
-            keys.add(new KeyFields(form.field().getUnescapedText(), joinedField(inner.select(), alias)));
+            if (!isField(form.field())) {
+                throw new TokenException(form.field(), "Only a field of the first source can come before in "
+                                                       + "(from ...), e.g. where team in (from Teams select team)");
+            }
+            keys.add(new KeyFields(firstSourceField(form.field(), outerName, outerHasAlias),
+                    joinedField(inner.select(), alias)));
         }
         for (final KeyPair pair : correlation.keys()) {
-            final String outer = pair.outer().getUnescapedText();
-            keys.add(new KeyFields(outerHasAlias
-                    ? outer
-                    : withoutAlias(outer, outerName), joinedField(pair.inner(), alias)));
+            keys.add(new KeyFields(firstSourceField(pair.outer(), outerName, outerHasAlias),
+                    joinedField(pair.inner(), alias)));
         }
         if (keys.isEmpty()) {
             throw new TokenException(form.errorToken(), "An exists query must compare a field of '" + alias
@@ -149,7 +154,18 @@ final class WhereSubqueries {
 
     // The name of a field of the bracketed query as the join names it, e.g. 't.team'.
     private static String joinedField(final AbstractToken token, final String alias) {
-        return alias + "." + withoutAlias(token.getUnescapedText(), alias);
+        return alias + "." + JoinWhereSplitter.withoutAlias(token.getUnescapedText(), alias);
+    }
+
+    // The name of a field of the first source as its rows name it: by its alias, as in a join line's
+    // keys, or by its own name if the first source has no alias and it is written with the data
+    // source's name.
+    private static String firstSourceField(final AbstractToken token,
+                                           final String outerName,
+                                           final boolean outerHasAlias) {
+        return outerHasAlias
+                ? token.getUnescapedText()
+                : JoinWhereSplitter.withoutAlias(token.getUnescapedText(), outerName);
     }
 
     /// Splits the children of a where clause at its top-level `and` tokens.
@@ -217,9 +233,15 @@ final class WhereSubqueries {
         List<AbstractToken> where = List.of();
         List<AbstractToken> select = null;
         AbstractToken selectToken = null;
+        final Set<TokenType> seen = EnumSet.noneOf(TokenType.class);
         for (final AbstractToken child : form.query().getChildren()) {
             if (!(child instanceof final KeywordGroup group)) {
                 throw new TokenException(child, "Unexpected token");
+            }
+            if (!seen.add(group.getTokenType())) {
+                throw new TokenException(group, "An exists or in query can only have one "
+                                                + group.getTokenType().toString().toLowerCase(Locale.ROOT)
+                                                + " clause");
             }
             switch (group.getTokenType()) {
                 case FROM -> {
@@ -295,19 +317,14 @@ final class WhereSubqueries {
                     ? new KeyPair(left, right)
                     : new KeyPair(right, left));
         }
+        // 'and' comes before 'or', so taking the comparisons out of where beside an 'or' would change
+        // what the rest means.
+        if (!keys.isEmpty() && where.stream().anyMatch(token -> TokenType.OR.equals(token.getTokenType()))) {
+            throw new TokenException(where.getFirst(), "An exists or in query that compares fields of '"
+                                                       + outerName + "' can't have or at the top level of its "
+                                                       + "where; put the conditions joined by or in brackets");
+        }
         return new Correlation(keys, rest);
-    }
-
-    /// Gets a field's name without the given alias, if it has it.
-    ///
-    /// @param field The field, as written, e.g. `t.team`.
-    /// @param alias The alias.
-    /// @return The field's name, e.g. `team`.
-    static String withoutAlias(final String field, final String alias) {
-        final String prefix = alias + ".";
-        return field.startsWith(prefix)
-                ? field.substring(prefix.length())
-                : field;
     }
 
     // An 'and' token to join two conditions that weren't next to each other, pointing at the second.

@@ -166,6 +166,11 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
         if (!requestAndStore.searchRequest().incremental()) {
             requestAndStore = awaitSearchStoreForResponse(requestAndStore);
         }
+        // A placeholder that has already been replaced needn't make a response only to lose it.
+        final Optional<ResultStore> earlyReplacement = getReplacement(requestAndStore);
+        if (earlyReplacement.isPresent()) {
+            requestAndStore = new RequestAndStore(requestAndStore.searchRequest(), earlyReplacement.get());
+        }
         final SearchResponse response = searchWithDefaultResultCreators(requestAndStore);
         // A search with joins' placeholder is cleared, which completes it with no rows, once another
         // store takes its place, which can happen while the response is made. A response from a
