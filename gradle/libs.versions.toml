@@ -181,7 +181,7 @@ saxon-he = { module = "net.sf.saxon:Saxon-HE", version = "9.9.1-8" }
 simple-java-mail = { module = "org.simplejavamail:simple-java-mail", version.ref = "simple-java-mail" }
 simple-java-mail-batch-module = { module = "org.simplejavamail:batch-module", version.ref = "simple-java-mail" }
 slf4j-api = { module = "org.slf4j:slf4j-api" } # version controlled by dropwizard-dependencies
-solrj = { module = "org.apache.solr:solr-solrj", version = "9.10.1" }
+solrj = { module = "org.apache.solr:solr-solrj", version = "10.1.0" }
 # Yes, I know it's Spring, but it doesn't pull in any other deps and is more up to date than github.com/patrickfav/bcrypt
 # and it provides a drop in replacement for JBcrypt that we used to use. Currently only used for BCrypt hashing.
 spring-security-crypto = { module = "org.springframework.security:spring-security-crypto", version = "7.1.1" }
