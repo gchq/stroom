@@ -61,4 +61,10 @@ public class MockDataSourceResolver extends DataSourceResolver {
     public DocRef resolveDataSourceRef(final String name) {
         return new DocRef(name, name, name);
     }
+
+    /// Data sources named `sql_...` take a native query, as a Data Connection does.
+    @Override
+    public boolean takesNativeQuery(final DocRef dataSourceRef) {
+        return dataSourceRef.getName().startsWith("sql_");
+    }
 }

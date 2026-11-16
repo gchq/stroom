@@ -108,6 +108,15 @@ public class UserSessionsList extends Component {
         this.onEndSession = onEndSession;
     }
 
+    /// Shows or hides End Session. It is hidden behind an authenticating edge proxy (e.g. an AWS ALB),
+    /// where ending a session does not sign the user out, as the proxy authenticates their very next
+    /// request.
+    ///
+    /// @param visible True to offer End Session.
+    public void setEndSessionVisible(final boolean visible) {
+        endSessionButton.setVisible(visible);
+    }
+
     private void setButtonStates() {
         endSessionButton.setEnabled(selectionModel.getSelected() != null);
     }

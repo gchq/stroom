@@ -23,6 +23,7 @@ import stroom.widget.component.client.Controller;
 import stroom.widget.form.client.FileUploadCallback;
 import stroom.widget.form.client.FileUploadSubmitter;
 import stroom.widget.form.client.FileUploadTransport;
+import stroom.widget.form.client.LocalTextFile;
 import stroom.widget.task.client.SimpleTask;
 import stroom.widget.task.client.Task;
 import stroom.widget.task.client.TaskMonitor;
@@ -116,6 +117,39 @@ public class FileChooserController extends Controller {
                 }
             }
         });
+    }
+
+    /// Reads the chosen file as UTF-8 text in the browser, without uploading it (e.g. CSV loaded
+    /// into an editor), then forgets it (still showing its name), so the same file can be chosen
+    /// again. A reply that comes once this is disposed is dropped.
+    ///
+    /// @param maxBytes  The largest file to read; a larger one fails, rather than filling the page.
+    /// @param onText    Given the file's text.
+    /// @param onFailure Given what is wrong, e.g. that the file is too large.
+    public void readText(final double maxBytes,
+                         final Consumer<String> onText,
+                         final Consumer<String> onFailure) {
+        Objects.requireNonNull(chooser, "Not attached to a chooser");
+        LocalTextFile.read(chooser.getFileInput(),
+                maxBytes,
+                text -> {
+                    if (!isDisposed()) {
+                        onText.accept(text);
+                    }
+                },
+                message -> {
+                    if (!isDisposed()) {
+                        onFailure.accept(message);
+                    }
+                });
+        chooser.clearInput();
+    }
+
+    /// Forgets the chosen file, e.g. once it is uploaded or removed, so the same file can be chosen
+    /// again.
+    public void reset() {
+        Objects.requireNonNull(chooser, "Not attached to a chooser");
+        chooser.reset();
     }
 
     /// Sets how every [FileChooserController] sends its file. Only for tests, which fake uploads.

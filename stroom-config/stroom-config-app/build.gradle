@@ -56,6 +56,7 @@ dependencies {
     implementation project(':stroom-planb:stroom-planb-impl')
     implementation project(':stroom-processor:stroom-processor-impl')
     implementation project(':stroom-processor:stroom-processor-impl-db')
+    implementation project(':stroom-data-connection:stroom-data-connection-impl')
     implementation project(':stroom-sqlstore:stroom-sqlstore-impl')
     implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-receive:stroom-receive-rules-impl')

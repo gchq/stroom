@@ -1,0 +1,47 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:dc="urn:import:stroom.dataconnection.client.component">
+    <!-- BEM block data-connection-settings (data-connection-settings.css): a Data Connection's
+         Settings tab. Only the chosen type's section is shown -->
+    <g:FlowPanel styleName="data-connection-settings max form-padding form">
+        <form:FormGroup identity="dataConnectionType"
+                        label="Type"
+                        helpText="Where the data comes from: a database reached by JDBC, Amazon Athena through the AWS SDK, an LDAP directory, or CSV or an Excel workbook held in this document. Queries of a JDBC or Athena source give their SQL in a sql clause, and queries of an LDAP directory their search filter; CSV and Excel are queried with Stroom's own clauses.">
+            <l:SelectionBox ui:field="type" addStyleNames="text-field--wide"/>
+        </form:FormGroup>
+
+        <dc:JdbcSection ui:field="jdbc"/>
+        <dc:AthenaSection ui:field="athena"/>
+        <dc:LdapSection ui:field="ldap"/>
+        <dc:CsvSection ui:field="csv"/>
+        <dc:ExcelSection ui:field="excel"/>
+
+        <g:FlowPanel ui:field="timeFieldGroup" styleName="data-connection-settings__section">
+            <form:FormGroup identity="dataConnectionTimeField"
+                            label="Time Column (optional)"
+                            helpText="A date column of the data. When a query has a time range, rows are filtered on this column in Stroom. For JDBC and LDAP this is only done when the SQL or filter has no :from or :to placeholder; for LDAP, CSV and Excel it must be a Date column or attribute. With none, the time range is ignored and the query says so.">
+                <form:TextBox ui:field="timeField" addStyleNames="text-field--wide"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+        <g:FlowPanel ui:field="queryTimeoutGroup" styleName="data-connection-settings__section">
+            <form:FormGroup identity="dataConnectionQueryTimeout"
+                            label="Query Timeout (seconds)"
+                            helpText="How long a query may run before it is stopped. An administrator may set a lower ceiling. Default: 60">
+                <v:ValueSpinner ui:field="queryTimeoutSeconds" minValue="1" maxValue="86400"
+                                addStyleNames="value-spinner--wide"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+        <form:FormGroup identity="dataConnectionMaxRows"
+                        label="Max Rows"
+                        helpText="The most rows a query may read; a query with more uses the first ones and says so. An administrator may set a lower ceiling. Default: 100000">
+            <v:ValueSpinner ui:field="maxRows" minValue="1" maxValue="100000000" addStyleNames="value-spinner--wide"/>
+        </form:FormGroup>
+
+        <b:Button ui:field="testConnection" text="Test Connection" icon="OK" addStyleNames="allow-focus"/>
+    </g:FlowPanel>
+</ui:UiBinder>
