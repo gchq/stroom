@@ -571,8 +571,9 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     }
 
     @PipelineProperty(
-            description = "Some inputs might contain control character 0 which turns off output escaping. " +
-                          "Set this to true to prevent that behaviour.",
+            description = "Control character 0 in the data is always removed and never turns off output " +
+                          "escaping. Set this to true to also escape text substituted by an " +
+                          "xsl:character-map in the XSLT.",
             defaultValue = "false",
             displayPriority = 4)
     public void setPreventEscapeSwitching(final boolean preventEscapeSwitching) {
