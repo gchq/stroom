@@ -1498,11 +1498,24 @@ class McpAgentChat {
         } catch (final AiChatRunManager.WaitingForUserException e) {
             // The run stops until the user answers (e.g. ask_user's questions), and makes the call again then.
             throw e;
+        } catch (final TaskTerminatedException e) {
+            // A built-in tool gave up on its work as the run was stopped (e.g. cancelled its query in
+            // Elasticsearch). Its result is kept, as for a server's tool given up on, and the run then ends
+            // stopped, as it does for a stop seen between steps.
+            LOGGER.debug(() -> "Tool '" + toolName + "' stopped for chatId=" + chatId + " as the run was stopped");
+            return ToolResult.text(stoppedResult(toolName));
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> "Tool '" + toolName + "' failed for chatId=" + chatId, e);
             return ToolResult.text("Error calling tool '" + toolName + "': "
                                    + NullSafe.nonBlankStringElse(e.getMessage(), e.toString()));
         }
+    }
+
+    /// @param toolName A built-in tool given up on as the run was stopped.
+    /// @return What its call gives: that the user stopped it, and that what it ran was stopped too.
+    static String stoppedResult(final String toolName) {
+        return "Error calling tool '" + toolName + "': the user stopped the chat before it finished, so what it "
+               + "was running was stopped.";
     }
 
     /// @return Whether the user has asked to send a message now, looked up at most every

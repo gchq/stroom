@@ -159,8 +159,10 @@ class TestE2eEqlSequence extends AbstractE2eTest {
 
         assertThat(result).containsEntry("maxspan", "2m").containsEntry("sequence_count", 2)
                 .containsEntry("truncated", false);
-        assertThat((String) result.get("query")).contains("stroom_eql_doc == \"1\" and action : \"copy\"")
-                .contains("by SubjectUserName, Computer");
+        // action and Image are each mapped in one doc only, so no step needs the doc condition or its script.
+        assertThat((String) result.get("query")).contains("[any where action : \"copy\"]")
+                .contains("by SubjectUserName, Computer").doesNotContain("stroom_eql_doc");
+        assertThat((String) result.get("note")).contains("at least the sequences there are");
         assertThat(keys(result)).containsExactlyInAnyOrder(List.of("alice", "H1"), List.of("frank", "H4"));
         assertThat((List<Object>) result.get("step_counts")).containsExactly(4L, 3L);
         assertThat((String) result.get("caveat")).contains("straight from Elasticsearch");
@@ -184,8 +186,7 @@ class TestE2eEqlSequence extends AbstractE2eTest {
         final Map<String, Object> result = json("eql_sequence", copyThenPowerShell(true));
 
         assertThat(keys(result)).containsExactly(List.of("alice", "H1"));
-        assertThat((String) result.get("query")).contains("![any where stroom_eql_doc == \"1\" and action == "
-                                                          + "\"Cancel\"] by user, host");
+        assertThat((String) result.get("query")).contains("![any where action == \"Cancel\"] by user, host");
     }
 
     @Test
@@ -242,8 +243,8 @@ class TestE2eEqlSequence extends AbstractE2eTest {
             final String eql = (String) result.get("query");
             assertThat(eql).isEqualTo("""
                     sequence with maxspan=2m
-                      [any where stroom_eql_doc == "1" and `sequence` == "upload"] by `cs-username`
-                      [any where stroom_eql_doc == "2" and `by` : "SU"] by `cs-username`""");
+                      [any where `sequence` == "upload"] by `cs-username`
+                      [any where `by` : "SU"] by `cs-username`""");
             assertThat(eql).doesNotContain("event.").doesNotContain("@timestamp");
             assertThat(result).containsEntry("time_field", "EventTime").containsEntry("sequence_count", 1);
             assertThat(keys(result)).containsExactly(List.of("alice"));
@@ -266,6 +267,116 @@ class TestE2eEqlSequence extends AbstractE2eTest {
         } finally {
             node.deleteIndices(proxyIndex);
             node.deleteIndices(authIndex);
+        }
+    }
+
+    @Test
+    void aTextFieldIsSearchedAsItsDifferentlyNamedKeywordSubfield() {
+        // CommandLine is text, its keyword subfield is CommandLine.raw (not .keyword), and Notes is text with no
+        // keyword subfield. Also any_of, NOT_IN and length() against the real Elasticsearch.
+        final String shellIndex = ElasticTestNode.createIndexName("eql-shell");
+        try {
+            node.createIndex(shellIndex, """
+                    {"settings": {"number_of_shards": 1, "number_of_replicas": 0},
+                     "mappings": {"properties": {
+                       "@timestamp": {"type": "date"}, "user": {"type": "keyword"},
+                       "CommandLine": {"type": "text", "fields": {"raw": {"type": "keyword"}}},
+                       "Notes": {"type": "text"},
+                       "StreamId": {"type": "long"}, "EventId": {"type": "long"}}}}""");
+            final ArrayNode events = JsonUtil.getMapper().createArrayNode();
+            events.add(shell(1, "00", "alice", "Get-Clipboard"));
+            events.add(shell(2, "30", "alice", "powershell -enc " + "A".repeat(40)));
+            events.add(shell(3, "00", "bob", "Get-Clipboard"));
+            events.add(shell(4, "30", "bob", "powershell -c dir"));
+            events.add(shell(5, "00", "svc", "Get-Clipboard"));
+            events.add(shell(6, "30", "svc", "powershell -enc " + "B".repeat(40)));
+            node.bulkIndex(shellIndex, events);
+            final DocRef cluster = liveElasticCluster(node, "E2E EQL text cluster " + shellIndex);
+            final DocRef shells = elasticIndex("E2E shells " + shellIndex, shellIndex, cluster);
+
+            final Map<String, Object> args = new LinkedHashMap<>();
+            args.put("maxspan", "2m");
+            args.put("steps", List.of(
+                    Map.of("index", shells.getUuid(), "by", List.of("user"),
+                            "where", List.of(Map.of("field", "CommandLine", "value", "get-clipboard",
+                                    "caseInsensitive", true))),
+                    Map.of("index", shells.getUuid(), "by", List.of("user"),
+                            "where", List.of(
+                                    Map.of("field", "CommandLine", "condition", "STARTS_WITH",
+                                            "value", "powershell"),
+                                    Map.of("field", "CommandLine", "condition", "GREATER_THAN", "value", "30",
+                                            "length", true),
+                                    Map.of("field", "user", "condition", "NOT_IN", "value", "svc,system")),
+                            "any_of", List.of(
+                                    Map.of("field", "CommandLine", "condition", "CONTAINS", "value", "-enc"),
+                                    Map.of("field", "CommandLine", "condition", "CONTAINS", "value", "-e ")))));
+            final Map<String, Object> result = json("eql_sequence", args);
+            dump("eql_sequence text field", result);
+
+            assertThat((String) result.get("query"))
+                    .contains("CommandLine.raw : \"get-clipboard\"")
+                    .contains("CommandLine.raw like \"powershell*\" and length(CommandLine.raw) > 30 and not user "
+                              + "in (\"svc\", \"system\") and (CommandLine.raw like \"*-enc*\" or "
+                              + "CommandLine.raw like \"*-e *\")");
+            assertThat((List<String>) result.get("field_notes")).singleElement().asString()
+                    .contains("its subfield 'CommandLine.raw' (keyword) was searched instead");
+            assertThat(keys(result)).containsExactly(List.of("alice"));
+
+            args.put("steps", List.of(
+                    Map.of("index", shells.getUuid(), "by", List.of("user"),
+                            "where", List.of(Map.of("field", "Notes", "value", "x"))),
+                    Map.of("index", shells.getUuid(), "by", List.of("user"))));
+            assertThat(McpTestClient.text(client.call("eql_sequence", args)))
+                    .contains("'Notes' in Elastic Index 'E2E shells " + shellIndex + "' is a text field, which EQL "
+                              + "can't search, and it has no subfields");
+        } finally {
+            node.deleteIndices(shellIndex);
+        }
+    }
+
+    @Test
+    void stepsOnAFieldBothDocsMapAreKeptToTheirOwnDoc() {
+        // Both indexes map action: without the doc condition, step 1 would match the second index's Login too, and
+        // bob (whose Logins are both in the second) would be found.
+        final String vpnIndex = ElasticTestNode.createIndexName("eql-vpn");
+        final String appIndex = ElasticTestNode.createIndexName("eql-app");
+        final String body = """
+                {"settings": {"number_of_shards": 1, "number_of_replicas": 0},
+                 "mappings": {"properties": {
+                   "@timestamp": {"type": "date"}, "user": {"type": "keyword"}, "action": {"type": "keyword"},
+                   "StreamId": {"type": "long"}, "EventId": {"type": "long"}}}}""";
+        try {
+            node.createIndex(vpnIndex, body);
+            node.createIndex(appIndex, body);
+            final ArrayNode vpn = JsonUtil.getMapper().createArrayNode();
+            vpn.add(login(1, "00", "alice", devicesStream));
+            node.bulkIndex(vpnIndex, vpn);
+            final ArrayNode app = JsonUtil.getMapper().createArrayNode();
+            app.add(login(1, "30", "alice", sysmonStream));
+            app.add(login(2, "00", "bob", sysmonStream));
+            app.add(login(3, "30", "bob", sysmonStream));
+            node.bulkIndex(appIndex, app);
+            final DocRef cluster = liveElasticCluster(node, "E2E EQL shared cluster " + vpnIndex);
+            final DocRef vpnDoc = elasticIndex("E2E vpn " + vpnIndex, vpnIndex, cluster);
+            final DocRef appDoc = elasticIndex("E2E app " + appIndex, appIndex, cluster);
+
+            final Map<String, Object> args = new LinkedHashMap<>();
+            args.put("maxspan", "2m");
+            args.put("steps", List.of(
+                    Map.of("index", vpnDoc.getUuid(), "by", List.of("user"),
+                            "where", List.of(Map.of("field", "action", "value", "Login"))),
+                    Map.of("index", appDoc.getUuid(), "by", List.of("user"),
+                            "where", List.of(Map.of("field", "action", "value", "Login")))));
+            final Map<String, Object> result = json("eql_sequence", args);
+
+            assertThat((String) result.get("query")).isEqualTo("""
+                    sequence with maxspan=2m
+                      [any where stroom_eql_doc == "1" and action == "Login"] by user
+                      [any where stroom_eql_doc == "2" and action == "Login"] by user""");
+            assertThat(keys(result)).containsExactly(List.of("alice"));
+        } finally {
+            node.deleteIndices(vpnIndex);
+            node.deleteIndices(appIndex);
         }
     }
 
@@ -397,6 +508,29 @@ class TestE2eEqlSequence extends AbstractE2eTest {
         event.put("Computer", host);
         event.put("Image", "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe");
         event.put("StreamId", sysmonStream);
+        event.put("EventId", eventId);
+        return event;
+    }
+
+    private ObjectNode login(final long eventId, final String second, final String user, final long streamId) {
+        final ObjectNode event = JsonUtil.getMapper().createObjectNode();
+        event.put("_id", "l" + eventId);
+        event.put("@timestamp", T0 + second + "Z");
+        event.put("user", user);
+        event.put("action", "Login");
+        event.put("StreamId", streamId);
+        event.put("EventId", eventId);
+        return event;
+    }
+
+    private ObjectNode shell(final long eventId, final String second, final String user, final String commandLine) {
+        final ObjectNode event = JsonUtil.getMapper().createObjectNode();
+        event.put("_id", "c" + eventId);
+        event.put("@timestamp", T0 + second + "Z");
+        event.put("user", user);
+        event.put("CommandLine", commandLine);
+        event.put("Notes", "note");
+        event.put("StreamId", devicesStream);
         event.put("EventId", eventId);
         return event;
     }

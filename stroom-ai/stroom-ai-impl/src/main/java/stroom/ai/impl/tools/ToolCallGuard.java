@@ -107,9 +107,12 @@ public class ToolCallGuard {
     // Stroom, and a query's answer changes as data arrives.)
     private static final Set<String> SAME_UNTIL_WRITTEN = Set.of("read_file", "jq", "grep", "ls", "wc", "xpath",
             "describe_data_source");
-    // Failures that may pass on their own, and are retried as they are: never counted.
+    // Failures that may pass on their own, and are retried as they are: never counted. A cluster short of memory or
+    // overloaded right now (HTTP 429, e.g. Elasticsearch's transient circuit breaker or a rejected execution) is one;
+    // a query that needs more memory than allowed is not, and is counted, so it is changed rather than repeated.
     private static final Pattern TRANSIENT = Pattern.compile(
-            "call again|timed? ?out|temporar|unavailable|could not connect|connection|\\b50[234]\\b|try again",
+            "call again|timed? ?out|temporar|unavailable|could not connect|connection|\\b50[234]\\b|try again"
+            + "|overloaded|short of memory|too many requests|\\b(?:HTTP|status):? ?429\\b",
             Pattern.CASE_INSENSITIVE);
     // The user's answer, not a failure: a form declined, unanswered or superseded (seen in testing, chat 145: told
     // "no indexing for now" as the backend form showed, get_field_conventions was answered "The same arguments as a

@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.api.ElasticEsql;
+import stroom.ai.api.ElasticEsql.Reason;
 import stroom.ai.api.ElasticEsql.Refusal;
 import stroom.ai.api.ElasticEsql.Request;
 import stroom.ai.api.ElasticEsql.Result;
@@ -43,6 +44,7 @@ import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermission;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
@@ -175,6 +177,9 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                                  + "questions on Elasticsearch indexes (e.g. which users uploaded the most, by site "
                                  + "domain; events per hour with BUCKET(@timestamp, 1 hour))")
                         .chatOnly("; use run_stroomql for row-level work or any other data source")
+                        .general(". Not for ordered sequences (X then Y within N, in one doc or across several): "
+                                 + "joins of STATS results get them wrong")
+                        .chatOnly("; use eql_sequence")
                         .general(". Give pipeline: the commands after FROM, e.g. '| WHERE event.action == "
                                  + "\"allowed\" | STATS total = SUM(bytes) BY user.name, url.domain | SORT total "
                                  + "DESC | LIMIT 10'. FROM and the index are written for you. Allowed: WHERE, EVAL, "
@@ -283,8 +288,12 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
         try {
             result = elasticEsqlProvider.get().query(new Request(index, pipeline, filter, timeRange,
                     Objects.requireNonNullElse(intArg(request, LIMIT_ARG), ElasticEsql.MAX_ROWS), timeLimit(context),
-                    true));
+                    true, context.stopped()));
         } catch (final Refusal refusal) {
+            if (refusal.reason() == Reason.STOPPED) {
+                // The user stopped the chat, and the query was cancelled in Elasticsearch: the run ends stopped.
+                throw new TaskTerminatedException();
+            }
             throw new WorkspaceException(refusal(refusal, fields));
         } catch (final PermissionException e) {
             throw new WorkspaceException(DataSourceAccess.NOT_FOUND);

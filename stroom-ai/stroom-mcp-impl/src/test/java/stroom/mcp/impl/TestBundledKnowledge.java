@@ -126,6 +126,17 @@ class TestBundledKnowledge {
     }
 
     @Test
+    void orderedQuestionsAreSteeredToEqlSequenceNotJoins() {
+        // Seen in acceptance runs on a small model: "a USB device connected, then a file copied to it within 10
+        // minutes" answered by joining esql_query results by hand, and wrongly.
+        final String text = String.join(" ", BundledKnowledge.serverInstructions().split("\\s+"));
+
+        assertThat(text).contains("\"X, then Y, by the same user/host, within N\" (N in a row, then NOT Y), in one "
+                                  + "Elasticsearch index or across several: eql_sequence, never a join of "
+                                  + "esql_query or search results by hand.");
+    }
+
+    @Test
     void theInstructionsFitWhatStroomAiGivesAServer() {
         // Seen: the instructions grew to 20,675 characters, past the 20,000 Stroom AI gives one server's
         // instructions, and its agent never saw the last rules: they were cut without a word. Stroom's own must fit

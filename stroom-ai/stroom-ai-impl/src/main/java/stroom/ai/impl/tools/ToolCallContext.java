@@ -21,6 +21,7 @@ import stroom.ai.impl.workspace.SessionWorkspace;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 
 /// What a [StroomTool] is given with each call, in place of the chat it used to be given: the session it is made
 /// in (and so who for), the session's workspace if it has one, how to ask the user, where to report progress, the
@@ -126,6 +127,15 @@ public final class ToolCallContext {
     /// counted), or empty if it isn't part of one.
     public Optional<ToolRunContext> runContext() {
         return Optional.ofNullable(runContext);
+    }
+
+    /// @return True once the agent run the call is part of has been asked to stop (the user stopped the chat), for
+    /// tools that wait on long work (e.g. a query in Elasticsearch) to give up on it; never true for a call that
+    /// isn't part of a run (e.g. over MCP).
+    public BooleanSupplier stopped() {
+        return runContext()
+                .map(ToolRunContext::getCancelled)
+                .orElse(() -> false);
     }
 
     /// @return How to make links to Stroom objects (documents, streams and events) in what the call returns, in the

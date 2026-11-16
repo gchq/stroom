@@ -1211,6 +1211,13 @@ written from the doc, so a query never names another index.
   field grouped by when it has a keyword sub-field (group by the sub-field); a cluster older than 8.14 (use
   `run_stroomql`); a query over the time limit (`esqlTimeout`, and the session's query time limit), which is
   cancelled; partial results (`allow_partial_results=false` from 8.18).
+* **Stop and cluster errors**: a stop of the chat's run cancels the query in Elasticsearch within about 250 ms and
+  ends the run stopped (not a tool error). A transient circuit breaker or a rejection (429) says the cluster is
+  short of memory or overloaded, try again shortly (transient to the tool call guard); a permanent breaker, or the
+  request breaker, says the query needs too much memory and what to ask for less of. Elasticsearch's own reason
+  follows "Elasticsearch said:".
+* **Steered away**: its description says ordered sequences (X then Y within N) are for `eql_sequence`, not joins of
+  STATS results.
 
 * **Hints** (`EsqlQueryTool.refusal`, checked on 9.5.3): a keyword as a column name ("no viable alternative at
   input 'first ='", "mismatched input 'by' expecting") says it is reserved (rename or backquote it); "Unknown
@@ -1229,15 +1236,19 @@ Finds ordered sequences of events across one or more Elastic Index docs on one c
 Elasticsearch: "a device plugged in, then a file copied to it", "a clipboard copy then PowerShell within 2 minutes
 by the same user on the same host", "20 failed logons then a success". Structured steps only, never raw EQL.
 
-* **Arguments**: `steps` (2 or more, in order), each `{index, where, by, missing, runs, fields}`: the doc (uuid or
-  name), conditions as `search_events` takes them plus `caseInsensitive`, its own join fields (same number and
+* **Arguments**: `steps` (2 or more, in order), each `{index, where, any_of, by, missing, runs, fields}`: the doc
+  (uuid or name), conditions as `search_events` takes them plus `caseInsensitive`, `NOT_IN` and `length`, an
+  optional `any_of` group (2 or more plain conditions, at least one must hold), its own join fields (same number and
   order in every step), `missing=true` for "and then NOT", `runs=N` (1 to 100), and up to 5 fields to show;
-  `until` (`{index, where, by}`); `maxspan` (at most 24h); `timeFrom`/`timeTo`; `limit` (default 1,000, at most
+  `until` (`{index, where, any_of, by}`); `maxspan` (at most 24h); `timeFrom`/`timeTo`; `limit` (default 1,000, at most
   10,000); `runAnyway`; `out` (chat).
 * **EQL** (`EqlQueryWriter`): `sequence with maxspan=2m [any where stroom_eql_doc == "1" and ...] by a, b ...`,
   `![...]` for missing, `with runs=N`, `until [...]`. EQUALS is `==` (`:` case-insensitive), `like`/`like~` with
   `*`, `cidrMatch` for a CIDR on an IP field; IN `in`/`in~` or `cidrMatch`; CONTAINS/STARTS_WITH/ENDS_WITH like
-  patterns; MATCHES_REGEX `regex`/`regex~`; ranges and BETWEEN; IS_NULL/IS_NOT_NULL `== null`/`!= null`.
+  patterns; MATCHES_REGEX `regex`/`regex~`; ranges and BETWEEN; IS_NULL/IS_NOT_NULL `== null`/`!= null`; NOT_IN
+  `not f in (...)` (`in~`, `not cidrMatch`); `length=true` as `length(f) > N`; `any_of` as `( a or b )`. A value with
+  `?` and no `*` is matched exactly (`==`, or `in~` case-insensitive, as `:` reads `?` as a wildcard); a pattern
+  holding a `?` is refused (EQL can't escape it: use the whole value or MATCHES_REGEX with `\?`).
   `stroom_eql_doc` is a runtime field `ElasticEqlService` defines from each doc's concrete indices (`_resolve/index`),
   as EQL can't name `_index`; it is left out with one doc.
 * **maxspan**: from the user's words. Without it, in the chat, a plain-text form (`MAXSPAN_QUESTION`, one line that
@@ -1245,22 +1256,32 @@ by the same user on the same host", "20 failed logons then a success". Structure
   (`stroom.ai.workspace.eqlDefaultMaxspan`, 5 minutes), then 1 minute, 15 minutes, 1 hour and another interval,
   typed; over MCP (or with the user away) refused with that question and the suggestions. The result says the
   window used and where it came from.
-* **Checks and refusals**: every field (conditions, join fields, fields to show) against the doc's fields, with the
-  closest names; a value its field can't take (a number field); join lists of different lengths; missing with runs;
+* **Checks and refusals**: every field (conditions, any_of, join fields, fields to show) against the doc's fields,
+  with the closest names; a `text` field searched or joined on is swapped for its keyword subfield found in the
+  mapping (not assumed `.keyword`; one without a normaliser first; the result's `field_notes` say so), or refused
+  with its subfields and their types when it has none; a field in a `nested` field; a value its field can't take (a number field); join lists of different lengths; missing with runs;
   a Lucene or other doc (use `run_stroomql`); a doc the user can't use, named; docs on different clusters or with
   different time fields, naming each doc's (`ElasticEqlService.target`); a cluster older than 7.10, or than 8.8 for a
   missing step or 8.7 for runs.
-* **Pre-flight** (`EqlSequenceTool.assess`): each step that must happen is counted with ES|QL (`| WHERE ... | STATS
-  n = COUNT(*)`) on 8.14 or later, else skipped saying so. The sum at 50,000 events a second over the query time
-  limit is refused before it runs ("narrow the window or the first step", or `runAnyway`); a first step of 1,000
-  or more events and 10 times a later one's, with no missing step or runs, gets "put step k first if the order
-  doesn't matter"; a step with fewer events than its runs is noted.
-* **Running**: async in Elasticsearch within the query time limit (`wait_for_completion_timeout`,
-  `keep_on_completion=false`); still running then, it is deleted and refused with "narrow the window or the first
-  step". `filter_path` keeps only the ids, `missing` and the fields fetched.
+* **Pre-flight** (`EqlSequenceTool.assess`): each step that must happen is counted with ES|QL up to 1,000,000
+  (`| WHERE ... | LIMIT 1000001 | STATS n = COUNT(*)`) on 8.14 or later, else skipped saying so; skipped when the
+  time range is 1 hour or less. A first step past the cap is refused before it runs ("narrow the window or the
+  first step", or `runAnyway`); a later one past it is noted; a first step of 1,000 or more events and 10 times a
+  later one's, with no missing step or runs, gets "put step k first if the order doesn't matter"; a step with fewer
+  events than its runs is noted.
+* **Doc condition**: with several docs, `stroom_eql_doc == "n"` (and its runtime script) only on a step whose
+  conditions could match another doc's events (none of its positive conditions is on a field only its doc maps);
+  each event's doc comes from its `_index`.
+* **Running**: async in Elasticsearch within the query time limit: submitted with a 250 ms
+  `wait_for_completion_timeout` (`keep_on_completion=false`), then polled in 250 ms slices; still running at the
+  limit, it is deleted and refused with "narrow the window or the first step"; a stop of the chat's run deletes it
+  and ends the run stopped (a stop during the counts doesn't run it). Cluster errors as `esql_query`'s: busy or
+  overloaded, try again shortly; the sequence breaker or a permanent breaker, needs too much memory (narrow the
+  window, shorten maxspan, put the more selective step first). `filter_path` keeps only the ids, `missing` and the fields fetched.
 * **Returns**: the EQL, the window, the counts and advice, a summary per entity (sequences, first, last, shortest
   gap), the sequences (first 20 shown) written to `/outputs/eql/eql-<time>.md` (join keys; each step's time,
-  fields, StreamId and EventId; the gaps; the span), the "straight from Elasticsearch" caveat, a note when the limit
+  fields, StreamId and EventId; the gaps; the span), a line that these are at least the sequences (EQL doesn't find
+  every overlapping match), the "straight from Elasticsearch" caveat, a note when the limit
   cut them (the latest are kept), and a validated StroomQL review query per doc. Markdown in the chat, JSON over
   `/mcp`. Audited per doc as a Search event.
 * **Review query** (`EqlSequenceResults.review`): the doc's hits by stream, `(StreamId = x and EventId in (a, b))

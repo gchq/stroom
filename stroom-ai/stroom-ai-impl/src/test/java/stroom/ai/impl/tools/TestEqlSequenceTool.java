@@ -37,10 +37,12 @@ import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.TimeRange;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
@@ -63,9 +65,11 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SuppressWarnings("unchecked")
 class TestEqlSequenceTool {
@@ -147,8 +151,8 @@ class TestEqlSequenceTool {
         assertThat(request.indexes()).containsExactly(DEVICES, SYSMON);
         assertThat(request.query()).isEqualTo("""
                 sequence with maxspan=2m
-                  [any where stroom_eql_doc == "1" and action : "copy"] by user, host
-                  [any where stroom_eql_doc == "2" and Image like~ "*powershell.exe"] by SubjectUserName, Computer""");
+                  [any where action : "copy"] by user, host
+                  [any where Image like~ "*powershell.exe"] by SubjectUserName, Computer""");
         assertThat(request.fields()).containsExactly("StreamId", "EventId", "user", "host", "action",
                 "SubjectUserName", "Computer");
         assertThat(request.size()).isEqualTo(EqlSequenceTool.DEFAULT_LIMIT);
@@ -326,13 +330,14 @@ class TestEqlSequenceTool {
 
     @Test
     void aSequenceTheCountsSayIsTooBigIsRefusedBeforeItRuns() {
-        counts.put(DEVICES, 9_000_000L);
+        // The count reads at most COUNT_CAP + 1 events: more than the cap.
+        counts.put(DEVICES, EqlSequenceTool.COUNT_CAP + 1);
 
         final String output = run(chat(UserQuestions.NONE), args("2m"));
 
-        assertThat(output).contains("Not run: the steps match 9000010 events in the window (step 1: 9000000, step "
-                                    + "2: 10)")
-                .contains("longer than the 120-second time limit")
+        assertThat(output).contains("Not run: step 1 matches more than 1000000 events in the window (step 1: more "
+                                    + "than 1000000, step 2: 10), and a sequence reads every event of its first "
+                                    + "step, so it is unlikely to finish in the time limit.")
                 .contains("Narrow the window or the first step")
                 .contains("runAnyway=true");
         Mockito.verify(elasticEql, Mockito.never()).search(Mockito.any());
@@ -416,6 +421,234 @@ class TestEqlSequenceTool {
     }
 
     @Test
+    void theRunsStopReachesTheSearchAndAStoppedSearchEndsTheRunStopped() {
+        Mockito.doThrow(new Refusal(ElasticEql.Reason.STOPPED,
+                "The search was stopped, so it was deleted in Elasticsearch")).when(elasticEql).search(Mockito.any());
+        final AtomicBoolean cancelled = new AtomicBoolean(false);
+
+        assertThatThrownBy(() -> run(inRun(cancelled), args("2m")))
+                .isInstanceOf(TaskTerminatedException.class);
+
+        // The search and the counts before it are given the run's stop.
+        cancelled.set(true);
+        assertThat(request().stopped().getAsBoolean()).isTrue();
+        final ArgumentCaptor<ElasticEsql.Request> counts = ArgumentCaptor.forClass(ElasticEsql.Request.class);
+        Mockito.verify(elasticEsql, Mockito.atLeastOnce()).query(counts.capture());
+        assertThat(counts.getAllValues()).allSatisfy(count -> assertThat(count.stopped().getAsBoolean()).isTrue());
+    }
+
+    @Test
+    void aStopWhileTheStepsAreCountedDoesntRunTheSequence() {
+        // Before, a refused count was only noted ("the steps weren't counted first") and the sequence ran anyway.
+        Mockito.doThrow(new ElasticEsql.Refusal(ElasticEsql.Reason.STOPPED,
+                "The query was stopped, so it was cancelled in Elasticsearch")).when(elasticEsql).query(Mockito.any());
+
+        assertThatThrownBy(() -> run(inRun(new AtomicBoolean(true)), args("2m")))
+                .isInstanceOf(TaskTerminatedException.class);
+        Mockito.verify(elasticEql, Mockito.never()).search(Mockito.any());
+    }
+
+    @Test
+    void overMcpTheSearchIsNeverStopped() {
+        run(mcp(), args("2m"));
+
+        assertThat(request().stopped().getAsBoolean()).isFalse();
+    }
+
+    @Test
+    void aTextFieldIsSearchedAsItsKeywordSubfieldWhateverItsName() {
+        // Not ".keyword": the subfield is looked up in the mapping. Of two keyword subfields, the one without a
+        // normaliser is taken.
+        withDevicesMapping(List.of(
+                new ElasticEql.Field("message", "text", null, null, false),
+                new ElasticEql.Field("message.lower", "keyword", "message", "lowercase", false),
+                new ElasticEql.Field("message.raw", "keyword", "message", null, false),
+                new ElasticEql.Field("message.words", "text", "message", null, false)));
+
+        final String output = run(chat(UserQuestions.NONE), messageArgs(Map.of("field", "message",
+                "condition", "CONTAINS", "value", "usb")));
+
+        assertThat(request().query()).contains("message.raw like \"*usb*\"").doesNotContain("message like");
+        assertThat(output).contains("'message' in Elastic Index 'Devices' is a text field, which EQL can't search, "
+                                    + "so its subfield 'message.raw' (keyword) was searched instead");
+    }
+
+    @Test
+    void aNormalisedKeywordSubfieldIsTakenWhenItIsTheOnlyOne() {
+        withDevicesMapping(List.of(
+                new ElasticEql.Field("message", "text", null, null, false),
+                new ElasticEql.Field("message.lower", "keyword", "message", "lowercase", false)));
+
+        final String output = run(chat(UserQuestions.NONE), messageArgs(Map.of("field", "message",
+                "value", "usb")));
+
+        assertThat(request().query()).contains("message.lower == \"usb\"");
+        assertThat(output).contains("its subfield 'message.lower' (keyword, normaliser lowercase)");
+    }
+
+    @Test
+    void aTextFieldWithNoKeywordSubfieldIsRefusedNamingItsSubfields() {
+        withDevicesMapping(List.of(
+                new ElasticEql.Field("message", "text", null, null, false),
+                new ElasticEql.Field("message.words", "text", "message", null, false)));
+
+        assertThat(run(chat(UserQuestions.NONE), messageArgs(Map.of("field", "message", "value", "usb"))))
+                .contains("Step 1: 'message' in Elastic Index 'Devices' is a text field, which EQL can't search, "
+                          + "and it has no keyword subfield (its subfields: message.words (text))");
+        Mockito.verify(elasticEql, Mockito.never()).search(Mockito.any());
+    }
+
+    @Test
+    void aTextFieldWithNoSubfieldsIsRefused() {
+        withDevicesMapping(List.of(new ElasticEql.Field("message", "text", null, null, false)));
+
+        assertThat(run(chat(UserQuestions.NONE), messageArgs(Map.of("field", "message", "value", "usb"))))
+                .contains("is a text field, which EQL can't search, and it has no subfields");
+    }
+
+    @Test
+    void aNestedFieldIsRefusedUpFront() {
+        withDevicesMapping(List.of(
+                new ElasticEql.Field("message", "keyword", null, null, true)));
+
+        assertThat(run(chat(UserQuestions.NONE), messageArgs(Map.of("field", "message", "value", "usb"))))
+                .contains("Step 1: 'message' in Elastic Index 'Devices' is in a nested field, which EQL can't "
+                          + "search");
+        Mockito.verify(elasticEql, Mockito.never()).search(Mockito.any());
+    }
+
+    @Test
+    void anyOfNotInAndLengthAreWrittenIntoTheStep() {
+        final Map<String, Object> args = args("2m");
+        final List<Map<String, Object>> steps = new ArrayList<>((List<Map<String, Object>>) args.get("steps"));
+        final Map<String, Object> first = new LinkedHashMap<>(steps.getFirst());
+        first.put("where", List.of(
+                Map.of("field", "user", "condition", "NOT_IN", "value", "svc,system", "caseInsensitive", true),
+                Map.of("field", "action", "condition", "GREATER_THAN", "value", "100", "length", true)));
+        first.put("any_of", List.of(Map.of("field", "host", "value", "H1"), Map.of("field", "host", "value", "H2")));
+        steps.set(0, first);
+        args.put("steps", steps);
+
+        run(chat(UserQuestions.NONE), args);
+
+        assertThat(request().query()).contains("[any where not user in~ (\"svc\", "
+                                               + "\"system\") and length(action) > 100 and (host == \"H1\" or "
+                                               + "host == \"H2\")] by user, host");
+    }
+
+    @Test
+    void anyOfIsOneLevelOfTwoOrMoreConditionsOnTheStepsFields() {
+        final Map<String, Object> args = args("2m");
+        final List<Map<String, Object>> steps = new ArrayList<>((List<Map<String, Object>>) args.get("steps"));
+        final Map<String, Object> first = new LinkedHashMap<>(steps.getFirst());
+
+        first.put("any_of", List.of(Map.of("field", "host", "value", "H1")));
+        steps.set(0, first);
+        args.put("steps", steps);
+        assertThat(run(chat(UserQuestions.NONE), args)).contains("Step 1's any_of has one condition: give 2 or more");
+
+        first.put("any_of", List.of(Map.of("field", "host", "value", "H1"), Map.of("any_of", List.of())));
+        args.put("steps", List.of(first, steps.get(1)));
+        assertThat(run(chat(UserQuestions.NONE), args)).contains("has a condition with its own any_of");
+
+        first.put("any_of", List.of(Map.of("field", "host", "value", "H1"), Map.of("field", "hots", "value", "x")));
+        args.put("steps", List.of(first, steps.get(1)));
+        assertThat(run(chat(UserQuestions.NONE), args)).contains("not fields of Elastic Index 'Devices': hots");
+        Mockito.verify(elasticEql, Mockito.never()).search(Mockito.any());
+    }
+
+    @Test
+    void aLiteralQuestionMarkInAPatternIsRefused() {
+        assertThat(run(chat(UserQuestions.NONE), messageArgs(Map.of("field", "action", "condition", "CONTAINS",
+                "value", "what?"))))
+                .contains("has a ? in a pattern ('what?')");
+    }
+
+    // The steps of args("2m"), with step 1's where replaced by one condition.
+    private static Map<String, Object> messageArgs(final Map<String, Object> condition) {
+        final Map<String, Object> args = args("2m");
+        final List<Map<String, Object>> steps = new ArrayList<>((List<Map<String, Object>>) args.get("steps"));
+        final Map<String, Object> first = new LinkedHashMap<>(steps.getFirst());
+        first.put("where", List.of(condition));
+        first.remove("fields");
+        steps.set(0, first);
+        args.put("steps", steps);
+        return args;
+    }
+
+    // Gives Devices a message field (and its subfields) with these mappings, as the target and as its fields.
+    private void withDevicesMapping(final List<ElasticEql.Field> mapped) {
+        final Map<String, ElasticEql.Field> byName = new LinkedHashMap<>();
+        mapped.forEach(field -> byName.put(field.name(), field));
+        Mockito.doAnswer(invocation -> new Target("9.5.3", "@timestamp", List.of("devices", "sysmon"),
+                List.of(byName, Map.of()))).when(elasticEql).target(Mockito.any());
+        final List<QueryField> devicesFields = new ArrayList<>(List.of(QueryField.createDate("@timestamp"),
+                QueryField.createKeyword("user"), QueryField.createKeyword("host"),
+                QueryField.createKeyword("action"), QueryField.createId("StreamId"),
+                QueryField.createId("EventId")));
+        mapped.forEach(field -> devicesFields.add("text".equals(field.nativeType())
+                ? QueryField.createText(field.name())
+                : QueryField.createKeyword(field.name())));
+        Mockito.doAnswer(invocation -> {
+            final DocRef doc = invocation.<FindFieldCriteria>getArgument(0).getDataSourceRef();
+            return new ResultPage<>(DEVICES.equals(doc)
+                    ? devicesFields
+                    : List.of(QueryField.createDate("@timestamp"), QueryField.createKeyword("SubjectUserName"),
+                            QueryField.createKeyword("Computer"), QueryField.createKeyword("Image"),
+                            QueryField.createId("StreamId"), QueryField.createId("EventId")));
+        }).when(queryService).findFields(Mockito.any());
+    }
+
+    @Test
+    void aStepIsKeptToItsDocOnlyWhenItsConditionsCouldMatchAnotherDocsEvents() {
+        // Devices' action and Sysmon's Image are each mapped in one doc only: no doc condition, no script. StreamId
+        // is in both, so a step on it alone is kept to its doc; so is one with only a negated condition, which an
+        // event without the field can meet.
+        run(chat(UserQuestions.NONE), args("2m"));
+        assertThat(request().query()).doesNotContain(ElasticEql.DOC_FIELD);
+
+        final Map<String, Object> shared = args("2m");
+        final List<Map<String, Object>> steps = new ArrayList<>((List<Map<String, Object>>) shared.get("steps"));
+        final Map<String, Object> first = new LinkedHashMap<>(steps.getFirst());
+        first.put("where", List.of(Map.of("field", "StreamId", "value", "1")));
+        first.remove("fields");
+        steps.set(0, first);
+        final Map<String, Object> second = new LinkedHashMap<>(steps.get(1));
+        second.put("where", List.of(Map.of("field", "Image", "condition", "NOT_IN", "value", "cmd.exe")));
+        steps.set(1, second);
+        shared.put("steps", steps);
+        Mockito.clearInvocations(elasticEql);
+
+        run(chat(UserQuestions.NONE), shared);
+
+        assertThat(request().query()).isEqualTo("""
+                sequence with maxspan=2m
+                  [any where stroom_eql_doc == "1" and StreamId == 1] by user, host
+                  [any where stroom_eql_doc == "2" and not Image in ("cmd.exe")] by SubjectUserName, Computer""");
+    }
+
+    @Test
+    void theResultSaysTheSequencesAreAtLeastThese() {
+        final String output = run(chat(UserQuestions.NONE), args("2m"));
+
+        assertThat(output).contains("1 sequence found, for 1 entity. " + EqlSequenceTool.AT_LEAST)
+                .contains("By entity (sequences found, at least these):");
+        assertThat(JsonUtil.readValue(run(mcp(), args("2m")), Map.class).get("note").toString())
+                .contains(EqlSequenceTool.AT_LEAST);
+    }
+
+    @Test
+    void theDescriptionLeadsWithTheOrderedQuestionsItAnswers() {
+        // Seen in acceptance runs on a small model: ordered questions answered by joining esql_query results.
+        final String lead = "Use for any 'X, then Y, by the same user/host, within N' question on Elastic Indexes, "
+                            + "in one doc or across several, rather than joining the results of separate queries";
+
+        assertThat(tool.definition().description()).startsWith(lead + " (esql_query, search_events) by hand.");
+        // Over MCP, without the chat's tool names.
+        assertThat(tool.definition().general().description()).startsWith(lead + " by hand.");
+    }
+
+    @Test
     void theDescriptionSaysToAskWhichDocToReview() {
         final ToolDefinition definition = tool.definition();
 
@@ -442,33 +675,59 @@ class TestEqlSequenceTool {
         final List<Step> steps = List.of(stepOf(false, 1), stepOf(false, 1), stepOf(false, 1));
 
         final Preflight selective = EqlSequenceTool.assess(steps, List.of(50_000L, 4_000L, 200L),
-                List.of("a", "b", "c"), Duration.ofMinutes(2));
+                List.of("a", "b", "c"));
         assertThat(selective.notes()).containsExactly("Step 3 matches far fewer events (200) than step 1 (50000): if "
                                                       + "the order doesn't matter to the question, put step 3 first, "
                                                       + "which is quicker.");
         assertThat(selective.tooBig()).isFalse();
 
         // Not for a small first step, nor where a missing step or runs fix the order.
-        assertThat(EqlSequenceTool.assess(steps, List.of(900L, 10L, 10L), List.of("a", "b", "c"),
-                Duration.ofMinutes(2)).notes()).isEmpty();
+        assertThat(EqlSequenceTool.assess(steps, List.of(900L, 10L, 10L), List.of("a", "b", "c")).notes()).isEmpty();
         assertThat(EqlSequenceTool.assess(List.of(stepOf(false, 1), stepOf(true, 1), stepOf(false, 1)),
-                Arrays.asList(50_000L, null, 10L), Arrays.asList("a", null, "c"),
-                Duration.ofMinutes(2)).notes()).isEmpty();
+                Arrays.asList(50_000L, null, 10L), Arrays.asList("a", null, "c")).notes()).isEmpty();
         assertThat(EqlSequenceTool.assess(List.of(stepOf(false, 1), stepOf(false, 20)), List.of(50_000L, 10L),
-                List.of("a", "b"), Duration.ofMinutes(2)).notes()).noneMatch(note -> note.contains("far fewer"));
+                List.of("a", "b")).notes()).noneMatch(note -> note.contains("far fewer"));
 
         // A step with too few events to make one.
         assertThat(EqlSequenceTool.assess(List.of(stepOf(false, 1), stepOf(false, 20)), List.of(5L, 10L),
-                List.of("a", "b"), Duration.ofMinutes(2)).notes()).singleElement().asString()
+                List.of("a", "b")).notes()).singleElement().asString()
                 .contains("Step 2 matches 10 events in the window (it needs 20 in a row)");
 
-        // Too big: the sum of the counts at EVENTS_PER_SECOND, over the time limit.
+        // Too big: the first step past the cap (a bounded count), whatever the later steps.
+        final long capped = EqlSequenceTool.COUNT_CAP + 1;
         final Preflight big = EqlSequenceTool.assess(List.of(stepOf(false, 1), stepOf(false, 1)),
-                List.of(5_000_000L, 1_000_001L), List.of("a", "b"), Duration.ofMinutes(2));
+                List.of(capped, 10L), List.of("a", "b"));
         assertThat(big.tooBig()).isTrue();
-        assertThat(big.tooBigNote()).contains("about 120 seconds");
-        assertThat(EqlSequenceTool.assess(List.of(stepOf(false, 1), stepOf(false, 1)),
-                List.of(5_000_000L, 1_000_000L), List.of("a", "b"), Duration.ofMinutes(2)).tooBig()).isFalse();
+        assertThat(big.tooBigNote()).contains("step 1 matches more than 1000000 events");
+        // The selective-step advice still works from the bounded first count.
+        assertThat(big.notes()).singleElement().asString().contains("Step 2 matches far fewer events (10) than step "
+                                                                     + "1 (more than 1000000)");
+        // A first step at the cap is not past it; a later step past it is only noted.
+        final Preflight laterLarge = EqlSequenceTool.assess(List.of(stepOf(false, 1), stepOf(false, 1)),
+                List.of(EqlSequenceTool.COUNT_CAP, capped), List.of("a", "b"));
+        assertThat(laterLarge.tooBig()).isFalse();
+        assertThat(laterLarge.notes()).containsExactly("Step 2 matches more than 1000000 events: if the sequence times "
+                                                       + "out, narrow that step.");
+        // A missing first step: the first step that must happen is judged.
+        assertThat(EqlSequenceTool.assess(List.of(stepOf(true, 1), stepOf(false, 1)),
+                Arrays.asList(null, capped), Arrays.asList(null, "b")).tooBig()).isTrue();
+    }
+
+    @Test
+    void aShortTimeRangeIsntCountedFirst() {
+        final Map<String, Object> shortRange = new LinkedHashMap<>(args("2m"));
+        shortRange.put("timeTo", "2026-01-01T01:00:00Z");
+
+        assertThat(run(chat(UserQuestions.NONE), shortRange))
+                .contains("The steps weren't counted first: the time range is 1 hour or less, so the sequence is "
+                          + "cheap enough to just run.");
+        Mockito.verifyNoInteractions(elasticEsql);
+
+        assertThat(EqlSequenceTool.isShort(new TimeRange(null, "2026-01-01T00:00:00Z", "2026-01-01T01:00:01Z")))
+                .isFalse();
+        assertThat(EqlSequenceTool.isShort(new TimeRange(null, "now() - 30m", "now()"))).isTrue();
+        assertThat(EqlSequenceTool.isShort(new TimeRange(null, "2026-01-01T00:00:00Z", null))).isFalse();
+        assertThat(EqlSequenceTool.isShort(null)).isFalse();
     }
 
     private static Step stepOf(final boolean missing, final int runs) {
@@ -529,6 +788,16 @@ class TestEqlSequenceTool {
                 .workspace(new SessionWorkspace(chatWorkspace, 1))
                 .userQuestions(questions)
                 .limits(SessionLimits.lookedUp(() -> config))
+                .build();
+    }
+
+    // A chat's call in an agent run, stopped when `cancelled` is set.
+    private ToolCallContext inRun(final AtomicBoolean cancelled) {
+        return ToolCallContext.builder(ToolSession.chat(1))
+                .workspace(new SessionWorkspace(chatWorkspace, 1))
+                .userQuestions(UserQuestions.NONE)
+                .limits(SessionLimits.lookedUp(() -> config))
+                .runContext(new ToolRunContext(null, null, cancelled::get))
                 .build();
     }
 

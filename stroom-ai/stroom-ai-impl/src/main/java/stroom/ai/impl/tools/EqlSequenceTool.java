@@ -41,8 +41,10 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.TimeRange;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.impl.QueryService;
 import stroom.security.shared.DocumentPermission;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
@@ -58,13 +60,16 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 /// `eql_sequence` - an ordered hunt across sources at volume, run in Elasticsearch as one EQL sequence over one or
 /// more Elastic Index docs on one cluster ([ElasticEql]): e.g. a device plugged in and then a file copied to it, a
@@ -74,12 +79,12 @@ import java.util.Set;
 /// happen N times in a row (`runs`); an optional `until` step; and the window (`maxspan`), which the user is asked
 /// for in a form when the model doesn't give it (refused over MCP, with the question to ask).
 ///
-/// Before it runs, the tool counts each step's events (an ES|QL `COUNT` per step, where the cluster takes ES|QL):
-/// it says when a later step is far more selective than the first, and refuses, before running, a sequence the counts
-/// say won't finish in the query time limit ([#preflight]). The result gives the EQL run, the window used, a summary
-/// per entity (join keys), the sequences as a workspace table (each step's time, the gaps, chosen fields and each
-/// step's StreamId/EventId), the caveat that the events come straight from Elasticsearch, and a validated StroomQL
-/// review query per doc ([EqlSequenceResults#review]).
+/// Before it runs, the tool counts each step's events up to [#COUNT_CAP] (an ES|QL `COUNT` per step, where the
+/// cluster takes ES|QL, unless the time range is short): it says when a later step is far more selective than the
+/// first, and refuses, before running, a sequence whose first step passes the cap ([#preflight]). The result gives
+/// the EQL run, the window used, a summary per entity (join keys), the sequences as a workspace table (each step's
+/// time, the gaps, chosen fields and each step's StreamId/EventId), the caveat that the events come straight from
+/// Elasticsearch, and a validated StroomQL review query per doc ([EqlSequenceResults#review]).
 class EqlSequenceTool extends AbstractWorkspaceTool {
 
     static final String NAME = "eql_sequence";
@@ -97,13 +102,19 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
     static final String RUNS_KEY = "runs";
     static final String FIELDS_KEY = "fields";
     static final String CASE_INSENSITIVE_KEY = "caseInsensitive";
+    static final String ANY_OF_KEY = "any_of";
+    static final String LENGTH_KEY = "length";
+    /// The negated list condition, which only this tool takes: `not field in (...)`.
+    static final String NOT_IN = "NOT_IN";
     /// The sequences returned when the call doesn't say.
     static final int DEFAULT_LIMIT = 1_000;
     /// The most fields of a step's events shown.
     static final int MAX_STEP_FIELDS = 5;
-    /// The events an EQL sequence is taken to read a second, to say from the counts whether it will finish in the
-    /// time limit: deliberately low, so a refusal before running is likely right.
-    static final long EVENTS_PER_SECOND = 50_000;
+    /// The most events a step's pre-flight count reads: a step past it is "large", and a first step past it is
+    /// refused before the sequence runs (unless `runAnyway`), as the sequence reads every one of its events.
+    static final long COUNT_CAP = 1_000_000;
+    /// A window this short or shorter isn't counted first: the sequence is cheap enough to just run.
+    static final Duration SHORT_WINDOW = Duration.ofHours(1);
     /// How many times more events the first step must match than a later one to suggest putting the later first.
     static final long SELECTIVITY_FACTOR = 10;
     /// The fewest events the first step must match to suggest it, as below this any order is quick.
@@ -116,6 +127,9 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
     static final String WIDER_NOTE = "A wider window finds more pairs, mostly harmless, and runs slower.";
     static final String ANOTHER_INTERVAL = "Another interval (type it, e.g. 10m)";
     static final String NARROW = "narrow the window or the first step";
+    /// What every result with sequences says of their number: EQL doesn't find every overlapping match.
+    static final String AT_LEAST = "Elasticsearch doesn't find every overlapping match, so these are at least the "
+                                   + "sequences there are, not an exact total.";
     static final String CAVEAT = "The sequences come straight from Elasticsearch, as esql_query's counts do: they "
                                  + "may include events of streams the user can't see or that have been deleted, so "
                                  + "a Stroom search may find fewer.";
@@ -126,6 +140,9 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
     private static final int[] RUNS_VERSION = {8, 7};
     private static final DateTimeFormatter FILE_TIME = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
     private static final String FIELDS_HINT = "describe_data_source gives the index's fields";
+    private static final Set<String> TEXT_NATIVE_TYPES = Set.of("text", "match_only_text");
+    // The types a text field's subfield may have for EQL to search it in its place, the most fitting first.
+    private static final List<String> SUBFIELD_TYPES = List.of("keyword", "constant_keyword", "wildcard");
 
     private final Provider<ElasticEql> elasticEqlProvider;
     private final Provider<ElasticEsql> elasticEsqlProvider;
@@ -177,18 +194,24 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
                         .general(".")
                         .build())
                 .addStringProperty("field", "The doc's field.")
-                .addEnumProperty("condition", IndexEvents.CONDITIONS.stream().map(Condition::name).toList(),
-                        "The condition (default EQUALS).")
-                .addStringProperty("value", "BETWEEN: 'from,to'; IN: values separated by commas; EQUALS takes * "
-                                            + "wildcards, and a CIDR (10.0.0.0/8) on an IP field.")
+                .addEnumProperty("condition", conditionNames(), "The condition (default EQUALS).")
+                .addStringProperty("value", "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; "
+                                            + "EQUALS takes * wildcards, and a CIDR (10.0.0.0/8) on an IP field.")
                 .addBooleanProperty(CASE_INSENSITIVE_KEY, "True to match text whatever its case.")
+                .addBooleanProperty(LENGTH_KEY, "True to compare the string's length in characters (a whole "
+                                                + "number), e.g. GREATER_THAN 1000 for long command lines.")
                 .required("field")
+                .build();
+        final ArraySchema anyOf = ArraySchema.builder().items(condition)
+                .description("Optional: conditions of which at least one must hold (written as one OR group, "
+                             + "beside where's).")
                 .build();
         final ObjectSchema step = ObjectSchema.builder()
                 .description("One step.")
                 .addStringProperty(INDEX_KEY, "The Elastic Index doc's uuid or name.")
                 .addProperty(WHERE_KEY, ArraySchema.builder().items(condition)
                         .description("Conditions its events meet, all of them.").build())
+                .addProperty(ANY_OF_KEY, anyOf)
                 .addProperty(BY_KEY, stringArraySchema("Its join fields, in the same order and number in every "
                                                        + "step (e.g. [\"user.name\", \"host.name\"] in one, "
                                                        + "[\"SubjectUserName\", \"Computer\"] in another)."))
@@ -202,11 +225,18 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
         return ToolDefinition.builder()
                 .name(NAME)
                 .description(ToolDescription.builder()
-                        .general("Finds ordered sequences of events across one or more Elastic Index docs on one "
-                                 + "cluster, matched in Elasticsearch as one EQL sequence: e.g. a USB device plugged "
-                                 + "in then a file copied to it; a clipboard copy then PowerShell within 2 minutes by "
-                                 + "the same user on the same host; 20 failed logons then a success. Give steps "
-                                 + "(2 or more, in order), each with its doc, its where conditions, its own join "
+                        .general("Use for any 'X, then Y, by the same user/host, within N' question on Elastic "
+                                 + "Indexes, in one doc or across several, rather than joining the results of "
+                                 + "separate queries")
+                        .chatOnly(" (esql_query, search_events)")
+                        .general(" by hand. Finds ordered sequences of events across one or "
+                                 + "more Elastic Index docs on one cluster, matched in Elasticsearch as one EQL "
+                                 + "sequence: e.g. a USB device plugged in then a file copied to it; a clipboard copy "
+                                 + "then PowerShell within 2 minutes by the same user on the same host; 20 failed "
+                                 + "logons then a success. Give steps "
+                                 + "(2 or more, in order), each with its doc, its where conditions (all must hold; "
+                                 + "NOT_IN for none of a list; length=true to compare a string's length), any_of "
+                                 + "(optional, at least one must hold), its own join "
                                  + "fields (by, same number and order in every step: the same entity in each doc's "
                                  + "own names), missing=true for 'and then NOT ...', runs=N for N in a row; "
                                  + "until for a step that ends a sequence. maxspan: how far apart the first and "
@@ -230,7 +260,9 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
                                  + "counts do, and may "
                                  + "include streams the user can't see or deleted ones. Refused for a Lucene index")
                         .chatOnly(" (use run_stroomql)")
-                        .general(", docs on different clusters or with different time fields.")
+                        .general(", docs on different clusters or with different time fields, and nested fields. "
+                                 + "A text field is searched as its keyword subfield (the result says so). A literal "
+                                 + "? can't be in a pattern (EQL reads it as any one character).")
                         .build())
                 .parameters(ObjectSchema.builder()
                         .addProperty(STEPS_ARG, ArraySchema.builder().items(step)
@@ -241,6 +273,7 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
                                 .addStringProperty(INDEX_KEY, "The Elastic Index doc's uuid or name.")
                                 .addProperty(WHERE_KEY, ArraySchema.builder().items(condition)
                                         .description("Its conditions.").build())
+                                .addProperty(ANY_OF_KEY, anyOf)
                                 .addProperty(BY_KEY, stringArraySchema("Its join fields."))
                                 .build())
                         .addStringProperty(MAXSPAN_ARG, ToolDescription.builder()
@@ -303,17 +336,23 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
             }
             fieldsByDoc.put(doc, fields);
         }
+        final Target target = target(docs);
+        final List<String> fieldNotes = new ArrayList<>();
         final List<Step> steps = new ArrayList<>();
         for (int i = 0; i < given.size(); i++) {
-            steps.add(step(given.get(i), "Step " + (i + 1), byGiven, docs, fieldsByDoc));
+            steps.add(step(given.get(i), "Step " + (i + 1), byGiven, docs, fieldsByDoc, target, fieldNotes));
         }
         final Step until = givenUntil == null
                 ? null
-                : step(givenUntil, "The until step", byGiven, docs, fieldsByDoc);
+                : step(givenUntil, "The until step", byGiven, docs, fieldsByDoc, target, fieldNotes);
         checkJoins(steps, until);
-
-        final Target target = target(docs);
         checkVersion(target.version(), steps);
+        if (docs.size() > 1) {
+            steps.replaceAll(step -> step.withRestricted(needsRestriction(step, docs, fieldsByDoc)));
+        }
+        final Step untilStep = until == null || docs.size() == 1
+                ? until
+                : until.withRestricted(needsRestriction(until, docs, fieldsByDoc));
 
         final String givenMaxspan = stringArg(request, MAXSPAN_ARG);
         final Duration maxspan;
@@ -336,9 +375,10 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
         final String limitNote = givenLimit != null && givenLimit > ElasticEql.MAX_SEQUENCES
                 ? "The limit asked for was over " + ElasticEql.MAX_SEQUENCES + ", the most allowed, so it was lowered."
                 : null;
-        final String eql = EqlQueryWriter.eql(steps, until, maxspan, docs.size());
+        final String eql = EqlQueryWriter.eql(steps, untilStep, maxspan, docs.size());
 
-        final Preflight preflight = preflight(steps, docs, timeRange, target.version(), deadline, timeLimit);
+        final Preflight preflight = preflight(steps, docs, timeRange, target.version(), deadline, timeLimit,
+                context.stopped());
         if (preflight.tooBig() && !booleanArg(request, RUN_ANYWAY_ARG, false)) {
             throw new WorkspaceException("Not run: " + preflight.tooBigNote() + " " + capitalised(NARROW)
                                          + " (fewer events in the first step's conditions), or call again with "
@@ -349,8 +389,12 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
         final Result result;
         try {
             result = elasticEqlProvider.get().search(new ElasticEql.Request(docs, eql, timeRange, fetched, limit,
-                    remaining(deadline, timeLimit)));
+                    remaining(deadline, timeLimit), context.stopped()));
         } catch (final Refusal refusal) {
+            if (refusal.reason() == ElasticEql.Reason.STOPPED) {
+                // The user stopped the chat, and the search was deleted in Elasticsearch: the run ends stopped.
+                throw new TaskTerminatedException();
+            }
             throw new WorkspaceException(refusal(refusal, fieldsByDoc));
         } catch (final PermissionException e) {
             throw new WorkspaceException(notUsable(docs, e));
@@ -377,7 +421,8 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
                 limits(context).getMaxQueryLength());
         final boolean truncated = result.sequences().size() >= limit;
         final Outcome outcome = new Outcome(docs, result, maxspan, maxspanSource, timeRange, limit, limitNote,
-                truncated, preflight, steps, columns, cells, entities, reviews, out);
+                truncated, preflight, steps, columns, cells, entities, reviews, out,
+                fieldNotes.stream().distinct().toList());
         final Map<String, Object> structured = structured(outcome);
         return context.session().isChat()
                 ? ToolResult.text(markdown(outcome)).withStructuredContent(structured)
@@ -435,26 +480,11 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
         if (index.isEmpty()) {
             throw new WorkspaceException(what + " has no index: give the Elastic Index doc's uuid or name.");
         }
-        final List<Filter> filters = new ArrayList<>();
-        final Object where = map.get(WHERE_KEY);
-        final List<?> conditions = where == null
-                ? List.of()
-                : where instanceof final List<?> list
-                        ? list
-                        : where instanceof final Map<?, ?> one
-                                ? List.of(one)
-                                : parsedList(where);
-        for (final Object item : conditions) {
-            if (!(item instanceof final Map<?, ?> term) || term.get("field") == null
-                || String.valueOf(term.get("field")).isBlank()) {
-                throw new WorkspaceException(what + "'s where is a list of {field, condition, value}, each with a "
-                                             + "field.");
-            }
-            filters.add(new Filter(String.valueOf(term.get("field")).strip(), condition(term.get("condition"), what),
-                    term.get("value") == null
-                            ? ""
-                            : String.valueOf(term.get("value")),
-                    truthy(term.get(CASE_INSENSITIVE_KEY))));
+        final List<Filter> filters = filters(map.get(WHERE_KEY), what, WHERE_KEY);
+        final List<Filter> anyOf = filters(map.get(ANY_OF_KEY), what, ANY_OF_KEY);
+        if (anyOf.size() == 1) {
+            throw new WorkspaceException(what + "'s " + ANY_OF_KEY + " has one condition: give 2 or more (at least "
+                                         + "one must hold), or put the one in where.");
         }
         final boolean missing = truthy(map.get(MISSING_KEY));
         final int runs = runs(map.get(RUNS_KEY), what);
@@ -470,21 +500,64 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
         if (missing && !fields.isEmpty()) {
             throw new WorkspaceException(what + " is missing=true, so it has no events to show fields of.");
         }
-        return new GivenStep(index, filters, strings(map.get(BY_KEY)), missing, runs, fields);
+        return new GivenStep(index, filters, anyOf, strings(map.get(BY_KEY)), missing, runs, fields);
     }
 
-    private static Condition condition(final Object given, final String what) {
+    // A list of conditions in the where form: where's, or an any_of group's (one level: no group inside).
+    private static List<Filter> filters(final Object given, final String what, final String key) {
+        final List<?> conditions = given == null
+                ? List.of()
+                : given instanceof final List<?> list
+                        ? list
+                        : given instanceof final Map<?, ?> one
+                                ? List.of(one)
+                                : parsedList(given);
+        final List<Filter> filters = new ArrayList<>();
+        for (final Object item : conditions) {
+            if (item instanceof final Map<?, ?> term && term.containsKey(ANY_OF_KEY)) {
+                throw new WorkspaceException(what + "'s " + key + " has a condition with its own " + ANY_OF_KEY
+                                             + ": give one " + ANY_OF_KEY + " per step, of plain conditions.");
+            }
+            if (!(item instanceof final Map<?, ?> term) || term.get("field") == null
+                || String.valueOf(term.get("field")).isBlank()) {
+                throw new WorkspaceException(what + "'s " + key + " is a list of {field, condition, value}, each "
+                                             + "with a field.");
+            }
+            final String condition = conditionName(term.get("condition"), what);
+            filters.add(new Filter(String.valueOf(term.get("field")).strip(), NOT_IN.equals(condition)
+                    ? Condition.IN
+                    : Condition.valueOf(condition),
+                    term.get("value") == null
+                            ? ""
+                            : String.valueOf(term.get("value")),
+                    truthy(term.get(CASE_INSENSITIVE_KEY)),
+                    NOT_IN.equals(condition),
+                    truthy(term.get(LENGTH_KEY))));
+        }
+        return filters;
+    }
+
+    // The conditions a step takes: search_events's, and NOT_IN.
+    private static List<String> conditionNames() {
+        final List<String> names = new ArrayList<>(IndexEvents.CONDITIONS.stream()
+                .filter(EqlQueryWriter::takes)
+                .map(Condition::name)
+                .toList());
+        names.add(NOT_IN);
+        return names;
+    }
+
+    // The condition's name, checked: one of conditionNames().
+    private static String conditionName(final Object given, final String what) {
         if (given == null || String.valueOf(given).isBlank()) {
-            return Condition.EQUALS;
+            return Condition.EQUALS.name();
         }
         final String name = String.valueOf(given).strip().toUpperCase(Locale.ROOT);
-        for (final Condition condition : IndexEvents.CONDITIONS) {
-            if (condition.name().equals(name) && EqlQueryWriter.takes(condition)) {
-                return condition;
-            }
+        if (conditionNames().contains(name)) {
+            return name;
         }
-        throw new WorkspaceException(what + ": condition '" + given + "' isn't one of " + String.join(", ",
-                IndexEvents.CONDITIONS.stream().map(Condition::name).toList()) + ".");
+        throw new WorkspaceException(what + ": condition '" + given + "' isn't one of "
+                                     + String.join(", ", conditionNames()) + ".");
     }
 
     private static int runs(final Object given, final String what) {
@@ -545,18 +618,26 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
         }
     }
 
-    // A step, checked against its doc's fields.
+    // A step, checked against its doc's fields: a text field searched or joined on is swapped for a subfield EQL
+    // can search (said in notes), and a nested field is refused.
     private static Step step(final GivenStep given,
                              final String what,
                              final Map<String, DocRef> byGiven,
                              final List<DocRef> docs,
-                             final Map<DocRef, List<QueryField>> fieldsByDoc) {
+                             final Map<DocRef, List<QueryField>> fieldsByDoc,
+                             final Target target,
+                             final List<String> notes) {
         final DocRef doc = byGiven.get(given.index());
         final List<QueryField> fields = fieldsByDoc.get(doc);
         final Map<String, FieldType> types = new LinkedHashMap<>();
         fields.forEach(field -> types.put(field.getFldName(), field.getFldType()));
+        final int position = docs.indexOf(doc);
+        final Map<String, ElasticEql.Field> mapping = position < target.fields().size()
+                ? target.fields().get(position)
+                : Map.of();
         final Set<String> named = new LinkedHashSet<>();
         given.filters().forEach(filter -> named.add(filter.field()));
+        given.anyOf().forEach(filter -> named.add(filter.field()));
         named.addAll(given.by());
         named.addAll(given.fields());
         final List<String> unknown = named.stream().filter(name -> !types.containsKey(name)).toList();
@@ -564,7 +645,27 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
             throw new WorkspaceException(what + ": not fields of Elastic Index '" + doc.getName() + "': "
                                          + EsqlQueryTool.said(unknown, types.keySet()) + ". " + FIELDS_HINT + ".");
         }
-        for (final Filter filter : given.filters()) {
+        final Set<String> searched = new LinkedHashSet<>();
+        given.filters().forEach(filter -> searched.add(filter.field()));
+        given.anyOf().forEach(filter -> searched.add(filter.field()));
+        searched.addAll(given.by());
+        final Map<String, String> swapped = new LinkedHashMap<>();
+        for (final String name : searched) {
+            refuseNested(what, doc, name, mapping, types);
+            final String searchable = searchable(what, doc, name, mapping);
+            if (!searchable.equals(name)) {
+                swapped.put(name, searchable);
+                notes.add(swapNote(doc, name, searchable, mapping));
+            }
+        }
+        final List<Filter> filters = given.filters().stream()
+                .map(filter -> filter.onField(swapped.getOrDefault(filter.field(), filter.field())))
+                .toList();
+        final List<Filter> anyOf = given.anyOf().stream()
+                .map(filter -> filter.onField(swapped.getOrDefault(filter.field(), filter.field())))
+                .toList();
+        final List<String> by = given.by().stream().map(name -> swapped.getOrDefault(name, name)).toList();
+        for (final Filter filter : concat(filters, anyOf)) {
             if (filter.value().isEmpty() && filter.condition() != Condition.IS_NULL
                 && filter.condition() != Condition.IS_NOT_NULL) {
                 throw new WorkspaceException(what + ": the condition on '" + filter.field() + "' has no value.");
@@ -572,8 +673,114 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
             // Written now, so a value its field can't take is refused before anything runs.
             EqlQueryWriter.eqlCondition(filter, types.get(filter.field()));
         }
-        return new Step(docs.indexOf(doc) + 1, given.filters(), given.by(), given.missing(), given.runs(),
-                given.fields(), types);
+        return new Step(position + 1, filters, anyOf, by, given.missing(), given.runs(), given.fields(), types);
+    }
+
+    private static List<Filter> concat(final List<Filter> first, final List<Filter> second) {
+        final List<Filter> all = new ArrayList<>(first);
+        all.addAll(second);
+        return all;
+    }
+
+    // Refuses a field that is, or is inside, a nested field, which EQL can't search.
+    private static void refuseNested(final String what,
+                                     final DocRef doc,
+                                     final String name,
+                                     final Map<String, ElasticEql.Field> mapping,
+                                     final Map<String, FieldType> types) {
+        final ElasticEql.Field field = mapping.get(name);
+        if ((field != null && field.nested()) || types.get(name) == FieldType.NESTED) {
+            throw new WorkspaceException(what + ": '" + name + "' in Elastic Index '" + doc.getName() + "' is in a "
+                                         + "nested field, which EQL can't search. Leave it out of the steps, or "
+                                         + "search it with search_events or esql_query instead.");
+        }
+    }
+
+    /// The field EQL is to search for a field a step names: the field itself, unless its mapping says it is text,
+    /// which EQL can't search; then its subfield EQL can search, the most fitting first ([#SUBFIELD_TYPES]; of
+    /// those, one without a normaliser first, then by name).
+    ///
+    /// @param what    The step, for a refusal.
+    /// @param doc     Its doc.
+    /// @param name    The field it names.
+    /// @param mapping The doc's fields, as its mapping has them; empty if not known (the field is then kept).
+    /// @return The field to search.
+    /// @throws WorkspaceException for a text field with no subfield EQL can search, giving its subfields.
+    static String searchable(final String what,
+                             final DocRef doc,
+                             final String name,
+                             final Map<String, ElasticEql.Field> mapping) {
+        final ElasticEql.Field field = mapping.get(name);
+        if (field == null || !TEXT_NATIVE_TYPES.contains(field.nativeType())) {
+            return name;
+        }
+        final List<ElasticEql.Field> subfields = mapping.values().stream()
+                .filter(sub -> name.equals(sub.multiFieldParent()))
+                .sorted(Comparator.comparing(ElasticEql.Field::name))
+                .toList();
+        return subfields.stream()
+                .filter(sub -> SUBFIELD_TYPES.contains(sub.nativeType()))
+                .min(Comparator
+                        .comparingInt((ElasticEql.Field sub) -> SUBFIELD_TYPES.indexOf(sub.nativeType()))
+                        .thenComparing(sub -> sub.normaliser() != null))
+                .map(ElasticEql.Field::name)
+                .orElseThrow(() -> new WorkspaceException(what + ": '" + name + "' in Elastic Index '"
+                                                          + doc.getName() + "' is a " + field.nativeType()
+                                                          + " field, which EQL can't search, and it has "
+                                                          + (subfields.isEmpty()
+                        ? "no subfields"
+                        : "no keyword subfield (its subfields: " + String.join(", ", subfields.stream()
+                                .map(sub -> sub.name() + " (" + sub.nativeType() + ")")
+                                .toList()) + ")") + ". Search it with search_events or esql_query instead, or "
+                                                          + "use another field."));
+    }
+
+    // What the result says of a text field searched as its subfield.
+    private static String swapNote(final DocRef doc,
+                                   final String name,
+                                   final String subfield,
+                                   final Map<String, ElasticEql.Field> mapping) {
+        final ElasticEql.Field sub = mapping.get(subfield);
+        final String normaliser = sub == null || sub.normaliser() == null
+                ? ""
+                : ", normaliser " + sub.normaliser();
+        return "'" + name + "' in Elastic Index '" + doc.getName() + "' is a text field, which EQL can't search, so "
+               + "its subfield '" + subfield + "' (" + (sub == null
+                ? "keyword"
+                : sub.nativeType()) + normaliser + ") was searched instead: it matches the whole value, as "
+               + "written.";
+    }
+
+    /// Whether a step, with more than one doc, must be kept to its own doc's events ([ElasticEql#DOC_FIELD], a
+    /// script on every event): not when one of its `where` conditions (or every condition of its `any_of`) is on a
+    /// field no other doc maps and can't hold for an event without the field, as then no other doc's event can
+    /// match it. IS_NULL, NOT_EQUALS and NOT_IN can hold for an event without the field, so don't count.
+    ///
+    /// @param step        The step.
+    /// @param docs        The docs, in order.
+    /// @param fieldsByDoc Each doc's fields.
+    /// @return True if it needs the doc condition.
+    static boolean needsRestriction(final Step step,
+                                    final List<DocRef> docs,
+                                    final Map<DocRef, List<QueryField>> fieldsByDoc) {
+        final Set<String> elsewhere = new LinkedHashSet<>();
+        for (int d = 0; d < docs.size(); d++) {
+            if (d != step.doc() - 1) {
+                NullSafe.list(fieldsByDoc.get(docs.get(d))).forEach(field -> elsewhere.add(field.getFldName()));
+            }
+        }
+        if (step.filters().stream().anyMatch(filter -> rulesOut(filter, elsewhere))) {
+            return false;
+        }
+        return step.anyOf().isEmpty() || !step.anyOf().stream().allMatch(filter -> rulesOut(filter, elsewhere));
+    }
+
+    // Whether a condition rules out every event of a doc that doesn't map its field.
+    private static boolean rulesOut(final Filter filter, final Set<String> elsewhere) {
+        return !elsewhere.contains(filter.field())
+               && !filter.negated()
+               && filter.condition() != Condition.IS_NULL
+               && filter.condition() != Condition.NOT_EQUALS;
     }
 
     // Every step joins on the same number of fields, at least one.
@@ -770,9 +977,14 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
                                 final TimeRange timeRange,
                                 final String version,
                                 final Instant deadline,
-                                final Duration timeLimit) {
+                                final Duration timeLimit,
+                                final BooleanSupplier stopped) {
         if (!atLeast(version, ESQL_VERSION)) {
             return Preflight.skipped("The steps weren't counted first: that needs ES|QL, from Elasticsearch 8.14.");
+        }
+        if (isShort(timeRange)) {
+            return Preflight.skipped("The steps weren't counted first: the time range is " + SHORT_WINDOW.toHours()
+                                     + " hour or less, so the sequence is cheap enough to just run.");
         }
         final List<Long> counts = new ArrayList<>();
         final List<String> pipelines = new ArrayList<>();
@@ -782,14 +994,18 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
                 pipelines.add(null);
                 continue;
             }
-            final String pipeline = EqlQueryWriter.countPipeline(step);
+            final String pipeline = EqlQueryWriter.countPipeline(step, COUNT_CAP);
             pipelines.add(pipeline);
             try {
                 final ElasticEsql.Result counted = elasticEsqlProvider.get().query(new ElasticEsql.Request(
                         docs.get(step.doc() - 1), pipeline, null, timeRange, 1, remaining(deadline, timeLimit),
-                        false));
+                        false, stopped));
                 counts.add(count(counted));
             } catch (final ElasticEsql.Refusal refusal) {
+                if (refusal.reason() == ElasticEsql.Reason.STOPPED) {
+                    // The user stopped the chat while the steps were counted: the sequence isn't run.
+                    throw new TaskTerminatedException();
+                }
                 if (refusal.reason() == ElasticEsql.Reason.TIMEOUT) {
                     throw new WorkspaceException("Counting the steps took longer than the time limit ("
                                                  + timeLimit.toSeconds() + " seconds), so the sequence wasn't run: "
@@ -801,38 +1017,61 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
                 throw new WorkspaceException(notUsable(docs, e));
             }
         }
-        return assess(steps, counts, pipelines, timeLimit);
+        return assess(steps, counts, pipelines);
     }
 
-    /// What the counts say, before the sequence runs. The heuristic:
+    /// @param timeRange The call's time range, or null.
+    /// @return True if it has both ends, and they are at most [#SHORT_WINDOW] apart.
+    static boolean isShort(final TimeRange timeRange) {
+        if (timeRange == null || NullSafe.isBlankString(timeRange.getFrom())
+            || NullSafe.isBlankString(timeRange.getTo())) {
+            return false;
+        }
+        try {
+            final long now = System.currentTimeMillis();
+            final Optional<ZonedDateTime> from = DateExpressionParser.parse(timeRange.getFrom().strip(), now);
+            final Optional<ZonedDateTime> to = DateExpressionParser.parse(timeRange.getTo().strip(), now);
+            return from.isPresent() && to.isPresent()
+                   && Duration.between(from.get(), to.get()).compareTo(SHORT_WINDOW) <= 0;
+        } catch (final RuntimeException e) {
+            // Not read here: the service refuses it, saying why.
+            return false;
+        }
+    }
+
+    /// What the counts say, before the sequence runs. Each count reads at most [#COUNT_CAP] events, so the
+    /// heuristic is by thresholds, not a guess of speed:
     ///
-    /// - **Too big**: an EQL sequence reads the events of every step that must happen, so it is taken to read the
-    ///   sum of their counts, at [#EVENTS_PER_SECOND]; when that would take longer than the time limit, it is
-    ///   refused before running (unless `runAnyway`), saying to narrow the window or the first step.
+    /// - **Too big**: the first step that must happen matches more than [#COUNT_CAP] events. A sequence reads every
+    ///   event of its first step, so it is refused before running (unless `runAnyway`), saying to narrow the window
+    ///   or the first step. A later step past the cap is noted.
     /// - **Selective step first**: when the first step matches at least [#SELECTIVITY_MIN_EVENTS] events and at
-    ///   least [#SELECTIVITY_FACTOR] times as many as a later step, and the order allows it (no step is missing,
-    ///   and neither step has runs, as moving either would change what a sequence means), it says to put the later
-    ///   step first if the order doesn't matter to the question.
+    ///   least [#SELECTIVITY_FACTOR] times as many as a later step (a capped first count is a lower bound, which is
+    ///   enough), and the order allows it (no step is missing, and neither step has runs, as moving either would
+    ///   change what a sequence means), it says to put the later step first if the order doesn't matter.
     /// - **Nothing to find**: a step that must happen matching fewer events than its runs means no sequence can
     ///   be found; it is said (the sequence still runs, as the count can be low where a field holds several values).
     ///
     /// @param steps     The steps.
-    /// @param counts    Each step's count, null for a missing step.
+    /// @param counts    Each step's count (`COUNT_CAP + 1` for more than the cap), null for a missing step.
     /// @param pipelines Each step's count pipeline, null for a missing step.
-    /// @param timeLimit The query time limit.
     /// @return The assessment.
     static Preflight assess(final List<Step> steps,
                             final List<Long> counts,
-                            final List<String> pipelines,
-                            final Duration timeLimit) {
-        long total = 0;
+                            final List<String> pipelines) {
         final List<String> notes = new ArrayList<>();
+        int firstHappening = -1;
         for (int i = 0; i < steps.size(); i++) {
             final Long count = counts.get(i);
             if (count == null) {
                 continue;
             }
-            total += count;
+            if (firstHappening < 0) {
+                firstHappening = i;
+            } else if (count > COUNT_CAP) {
+                notes.add("Step " + (i + 1) + " matches " + countText(count) + " events: if the sequence times "
+                          + "out, narrow that step.");
+            }
             if (count < steps.get(i).runs() || count == 0) {
                 notes.add("Step " + (i + 1) + " matches " + count + " event" + (count == 1
                         ? ""
@@ -847,32 +1086,38 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
             int best = -1;
             for (int i = 1; i < steps.size(); i++) {
                 final Long count = counts.get(i);
-                if (count != null && steps.get(i).runs() == 1 && count > 0 && first >= count * SELECTIVITY_FACTOR
-                    && (best < 0 || count < counts.get(best))) {
+                if (count != null && count <= COUNT_CAP && steps.get(i).runs() == 1 && count > 0
+                    && first >= count * SELECTIVITY_FACTOR && (best < 0 || count < counts.get(best))) {
                     best = i;
                 }
             }
             if (best > 0) {
                 notes.add("Step " + (best + 1) + " matches far fewer events (" + counts.get(best) + ") than step 1 ("
-                          + first + "): if the order doesn't matter to the question, put step " + (best + 1)
-                          + " first, which is quicker.");
+                          + countText(first) + "): if the order doesn't matter to the question, put step "
+                          + (best + 1) + " first, which is quicker.");
             }
         }
-        final double seconds = (double) total / EVENTS_PER_SECOND;
-        final boolean tooBig = seconds > timeLimit.toMillis() / 1_000.0;
+        final boolean tooBig = firstHappening >= 0 && counts.get(firstHappening) > COUNT_CAP;
         final String tooBigNote = tooBig
-                ? "the steps match " + total + " events in the window (" + countsText(counts) + "); at about "
-                  + EVENTS_PER_SECOND + " events a second an EQL sequence over them would take about "
-                  + Math.round(seconds) + " seconds, longer than the " + timeLimit.toSeconds() + "-second time limit."
+                ? "step " + (firstHappening + 1) + " matches " + countText(counts.get(firstHappening)) + " events in "
+                  + "the window (" + countsText(counts) + "), and a sequence reads every event of its first step, so "
+                  + "it is unlikely to finish in the time limit."
                 : null;
         return new Preflight(true, counts, pipelines, notes, tooBig, tooBigNote, null);
+    }
+
+    // A count, "more than 1000000" when it passed the cap.
+    private static String countText(final long count) {
+        return count > COUNT_CAP
+                ? "more than " + COUNT_CAP
+                : String.valueOf(count);
     }
 
     private static String countsText(final List<Long> counts) {
         final List<String> parts = new ArrayList<>();
         for (int i = 0; i < counts.size(); i++) {
             if (counts.get(i) != null) {
-                parts.add("step " + (i + 1) + ": " + counts.get(i));
+                parts.add("step " + (i + 1) + ": " + countText(counts.get(i)));
             }
         }
         return String.join(", ", parts);
@@ -1049,6 +1294,7 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
                 .append(" (Elasticsearch ").append(result.version()).append(", ").append(result.tookMs())
                 .append(" ms), with maxspan ").append(EqlQueryWriter.maxspanText(outcome.maxspan())).append(" (")
                 .append(outcome.maxspanSource()).append("):\n\n```\n").append(result.query()).append("\n```\n");
+        outcome.fieldNotes().forEach(note -> sb.append(note).append('\n'));
         if (outcome.timeRange() != null) {
             sb.append("Time: ").append(NullSafe.nonBlankStringElse(outcome.timeRange().getFrom(), "any"))
                     .append(" to ").append(NullSafe.nonBlankStringElse(outcome.timeRange().getTo(), "any"))
@@ -1063,7 +1309,8 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
             final List<String> columns = new ArrayList<>(outcome.steps().getFirst().joinFields());
             columns.addAll(List.of("sequences", "first", "last", "shortest gap (s)"));
             final List<List<String>> cells = outcome.entities().stream().map(EqlSequenceTool::entityCells).toList();
-            sb.append("\nBy entity:\n\n").append(ToolTables.preview(columns, cells, SHOWN_ROWS)).append('\n');
+            sb.append("\nBy entity (sequences found, at least these):\n\n")
+                    .append(ToolTables.preview(columns, cells, SHOWN_ROWS)).append('\n');
             sb.append("\nSequences:\n\n").append(ToolTables.preview(outcome.columns(), outcome.cells(), SHOWN_ROWS))
                     .append("\n\nThe sequences are in ").append(outcome.out()).append(" (each step's StreamId and "
                                                                                     + "EventId, for fetch_events and "
@@ -1127,6 +1374,9 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
                 .append(outcome.entities().size() == 1
                         ? "y"
                         : "ies").append('.');
+        if (count > 0) {
+            sb.append(' ').append(AT_LEAST);
+        }
         if (outcome.limitNote() != null) {
             sb.append(' ').append(outcome.limitNote());
         }
@@ -1161,6 +1411,9 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
             map.put("time_range", time);
         }
         map.put("time_field", result.timeField());
+        if (!outcome.fieldNotes().isEmpty()) {
+            map.put("field_notes", outcome.fieldNotes());
+        }
         map.put("version", result.version());
         map.put("took_ms", result.tookMs());
         final Preflight preflight = outcome.preflight();
@@ -1230,6 +1483,7 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
     /// @param fields  Fields to show.
     private record GivenStep(String index,
                              List<Filter> filters,
+                             List<Filter> anyOf,
                              List<String> by,
                              boolean missing,
                              int runs,
@@ -1326,7 +1580,8 @@ class EqlSequenceTool extends AbstractWorkspaceTool {
                    List<List<String>> cells,
                    List<Entity> entities,
                    List<ReviewNote> reviews,
-                   WorkspacePath out) {
+                   WorkspacePath out,
+                   List<String> fieldNotes) {
 
     }
 }

@@ -62,6 +62,7 @@ import java.math.BigInteger;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -367,6 +368,121 @@ class TestElasticEsqlService {
     }
 
     @Test
+    void testStopCancelsARunningQueryPromptly() {
+        // Before, a stop was seen only once the query ended or reached its time limit (2 minutes by default), while
+        // Elasticsearch kept working.
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(QUERY_PATH))
+                .willReturn(ElasticWireMock.elasticResponse(200, GROUPED).withFixedDelay(20_000)));
+        final long startNs = System.nanoTime();
+        final BooleanSupplier stopped = () -> System.nanoTime() - startNs > Duration.ofMillis(300).toNanos();
+
+        assertThatThrownBy(() -> service.query(new Request(INDEX_REF, "| STATS c = COUNT(*)", null, null, null, null,
+                false, stopped)))
+                .isInstanceOf(Refusal.class)
+                .satisfies(e -> assertThat(((Refusal) e).reason()).isEqualTo(Reason.STOPPED))
+                .hasMessage("The query was stopped, so it was cancelled in Elasticsearch");
+
+        assertThat(Duration.ofNanos(System.nanoTime() - startNs)).isLessThan(Duration.ofSeconds(3));
+        assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(QUERY_PATH)))).hasSize(1);
+    }
+
+    @Test
+    void testAQueryStoppedBeforeItStartsIsNotSent() {
+        stubQuery(GROUPED);
+
+        assertThatThrownBy(() -> service.query(new Request(INDEX_REF, "| STATS c = COUNT(*)", null, null, null, null,
+                false, () -> true)))
+                .isInstanceOf(Refusal.class)
+                .satisfies(e -> assertThat(((Refusal) e).reason()).isEqualTo(Reason.STOPPED));
+        assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(QUERY_PATH)))).isEmpty();
+    }
+
+    @Test
+    void testAQueryThatIsNeverStoppedStillEndsAtItsTimeLimit() {
+        config = new ElasticSearchConfig(null, null, null, null, null, null, null, StroomDuration.ofMillis(600));
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(QUERY_PATH))
+                .willReturn(ElasticWireMock.elasticResponse(200, GROUPED).withFixedDelay(20_000)));
+        final long startNs = System.nanoTime();
+
+        assertThatThrownBy(() -> service.query(new Request(INDEX_REF, "| STATS c = COUNT(*)", null, null, null, null,
+                false, () -> false)))
+                .isInstanceOf(Refusal.class)
+                .satisfies(e -> assertThat(((Refusal) e).reason()).isEqualTo(Reason.TIMEOUT));
+        assertThat(Duration.ofNanos(System.nanoTime() - startNs))
+                .isGreaterThanOrEqualTo(Duration.ofMillis(600))
+                .isLessThan(Duration.ofSeconds(5));
+    }
+
+    @Test
+    void testATransientCircuitBreakerSaysToTryAgainShortly() {
+        stubError(429, breaker("parent", "TRANSIENT", 429));
+
+        assertThatThrownBy(() -> service.query(request("| STATS c = COUNT(*) BY user")))
+                .isInstanceOf(Refusal.class)
+                .satisfies(e -> assertThat(((Refusal) e).reason()).isEqualTo(Reason.CLUSTER_BUSY))
+                .hasMessage("Elasticsearch is short of memory right now, so it refused the query: try again "
+                            + "shortly. Elasticsearch said: [parent] Data too large, data for [<http_request>] "
+                            + "would be [1030000000/982.2mb], which is larger than the limit of "
+                            + "[1020054732/972.7mb]");
+    }
+
+    @Test
+    void testAPermanentCircuitBreakerSaysToAskForLess() {
+        stubError(500, breaker("parent", "PERMANENT", 500));
+
+        assertThatThrownBy(() -> service.query(request("| STATS c = COUNT(*) BY user")))
+                .isInstanceOf(Refusal.class)
+                .satisfies(e -> assertThat(((Refusal) e).reason()).isEqualTo(Reason.TOO_MUCH_MEMORY))
+                .hasMessageStartingWith("The query needs more memory than Elasticsearch allows it: narrow the time "
+                                        + "range, group by fewer high-cardinality fields, avoid MV_EXPAND on large "
+                                        + "multi-value fields, or lower the LIMIT. Elasticsearch said: [parent] Data "
+                                        + "too large");
+    }
+
+    @Test
+    void testTheRequestBreakerIsTheQueryNeedingTooMuchMemoryWhateverItsDurability() {
+        // The request breaker counts the query's own memory: trying it again as it is won't help.
+        stubError(429, breaker("request", "TRANSIENT", 429));
+
+        assertThatThrownBy(() -> service.query(request("| STATS c = COUNT(*) BY user")))
+                .isInstanceOf(Refusal.class)
+                .satisfies(e -> assertThat(((Refusal) e).reason()).isEqualTo(Reason.TOO_MUCH_MEMORY))
+                .hasMessageContaining("Elasticsearch said: [request] Data too large");
+    }
+
+    @Test
+    void testARejectedExecutionSaysTheClusterIsOverloaded() {
+        stubError(429, """
+                {"error": {"root_cause": [{"type": "es_rejected_execution_exception",
+                  "reason": "rejected execution of TimedRunnable on QueueResizingEsThreadPoolExecutor[name = \
+                node/search, queue capacity = 1000]"}],
+                 "type": "search_phase_execution_exception", "reason": "all shards failed", "phase": "query",
+                 "grouped": true,
+                 "caused_by": {"type": "es_rejected_execution_exception",
+                  "reason": "rejected execution of TimedRunnable on QueueResizingEsThreadPoolExecutor[name = \
+                node/search, queue capacity = 1000]"}},
+                 "status": 429}""");
+
+        assertThatThrownBy(() -> service.query(request("| STATS c = COUNT(*) BY user")))
+                .isInstanceOf(Refusal.class)
+                .satisfies(e -> assertThat(((Refusal) e).reason()).isEqualTo(Reason.CLUSTER_BUSY))
+                .hasMessage("Elasticsearch is overloaded right now, so it refused the query: try again shortly. "
+                            + "Elasticsearch said: rejected execution of TimedRunnable on "
+                            + "QueueResizingEsThreadPoolExecutor[name = node/search, queue capacity = 1000]");
+    }
+
+    @Test
+    void testAnyOther429IsTheClusterOverloaded() {
+        stubError(429, """
+                {"error": {"type": "status_exception", "reason": "too many concurrent queries"}, "status": 429}""");
+
+        assertThatThrownBy(() -> service.query(request("| STATS c = COUNT(*) BY user")))
+                .isInstanceOf(Refusal.class)
+                .satisfies(e -> assertThat(((Refusal) e).reason()).isEqualTo(Reason.CLUSTER_BUSY))
+                .hasMessageEndingWith("Elasticsearch said: too many concurrent queries");
+    }
+
+    @Test
     void testRequestedTimeLimitIsNeverLongerThanConfigured() {
         config = new ElasticSearchConfig(null, null, null, null, null, null, null, StroomDuration.ofMillis(300));
         ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(QUERY_PATH))
@@ -500,6 +616,29 @@ class TestElasticEsqlService {
                 {"took": 1, "is_partial": true, "columns": [], "values": []}""")))
                 .isInstanceOf(Refusal.class)
                 .hasMessageContaining("only part of the results");
+    }
+
+    /// A circuit breaker's error, as Elasticsearch gives it: the breaker's name starts its reason, and its
+    /// durability says whether it may pass.
+    ///
+    /// @param name       The breaker, e.g. `parent` or `request`.
+    /// @param durability `TRANSIENT` or `PERMANENT`.
+    /// @param status     The HTTP status Elasticsearch answers with.
+    /// @return The error body.
+    static String breaker(final String name, final String durability, final int status) {
+        final String reason = "[" + name + "] Data too large, data for [<http_request>] would be "
+                              + "[1030000000/982.2mb], which is larger than the limit of [1020054732/972.7mb]";
+        return """
+                {"error": {"root_cause": [{"type": "circuit_breaking_exception", "reason": "%1$s",
+                  "bytes_wanted": 1030000000, "bytes_limit": 1020054732, "durability": "%2$s"}],
+                 "type": "circuit_breaking_exception", "reason": "%1$s",
+                 "bytes_wanted": 1030000000, "bytes_limit": 1020054732, "durability": "%2$s"},
+                 "status": %3$d}""".formatted(reason, durability, status);
+    }
+
+    private void stubError(final int status, final String body) {
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(QUERY_PATH))
+                .willReturn(ElasticWireMock.elasticResponse(status, body)));
     }
 
     private static Request request(final String pipeline) {

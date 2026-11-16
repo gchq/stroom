@@ -164,6 +164,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 /// A small, fixed Stroom for running every built-in tool as McpAgentChat runs them: through
@@ -485,6 +486,16 @@ public final class BuiltInToolWorld implements AutoCloseable {
     /// @param arguments Its arguments, as JSON.
     /// @return What the tool returned.
     public String run(final String name, final String arguments) {
+        return run(name, arguments, () -> false);
+    }
+
+    /// Runs a built-in tool, as McpAgentChat does, in a run of its own that may be stopped.
+    ///
+    /// @param name      The tool's name.
+    /// @param arguments Its arguments, as JSON.
+    /// @param cancelled True once the run is stopped.
+    /// @return What the tool returned.
+    public String run(final String name, final String arguments, final BooleanSupplier cancelled) {
         final ToolExecutor executor = builtInTools.toolMap().entrySet().stream()
                 .filter(entry -> entry.getKey().name().equals(name))
                 .map(Map.Entry::getValue)
@@ -495,7 +506,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 .name(name)
                 .arguments(arguments)
                 .build();
-        final ToolRunContext context = new ToolRunContext(null, null, () -> false);
+        final ToolRunContext context = new ToolRunContext(null, null, cancelled);
         return context.run(() -> executor.execute(request, CHAT_ID));
     }
 

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 
 /// Runs an ES|QL query on the index of an Elastic Index document, as the user: totals, top N and grouped questions
 /// answered by Elasticsearch itself, rather than by scrolling every document through Stroom. It only reads: nothing
@@ -73,6 +74,15 @@ public interface ElasticEsql {
         COMMAND_NOT_ALLOWED,
         /// The commands can't be read: e.g. an unterminated string or comment, or a `LIMIT` that isn't a number.
         INVALID,
+        /// The caller stopped the query while it ran (e.g. the user stopped the chat): it was cancelled in
+        /// Elasticsearch.
+        STOPPED,
+        /// The cluster is short of memory or overloaded right now (a transient circuit breaker, or a rejected
+        /// execution): the same query may work shortly.
+        CLUSTER_BUSY,
+        /// The query needs more memory than Elasticsearch allows it (a permanent circuit breaker, or the request
+        /// breaker): it must ask for less, not be run again as it is.
+        TOO_MUCH_MEMORY,
         /// Elasticsearch doesn't know a column the query names ([Refusal#names()] has them).
         UNKNOWN_FIELD,
         /// The query groups by a text field that has a keyword sub-field to group by instead ([Refusal#names()]
@@ -105,14 +115,43 @@ public interface ElasticEsql {
     /// @param timeLimit  How long the query may take, or null for the configured limit (never longer).
     /// @param countTotal True to count, when the rows are cut short by the limit, how many rows the query gives
     ///                   without its limits (for `STATS ... BY`, the number of groups), with a second query.
+    /// @param stopped    True once the caller wants the query stopped (e.g. the user stopped the chat), asked
+    ///                   while it runs; null for never. A query stopped is cancelled in Elasticsearch, and refused
+    ///                   with [Reason#STOPPED].
     record Request(DocRef index,
                    String pipeline,
                    ExpressionOperator filter,
                    TimeRange timeRange,
                    Integer limit,
                    Duration timeLimit,
-                   boolean countTotal) {
+                   boolean countTotal,
+                   BooleanSupplier stopped) {
 
+        /// A null `stopped` is never stopped.
+        public Request {
+            stopped = stopped == null
+                    ? () -> false
+                    : stopped;
+        }
+
+        /// A query that is never stopped by its caller (only by its time limit).
+        ///
+        /// @param index      The Elastic Index document.
+        /// @param pipeline   The ES|QL commands after `FROM`.
+        /// @param filter     A Stroom expression the documents must match, or null.
+        /// @param timeRange  A time range on the document's time field, or null.
+        /// @param limit      The most rows to return, or null for the configured default.
+        /// @param timeLimit  How long the query may take, or null for the configured limit.
+        /// @param countTotal True to count the rows without the limits when they are cut short.
+        public Request(final DocRef index,
+                       final String pipeline,
+                       final ExpressionOperator filter,
+                       final TimeRange timeRange,
+                       final Integer limit,
+                       final Duration timeLimit,
+                       final boolean countTotal) {
+            this(index, pipeline, filter, timeRange, limit, timeLimit, countTotal, null);
+        }
     }
 
 

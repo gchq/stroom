@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 
 /// Runs an EQL sequence over the indexes of one or more Elastic Index documents on one cluster, as the user: ordered
 /// hunts across sources (a device plugged in and then a file copied to it; 20 failed logons then a success), matched
@@ -85,6 +86,15 @@ public interface ElasticEql {
         UNKNOWN_FIELD,
         /// The query took longer than it may.
         TIMEOUT,
+        /// The caller stopped the search while it ran (e.g. the user stopped the chat): it was deleted in
+        /// Elasticsearch, so it stopped there too.
+        STOPPED,
+        /// The cluster is short of memory or overloaded right now (a transient circuit breaker, or a rejected
+        /// execution): the same search may work shortly.
+        CLUSTER_BUSY,
+        /// The search needs more memory than Elasticsearch allows it (a permanent circuit breaker, EQL's sequence
+        /// breaker or the request breaker): it must ask for less, not be run again as it is.
+        TOO_MUCH_MEMORY,
         /// The time range can't be read.
         INVALID,
         /// Elasticsearch refused the query for another reason, given in its own words.
@@ -97,19 +107,48 @@ public interface ElasticEql {
     // --------------------------------------------------------------------------------
 
 
-    /// The documents' cluster and time field.
+    /// The documents' cluster and time field, and what their mappings say of their fields.
     ///
     /// @param version    The cluster's version, e.g. `9.5.3`.
     /// @param timeField  The documents' time field, which orders a sequence's events.
     /// @param indexNames Each document's index name (or pattern), in order.
-    record Target(String version, String timeField, List<String> indexNames) {
+    /// @param fields     Each document's fields as its mapping has them, by name, in the documents' order; empty
+    ///                   if not known.
+    record Target(String version, String timeField, List<String> indexNames, List<Map<String, Field>> fields) {
 
-        /// Copies the list.
+        /// Copies the lists.
         public Target {
             indexNames = indexNames == null
                     ? List.of()
                     : List.copyOf(indexNames);
+            fields = fields == null
+                    ? List.of()
+                    : fields.stream().map(Map::copyOf).toList();
         }
+
+        /// Documents whose fields aren't known.
+        ///
+        /// @param version    The cluster's version.
+        /// @param timeField  The documents' time field.
+        /// @param indexNames Each document's index name (or pattern), in order.
+        public Target(final String version, final String timeField, final List<String> indexNames) {
+            this(version, timeField, indexNames, null);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A field of a document, as its mapping has it: what EQL needs to know to search it.
+    ///
+    /// @param name             Its full name, e.g. `process.command_line.raw`.
+    /// @param nativeType       Its Elasticsearch type, e.g. `text`, `keyword`, `wildcard`.
+    /// @param multiFieldParent The field it is a multi-field (subfield) of, or null if it is none's.
+    /// @param normaliser       Its `normalizer` (keyword fields), or null for none.
+    /// @param nested           True if it is, or is inside, a `nested` field, which EQL can't search.
+    record Field(String name, String nativeType, String multiFieldParent, String normaliser, boolean nested) {
+
     }
 
 
@@ -123,15 +162,19 @@ public interface ElasticEql {
     /// @param timeRange A time range on the documents' time field, or null.
     /// @param fields    The fields to fetch of each event (the time field is always fetched, in epoch ms).
     /// @param size      The most sequences to return; at most [#MAX_SEQUENCES].
-    /// @param timeLimit How long the search may take, or null for none (the client's own time-outs apply).
+    /// @param timeLimit How long the search may take, or null for none.
+    /// @param stopped   True once the caller wants the search stopped (e.g. the user stopped the chat), asked
+    ///                  while it runs; null for never. A search stopped is deleted in Elasticsearch, and refused
+    ///                  with [Reason#STOPPED].
     record Request(List<DocRef> indexes,
                    String query,
                    TimeRange timeRange,
                    List<String> fields,
                    int size,
-                   Duration timeLimit) {
+                   Duration timeLimit,
+                   BooleanSupplier stopped) {
 
-        /// Copies the lists.
+        /// Copies the lists; a null `stopped` is never stopped.
         public Request {
             indexes = indexes == null
                     ? List.of()
@@ -139,6 +182,26 @@ public interface ElasticEql {
             fields = fields == null
                     ? List.of()
                     : List.copyOf(fields);
+            stopped = stopped == null
+                    ? () -> false
+                    : stopped;
+        }
+
+        /// A search that is never stopped by its caller (only by its time limit).
+        ///
+        /// @param indexes   The Elastic Index documents, in order.
+        /// @param query     The EQL.
+        /// @param timeRange A time range on the documents' time field, or null.
+        /// @param fields    The fields to fetch of each event.
+        /// @param size      The most sequences to return.
+        /// @param timeLimit How long the search may take, or null for none.
+        public Request(final List<DocRef> indexes,
+                       final String query,
+                       final TimeRange timeRange,
+                       final List<String> fields,
+                       final int size,
+                       final Duration timeLimit) {
+            this(indexes, query, timeRange, fields, size, timeLimit, null);
         }
     }
 

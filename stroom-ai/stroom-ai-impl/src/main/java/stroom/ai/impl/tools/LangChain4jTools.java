@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.ToolSchema.EnumSchema;
 import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolSchema.StringSchema;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -174,6 +175,10 @@ public final class LangChain4jTools {
                 return ToolResult.error("Error: " + e.getMessage());
             } catch (final AiChatRunManager.WaitingForUserException e) {
                 // The run stops until the user answers (e.g. ask_user's questions), and makes the call again then.
+                throw e;
+            } catch (final TaskTerminatedException e) {
+                // The user stopped the run while the tool worked (e.g. a query it cancelled): not a fault, so the
+                // run, not the tool, says so.
                 throw e;
             } catch (final RuntimeException e) {
                 // Not one of the tool's own errors (which it gives as its result), so a fault to look into.
