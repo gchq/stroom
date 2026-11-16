@@ -1,5 +1,0 @@
-ext.moduleName = 'stroom.security.impl.dao'
-
-dependencies {
-
-}
