@@ -385,7 +385,7 @@ class TestDataConnectionExamplePack extends AbstractCoreIntegrationTest {
 
     @Test
     void everyQueryIsValidStroomQl() {
-        assertThat(queries).hasSize(15);
+        assertThat(queries).hasSize(18);
         queries.forEach((name, queryDoc) ->
                 assertThatCode(() -> searchRequest(queryDoc.getQuery(), queryDoc.getTimeRange()))
                         .as(name)
@@ -462,6 +462,31 @@ class TestDataConnectionExamplePack extends AbstractCoreIntegrationTest {
     @Test
     void antiJoinGivesPeopleInNoKnownTeam() {
         assertThat(run("Join - people in no known team", 2)).containsExactly(List.of("Femi", "Design"));
+    }
+
+    @Test
+    void existsGivesTheSameRowsAsTheSemiJoin() {
+        assertThat(run("Join - people in on-call teams, with exists", 2))
+                .isNotEmpty()
+                .isEqualTo(run("Join - people in on-call teams", 2));
+    }
+
+    @Test
+    void notExistsGivesTheSameRowsAsTheAntiJoin() {
+        assertThat(run("Join - people in no known team, with not exists", 2))
+                .isNotEmpty()
+                .isEqualTo(run("Join - people in no known team", 2));
+    }
+
+    @Test
+    void inGivesPeopleInKnownTeams() {
+        assertThat(run("Join - people in known teams, with in", 2)).containsExactly(
+                List.of("Alice", "Platform"),
+                List.of("Ben", "Data"),
+                List.of("Chloe", "Security"),
+                List.of("Dev", "Analysis"),
+                List.of("Ella", "Platform"),
+                List.of("Gus", "Support"));
     }
 
     @Test

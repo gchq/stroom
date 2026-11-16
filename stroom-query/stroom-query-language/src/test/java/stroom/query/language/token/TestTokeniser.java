@@ -202,6 +202,22 @@ public class TestTokeniser extends AbstractQueryTest {
     }
 
     @Test
+    void logicalOperatorsAfterABracketedQueryBelongToTheClauseAroundIt() {
+        // The select in the brackets ends at the closing bracket, so 'and' is in where again.
+        assertThat(withoutWhitespace("from x where a in (from y select b) and c = 1 or not d = 2"))
+                .extracting(Token::getTokenType)
+                .contains(TokenType.AND, TokenType.OR, TokenType.NOT);
+        // Inside the brackets, 'and' is in the bracketed query's own where.
+        assertThat(withoutWhitespace("from x where exists (from y where b = x.b and c = 1)"))
+                .extracting(Token::getTokenType)
+                .containsOnlyOnce(TokenType.AND);
+        // Outside an expression clause, 'and' stays a word.
+        assertThat(withoutWhitespace("from x where (a = 1) select and"))
+                .extracting(Token::getTokenType)
+                .doesNotContain(TokenType.AND);
+    }
+
+    @Test
     void dataSourceNamedLikeAJoinKindIsNotPartOfALongerKind() {
         // 'Left' is the data source, and 'semi join' starts the join line.
         final List<Token> tokens = withoutWhitespace("from Left semi join y on a = y.a");

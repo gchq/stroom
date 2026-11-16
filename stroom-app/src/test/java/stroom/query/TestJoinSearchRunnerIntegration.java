@@ -149,6 +149,60 @@ class TestJoinSearchRunnerIntegration extends AbstractCoreIntegrationTest {
     }
 
     @Test
+    void existsAndInGiveTheSameRowsAsTheirJoins() {
+        final String semi = """
+                from "%s" as e
+                semi join "%s" as hr on e.UserId = hr.Username
+                sort by Host
+                select Host""".formatted(events, hr);
+        final String anti = """
+                from "%s" as e
+                anti join "%s" as hr on e.UserId = hr.Username
+                sort by Host
+                select Host""".formatted(events, hr);
+        final String exists = """
+                from "%s" as e
+                where exists (from "%s" as hr where hr.Username = e.UserId)
+                sort by Host
+                select Host""".formatted(events, hr);
+        final String notExists = """
+                from "%s" as e
+                where not exists (from "%s" as hr where hr.Username = e.UserId)
+                sort by Host
+                select Host""".formatted(events, hr);
+        final String in = """
+                from "%s" as e
+                where UserId in (from "%s" as hr select Username)
+                sort by Host
+                select Host""".formatted(events, hr);
+        final String notIn = """
+                from "%s" as e
+                where UserId not in (from "%s" as hr select Username)
+                sort by Host
+                select Host""".formatted(events, hr);
+
+        assertThat(rows(search(semi), 1)).containsExactly(List.of("h1"), List.of("h2"), List.of("h4"));
+        assertThat(rows(search(anti), 1)).containsExactly(List.of("h3"));
+        assertThat(rows(search(exists), 1)).isEqualTo(rows(search(semi), 1));
+        assertThat(rows(search(in), 1)).isEqualTo(rows(search(semi), 1));
+        assertThat(rows(search(notExists), 1)).isEqualTo(rows(search(anti), 1));
+        assertThat(rows(search(notIn), 1)).isEqualTo(rows(search(anti), 1));
+    }
+
+    @Test
+    void existsWithAConditionNarrowsTheJoinedSource() {
+        // Only IT counts, so the anti join keeps everyone not in IT, including jbloggs in Sales.
+        final SearchResponse response = search("""
+                from "%s" as e
+                where not exists (from "%s" as hr where hr.Username = e.UserId and hr.Department = 'IT')
+                sort by Host
+                select Host""".formatted(events, hr));
+
+        assertThat(errors(response)).isEmpty();
+        assertThat(rows(response, 1)).containsExactly(List.of("h1"), List.of("h3"), List.of("h4"));
+    }
+
+    @Test
     void chainedJoinsAndGroupingAfterTheJoin() {
         final SearchResponse response = search("""
                 from "%s"

@@ -85,26 +85,7 @@ public class Tokeniser {
 
         // Treat NOT/AND/OR as keywords if they are in an expression to make sure they aren't treated as functions,
         // e.g. not().
-        final List<Token> replaced = new ArrayList<>();
-        TokenType currentKeyword = null;
-        for (final Token token : tokens) {
-            if (TokenType.ALL_KEYWORDS.contains(token.getTokenType())) {
-                currentKeyword = token.getTokenType();
-                replaced.add(token);
-            } else if (currentKeyword != null &&
-                    TokenType.EXPRESSION_KEYWORDS.contains(currentKeyword) &&
-                    TokenType.UNKNOWN.equals(token.getTokenType())) {
-                List<Token> outTokens = new ArrayList<>();
-                outTokens.add(token);
-                outTokens = tagKeyword("and", TokenType.AND, outTokens);
-                outTokens = tagKeyword("or", TokenType.OR, outTokens);
-                outTokens = tagKeyword("not", TokenType.NOT, outTokens);
-                replaced.addAll(outTokens);
-            } else {
-                replaced.add(token);
-            }
-        }
-        tokens = replaced;
+        tokens = tagLogicalOperators(tokens);
 
         // Treat other conjunctions as keywords.
         tokens = tagKeyword("in", TokenType.IN, tokens);
@@ -151,6 +132,65 @@ public class Tokeniser {
 
         // Tag everything else as a string.
         tokens = categorise(TokenType.STRING, tokens);
+    }
+
+    // Tags 'and', 'or' and 'not' in the expression clauses: where, filter, having and on. Each bracket
+    // is a level of its own, so the clauses of a bracketed query, as in
+    // 'where X in (from Y select Z) and A = 1', end at its closing bracket and the clause around it
+    // goes on after.
+    private static List<Token> tagLogicalOperators(final List<Token> tokens) {
+        final List<Token> out = new ArrayList<>();
+        // The clause each open bracket is in, innermost last.
+        final List<TokenType> outerKeywords = new ArrayList<>();
+        TokenType currentKeyword = null;
+        for (final Token token : tokens) {
+            if (TokenType.ALL_KEYWORDS.contains(token.getTokenType())) {
+                currentKeyword = token.getTokenType();
+                out.add(token);
+            } else if (TokenType.UNKNOWN.equals(token.getTokenType())) {
+                // The text between brackets is tagged by the clause it is in.
+                final List<Token> pieces = new ArrayList<>();
+                final char[] chars = token.getChars();
+                int pieceStart = token.getStart();
+                for (int i = token.getStart(); i <= token.getEnd(); i++) {
+                    if (chars[i] == '(' || chars[i] == ')') {
+                        addLogicalOperators(pieces, chars, pieceStart, i - 1, currentKeyword);
+                        if (chars[i] == '(') {
+                            outerKeywords.add(currentKeyword);
+                        } else if (!outerKeywords.isEmpty()) {
+                            currentKeyword = outerKeywords.removeLast();
+                        }
+                        addJoiningUnknown(pieces, new Token(TokenType.UNKNOWN, chars, i, i));
+                        pieceStart = i + 1;
+                    }
+                }
+                addLogicalOperators(pieces, chars, pieceStart, token.getEnd(), currentKeyword);
+                out.addAll(pieces);
+            } else {
+                out.add(token);
+            }
+        }
+        return out;
+    }
+
+    // Adds the text from start to end, with 'and', 'or' and 'not' tagged if it is in an expression
+    // clause. Plain text is joined to the plain text before it, so a function name and its bracket
+    // stay together.
+    private static void addLogicalOperators(final List<Token> out,
+                                            final char[] chars,
+                                            final int start,
+                                            final int end,
+                                            final TokenType keyword) {
+        if (start > end) {
+            return;
+        }
+        List<Token> pieces = List.of(new Token(TokenType.UNKNOWN, chars, start, end));
+        if (keyword != null && TokenType.EXPRESSION_KEYWORDS.contains(keyword)) {
+            pieces = tagKeyword("and", TokenType.AND, pieces);
+            pieces = tagKeyword("or", TokenType.OR, pieces);
+            pieces = tagKeyword("not", TokenType.NOT, pieces);
+        }
+        pieces.forEach(piece -> addJoiningUnknown(out, piece));
     }
 
     // Every spelling of every kind of join, longest first so 'left outer join' isn't read as 'left'

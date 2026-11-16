@@ -203,6 +203,30 @@ class Structures {
                         where user = "bob"
                         and (feed = "my feed" or feed = "other feed")
                         ```
+
+                        Keep only the rows that have a match in another data source with `exists`, or
+                        those with none with `not exists`, as in SQL, e.g.
+                        ```stroomql
+                        from People as p
+                        where exists (from Teams as t where t.team = p.team and t.on_call = true)
+                        ```
+
+                        or compare a field with one field of another data source with `in` or `not in`, e.g.
+                        ```stroomql
+                        from People
+                        where team not in (from Teams select team)
+                        ```
+
+                        These are another way of writing `semi join` and `anti join`, and run as them. The
+                        bracketed query names the first source's fields by its alias, or by its data
+                        source's name if it has none, and can only compare them with `=`. Its other
+                        conditions narrow its own search. It can only have `from`, `sql`, `where` and
+                        `select`. These forms can only be used at the top level of `where`, joined to the
+                        rest by `and`.
+
+                        A blank key never matches, so `not in` keeps a row whose field is blank, and a
+                        blank value in the other data source doesn't stop any row from being kept. This
+                        differs from SQL, where `not in` gives no rows once the other query holds a null.
                         """,
                 "where ${1:field} ${2:=} ${3:value}\n$0");
         add(list, name(TokenType.EVAL),
