@@ -30,6 +30,11 @@ import stroom.ai.impl.workspace.TableEngine.Format;
 import stroom.ai.impl.workspace.TableEngine.Order;
 import stroom.ai.impl.workspace.TableEngine.Query;
 import stroom.ai.impl.workspace.TableEngine.Result;
+import stroom.ai.impl.workspace.TableJoin;
+import stroom.ai.impl.workspace.TableJoin.Joined;
+import stroom.ai.impl.workspace.TableJoin.Keep;
+import stroom.ai.impl.workspace.TableJoin.Spec;
+import stroom.ai.impl.workspace.TableJoin.Within;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiToolCategory;
@@ -41,6 +46,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +66,7 @@ class TableTool extends AbstractWorkspaceTool {
 
     static final String NAME = "table";
     static final String HELP_ARG = "help";
+    static final String JOIN_ARG = "join";
     /// Examples of expressions, in the tool's description (each is checked to work).
     static final String EXAMPLES = "eval {\"as\": \"rate\", \"expression\": \"round(${bytes} / ${seconds}, 1)\"}, "
                                    + "{\"as\": \"site\", \"expression\": \"upperCase(substring(${host}, 0, 3))\"}, "
@@ -138,6 +145,28 @@ class TableTool extends AbstractWorkspaceTool {
                 .addBooleanProperty("descending", "True for largest first.")
                 .required("column")
                 .build();
+        final ObjectSchema within = ObjectSchema.builder()
+                .addStringProperty("column", "This table's time column (ISO 8601, UTC if no zone, or epoch ms).")
+                .addStringProperty("rightColumn", "The other table's, if named differently.")
+                .addIntegerProperty("seconds", "The most seconds apart.")
+                .addBooleanProperty("after", "True if the other table's time must be at or after this one's "
+                                             + "(default either side).")
+                .required("column", "seconds")
+                .build();
+        final ObjectSchema join = ObjectSchema.builder()
+                .description("Joins another table to this one first; the rest of the query is then of the joined "
+                             + "rows. A column of the other table this one has too is named right.<name>.")
+                .addStringProperty(PATH_ARG, "The other table.")
+                .addProperty("on", stringArraySchema("Columns whose values must be the same (exact text) in both; "
+                                                     + "an empty cell matches nothing."))
+                .addProperty("rightOn", stringArraySchema("The other table's columns for on, in order, if named "
+                                                          + "differently."))
+                .addEnumProperty("keep", List.of("both", "unmatched"), "both (default): each row with each row "
+                                                                       + "of the other it matches; unmatched: "
+                                                                       + "this table's rows nothing matches.")
+                .addProperty("within", within)
+                .required(PATH_ARG, "on")
+                .build();
         return ToolDefinition.builder()
                 .name(NAME)
                 .description(description())
@@ -162,6 +191,7 @@ class TableTool extends AbstractWorkspaceTool {
                         .addProperty("orderBy", ArraySchema.builder().items(order)
                                 .description("How to sort the result.").build())
                         .addIntegerProperty("limit", "The most rows to return.")
+                        .addProperty(JOIN_ARG, join)
                         .addStringProperty(OUT_ARG, ToolDescription.builder()
                                 .chatOnly("A file in /outputs/ to write the result to: .csv, .tsv or .md.")
                                 .build())
@@ -183,7 +213,8 @@ class TableTool extends AbstractWorkspaceTool {
                          + "groupBy and aggregates (or distinct, for each distinct value with its count) summarise "
                          + "them, orderBy sorts and limit cuts the result. Use mask with distinct or groupBy to count "
                          + "free text (e.g. messages) as patterns, with numbers, IPs, dates and IDs masked. Use this "
-                         + "for any figures; never count rows or work figures out by reading them.")
+                         + "for any figures; never count rows or work figures out by reading them. Give join to match "
+                         + "its rows with another table's first, e.g. on a user and an id, within some seconds.")
                 .chatOnly(" Give out to write the result to a file.")
                 .general("\n\n" + expressionsHelp())
                 .build();
@@ -220,8 +251,11 @@ class TableTool extends AbstractWorkspaceTool {
         // calls, the second refusal coming with an unasked-for summary of a column).
         final Query query = query(args, () -> columns(sessionWorkspace(context), path));
         final WorkspacePath out = outArg(request);
+        final Map<?, ?> join = joinArg(args.get(JOIN_ARG));
         try {
-            return ToolResult.text(run(context, path, query, out));
+            return ToolResult.text(join == null
+                    ? run(context, path, query, out)
+                    : runJoined(context, path, join, query, out));
         } catch (final ExpressionException e) {
             // The model fixes its expression from the message; a column's summary wouldn't help.
             throw e;
@@ -371,6 +405,130 @@ class TableTool extends AbstractWorkspaceTool {
         }
         return summary + "\n\n" + markdown(context, result.columns(), result.rows(),
                 limits(context).getMaxLinesPerRead());
+    }
+
+    // Joins the other table to this one, then runs the query on the joined rows.
+    private String runJoined(final ToolCallContext context,
+                             final WorkspacePath path,
+                             final Map<?, ?> join,
+                             final Query query,
+                             final WorkspacePath out) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
+        final String rightName = string(join.get(PATH_ARG));
+        if (rightName == null) {
+            throw new WorkspaceException("Give join.path: the table to join to this one.");
+        }
+        final WorkspacePath right = WorkspacePath.parse(rightName);
+        refuseUnlessATable(right);
+        final Spec spec = spec(join);
+        final Joined joined = TableJoin.join(workspace.localFile(path), Format.forPath(path),
+                workspace.localFile(right), Format.forPath(right), spec);
+        final Path temp = workspace.tempFile();
+        try {
+            ToolTables.writeCsv(temp, joined.columns(), joined.rows());
+            final Result result = TableEngine.run(temp, Format.CSV, query);
+            // The file is checked again against the document a table came from when used: the left table's, or
+            // the right's if only it came from one.
+            final String leftSource = workspace.sourceDocUuid(path);
+            final String source = leftSource != null
+                    ? leftSource
+                    : workspace.sourceDocUuid(right);
+            final String summary = joinSummary(path, right, spec, joined) + " " + result.rowsMatched() + " of "
+                                   + result.rowsRead() + " joined rows matched; the result has "
+                                   + result.rows().size() + " row(s).";
+            if (out != null) {
+                writeTable(workspace, out, result, source);
+                return "Wrote the result to " + out + ". " + summary + " The first rows:\n\n"
+                       + markdown(context, result.columns(), result.rows(), PREVIEW_ROWS);
+            }
+            return summary + "\n\n" + markdown(context, result.columns(), result.rows(),
+                    limits(context).getMaxLinesPerRead());
+        } finally {
+            ChatWorkspace.deleteQuietly(temp);
+        }
+    }
+
+    // What was joined, and how many rows matched.
+    private static String joinSummary(final WorkspacePath path,
+                                      final WorkspacePath right,
+                                      final Spec spec,
+                                      final Joined joined) {
+        final StringBuilder sb = new StringBuilder("Joined ").append(joined.leftRows()).append(" rows of ")
+                .append(path).append(" with ").append(joined.rightRows()).append(" of ").append(right)
+                .append(" on ").append(String.join(", ", spec.on()));
+        if (!spec.rightOn().isEmpty()) {
+            sb.append(" (").append(String.join(", ", spec.rightOn())).append(" there)");
+        }
+        if (spec.within() != null) {
+            sb.append(", within ").append(spec.within().seconds()).append(" s")
+                    .append(spec.within().after()
+                            ? " after"
+                            : "");
+        }
+        sb.append(": ").append(joined.leftMatched()).append(" of the ").append(joined.leftRows())
+                .append(" rows matched")
+                .append(spec.keep() == Keep.UNMATCHED
+                        ? ", so " + joined.rows().size() + " are unmatched."
+                        : ", making " + joined.rows().size() + " joined rows.");
+        if (joined.untimed() > 0) {
+            sb.append(" ").append(joined.untimed()).append(" row(s) had a matching key but a time that couldn't "
+                                                           + "be read, so matched nothing.");
+        }
+        return sb.toString();
+    }
+
+    /// Reads join's how-to from its argument.
+    ///
+    /// @param join The join argument.
+    /// @return How to join.
+    /// @throws WorkspaceException if a part of it is missing or in a shape that can't be read.
+    static Spec spec(final Map<?, ?> join) {
+        final String keep = string(join.get("keep"));
+        final Keep keepWhat;
+        if (keep == null || "both".equalsIgnoreCase(keep.strip())) {
+            keepWhat = Keep.BOTH;
+        } else if ("unmatched".equalsIgnoreCase(keep.strip())) {
+            keepWhat = Keep.UNMATCHED;
+        } else {
+            throw new WorkspaceException("join.keep must be both or unmatched, but was " + quote(keep) + ".");
+        }
+        final Object withinArg = loose(join.get("within"), "join.within", OBJECTS);
+        Within within = null;
+        if (withinArg instanceof final Map<?, ?> map) {
+            final String column = string(map.get("column"));
+            if (column == null || map.get("seconds") == null) {
+                throw new WorkspaceException("join.within needs column (this table's time) and seconds.");
+            }
+            final long seconds;
+            try {
+                seconds = (long) Double.parseDouble(String.valueOf(map.get("seconds")));
+            } catch (final NumberFormatException e) {
+                throw new WorkspaceException("join.within.seconds must be a number of seconds.");
+            }
+            if (seconds < 0) {
+                throw new WorkspaceException("join.within.seconds can't be negative.");
+            }
+            within = new Within(column, string(map.get("rightColumn")), seconds,
+                    Boolean.TRUE.equals(map.get("after")) || "true".equals(string(map.get("after"))));
+        } else if (withinArg != null) {
+            throw new WorkspaceException("join.within must be an object, e.g. {\"column\": \"time\", "
+                                         + "\"seconds\": 300}, but was " + quote(withinArg) + ".");
+        }
+        return new Spec(strings(join.get("on"), "join.on"), strings(join.get("rightOn"), "join.rightOn"),
+                keepWhat, within);
+    }
+
+    // The join argument as an object, or null if there is none.
+    private static Map<?, ?> joinArg(final Object value) {
+        final Object loose = loose(value, JOIN_ARG, OBJECTS);
+        if (loose == null) {
+            return null;
+        }
+        if (loose instanceof final Map<?, ?> map) {
+            return map;
+        }
+        throw new WorkspaceException("join must be an object, e.g. {\"path\": \"/outputs/b.csv\", \"on\": "
+                                     + "[\"user\"]}, but was " + quote(loose) + ".");
     }
 
     /// The note for many rows of an Elastic Index grouped or totalled here, which esql_query would have done in

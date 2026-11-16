@@ -30,6 +30,7 @@ import org.mockito.Mockito;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -218,6 +219,69 @@ class TestFetchEventsTool {
     }
 
     @Test
+    void recordsReadIntoAFileComeAThousandACallAndACappedReadSaysWhereToGoOn() {
+        // Seen in a chat: two 3,000-record raw streams of JSON lines read 100 records a call (83 calls); asked for
+        // 170, it was given 100 without a word and read on from 170, leaving gaps it found only by counting.
+        final String padding = "x".repeat(1_000);
+        final List<String> lines = IntStream.range(0, 3000)
+                .mapToObj(n -> "{\"Id\":" + n + ",\"Operation\":\"MoveToDeletedItems\",\"pad\":\"" + padding + "\"}")
+                .toList();
+        world.addRaw(7, String.join("\n", lines) + "\n");
+
+        final Map<String, Object> toFile = runJson("{\"streamId\":7,\"firstRecord\":1500,\"recordCount\":1000,"
+                                                   + "\"out\":\"/outputs/r.jsonl\"}");
+
+        assertThat(toFile.get("records_read")).isEqualTo(1000);
+        assertThat(toFile).doesNotContainKey("record_count_capped");
+        final String file = fixture.written.get("/outputs/r.jsonl");
+        assertThat(file.lines().toList()).isEqualTo(lines.subList(1500, 2500));
+
+        // Asked for more than a call reads: it says so, and where to read on.
+        final Map<String, Object> capped = runJson("{\"streamId\":7,\"recordCount\":1500,"
+                                                   + "\"out\":\"/outputs/r.jsonl\"}");
+        assertThat(capped.get("records_read")).isEqualTo(1000);
+        assertThat((String) capped.get("record_count_capped")).isEqualTo("Asked for 1,500, read 1,000: at most 1,000 "
+                                                                         + "records a call.");
+        assertThat(capped.get("next_first_record")).isEqualTo(1000);
+        assertThat((String) capped.get("hint")).contains("firstRecord=1000, not 1500");
+
+        // Into the conversation, 100 at most, and the cap names the larger one to a file.
+        final Map<String, Object> returned = runJson("{\"streamId\":7,\"firstRecord\":200,\"recordCount\":170,"
+                                                     + "\"maxChars\":200000}");
+        assertThat(records(returned)).isEqualTo(lines.subList(200, 300));
+        assertThat((String) returned.get("record_count_capped")).contains("at most 100 records a call (1,000 with "
+                                                                          + "out, to a file)");
+        assertThat(returned.get("next_first_record")).isEqualTo(300);
+    }
+
+    @Test
+    void aCappedReadAtTheEndOfAStreamGivesNoNextRecord() {
+        world.addSegmented(7, StreamTypeNames.EVENTS, null, null, Collections.nCopies(150, "<Events/>"));
+
+        final Map<String, Object> read = runJson("{\"streamId\":7,\"firstRecord\":50,\"recordCount\":500}");
+
+        assertThat(records(read)).hasSize(100);
+        assertThat((String) read.get("record_count_capped")).startsWith("Asked for 500, read 100");
+        assertThat(read).doesNotContainKey("next_first_record");
+    }
+
+    @Test
+    void aCappedReadStoppedByTheCharacterLimitKeepsThatHint() {
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("records", List.of("a", "b"));
+        result.put("total_records", 500);
+        result.put("next_first_record", 2);
+        result.put("hint", "2 whole records fit in 60,000 characters");
+
+        FetchEventsTool.sayCapped(result, 0, 300, 100, false);
+
+        assertThat((String) result.get("record_count_capped")).isEqualTo("Asked for 300: at most 100 records a call "
+                                                                         + "(1,000 with out, to a file).");
+        assertThat(result.get("next_first_record")).isEqualTo(2);
+        assertThat((String) result.get("hint")).startsWith("2 whole records fit");
+    }
+
+    @Test
     void theRecordsComeBackAsJsonAndTheReadIsLogged() {
         world.addSegmented(7, StreamTypeNames.EVENTS, null, null, List.of("<Events/>"));
 
@@ -246,6 +310,12 @@ class TestFetchEventsTool {
         assertThatThrownBy(() -> tool.run(ToolTestFixture.request(FetchEventsTool.NAME, "{}"),
                 ToolCalls.inChat(1, fixture.workspace)))
                 .hasMessageContaining("Give path");
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> runJson(final String arguments) {
+        return JsonUtil.readValue(tool.run(ToolTestFixture.request(FetchEventsTool.NAME, arguments),
+                ToolCalls.inChat(1, fixture.workspace)).text(), Map.class);
     }
 
     @SuppressWarnings("unchecked")

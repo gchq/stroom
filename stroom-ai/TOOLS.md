@@ -928,7 +928,7 @@ description points at `grep` and `table`). Expressions are at most 2,000 charact
 
 ### `table`
 
-Core · read-only · Classes: `TableTool`, `TableEngine`, `TableExpression`, `ExpressionFunctions`,
+Core · read-only · Classes: `TableTool`, `TableEngine`, `TableJoin`, `TableExpression`, `ExpressionFunctions`,
 `ColumnSummariser`
 
 Queries a table (an attachment in `/attachments/`, a tab's results that `current_results` saved in
@@ -945,12 +945,20 @@ category, and its examples are checked to work.
   `not_empty`, `in`, `not_in`, the last two with their values as a list or separated by commas); `groupBy`; `aggregates` (`function` count, count_distinct, sum, min, max or avg, or an
   `expression`; `column`, `as`); `distinct`; `mask`; `orderBy` (`column`, `descending`); `limit` (at least 1);
   `out` (`.csv`, `.tsv` or `.md`, written in the format its name gives, as for every tool that writes a table);
-  `help`. Loose shapes are taken as meant: a list given as JSON text (surrounding whitespace and
+  `join` (`path`, `on`, `rightOn`, `keep` both or unmatched, `within` with `column`, `rightColumn`, `seconds` and
+  `after`); `help`. `join` (`TableJoin`) joins another table first and the rest of the query is of the joined rows:
+  rows whose `on` cells are the same text (an empty cell matches nothing), optionally only where the other table's
+  time is within `seconds` (at or after this one's with `after`; times ISO 8601, UTC without a zone, or epoch
+  milliseconds); the other table's columns follow, bar its key columns, one this table has too named
+  `right.<name>`; `keep: unmatched` gives this table's rows nothing matches. Seen: a chat matching mail items read
+  then deleted by user and message id took some 15 calls of `grep`, `jq` and `table`, the `jq` join failing. Its
+  rows are held in memory, at most 1,000,000 a table and joined. Loose shapes are taken as meant: a list given as JSON text (surrounding whitespace and
   one stray trailing comma ignored) is read as that list, a single object where a list of objects is expected is a
   list of one, and an `orderBy` item may be a column's name, `-` before it for largest first (unless a column of
   the result is called that, `-` and all).
-* **Returns**: "N of M rows matched; the result has K row(s)." (and, for a `current_results` snapshot, how much of
-  the search it holds, which the answer must say), then a Markdown table; with `out`, the file and the first 10
+* **Returns**: "N of M rows matched; the result has K row(s)." (with `join`, first "Joined N rows of … with M of …
+  on …: K of the N rows matched, making J joined rows."), and, for a `current_results` snapshot, how much of
+  the search it holds, which the answer must say; then a Markdown table; with `out`, the file and the first 10
   rows.
 * **Refuses**: a file of a kind that is never a table (`json`, `jsonl`, `ndjson`, `xml`, `xsl`, `xslt`, `txt`,
   `log`, `yaml`, `yml`), pointing at `jq` or `read_file` (a survey's JSON was once read as CSV and refused for a
@@ -1417,7 +1425,10 @@ XML records (e.g. Events, each a document with its own XML declaration) are writ
 a child type, text) is written one record after another.
 
 * **Arguments**: from a table: `path`, `limit`, `out`. From a stream: `streamId`, `part` (default 0),
-  `firstRecord` (default 0), `recordCount` (default 5, at most 100), `childType`, `maxChars` (default 60,000; 1,000 to 200,000), `out`.
+  `firstRecord` (default 0), `recordCount` (default 5, at most 100; with `out`, at most 1,000), `childType`,
+  `maxChars` (default 60,000; 1,000 to 200,000; with `out`, default and most 2,000,000), `out`. Asked for more
+  records than a call reads, the result says so in `record_count_capped`, with `next_first_record` (seen: 170 asked
+  for, 100 given without a word, and the agent read on from 170, leaving gaps; a 6,000-record scan took 83 calls).
 * **Returns**: from a table: a text summary, plus the events file. From a stream: JSON (also structured content):
   `stream_id`, `feed`, `type`, `first_record`, `total_records`, `available_child_types`, and `records` (or
   `records_read`, `out` and `note` when written to a file). It may also include `undecodable_bytes`, `truncated`,
