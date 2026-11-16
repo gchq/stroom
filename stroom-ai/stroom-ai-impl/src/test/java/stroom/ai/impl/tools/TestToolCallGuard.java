@@ -19,10 +19,14 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolSchema.StringSchema;
+import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
+import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiToolCategory;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -220,7 +224,7 @@ class TestToolCallGuard {
             }
         }
 
-        // The same arguments in another order are the same call.
+        // The same arguments, spaced otherwise, are the same call.
         final ToolResult fourth = call(tool, "{ \"mapping\" : { \"raise\" : true } }");
 
         assertThat(fourth.isError()).isTrue();
@@ -273,6 +277,111 @@ class TestToolCallGuard {
         now.addAndGet(ToolCallGuard.TTL.toMillis() + 1);
 
         assertThat(call(tool, "{\"mapping\":{\"raise\":true}}").text()).doesNotContain("already failed");
+    }
+
+    @Test
+    void theThirdIdenticalReadInARunSaysNothingHasChangedButStillRuns() {
+        // Seen in a UniFi OS onboarding chat: the same read_file calls on three /outputs files about 14 times in 70
+        // seconds, and about 15 jq calls on the same file.
+        final StroomTool readFile = tool("read_file", ObjectSchema.builder()
+                .addStringProperty("path", "The file.")
+                .build(), call -> ToolResult.text("line 1"));
+        final ToolRunContext run = new ToolRunContext(null, null, () -> false);
+        final ToolCallContext context = ToolCallContext.builder(ToolSession.chat(1)).runContext(run).build();
+
+        assertThat(read(readFile, "{\"path\":\"/outputs/a.md\"}", context).text()).isEqualTo("line 1");
+        // The same arguments, spaced otherwise, are the same call.
+        assertThat(read(readFile, "{ \"path\": \"/outputs/a.md\" }", context).text()).isEqualTo("line 1");
+        // Another file is another call.
+        assertThat(read(readFile, "{\"path\":\"/outputs/b.md\"}", context).text()).isEqualTo("line 1");
+        final ToolResult third = read(readFile, "{\"path\":\"/outputs/a.md\"}", context);
+        final ToolResult fourth = read(readFile, "{\"path\":\"/outputs/a.md\"}", context);
+
+        // Run, its result returned, with the note after it.
+        assertThat(calls).hasSize(5);
+        assertThat(third.isError()).isFalse();
+        assertThat(third.text()).isEqualTo("line 1\n\nYou have made this same call 3 times in this turn with the "
+                                           + "same result; nothing has been written since. Use what it returned, "
+                                           + "or try something different.");
+        assertThat(fourth.text()).contains("this same call 4 times");
+        // In a new run (turn), the count starts again.
+        final ToolCallContext next = ToolCallContext.builder(ToolSession.chat(1))
+                .runContext(new ToolRunContext(null, null, () -> false))
+                .build();
+        assertThat(read(readFile, "{\"path\":\"/outputs/a.md\"}", next).text()).isEqualTo("line 1");
+    }
+
+    @Test
+    void anIdenticalReadInsideJsonIsNotedInsideIt() {
+        final StroomTool jq = tool("jq", ObjectSchema.builder()
+                .addStringProperty("filter", "The filter.")
+                .build(), call -> ToolResult.text("{\"count\":3}"));
+        for (int n = 0; n < 2; n++) {
+            call(jq, "{\"filter\":\".a\"}");
+        }
+
+        final Map<?, ?> third = JsonUtil.readValue(call(jq, "{\"filter\":\".a\"}").text(), Map.class);
+
+        assertThat(third.get("count")).isEqualTo(3);
+        assertThat(String.valueOf(third.get("repeated"))).startsWith("You have made this same call 3 times in this "
+                                                                     + "session");
+    }
+
+    @Test
+    void anyWriteStartsTheCountOfIdenticalReadsAgain() {
+        final StroomTool ls = tool("ls", ObjectSchema.builder().build(), call -> ToolResult.text("a.md"));
+        final StroomTool table = table();
+        final StroomTool change = new StroomTool() {
+            @Override
+            public ToolDefinition definition() {
+                return ToolDefinition.builder().name("propose_query").description("propose_query").build();
+            }
+
+            @Override
+            public AiToolCategory category() {
+                return AiToolCategory.CONTENT;
+            }
+
+            @Override
+            public boolean isReadOnly() {
+                return false;
+            }
+
+            @Override
+            public ToolResult execute(final ToolCall call, final ToolCallContext context) {
+                return ToolResult.text("proposed");
+            }
+        };
+        tools.put("propose_query", call -> ToolResult.text("proposed"));
+        final ChatWorkspace chatWorkspace = Mockito.mock(ChatWorkspace.class);
+
+        call(ls, "{}");
+        call(ls, "{}");
+        // A file written to the workspace, by any tool.
+        final ToolCallContext writing = ToolCallContext.builder(ToolSession.chat(1))
+                .workspace(new SessionWorkspace(chatWorkspace, 1))
+                .build();
+        guard.run(table, new ToolCall("c", "table", "{\"path\":\"/outputs/t.csv\"}"), writing, (call, context) -> {
+            context.workspace().orElseThrow().write(WorkspacePath.parse("/outputs/t.csv"), "a,b", null);
+            return ToolResult.text("Wrote /outputs/t.csv");
+        });
+        assertThat(call(ls, "{}").text()).isEqualTo("a.md");
+        assertThat(call(ls, "{}").text()).isEqualTo("a.md");
+        // A tool that may change something.
+        call(change, "{}");
+        assertThat(call(ls, "{}").text()).isEqualTo("a.md");
+        assertThat(call(ls, "{}").text()).isEqualTo("a.md");
+        // A tool whose answer can change without a write (a query, as data arrives) isn't counted.
+        final StroomTool query = tool("run_stroomql", ObjectSchema.builder().build(), call -> ToolResult.text("1"));
+        for (int n = 0; n < 4; n++) {
+            assertThat(call(query, "{}").text()).isEqualTo("1");
+        }
+        // A failed read isn't counted.
+        final StroomTool grep = tool("grep", ObjectSchema.builder().build(), call -> ToolResult.error("Error: no"));
+        for (int n = 0; n < 4; n++) {
+            assertThat(call(grep, "{}").text()).doesNotContain("same call");
+        }
+        assertThat(call(ls, "{}").text()).contains("this same call 3 times");
     }
 
     @Test
@@ -336,6 +445,10 @@ class TestToolCallGuard {
     private ToolResult call(final StroomTool tool, final String arguments) {
         return guard.run(tool, new ToolCall("c", tool.definition().name(), arguments),
                 ToolCallContext.builder(ToolSession.chat(1)).build(), this::run);
+    }
+
+    private ToolResult read(final StroomTool tool, final String arguments, final ToolCallContext context) {
+        return guard.run(tool, new ToolCall("c", tool.definition().name(), arguments), context, this::run);
     }
 
     private ToolResult run(final ToolCall call, final ToolCallContext context) {
