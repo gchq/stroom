@@ -161,7 +161,7 @@ class TestToolPermissionMatrix {
     }
 
     @Test
-    void everyToolIsOfferedWhateverTheUsersPermissions() {
+    void everyToolButEqlSequenceIsOfferedWhateverTheUsersPermissions() {
         final List<String> withEverything;
         final List<String> all;
         try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
@@ -175,7 +175,11 @@ class TestToolPermissionMatrix {
 
         // A tool in a group is offered as the tool that turns its group on.
         assertThat(new TreeSet<>(withEverything)).containsExactlyElementsOf(OfferedToolNames.withNoGroupsOn(all));
-        assertThat(withNothing).containsExactlyElementsOf(withEverything);
+        // All but eql_sequence, which is only offered to a user who can use an Elastic Index (its definition is
+        // large, and it has nothing to search without one).
+        assertThat(withNothing).containsExactlyElementsOf(withEverything.stream()
+                .filter(name -> !"eql_sequence".equals(name))
+                .toList());
     }
 
     private List<String> offered(final BuiltInToolWorld world) {

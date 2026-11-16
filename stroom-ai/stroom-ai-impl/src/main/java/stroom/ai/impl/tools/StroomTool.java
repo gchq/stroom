@@ -110,6 +110,18 @@ public interface StroomTool {
         return false;
     }
 
+    /// Whether the "Ask Stroom AI" chat offers the tool to the current user: false when they have nothing to use it
+    /// on, so its definition isn't sent with every request for nothing (e.g. eql_sequence for a user who can use no
+    /// Elastic Index). It is asked as the user when a chat's run starts, and a true answer is kept for the rest of
+    /// the chat ([BuiltInTools#isUsableInChat]), so it must be cheap: a look at documents and permissions, never a
+    /// call to another system. Stroom's MCP endpoint offers the tool whatever it says, as the endpoint's server
+    /// instructions are the same for every user.
+    ///
+    /// @return True if the user has something to use the tool on. Defaults to true.
+    default boolean isUsable() {
+        return true;
+    }
+
     /// Whether the tool asks the user itself before every change it makes, with a form that says what it will do
     /// and lets them change it (see the build layer's `Consent`). Over MCP such a call isn't also approved as a
     /// whole first, so the user is asked once; in the chat, such a call isn't put on an approval card after the chat

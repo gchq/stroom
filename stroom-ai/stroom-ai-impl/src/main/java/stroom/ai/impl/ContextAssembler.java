@@ -62,6 +62,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /// Builds what the model is sent for a question: the system prompt, the earlier conversation (compacted turns as
 /// digests or a summary, later turns in full, with attached tables and a short record of the tools used for each
@@ -72,6 +73,17 @@ import java.util.Set;
 public class ContextAssembler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContextAssembler.class);
+
+    /// The guidance bullet that routes ordered questions to eql_sequence, part of [#TOOL_GUIDANCE]: left out of a
+    /// chat's system prompt when the chat isn't offered the tool (see [#withoutGuidanceForToolsNotOffered]).
+    static final String EQL_SEQUENCE_TOOL = "eql_sequence";
+    static final String EQL_SEQUENCE_GUIDANCE = """
+            - For "X, then Y" questions on Elastic Indexes (by the same user or host, within N; N in a row; X \
+            and then not Y), in one index or across several, use eql_sequence: never join esql_query or search \
+            results by hand.
+            """;
+    // The guidance bullets about one built-in tool alone, by the tool's name.
+    private static final Map<String, String> GUIDANCE_BY_TOOL = Map.of(EQL_SEQUENCE_TOOL, EQL_SEQUENCE_GUIDANCE);
 
     /// What a model with tools is told about using them, after the (configurable) system prompt.
     static final String TOOL_GUIDANCE = """
@@ -128,9 +140,7 @@ public class ContextAssembler {
             ones they can't see or that were deleted). Rows cut short are never a full \
             ranking: say how many groups there are in all. Compute derived values and cut-offs in the query, not \
             in your reply: EVAL for conversions, WHERE after STATS for thresholds.
-            - For "X, then Y" questions on Elastic Indexes (by the same user or host, within N; N in a row; X \
-            and then not Y), in one index or across several, use eql_sequence, one EQL sequence in Elasticsearch: \
-            never join esql_query or search results by hand.
+            """ + EQL_SEQUENCE_GUIDANCE + """
             - "Query" can mean two things. If it isn't clear whether the user wants you to run a search and give \
             them the results (run_stroomql), or to set up a Query document they can run themselves \
             (propose_query), ask them with ask_user before writing it. "Show me", "how many" or "find" mean run \
@@ -485,6 +495,25 @@ public class ContextAssembler {
             LOGGER.debug(() -> "Unable to read compaction message " + message.getId(), e);
             return null;
         }
+    }
+
+    /// Leaves out the tool guidance about a built-in tool the chat isn't offered, so the prompt never points the
+    /// model at a tool it doesn't have (e.g. eql_sequence for a user who can use no Elastic Index, or whose tool
+    /// policies don't grant it).
+    ///
+    /// @param systemPrompt A chat's system prompt, or null.
+    /// @param offered      Whether the chat is offered a built-in tool, by its name.
+    /// @return The prompt without those tools' guidance; null if it was null.
+    static String withoutGuidanceForToolsNotOffered(final String systemPrompt, final Predicate<String> offered) {
+        String prompt = systemPrompt;
+        if (prompt != null) {
+            for (final Map.Entry<String, String> entry : GUIDANCE_BY_TOOL.entrySet()) {
+                if (!offered.test(entry.getKey())) {
+                    prompt = prompt.replace(entry.getValue(), "");
+                }
+            }
+        }
+        return prompt;
     }
 
     /**

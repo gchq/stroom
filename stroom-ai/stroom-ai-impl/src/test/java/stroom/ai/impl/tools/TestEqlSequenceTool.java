@@ -48,6 +48,8 @@ import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.StroomDuration;
 
+import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.internal.JsonSchemaElementUtils;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -649,16 +651,67 @@ class TestEqlSequenceTool {
     }
 
     @Test
-    void theDescriptionSaysToAskWhichDocToReview() {
-        final ToolDefinition definition = tool.definition();
+    void theDefinitionIsKeptShort() {
+        // It is sent with every request of a chat that offers it: seen at 8,221 characters (description and
+        // schema, as sent), the fourth largest tool. The detail is said where a call meets it.
+        final ToolSpecification specification = LangChain4jTools.specification(tool.definition());
+        final int size = specification.description().length() + JsonUtil.writeValueAsString(
+                JsonSchemaElementUtils.toMap(specification.parameters()), false).length();
 
-        assertThat(definition.description()).contains("Each reads one doc: when the hunt spans several, ask the "
-                                                       + "user which doc to review (ask_user, the docs as options), "
-                                                       + "then offer that doc's.")
-                .contains("a dashboard with the event preview (propose_dashboard)")
-                .doesNotContain("stepping.");
-        assertThat(definition.general().description()).contains("ask the user which doc to review, then offer "
-                                                                 + "that doc's").doesNotContain("ask_user");
+        assertThat(size).isLessThanOrEqualTo(3_000);
+    }
+
+    @Test
+    void theRulesLeftOutOfTheDescriptionAreSaidWhereACallMeetsThem() {
+        // Each is said by the refusal or result that meets it, as the tests here show: a literal ? in a pattern
+        // (aLiteralQuestionMarkInAPatternIsRefused), nested and text fields (aNestedFieldIsRefusedUpFront,
+        // aTextFieldWithNoKeywordSubfieldIsRefusedNamingItsSubfields), the versions for missing and runs
+        // (aClusterTooOldForAMissingStepIsRefused), a Lucene index (refusals), docs on different clusters
+        // (docsOnDifferentClustersOrTimeFieldsAreRefusedSayingWhatDiffers), the counts and runAnyway
+        // (aSequenceTheCountsSayIsTooBigIsRefusedBeforeItRuns), and the caveat and which doc to review (the
+        // result, aSequenceAcrossTwoDocsRunsAsOneEqlSequence).
+        final String description = tool.definition().description();
+
+        assertThat(description).doesNotContain("?").doesNotContain("nested").doesNotContain("keyword subfield")
+                .doesNotContain("Lucene").doesNotContain("runAnyway").doesNotContain("which doc to review")
+                .doesNotContain("can't see");
+        assertThat(EqlSequenceTool.reviewHint(2)).contains("ask the user which doc to review (ask_user, the docs as "
+                                                           + "options), then offer that doc's with propose_query, or "
+                                                           + "propose_dashboard for a table with the event preview.");
+        assertThat(EqlSequenceTool.reviewHint(1)).contains("offer it with propose_query, or propose_dashboard");
+    }
+
+    @Test
+    void theLimitsLeftOutOfTheSchemaAreSaidWhenPassed() {
+        final Map<String, Object> tooMany = new LinkedHashMap<>(args("2m"));
+        tooMany.put("limit", 20_000);
+        assertThat(run(chat(UserQuestions.NONE), tooMany)).contains("The limit asked for was over 10000, the most "
+                                                                    + "allowed, so it was lowered.");
+
+        assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "2m", "steps", List.of(
+                Map.of("index", "Devices", "by", List.of("user"), "runs", 101), step(SYSMON, "SubjectUserName")))))
+                .contains("Step 1: runs is a whole number, from 1 to 100.");
+        assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "2m", "steps", List.of(
+                Map.of("index", "Devices", "by", List.of("user"), "fields",
+                        List.of("user", "host", "action", "ip", "StreamId", "EventId")),
+                step(SYSMON, "SubjectUserName"))))).contains("Step 1 asks for 6 fields: show at most 5.");
+        assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "2m", "steps", List.of(
+                Map.of("index", "Devices", "by", List.of("user"), "any_of", List.of("host")),
+                step(SYSMON, "SubjectUserName"))))).contains("Step 1's any_of is a list of {field, condition, value}");
+        assertThat(run(chat(UserQuestions.NONE), Map.of("maxspan", "2m", "steps", List.of(step(DEVICES, "user"),
+                step(SYSMON, "SubjectUserName")), "until", "nonsense")))
+                .contains("The steps can't be read: give them as JSON objects.");
+    }
+
+    @Test
+    void itIsUsableOnlyByAUserWhoCanUseAnElasticIndex() {
+        Mockito.when(dataSourceAccess.canUseAny(ElasticIndexDoc.TYPE)).thenReturn(true);
+        assertThat(tool.isUsable()).isTrue();
+
+        Mockito.when(dataSourceAccess.canUseAny(ElasticIndexDoc.TYPE)).thenReturn(false);
+        assertThat(tool.isUsable()).isFalse();
+        // No cluster is called to tell.
+        Mockito.verifyNoInteractions(elasticEql, elasticEsql);
     }
 
     @Test

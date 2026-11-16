@@ -66,6 +66,23 @@ public class DataSourceAccess {
                 .toList();
     }
 
+    /// Whether the user can use any data source of a type, from the type's own list of its docs (no search, and no
+    /// call to another system), stopping at the first.
+    ///
+    /// @param type A data source type, e.g. `ElasticIndex`.
+    /// @return True if the user can use at least one data source of the type. False if they can't, or if listing
+    /// them fails.
+    public boolean canUseAny(final String type) {
+        try {
+            return registryProvider.get().getDataSourceProvider(type)
+                    .map(provider -> NullSafe.list(provider.getDataSourceDocRefs()).stream().anyMatch(this::canUse))
+                    .orElse(false);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to list the data sources of type " + type, e);
+            return false;
+        }
+    }
+
     /// @param docRef A data source.
     /// @return True if the user can use it. False if they can't, or if checking fails (failing closed).
     public boolean canUse(final DocRef docRef) {

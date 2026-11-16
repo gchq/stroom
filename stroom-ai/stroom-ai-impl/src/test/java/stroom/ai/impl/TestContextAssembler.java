@@ -878,6 +878,21 @@ class TestContextAssembler {
     }
 
     @Test
+    void theGuidanceOnAToolTheChatIsntOfferedIsLeftOut() {
+        // Seen as a risk: without an Elastic Index the chat isn't offered eql_sequence, and the guidance mustn't send
+        // the model to it.
+        final String prompt = "system\n\n" + ContextAssembler.TOOL_GUIDANCE;
+
+        assertThat(ContextAssembler.withoutGuidanceForToolsNotOffered(prompt, name -> true)).isEqualTo(prompt);
+        final String without = ContextAssembler.withoutGuidanceForToolsNotOffered(prompt,
+                name -> !ContextAssembler.EQL_SEQUENCE_TOOL.equals(name));
+        assertThat(without).doesNotContain("eql_sequence")
+                .isEqualTo(prompt.replace(ContextAssembler.EQL_SEQUENCE_GUIDANCE, ""))
+                .contains("WHERE after STATS for thresholds.\n- \"Query\" can mean two things.");
+        assertThat(ContextAssembler.withoutGuidanceForToolsNotOffered(null, name -> false)).isNull();
+    }
+
+    @Test
     void theModelIsToldToAskWhichDataSourceAndWhetherToRunOrCreateAQuery() {
         assertThat(ContextAssembler.TOOL_GUIDANCE)
                 .contains("Never choose a data source for the user")

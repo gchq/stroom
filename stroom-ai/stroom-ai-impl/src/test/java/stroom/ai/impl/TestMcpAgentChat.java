@@ -130,6 +130,8 @@ class TestMcpAgentChat {
 
     {
         Mockito.when(builtInTools.toolMap()).thenReturn(Map.of());
+        // The user has something to use every built-in tool on.
+        Mockito.when(builtInTools.isUsableInChat(Mockito.anyInt(), Mockito.anyString())).thenReturn(true);
         // Workspace files named in arguments are read within the workspace's limits.
         Mockito.when(chatWorkspace.limits()).thenReturn(new AiWorkspaceConfig());
         Mockito.when(chatWorkspace.withTimeLimit(Mockito.any()))

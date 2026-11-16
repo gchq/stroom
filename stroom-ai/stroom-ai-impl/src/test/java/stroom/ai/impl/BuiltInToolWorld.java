@@ -106,6 +106,7 @@ import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.ResultStoreManager;
@@ -1001,6 +1002,11 @@ public final class BuiltInToolWorld implements AutoCloseable {
         });
         Mockito.when(dataSourceRegistry.fetchDocumentation(Mockito.any())).thenReturn(Optional.empty());
         Mockito.when(dataSourceRegistry.getDataSourceProvider(Mockito.anyString())).thenReturn(Optional.empty());
+        // The Elastic Index docs, as their store lists them, for the tools offered only with one (eql_sequence).
+        final DataSourceProvider elasticProvider = Mockito.mock(DataSourceProvider.class);
+        Mockito.when(elasticProvider.getDataSourceDocRefs()).thenReturn(List.of(ELASTIC_INDEX));
+        Mockito.when(dataSourceRegistry.getDataSourceProvider(ElasticIndexDoc.TYPE))
+                .thenReturn(Optional.of(elasticProvider));
         Mockito.when(queryService.getReferencedDataSource(Mockito.anyString())).thenReturn(Optional.of(INDEX));
         Mockito.when(queryService.validateQuery(Mockito.anyString()))
                 .thenReturn(new ValidateExpressionResult(true, "ok", false));

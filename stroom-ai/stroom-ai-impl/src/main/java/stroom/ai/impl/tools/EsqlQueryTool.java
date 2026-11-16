@@ -172,29 +172,24 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
         return ToolDefinition.builder()
                 .name(NAME)
                 .description(ToolDescription.builder()
-                        .general("Runs an ES|QL query on an Elastic Index doc's index, as the user, answered by "
-                                 + "Elasticsearch itself: use it for totals, counts, top N and grouped or bucketed "
-                                 + "questions on Elasticsearch indexes (e.g. which users uploaded the most, by site "
-                                 + "domain; events per hour with BUCKET(@timestamp, 1 hour))")
+                        .general("Runs an ES|QL query on an Elastic Index, answered by Elasticsearch itself: for "
+                                 + "totals, counts, top N and grouped or bucketed questions (e.g. events per hour "
+                                 + "with BUCKET(@timestamp, 1 hour))")
                         .chatOnly("; use run_stroomql for row-level work or any other data source")
                         .general(". Not for ordered sequences (X then Y within N, in one doc or across several): "
                                  + "joins of STATS results get them wrong")
                         .chatOnly("; use eql_sequence")
-                        .general(". Give pipeline: the commands after FROM, e.g. '| WHERE event.action == "
-                                 + "\"allowed\" | STATS total = SUM(bytes) BY user.name, url.domain | SORT total "
-                                 + "DESC | LIMIT 10'. FROM and the index are written for you. Allowed: WHERE, EVAL, "
-                                 + "STATS ... BY, SORT, LIMIT, KEEP, DROP, RENAME, DISSECT, GROK, MV_EXPAND. Field "
-                                 + "names are the index's own")
+                        .general(". Give pipeline: the commands after FROM (written for you), e.g. '| WHERE "
+                                 + "event.action == \"allowed\" | STATS total = SUM(bytes) BY user.name | SORT total "
+                                 + "DESC | LIMIT 10'. Allowed: WHERE, EVAL, STATS ... BY, SORT, LIMIT, KEEP, DROP, "
+                                 + "RENAME, DISSECT, GROK, MV_EXPAND. Field names are the index's own")
                         .chatOnly(" (describe_data_source gives them)")
-                        .general("; group by a keyword field, not text. A field with several values in a "
-                                 + "document (e.g. a list of recipients): a comparison or function on it gives null "
-                                 + "there (the result says so), so MV_EXPAND it first; STATS ... BY it counts the "
-                                 + "document once under each value. Work out derived values and cut-offs "
-                                 + "in the query, not in your reply, so its rows are the answer: EVAL for a "
-                                 + "conversion (e.g. '| EVAL hours = ROUND(seconds / 3600.0, 1)'), WHERE after "
-                                 + "STATS for a threshold on a total (e.g. '| WHERE hours > 8'). Without a LIMIT in "
-                                 + "the pipeline, one is added (limit). The result says when the rows were cut "
-                                 + "short and how many rows (groups) there are in all: never call cut-short rows a "
+                        .general("; group by a keyword field, not text. STATS ... BY a multi-valued field counts "
+                                 + "a document under each value. Work out derived values and cut-offs in the "
+                                 + "query, not in your reply: EVAL for a conversion (e.g. '| EVAL hours = "
+                                 + "ROUND(seconds / 3600.0, 1)'), WHERE after STATS for a threshold (e.g. '| WHERE "
+                                 + "hours > 8'). A LIMIT is added if the pipeline has none; the result says when "
+                                 + "rows were cut short and how many there are in all: never call cut-short rows a "
                                  + "full ranking or a total. Counts and sums come straight from Elasticsearch and "
                                  + "may include documents from streams the user can't see or that have been "
                                  + "deleted, so they can differ from Stroom searches")
@@ -203,12 +198,10 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                                  + "Stroom search")
                         .chatOnly(" (run_stroomql)")
                         .general(". In RLIKE, @ matches any string: escape it, or use LIKE for simple "
-                                 + "patterns. ES|QL has no IF: use CASE(condition, then, else). Patterns: baseline vs "
-                                 + "recent, one STATS with 'COUNT(*) WHERE @timestamp < x' per period; first seen, "
-                                 + "'STATS first_seen = MIN(@timestamp) BY user, value' then WHERE on it; spraying or "
-                                 + "scans, COUNT_DISTINCT(target) BY source; a cold-start guard, WHERE on a history "
-                                 + "count to skip entities with little history. Refused for a Lucene index or a "
-                                 + "cluster older than 8.14, saying what to use instead.")
+                                 + "patterns. ES|QL has no IF: use CASE(condition, then, else). Patterns: first "
+                                 + "seen, MIN(@timestamp) BY user, value; spraying or scans, COUNT_DISTINCT(target) "
+                                 + "BY source; baseline vs recent, one STATS with COUNT(*) WHERE @timestamp < x per "
+                                 + "period; a cold-start guard, WHERE on a history count.")
                         .chatOnly(" The rows are written to a table in the workspace too, for the table tool.")
                         .build())
                 .parameters(ObjectSchema.builder()
@@ -220,8 +213,7 @@ class EsqlQueryTool extends AbstractWorkspaceTool {
                         .addStringProperty(PIPELINE_ARG, "The ES|QL commands after FROM, each after '|'.")
                         .addProperty(WHERE_ARG, ArraySchema.builder()
                                 .items(ObjectSchema.builder()
-                                        .description("One condition, as a person would set it on a dashboard.")
-                                        .addStringProperty("field", "The index's field.")
+                                        .addStringProperty("field", (String) null)
                                         .addEnumProperty("condition", IndexEvents.CONDITIONS.stream()
                                                 .map(Condition::name)
                                                 .toList(), "The condition (default EQUALS).")

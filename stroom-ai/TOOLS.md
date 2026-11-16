@@ -105,6 +105,12 @@ Where a tool is offered:
   group is always offered. A dashboard tab's guidance turns on `dashboards` from the start
   (`BuiltInToolGroups.neededBy`). A group none of whose tools the user may use isn't offered. `activate_*` are
   not tools of their own: they are made by `ToolGroups` and are not in the tables.
+* **Usable**: a tool can say it has nothing to work on for the user (`StroomTool.isUsable`), and the chat then
+  doesn't offer it, nor the guidance that names it (`ContextAssembler.withoutGuidanceForToolsNotOffered`). Asked as
+  the user when a run starts; a yes is kept for the rest of the chat (`BuiltInTools.isUsableInChat`), so its tools
+  stay the same from question to question, and a no is asked again at the next run. Only `eql_sequence` uses it:
+  offered to a user who can Use at least one Elastic Index doc (the store's list and the permission check, no
+  cluster call). Over `/mcp` it is offered whatever it says, as the server instructions are the same for everyone.
 * **Over `/mcp`** (`McpTools`): a session is offered the tools its user's policies grant, except the chat-only
   ones. A call that changes something needs a client that can show forms (MCP elicitation) and is refused
   otherwise (`FormsRequired`); it is approved by the user first (`McpApprovals`) unless the tool confirms itself
@@ -1224,7 +1230,9 @@ written from the doc, so a query never names another index.
   function [IF]" says to use `CASE(condition, then, else)`; a backslash in a "..." string, as before. An unescaped
   `@` in an RLIKE pattern (Lucene's "any string": `RLIKE "C@"` matched "Copy") adds a note to the result
   (`unescapedAtInRlike`), and the description warns of it and gives four short analysis patterns (baseline vs
-  recent, first seen, COUNT_DISTINCT for spraying or scans, a cold-start guard).
+  recent, first seen, COUNT_DISTINCT for spraying or scans, a cold-start guard). The description no longer says
+  what the refusals and warnings say (a Lucene index or a cluster older than 8.14; a comparison on a multi-valued
+  field giving null).
 
 ### `eql_sequence`
 
@@ -1236,6 +1244,11 @@ Finds ordered sequences of events across one or more Elastic Index docs on one c
 Elasticsearch: "a device plugged in, then a file copied to it", "a clipboard copy then PowerShell within 2 minutes
 by the same user on the same host", "20 failed logons then a success". Structured steps only, never raw EQL.
 
+* **Offered** in the chat only to a user who can Use an Elastic Index doc (see "Usable" above). Its definition is
+  kept short (about 2,800 characters as sent, from 8,200; a test holds it under 3,000): what a call can get wrong is
+  said by the refusal or result that meets it (a `?` in a pattern, nested and text fields, the versions for missing
+  and runs, a Lucene index, docs on different clusters, the counts and `runAnyway`, the limits on `runs`, `fields`
+  and `limit`, the caveat and which doc to review).
 * **Arguments**: `steps` (2 or more, in order), each `{index, where, any_of, by, missing, runs, fields}`: the doc
   (uuid or name), conditions as `search_events` takes them plus `caseInsensitive`, `NOT_IN` and `length`, an
   optional `any_of` group (2 or more plain conditions, at least one must hold), its own join fields (same number and
