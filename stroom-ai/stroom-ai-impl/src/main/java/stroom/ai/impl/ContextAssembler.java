@@ -128,6 +128,8 @@ public class ContextAssembler {
             ones they can't see or that were deleted). Rows cut short are never a full \
             ranking: say how many groups there are in all. Compute derived values and cut-offs in the query, not \
             in your reply: EVAL for conversions, WHERE after STATS for thresholds.
+            - For "X then Y" hunts across Elastic Indexes (within a window, by the same user or host, N in a \
+            row, X and then not Y), use eql_sequence, one EQL sequence in Elasticsearch.
             - "Query" can mean two things. If it isn't clear whether the user wants you to run a search and give \
             them the results (run_stroomql), or to set up a Query document they can run themselves \
             (propose_query), ask them with ask_user before writing it. "Show me", "how many" or "find" mean run \

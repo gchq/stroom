@@ -1,10 +1,10 @@
 # The built-in tools the model is shown
 
-Built-in tools: 57
+Built-in tools: 58
 
 ## Offered in each mode (in a chat with no MCP servers)
 
-### AGENT (48 tool(s))
+### AGENT (49 tool(s))
 activate_administration
 activate_build
 activate_dashboards
@@ -17,6 +17,7 @@ describe_data_source
 document_documentation
 document_info
 document_links
+eql_sequence
 esql_query
 fetch_events
 find_in_content
@@ -54,7 +55,7 @@ write_file
 xpath
 xslt_lookups
 
-### ASK (44 tool(s))
+### ASK (45 tool(s))
 activate_administration
 activate_build
 activate_dashboards
@@ -66,6 +67,7 @@ describe_data_source
 document_documentation
 document_info
 document_links
+eql_sequence
 esql_query
 fetch_events
 find_in_content
@@ -100,7 +102,7 @@ wc
 xpath
 xslt_lookups
 
-### PLAN (44 tool(s))
+### PLAN (45 tool(s))
 activate_administration
 activate_build
 activate_dashboards
@@ -112,6 +114,7 @@ describe_data_source
 document_documentation
 document_info
 document_links
+eql_sequence
 esql_query
 fetch_events
 find_in_content
@@ -516,6 +519,164 @@ For administrators reviewing or reproducing the Elasticsearch templates of an El
 }
 
 ================================================================================
+## eql_sequence
+
+isReadOnly: true
+readsUntrustedContent: true
+boundsItsOutput: true
+strict: null
+metadata: { }
+offered in modes: AGENT, ASK, PLAN
+
+### Description
+
+Finds ordered sequences of events across one or more Elastic Index docs on one cluster, matched in Elasticsearch as one EQL sequence: e.g. a USB device plugged in then a file copied to it; a clipboard copy then PowerShell within 2 minutes by the same user on the same host; 20 failed logons then a success. Give steps (2 or more, in order), each with its doc, its where conditions, its own join fields (by, same number and order in every step: the same entity in each doc's own names), missing=true for 'and then NOT ...', runs=N for N in a row; until for a step that ends a sequence. maxspan: how far apart the first and last events may be, from the user's words ('within 2 minutes' is 2m), at most 24h; if they didn't say, leave it out and the user is asked. Fields are checked against each doc's (describe_data_source gives them). Each step is counted first: the result says when a later step is far more selective, and a sequence too big for the time limit is refused before it runs (narrow the window or the first step, or runAnyway=true). The result gives the EQL, a summary per entity, the sequences with each step's StreamId/EventId, and a validated StroomQL review query per doc, for a saved query (propose_query) or a dashboard with the event preview (propose_dashboard). Each reads one doc: when the hunt spans several, ask the user which doc to review (ask_user, the docs as options), then offer that doc's. Sequences come straight from Elasticsearch, as ES|QL counts do, and may include streams the user can't see or deleted ones. Refused for a Lucene index (use run_stroomql), docs on different clusters or with different time fields.
+
+### Parameters
+
+{
+  "properties" : {
+    "limit" : {
+      "description" : "The most sequences (default 1000, at most 10000).",
+      "type" : "integer"
+    },
+    "maxspan" : {
+      "description" : "How far apart the first and last events may be, e.g. 30s, 2m, 1h (at most 24h); leave it out if the user didn't say, and they are asked.",
+      "type" : "string"
+    },
+    "out" : {
+      "description" : "A .md file in /outputs/ for the sequences (default /outputs/eql/eql-<time>.md).",
+      "type" : "string"
+    },
+    "runAnyway" : {
+      "description" : "True to run even though the counts say it won't finish in the time limit.",
+      "type" : "boolean"
+    },
+    "steps" : {
+      "description" : "The steps, 2 or more, in order.",
+      "items" : {
+        "description" : "One step.",
+        "properties" : {
+          "by" : {
+            "description" : "Its join fields, in the same order and number in every step (e.g. [\"user.name\", \"host.name\"] in one, [\"SubjectUserName\", \"Computer\"] in another).",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "fields" : {
+            "description" : "Up to 5 fields of its events to show, beside the join fields and ids.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "index" : {
+            "description" : "The Elastic Index doc's uuid or name.",
+            "type" : "string"
+          },
+          "missing" : {
+            "description" : "True if the event must NOT happen here (and then NOT ...).",
+            "type" : "boolean"
+          },
+          "runs" : {
+            "description" : "How many times in a row it must happen, e.g. 20 failed logons (default 1, at most 100).",
+            "type" : "integer"
+          },
+          "where" : {
+            "description" : "Conditions its events meet, all of them.",
+            "items" : {
+              "description" : "One condition, as a person would set it on a dashboard (as search_events takes it).",
+              "properties" : {
+                "caseInsensitive" : {
+                  "description" : "True to match text whatever its case.",
+                  "type" : "boolean"
+                },
+                "condition" : {
+                  "description" : "The condition (default EQUALS).",
+                  "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL" ],
+                  "type" : "string"
+                },
+                "field" : {
+                  "description" : "The doc's field.",
+                  "type" : "string"
+                },
+                "value" : {
+                  "description" : "BETWEEN: 'from,to'; IN: values separated by commas; EQUALS takes * wildcards, and a CIDR (10.0.0.0/8) on an IP field.",
+                  "type" : "string"
+                }
+              },
+              "required" : [ "field" ],
+              "type" : "object"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "index", "by" ],
+        "type" : "object"
+      },
+      "type" : "array"
+    },
+    "timeFrom" : {
+      "description" : "Optional: from this time on the docs' time field (ISO 8601, or Stroom's day()-7d).",
+      "type" : "string"
+    },
+    "timeTo" : {
+      "description" : "Optional: up to this time (ISO 8601, or Stroom's now()).",
+      "type" : "string"
+    },
+    "until" : {
+      "description" : "Optional: a step that ends a sequence before it is complete (index, where, by).",
+      "properties" : {
+        "by" : {
+          "description" : "Its join fields.",
+          "items" : {
+            "type" : "string"
+          },
+          "type" : "array"
+        },
+        "index" : {
+          "description" : "The Elastic Index doc's uuid or name.",
+          "type" : "string"
+        },
+        "where" : {
+          "description" : "Its conditions.",
+          "items" : {
+            "description" : "One condition, as a person would set it on a dashboard (as search_events takes it).",
+            "properties" : {
+              "caseInsensitive" : {
+                "description" : "True to match text whatever its case.",
+                "type" : "boolean"
+              },
+              "condition" : {
+                "description" : "The condition (default EQUALS).",
+                "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL" ],
+                "type" : "string"
+              },
+              "field" : {
+                "description" : "The doc's field.",
+                "type" : "string"
+              },
+              "value" : {
+                "description" : "BETWEEN: 'from,to'; IN: values separated by commas; EQUALS takes * wildcards, and a CIDR (10.0.0.0/8) on an IP field.",
+                "type" : "string"
+              }
+            },
+            "required" : [ "field" ],
+            "type" : "object"
+          },
+          "type" : "array"
+        }
+      },
+      "required" : [ ],
+      "type" : "object"
+    }
+  },
+  "required" : [ "steps" ],
+  "type" : "object"
+}
+
+================================================================================
 ## esql_query
 
 isReadOnly: true
@@ -527,7 +688,7 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-Runs an ES|QL query on an Elastic Index doc's index, as the user, answered by Elasticsearch itself: use it for totals, counts, top N and grouped or bucketed questions on Elasticsearch indexes (e.g. which users uploaded the most, by site domain; events per hour with BUCKET(@timestamp, 1 hour)); use run_stroomql for row-level work or any other data source. Give pipeline: the commands after FROM, e.g. '| WHERE event.action == "allowed" | STATS total = SUM(bytes) BY user.name, url.domain | SORT total DESC | LIMIT 10'. FROM and the index are written for you. Allowed: WHERE, EVAL, STATS ... BY, SORT, LIMIT, KEEP, DROP, RENAME, DISSECT, GROK, MV_EXPAND. Field names are the index's own (describe_data_source gives them); group by a keyword field, not text. A field with several values in a document (e.g. a list of recipients): a comparison or function on it gives null there (the result says so), so MV_EXPAND it first; STATS ... BY it counts the document once under each value. Work out derived values and cut-offs in the query, not in your reply, so its rows are the answer: EVAL for a conversion (e.g. '| EVAL hours = ROUND(seconds / 3600.0, 1)'), WHERE after STATS for a threshold on a total (e.g. '| WHERE hours > 8'). Without a LIMIT in the pipeline, one is added (limit). The result says when the rows were cut short and how many rows (groups) there are in all: never call cut-short rows a full ranking or a total. Counts and sums come straight from Elasticsearch and may include documents from streams the user can't see or that have been deleted, so they can differ from Stroom searches (run_stroomql) and dashboards: when the user needs figures that match those exactly, use a Stroom search (run_stroomql). Refused for a Lucene index or a cluster older than 8.14, saying what to use instead. The rows are written to a table in the workspace too, for the table tool.
+Runs an ES|QL query on an Elastic Index doc's index, as the user, answered by Elasticsearch itself: use it for totals, counts, top N and grouped or bucketed questions on Elasticsearch indexes (e.g. which users uploaded the most, by site domain; events per hour with BUCKET(@timestamp, 1 hour)); use run_stroomql for row-level work or any other data source. Give pipeline: the commands after FROM, e.g. '| WHERE event.action == "allowed" | STATS total = SUM(bytes) BY user.name, url.domain | SORT total DESC | LIMIT 10'. FROM and the index are written for you. Allowed: WHERE, EVAL, STATS ... BY, SORT, LIMIT, KEEP, DROP, RENAME, DISSECT, GROK, MV_EXPAND. Field names are the index's own (describe_data_source gives them); group by a keyword field, not text. A field with several values in a document (e.g. a list of recipients): a comparison or function on it gives null there (the result says so), so MV_EXPAND it first; STATS ... BY it counts the document once under each value. Work out derived values and cut-offs in the query, not in your reply, so its rows are the answer: EVAL for a conversion (e.g. '| EVAL hours = ROUND(seconds / 3600.0, 1)'), WHERE after STATS for a threshold on a total (e.g. '| WHERE hours > 8'). Without a LIMIT in the pipeline, one is added (limit). The result says when the rows were cut short and how many rows (groups) there are in all: never call cut-short rows a full ranking or a total. Counts and sums come straight from Elasticsearch and may include documents from streams the user can't see or that have been deleted, so they can differ from Stroom searches (run_stroomql) and dashboards: when the user needs figures that match those exactly, use a Stroom search (run_stroomql). In RLIKE, @ matches any string: escape it, or use LIKE for simple patterns. ES|QL has no IF: use CASE(condition, then, else). Patterns: baseline vs recent, one STATS with 'COUNT(*) WHERE @timestamp < x' per period; first seen, 'STATS first_seen = MIN(@timestamp) BY user, value' then WHERE on it; spraying or scans, COUNT_DISTINCT(target) BY source; a cold-start guard, WHERE on a history count to skip entities with little history. Refused for a Lucene index or a cluster older than 8.14, saying what to use instead. The rows are written to a table in the workspace too, for the table tool.
 
 ### Parameters
 
@@ -538,7 +699,7 @@ Runs an ES|QL query on an Elastic Index doc's index, as the user, answered by El
       "type" : "string"
     },
     "limit" : {
-      "description" : "The most rows (default 1000, at most 10000); a LIMIT in the pipeline lowers it.",
+      "description" : "The most rows (default 10000, at most 10000); a LIMIT in the pipeline lowers it.",
       "type" : "integer"
     },
     "out" : {

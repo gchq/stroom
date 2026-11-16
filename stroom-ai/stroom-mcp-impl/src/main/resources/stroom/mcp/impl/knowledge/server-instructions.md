@@ -101,7 +101,8 @@ Questions about the data (what a feed holds, what a field means, how to search i
 from the generated documentation and the indexes' fields. Answer in plain words and give the documentation links.
 Totals, top N or grouped questions on an Elasticsearch index: esql_query, which Elasticsearch answers itself (rows cut
 short are never a full ranking); row-level work, and other data sources: run_stroomql. Compute derived values and
-cut-offs in the query, not in your reply: EVAL for conversions, WHERE after STATS for thresholds.
+cut-offs in the query, not in your reply: EVAL for conversions, WHERE after STATS for thresholds. Ordered "X then Y"
+hunts across Elasticsearch indexes (within a window, by the same entity, N in a row, then NOT Y): eql_sequence.
 
 Parsing: profile_sample names the parser and the namespace the XSLT reads its output in (xslt_input): JSON is read by
 the JSON template's JSONParser with no text converter, text (CSV, syslog, key=value) by a Data Splitter written with

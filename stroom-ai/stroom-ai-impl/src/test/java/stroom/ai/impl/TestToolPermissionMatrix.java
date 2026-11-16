@@ -75,6 +75,7 @@ class TestToolPermissionMatrix {
             new Case("describe_data_source", null, List.of(Need.VIEW, Need.USE)),
             new Case("validate_stroomql", null, List.of(Need.USE)),
             new Case("esql_query", null, List.of(Need.USE)),
+            new Case("eql_sequence", null, List.of(Need.USE)),
             new Case("search_events", "{\"index\":\"index-uuid\",\"where\":[{\"field\":\"UserId\","
                                       + "\"value\":\"alice\"}]}", List.of(Need.USE)),
             new Case("propose_query", null, List.of(Need.USE)),

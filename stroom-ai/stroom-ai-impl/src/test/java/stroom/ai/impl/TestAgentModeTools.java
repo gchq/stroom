@@ -18,6 +18,7 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.api.CodeChangeStepper;
+import stroom.ai.api.ElasticEql;
 import stroom.ai.api.ElasticEsql;
 import stroom.ai.api.ElasticIndexTemplates;
 import stroom.ai.api.TableSummariser;
@@ -131,6 +132,7 @@ class TestAgentModeTools {
             Map.entry("pipeline", false),
             Map.entry("run_stroomql", false),
             Map.entry("esql_query", false),
+            Map.entry("eql_sequence", false),
             Map.entry("summarise_column", false),
             Map.entry("task_list", false),
             Map.entry("ask_user", false),
@@ -225,6 +227,7 @@ class TestAgentModeTools {
             bind(CodeChangeStepper.class).toInstance(Mockito.mock(CodeChangeStepper.class));
             bind(ElasticIndexTemplates.class).toInstance(Mockito.mock(ElasticIndexTemplates.class));
             bind(ElasticEsql.class).toInstance(Mockito.mock(ElasticEsql.class));
+            bind(ElasticEql.class).toInstance(Mockito.mock(ElasticEql.class));
             bind(AttributeMapFactory.class).toInstance(Mockito.mock(AttributeMapFactory.class));
             bind(DataService.class).toInstance(Mockito.mock(DataService.class));
             bind(FeedProperties.class).toInstance(Mockito.mock(FeedProperties.class));

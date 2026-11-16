@@ -222,6 +222,82 @@ class TestEsqlQueryTool {
     }
 
     @Test
+    void aReservedWordAsAColumnNameIsExplained() {
+        // As Elasticsearch 9.5.3 refuses '| STATS first = MIN(n) BY user'.
+        assertThat(EsqlQueryTool.refusal(new Refusal(Reason.REFUSED, "Elasticsearch refused the query: line 2:9: "
+                                                                     + "no viable alternative at input 'first ='"),
+                List.of()))
+                .contains("If 'first' is meant as a column's name: it is a reserved word in ES|QL, so rename the "
+                          + "column (e.g. first_seen) or put it in backquotes (`first`).");
+        // And '| EVAL by = 1', in its other form.
+        assertThat(EsqlQueryTool.refusal(new Refusal(Reason.REFUSED, "Elasticsearch refused the query: line 2:7: "
+                                                                     + "mismatched input 'by' expecting "
+                                                                     + "{QUOTED_STRING, INTEGER_LITERAL}"),
+                List.of()))
+                .contains("If 'by' is meant as a column's name: it is a reserved word");
+        assertThat(EsqlQueryTool.refusal(new Refusal(Reason.REFUSED, "Elasticsearch refused the query: line 2:7: "
+                                                                     + "no viable alternative at input 'user ='"),
+                List.of())).doesNotContain("reserved word");
+    }
+
+    @Test
+    void ifIsExplainedAsCase() {
+        // As Elasticsearch 9.5.3 refuses '| EVAL x = IF(n > 1, 1, 0)'.
+        assertThat(EsqlQueryTool.refusal(new Refusal(Reason.REFUSED, "Elasticsearch refused the query: line 2:11: "
+                                                                     + "Unknown function [IF]"), List.of()))
+                .endsWith(EsqlQueryTool.IF_HINT);
+        assertThat(EsqlQueryTool.refusal(new Refusal(Reason.REFUSED, "Elasticsearch refused the query: line 2:11: "
+                                                                     + "Unknown function [iif]"), List.of()))
+                .endsWith(EsqlQueryTool.IF_HINT);
+        assertThat(EsqlQueryTool.refusal(new Refusal(Reason.REFUSED, "Elasticsearch refused the query: line 2:11: "
+                                                                     + "Unknown function [iff2]"), List.of()))
+                .doesNotContain(EsqlQueryTool.IF_HINT);
+    }
+
+    @Test
+    void anUnescapedAtInRlikeIsNoted() {
+        // On Elasticsearch 9.5.3 'RLIKE "C@"' matched "Copy": @ is any string. "a\\@b", """a\@b""" and "a[@]b"
+        // matched "a@b" only.
+        assertThat(EsqlQueryTool.unescapedAtInRlike("| WHERE email RLIKE \".*@example\\\\.com\"")).isTrue();
+        assertThat(EsqlQueryTool.unescapedAtInRlike("| WHERE email rlike \"\"\".*@x\"\"\"")).isTrue();
+        assertThat(EsqlQueryTool.unescapedAtInRlike("| WHERE email RLIKE \".*\\\\@example\\\\.com\"")).isFalse();
+        assertThat(EsqlQueryTool.unescapedAtInRlike("| WHERE email RLIKE \"\"\".*\\@x\"\"\"")).isFalse();
+        assertThat(EsqlQueryTool.unescapedAtInRlike("| WHERE email RLIKE \"a[@]b\"")).isFalse();
+        assertThat(EsqlQueryTool.unescapedAtInRlike("| WHERE email LIKE \"*@example.com\"")).isFalse();
+        assertThat(EsqlQueryTool.unescapedAtInRlike("| WHERE @timestamp > \"2026\" AND x RLIKE \"a.*\"")).isFalse();
+
+        try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
+            Mockito.when(world.elasticEsql().query(Mockito.any())).thenReturn(new Result(
+                    "FROM i\n| WHERE email RLIKE \".*@x\\\\.com\"", "i", List.of(new Column("n", "long")),
+                    List.of(), 1, 1000, null, false, false, null, null, "9.5.3", List.of()));
+
+            assertThat(world.run(EsqlQueryTool.NAME, BuiltInToolWorld.json(Map.of(
+                    "index", "elastic-index-uuid", "pipeline", "| WHERE email RLIKE \".*@x\\\\.com\""))))
+                    .contains(EsqlQueryTool.RLIKE_AT_NOTE);
+        }
+        assertThat(new EsqlQueryTool(null, null, null, null, null).definition().description())
+                .contains("In RLIKE, @ matches any string: escape it, or use LIKE for simple patterns.")
+                .contains("ES|QL has no IF: use CASE(condition, then, else).")
+                .contains("COUNT_DISTINCT(target) BY source")
+                .contains("MIN(@timestamp) BY user, value");
+    }
+
+    @Test
+    void theDefaultLimitIsTheMostRowsAndACutAtItSaysToSplitByTime() {
+        try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
+            world.run(EsqlQueryTool.NAME, BuiltInToolWorld.json(Map.of(
+                    "index", "elastic-index-uuid", "pipeline", "| KEEP UserId")));
+
+            assertThat(request(world).limit()).isEqualTo(ElasticEsql.MAX_ROWS);
+        }
+        assertThat(EsqlQueryTool.rowsNote(result(List.of(List.of(1L)), ElasticEsql.MAX_ROWS, true, false, 25_000L)))
+                .contains("there are 25000 rows in all.")
+                .contains(EsqlQueryTool.MAX_ROWS_NOTE);
+        assertThat(EsqlQueryTool.rowsNote(result(List.of(List.of(1L)), 100, true, false, 25_000L)))
+                .doesNotContain(EsqlQueryTool.MAX_ROWS_NOTE);
+    }
+
+    @Test
     void warningsAreShownWithTheMultiValueHint() {
         try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
             Mockito.when(world.elasticEsql().query(Mockito.any())).thenReturn(result(List.of(), 1000, false,
