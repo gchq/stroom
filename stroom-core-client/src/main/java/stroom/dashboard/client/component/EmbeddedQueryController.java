@@ -43,6 +43,7 @@ import stroom.query.api.ParamUtil;
 import stroom.query.api.QLVisResult;
 import stroom.query.api.Result;
 import stroom.query.api.TableResult;
+import stroom.query.client.DataSourceClient;
 import stroom.query.client.DateTimeSettingsFactory;
 import stroom.query.client.QueryClient;
 import stroom.query.client.QueryModel;
@@ -94,6 +95,7 @@ public class EmbeddedQueryController
 
     private final EmbeddedQuery view;
     private final QueryClient queryClient;
+    private final DataSourceClient dataSourceClient;
     private final QueryModel queryModel;
     private final Provider<QueryDocEditor> queryDocEditorProvider;
     // The query's tab, opened by Edit Query, which closes when the pane goes (its Save writes to the pane)
@@ -140,7 +142,8 @@ public class EmbeddedQueryController
                                    final RestFactory restFactory,
                                    final DateTimeSettingsFactory dateTimeSettingsFactory,
                                    final ResultStoreModel resultStoreModel,
-                                   final ContentManager contentManager) {
+                                   final ContentManager contentManager,
+                                   final DataSourceClient dataSourceClient) {
         super(eventBus, settingsControllerProvider);
         this.view = view;
         initWidget(view);
@@ -148,6 +151,7 @@ public class EmbeddedQueryController
         this.tableControllerProvider = tableControllerProvider;
         this.visControllerProvider = visControllerProvider;
         this.queryDocEditorProvider = queryDocEditorProvider;
+        this.dataSourceClient = dataSourceClient;
         this.queryTabs = new OwnedContentTabs(contentManager);
         onDispose(queryTabs::closeAll);
 
@@ -630,11 +634,27 @@ public class EmbeddedQueryController
             // Read expression.
             queryModel.init(queryDoc.asDocRef());
             query = queryDoc.getQuery();
+            fetchMinRefreshInterval(query);
             initialised = true;
             if (queryOnOpen || getAutomate().isOpen()) {
                 run(true, false);
             }
         }
+    }
+
+    // Some data sources, such as Amazon Athena, cost money on every run, so may set a minimum.
+    private void fetchMinRefreshInterval(final String query) {
+        setDataSourceMinRefreshInterval(null);
+        queryClient.fetchDataSourceFromQueryString(query, guard(dataSourceRef -> {
+            // Ignore the answer if the query has changed since.
+            if (Objects.equals(this.query, query)) {
+                dataSourceClient.fetchMinRefreshInterval(dataSourceRef, guard(minimum -> {
+                    if (Objects.equals(this.query, query)) {
+                        setDataSourceMinRefreshInterval(minimum);
+                    }
+                }), taskMonitor());
+            }
+        }), taskMonitor());
     }
 
     @Override

@@ -1,0 +1,15 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:dg="urn:import:stroom.widget.datagrid.client">
+    <!-- BEM block data-column-list (data-column-list.css): the toolbar and grid in a control's box,
+         as other forms' tables are. The toolbar is shown only where names can be added -->
+    <g:FlowPanel styleName="data-column-list control-box">
+        <b:Toolbar ui:field="toolbar" name="Attribute actions">
+            <b:ToolbarButton ui:field="add" svg="ADD" title="Add Attribute"/>
+            <b:ToolbarButton ui:field="remove" svg="DELETE" title="Remove Attribute" enabled="false"/>
+        </b:Toolbar>
+        <dg:DataGrid ui:field="grid" tableName="Columns" addStyleNames="data-column-list__grid"/>
+    </g:FlowPanel>
+</ui:UiBinder>

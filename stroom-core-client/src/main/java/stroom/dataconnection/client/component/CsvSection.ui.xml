@@ -1,0 +1,41 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:fc="urn:import:stroom.widget.form.client.component"
+             xmlns:ed="urn:import:stroom.editor.client.component"
+             xmlns:dc="urn:import:stroom.dataconnection.client.component">
+    <!-- A CSV Data Connection's settings, a section of its Settings tab -->
+    <g:FlowPanel styleName="data-connection-settings__section">
+        <form:FormGroup identity="dataConnectionCsvDelimiter"
+                        label="Delimiter"
+                        helpText="The character between the values of each row.">
+            <l:SelectionBox ui:field="delimiter"/>
+        </form:FormGroup>
+        <form:FormGroup helpText="Whether the first row holds the column names. Without it, columns are named column1, column2 and so on. Default: on">
+            <tickbox:TickBox ui:field="header" identity="dataConnectionCsvHeader" label="First Row Is A Header"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionCsvData"
+                        label="CSV"
+                        helpText="The data, pasted here or read from a file on your computer with Load From File. It is held in this document and is queried as it stands when saved. An administrator sets the most it may hold with the dataConnection.maxStoredDataSize property, so keep it to lookup tables and reference lists; bulk data belongs in a feed.">
+            <g:SimplePanel addStyleNames="form-control-border">
+                <ed:CodeEditor ui:field="editor" addStyleNames="data-connection-settings__csv-editor"/>
+            </g:SimplePanel>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionCsvFile"
+                        label="File (optional)"
+                        helpText="Loads a CSV file from your computer into the editor above, replacing what it holds, then detects its columns. The file is read in your browser; it reaches Stroom only when you save.">
+            <fc:FileChooser ui:field="fileChooser" buttonText="Load From File"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionCsvColumns"
+                        label="Columns"
+                        helpText="The columns, in the order their values appear in each row. Each becomes a query field of the same name, read as its type; a value that is not of its column's type is empty, and the query warns. Detect Columns names them from the header row and guesses each type from the values, keeping a type you set here for a column of the same name.">
+            <dc:DataColumnList ui:field="columns" tableName="Columns"
+                               emptyText="No columns yet. Add the data, then click Detect Columns."/>
+        </form:FormGroup>
+        <b:Button ui:field="detectColumns" text="Detect Columns" addStyleNames="allow-focus data-connection-settings__button"/>
+    </g:FlowPanel>
+</ui:UiBinder>

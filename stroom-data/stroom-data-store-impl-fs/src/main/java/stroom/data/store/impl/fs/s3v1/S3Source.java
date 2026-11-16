@@ -270,6 +270,12 @@ final class S3Source implements Source {
 
             final String extension = S3FileExtensions.EXTENSION_MAP.get(childStreamType);
             Objects.requireNonNull(extension, () -> "Unexpected child stream type: " + childStreamType);
+
+            final Path dataFile = dir.resolve(partString + extension);
+            // Not all child types will be present
+            if (!Files.isRegularFile(dataFile)) {
+                return null;
+            }
             return create(extension);
         }
 

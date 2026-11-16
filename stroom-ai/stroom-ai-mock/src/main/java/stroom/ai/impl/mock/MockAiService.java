@@ -125,35 +125,38 @@ public class MockAiService implements AiService {
     @Override
     public synchronized EmbeddingModel getEmbeddingModel(final OpenAIModelDoc modelDoc) {
         final EmbeddingModel innerProxy = aiService.getEmbeddingModel(modelDoc);
-        return textSegments -> {
-            final TextSegment textSegment = textSegments.getFirst();
-            final String text = writeTextSegment(textSegment);
-            String embeddings = cache.get(text);
-            if (embeddings == null) {
-                final Embedding embedding = innerProxy.embedAll(textSegments).content().getFirst();
-                embeddings = writeEmbedding(embedding);
-                cache.put(text, embeddings);
+        return new EmbeddingModel() {
+            @Override
+            public Response<List<Embedding>> embedAll(final List<TextSegment> textSegments) {
+                final TextSegment textSegment = textSegments.getFirst();
+                final String text = writeTextSegment(textSegment);
+                String embeddings = cache.get(text);
+                if (embeddings == null) {
+                    final Embedding embedding = innerProxy.embedAll(textSegments).content().getFirst();
+                    embeddings = writeEmbedding(embedding);
+                    cache.put(text, embeddings);
 
-                try {
-                    // Dump it all.
-                    final StringBuilder sb = new StringBuilder();
-                    cache.entrySet()
-                            .stream()
-                            .sorted(Map.Entry.comparingByKey())
-                            .forEach(entry -> {
-                                sb.append(entry.getKey());
-                                sb.append("\n");
-                                sb.append(entry.getValue());
-                                sb.append("\n");
-                            });
+                    try {
+                        // Dump it all.
+                        final StringBuilder sb = new StringBuilder();
+                        cache.entrySet()
+                                .stream()
+                                .sorted(Map.Entry.comparingByKey())
+                                .forEach(entry -> {
+                                    sb.append(entry.getKey());
+                                    sb.append("\n");
+                                    sb.append(entry.getValue());
+                                    sb.append("\n");
+                                });
 
-                    Files.writeString(EMBEDDING_CACHE, sb.toString());
-                } catch (final IOException e) {
-                    throw new UncheckedIOException(e);
+                        Files.writeString(EMBEDDING_CACHE, sb.toString());
+                    } catch (final IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
                 }
-            }
 
-            return new Response<>(List.of(readEmbedding(embeddings)));
+                return new Response<>(List.of(readEmbedding(embeddings)));
+            }
         };
     }
 

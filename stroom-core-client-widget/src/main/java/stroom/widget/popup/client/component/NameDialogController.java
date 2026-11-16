@@ -27,6 +27,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /// Asks for a name in a dialog ([NameDialog]), e.g. to save a tab session under. OK with no name
 /// says so under the field and keeps the dialog open.
@@ -53,6 +54,23 @@ public class NameDialogController extends Controller {
                      final String caption,
                      final String name,
                      final Consumer<String> onOk) {
+        show(opener, caption, name, typed -> null, onOk);
+    }
+
+    /// Shows the dialog, owned by `opener` until it is closed, refusing a name a check finds
+    /// wrong (e.g. one already used) as it refuses none: it says why under the field and stays
+    /// open.
+    ///
+    /// @param opener  What shows it.
+    /// @param caption The dialog's caption, e.g. "Add Attribute".
+    /// @param name    The name to start with, or null for none.
+    /// @param check   Given a name typed, says what is wrong with it, or gives null if nothing is.
+    /// @param onOk    Given the name when OK is pressed with one the check accepts.
+    public void show(final HasControllerNode opener,
+                     final String caption,
+                     final String name,
+                     final Function<String, String> check,
+                     final Consumer<String> onOk) {
         view.setName(name == null
                 ? ""
                 : name);
@@ -62,7 +80,7 @@ public class NameDialogController extends Controller {
                 .popupSize(PopupSize.resizableX())
                 .caption(caption)
                 .onShow(e -> view.focus())
-                .onHideRequest(e -> onHideRequest(e, view.getName(), view::setInvalid, view::setValid, onOk))
+                .onHideRequest(e -> onHideRequest(e, view.getName(), check, view::setInvalid, view::setValid, onOk))
                 .fire();
     }
 
@@ -70,11 +88,12 @@ public class NameDialogController extends Controller {
     // and keeps the dialog open; Cancel closes it
     static void onHideRequest(final HidePopupRequestEvent event,
                               final String name,
+                              final Function<String, String> check,
                               final Consumer<String> onInvalid,
                               final Runnable onValid,
                               final Consumer<String> onOk) {
         if (event.isOk()) {
-            final String problem = problemWith(name);
+            final String problem = problemWith(name, check);
             if (problem == null) {
                 onValid.run();
                 onOk.accept(name);
@@ -94,5 +113,15 @@ public class NameDialogController extends Controller {
         return name == null || name.isBlank()
                 ? NO_NAME_MESSAGE
                 : null;
+    }
+
+    /// @param name  A name typed.
+    /// @param check Says what else is wrong with a name that isn't blank, or gives null.
+    /// @return What is wrong with the name, or null if nothing is.
+    static String problemWith(final String name, final Function<String, String> check) {
+        final String problem = problemWith(name);
+        return problem != null
+                ? problem
+                : check.apply(name);
     }
 }

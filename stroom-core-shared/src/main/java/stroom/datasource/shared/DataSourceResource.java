@@ -23,6 +23,7 @@ import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.time.SimpleDuration;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -62,5 +63,17 @@ public interface DataSourceResource extends RestResource, DirectRestService {
             summary = "Fetch default extraction pipeline",
             operationId = "fetchDefaultExtractionPipeline")
     DocRef fetchDefaultExtractionPipeline(
+            @Parameter(description = "dataSourceRef", required = true) DocRef dataSourceRef);
+
+    /// The shortest interval at which a dashboard may rerun queries of a data source automatically.
+    ///
+    /// @param dataSourceRef The data source.
+    /// @return The minimum, or `null` for none beyond the dashboard's own.
+    @POST
+    @Path("/fetchMinRefreshInterval")
+    @Operation(
+            summary = "Fetch the minimum automatic refresh interval of a data source",
+            operationId = "fetchMinRefreshInterval")
+    SimpleDuration fetchMinRefreshInterval(
             @Parameter(description = "dataSourceRef", required = true) DocRef dataSourceRef);
 }
