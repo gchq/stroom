@@ -1,14 +1,15 @@
 # StroomQL Joins Design
 
-Snapshot of the design document, last updated 2026-11-12
+Snapshot of the design document, last updated 2026-11-16
 
 ## TL;DR
 
-- **What:** add `join`, `left join`, `keep join` and `drop join` lines to StroomQL, straight after `from`. Either side may be a source or a bracketed query, and `where` may name joined fields.
+- **What:** add join lines to StroomQL, straight after `from`: `join` (or `inner join`), `left join`, `right join`, `full outer join`, `semi join` and `anti join`. `where exists`, `where not exists` and `where X in (from …)` are the SQL forms of semi and anti joins. Either side may be a source or a bracketed query, and `where` may name joined fields. Until the 2026-11-16 revision, semi and anti joins were called `keep join` and `drop join`, and there were no right or full joins.
 - **How:** the bounded side (a Data Connection, a small or grouped query) runs first into an LMDB join table, up to 1 million rows. The other side streams through it into the existing result store, so results still arrive incrementally.
 - **Windowed joins too:** event-to-event joins within a time window, such as a logon then an export within 10 minutes, are in this plan as its last stage.
 - **Not DuckDB, for now:** it would add a second query language, end incremental results, and bring a 79 MB native jar that does not run on Stroom's Alpine image as shipped.
 - **Status:** all sixteen decisions made on 2026-11-12; all seven build stages built and committed on 2026-11-12. Three differ from the decisions: the pushdown limit is 1,000 keys, `drop join` is pushed down only on ID and whole-number fields, and windowed joins give their rows once both searches finish.
+- **Revision, 2026-11-16:** semi and anti joins take their standard names, replacing `keep join` and `drop join`. They gain their SQL forms, `where exists`, `where not exists` and `where X in (…)`, and right and full outer joins are added. This is stages 8 to 10, not yet started.
 
 ## How a StroomQL query runs today
 
@@ -89,7 +90,7 @@ A native join in StroomQL is the easiest option for users. DuckDB is a good engi
 | Language users write | StroomQL, with completion, help and Stroom's functions | DuckDB SQL wrapping StroomQL strings; a second language | The tool's SQL |
 | Results while running | Incremental on the streamed side, as today | None until DuckDB finishes: joins, sorts and groups block | None |
 | Dashboards, tables, links to events, annotations | Unchanged: same result store | Rows must be copied back into a result store | Outside Stroom |
-| Join kinds | inner, left, keep, drop; windows later | All of SQL, including large-to-large joins that spill to disk | All of SQL |
+| Join kinds | inner, left, semi, anti; windows later | All of SQL, including large-to-large joins that spill to disk | All of SQL |
 | Large-to-large joins | Refused with a reason (one side must be bounded) | Supported, with disk spill | Supported, on the analyst's machine |
 | New dependency | None | `duckdb_jdbc` 2.0.0.0, a 79 MB jar of native code | A new Stroom server endpoint |
 | Runs in Stroom's Docker image | Yes | Not as shipped: the image is Alpine (musl) and the jar holds only glibc Linux builds | n/a |
@@ -105,32 +106,48 @@ Join lines go straight after `from`, one per joined source, and the right side i
 
 ```text
 from <side>
-[ join | left join | keep join | drop join ]  <side> on <a> = <b> [and <c> = <d> ...]
+<kind> <side> on <a> = <b> [and <c> = <d> ...]
 ...
-where ...      // may name any field; first-source terms are pushed down to its index
+where ...      // may name any field; first-source terms are pushed down to its index,
+               // except with a right or full join
 eval ...
 filter ...     // runs on joined rows
 group by ...
 select ...
 
+<kind> := join | inner join | left [outer] join | right [outer] join | full [outer] join
+        | semi join | left semi join | anti join | left anti join
+
 <side> := <source> [as <alias>] [sql """..."""]
         | ( from <source> [sql ...] [where ...] [eval ...] [group by ...] select ... ) [as <alias>]
+
+// SQL forms of semi and anti joins, at the top level of where, joined by and
+where exists (from <source> [as <alias>] where <k> = <first source alias>.<k> [and ...])
+where not exists (from <source> [as <alias>] where <k> = <first source alias>.<k> [and ...])
+where <field> in (from <source> [where ...] select <k>)
+where <field> not in (from <source> [where ...] select <k>)
 
 // windowed event-to-event join (stage 7)
 join <source> as <alias> on <a> = <b> within <duration> [after | before] <time field>
 ```
 
-| Kind | Rows out | Joined fields |
-| --- | --- | --- |
-| `join` | One row per match; left rows with no match are dropped | Added |
-| `left join` | One row per match; left rows with no match kept | Added, blank when no match |
-| `keep join` | Each left row with at least one match, once | None |
-| `drop join` | Each left row with no match | None |
+| Join | Also written | Rows out | Joined fields |
+| --- | --- | --- | --- |
+| `join` | `inner join` | One row per match; first-source rows with no match are dropped | Added |
+| `left join` | `left outer join` | One row per match; first-source rows with no match are kept | Added, blank when no match |
+| `right join` | `right outer join` | One row per match; joined rows with no match are kept | Added; first-source fields blank when no match |
+| `full outer join` | `full join` | One row per match; unmatched rows from both sides are kept | Added, blank where no match |
+| `semi join` | `left semi join`, `where exists (from …)`, `where X in (from …)` | Each first-source row with at least one match, once | None |
+| `anti join` | `left anti join`, `where not exists (from …)`, `where X not in (from …)` | Each first-source row with no match | None |
+
+![Which rows each StroomQL join returns](joins-venn.svg)
+
+A `join` and a `semi join` return the same region; the semi join adds no fields and never repeats a row. Every join starts from the first source's rows except the right and full joins, which also give joined rows that matched nothing.
 
 Rules:
 
 - **Field names.** Joined fields are named `<alias>.<field>`, so `hr.Department`. The alias defaults to the source name. Fields of the first source stay unprefixed, so existing queries read the same.
-- **`where`.** `where` may name any field. Stroom splits it: the top-level `and` terms that name only first-source fields are pushed down to Lucene, Elastic or the database, as today. For inner and keep joins, terms that name only one joined source's fields are pushed down to that source's search too; for left and drop joins they are not, because that would change which rows count as unmatched. Every other term, including an `or` that mixes both sides, runs on joined rows. The query info pane shows which part was pushed down. `filter` keeps its current meaning.
+- **`where`.** `where` may name any field. Stroom splits it: the top-level `and` terms that name only first-source fields are pushed down to Lucene, Elastic or the database, as today, except with a right or full join. For inner and semi joins, terms that name only one joined source's fields are pushed down to that source's search too; for left, anti, right and full joins they are not, because that would change which rows count as unmatched. Every other term, including an `or` that mixes both sides, runs on joined rows. The query info pane shows which part was pushed down. `filter` keeps its current meaning.
 - **Bracketed sides.** Either side may be a bracketed query, for example a grouped summary. A bracketed left side must finish before any joined row appears, so its results are not incremental.
 - **Keys.** One or more equal pairs, joined with `and`, and either side may be an expression (`lowerCase(UserId) = hr.Username`). Values compare as strings after the usual `Val` conversion, so a number key matches its text form.
 - **Time range.** The query's time range applies to the first source. A joined source with a time field gets it too, unless its bracketed query sets its own range in `where`.
@@ -187,8 +204,8 @@ The highlighted parts are new. The left search starts only once every join table
 1. **Model.** `Query` gains `joins`: a list of `Join` (kind, alias, key pairs, optional window, and the right side). A bracketed side, left or right, is carried as its own `Query` and `TableSettings`. `SearchRequestFactory` builds it from the join lines, and resolves each source with `DataSourceResolver` as `from` does.
 2. **Child searches.** `ResultStoreManager` puts a placeholder store under the search's key, so polls see an incomplete search straight away. A background task runs a child search for each right side, and for a bracketed left side. The children are held by the join search itself, not by the result store manager. Each child is searched as the current user, so a join never widens access. Once the tables are built, the first source's search takes the placeholder's place under the same key. Terminating or destroying the search terminates or destroys its children.
 3. **Join table.** When a right child completes, its rows are read once with `OffsetRange.UNBOUNDED` into a `JoinTable`. This is its own LMDB environment, beside the result stores, made by the same environment factory. Its key is the join key and its duplicate-sorted values are the right side's rows, holding only the fields the query uses. It is capped at 1 million rows or 256 MB, changeable by administrators; over the cap, the query fails and suggests a filter or a grouped right side.
-4. **Splitting `where`.** Top-level `and` terms that name only first-source fields stay in the left search's expression and are pushed down. For inner and keep joins, terms that name only one right source's fields move into that child search the same way. The remaining terms become a post-join predicate, built with `ExpressionPredicateFactory`, that runs straight after the probe.
-5. **Pushdown of keep and drop.** A `join` or `keep join` whose table has at most 1,000 keys, with a plain field of the first source as its left key that the source can search with `in`, also adds an `in` term to the left search. A `drop join` adds `not in`, but only on ID and whole-number fields, where every data source matches exactly as the join does; on text fields a source that ignores case would drop rows the join keeps. The limit is 1,000 rather than the 10,000 first agreed, because Lucene, Solr and Elasticsearch refuse queries of more than 1,024 conditions by default. A key with spaces, commas, quotes or wildcards, or a number written unusually, turns the pushdown off for that join.
+4. **Splitting `where`.** Top-level `and` terms that name only first-source fields stay in the left search's expression and are pushed down, except with a right or full join. For inner and semi joins, terms that name only one right source's fields move into that child search the same way. The remaining terms become a post-join predicate, built with `ExpressionPredicateFactory`, that runs straight after the probe.
+5. **Pushdown of semi and anti joins.** A `join` or `semi join` whose table has at most 1,000 keys, with a plain field of the first source as its left key that the source can search with `in`, also adds an `in` term to the left search. An `anti join` adds `not in`, but only on ID and whole-number fields, where every data source matches exactly as the join does; on text fields a source that ignores case would drop rows the join keeps. The limit is 1,000 rather than the 10,000 first agreed, because Lucene, Solr and Elasticsearch refuse queries of more than 1,024 conditions by default. A key with spaces, commas, quotes or wildcards, or a number written unusually, turns the pushdown off for that join.
 6. **Left search.** The left search starts only after every table is built, and runs through its normal provider. `CoprocessorsFactory` wraps `CoprocessorsImpl` in a `JoiningCoprocessors` that probes each `Val[]` and passes on zero, one or several joined rows. `FieldIndex` gains the `alias.field` positions, and providers are told not to extract them. A bracketed left side is read from its child store once complete and fed through the same probe.
 7. **Other nodes.** Each node's search task carries the join's id. The node fetches a compacted, compressed copy of the LMDB table from the coordinator once, over the remote search resource. It opens the copy read-only and deletes it when the search ends.
 8. **Progress.** While a child runs, polls return `complete = false` with a message such as "Reading HR Users: 12,400 rows". After that, left rows arrive incrementally as they do today.
@@ -202,20 +219,81 @@ In a windowed join the left side is the anchor and is bounded instead of the rig
 1. The left search runs first and writes its rows to an LMDB join table, keyed on the join key, with each row's time. It has the same cap, so the left side must be selective: a filter, a short time range or a grouped query.
 2. The right search is narrowed before it starts, to the anchors' windows: overlapping windows are merged, and at most 20 ranges are searched, merged across the smallest gaps if there are more. The right side's time is its data source's time field, so it must have one; Data Connections have none. When there are at most 980 keys, the search also gets an `in` term on its key, leaving room under the 1,024-condition limit for the ranges.
 3. Each right row probes the table and is joined to every left row with the same key whose time puts the right row inside the window.
-4. As built, rows do not stream: the right search runs to completion, capped at the join limit, and then every joined row is given at once, with unmatched anchors for `left join` and `drop join` and matched ones for `keep join`. Over the cap the query fails before any row is given. Streaming `join` and `keep join` rows as the right rows arrive is left for later, as it means probing inside the right search on every node.
+4. As built, rows do not stream: the right search runs to completion, capped at the join limit, and then every joined row is given at once, with unmatched anchors for `left join` and `anti join` and matched ones for `semi join`. Over the cap the query fails before any row is given. Streaming `join` and `semi join` rows as the right rows arrive is left for later, as it means probing inside the right search on every node.
 
 A windowed join with no window is refused with a message suggesting one.
 
 A query with a windowed join has only that one join line, and neither side may be a bracketed query yet.
 
+## Revision: standard names and outer joins
+
+Before release, joins move to standard SQL names and gain the outer joins SQL users expect. `keep join` and `drop join` become `semi join` and `anti join`. `where exists`, `where not exists` and `where X in (…)` are added as their SQL forms, and `right join` and `full outer join` are added. Joins have not been released, so the old words are removed, not deprecated.
+
+### What we are correcting
+
+Decision 2 chose `keep` / `drop`, with `semi` and `anti` as completion synonyms. Users don't recognise `keep` and `drop`, which no SQL dialect or query language uses, and the synonyms were never built.
+
+| Was | Now | Why |
+| --- | --- | --- |
+| `keep join` | `semi join`, or Spark's `left semi join` | DuckDB's name for it |
+| `drop join` | `anti join`, or Spark's `left anti join` | DuckDB's name for it |
+| `join` | `join` or `inner join` | `inner join` is standard SQL |
+| `left join` | `left join` or `left outer join` | `left outer join` is standard SQL |
+
+Only the names change. A semi join gives each first-source row that has a match, once, with no joined fields. An anti join gives each first-source row with no match. Their `in` / `not in` pushdown stays as built.
+
+### What we are adding
+
+| Form | Rows out | Joined fields | Runs as |
+| --- | --- | --- | --- |
+| `where exists (from S where k = p.k)` | First-source rows with a match, once | None | Semi join |
+| `where not exists (from S where k = p.k)` | First-source rows with no match | None | Anti join |
+| `where X in (from S select k)` | First-source rows whose X is one of S's k values, once | None | Semi join on X = k |
+| `where X not in (from S select k)` | First-source rows whose X is none of S's k values | None | Anti join on X = k |
+| `right join` or `right outer join` | One row per match, plus each joined row with no match | Added; first-source fields blank on unmatched joined rows | New |
+| `full join` or `full outer join` | One row per match, plus unmatched rows from both sides | Added, blank where there is no match | New |
+
+Rules for the `exists` and `in` forms:
+
+- **Rewritten, not run differently.** Each form becomes the semi or anti join a join line gives, before the search starts, with the same pushdown.
+- **Top level only.** They may appear only at the top level of `where`, joined by `and`. Under `or`, or inside `not`, they are refused with a message saying so; `not exists` is its own form.
+- **Correlation.** The bracketed query names the first source's fields by its alias or name (`p.team`). Only equality is allowed, joined by `and`, and each pair becomes a join key. The bracketed query's other terms are pushed into its own search.
+- **Telling `in` forms apart.** `in (from …)` is told apart from `in (a, b)` and `in dictionary` by `from` straight after the bracket. Its bracketed query must select exactly one field.
+- **Not in `filter` or `having`.** They run after the search, when no join can be added.
+- **Blank keys.** As decision 12 says, blank and null keys never match. That is SQL's behaviour for `not exists`. It is not SQL's for `not in`, which gives no rows once the subquery holds a null, so `not in` follows the join's rule instead, and the help says so (decision 19).
+
+Rules for right and full outer joins:
+
+- **Matched flags.** The join table keeps a matched flag per row, set by the probe, as windowed joins already do for their anchors.
+- **Several nodes.** When the first source finishes, each node sends back its matched flags. The node running the search merges them, then gives every joined row that no node matched, with first-source fields blank.
+- **Late rows.** Those unmatched rows arrive when the search completes, not incrementally.
+- **No pushdown.** First-source `where` terms are not pushed down, because SQL applies `where` after the join and pushing them down changes which rows count as unmatched. To narrow the first source before the join, use a bracketed first source. Joined-source terms stay out of its search, as for left joins.
+- **First version limits.** A right or full join must be the last join line and can't be windowed. The joined side is still capped at the join limit, and hidden event link columns (decision 15) are blank on unmatched joined rows.
+
+### Tests
+
+Every join kind and every alias gets tests at three levels:
+
+- **Unit tests.**
+  - Tokenising and parsing each spelling.
+  - The rewrite of each `exists` and `in` form into its join.
+  - The refusals: a form under `or`, an `in` query with two fields, a correlation that isn't equality, a right or full join that isn't last, a windowed one.
+  - Matched flags merged from several nodes, and late rows going through `eval`, `filter` and `group by`.
+- **Equivalence tests.** Each alias gives the same rows as its join line, for example `where exists` and `semi join`.
+- **Content pack.**
+  - The five join examples use the new names.
+  - New examples cover `where exists`, `where not exists`, `where X in`, `right join` and `full outer join`.
+  - Teams gains a team nobody in People belongs to, so right and full joins have unmatched rows on both sides.
+  - `TestDataConnectionExamplePack` checks every example's rows, run as the Query pane runs them.
+
 ## Decisions
 
-All sixteen were decided on 2026-11-12. Twelve followed the recommendation; four changed it, and the sections above now reflect those changes. Decisions 10 to 16 settle the details needed to build.
+All sixteen were decided on 2026-11-12. Twelve followed the recommendation; four changed it, and the sections above now reflect those changes. Decisions 10 to 16 settle the details needed to build. On 2026-11-16 decision 2 was changed and decisions 17 to 21 were added for the revision above.
 
 | # | Question | Recommendation | Decision | Outcome |
 | --- | --- | --- | --- | --- |
 | 1 | Native join in StroomQL, or embedded DuckDB? | Native; DuckDB a possible later engine | Agreed | Native |
-| 2 | Kind keywords: `keep` / `drop`, or `semi` / `anti`? | `keep` / `drop`, with `semi` and `anti` as completion synonyms | Agreed | `keep` / `drop` |
+| 2 | Kind keywords: `keep` / `drop`, or `semi` / `anti`? | `keep` / `drop`, with `semi` and `anti` as completion synonyms | Changed | `keep` / `drop` on 2026-11-12. Changed on 2026-11-16 to `semi` / `anti`, the standard names; `keep` and `drop` are removed |
 | 3 | Does `where` filter the first source only? | Yes; joined conditions go in `filter` | Changed | `where` may name joined fields. Top-level `and` terms on first-source fields are pushed down; the rest runs after the join |
 | 4 | Join table in the JVM heap or in LMDB? | Heap, with the cap | Changed | LMDB, keyed on the join key |
 | 5 | Join table limit | 1 million rows or 256 MB | Agreed | 1 million rows or 256 MB, set by administrators |
@@ -230,6 +308,11 @@ All sixteen were decided on 2026-11-12. Twelve followed the recommendation; four
 | 14 | May a join's keys use an earlier join's fields? | Yes; joins apply in order | Agreed | As recommended |
 | 15 | Hidden event link columns (StreamId, EventId, AnnotationId) | First source only | Agreed | As recommended |
 | 16 | Outer `where` with a bracketed left side | Applied after the join, like `filter` | Agreed | As recommended |
+| 17 | SQL forms of semi and anti joins? | `where exists`, `where not exists` and `where X in (…)`, rewritten into semi and anti joins | Agreed | As recommended, 2026-11-16 |
+| 18 | Also accept `inner join`, `left outer join`, `left semi join` and `left anti join`? | Yes, so SQL and Spark users' habits work | Agreed | As recommended, 2026-11-16 |
+| 19 | Also accept `where X not in (from …)`? | Yes, as an anti join, with the help saying blank keys never match; SQL instead gives no rows once the subquery holds a null | Agreed | As recommended, 2026-11-16 |
+| 20 | Right and full outer joins? | Add them; unmatched joined rows arrive when the search completes; last join line only at first | Agreed | As recommended, 2026-11-16: last join line, not windowed |
+| 21 | What do the old `keep join` and `drop join` give after the rename? | An error naming the new word | Changed | A plain parse error, as for any unknown word; nothing released used them |
 
 ## Work plan
 
@@ -264,6 +347,9 @@ There are seven stages, all on a branch from 7.14. Each stage ends with its test
 
    Done and committed 2026-11-12 (35e722736c). `WindowedJoin` plans the join and probes with the window; `JoinSearchRunner` searches the first source into an anchor table, then the joined source over the merged windows, and gives the joined rows once both are searched (see Windowed event-to-event joins). Tests run fake logon and export sources and join the Lucene test index to itself within a day, checked against plain searches. Testing found that a query with only a `from` alias failed in the stage 6 pushdown; fixed.
    - Tests: results equal a brute-force windowed join over a test set, window edges (exactly 10 minutes), and refusal when the left side is over the cap.
+8. **Standard names.** Rename `keep join` and `drop join` to `semi join` and `anti join` in the tokeniser, `JoinType`, the StroomQL help, the tests, the example pack and `JOINS_DESIGN.md`. Accept `inner join`, `left outer join`, `left semi join` and `left anti join` (decision 18). Tests: tokenising and parsing every spelling, and every pack example run under its new name.
+9. **SQL forms.** `where exists`, `where not exists`, `where X in (from …)` and `where X not in (from …)` (decisions 17 and 19). This means bracketed queries inside `where`, correlation to the first source's fields, a rewrite into a join line before planning, and refusals for the forms that can't be rewritten. Tests: each rewrite, each refusal, the same rows as the equivalent join line, and pack examples for each form.
+10. **Right and full outer joins.** Matched flags in the join table, flags merged from remote nodes, late unmatched rows through `eval`, `filter` and `group by`, no first-source pushdown, and the last-join-line and no-window limits. Tests: the probe and flag merge as unit tests, a Lucene integration test over several nodes, CSV integration tests, and pack examples using Teams' new unmatched team.
 
 A DuckDB engine stays out of this plan; it can be revisited if large-to-large joins become a real need.
 
@@ -271,8 +357,8 @@ A DuckDB engine stays out of this plan; it can be revisited if large-to-large jo
 
 Not started. Each would build on the seven stages without changing the syntax.
 
-- **Stream windowed join rows.** Give `join` and `keep join` rows as the joined source's rows arrive, rather than once both searches finish, and drop the cap on the joined source. This means probing inside the joined source's search on every node, with the anchor table shipped to each node as join tables are now.
-- **Skip a search that can give nothing.** When a `join` or `keep join` side returns no rows, the main source is still searched in full and every row dropped. Stopping early needs a match-nothing condition that every data source reads the same way.
+- **Stream windowed join rows.** Give `join` and `semi join` rows as the joined source's rows arrive, rather than once both searches finish, and drop the cap on the joined source. This means probing inside the joined source's search on every node, with the anchor table shipped to each node as join tables are now.
+- **Skip a search that can give nothing.** When a `join` or `semi join` side returns no rows, the main source is still searched in full and every row dropped. Stopping early needs a match-nothing condition that every data source reads the same way.
 - **Joins inside bracketed queries.** A bracketed query on either side can't have join lines of its own yet.
 - **A windowed join with other join lines.** A query with a time window can have only that one join line, and neither side can be a bracketed query.
 - **Pushdown limit from configuration.** The 1,000-key pushdown limit is fixed below the default of 1,024 conditions; it could follow the administrator's `maxBooleanClauseCount` instead.
