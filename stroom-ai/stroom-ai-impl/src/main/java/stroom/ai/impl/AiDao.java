@@ -278,8 +278,11 @@ public interface AiDao {
     List<Integer> findChatsNotUpdatedSince(long timeMs, int limit);
 
     /// Finds chats that may be compacted while idle: the user's own chats (not those of MCP sessions) whose last
-    /// message was stored between two times, is not a compaction, and that have no active run and no idle
-    /// compaction run started since that message. Only `ai_chat`, the latest message of each chat changed since
+    /// message was stored between two times, is not a compaction, and that have no active run, no run active (its
+    /// end or latest heartbeat) since {@code idleBeforeMs}, and no idle compaction run started since that message.
+    /// A run counts as activity as its messages do: a run whose last tool call or thinking took longer than the idle
+    /// time and then ended without a message is not idle from that message. Only `ai_chat`, the latest message of
+    /// each chat changed since
     /// {@code idleSinceMs} and its runs are read, so it is cheap to run often.
     ///
     /// @param idleBeforeMs       The last message must be older than this, i.e. the chat has been idle long enough.
