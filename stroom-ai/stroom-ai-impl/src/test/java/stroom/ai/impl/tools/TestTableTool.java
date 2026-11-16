@@ -186,6 +186,71 @@ class TestTableTool {
         assertThat(files.content("/outputs/first.csv")).hasValue("user,n\r\nalice,3\r\n");
     }
 
+    @Test
+    void anotherTableIsJoinedFirstAndTheQueryIsOfTheJoinedRows() {
+        // Seen: a chat matched mail items read then deleted, by user and message id within 5 minutes, across two
+        // files: some 15 calls of grep, jq and table, the jq join failing.
+        files.workspace().writeTabFile(CHAT, WorkspacePath.parse("/outputs/accesses.csv"), """
+                user,msg,time
+                li.wei,m1,2026-11-10T00:00:17
+                li.wei,m2,2026-11-10T00:00:17
+                anja,m3,2026-11-10T00:02:24
+                """, null);
+        files.workspace().writeTabFile(CHAT, WorkspacePath.parse("/outputs/deletes.csv"), """
+                user,msg,time
+                li.wei,m1,2026-11-10T00:00:26
+                li.wei,m2,2026-11-10T00:09:00
+                """, null);
+
+        final String result = run("""
+                {"path":"/outputs/accesses.csv","join":{"path":"/outputs/deletes.csv","on":["user","msg"],
+                "within":{"column":"time","seconds":300,"after":true}},
+                "select":["user","msg","right.time"]}""");
+
+        assertThat(result)
+                .startsWith("Joined 3 rows of /outputs/accesses.csv with 2 of /outputs/deletes.csv on user, msg, "
+                            + "within 300 s after: 1 of the 3 rows matched, making 1 joined rows. 1 of 1 joined "
+                            + "rows matched; the result has 1 row(s).")
+                .contains("| user | msg | right.time |")
+                .contains("| li.wei | m1 | 2026-11-10T00:00:26 |");
+        // The rows nothing matches, grouped.
+        assertThat(run("""
+                {"path":"/outputs/accesses.csv","join":{"path":"/outputs/deletes.csv","on":"msg",
+                "keep":"unmatched"},"groupBy":["user"]}"""))
+                .contains("2 of the 3 rows matched, so 1 are unmatched.")
+                .contains("| anja | 1 |");
+    }
+
+    @Test
+    void aJoinInAShapeThatCantBeReadIsRefusedSayingWhatWasGiven() {
+        assertThat(run("{\"path\":\"" + TABLE + "\",\"join\":\"the other file\"}"))
+                .startsWith("Error: join must be an object");
+        assertThat(run("{\"path\":\"" + TABLE + "\",\"join\":{\"on\":[\"user\"]}}"))
+                .isEqualTo("Error: Give join.path: the table to join to this one.");
+        assertThat(run("{\"path\":\"" + TABLE + "\",\"join\":{\"path\":\"/outputs/x.json\",\"on\":"
+                       + "[\"user\"]}}"))
+                .startsWith("Error: /outputs/x.json is JSON, not a table");
+        assertThat(run("{\"path\":\"" + TABLE + "\",\"join\":{\"path\":\"" + TABLE + "\",\"on\":"
+                       + "[\"user\"],\"keep\":\"left\"}}"))
+                .isEqualTo("Error: join.keep must be both or unmatched, but was 'left'.");
+        assertThat(run("{\"path\":\"" + TABLE + "\",\"join\":{\"path\":\"" + TABLE + "\",\"on\":"
+                       + "[\"user\"],\"within\":{\"column\":\"n\"}}}"))
+                .isEqualTo("Error: join.within needs column (this table's time) and seconds.");
+    }
+
+    @Test
+    void aTableJoinedToItselfPrefixesTheOtherCopysColumns() {
+        final String result = run("{\"path\":\"" + TABLE + "\",\"join\":{\"path\":\"" + TABLE + "\","
+                                  + "\"on\":[\"user\"]},\"where\":[{\"column\":\"user\",\"op\":\"=\","
+                                  + "\"value\":\"alice\"}]}");
+
+        // alice has two rows, each matching both.
+        assertThat(result)
+                .contains("making 6 joined rows")
+                .contains("4 of 6 joined rows matched")
+                .contains("| user | n | right.n |");
+    }
+
     private String run(final String arguments) {
         return tool.execute(new ToolCall("c1", TableTool.NAME, arguments),
                 ToolCalls.inChat(CHAT, files.workspace())).text();

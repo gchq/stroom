@@ -419,7 +419,7 @@ class TestEventTools {
         // Seen: an agent asked five times for 100 records of a stream in a file, to count keys with grep; each time
         // they came back in the result, which the chat moved out of its context, and no file was written.
         final StreamReader streamReader = Mockito.mock(StreamReader.class);
-        Mockito.when(streamReader.readRecords(73145L, 0, 2, null, FetchEventsTool.MAX_MAX_CHARS))
+        Mockito.when(streamReader.readRecords(73145L, 0, 2, null, FetchEventsTool.MAX_CHARS_TO_FILE))
                 .thenReturn(new StreamReader.Records(List.of("<Event>1</Event>", "<Event>2</Event>"),
                         new StreamReader.Fetched("ACME", "Raw Events", null, true, 1000L, List.of(), List.of())));
         final FetchEventsTool tool = new FetchEventsTool(workspace, () -> store, () -> securityContext,
@@ -448,7 +448,7 @@ class TestEventTools {
         final List<String> segments = streams.get(11L);
         final List<String> records = List.of(segments.get(0) + segments.get(2) + segments.get(4),
                 segments.get(0) + segments.get(3) + segments.get(4));
-        Mockito.when(streamReader.readRecords(11L, 1, 2, null, FetchEventsTool.MAX_MAX_CHARS))
+        Mockito.when(streamReader.readRecords(11L, 1, 2, null, FetchEventsTool.MAX_CHARS_TO_FILE))
                 .thenReturn(new StreamReader.Records(records,
                         new StreamReader.Fetched("ACME", "Events", null, true, 3L, List.of(), List.of())));
         final FetchEventsTool tool = new FetchEventsTool(workspace, () -> store, () -> securityContext,
@@ -498,10 +498,10 @@ class TestEventTools {
     @Test
     void fetchEventsWritesRawAndChildRecordsAsTheyAre() {
         final StreamReader streamReader = Mockito.mock(StreamReader.class);
-        Mockito.when(streamReader.readRecords(11L, 0, 1, "Context", FetchEventsTool.MAX_MAX_CHARS))
+        Mockito.when(streamReader.readRecords(11L, 0, 1, "Context", FetchEventsTool.MAX_CHARS_TO_FILE))
                 .thenReturn(new StreamReader.Records(List.of("<?xml version=\"1.0\"?><Context/>"),
                         new StreamReader.Fetched("ACME", "Events", null, true, 1L, List.of(), List.of())));
-        Mockito.when(streamReader.readRecords(11L, 0, 1, null, FetchEventsTool.MAX_MAX_CHARS))
+        Mockito.when(streamReader.readRecords(11L, 0, 1, null, FetchEventsTool.MAX_CHARS_TO_FILE))
                 .thenReturn(new StreamReader.Records(List.of("a,line,of,text"),
                         new StreamReader.Fetched("ACME", "Events", null, true, 1L, List.of(), List.of())));
         final FetchEventsTool tool = new FetchEventsTool(workspace, () -> store, () -> securityContext,

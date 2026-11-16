@@ -110,6 +110,20 @@ final class ToolTables {
         return sb.append('\n').toString();
     }
 
+    /// Writes a table to a local file as CSV, outside the workspace: e.g. a joined table the table tool then
+    /// queries.
+    ///
+    /// @param file    The file to write.
+    /// @param columns The column headings.
+    /// @param rows    The rows, each with a cell per column.
+    static void writeCsv(final Path file, final List<String> columns, final List<List<String>> rows) {
+        try (final BufferedWriter writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
+            writeDelimited(writer, CSVFormat.DEFAULT, columns, rows);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     private static void writeMarkdown(final BufferedWriter writer,
                                       final List<String> columns,
                                       final List<List<String>> rows) throws IOException {

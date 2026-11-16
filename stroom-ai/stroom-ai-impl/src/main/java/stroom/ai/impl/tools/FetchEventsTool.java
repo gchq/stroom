@@ -88,10 +88,15 @@ class FetchEventsTool extends AbstractWorkspaceTool {
     static final String MAX_CHARS_ARG = "maxChars";
     static final int DEFAULT_RECORD_COUNT = 5;
     static final int MAX_RECORD_COUNT = 100;
+    /// Records a call may read into a file (out): they take nothing from the conversation. Seen in a chat that read
+    /// two 3,000-record raw streams 100 records a call: 83 calls to scan them.
+    static final int MAX_RECORD_COUNT_TO_FILE = 1_000;
     /// Characters of record data returned by default.
     static final int DEFAULT_MAX_CHARS = 60_000;
     static final int MIN_MAX_CHARS = 1_000;
     static final int MAX_MAX_CHARS = 200_000;
+    /// Characters of record data a call may read into a file (out).
+    static final int MAX_CHARS_TO_FILE = 2_000_000;
     // Set in a stream's records while they are read: true when they are a segmented stream's own records (e.g.
     // Events), each a document. Taken out before the result is returned.
     private static final String SEGMENTED_KEY = "_segmented";
@@ -174,13 +179,16 @@ class FetchEventsTool extends AbstractWorkspaceTool {
                                                       + "the first part whose child is read.")
                         .addIntegerProperty(RECORD_COUNT_ARG, "With streamId: how many records (default "
                                                               + DEFAULT_RECORD_COUNT + ", at most "
-                                                              + MAX_RECORD_COUNT + ").")
+                                                              + MAX_RECORD_COUNT + "; "
+                                                              + StreamReader.thousands(MAX_RECORD_COUNT_TO_FILE)
+                                                              + " with out).")
                         .addStringProperty(CHILD_TYPE_ARG, "With streamId: read a child part instead, e.g. 'Meta "
                                                            + "Data' (receipt headers) or 'Context': a record "
                                                            + "per part, the part's own.")
                         .addIntegerProperty(MAX_CHARS_ARG, "With streamId: characters of record data to return: "
                                                            + "leave the default (60,000) unless the user asks for "
-                                                           + "more, for long records; up to 200,000.")
+                                                           + "more, for long records; up to 200,000 (with out, "
+                                                           + "2,000,000, the default there).")
                         .addStringProperty(OUT_ARG, ToolDescription.builder()
                                 .chatOnly("The file in /outputs/ to write the events to (default " + DEFAULT_OUT
                                           + "). With streamId, the records are written there instead of "
@@ -260,11 +268,15 @@ class FetchEventsTool extends AbstractWorkspaceTool {
         }
         final int firstRecord = Math.max(0, Objects.requireNonNullElse(intArg(request, FIRST_RECORD_ARG), 0));
         final int part = Math.max(0, Objects.requireNonNullElse(intArg(request, PART_ARG), 0));
-        final int recordCount = Math.max(1, Math.min(MAX_RECORD_COUNT,
-                Objects.requireNonNullElse(intArg(request, RECORD_COUNT_ARG), DEFAULT_RECORD_COUNT)));
         final String childType = stringArg(request, CHILD_TYPE_ARG);
-        // Records written to a file take nothing from the conversation, so as many are read as may be.
+        // Records written to a file take nothing from the conversation, so more are read than are returned.
         final WorkspacePath out = outArg(request);
+        final int maxRecords = out != null
+                ? MAX_RECORD_COUNT_TO_FILE
+                : MAX_RECORD_COUNT;
+        final int askedFor = Math.max(1, Objects.requireNonNullElse(intArg(request, RECORD_COUNT_ARG),
+                DEFAULT_RECORD_COUNT));
+        final int recordCount = Math.min(maxRecords, askedFor);
         final SessionWorkspace workspace = out != null
                 ? sessionWorkspace(context)
                 : null;
@@ -272,11 +284,14 @@ class FetchEventsTool extends AbstractWorkspaceTool {
             workspace.checkWritable(out);
         }
         final Integer maxChars = intArg(request, MAX_CHARS_ARG);
+        final int maxLimit = out != null
+                ? MAX_CHARS_TO_FILE
+                : MAX_MAX_CHARS;
         final int limit = maxChars == null
                 ? (out != null
-                        ? MAX_MAX_CHARS
+                        ? MAX_CHARS_TO_FILE
                         : DEFAULT_MAX_CHARS)
-                : Math.max(MIN_MAX_CHARS, Math.min(MAX_MAX_CHARS, maxChars));
+                : Math.max(MIN_MAX_CHARS, Math.min(maxLimit, maxChars));
         final Map<String, Object> result;
         try {
             result = readRecords(streamId, part, firstRecord, recordCount, childType, limit);
@@ -287,12 +302,55 @@ class FetchEventsTool extends AbstractWorkspaceTool {
                                                                          + " with the " + NAME + " tool");
         }
         final boolean segmented = Boolean.TRUE.equals(result.remove(SEGMENTED_KEY));
+        if (askedFor > maxRecords) {
+            sayCapped(result, firstRecord, askedFor, maxRecords, out != null);
+        }
         if (workspace != null) {
             writeRecords(workspace, out, result, segmented
                     ? streamId
                     : null, firstRecord);
         }
         return ToolResult.text(JsonUtil.writeValueAsString(result, false)).withStructuredContent(result);
+    }
+
+    /// Says in the result that fewer records were read than asked for, because of the most a call reads, and where
+    /// to read on. Seen: an agent asked for 170 records, was given 100 without a word, and read on from 170, leaving
+    /// gaps it found only by counting.
+    ///
+    /// @param result      The result of the read, changed in place.
+    /// @param firstRecord The zero-based index of the first record asked for.
+    /// @param askedFor    The records asked for.
+    /// @param maxRecords  The most a call reads.
+    /// @param toFile      True if the records go to a file (out).
+    static void sayCapped(final Map<String, Object> result,
+                          final int firstRecord,
+                          final int askedFor,
+                          final int maxRecords,
+                          final boolean toFile) {
+        final int read = result.get("records") instanceof final List<?> list
+                ? list.size()
+                : 0;
+        final long total = result.get("total_records") instanceof final Number number
+                ? number.longValue()
+                : -1;
+        final String most = "at most " + StreamReader.thousands(maxRecords) + " records a call"
+                            + (toFile
+                ? ""
+                : " (" + StreamReader.thousands(MAX_RECORD_COUNT_TO_FILE) + " with out, to a file)");
+        // A hint already there (a character limit, or past the end) says more about where to go on.
+        if (read < maxRecords || result.containsKey("hint")) {
+            result.put("record_count_capped", "Asked for " + StreamReader.thousands(askedFor) + ": " + most + ".");
+            return;
+        }
+        final int next = firstRecord + read;
+        result.put("record_count_capped", "Asked for " + StreamReader.thousands(askedFor) + ", read "
+                                          + StreamReader.thousands(read) + ": "
+                                          + most + ".");
+        if (total < 0 || next < total) {
+            result.put("next_first_record", next);
+            result.put("hint", "Read on with firstRecord=" + next + ", not " + (firstRecord + askedFor)
+                               + ", or records are missed.");
+        }
     }
 
     // Writes the records read to the file in place of them in the result, which says where they are: an Events
@@ -446,8 +504,11 @@ class FetchEventsTool extends AbstractWorkspaceTool {
         if (records.stream().mapToInt(String::length).sum() >= limit) {
             result.put("truncated", true);
             result.put("hint", "Record data was trimmed at " + StreamReader.thousands(limit) + " characters: read "
-                               + "fewer records at a time, or, if the user asks for more, maxChars (up to "
-                               + "200,000).");
+                               + "fewer records at a time"
+                               + (limit < MAX_MAX_CHARS
+                    ? ", or, if the user asks for more, maxChars (up to 200,000)"
+                    : "")
+                               + ".");
         } else if (records.size() < recordCount && start + records.size() < total) {
             // The size limit was reached before the next whole record: the rest from where this stops.
             final int next = start + records.size();
