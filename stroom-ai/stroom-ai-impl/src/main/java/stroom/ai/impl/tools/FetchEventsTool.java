@@ -31,6 +31,7 @@ import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiToolCategory;
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
@@ -91,6 +92,9 @@ class FetchEventsTool extends AbstractWorkspaceTool {
     static final int DEFAULT_MAX_CHARS = 60_000;
     static final int MIN_MAX_CHARS = 1_000;
     static final int MAX_MAX_CHARS = 200_000;
+    // Set in a stream's records while they are read: true when they are a segmented stream's own records (e.g.
+    // Events), each a document. Taken out before the result is returned.
+    private static final String SEGMENTED_KEY = "_segmented";
 
     private final Provider<Store> storeProvider;
     private final Provider<SecurityContext> securityContextProvider;
@@ -179,8 +183,9 @@ class FetchEventsTool extends AbstractWorkspaceTool {
                                                            + "more, for long records; up to 200,000.")
                         .addStringProperty(OUT_ARG, ToolDescription.builder()
                                 .chatOnly("The file in /outputs/ to write the events to (default " + DEFAULT_OUT
-                                          + "). With streamId, the records are written there, one after "
-                                          + "another, instead of being returned (none is written without it).")
+                                          + "). With streamId, the records are written there instead of "
+                                          + "being returned (none is written without it): an Events stream's "
+                                          + "as from a table, for search_events; others one after another.")
                                 .build())
                         .build())
                 .build();
@@ -281,28 +286,61 @@ class FetchEventsTool extends AbstractWorkspaceTool {
             auditLog.streamsViewed(context.session(), List.of(streamId), "Read records of stream " + streamId
                                                                          + " with the " + NAME + " tool");
         }
+        final boolean segmented = Boolean.TRUE.equals(result.remove(SEGMENTED_KEY));
         if (workspace != null) {
-            writeRecords(workspace, out, result);
+            writeRecords(workspace, out, result, segmented
+                    ? streamId
+                    : null, firstRecord);
         }
         return ToolResult.text(JsonUtil.writeValueAsString(result, false)).withStructuredContent(result);
     }
 
-    // Writes the records read to the file, one after another, in place of them in the result, which says where
-    // they are.
+    // Writes the records read to the file in place of them in the result, which says where they are: an Events
+    // stream's records (each a document of its own, with its own XML declaration) as fetch_events writes events from
+    // a table, so search_events reads them; anything else one after another, as read.
     private static void writeRecords(final SessionWorkspace workspace,
                                      final WorkspacePath out,
-                                     final Map<String, Object> result) {
+                                     final Map<String, Object> result,
+                                     final Long segmentedStreamId,
+                                     final int firstRecord) {
         final List<String> records = result.get("records") instanceof final List<?> list
                 ? list.stream().map(String::valueOf).toList()
                 : List.of();
-        workspace.write(out, String.join("\n", records) + (records.isEmpty()
-                ? ""
-                : "\n"), null);
+        final boolean asEvents = segmentedStreamId != null && !records.isEmpty() && records.stream()
+                .allMatch(FetchEventsTool::isXml);
+        if (asEvents) {
+            workspace.write(out, eventsFile(segmentedStreamId, firstRecord, records), null);
+        } else {
+            workspace.write(out, String.join("\n", records) + (records.isEmpty()
+                    ? ""
+                    : "\n"), null);
+        }
         result.remove("records");
         result.put("records_read", records.size());
         result.put("out", out.toString());
-        result.put("note", "The records are in " + out + ", one after another: use grep, read_file, xpath or "
-                           + "search_events on it.");
+        result.put("note", asEvents
+                ? "The events are in " + out + ", each in a <" + EventsFile.EVENT_ELEMENT + " streamId=\"..\" "
+                  + "eventId=\"..\"> element, as from a table: use search_events on it to get values by XPath or "
+                  + "find text, per event, or grep or read_file."
+                : "The records are in " + out + ", one after another: use grep, read_file or xpath on it.");
+    }
+
+    /// @param streamId    The segmented stream the records are of.
+    /// @param firstRecord The zero-based index of the first record.
+    /// @param records     The records read from it, in order, each a document.
+    /// @return The file's text, as [EventsFile] has it: record index `n` is event `n + 1`, as the table form (and
+    /// the index's EventId) numbers it, since segment 0 of the stream is its header.
+    static String eventsFile(final long streamId, final int firstRecord, final List<String> records) {
+        final StringBuilder sb = new StringBuilder(EventsFile.start());
+        for (int i = 0; i < records.size(); i++) {
+            sb.append(EventsFile.element(streamId, (long) firstRecord + i + 1, records.get(i)));
+        }
+        return sb.append(EventsFile.end()).toString();
+    }
+
+    // True if the record is XML (after any byte order mark and white space), not text.
+    private static boolean isXml(final String record) {
+        return record.replace("\uFEFF", "").stripLeading().startsWith("<");
     }
 
     /// @return The records of the stream's first part, with where to read on.
@@ -356,6 +394,10 @@ class FetchEventsTool extends AbstractWorkspaceTool {
         result.put("total_records", first.totalItems());
         result.put("available_child_types", first.availableChildTypes());
         result.put("records", records);
+        if (childType == null && first.segmented()
+            && !StreamTypeNames.ALL_HARD_CODED_RAW_STREAM_TYPE_NAMES.contains(first.streamTypeName())) {
+            result.put(SEGMENTED_KEY, true);
+        }
         final Map<String, Object> report = childType == null
                 ? streamReader.charsetReport(streamId)
                 : null;

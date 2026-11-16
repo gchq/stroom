@@ -1303,7 +1303,10 @@ stream was read as Stroom's record 9,000, and the agent was given the part's sta
 record the stream doesn't have says so in `hint`. A stream with bytes its feed's encoding can't decode is read as a
 pipeline reads it: each bad byte is
 replaced, and `undecodable_bytes` reports what was replaced (`StreamCharsets`). With `out`, the records are
-written to that file, one after another, in place of the result's `records`. The budget is then the maximum.
+written to that file in place of the result's `records`, and the budget is then the maximum. A segmented stream's
+XML records (e.g. Events, each a document with its own XML declaration) are written as the table form writes events
+(`EventsFile`), record index `n` as `eventId` `n + 1`, so `search_events` reads the file; anything else (raw input,
+a child type, text) is written one record after another.
 
 * **Arguments**: from a table: `path`, `limit`, `out`. From a stream: `streamId`, `part` (default 0),
   `firstRecord` (default 0), `recordCount` (default 5, at most 100), `childType`, `maxChars` (default 60,000; 1,000 to 200,000), `out`.

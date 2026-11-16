@@ -79,6 +79,18 @@ public final class EventsFile {
                + "</" + EVENT_ELEMENT + ">\n";
     }
 
+    /// @param head The start of a file's text.
+    /// @return True if it starts as an events file does: with the [#ROOT_ELEMENT] element, after any byte order
+    /// mark, white space and XML declaration.
+    public static boolean startsAsOne(final String head) {
+        final String text = head == null
+                ? ""
+                : head.replace("\uFEFF", "").stripLeading();
+        final String rest = XML_DECLARATION.matcher(text).replaceFirst("").stripLeading();
+        return rest.startsWith("<" + ROOT_ELEMENT + ">") || rest.startsWith("<" + ROOT_ELEMENT + " ")
+               || rest.startsWith("<" + ROOT_ELEMENT + "/");
+    }
+
     /// @return True if the text is one well-formed XML element, with no DOCTYPE.
     static boolean isWellFormedXml(final String text) {
         if (!text.startsWith("<")) {

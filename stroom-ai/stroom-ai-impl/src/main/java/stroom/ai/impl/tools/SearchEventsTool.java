@@ -48,6 +48,11 @@ import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XdmNodeKind;
 import net.thisptr.jackson.jq.JsonQuery;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -90,6 +95,16 @@ class SearchEventsTool extends AbstractWorkspaceTool {
     static final int SNIPPET_CHARS = 200;
     static final String VALUE_SEPARATOR = " | ";
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    // Characters read of a file that doesn't parse, to say whether it is an events file.
+    private static final int HEAD_CHARS = 4096;
+    private static final String NOT_AN_EVENTS_FILE = "This isn't a file fetch_events wrote for events (one <"
+                                                     + EventsFile.ROOT_ELEMENT + "> document, each event in a <"
+                                                     + EventsFile.EVENT_ELEMENT + " streamId=\"..\" "
+                                                     + "eventId=\"..\"> element), so search_events can't read "
+                                                     + "it. Write the events with fetch_events and its out, from a "
+                                                     + "table with StreamId and EventId columns or from an Events "
+                                                     + "stream's streamId, and search that file; or use xpath, grep "
+                                                     + "or read_file on this one.";
     private static final String WHERE_SHAPE = "where is a list of {\"field\": ..., \"condition\": ..., "
                                               + "\"value\": ...}";
 
@@ -262,7 +277,7 @@ class SearchEventsTool extends AbstractWorkspaceTool {
                 ? SafeJq.compile(jq)
                 : null;
 
-        final List<XdmNode> events = events(SafeXPath.parse(workspace.localFile(path)));
+        final List<XdmNode> events = events(parsed(workspace.localFile(path)));
         final XPathExecutable executable = hasXPath
                 ? SafeXPath.compile(expression, namespaces(request, events))
                 : null;
@@ -394,13 +409,42 @@ class SearchEventsTool extends AbstractWorkspaceTool {
                 IndexEvents.CONDITIONS.stream().map(Condition::name).toList()) + ".");
     }
 
+    /// @param file The events file.
+    /// @return It parsed. A file not in the events file's form (e.g. Events records joined one after another, each
+    /// with its own XML declaration) is refused saying so and what to do, not with the parser's error (seen: "The
+    /// processing instruction target matching "[xX][mM][lL]" is not allowed").
+    static XdmNode parsed(final Path file) {
+        try {
+            return SafeXPath.parse(file);
+        } catch (final WorkspaceException e) {
+            if (!EventsFile.startsAsOne(head(file))) {
+                throw new WorkspaceException(NOT_AN_EVENTS_FILE);
+            }
+            throw e;
+        }
+    }
+
+    // The start of the file's text, enough to hold its root element's start.
+    private static String head(final Path file) {
+        try (final Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            final char[] chars = new char[HEAD_CHARS];
+            final int read = reader.read(chars);
+            return read <= 0
+                    ? ""
+                    : new String(chars, 0, read);
+        } catch (final IOException e) {
+            // E.g. not text in UTF-8: not an events file either.
+            return "";
+        }
+    }
+
     /// @return The events in the file, in order.
     static List<XdmNode> events(final XdmNode document) {
         final List<XdmNode> events = new ArrayList<>();
         for (final XdmNode root : document.children()) {
             if (root.getNodeKind() == XdmNodeKind.ELEMENT) {
                 if (!EventsFile.ROOT_ELEMENT.equals(root.getNodeName().getLocalName())) {
-                    throw new WorkspaceException("This isn't a file of events from fetch_events.");
+                    throw new WorkspaceException(NOT_AN_EVENTS_FILE);
                 }
                 for (final XdmNode child : root.children()) {
                     if (child.getNodeKind() == XdmNodeKind.ELEMENT
