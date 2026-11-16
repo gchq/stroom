@@ -24,6 +24,7 @@ import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
@@ -73,6 +74,29 @@ public class DataSourceClient {
                             consumer.accept(result.getFirst());
                         }
                     })
+                    .taskMonitorFactory(taskMonitorFactory)
+                    .exec();
+        }
+    }
+
+    /// Fetches the shortest interval at which a dashboard may rerun queries of a data source
+    /// automatically. If it cannot be fetched, the consumer gets `null`, as the query itself will
+    /// report the problem.
+    ///
+    /// @param dataSourceRef      The data source.
+    /// @param consumer           Takes the minimum, or `null` for none.
+    /// @param taskMonitorFactory Shows that the fetch is running.
+    public void fetchMinRefreshInterval(final DocRef dataSourceRef,
+                                        final Consumer<SimpleDuration> consumer,
+                                        final TaskMonitorFactory taskMonitorFactory) {
+        if (dataSourceRef == null) {
+            consumer.accept(null);
+        } else {
+            restFactory
+                    .create(DATA_SOURCE_RESOURCE)
+                    .method(res -> res.fetchMinRefreshInterval(dataSourceRef))
+                    .onSuccess(consumer)
+                    .onFailure(error -> consumer.accept(null))
                     .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         }

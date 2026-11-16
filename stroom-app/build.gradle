@@ -101,6 +101,7 @@ dependencies {
     implementation project(':stroom-data:stroom-data-zip')
     implementation project(':stroom-datagen:stroom-datagen-impl')
     implementation project(':stroom-floormap:stroom-floormap-impl')
+    implementation project(':stroom-data-connection:stroom-data-connection-impl')
     implementation project(':stroom-db-util')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-dictionary:stroom-dictionary-impl')
@@ -249,6 +250,7 @@ dependencies {
     testImplementation project(':stroom-task:stroom-task-api')
     testImplementation project(':stroom-test-common')
 
+    testImplementation libs.aws.athena
     testImplementation libs.classgraph
     testImplementation libs.data.faker
     testImplementation libs.guice.extension
@@ -259,6 +261,7 @@ dependencies {
     testImplementation libs.lmdbjava
     testImplementation libs.saxon.he
     testImplementation libs.swagger.annotations
+    testImplementation libs.unboundid.ldapsdk
     testImplementation libs.vavr
 
     testImplementation libs.dropwizard.testing
@@ -271,7 +274,9 @@ dependencies {
     swaggerBuild libs.jakarta.servlet.api
     swaggerBuild libs.swagger.annotations
     swaggerBuild libs.swagger.core
-    swaggerBuild libs.swagger.jaxrs
+    swaggerBuild libs.swagger.rest
+    // swagger-integration v3.0.0 (pulled in from swagger-rest) uses v4.8 of classgraph, so we use a different
+    // version of classgraph to that used by stroom
     swaggerBuild libs.classgraph.legacy
     swaggerBuild libs.ws.rs.api
 }
@@ -326,13 +331,26 @@ shadowJar {
     // Allows us to build fat jars with lots of files
     zip64 = true
 
-    // Ensure we include the GWT and Rest generated resources.
-    from './src/main/resources'
+    // processResources runs before gwtCompile, so include the GWT output generated afterwards.
+    // The remaining main resources are already included from sourceSets.main.output.
+    from('./src/main/resources') {
+        include 'ui/stroom/**'
+    }
+//    from './src/main/resources'
 
     // A transformer to merges files in META-INF/services
     mergeServiceFiles()
     // Without INCLUDE, it drops any duplicates
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+//    // Keep duplicate service files so mergeServiceFiles() can combine them, but discard all
+//    // other duplicate entries.
+//    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+//    filesMatching('META-INF/services/**') {
+//        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+//    }
+//    filesMatching('META-INF/*.kotlin_module') {
+//        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+//    }
 
     archiveFileName = fatJarName
     exclude '**/gwt-unitCache'
@@ -473,8 +491,8 @@ tasks.register('copyFilesForStroomDockerBuild') {
 resolve {
     outputFileName = 'stroom'
     outputFormat = 'JSONANDYAML'
-    prettyPrint = 'TRUE'
-    sortOutput = 'TRUE'
+    prettyPrint = true
+    sortOutput = true
     openApiFile = file('openapi.yaml')
     // As we are pulling in the whole classpath, that includes stroom-app and all the dropwiz
     // deps which includes logback-classic.  In the absence of a logback.xml logback will output
@@ -491,6 +509,14 @@ resolve {
 
     resourcePackages = ['stroom']
     outputDir = file('src/main/resources/ui/noauth/swagger')
+}
+
+// Swagger output is generated into the main resources directory, so it must exist before
+// processResources reads that directory.
+tasks.named('processResources') {
+    dependsOn(tasks.named('resolve'))
+    // GWT writes this directory after processResources has run. It is added directly to shadowJar below.
+    exclude 'ui/stroom/**'
 }
 
 //// A task to fix the classpath for running the swagger plugin and

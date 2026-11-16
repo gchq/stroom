@@ -50,6 +50,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// | `POST /userAccess/v1/revoke?subjectId=...` | revoking a user's access |
 /// | `POST /session/v1/terminateSession?sessionHandle=...&nodeName=...` | terminating a session |
 /// | the extended UI config's `externalIdentityProvider` | an internal or external IdP |
+/// | the extended UI config's `edgeAuthentication` | an authenticating edge proxy in front |
 ///
 /// The calls are checked on the request spy, and the `openScreen` spy records Stroom's
 /// `OpenUserEvent`. The user holds `MANAGE_USERS_PERMISSION`.
@@ -62,6 +63,8 @@ public final class UserAccessScreenStories {
 
     private static final String REVOKE_TITLE = "End Sessions and Revoke Tokens for Selected User";
     private static final String OPEN_USER_TITLE = "Open Selected User (to disable them)";
+    private static final String END_SESSION_TITLE = "End Selected Session";
+    private static final String EDGE_NOTE = "Users here sign in through an authenticating load balancer or proxy";
 
     // UserAccessResource.find(): the second row is a subject with no stroom user
     private static final String ROWS = """
@@ -153,6 +156,9 @@ public final class UserAccessScreenStories {
                     // Moment.js says e.g. 'in 3 years' or '2 days ago'
                     play.expect(users.getAllByText(TextMatch.regex("\\((.* ago|in .*)\\)$")).count())
                             .toBeGreaterThan(1);
+                    // Tokens are tracked by the internal IdP, and there is no edge proxy note
+                    play.expect(users.queryByText("n/a")).toBeNull();
+                    play.expect(play.getByText(TextMatch.containing(EDGE_NOTE))).not().toBeVisible();
                     SecurityPlays.expectNoProblems(play);
                 })
                 // One user at a time, as every action is on one, and a split pane between the two grids
@@ -251,6 +257,35 @@ public final class UserAccessScreenStories {
                             .toBeInTheDocument();
                     // The internal IdP's promise isn't made
                     play.expect(screen.queryByText(TextMatch.containing("stops working at once"))).toBeNull();
+                    SecurityPlays.expectNoProblems(play);
+                })
+                // An external IdP's tokens are not tracked here, so the token columns say so rather than
+                // showing a misleading zero
+                .story("ExternalIdpTokensNotTracked", context -> render(context, true))
+                .withPlay(play -> {
+                    play.findByText("Alice Smith");
+                    final Query aliceRow = usersGrid(play).getByText("Alice Smith").closest(StroomDom.GRID_ROW);
+                    // Tokens and Access Expires
+                    play.expect(play.within(aliceRow).getAllByText("n/a").count()).toBe(2);
+                    // The ending of sessions is still offered
+                    play.expect(play.getByRole("button", TextMatch.containing(REVOKE_TITLE))).toBeVisible();
+                    play.expect(play.getByText(TextMatch.containing(EDGE_NOTE))).not().toBeVisible();
+                    SecurityPlays.expectNoProblems(play);
+                })
+                // Behind an authenticating edge proxy, ending sessions would not sign anyone out, so the
+                // actions are hidden and a note says how to stop a user's access instead
+                .story("EdgeAuthentication", context -> render(context, FIXTURES, edgeAuthenticationConfig()))
+                .withPlay(play -> {
+                    play.findByText("Alice Smith");
+                    play.expect(play.getByText(TextMatch.containing(EDGE_NOTE))).toBeVisible();
+                    play.expect(play.queryByRole("button", TextMatch.containing(REVOKE_TITLE))).toBeNull();
+                    play.expect(play.queryByRole("button", END_SESSION_TITLE)).toBeNull();
+                    // Opening the user, to disable them, is what does work
+                    play.expect(play.getByRole("button", OPEN_USER_TITLE)).not().toHaveAttribute("aria-disabled");
+                    // The selected user's sessions are still listed, and their tokens aren't tracked
+                    play.expect(play.findByText("curl/8.5.0")).toBeInTheDocument();
+                    final Query aliceRow = usersGrid(play).getByText("Alice Smith").closest(StroomDom.GRID_ROW);
+                    play.expect(play.within(aliceRow).getAllByText("n/a").count()).toBe(2);
                     SecurityPlays.expectNoProblems(play);
                 })
                 // Ending one session names the node
@@ -354,7 +389,7 @@ public final class UserAccessScreenStories {
 
     /// @return The selected user's sessions grid (with its toolbar and pager).
     private static Play sessionsGrid(final Play play) {
-        return play.within(play.getByTitle("End Selected Session").closest(".dock-container-vertical"));
+        return play.within(play.getByTitle(END_SESSION_TITLE).closest(".dock-container-vertical"));
     }
 
     private static Widget render(final StoryContext context, final boolean externalIdp) {
@@ -366,13 +401,23 @@ public final class UserAccessScreenStories {
     private static Widget render(final StoryContext context,
                                  final RestFixtures fixtures,
                                  final boolean externalIdp) {
+        return render(context, fixtures, externalIdp
+                ? externalIdpConfig()
+                : null);
+    }
+
+    /// @param fixtures         The story's fixtures.
+    /// @param extendedUiConfig The extended UI config, or `null` for the default (an internal IdP).
+    private static Widget render(final StoryContext context,
+                                 final RestFixtures fixtures,
+                                 final String extendedUiConfig) {
         final SecurityScreenGinjector injector = GWT.create(SecurityScreenGinjector.class);
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
                 .appPermissions(AppPermission.MANAGE_USERS_PERMISSION)
                 .startup(startup -> {
-                    if (externalIdp) {
-                        startup.extendedUiConfig(externalIdpConfig());
+                    if (extendedUiConfig != null) {
+                        startup.extendedUiConfig(extendedUiConfig);
                     }
                 })
                 .realAlerts()
@@ -392,8 +437,19 @@ public final class UserAccessScreenStories {
 
     /// @return The default extended UI config with an external identity provider.
     private static String externalIdpConfig() {
+        return extendedUiConfig(false);
+    }
+
+    /// @return The default extended UI config with an external identity provider behind an
+    ///         authenticating edge proxy.
+    private static String edgeAuthenticationConfig() {
+        return extendedUiConfig(true);
+    }
+
+    private static String extendedUiConfig(final boolean edgeAuthentication) {
         return "{\"uiConfig\":" + StartupFixtures.DEFAULT_UI_CONFIG
-                + ",\"externalIdentityProvider\":true,\"dependencyWarningsEnabled\":false"
+                + ",\"externalIdentityProvider\":true,\"edgeAuthentication\":" + edgeAuthentication
+                + ",\"dependencyWarningsEnabled\":false"
                 + ",\"maxApiKeyExpiryAgeMs\":31536000000,\"obfuscatedFields\":[]}";
     }
 }

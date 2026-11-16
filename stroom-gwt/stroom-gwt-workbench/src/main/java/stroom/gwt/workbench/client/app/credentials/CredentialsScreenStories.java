@@ -299,6 +299,41 @@ public final class CredentialsScreenStories {
                                     .toSpyMatcher()));
                     SecurityPlays.expectNoProblems(play);
                 })
+                // AWS Access Key (for an Amazon Athena Data Connection): the key ID and secret key are
+                // stored in an awsKey secret, trimmed
+                .story("AwsKey", CredentialsScreenStories::render)
+                .withPlay(play -> {
+                    play.findByText("My Creds");
+                    final Play dialog = openNewCredentials(play);
+                    play.type(dialog.getByLabelText("Name"), "Athena Key");
+                    chooseType(play, dialog, "AWS Access Key");
+                    play.type(dialog.findByLabelText("Access Key ID"), " AKIAEXAMPLE ");
+                    play.type(dialog.getByLabelText("Secret Access Key"), "secret123");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/credentials/store")
+                                    .withJsonBodyContaining("""
+                                            {"credential": {"name": "Athena Key"},
+                                             "secret": {"type": "awsKey", "accessKeyId": "AKIAEXAMPLE",
+                                               "secretAccessKey": "secret123"}}""")
+                                    .toSpyMatcher()));
+                    SecurityPlays.expectNoProblems(play);
+                })
+                // AWS Access Key with no secret key: OK says so, and stores nothing
+                .story("AwsKeyRequired", CredentialsScreenStories::render)
+                .withPlay(play -> {
+                    play.findByText("My Creds");
+                    final Play dialog = openNewCredentials(play);
+                    play.type(dialog.getByLabelText("Name"), "Athena Key");
+                    chooseType(play, dialog, "AWS Access Key");
+                    play.type(dialog.findByLabelText("Access Key ID"), "AKIAEXAMPLE");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith("ERROR: Secret access key must not be empty"));
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/credentials/store").toSpyMatcher());
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
                 // Access Token with no token: OK says so, and stores nothing
                 .story("AccessTokenRequired", CredentialsScreenStories::render)
                 .withPlay(play -> {

@@ -83,9 +83,35 @@ public class FileChooser extends Component {
         this.onChange = onChange;
     }
 
+    /// Sets the button's text, e.g. "Load From File" where the file is read rather than uploaded.
+    /// Bound to the `buttonText` attribute in ui.xml.
+    ///
+    /// @param buttonText The text; "Choose File" by default.
+    public void setButtonText(final String buttonText) {
+        chooseFile.setText(buttonText);
+    }
+
+    /// Forgets the chosen file, so that choosing the same file again is a change.
+    void reset() {
+        fileInput.setValue("");
+        showFileName();
+    }
+
+    /// Forgets the chosen file but still shows its name, e.g. once it has been read, so that
+    /// choosing the same file again is a change.
+    void clearInput() {
+        fileInput.setValue("");
+    }
+
     /// Puts the focus on the button.
     public void focus() {
         chooseFile.setFocus(true);
+    }
+
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
+        // No file can be chosen for a read-only document
+        chooseFile.setEnabled(!readOnly);
     }
 
     /// @return The file input holding the chosen file, which its controller uploads.

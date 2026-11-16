@@ -82,7 +82,7 @@ public class ContentPackZipDownloader {
                         downloadFile, importFile, e.getMessage()), e);
             }
         } else {
-            LOGGER.info("File {} already exists", importFile.toAbsolutePath().normalize());
+            LOGGER.debug("File {} already exists", importFile.toAbsolutePath().normalize());
         }
     }
 
@@ -245,7 +245,7 @@ public class ContentPackZipDownloader {
                 }
 
                 if (destFileExists) {
-                    LOGGER.info("ContentPack {} already exists {}",
+                    LOGGER.debug("ContentPack {} already exists {}",
                             contentPackZip.getName(),
                             FileUtil.getCanonicalPath(destFilePath));
                 } else {

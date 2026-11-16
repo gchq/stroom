@@ -98,6 +98,8 @@ public class SteppingController {
     private StepDataStore.RecordOrder recordOrder = StepDataStore.RecordOrder.SEQUENTIAL;
     // Elements whose captured IO this run must mark as carrying indicative counts - see setIndicativeCountElements.
     private Set<String> indicativeCountElementIds = Set.of();
+    // True when this capture is a backbone, which is held to a share of the store's byte cap.
+    private boolean backbone;
 
     @Inject
     SteppingController(final MetaHolder metaHolder,
@@ -281,6 +283,9 @@ public class SteppingController {
         // Commit the whole record - element IO plus the shared-scope snapshot - atomically, then signal that
         // it is available. The scope map is snapshotted here, after every element of the record has run, so a
         // reprocess of a mid-pipeline element can be given what the elements above it put.
+        if (backbone) {
+            stepDataStore.checkBackboneHeadroom();
+        }
         stepDataStore.putRecord(location, records, sourceLocation,
                 taskScopeMap == null ? null : taskScopeMap.snapshot(), countsAtEndOfRecord(), recordOrder);
         if (recordListener != null) {
@@ -326,6 +331,16 @@ public class SteppingController {
      */
     public void setTerminateCheck(final BooleanSupplier terminateCheck) {
         this.terminateCheck = terminateCheck == null ? () -> false : terminateCheck;
+    }
+
+    /// Say whether this capture is a backbone, i.e. one truncated at the record boundary that reads ahead
+    /// through the stream. A backbone stops, with the store's byte-limit error, once the store holds its
+    /// share of the cap (see `StepDataStore.checkBackboneHeadroom`), so the rest of the cap is left for the
+    /// records a step materialises. Defaults to false.
+    ///
+    /// @param backbone true if this capture is a backbone.
+    public void setBackbone(final boolean backbone) {
+        this.backbone = backbone;
     }
 
     public void setStreamInfo(final String streamInfo) {

@@ -16,6 +16,9 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
@@ -24,6 +27,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRefreshInterval {
+
+    private static final SimpleDuration FIVE_MINUTES = new SimpleDuration(5L, TimeUnit.MINUTES);
 
     @ParameterizedTest
     @NullAndEmptySource
@@ -99,6 +104,44 @@ class TestRefreshInterval {
         // Regression test: 30 days is more milliseconds than an int holds, which once wrapped round
         // to a negative wait
         assertThat(RefreshInterval.getMillis("30d"))
+                .isEqualTo(RefreshInterval.MAX_MILLIS);
+    }
+
+    @Test
+    void getMillis_noDataSourceMinimum() {
+        assertThat(RefreshInterval.getMillis("30s", null))
+                .isEqualTo(30_000);
+    }
+
+    @Test
+    void getMillis_dataSourceMinimumRaisesShorterInterval() {
+        // As for an Amazon Athena Data Connection refreshed every 30 seconds
+        assertThat(RefreshInterval.getMillis("30s", FIVE_MINUTES))
+                .isEqualTo(300_000);
+    }
+
+    @Test
+    void getMillis_longerIntervalWinsOverDataSourceMinimum() {
+        assertThat(RefreshInterval.getMillis("1h", FIVE_MINUTES))
+                .isEqualTo(3_600_000);
+    }
+
+    @Test
+    void getMillis_dataSourceMinimumUnderTenSeconds() {
+        assertThat(RefreshInterval.getMillis("1s", new SimpleDuration(2L, TimeUnit.SECONDS)))
+                .isEqualTo(RefreshInterval.MIN_MILLIS);
+    }
+
+    @Test
+    void getMillis_unreadableIntervalWithDataSourceMinimum() {
+        // An unreadable interval is the default, then raised to the data source's minimum
+        assertThat(RefreshInterval.getMillis("soon", FIVE_MINUTES))
+                .isEqualTo(300_000);
+    }
+
+    @Test
+    void getMillis_dataSourceMinimumOverMaximum() {
+        assertThat(RefreshInterval.getMillis("1m", new SimpleDuration(30L, TimeUnit.DAYS)))
                 .isEqualTo(RefreshInterval.MAX_MILLIS);
     }
 }

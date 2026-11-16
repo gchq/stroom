@@ -1,0 +1,37 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:fc="urn:import:stroom.widget.form.client.component"
+             xmlns:dc="urn:import:stroom.dataconnection.client.component">
+    <!-- An Excel Data Connection's settings, a section of its Settings tab -->
+    <g:FlowPanel styleName="data-connection-settings__section">
+        <form:FormGroup identity="dataConnectionExcelWorkbook"
+                        label="Workbook"
+                        helpText="The Excel .xlsx workbook, held in this document and queried as it stood when saved. Choose a file: it is uploaded straight away, and stored with the document when you save. Older .xls workbooks cannot be read; save them as .xlsx in Excel first. An administrator sets the most it may hold with the dataConnection.maxStoredDataSize property, so keep it to lookup tables and reference lists; bulk data belongs in a feed.">
+            <form:DescriptionHTML ui:field="workbookName"/>
+            <fc:FileChooser ui:field="fileChooser"/>
+        </form:FormGroup>
+        <g:FlowPanel styleName="button-group">
+            <b:Button ui:field="download" text="Download" icon="DOWNLOAD" addStyleNames="allow-focus"/>
+            <b:Button ui:field="remove" text="Remove" icon="DELETE" addStyleNames="allow-focus"/>
+        </g:FlowPanel>
+        <form:FormGroup identity="dataConnectionExcelSheet"
+                        label="Sheet (optional)"
+                        helpText="The name of the sheet to read. Leave empty to read the first sheet.">
+            <form:TextBox ui:field="sheet" addStyleNames="text-field--wide"/>
+        </form:FormGroup>
+        <form:FormGroup helpText="Whether the first row with values holds the column names. Without it, columns are named column1, column2 and so on. Default: on">
+            <tickbox:TickBox ui:field="header" identity="dataConnectionExcelHeader" label="First Row Is A Header"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionExcelColumns"
+                        label="Columns"
+                        helpText="The columns, in the order their values appear in each row. Each becomes a query field of the same name, read as its type; a value that is not of its column's type is empty, and the query warns. Numbers are read as plain numbers, whatever their format in Excel, dates as dates, and formulas as the value Excel last worked out. Detect Columns names them from the header row and guesses each type from the values, keeping a type you set here for a column of the same name.">
+            <dc:DataColumnList ui:field="columns" tableName="Columns"
+                               emptyText="No columns yet. Upload a workbook, then click Detect Columns."/>
+        </form:FormGroup>
+        <b:Button ui:field="detectColumns" text="Detect Columns" addStyleNames="allow-focus data-connection-settings__button"/>
+    </g:FlowPanel>
+</ui:UiBinder>

@@ -18,6 +18,7 @@ package stroom.gwt.workbench.client.app.gin.editors;
 
 import stroom.ai.client.component.AskStroomAiController;
 import stroom.aws.s3.client.component.S3ConfigEditor;
+import stroom.dataconnection.client.component.DataConnectionEditor;
 import stroom.datagen.client.component.DataGenEditor;
 import stroom.document.asset.client.component.DocumentAssetSelectionController;
 import stroom.document.asset.client.component.DocumentAssetsTabController;
@@ -70,6 +71,9 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
 
     /// @return A Documentation document's editor, as `DocumentationPlugin` opens it.
     DocumentationEditor getDocumentationEditor();
+
+    /// @return A Data Connection's editor, as `DataConnectionPlugin` opens it.
+    DataConnectionEditor getDataConnectionEditor();
 
     /// @return An Elastic Cluster's editor, as `ElasticClusterPlugin` opens it.
     ElasticClusterEditor getElasticClusterEditor();

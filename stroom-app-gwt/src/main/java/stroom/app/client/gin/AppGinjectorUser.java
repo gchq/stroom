@@ -32,6 +32,7 @@ import stroom.credentials.client.gin.CredentialsModule;
 import stroom.dashboard.client.gin.DashboardModule;
 import stroom.data.client.gin.StreamStoreModule;
 import stroom.data.store.impl.fs.client.gin.FsVolumeModule;
+import stroom.dataconnection.client.gin.DataConnectionModule;
 import stroom.datagen.client.gin.DataGenModule;
 import stroom.dictionary.client.gin.DictionaryModule;
 import stroom.dispatch.client.RestModule;
@@ -116,6 +117,7 @@ import com.google.web.bindery.event.shared.EventBus;
         SecurityModule.class,
         IdentityModule.class,
         ElasticClusterModule.class,
+        DataConnectionModule.class,
         ElasticIndexModule.class,
         AnalyticsModule.class,
         DataGenModule.class,

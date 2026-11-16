@@ -2385,6 +2385,112 @@ paths:
       summary: List child types for a stream
       tags:
       - Data
+  /dataConnection/v1/detectColumns:
+    post:
+      operationId: detectDataConnectionColumns
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataConnectionDoc"
+        description: dataConnectionDoc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DataColumn"
+          description: default response
+      summary: "Detect the columns of a Data Connection's CSV or workbook, or the\
+        \ attributes of its LDAP directory"
+      tags:
+      - Data Connections
+  /dataConnection/v1/downloadExcelFile/{uuid}:
+    get:
+      operationId: downloadDataConnectionExcelFile
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceGeneration"
+          description: default response
+      summary: Download the workbook of an Excel Data Connection
+      tags:
+      - Data Connections
+  /dataConnection/v1/testConnection:
+    post:
+      operationId: testDataConnection
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataConnectionDoc"
+        description: dataConnectionDoc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataConnectionTestResponse"
+          description: default response
+      summary: Test a Data Connection
+      tags:
+      - Data Connections
+  /dataConnection/v1/{uuid}:
+    get:
+      operationId: fetchDataConnection
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataConnectionDoc"
+          description: default response
+      summary: Fetch a Data Connection doc by its UUID
+      tags:
+      - Data Connections
+    put:
+      operationId: updateDataConnection
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataConnectionDoc"
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataConnectionDoc"
+          description: default response
+      summary: Update a Data Connection doc
+      tags:
+      - Data Connections
   /dataDownload/v1/downloadZip:
     post:
       operationId: downloadZip
@@ -2510,6 +2616,26 @@ paths:
                 $ref: "#/components/schemas/Documentation"
           description: default response
       summary: Fetch documentation for a data source
+      tags:
+      - Data Sources
+  /dataSource/v1/fetchMinRefreshInterval:
+    post:
+      operationId: fetchMinRefreshInterval
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocRef"
+        description: dataSourceRef
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleDuration"
+          description: default response
+      summary: Fetch the minimum automatic refresh interval of a data source
       tags:
       - Data Sources
   /dataSource/v1/findFields:
@@ -11585,6 +11711,30 @@ components:
           type: string
         sourceTaskId:
           $ref: "#/components/schemas/TaskId"
+    AthenaConnectionSettings:
+      type: object
+      properties:
+        catalog:
+          type: string
+        credentialName:
+          type: string
+        database:
+          type: string
+        maxDataScannedMb:
+          type: integer
+          format: int32
+        minRefreshMinutes:
+          type: integer
+          format: int32
+        outputLocation:
+          type: string
+        region:
+          type: string
+        resultReuseMinutes:
+          type: integer
+          format: int32
+        workGroup:
+          type: string
     AuthFlowResponse:
       type: object
       properties:
@@ -11709,6 +11859,16 @@ components:
           $ref: "#/components/schemas/AwsProxyConfig"
         trustAllCertificatesEnabled:
           type: boolean
+    AwsKeySecret:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Secret"
+      - type: object
+        properties:
+          accessKeyId:
+            type: string
+          secretAccessKey:
+            type: string
     AwsPolicyDescriptorType:
       type: object
       properties:
@@ -12731,6 +12891,7 @@ components:
           - SSH_KEY
           - KEY_STORE
           - KEY_STORE_FILE
+          - AWS_KEY
         expiryTimeMs:
           type: integer
           format: int64
@@ -12768,6 +12929,19 @@ components:
         id:
           type: string
         ignoreCase:
+          type: boolean
+    CsvSettings:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataColumn"
+        data:
+          type: string
+        delimiter:
+          type: string
+        header:
           type: boolean
     CustomConditionalFormattingStyle:
       type: object
@@ -12923,6 +13097,75 @@ components:
             type: string
           searchRequest:
             $ref: "#/components/schemas/DashboardSearchRequest"
+    DataColumn:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+          - TEXT
+          - LONG
+          - DOUBLE
+          - DATE
+          - BOOLEAN
+    DataConnectionDoc:
+      type: object
+      properties:
+        athena:
+          $ref: "#/components/schemas/AthenaConnectionSettings"
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        csv:
+          $ref: "#/components/schemas/CsvSettings"
+        description:
+          type: string
+        excel:
+          $ref: "#/components/schemas/ExcelSettings"
+        jdbc:
+          $ref: "#/components/schemas/JdbcConnectionSettings"
+        ldap:
+          $ref: "#/components/schemas/LdapSettings"
+        maxRows:
+          type: integer
+          format: int32
+        name:
+          type: string
+        queryTimeoutSeconds:
+          type: integer
+          format: int32
+        sourceType:
+          type: string
+          enum:
+          - JDBC
+          - ATHENA
+          - CSV
+          - EXCEL
+          - LDAP
+        timeField:
+          type: string
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
+    DataConnectionTestResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        ok:
+          type: boolean
     DataGenDoc:
       type: object
       properties:
@@ -13549,6 +13792,7 @@ components:
           - DOCUMENT_ANALYTIC_RULE
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
+          - DOCUMENT_DATA_CONNECTION
           - DOCUMENT_DATA_GEN
           - DOCUMENT_DICTIONARY
           - DOCUMENT_DOCUMENTATION
@@ -14415,6 +14659,23 @@ components:
         streamId:
           type: integer
           format: int64
+    ExcelSettings:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataColumn"
+        copyWorkbookFrom:
+          type: string
+        fileName:
+          type: string
+        header:
+          type: boolean
+        sheet:
+          type: string
+        uploadKey:
+          $ref: "#/components/schemas/ResourceKey"
     ExecutionHistory:
       type: object
       properties:
@@ -14844,6 +15105,8 @@ components:
       type: object
       properties:
         dependencyWarningsEnabled:
+          type: boolean
+        edgeAuthentication:
           type: boolean
         externalIdentityProvider:
           type: boolean
@@ -15354,6 +15617,7 @@ components:
             - SSH_KEY
             - KEY_STORE
             - KEY_STORE_FILE
+            - AWS_KEY
           uniqueItems: true
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
@@ -15432,6 +15696,8 @@ components:
       properties:
         dataSourceRef:
           $ref: "#/components/schemas/DocRef"
+        nativeQuery:
+          type: string
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
         queryable:
@@ -16994,6 +17260,26 @@ components:
       required:
       - minimumPasswordLength
       - minimumPasswordStrength
+    JdbcConnectionSettings:
+      type: object
+      properties:
+        connectionProperties:
+          type: object
+          additionalProperties:
+            type: string
+        credentialName:
+          type: string
+        fetchSize:
+          type: integer
+          format: int32
+        maxPoolSize:
+          type: integer
+          format: int32
+        minRefreshMinutes:
+          type: integer
+          format: int32
+        url:
+          type: string
     Job:
       type: object
       properties:
@@ -17214,6 +17500,33 @@ components:
           type: boolean
         fitWidth:
           type: boolean
+    LdapSettings:
+      type: object
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataColumn"
+        baseDn:
+          type: string
+        credentialName:
+          type: string
+        minRefreshMinutes:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        scope:
+          type: string
+          enum:
+          - BASE
+          - ONE_LEVEL
+          - SUBTREE
+        startTls:
+          type: boolean
+        url:
+          type: string
     LifespanInfo:
       type: object
       properties:
@@ -18284,6 +18597,7 @@ components:
           - DOCUMENT_ANALYTIC_RULE
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
+          - DOCUMENT_DATA_CONNECTION
           - DOCUMENT_DATA_GEN
           - DOCUMENT_DICTIONARY
           - DOCUMENT_DOCUMENTATION
@@ -19155,6 +19469,8 @@ components:
           $ref: "#/components/schemas/DocRef"
         expression:
           $ref: "#/components/schemas/ExpressionOperator"
+        nativeQuery:
+          type: string
         params:
           type: array
           items:
@@ -21066,6 +21382,7 @@ components:
       discriminator:
         mapping:
           accessToken: "#/components/schemas/AccessTokenSecret"
+          awsKey: "#/components/schemas/AwsKeySecret"
           keyStore: "#/components/schemas/KeyStoreSecret"
           keyStoreFile: "#/components/schemas/KeyStoreFileSecret"
           sshKey: "#/components/schemas/SshKeySecret"
