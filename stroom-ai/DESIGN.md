@@ -1378,6 +1378,23 @@ the assembled messages, so they see what is sent.
 * **Between questions** (`ChatCompactor`): when the estimate passes 80% of the budget, turns older than the latest two
   are replaced by digests built in code (`TurnDigests`), and if that isn't enough the model folds the digests into a
   rolling summary. Nothing is deleted; `/compact` compacts on request and compaction can be undone.
+* **While idle** (`AiIdleCompaction`, the 'AI Chat Idle Compaction' job, every minute; built 2026-11-16): a chat whose
+  last message is older than `compaction.idleAfter` (10 minutes; empty or zero turns it off) and that is over
+  `compaction.idleThresholdPercent` (60%, below the 80%) is compacted before the user comes back, so their next
+  question need not wait for a summary. It is `CompactionMode.IDLE`: as the automatic compaction, but against the idle
+  threshold, with every answered turn counted as finished. If set at or above `thresholdPercent`, that is used instead
+  (a validation warning). The chat's last model (or the default) is used, as its owner, in a run of its own
+  (`AiChatRunManager.startIdleCompaction`): only when the chat has no active run and a run slot is free, never queued.
+  The run is marked (`ai_chat_run.idle_compaction`), so on any node a question sent meanwhile waits for it (up to two
+  minutes, then a clear busy message) and then starts as usual, rather than steering a run that answers nothing.
+  _Stop_ works on it; once ended it is not shown as the chat's run (`getLatestShown`), so there is nothing to resume.
+  The record says `idle`, shown as "Compacted while the chat was idle", and can be undone. A summary's tokens are
+  added to the run. Candidates come from one query (`AiDao.findIdleChats`): last message in a window of one hour
+  after the idle time, not a compaction, no active run and no idle compaction run since it. At most 50 are measured
+  (no model call) and 5 runs started per job run. A chat measured as under the threshold is remembered in memory by
+  its last message until it leaves the window, so after a restart it is measured at most once more; compacted or
+  stopped chats are left out by the query itself, so that holds across nodes and restarts. Several nodes compact a
+  chat at most once: one run per chat, and the run does nothing if the chat's last message has changed.
 * **Within a question** (`McpAgentChat.fitToBudget`): earlier steps (all but the latest four) are summarised in their
   place by the model, then results and arguments are shortened in stages. On an overflow error the run shrinks and
   retries.

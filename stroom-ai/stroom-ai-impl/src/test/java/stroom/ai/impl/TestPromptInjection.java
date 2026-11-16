@@ -115,7 +115,7 @@ class TestPromptInjection {
                 message(1, AiMessageType.USER_MESSAGE, null, "q1", 1),
                 message(2, AiMessageType.AI_RESPONSE, null, "a1", 1),
                 message(3, AiMessageType.COMPACTION_SUMMARY, null, JsonUtil.writeValueAsString(
-                        new CompactionRecord(1, 1, INJECTION, 0, 0, 0, false, false), false), 1),
+                        new CompactionRecord(1, 1, INJECTION, 0, 0, 0, false, false, false), false), 1),
                 message(4, AiMessageType.USER_MESSAGE, null, "q2", 4));
 
         final List<ChatMessage> messages = assembler.assemble(new AskStroomAiRequest(null, null, null, "q2"), 1,

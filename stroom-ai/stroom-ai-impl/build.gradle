@@ -65,6 +65,7 @@ dependencies {
     implementation libs.jackson.jq
     implementation libs.jackson2.databind
     implementation libs.jakarta.servlet.api
+    implementation libs.jakarta.validation.api
     implementation libs.langchain4j
     implementation libs.langchain4j.cohere
     implementation libs.langchain4j.jina

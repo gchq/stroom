@@ -270,6 +270,20 @@ public class AiChatRunRecord extends UpdatableRecordImpl<AiChatRunRecord> {
         return (String) get(17);
     }
 
+    /**
+     * Setter for <code>stroom.ai_chat_run.idle_compaction</code>.
+     */
+    public void setIdleCompaction(Boolean value) {
+        set(18, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat_run.idle_compaction</code>.
+     */
+    public Boolean getIdleCompaction() {
+        return (Boolean) get(18);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -293,7 +307,7 @@ public class AiChatRunRecord extends UpdatableRecordImpl<AiChatRunRecord> {
     /**
      * Create a detached, initialised AiChatRunRecord
      */
-    public AiChatRunRecord(Integer id, Integer version, Long createTimeMs, Long updateTimeMs, Integer fkAiChatId, String userUuid, Byte status, Byte stopReason, String nodeName, String sessionIdHash, Boolean unattended, Long heartbeatMs, Long startTimeMs, Long endTimeMs, Long inputTokens, Long outputTokens, Integer toolCallCount, String errorMessage) {
+    public AiChatRunRecord(Integer id, Integer version, Long createTimeMs, Long updateTimeMs, Integer fkAiChatId, String userUuid, Byte status, Byte stopReason, String nodeName, String sessionIdHash, Boolean unattended, Long heartbeatMs, Long startTimeMs, Long endTimeMs, Long inputTokens, Long outputTokens, Integer toolCallCount, String errorMessage, Boolean idleCompaction) {
         super(AiChatRun.AI_CHAT_RUN);
 
         setId(id);
@@ -314,6 +328,7 @@ public class AiChatRunRecord extends UpdatableRecordImpl<AiChatRunRecord> {
         setOutputTokens(outputTokens);
         setToolCallCount(toolCallCount);
         setErrorMessage(errorMessage);
+        setIdleCompaction(idleCompaction);
         resetTouchedOnNotNull();
     }
 }

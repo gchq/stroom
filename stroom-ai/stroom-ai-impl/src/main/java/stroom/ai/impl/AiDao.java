@@ -28,6 +28,7 @@ import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -276,6 +277,20 @@ public interface AiDao {
      */
     List<Integer> findChatsNotUpdatedSince(long timeMs, int limit);
 
+    /// Finds chats that may be compacted while idle: the user's own chats (not those of MCP sessions) whose last
+    /// message was stored between two times, is not a compaction, and that have no active run and no idle
+    /// compaction run started since that message. Only `ai_chat`, the latest message of each chat changed since
+    /// {@code idleSinceMs} and its runs are read, so it is cheap to run often.
+    ///
+    /// @param idleBeforeMs       The last message must be older than this, i.e. the chat has been idle long enough.
+    /// @param idleSinceMs        The last message must be no older than this, which bounds how far back to look.
+    /// @param excludedMessageIds Chats whose last message is one of these are left out, e.g. those already found
+    ///                           to need no compaction.
+    /// @param limit              The most to return.
+    /// @return The chats, those idle the longest first.
+    List<IdleChat> findIdleChats(long idleBeforeMs, long idleSinceMs, Collection<Integer> excludedMessageIds,
+                                 int limit);
+
     /**
      * @return The UUIDs of every user who has a chat.
      */
@@ -301,6 +316,16 @@ public interface AiDao {
                      Integer lastInputTokens,
                      long totalInputTokens,
                      long totalOutputTokens) {
+
+    }
+
+    /// A chat found by [#findIdleChats].
+    ///
+    /// @param chatId            The chat.
+    /// @param userUuid          Its owner.
+    /// @param lastMessageId     The id of its last message.
+    /// @param lastMessageTimeMs When its last message was stored.
+    record IdleChat(int chatId, String userUuid, int lastMessageId, long lastMessageTimeMs) {
 
     }
 

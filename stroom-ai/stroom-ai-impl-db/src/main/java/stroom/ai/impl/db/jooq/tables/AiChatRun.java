@@ -146,6 +146,11 @@ public class AiChatRun extends TableImpl<AiChatRunRecord> {
      */
     public final TableField<AiChatRunRecord, String> ERROR_MESSAGE = createField(DSL.name("error_message"), SQLDataType.VARCHAR(1024), this, "");
 
+    /**
+     * The column <code>stroom.ai_chat_run.idle_compaction</code>.
+     */
+    public final TableField<AiChatRunRecord, Boolean> IDLE_COMPACTION = createField(DSL.name("idle_compaction"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
+
     private AiChatRun(Name alias, Table<AiChatRunRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

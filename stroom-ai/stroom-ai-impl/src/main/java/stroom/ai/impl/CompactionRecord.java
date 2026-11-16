@@ -33,6 +33,8 @@ import java.util.Objects;
 /// @param tokensAfter       The estimated tokens it is sent after it.
 /// @param messageCount      How many messages the model now sees as digests or a summary.
 /// @param manual            True if the user asked for it, false if it was automatic.
+/// @param idle              True if it was made while the chat was idle, ahead of the user's next question. False
+///                          in records stored before idle compaction existed.
 /// @param stale             True if a message it covers has since been changed or deleted, so it is no longer
 ///                          used.
 public record CompactionRecord(int digestsUpToTurnId,
@@ -42,36 +44,43 @@ public record CompactionRecord(int digestsUpToTurnId,
                                long tokensAfter,
                                int messageCount,
                                boolean manual,
+                               boolean idle,
                                boolean stale) {
 
     /// Nothing compacted.
-    public static final CompactionRecord NONE = new CompactionRecord(0, 0, null, 0, 0, 0, false, false);
+    public static final CompactionRecord NONE = new CompactionRecord(0, 0, null, 0, 0, 0, false, false, false);
 
     /// @return A copy that shows turns up to {@code turnId} as digests.
     public CompactionRecord withDigestsUpTo(final int turnId) {
         return new CompactionRecord(turnId, summaryUpToTurnId, summary, tokensBefore, tokensAfter, messageCount,
-                manual, stale);
+                manual, idle, stale);
     }
 
     /// @return A copy with the turns up to {@code turnId} replaced by {@code summary}.
     public CompactionRecord withSummary(final String summary, final int turnId) {
         return new CompactionRecord(digestsUpToTurnId, turnId, summary, tokensBefore, tokensAfter, messageCount,
-                manual, stale);
+                manual, idle, stale);
     }
 
-    /// @return A copy with the figures shown to the user.
+    /// @param tokensBefore The estimated tokens before the compaction.
+    /// @param tokensAfter  The estimated tokens after it.
+    /// @param messageCount How many messages the model now sees as digests or a summary.
+    /// @param manual       True if the user asked for it.
+    /// @param idle         True if it was made while the chat was idle.
+    /// @return A copy with the figures shown to the user, and why it was made.
     public CompactionRecord withStats(final long tokensBefore,
                                       final long tokensAfter,
                                       final int messageCount,
-                                      final boolean manual) {
+                                      final boolean manual,
+                                      final boolean idle) {
         return new CompactionRecord(digestsUpToTurnId, summaryUpToTurnId, summary, tokensBefore, tokensAfter,
-                messageCount, manual, stale);
+                messageCount, manual, idle, stale);
     }
 
     /// @return A copy marked as stale.
     public CompactionRecord asStale() {
         return new CompactionRecord(digestsUpToTurnId, summaryUpToTurnId, summary, tokensBefore, tokensAfter,
-                messageCount, manual, true);
+                messageCount, manual, idle, true);
     }
 
     /// @param other Another record, or null.

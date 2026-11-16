@@ -38,6 +38,7 @@ import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.output.TokenUsage;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -80,18 +81,22 @@ public class ChatCompactor {
     private final Provider<AiConfig> aiConfigProvider;
     private final Provider<AskStroomAiConfig> askConfigProvider;
     private final ModelStreamer modelStreamer;
+    // Null where it isn't given (in tests), and a summary's tokens are not added to the run.
+    private final Provider<AiChatRunManager> runManagerProvider;
 
     @Inject
     ChatCompactor(final AiService aiService,
                   final ContextAssembler contextAssembler,
                   final Provider<AiConfig> aiConfigProvider,
                   final Provider<AskStroomAiConfig> askConfigProvider,
-                  final ModelStreamer modelStreamer) {
+                  final ModelStreamer modelStreamer,
+                  final Provider<AiChatRunManager> runManagerProvider) {
         this.aiService = aiService;
         this.contextAssembler = contextAssembler;
         this.aiConfigProvider = aiConfigProvider;
         this.askConfigProvider = askConfigProvider;
         this.modelStreamer = modelStreamer;
+        this.runManagerProvider = runManagerProvider;
     }
 
     /// @param modelDoc The model, or null.
@@ -105,6 +110,16 @@ public class ChatCompactor {
         // Keep at least half of the window for the request, however large the reserve is set.
         final long budget = Math.max(window / 2, window - (long) config.getReplyReserveTokens());
         return new ContextBudget(budget, config.getThresholdPercent());
+    }
+
+    /// @param modelDoc The model, or null.
+    /// @return How much of the model's context window an idle chat may use before it is compacted while idle: as
+    /// [#budget(OpenAIModelDoc)], with the idle threshold.
+    public ContextBudget idleBudget(final OpenAIModelDoc modelDoc) {
+        final ContextBudget budget = budget(modelDoc);
+        return budget.isKnown()
+                ? new ContextBudget(budget.budgetTokens(), config().getEffectiveIdleThresholdPercent())
+                : budget;
     }
 
     /// Builds the messages to send to the model for a question, compacting the chat first if it needs it.
@@ -131,14 +146,17 @@ public class ChatCompactor {
         final CompactionRecord current = ContextAssembler.currentCompaction(history);
         List<ChatMessage> messages = contextAssembler.assemble(request, chatId, attachmentMap, history, current,
                 tablesAsProfiles(modelDoc));
-        final ContextBudget budget = budget(modelDoc);
+        final ContextBudget budget = mode == CompactionMode.IDLE
+                ? idleBudget(modelDoc)
+                : budget(modelDoc);
         final long before = contextAssembler.estimateTokens(chatId, messages);
-        if (mode == CompactionMode.AUTO && !budget.isOver(before)) {
+        if ((mode == CompactionMode.AUTO || mode == CompactionMode.IDLE) && !budget.isOver(before)) {
             return messages;
         }
 
-        // Replace older turns with their digests.
-        final List<Integer> finishedTurns = mode == CompactionMode.MANUAL
+        // Replace older turns with their digests. With no question being asked (the user asked to compact, or the
+        // chat is idle), every answered turn has finished.
+        final List<Integer> finishedTurns = mode == CompactionMode.MANUAL || mode == CompactionMode.IDLE
                 ? answeredTurns(history)
                 : finishedTurns(history);
         final int keep = mode == CompactionMode.FORCE
@@ -156,7 +174,7 @@ public class ChatCompactor {
 
         // If that is not enough, fold the digests not yet summarised into the summary.
         final boolean summarise = switch (mode) {
-            case AUTO -> budget.isOver(contextAssembler.estimateTokens(chatId, messages));
+            case AUTO, IDLE -> budget.isOver(contextAssembler.estimateTokens(chatId, messages));
             case FORCE -> !budget.isKnown() || budget.isOver(contextAssembler.estimateTokens(chatId, messages));
             case MANUAL -> true;
         };
@@ -173,7 +191,7 @@ public class ChatCompactor {
                     .filter(m -> m.getTurnId() <= digestsUpTo && MODEL_MESSAGE_TYPES.contains(m.getMessageType()))
                     .count();
             final CompactionRecord stored = next.withStats(before, after, messageCount,
-                    mode == CompactionMode.MANUAL);
+                    mode == CompactionMode.MANUAL, mode == CompactionMode.IDLE);
             aiService.storeMessage(chatId, AiMessageType.COMPACTION_SUMMARY,
                     JsonUtil.writeValueAsString(stored, false));
             LOGGER.info(() -> "Compacted chatId=" + chatId + " (" + mode + "): turns up to "
@@ -243,11 +261,23 @@ public class ChatCompactor {
                 ? aiService.getStreamingChatModel(modelDoc)
                 : null;
         final ChatResponse response = modelStreamer.callUnseen(chatModel, streamingModel, request, chatId, cancelled);
+        addUsageToRun(chatId, response);
         final String summary = NullSafe.get(response, ChatResponse::aiMessage, AiMessage::text);
         if (NullSafe.isBlankString(summary)) {
             throw new IllegalStateException("the model gave an empty summary");
         }
         return summary.strip();
+    }
+
+    // The tokens a summary used count towards the run that wrote it, as a question's model calls do.
+    private void addUsageToRun(final int chatId, final ChatResponse response) {
+        final TokenUsage usage = NullSafe.get(response, ChatResponse::tokenUsage);
+        if (usage != null && runManagerProvider != null) {
+            runManagerProvider.get().addUsage(chatId,
+                    NullSafe.getOrElse(usage, TokenUsage::inputTokenCount, 0),
+                    NullSafe.getOrElse(usage, TokenUsage::outputTokenCount, 0),
+                    0);
+        }
     }
 
     // Why a summary couldn't be written, for the user. Seen in testing: a compaction's warning said only "(null)",
@@ -274,9 +304,50 @@ public class ChatCompactor {
                               final String instructions,
                               final BooleanSupplier cancelled) {
         final CompactionRecord before = ContextAssembler.currentCompaction(aiService.getMessages(chatId));
-        assemble(new AskStroomAiRequest(null, null, null, ""), chatId, Map.of(), modelDoc, chatModel,
-                CompactionMode.MANUAL, instructions, cancelled);
+        assemble(noQuestion(), chatId, Map.of(), modelDoc, chatModel, CompactionMode.MANUAL, instructions,
+                cancelled);
         return !ContextAssembler.currentCompaction(aiService.getMessages(chatId)).coversTheSameAs(before);
+    }
+
+    /// Checks, cheaply (no model is called), whether an idle chat is over the idle threshold, so would be compacted
+    /// by [#compactWhileIdle].
+    ///
+    /// @param chatId   The chat.
+    /// @param modelDoc The model the chat would next be answered with.
+    /// @return True if the chat is over the idle threshold. False if it is under it, or the model's context window
+    /// is not known.
+    public boolean isOverIdleThreshold(final int chatId, final OpenAIModelDoc modelDoc) {
+        final ContextBudget budget = idleBudget(modelDoc);
+        if (!budget.isKnown()) {
+            return false;
+        }
+        final List<AiChatMessage> history = aiService.getMessages(chatId);
+        final List<ChatMessage> messages = contextAssembler.assemble(noQuestion(), chatId, Map.of(), history,
+                ContextAssembler.currentCompaction(history), tablesAsProfiles(modelDoc));
+        return budget.isOver(contextAssembler.estimateTokens(chatId, messages));
+    }
+
+    /// Compacts an idle chat ahead of the user's next question, as a question would ([CompactionMode#AUTO]) but
+    /// measured against the idle threshold ([CompactionMode#IDLE]). Nothing is done if the chat is under it.
+    ///
+    /// @param chatId    The chat.
+    /// @param modelDoc  The model the chat would next be answered with.
+    /// @param chatModel The model, to write a summary if one is needed.
+    /// @param cancelled Says if the run has been stopped, which ends a summary being written.
+    /// @return True if anything was compacted.
+    /// @throws TaskTerminatedException If the run was stopped while a summary was being written.
+    public boolean compactWhileIdle(final int chatId,
+                                    final OpenAIModelDoc modelDoc,
+                                    final ChatModel chatModel,
+                                    final BooleanSupplier cancelled) {
+        final CompactionRecord before = ContextAssembler.currentCompaction(aiService.getMessages(chatId));
+        assemble(noQuestion(), chatId, Map.of(), modelDoc, chatModel, CompactionMode.IDLE, null, cancelled);
+        return !ContextAssembler.currentCompaction(aiService.getMessages(chatId)).coversTheSameAs(before);
+    }
+
+    // What the model would be sent with no question asked, to measure a chat by.
+    private static AskStroomAiRequest noQuestion() {
+        return new AskStroomAiRequest(null, null, null, "");
     }
 
     /// @param history All of a chat's messages, in order.
@@ -406,6 +477,10 @@ public class ChatCompactor {
         /// As far as possible, because the model said the request was too large.
         FORCE,
         /// Because the user asked, keeping the latest turns in full and always writing a summary.
-        MANUAL
+        MANUAL,
+        /// Because the chat has been left idle: as [#AUTO], but only if the chat is past the idle threshold (below
+        /// the automatic one), so that the user's next question need not wait for a compaction. Every answered turn
+        /// counts as finished, as no question is being asked.
+        IDLE
     }
 }

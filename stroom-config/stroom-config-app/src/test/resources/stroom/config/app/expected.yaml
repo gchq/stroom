@@ -31,6 +31,8 @@ appConfig:
     chatRetention: "P90D"
     compaction:
       digestMaxResultRows: 20
+      idleAfter: "PT10M"
+      idleThresholdPercent: 60
       replyReserveTokens: 4096
       thresholdPercent: 80
       turnsKeptInFull: 2

@@ -61,6 +61,7 @@ import org.jooq.impl.DSL;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -775,6 +776,55 @@ public class AiDaoImpl implements AiDao {
                 .orderBy(AI_CHAT.UPDATE_TIME_MS)
                 .limit(limit)
                 .fetch(AI_CHAT.ID));
+    }
+
+    @Override
+    public List<IdleChat> findIdleChats(final long idleBeforeMs,
+                                        final long idleSinceMs,
+                                        final Collection<Integer> excludedMessageIds,
+                                        final int limit) {
+        final stroom.ai.impl.db.jooq.tables.AiChatMessage last = AI_CHAT_MESSAGE.as("last_message");
+        final stroom.ai.impl.db.jooq.tables.AiChatMessage any = AI_CHAT_MESSAGE.as("any_message");
+        final List<Byte> activeStatuses = Arrays.stream(AiChatRunStatus.values())
+                .filter(AiChatRunStatus::isActive)
+                .map(AiChatRunStatus::getPrimitiveValue)
+                .toList();
+        // Storing a message updates its chat's update time, so only chats updated since idleSinceMs can have a
+        // last message that recent.
+        final List<Condition> conditions = new ArrayList<>();
+        conditions.add(AI_CHAT.MCP_SESSION_ID.isNull());
+        conditions.add(AI_CHAT.UPDATE_TIME_MS.ge(idleSinceMs));
+        conditions.add(last.CREATE_TIME_MS.lt(idleBeforeMs));
+        conditions.add(last.CREATE_TIME_MS.ge(idleSinceMs));
+        // Compacted since its last message, i.e. its last message is the compaction.
+        conditions.add(last.MESSAGE_TYPE.ne((int) AiMessageType.COMPACTION_SUMMARY.getPrimitiveValue()));
+        // Busy, or already compacted (or looked at, e.g. stopped by the user) while idle since its last message.
+        conditions.add(DSL.notExists(DSL.selectOne()
+                .from(AI_CHAT_RUN)
+                .where(AI_CHAT_RUN.FK_AI_CHAT_ID.eq(AI_CHAT.ID))
+                .and(AI_CHAT_RUN.STATUS.in(activeStatuses)
+                        .or(AI_CHAT_RUN.IDLE_COMPACTION.isTrue()
+                                .and(AI_CHAT_RUN.CREATE_TIME_MS.ge(last.CREATE_TIME_MS))))));
+        if (!NullSafe.isEmptyCollection(excludedMessageIds)) {
+            conditions.add(last.ID.notIn(excludedMessageIds));
+        }
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                        .select(AI_CHAT.ID, AI_CHAT.USER_UUID, last.ID, last.CREATE_TIME_MS)
+                        .from(AI_CHAT)
+                        .join(last).on(last.FK_AI_CHAT_ID.eq(AI_CHAT.ID)
+                                // The chat's last message, found with the (chat, id) index.
+                                .and(last.ID.eq(DSL.field(DSL.select(DSL.max(any.ID))
+                                        .from(any)
+                                        .where(any.FK_AI_CHAT_ID.eq(AI_CHAT.ID))))))
+                        .where(conditions)
+                        .orderBy(last.CREATE_TIME_MS, AI_CHAT.ID)
+                        .limit(limit)
+                        .fetch())
+                .map(record -> new IdleChat(
+                        record.value1(),
+                        record.value2(),
+                        record.value3(),
+                        record.value4()));
     }
 
     @Override

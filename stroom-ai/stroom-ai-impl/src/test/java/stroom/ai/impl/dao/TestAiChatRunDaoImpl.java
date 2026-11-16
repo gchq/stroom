@@ -21,14 +21,17 @@ import stroom.ai.impl.AiDao;
 import stroom.ai.impl.db.AiDbConnProvider;
 import stroom.ai.impl.db.AiDbModule;
 import stroom.ai.shared.AiChat;
+import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
+import stroom.ai.shared.AiMessageType;
 import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docstore.api.DocFinder;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.db.DbTestUtil;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.shared.UserRef;
 
 import com.google.inject.AbstractModule;
@@ -269,5 +272,143 @@ class TestAiChatRunDaoImpl {
         aiDao.deleteChat(chat.getId());
 
         assertThat(runDao.getLatest(chat.getId())).isEmpty();
+    }
+
+    @Test
+    void testIdleCompactionRun_isMarkedAndOnlyStartsInAChatWithNoActiveRun() {
+        final AiChatRun idle = runDao.createIdleCompactionIfNoneActive(chat.getId(), "user1", "node1")
+                .orElseThrow();
+
+        assertThat(idle.getStatus()).isEqualTo(AiChatRunStatus.RUNNING);
+        assertThat(runDao.getActiveIdleCompaction(chat.getId())).contains(idle);
+        assertThat(runDao.createIdleCompactionIfNoneActive(chat.getId(), "user1", "node1")).isEmpty();
+        assertThat(runDao.createIfNoneActive(chat.getId(), "user1", AiChatRunStatus.RUNNING, "node1", null))
+                .isEmpty();
+
+        // A question's run isn't an idle compaction.
+        runDao.compareAndSetStatus(idle.getId(), Set.of(AiChatRunStatus.RUNNING), AiChatRunStatus.DONE, null, null);
+        final AiChatRun question = runDao.createIfNoneActive(
+                chat.getId(), "user1", AiChatRunStatus.RUNNING, "node1", null).orElseThrow();
+        assertThat(runDao.getActiveIdleCompaction(chat.getId())).isEmpty();
+        assertThat(runDao.createIdleCompactionIfNoneActive(chat.getId(), "user1", "node1")).isEmpty();
+        assertThat(runDao.getActive(chat.getId())).contains(question);
+    }
+
+    @Test
+    void testGetLatestShown_leavesOutAnIdleCompactionThatHasEnded() {
+        final AiChatRun question = runDao.create(chat.getId(), "user1", AiChatRunStatus.RUNNING, "node1", null);
+        runDao.compareAndSetStatus(question.getId(), Set.of(AiChatRunStatus.RUNNING), AiChatRunStatus.DONE, null,
+                null);
+        final AiChatRun idle = runDao.createIdleCompactionIfNoneActive(chat.getId(), "user1", "node1")
+                .orElseThrow();
+
+        // Shown while it works, so the chat shows as busy and it can be stopped.
+        assertThat(runDao.getLatestShown(chat.getId())).contains(idle);
+
+        // Stopped, it answered no question, so there is nothing of it to resume.
+        runDao.compareAndSetStatus(idle.getId(), Set.of(AiChatRunStatus.RUNNING), AiChatRunStatus.STOPPED,
+                AiChatRunStopReason.USER, null);
+        assertThat(runDao.getLatestShown(chat.getId()).map(AiChatRun::getId)).contains(question.getId());
+        assertThat(runDao.getLatest(chat.getId()).map(AiChatRun::getId)).contains(idle.getId());
+    }
+
+    @Test
+    void testFindIdleChats_aChatWhoseLastMessageIsInTheWindowIsFound() {
+        final AiChatMessage last = answered(chat.getId());
+
+        assertThat(findIdle()).containsExactly(
+                new AiDao.IdleChat(chat.getId(), "user1", last.getId(), last.getCreateTimeMs()));
+    }
+
+    @Test
+    void testFindIdleChats_aChatNotIdleLongEnoughIsNotFound() {
+        final AiChatMessage last = answered(chat.getId());
+
+        // Its last message is no older than the idle time.
+        assertThat(aiDao.findIdleChats(last.getCreateTimeMs(), last.getCreateTimeMs() - 60_000, List.of(), 10))
+                .isEmpty();
+        // Nor is one idle for longer than the window looks back.
+        assertThat(aiDao.findIdleChats(last.getCreateTimeMs() + 60_000, last.getCreateTimeMs() + 1, List.of(), 10))
+                .isEmpty();
+    }
+
+    @Test
+    void testFindIdleChats_aChatCompactedSinceItsLastMessageIsNotFound() {
+        answered(chat.getId());
+        aiDao.storeMessage(chat.getId(), AiMessageType.COMPACTION_SUMMARY, "{}");
+
+        assertThat(findIdle()).isEmpty();
+
+        // A message after the compaction makes it a candidate again.
+        aiDao.storeMessage(chat.getId(), AiMessageType.USER_MESSAGE, "and now?");
+        assertThat(findIdle()).hasSize(1);
+    }
+
+    @Test
+    void testFindIdleChats_aChatWithAnActiveRunIsNotFound() {
+        answered(chat.getId());
+        final AiChatRun waiting = runDao.create(chat.getId(), "user1", AiChatRunStatus.WAITING_FOR_USER, "node1",
+                null);
+
+        assertThat(findIdle()).isEmpty();
+
+        runDao.compareAndSetStatus(waiting.getId(), Set.of(AiChatRunStatus.WAITING_FOR_USER),
+                AiChatRunStatus.DONE, null, null);
+        assertThat(findIdle()).hasSize(1);
+    }
+
+    @Test
+    void testFindIdleChats_aChatWithAnIdleCompactionSinceItsLastMessageIsNotFound() {
+        answered(chat.getId());
+        final AiChatRun idle = runDao.createIdleCompactionIfNoneActive(chat.getId(), "user1", "node1")
+                .orElseThrow();
+        // Stopped by the user, say: it is not tried again until a new message arrives.
+        runDao.compareAndSetStatus(idle.getId(), Set.of(AiChatRunStatus.RUNNING), AiChatRunStatus.STOPPED,
+                AiChatRunStopReason.USER, null);
+
+        assertThat(findIdle()).isEmpty();
+
+        sleepPastTheMillisecond();
+        aiDao.storeMessage(chat.getId(), AiMessageType.USER_MESSAGE, "and now?");
+        assertThat(findIdle()).hasSize(1);
+    }
+
+    @Test
+    void testFindIdleChats_leavesOutExcludedMessagesSessionChatsAndKeepsTheLimit() {
+        final AiChatMessage first = answered(chat.getId());
+        final AiChat second = aiDao.createChat(UserRef.builder().uuid("user2").build());
+        final AiChatMessage secondLast = answered(second.getId());
+        final AiChat session = aiDao.createSessionChat(UserRef.builder().uuid("user1").build(), "session-1");
+        answered(session.getId());
+
+        assertThat(findIdle()).extracting(AiDao.IdleChat::chatId).containsExactly(chat.getId(), second.getId());
+        assertThat(aiDao.findIdleChats(now() + 60_000, now() - 60_000, List.of(first.getId()), 10))
+                .extracting(AiDao.IdleChat::lastMessageId)
+                .containsExactly(secondLast.getId());
+        assertThat(aiDao.findIdleChats(now() + 60_000, now() - 60_000, List.of(), 1))
+                .extracting(AiDao.IdleChat::chatId)
+                .containsExactly(chat.getId());
+    }
+
+    // A question and its answer, returning the answer.
+    private AiChatMessage answered(final int chatId) {
+        aiDao.storeMessage(chatId, AiMessageType.USER_MESSAGE, "q");
+        final AiChatMessage answer = aiDao.storeMessage(chatId, AiMessageType.AI_RESPONSE, "a");
+        sleepPastTheMillisecond();
+        return answer;
+    }
+
+    // As if the idle time had passed: messages stored up to a minute ago count as idle.
+    private List<AiDao.IdleChat> findIdle() {
+        return aiDao.findIdleChats(now() + 60_000, now() - 60_000, List.of(), 10);
+    }
+
+    private static long now() {
+        return System.currentTimeMillis();
+    }
+
+    // So that what is stored next is stored later than what was stored before.
+    private static void sleepPastTheMillisecond() {
+        ThreadUtil.sleepIgnoringInterrupts(5);
     }
 }

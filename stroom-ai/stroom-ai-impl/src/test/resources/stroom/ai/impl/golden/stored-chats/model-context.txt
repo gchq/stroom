@@ -1,7 +1,7 @@
 # What the model is given from a 7.14 chat
 
 The chat's latest compaction:
-    CompactionRecord[digestsUpToTurnId=21, summaryUpToTurnId=2, summary=The user asked which feeds had errors yesterday: ACME (40) and FW (2)., tokensBefore=52000, tokensAfter=9000, messageCount=27, manual=false, stale=false]
+    CompactionRecord[digestsUpToTurnId=21, summaryUpToTurnId=2, summary=The user asked which feeds had errors yesterday: ACME (40) and FW (2)., tokensBefore=52000, tokensAfter=9000, messageCount=27, manual=false, idle=false, stale=false]
 
 == The messages for the model (ContextAssembler.assemble, with tools) ==
 [0] SYSTEM

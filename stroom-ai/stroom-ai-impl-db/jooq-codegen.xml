@@ -27,7 +27,7 @@
             <forcedTypes>
                 <forcedType>
                     <name>BOOLEAN</name>
-                    <includeExpression>.*\.ai_chat_attachment\.truncated|.*\.ai_chat\.auto_approve|.*\.ai_chat_run\.unattended|.*\.ai_tool_policy\.enabled|.*\.ai_tool_policy\.all_users</includeExpression>
+                    <includeExpression>.*\.ai_chat_attachment\.truncated|.*\.ai_chat\.auto_approve|.*\.ai_chat_run\.unattended|.*\.ai_chat_run\.idle_compaction|.*\.ai_tool_policy\.enabled|.*\.ai_tool_policy\.all_users</includeExpression>
                     <!-- see https://github.com/jOOQ/jOOQ/issues/9405 -->
                     <includeTypes>(?i:tinyint)(\(1\))?</includeTypes>
                 </forcedType>

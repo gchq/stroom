@@ -153,7 +153,7 @@
     {"kind":"MEMORY","operation":"CREATE","path":"/memories/role.md","after":"Looks after ACME.\n","undone":false}
     ~~~~~~~~
 #29 COMPACTION_SUMMARY
-    CompactionRecord[digestsUpToTurnId=21, summaryUpToTurnId=2, summary=The user asked which feeds had errors yesterday: ACME (40) and FW (2)., tokensBefore=52000, tokensAfter=9000, messageCount=27, manual=false, stale=false]
+    CompactionRecord[digestsUpToTurnId=21, summaryUpToTurnId=2, summary=The user asked which feeds had errors yesterday: ACME (40) and FW (2)., tokensBefore=52000, tokensAfter=9000, messageCount=27, manual=false, idle=false, stale=false]
 #31 TOOL_CALL
     ToolCallRecord[callId=call-5, tool=stroom__describe_filter, arguments={"feed":"ACME"}, rationale=null]
     Exported as:

@@ -833,7 +833,7 @@ class TestContextAssembler {
         // The turn it was attached in is compacted.
         final List<ChatMessage> messages = assembler.assemble(new AskStroomAiRequest(null, null, null, "q2"), 1,
                 java.util.Map.of(50, reference), history,
-                new CompactionRecord(1, 1, "Summary", 0, 0, 0, false, false), true);
+                new CompactionRecord(1, 1, "Summary", 0, 0, 0, false, false, false), true);
 
         assertThat(messages).filteredOn(UserMessage.class::isInstance)
                 .extracting(message -> ((UserMessage) message).singleText())
