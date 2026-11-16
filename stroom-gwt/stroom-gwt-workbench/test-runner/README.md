@@ -275,7 +275,9 @@ sets, and that the code doesn't build, can only be styled for a screen no story 
 
 `--font-size <small|medium|large>` shows the stories at a Stroom text size preference: a script
 added to every frame (`lib/text-sizes.mjs`) gives the page the `stroom-font-size-<size>` class, as
-`ThemeCssUtil` does in Stroom, in place of the workbench page's `stroom-font-size-medium`.
+`ThemeCssUtil` does in Stroom, in place of the workbench page's `stroom-font-size-medium`. It only
+switches a frame's own class: a frame without one (a visualisation's) doesn't follow the preference
+in Stroom either, so it isn't given one.
 
 `--text-sizes <file>` writes every text each story that passes shows to the file as JSON: each
 element with text of its own (HTML or SVG, in any frame, visible), its path (the element and up to
@@ -297,6 +299,27 @@ node text-size-diff.mjs --baseline /some/dir/medium.json --actual /some/dir/larg
 A text counts as changed if it grew (or shrank) by 3% or more (`--min-ratio`). Large is about 10%
 above Medium for each variable, and ordinary text about 22% (14.44px to 17.64px), as the
 page's own size follows the preference too (`base.css`), so the `rem` sizes do as well.
+
+`--text-fit <file>` writes the text each story that passes shows that doesn't fit, to the file as
+JSON (`lib/text-fit.mjs`): text whose line boxes reach past a box that hides its overflow
+(`cut-off`; a box that scrolls instead doesn't count, nor one of 2px or less, which hides text for
+screen readers on purpose), text shortened with `text-overflow: ellipsis` (`ellipsis`), and two texts
+drawn over each other, neither inside the other (`overlap`, of the parts shown), and a dialog whose
+content is wider than it (`scrolls-sideways`, by its title). Each is listed once per story, by its
+kind, path and text; a text cut off or shortened is one problem however it shows, so a text
+shortened at one size and cut off at the other is not new. Stories have plenty of these on purpose (an ellipsis in a
+narrow column), so a run on its own says little: `text-fit-diff.mjs` compares two runs at different
+text sizes and lists what only the second has, what no longer fits as the text grew (it exits 1 if
+there is any):
+
+```bash
+./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest \
+  "-PworkbenchTestArgs=--skip-a11y --font-size medium --text-fit /some/dir/medium-fit.json"
+./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest \
+  "-PworkbenchTestArgs=--skip-a11y --font-size large --text-fit /some/dir/large-fit.json"
+cd stroom-gwt/stroom-gwt-workbench/test-runner
+node text-fit-diff.mjs --baseline /some/dir/medium-fit.json --actual /some/dir/large-fit.json
+```
 
 ## Leak check
 
@@ -376,6 +399,8 @@ or `src/test/resources/dialog-coverage-evidence.json` names a story whose play o
   [Screenshots](#screenshots)); `lib/screenshot-diff.mjs` does the comparison.
 * `text-size-diff.mjs` - compares two runs' text sizes (see [Text sizes](#text-sizes));
   `lib/text-sizes.mjs` sets the text size and records and compares the sizes.
+* `text-fit-diff.mjs` - compares two runs' text that doesn't fit (see [Text sizes](#text-sizes));
+  `lib/text-fit.mjs` finds it and compares the runs.
 * `grid-geometry.mjs` - records or compares the sizes of the stories' data grids (see
   [Data grid geometry](#data-grid-geometry)); `lib/grid-geometry.mjs` measures and compares them.
 * `lib/` - story selection, deciding a story's

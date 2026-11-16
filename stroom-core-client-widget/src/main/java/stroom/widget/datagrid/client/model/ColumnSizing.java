@@ -149,6 +149,22 @@ public final class ColumnSizing {
         return new ColumnSizing(type, width, percent, fillWeight, minWidth, resizable, movable);
     }
 
+    /// Derive a copy drawn at a text size: its width and minimum width multiplied by the text size's
+    /// scale ([TextScale]), rounded to whole pixels. A percentage or fill weight is a share, so it
+    /// doesn't change.
+    ///
+    /// @param scale The text size's scale, 1 at medium.
+    /// @return A copy of this sizing with its pixel widths scaled.
+    public ColumnSizing scaled(final double scale) {
+        return new ColumnSizing(type,
+                TextScale.toDrawn(width, scale),
+                percent,
+                fillWeight,
+                TextScale.toDrawn(minWidth, scale),
+                resizable,
+                movable);
+    }
+
     /// @return How the starting width is worked out.
     public ColumnWidthType getType() {
         return type;

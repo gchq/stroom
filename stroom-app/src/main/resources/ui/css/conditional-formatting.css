@@ -7,7 +7,7 @@
 
 
 .cf-colour-swatch {
-    min-width: 200px;
+    min-width: calc(200px * var(--text-scale));
     padding: 3px;
     border: 1px solid rgba(0,0,0,.2);
 }
@@ -20,7 +20,7 @@
 }
 
 .data-grid__cell .cf-colour-swatch {
-    min-width: 100px;
+    min-width: calc(100px * var(--text-scale));
     padding: 2px;
 }
 
@@ -470,12 +470,12 @@
 }
 
 .cf-light-example {
-    width: 200px;
+    width: calc(200px * var(--text-scale));
     background-color: rgb(255, 255, 255);
     color: #151515;
 }
 .cf-dark-example {
-    width: 200px;
+    width: calc(200px * var(--text-scale));
     background-color: rgb(34, 37, 44);
     color: #dce4e5;
 }

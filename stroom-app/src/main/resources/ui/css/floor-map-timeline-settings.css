@@ -23,7 +23,7 @@
     flex-direction: column;
     gap: 8px;
     padding: 10px 14px;
-    min-width: 280px;
+    min-width: calc(280px * var(--text-scale));
 }
 
 .floor-map-timeline-settings__row {
@@ -37,13 +37,13 @@
     font-weight: 600;
     color: var(--text-color--low-emphasis);
     white-space: nowrap;
-    width: 100px;
+    width: calc(100px * var(--text-scale));
     flex-shrink: 0;
 }
 
 .floor-map-timeline-settings__date-box {
     flex: 1;
-    min-width: 160px;
+    min-width: calc(160px * var(--text-scale));
 }
 
 /* Show All button row — right-aligned, separated from the date pickers by a divider */

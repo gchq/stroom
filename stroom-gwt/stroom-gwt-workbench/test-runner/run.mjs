@@ -45,6 +45,7 @@ import { judgeA11y, measureA11y, readBaseline, updateBaseline, writeBaseline } f
 import { REAL_INPUT_CHECKS, unknownCheckIds } from './lib/real-input/index.mjs';
 import { judgeContentFocus, measureContentFocus } from './lib/focus-check.mjs';
 import { screenshotFile } from './lib/screenshots.mjs';
+import { collectTextFit, writeTextFit } from './lib/text-fit.mjs';
 import { collectTextSizes, fontSize, fontSizeScript, writeTextSizes } from './lib/text-sizes.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -108,6 +109,9 @@ const CLASS_CENSUS = new Map();
 // The text sizes (--text-sizes): story id -> the texts it shows and their sizes
 const TEXT_SIZES = new Map();
 
+// The text that doesn't fit (--text-fit): story id -> its problems
+const TEXT_FIT = new Map();
+
 // The signal that cancelled the run (e.g. Ctrl-C, or Gradle stopping it), or null
 let cancelledBy = null;
 
@@ -150,6 +154,10 @@ Options:
                            computed font size and line height, to the file as JSON. Compare two
                            runs at different --font-size with text-size-diff.mjs, to find the text
                            that doesn't follow the preference
+  --text-fit <file>        Write the text each story that passes shows (in any frame) that doesn't
+                           fit: cut off by a box that hides its overflow, shortened with an
+                           ellipsis, or drawn over another text. Compare two runs at different
+                           --font-size with text-fit-diff.mjs, to find what no longer fits
   --fixed-time <iso>       Fix the stories' clock (Date) at this time, e.g. 2026-01-01T12:00:00Z,
                            and make Math.random the same sequence every run, so that times and
                            random layouts are the same every run (for comparing screenshots).
@@ -233,6 +241,7 @@ function parseOptions() {
       'colour-scheme': { type: 'string' },
       'font-size': { type: 'string' },
       'text-sizes': { type: 'string' },
+      'text-fit': { type: 'string' },
       'leak-check': { type: 'boolean', default: false },
       'leak-cycles': { type: 'string', default: String(DEFAULT_LEAK_CYCLES) },
       'skip-a11y': { type: 'boolean', default: false },
@@ -274,6 +283,7 @@ function parseOptions() {
     colourScheme: colourScheme(values['colour-scheme']),
     fontSize: fontSize(values['font-size']),
     textSizes: values['text-sizes'] ? path.resolve(values['text-sizes']) : null,
+    textFit: values['text-fit'] ? path.resolve(values['text-fit']) : null,
     leakCheck: values['leak-check'],
     leakCycles: integer('leak-cycles', values['leak-cycles'], 2),
     a11y: !values['skip-a11y'],
@@ -447,6 +457,9 @@ async function runStoryOnce(browser, story, options, attempt) {
     // What the story shows when it has finished, before the checks below change it
     if (options.textSizes && result.status === 'PASS' && !unresponsive && !seen.crashed) {
       TEXT_SIZES.set(story.id, await collectTextSizes(page));
+    }
+    if (options.textFit && result.status === 'PASS' && !unresponsive && !seen.crashed) {
+      TEXT_FIT.set(story.id, await collectTextFit(page));
     }
     if (options.realInput && REAL_INPUT_CHECKS[story.id] && result.status === 'PASS'
         && !unresponsive && !seen.crashed) {
@@ -997,6 +1010,10 @@ async function main() {
     if (options.textSizes) {
       await writeTextSizes(options.textSizes, options.fontSize, TEXT_SIZES);
       console.log(`Text sizes: ${TEXT_SIZES.size} stories, in ${options.textSizes}`);
+    }
+    if (options.textFit) {
+      await writeTextFit(options.textFit, options.fontSize, TEXT_FIT);
+      console.log(`Text fit: ${TEXT_FIT.size} stories, in ${options.textFit}`);
     }
     if (runError) {
       console.error(cancelledBy ? `\n${runError}` : `\nThe test run failed: ${runError}`);

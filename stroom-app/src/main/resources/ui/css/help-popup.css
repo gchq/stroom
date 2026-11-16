@@ -22,7 +22,9 @@
 */
 
 .help-popup {
-    max-width: 700px;
+    /* No wider than the room beside its button (HelpPopup), less its border and padding, so that
+       long help at a large text size wraps rather than covering the field it helps with */
+    max-width: min(700px, calc(var(--help-popup__room, 10000px) - 10px));
     padding: 1px 3px;
     border: 2px solid var(--heading-color);
     border-radius: 6px;

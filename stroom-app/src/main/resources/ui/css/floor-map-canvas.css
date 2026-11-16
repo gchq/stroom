@@ -197,7 +197,7 @@
     pointer-events: none;
     z-index: 26;
     display: none;
-    max-width: 260px;
+    max-width: calc(260px * var(--text-scale));
 }
 
 .floor-map-canvas__hover-tooltip--visible {

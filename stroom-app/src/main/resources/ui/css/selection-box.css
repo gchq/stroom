@@ -27,7 +27,7 @@
    that it can (it was lost when SelectionBox.css became this, so a box in a form group, a column
    flexbox, stretched across the screen) */
 .selection-box {
-    width: 200px;
+    width: calc(200px * var(--text-scale));
 }
 
 /* The value as it is drawn (the text box, which holds it as text, sits over it, unseen unless the box
@@ -131,7 +131,7 @@
 
 /* In a Git repo's settings, beside the credentials' button */
 .git-repo-settings__credentials .selection-box {
-    width: 280px;
+    width: calc(280px * var(--text-scale));
 }
 
 /* In a conditional formatting rule's style, a colour swatch filling the box */

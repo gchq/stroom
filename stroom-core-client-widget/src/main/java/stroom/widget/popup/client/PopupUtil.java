@@ -196,7 +196,10 @@ public class PopupUtil {
                         popupPosition,
                         newWidth,
                         newHeight);
-                popup.setPopupPosition((int) position.getLeft(), (int) position.getTop());
+                // Rounded, not cut down: an anchor at a fractional position (any text size but
+                // Small) leaves the popup within half a pixel of it, so a submenu's first row stays
+                // level with its parent's
+                popup.setPopupPosition((int) Math.round(position.getLeft()), (int) Math.round(position.getTop()));
             }
 
             // Make the popup visible.

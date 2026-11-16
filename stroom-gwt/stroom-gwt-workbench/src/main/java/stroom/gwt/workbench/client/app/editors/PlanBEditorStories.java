@@ -26,6 +26,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.client.widgets.datagrid.DataGridStories;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
@@ -132,9 +133,9 @@ public final class PlanBEditorStories {
                     // The key schema's TimeZoneBox
                     play.expect(play.getByText("Time Zone", "label")).toBeInTheDocument();
                     // A selection box in a form group is as wide as a text field, not the screen (its
-                    // width was once lost, so they stretched across it)
+                    // width was once lost, so they stretched across it); 200px at medium, scaled with the text
                     play.expect(play.getByRole("combobox", "Temporal Resolution").closest(".selection-box"))
-                            .toHaveStyle("width", "200px");
+                            .toHaveStyle("width", DataGridStories.drawn(200) + "px");
                     DocumentEditors.expectNoProblems(play);
                 })
                 // The Time Zone control shows the offset when Use is Offset (TimeZoneBox)

@@ -68,13 +68,13 @@
 }
 
 .term-editor__item.term-editor__item--wide {
-	width: 400px;
-	min-width: 300px;
+	width: calc(400px * var(--text-scale));
+	min-width: calc(300px * var(--text-scale));
 }
 
 .term-editor__item.term-editor__item--narrow {
-	width: 175px;
-    min-width: 175px;
+	width: calc(175px * var(--text-scale));
+    min-width: calc(175px * var(--text-scale));
 }
 
 
@@ -86,17 +86,17 @@
 
 .term-editor__item.term-editor__item--condition {
     /* Need room for 'matches regex (case sensitive)' */
-	width: 160px;
+	width: calc(160px * var(--text-scale));
 	padding-right: 25px;
 }
 
 .term-editor__item.term-editor__item--condition-wide {
-	width: 230px;
+	width: calc(230px * var(--text-scale));
 }
 
 .term-editor__item.term-editor__item--picker {
-	width: 200px;
-	min-width: 200px;
+	width: calc(200px * var(--text-scale));
+	min-width: calc(200px * var(--text-scale));
 	margin-top: 1px;
 }
 

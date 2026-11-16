@@ -43,10 +43,12 @@
     line-height: 16px !important;
 }
 
+/* Whole pixels, as Ace lays its lines out at the measured line height; about 1.2 times the text,
+   as at medium (18px left a line's text taller than its line) */
 .stroom-font-size-large .code-editor__ace,
 .stroom-font-size-large .code-editor__ace * {
     font-size: 1rem !important;
-    line-height: 18px !important;
+    line-height: 20px !important;
 }
 
 .code-editor__ace.ace_editor {
@@ -128,7 +130,7 @@
     border: 1px solid var(--dialog__border-color);
     color: var(--tooltip__text-color);
     /* Ace's default of 300px is too small */
-    width: 400px;
+    width: calc(400px * var(--text-scale));
 }
 
 .stroom .ace_tooltip.ace_doc-tooltip {
@@ -136,7 +138,7 @@
     background-image: none;
     border: 1px solid var(--dialog__border-color);
     color: var(--tooltip__text-color);
-    width: 600px;
+    width: calc(600px * var(--text-scale));
     overflow-wrap: anywhere;
 }
 

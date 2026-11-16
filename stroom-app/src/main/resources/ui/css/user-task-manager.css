@@ -16,7 +16,7 @@
 
 /* The tasks, scrolling in a rounded frame */
 .user-task-manager {
-    width: 400px;
+    width: calc(400px * var(--text-scale));
     height: 200px;
     border: 1px solid var(--control__border-color);
     border-radius: .25rem;

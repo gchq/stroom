@@ -422,7 +422,7 @@
 .trace-overview-chart__operation-content {
     display: flex;
     align-items: center;
-    width: 400px;
+    width: calc(400px * var(--text-scale));
     position: relative;
     flex-shrink: 0;
     padding-left: calc(var(--trace-overview-chart__depth, 0) * 30px);

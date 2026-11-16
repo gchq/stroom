@@ -22,7 +22,7 @@
 */
 
 .info-tooltip {
-    max-width: 500px;
+    max-width: calc(500px * var(--text-scale));
     max-height: 500px;
     overflow: auto;
     -webkit-user-select: text;

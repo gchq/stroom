@@ -17,7 +17,7 @@
 /* The type filter's scrolling list, as big as its types up to the popup's size */
 .type-filter__scroll {
     min-width: 50px;
-    max-width: 600px;
+    max-width: calc(600px * var(--text-scale));
     max-height: 600px;
 }
 

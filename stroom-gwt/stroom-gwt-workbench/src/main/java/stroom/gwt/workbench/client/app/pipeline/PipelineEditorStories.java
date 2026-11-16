@@ -592,6 +592,13 @@ public final class PipelineEditorStories {
                     play.expect(play.spy(ON_DIRTY)).not().toHaveBeenCalledWith(true);
                     // The tree's boxes, not those of the dragged copy (a second tree panel)
                     final Play tree = play.within(play.querySelector(".pipeline-tree-diagram__items"));
+                    // The tree's pane scrolled to its end, as streamAppender is below what it shows:
+                    // dragging over it would otherwise scroll the pane (as dragging near its edge
+                    // does), moving the tree under the pointer for as long as the tree is taller than
+                    // the pane, longer with a larger text size
+                    final Query pane = play.querySelector(".pipeline-structure__tree-container");
+                    play.run("scroll the tree's pane to its end", () -> pane.element().get()
+                            .setScrollTop(pane.element().get().getScrollHeight()));
 
                     // Pressing on rawWriter and moving past the drag threshold lifts it (and
                     // rawAppender) out of the tree

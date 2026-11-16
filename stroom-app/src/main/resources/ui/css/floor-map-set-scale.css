@@ -19,7 +19,7 @@
 .floor-map-set-scale {
     display: flex;
     flex-direction: column;
-    width: 420px;
+    width: calc(420px * var(--text-scale));
     padding: 4px;
 }
 
@@ -43,5 +43,5 @@
 }
 
 .floor-map-set-scale__distance {
-    width: 110px;
+    width: calc(110px * var(--text-scale));
 }

@@ -32,7 +32,7 @@
 }
 
 .floor-map-layer-style td:last-child > * {
-    width: 260px;
+    width: calc(260px * var(--text-scale));
 }
 
 /* Whichever of the Shape / Image rows the current mode does not use: its controls dimmed (they

@@ -42,7 +42,7 @@
     padding: 5px;
     overflow: auto;
     min-width: 50px;
-    max-width: 400px;
+    max-width: calc(400px * var(--text-scale));
     max-height: 500px;
 }
 
@@ -75,7 +75,7 @@
     gap: var(--row__gap--horizontal);
     border: 1px solid transparent;
     border-radius: 5px;
-    min-width: 180px;
+    min-width: calc(180px * var(--text-scale));
     padding: var(--row__padding--vertical) var(--row__padding--horizontal);
     vertical-align: middle;
     overflow: hidden;

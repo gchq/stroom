@@ -18,5 +18,5 @@
 
 /* The change chosen, wide enough for the longest change's name */
 .batch-document-permissions-editor__change {
-    width: 350px;
+    width: calc(360px * var(--text-scale));
 }

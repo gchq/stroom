@@ -34,6 +34,7 @@ import stroom.widget.datagrid.client.AskStroomAiTableRequest;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.Heading;
 import stroom.widget.datagrid.client.HeadingListener;
+import stroom.widget.datagrid.client.model.TextScale;
 import stroom.widget.hyperlink.client.HyperlinkEvent;
 import stroom.widget.hyperlink.client.LinkValue;
 import stroom.widget.menu.client.IconParentMenuItem;
@@ -114,37 +115,43 @@ final class ColumnInteractionGrids {
     static void resizeAndReorderPlay(final Play play) {
         final Query name = header(play, 1);
         play.waitFor(() -> play.expect(name).toBeInTheDocument());
-        expectWidth(play, 1, 200);
+        // Widths are given at the medium text size and drawn larger or smaller with the text size;
+        // the listener is told medium widths
+        final int start = DataGridStories.drawn(200);
+        final int dragged = start + 50;
+        final int minimum = DataGridStories.drawn(30);
+        expectWidth(play, 1, start);
 
         play.step("drag Name's edge 50px right: the column grows as it is dragged", () -> {
-            hoverNearRightEdge(play, 1, 200);
+            hoverNearRightEdge(play, 1, start);
             final Query handle = play.querySelector(HANDLE);
             play.waitFor(() -> play.expect(handle).toBeVisible());
             play.fireEvent().pointerDown(handle, EventInit.create().atCentreOf(handle).button(0).buttons(1));
             play.fireEvent().pointerMove(handle, EventInit.create().relativeTo(handle, 55, 5).buttons(1));
             // Live: the column is wider before the release, but the listener has not been told
-            expectWidth(play, 1, 250);
+            expectWidth(play, 1, dragged);
             play.expect(play.spy(ON_COLUMN_RESIZE)).not().toHaveBeenCalled();
             play.expect(play.spy(ON_MOVE_START)).toHaveBeenCalledWith(1);
             play.fireEvent().pointerUp(handle, EventInit.create().relativeTo(handle, 5, 5));
-            play.waitFor(() -> play.expect(play.spy(ON_COLUMN_RESIZE)).toHaveBeenCalledWith(1, 250));
+            final int draggedAtMedium = TextScale.toMedium(dragged, DataGrid.textScale());
+            play.waitFor(() -> play.expect(play.spy(ON_COLUMN_RESIZE)).toHaveBeenCalledWith(1, draggedAtMedium));
             play.expect(play.spy(ON_COLUMN_RESIZE)).toHaveBeenCalledTimes(1);
             play.expect(play.spy(ON_MOVE_END)).toHaveBeenCalledTimes(1);
         });
 
         play.step("drag it far left: the column stops at its 30px minimum", () -> {
-            hoverNearRightEdge(play, 1, 250);
+            hoverNearRightEdge(play, 1, dragged);
             final Query handle = play.querySelector(HANDLE);
             play.waitFor(() -> play.expect(handle).toBeVisible());
             play.fireEvent().pointerDown(handle, EventInit.create().atCentreOf(handle).button(0).buttons(1));
             play.fireEvent().pointerMove(handle, EventInit.create().relativeTo(handle, -400, 5).buttons(1));
             play.fireEvent().pointerUp(handle, EventInit.create().relativeTo(handle, 5, 5));
-            expectWidth(play, 1, 30);
+            expectWidth(play, 1, minimum);
             play.waitFor(() -> play.expect(play.spy(ON_COLUMN_RESIZE)).toHaveBeenLastCalledWith(1, 30));
         });
 
         play.step("double-click the edge: the column fits its widest name", () -> {
-            hoverNearRightEdge(play, 1, 30);
+            hoverNearRightEdge(play, 1, minimum);
             final Query handle = play.querySelector(HANDLE);
             play.waitFor(() -> play.expect(handle).toBeVisible());
             play.fireEvent().dblClick(handle);

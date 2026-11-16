@@ -104,7 +104,7 @@ General button styles
   /*color: rgba(0, 0, 0, 0.87); */
   /*padding: .375rem 1rem; */
   /*font-size: 0.875rem; */
-  min-width: 120px;
+  min-width: calc(120px * var(--text-scale));
   /*box-sizing: border-box; */
   /*transition: background-color 250ms ease-in-out, box-shadow 250ms ease-in-out, border 250ms ease-in-out, color 250ms ease-in-out; */
   /*line-height: 1.75; */
@@ -160,7 +160,7 @@ General button styles
 .form > .button,
 .form-group > .button {
     align-self: flex-start;
-    min-width: 200px;
+    min-width: calc(200px * var(--text-scale));
 }
 
 .button:focus {

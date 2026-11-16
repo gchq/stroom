@@ -138,6 +138,13 @@ class TestStylesheets {
     private static final Pattern FONT_SIZE = Pattern.compile("(?<![\\w-])font-size\\s*:\\s*([^;]+)");
     // A size that doesn't follow the text size preference
     private static final Pattern FIXED_SIZE = Pattern.compile("-?[0-9.]*[1-9][0-9.]*(px|pt|pc|cm|mm|in)\\b.*");
+    // A width in pixels, not inside a calc() or other function
+    private static final Pattern FIXED_WIDTH = Pattern.compile(
+            "(?<![\\w-])((?:min-|max-)?width)\\s*:\\s*([0-9.]+)px\\s*(?:!important\\s*)?(?:;|$)");
+    // Widths from this up are wide enough to hold text, so grow with it
+    private static final double MIN_TEXT_WIDTH = 80;
+    // What may keep a fixed width: pictures and the boxes that measure the scroll bars
+    private static final Pattern PICTURES_AND_MEASURERS = Pattern.compile("svg|logo|__icon\\b|scrollbar-metrics");
     // The sheet that defines the text size variables for each preference
     private static final String FONT_SIZES_SHEET = "font.css";
 
@@ -361,6 +368,36 @@ class TestStylesheets {
         }
         assertThat(problems)
                 .as("fixed font sizes: use a --font-size-N variable (font.css) with the same size at Medium")
+                .isEmpty();
+    }
+
+    /// Every width wide enough to hold text grows with the text size preference, as a grid's column
+    /// widths do: `calc(200px * var(--text-scale))`, the same at Medium. Pictures (`svg`, logos,
+    /// icons) and measurers (`scrollbar-metrics`) may be fixed.
+    @Test
+    void testTextWidthsFollowThePreference() {
+        final List<String> problems = new ArrayList<>();
+        for (final String sheet : new TreeSet<>(loaded)) {
+            if (!isOwnSheet(sheet) || FONT_SIZES_SHEET.equals(sheet)) {
+                continue;
+            }
+            final Matcher rules = RULE.matcher(QUOTED.matcher(withoutComments(sheets.get(sheet))).replaceAll("\"\""));
+            while (rules.find()) {
+                final String selector = rules.group(1).trim();
+                if (selector.contains("stroom-font-size-") || PICTURES_AND_MEASURERS.matcher(selector).find()) {
+                    continue;
+                }
+                final Matcher widths = FIXED_WIDTH.matcher(rules.group(2));
+                while (widths.find()) {
+                    if (Double.parseDouble(widths.group(2)) >= MIN_TEXT_WIDTH) {
+                        problems.add(sheet + ": " + selector.replaceAll("\\s+", " ") + " { " + widths.group(1)
+                                     + ": " + widths.group(2) + "px }");
+                    }
+                }
+            }
+        }
+        assertThat(problems)
+                .as("fixed widths: multiply by the text scale, e.g. calc(200px * var(--text-scale))")
                 .isEmpty();
     }
 

@@ -13,7 +13,7 @@
 
 /* A time of day (14:30:00) needs no more than a text field's width */
 .date-time-box--time {
-    width: 200px;
+    width: calc(200px * var(--text-scale));
 }
 
 /* Where it sits: */

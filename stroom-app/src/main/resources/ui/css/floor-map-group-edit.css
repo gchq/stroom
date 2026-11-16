@@ -19,7 +19,7 @@
 .floor-map-group-edit {
     display: flex;
     flex-direction: column;
-    width: 420px;
+    width: calc(420px * var(--text-scale));
     padding: 4px;
 }
 
@@ -37,7 +37,7 @@
 }
 
 .floor-map-group-edit__fields input[type="text"] {
-    width: 300px;
+    width: calc(300px * var(--text-scale));
 }
 
 .floor-map-group-edit__label {

@@ -132,7 +132,7 @@ textarea:where(:not(.text-field))[aria-invalid="true"] {
    sheet comes in app.css: a layout helper (max, which comes before this sheet), a screen's own rule
    or a modifier below */
 :where(.text-field) {
-    width: 200px;
+    width: calc(200px * var(--text-scale));
 }
 
 /* Its look, at an element and a class's weight for a text box (a text area's is a class's) */
@@ -204,12 +204,12 @@ input.text-field:where(:-webkit-autofill, :-webkit-autofill:hover, :-webkit-auto
 
 /* A narrow field, e.g. for a short number */
 .text-field.text-field--narrow {
-    width: 80px;
+    width: calc(80px * var(--text-scale));
 }
 
 /* A wide field, e.g. for a name, path or URI */
 .text-field.text-field--wide {
-    width: 400px;
+    width: calc(400px * var(--text-scale));
 }
 
 /* A text area: several lines, scrolling when there are more, at a fixed height a screen can change

@@ -35,6 +35,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.client.widgets.datagrid.DataGridStories;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -605,7 +606,8 @@ public final class QueryEditorStories {
                     play.keyboard("{Enter}");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(header(play, "Count").closest(StroomDom.GRID_HEADER_CELL).width())
-                            .toSatisfy("180 pixels wide", w -> Math.abs((Double) w - 180) <= 1));
+                            .toSatisfy("180 pixels wide (at medium)",
+                                    w -> Math.abs((Double) w - DataGridStories.drawn(180)) <= 1));
                     play.click(play.getByRole("button", "Execute Query"));
                     expectSearchWith(play, "{\"queryTablePreferences\": {\"columns\": "
                                            + "[{}, {\"name\": \"Count\", \"width\": 180}, {}, {}]}}");

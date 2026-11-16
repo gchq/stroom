@@ -31,6 +31,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.client.widgets.datagrid.DataGridStories;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -427,8 +428,10 @@ public final class DashboardPaneStories {
                     play.waitFor(() -> play.expect("Name is first",
                             () -> labels.textContents().get().indexOf("Name")).toBe(0));
 
-                    // Resize it to 200 pixels
+                    // Resize it to 200 pixels, a width at the medium text size, drawn larger or smaller
+                    // with the text size
                     final String moved = "Name";
+                    final int drawn200 = DataGridStories.drawn(200);
                     StroomDom.clickHeader(play, DashboardPlays.header(play, moved));
                     play.click(screen.findByText("Resize Column", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = DashboardPlays.dialog(screen, "Column Width");
@@ -441,7 +444,8 @@ public final class DashboardPaneStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Column Width", StroomDom.DIALOG_TITLE))
                             .toBeNull());
                     play.waitFor(() -> play.expect(DashboardPlays.headerCell(play, moved).width())
-                            .toSatisfy("200 pixels wide", w -> Math.abs((Double) w - 200) <= 1));
+                            .toSatisfy("200 pixels wide (at medium)",
+                                    w -> Math.abs((Double) w - drawn200) <= 1));
 
                     // Cancel leaves it as it is
                     StroomDom.clickHeader(play, DashboardPlays.header(play, moved));
@@ -455,7 +459,8 @@ public final class DashboardPaneStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Column Width", StroomDom.DIALOG_TITLE))
                             .toBeNull());
                     play.expect(DashboardPlays.headerCell(play, moved).width())
-                            .toSatisfy("still 200 pixels wide", w -> Math.abs((Double) w - 200) <= 1);
+                            .toSatisfy("still 200 pixels wide (at medium)",
+                                    w -> Math.abs((Double) w - drawn200) <= 1);
                     DashboardPlays.expectNoProblems(play);
                 })
                 // Add Column's button opens its list, and a second press closes it. A column chosen

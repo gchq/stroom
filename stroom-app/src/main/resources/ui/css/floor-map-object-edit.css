@@ -18,8 +18,8 @@
 
 /* A position, size, scale or rotation box, each the same narrow width beside the next */
 .floor-map-object-edit__number {
-    width: 80px !important;
-    min-width: 80px !important;
+    width: calc(80px * var(--text-scale)) !important;
+    min-width: calc(80px * var(--text-scale)) !important;
     margin-right: 8px;
 }
 

@@ -36,6 +36,7 @@ import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.OrderByColumn;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.datagrid.client.model.ColumnSizing;
+import stroom.widget.datagrid.client.model.TextScale;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.text.client.Label;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -410,7 +411,7 @@ public final class DataGridStories {
                 })
                 // The fill columns share the surplus width by weight
                 .story("ColumnFillWeights", context -> sized(paged(noteGrid(true)), "320px", "900px"))
-                .withPlay(play -> expectHeaderWidths(play, 300L, 260L, 340L))
+                .withPlay(play -> expectFillWidths(play, 900, NOTE_COLUMN_WIDTH, 200, 30, 70))
                 // No fill column, so the declared widths are kept and the table stops short
                 .story("ColumnWidthsScaleWithoutFill", context -> {
                     final DataGrid<Note> grid = noteGridWithoutFill();
@@ -487,7 +488,7 @@ public final class DataGridStories {
 
                 // Percent columns: a share of the grid's initial width, then plain pixels
                 .story("PercentColumns", DataGridStories::percentColumns)
-                .withPlay(play -> expectHeaderWidths(play, 200L, 400L, 200L))
+                .withPlay(play -> expectDrawnWidths(play, 200L, 400L, 200L))
                 // Keyboard: the selection follows the row focus (see DataGridKeyboard, and
                 // Widgets/Data Grid/DataGridKeyboard for the rest of its keys); Ctrl moves without
                 // choosing, and Enter chooses the focused row
@@ -1211,15 +1212,48 @@ public final class DataGridStories {
     }
 
     /// Waits until the header cells have the given widths, rounded to whole pixels.
+    /// Expects the header cells to be these widths, given at the medium text size: drawn larger or
+    /// smaller with the text size, to a pixel.
     private static void expectHeaderWidths(final Play play, final Long... widths) {
+        final Long[] drawn = new Long[widths.length];
+        for (int i = 0; i < widths.length; i++) {
+            drawn[i] = (long) drawn(widths[i]);
+        }
+        expectDrawnWidths(play, drawn);
+    }
+
+    /// Expects a fixed column then two fill columns sharing what is left of the grid by weight, from
+    /// widths given at the medium text size.
+    private static void expectFillWidths(final Play play, final int gridWidth, final int fixed,
+                                         final int fillMinimum, final int firstWeight, final int secondWeight) {
+        final int surplus = gridWidth - drawn(fixed) - 2 * drawn(fillMinimum);
+        final double firstShare = firstWeight / (double) (firstWeight + secondWeight);
+        final long first = drawn(fillMinimum) + Math.round(surplus * firstShare);
+        expectDrawnWidths(play, (long) drawn(fixed), first, (long) gridWidth - drawn(fixed) - first);
+    }
+
+    /// Expects the header cells to be these widths as drawn, to a pixel (percent columns and fill
+    /// shares round).
+    private static void expectDrawnWidths(final Play play, final Long... widths) {
         final Query headers = play.querySelectorAll(HEADER_CELLS);
         play.waitFor(() -> play.expect(headers).toHaveLength(widths.length));
         play.waitFor(() -> {
             for (int i = 0; i < widths.length; i++) {
                 final Value<Double> width = headers.nth(i).width();
-                play.expect("column " + i, () -> Math.round(width.get())).toBe(widths[i]);
+                final long expected = widths[i];
+                play.expect("column " + i, width::get)
+                        .toSatisfy(expected + " pixels wide", w -> Math.abs((Double) w - expected) <= 1);
             }
         });
+    }
+
+    /// @return A width given at the medium text size, as drawn at the page's text size.
+    public static int drawn(final int width) {
+        return TextScale.toDrawn(width, DataGrid.textScale());
+    }
+
+    private static int drawn(final long width) {
+        return drawn((int) width);
     }
 
     /// Whether the element at the row's centre (40px in) is in the row.
