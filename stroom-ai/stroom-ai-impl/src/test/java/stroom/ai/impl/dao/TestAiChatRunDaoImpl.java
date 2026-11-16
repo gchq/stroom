@@ -358,6 +358,27 @@ class TestAiChatRunDaoImpl {
     }
 
     @Test
+    void testFindIdleChats_aRunActiveWithinTheIdleTimeIsActivityThoughItHasEnded() {
+        // A run whose last tool call (or thinking) took longer than the idle time, then ended without a message:
+        // its last message is old, but the chat was not idle.
+        final AiChatMessage last = answered(chat.getId());
+        final AiChatRun run = runDao.create(chat.getId(), "user1", AiChatRunStatus.RUNNING, "node1", null);
+        sleepPastTheMillisecond();
+        final long afterLastMessage = now();
+        runDao.heartbeat(List.of(run.getId()));
+        runDao.compareAndSetStatus(run.getId(), Set.of(AiChatRunStatus.RUNNING), AiChatRunStatus.FAILED, null,
+                "The tool call failed");
+
+        // Idle since before the run's end: not found.
+        assertThat(aiDao.findIdleChats(afterLastMessage, last.getCreateTimeMs() - 60_000, List.of(), 10))
+                .isEmpty();
+        // Idle since after it: found.
+        assertThat(aiDao.findIdleChats(now() + 60_000, last.getCreateTimeMs() - 60_000, List.of(), 10))
+                .extracting(AiDao.IdleChat::chatId)
+                .containsExactly(chat.getId());
+    }
+
+    @Test
     void testFindIdleChats_aChatWithAnIdleCompactionSinceItsLastMessageIsNotFound() {
         answered(chat.getId());
         final AiChatRun idle = runDao.createIdleCompactionIfNoneActive(chat.getId(), "user1", "node1")

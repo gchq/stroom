@@ -803,6 +803,10 @@ public class AiDaoImpl implements AiDao {
                 .from(AI_CHAT_RUN)
                 .where(AI_CHAT_RUN.FK_AI_CHAT_ID.eq(AI_CHAT.ID))
                 .and(AI_CHAT_RUN.STATUS.in(activeStatuses)
+                        // Active within the idle time, though ended since: e.g. a long tool call that ended
+                        // without a message.
+                        .or(AI_CHAT_RUN.END_TIME_MS.ge(idleBeforeMs))
+                        .or(AI_CHAT_RUN.HEARTBEAT_MS.ge(idleBeforeMs))
                         .or(AI_CHAT_RUN.IDLE_COMPACTION.isTrue()
                                 .and(AI_CHAT_RUN.CREATE_TIME_MS.ge(last.CREATE_TIME_MS))))));
         if (!NullSafe.isEmptyCollection(excludedMessageIds)) {
