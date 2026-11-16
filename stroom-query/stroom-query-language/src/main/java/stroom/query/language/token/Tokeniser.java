@@ -42,6 +42,9 @@ public class Tokeniser {
     private static final char[] COMMENT = new char[]{'/', '/'};
     private static final char[] BLOCK_COMMENT_START = new char[]{'/', '*'};
     private static final char[] BLOCK_COMMENT_END = new char[]{'*', '/'};
+    // A triple-quoted string holds its text as written, with no escapes, so SQL with double quotes
+    // and backslashes can be pasted in unchanged.
+    private static final char[] TRIPLE_QUOTE = new char[]{'"', '"', '"'};
 
     private List<Token> tokens;
 
@@ -64,6 +67,9 @@ public class Tokeniser {
         TokenType.ALL_KEYWORDS.forEach(token -> {
             tokens = tagKeyword(token.toString().toLowerCase(Locale.ROOT), token, tokens);
         });
+        // 'sql' is only a keyword straight after 'from <data source>', so a field or data source
+        // named sql elsewhere is not affected.
+        tokens = untagSqlOutsideItsClause(tokens);
 
         // Treat NOT/AND/OR as keywords if they are in an expression to make sure they aren't treated as functions,
         // e.g. not().
@@ -326,6 +332,25 @@ public class Tokeniser {
                                 lastPos = i + 2;
                             }
                         }
+                    } else if (testChars(token, TRIPLE_QUOTE, i)) {
+                        final int close = findTripleQuoteEnd(token, i + TRIPLE_QUOTE.length);
+                        if (lastPos < i) {
+                            out.add(new Token(TokenType.UNKNOWN, token.getChars(), lastPos, i - 1));
+                        }
+                        if (close < 0) {
+                            // Not closed, so leave the rest as unknown text, as for other quotes.
+                            lastPos = i;
+                            break;
+                        }
+                        final int textStart = i + TRIPLE_QUOTE.length;
+                        out.add(new QuotedStringToken(
+                                TokenType.DOUBLE_QUOTED_STRING,
+                                token.getChars(),
+                                i,
+                                close + TRIPLE_QUOTE.length - 1,
+                                new String(token.getChars(), textStart, close - textStart)));
+                        lastPos = close + TRIPLE_QUOTE.length;
+                        i = lastPos - 1;
                     } else if (c == DOUBLE_QUOTE_CHAR || c == SINGLE_QUOTE_CHAR) {
                         outputType = c == DOUBLE_QUOTE_CHAR
                                 ? TokenType.DOUBLE_QUOTED_STRING
@@ -367,6 +392,94 @@ public class Tokeniser {
             }
         }
         return out;
+    }
+
+    // The index of the closing triple quote at or after the given index, or -1 if there is none.
+    // In a run of more than three quotes the last three close the string, so the text can end with
+    // a quote, as SQL ending with a quoted identifier does.
+    private static int findTripleQuoteEnd(final Token token, final int from) {
+        for (int i = from; i <= token.getEnd(); i++) {
+            if (testChars(token, TRIPLE_QUOTE, i)) {
+                int close = i;
+                while (close + TRIPLE_QUOTE.length <= token.getEnd()
+                       && token.getChars()[close + TRIPLE_QUOTE.length] == DOUBLE_QUOTE_CHAR) {
+                    close++;
+                }
+                return close;
+            }
+        }
+        return -1;
+    }
+
+    /// Finds whether text ends inside a triple-quoted string that has not been closed, as it does
+    /// while SQL is being typed into a `sql` clause.
+    ///
+    /// @param text Query text, such as the text before the cursor.
+    /// @return True if the text ends inside an unclosed triple-quoted string.
+    public static boolean endsInsideTripleQuotedString(final String text) {
+        if (text == null || text.isEmpty()) {
+            return false;
+        }
+        final char[] chars = text.toCharArray();
+        final List<Token> tokens = extractQuotedTokens(
+                List.of(new Token(TokenType.UNKNOWN, chars, 0, chars.length - 1)));
+        final Token last = tokens.getLast();
+        return TokenType.UNKNOWN.equals(last.getTokenType())
+               && last.getText().startsWith(new String(TRIPLE_QUOTE));
+    }
+
+    // Turns each SQL keyword back into plain text unless it comes straight after 'from' and the data
+    // source, with only white space or comments between. Neighbouring plain text is joined up again,
+    // so the text is tokenised exactly as it was before 'sql' was a keyword. 'sql' followed by a
+    // triple-quoted string stays a keyword wherever it is, as it can only be a misplaced sql clause,
+    // which the parser then reports as being in the wrong place.
+    private static List<Token> untagSqlOutsideItsClause(final List<Token> tokens) {
+        final List<Token> out = new ArrayList<>(tokens.size());
+        TokenType lastKeyword = null;
+        boolean valueSinceKeyword = false;
+        for (int i = 0; i < tokens.size(); i++) {
+            final Token token = tokens.get(i);
+            final boolean keepSql = (TokenType.FROM.equals(lastKeyword) && valueSinceKeyword)
+                                    || isFollowedByTripleQuotedString(tokens, i);
+            final Token current = TokenType.SQL.equals(token.getTokenType()) && !keepSql
+                    ? new Token(TokenType.UNKNOWN, token.getChars(), token.getStart(), token.getEnd())
+                    : token;
+
+            if (TokenType.ALL_KEYWORDS.contains(current.getTokenType())) {
+                lastKeyword = current.getTokenType();
+                valueSinceKeyword = false;
+            } else if (!TokenType.COMMENT.equals(current.getTokenType())
+                       && !TokenType.BLOCK_COMMENT.equals(current.getTokenType())
+                       && !current.getText().isBlank()) {
+                valueSinceKeyword = true;
+            }
+
+            final Token previous = out.isEmpty()
+                    ? null
+                    : out.getLast();
+            if (previous != null
+                && TokenType.UNKNOWN.equals(previous.getTokenType())
+                && TokenType.UNKNOWN.equals(current.getTokenType())
+                && previous.getEnd() + 1 == current.getStart()) {
+                out.set(out.size() - 1, new Token(
+                        TokenType.UNKNOWN, previous.getChars(), previous.getStart(), current.getEnd()));
+            } else {
+                out.add(current);
+            }
+        }
+        return out;
+    }
+
+    // True if the next token after the one at the index, ignoring white space, is triple-quoted.
+    private static boolean isFollowedByTripleQuotedString(final List<Token> tokens, final int index) {
+        for (int i = index + 1; i < tokens.size(); i++) {
+            final Token next = tokens.get(i);
+            if (!next.getText().isBlank()) {
+                return next instanceof QuotedStringToken
+                       && next.getText().startsWith(new String(TRIPLE_QUOTE));
+            }
+        }
+        return false;
     }
 
     private static boolean testChars(final Token token, final char[] test, final int pos) {

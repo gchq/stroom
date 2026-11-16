@@ -19,6 +19,7 @@ package stroom.dashboard.client.main;
 import stroom.dashboard.shared.Automate;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.time.SimpleDuration;
 
 /// The rules for a query component's auto refresh interval, e.g. `10s` or `5m`: what may be
 /// entered in its settings, and how long a refresh then waits.
@@ -70,6 +71,20 @@ public final class RefreshInterval {
             millis = parse(Automate.DEFAULT_REFRESH_INTERVAL);
         }
         return (int) Math.min(Math.max(millis, MIN_MILLIS), MAX_MILLIS);
+    }
+
+    /// Works out how long a refresh waits, as [#getMillis(String)] does, but never less than its data
+    /// source's own minimum, e.g. an Amazon Athena Data Connection's, as every run of it is billed.
+    ///
+    /// @param interval          The refresh interval, e.g. `10s`, which may be null or blank.
+    /// @param dataSourceMinimum The data source's minimum, or null for none.
+    /// @return The milliseconds to wait.
+    public static int getMillis(final String interval, final SimpleDuration dataSourceMinimum) {
+        final long millis = getMillis(interval);
+        if (dataSourceMinimum == null) {
+            return (int) millis;
+        }
+        return (int) Math.min(Math.max(millis, dataSourceMinimum.getApproxMillis()), MAX_MILLIS);
     }
 
     // The interval in milliseconds, or null if it is blank or can't be read.

@@ -84,6 +84,8 @@ public final class DashboardSupport {
             .route(QueryFixtures.SEARCH, RestReply.json(alphaBetaResponse("table")))
             .get("/query/v1/q-ref", RestReply.json(REFERENCED_QUERY))
             .post("/dataSource/v1/fetchDefaultExtractionPipeline", RestReply.noContent())
+            // The data source's shortest automatic refresh: none beyond the dashboard's own
+            .post("/dataSource/v1/fetchMinRefreshInterval", RestReply.noContent())
             .build();
 
     private DashboardSupport() {
@@ -100,6 +102,7 @@ public final class DashboardSupport {
     /// | A StroomQL search (`QueryFixtures.SEARCH`, an Embedded Query) | the rows `alpha` and `beta` |
     /// | `GET /query/v1/q-ref` | the referenced query |
     /// | `POST /dataSource/v1/fetchDefaultExtractionPipeline` | none |
+    /// | `POST /dataSource/v1/fetchMinRefreshInterval` | none (no minimum beyond the dashboard's) |
     /// | The result store's `destroy`/`terminate`, the StroomQL editor's requests | [QueryFixtures#editorRoutes] |
     /// | The Permissions tab | the user owns the dashboard |
     ///

@@ -3312,6 +3312,24 @@ found, and these were fixed:
 - Tidy-ups: the unused three-argument deletes, the task summary's key getter, stale javadoc and
   the detached comment on `addSelectionHandler`.
 
+### Choosing Excel for a Data Connection with no workbook threw
+
+**Fixed** (12 November 2026, in the fourth 7.14 merge). Writing a Data Connection whose document had
+no Excel settings, read or stored, called `Objects.requireNonNullElse(stored, read)` with both null,
+which throws. On 7.14 that is only on Save after choosing Excel without uploading a workbook
+(`DataConnectionSettingsPresenter.writeExcel`); on master every change writes the document to work
+out whether it is dirty, so choosing the Excel type threw at once
+(`DataConnectionSettingsController.writeExcel`). Story: `App/Editors/DataConnectionEditor`,
+TypeSections. Also fixed on 7.14 (12 November 2026). Confirmed.
+
+### Replace Secret stories expected the old request
+
+**Fixed** (12 November 2026). #5815 (`d8865194a7`) made `ReplaceSecretRequest` carry the
+credential (`{"credential": {...}, "secret": ...}`) instead of its UUID, but the
+`App/Main/CredentialsScreen` stories Replace Secret, Replace Key Store File Secret and Replace Key
+Store Secret still looked for `{"uuid": ...}`, so they failed on master. The UI was right; the
+stories now look for the credential's UUID inside `credential`. Reproduced.
+
 ## Checked and not bugs
 
 Reported by the suite and found not to be bugs, kept so they aren't reported again:

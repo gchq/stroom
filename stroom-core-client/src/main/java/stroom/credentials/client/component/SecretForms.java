@@ -71,6 +71,7 @@ public class SecretForms {
     private SecretForm create(final CredentialType credentialType) {
         return switch (credentialType) {
             case ACCESS_TOKEN -> new AccessTokenSecretForm();
+            case AWS_KEY -> new AwsKeySecretForm();
             case KEY_STORE -> {
                 final KeyStoreSecretFormController keyStoreSecretForm = keyStoreSecretFormControllerProvider.get();
                 keyStoreSecretForm.setType(KeyStoreType.PKCS12);

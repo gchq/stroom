@@ -257,6 +257,8 @@
 @import url("credentials-picker.css");
 @import url("floor-map-cluster-dialog.css");
 @import url("floor-map-settings.css");
+@import url("data-connection-settings.css");
+@import url("data-column-list.css");
 @import url("document-assets-tab.css");
 @import url("duplicate-management.css");
 @import url("imports-tab.css");

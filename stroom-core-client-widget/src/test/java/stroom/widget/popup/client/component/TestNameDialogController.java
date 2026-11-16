@@ -136,6 +136,36 @@ class TestNameDialogController {
                 .isEmpty();
     }
 
+    @Test
+    void ok_nameTheCheckRefuses() {
+        // A name the opener's check refuses (e.g. already listed) is said under the field, and the
+        // dialog stays open
+        final HidePopupRequestEvent okPressed = request(true);
+
+        NameDialogController.onHideRequest(okPressed,
+                "mail",
+                typed -> "'" + typed + "' is already listed",
+                invalid::add,
+                () -> validCount++,
+                accepted::add);
+
+        assertThat(invalid)
+                .containsExactly("'mail' is already listed");
+        Mockito.verify(okPressed).reset();
+        Mockito.verify(okPressed, Mockito.never()).hide();
+        assertThat(accepted)
+                .isEmpty();
+    }
+
+    @Test
+    void problemWith_checkNotAskedForNoName() {
+        // No name is refused before the check is asked
+        assertThat(NameDialogController.problemWith(" ", typed -> "checked"))
+                .isEqualTo(NameDialogController.NO_NAME_MESSAGE);
+        assertThat(NameDialogController.problemWith("mail", typed -> null))
+                .isNull();
+    }
+
     private HidePopupRequestEvent request(final boolean ok) {
         final HidePopupRequestEvent event = Mockito.mock(HidePopupRequestEvent.class);
         Mockito.when(event.isOk()).thenReturn(ok);
@@ -143,6 +173,6 @@ class TestNameDialogController {
     }
 
     private void onHideRequest(final HidePopupRequestEvent event, final String name) {
-        NameDialogController.onHideRequest(event, name, invalid::add, () -> validCount++, accepted::add);
+        NameDialogController.onHideRequest(event, name, typed -> null, invalid::add, () -> validCount++, accepted::add);
     }
 }

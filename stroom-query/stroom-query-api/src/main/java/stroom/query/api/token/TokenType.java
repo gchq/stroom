@@ -82,6 +82,8 @@ public enum TokenType {
 
     // Other keywords
     FROM,
+    // The native query of a data source that takes one, such as the SQL of a Data Connection.
+    SQL,
     WHERE,
     EVAL,
     SELECT,
@@ -106,6 +108,7 @@ public enum TokenType {
 
     public static final Set<TokenType> ALL_KEYWORDS = Collections.unmodifiableSet(EnumSet.of(
             FROM,
+            SQL,
             WHERE,
             FILTER,
             EVAL,
@@ -169,6 +172,7 @@ public enum TokenType {
     public static final Map<TokenType, Set<TokenType>> KEYWORDS_REQUIRED_BEFORE = Collections.unmodifiableMap(
             new EnumMap<>(Map.ofEntries(
                     entry(FROM, Collections.emptySet()),
+                    entry(SQL, EnumSet.of(FROM)),
                     entry(WHERE, EnumSet.of(FROM)),
                     entry(AND, EnumSet.of(FROM)),
                     entry(OR, EnumSet.of(FROM)),
@@ -189,22 +193,24 @@ public enum TokenType {
     public static final Map<TokenType, Set<TokenType>> KEYWORDS_VALID_BEFORE = Collections.unmodifiableMap(
             new EnumMap<>(Map.ofEntries(
                     entry(FROM, Collections.emptySet()),
-                    entry(WHERE, EnumSet.of(FROM)),
+                    // SQL can only come straight after FROM.
+                    entry(SQL, EnumSet.of(FROM)),
+                    entry(WHERE, EnumSet.of(FROM, SQL)),
                     // AND/OR/NOT can appear after WHERE, FILTER and HAVING
-                    entry(AND, EnumSet.of(FROM, WHERE, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
-                    entry(OR, EnumSet.of(FROM, WHERE, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
-                    entry(NOT, EnumSet.of(FROM, WHERE, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
-                    entry(EVAL, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL, WINDOW)),
-                    entry(WINDOW, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL)),
-                    entry(FILTER, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL, WINDOW)),
-                    entry(SORT, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL, WINDOW, FILTER, GROUP)),
+                    entry(AND, EnumSet.of(FROM, SQL, WHERE, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
+                    entry(OR, EnumSet.of(FROM, SQL, WHERE, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
+                    entry(NOT, EnumSet.of(FROM, SQL, WHERE, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
+                    entry(EVAL, EnumSet.of(FROM, SQL, WHERE, AND, OR, NOT, EVAL, WINDOW)),
+                    entry(WINDOW, EnumSet.of(FROM, SQL, WHERE, AND, OR, NOT, EVAL)),
+                    entry(FILTER, EnumSet.of(FROM, SQL, WHERE, AND, OR, NOT, EVAL, WINDOW)),
+                    entry(SORT, EnumSet.of(FROM, SQL, WHERE, AND, OR, NOT, EVAL, WINDOW, FILTER, GROUP)),
                     // Multiple 'group by's are allowed for nested grouping
-                    entry(GROUP, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL, WINDOW, FILTER, SORT, GROUP)),
-                    entry(HAVING, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL, WINDOW, FILTER, SORT, GROUP)),
-                    entry(LIMIT, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
-                    entry(SELECT, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL,
+                    entry(GROUP, EnumSet.of(FROM, SQL, WHERE, AND, OR, NOT, EVAL, WINDOW, FILTER, SORT, GROUP)),
+                    entry(HAVING, EnumSet.of(FROM, SQL, WHERE, AND, OR, NOT, EVAL, WINDOW, FILTER, SORT, GROUP)),
+                    entry(LIMIT, EnumSet.of(FROM, SQL, WHERE, AND, OR, NOT, EVAL, WINDOW, FILTER, SORT, GROUP, HAVING)),
+                    entry(SELECT, EnumSet.of(FROM, SQL, WHERE, AND, OR, NOT, EVAL,
                             WINDOW, FILTER, SORT, GROUP, HAVING, LIMIT)),
-                    entry(SHOW, EnumSet.of(FROM, WHERE, AND, OR, NOT, EVAL,
+                    entry(SHOW, EnumSet.of(FROM, SQL, WHERE, AND, OR, NOT, EVAL,
                             WINDOW, FILTER, SORT, GROUP, HAVING, SELECT, LIMIT))
             )));
 

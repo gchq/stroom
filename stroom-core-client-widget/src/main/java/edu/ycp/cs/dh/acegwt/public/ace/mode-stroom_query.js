@@ -28,6 +28,12 @@ var StroomQueryHighlightRules = function() {
             start : "/\\*",
             end : "\\*/"
         }, {
+            // """ string, which may span lines, e.g. the SQL of a sql clause. A run of more than
+            // three quotes closes on its last three, so the text can end with a quote.
+            token : "string.quoted.triple",
+            start : /"""/,
+            end : /"{3,}/
+        }, {
             token : "keyword", // From Dual | From "My View"
             regex : /(from|show)\b/,
             next : "doc-rule" // All subsequent matching done with doc-rule set
@@ -46,7 +52,7 @@ var StroomQueryHighlightRules = function() {
             regex : '(\\$)(\\{)(.*?)(})'
         },  {
             token : ["keyword"],
-            regex : "(from|select|where|filter|eval|and|or|not|sort|group|order|"
+            regex : "(from|sql|select|where|filter|eval|and|or|not|sort|group|order|"
                     + "limit|having|as|by|when|desc|asc|window|show|advance)\\b"
         },  {
             token : ["support.function", "text", "paren.lparen" ], // Un-quoted func, 'foo('

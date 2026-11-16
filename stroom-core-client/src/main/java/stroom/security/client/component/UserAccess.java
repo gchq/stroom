@@ -17,6 +17,7 @@
 package stroom.security.client.component;
 
 import stroom.widget.component.client.Component;
+import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -32,6 +33,8 @@ public class UserAccess extends Component {
     UserAccessList list;
     @UiField
     UserSessionsList sessions;
+    @UiField
+    Label edgeAuthenticationNote;
 
     /// Makes the screen, with its lists empty.
     public UserAccess() {
@@ -46,6 +49,14 @@ public class UserAccess extends Component {
     /// @return The selected user's sessions.
     public UserSessionsList getSessions() {
         return sessions;
+    }
+
+    /// Shows or hides the note explaining that, behind an authenticating edge proxy, sessions cannot
+    /// be ended here, and how to stop a user's access instead.
+    ///
+    /// @param visible True to show the note.
+    public void setEdgeAuthenticationNoteVisible(final boolean visible) {
+        edgeAuthenticationNote.setVisible(visible);
     }
 
     // --------------------------------------------------------------------------------

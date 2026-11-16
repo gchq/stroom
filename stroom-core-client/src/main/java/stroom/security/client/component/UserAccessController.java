@@ -100,6 +100,8 @@ public class UserAccessController extends ContentTabController
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
                 isExternalIdp = extendedUiConfig.isExternalIdentityProvider();
+                userAccessList.setTokensTracked(!isExternalIdp);
+                setEdgeAuthentication(view, extendedUiConfig.isEdgeAuthentication());
             }
         }, this);
 
@@ -108,6 +110,16 @@ public class UserAccessController extends ContentTabController
             showSessionsForSelectedUser();
         }));
         setButtonStates();
+    }
+
+    // Behind an authenticating edge proxy (e.g. an AWS ALB) ending a session does not sign the user out:
+    // the proxy authenticates their very next request, and it issues their tokens rather than Stroom, so
+    // there are none to revoke here. Offering the actions would let an administrator believe they had cut
+    // someone off when they had not, so they are hidden and the screen says what does work.
+    private void setEdgeAuthentication(final UserAccess view, final boolean edgeAuthentication) {
+        revokeButton.setVisible(!edgeAuthentication);
+        userSessionsList.setEdgeAuthentication(edgeAuthentication);
+        view.setEdgeAuthenticationNoteVisible(edgeAuthentication);
     }
 
     private void showSessionsForSelectedUser() {
