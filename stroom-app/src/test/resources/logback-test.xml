@@ -41,7 +41,7 @@
 <!--    <logger name="stroom.resource.impl.UserResourceStoreImpl" level="debug" />-->
 
     <logger name="stroom.db.util.SlowQueryExecuteListener" level="debug" />
-    <logger name="stroom.test.common.util.test.ContentPackZipDownloader" level="debug" />
+<!--    <logger name="stroom.test.common.util.test.ContentPackZipDownloader" level="debug" />-->
 
 <!--    <logger name="stroom.db.util.DataSourceProxy" level="trace" />-->
 
@@ -71,7 +71,7 @@
     <logger name="stroom.statistics" level="info" />
 
 
-    <logger name="stroom.pipeline.writer.FileAppender" level="trace" />
+<!--    <logger name="stroom.pipeline.writer.FileAppender" level="trace" />-->
 
     <logger name="org.flywaydb" level="error" />
 
