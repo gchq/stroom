@@ -27,6 +27,7 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -88,6 +89,71 @@ class TestEqlSequenceResults {
         assertThat(EqlSequenceResults.iso(entities.getFirst().last())).isEqualTo("2026-01-01T01:00:10.000Z");
         assertThat(entities.getFirst().shortestSpan()).isEqualTo(10_000L);
         assertThat(entities.get(1).keys()).containsExactly("bob");
+    }
+
+    @Test
+    void anEntityWhoseFirstSequenceHasNoTimeIsSummarisedFromItsTimedOnes() {
+        // Before, the summary's null-safe min and max unboxed two nulls and threw a NullPointerException, failing
+        // the whole call (seen when Elasticsearch left the events' fields out).
+        final List<Step> steps = twoSteps();
+        final List<Row> rows = EqlSequenceResults.rows(List.of(
+                untimedPair("alice", 1),
+                pair("alice", T0 + 3_600_000, 10_000, 3),
+                pair("alice", T0, 60_000, 5)), steps, TIME);
+
+        final List<Entity> entities = EqlSequenceResults.entities(rows);
+
+        assertThat(entities).singleElement().satisfies(entity -> {
+            assertThat(entity.sequences()).isEqualTo(3);
+            assertThat(EqlSequenceResults.iso(entity.first())).isEqualTo("2026-01-01T00:00:00.000Z");
+            assertThat(EqlSequenceResults.iso(entity.last())).isEqualTo("2026-01-01T01:00:10.000Z");
+            assertThat(entity.shortestSpan()).isEqualTo(10_000L);
+        });
+        assertThat(EqlSequenceResults.untimed(rows)).isEqualTo(1);
+    }
+
+    @Test
+    void anEntityWithNoTimeAtAllHasEmptyTimes() {
+        final List<Step> steps = twoSteps();
+        final List<Row> rows = EqlSequenceResults.rows(List.of(untimedPair("bob", 1), untimedPair("bob", 3)), steps,
+                TIME);
+
+        final List<Entity> entities = EqlSequenceResults.entities(rows);
+
+        assertThat(entities).singleElement().satisfies(entity -> {
+            assertThat(entity.sequences()).isEqualTo(2);
+            assertThat(entity.first()).isNull();
+            assertThat(entity.last()).isNull();
+            assertThat(entity.shortestSpan()).isNull();
+        });
+        assertThat(EqlSequenceResults.cells(rows.getFirst(), steps)).containsExactly("bob", "", "1", "1", "", "",
+                "2", "2", "");
+        assertThat(EqlSequenceResults.untimed(rows)).isEqualTo(2);
+    }
+
+    @Test
+    void eventTimesAreReadInEachFormElasticsearchGives() {
+        assertThat(EqlSequenceResults.epochMillis("1768471440000")).isEqualTo(1_768_471_440_000L);
+        assertThat(EqlSequenceResults.epochMillis(" 1768471440000 ")).isEqualTo(1_768_471_440_000L);
+        assertThat(EqlSequenceResults.epochMillis(1_768_471_440_000L)).isEqualTo(1_768_471_440_000L);
+        assertThat(EqlSequenceResults.epochMillis(1_000)).isEqualTo(1_000L);
+        // A date_nanos field's millis have a fraction, which is dropped.
+        assertThat(EqlSequenceResults.epochMillis("1768471560123.456")).isEqualTo(1_768_471_560_123L);
+        assertThat(EqlSequenceResults.epochMillis("1768471440000.0")).isEqualTo(1_768_471_440_000L);
+        assertThat(EqlSequenceResults.epochMillis(1.76847144E12)).isEqualTo(1_768_471_440_000L);
+        assertThat(EqlSequenceResults.epochMillis("1.76847144E12")).isEqualTo(1_768_471_440_000L);
+        assertThat(EqlSequenceResults.epochMillis(new BigDecimal("1768471440000.999")))
+                .isEqualTo(1_768_471_440_000L);
+    }
+
+    @Test
+    void anEventTimeThatIsntANumberIsNoTime() {
+        assertThat(EqlSequenceResults.epochMillis(null)).isNull();
+        assertThat(EqlSequenceResults.epochMillis("")).isNull();
+        assertThat(EqlSequenceResults.epochMillis("2026-01-15T10:04:00Z")).isNull();
+        assertThat(EqlSequenceResults.epochMillis("1e400")).isNull();
+        assertThat(EqlSequenceResults.epochMillis(Double.NaN)).isNull();
+        assertThat(EqlSequenceResults.epochMillis(true)).isNull();
     }
 
     @Test
@@ -201,6 +267,16 @@ class TestEqlSequenceResults {
     private static Sequence pair(final String user, final long time, final long gapMs, final long eventId) {
         return new Sequence(List.of(user), List.of(event(time, 1, eventId, Map.of()),
                 event(time + gapMs, 2, eventId + 1, Map.of())));
+    }
+
+    // A sequence like [#pair], but its events have no time field.
+    private static Sequence untimedPair(final String user, final long eventId) {
+        return new Sequence(List.of(user), List.of(untimed(1, eventId), untimed(2, eventId + 1)));
+    }
+
+    private static Event untimed(final long streamId, final long eventId) {
+        return new Event("index", "id-" + eventId, false, Map.of("StreamId", List.of(streamId), "EventId",
+                List.of(eventId)));
     }
 
     private static Event event(final long time, final long streamId, final long eventId,

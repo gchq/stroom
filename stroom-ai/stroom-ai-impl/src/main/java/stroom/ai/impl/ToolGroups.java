@@ -222,10 +222,14 @@ final class ToolGroups {
         final String forWhat = purpose != null
                 ? ", to " + purpose
                 : "";
+        final boolean one = tools.size() == 1;
         return ToolSpecification.builder()
                 .name(ACTIVATE_PREFIX + group)
-                .description("Turns on the '" + group + "' group of " + tools.size() + " tools" + forWhat
-                             + ", so you can call them from your next step: " + String.join(", ", names) + more
+                .description("Turns on the '" + group + "' group of " + tools.size() + (one
+                        ? " tool"
+                        : " tools") + forWhat + ", so you can call " + (one
+                        ? "it"
+                        : "them") + " from your next step: " + String.join(", ", names) + more
                              + ". Turn on a group only when you need its tools.")
                 .build();
     }

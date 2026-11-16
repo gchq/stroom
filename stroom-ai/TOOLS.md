@@ -101,16 +101,20 @@ Where a tool is offered:
   is given one `activate_<group>` tool per group naming the group's tools, and once it calls it, the group's tools
   are offered from its next step. The 103 tools' definitions took about 51k tokens of a 131k context window
   before the question, so a long question had its steps shortened at every step. The groups are `build`,
-  `processing`, `indexing`, `dashboards` and `administration` (the tables below give each tool's). A tool in no
+  `processing`, `indexing`, `dashboards`, `administration` and `elastic_hunting` (the tables below give each
+  tool's). A group's name may hold `_`: it is only MCP tool names that are split at the first `_`, and an MCP
+  group of the same name as a built-in one is `mcp_<name>`. A tool in no
   group is always offered. A dashboard tab's guidance turns on `dashboards` from the start
-  (`BuiltInToolGroups.neededBy`). A group none of whose tools the user may use isn't offered. `activate_*` are
+  (`BuiltInToolGroups.neededBy`). A group none of whose tools the user may use, or that are usable (see
+  "Usable"), isn't offered: `activate_elastic_hunting` only to a user who can Use an Elastic Index. `activate_*` are
   not tools of their own: they are made by `ToolGroups` and are not in the tables.
 * **Usable**: a tool can say it has nothing to work on for the user (`StroomTool.isUsable`), and the chat then
   doesn't offer it, nor the guidance that names it (`ContextAssembler.withoutGuidanceForToolsNotOffered`). Asked as
   the user when a run starts; a yes is kept for the rest of the chat (`BuiltInTools.isUsableInChat`), so its tools
   stay the same from question to question, and a no is asked again at the next run. Only `eql_sequence` uses it:
   offered to a user who can Use at least one Elastic Index doc (the store's list and the permission check, no
-  cluster call). Over `/mcp` it is offered whatever it says, as the server instructions are the same for everyone.
+  cluster call), and so its group, `elastic_hunting`, is too. Over `/mcp` it is offered whatever it says, as the
+  server instructions are the same for everyone, and `/mcp` has no groups: a client hides tools itself.
 * **Over `/mcp`** (`McpTools`): a session is offered the tools its user's policies grant, except the chat-only
   ones. A call that changes something needs a client that can show forms (MCP elicitation) and is refused
   otherwise (`FormsRequired`); it is approved by the user first (`McpApprovals`) unless the tool confirms itself
@@ -148,7 +152,7 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 | `document_info` | A document's type, path, tags, history, version and dependencies | core | yes | | | | View | |
 | `document_links` | Follows dependency links (dependants or dependencies) from documents | core | yes | | | Manage Processors | View | |
 | `elastic_index_templates` | An Elastic Index's index template and its component templates, read from its cluster | indexing | yes | indexing | | | View | |
-| `eql_sequence` | Ordered sequences of events across Elastic Index docs on one cluster (EQL): steps, join fields, missing, runs, until | search | yes | | | | Use | slot |
+| `eql_sequence` | Ordered sequences of events across Elastic Index docs on one cluster (EQL): steps, join fields, missing, runs, until | search | yes | elastic_hunting | | | Use | slot |
 | `esql_query` | Totals, top N and grouped answers on an Elastic Index's index, worked out by Elasticsearch (ESQL) | search | yes | | | | Use | slot |
 | `explain_processing` | Why processing isn't happening, or is slow, link by link from nodes and jobs to each filter's tasks and priority | processing | yes | processing | Manage Processors | Manage Jobs, Manage Nodes, View System Info | View | |
 | `explain_retention` | How long data is kept and why: retention rules in order, the rule keeping a feed or stream, what would go now | processing | yes | processing | | Manage Policies, Manage Jobs | | |
@@ -1244,11 +1248,15 @@ Finds ordered sequences of events across one or more Elastic Index docs on one c
 Elasticsearch: "a device plugged in, then a file copied to it", "a clipboard copy then PowerShell within 2 minutes
 by the same user on the same host", "20 failed logons then a success". Structured steps only, never raw EQL.
 
-* **Offered** in the chat only to a user who can Use an Elastic Index doc (see "Usable" above). Its definition is
-  kept short (about 2,800 characters as sent, from 8,200; a test holds it under 3,000): what a call can get wrong is
-  said by the refusal or result that meets it (a `?` in a pattern, nested and text fields, the versions for missing
-  and runs, a Lucene index, docs on different clusters, the counts and `runAnyway`, the limits on `runs`, `fields`
-  and `limit`, the caveat and which doc to review).
+* **Offered** in the chat in the `elastic_hunting` group, and only to a user who can Use an Elastic Index doc (see
+  "Usable" above): the chat sends `activate_elastic_hunting` (about 290 characters) until the model turns it on,
+  and the full definition (about 8,400 characters as sent) only from then, while the chat's latest two questions
+  use it. The guidance bullet names it "in the elastic_hunting group". The definition carries the rules and
+  examples, and `until` and the `any_of` items list their properties (a condition's, a step's index, where, any_of
+  and by), as strict providers may refuse an object schema with none. What a call can get wrong is also said by
+  the refusal or result that meets it (a `?` in a pattern, nested and text fields, the versions for missing and
+  runs, a Lucene index, docs on different clusters, the counts and `runAnyway`, the limits on `runs`, `fields` and
+  `limit`, the caveat and which doc to review).
 * **Arguments**: `steps` (2 or more, in order), each `{index, where, any_of, by, missing, runs, fields}`: the doc
   (uuid or name), conditions as `search_events` takes them plus `caseInsensitive`, `NOT_IN` and `length`, an
   optional `any_of` group (2 or more plain conditions, at least one must hold), its own join fields (same number and
@@ -1291,10 +1299,14 @@ by the same user on the same host", "20 failed logons then a success". Structure
   and ends the run stopped (a stop during the counts doesn't run it). Cluster errors as `esql_query`'s: busy or
   overloaded, try again shortly; the sequence breaker or a permanent breaker, needs too much memory (narrow the
   window, shorten maxspan, put the more selective step first). `filter_path` keeps only the ids, `missing` and the fields fetched.
+  A search that completes during a poll is read once more from its stored result when an event that happened has
+  no fields: Elasticsearch 9.5.3 leaves every event's `fields` out of the answer to that poll (seen: 13 of 38 calls
+  over windows wider than about a day had no times, and failed).
 * **Returns**: the EQL, the window, the counts and advice, a summary per entity (sequences, first, last, shortest
   gap), the sequences (first 20 shown) written to `/outputs/eql/eql-<time>.md` (join keys; each step's time,
   fields, StreamId and EventId; the gaps; the span), a line that these are at least the sequences (EQL doesn't find
-  every overlapping match), the "straight from Elasticsearch" caveat, a note when the limit
+  every overlapping match), the "straight from Elasticsearch" caveat, how many sequences had no time on their
+  events if any (`untimed_sequence_count`; their times and gaps are empty), a note when the limit
   cut them (the latest are kept), and a validated StroomQL review query per doc. Markdown in the chat, JSON over
   `/mcp`. Audited per doc as a Search event.
 * **Review query** (`EqlSequenceResults.review`): the doc's hits by stream, `(StreamId = x and EventId in (a, b))

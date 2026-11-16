@@ -79,8 +79,8 @@ public class ContextAssembler {
     static final String EQL_SEQUENCE_TOOL = "eql_sequence";
     static final String EQL_SEQUENCE_GUIDANCE = """
             - For "X, then Y" questions on Elastic Indexes (by the same user or host, within N; N in a row; X \
-            and then not Y), in one index or across several, use eql_sequence: never join esql_query or search \
-            results by hand.
+            and then not Y), in one index or across several, use eql_sequence (in the elastic_hunting group): never \
+            join esql_query or search results by hand.
             """;
     // The guidance bullets about one built-in tool alone, by the tool's name.
     private static final Map<String, String> GUIDANCE_BY_TOOL = Map.of(EQL_SEQUENCE_TOOL, EQL_SEQUENCE_GUIDANCE);

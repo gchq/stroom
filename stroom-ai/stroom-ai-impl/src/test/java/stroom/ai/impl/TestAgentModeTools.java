@@ -30,6 +30,7 @@ import stroom.ai.impl.workspace.WorkspaceArguments;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.cluster.api.ClusterNodeManager;
@@ -87,6 +88,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
@@ -190,6 +192,8 @@ class TestAgentModeTools {
             Map.entry("elastic_index_templates", false)));
 
     private static final DocRef ELASTIC_INDEX = new DocRef(ElasticIndexDoc.TYPE, "elastic-uuid", "Events");
+    private static final String ACTIVATE_ELASTIC_HUNTING = ToolGroups.ACTIVATE_PREFIX
+                                                           + BuiltInToolGroups.ELASTIC_HUNTING;
 
     private final AiService aiService = Mockito.mock(AiService.class);
     private final AiDao aiDao = Mockito.mock(AiDao.class);
@@ -291,44 +295,103 @@ class TestAgentModeTools {
 
     @Test
     void eqlSequenceAndItsGuidanceAreOnlyForAUserWhoCanUseAnElasticIndex() {
-        // Its definition is large, and most users of most chats have no Elastic Index to hunt sequences in.
+        // Its definition is large, and most users of most chats have no Elastic Index to hunt sequences in: its
+        // group's activator isn't offered without one, and the guidance on it is left out.
         final String systemPrompt = "system\n\n" + ContextAssembler.TOOL_GUIDANCE;
         final ChatRequest withIndex = firstRequest(1, systemPrompt);
         Mockito.when(securityContext.hasDocumentPermission(ELASTIC_INDEX, DocumentPermission.USE)).thenReturn(false);
         final ChatRequest withoutIndex = firstRequest(2, systemPrompt);
 
-        assertThat(offered(withIndex)).contains("eql_sequence", "esql_query");
+        assertThat(offered(withIndex)).contains(ACTIVATE_ELASTIC_HUNTING, "esql_query").doesNotContain("eql_sequence");
         assertThat(systemPrompt(withIndex)).isEqualTo(systemPrompt)
                 .contains(ContextAssembler.EQL_SEQUENCE_GUIDANCE);
-        assertThat(offered(withoutIndex)).doesNotContain("eql_sequence").contains("esql_query");
-        assertThat(systemPrompt(withoutIndex)).doesNotContain("eql_sequence")
+        assertThat(offered(withoutIndex)).doesNotContain("eql_sequence", ACTIVATE_ELASTIC_HUNTING)
+                .contains("esql_query");
+        assertThat(systemPrompt(withoutIndex)).doesNotContain("eql_sequence").doesNotContain("elastic_hunting")
                 .contains("For totals, top N and grouped questions on an Elastic Index, use esql_query")
                 .contains("- \"Query\" can mean two things.");
     }
 
     @Test
-    void aChatKeepsEqlSequenceOnceOfferedAndOffersItOnceTheUserHasAnElasticIndex() {
+    void theElasticHuntingActivatorSaysWhatItIsForAndNamesEqlSequence() {
+        final ToolSpecification activator = firstRequest(1, "system").toolSpecifications().stream()
+                .filter(specification -> specification.name().equals(ACTIVATE_ELASTIC_HUNTING))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(activator.description()).isEqualTo("Turns on the 'elastic_hunting' group of 1 tool, to hunt "
+                                                       + "across Elastic Indexes for ordered sequences of events (X, "
+                                                       + "then Y, by the same user or host, within N; N in a row; X "
+                                                       + "and then not Y), so you can call it from your next step: "
+                                                       + "eql_sequence. Turn on a group only when you need its "
+                                                       + "tools.");
+    }
+
+    @Test
+    void turningOnElasticHuntingOffersEqlSequenceFromTheNextStep() {
+        final List<ChatRequest> requests = requests(1, "system",
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name(ACTIVATE_ELASTIC_HUNTING)
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from("an answer"));
+
+        assertThat(requests).hasSize(2);
+        assertThat(offered(requests.get(0))).contains(ACTIVATE_ELASTIC_HUNTING).doesNotContain("eql_sequence");
+        assertThat(offered(requests.get(1))).contains("eql_sequence").doesNotContain(ACTIVATE_ELASTIC_HUNTING);
+    }
+
+    @Test
+    void elasticHuntingStaysOnWhileTheChatsLatestQuestionsUseIt() {
+        // The latest question called eql_sequence, so its group is on as the next run starts.
+        Mockito.when(aiDao.getMessages(1)).thenReturn(List.of(
+                new AiChatMessage(1, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 10, 0),
+                new AiChatMessage(2, 1, 0L, AiMessageType.TOOL_CALL, null,
+                        "{\"callId\":\"a\",\"tool\":\"eql_sequence\"}", 10, 0)));
+
+        assertThat(offered(firstRequest(1, "system"))).contains("eql_sequence")
+                .doesNotContain(ACTIVATE_ELASTIC_HUNTING);
+        // Three questions on, it is off again.
+        Mockito.when(aiDao.getMessages(1)).thenReturn(List.of(
+                new AiChatMessage(1, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 10, 0),
+                new AiChatMessage(2, 1, 0L, AiMessageType.TOOL_CALL, null,
+                        "{\"callId\":\"a\",\"tool\":\"eql_sequence\"}", 10, 0),
+                new AiChatMessage(3, 1, 0L, AiMessageType.USER_MESSAGE, null, "q2", 11, 0),
+                new AiChatMessage(4, 1, 0L, AiMessageType.USER_MESSAGE, null, "q3", 12, 0)));
+
+        assertThat(offered(firstRequest(1, "system"))).contains(ACTIVATE_ELASTIC_HUNTING)
+                .doesNotContain("eql_sequence");
+    }
+
+    @Test
+    void aChatKeepsElasticHuntingOnceOfferedAndOffersItOnceTheUserHasAnElasticIndex() {
         // Kept, so the tools (and the start of every request) stay the same from question to question; the call
         // itself checks Use on each doc.
-        assertThat(offered(firstRequest(1, "system"))).contains("eql_sequence");
+        assertThat(offered(firstRequest(1, "system"))).contains(ACTIVATE_ELASTIC_HUNTING);
         Mockito.when(securityContext.hasDocumentPermission(ELASTIC_INDEX, DocumentPermission.USE)).thenReturn(false);
-        assertThat(offered(firstRequest(1, "system"))).contains("eql_sequence");
+        assertThat(offered(firstRequest(1, "system"))).contains(ACTIVATE_ELASTIC_HUNTING);
 
         // Not found usable, it is looked for again as each run starts: e.g. once an index is made in the chat.
-        assertThat(offered(firstRequest(2, "system"))).doesNotContain("eql_sequence");
+        assertThat(offered(firstRequest(2, "system"))).doesNotContain(ACTIVATE_ELASTIC_HUNTING);
         Mockito.when(securityContext.hasDocumentPermission(ELASTIC_INDEX, DocumentPermission.USE)).thenReturn(true);
-        assertThat(offered(firstRequest(2, "system"))).contains("eql_sequence");
+        assertThat(offered(firstRequest(2, "system"))).contains(ACTIVATE_ELASTIC_HUNTING);
     }
 
     @Test
     void aUserWithNoElasticIndexStoreIsntOfferedEqlSequence() {
         Mockito.when(dataSourceRegistry.getDataSourceProvider(ElasticIndexDoc.TYPE)).thenReturn(Optional.empty());
 
-        assertThat(offered(firstRequest(1, "system"))).doesNotContain("eql_sequence");
+        assertThat(offered(firstRequest(1, "system"))).doesNotContain("eql_sequence", ACTIVATE_ELASTIC_HUNTING);
     }
 
     // The first request a run of the chat makes of the model, with the system prompt given.
     private ChatRequest firstRequest(final int chatId, final String systemPrompt) {
+        return requests(chatId, systemPrompt, AiMessage.from("an answer")).getFirst();
+    }
+
+    // The requests a run of the chat makes of the model, which replies with each message in turn.
+    private List<ChatRequest> requests(final int chatId, final String systemPrompt, final AiMessage... replies) {
         final ToolConsent toolConsent = Mockito.mock(ToolConsent.class);
         final AiChatRunManager runManager = Mockito.mock(AiChatRunManager.class);
         final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools,
@@ -344,14 +407,15 @@ class TestAgentModeTools {
             @Override
             public ChatResponse doChat(final ChatRequest chatRequest) {
                 requests.add(chatRequest);
-                return ChatResponse.builder().aiMessage(AiMessage.from("an answer")).build();
+                return ChatResponse.builder().aiMessage(replies[Math.min(requests.size(), replies.length) - 1])
+                        .build();
             }
         };
 
         agentChat.chat(model, null, chatId, List.of(new SystemMessage(systemPrompt), new UserMessage("q")),
                 McpToolset.EMPTY, 99, new AtomicBoolean(false), Mockito.mock(TaskContext.class), 1,
                 new StringBuilder(), 0, ContextBudget.UNKNOWN);
-        return requests.getFirst();
+        return requests;
     }
 
     private static Set<String> offered(final ChatRequest request) {

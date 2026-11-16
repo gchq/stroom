@@ -764,6 +764,23 @@ the user:
   per chat once true, and leaves out the chat guidance bullet that names it when it isn't offered. Over `/mcp` it
   is always offered, as the server instructions name it for everyone. The definition was cut to about 2,800
   characters: the rarely needed detail is in the refusals and results that meet it.
+* **Behind a group (2026-11-16).** Then put in its own built-in group, `elastic_hunting` (`BuiltInToolGroups`), so
+  a chat sends only its activator (about 290 characters: "hunt across Elastic Indexes for ordered sequences of
+  events ...") until the model turns it on, and the definition was restored in full (about 8,400 characters: the
+  examples and rules, and `until` and the `any_of` items with their properties listed, not empty objects, which
+  strict providers may refuse). The group is offered only when the tool is usable, as a group none of whose tools
+  are offered isn't. `esql_query` stays ungrouped. The rules stay in the refusals and results too. Over `/mcp`
+  nothing changes: `/mcp` has no groups.
+* **Times read whatever the poll (2026-11-16).** A Haiku acceptance run (t22 at scale) failed 13 of 38 calls with
+  a NullPointerException. Root cause, reproduced on 9.5.3: an async EQL search that completes while a poll
+  (`GET _eql/search/<id>` with `wait_for_completion_timeout`) is waiting answers that poll with no `fields` on any
+  event, though `_source` is there and a later read of the stored result has them; a search done within the
+  submit's wait, or read after it completed, is complete. Wide windows run longer, so more often complete during a
+  poll. With no time on any event, the entity summary's min/max (a conditional mixing `Long` and `long`) unboxed
+  null. Fixed in three places: `ElasticEqlService` reads the stored result once more when an event that happened
+  has no fields; the summary's min/max are plain if/else; the time is read as epoch millis from a whole or decimal
+  number or text (a `date_nanos` field gives `1768471560123.456`), anything else logged at debug. A sequence still
+  without a time shows empty times, and the result says how many.
 * **Pre-flight (the heuristic; bounded 2026-11-16).** Each step that must happen is counted with ES|QL up to a
   cap, `| WHERE <the step's conditions> | LIMIT 1000001 | STATS n = COUNT(*)` (a case-insensitive regex left out),
   where the cluster takes ES|QL (8.14+), else skipped, saying so; skipped too when the time range has both ends
@@ -1023,9 +1040,9 @@ User's view: `how-it-works/runs-and-context.md`, `ask-stroom-ai/chat-interface.m
 
 ### Tool registry, groups and server instructions
 
-* **Groups** (`BuiltInToolGroups`, `ToolGroups`): build, processing, indexing, dashboards and administration tools
-  are offered behind `activate_<group>` tools, each saying what the group is for. Core, search and file tools are
-  always offered. All definitions together came to about 51k tokens; a question now starts at about 14k
+* **Groups** (`BuiltInToolGroups`, `ToolGroups`): build, processing, indexing, dashboards and administration tools,
+  and `eql_sequence` (elastic_hunting, offered only to a user who can Use an Elastic Index), are offered behind
+  `activate_<group>` tools, each saying what the group is for. Core, search and file tools are always offered. All definitions together came to about 51k tokens; a question now starts at about 14k
   (2026-10-29). A group stays on while either of the latest two questions uses it, and calling a tool from a group
   that is off turns it on. Activations are rebuilt from the chat's stored calls at each run start, so they survive
   node changes. A Dashboard tab's guidance turns the dashboards group on from the start.

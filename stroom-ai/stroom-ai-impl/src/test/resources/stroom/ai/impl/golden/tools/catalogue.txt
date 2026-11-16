@@ -527,87 +527,115 @@ offered in modes:
 
 ### Description
 
-Use for any 'X, then Y, by the same user/host, within N' question on Elastic Indexes, in one doc or across several, rather than joining the results of separate queries (esql_query, search_events) by hand. Runs as one EQL sequence in Elasticsearch, over docs on one cluster. Give 2 or more steps in order, each with its doc (index), conditions (where; any_of), join fields (by: the same entity in each doc's own field names, from describe_data_source), missing=true for 'and then NOT ...' and runs=N for N in a row; until for a step that ends a sequence. maxspan is from the user's words ('within 2 minutes' is 2m, at most 24h); if they didn't say, leave it out and the user is asked. The result gives the EQL, the sequences with each event's StreamId/EventId, and review queries to offer.
+Use for any 'X, then Y, by the same user/host, within N' question on Elastic Indexes, in one doc or across several, rather than joining the results of separate queries (esql_query, search_events) by hand. Finds ordered sequences of events across one or more Elastic Index docs on one cluster, matched in Elasticsearch as one EQL sequence: e.g. a USB device plugged in then a file copied to it; a clipboard copy then PowerShell within 2 minutes by the same user on the same host; 20 failed logons then a success. Give steps (2 or more, in order), each with its doc, its where conditions (all must hold; NOT_IN for none of a list; length=true to compare a string's length), any_of (optional, at least one must hold), its own join fields (by, same number and order in every step: the same entity in each doc's own names), missing=true for 'and then NOT ...', runs=N for N in a row; until for a step that ends a sequence. maxspan: how far apart the first and last events may be, from the user's words ('within 2 minutes' is 2m), at most 24h; if they didn't say, leave it out and the user is asked. Fields are checked against each doc's (describe_data_source gives them). Each step is counted first: the result says when a later step is far more selective, and a sequence too big for the time limit is refused before it runs (narrow the window or the first step, or runAnyway=true). The result gives the EQL, a summary per entity, the sequences with each step's StreamId/EventId, and a validated StroomQL review query per doc, for a saved query (propose_query) or a dashboard with the event preview (propose_dashboard). Each reads one doc: when the hunt spans several, ask the user which doc to review (ask_user, the docs as options), then offer that doc's. Sequences come straight from Elasticsearch, as ES|QL counts do, and may include streams the user can't see or deleted ones. Refused for a Lucene index (use run_stroomql), docs on different clusters or with different time fields, and nested fields. A text field is searched as its keyword subfield (the result says so). A literal ? can't be in a pattern (EQL reads it as any one character).
 
 ### Parameters
 
 {
   "properties" : {
     "limit" : {
-      "description" : "The most sequences (default 1000).",
+      "description" : "The most sequences (default 1000, at most 10000).",
       "type" : "integer"
     },
     "maxspan" : {
-      "description" : "e.g. 30s, 2m, 1h.",
+      "description" : "How far apart the first and last events may be, e.g. 30s, 2m, 1h (at most 24h); leave it out if the user didn't say, and they are asked.",
       "type" : "string"
     },
     "out" : {
-      "description" : "A .md file in /outputs/ (default /outputs/eql/eql-<time>.md).",
+      "description" : "A .md file in /outputs/ for the sequences (default /outputs/eql/eql-<time>.md).",
       "type" : "string"
     },
     "runAnyway" : {
-      "description" : "Run though the counts say it won't finish in time.",
+      "description" : "True to run even though the counts say it won't finish in the time limit.",
       "type" : "boolean"
     },
     "steps" : {
+      "description" : "The steps, 2 or more, in order.",
       "items" : {
+        "description" : "One step.",
         "properties" : {
           "any_of" : {
-            "description" : "Optional: 2 or more conditions like where's, at least one must hold.",
+            "description" : "Optional: 2 or more conditions of which at least one must hold (written as one OR group, beside where's).",
             "items" : {
-              "properties" : { },
-              "required" : [ ],
+              "description" : "One condition, as a person would set it on a dashboard (as search_events takes it).",
+              "properties" : {
+                "caseInsensitive" : {
+                  "description" : "True to match text whatever its case.",
+                  "type" : "boolean"
+                },
+                "condition" : {
+                  "description" : "The condition (default EQUALS).",
+                  "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
+                  "type" : "string"
+                },
+                "field" : {
+                  "description" : "The doc's field.",
+                  "type" : "string"
+                },
+                "length" : {
+                  "description" : "True to compare the string's length in characters (a whole number), e.g. GREATER_THAN 1000 for long command lines.",
+                  "type" : "boolean"
+                },
+                "value" : {
+                  "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards, and a CIDR (10.0.0.0/8) on an IP field.",
+                  "type" : "string"
+                }
+              },
+              "required" : [ "field" ],
               "type" : "object"
             },
             "type" : "array"
           },
           "by" : {
-            "description" : "Join fields: the same number and order in every step.",
+            "description" : "Its join fields, in the same order and number in every step (e.g. [\"user.name\", \"host.name\"] in one, [\"SubjectUserName\", \"Computer\"] in another).",
             "items" : {
               "type" : "string"
             },
             "type" : "array"
           },
           "fields" : {
-            "description" : "Up to 5 more fields to show.",
+            "description" : "Up to 5 fields of its events to show, beside the join fields and ids.",
             "items" : {
               "type" : "string"
             },
             "type" : "array"
           },
           "index" : {
-            "description" : "Elastic Index doc uuid or name.",
+            "description" : "The Elastic Index doc's uuid or name.",
             "type" : "string"
           },
           "missing" : {
-            "description" : "Must NOT happen here.",
+            "description" : "True if the event must NOT happen here (and then NOT ...).",
             "type" : "boolean"
           },
           "runs" : {
-            "description" : "N in a row (default 1).",
+            "description" : "How many times in a row it must happen, e.g. 20 failed logons (default 1, at most 100).",
             "type" : "integer"
           },
           "where" : {
-            "description" : "All must hold.",
+            "description" : "Conditions its events meet, all of them.",
             "items" : {
+              "description" : "One condition, as a person would set it on a dashboard (as search_events takes it).",
               "properties" : {
                 "caseInsensitive" : {
+                  "description" : "True to match text whatever its case.",
                   "type" : "boolean"
                 },
                 "condition" : {
-                  "description" : "Default EQUALS.",
+                  "description" : "The condition (default EQUALS).",
                   "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
                   "type" : "string"
                 },
                 "field" : {
+                  "description" : "The doc's field.",
                   "type" : "string"
                 },
                 "length" : {
-                  "description" : "Compare the string's length (a number).",
+                  "description" : "True to compare the string's length in characters (a whole number), e.g. GREATER_THAN 1000 for long command lines.",
                   "type" : "boolean"
                 },
                 "value" : {
-                  "description" : "BETWEEN 'from,to'; IN and NOT_IN comma-separated; * wildcards; a CIDR on an IP field.",
+                  "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards, and a CIDR (10.0.0.0/8) on an IP field.",
                   "type" : "string"
                 }
               },
@@ -623,17 +651,93 @@ Use for any 'X, then Y, by the same user/host, within N' question on Elastic Ind
       "type" : "array"
     },
     "timeFrom" : {
-      "description" : "Optional: ISO 8601, or Stroom's day()-7d.",
+      "description" : "Optional: from this time on the docs' time field (ISO 8601, or Stroom's day()-7d).",
       "type" : "string"
     },
     "timeTo" : {
-      "description" : "Optional: ISO 8601, or Stroom's now().",
+      "description" : "Optional: up to this time (ISO 8601, or Stroom's now()).",
       "type" : "string"
     },
     "until" : {
-      "description" : "Optional: a step (index, where, any_of, by) that ends a sequence.",
-      "properties" : { },
-      "required" : [ ],
+      "description" : "Optional: a step that ends a sequence before it is complete: its doc, conditions and join fields, as a step's (no missing, runs or fields).",
+      "properties" : {
+        "any_of" : {
+          "description" : "Optional: 2 or more conditions of which at least one must hold (written as one OR group, beside where's).",
+          "items" : {
+            "description" : "One condition, as a person would set it on a dashboard (as search_events takes it).",
+            "properties" : {
+              "caseInsensitive" : {
+                "description" : "True to match text whatever its case.",
+                "type" : "boolean"
+              },
+              "condition" : {
+                "description" : "The condition (default EQUALS).",
+                "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
+                "type" : "string"
+              },
+              "field" : {
+                "description" : "The doc's field.",
+                "type" : "string"
+              },
+              "length" : {
+                "description" : "True to compare the string's length in characters (a whole number), e.g. GREATER_THAN 1000 for long command lines.",
+                "type" : "boolean"
+              },
+              "value" : {
+                "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards, and a CIDR (10.0.0.0/8) on an IP field.",
+                "type" : "string"
+              }
+            },
+            "required" : [ "field" ],
+            "type" : "object"
+          },
+          "type" : "array"
+        },
+        "by" : {
+          "description" : "Its join fields, in the same order and number as the steps'.",
+          "items" : {
+            "type" : "string"
+          },
+          "type" : "array"
+        },
+        "index" : {
+          "description" : "The Elastic Index doc's uuid or name.",
+          "type" : "string"
+        },
+        "where" : {
+          "description" : "Conditions its events meet, all of them.",
+          "items" : {
+            "description" : "One condition, as a person would set it on a dashboard (as search_events takes it).",
+            "properties" : {
+              "caseInsensitive" : {
+                "description" : "True to match text whatever its case.",
+                "type" : "boolean"
+              },
+              "condition" : {
+                "description" : "The condition (default EQUALS).",
+                "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL", "NOT_IN" ],
+                "type" : "string"
+              },
+              "field" : {
+                "description" : "The doc's field.",
+                "type" : "string"
+              },
+              "length" : {
+                "description" : "True to compare the string's length in characters (a whole number), e.g. GREATER_THAN 1000 for long command lines.",
+                "type" : "boolean"
+              },
+              "value" : {
+                "description" : "BETWEEN: 'from,to'; IN and NOT_IN: values separated by commas; EQUALS takes * wildcards, and a CIDR (10.0.0.0/8) on an IP field.",
+                "type" : "string"
+              }
+            },
+            "required" : [ "field" ],
+            "type" : "object"
+          },
+          "type" : "array"
+        }
+      },
+      "required" : [ "index", "by" ],
       "type" : "object"
     }
   },

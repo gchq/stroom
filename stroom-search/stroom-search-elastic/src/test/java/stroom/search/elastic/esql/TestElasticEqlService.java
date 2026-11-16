@@ -275,6 +275,54 @@ class TestElasticEqlService {
     }
 
     @Test
+    void aSearchCompletedDuringAPollIsReadAgainWhenItsEventsHaveNoFields() {
+        // Elasticsearch 9.5.3 leaves the events' fields out of the answer to a poll the search completes during
+        // (seen: 13 of 38 eql_sequence calls over wide windows had no times, so failed); the stored result has them.
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(EQL_PATH))
+                .willReturn(ElasticWireMock.elasticResponse(200, RUNNING)));
+        ELASTIC.stubFor(WireMock.get(WireMock.urlPathEqualTo("/_eql/search/search-1"))
+                .inScenario("poll").whenScenarioStateIs(Scenario.STARTED).willSetStateTo("stored")
+                .willReturn(ElasticWireMock.elasticResponse(200, """
+                        {"id": "search-1", "is_partial": false, "is_running": false, "took": 7, "timed_out": false,
+                         "hits": {"sequences": [
+                           {"join_keys": ["alice"], "events": [
+                             {"_index": "devices-000001", "_id": "a1"},
+                             {"_index": "", "_id": "", "missing": true},
+                             {"_index": "sysmon", "_id": "b1"}]}]}}""")));
+        ELASTIC.stubFor(WireMock.get(WireMock.urlPathEqualTo("/_eql/search/search-1"))
+                .inScenario("poll").whenScenarioStateIs("stored")
+                .willReturn(ElasticWireMock.elasticResponse(200, FOUND.replace("{\"is_partial\"",
+                        "{\"id\": \"search-1\", \"is_partial\""))));
+        stubDelete();
+
+        final Result result = service.search(new Request(List.of(DEVICES, SYSMON), QUERY, null, List.of(), 10,
+                Duration.ofSeconds(30)));
+
+        assertThat(result.sequences()).singleElement().satisfies(sequence -> {
+            assertThat(sequence.events().getFirst().fields().get("@timestamp")).containsExactly("1767225600000");
+            assertThat(sequence.events().getLast().fields().get("@timestamp")).containsExactly("1767225640000");
+        });
+        final List<LoggedRequest> polls = ELASTIC.findAll(WireMock.getRequestedFor(
+                WireMock.urlPathEqualTo("/_eql/search/search-1")));
+        assertThat(polls).hasSize(2);
+        assertThat(polls.getLast().queryParameter("wait_for_completion_timeout").firstValue()).isEqualTo("0ms");
+        ELASTIC.verify(WireMock.deleteRequestedFor(WireMock.urlPathEqualTo("/_eql/search/search-1")));
+    }
+
+    @Test
+    void aSearchCompletedDuringAPollWithItsFieldsIsReadOnce() {
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(EQL_PATH))
+                .willReturn(ElasticWireMock.elasticResponse(200, RUNNING)));
+        stubPoll(FOUND.replace("{\"is_partial\"", "{\"id\": \"search-1\", \"is_partial\""), 0);
+        stubDelete();
+
+        service.search(new Request(List.of(DEVICES, SYSMON), QUERY, null, List.of(), 10, Duration.ofSeconds(30)));
+
+        assertThat(ELASTIC.findAll(WireMock.getRequestedFor(WireMock.urlPathEqualTo("/_eql/search/search-1"))))
+                .hasSize(1);
+    }
+
+    @Test
     void aStopDuringTheSearchDeletesItPromptly() {
         // Before, a stop was seen only once the search ended or reached its time limit, while Elasticsearch kept
         // working.
