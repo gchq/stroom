@@ -1367,6 +1367,57 @@ class TestMcpAgentChat {
     }
 
     @Test
+    void aBuiltInToolStoppedWithTheRunEndsItStoppedWithTheCallsResultKept() {
+        // E.g. esql_query cancelling its query in Elasticsearch once the user stops the chat. Before, the stop came
+        // back as the tool's fault ("Error running built-in tool ...").
+        final AtomicBoolean cancelled = new AtomicBoolean(false);
+        final dev.langchain4j.agent.tool.ToolSpecification query = dev.langchain4j.agent.tool.ToolSpecification
+                .builder()
+                .name("esql_query")
+                .description("built in")
+                .build();
+        final StroomTool queryTool = new StroomTool() {
+            @Override
+            public AiToolCategory category() {
+                return AiToolCategory.CORE;
+            }
+
+            @Override
+            public ToolDefinition definition() {
+                return ToolDefinition.builder().name("esql_query").description("built in").build();
+            }
+
+            @Override
+            public ToolResult execute(final ToolCall call, final ToolCallContext context) {
+                // The user stops the chat while the query runs; the tool sees it through its context.
+                cancelled.set(true);
+                assertThat(context.stopped().getAsBoolean()).isTrue();
+                throw new TaskTerminatedException();
+            }
+        };
+        Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(query,
+                LangChain4jTools.executor(queryTool, ToolCalls.chatContexts()::forMemoryId)));
+        final StubToolCallingModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("esql_query")
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from("never given"));
+
+        assertThatThrownBy(() -> agentChat.chat(model, null, 7, messages, McpToolset.EMPTY, 99, cancelled,
+                taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN))
+                .isInstanceOf(TaskTerminatedException.class);
+
+        assertThat(model.requests).hasSize(1);
+        Mockito.verify(aiService).storeMessage(Mockito.eq(7), Mockito.eq(AiMessageType.TOOL_RESULT),
+                Mockito.contains("the user stopped the chat before it finished, so what it was running was "
+                                 + "stopped"));
+        Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.eq(7),
+                Mockito.eq(AiMessageType.TOOL_RESULT), Mockito.contains("Error running built-in tool"));
+    }
+
+    @Test
     void steeringMessagesArePickedUp() {
         final McpSyncClient client = Mockito.mock(McpSyncClient.class);
         Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))

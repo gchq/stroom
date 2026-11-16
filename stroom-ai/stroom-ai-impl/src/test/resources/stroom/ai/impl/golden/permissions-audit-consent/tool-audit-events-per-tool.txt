@@ -158,7 +158,7 @@
   }
 
 ## eql_sequence {"maxspan":"2m","steps":[{"index":"elastic-index-uuid","by":["UserId"],"where":[{"field":"UserId","value":"alice"}]},{"index":"elastic-index-uuid","by":["UserId"]}]}
-- audit: searched(1, DocRef{type='ElasticIndex', uuid='elastic-index-uuid', name='Test elastic index'}, "sequence with maxspan=2m\n  [any where UserId == "alice"] by UserId\n  [any where true] by UserId\nmaxspan: 2m\ncount of step 1: | WHERE UserId == "alice" | STATS n = COUNT(*)\ncount of step 2: | STATS n = COUNT(*)", 2, "EQL sequence by the eql_sequence tool")
+- audit: searched(1, DocRef{type='ElasticIndex', uuid='elastic-index-uuid', name='Test elastic index'}, "sequence with maxspan=2m\n  [any where UserId == "alice"] by UserId\n  [any where true] by UserId\nmaxspan: 2m\ncount of step 1: | WHERE UserId == "alice" | LIMIT 1000001 | STATS n = COUNT(*)\ncount of step 2: | LIMIT 1000001 | STATS n = COUNT(*)", 2, "EQL sequence by the eql_sequence tool")
 - event: AskStroomAi.search "Ask Stroom AI read search results in chat 1: EQL sequence by the eql_sequence tool"
   SearchEventAction {
     "data" : [ {
@@ -175,7 +175,7 @@
       "dataSource" : [ "ElasticIndex 'Test elastic index'" ]
     },
     "query" : {
-      "raw" : "sequence with maxspan=2m\n  [any where UserId == \"alice\"] by UserId\n  [any where true] by UserId\nmaxspan: 2m\ncount of step 1: | WHERE UserId == \"alice\" | STATS n = COUNT(*)\ncount of step 2: | STATS n = COUNT(*)"
+      "raw" : "sequence with maxspan=2m\n  [any where UserId == \"alice\"] by UserId\n  [any where true] by UserId\nmaxspan: 2m\ncount of step 1: | WHERE UserId == \"alice\" | LIMIT 1000001 | STATS n = COUNT(*)\ncount of step 2: | LIMIT 1000001 | STATS n = COUNT(*)"
     },
     "totalResults" : 2
   }

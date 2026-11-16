@@ -868,6 +868,16 @@ class TestContextAssembler {
     }
 
     @Test
+    void theModelIsToldToAnswerOrderedQuestionsWithEqlSequenceNotJoins() {
+        // Seen in acceptance runs on a small model: "a USB device connected, then a file copied to it within 10
+        // minutes" answered by joining esql_query results by hand, and wrongly.
+        assertThat(ContextAssembler.TOOL_GUIDANCE)
+                .contains("For \"X, then Y\" questions on Elastic Indexes (by the same user or host, within N; N in a "
+                          + "row; X and then not Y), in one index or across several, use eql_sequence")
+                .contains("never join esql_query or search results by hand");
+    }
+
+    @Test
     void theModelIsToldToAskWhichDataSourceAndWhetherToRunOrCreateAQuery() {
         assertThat(ContextAssembler.TOOL_GUIDANCE)
                 .contains("Never choose a data source for the user")

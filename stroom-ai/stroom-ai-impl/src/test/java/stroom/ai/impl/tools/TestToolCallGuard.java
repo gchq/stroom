@@ -252,6 +252,36 @@ class TestToolCallGuard {
     }
 
     @Test
+    void aBusyOrOverloadedClusterIsTransientButAQueryNeedingTooMuchMemoryIsNot() {
+        // A cluster short of memory or overloaded right now (HTTP 429) may pass, so trying again shortly isn't
+        // repeating a failure; a query that needs more memory than allowed must be changed, not run again as it is.
+        final List<String> busy = List.of(
+                "Error: Elasticsearch refused the query: HTTP 429 Too Many Requests",
+                "Error: Elasticsearch refused the query: status 429",
+                "Error: Elasticsearch is overloaded right now, so it refused the query: try again shortly. "
+                + "Elasticsearch said: rejected execution of TimedRunnable on search",
+                "Error: Elasticsearch is short of memory right now, so it refused the search: try again shortly. "
+                + "Elasticsearch said: [parent] Data too large");
+        for (final String message : busy) {
+            final StroomTool esql = tool("esql_query", null, call -> ToolResult.text(message));
+            for (int n = 0; n < 6; n++) {
+                assertThat(call(esql, "{\"pipeline\":\"| STATS c = COUNT(*)\"}").text())
+                        .as(message)
+                        .doesNotContain("already failed", "in a row");
+            }
+        }
+        final StroomTool tooBig = tool("esql_query", null, call -> ToolResult.text(
+                "Error: The query needs more memory than Elasticsearch allows it: narrow the time range, group by "
+                + "fewer high-cardinality fields, avoid MV_EXPAND on large multi-value fields, or lower the LIMIT. "
+                + "Elasticsearch said: [request] Data too large, data for [<reused_arrays>] would be "
+                + "[429/429b], which is larger than the limit of [100/100b]."));
+
+        call(tooBig, "{\"pipeline\":\"| STATS c = COUNT(*) BY user\"}");
+        assertThat(call(tooBig, "{\"pipeline\":\"| STATS c = COUNT(*) BY user\"}").text())
+                .contains("The same arguments as a call that already failed (2 times): change them.");
+    }
+
+    @Test
     void theUsersAnswerToAFormIsNoFailure() {
         // Seen in testing (chat 145): told "no indexing for now" as the backend form showed, get_field_conventions was
         // answered "The same arguments as a call that already failed (2 times): change them. Step back..."

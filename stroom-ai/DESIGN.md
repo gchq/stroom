@@ -744,8 +744,11 @@ the user:
   (`_resolve/index`: aliases' indices, data streams' backing indices) and defines a runtime keyword field
   `stroom_eql_doc` (painless, from `doc['_index']`) holding each event's doc positions, so a step matches its own
   doc's events (`stroom_eql_doc == "2"`): EQL can't name `_index` (checked: "Unknown column [_index]"). The
-  search runs async in Elasticsearch with `wait_for_completion_timeout` = the time left and
-  `keep_on_completion=false`; one still running is deleted and refused as a timeout. `filter_path` keeps only the
+  search runs async in Elasticsearch: submitted with a 250 ms `wait_for_completion_timeout` and
+  `keep_on_completion=false`, then, while it runs, asked for again (`GET _eql/search/<id>`, 250 ms waits,
+  `keep_alive` 1m) until it completes, the run is stopped or the time limit passes; one stopped or still running
+  then is deleted (see "Stop and Elasticsearch errors"), and one read once complete is deleted too. `filter_path`
+  keeps only the
   ids, `missing` and `fields` (the time field in epoch ms, StreamId/EventId, join and chosen fields), not each
   event's `_source`, which the Java client otherwise requires (its required-property check is turned off on that
   thread while it reads).
@@ -754,14 +757,29 @@ the user:
   runs slower), the configured default first (`stroom.ai.workspace.eqlDefaultMaxspan`, 5 minutes), then 1 minute,
   15 minutes, 1 hour and another interval, typed. Over MCP (or while the user is away), refused with that question
   and the suggestions. The result always says the window and where it came from.
-* **Pre-flight (the heuristic).** Each step that must happen is counted with ES|QL (`| WHERE <the step's
-  conditions> | STATS n = COUNT(*)`, a case-insensitive regex left out) where the cluster takes ES|QL (8.14+),
-  else skipped, saying so. Too big: the sum of the counts at 50,000 events a second, deliberately low, over the
-  query time limit is refused before it runs, with the counts, "narrow the window or the first step", and
-  `runAnyway`. Selective step first: the first step at least 1,000 events and 10 times a later one's, no step
-  missing and neither with runs (moving them would change the meaning): "if the order doesn't matter, put step k
-  first". A step matching fewer events than its runs is noted (it still runs, as counts can be low where fields
-  hold several values). A count timing out is the timeout message.
+* **Pre-flight (the heuristic; bounded 2026-11-16).** Each step that must happen is counted with ES|QL up to a
+  cap, `| WHERE <the step's conditions> | LIMIT 1000001 | STATS n = COUNT(*)` (a case-insensitive regex left out),
+  where the cluster takes ES|QL (8.14+), else skipped, saying so; skipped too when the time range has both ends
+  at most 1 hour apart (the sequence is cheap enough to just run), saying so. Checked on 9.5.3 (3 million events,
+  one shard): with a condition Elasticsearch can't push into Lucene the LIMIT stops the read (about 600,000 rows
+  read for a cap of 100,000; 97 ms against 342 ms uncapped); a pushed-down condition is counted from the index in
+  about 15 ms either way. Judged by thresholds, not a guessed speed (the old 50,000 events a second is gone): the
+  first step that must happen past the cap (1,000,000, `COUNT_CAP`, not in config: no need shown) is refused before
+  it runs, as a sequence reads every event of its first step, with the counts, "narrow the window or the first
+  step", and `runAnyway`; a later step past it is noted. Selective step first: the first step at least 1,000
+  events and 10 times a later one's (a capped first count is a lower bound, enough for this; a capped later one
+  isn't compared), no step missing and neither with runs (moving them would change the meaning): "if the order
+  doesn't matter, put step k first". A step matching fewer events than its runs is noted (it still runs, as counts
+  can be low where fields hold several values). A count timing out is the timeout message.
+* **Doc condition only where needed (2026-11-16).** With several docs, a step gets `stroom_eql_doc == "n"` only
+  when its conditions could match another doc's events: unless one of its `where` conditions (or every condition
+  of its `any_of`) is on a field no other doc maps and can't hold for an event without the field (IS_NULL,
+  NOT_EQUALS and NOT_IN can, so don't count). With no step naming it, the runtime field (a painless script on every
+  event read) isn't sent. Each event's docs come from its `_index` against the resolved index lists, put in its
+  fields as `stroom_eql_doc`, not fetched. Not built: a plain condition on a distinguishing `constant_keyword`
+  field in place of the script.
+* **At least.** Elasticsearch documents that a sequence query doesn't find every overlapping match, so the
+  result (and the per-entity summary's heading) says these are at least the sequences, not an exact total.
 * **Result.** The EQL, the window, the counts and advice, a summary per entity (join keys: sequences, first, last,
   shortest gap first to last event), the sequences as a workspace table (join keys; per step its time, last time
   and count with runs, chosen fields, StreamId and EventId; the gap after the step before; the span), the caveat
@@ -777,6 +795,19 @@ the user:
   the window alone. A query or dashboard reads one doc, so for several docs the model asks the user which doc to
   review (ask_user), then offers that one (propose_query, or propose_dashboard with its event preview; no change
   to propose_dashboard). The tool never calls those itself.
+* **Generator fixes (2026-11-16).** A `text` field searched or joined on is swapped for a subfield EQL can
+  search, found in the mapping (`ElasticEql.Target#fields`, from the doc's fields' multi-field parents, native
+  types and normalisers; never assumed to be `.keyword`): keyword first, then constant_keyword, then wildcard, one
+  without a normaliser first; the result says which (`field_notes`). None: refused, naming the field and its
+  subfields with their types. A field in a `nested` field is refused up front. `any_of` (per step and for
+  `until`): two or more plain conditions written as one `( a or b ... )` group beside `where`'s (one level; the
+  count leaves the group out if a condition has no ES|QL form). `NOT_IN` (eql_sequence only): `not f in (...)`,
+  `in~` case-insensitive, `not cidrMatch(...)` with CIDRs. `length=true` on a condition compares `length(f)` with a
+  whole number (EQUALS, NOT_EQUALS, the ranges, BETWEEN). `?`: checked on 9.5.3, `v : "a?b"` matched "axb", and
+  `\?` (however escaped) matched nothing, and `endsWith`/`stringContains` read `?` as a wildcard too; so a value
+  with `?` and no `*` is matched exactly (`==`, or `in~` case-insensitive), and a pattern holding a `?`
+  (wildcard EQUALS, CONTAINS, STARTS_WITH, ENDS_WITH) is refused, saying to give the whole value or use
+  MATCHES_REGEX with `\?`.
 * **Future (recorded, not built).** INLINE STATS and SAMPLE in `EsqlPipeline`; a join in the `table` tool (kept:
   Lucene users have no ES|QL/EQL, so it is their only way to combine indexes); multi-doc `esql_query` (the next package); for `eql_sequence`, `sample by`,
   exclusion lists, and how usual a hit is for the user. CHANGE_POINT is out of scope: it needs a licence.
@@ -786,6 +817,40 @@ the user:
   checked and the read audited, which is why `EsqlPipeline` refuses LOOKUP today. Open: how the lookup data is
   loaded and kept current (likely from Stroom reference data or dictionaries), and version checks for the join
   features used. Preferred to ENRICH.
+* **Future: field profile (parked 2026-11-16).** A `describe_data_source` value lookup (`match="term"`: the real
+  values containing the term, with counts) and a profile (empty share, approximate distinct count, top values,
+  value shapes), so queries use the formats the data really holds (e.g. emails in user.name). Generic, with two
+  backends: ES|QL in the cluster for Elastic, StroomQL through Stroom search for Lucene and the rest. Narrow
+  triggers (after an empty result on a value the user named, or when the format is unknown); on Lucene, bounded
+  lookups only, with a sampled profile on request; a per-chat cache, and lasting formats recorded as AGENTS lines.
+
+### Stop and Elasticsearch errors (built 2026-11-16)
+
+* **Stop reaches the query.** Stop sets the run's flag (`AiChatRunManager.LocalRun.requestStop`), which the agent
+  loop sees between steps; a built-in tool reaches it through `ToolCallContext#stopped()` (the run's
+  `ToolRunContext` cancelled supplier; never true outside a run, e.g. over MCP). `esql_query` and `eql_sequence`
+  (its search and its pre-flight counts) pass it in the request (`ElasticEsql.Request#stopped`,
+  `ElasticEql.Request#stopped`). `ElasticEsqlService` waits on the query in 250 ms slices within the time limit:
+  on a stop it cancels the request (closing the connection, so Elasticsearch cancels the query) and refuses with
+  `STOPPED`. `ElasticEqlService` polls the async search in 250 ms slices and deletes it on a stop or at the time
+  limit. The tools turn `STOPPED` into `TaskTerminatedException`; the tool executor lets it through (not a tool
+  fault); `McpAgentChat.execute` keeps the call's result ("the user stopped the chat before it finished, so what
+  it was running was stopped"), and the run then ends stopped at its next check, so the chat leaves "Stopping"
+  within about a quarter of a second of Elasticsearch, not when the query ends. A stop during the counts doesn't run
+  the sequence.
+* **Error classes** (`ElasticErrors`, both services). A `circuit_breaking_exception` with `durability` TRANSIENT
+  (the Java client keeps it in `ErrorCause#metadata()`) is `CLUSTER_BUSY`: "short of memory right now; try again
+  shortly". PERMANENT, or the request (`[request]`) or EQL sequence (`[eql_sequence]`) breaker whatever its
+  durability (they count the query's own memory), is `TOO_MUCH_MEMORY`, with what to ask for less of (ES|QL:
+  narrow the time range, group by fewer high-cardinality fields, avoid MV_EXPAND on large multi-value fields,
+  lower the LIMIT; EQL: narrow the time window, shorten maxspan, put the more selective step first). A breaker
+  without a durability is busy on a 429, else too much memory. `es_rejected_execution_exception`, or any other
+  429, is `CLUSTER_BUSY`: "overloaded right now; try again shortly". Elasticsearch's own reason is kept after
+  "Elasticsearch said:". A 500 (a permanent breaker's status) reaches the client as the low-level client's failure
+  with the body in its message, which is read too. `ToolCallGuard` counts "overloaded", "short of memory", "too many
+  requests" and an HTTP/status 429 as transient (not a repeated failure); a query needing too much memory is
+  counted, so the same call made again is told to change it. ES|QL already refused partial results
+  (`allow_partial_results=false` from 8.18, `is_partial` refused), as EQL does.
 
 ### Explain processing, retention and volumes
 

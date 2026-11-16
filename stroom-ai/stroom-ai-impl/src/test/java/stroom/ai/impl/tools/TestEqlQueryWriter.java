@@ -58,6 +58,18 @@ class TestEqlQueryWriter {
     }
 
     @Test
+    void aStepNotRestrictedHasNoDocCondition() {
+        final Step copy = step(1, List.of(filter("action", Condition.EQUALS, "Copy")), List.of("user"))
+                .withRestricted(false);
+        final Step shell = step(2, List.of(filter("host", Condition.EQUALS, "H1")), List.of("user"));
+
+        assertThat(EqlQueryWriter.eql(List.of(copy, shell), null, Duration.ofMinutes(2), 2)).isEqualTo("""
+                sequence with maxspan=2m
+                  [any where action == "Copy"] by user
+                  [any where stroom_eql_doc == "2" and host == "H1"] by user""");
+    }
+
+    @Test
     void oneDocNeedsNoDocCondition() {
         final Step a = step(1, List.of(), List.of("user"));
         final Step b = step(1, List.of(filter("action", Condition.EQUALS, "x")), List.of("user"));
@@ -157,11 +169,13 @@ class TestEqlQueryWriter {
                 filter("host", Condition.IS_NOT_NULL, ""),
                 new Filter("message", Condition.MATCHES_REGEX, "x", true)), List.of("user"));
 
-        assertThat(EqlQueryWriter.countPipeline(step)).isEqualTo(
+        // Counted up to a cap: the LIMIT before STATS stops the read once it is passed.
+        assertThat(EqlQueryWriter.countPipeline(step, 1_000)).isEqualTo(
                 "| WHERE TO_LOWER(user) == \"alice\" AND action LIKE \"Co*\" AND CIDR_MATCH(ip, \"10.0.0.0/8\", "
-                + "\"10.1.1.1/32\") AND (bytes >= 1 AND bytes <= 10) AND host IS NOT NULL | STATS n = COUNT(*)");
-        assertThat(EqlQueryWriter.countPipeline(step(1, List.of(), List.of("user"))))
-                .isEqualTo("| STATS n = COUNT(*)");
+                + "\"10.1.1.1/32\") AND (bytes >= 1 AND bytes <= 10) AND host IS NOT NULL | LIMIT 1001 "
+                + "| STATS n = COUNT(*)");
+        assertThat(EqlQueryWriter.countPipeline(step(1, List.of(), List.of("user")), 1_000))
+                .isEqualTo("| LIMIT 1001 | STATS n = COUNT(*)");
         assertThat(EqlQueryWriter.esqlCondition(new Filter("user", Condition.IN, "A,B", true), FieldType.KEYWORD))
                 .isEqualTo("TO_LOWER(user) IN (\"a\", \"b\")");
         assertThat(EqlQueryWriter.esqlCondition(filter("message", Condition.CONTAINS, "usb"), FieldType.TEXT))
@@ -195,6 +209,86 @@ class TestEqlQueryWriter {
 
     private static String eql(final Filter filter) {
         return EqlQueryWriter.eqlCondition(filter, TYPES.get(filter.field()));
+    }
+
+    @Test
+    void notInIsANegatedList() {
+        assertThat(EqlQueryWriter.eqlCondition(new Filter("user", Condition.IN, "svc,system", false, true, false),
+                FieldType.KEYWORD)).isEqualTo("not user in (\"svc\", \"system\")");
+        assertThat(EqlQueryWriter.eqlCondition(new Filter("user", Condition.IN, "SVC,System", true, true, false),
+                FieldType.KEYWORD)).isEqualTo("not user in~ (\"SVC\", \"System\")");
+        assertThat(EqlQueryWriter.eqlCondition(new Filter("ip", Condition.IN, "10.0.0.0/8,192.168.1.1", false, true,
+                false), FieldType.IPV4_ADDRESS))
+                .isEqualTo("not cidrMatch(ip, \"10.0.0.0/8\", \"192.168.1.1/32\")");
+        assertThat(EqlQueryWriter.eqlCondition(new Filter("bytes", Condition.IN, "1,2", false, true, false),
+                FieldType.LONG)).isEqualTo("not bytes in (1, 2)");
+        // The count, in ES|QL.
+        assertThat(EqlQueryWriter.esqlCondition(new Filter("user", Condition.IN, "svc,system", false, true, false),
+                FieldType.KEYWORD)).isEqualTo("user NOT IN (\"svc\", \"system\")");
+        assertThat(EqlQueryWriter.esqlCondition(new Filter("ip", Condition.IN, "10.0.0.0/8", false, true, false),
+                FieldType.IPV4_ADDRESS)).isEqualTo("NOT CIDR_MATCH(ip, \"10.0.0.0/8\")");
+    }
+
+    @Test
+    void aLengthIsComparedAsAWholeNumber() {
+        assertThat(EqlQueryWriter.eqlCondition(new Filter("cmd", Condition.GREATER_THAN, "1000", false, false, true),
+                FieldType.KEYWORD)).isEqualTo("length(cmd) > 1000");
+        assertThat(EqlQueryWriter.eqlCondition(new Filter("cmd", Condition.BETWEEN, "10, 20", false, false, true),
+                FieldType.KEYWORD)).isEqualTo("(length(cmd) >= 10 and length(cmd) <= 20)");
+        assertThat(EqlQueryWriter.esqlCondition(new Filter("cmd", Condition.GREATER_THAN, "1000", false, false,
+                true), FieldType.KEYWORD)).isEqualTo("LENGTH(cmd) > 1000");
+
+        assertThatThrownBy(() -> EqlQueryWriter.eqlCondition(new Filter("cmd", Condition.GREATER_THAN, "long",
+                false, false, true), FieldType.KEYWORD))
+                .hasMessageContaining("whole number of characters, not 'long'");
+        assertThatThrownBy(() -> EqlQueryWriter.eqlCondition(new Filter("cmd", Condition.CONTAINS, "10", false,
+                false, true), FieldType.KEYWORD))
+                .hasMessageContaining("length on 'cmd' is compared with EQUALS");
+        assertThatThrownBy(() -> EqlQueryWriter.eqlCondition(new Filter("bytes", Condition.GREATER_THAN, "10", false,
+                false, true), FieldType.LONG))
+                .hasMessage("length is for string fields; 'bytes' isn't one.");
+    }
+
+    @Test
+    void aQuestionMarkInAValueIsMatchedAsItIs() {
+        // In a pattern and with ':', EQL reads ? as any one character (9.5.3: 'v : "a?b"' matched "axb"), and
+        // can't escape it.
+        assertThat(EqlQueryWriter.eqlCondition(new Filter("user", Condition.EQUALS, "a?b", true), FieldType.KEYWORD))
+                .isEqualTo("user in~ (\"a?b\")");
+        assertThat(EqlQueryWriter.eqlCondition(new Filter("user", Condition.EQUALS, "a?b", false), FieldType.KEYWORD))
+                .isEqualTo("user == \"a?b\"");
+        assertThat(EqlQueryWriter.eqlCondition(new Filter("user", Condition.NOT_EQUALS, "a?b", true),
+                FieldType.KEYWORD)).isEqualTo("not user in~ (\"a?b\")");
+        // Without a ?, ':' as before.
+        assertThat(EqlQueryWriter.eqlCondition(new Filter("user", Condition.EQUALS, "ab", true), FieldType.KEYWORD))
+                .isEqualTo("user : \"ab\"");
+
+        for (final Filter pattern : List.of(new Filter("user", Condition.EQUALS, "a?b*", false),
+                new Filter("user", Condition.CONTAINS, "a?b", true),
+                new Filter("user", Condition.STARTS_WITH, "a?", false),
+                new Filter("user", Condition.ENDS_WITH, "?b", false),
+                new Filter("user", Condition.NOT_EQUALS, "*?", false))) {
+            assertThatThrownBy(() -> EqlQueryWriter.eqlCondition(pattern, FieldType.KEYWORD))
+                    .as(pattern.toString())
+                    .hasMessageContaining("has a ? in a pattern")
+                    .hasMessageContaining("use MATCHES_REGEX with \\? for the ?");
+        }
+    }
+
+    @Test
+    void anyOfIsOneOrGroupBesideTheOtherConditions() {
+        final Step step = new Step(1, List.of(filter("action", Condition.EQUALS, "exec")),
+                List.of(filter("user", Condition.EQUALS, "alice"), new Filter("host", Condition.STARTS_WITH, "web",
+                        true)), List.of("user"), false, 1, List.of(), TYPES);
+        final Step other = step(1, List.of(), List.of("user"));
+
+        assertThat(EqlQueryWriter.eql(List.of(step, other), null, Duration.ofMinutes(1), 1)).isEqualTo("""
+                sequence with maxspan=1m
+                  [any where action == "exec" and (user == "alice" or host like~ "web*")] by user
+                  [any where true] by user""");
+        assertThat(EqlQueryWriter.countPipeline(step, 10))
+                .isEqualTo("| WHERE action == \"exec\" AND (user == \"alice\" OR TO_LOWER(host) LIKE \"web*\") "
+                           + "| LIMIT 11 | STATS n = COUNT(*)");
     }
 
     private static Filter filter(final String field, final Condition condition, final String value) {

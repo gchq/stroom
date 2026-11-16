@@ -28,6 +28,7 @@ import stroom.ai.impl.workspace.TableEngine;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.QueryField;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.shared.PermissionException;
 
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestEsqlQueryTool {
 
@@ -340,6 +342,59 @@ class TestEsqlQueryTool {
                 .contains("may include documents from streams the user can't see or that have been deleted, so "
                           + "they can differ from Stroom searches (run_stroomql) and dashboards: when the user "
                           + "needs figures that match those exactly, use a Stroom search (run_stroomql).");
+    }
+
+    @Test
+    void theRunsStopReachesTheQueryAndAStoppedQueryEndsTheRunStopped() {
+        // Before, a stopped query came back as the tool's error ("Error running built-in tool ..."), after the
+        // query had run to its end or time limit.
+        try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
+            Mockito.when(world.elasticEsql().query(Mockito.any())).thenThrow(new Refusal(Reason.STOPPED,
+                    "The query was stopped, so it was cancelled in Elasticsearch"));
+
+            assertThatThrownBy(() -> world.run(EsqlQueryTool.NAME, BuiltInToolWorld.json(Map.of(
+                    "index", "elastic-index-uuid", "pipeline", GROUPED)), () -> true))
+                    .isInstanceOf(TaskTerminatedException.class);
+            assertThat(request(world).stopped().getAsBoolean()).isTrue();
+        }
+    }
+
+    @Test
+    void aQueryOutsideAStoppedRunIsNeverStopped() {
+        try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
+            world.run(EsqlQueryTool.NAME, BuiltInToolWorld.json(Map.of(
+                    "index", "elastic-index-uuid", "pipeline", GROUPED)));
+
+            assertThat(request(world).stopped().getAsBoolean()).isFalse();
+        }
+    }
+
+    @Test
+    void busyAndTooMuchMemoryRefusalsKeepTheirAdvice() {
+        final String busy = "Elasticsearch is short of memory right now, so it refused the query: try again shortly. "
+                            + "Elasticsearch said: [parent] Data too large";
+        final String tooBig = "The query needs more memory than Elasticsearch allows it: narrow the time range, group "
+                              + "by fewer high-cardinality fields, avoid MV_EXPAND on large multi-value fields, or "
+                              + "lower the LIMIT. Elasticsearch said: [request] Data too large";
+
+        assertThat(EsqlQueryTool.refusal(new Refusal(Reason.CLUSTER_BUSY, busy), List.of())).isEqualTo(busy + ".");
+        assertThat(EsqlQueryTool.refusal(new Refusal(Reason.TOO_MUCH_MEMORY, tooBig), List.of()))
+                .isEqualTo(tooBig + ".");
+    }
+
+    @Test
+    void theDescriptionSteersOrderedSequencesToEqlSequence() {
+        // Seen in acceptance runs on a small model: "a clipboard copy, then PowerShell within 2 minutes" answered by
+        // joining STATS results by hand.
+        try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
+            assertThat(world.builtInTools().toolMap().keySet().stream()
+                    .filter(specification -> EsqlQueryTool.NAME.equals(specification.name()))
+                    .findFirst()
+                    .orElseThrow()
+                    .description())
+                    .contains("Not for ordered sequences (X then Y within N, in one doc or across several): "
+                              + "joins of STATS results get them wrong; use eql_sequence.");
+        }
     }
 
     @Test

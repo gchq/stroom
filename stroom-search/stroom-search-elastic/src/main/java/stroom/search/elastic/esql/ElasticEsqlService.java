@@ -76,6 +76,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -90,6 +91,12 @@ import java.util.stream.Collectors;
 /// before the commands. The documents' streams aren't looked up, as a search looks up its hits' (for speed): the
 /// answer may include the documents of streams the user can't see, or that are no longer in Stroom. Clusters older
 /// than 8.14, the first with ES|QL generally available, are refused.
+///
+/// A query is waited for in short slices ([#STOP_CHECK]) up to its time limit, asking between them whether the
+/// caller has stopped it ([Request#stopped()]): one stopped, or still running at the limit, has its request
+/// cancelled, which closes its connection, and Elasticsearch cancels a query whose connection closes. Elasticsearch's
+/// circuit breakers and rejections are told apart ([ElasticErrors]), so the caller can say whether to try again
+/// shortly or ask for less.
 public class ElasticEsqlService implements ElasticEsql {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticEsqlService.class);
@@ -107,6 +114,8 @@ public class ElasticEsqlService implements ElasticEsql {
     private static final String KEYWORD_TYPE = "keyword";
     /// The most warnings passed on from one query.
     static final int MAX_WARNINGS = 10;
+    /// How long a query is waited for before asking again whether the caller has stopped it.
+    static final Duration STOP_CHECK = Duration.ofMillis(250);
     // A warning header: code, agent, then the text in quotes (and maybe a date).
     private static final Pattern WARNING_HEADER = Pattern.compile(
             "^\\d{3} \\S+ \"((?:[^\"\\\\]|\\\\.)*)\"(?: \"[^\"]*\")?$");
@@ -205,15 +214,19 @@ public class ElasticEsqlService implements ElasticEsql {
             return elasticClientCache.contextResult(cluster.getConnection(), client -> {
                 final String version = checkVersion(client);
                 final String query = limited.pipeline().query(indexName);
-                final Response response = run(client, query, filter, version, deadline, timeLimit);
+                final Response response = run(client, query, filter, version, deadline, timeLimit,
+                        request.stopped());
                 final boolean truncated = response.rows().size() >= limited.limit();
                 Long total = null;
                 String totalNote = null;
                 if (request.countTotal() && truncated) {
                     try {
                         total = count(client, pipeline.forTotal().query(indexName), filter, version, deadline,
-                                timeLimit);
+                                timeLimit, request.stopped());
                     } catch (final Refusal e) {
+                        if (e.reason() == Reason.STOPPED) {
+                            throw e;
+                        }
                         totalNote = "The total couldn't be counted: " + e.getMessage();
                     }
                 }
@@ -404,8 +417,9 @@ public class ElasticEsqlService implements ElasticEsql {
                               final Query filter,
                               final String version,
                               final Instant deadline,
-                              final Duration timeLimit) {
-        final Response response = run(client, query, filter, version, deadline, timeLimit);
+                              final Duration timeLimit,
+                              final BooleanSupplier stopped) {
+        final Response response = run(client, query, filter, version, deadline, timeLimit, stopped);
         if (response.rows().isEmpty() || response.rows().getFirst().isEmpty()
             || !(response.rows().getFirst().getFirst() instanceof final Number number)) {
             throw new Refusal(Reason.CLUSTER_ERROR, "Elasticsearch gave no count");
@@ -413,13 +427,15 @@ public class ElasticEsqlService implements ElasticEsql {
         return number.longValue();
     }
 
-    // Runs a query, waiting until the deadline at most; a query still running then is cancelled.
+    // Runs a query, waiting until the deadline at most, in slices between which it asks whether the caller has
+    // stopped it; a query stopped, or still running at the deadline, is cancelled.
     private static Response run(final ElasticsearchClient client,
                                 final String query,
                                 final Query filter,
                                 final String version,
                                 final Instant deadline,
-                                final Duration timeLimit) {
+                                final Duration timeLimit,
+                                final BooleanSupplier stopped) {
         LOGGER.debug(() -> LogUtil.message("Running ES|QL query: {}, filter: {}", query, filter));
         final QueryRequest queryRequest = QueryRequest.of(b -> {
             b.query(query).format(EsqlFormat.Json).columnar(false);
@@ -431,8 +447,10 @@ public class ElasticEsqlService implements ElasticEsql {
             }
             return b;
         });
-        final long remainingMs = Duration.between(Instant.now(), deadline).toMillis();
-        if (remainingMs <= 0) {
+        if (stopped.getAsBoolean()) {
+            throw stoppedRefusal();
+        }
+        if (!Instant.now().isBefore(deadline)) {
             throw timedOut(timeLimit);
         }
         // Elasticsearch gives warnings in response headers, not the body: e.g. that a comparison met a
@@ -445,14 +463,9 @@ public class ElasticEsqlService implements ElasticEsql {
         }));
         final CompletableFuture<BinaryResponse> future = new ElasticsearchEsqlAsyncClient(client._transport(),
                 options).query(queryRequest);
-        try (final BinaryResponse response = future.get(remainingMs, TimeUnit.MILLISECONDS);
+        try (final BinaryResponse response = await(future, deadline, timeLimit, stopped);
                 final InputStream content = response.content()) {
             return parse(MAPPER.readTree(content)).withWarnings(warnings(warnings));
-        } catch (final TimeoutException e) {
-            // Cancelling the request closes its connection, and Elasticsearch cancels a query whose connection
-            // closes.
-            future.cancel(true);
-            throw timedOut(timeLimit);
         } catch (final InterruptedException e) {
             future.cancel(true);
             Thread.currentThread().interrupt();
@@ -467,6 +480,36 @@ public class ElasticEsqlService implements ElasticEsql {
         }
     }
 
+    // The query's answer, waited for in slices of STOP_CHECK until the deadline; cancelled (which closes its
+    // connection, and Elasticsearch cancels a query whose connection closes) when the caller stops it or the
+    // deadline passes.
+    private static BinaryResponse await(final CompletableFuture<BinaryResponse> future,
+                                        final Instant deadline,
+                                        final Duration timeLimit,
+                                        final BooleanSupplier stopped)
+            throws InterruptedException, ExecutionException {
+        while (true) {
+            final long remainingMs = Duration.between(Instant.now(), deadline).toMillis();
+            if (remainingMs <= 0) {
+                future.cancel(true);
+                throw timedOut(timeLimit);
+            }
+            try {
+                return future.get(Math.min(remainingMs, STOP_CHECK.toMillis()), TimeUnit.MILLISECONDS);
+            } catch (final TimeoutException e) {
+                if (stopped.getAsBoolean()) {
+                    future.cancel(true);
+                    LOGGER.debug("ES|QL query stopped by its caller, so cancelled");
+                    throw stoppedRefusal();
+                }
+            }
+        }
+    }
+
+    private static Refusal stoppedRefusal() {
+        return new Refusal(Reason.STOPPED, "The query was stopped, so it was cancelled in Elasticsearch");
+    }
+
     private static Refusal timedOut(final Duration timeLimit) {
         return new Refusal(Reason.TIMEOUT, "The query took longer than " + timeLimit.toSeconds() + " seconds, so "
                                            + "it was cancelled: narrow the time range or the filter");
@@ -476,6 +519,10 @@ public class ElasticEsqlService implements ElasticEsql {
     private static Refusal failed(final Throwable cause) {
         if (cause instanceof final Refusal refusal) {
             return refusal;
+        }
+        final Refusal classified = classified(cause);
+        if (classified != null) {
+            return classified;
         }
         if (cause instanceof final ElasticsearchException e) {
             final String reason = reason(e);
@@ -494,6 +541,33 @@ public class ElasticEsqlService implements ElasticEsql {
         return new Refusal(Reason.CLUSTER_ERROR, "The query failed: "
                                                  + NullSafe.nonBlankStringElse(cause.getMessage(),
                 cause.getClass().getSimpleName()));
+    }
+
+    // A circuit breaker's or a rejection's refusal, with what to do about it and Elasticsearch's own words; null
+    // for any other error.
+    private static Refusal classified(final Throwable cause) {
+        final ElasticErrors.Classified classified = ElasticErrors.classify(cause);
+        if (classified.kind() == ElasticErrors.Kind.OTHER) {
+            return null;
+        }
+        final String said = " Elasticsearch said: " + NullSafe.nonBlankStringElse(classified.reason(),
+                cause instanceof final ElasticsearchException e
+                        ? reason(e)
+                        : NullSafe.string(cause.getMessage()));
+        return switch (classified.kind()) {
+            case SHORT_OF_MEMORY -> new Refusal(Reason.CLUSTER_BUSY, "Elasticsearch is short of memory right now, "
+                                                                     + "so it refused the query: try again "
+                                                                     + "shortly." + said);
+            case OVERLOADED -> new Refusal(Reason.CLUSTER_BUSY, "Elasticsearch is overloaded right now, so it "
+                                                                + "refused the query: try again shortly." + said);
+            case TOO_MUCH_MEMORY -> new Refusal(Reason.TOO_MUCH_MEMORY, "The query needs more memory than "
+                                                                        + "Elasticsearch allows it: narrow the "
+                                                                        + "time range, group by fewer "
+                                                                        + "high-cardinality fields, avoid "
+                                                                        + "MV_EXPAND on large multi-value fields, "
+                                                                        + "or lower the LIMIT." + said);
+            case OTHER -> null;
+        };
     }
 
     // Elasticsearch's reason, without the count of problems it starts with.

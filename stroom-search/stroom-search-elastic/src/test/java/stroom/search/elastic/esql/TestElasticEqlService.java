@@ -39,6 +39,7 @@ import stroom.util.shared.PermissionException;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,6 +58,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -91,6 +93,10 @@ class TestElasticEqlService {
                  {"_index": "sysmon", "_id": "b1",
                   "fields": {"@timestamp": ["1767225640000"], "StreamId": [3], "EventId": [4],
                              "Image": ["powershell.exe"], "stroom_eql_doc": ["2"]}}]}]}}""";
+
+    private static final String RUNNING = """
+            {"id": "search-1", "is_partial": true, "is_running": true, "took": 100,
+             "timed_out": false, "hits": {}}""";
 
     @RegisterExtension
     static final WireMockExtension ELASTIC = ElasticWireMock.createExtension();
@@ -174,7 +180,7 @@ class TestElasticEqlService {
         assertThat(body.path("wait_for_completion_timeout").asString()).endsWith("ms");
         assertThat(body.path("allow_partial_search_results").asBoolean(true)).isFalse();
         assertThat(body.path("fields").toString()).contains("{\"field\":\"@timestamp\",\"format\":\"epoch_millis\"}")
-                .contains("\"stroom_eql_doc\"").contains("\"Image\"");
+                .contains("\"Image\"").doesNotContain("stroom_eql_doc");
         final JsonNode runtime = body.path("runtime_mappings").path("stroom_eql_doc");
         assertThat(runtime.path("type").asString()).isEqualTo("keyword");
         assertThat(runtime.path("script").path("params").path("docs").toString())
@@ -182,6 +188,27 @@ class TestElasticEqlService {
         // One query, not a list, which Elasticsearch's EQL refuses.
         assertThat(body.path("filter").isObject()).isTrue();
         assertThat(body.path("filter").toString()).contains("@timestamp").contains("epoch_millis");
+    }
+
+    @Test
+    void aQueryThatDoesntNameTheDocFieldHasNoScriptAndItsEventsDocsComeFromTheirIndex() {
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(EQL_PATH))
+                .willReturn(ElasticWireMock.elasticResponse(200, FOUND.replace(", \"stroom_eql_doc\": [\"1\"]", "")
+                        .replace(", \"stroom_eql_doc\": [\"2\"]", ""))));
+
+        final String query = "sequence with maxspan=2m [any where action == \"x\"] by user "
+                             + "[any where Image == \"y\"] by SubjectUserName";
+        final Result result = service.search(new Request(List.of(DEVICES, SYSMON), query, null, List.of(), 10,
+                Duration.ofSeconds(30)));
+
+        assertThat(onlyBody().has("runtime_mappings")).isFalse();
+        final List<Event> events = result.sequences().getFirst().events();
+        // From _index: devices-000001 is Devices' (1), sysmon Sysmon's (2); the missing event has none.
+        assertThat(events.get(0).fields().get("stroom_eql_doc")).containsExactly("1");
+        assertThat(events.get(1).fields()).doesNotContainKey("stroom_eql_doc");
+        assertThat(events.get(2).fields().get("stroom_eql_doc")).containsExactly("2");
+        assertThat(ElasticEqlService.usesDocField("[any where stroom_eql_doc == \"1\"]")).isTrue();
+        assertThat(ElasticEqlService.usesDocField("[any where my_stroom_eql_doc_x == \"1\"]")).isFalse();
     }
 
     @Test
@@ -196,17 +223,128 @@ class TestElasticEqlService {
     @Test
     void aSearchStillRunningAtTheTimeLimitIsDeletedAndTimesOut() {
         ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(EQL_PATH))
-                .willReturn(ElasticWireMock.elasticResponse(200, """
-                        {"id": "search-1", "is_partial": true, "is_running": true, "took": 100,
-                         "timed_out": false, "hits": {}}""")));
-        ELASTIC.stubFor(WireMock.delete(WireMock.urlPathEqualTo("/_eql/search/search-1"))
-                .willReturn(ElasticWireMock.elasticResponse(200, "{\"acknowledged\": true}")));
+                .willReturn(ElasticWireMock.elasticResponse(200, RUNNING)));
+        stubPoll(RUNNING, 200);
+        stubDelete();
 
         assertThatThrownBy(() -> service.search(new Request(List.of(DEVICES, SYSMON), QUERY, null, List.of(), 10,
                 Duration.ofMillis(500))))
                 .isInstanceOf(Refusal.class)
                 .hasMessage("The search took longer than 500 ms, so it was stopped")
                 .satisfies(e -> assertThat(((Refusal) e).reason()).isEqualTo(Reason.TIMEOUT));
+        ELASTIC.verify(WireMock.deleteRequestedFor(WireMock.urlPathEqualTo("/_eql/search/search-1")));
+    }
+
+    @Test
+    void aSearchIsSubmittedWaitingOnlyAShortWhile() {
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(EQL_PATH))
+                .willReturn(ElasticWireMock.elasticResponse(200, FOUND)));
+
+        service.search(new Request(List.of(DEVICES, SYSMON), QUERY, null, List.of(), 10, Duration.ofMinutes(5)));
+
+        // So a stop is seen within that while, rather than only when the search ends.
+        assertThat(onlyBody().path("wait_for_completion_timeout").asString()).isEqualTo("250ms");
+    }
+
+    @Test
+    void aSearchStillRunningIsAskedForAgainUntilItCompletesThenDeleted() {
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(EQL_PATH))
+                .willReturn(ElasticWireMock.elasticResponse(200, RUNNING)));
+        ELASTIC.stubFor(WireMock.get(WireMock.urlPathEqualTo("/_eql/search/search-1"))
+                .inScenario("poll").whenScenarioStateIs(Scenario.STARTED).willSetStateTo("done")
+                .willReturn(ElasticWireMock.elasticResponse(200, RUNNING)));
+        ELASTIC.stubFor(WireMock.get(WireMock.urlPathEqualTo("/_eql/search/search-1"))
+                .inScenario("poll").whenScenarioStateIs("done")
+                .willReturn(ElasticWireMock.elasticResponse(200, FOUND.replace("{\"is_partial\"",
+                        "{\"id\": \"search-1\", \"is_partial\""))));
+        stubDelete();
+
+        final Result result = service.search(new Request(List.of(DEVICES, SYSMON), QUERY, null, List.of(), 10,
+                Duration.ofSeconds(30)));
+
+        assertThat(result.sequences()).hasSize(1);
+        final List<LoggedRequest> polls = ELASTIC.findAll(WireMock.getRequestedFor(
+                WireMock.urlPathEqualTo("/_eql/search/search-1")));
+        assertThat(polls).hasSize(2);
+        assertThat(polls.getFirst().queryParameter("wait_for_completion_timeout").firstValue()).isEqualTo("250ms");
+        assertThat(polls.getFirst().queryParameter("keep_alive").firstValue()).isEqualTo("1m");
+        assertThat(polls.getFirst().queryParameter("filter_path").firstValue())
+                .contains("hits.sequences.events.fields");
+        // Its results aren't kept once read.
+        ELASTIC.verify(WireMock.deleteRequestedFor(WireMock.urlPathEqualTo("/_eql/search/search-1")));
+    }
+
+    @Test
+    void aStopDuringTheSearchDeletesItPromptly() {
+        // Before, a stop was seen only once the search ended or reached its time limit, while Elasticsearch kept
+        // working.
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(EQL_PATH))
+                .willReturn(ElasticWireMock.elasticResponse(200, RUNNING)));
+        stubPoll(RUNNING, 200);
+        stubDelete();
+        final long startNs = System.nanoTime();
+        final BooleanSupplier stopped = () -> System.nanoTime() - startNs > Duration.ofMillis(300).toNanos();
+
+        assertThatThrownBy(() -> service.search(new Request(List.of(DEVICES, SYSMON), QUERY, null, List.of(), 10,
+                Duration.ofMinutes(2), stopped)))
+                .isInstanceOf(Refusal.class)
+                .hasMessage("The search was stopped, so it was deleted in Elasticsearch")
+                .satisfies(e -> assertThat(((Refusal) e).reason()).isEqualTo(Reason.STOPPED));
+        assertThat(Duration.ofNanos(System.nanoTime() - startNs)).isLessThan(Duration.ofSeconds(3));
+        ELASTIC.verify(WireMock.deleteRequestedFor(WireMock.urlPathEqualTo("/_eql/search/search-1")));
+    }
+
+    @Test
+    void aSearchStoppedBeforeItStartsIsNotSent() {
+        assertThatThrownBy(() -> service.search(new Request(List.of(DEVICES, SYSMON), QUERY, null, List.of(), 10,
+                Duration.ofMinutes(2), () -> true)))
+                .isInstanceOf(Refusal.class)
+                .satisfies(e -> assertThat(((Refusal) e).reason()).isEqualTo(Reason.STOPPED));
+        assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(EQL_PATH)))).isEmpty();
+    }
+
+    @Test
+    void theSequenceBreakerIsTheSearchNeedingTooMuchMemory() {
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(EQL_PATH))
+                .willReturn(ElasticWireMock.elasticResponse(429, TestElasticEsqlService.breaker("eql_sequence",
+                        "TRANSIENT", 429))));
+
+        assertThatThrownBy(() -> service.search(new Request(List.of(DEVICES, SYSMON), QUERY, null, List.of(), 10,
+                null)))
+                .isInstanceOf(Refusal.class)
+                .satisfies(e -> assertThat(((Refusal) e).reason()).isEqualTo(Reason.TOO_MUCH_MEMORY))
+                .hasMessageStartingWith("The search needs more memory than Elasticsearch allows it: narrow the "
+                                        + "time window, shorten maxspan, or put the more selective step first. "
+                                        + "Elasticsearch said: [eql_sequence] Data too large");
+    }
+
+    @Test
+    void aTransientParentBreakerSaysToTryAgainShortly() {
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(EQL_PATH))
+                .willReturn(ElasticWireMock.elasticResponse(429, TestElasticEsqlService.breaker("parent",
+                        "TRANSIENT", 429))));
+
+        assertThatThrownBy(() -> service.search(new Request(List.of(DEVICES, SYSMON), QUERY, null, List.of(), 10,
+                null)))
+                .isInstanceOf(Refusal.class)
+                .satisfies(e -> assertThat(((Refusal) e).reason()).isEqualTo(Reason.CLUSTER_BUSY))
+                .hasMessageStartingWith("Elasticsearch is short of memory right now, so it refused the search: try "
+                                        + "again shortly. Elasticsearch said: [parent] Data too large");
+    }
+
+    @Test
+    void aPermanentBreakerWhilePollingSaysToAskForLessAndDeletesTheSearch() {
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(EQL_PATH))
+                .willReturn(ElasticWireMock.elasticResponse(200, RUNNING)));
+        ELASTIC.stubFor(WireMock.get(WireMock.urlPathEqualTo("/_eql/search/search-1"))
+                .willReturn(ElasticWireMock.elasticResponse(500, TestElasticEsqlService.breaker("parent",
+                        "PERMANENT", 500))));
+        stubDelete();
+
+        assertThatThrownBy(() -> service.search(new Request(List.of(DEVICES, SYSMON), QUERY, null, List.of(), 10,
+                Duration.ofSeconds(30))))
+                .isInstanceOf(Refusal.class)
+                .satisfies(e -> assertThat(((Refusal) e).reason()).isEqualTo(Reason.TOO_MUCH_MEMORY));
         ELASTIC.verify(WireMock.deleteRequestedFor(WireMock.urlPathEqualTo("/_eql/search/search-1")));
     }
 
@@ -302,6 +440,16 @@ class TestElasticEqlService {
                           "lucene_version": "10", "minimum_wire_compatibility_version": "8.0.0",
                           "minimum_index_compatibility_version": "8.0.0"},
                          "tagline": "You Know, for Search"}""".formatted(version))));
+    }
+
+    private void stubPoll(final String body, final int delayMs) {
+        ELASTIC.stubFor(WireMock.get(WireMock.urlPathEqualTo("/_eql/search/search-1"))
+                .willReturn(ElasticWireMock.elasticResponse(200, body).withFixedDelay(delayMs)));
+    }
+
+    private void stubDelete() {
+        ELASTIC.stubFor(WireMock.delete(WireMock.urlPathEqualTo("/_eql/search/search-1"))
+                .willReturn(ElasticWireMock.elasticResponse(200, "{\"acknowledged\": true}")));
     }
 
     private void stubResolve(final String name, final String body) {
