@@ -166,9 +166,36 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
         if (!requestAndStore.searchRequest().incremental()) {
             requestAndStore = awaitSearchStoreForResponse(requestAndStore);
         }
+        final SearchResponse response = searchWithDefaultResultCreators(requestAndStore);
+        // A search with joins' placeholder is cleared, which completes it with no rows, once another
+        // store takes its place, which can happen while the response is made. A response from a
+        // replaced placeholder would wrongly say the search is complete, so it comes from the store
+        // that took the placeholder's place instead.
+        final Optional<ResultStore> replacement = getReplacement(requestAndStore);
+        if (replacement.isPresent()) {
+            return searchWithDefaultResultCreators(
+                    new RequestAndStore(requestAndStore.searchRequest(), replacement.get()));
+        }
+        return response;
+    }
+
+    private SearchResponse searchWithDefaultResultCreators(final RequestAndStore requestAndStore) {
         final Map<String, ResultCreator> defaultResultCreators =
                 requestAndStore.resultStore.makeDefaultResultCreators(requestAndStore.searchRequest);
         return search(requestAndStore, defaultResultCreators);
+    }
+
+    // The store that took the place of the store a search started with, if that was a search with
+    // joins' placeholder and another store has taken its place.
+    private Optional<ResultStore> getReplacement(final RequestAndStore requestAndStore) {
+        final JoinSearchHandOver handOver = joinSearches.get(requestAndStore.searchRequest().getKey());
+        if (handOver == null
+            || handOver.placeholder() != requestAndStore.resultStore()
+            || !handOver.searchStore().isDone()
+            || handOver.searchStore().isCompletedExceptionally()) {
+            return Optional.empty();
+        }
+        return Optional.of(handOver.searchStore().join());
     }
 
     public SearchResponse search(final RequestAndStore requestAndStore,
