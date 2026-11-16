@@ -76,7 +76,9 @@ import java.util.stream.Collectors;
 /// arguments, as failures are compared) in one agent run (or, outside one, the session), with nothing written in
 /// between, the result says so. The call still runs and returns its result: reading again after the context is
 /// compacted is legitimate. Any call that writes to the workspace, or of a tool that may change something, starts
-/// the count again.
+/// the count again, as does a gap of more than [#SAME_READ_WINDOW] since the same call was last made: over a long
+/// MCP session or chat run, the same read asked for each of several questions is reasonable, and what it reads (e.g.
+/// an index's fields) may have been changed outside the tools meanwhile.
 @Singleton
 public class ToolCallGuard {
 
@@ -92,6 +94,8 @@ public class ToolCallGuard {
     static final int MAX_MESSAGE = 300;
     /// Identical successful reads, with nothing written in between, from which the result says so.
     static final int SAME_READ_LIMIT = 3;
+    /// The longest gap between identical reads for them to be counted together.
+    static final Duration SAME_READ_WINDOW = Duration.ofMinutes(5);
 
     // Answered from the last failure only where the same arguments give the same answer: the mapping and drafting
     // tools. Another tool's call may succeed once the user has changed something in Stroom.
@@ -197,14 +201,15 @@ public class ToolCallGuard {
         return withNotes(noted, read.notes());
     }
 
-    // Counts an identical successful read in the run, the count starting again in a new run and after any write.
-    // How many times it has now been made with nothing written in between, or 0 for a call not counted.
-    private static int sameReads(final SessionFailures failures,
-                                 final StroomTool tool,
-                                 final ToolCall call,
-                                 final ToolCallContext context,
-                                 final CallKey key,
-                                 final boolean succeeded) {
+    // Counts an identical successful read in the run, the count starting again in a new run, after any write, and
+    // after a gap of more than SAME_READ_WINDOW since the same call. How many times it has now been made with nothing
+    // written in between, or 0 for a call not counted.
+    private int sameReads(final SessionFailures failures,
+                          final StroomTool tool,
+                          final ToolCall call,
+                          final ToolCallContext context,
+                          final CallKey key,
+                          final boolean succeeded) {
         final ToolRunContext run = context.runContext().orElse(null);
         final boolean wrote = !tool.isReadOnly(call) || context.workspace()
                 .map(workspace -> !workspace.written().isEmpty())
@@ -221,7 +226,14 @@ public class ToolCallGuard {
             if (!succeeded || !SAME_UNTIL_WRITTEN.contains(call.name())) {
                 return 0;
             }
-            return failures.reads.merge(key, 1, Integer::sum);
+            final long now = clock.getAsLong();
+            final SameRead same = failures.reads.computeIfAbsent(key, ignored -> new SameRead());
+            if (same.times > 0 && now - same.lastMs > SAME_READ_WINDOW.toMillis()) {
+                same.times = 0;
+            }
+            same.times++;
+            same.lastMs = now;
+            return same.times;
         }
     }
 
@@ -609,8 +621,15 @@ public class ToolCallGuard {
         // The problems a tool's run of failures has met, by tool, each as compared ([#problem(String)]).
         private final Map<String, Set<String>> problems = new LinkedHashMap<>();
         // Identical successful reads since the last write, in the run they were made in ([#readsRun]).
-        private final Map<CallKey, Integer> reads = new LinkedHashMap<>();
+        private final Map<CallKey, SameRead> reads = new LinkedHashMap<>();
         private ToolRunContext readsRun;
         private volatile long usedMs;
+    }
+
+    // One read's identical calls with nothing written in between, and when it was last made.
+    private static final class SameRead {
+
+        private int times;
+        private long lastMs;
     }
 }

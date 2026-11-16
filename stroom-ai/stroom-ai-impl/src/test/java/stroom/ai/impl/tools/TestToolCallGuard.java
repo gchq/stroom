@@ -328,6 +328,31 @@ class TestToolCallGuard {
     }
 
     @Test
+    void identicalReadsFarApartAreNotCountedTogether() {
+        // Over a long MCP session, the same read for each of several questions is reasonable, and what it reads may
+        // have been changed outside the tools meanwhile.
+        final StroomTool describe = tool("describe_data_source", ObjectSchema.builder()
+                .addStringProperty("data_source", "The data source.")
+                .build(), call -> ToolResult.text("Fields (3)"));
+        final String args = "{\"data_source\":\"Proxy uploads\"}";
+
+        call(describe, args);
+        now.addAndGet(ToolCallGuard.SAME_READ_WINDOW.toMillis() + 1);
+        call(describe, args);
+        now.addAndGet(ToolCallGuard.SAME_READ_WINDOW.toMillis() + 1);
+        final ToolResult third = call(describe, args);
+        // Within the window of the one before, it is counted with it.
+        now.addAndGet(ToolCallGuard.SAME_READ_WINDOW.toMillis());
+        call(describe, args);
+        now.addAndGet(1_000);
+        final ToolResult fifth = call(describe, args);
+
+        assertThat(calls).hasSize(5);
+        assertThat(third.text()).isEqualTo("Fields (3)");
+        assertThat(fifth.text()).contains("this same call 3 times");
+    }
+
+    @Test
     void anyWriteStartsTheCountOfIdenticalReadsAgain() {
         final StroomTool ls = tool("ls", ObjectSchema.builder().build(), call -> ToolResult.text("a.md"));
         final StroomTool table = table();
