@@ -28,7 +28,7 @@ import java.nio.file.Paths;
 
 public class DownloadStroomContentApp {
 
-    public static void main(final String[] args) {
+    static void main(final String[] args) {
         if (args.length != 3) {
             throw new RuntimeException("Expected 1 argument that is the location of the config.");
         }

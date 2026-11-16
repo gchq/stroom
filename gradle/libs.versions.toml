@@ -19,7 +19,7 @@ kafka = "3.9.0"
 openai = "4.69.3"
 poi = "6.0.0"
 simple-java-mail = "8.8.0"
-swagger = "2.2.55"
+swagger = "3.0.0"
 
 
 # --------------------------------------------------------------------------------
@@ -49,7 +49,8 @@ commons-lang = { module = "org.apache.commons:commons-lang3" } # version control
 commons-pool2 = { module = "org.apache.commons:commons-pool2", version = "2.13.1" }
 commons-text = { module = "org.apache.commons:commons-text" } # version controlled by dropwizard-dependencies
 classgraph = { module = "io.github.classgraph:classgraph", version = "6.0.2" }
-classgraph-legacy = { module = "io.github.classgraph:classgraph", version = "6.0.2" }
+# classgraph-legacy is a dep of swagger-integration
+classgraph-legacy = { module = "io.github.classgraph:classgraph", version = "4.8.200" }
 data-faker = { module = "net.datafaker:datafaker", version = "2.7.0" }
 dropwizard-assets = { module = "io.dropwizard:dropwizard-assets" } # version controlled by dropwizard-dependencies
 dropwizard-bom = { module = "io.dropwizard:dropwizard-bom", version.ref = "dropwizard" }
@@ -185,9 +186,9 @@ solrj = { module = "org.apache.solr:solr-solrj", version = "9.10.1" }
 # Yes, I know it's Spring, but it doesn't pull in any other deps and is more up to date than github.com/patrickfav/bcrypt
 # and it provides a drop in replacement for JBcrypt that we used to use. Currently only used for BCrypt hashing.
 spring-security-crypto = { module = "org.springframework.security:spring-security-crypto", version = "7.1.1" }
-swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations-jakarta", version.ref = "swagger" }
-swagger-core = { module = "io.swagger.core.v3:swagger-core-jakarta", version.ref = "swagger" }
-swagger-jaxrs = { module = "io.swagger.core.v3:swagger-jaxrs2-jakarta", version.ref = "swagger" }
+swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations", version.ref = "swagger" }
+swagger-core = { module = "io.swagger.core.v3:swagger-core", version.ref = "swagger" }
+swagger-rest = { module = "io.swagger.core.v3:swagger-rest", version.ref = "swagger" }
 vavr = { module = "io.vavr:vavr", version = "1.1.0" }
 # Wiremock 3.13.2 works with jetty 11 by default, but DW 5.0.1 is using Jetty 12, so we have to use
 # wiremock-jetty12
@@ -234,7 +235,7 @@ jdeps = { id = "org.kordamp.gradle.jdeps", version = "0.20.0" }
 
 # dependency-graph-generator = { id = "com.vanniktech.dependency.graph.generator", version = "0.5.0" }
 
-swagger-gradle-plugin = { id = "io.swagger.core.v3.swagger-gradle-plugin", version = "2.2.19" }
+swagger-gradle-plugin = { id = "io.swagger.core.v3.swagger-gradle-plugin", version = "3.0.0" }
 
 
 # --------------------------------------------------------------------------------
