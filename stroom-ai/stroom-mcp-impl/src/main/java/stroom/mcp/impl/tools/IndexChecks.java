@@ -651,8 +651,11 @@ class IndexChecks {
                                    + "give counts, the tool counts them");
         }
         if (needsAny && wanted == 0) {
+            final String held = events.held(field);
             check.put("why", "'" + value + "' is in none of the Events read (" + expectation.source() + "): an "
-                             + "exact check needs a value they hold, from stepped documents");
+                             + "exact check needs a value they hold, from stepped documents" + (held == null
+                    ? ""
+                    : "; " + held));
         } else if (countedAll && n != wanted) {
             check.put("why", "the index finds " + n + " of the events read, but the Events hold " + wanted + " with "
                              + "this " + field + ": the index doesn't hold what the Events do (not reindexed since "

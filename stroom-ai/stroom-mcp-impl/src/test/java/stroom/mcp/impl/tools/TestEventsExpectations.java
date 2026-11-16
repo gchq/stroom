@@ -91,6 +91,45 @@ class TestEventsExpectations {
     }
 
     @Test
+    void theValuesTheEventsHoldAreTheCommonestFirst() {
+        // Seen in a UniFi OS chat: exact checks of values from before a TypeId rewrite failed with only "in none of
+        // the Events read", and the agent took about 50 calls to find the values the Events did hold.
+        final List<String> records = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            records.add(event("dave", "Send"));
+        }
+        for (int i = 0; i < 3; i++) {
+            records.add(event("carol", "Send"));
+        }
+        records.add(event("bob", "Send"));
+        records.add(event("bob", "Send"));
+        records.add(event("alice", "Send"));
+        records.add(event("eve", "Send"));
+        records.add(event("frank", "Send"));
+        records.add(event("line\none `" + "x".repeat(60) + "`", "Send"));
+        stream(6L, records.size(), records);
+
+        final EventsExpectations.Sample sample = expectations.read(plan(), List.of(6L));
+
+        // Up to five, with their counts, then how many more; ties by value.
+        assertThat(sample.held("user.name")).isEqualTo("the Events hold: `dave` (4), `carol` (3), `bob` (2), "
+                                                       + "`alice` (1), `eve` (1) and 2 other values");
+        // A path no event holds says so.
+        assertThat(sample.held("bytes")).isEqualTo("EventDetail/*/Bytes is empty in every Event read");
+        // A field not read from the Events gives nothing.
+        assertThat(sample.held("message")).isNull();
+    }
+
+    @Test
+    void aValueTheEventsHoldIsShownOnOneLineAndCut() {
+        stream(6L, 1L, List.of(event("line\none `" + "x".repeat(60) + "`", "Send")));
+
+        final EventsExpectations.Sample sample = expectations.read(plan(), List.of(6L));
+
+        assertThat(sample.held("user.name")).isEqualTo("the Events hold: `line one '" + "x".repeat(30) + "…` (1)");
+    }
+
+    @Test
     void aFieldTheEventsCannotCountSaysWhy() {
         stream(6L, 1L, List.of(event("alice", "Send")));
 
