@@ -149,10 +149,11 @@ public class ColumnValuesFilter extends Component {
         quickFilter.setText(text, false);
     }
 
-    /// Shows no values.
+    /// Shows no values, and doesn't say there are none, e.g. while they are fetched.
     public void clear() {
         list.setRowData(0, Collections.emptyList());
-        list.setRowCount(0);
+        // Not known, so the list doesn't say it has none while the values are fetched
+        list.setRowCount(0, false);
     }
 
     /// @param dataProvider Gives the list its values, a page at a time.

@@ -20,7 +20,6 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.datagrid.client.HasFiltered;
-import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.help.client.HelpPopup;
@@ -426,25 +425,47 @@ public class QuickFilter extends Composite
     /// "No matches" rather than that there is nothing (`DataGrid.setFiltered`). A
     /// [QuickFilterPage] does this for the grids it holds ([#addFilteredGridsIn(Widget)]).
     ///
-    /// @param grid A grid this filter filters, or a component showing one.
+    /// @param grid A grid this filter filters, or a component showing one; one already linked
+    ///             stays linked once.
     public void addFilteredGrid(final HasFiltered grid) {
-        filteredGrids.add(grid);
+        if (!filteredGrids.contains(grid)) {
+            filteredGrids.add(grid);
+        }
         grid.setFiltered(NullSafe.isNonBlankString(getText()));
     }
 
+    /// Unlinks a grid from this filter, e.g. one no longer shown, so that it is no longer kept or
+    /// told.
+    ///
+    /// @param grid A grid linked by [#addFilteredGrid(HasFiltered)].
+    public void removeFilteredGrid(final HasFiltered grid) {
+        filteredGrids.remove(grid);
+    }
+
     /// Links this filter ([#addFilteredGrid(HasFiltered)]) to the grids that a widget it filters
-    /// shows: the widget itself, a pager panel's grid, or those in its panels (`HasWidgets`). A
-    /// component hides its widgets, so one showing a grid implements [HasFiltered] to be found.
+    /// shows: the widget itself, e.g. a grid or a pager panel, or those in its panels
+    /// (`HasWidgets`). A component hides its widgets, so one showing a grid implements
+    /// [HasFiltered] to be found.
     ///
     /// @param widget What this filter filters, e.g. a page's content.
     public void addFilteredGridsIn(final Widget widget) {
+        forEachFilteredGridIn(widget, this::addFilteredGrid);
+    }
+
+    /// Unlinks the grids that [#addFilteredGridsIn(Widget)] linked, e.g. when the widget is no
+    /// longer shown.
+    ///
+    /// @param widget What this filter filtered.
+    public void removeFilteredGridsIn(final Widget widget) {
+        forEachFilteredGridIn(widget, this::removeFilteredGrid);
+    }
+
+    private static void forEachFilteredGridIn(final Widget widget, final Consumer<HasFiltered> consumer) {
         if (widget instanceof final HasFiltered grid) {
-            addFilteredGrid(grid);
-        } else if (widget instanceof final PagerPanel pagerPanel) {
-            addFilteredGridsIn(pagerPanel.getDataWidget());
+            consumer.accept(grid);
         } else if (widget instanceof final HasWidgets panel) {
             for (final Widget child : panel) {
-                addFilteredGridsIn(child);
+                forEachFilteredGridIn(child, consumer);
             }
         }
     }

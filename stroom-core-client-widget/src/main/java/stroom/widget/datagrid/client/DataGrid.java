@@ -215,6 +215,9 @@ public class DataGrid<R> extends Widget
     private String tableName;
     // What the grid says with no rows (R-D5)
     private final EmptyMessage emptyMessage = new EmptyMessage();
+    // What the empty message last showed, so that only a change is written (renderEmptyMessage)
+    private String renderedEmptyText;
+    private boolean renderedEmptyShown;
 
     // Render state.
     private boolean renderScheduled;
@@ -1103,12 +1106,22 @@ public class DataGrid<R> extends Widget
     }
 
     /// Says whether a filter is set on the rows, so that with none the grid says "No matches"
-    /// rather than that there is nothing. A `QuickFilterPage` sets it for the grids it holds.
+    /// rather than that there is nothing. A `QuickFilterPage` sets it for the grids it holds. A
+    /// change hides the message until rows arrive, as those held were filtered by the old one.
     ///
     /// @param filtered Whether a filter is set.
     @Override
     public void setFiltered(final boolean filtered) {
         emptyMessage.setFiltered(filtered);
+        scheduleRender();
+    }
+
+    /// Says whether another message covers the grid, e.g. its errors in a `PagerPanel`'s
+    /// [MessagePanel], so that what it says with no rows doesn't show under it or describe it.
+    ///
+    /// @param covered Whether another message covers the grid.
+    public void setEmptyMessageCovered(final boolean covered) {
+        emptyMessage.setCovered(covered);
         scheduleRender();
     }
 
@@ -1410,6 +1423,7 @@ public class DataGrid<R> extends Widget
         // selected as that object, so the selection never holds a stale row (after the rows are
         // stored, as a changed row's selection event may look at them)
         NullSafe.consume(multiSelectionModel(), model -> model.followRows(values));
+        emptyMessage.rowsArrived();
         rowsArrived = true;
         updateLoadingState();
         scheduleRender();
@@ -1422,6 +1436,10 @@ public class DataGrid<R> extends Widget
 
     @Override
     public void setRowCount(final int count, final boolean isExact) {
+        // A count, even an unchanged one, is the answer to a changed filter
+        if (emptyMessage.rowsArrived()) {
+            scheduleRender();
+        }
         if (pageState.setRowCount(count, isExact)) {
             rowsArrived = true;
             updateLoadingState();
@@ -1521,25 +1539,43 @@ public class DataGrid<R> extends Widget
     // outside the scroller, which is the grid, list or tree to assistive technology and may hold
     // only rows, and describes it instead (aria-describedby), so an empty grid given the focus says
     // why it is empty. It sits where the first row would be, below the header, and the rows' area
-    // keeps the room it took when it was among them.
+    // keeps the room it took when it was among them (data-grid.css, from --data-grid__empty-top
+    // and --data-grid__empty-height, which snapHeaderHeight and the message's resize observer
+    // set). Only a change is written, so a render of an empty grid neither rewrites the text nor
+    // has it announced again.
     private void renderEmptyMessage() {
-        final String text = emptyMessage.getText(profile.hasCells());
-        final boolean shown = EmptyMessage.isShown(
-                pageState.getRowDataSize(), pageState.isRowCountExact(), text);
-        empty.setInnerText(NullSafe.string(text));
-        // Which shows the message (data-grid.css)
-        setStyleName("data-grid--empty", shown);
-        if (shown) {
-            scroller.setAttribute("aria-describedby", empty.getId());
-            final int top = hideHeader
-                    ? 0
-                    : head.getOffsetHeight();
-            empty.getStyle().setTop(top, Unit.PX);
-            content.getStyle().setProperty("minHeight", empty.getOffsetHeight(), Unit.PX);
-        } else {
-            scroller.removeAttribute("aria-describedby");
-            content.getStyle().clearProperty("minHeight");
+        final boolean cells = profile.hasCells();
+        final String text = NullSafe.string(emptyMessage.getText(cells));
+        final boolean shown = emptyMessage.isShown(
+                pageState.getRowDataSize(), pageState.getRowCount(), pageState.isRowCountExact(), cells);
+        if (!text.equals(renderedEmptyText)) {
+            empty.setInnerText(text);
+            renderedEmptyText = text;
         }
+        if (shown != renderedEmptyShown) {
+            // Which shows the message (data-grid.css)
+            setStyleName("data-grid--empty", shown);
+            if (shown) {
+                scroller.setAttribute("aria-describedby", empty.getId());
+            } else {
+                scroller.removeAttribute("aria-describedby");
+            }
+            renderedEmptyShown = shown;
+        }
+    }
+
+    // Snaps the header to its height (GridHeader.snapHeight) and places the empty message below it
+    private void snapHeaderHeight() {
+        final int height = gridHeader.snapHeight(hideHeader);
+        if (height > 0) {
+            CssProperties.set(empty, "--data-grid__empty-top", height + "px");
+        }
+    }
+
+    // The rows' area keeps the room the empty message takes, measured as it changes size: shown,
+    // given other text, or its text size changed
+    private void onEmptyMessageResize() {
+        CssProperties.set(content, "--data-grid__empty-height", empty.getOffsetHeight() + "px");
     }
 
     private void updateLoadingState() {
@@ -1720,7 +1756,7 @@ public class DataGrid<R> extends Widget
         if (headerChanged || widthsChanged) {
             // Only once the column widths apply, or the header is measured in the wrong layout. A
             // width change can change the header's height too, e.g. when its text wraps.
-            gridHeader.snapHeight(hideHeader);
+            snapHeaderHeight();
         }
 
         resolveKeyboardRow();
@@ -1995,9 +2031,10 @@ public class DataGrid<R> extends Widget
         // height follows its content, e.g. when the density or text size preference changes. That
         // changes the rows' height too, which virtual rendering measures.
         GlobalResizeObserver.addListener(headerRow, element -> {
-            gridHeader.snapHeight(hideHeader);
+            snapHeaderHeight();
             forgetRowHeight();
         });
+        GlobalResizeObserver.addListener(empty, element -> onEmptyMessageResize());
 
         scroller.setScrollTop(savedScrollTop);
         scroller.setScrollLeft(savedScrollLeft);
@@ -2012,6 +2049,7 @@ public class DataGrid<R> extends Widget
         savedScrollLeft = scroller.getScrollLeft();
         GlobalResizeObserver.removeListener(getElement());
         GlobalResizeObserver.removeListener(headerRow);
+        GlobalResizeObserver.removeListener(empty);
         for (final JavaScriptObject handle : nativeListeners) {
             DataGridDom.removeListener(handle);
         }

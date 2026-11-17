@@ -200,7 +200,8 @@ public class FieldValuePicker extends Component {
         scope.setTitle("");
         showMessage(null);
         list.setRowData(0, values);
-        list.setRowCount(0);
+        // Not known, so the list doesn't say it has none while the values are fetched
+        list.setRowCount(0, false);
     }
 
     /// Sets the filter's text, without the filter change callback being told.

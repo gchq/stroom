@@ -284,6 +284,28 @@ public final class DataGridStories {
                     play.expect(play.querySelector(EMPTY_MESSAGE)).not().toBeVisible();
                     play.expect(play.querySelector(SCROLLER)).not().toHaveAccessibleDescription();
                 })
+                // Paged on to a page still being fetched: no rows are held, but the count is that
+                // of them all, so nothing says the grid is empty
+                .story("EmptyWhilePaging", context -> {
+                    final DataGrid<Person> grid = personGrid();
+                    addPlainColumns(grid);
+                    grid.setRowCount(250, true);
+                    grid.setVisibleRange(100, 100);
+                    return sized(paged(grid), "200px", null);
+                })
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.querySelectorAll(HEADER_CELLS)).toHaveLength(5));
+                    play.expect(play.querySelector(EMPTY_MESSAGE)).not().toBeVisible();
+                    play.expect(play.querySelector(SCROLLER)).not().toHaveAccessibleDescription();
+                })
+                // An empty grid whose errors show over it (the pager panel's message) says
+                // nothing of its own under them
+                .story("EmptyWithErrors", DataGridStories::emptyWithErrors)
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByText("The search timed out")).toBeVisible());
+                    play.expect(play.querySelector(EMPTY_MESSAGE)).not().toBeVisible();
+                    play.expect(play.querySelector(SCROLLER)).not().toHaveAccessibleDescription();
+                })
                 // With a filter that matches nothing, a grid in a quick filter page says "No
                 // matches"; cleared, the rows come back
                 .story("EmptyFiltered", DataGridStories::emptyFiltered)
@@ -862,6 +884,18 @@ public final class DataGridStories {
         final DataGrid<Person> grid = plainGrid();
         final PagerPanel pagerView = new PagerPanel();
         pagerView.setDataWidget(grid);
+        pagerView.getMessagePanel().showMessage(List.of(
+                new ErrorMessage(Severity.ERROR, "Node node1a could not be reached\nThe search timed out")));
+        return sized(pagerView.asWidget(), "260px", "600px");
+    }
+
+    private static Widget emptyWithErrors(final StoryContext context) {
+        final DataGrid<Person> grid = personGrid();
+        addPlainColumns(grid);
+        final PagerPanel pagerView = new PagerPanel();
+        pagerView.setDataWidget(grid);
+        grid.setRowData(0, Collections.emptyList());
+        grid.setRowCount(0);
         pagerView.getMessagePanel().showMessage(List.of(
                 new ErrorMessage(Severity.ERROR, "Node node1a could not be reached\nThe search timed out")));
         return sized(pagerView.asWidget(), "260px", "600px");

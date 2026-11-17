@@ -46,7 +46,8 @@
    --data-grid__body-offset, --data-grid__v-track-top, --data-grid__v-thumb-length,
    --data-grid__h-thumb-length, --data-grid__v-thumb-position, --data-grid__h-thumb-position,
    --data-grid__handle-left, --data-grid__resize-line-left, --data-grid__move-ghost-left,
-   --data-grid__move-ghost-width, --data-grid__move-line-left, and a spanning cell's
+   --data-grid__move-ghost-width, --data-grid__move-line-left, --data-grid__empty-top,
+   --data-grid__empty-height, and a spanning cell's
    --data-grid__span. The rules that use them select through the grid's own parts (child
    combinators), so a grid inside another's cell isn't laid out by the outer grid's.
 
@@ -392,12 +393,14 @@
 }
 
 /* What the grid says with no rows (DataGrid.renderEmptyMessage). Outside the scroller, which may hold
-   only rows, so laid over it where the first row would be: its top is set below the header, and the
-   rows' area keeps its room. Clicks pass through to the grid. */
+   only rows, so laid over it where the first row would be: below the header, whose height it is
+   given as --data-grid__empty-top (DataGrid.snapHeaderHeight), and the rows' area keeps its room,
+   given as --data-grid__empty-height (DataGrid.onEmptyMessageResize). Clicks pass through to the
+   grid. */
 .data-grid__empty {
     display: none;
     position: absolute;
-    top: 0;
+    top: var(--data-grid__empty-top, 0);
     right: 0;
     left: 0;
     overflow: hidden;
@@ -408,6 +411,14 @@
 
 .data-grid--empty > .data-grid__empty {
     display: block;
+}
+
+.data-grid--no-header > .data-grid__empty {
+    top: 0;
+}
+
+.data-grid--empty > .data-grid__scroller > .data-grid__content {
+    min-height: var(--data-grid__empty-height, 0);
 }
 
 /* setEmptyText: as MyDataGrid's empty text, a label with .form-padding */

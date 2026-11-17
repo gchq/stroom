@@ -92,11 +92,64 @@ class TestEmptyMessage {
 
     @Test
     void testIsShown_onlyWithNoRowsAndAnExactCount() {
-        assertThat(EmptyMessage.isShown(0, true, EmptyMessage.NO_DATA)).isTrue();
+        final EmptyMessage message = new EmptyMessage();
+
+        assertThat(message.isShown(0, 0, true, true)).isTrue();
         // Still loading: the count isn't known yet
-        assertThat(EmptyMessage.isShown(0, false, EmptyMessage.NO_DATA)).isFalse();
-        assertThat(EmptyMessage.isShown(3, true, EmptyMessage.NO_DATA)).isFalse();
-        // Turned off
-        assertThat(EmptyMessage.isShown(0, true, null)).isFalse();
+        assertThat(message.isShown(0, 0, false, true)).isFalse();
+        assertThat(message.isShown(3, 3, true, true)).isFalse();
+    }
+
+    @Test
+    void testIsShown_notWhileAPageIsFetched() {
+        final EmptyMessage message = new EmptyMessage();
+
+        // Paging on clears the rows held, while the count is still that of them all
+        assertThat(message.isShown(0, 250, true, true)).isFalse();
+    }
+
+    @Test
+    void testIsShown_notWhenTurnedOff() {
+        final EmptyMessage message = new EmptyMessage();
+        message.setOwn(null);
+
+        assertThat(message.isShown(0, 0, true, true)).isFalse();
+    }
+
+    @Test
+    void testIsShown_notAfterTheFilterChangesUntilRowsArrive() {
+        final EmptyMessage message = new EmptyMessage();
+        message.setFiltered(true);
+        message.rowsArrived();
+        assertThat(message.isShown(0, 0, true, true)).isTrue();
+
+        // Cleared: the rows held were filtered, so "No data" would say nothing exists
+        message.setFiltered(false);
+        assertThat(message.isShown(0, 0, true, true)).isFalse();
+
+        message.rowsArrived();
+        assertThat(message.isShown(0, 0, true, true)).isTrue();
+        assertThat(message.getText(true)).isEqualTo(EmptyMessage.NO_DATA);
+    }
+
+    @Test
+    void testIsShown_filterSetAgainUnchangedKeepsIt() {
+        final EmptyMessage message = new EmptyMessage();
+        message.setFiltered(true);
+        message.rowsArrived();
+
+        message.setFiltered(true);
+
+        assertThat(message.isShown(0, 0, true, true)).isTrue();
+    }
+
+    @Test
+    void testIsShown_notWhileCovered() {
+        final EmptyMessage message = new EmptyMessage();
+        message.setCovered(true);
+        assertThat(message.isShown(0, 0, true, true)).isFalse();
+
+        message.setCovered(false);
+        assertThat(message.isShown(0, 0, true, true)).isTrue();
     }
 }

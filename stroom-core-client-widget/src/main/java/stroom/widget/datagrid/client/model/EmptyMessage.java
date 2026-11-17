@@ -21,7 +21,9 @@ package stroom.widget.datagrid.client.model;
 /// Every grid has a message unless its screen turns it off: its screen's own, else "No data" for a
 /// table and "No items" for a list or tree. While a filter is set, "No matches" says the rows
 /// were filtered out rather than missing. The message shows only once the grid knows it has no
-/// rows (an exact count of none), never while it is still loading.
+/// rows at all (an exact count of none), never while it is still loading: not while a page is
+/// fetched, and not after the filter changes until the rows for it arrive. It doesn't show while
+/// another message covers the grid, e.g. its errors.
 public final class EmptyMessage {
 
     /// A table's message when its screen gives none.
@@ -34,6 +36,9 @@ public final class EmptyMessage {
     private boolean own;
     private String ownText;
     private boolean filtered;
+    // The filter changed and the rows for it haven't arrived, so the rows held are for the old one
+    private boolean awaitingRows;
+    private boolean covered;
 
     /// Makes the default message.
     public EmptyMessage() {
@@ -45,9 +50,30 @@ public final class EmptyMessage {
         ownText = text;
     }
 
+    /// Says whether a filter is set on the rows. A change hides the message until the rows for it
+    /// arrive ([#rowsArrived()]), as those held were filtered by the old one.
+    ///
     /// @param filtered Whether a filter is set on the rows.
     public void setFiltered(final boolean filtered) {
-        this.filtered = filtered;
+        if (this.filtered != filtered) {
+            this.filtered = filtered;
+            awaitingRows = true;
+        }
+    }
+
+    /// Says that rows, or a count of them, have arrived, e.g. for a changed filter.
+    ///
+    /// @return Whether it was waiting for them, so whether the message may now show.
+    public boolean rowsArrived() {
+        final boolean wasAwaiting = awaitingRows;
+        awaitingRows = false;
+        return wasAwaiting;
+    }
+
+    /// @param covered Whether another message covers the grid, e.g. its errors, so that this one
+    ///                doesn't show under it.
+    public void setCovered(final boolean covered) {
+        this.covered = covered;
     }
 
     /// @param cells Whether the grid is a table (has cells), rather than a list or tree.
@@ -67,11 +93,21 @@ public final class EmptyMessage {
                 : NO_ITEMS;
     }
 
-    /// @param rowDataSize The number of rows on the page.
+    /// @param rowDataSize   The number of rows held for the page.
+    /// @param rowCount      The number of rows in all.
     /// @param rowCountExact Whether the row count is known, rather than still loading.
-    /// @param text The message, or `null` for none.
-    /// @return Whether to show the message.
-    public static boolean isShown(final int rowDataSize, final boolean rowCountExact, final String text) {
-        return rowDataSize == 0 && rowCountExact && text != null;
+    /// @param cells         Whether the grid is a table (has cells), rather than a list or tree.
+    /// @return Whether to show the message ([#getText(boolean)]).
+    public boolean isShown(final int rowDataSize,
+                           final int rowCount,
+                           final boolean rowCountExact,
+                           final boolean cells) {
+        // The rows held may be none while a page is fetched, with the count still that of them all
+        return rowDataSize == 0
+               && rowCount == 0
+               && rowCountExact
+               && !awaitingRows
+               && !covered
+               && getText(cells) != null;
     }
 }

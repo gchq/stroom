@@ -102,9 +102,11 @@ final class GridHeader<R> {
     /// exactly.
     ///
     /// @param hidden Whether the header is hidden (when there is nothing to snap).
-    void snapHeight(final boolean hidden) {
+    /// @return The height snapped to, or 0 if there was none to measure (hidden, detached or not
+    /// displayed).
+    int snapHeight(final boolean hidden) {
         if (!grid.isAttached() || hidden) {
-            return;
+            return 0;
         }
         CssProperties.remove(head, "--data-grid__head-height");
         final int height = head.getOffsetHeight();
@@ -112,6 +114,7 @@ final class GridHeader<R> {
         if (height > 0) {
             CssProperties.set(head, "--data-grid__head-height", height + "px");
         }
+        return height;
     }
 
     /// @param column The column index.
