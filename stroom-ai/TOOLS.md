@@ -2886,7 +2886,11 @@ minimum creation time.
   enabled filter already selecting what arrives gets no second one (it would process everything twice). An index read
   by a pipeline promoted with its events pipeline has the events pipeline's filter made first (seen in e2e: both
   enabled together, the index held the sample twice). An index starts fresh: `before_enabling` says to drop (or empty)
-  it first, with a button.
+  it first, with a button. A production index is never put up for dropping (`PromotionProcessing`): an original a
+  working copy was written back over keeps its live index (no drop or empty), and a new version's own Elasticsearch
+  index is dropped only while nothing but this promotion's documents writes to it or names it
+  (`ProductionIndexes.claimsBesides`); otherwise `before_enabling` says it is a production index, not dropped, and
+  why.
 
 ## Samples, surveys and feeds
 
@@ -3459,8 +3463,19 @@ A build pipeline whose indexing filter names a Lucene index outside the build (a
 production indexing pipeline) is pointed at a test index in the build first, `<INDEX>-MCP-TEST`, mirroring the
 production index's settings and fields plus the pipeline's kept plan's, so a build never writes into a production
 index (seen in an eval: a working copy's test run put 192 documents into the live index). `verify_index` on the
-production index searches the test index. Processing a copy of an Elasticsearch indexing pipeline that writes to a
-production index is refused: step it clean instead. At promotion the test index stays in the workspace, the pipeline
+production index searches the test index. A build pipeline writing to a production Elasticsearch index is refused
+(`ProductionIndexes`, through `IndexingRuns.refuseUnsafeIndex`), before any lookup, `index_exists`, `drop_first`,
+template or approval form: production is decided by the index name, not by where an Elastic Index doc lives, a name
+(variables as wildcards) that a non-template pipeline outside the build writes to (its own `indexName`), that an
+Elastic Index doc outside the build names (one naming a pattern names none), or, for a working copy or new version,
+that its original writes (inherited from a template too). The refusal says nothing was processed and nothing is to
+be dropped (`Pipeline '...' writes to Elasticsearch index '...', which is a production index (...) ... Nothing was
+processed, and nothing is to be dropped or deleted ...`): step a working copy clean instead, or make a new version
+with its own index (`copy_pipeline`). Seen in a user's test: the build's own Elastic Index doc for the production name
+made the index count as the build's, and the user was asked to drop the production index, and did. `freshIndex` and
+the existing-index lookup refuse it again, so `drop_first` and `delete_first` never name one. A new version's first
+run (`version_of`, no filter yet) looks its own index up again: anything it matches, or a failed lookup, refuses it.
+At promotion the test index stays in the workspace, the pipeline
 is written back pointed at production, and the production index gains the plan's missing fields (said in the
 review's `index_changes`), for any build.
 
@@ -3569,7 +3584,8 @@ indexing or discovery pipeline runs on the user's approval (created enabled); an
 user. An index this pipeline wrote to starts fresh, because Stroom's purge on reprocess doesn't apply to a second filter on the same
 streams nor remove a Lucene index's documents (seen: an index held each event twice after its XSLT was fixed and the
 stream reprocessed): a `drop_first` reply comes before the approval, then `index_dropped=true` (an Elasticsearch
-index still holding documents then gets `index_exists`); a build's own Lucene index is emptied once approved.
+index still holding documents then gets `index_exists`); a build's own Lucene index is emptied once approved. A
+production Elasticsearch index is refused first, as in `create_processor_filter`, so `drop_first` never names one.
 
 * **Arguments**: `pipeline_uuid`, `stream_ids` (required; 1 to 10), `source_pipeline_uuid`, `index_dropped`,
   `template_committed_by_user`.
@@ -4334,21 +4350,50 @@ goes to (`SourceTypeGroups.promotedGroup`: no choice recorded, no copy of the gr
 version question to the user in the form `build_translation_xslt` asks (`SourceTypeGroups.askPipelineChoice`), and
 the answer decides the copy, not `working_copy` (seen in eval case 61: the agent's `working_copy=true` made the
 user's choice). The answer is recorded in the build record (`group_pipeline_choices`), so neither tool asks again;
-without forms the call is refused until `pipeline=change|new_version` carries it. A new version needs a `new_name`
-of its own.
+without forms the call is refused until `pipeline=change|new_version` carries it.
+
+Any other promoted pipeline (outside every build, a group's or not) is asked the same question in a form
+(`SourceTypeGroups.askPromotedPipelineChoice`: "Pipeline X is in production. This build changes it: change that
+pipeline, or make a new version of it."), once per pipeline and build (`pipeline_choices` in the build record); the
+answer decides the copy, not `working_copy`, which decides only for a pipeline of a build (seen in a user's test: a
+promoted feed's pipelines copied under the same names as working copies, never asked, where the user expected a new
+version). Without forms the reply is `needs_choice`: the question, its `options`, the proposed names
+(`new_version_names`) and a hint to ask the user and call again with `pipeline=`.
+
+A new version's names are proposed (`VersionNames`) and confirmed or edited in the copy's form, each an editable
+field: the agent's where they differ from the original's, else the next version's. The pipeline's last version token
+goes up by its last part (`V1.0` to `V1.1`, `V1` to `V2`, `-v1.2` to `-v1.3`), the major bump (`V2.0`) said in the
+form as the other choice; a name with none gets `-V2` (before its first `{variable}`). Its documents follow the
+pipeline's change where they hold the same token, else bump their own. For an Elasticsearch indexing pipeline the
+index name's last token goes up (`acme-events-v1` to `acme-events-v2`; none: `-v2`, before the first variable,
+`acme-events{_suffix}` to `acme-events-v2{_suffix}`), the copy's ElasticIndexingFilter gets it, and each Elastic Index
+doc outside the build naming exactly the old index gets a new doc in the build for the new one (its settings and
+fields, `version_of` the old), beside it. A new version under any of the original's names (pipeline, document, index,
+Elastic Index doc) is refused.
+
+Once the names are confirmed and before anything is copied, a new index name is looked up
+(`ProductionIndexes.taken`, asked for by the user): on the cluster (`ExistingIndexes`, variables as wildcards) and
+against every pipeline and Elastic Index doc outside the build. Any data stream, index or alias it matches, even an
+empty one, a lookup that fails (never taken as free), or another Stroom document naming it, refuses the copy, saying
+what matched (name, kind, document count, the Stroom document), the pattern looked up and the next free version name;
+nothing it matches is offered for deletion.
 
 * **Arguments**: `build`, `source_uuid`, `new_name` (required); `rename` (text replacements for the copied
   documents' names, e.g. `{"V1.2": "V1.3"}`; JSON text or a single-quoted literal is read too:
   `PipelineArguments.textMap`); `set_properties` (changes on the copy, e.g. a new `indexName`); `working_copy` (true
   when promotion will write the copy back over the original; false, the default, for a new version promoted
-  alongside it; for the build's group's promoted pipeline the user's choice decides it); `pipeline` (`change` or
-  `new_version`: the user's answer, where no form can be shown).
+  alongside it; for a promoted pipeline the user's choice decides it); `pipeline` (`change` or `new_version`: the
+  user's answer, where no form can be shown).
 * **Returns**: `type`, `uuid`, `name`, `copy_of`, `working_copy`, `copied_documents`, `source_types` (a new version
-  of a group's pipeline: the registry rows moved to it), `note` (a `working_copy` the user's choice overrode, or a
-  `pipeline` ignored), and `next`.
+  of a group's pipeline: the registry rows moved to it), `index_name` and `index_docs` (a new version's own index and
+  its Elastic Index docs), `note` (a `working_copy` the user's choice overrode, or a `pipeline` ignored), and `next`;
+  or `needs_choice` (see above).
 * **Refuses**: a missing required argument; a template (`PipelineTemplates.templateReason`: `... is a template
   (...): templates are inherited, not copied ...`, pointing at `create_pipeline`); an owned document the user can't
-  read; the user declining the form, or no form.
+  read; a new version under the original's names (`A new version of X needs names of its own, and ... are the
+  original's ... Nothing was copied.`); a new index name that is taken (`Index name '...' (looked up as '...') is not
+  free for the new version: ... Nothing was copied. ... '<next>' is free ...`); a group's choice without forms and no
+  `pipeline`; the user declining the form, or no form.
 * **Notes**:
   * A document that `set_properties` replaces is not copied: the copy would be unused, and its renamed name could
     clash with the replacement's (v2's XSLT made first, then V1's copied and renamed to the same name, which the

@@ -149,7 +149,9 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
                              + "deleted, with no such step). The sample's first run into an Elasticsearch index "
                              + "that already exists holding documents (made by something else) gets an "
                              + "index_exists reply before anything is asked or processed: not a translation "
-                             + "problem; the cluster admin drops it or the user chooses another name. An indexing "
+                             + "problem; the cluster admin drops it or the user chooses another name. An index name "
+                             + "a pipeline or Elastic Index doc outside the build writes to or names is production's: "
+                             + "refused before anything is asked, never dropped. An indexing "
                              + "pipeline reading Events needs "
                              + "source_pipeline_uuid, and its filter only selects Events from exactly that events "
                              + "pipeline. For an Elasticsearch indexing pipeline, the index template for its "
@@ -254,6 +256,15 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
         if (uncovered.isPresent()) {
             throw new ToolRefusal(uncovered.get());
         }
+        final Map<String, Object> destination = agreements.elasticDestination(pipelineUuid).orElse(null);
+        final List<ProcessorFilter> filters = filterWrites.filters(ref);
+        // A production Elasticsearch index is refused before anything is looked up, asked, made or processed: before,
+        // only a pipeline recorded as a copy was checked, and only against index docs outside the build (seen in a
+        // user's test: the build's copy of a promoted pipeline, under the same names, with an Elastic Index doc of the
+        // build's for the same index; the user was asked to drop the production index, and did).
+        if (destination != null) {
+            indexingRuns.refuseUnsafeIndex(pipeline, destination, filters.isEmpty() && newVersion(ref));
+        }
         final Optional<OutputFeeds.OutputFeed> output = sources.buildFeedsOnly(ref, streamIds, feed);
         // A build's indexing pipeline indexes into the build's test index, never a production one.
         final List<BuildTestIndexes.TestIndex> testIndexes = sources.buildIndexesOnly(ref);
@@ -280,7 +291,6 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
                     ProcessorFilterWrites.pipelineTerm(source.pipeline())));
             said += ", only Events from pipeline '" + source.pipeline().getName() + "'";
         }
-        final List<ProcessorFilter> filters = filterWrites.filters(ref);
         if (feed != null) {
             ProcessorFilterWrites.refuseDuplicate(filters, expression, scope.minMs());
         }
@@ -302,13 +312,12 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
             details.put("sends", "each processed Event as a Kafka record, through the pipeline's KafkaConfig: the "
                                  + "destination (ArcSight, say) receives them");
         }
-        final Map<String, Object> destination = agreements.elasticDestination(pipelineUuid).orElse(null);
         String existingNote = null;
         // The sample's first run into an Elasticsearch index: one already holding documents stops it here, before
         // anything is asked or processed (seen in testing: a data stream of the same name, found only by
         // verify_index's counts after indexing).
         if (destination != null && !streamIds.isEmpty() && filters.isEmpty()) {
-            final Presence existing = indexingRuns.existingIndex(destination);
+            final Presence existing = indexingRuns.existingIndex(pipeline, destination);
             if (existing.holdsDocuments()) {
                 return plan.nextFor(context, ref, ExistingIndexes.stop(pipeline, destination, existing,
                         ToolArgs.flag(call, INDEX_DROPPED_ARG), NAME));
@@ -427,7 +436,7 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
             || !ToolArgs.flag(call, INDEX_DROPPED_ARG)) {
             return Optional.empty();
         }
-        final Presence existing = indexingRuns.existingIndex(destination);
+        final Presence existing = indexingRuns.existingIndex(pipeline, destination);
         return existing.holdsDocuments()
                 ? Optional.of(ExistingIndexes.stop(pipeline, destination, existing, true, tool))
                 : Optional.empty();
@@ -489,6 +498,21 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
                     reason), e);
             return new BuildRecords.Passed(false, reason);
         }
+    }
+
+    // Whether the pipeline is a new version of a promoted one (copy_pipeline, or create_pipeline version_of=).
+    private boolean newVersion(final DocRef ref) {
+        return newVersion(buildRecords, plan, ref);
+    }
+
+    /// @param buildRecords The builds' records.
+    /// @param plan         Says which build a document is in.
+    /// @param ref          A pipeline.
+    /// @return Whether its build records it as a new version of a promoted pipeline (`version_of`).
+    static boolean newVersion(final BuildRecords buildRecords, final BuildPlan plan, final DocRef ref) {
+        return plan.buildOf(ref)
+                .map(build -> buildRecords.entry(build, ref.getUuid()).get("version_of") != null)
+                .orElse(false);
     }
 
     private int priority(final ToolCall call) {

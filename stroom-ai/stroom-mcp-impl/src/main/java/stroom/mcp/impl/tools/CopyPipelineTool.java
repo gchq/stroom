@@ -38,6 +38,7 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
@@ -67,6 +68,13 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     static final String WORKING_COPY_ARG = "working_copy";
     static final String PIPELINE_ARG = "pipeline";
 
+    private static final String ELASTIC_FILTER = "ElasticIndexingFilter";
+    private static final String INDEX_NAME = "indexName";
+    // The form's keys for a new version's names besides the pipeline's (new_name).
+    private static final String DOC_KEY = "doc:";
+    private static final String INDEX_KEY = "index_name";
+    private static final String INDEX_DOC_KEY = "index_doc:";
+
     private final PipelineWrites writes;
     private final PipelineDocs pipelineDocs;
     private final PipelineShapes pipelineShapes;
@@ -76,6 +84,8 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     private final BuildRecords records;
     private final Consent consent;
     private final BuildPlan plan;
+    private final IndexTemplateAgreements agreements;
+    private final ProductionIndexes productionIndexes;
     // An aggregated feed's source type groups; none in tests that make the tool themselves.
     private Provider<SourceTypeGroups> groupsProvider;
 
@@ -88,7 +98,9 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                      final WriteGuard guard,
                      final BuildRecords records,
                      final Consent consent,
-                     final BuildPlan plan) {
+                     final BuildPlan plan,
+                     final IndexTemplateAgreements agreements,
+                     final ProductionIndexes productionIndexes) {
         this.writes = writes;
         this.pipelineDocs = pipelineDocs;
         this.pipelineShapes = pipelineShapes;
@@ -98,6 +110,8 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         this.records = records;
         this.consent = consent;
         this.plan = plan;
+        this.agreements = agreements;
+        this.productionIndexes = productionIndexes;
     }
 
     /// Where an aggregated feed's source type groups are found (set by injection; none in tests that make the tool
@@ -151,7 +165,13 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                              + "build's working copies of the feed's common module and helpers where it has them, "
                              + "so stepping in the build runs the build's chain. A new version of a group's "
                              + "pipeline: the registry's rows of the group move to it, and to its copy of the "
-                             + "group's XSLT. The user confirms the names first.")
+                             + "group's XSLT. A promoted pipeline (outside any build): the user chooses, once "
+                             + "per build, whether the build changes it in place or makes a new version; a new "
+                             + "version's names are proposed from the original's version (V1.0 to V1.1, an "
+                             + "Elasticsearch index -v1 to -v2, with an Elastic Index doc for it) and confirmed or "
+                             + "edited by the user, never the original's, and its index name is looked up first: "
+                             + "one that matches anything on the cluster is refused. The user confirms the names "
+                             + "first.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(BUILD_ARG, CreateFeedTool.BUILD_DESCRIPTION)
                         .addStringProperty(SOURCE_UUID_ARG, "Pipeline to copy.")
@@ -164,16 +184,16 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                                 "Properties to change on the copy, as objects, e.g. [{\"element\": "
                                 + "\"elasticIndexingFilter\", \"name\": \"indexName\", \"value\": "
                                 + "\"ecs-acme-v2\"}] for a new index version."))
-                        .addBooleanProperty(WORKING_COPY_ARG, "True when the copy will be written back over the "
-                                                              + "original on promotion (an in-place change); "
-                                                              + "False for a new version that is promoted "
-                                                              + "alongside it. For a source type group's "
+                        .addBooleanProperty(WORKING_COPY_ARG, "For a pipeline of a build: true when the copy "
+                                                              + "will be written back over the original on "
+                                                              + "promotion (an in-place change); false for a new "
+                                                              + "version that is promoted alongside it. For a "
                                                               + "promoted pipeline the user's choice decides it, "
                                                               + "not this flag.")
                         .addEnumProperty(PIPELINE_ARG, SourceTypeGroups.PIPELINE_CHOICES,
-                                "Only for a source type group's promoted pipeline, where no form can be shown: "
-                                + "what the user said the build's change to the group goes to, 'change' (a "
-                                + "working copy) or 'new_version'. Asked in a form otherwise.")
+                                "Only for a promoted pipeline (or a source type group's), where no form can be "
+                                + "shown (a needs_choice reply): what the user said the build's change goes to, "
+                                + "'change' (a working copy) or 'new_version'. Asked in a form otherwise.")
                         .required(BUILD_ARG, SOURCE_UUID_ARG, NEW_NAME_ARG)
                         .build())
                 .build();
@@ -208,7 +228,8 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                                   + "Acme-Door-V1.2-Events).");
         }
         final List<String> notes = new ArrayList<>();
-        final boolean workingCopy = workingCopy(call, context, build, sourceUuid, source, newName, notes);
+        // Promoted: outside any build (in production), whoever made it.
+        final boolean promoted = guard.buildOf(new DocRef(PipelineDoc.TYPE, sourceUuid)).isEmpty();
         final List<DocRef> owned = owned(source, changes);
         final Map<String, String> names = new LinkedHashMap<>();
         for (final DocRef entity : owned) {
@@ -218,18 +239,50 @@ class CopyPipelineTool extends AbstractBuiltInTool {
             }
             names.put(entity.getUuid(), name);
         }
+        final Optional<Boolean> decided = workingCopy(call, context, build, sourceUuid, source, notes, promoted);
+        final NewVersion version = promoted && !decided.orElse(false)
+                ? newVersion(build, source, newName, owned, names, changes)
+                : null;
+        if (decided.isEmpty()) {
+            return choiceAsked(source, version);
+        }
+        final boolean workingCopy = decided.get();
         final Typed typed = changes.stream().anyMatch(property -> property.docUuid() == null)
                 ? writes.typedProperties(writes.layout(sourceUuid).elements(), changes)
                 : new Typed(changes, Map.of());
+        final String proposedName = version == null
+                ? newName
+                : version.pipeline();
         final Map<String, Object> details = new LinkedHashMap<>();
         details.put("build", build);
         details.put("copy of", source.getName());
-        details.put("pipeline name", newName);
-        details.put("copied documents", List.copyOf(new TreeSet<>(names.values())));
+        details.put("pipeline name", proposedName);
+        details.put("copied documents", List.copyOf(new TreeSet<>(version == null
+                ? names.values()
+                : version.documents().values())));
         details.put("working copy", workingCopy);
         details.put("changes", changes.stream().map(PropertyValue::dotted).toList());
-        consent.require(call, context, Consent.Request.confirmation(NAME,
-                "Copy pipeline '" + source.getName() + "' as '" + newName + "'", details));
+        if (version != null) {
+            version.addTo(details);
+        }
+        final Consent.Request request = version == null
+                ? Consent.Request.confirmation(NAME, "Copy pipeline '" + source.getName() + "' as '" + proposedName
+                                                     + "'", details)
+                : version.editable(Consent.Request.confirmation(NAME, "Copy pipeline '" + source.getName() + "' as "
+                                                                      + "a new version, '" + proposedName + "'",
+                        details));
+        consent.require(call, context, request);
+        final NewVersion settled = version == null
+                ? null
+                : version.settled(consent, context);
+        if (settled != null) {
+            refuseUnchanged(source, version, settled);
+            refuseTakenIndex(build, settled);
+            names.putAll(settled.documents());
+        }
+        final String pipelineName = settled == null
+                ? newName
+                : settled.pipeline();
 
         final String role = pipelineShapes.role(sourceUuid);
         final Map<String, DocRef> copies = new LinkedHashMap<>();
@@ -255,8 +308,15 @@ class CopyPipelineTool extends AbstractBuiltInTool {
             data = PipelineDocs.withProperty(data, property.element(), property.name(),
                     writes.value(property, typed.keys().get(property.dotted())));
         }
+        if (settled != null && settled.indexName() != null) {
+            // The new version's own index, as set_properties would set it.
+            for (final String element : settled.elasticElements()) {
+                data = PipelineDocs.withProperty(data, element, INDEX_NAME, new PipelinePropertyValue(
+                        settled.indexName()));
+            }
+        }
         final PipelineDoc changed = data;
-        final DocRef ref = guard.create(PipelineDoc.TYPE, newName, build, workingCopy
+        final DocRef ref = guard.create(PipelineDoc.TYPE, pipelineName, build, workingCopy
                 ? sourceUuid
                 : null, false, role);
         if (!workingCopy) {
@@ -267,6 +327,9 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                 .description(source.getDescription())
                 .pipelineData(changed.getPipelineData())
                 .build());
+        final List<DocRef> indexDocs = settled == null
+                ? List.of()
+                : copyIndexDocs(build, settled);
         final Map<String, Object> result = new LinkedHashMap<>();
         if (groupsProvider != null) {
             // An aggregated feed's group copied: it imports the build's copies of the feed's modules, and a new
@@ -286,76 +349,268 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         result.put("copy_of", source.getName());
         result.put("working_copy", workingCopy);
         result.put("copied_documents", copies.values().stream().map(MergedPipeline::docRef).toList());
+        if (settled != null && settled.indexName() != null) {
+            result.put("index_name", settled.indexName());
+            result.put("index_docs", indexDocs.stream().map(MergedPipeline::docRef).toList());
+            notes.add("the new version writes to its own index '" + settled.indexName() + "', checked free on "
+                      + "the cluster: agree its index template (propose_index_template) for that name");
+        }
         if (!notes.isEmpty()) {
             result.put("note", String.join("; ", notes));
         }
         return plan.withNext(context, build, result);
     }
 
-    // Whether the copy is a working copy (written back over the original at promotion) or a new version. For a
-    // source type group's promoted pipeline it is the user's choice, not the agent's flag (seen in eval case 61: the
-    // agent copied the Messaging pipeline as a working copy before build_translation_xslt asked, and the user was
-    // only shown a technical copy form): put to them in the form build_translation_xslt asks, unless the build has
-    // recorded it or copied the group's XSLT already; recorded, so neither tool asks again.
-    private boolean workingCopy(final ToolCall call,
-                                final ToolCallContext context,
-                                final String build,
-                                final String sourceUuid,
-                                final PipelineDoc source,
-                                final String newName,
-                                final List<String> notes) {
+    // Whether the copy is a working copy (written back over the original at promotion) or a new version; empty
+    // when the user is still to be asked in the chat. For a promoted pipeline it is the user's choice, not the
+    // agent's flag: put to them in a form once per build (seen in a user's test: a promoted feed's pipelines copied
+    // under the same names as working copies, never asked, where the user expected a new version). A source type
+    // group's promoted pipeline asks the group's question, as build_translation_xslt does (seen in eval case 61:
+    // the agent copied the Messaging pipeline as a working copy before build_translation_xslt asked, and the user
+    // was only shown a technical copy form), unless the build has recorded it or copied the group's XSLT already;
+    // recorded, so neither tool asks again.
+    private Optional<Boolean> workingCopy(final ToolCall call,
+                                          final ToolCallContext context,
+                                          final String build,
+                                          final String sourceUuid,
+                                          final PipelineDoc source,
+                                          final List<String> notes,
+                                          final boolean promoted) {
         final boolean flagged = ToolArgs.flag(call, WORKING_COPY_ARG);
-        final Optional<SourceTypeGroups.PromotedGroup> promoted = groupsProvider == null
+        final Optional<SourceTypeGroups.PromotedGroup> group = groupsProvider == null
                 ? Optional.empty()
                 : groupsProvider.get().promotedGroup(build, sourceUuid);
-        if (promoted.isEmpty() || promoted.get().copied()) {
+        final String choice;
+        final String pipeline;
+        if (group.isPresent() && !group.get().copied()) {
+            pipeline = group.get().pipeline();
+            choice = group.get().recorded() != null
+                    ? group.get().recorded()
+                    : groupChoice(call, context, build, group.get());
+        } else if (group.isEmpty() && promoted) {
+            pipeline = source.getName();
+            choice = records.pipelineChoice(build, sourceUuid)
+                    .filter(SourceTypeGroups.PIPELINE_CHOICES::contains)
+                    .orElseGet(() -> promotedChoice(call, context, build, source));
+        } else {
             if (stringArg(call, PIPELINE_ARG) != null) {
-                notes.add(PIPELINE_ARG + " was ignored: '" + source.getName() + "' is not a source type group's "
-                          + "promoted pipeline whose change is still to be decided");
+                notes.add(PIPELINE_ARG + " was ignored: '" + source.getName() + "' is not a promoted pipeline whose "
+                          + "change is still to be decided");
             }
-            return flagged;
+            return Optional.of(flagged);
         }
-        final SourceTypeGroups.PromotedGroup group = promoted.get();
-        final String choice = group.recorded() != null
-                ? group.recorded()
-                : chosen(call, context, build, group);
+        if (choice == null) {
+            return Optional.empty();
+        }
         final boolean asChosen = SourceTypeGroups.CHANGE.equals(choice);
-        if (!asChosen && newName.equals(source.getName())) {
-            throw new ToolRefusal("The user chose a new version of " + group.pipeline() + " (recorded for the "
-                                  + "build): give the new version a name of its own (" + NEW_NAME_ARG + "), and "
-                                  + "call again. Nothing was copied.");
-        }
         if (argsMap(call).containsKey(WORKING_COPY_ARG) && flagged != asChosen) {
             notes.add(WORKING_COPY_ARG + "=" + flagged + " was overridden: the user chose " + (asChosen
-                    ? "to change " + group.pipeline() + " (a working copy)"
-                    : "a new version of " + group.pipeline()));
+                    ? "to change " + pipeline + " (a working copy)"
+                    : "a new version of " + pipeline));
         }
-        return asChosen;
+        return Optional.of(asChosen);
     }
 
     // What the user chooses a change to a group's promoted pipeline goes to: asked in the form, else what the agent
     // passes as their answer; recorded for the build.
-    private String chosen(final ToolCall call,
-                          final ToolCallContext context,
-                          final String build,
-                          final SourceTypeGroups.PromotedGroup group) {
+    private String groupChoice(final ToolCall call,
+                               final ToolCallContext context,
+                               final String build,
+                               final SourceTypeGroups.PromotedGroup group) {
         final Optional<String> asked = SourceTypeGroups.askPipelineChoice(consent, call, context, NAME,
                 group.group(), group.pipeline());
-        final String given = stringArg(call, PIPELINE_ARG);
-        final String choice;
-        if (asked.isPresent()) {
-            choice = asked.get();
-        } else if (given == null) {
+        final String choice = asked.orElseGet(() -> given(call));
+        if (choice == null) {
             throw new ToolRefusal(SourceTypeGroups.pipelineChoiceAsked(group.group(), group.pipeline(),
                     PIPELINE_ARG + "=" + ToolText.list(SourceTypeGroups.PIPELINE_CHOICES)));
-        } else if (!SourceTypeGroups.PIPELINE_CHOICES.contains(given)) {
-            throw new ToolRefusal(PIPELINE_ARG + " is one of " + ToolText.list(SourceTypeGroups.PIPELINE_CHOICES)
-                                  + ", not " + ToolText.repr(given) + ". Nothing was copied.");
-        } else {
-            choice = given;
         }
         groupsProvider.get().rememberPipelineChoice(build, group.group(), choice);
         return choice;
+    }
+
+    // What the user chooses a change to a promoted pipeline goes to: asked in the form, else what the agent passes
+    // as their answer (null when it passes none: the agent asks in the chat); recorded for the build.
+    private String promotedChoice(final ToolCall call,
+                                  final ToolCallContext context,
+                                  final String build,
+                                  final PipelineDoc source) {
+        final Optional<String> asked = SourceTypeGroups.askPromotedPipelineChoice(consent, call, context, NAME,
+                source.getName());
+        final String choice = asked.orElseGet(() -> given(call));
+        if (choice != null) {
+            records.rememberPipelineChoice(build, source.getUuid(), choice);
+        }
+        return choice;
+    }
+
+    // The user's choice as the agent passed it, checked; null when it passed none.
+    private String given(final ToolCall call) {
+        final String given = stringArg(call, PIPELINE_ARG);
+        if (given != null && !SourceTypeGroups.PIPELINE_CHOICES.contains(given)) {
+            throw new ToolRefusal(PIPELINE_ARG + " is one of " + ToolText.list(SourceTypeGroups.PIPELINE_CHOICES)
+                                  + ", not " + ToolText.repr(given) + ". Nothing was copied.");
+        }
+        return given;
+    }
+
+    // Where no form can be shown: the agent asks the user, with the new version's proposed names, and calls again
+    // with their answer.
+    private static Map<String, Object> choiceAsked(final PipelineDoc source, final NewVersion version) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("status", "needs_choice");
+        out.put("pipeline", source.getName());
+        out.put("question", "Pipeline " + source.getName() + " is in production. This build changes it: change "
+                            + "that pipeline, or make a new version of it?");
+        out.put("options", SourceTypeGroups.pipelineChoiceTexts(source.getName()));
+        out.put("new_version_names", version.toMap());
+        out.put("hint", "Nothing was copied. Ask the user which (and, for a new version, whether the proposed "
+                        + "names in new_version_names suit them, or which they want instead), then call "
+                        + "copy_pipeline again with " + PIPELINE_ARG + "=" + SourceTypeGroups.CHANGE + " (a "
+                        + "working copy, written back over it at promotion) or " + PIPELINE_ARG + "="
+                        + SourceTypeGroups.NEW_VERSION + " with " + NEW_NAME_ARG + "= the pipeline name, " + RENAME_ARG
+                        + "= the version change for its documents and, for an Elasticsearch indexing pipeline, "
+                        + SET_PROPERTIES_ARG + "= its new indexName. A new version's names are never the "
+                        + "original's.");
+        return out;
+    }
+
+    // The names proposed for a new version of a promoted pipeline: the agent's where they differ from the
+    // original's, else the next version's (VersionNames); for an Elasticsearch indexing pipeline, its index's next
+    // version and an Elastic Index doc for it beside each one naming the old index.
+    private NewVersion newVersion(final String build,
+                                  final PipelineDoc source,
+                                  final String newName,
+                                  final List<DocRef> owned,
+                                  final Map<String, String> names,
+                                  final List<PropertyValue> changes) {
+        final String pipeline = newName.equals(source.getName())
+                ? VersionNames.next(source.getName())
+                : newName;
+        final String from = VersionNames.token(source.getName()).orElse(null);
+        final String to = VersionNames.token(pipeline).orElse(null);
+        final Map<String, String> documents = new LinkedHashMap<>();
+        final Map<String, String> originals = new LinkedHashMap<>();
+        for (final DocRef entity : owned) {
+            if (alreadyCopied(build, entity, false).isPresent()) {
+                continue;
+            }
+            final String given = names.get(entity.getUuid());
+            documents.put(entity.getUuid(), given.equals(entity.getName())
+                    ? VersionNames.following(entity.getName(), from, to)
+                    : given);
+            originals.put(entity.getUuid(), entity.getName());
+        }
+        final Map<String, Object> destination = agreements.elasticDestination(source.getUuid()).orElse(null);
+        final String oldIndex = destination == null
+                ? null
+                : NullSafe.get(destination.get("index name"), String::valueOf);
+        if (oldIndex == null) {
+            return new NewVersion(source.getName(), pipeline, VersionNames.nextMajor(source.getName()), documents,
+                    originals, null, null, null, List.of(), Map.of(), Map.of());
+        }
+        final String givenIndex = changes.stream()
+                .filter(property -> INDEX_NAME.equals(property.name()) && property.value() != null)
+                .map(property -> String.valueOf(property.value()))
+                .findFirst()
+                .orElse(null);
+        final String index = givenIndex == null || givenIndex.equals(oldIndex)
+                ? VersionNames.nextIndexName(oldIndex)
+                : givenIndex;
+        final List<String> elements = pipelineShapes.merged(source.getUuid()).elements().entrySet().stream()
+                .filter(entry -> ELASTIC_FILTER.equals(entry.getValue()))
+                .map(Map.Entry::getKey)
+                .toList();
+        final Map<String, String> indexDocs = new LinkedHashMap<>();
+        final Map<String, String> indexDocOriginals = new LinkedHashMap<>();
+        for (final ProductionIndexes.Claim claim : productionIndexes.claims(build, oldIndex)) {
+            // A doc naming exactly the old index (one naming a single index a {variable} stands for is left: the
+            // new version's name for it isn't known).
+            if (ElasticIndexDoc.TYPE.equals(claim.doc().getType()) && claim.indexName().equalsIgnoreCase(oldIndex)) {
+                indexDocs.put(claim.doc().getUuid(), VersionNames.following(claim.doc().getName(), from, to));
+                indexDocOriginals.put(claim.doc().getUuid(), claim.doc().getName());
+            }
+        }
+        return new NewVersion(source.getName(), pipeline, VersionNames.nextMajor(source.getName()), documents,
+                originals, oldIndex, index, destination, elements, indexDocs, indexDocOriginals);
+    }
+
+    // A new version under any of the original's names is refused: it would be taken for the original, and promoted
+    // over or beside it under the same name (seen in a user's test: a new version copied as V1.0, where the user
+    // expected V1.1 and a new index name).
+    private static void refuseUnchanged(final PipelineDoc source, final NewVersion proposed, final NewVersion settled) {
+        final List<String> same = new ArrayList<>();
+        if (settled.pipeline().equals(source.getName())) {
+            same.add("pipeline name '" + source.getName() + "'");
+        }
+        settled.documents().forEach((uuid, name) -> {
+            if (name.equals(proposed.originals().get(uuid))) {
+                same.add("document name '" + name + "'");
+            }
+        });
+        if (settled.indexName() != null && settled.indexName().equals(settled.oldIndexName())) {
+            same.add("index name '" + settled.oldIndexName() + "'");
+        }
+        settled.indexDocs().forEach((uuid, name) -> {
+            if (name.equals(proposed.indexDocOriginals().get(uuid))) {
+                same.add("Elastic Index doc name '" + name + "'");
+            }
+        });
+        if (!same.isEmpty()) {
+            throw new ToolRefusal("A new version of " + source.getName() + " needs names of its own, and "
+                                  + ToolText.list(same) + " are the original's. Give it new ones (" + NEW_NAME_ARG
+                                  + ", " + RENAME_ARG + ", " + SET_PROPERTIES_ARG + " for its indexName), e.g. '"
+                                  + proposed.pipeline() + "', and call again. Nothing was copied.");
+        }
+    }
+
+    // The candidate index of a new version of an Elasticsearch indexing pipeline, looked up before anything is
+    // copied (asked for by the user): anything it matches, even an empty index, or a lookup that fails, is refused.
+    private void refuseTakenIndex(final String build, final NewVersion settled) {
+        if (settled.indexName() == null) {
+            return;
+        }
+        final Map<String, Object> destination = new LinkedHashMap<>(settled.destination());
+        destination.put("index name", settled.indexName());
+        productionIndexes.taken(build, destination, "Nothing was copied.").ifPresent(taken -> {
+            throw new ToolRefusal(taken + " Call again with " + SET_PROPERTIES_ARG + " setting the "
+                                  + "elasticIndexingFilter's indexName to the name the user settles on.");
+        });
+    }
+
+    // An Elastic Index doc in the build for the new version's index, beside each one outside it naming the old: the
+    // original's settings and fields, its index name the new one.
+    @SuppressWarnings("unchecked")
+    private List<DocRef> copyIndexDocs(final String build, final NewVersion settled) {
+        final List<DocRef> made = new ArrayList<>();
+        for (final Map.Entry<String, String> entry : settled.indexDocs().entrySet()) {
+            final ElasticIndexDoc original = documentAccess.read(new DocRef(ElasticIndexDoc.TYPE, entry.getKey()),
+                    ElasticIndexDoc.class).orElse(null);
+            if (original == null) {
+                continue;
+            }
+            final DocRef ref = guard.create(ElasticIndexDoc.TYPE, entry.getValue(), build, null, false,
+                    IndexExamples.ROLE);
+            records.update(build, ref, kept -> kept.put("version_of", entry.getKey()));
+            final ElasticIndexDoc fresh = documentAccess.read(ref, ElasticIndexDoc.class)
+                    .orElseThrow(() -> new ToolRefusal("Elastic Index doc '" + entry.getValue() + "' was made but "
+                                                       + "can't be read"));
+            final DocumentActionHandler<AbstractDoc> handler = documentAccess.handler(ElasticIndexDoc.TYPE)
+                    .orElseThrow(() -> new ToolRefusal("Stroom has no " + ElasticIndexDoc.TYPE + " store"));
+            final Object saved = handler.writeDocument(fresh.copy()
+                    .clusterRef(original.getClusterRef())
+                    .description(original.getDescription())
+                    .indexName(settled.indexName())
+                    .searchSlices(original.getSearchSlices())
+                    .searchScrollSize(original.getSearchScrollSize())
+                    .fields(original.getFields())
+                    .timeField(original.getTimeField())
+                    .defaultExtractionPipeline(original.getDefaultExtractionPipeline())
+                    .build());
+            made.add(new DocRef(ElasticIndexDoc.TYPE, ref.getUuid(), saved instanceof final AbstractDoc doc
+                    ? doc.getName()
+                    : entry.getValue()));
+        }
+        return made;
     }
 
     // The XSLTs and text converters the pipeline's own layer names, but not those set_properties replaces: a copy
@@ -441,5 +696,85 @@ class CopyPipelineTool extends AbstractBuiltInTool {
             throw new ToolRefusal("Give " + name);
         }
         return value;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // A new version's names: proposed (the agent's where they differ from the original's, else the next version's),
+    // or as the user settled them in the form.
+    private record NewVersion(String original,
+                              String pipeline,
+                              String major,
+                              Map<String, String> documents,
+                              Map<String, String> originals,
+                              String oldIndexName,
+                              String indexName,
+                              Map<String, Object> destination,
+                              List<String> elasticElements,
+                              Map<String, String> indexDocs,
+                              Map<String, String> indexDocOriginals) {
+
+        // The confirmation, each name editable.
+        Consent.Request editable(final Consent.Request request) {
+            Consent.Request out = request.withEditable(NEW_NAME_ARG, "Pipeline name", pipeline);
+            for (final Map.Entry<String, String> entry : documents.entrySet()) {
+                out = out.withEditable(DOC_KEY + entry.getKey(), "Copy of " + originals.get(entry.getKey()),
+                        entry.getValue());
+            }
+            if (indexName != null) {
+                out = out.withEditable(INDEX_KEY, "Elasticsearch index name (was " + oldIndexName + ")", indexName);
+            }
+            for (final Map.Entry<String, String> entry : indexDocs.entrySet()) {
+                out = out.withEditable(INDEX_DOC_KEY + entry.getKey(), "Elastic Index doc for it (beside "
+                                                                      + indexDocOriginals.get(entry.getKey()) + ")",
+                        entry.getValue());
+            }
+            return out;
+        }
+
+        // The names as the user settled them in the form.
+        NewVersion settled(final Consent consent, final ToolCallContext context) {
+            final Map<String, String> docs = new LinkedHashMap<>();
+            documents.forEach((uuid, name) -> docs.put(uuid, consent.edited(context, DOC_KEY + uuid, name)));
+            final Map<String, String> indexes = new LinkedHashMap<>();
+            indexDocs.forEach((uuid, name) -> indexes.put(uuid, consent.edited(context, INDEX_DOC_KEY + uuid,
+                    name)));
+            return new NewVersion(original, consent.edited(context, NEW_NAME_ARG, pipeline), major, docs,
+                    originals, oldIndexName, indexName == null
+                    ? null
+                    : consent.edited(context, INDEX_KEY, indexName), destination, elasticElements, indexes,
+                    indexDocOriginals);
+        }
+
+        // What the form says of it.
+        void addTo(final Map<String, Object> details) {
+            details.put("new version", "the next of " + original + "; for a major change, " + major + " instead "
+                                       + "(edit the names)");
+            if (indexName != null) {
+                details.put("index", "its own, '" + indexName + "' (was '" + oldIndexName + "'), looked up on the "
+                                     + "cluster before anything is copied");
+            }
+        }
+
+        // The names, for the agent to put to the user in the chat.
+        Map<String, Object> toMap() {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("pipeline", pipeline);
+            out.put("major_version_instead", major);
+            final List<Map<String, Object>> docs = new ArrayList<>();
+            documents.forEach((uuid, name) -> docs.add(Map.of("was", originals.get(uuid), "name", name)));
+            out.put("documents", docs);
+            if (indexName != null) {
+                out.put("index_name", indexName);
+                out.put("was_index_name", oldIndexName);
+                final List<Map<String, Object>> indexes = new ArrayList<>();
+                indexDocs.forEach((uuid, name) -> indexes.add(Map.of("beside", indexDocOriginals.get(uuid),
+                        "name", name)));
+                out.put("elastic_index_docs", indexes);
+            }
+            return out;
+        }
     }
 }

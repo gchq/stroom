@@ -595,11 +595,50 @@ class SourceTypeGroups {
                                               final String tool,
                                               final String group,
                                               final String pipeline) {
+        return askChoice(consent, call, context, tool, "Group '" + group + "' runs in pipeline " + pipeline + ", in "
+                                                       + "production. This build changes the group: change that "
+                                                       + "pipeline, or make a new version of it.",
+                "What does the change to group '" + group + "' go to?", pipeline);
+    }
+
+    /// Puts to the user what a build's change to a promoted pipeline (one outside any build, not a source type
+    /// group's) goes to: that pipeline (through a working copy), or a new version of it. The same choice as a
+    /// group's ([#askPipelineChoice]), asked by copy_pipeline once per pipeline and build. Seen in a user's test: a
+    /// promoted feed's pipelines were copied as working copies under the same names, never asked, where the user
+    /// expected a new version.
+    ///
+    /// @param consent  Asks the user.
+    /// @param call     The call asking.
+    /// @param context  The call's context.
+    /// @param tool     The tool asking.
+    /// @param pipeline The promoted pipeline's name.
+    /// @return [#CHANGE] or [#NEW_VERSION]; empty when no form can be shown (the agent then asks in the chat).
+    static Optional<String> askPromotedPipelineChoice(final Consent consent,
+                                                      final ToolCall call,
+                                                      final ToolCallContext context,
+                                                      final String tool,
+                                                      final String pipeline) {
+        return askChoice(consent, call, context, tool, "Pipeline " + pipeline + " is in production. This build "
+                                                       + "changes it: change that pipeline, or make a new version "
+                                                       + "of it.",
+                "What does the change to " + pipeline + " go to?", pipeline);
+    }
+
+    /// @param pipeline The promoted pipeline's name.
+    /// @return The choices, as the user reads them, in the order offered.
+    static List<String> pipelineChoiceTexts(final String pipeline) {
+        return List.copyOf(pipelineChoiceOptions(pipeline).keySet());
+    }
+
+    private static Optional<String> askChoice(final Consent consent,
+                                              final ToolCall call,
+                                              final ToolCallContext context,
+                                              final String tool,
+                                              final String question,
+                                              final String title,
+                                              final String pipeline) {
         final Map<String, String> options = pipelineChoiceOptions(pipeline);
-        return consent.choose(call, context, tool, "Group '" + group + "' runs in pipeline " + pipeline + ", in "
-                                                   + "production. This build changes the group: change that "
-                                                   + "pipeline, or make a new version of it.",
-                        List.copyOf(options.keySet()), "What does the change to group '" + group + "' go to?")
+        return consent.choose(call, context, tool, question, List.copyOf(options.keySet()), title)
                 .map(options::get);
     }
 

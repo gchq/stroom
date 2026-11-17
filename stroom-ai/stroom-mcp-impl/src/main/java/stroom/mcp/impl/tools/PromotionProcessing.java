@@ -51,6 +51,7 @@ class PromotionProcessing {
     private final IndexTemplateAgreements agreements;
     private final IndexingRuns indexingRuns;
     private final PipelineDocs pipelineDocs;
+    private final ProductionIndexes productionIndexes;
     private final LongSupplier clockMs;
 
     /// @param filterWrites     Makes and reads processor filters.
@@ -59,16 +60,18 @@ class PromotionProcessing {
     /// @param agreements       Says where an Elasticsearch indexing pipeline writes.
     /// @param indexingRuns     Says which Lucene index a pipeline writes to, and how its Elasticsearch index is
     ///                         dropped.
-    /// @param pipelineDocs     Reads pipelines.
+    /// @param pipelineDocs      Reads pipelines.
+    /// @param productionIndexes Says what else writes to, or names, a promoted pipeline's Elasticsearch index.
     @Inject
     PromotionProcessing(final ProcessorFilterWrites filterWrites,
                         final StreamProcessing streamProcessing,
                         final PipelineOutputs pipelineOutputs,
                         final IndexTemplateAgreements agreements,
                         final IndexingRuns indexingRuns,
-                        final PipelineDocs pipelineDocs) {
+                        final PipelineDocs pipelineDocs,
+                        final ProductionIndexes productionIndexes) {
         this(filterWrites, streamProcessing, pipelineOutputs, agreements, indexingRuns, pipelineDocs,
-                System::currentTimeMillis);
+                productionIndexes, System::currentTimeMillis);
     }
 
     /// As the injected constructor, with the clock given, for tests.
@@ -78,6 +81,7 @@ class PromotionProcessing {
                         final IndexTemplateAgreements agreements,
                         final IndexingRuns indexingRuns,
                         final PipelineDocs pipelineDocs,
+                        final ProductionIndexes productionIndexes,
                         final LongSupplier clockMs) {
         this.filterWrites = filterWrites;
         this.streamProcessing = streamProcessing;
@@ -85,6 +89,7 @@ class PromotionProcessing {
         this.agreements = agreements;
         this.indexingRuns = indexingRuns;
         this.pipelineDocs = pipelineDocs;
+        this.productionIndexes = productionIndexes;
         this.clockMs = clockMs;
     }
 
@@ -209,6 +214,22 @@ class PromotionProcessing {
     /// @param plan  What [#promotionProcessing] planned.
     /// @return What was made for each entry, in order.
     List<Map<String, Object>> createPromotionFilters(final StroomLinks links, final List<Entry> plan) {
+        return createPromotionFilters(links, plan, Set.of(), Set.of());
+    }
+
+    /// As [#createPromotionFilters(StroomLinks, List)], with what the promotion did, so a production index is never
+    /// put up for dropping: an original a working copy was written back over keeps writing to its live index, and a
+    /// new index is dropped only while nothing but this promotion's documents writes to it or names it.
+    ///
+    /// @param links       How the caller links to Stroom.
+    /// @param plan        What [#promotionProcessing] planned.
+    /// @param promoted    The UUIDs of the documents the promotion moved out of the build.
+    /// @param writtenBack The UUIDs of the originals working copies were written back over.
+    /// @return What was made for each entry, in order.
+    List<Map<String, Object>> createPromotionFilters(final StroomLinks links,
+                                                     final List<Entry> plan,
+                                                     final Set<String> promoted,
+                                                     final Set<String> writtenBack) {
         final List<Map<String, Object>> made = new ArrayList<>();
         for (final Entry entry : plan) {
             final String link = links.documentTarget(entry.pipeline());
@@ -231,7 +252,7 @@ class PromotionProcessing {
             final ProcessorFilter created = filterWrites.createFilter(entry.pipeline(),
                     ProcessorFilterWrites.allOf(children), ProcessorFilterWrites.DEFAULT_PRIORITY,
                     ProcessorFilterWrites.MAX_FEED_FILTER_TASKS, null, false);
-            final BeforeEnabling before = beforePromotedIndexing(links, entry.pipeline());
+            final BeforeEnabling before = beforePromotedIndexing(links, entry.pipeline(), promoted, writtenBack);
             final String selects = entry.feed() != null
                     ? "processes feed " + entry.feed() + " (" + entry.streamType() + "), existing data included"
                     : "processes " + entry.streamType() + " from its source pipeline, existing data included";
@@ -320,11 +341,32 @@ class PromotionProcessing {
     }
 
     // What a promoted indexing pipeline's index needs before its filter is enabled, dropped or emptied so it starts
-    // fresh, and the button for it; nothing for any other pipeline.
-    private BeforeEnabling beforePromotedIndexing(final StroomLinks links, final DocRef pipeline) {
+    // fresh, and the button for it; nothing for any other pipeline. A production index is never put up for dropping
+    // (seen in a user's test: the production index of a promoted feed was dropped at the tools' prompt): an original
+    // a working copy was written back over goes on writing to its live index, and a new version's own index is
+    // dropped only while nothing but this promotion's documents writes to it or names it.
+    private BeforeEnabling beforePromotedIndexing(final StroomLinks links,
+                                                  final DocRef pipeline,
+                                                  final Set<String> promoted,
+                                                  final Set<String> writtenBack) {
+        final boolean live = writtenBack.contains(pipeline.getUuid());
         final Optional<Map<String, Object>> destination = agreements.elasticDestination(pipeline.getUuid());
         if (destination.isPresent()) {
             final String index = String.valueOf(destination.get().get("index name"));
+            if (live) {
+                return new BeforeEnabling("nothing: '" + index + "' is the live index it wrote to before the change, "
+                                          + "kept as it is (never dropped)", null);
+            }
+            final Set<String> ours = new HashSet<>(promoted);
+            ours.add(pipeline.getUuid());
+            final List<ProductionIndexes.Claim> others = productionIndexes.claimsBesides(ours, index);
+            if (!others.isEmpty()) {
+                return new BeforeEnabling("'" + index + "' is not dropped: it is a production index ("
+                                          + String.join("; ", others.stream().map(ProductionIndexes.Claim::said)
+                        .distinct().toList()) + "), never dropped for a promotion. Enabled, this filter indexes "
+                                          + "into it beside what it holds: the user decides whether that is meant",
+                        null);
+            }
             final String request = IndexingRuns.dropRequest(pipelineDocs.read(pipeline.getUuid()), index);
             return new BeforeEnabling("the cluster admin drops '" + index + "' first, so it starts fresh with what "
                                       + "this pipeline indexes, the Events indexed in the build among them: "
@@ -332,6 +374,9 @@ class PromotionProcessing {
                                       + "again as documents arrive",
                     UserActionEntries.esRequest("drop-" + index, request, "Drop '" + index + "' so it starts "
                                                                           + "fresh"));
+        }
+        if (live) {
+            return new BeforeEnabling(null, null);
         }
         final Optional<DocRef> lucene = indexingRuns.luceneIndex(pipeline.getUuid());
         if (lucene.isPresent()) {

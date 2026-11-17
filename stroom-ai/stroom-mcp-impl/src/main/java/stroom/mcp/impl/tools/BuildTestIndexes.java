@@ -30,7 +30,6 @@ import stroom.index.shared.LuceneIndexDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
-import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -43,7 +42,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -60,9 +58,10 @@ import java.util.Set;
 /// is set to it before any processing; verify_index searches it in the production index's place. Promotion leaves the
 /// test index in the workspace (it holds only the sample's documents), writes the working copy's XSLT back (the
 /// working-copy pipeline itself is deleted) and adds the new fields to the production index, and points a promoted
-/// pipeline back at the production index ([#restoreIndex]). An Elasticsearch index outside the build is written to
-/// by its index name on the cluster, which the build can't mirror without the cluster's templates: a working copy
-/// (or new version) of an Elasticsearch indexing pipeline is stepped in the build, not processed.
+/// pipeline back at the production index ([#restoreIndex]). An Elasticsearch index is written to by its index name on
+/// the cluster, which the build can't mirror without the cluster's templates: a build pipeline writing to a
+/// production index name is stepped in the build, not processed ([ProductionIndexes], refused by the processing
+/// tools).
 class BuildTestIndexes {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BuildTestIndexes.class);
@@ -73,9 +72,7 @@ class BuildTestIndexes {
     static final String TEST_INDEX_FOR = "test_index_for";
 
     private static final String LUCENE_FILTER = "IndexingFilter";
-    private static final String ELASTIC_FILTER = "ElasticIndexingFilter";
     private static final String INDEX = "index";
-    private static final String INDEX_NAME = "indexName";
     // The most numbered names tried for a test index in one build.
     private static final int LAST_FREE_NAME = 99;
 
@@ -117,15 +114,12 @@ class BuildTestIndexes {
     /// @param pipeline A pipeline.
     /// @return The test indexes it now writes to; none for a pipeline outside any build, or one that writes only to
     /// the build's own indexes.
-    /// @throws ToolRefusal for a working copy or new version of an Elasticsearch indexing pipeline writing to an
-    ///                     index of a production index doc.
     List<TestIndex> redirect(final DocRef pipeline) {
         final String build = guard.buildOf(new DocRef(PipelineDoc.TYPE, pipeline.getUuid())).orElse(null);
         if (build == null) {
             return List.of();
         }
         final MergedPipeline merged = pipelineShapes.merged(pipeline.getUuid());
-        refuseProductionElastic(build, pipeline, merged);
         final Map<String, String> production = productionIndexes(build, merged);
         if (production.isEmpty()) {
             return List.of();
@@ -341,45 +335,6 @@ class BuildTestIndexes {
 
     private boolean inBuild(final String build, final DocRef ref) {
         return guard.buildOf(ref).filter(build::equals).isPresent();
-    }
-
-    // A working copy or new version of an Elasticsearch indexing pipeline writing to an index a production Elastic
-    // Index doc names: processing would write to the production index on the cluster.
-    private void refuseProductionElastic(final String build, final DocRef pipeline, final MergedPipeline merged) {
-        final Map<String, Object> entry = records.entry(build, pipeline.getUuid());
-        if (entry.get("copy_of") == null && entry.get("version_of") == null) {
-            return;
-        }
-        for (final Map.Entry<String, String> element : merged.elements().entrySet()) {
-            if (!ELASTIC_FILTER.equals(element.getValue())) {
-                continue;
-            }
-            final Object name = merged.properties().get(new ElementProperty(element.getKey(), INDEX_NAME));
-            final Object index = merged.properties().get(new ElementProperty(element.getKey(), INDEX));
-            final String indexUuid = docUuid(index);
-            final boolean production = indexUuid != null
-                    ? !inBuild(build, new DocRef(ElasticIndexDoc.TYPE, indexUuid))
-                    : name != null && !builtIndexName(build, String.valueOf(name));
-            if (production) {
-                throw new ToolRefusal("Pipeline '" + pipeline.getName() + "' is a copy of a production "
-                                      + "Elasticsearch indexing pipeline, and processing it would write the sample's "
-                                      + "documents into the production index" + (name == null
-                        ? ""
-                        : " '" + name + "'") + ", not a test index of the build. Step it clean (step_sample) "
-                                      + "instead: a working copy's indexing step is done once it steps clean, and "
-                                      + "promotion writes its XSLT back. Indexing production Events with it is the "
-                                      + "user's, once promoted. Nothing was processed.");
-            }
-        }
-    }
-
-    // Whether an Elasticsearch index name is one of the build's own Elastic Index docs'.
-    private boolean builtIndexName(final String build, final String indexName) {
-        return guard.folderContents(build).stream()
-                .filter(doc -> ElasticIndexDoc.TYPE.equals(doc.type()))
-                .map(doc -> documentAccess.read(doc.docRef(), ElasticIndexDoc.class))
-                .flatMap(Optional::stream)
-                .anyMatch(doc -> Objects.equals(doc.getIndexName(), indexName));
     }
 
     // The index plan kept with the pipeline's indexing XSLT, if it keeps one.

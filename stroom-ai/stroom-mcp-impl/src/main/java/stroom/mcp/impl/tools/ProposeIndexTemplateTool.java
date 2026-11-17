@@ -97,6 +97,7 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
     private final TemplatePipelines pipelines;
     private final TemplateReviews reviews;
     private final ExistingIndexes existingIndexes;
+    private final ProductionIndexes productionIndexes;
 
     @Inject
     ProposeIndexTemplateTool(final IndexPlans plans,
@@ -105,7 +106,8 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
                              final BuildIndexes buildIndexes,
                              final TemplatePipelines pipelines,
                              final TemplateReviews reviews,
-                             final ExistingIndexes existingIndexes) {
+                             final ExistingIndexes existingIndexes,
+                             final ProductionIndexes productionIndexes) {
         this.plans = plans;
         this.examples = examples;
         this.inputs = inputs;
@@ -113,6 +115,7 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
         this.pipelines = pipelines;
         this.reviews = reviews;
         this.existingIndexes = existingIndexes;
+        this.productionIndexes = productionIndexes;
     }
 
     @Override
@@ -262,8 +265,13 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
         final String index = String.valueOf(destination.get("index name"));
         buildIndexes.requireSameIndex(pipelineUuid, index);
         // An index name already holding documents on the cluster, said now so the user can choose another before
-        // anything is indexed (the first processing run stops until it is dropped or renamed).
-        final Optional<String> existing = ExistingIndexes.warning(existingIndexes.check(destination), destination);
+        // anything is indexed (the first processing run stops until it is dropped or renamed). A production index is
+        // said to be one, never to be dropped (seen in a user's test: told the cluster admin drops it, they deleted
+        // the production index a build's copy of its pipeline wrote to).
+        final Optional<String> production = productionIndexes.productionWarning(pipelineUuid, destination);
+        final Optional<String> existing = production.isPresent()
+                ? production
+                : ExistingIndexes.warning(existingIndexes.check(destination), destination);
         final TemplateTarget target = IndexingHelpers.templateTarget(index);
         final String name = NullSafe.nonBlankStringElse(templateName, target.name());
         final FieldPlan forIndex = plan.withIndexName(target.indexName());

@@ -68,6 +68,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /// `promote_build` - promotes a build out of the workspace once the user has seen where everything goes and approved
 /// it. New documents are moved to their destination folders, working copies written back over their originals after a
@@ -524,8 +525,13 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (guard.removeBuildFolderIfEmpty(build)) {
             done.add("removed the build's workspace folder, now empty");
         }
+        // What was moved and what was written back: a production index is never put up for dropping.
+        final Set<String> moved = plan.stream()
+                .filter(p -> PromotionLayout.MOVE.equals(p.action()))
+                .map(p -> String.valueOf(p.doc().get("uuid")))
+                .collect(Collectors.toSet());
         final List<Map<String, Object>> filters = promotionProcessing.createPromotionFilters(context.links(),
-                processing);
+                processing, moved, Set.copyOf(originals.values()));
         return promoted(context, build, plan, folders, tree, done, warnings, filters, predecessors);
     }
 

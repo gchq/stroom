@@ -116,6 +116,40 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
+    void aPromotedXsltIsNotChangedInPlaceButThroughACopyInABuild() {
+        // A promoted document is production's: its uuid given outside any build, it is refused, pointing at
+        // copy_pipeline (promotion takes the managed tag off, keeping the generated one).
+        world.world.add(XsltDoc.TYPE, "ACME-V1.0-XSLT", world.world.folder("System/Feeds/Acme").uuid, "promoted-x",
+                WriteGuard.GENERATED);
+        world.world.docs.put("promoted-x", XsltDoc.builder().uuid("promoted-x").name("ACME-V1.0-XSLT").version("v0")
+                .data("<xsl:stylesheet/>").build());
+
+        final Map<String, Object> refused = world.call(tool, Map.of("mapping", TranslationWorld.mapping(),
+                "uuid", "promoted-x"));
+
+        assertThat(String.valueOf(refused.get("error"))).contains("was not created by this server")
+                .contains("copy_pipeline");
+        assertThat(world.xslt("promoted-x").getData()).isEqualTo("<xsl:stylesheet/>");
+    }
+
+    @Test
+    void anXsltOutsideEveryBuildIsNotWrittenWhateverItsTags() {
+        // Moved out of its build (or promoted with its tag left on): still production's, changed only through a copy
+        // in a build.
+        world.world.add(XsltDoc.TYPE, "ACME-V1.0-XSLT", world.world.folder("System/Feeds/Acme").uuid, "moved-x",
+                WriteGuard.MANAGED, WriteGuard.GENERATED);
+        world.world.docs.put("moved-x", XsltDoc.builder().uuid("moved-x").name("ACME-V1.0-XSLT").version("v0")
+                .data("<xsl:stylesheet/>").build());
+
+        final Map<String, Object> refused = world.call(tool, Map.of("mapping", TranslationWorld.mapping(),
+                "uuid", "moved-x"));
+
+        assertThat(String.valueOf(refused.get("error"))).contains("is not in a build folder")
+                .contains("copy_pipeline");
+        assertThat(world.xslt("moved-x").getData()).isEqualTo("<xsl:stylesheet/>");
+    }
+
+    @Test
     void aSingleStreamIdIsTakenAsAListOfOne() {
         // Clients send the model's arguments as they are; one sample stream often arrives as a bare number, which
         // failed validation ("invalid input") and left the documentation to be written by hand.

@@ -445,15 +445,14 @@ public class TranslationDocs {
         final XsltDoc doc = readXslt(uuid);
         checked(context, code, null, doc.getData());
         final DocRef ref = new DocRef(XsltDoc.TYPE, uuid, doc.getName());
-        guard.checkManaged(context.session(), ref);
-        final Optional<String> build = guard.buildOf(ref);
-        if (build.isPresent()) {
-            requiredImports.refuseWithout(context.session(), code, build.get(), source.indexPlan() != null
-                    ? "Indexing"
-                    : source.cefPlan() != null
-                            ? "CEF"
-                            : null);
-        }
+        // Only in a build, whatever its tags say: a document outside every build is production's (a promoted one,
+        // or one moved out of its build still tagged as the tools'), changed only through a copy in a build.
+        final String build = guard.checkInBuild(context.session(), ref);
+        requiredImports.refuseWithout(context.session(), code, build, source.indexPlan() != null
+                ? "Indexing"
+                : source.cefPlan() != null
+                        ? "CEF"
+                        : null);
         if (!discardHandEdit) {
             final Optional<Map<String, Object>> gate = handEditGate.check(call, context, doc, code, source.kind(),
                     source.handEditPayload(), choices);
@@ -468,7 +467,7 @@ public class TranslationDocs {
         String description = XsltVersionHistory.adopt(doc.getDescription(), doc.getData());
         final String data = XsltVersionHistory.strip(code);
         final Map<String, Object> extra = new LinkedHashMap<>();
-        description = described(context, build.orElse(null), description, code, source, extra);
+        description = described(context, build, description, code, source, extra);
         description = history.pending(context.session(), description, new XsltVersionHistory.Previous(doc.getData(),
                 doc.getUpdateUser(), doc.getUpdateTimeMs()), NullSafe.nonBlankStringElse(change, "Changed"), data,
                 !source.keeps());
