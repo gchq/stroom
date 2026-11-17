@@ -157,6 +157,28 @@ class TestCopyPipelineTool {
     }
 
     @Test
+    void aNewVersionTheBuildMadeAlreadyUnderTheOriginalsNameIsRefused() {
+        // An aggregated feed's group XSLT made by build_translation_xslt before its new versions were named for
+        // them: run, not copied again, so its name would be the original's in the new version.
+        source();
+        final DocRef made = pipelines.world.inBuild(BUILD, XsltDoc.TYPE, "ACME-V1-XSLT", "x1-version");
+        pipelines.world.docs.put("x1-version", XsltDoc.builder().uuid("x1-version").name("ACME-V1-XSLT")
+                .version("v0").data("<xsl:stylesheet/>").build());
+        pipelines.world.records().update(BUILD, made, entry -> entry.put("version_of", "x1"));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final ToolResult refused = call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": "
+                                        + "\"ACME-V2 - Indexing\"}", user.context());
+
+        assertThat(refused.isError()).isTrue();
+        assertThat(refused.text()).startsWith("A new version of ACME-V1 - Indexing needs names of its own")
+                .contains("'ACME-V1-XSLT' (x1-version)", "have the original's", "Rename each in Stroom",
+                        "Nothing was copied");
+        assertThat(user.shown()).isEmpty();
+        assertThat(pipelines.pipelineNamed("ACME-V2 - Indexing")).isNull();
+    }
+
+    @Test
     void withoutFormsTheAgentIsGivenTheProposedNamesToPutToTheUser() {
         source();
 

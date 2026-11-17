@@ -432,10 +432,16 @@ flowchart TD
   `needs_names`, with the proposed names, for the agent to put to the user. A build opened before keeps its working
   copies of a pipeline's code: promotion refuses them (`PromoteBuildTool.refuseCodeWorkingCopies`), saying to make
   a new version, rather than writing them back. Documentation (pipeline and index docs, evaluation reports) is
-  still updated in place through a working copy, and an aggregated feed's shared modules (`<feed> common`,
-  `<feed> helpers`) keep their working copies for now. Seen in a user's test: a promoted feed's pipelines were
-  copied under the same names (V1.0) as working copies, where the user expected V1.1 and a new index name; an
-  earlier version of this asked change-or-new-version instead.
+  still updated in place through a working copy. An aggregated feed's shared modules (`<feed> common`,
+  `<feed> helpers`) are new-version-only too (the user, later on 2026-11-17): a build changing one makes a new
+  version of it, imported only by the build's group (see [Aggregated feeds](#aggregated-feeds-source-types-and-source-type-groups-built-2026-11-13-pipeline-per-group-built-2026-11-13)),
+  and promotion refuses an older build's working copy of one like any other code working copy. A group's new XSLT
+  made by `build_translation_xslt` is named for its pipeline's new version (`VersionNames.following`, as
+  `copy_pipeline` names what it copies; seen in testing: it had kept the original's name, told apart only by its
+  version folder), and `copy_pipeline` refuses a version the build made earlier under the original's name, saying
+  to rename it. Seen in a user's test: a promoted feed's pipelines were copied under the same names (V1.0) as
+  working copies, where the user expected V1.1 and a new index name; an earlier version of this asked
+  change-or-new-version instead.
 * **The tools propose a new version's names; the user confirms or edits them (2026-11-17).** `VersionNames`, generic,
   never product-specific: a version token is a `v` (either case) and dotted numbers standing apart from the words
   around it. The pipeline's last token goes up by its last part (`V1.0` to `V1.1`, `V1` to `V2`, `-v1.2` to `-v1.3`),
@@ -1659,8 +1665,9 @@ The steps, in order:
   server instructions map what the user wants to a path; for example, a table to look values up in leads to
   reference data. Workflow prompts are not used.
 * **New versions, not working copies.** A production pipeline is changed by a new version made in a build
-  (`copy_pipeline`), promoted beside the old one after review; only Documentation (and, for now, an aggregated
-  feed's shared modules) is changed through a working copy. Promotion records a version in each XSLT's history.
+  (`copy_pipeline`), promoted beside the old one after review, and so is an aggregated feed's common module or
+  helpers (`<feed> common V1.1`); only Documentation is changed through a working copy. Promotion records a version
+  in each XSLT's history.
 * **Builds on data already in Stroom** (`start_build feeds=`) create no feed and upload nothing: `create_feed` is
   refused unless the user names sample files of their own (`user_samples`) or asks for a test feed. Records are
   stepped and processed where they are, with Events written to the build's test feed.
@@ -1696,7 +1703,15 @@ flowchart LR
   working. Promoted documents lose `mcp-managed` and keep `mcp-generated`. Role subfolders are added when more than one
   role is moved.
 * **Working copies** are written back over the original (its data, converter type, documentation and description)
-  after a backup to `<workspace>/backups/`; an unchanged copy is discarded.
+  after a backup to `<workspace>/backups/`; an unchanged copy is discarded. Only Documentation's are, now: a working
+  copy of a pipeline's code or of an aggregated feed's shared module, from a build opened before new versions became
+  the only way (2026-11-17), is refused (`refuseCodeWorkingCopies`), saying what to do instead.
+* **A shared module's new version** (`<feed> common V1.1`, `<feed> helpers V1.1`; 2026-11-17) goes in a version
+  subfolder beside its predecessor, named by its version, as a pipeline's new version does
+  (`PromotionLayout.versionFolders` with the modules `apart`): the build's other documents don't join that folder,
+  as they belong to the group's version, not the module's. Nothing promoted is written: the feed's other groups keep
+  importing the versions they import. (A later part moves every document to `<root>/<feed>/<Role>/V<x.y>`, the
+  modules as roles `Common` and `Helpers`; not built.)
 * **Production changed since the copy** (2026-10-31). `copy_pipeline` records the version each working copy's
   original had when copied (`copy_of_version` in the build record). At promotion, before the layout is built (so the
   reviewed tree shows the choice), each working copy whose original's version has changed (e.g. edited by hand in
@@ -2090,9 +2105,9 @@ place of an element's own code, but the dispatcher imports each group by UUID, a
 document. So the tools step a temporary dispatcher with the draft group inlined in place of its import (the draft's
 own imports hoisted to the top, as XSLT requires imports first).
 
-**Working copies**: a later build changing a promoted group, the common module or the helpers works on copies with
-UUIDs of their own. Stepping in the build resolves imports to the working copies; promotion writes them back over
-the originals and regenerates the dispatcher against the originals' UUIDs.
+**Working copies** (superseded, 2026-11-17): a later build changing a promoted group, the common module or the
+helpers worked on copies with UUIDs of their own, written back over the originals at promotion. Now each is a new
+version: see the shared modules' versions below.
 
 The same shape with or without a wrapper: without one (Azure's audit log), the dispatcher chooses by the record's own
 field (`Workload`) and each group reads the fields its source types have (`event.*` for one workload, others for
@@ -2422,7 +2437,8 @@ Built in rework R1 (where the design was silent):
   and translates a record whose first matching row is one of its own source types; values no row matches are counted
   with the rest in the one passed-over line.
 * A later group's shared call the common module lacks is added to the common module, which is saved again (in place,
-  or through a working copy of a promoted one); a group never imports a shared call itself. Function libraries and
+  or as a new version of a promoted one: see the shared modules' versions below); a group never imports a shared
+  call itself. Function libraries and
   standing-instruction imports stay on the group; `check_xslt` refuses any module reached twice (a diamond), naming
   both paths, besides cycles and depth.
 * Groups no longer share a stylesheet, so groups' modes may meet; only a group whose mode is the common module's is
@@ -2444,6 +2460,31 @@ Built in rework R2 (where the design was silent):
   to that copy, so the chain runs the copies. Promotion's `pipeline_changes` add each group pipeline's missing
   reference data, including the production pipeline of a group changed through a working copy of its XSLT.
 * The index union per output feed reads the group XSLTs of the translated rows sharing that output feed.
+
+Shared modules' versions (built 2026-11-17, decided by the user: a promoted module is never changed in place):
+
+* A build changing a promoted common module or helpers (a group's change moving entries into common, a shared call
+  added to it, the helpers regenerated because the generator writes them otherwise now) makes a new version of it in
+  the build (`SourceTypeGroups.newModuleVersion`, recorded `version_of`), not a working copy. Its name is the
+  module's base name and the next version after the highest the feed knows (the module changed, the registry's
+  newest): a promoted module with no version of its own is V1.0, so its first new version is `<feed> common V1.1`
+  (`VersionNames.nextModule`; a feed's own version token, `ACME-V2`, is part of the base). A later change in the
+  same build changes that version where it is.
+* Only the build's group's new version imports it (imports resolve by UUID, and the group's XSLT is generated
+  importing it); the feed's other groups keep importing the version they import, and nothing promoted is rewritten.
+  Each module versions on its own: a common change makes no helpers version. The chain is by UUID, though, so a
+  helpers' new version makes a new version of the common module importing it (its import changed, code and kept
+  mapping alike), which the group imports.
+* Independence is one way: a helpers version forces a common version (the common module imports the helpers by
+  UUID), while a common change makes no helpers version.
+* What a group imports is read from its XSLT's imports (the build's copy of it where it has one), by the modules'
+  marks: its common module, and the helpers that module imports. A new group takes the registry's (the feed's
+  newest, as the last save named them), else the build's own of the modules' names. A promoted module the build has a
+  new version of is that version. The plan, the save, the kept-mapping checks, the field-mapping docs (by the common
+  module's href) and promotion all read these, never "the" feed's module by name.
+* `build_status` and `review_coverage` (on a group's pipeline) say in one informational line, `module_versions`,
+  when a feed's groups import different versions of its common module or helpers, naming the groups and versions.
+  A group the build changes is read as the build has it, the others as production has them.
 
 Built in rework R3 (where the design was silent):
 
@@ -3526,6 +3567,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-17 | Shared modules new-version-only (the user): a build changing an aggregated feed's promoted common module or helpers makes a new version of it (`<feed> common V1.1`: no token is V1.0; the next after the highest the feed knows), imported only by the build's group; the other groups keep their versions and nothing promoted is rewritten. A helpers' new version brings a common version importing it (the chain is by UUID). What a group imports is read from its XSLT's imports. Promotion places a module's new version in a version folder beside its predecessor that no other document joins, and refuses a module working copy from an older build. `build_status` and `review_coverage` say when groups import different versions (`module_versions`). A group's new XSLT is named for its pipeline's new version; copy_pipeline refuses a build's earlier version under the original's name. | Aggregated feeds; Builds and onboarding |
 | 2026-11-17 | New version only (the user): a promoted pipeline and the code it runs are never changed in place. copy_pipeline always makes a new version (names proposed and confirmed; `needs_names` without forms; `working_copy=true` refused), a source type group's change goes to a new version of its XSLT without asking, and promotion refuses an older build's working copies of a pipeline's code. Documentation keeps its working copies; an aggregated feed's shared modules too, for now. | Builds and onboarding |
 | 2026-11-17 | From a user's test (a promoted feed changed: its pipelines copied under the same names, the user asked to delete the production Elasticsearch index, and did): a production index is decided by its name (written by a pipeline, or named by an Elastic Index doc, outside the build), refused for every build pipeline before any lookup, drop or form, and never named for dropping (`ProductionIndexes`). copy_pipeline of any promoted pipeline asks change in place or new version once per build, proposes a new version's names (`VersionNames`: V1.0 to V1.1, V2.0 offered; index -v1 to -v2, a new Elastic Index doc beside the old), editable, never the original's, and checks the new index name free on the cluster and in Stroom first (even an empty index, or an unknown lookup, refuses), again on its first processing run. | Builds and onboarding; Indexing |
 | 2026-11-17 | Text inside a key's quoted value is that value, not pairs of the text holding it (seen in testing: a mail gateway's syslog, `subject="[EXT] Invoice: due"` and `subject="ref=123 status=paid"`, made its key=value body look unread by the splitter, so the draft read it again for pairs, and the subjects' words were listed by classify_kinds as fields its send events read). The draft's pair reading empties quoted values before looking for keys, except a key whose quoted values hold two or more key=value pairs in most records (auditd's `msg`). No backstop in classify_kinds' Reads: the fix covers both ways in. | Builds and onboarding |

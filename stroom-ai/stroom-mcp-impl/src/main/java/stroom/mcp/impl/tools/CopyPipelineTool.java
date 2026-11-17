@@ -50,6 +50,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -160,9 +161,10 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                              + "converters it owns are copied too and the copy is rewired to them; other documents "
                              + "(shared libraries, indexes, clusters) stay shared; one the build has copied already "
                              + "(an aggregated feed's source type group, copied when the group was saved) is used, "
-                             + "not copied again. A copy of an aggregated feed's source type group imports the "
-                             + "build's working copies of the feed's common module and helpers where it has them, "
-                             + "so stepping in the build runs the build's chain. A new version of a group's "
+                             + "not copied again (refused where it has the original's name: rename it). A copy of "
+                             + "an aggregated feed's source type group imports the build's working copies of the "
+                             + "feed's common module and helpers where an older build has them, so stepping in the "
+                             + "build runs the build's chain. A new version of a group's "
                              + "pipeline: the registry's rows of the group move to it, and to its copy of the "
                              + "group's XSLT. A promoted pipeline (outside any build) is only ever copied as a "
                              + "new version, never changed in place: its names are proposed from the original's "
@@ -232,6 +234,9 @@ class CopyPipelineTool extends AbstractBuiltInTool {
             names.put(entity.getUuid(), name);
         }
         refuseWorkingCopy(call, source, promoted);
+        if (promoted) {
+            refuseCopiesUnderOriginalNames(build, source, owned);
+        }
         final NewVersion version = promoted
                 ? newVersion(build, source, newName, owned, names, changes)
                 : null;
@@ -460,6 +465,30 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                                   + ToolText.list(same) + " are the original's. Give it new ones (" + NEW_NAME_ARG
                                   + ", " + RENAME_ARG + ", " + SET_PROPERTIES_ARG + " for its indexName), e.g. '"
                                   + proposed.pipeline() + "', and call again. Nothing was copied.");
+        }
+    }
+
+    // A document of the pipeline the build has a new version of already under the original's name (a source type
+    // group's XSLT, made by build_translation_xslt before its new versions were named for them): refused, as a new
+    // version under the original's names is. It is run, not copied again, so it isn't renamed here.
+    private void refuseCopiesUnderOriginalNames(final String build,
+                                                final PipelineDoc source,
+                                                final List<DocRef> owned) {
+        final List<String> same = new ArrayList<>();
+        String example = null;
+        for (final DocRef entity : owned) {
+            final Optional<DocRef> copy = alreadyCopied(build, entity)
+                    .filter(found -> Objects.equals(found.getName(), entity.getName()));
+            if (copy.isPresent()) {
+                same.add("'" + copy.get().getName() + "' (" + copy.get().getUuid() + ")");
+                example = Objects.requireNonNullElse(example, VersionNames.next(entity.getName()));
+            }
+        }
+        if (!same.isEmpty()) {
+            throw new ToolRefusal("A new version of " + source.getName() + " needs names of its own, and the build's "
+                                  + "new version(s) " + ToolText.list(same) + " of its documents have the "
+                                  + "original's: they would be taken for the original. Rename each in Stroom (e.g. '"
+                                  + example + "'), then call again. Nothing was copied.");
         }
     }
 

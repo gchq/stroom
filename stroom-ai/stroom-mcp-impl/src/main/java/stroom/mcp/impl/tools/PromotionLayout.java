@@ -81,12 +81,37 @@ class PromotionLayout {
     VersionFolders versionFolders(final List<Map<String, Object>> docs,
                                   final Map<String, String> destinations,
                                   final String group) {
+        return versionFolders(docs, destinations, group, Set.of(), Set.of());
+    }
+
+    /// As [#versionFolders(List, Map, String)], with documents whose version folder is theirs alone, and documents
+    /// placed with their pipeline's version: an aggregated
+    /// feed's shared module's new version (its common module or helpers, decided by the user 2026-11-17: changed only
+    /// by a new version) goes in a version folder beside its predecessor, as a pipeline's new version does, but the
+    /// build's other documents don't join it there (they belong to the group's version, not the module's).
+    ///
+    /// @param docs         The build's documents.
+    /// @param destinations The destinations given, by type or document UUID.
+    /// @param group        The build's source type group's folder name, or null for a build of none.
+    /// A source type group's new XSLT has no version folder of its own: it goes in its pipeline's, whatever its own
+    /// name says (seen in e2e: named `-V2` for the pipeline's next version before the user settled the pipeline's
+    /// `v2`, it went in a `V2` folder apart from its pipeline).
+    ///
+    /// @param apart        The UUIDs of the documents whose version folders the build's others don't join.
+    /// @param following    The UUIDs of the documents placed with their pipeline's version, not by their own names.
+    /// @return Each new version's folder by document UUID, and the version folders by predecessor's folder.
+    VersionFolders versionFolders(final List<Map<String, Object>> docs,
+                                  final Map<String, String> destinations,
+                                  final String group,
+                                  final Set<String> apart,
+                                  final Set<String> following) {
         final Map<String, String> out = new LinkedHashMap<>();
         final Map<String, Set<String>> beside = new LinkedHashMap<>();
         for (final Map<String, Object> doc : docs) {
             final Object versionOf = doc.get("version_of");
             final String uuid = String.valueOf(doc.get("uuid"));
-            if (versionOf == null || destinations.containsKey(uuid) || doc.get("working_copy_of") != null) {
+            if (versionOf == null || destinations.containsKey(uuid) || doc.get("working_copy_of") != null
+                || following.contains(uuid)) {
                 continue;
             }
             final Optional<DocRef> before = places.find(String.valueOf(versionOf));
@@ -113,7 +138,9 @@ class PromotionLayout {
                 continue;
             }
             out.put(uuid, version);
-            beside.computeIfAbsent(folder, ignored -> new LinkedHashSet<>()).add(version);
+            if (!apart.contains(uuid)) {
+                beside.computeIfAbsent(folder, ignored -> new LinkedHashSet<>()).add(version);
+            }
         }
         return new VersionFolders(out, beside);
     }

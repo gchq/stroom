@@ -55,6 +55,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -129,6 +130,8 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
     private final EventStreams eventStreams;
     private final WriteGuard guard;
     private final SourceTypeCoverage sourceTypes;
+    // An aggregated feed's source type groups; none in tests that make the tool themselves.
+    private Provider<SourceTypeGroups> groupsProvider;
 
     @Inject
     ReviewCoverageTool(final DocumentAccess documentAccess,
@@ -151,6 +154,15 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         this.eventStreams = eventStreams;
         this.guard = guard;
         this.sourceTypes = sourceTypes;
+    }
+
+    /// Where an aggregated feed's source type groups are found (set by injection; none in tests that make the tool
+    /// themselves).
+    ///
+    /// @param groups The feed's source type groups.
+    @Inject
+    void setGroups(final Provider<SourceTypeGroups> groups) {
+        this.groupsProvider = groups;
     }
 
     @Override
@@ -446,6 +458,16 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         tellUser(result, groups, affected, affectedList, keptUnknown, more, continued,
                 errors.size(), pipeline);
         judged.ifPresent(told -> sourceTypesSaid(result, told));
+        if (groupsProvider != null && kept.isPresent() && mapping != null && mapping.module() != null
+            && mapping.module().isGroup()) {
+            // Informational: a promoted module changes only by a new version, so a feed's groups may import
+            // different ones.
+            final List<String> versions = groupsProvider.get().mixedModuleVersionsOf(
+                    guard.buildOf(pipeline).orElse(null), kept.get().xslt().getUuid());
+            if (!versions.isEmpty()) {
+                result.put(BuildStatusTool.MODULE_VERSIONS, String.join(" ", versions));
+            }
+        }
         cappedCounts(result, logged.capped());
         if (request.followOn()) {
             followOn(context, request, pipeline, kept, groups, affected, affectedList, anyEvents, more, result);

@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -33,11 +34,17 @@ final class VersionNames {
     /// What an Elasticsearch index name with no version token is given (index names are lower case).
     static final String NO_INDEX_VERSION_SUFFIX = "-v2";
 
+    /// The version a promoted aggregated feed's shared module with no version of its own is taken to be.
+    static final String FIRST_MODULE_VERSION = "V1.0";
+
     // What separates a name's words.
     private static final String SEPARATORS = "-_. ";
     // A version token: v or V, then numbers separated by dots, not inside a word or a longer number.
     private static final Pattern TOKEN = Pattern.compile(
             "(?<![A-Za-z0-9])([vV])(\\d+(?:\\.\\d+)*)(?![A-Za-z0-9]|\\.\\d)");
+
+    // A shared module's version after its base name: a space, then a version token.
+    private static final Pattern MODULE_VERSION = Pattern.compile(" ([vV])(\\d+(?:\\.\\d+)*)");
 
     private VersionNames() {
         // Static methods only.
@@ -103,6 +110,94 @@ final class VersionNames {
             }
         }
         return next(name);
+    }
+
+    /// Whether a name is an aggregated feed's shared module's of that base name: the base itself (its first
+    /// version), or the base and a version token after a space (`ACME common V1.1`). The base may hold version
+    /// tokens of its own (a feed named `ACME-V2`): only what follows it is the module's version.
+    ///
+    /// @param base The module's name with no version, e.g. `ACME common`.
+    /// @param name A name.
+    /// @return True if it is a version of that module's name.
+    static boolean isModuleName(final String base, final String name) {
+        return moduleVersion(base, name).isPresent();
+    }
+
+    /// The name of a new version of an aggregated feed's shared module (its common module or helpers): the base
+    /// name and the highest version of those given with its last part one higher. A name that is the base alone
+    /// is [#FIRST_MODULE_VERSION], so the first new version of `ACME common` is `ACME common V1.1` (decided by the
+    /// user, 2026-11-17: a promoted module changes only by a new version).
+    ///
+    /// @param base  The module's name with no version, e.g. `ACME common`.
+    /// @param names The module's names known (the version changed, the feed's newest): those not the module's
+    ///              are passed over.
+    /// @return The new version's name, e.g. `ACME common V1.2` after `ACME common V1.1`.
+    static String nextModule(final String base, final Collection<String> names) {
+        List<Long> highest = parts(FIRST_MODULE_VERSION.substring(1));
+        String letter = "V";
+        for (final String name : names) {
+            final Optional<Matcher> version = moduleVersion(base, name);
+            if (version.isPresent()) {
+                final List<Long> found = parts(version.get().group(2));
+                if (compare(found, highest) > 0) {
+                    highest = found;
+                    letter = version.get().group(1);
+                }
+            }
+        }
+        final List<String> next = new ArrayList<>();
+        for (int i = 0; i < highest.size(); i++) {
+            next.add(String.valueOf(i == highest.size() - 1
+                    ? highest.get(i) + 1
+                    : highest.get(i)));
+        }
+        return base + " " + letter + String.join(".", next);
+    }
+
+    // The version after a module's base name: the base's own first version (a matcher of the first version), or
+    // the token after it; empty for a name that isn't the module's.
+    private static Optional<Matcher> moduleVersion(final String base, final String name) {
+        if (base == null || name == null) {
+            return Optional.empty();
+        }
+        if (name.equals(base)) {
+            final Matcher first = MODULE_VERSION.matcher(" " + FIRST_MODULE_VERSION);
+            return first.matches()
+                    ? Optional.of(first)
+                    : Optional.empty();
+        }
+        if (!name.startsWith(base)) {
+            return Optional.empty();
+        }
+        final Matcher matcher = MODULE_VERSION.matcher(name.substring(base.length()));
+        return matcher.matches()
+                ? Optional.of(matcher)
+                : Optional.empty();
+    }
+
+    // A version's numbers.
+    private static List<Long> parts(final String numbers) {
+        final List<Long> out = new ArrayList<>();
+        for (final String part : numbers.split("\\.")) {
+            out.add(Long.parseLong(part));
+        }
+        return out;
+    }
+
+    // Versions compared number by number, a missing number as 0.
+    private static int compare(final List<Long> left, final List<Long> right) {
+        for (int i = 0; i < Math.max(left.size(), right.size()); i++) {
+            final long a = i < left.size()
+                    ? left.get(i)
+                    : 0;
+            final long b = i < right.size()
+                    ? right.get(i)
+                    : 0;
+            if (a != b) {
+                return Long.compare(a, b);
+            }
+        }
+        return 0;
     }
 
     // The name with its last version token bumped, or the suffix added when it has none.

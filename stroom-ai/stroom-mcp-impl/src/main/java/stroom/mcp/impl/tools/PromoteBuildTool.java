@@ -159,7 +159,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         this.pendingDocs = pendingDocs;
     }
 
-    /// An aggregated feed's modules, put beside the feed and pointed at the originals of their working copies, and
+    /// An aggregated feed's modules, put beside the feed (pointed at the originals of an older build's unchanged
+    /// working copies, which are discarded), and
     /// the reference data its group pipelines load (set by injection; none in tests that make the tool themselves).
     ///
     /// @param groups     The feed's source type groups.
@@ -240,10 +241,12 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                              + "and common module go beside the feed, with its registry and source notes; a source "
                              + "type group's documents (its XSLT, output feed, pipelines, index, documentation and "
                              + "dashboard) in <feed's folder>/<group>/, under their role subfolders (Events, "
-                             + "Indexing); working copies of modules are written back with every "
-                             + "module importing the originals again (each group importing the common module, "
-                             + "which imports the helpers), and each pipeline running a group's XSLT gains the "
-                             + "reference data the group looks up (a pipeline change, in the approval). What "
+                             + "Indexing); a new version of the common module or helpers goes in a version "
+                             + "subfolder beside its predecessor, and nothing promoted is rewritten (the feed's "
+                             + "other groups keep importing the versions they import); a working copy of a "
+                             + "pipeline's code or of a module is refused. Each pipeline running a group's XSLT "
+                             + "gains the reference data the group looks up (a pipeline change, in the approval). "
+                             + "What "
                              + "build_status says "
                              + "is "
                              + "missing goes in the approval, except documentation the build's own change left "
@@ -306,11 +309,11 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         }
         // An aggregated feed's build's source type group: its documents in a folder of its own beside the feed.
         final Map<String, ModuleChecks.Marker> markers = markers(docs);
-        refuseCodeWorkingCopies(docs, markers);
+        refuseCodeWorkingCopies(docs, sharedModules(markers));
         final GroupPlace group = group(build, docs, markers);
         final PromotionLayout.VersionFolders versions = layout.versionFolders(docs, destinations, group == null
                 ? null
-                : group.name());
+                : group.name(), sharedModules(markers), groupModules(markers));
         final Map<String, String> joins = PromotionLayout.joining(versions.beside());
         // A build on data already in Stroom: its own feeds are test feeds, which stay in the workspace, and its
         // pipelines' filters name the feeds it works from (seen in VS Code: the promoted filter selected the test
@@ -539,27 +542,49 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         return promoted(context, build, plan, folders, tree, done, warnings, filters, predecessors);
     }
 
-    // A working copy of a promoted pipeline, or of the code it runs (its XSLTs, text converters), from a build opened
-    // before new versions became the only way (decided by the user, 2026-11-17: no change in place of a promoted
-    // pipeline or the code it runs): refused, not written back. Documentation is updated in place as before, and an
-    // aggregated feed's shared modules (its common module and helpers) keep their working copies; an unchanged
-    // XSLT or converter copy is only discarded.
-    private void refuseCodeWorkingCopies(final List<Map<String, Object>> docs,
-                                         final Map<String, ModuleChecks.Marker> markers) {
+    // An aggregated feed's shared modules among the build's XSLTs (its common module and helpers, by their marks),
+    // by UUID: a new version of one goes in a version folder of its own.
+    private static Set<String> sharedModules(final Map<String, ModuleChecks.Marker> markers) {
+        final Set<String> out = new LinkedHashSet<>();
+        markers.forEach((uuid, marker) -> {
+            if (ModuleChecks.HELPERS.equals(marker.kind()) || SourceTypeModule.COMMON.equals(marker.kind())) {
+                out.add(uuid);
+            }
+        });
+        return out;
+    }
+
+    // An aggregated feed's source type groups' XSLTs among the build's, by UUID: a new version of one goes with its
+    // pipeline's version.
+    private static Set<String> groupModules(final Map<String, ModuleChecks.Marker> markers) {
+        final Set<String> out = new LinkedHashSet<>();
+        markers.forEach((uuid, marker) -> {
+            if (SourceTypeModule.GROUP.equals(marker.kind())) {
+                out.add(uuid);
+            }
+        });
+        return out;
+    }
+
+    // A working copy of a promoted pipeline, or of the code it runs (its XSLTs, text converters, an aggregated
+    // feed's shared modules), from a build opened before new versions became the only way (decided by the user,
+    // 2026-11-17: no change in place of a promoted pipeline or the code it runs, nor of a feed's common module or
+    // helpers): refused, not written back. Documentation is updated in place as before; an unchanged XSLT or
+    // converter copy is only discarded.
+    private void refuseCodeWorkingCopies(final List<Map<String, Object>> docs, final Set<String> shared) {
         final List<String> refused = new ArrayList<>();
+        boolean modules = false;
         for (final Map<String, Object> doc : docs) {
             final Object copyOf = doc.get("working_copy_of");
             final String type = String.valueOf(doc.get("type"));
             if (copyOf == null || !CODE_TYPES.contains(type)) {
                 continue;
             }
-            final ModuleChecks.Marker marker = markers.get(String.valueOf(doc.get("uuid")));
-            final boolean shared = marker != null && (ModuleChecks.HELPERS.equals(marker.kind())
-                                                      || SourceTypeModule.COMMON.equals(marker.kind()));
-            if (shared || (!PipelineDoc.TYPE.equals(type) && unchangedCopy(doc, String.valueOf(copyOf)))) {
+            if (!PipelineDoc.TYPE.equals(type) && unchangedCopy(doc, String.valueOf(copyOf))) {
                 continue;
             }
             refused.add(type + " '" + doc.get("name") + "'");
+            modules |= shared.contains(String.valueOf(doc.get("uuid")));
         }
         if (!refused.isEmpty()) {
             throw new ToolRefusal("Not promoted: " + String.join(", ", refused) + (refused.size() == 1
@@ -568,8 +593,11 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                   + "version, never written back in place. In this build, make a new version "
                                   + "instead: copy_pipeline of the promoted pipeline (it copies its code under the "
                                   + "new version's names), carry the change over to the new version's XSLT, and "
-                                  + "delete the working copies (in Stroom); then promote_build again. Nothing was "
-                                  + "changed.");
+                                  + "delete the working copies (in Stroom); then promote_build again." + (modules
+                ? " An aggregated feed's common module or helpers changes the same way: delete its working copy, "
+                  + "and build_translation_xslt of the build's group makes the new version of it that the group "
+                  + "imports."
+                : "") + " Nothing was changed.");
         }
     }
 
