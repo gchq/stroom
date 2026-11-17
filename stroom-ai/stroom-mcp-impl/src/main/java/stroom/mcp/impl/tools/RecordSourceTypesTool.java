@@ -413,8 +413,13 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                              + "survey_feed build='" + build + "' feed='" + feed + "' reads them "
                                              + "again for those source types.");
         }
-        result.put("hint", "The registry is written and the build's scope recorded: source type group '"
-                           + scope.get().group() + "', " + groupTypes + ". build_translation_xslt builds "
+        // Seen in chat 181: told only "the scope recorded", with the chosen source types still `parked` until their
+        // group is built, the agent took the user's form answer for a choice made without them, and asked again.
+        result.put("chosen_by", "user");
+        result.put("hint", "The registry is written with the scope the user chose (in the form, or as they said): "
+                           + "source type group '" + scope.get().group() + "', " + groupTypes + ". Don't ask them "
+                           + "again. Its source types stay parked until the group is built. build_translation_xslt "
+                           + "builds "
                            + "it (group and source_types default to these); a build makes one group, so another "
                            + "is a later build's, after this one is promoted. Carry on with the plan (next).");
         offerToFind(result, build, feed, unseen(registry, before, groupTypes));

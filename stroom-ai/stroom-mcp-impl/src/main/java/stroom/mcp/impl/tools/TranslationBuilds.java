@@ -75,6 +75,11 @@ class TranslationBuilds {
     static final String CONFIRMED_CHANGED = "confirmed kinds changed";
     /// What changes_applied_to says when changes went onto the session's draft.
     static final String ON_THE_DRAFT = "the draft draft_translation_mapping made";
+    /// What a review's hint says of the changes given with the call reviewed: the mapping holds them already, so
+    /// giving them again is refused (seen in chat 181: told "the same arguments plus reviewed=", the agent resent its
+    /// removals and was refused, as the mapping no longer had those entries).
+    static final String CHANGES_APPLIED = " but no changes= (the mapping holds them already: given again, they are "
+                                          + "refused)";
 
     private static final Pattern META_CALL = Pattern.compile("stroom:meta\\(\\s*'([^']+)'\\s*\\)");
 
@@ -342,7 +347,10 @@ class TranslationBuilds {
                 ? " and uuid='" + uuid + "'"
                 : NullSafe.isNonBlankString(build) && NullSafe.isNonBlankString(name)
                         ? " and the same build and name"
-                        : ", or the whole mapping") + ".";
+                        : ", or the whole mapping") + ". The mapping keeps the changes of a call its problems "
+               + "refused: an entry a problem names stays until you change it or remove it ({\"path\": <its path>, "
+               + "\"data_name\": <its Data name, if it has one>, \"remove\": true}); giving the right entry beside it "
+               + "doesn't replace it.";
     }
 
     /// @param rule A rule kept as Unknown.

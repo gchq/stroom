@@ -250,6 +250,19 @@ class TestRecordSourceTypesTool {
     }
 
     @Test
+    void theScopeChosenInTheFormIsSaidToBeTheUsersSoTheAgentDoesNotAskAgain() {
+        // Seen in chat 181: the result said only "the scope recorded", and the agent took the user's form answer for
+        // a choice made without them, and asked again.
+        final GroupUser user = new GroupUser(List.of("PegaDB"), "PEGA back end");
+
+        final Map<String, Object> result = called(user.context(), Map.of("group", "PEGA back end"));
+
+        assertThat(result).as("%s", result).containsEntry("chosen_by", "user");
+        assertThat(String.valueOf(result.get("hint"))).contains("the scope the user chose", "Don't ask them again",
+                "stay parked until the group is built");
+    }
+
+    @Test
     void withoutFormsTheScopeTakesTheGroupsNameAndIsRefusedWithoutOne() {
         final Map<String, Object> refused = called(BuildToolCalls.context(), Map.of("scope",
                 List.of("PegaDB", "PegaIntegration")));
