@@ -14978,6 +14978,8 @@ components:
       properties:
         dependencyWarningsEnabled:
           type: boolean
+        edgeAuthentication:
+          type: boolean
         externalIdentityProvider:
           type: boolean
         lastAnnotationChangeTime:
@@ -17223,7 +17225,7 @@ components:
         after:
           type: boolean
           description: "True if the window starts at the time field and runs forward,\
-            \ false if it ends there and runs back"
+            \ false or missing if it ends there and runs back"
         duration:
           type: string
           description: "The length of the window as a StroomQL duration, e.g. 10m"

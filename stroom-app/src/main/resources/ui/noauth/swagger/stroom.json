@@ -20647,6 +20647,9 @@
           "dependencyWarningsEnabled" : {
             "type" : "boolean"
           },
+          "edgeAuthentication" : {
+            "type" : "boolean"
+          },
           "externalIdentityProvider" : {
             "type" : "boolean"
           },
@@ -23637,7 +23640,7 @@
         "properties" : {
           "after" : {
             "type" : "boolean",
-            "description" : "True if the window starts at the time field and runs forward, false if it ends there and runs back"
+            "description" : "True if the window starts at the time field and runs forward, false or missing if it ends there and runs back"
           },
           "duration" : {
             "type" : "string",
