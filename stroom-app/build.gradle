@@ -342,17 +342,22 @@ shadowJar {
 
     // A transformer to merges files in META-INF/services
     mergeServiceFiles()
-    // Without INCLUDE, it drops any duplicates
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
-//    // Keep duplicate service files so mergeServiceFiles() can combine them, but discard all
-//    // other duplicate entries.
-//    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-//    filesMatching('META-INF/services/**') {
-//        duplicatesStrategy = DuplicatesStrategy.INCLUDE
-//    }
-//    filesMatching('META-INF/*.kotlin_module') {
-//        duplicatesStrategy = DuplicatesStrategy.INCLUDE
-//    }
+
+    // Warn about dup classes.
+    // Keep duplicate service files so mergeServiceFiles() can combine them, but discard all
+    // other duplicate entries.
+    filesMatching('**/*.class') {
+        duplicatesStrategy = DuplicatesStrategy.WARN
+    }
+    filesMatching('META-INF/services/**') {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+    filesMatching('META-INF/*.kotlin_module') {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+
+    // Exclude all other dups, which will mostly be text files
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     archiveFileName = fatJarName
     exclude '**/gwt-unitCache'

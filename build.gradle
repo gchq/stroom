@@ -266,8 +266,17 @@ subprojects {
                 }
 
                 dependencySubstitution {
+
+                    // aopalliance-repackaged is basically aopalliance:1.0 with added OSGI headers, which we don't want/use.
+                    // Both deps use the same packages, so this results in duplicates in the fat jar. Thus, just use 1.0
+                    substitute module('org.glassfish.hk2.external:aopalliance-repackaged') using module('aopalliance:aopalliance:1.0')
+
+
+                    // solr pulls in swagger-annotations-jakarta, which uses the same packages as swagger-annotation
+                    // so use the more recent one that we pull in directly
+                    substitute module('io.swagger.core.v3:swagger-annotations-jakarta') using module("io.swagger.core.v3:swagger-annotations:3.0.0")
+
                     //println "Slf4j version = $dropwizardBomSlf4jVersion"
-                    //substitute module('aopalliance:aopalliance') using module("org.glassfish.hk2.external:aopalliance-repackaged:3.0.5")
                     //substitute module('com.fasterxml.jackson.datatype:jackson-datatype-joda') using module("com.fasterxml.jackson.datatype:jackson-datatype-joda:2.13.1")
                     //substitute module("com.fasterxml.jackson.core:jackson-databind") using module('com.fasterxml.jackson.core:jackson-databind:2.10.5.1') withoutClassifier()
                     substitute module('com.google.code.findbugs:jsr305') using module("javax.annotation:javax.annotation-api:1.3.2")
