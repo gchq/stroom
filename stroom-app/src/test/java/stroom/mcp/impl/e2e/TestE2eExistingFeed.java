@@ -19,6 +19,7 @@ package stroom.mcp.impl.e2e;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.Status;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
@@ -42,7 +43,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// location clean), 5 (the feed covered, the survey doc complete), 6 (the broad check of each stream's head), 6b (a
 /// kind left untranslated on purpose), 7 (a ~2.6 MB single-line stream surveyed from its head only), "stepping copied
 /// nothing; generated docs are tagged", 8 (the feed's streams processed where they are, into a test feed the user
-/// names) and 9 (promotion takes the test feed off, and its filter leaves none of the sample out), and survey locations
+/// names), 9 (promotion takes the test feed off, and its filter leaves none of the sample out) and 10 (the tidy-up
+/// at promotion marks the test feed's streams deleted and deletes it, nothing else touched), and survey locations
 /// in a CSV feed with a header and an RFC 5424 syslog feed are the lines they name. The user naming the test feed is
 /// covered; the next free name the tools would give it is not.
 @SuppressWarnings("unchecked")
@@ -221,7 +223,7 @@ class TestE2eExistingFeed extends AbstractE2eTest {
         assertThat(samplesFeed).contains("works from the existing feed", "user_samples=", "test_feed=true");
         // Seen in Ask Stroom AI: an earlier build's test feed held the tools' name for it; the user names it
         // instead.
-        createFeed(SOURCE_BUILD, SOURCE + "-MCP-TEST");
+        final Map<String, Object> othersTestFeed = createFeed(SOURCE_BUILD, SOURCE + "-MCP-TEST");
         final Map<String, Object> named = json("create_feed", args("build", BUILD, "name", TEST_FEED,
                 "test_feed", true));
         assertThat(named).containsEntry("test_feed", true).containsEntry("name", TEST_FEED);
@@ -274,6 +276,26 @@ class TestE2eExistingFeed extends AbstractE2eTest {
             assertThat(filter).containsEntry("feed", SOURCE);
             assertThat(filter.get("except_processed_in_build")).as("none of the sample left out").isNull();
         });
+
+        // 10. Tidied up (decided by the user, 2026-11-17: on by default): the review listed it, the test feed's
+        // streams were marked deleted (as Stroom's Data screen does: retention purges them), then the test feed
+        // deleted. The promoted pipeline, the source feed's streams and another build's test feed are untouched.
+        assertThat(String.valueOf(review.get("layout"))).contains("Tidy-up after promotion", "test feed '"
+                                                                                            + TEST_FEED + "'");
+        assertThat(list(promoted, "tidied_up")).singleElement().satisfies(item -> {
+            assertThat(item).containsEntry("document", "Feed '" + TEST_FEED + "'");
+            assertThat(number(item.get("streams_marked_deleted"))).isEqualTo(events.size());
+            assertThat(item).containsEntry("deleted", true);
+        });
+        assertThat(events).allSatisfy(meta -> assertThat(status(meta.getId())).isEqualTo(Status.DELETED));
+        assertThat(streamsOf(TEST_FEED)).isEmpty();
+        assertThat(exists((String) named.get("uuid"))).as("the test feed doc is gone").isFalse();
+        assertThat(exists(pipelineUuid)).isTrue();
+        assertThat(exists(xsltUuid)).isTrue();
+        assertThat(streamIdsOf(SOURCE)).as("the source feed's streams are untouched").isEqualTo(ids);
+        assertThat(exists((String) othersTestFeed.get("uuid"))).as("another build's test feed is untouched")
+                .isTrue();
+        assertThat(exists(surveyUuid)).as("the survey doc stays in the build").isTrue();
     }
 
     /// The user's stalled session as a test: an existing feed of XML fragments, onboarded by following each result's

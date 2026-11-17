@@ -137,6 +137,47 @@ class TestConsent {
     }
 
     @Test
+    void anApprovalOffersAChoiceTickedToStartThatTheUserCanUntick() {
+        // Decided by the user (2026-11-17): promotion's tidy-up is a choice in its approval, on by default.
+        final Consent.Request approval = Consent.Request.approval("promote_build", "Promote build 'bb'",
+                Map.of("layout", "3 document(s)")).withOption("tidy_up", "Tidy up", true);
+        final Questions ticked = new Questions(new ElicitResult(ElicitResult.Action.ACCEPT, Map.of("value", true)));
+        final ToolCallContext tickedCall = ticked.context();
+        consent.require(CALL, tickedCall, approval);
+
+        final Map<String, Object> properties = asMap(ticked.forms.getFirst().get("properties"));
+        assertThat(properties.keySet()).containsExactly("value", "tidy_up");
+        assertThat(asMap(properties.get("tidy_up"))).containsEntry("type", "boolean")
+                .containsEntry("title", "Tidy up").containsEntry("default", true);
+        assertThat(ticked.forms.getFirst().get("required")).isEqualTo(List.of("value"));
+        assertThat(ElicitationSchema.check(ticked.intros.getFirst(), ticked.forms.getFirst())).isNull();
+        // Left as it started: ticked.
+        assertThat(consent.option(tickedCall, "tidy_up", false)).isTrue();
+
+        final Questions unticked = new Questions(new ElicitResult(ElicitResult.Action.ACCEPT, Map.of("value", true,
+                "tidy_up", false)));
+        final ToolCallContext untickedCall = unticked.context();
+        consent.require(CALL, untickedCall, approval);
+        assertThat(consent.option(untickedCall, "tidy_up", true)).isFalse();
+
+        // A choice is part of what is agreed: the form's id differs from the same approval without it.
+        final Questions plain = new Questions(new ElicitResult(ElicitResult.Action.ACCEPT, Map.of("value", true)));
+        final ToolCallContext plainCall = plain.context();
+        consent.require(CALL, plainCall, Consent.Request.approval("promote_build", "Promote build 'bb'",
+                Map.of("layout", "3 document(s)")));
+        assertThat(plain.callIds.getFirst()).isNotEqualTo(ticked.callIds.getFirst());
+        assertThat(consent.option(plainCall, "tidy_up", true)).isTrue();
+        assertThat(consent.option(plainCall, "tidy_up", false)).isFalse();
+
+        // Declined: nothing agreed, so no choice either.
+        final Questions declined = new Questions(new ElicitResult(ElicitResult.Action.DECLINE, null));
+        final ToolCallContext declinedCall = declined.context();
+        assertThatThrownBy(() -> consent.require(CALL, declinedCall, approval))
+                .hasMessageContaining("did not agree");
+        assertThat(consent.option(declinedCall, "tidy_up", false)).isFalse();
+    }
+
+    @Test
     void aProposedNameCanBeCorrectedInTheForm() {
         final Consent.Request request = Consent.Request.confirmation("create_feed", "Create feed",
                 Map.of("feed name", "FIREWALL-EDGE-V1.0")).withEditable("name", "Feed name",
@@ -324,6 +365,11 @@ class TestConsent {
     }
 
     // Answers every form with the same answer, and keeps what was asked.
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> asMap(final Object value) {
+        return (Map<String, Object>) value;
+    }
+
     private static final class Questions implements UserQuestions {
 
         private final ElicitResult answer;

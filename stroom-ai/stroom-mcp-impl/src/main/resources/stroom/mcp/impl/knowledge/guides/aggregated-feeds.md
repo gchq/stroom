@@ -171,7 +171,7 @@ is held while a clash remains, and refuses a plan naming another group's index n
 
 * Promotion moves the registry (always; the survey doc stays in the build) and source notes beside the feed (in a
   folder of the source's own where the feed's folder holds other sources' folders; the build's test feed is never
-  promoted: don't offer it), the common module and helpers into `<that folder>/Common/<version>` and
+  promoted: don't offer it; it is tidied up after, as the review lists, unless the user unticks it), the common module and helpers into `<that folder>/Common/<version>` and
   `Helpers/<version>`, and the group's own documents into `<that folder>/<group>/`: its output feed there, its
   pipeline, XSLT and documentation in `Events/<version>`, its index, indexing pipeline and dashboard in
   `Indexing/<version>` (the version from the pipeline's name; an Indexing location elsewhere, chosen in the review,

@@ -2735,7 +2735,7 @@ destinations; unlocked by Manage Processors (the promoted pipelines' filters are
 approve) · confirms itself · chat group build · Classes: `PromoteBuildTool`, `PromotionLayout`, `PromotionProcessing`,
 `DocumentPlaces`, `DocumentWrites`, `WriteGuard`, `BuildRecords`, `BuildChecks`, `Consent`, `IndexingRuns`,
 `OutputFeeds`, `XsltHistory`, `DocumentationVersions`, `SurveyDocuments`, `SourceTypeGroups`, `GroupReferences`,
-`FeedIndexDecisions`, `SourceFolders`
+`FeedIndexDecisions`, `SourceFolders`, `PromotionTidyUp`
 
 An aggregated feed's indexes (`FeedIndexDecisions.changes`, `apply`): each indexing plan kept in the build is
 matched to its source type group and output feed (as `draft_index_mapping` recorded them in the build record's
@@ -2803,9 +2803,11 @@ Where each document goes (`plan`):
   just deleted. A copy whose original was changed since it was taken is put to the user first (below).
 * `keep` for a document UUID leaves it in the workspace (seen: a test feed made while fixing had nowhere to go but
   production, and the agent never promoted the fix). A build on existing feeds keeps its feeds there unless given a
-  folder. The build's test feed (named `-MCP-TEST`, or recorded `output_for` the feeds it works from) always stays,
-  whatever the destinations say, and the layout ends saying so (`testFeedNote`): seen in chat 177, the test feed
-  listed under Events and the agent asked the user whether to promote it.
+  folder. The build's test feed (named `-MCP-TEST`, or recorded `output_for` the feeds it works from), its test
+  indexes (`test_index_for`) and the `-VERIFY` dashboards searching only them are never promoted, whatever the
+  destinations say (`PromotionTidyUp.testDocs`): seen in chat 177, the test feed listed under Events and the agent
+  asked the user whether to promote it. The layout ends with the tidy-up (below), or, for a test feed not tidied up,
+  saying it stays in the workspace.
 * Otherwise a destination by document UUID (exactly that folder), else by type. Source notes and reference docs go
   beside the build's only feed; a pipeline's (or index's) documentation, unless given a destination by its own UUID,
   goes wherever that document's step goes (`besideWhatItDocuments`); a verification dashboard goes where the index it
@@ -2890,14 +2892,38 @@ missing folders are created (one made since the review is used, never twinned; t
 `mcp-managed`); each promoted pipeline has its StreamAppender `feed` property removed where it named a build feed
 other than a group's output feed of its own (`OutputFeeds.restoreOutputFeed`: in production its Events go into the
 input's feed); then write-backs, moves (untagged `mcp-managed`, so the agent may no longer change them directly),
-discards and keeps. The build's record entries go, the build folder is removed if empty,
-and `PromotionProcessing.createPromotionFilters` makes a feed-wide filter per promoted pipeline, **disabled**, with no
-minimum creation time.
+discards and keeps. The build's record entries go, the tidy-up is carried out (below), the build folder is removed
+if empty, and `PromotionProcessing.createPromotionFilters` makes a feed-wide filter per promoted pipeline,
+**disabled**, with no minimum creation time.
+
+**Tidy-up** (`PromotionTidyUp`; decided by the user 2026-11-17), on by default. What it will do is read on both calls,
+before anything moves (`plan`), and listed in the review's `tidy_up` and at the end of the layout tree (`Tidy-up after
+promotion (the user can untick it in the approval):`), so the approval, bound to the tree, is bound to it too; the
+approval form refers to it (`tidy-up after promotion: <n> test document(s), as listed in the chat`) and has it as a
+choice, `Tidy up the build's test data after promotion (as listed in the chat)`, ticked to start
+(`Consent.Request.withOption`). Unticked, or `tidy_up=false` (no choice is shown then, and the layout is another to
+review), nothing is tidied. Items, in the order carried out after promotion: (1) each test feed's unlocked streams
+marked deleted (`MetaService.updateStatus` with the feed's Data tab expression, `MetaExpressionUtil.createFeedExpression`,
+as the Data screen's Delete marks them: logical, data retention purges them; the review gives their count and total
+`File Size`), (2) each Lucene test index's shards deleted on every node (`IndexResource.reset`, as the Index Shards
+screen deletes them; the review gives their count), (3) the documents deleted as the user: dashboards, then index
+docs (an Elastic Index doc recorded as a test index is deleted as a doc only, never its index on the cluster), then
+feeds. A failure is kept to its item: its later steps are skipped and it stays (a dashboard stays while an index it
+searches does); the others carry on, and the promotion, already done, never fails. Only what the build provably
+made is tidied: in the build's own workspace folder, tagged `mcp-managed`, left there by the plan, not a feed the build
+works from, used by nothing outside the build (Stroom's dependencies: a pipeline or dashboard naming it; for a feed,
+any pipeline whose processor filter reads it, `ProcessorFilters.pipelinesReading`; without Manage Processors that
+check fails closed). Each test document passed over is listed with why (`Not tidied up, left in the workspace:`). The
+build record forgets what was deleted. Never touched: the promoted documents, production feeds and their streams, a
+feed the build works from, the survey doc and the build record.
 
 * **Arguments**: `build` (required), `destinations` (object, or JSON text: type, role or document UUID → explorer
-  path, in any form `WriteGuard.folderParts` takes, or `keep`), `reviewed` (a `review_id`).
+  path, in any form `WriteGuard.folderParts` takes, or `keep`), `reviewed` (a `review_id`), `tidy_up` (boolean,
+  default true; false keeps the test data).
 * **Returns**: first call `{status: needs_review, build, layout, review_id, warnings?, processing_after_promotion?,
-  role_locations?, follow_on_filters?, pipeline_changes?, index_changes?, hint}`. After approval: `build`, `layout`,
+  role_locations?, follow_on_filters?, pipeline_changes?, index_changes?, tidy_up?, hint}`. After approval: `build`,
+  `tidied_up` (per item: `document`, `streams_marked_deleted` or `shards_deleted`, `deleted`, and `failed` or
+  `skipped` where it was left; or `tidy_up: not done ...` when the user unticked it), `layout`,
   `folders` (each with a link to open it), `updated_in_place`, `promoted` (what was done), `promoted_with_warnings`,
   `processing_filters` (each with `pipeline_link`, and `before_enabling` for an index that must start fresh) with a
   `next` telling the user to review and enable them, `follow_on_filters`, `next_steps` and `user_actions` (buttons:
@@ -3525,8 +3551,8 @@ with its own index (`copy_pipeline`). Seen in a user's test: the build's own Ela
 made the index count as the build's, and the user was asked to drop the production index, and did. `freshIndex` and
 the existing-index lookup refuse it again, so `drop_first` and `delete_first` never name one. A new version's first
 run (`version_of`, no filter yet) looks its own index up again: anything it matches, or a failed lookup, refuses it.
-At promotion the test index stays in the workspace, the pipeline
-is written back pointed at production, and the production index gains the plan's missing fields (said in the
+At promotion the test index isn't promoted (the tidy-up deletes its shards, then it, unless the user unticks it),
+the pipeline is written back pointed at production, and the production index gains the plan's missing fields (said in the
 review's `index_changes`), for any build.
 
 Creates a processor filter on a pipeline in a build (`ProcessorFilterWrites.managedPipeline`), through Stroom's

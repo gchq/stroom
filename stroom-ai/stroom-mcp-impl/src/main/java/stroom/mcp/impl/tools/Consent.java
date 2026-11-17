@@ -100,11 +100,25 @@ public class Consent {
                         final Request request) {
         final CallState state = state(context);
         state.edits.clear();
+        state.options.clear();
         if (!context.userQuestions().canAsk()) {
             audit(context.session(), request.kind().word(), request, "refused: no form can be shown", false);
             throw new ToolRefusal(FormsRequired.cannotAsk(context.session(), call.name(), request.summary()));
         }
-        ask(call, context, request, digest(request.action(), request.details(), request.binding()), state);
+        ask(call, context, request, digest(request.action(), request.details(), request.binding(),
+                request.options()), state);
+    }
+
+    /// @param context  The call's context.
+    /// @param key      A choice's key, as [Request#withOption] gave it.
+    /// @param fallback What it is when the call's approval didn't offer it.
+    /// @return The user's answer to the choice in the call's last approval or confirmation: ticked or not (left
+    /// unanswered, as it started), else the fallback.
+    public boolean option(final ToolCallContext context, final String key, final boolean fallback) {
+        final Boolean answered = state(context).options.get(key);
+        return answered == null
+                ? fallback
+                : answered;
     }
 
     /// The option the user picks in a form. Seen: an agent given the choices asked in the chat, on Gemma and on
@@ -654,6 +668,9 @@ public class Consent {
             throw new ToolRefusal(notAgreed(request.summary(), request.action(), unanswered));
         }
         state.edits.putAll(edits);
+        request.options().forEach((name, option) -> state.options.put(name, content.get(name) == null
+                ? option.ticked()
+                : isTrue(content.get(name))));
         changed.forEach((name, theirs) -> state.changes.put(name,
                 new Change(request.editable().get(name).proposed(), theirs)));
     }
@@ -673,6 +690,13 @@ public class Consent {
                             : "Confirm"));
             field.put("description", request.summary());
             properties.put("value", field);
+            request.options().forEach((name, option) -> {
+                final Map<String, Object> choice = new LinkedHashMap<>();
+                choice.put("type", "boolean");
+                choice.put("title", option.title());
+                choice.put("default", option.ticked());
+                properties.put(name, choice);
+            });
             schema.put("required", List.of("value"));
         } else {
             request.editable().forEach((name, editable) -> {
@@ -716,12 +740,21 @@ public class Consent {
         return "The user did not agree to: " + summary;
     }
 
-    private static String digest(final String action, final Map<String, Object> details, final String binding) {
+    private static String digest(final String action,
+                                 final Map<String, Object> details,
+                                 final String binding,
+                                 final Map<String, Option> options) {
         final List<Object> request = new ArrayList<>();
         request.add(action);
         request.add(NullSafe.map(details));
         if (binding != null) {
             request.add(binding);
+        }
+        if (!NullSafe.isEmptyMap(options)) {
+            // Only a request with a choice: the others' forms keep their ids.
+            final Map<String, Object> offered = new LinkedHashMap<>();
+            options.forEach((name, option) -> offered.put(name, option.title() + "=" + option.ticked()));
+            request.add(offered);
         }
         return XsltCode.sha256(ToolJson.dumpsSortedKeys(request));
     }
@@ -833,6 +866,15 @@ public class Consent {
 
     }
 
+    /// A choice the user makes in an approval or confirmation beside agreeing to it, e.g. whether promotion tidies
+    /// up after itself.
+    ///
+    /// @param title  Its field's title.
+    /// @param ticked True if it starts ticked.
+    public record Option(String title, boolean ticked) {
+
+    }
+
     /// A question asked with [#chooseEach].
     ///
     /// @param text    The question.
@@ -852,13 +894,16 @@ public class Consent {
     ///                  links to open them; not part of what is agreed to.
     /// @param binding   What the answer is bound to beyond the details, not shown in the form (the review id of what
     ///                  the chat showed), or null: a changed one asks again.
+    /// @param options   The choices the user makes in the form beside agreeing (a form with no value to edit), by
+    ///                  key ([Consent#option]).
     public record Request(Kind kind,
                           String action,
                           String summary,
                           Map<String, Object> details,
                           Map<String, Editable> editable,
                           List<DocRef> documents,
-                          String binding) {
+                          String binding,
+                          Map<String, Option> options) {
 
         /// @param kind      A confirmation or an approval.
         /// @param action    The tool.
@@ -867,6 +912,7 @@ public class Consent {
         /// @param editable  The values the user may correct in the form.
         /// @param documents The documents it names, which its form links.
         /// @param binding   What the answer is bound to beyond the details, not shown, or null.
+        /// @param options   The choices made in the form beside agreeing, by key.
         public Request {
             Objects.requireNonNull(kind, "kind");
             Objects.requireNonNull(action, "action");
@@ -874,6 +920,7 @@ public class Consent {
             details = Collections.unmodifiableMap(new LinkedHashMap<>(NullSafe.map(details)));
             editable = Collections.unmodifiableMap(new LinkedHashMap<>(NullSafe.map(editable)));
             documents = List.copyOf(NullSafe.list(documents));
+            options = Collections.unmodifiableMap(new LinkedHashMap<>(NullSafe.map(options)));
         }
 
         /// @param action  The tool.
@@ -883,7 +930,7 @@ public class Consent {
         public static Request confirmation(final String action,
                                            final String summary,
                                            final Map<String, Object> details) {
-            return new Request(Kind.CONFIRMATION, action, summary, details, Map.of(), List.of(), null);
+            return new Request(Kind.CONFIRMATION, action, summary, details, Map.of(), List.of(), null, Map.of());
         }
 
         /// @param action  The tool.
@@ -893,7 +940,7 @@ public class Consent {
         public static Request approval(final String action,
                                        final String summary,
                                        final Map<String, Object> details) {
-            return new Request(Kind.APPROVAL, action, summary, details, Map.of(), List.of(), null);
+            return new Request(Kind.APPROVAL, action, summary, details, Map.of(), List.of(), null, Map.of());
         }
 
         /// @param key      The value's key, e.g. `name`.
@@ -903,7 +950,7 @@ public class Consent {
         public Request withEditable(final String key, final String title, final String proposed) {
             final Map<String, Editable> more = new LinkedHashMap<>(editable);
             more.put(key, new Editable(title, proposed));
-            return new Request(kind, action, summary, details, more, documents, binding);
+            return new Request(kind, action, summary, details, more, documents, binding, options);
         }
 
         /// @param named The documents the request names, by their names in it.
@@ -916,7 +963,7 @@ public class Consent {
                     more.add(docRef);
                 }
             }
-            return new Request(kind, action, summary, details, editable, more, binding);
+            return new Request(kind, action, summary, details, editable, more, binding, options);
         }
 
         /// @param shown What the chat showed the user, which the answer is to agree to (a layout, a template, a
@@ -924,15 +971,26 @@ public class Consent {
         /// @return This request, its answer bound to exactly that, by its review id ([Consent#reviewId]), which the
         /// form doesn't show (asked for by the user: "as shown in the chat: e998d10dadc5" meant nothing to them).
         public Request boundTo(final String shown) {
-            return new Request(kind, action, summary, details, editable, documents, reviewId(shown));
+            return new Request(kind, action, summary, details, editable, documents, reviewId(shown), options);
+        }
+
+        /// @param key    The choice's key, as [Consent#option] reads its answer.
+        /// @param title  Its field's title, e.g. `Tidy up the build's test data`.
+        /// @param ticked True if it starts ticked.
+        /// @return This request, its form offering the choice beside agreeing (only a form with no value to edit).
+        public Request withOption(final String key, final String title, final boolean ticked) {
+            final Map<String, Option> more = new LinkedHashMap<>(options);
+            more.put(key, new Option(title, ticked));
+            return new Request(kind, action, summary, details, editable, documents, binding, more);
         }
     }
 
-    // What a call's forms settled: the value of each editable field, and those the user changed.
+    // What a call's forms settled: the value of each editable field, those the user changed, and each choice made.
     private static final class CallState {
 
         private final Map<String, String> edits = new LinkedHashMap<>();
         private final Map<String, Change> changes = new LinkedHashMap<>();
+        private final Map<String, Boolean> options = new LinkedHashMap<>();
     }
 
 

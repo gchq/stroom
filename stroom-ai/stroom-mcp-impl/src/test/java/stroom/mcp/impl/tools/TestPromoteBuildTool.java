@@ -23,16 +23,30 @@ import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocDependencyService;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.feed.shared.FeedDoc;
+import stroom.index.shared.IndexResource;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.meta.api.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaExpressionUtil;
+import stroom.meta.shared.MetaFields;
+import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.util.shared.ResultPage;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mockito;
 
 import java.time.Instant;
@@ -61,10 +75,23 @@ class TestPromoteBuildTool {
     private final BuildWorld world = docs.world;
     private final PromotionProcessing processing = Mockito.mock(PromotionProcessing.class);
     private final ProcessorFilterWrites filterWrites = Mockito.mock(ProcessorFilterWrites.class);
+    // The tidy-up's view of Stroom: what reads a test feed, its streams, a test index's shards, what uses either.
+    private final ProcessorFilters processorFilters = Mockito.mock(ProcessorFilters.class);
+    private final MetaService metaService = Mockito.mock(MetaService.class);
+    private final IndexResource indexResource = Mockito.mock(IndexResource.class);
+    private final DocDependencyService dependencies = Mockito.mock(DocDependencyService.class);
     private final PromoteBuildTool tool = new PromoteBuildTool(docs.facts, new PromotionLayout(docs.places),
             docs.places, world.guard(), world.records(), docs.translation.consent, processing,
             filterWrites, Mockito.mock(OutputFeeds.class), docs.writes,
-            world.documentAccess, docs.translation.history, docs.pendingDocs);
+            world.documentAccess, docs.translation.history, docs.pendingDocs,
+            new PromotionTidyUp(world.guard(), world.records(), world.documentAccess, () -> processorFilters,
+                    () -> metaService, () -> indexResource, () -> dependencies));
+
+    @BeforeEach
+    void setUp() {
+        // The user may manage processors, as promote_build needs.
+        Mockito.when(processorFilters.canManageProcessors()).thenReturn(true);
+    }
 
     @Test
     void aBuildIsNotPromotedWhileADocItWroteIsPending() {
@@ -299,6 +326,7 @@ class TestPromoteBuildTool {
         module("gx", feed + " M365 Messaging", "group", "M365 Messaging");
         module("cx", feed + " common", "common", null);
         module("hx", feed + " helpers", "helpers", null);
+        world.inBuild(BUILD, FeedDoc.TYPE, feed + OutputFeeds.TEST_FEED, "t");
         final DocRef output = world.inBuild(BUILD, FeedDoc.TYPE, "AZURE-M365-MESSAGING-EVENTS", "of");
         world.records().update(BUILD, output, entry -> entry.put(BuildFeeds.GROUP_OUTPUT, "M365 Messaging"));
         world.inBuild(BUILD, DashboardDoc.TYPE, "Azure M365 Messaging-VERIFY", "dash");
@@ -359,8 +387,9 @@ class TestPromoteBuildTool {
                 + "Pipeline 'Azure M365 Messaging' has no version in its name (e.g. -V1.0-): placed in V1.0.\n"
                 + "Pipeline 'Azure M365 Messaging Indexing' has no version in its name (e.g. -V1.0-): placed in "
                 + "V1.0.\n\n"
-                + "The build's test feed Azure-Audit-V1.0-EVENTS-MCP-TEST stays in the build's workspace: it holds "
-                + "only the sample's Events and is never promoted.");
+                + "Tidy-up after promotion (the user can untick it in the approval):\n"
+                + "- test feed 'Azure-Audit-V1.0-EVENTS-MCP-TEST': its 0 stream(s) (0B) marked deleted, as Stroom's "
+                + "Data screen deletes them (data retention purges them later), then the feed deleted");
         // A role's location elsewhere: <root>/<feed>/<group>/<version>, the shared modules still under the feed.
         final Map<String, Object> elsewhere = new LinkedHashMap<>(destinations);
         elsewhere.put("Indexing", "/Elastic Indices");
@@ -794,6 +823,188 @@ class TestPromoteBuildTool {
     }
 
     @Test
+    void theTidyUpIsListedInTheReviewAndOnByDefaultInTheApproval() {
+        // Decided by the user (2026-11-17): the review lists everything the tidy-up will do; the approval refers to
+        // it and offers it as a choice, ticked to start.
+        final Map<String, Object> destinations = buildWithTestData();
+        final BuildToolCalls.FormUser user = BuildToolCalls.declining();
+
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
+                null)));
+
+        assertThat(shown.get("tidy_up")).isEqualTo(List.of(
+                "test feed 'ACME-MCP-TEST': its 2 stream(s) (3K) marked deleted, as Stroom's Data screen deletes "
+                + "them (data retention purges them later), then the feed deleted",
+                "test index 'ACME-INDEX-MCP-TEST': its 3 shard(s) deleted, then the index doc deleted",
+                "verification dashboard 'ACME-INDEX-MCP-TEST-VERIFY': deleted"));
+        assertThat(String.valueOf(shown.get("layout")))
+                .contains("Left in the workspace: ACME-MCP-TEST (Feed), ACME-INDEX-MCP-TEST (Index), "
+                          + "ACME-INDEX-MCP-TEST-VERIFY (Dashboard), ACME - Survey (Documentation)")
+                .contains("Tidy-up after promotion (the user can untick it in the approval):\n- test feed "
+                          + "'ACME-MCP-TEST': its 2 stream(s)")
+                .doesNotContain("stays in the build's workspace");
+        assertThat(String.valueOf(shown.get("hint"))).contains("Say the tidy_up too");
+
+        assertThat(docs.refusal(tool, user.context(), DocumentationWorld.args(args(destinations,
+                shown.get("review_id"))))).startsWith("The user did not agree to: Promote build");
+        assertThat(user.forms().getLast().get("details")).isEqualTo(Map.of("build", BUILD, "layout",
+                "2 document(s), as shown in the chat", "folders", "System/Feeds/Acme",
+                "tidy-up after promotion", "3 test document(s), as listed in the chat"));
+        final Map<String, Object> fields = asMap(user.schemas().getLast().get("properties"));
+        assertThat(asMap(fields.get(PromotionTidyUp.TIDY_UP))).containsEntry("type", "boolean")
+                .containsEntry("title", PromotionTidyUp.CHOICE_TITLE).containsEntry("default", true);
+        // Declined: nothing tidied.
+        Mockito.verify(metaService, Mockito.never()).updateStatus(any(FindMetaCriteria.class), any(), any());
+        assertThat(world.nodes).containsKeys("t", "ti", "vd");
+    }
+
+    @Test
+    void approvedTheTestDataIsTidiedStreamsThenShardsThenDocumentsAndNothingElseTouched() {
+        final Map<String, Object> destinations = buildWithTestData();
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final Map<String, Object> promoted = promote(user, destinations);
+
+        assertThat(promoted.get("tidied_up")).isEqualTo(List.of(
+                Map.of("document", "Feed 'ACME-MCP-TEST'", "streams_marked_deleted", 2, "deleted", true),
+                Map.of("document", "Index 'ACME-INDEX-MCP-TEST'", "shards_deleted", 3, "deleted", true),
+                Map.of("document", "Dashboard 'ACME-INDEX-MCP-TEST-VERIFY'", "deleted", true)));
+        assertThat(String.valueOf(promoted.get("hint"))).contains("Say what the tidy-up did (tidied_up)");
+        // Streams, then shards, then the documents (a dashboard before the index it searches).
+        final InOrder order = Mockito.inOrder(metaService, indexResource, world.explorerService);
+        order.verify(metaService).updateStatus(any(FindMetaCriteria.class), Mockito.<Status>isNull(),
+                Mockito.eq(Status.DELETED));
+        order.verify(indexResource).reset("ti");
+        order.verify(world.explorerService).delete(Mockito.argThat(nodes -> "vd".equals(nodes.getFirst()
+                .getUuid())));
+        order.verify(world.explorerService).delete(Mockito.argThat(nodes -> "ti".equals(nodes.getFirst()
+                .getUuid())));
+        order.verify(world.explorerService).delete(Mockito.argThat(nodes -> "t".equals(nodes.getFirst()
+                .getUuid())));
+        // Only the test feed's streams, and only marked deleted, as the Data screen marks them.
+        final ArgumentCaptor<FindMetaCriteria> criteria = ArgumentCaptor.forClass(FindMetaCriteria.class);
+        Mockito.verify(metaService).updateStatus(criteria.capture(), Mockito.<Status>isNull(),
+                Mockito.eq(Status.DELETED));
+        assertThat(criteria.getValue().getExpression()).isEqualTo(MetaExpressionUtil.createFeedExpression(
+                new DocRef(FeedDoc.TYPE, "t", "ACME-MCP-TEST")));
+        Mockito.verify(metaService, Mockito.never()).delete(Mockito.anyLong());
+        Mockito.verify(indexResource, Mockito.times(1)).reset(any());
+        assertThat(world.nodes).doesNotContainKeys("t", "ti", "vd");
+        // The promoted documents, production and the survey doc and the build's record stay.
+        assertThat(world.documentAccess.path(new DocRef(PipelineDoc.TYPE, "p"))).isEqualTo("/Feeds/Acme");
+        assertThat(world.nodes).containsKeys("p", "d", "prod-feed", "prod-p", "s");
+        assertThat(world.guard().folderContents(BUILD, true)).extracting(WriteGuard.BuildDoc::uuid)
+                .contains("s").anyMatch(uuid -> !"s".equals(uuid));
+        // The record keeps nothing of what was tidied.
+        assertThat(world.records().entry(BUILD, "ti")).doesNotContainKey(BuildTestIndexes.TEST_INDEX_FOR);
+    }
+
+    @Test
+    void untickedInTheApprovalNothingIsTidied() {
+        final Map<String, Object> destinations = buildWithTestData();
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true, PromotionTidyUp.TIDY_UP,
+                false));
+
+        final Map<String, Object> promoted = promote(user, destinations);
+
+        assertThat(promoted).doesNotContainKey("tidied_up").containsEntry("tidy_up", "not done, as the user chose: "
+                                                                                    + "the build's test data stays "
+                                                                                    + "in the workspace");
+        Mockito.verify(metaService, Mockito.never()).updateStatus(any(FindMetaCriteria.class), any(), any());
+        Mockito.verify(indexResource, Mockito.never()).reset(any());
+        assertThat(world.nodes).containsKeys("t", "ti", "vd");
+        assertThat(world.documentAccess.path(new DocRef(PipelineDoc.TYPE, "p"))).isEqualTo("/Feeds/Acme");
+    }
+
+    @Test
+    void theToolArgumentTurnsTheTidyUpOffAndTheReviewChangesWithIt() {
+        // Without forms the user can't untick it: tidy_up=false keeps the test data, and is another layout to review.
+        final Map<String, Object> destinations = buildWithTestData();
+        final Map<String, Object> on = review(destinations);
+        final Map<String, Object> args = new LinkedHashMap<>(args(destinations, null));
+        args.put(PromotionTidyUp.TIDY_UP, false);
+        final Map<String, Object> off = docs.call(tool, BuildToolCalls.context(), DocumentationWorld.args(args));
+
+        assertThat(off).doesNotContainKey("tidy_up");
+        assertThat(String.valueOf(off.get("layout"))).doesNotContain("Tidy-up")
+                .endsWith("The build's test feed ACME-MCP-TEST stays in the build's workspace: it holds only the "
+                          + "sample's Events and is never promoted.");
+        assertThat(off.get("review_id")).isNotEqualTo(on.get("review_id"));
+        assertThat(tool.definition().toString()).contains(PromotionTidyUp.TIDY_UP);
+
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+        args.put("reviewed", off.get("review_id"));
+        final Map<String, Object> promoted = docs.call(tool, user.context(), DocumentationWorld.args(args));
+
+        assertThat(promoted).doesNotContainKeys("tidied_up", "tidy_up");
+        assertThat(asMap(user.schemas().getLast().get("properties"))).doesNotContainKey(PromotionTidyUp.TIDY_UP);
+        Mockito.verify(metaService, Mockito.never()).updateStatus(any(FindMetaCriteria.class), any(), any());
+        assertThat(world.nodes).containsKeys("t", "ti", "vd");
+    }
+
+    @Test
+    void theApprovalIsBoundToTheTidyUpReviewed() {
+        // A test feed with more streams since the review: the approval's layout isn't the one reviewed.
+        final Map<String, Object> destinations = buildWithTestData();
+        final Map<String, Object> shown = review(destinations);
+        Mockito.when(metaService.findRows(any())).thenReturn(new ResultPage<>(List.of(row(1, "1024"), row(2, "2048"),
+                row(3, "10"))));
+
+        final Map<String, Object> again = call(destinations, shown.get("review_id"));
+
+        assertThat(again).containsEntry("status", "needs_review");
+        assertThat(again.get("review_id")).isNotEqualTo(shown.get("review_id"));
+        assertThat(String.valueOf(again.get("layout"))).contains("its 3 stream(s)");
+    }
+
+    @Test
+    void aFailedItemIsSaidAndKeptWhileTheOthersAreTidiedAndThePromotionStands() {
+        final Map<String, Object> destinations = buildWithTestData();
+        Mockito.when(metaService.updateStatus(any(FindMetaCriteria.class), Mockito.<Status>isNull(),
+                        Mockito.eq(Status.DELETED)))
+                .thenThrow(new RuntimeException("You do not have permission to delete data"));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final Map<String, Object> promoted = promote(user, destinations);
+
+        assertThat(promoted.get("tidied_up")).asList().first().isEqualTo(Map.of("document", "Feed 'ACME-MCP-TEST'",
+                "deleted", false, "failed", "marking its streams deleted: You do not have permission to delete data "
+                                            + "(its later steps were skipped; it is left in the workspace)"));
+        assertThat(world.nodes).containsKey("t").doesNotContainKeys("ti", "vd");
+        assertThat(world.documentAccess.path(new DocRef(PipelineDoc.TYPE, "p"))).isEqualTo("/Feeds/Acme");
+    }
+
+    @Test
+    void aTestFeedAProductionPipelineReadsOrOneOutsideTheBuildIsNeverTidied() {
+        // A feed a pipeline outside the build reads, or one not in the build's workspace, is never a test feed.
+        final Map<String, Object> destinations = buildWithTestData();
+        Mockito.when(processorFilters.pipelinesReading("ACME-MCP-TEST")).thenReturn(List.of(Map.of("uuid",
+                "prod-p", "name", "ACME-Prod", "reads_events", true)));
+        world.add(FeedDoc.TYPE, "OTHER-MCP-TEST", world.folder("System/Feeds/Acme").uuid, "o");
+        listed(doc(FeedDoc.TYPE, "o", "OTHER-MCP-TEST", null));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
+                null)));
+
+        assertThat(String.valueOf(shown.get("layout"))).contains("Not tidied up, left in the workspace:\n"
+                + "- test feed 'ACME-MCP-TEST': used outside the build, by pipeline 'ACME-Prod' (its processor "
+                + "filter reads it)\n"
+                + "- test feed 'OTHER-MCP-TEST': it isn't in the build's workspace")
+                .endsWith("The build's test feed ACME-MCP-TEST, OTHER-MCP-TEST stays in the build's workspace: it "
+                          + "holds only the sample's Events and is never promoted.");
+        assertThat(shown.get("tidy_up")).asList().hasSize(2).noneMatch(line -> String.valueOf(line)
+                .contains("test feed"));
+
+        final Map<String, Object> promoted = docs.call(tool, user.context(), DocumentationWorld.args(args(
+                destinations, shown.get("review_id"))));
+
+        Mockito.verify(metaService, Mockito.never()).updateStatus(any(FindMetaCriteria.class), any(), any());
+        assertThat(promoted.get("tidied_up")).asList().hasSize(2);
+        assertThat(world.nodes).containsKeys("t", "o", "prod-feed", "prod-p").doesNotContainKeys("ti", "vd");
+    }
+
+    @Test
     void aWorkingCopyOfAFeedsCommonModuleIsRefusedAtPromotion() {
         // Decided by the user (2026-11-17): an aggregated feed's shared modules change only by a new version too. A
         // build opened before keeps its working copy of one: not written back, refused saying what to do.
@@ -989,6 +1200,66 @@ class TestPromoteBuildTool {
         assertThat(tool.definition().description()).startsWith("Onboarding step 18 of 18 (promoted): ");
     }
 
+    // A build with test data, and the destinations to promote it with: its test feed (2 streams, 3 KiB), its Lucene
+    // test index (3 shards) standing in for a production index, the -VERIFY dashboard on it, a pipeline and its
+    // documentation to promote, its survey doc, and a production feed and pipeline beside where it goes.
+    private Map<String, Object> buildWithTestData() {
+        exists("System/Feeds/Acme");
+        final String production = world.folder("System/Feeds/Acme").uuid;
+        world.add(FeedDoc.TYPE, "ACME", production, "prod-feed");
+        world.add(PipelineDoc.TYPE, "ACME-Prod", production, "prod-p");
+        world.inBuild(BUILD, FeedDoc.TYPE, "ACME" + OutputFeeds.TEST_FEED, "t");
+        final DocRef index = world.inBuild(BUILD, LuceneIndexDoc.TYPE, "ACME-INDEX" + BuildTestIndexes.TEST_INDEX,
+                "ti");
+        world.records().update(BUILD, index, entry -> entry.put(BuildTestIndexes.TEST_INDEX_FOR, "prod-ix"));
+        world.inBuild(BUILD, DashboardDoc.TYPE, "ACME-INDEX-MCP-TEST-VERIFY", "vd");
+        world.docs.put("vd", DashboardDoc.builder().uuid("vd").name("ACME-INDEX-MCP-TEST-VERIFY").version("v0")
+                .dashboardConfig(DashboardConfig.builder().components(List.of(ComponentConfig.builder()
+                        .type("query").id("query").name("Query")
+                        .settings(QueryComponentSettings.builder()
+                                .dataSource(new DocRef(LuceneIndexDoc.TYPE, "ti")).build())
+                        .build())).build())
+                .build());
+        world.inBuild(BUILD, DocumentationDoc.TYPE, "ACME - Survey", "s");
+        world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
+        world.inBuild(BUILD, DocumentationDoc.TYPE, "ACME-Events", "d");
+        world.docs.put("d", ((DocumentationDoc) world.docs.get("d")).copy()
+                .data(DocumentationVersions.withPending("# ACME-Events\n\nDoors.", "", "Created", "jane (agent)",
+                        "", Instant.parse("2026-10-20T00:00:00Z"))).build());
+        listed(doc(FeedDoc.TYPE, "t", "ACME" + OutputFeeds.TEST_FEED, null),
+                doc(LuceneIndexDoc.TYPE, "ti", "ACME-INDEX" + BuildTestIndexes.TEST_INDEX, null),
+                doc(DashboardDoc.TYPE, "vd", "ACME-INDEX-MCP-TEST-VERIFY", null),
+                doc(DocumentationDoc.TYPE, "s", "ACME - Survey", null),
+                doc(PipelineDoc.TYPE, "p", "ACME-Events", null),
+                doc(DocumentationDoc.TYPE, "d", "ACME-Events", null));
+        final BuildTestIndexes testIndexes = Mockito.mock(BuildTestIndexes.class);
+        Mockito.when(testIndexes.testIndexes(BUILD)).thenReturn(Map.of("ti", "prod-ix"));
+        tool.setTestIndexes(() -> testIndexes);
+        Mockito.when(metaService.findRows(any())).thenReturn(new ResultPage<>(List.of(row(1, "1024"),
+                row(2, "2048"))));
+        Mockito.when(metaService.updateStatus(any(FindMetaCriteria.class), Mockito.<Status>isNull(),
+                Mockito.eq(Status.DELETED))).thenReturn(2);
+        Mockito.when(indexResource.find(any())).thenReturn(new ResultPage<>(List.of(shard(1), shard(2), shard(3))));
+        Mockito.when(indexResource.reset("ti")).thenReturn(3L);
+        return Map.of("Pipeline", "/Feeds/Acme");
+    }
+
+    // Reviewed, then approved in the user's form: the promotion's result.
+    private Map<String, Object> promote(final BuildToolCalls.FormUser user, final Map<String, Object> destinations) {
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
+                null)));
+        return docs.call(tool, user.context(), DocumentationWorld.args(args(destinations, shown.get("review_id"))));
+    }
+
+    // A stream of the size given (its File Size attribute).
+    private static MetaRow row(final long id, final String size) {
+        return new MetaRow(Meta.builder().id(id).build(), null, Map.of(MetaFields.FILE_SIZE.getFldName(), size));
+    }
+
+    private static IndexShard shard(final long id) {
+        return IndexShard.builder().id(id).indexUuid("ti").status(IndexShard.IndexShardStatus.CLOSED).build();
+    }
+
     private Map<String, Object> review(final Map<String, Object> destinations) {
         final Map<String, Object> args = new LinkedHashMap<>();
         args.put("build", BUILD);
@@ -1066,6 +1337,11 @@ class TestPromoteBuildTool {
     @SafeVarargs
     private void listed(final Map<String, Object>... listedDocs) {
         docs.facts.docs.addAll(List.of(listedDocs));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> asMap(final Object value) {
+        return (Map<String, Object>) value;
     }
 
     private static Map<String, Object> doc(final String type, final String uuid, final String name, final String role) {

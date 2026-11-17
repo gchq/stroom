@@ -389,7 +389,7 @@ class TestE2eDiscovery extends AbstractE2eTest {
         final Map<String, Object> body = map(agreedTemplate, "template");
         assertThat(agreedTemplate).containsEntry("agreed", true);
         assertThat(body).as("the new index's pattern, the sibling's priority, no component templates")
-                .containsEntry("index_patterns", List.of(index + "*"))
+                .containsEntry("index_patterns", List.of(index))
                 .containsEntry("priority", 150L)
                 .doesNotContainKey("composed_of");
         assertThat(map(map(map(body, "template"), "settings"), "index")).containsEntry("refresh_interval", "5s");

@@ -219,8 +219,9 @@ class TestCreateFeedTool {
             assertThat(feeds.feed(feed.getUuid()).getEncoding()).isEqualTo("UTF-16LE");
             assertThat(feeds.feed(feed.getUuid()).getDescription()).isEqualTo("Build 'bb': the Events its pipelines "
                                                                               + "make from VPN-GATEWAY's streams. "
-                                                                              + "Nothing is uploaded to it; it stays "
-                                                                              + "in the workspace at promotion.");
+                                                                              + "Nothing is uploaded to it; it is "
+                                                                              + "never promoted, and is tidied up at "
+                                                                              + "promotion unless the user keeps it.");
             assertThat(feeds.world.records().entry("bb", feed.getUuid()).get(BuildFeeds.OUTPUT_FOR))
                     .isEqualTo(List.of("VPN-GATEWAY"));
         }

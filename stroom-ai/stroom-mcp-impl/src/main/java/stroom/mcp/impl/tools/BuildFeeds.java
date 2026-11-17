@@ -190,7 +190,8 @@ class BuildFeeds {
                 .streamType(NullSafe.nonBlankStringElse(NullSafe.get(settings, FeedDoc::getStreamType),
                         "Raw Events"))
                 .description("Build '" + build + "': the Events its pipelines make from " + String.join(", ", sources)
-                             + "'s streams. Nothing is uploaded to it; it stays in the workspace at promotion.")
+                             + "'s streams. Nothing is uploaded to it; it is never promoted, and is tidied up at "
+                             + "promotion unless the user keeps it.")
                 .build());
         records.update(build, new DocRef(FeedDoc.TYPE, found.getUuid(), found.getName()),
                 entry -> entry.put(OUTPUT_FOR, List.copyOf(sources)));
