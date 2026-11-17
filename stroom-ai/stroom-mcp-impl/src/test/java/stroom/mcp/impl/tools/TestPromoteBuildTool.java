@@ -28,17 +28,21 @@ import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.processor.shared.ProcessorFilter;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 
 /// promote_build: the layout, the documents moved, the versions consolidated, and what `TestE2ePlanWalk` and
 /// `TestE2eSourceDocs` (stroom-app) expect of it.
@@ -56,9 +60,10 @@ class TestPromoteBuildTool {
     private final DocumentationWorld docs = new DocumentationWorld();
     private final BuildWorld world = docs.world;
     private final PromotionProcessing processing = Mockito.mock(PromotionProcessing.class);
+    private final ProcessorFilterWrites filterWrites = Mockito.mock(ProcessorFilterWrites.class);
     private final PromoteBuildTool tool = new PromoteBuildTool(docs.facts, new PromotionLayout(docs.places),
             docs.places, world.guard(), world.records(), docs.translation.consent, processing,
-            Mockito.mock(ProcessorFilterWrites.class), Mockito.mock(OutputFeeds.class), docs.writes,
+            filterWrites, Mockito.mock(OutputFeeds.class), docs.writes,
             world.documentAccess, docs.translation.history, docs.pendingDocs);
 
     @Test
@@ -72,35 +77,139 @@ class TestPromoteBuildTool {
     }
 
     @Test
-    void roleSubfoldersAreKeptUnderEachDestinationUnlessTheUserSaysNot() {
-        // Asked for by the user: the build's Events and Indexing subfolders in production too, as they confirm.
+    void eachRolesDocumentsGoInTheirRoleThenVersionFolderUnderTheFeed() {
+        // Decided by the user (2026-11-17): <root>/<feed>/<Role>/<version>, role folders always, the version from
+        // the pipeline's name.
         exists("System/Feeds/Acme/Events", "System/Feeds/Acme/Indexing", "System/Elastic Indices/Acme");
-        listed(doc(FeedDoc.TYPE, "f", "ACME", null), doc(PipelineDoc.TYPE, "ev", "ACME-Events", "Events"),
-                doc(XsltDoc.TYPE, "x", "ACME-Events", "Events"), doc(PipelineDoc.TYPE, "ix", "ACME-Indexing",
-                        "Indexing"));
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), doc(PipelineDoc.TYPE, "ev", "ACME-V1.0-Events", "Events"),
+                doc(XsltDoc.TYPE, "x", "ACME-V1.0-Events", "Events"), doc(PipelineDoc.TYPE, "ix",
+                        "ACME-V1.0-Indexing", "Indexing"));
         final Map<String, Object> destinations = Map.of("Feed", "System/Feeds/Acme", "Pipeline", "System/Feeds/Acme",
                 "XSLT", "System/Feeds/Acme");
 
-        final Map<String, Object> shown = review(destinations, null);
+        final Map<String, Object> shown = review(destinations);
 
         assertThat(shown.get("layout")).isEqualTo("System/Feeds/Acme/\n"
                                                   + "├── ACME  (Feed)\n"
                                                   + "├── Events/\n"
-                                                  + "│   ├── ACME-Events  (Pipeline)\n"
-                                                  + "│   └── ACME-Events  (XSLT)\n"
+                                                  + "│   └── V1.0/  (new)\n"
+                                                  + "│       ├── ACME-V1.0-Events  (Pipeline)\n"
+                                                  + "│       └── ACME-V1.0-Events  (XSLT)\n"
                                                   + "└── Indexing/\n"
-                                                  + "    └── ACME-Indexing  (Pipeline)");
-        assertThat(String.valueOf(shown.get("hint"))).contains("whether to keep the build's role subfolders")
-                .contains("role_subfolders");
-
-        final Map<String, Object> flat = review(destinations, false);
-        assertThat(String.valueOf(flat.get("layout"))).doesNotContain("Events/").doesNotContain("Indexing/");
+                                                  + "    └── V1.0/  (new)\n"
+                                                  + "        └── ACME-V1.0-Indexing  (Pipeline)\n\n"
+                                                  + "Where each role goes (destinations keyed by the role change "
+                                                  + "it):\n"
+                                                  + "- Events: System/Feeds (proposed: the feed's own location)\n"
+                                                  + "- Indexing: System/Feeds (proposed: the feed's own location)");
+        // Without forms, the agent asks in the chat: each role's options, the proposal first.
+        assertThat(shown.get("role_locations")).asList().hasSize(2).first().isEqualTo(Map.of("role", "Events",
+                "location", "System/Feeds", "why", "proposed: the feed's own location", "options",
+                List.of("System/Feeds")));
+        assertThat(String.valueOf(shown.get("hint"))).contains("where each role's documents go")
+                .contains("destinations keyed by the role");
+        assertThat(tool.definition().toString()).doesNotContain("role_subfolders");
 
         // A folder given for one document is where it goes, as given.
         final Map<String, Object> given = new LinkedHashMap<>(destinations);
         given.put("ix", "System/Elastic Indices/Acme");
-        assertThat(String.valueOf(review(given, null).get("layout")))
-                .contains("Elastic Indices/\n    └── Acme/\n        └── ACME-Indexing  (Pipeline)");
+        assertThat(String.valueOf(review(given).get("layout")))
+                .contains("Elastic Indices/\n    └── Acme/\n        └── ACME-V1.0-Indexing  (Pipeline)");
+    }
+
+    @Test
+    void aRolesLocationElsewhereHasNoRoleFolderAndIsCoveredByTheReview() {
+        // Decided by the user (2026-11-17): a role whose root isn't the feed's has no role folder,
+        // <root>/<feed>/<version>; the layout the approval is bound to says each role's location.
+        exists("System/Feeds/Acme", "System/Elastic Indices");
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), doc(PipelineDoc.TYPE, "ev", "ACME-V1.0-Events", "Events"),
+                doc(PipelineDoc.TYPE, "ix", "ACME-V1.0-Indexing", "Indexing"),
+                doc(ElasticIndexDoc.TYPE, "ei", "ACME-V1.0-Index", "Indexing"));
+        final Map<String, Object> destinations = new LinkedHashMap<>(Map.of("Feed", "/Feeds/Acme"));
+
+        final Map<String, Object> feedsOwn = review(destinations);
+        destinations.put("indexing", "/Elastic Indices");
+        final Map<String, Object> elsewhere = review(destinations);
+
+        assertThat(String.valueOf(elsewhere.get("layout")))
+                .contains("Elastic Indices/\n    └── Acme/  (new)\n        └── V1.0/  (new)\n"
+                          + "            ├── ACME-V1.0-Index  (ElasticIndex)\n"
+                          + "            └── ACME-V1.0-Indexing  (Pipeline)")
+                .contains("Feeds/\n│   └── Acme/\n│       ├── ACME  (Feed)\n│       └── Events/  (new)\n")
+                .contains("- Indexing: System/Elastic Indices (as given)")
+                .doesNotContain("Acme/Indexing");
+        assertThat(elsewhere.get("review_id")).isNotEqualTo(feedsOwn.get("review_id"));
+    }
+
+    @Test
+    void eachRolesLocationIsAskedInOneFormWithTheProposalFirstAndKeptForTheApproval() {
+        // Decided by the user (2026-11-17): per role, (1) where the sibling feeds' pipelines of that role are,
+        // pre-selected, (2) the feed's own location where it differs, (3) a folder the user types.
+        siblingWithIndexingElsewhere();
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), doc(PipelineDoc.TYPE, "ev", "ACME-V1.0-Events", "Events"),
+                doc(PipelineDoc.TYPE, "ix", "ACME-V1.0-Indexing", "Indexing"));
+        final Map<String, Object> destinations = Map.of("Feed", "/Feeds/Acme");
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("a1", "", "a2", "/Custom Indices"));
+
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
+                null)));
+
+        assertThat(user.forms()).hasSize(1);
+        assertThat(String.valueOf(user.forms().getFirst())).contains("Events: System/Feeds",
+                "Indexing: System/Elastic Indices, where the sibling feeds' Indexing pipelines are");
+        assertThat(String.valueOf(shown.get("layout")))
+                .contains("Custom Indices/  (new)\n    └── Acme/  (new)\n        └── V1.0/  (new)\n"
+                          + "            └── ACME-V1.0-Indexing  (Pipeline)")
+                .contains("- Events: System/Feeds (as the user chose)")
+                .contains("- Indexing: System/Custom Indices (as the user chose)");
+        // Kept: the approval's call lays out what was reviewed, and asks no more.
+        final BuildToolCalls.FormUser later = BuildToolCalls.declining();
+        assertThat(docs.refusal(tool, later.context(), DocumentationWorld.args(args(destinations,
+                shown.get("review_id"))))).startsWith("The user did not agree to: Promote build");
+        assertThat(later.forms()).hasSize(1);
+        assertThat(String.valueOf(later.forms().getFirst())).contains("Indexing: System/Custom Indices");
+    }
+
+    @Test
+    void withoutFormsTheSiblingsLocationIsProposedAndTheFeedsOwnOffered() {
+        siblingWithIndexingElsewhere();
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), doc(PipelineDoc.TYPE, "ix", "ACME-V1.0-Indexing", "Indexing"));
+
+        final Map<String, Object> shown = review(Map.of("Feed", "/Feeds/Acme"));
+
+        assertThat(shown.get("role_locations")).isEqualTo(List.of(Map.of("role", "Indexing", "location",
+                "System/Elastic Indices", "why", "proposed: where the sibling feeds' Indexing pipelines are",
+                "options", List.of("System/Elastic Indices", "System/Feeds"))));
+        assertThat(String.valueOf(shown.get("layout"))).contains("└── Elastic Indices/\n    └── Acme/  (new)\n"
+                                                                 + "        └── V1.0/  (new)\n"
+                                                                 + "            └── ACME-V1.0-Indexing  (Pipeline)");
+    }
+
+    @Test
+    void aPipelineWithNoVersionInItsNameGoesInV10WithAWarning() {
+        exists("System/Feeds/Acme");
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), doc(PipelineDoc.TYPE, "ev", "ACME-Events", "Events"));
+
+        assertThat(String.valueOf(review(Map.of("Feed", "/Feeds/Acme")).get("layout")))
+                .contains("Events/  (new)\n    └── V1.0/  (new)\n        └── ACME-Events  (Pipeline)")
+                .contains("Pipeline 'ACME-Events' has no version in its name (e.g. -V1.0-): placed in V1.0.");
+    }
+
+    @Test
+    void aCefPipelineAndAReferenceLoaderGoInTheirRolesFolders() {
+        // A CEF flattener (Events in, CEF to Kafka) is classed forwarding, filed under CEF; a loader under Reference.
+        exists("System/Feeds/Acme");
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), doc(PipelineDoc.TYPE, "cef", "ACME-V1.0-CEF", null),
+                doc(XsltDoc.TYPE, "cx", "ACME-V1.0-CEF", "CEF"), doc(PipelineDoc.TYPE, "ref",
+                        "ACME-V1.0-Reference", null));
+        docs.facts.stages.put("cef", PipelineShapes.classify(Map.of("kafka", "StandardKafkaProducer", "xslt",
+                "XSLTFilter", "parser", "XMLParser"), Map.of(), Map.of(), () -> false).stage());
+        docs.facts.stages.put("ref", "loader");
+
+        assertThat(String.valueOf(review(Map.of("Feed", "/Feeds/Acme")).get("layout")))
+                .contains("├── CEF/  (new)\n│   └── V1.0/  (new)\n│       ├── ACME-V1.0-CEF  (Pipeline)\n"
+                          + "│       └── ACME-V1.0-CEF  (XSLT)\n")
+                .contains("└── Reference/  (new)\n    └── V1.0/  (new)\n        └── ACME-V1.0-Reference  (Pipeline)");
     }
 
     @Test
@@ -112,10 +221,10 @@ class TestPromoteBuildTool {
         listed(doc(FeedDoc.TYPE, "f", "ACME-COPY", null), doc(PipelineDoc.TYPE, "ev", "ACME-Events", "Events"));
         docs.facts.sources = List.of("ACME");
 
-        assertThat(String.valueOf(review(Map.of("Feed", "System/Feeds/Acme", "Pipeline", "System/Feeds/Acme"), null)
-                .get("layout"))).endsWith("Left in the workspace: ACME-COPY (Feed)");
+        assertThat(String.valueOf(review(Map.of("Feed", "System/Feeds/Acme", "Pipeline", "System/Feeds/Acme"))
+                .get("layout"))).contains("Left in the workspace: ACME-COPY (Feed)");
         // Promoted when the user gives it a folder of its own (a new version of the feed, say).
-        assertThat(String.valueOf(review(Map.of("f", "System/Feeds/Acme", "Pipeline", "System/Feeds/Acme"), null)
+        assertThat(String.valueOf(review(Map.of("f", "System/Feeds/Acme", "Pipeline", "System/Feeds/Acme"))
                 .get("layout"))).doesNotContain("Left in the workspace");
     }
 
@@ -128,7 +237,7 @@ class TestPromoteBuildTool {
                 "ACME-Events", "Events"));
 
         final String layout = String.valueOf(review(Map.of("t", "System/Feeds/Acme", "Feed", "System/Feeds/Acme",
-                "Pipeline", "System/Feeds/Acme"), null).get("layout"));
+                "Pipeline", "System/Feeds/Acme")).get("layout"));
 
         assertThat(layout).doesNotContain("ACME-MCP-TEST  (Feed)")
                 .contains("Left in the workspace: ACME-MCP-TEST (Feed)")
@@ -155,23 +264,24 @@ class TestPromoteBuildTool {
                 doc(DocumentationDoc.TYPE, "sn", "azure source notes", null));
         final String expected = "System/Feeds/AZURE/  (new)\n"
                                 + "├── Events/  (new)\n"
-                                + "│   ├── AZURE Messaging  (Pipeline)\n"
-                                + "│   └── AZURE Messaging  (XSLT)\n"
+                                + "│   └── V1.0/  (new)\n"
+                                + "│       ├── AZURE Messaging  (Pipeline)\n"
+                                + "│       └── AZURE Messaging  (XSLT)\n"
                                 + "├── Indexing/  (new)\n"
-                                + "│   └── AZURE Messaging Indexing  (Pipeline)\n"
+                                + "│   └── V1.0/  (new)\n"
+                                + "│       └── AZURE Messaging Indexing  (Pipeline)\n"
                                 + "├── AZURE source types  (Documentation)\n"
                                 + "└── azure source notes  (Documentation)";
 
         // The parent of the sources given by type, as the agent gave it: a folder of the source's own in it.
-        assertThat(String.valueOf(review(Map.of("Pipeline", "/Feeds", "XSLT", "/Feeds"), null).get("layout")))
+        assertThat(String.valueOf(review(Map.of("Pipeline", "/Feeds", "XSLT", "/Feeds")).get("layout")))
                 .startsWith(expected);
-        // None given: named all at once as before, the folder of its own suggested.
-        assertThat(docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(Map.of("build", BUILD,
-                "destinations", Map.of())))).contains("The others have one: System/Feeds/AZURE.",
-                "The source's own folder, as its siblings have one: System/Feeds/AZURE");
+        // None given: each role's documents laid out under the source's own folder all the same (decided by the user,
+        // 2026-11-17: a default layout, shown for the user to change).
+        assertThat(String.valueOf(review(Map.of()).get("layout"))).startsWith(expected);
         // A folder given for one document is where it goes, as given.
         assertThat(String.valueOf(review(Map.of("Pipeline", "/Feeds", "XSLT", "/Feeds", "ix",
-                "/Feeds/Elsewhere"), null).get("layout")))
+                "/Feeds/Elsewhere")).get("layout")))
                 .contains("Elsewhere/");
     }
 
@@ -217,33 +327,47 @@ class TestPromoteBuildTool {
         final Map<String, Object> destinations = Map.of("Pipeline", "/Feeds", "XSLT", "/Feeds", "ElasticIndex",
                 "/Feeds", "Documentation", "/Feeds", "Dashboard", "/Feeds");
 
-        assertThat(review(destinations, null).get("layout")).isEqualTo(
+        assertThat(review(destinations).get("layout")).isEqualTo(
                 "System/Feeds/Azure-Audit-V1.0-EVENTS/  (new)\n"
                 + "├── M365 Messaging/  (new)\n"
                 + "│   ├── AZURE-M365-MESSAGING-EVENTS  (Feed)\n"
                 + "│   ├── Events/  (new)\n"
-                + "│   │   ├── Azure M365 Messaging  (Documentation)\n"
-                + "│   │   ├── Azure M365 Messaging  (Pipeline)\n"
-                + "│   │   └── Azure-Audit-V1.0-EVENTS M365 Messaging  (XSLT)\n"
+                + "│   │   └── V1.0/  (new)\n"
+                + "│   │       ├── Azure M365 Messaging  (Documentation)\n"
+                + "│   │       ├── Azure M365 Messaging  (Pipeline)\n"
+                + "│   │       └── Azure-Audit-V1.0-EVENTS M365 Messaging  (XSLT)\n"
                 + "│   └── Indexing/  (new)\n"
-                + "│       ├── Azure M365 Messaging Index  (Documentation)\n"
-                + "│       ├── Azure M365 Messaging Index  (ElasticIndex)\n"
-                + "│       ├── Azure M365 Messaging Indexing  (Documentation)\n"
-                + "│       ├── Azure M365 Messaging Indexing  (Pipeline)\n"
-                + "│       ├── Azure M365 Messaging Indexing  (XSLT)\n"
-                + "│       └── Azure M365 Messaging-VERIFY  (Dashboard)\n"
-                + "├── Azure-Audit-V1.0-EVENTS common  (XSLT)\n"
-                + "├── Azure-Audit-V1.0-EVENTS helpers  (XSLT)\n"
+                + "│       └── V1.0/  (new)\n"
+                + "│           ├── Azure M365 Messaging Index  (Documentation)\n"
+                + "│           ├── Azure M365 Messaging Index  (ElasticIndex)\n"
+                + "│           ├── Azure M365 Messaging Indexing  (Documentation)\n"
+                + "│           ├── Azure M365 Messaging Indexing  (Pipeline)\n"
+                + "│           ├── Azure M365 Messaging Indexing  (XSLT)\n"
+                + "│           └── Azure M365 Messaging-VERIFY  (Dashboard)\n"
+                + "├── Common/  (new)\n"
+                + "│   └── V1.0/  (new)\n"
+                + "│       └── Azure-Audit-V1.0-EVENTS common  (XSLT)\n"
+                + "├── Helpers/  (new)\n"
+                + "│   └── V1.0/  (new)\n"
+                + "│       └── Azure-Audit-V1.0-EVENTS helpers  (XSLT)\n"
                 + "├── Azure-Audit-V1.0-EVENTS source notes  (Documentation)\n"
                 + "└── Azure-Audit-V1.0-EVENTS source types  (Documentation)\n\n"
                 + "Left in the workspace: Azure-Audit-V1.0-EVENTS-MCP-TEST (Feed)\n\n"
+                + "Where each role goes (destinations keyed by the role change it):\n"
+                + "- Events: System/Feeds (proposed: the feed's own location)\n"
+                + "- Indexing: System/Feeds (proposed: the feed's own location)\n\n"
+                + "Pipeline 'Azure M365 Messaging' has no version in its name (e.g. -V1.0-): placed in V1.0.\n"
+                + "Pipeline 'Azure M365 Messaging Indexing' has no version in its name (e.g. -V1.0-): placed in "
+                + "V1.0.\n\n"
                 + "The build's test feed Azure-Audit-V1.0-EVENTS-MCP-TEST stays in the build's workspace: it holds "
                 + "only the sample's Events and is never promoted.");
-        // Flat when the user says so: the group's folder kept, its role subfolders not.
-        assertThat(String.valueOf(review(destinations, false).get("layout")))
-                .contains("├── M365 Messaging/  (new)\n│   ├── AZURE-M365-MESSAGING-EVENTS  (Feed)\n"
-                          + "│   ├── Azure M365 Messaging  (Documentation)\n")
-                .doesNotContain("Events/").doesNotContain("Indexing/");
+        // A role's location elsewhere: <root>/<feed>/<group>/<version>, the shared modules still under the feed.
+        final Map<String, Object> elsewhere = new LinkedHashMap<>(destinations);
+        elsewhere.put("Indexing", "/Elastic Indices");
+        assertThat(String.valueOf(review(elsewhere).get("layout")))
+                .contains("Elastic Indices/  (new)\n    └── Azure-Audit-V1.0-EVENTS/  (new)\n"
+                          + "        └── M365 Messaging/  (new)\n            └── V1.0/  (new)\n")
+                .contains("├── Common/  (new)\n");
     }
 
     @Test
@@ -262,15 +386,16 @@ class TestPromoteBuildTool {
                 doc(DocumentationDoc.TYPE, "di", "AZURE Messaging Indexing", "Indexing"));
 
         final String layout = String.valueOf(review(Map.of("ev", "/Feeds", "Pipeline", "/Feeds",
-                "Documentation", "/Feeds"), null).get("layout"));
+                "Documentation", "/Feeds")).get("layout"));
 
-        assertThat(layout).isEqualTo("System/Feeds/\n"
-                                     + "├── AZURE Messaging  (Documentation)\n"
-                                     + "├── AZURE Messaging  (Pipeline)\n"
-                                     + "└── AZURE/  (new)\n"
-                                     + "    └── Indexing/  (new)\n"
-                                     + "        ├── AZURE Messaging Indexing  (Documentation)\n"
-                                     + "        └── AZURE Messaging Indexing  (Pipeline)");
+        assertThat(layout).startsWith("System/Feeds/\n"
+                                      + "├── AZURE Messaging  (Documentation)\n"
+                                      + "├── AZURE Messaging  (Pipeline)\n"
+                                      + "└── AZURE/  (new)\n"
+                                      + "    └── Indexing/  (new)\n"
+                                      + "        └── V1.0/  (new)\n"
+                                      + "            ├── AZURE Messaging Indexing  (Documentation)\n"
+                                      + "            └── AZURE Messaging Indexing  (Pipeline)\n\n");
     }
 
     @Test
@@ -292,24 +417,25 @@ class TestPromoteBuildTool {
                 .build());
         docs.facts.stages.put("ix", "indexing");
 
-        assertThat(review(Map.of(), false).get("layout")).isEqualTo("System/Indices/Acme/V2/\n"
-                                                                    + "├── ACME-V2-Indexing  (Pipeline)\n"
-                                                                    + "└── ACME-VERIFY  (Dashboard)");
+        // The predecessor alone in its feed's folder: the new version in a role folder there.
+        assertThat(review(Map.of()).get("layout")).isEqualTo("System/Indices/Acme/Indexing/V2/  (new)\n"
+                                                             + "├── ACME-V2-Indexing  (Pipeline)\n"
+                                                             + "└── ACME-VERIFY  (Dashboard)");
     }
 
     @Test
-    void aBuildOfOneRoleGetsNoRoleSubfolder() {
-        // An index documented, or a new indexing version: all of it Indexing, so a subfolder would only add a
-        // level (and put a doc the user placed in a folder of their choosing one level down).
+    void aBuildOfOneRoleStillGetsItsRoleFolder() {
+        // Decided by the user (2026-11-17): role folders always, even when one role moves (before, a build of one
+        // role got none, so where a version's documents went depended on what else the build held).
         exists("System/Docs");
-        listed(doc(DocumentationDoc.TYPE, "d", "ACME-Index", "Indexing"), doc(PipelineDoc.TYPE, "ix",
-                "ACME-Indexing", "Indexing"));
+        listed(doc(DocumentationDoc.TYPE, "d", "ACME-V1.0-Indexing", "Indexing"), doc(PipelineDoc.TYPE, "ix",
+                "ACME-V1.0-Indexing", "Indexing"));
 
-        final Map<String, Object> shown = review(Map.of("Documentation", "System/Docs", "Pipeline", "System/Docs"),
-                null);
+        final Map<String, Object> shown = review(Map.of("Documentation", "System/Docs", "Pipeline", "System/Docs"));
 
-        assertThat(String.valueOf(shown.get("layout"))).doesNotContain("Indexing/");
-        assertThat(String.valueOf(shown.get("hint"))).doesNotContain("role_subfolders");
+        assertThat(String.valueOf(shown.get("layout"))).startsWith("System/Docs/Indexing/V1.0/  (new)\n"
+                                                                   + "├── ACME-V1.0-Indexing  (Documentation)\n"
+                                                                   + "└── ACME-V1.0-Indexing  (Pipeline)");
     }
 
     @Test
@@ -323,7 +449,7 @@ class TestPromoteBuildTool {
         listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null), doc(DocumentationDoc.TYPE, "d", "ACME-Events",
                 null));
 
-        final Map<String, Object> shown = review(Map.of("Pipeline", "System/Feeds/Acme"), null);
+        final Map<String, Object> shown = review(Map.of("Pipeline", "System/Feeds/Acme"));
 
         // Every doc had a destination: on to the folders, to be made.
         assertThat(shown.get("layout")).isEqualTo("System/Feeds/Acme/  (new)\n"
@@ -339,7 +465,7 @@ class TestPromoteBuildTool {
                 "Acme directory source notes", null), doc(DocumentationDoc.TYPE, "r",
                 "Acme directory reference - audit log reference", null));
 
-        assertThat(review(Map.of("Feed", "System/Feeds/Acme"), null).get("layout"))
+        assertThat(review(Map.of("Feed", "System/Feeds/Acme")).get("layout"))
                 .isEqualTo("System/Feeds/Acme/\n"
                            + "├── ACME-DIR  (Feed)\n"
                            + "├── Acme directory reference - audit log reference  (Documentation)\n"
@@ -353,7 +479,7 @@ class TestPromoteBuildTool {
         listed(doc(FeedDoc.TYPE, "f", "ACME-DIR", null), doc(DocumentationDoc.TYPE, "s", "ACME-DIR - Survey", null),
                 doc(DocumentationDoc.TYPE, "r", "ACME-DIR source types", null));
 
-        final Map<String, Object> shown = review(Map.of("Feed", "System/Feeds/Acme"), null);
+        final Map<String, Object> shown = review(Map.of("Feed", "System/Feeds/Acme"));
 
         assertThat(shown.get("layout")).isEqualTo("System/Feeds/Acme/\n"
                                                   + "├── ACME-DIR  (Feed)\n"
@@ -713,17 +839,18 @@ class TestPromoteBuildTool {
         final Map<String, Object> shown = call(destinations, null);
         assertThat(shown.get("layout")).isEqualTo("System/Feeds/Acme/\n"
                                                   + "├── ACME-Events  (Pipeline)\n"
-                                                  + "└── V1.1/  (new)\n"
-                                                  + "    └── ACME common V1.1  (XSLT)");
+                                                  + "└── Common/  (new)\n"
+                                                  + "    └── V1.1/  (new)\n"
+                                                  + "        └── ACME common V1.1  (XSLT)");
         final Map<String, Object> promoted = docs.call(tool, BuildToolCalls.answering(Map.of("value", true)),
                 DocumentationWorld.args(args(destinations, shown.get("review_id"))));
 
         assertThat(promoted.get("promoted")).asList().contains(
-                "moved XSLT 'ACME common V1.1' to System/Feeds/Acme/V1.1",
+                "moved XSLT 'ACME common V1.1' to System/Feeds/Acme/Common/V1.1",
                 "moved Pipeline 'ACME-Events' to System/Feeds/Acme");
         assertThat(promoted).doesNotContainKey("updated_in_place");
         assertThat(((XsltDoc) world.docs.get("x-common")).getData()).isEqualTo(commonModule("v1"));
-        assertThat(world.documentAccess.path(version)).isEqualTo("/Feeds/Acme/V1.1");
+        assertThat(world.documentAccess.path(version)).isEqualTo("/Feeds/Acme/Common/V1.1");
     }
 
     @Test
@@ -740,14 +867,94 @@ class TestPromoteBuildTool {
         module("x-v2", "Messaging-V2", "group", "Messaging");
         world.records().update(BUILD, new DocRef(XsltDoc.TYPE, "x-v2", "Messaging-V2"),
                 entry -> entry.put("version_of", "x-prod"));
-        docs.facts.docs.add(FakeBuildFacts.doc(PipelineDoc.TYPE, "p-v2", "Acme Messaging v2", "version_of",
-                "p-prod"));
+        final Map<String, Object> listedPipeline = FakeBuildFacts.doc(PipelineDoc.TYPE, "p-v2", "Acme Messaging v2",
+                "version_of", "p-prod");
+        listedPipeline.put("role", "Events");
+        docs.facts.docs.add(listedPipeline);
         docs.facts.docs.add(FakeBuildFacts.doc(XsltDoc.TYPE, "x-v2", "Messaging-V2", "version_of", "x-prod"));
 
         assertThat(call(Map.of("XSLT", "/Feeds/Acme/Messaging"), null).get("layout")).isEqualTo(
-                "System/Feeds/Acme/Messaging/v2/  (new)\n"
+                "System/Feeds/Acme/Messaging/Events/v2/  (new)\n"
                 + "├── Acme Messaging v2  (Pipeline)\n"
                 + "└── Messaging-V2  (XSLT)");
+    }
+
+    @Test
+    void aNewEventsVersionGoesBesideItsPredecessorAndItsFollowOnsGainFiltersTheAdminRetiresTheOldOnes() {
+        // Decided by the user (2026-11-17): the new version in a sibling version folder; each promoted pipeline
+        // reading the predecessor's Events gains a new filter, disabled, reading the new version's (listed in the
+        // approval); no buttons disabling the earlier filters: the next steps say what to enable, then what the
+        // admin disables or removes once the new version's output is right.
+        final DocRef before = world.add(PipelineDoc.TYPE, "ACME-V1.0-Events",
+                world.folder("System/Feeds/Acme/Events/V1.0").uuid, "ev1").docRef();
+        final DocRef version = world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-V1.1-Events", "ev2");
+        world.records().update(BUILD, version, entry -> entry.put("version_of", "ev1"));
+        final Map<String, Object> listed = FakeBuildFacts.doc(PipelineDoc.TYPE, "ev2", "ACME-V1.1-Events", "version_of",
+                "ev1");
+        listed.put("role", "Events");
+        docs.facts.docs.add(listed);
+        final DocRef cef = new DocRef(PipelineDoc.TYPE, "cef", "ACME-CEF");
+        final ProcessorFilter reading = ProcessorFilter.builder().id(5).pipelineUuid("cef").enabled(true).build();
+        final PromotionProcessing.FollowOn followOn = new PromotionProcessing.FollowOn(cef, reading,
+                new DocRef(PipelineDoc.TYPE, "ev1", "ACME-V1.0-Events"), version);
+        Mockito.when(processing.followOns(any(), any())).thenReturn(List.of(followOn));
+        Mockito.when(processing.createPromotionFilters(any(), any(), any())).thenReturn(List.of(new LinkedHashMap<>(
+                Map.of("filter_id", 40, "pipeline", "ACME-V1.1-Events", "enabled", false))));
+        Mockito.when(processing.createFollowOnFilters(any(), any(), any())).thenReturn(List.of(new LinkedHashMap<>(
+                Map.of("filter_id", 41, "pipeline", "ACME-CEF", "reads", "ACME-V1.1-Events", "in_place_of",
+                        "ACME-V1.0-Events", "copied_from", 5, "enabled", false))));
+        Mockito.when(filterWrites.filters(any())).thenReturn(List.of(ProcessorFilter.builder().id(3)
+                .pipelineUuid("ev1").enabled(true).build()));
+        final Map<String, Object> destinations = Map.of();
+
+        final Map<String, Object> shown = call(destinations, null);
+        assertThat(String.valueOf(shown.get("layout"))).startsWith("System/Feeds/Acme/Events/V1.1/  (new)\n"
+                                                                   + "└── ACME-V1.1-Events  (Pipeline)");
+        assertThat(String.valueOf(shown.get("follow_on_filters"))).contains("'ACME-CEF': a new filter, disabled");
+        assertThat(String.valueOf(approvalForm(destinations, shown.get("review_id"))))
+                .contains("follow-on filters");
+        final Map<String, Object> promoted = docs.call(tool, BuildToolCalls.answering(Map.of("value", true)),
+                DocumentationWorld.args(args(destinations, shown.get("review_id"))));
+
+        assertThat(world.documentAccess.path(version)).isEqualTo("/Feeds/Acme/Events/V1.1");
+        assertThat(world.documentAccess.path(before)).isEqualTo("/Feeds/Acme/Events/V1.0");
+        assertThat(promoted.get("follow_on_filters")).asList().hasSize(1);
+        assertThat(promoted.get("next_steps")).isEqualTo(List.of(
+                "1. Enable the new version's filters when ready: filter 40 ('ACME-V1.1-Events'); filter 41 "
+                + "('ACME-CEF', reading the Events of 'ACME-V1.1-Events').",
+                "2. Once the new version's output is right, the admin disables or removes the earlier version's "
+                + "filters (the tools never do): 'ACME-V1.0-Events': filter 3; 'ACME-CEF': filter 5 (reading the "
+                + "Events of 'ACME-V1.0-Events')."));
+        assertThat(String.valueOf(promoted.get("user_actions"))).doesNotContain("disable");
+    }
+
+    @Test
+    void aFollowOnWithItsOwnNewVersionInTheBuildGainsNoFilterReadingTheNewEvents() {
+        // A build making new versions of both the events pipeline and the CEF flattener reading its Events: the CEF
+        // flattener's new version reads the new Events by its own filter, so its predecessor gains none (two filters
+        // would make the CEF output twice once both were enabled).
+        world.add(PipelineDoc.TYPE, "ACME-V1.0-Events", world.folder("System/Feeds/Acme/Events/V1.0").uuid, "ev1");
+        world.add(PipelineDoc.TYPE, "ACME-V1.0-CEF", world.folder("System/Feeds/Acme/CEF/V1.0").uuid, "cef1");
+        final DocRef events = world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-V1.1-Events", "ev2");
+        world.records().update(BUILD, events, entry -> entry.put("version_of", "ev1"));
+        final DocRef cef = world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-V1.1-CEF", "cef2");
+        world.records().update(BUILD, cef, entry -> entry.put("version_of", "cef1"));
+        final Map<String, Object> listedEvents = FakeBuildFacts.doc(PipelineDoc.TYPE, "ev2", "ACME-V1.1-Events",
+                "version_of", "ev1");
+        listedEvents.put("role", "Events");
+        docs.facts.docs.add(listedEvents);
+        final Map<String, Object> listedCef = FakeBuildFacts.doc(PipelineDoc.TYPE, "cef2", "ACME-V1.1-CEF",
+                "version_of", "cef1");
+        listedCef.put("role", "CEF");
+        docs.facts.docs.add(listedCef);
+        @SuppressWarnings("unchecked") final ArgumentCaptor<Predicate<DocRef>> outside =
+                ArgumentCaptor.forClass(Predicate.class);
+        Mockito.when(processing.followOns(any(), outside.capture())).thenReturn(List.of());
+
+        call(Map.of(), null);
+
+        assertThat(outside.getValue().test(new DocRef(PipelineDoc.TYPE, "cef1", "ACME-V1.0-CEF"))).isFalse();
+        assertThat(outside.getValue().test(new DocRef(PipelineDoc.TYPE, "other", "OTHER-Indexing"))).isTrue();
     }
 
     @Test
@@ -782,13 +989,10 @@ class TestPromoteBuildTool {
         assertThat(tool.definition().description()).startsWith("Onboarding step 18 of 18 (promoted): ");
     }
 
-    private Map<String, Object> review(final Map<String, Object> destinations, final Boolean roleSubfolders) {
+    private Map<String, Object> review(final Map<String, Object> destinations) {
         final Map<String, Object> args = new LinkedHashMap<>();
         args.put("build", BUILD);
         args.put("destinations", destinations);
-        if (roleSubfolders != null) {
-            args.put("role_subfolders", roleSubfolders);
-        }
         final Map<String, Object> shown = docs.call(tool, BuildToolCalls.context(), DocumentationWorld.args(args));
         assertThat(shown).containsEntry("status", "needs_review");
         return shown;
@@ -836,6 +1040,20 @@ class TestPromoteBuildTool {
         return "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:mcp=\"" + MappingFacts.MCP_NS
                + "\" version=\"3.0\"><mcp:module kind=\"common\"/>\n<xsl:variable name=\"v\">" + text
                + "</xsl:variable>\n</xsl:stylesheet>";
+    }
+
+    // A sibling feed beside ACME's folder (System/Feeds/Acme), its events pipeline under its own folder and its
+    // indexing pipeline under System/Elastic Indices.
+    private void siblingWithIndexingElsewhere() {
+        exists("System/Feeds/Acme", "System/Elastic Indices/Beta/V1.0", "System/Feeds/Beta/Events/V1.0");
+        world.add(FeedDoc.TYPE, "BETA", world.folder("System/Feeds/Beta").uuid, "beta");
+        Mockito.when(docs.pipelineIndex.read()).thenReturn(Map.of(
+                "beta-ev", new PipelineIndex.Entry("beta-ev", "BETA-V1.0-Events", "System/Feeds/Beta/Events/V1.0",
+                        "template", null),
+                "beta-ix", new PipelineIndex.Entry("beta-ix", "BETA-V1.0-Indexing", "System/Elastic Indices/Beta/V1.0",
+                        "template", null)));
+        docs.facts.stages.put("beta-ev", "translation");
+        docs.facts.stages.put("beta-ix", "indexing");
     }
 
     // The folders, made.

@@ -25,15 +25,19 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.shared.AiToolCategory;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /// `build_status` - where an onboarding stands: every step of the plan as done or to do, read from what the build
 /// holds, with the sample's format and what is next.
@@ -46,6 +50,8 @@ class BuildStatusTool extends AbstractBuiltInTool {
     static final String SKIP_STAGE_ARG = "skip_stage";
     /// The key of the line saying an aggregated feed's groups import different versions of its shared modules.
     static final String MODULE_VERSIONS = "module_versions";
+    /// The key of the line pointing a new events version's follow-on pipelines at review_coverage.
+    static final String FOLLOW_ON_REVIEW = "follow_on_review";
     // First, so a result too large to show in full still shows them.
     private static final List<String> FIRST = List.of("next", "before_promotion", "steps");
 
@@ -53,6 +59,8 @@ class BuildStatusTool extends AbstractBuiltInTool {
     private final PendingDocumentation pendingDocs;
     // An aggregated feed's source type groups; none in tests that make the tool themselves.
     private Provider<SourceTypeGroups> groupsProvider;
+    // The processor filters naming a pipeline; none in tests that make the tool themselves.
+    private Provider<ProcessorFilters> filtersProvider;
 
     @Inject
     BuildStatusTool(final BuildPlan plan, final PendingDocumentation pendingDocs) {
@@ -67,6 +75,15 @@ class BuildStatusTool extends AbstractBuiltInTool {
     @Inject
     void setGroups(final Provider<SourceTypeGroups> groups) {
         this.groupsProvider = groups;
+    }
+
+    /// Where the pipelines reading a pipeline's Events are found (set by injection; none in tests that make the tool
+    /// themselves).
+    ///
+    /// @param filters The processor filters.
+    @Inject
+    void setProcessorFilters(final Provider<ProcessorFilters> filters) {
+        this.filtersProvider = filters;
     }
 
     @Override
@@ -138,12 +155,53 @@ class BuildStatusTool extends AbstractBuiltInTool {
                     status.put(MODULE_VERSIONS, String.join(" ", versions));
                 }
             }
+            if (filtersProvider != null && status.get("documents") instanceof final List<?> docs) {
+                final List<String> followOns = followOnReview(docs, filtersProvider.get());
+                if (!followOns.isEmpty()) {
+                    status.put(FOLLOW_ON_REVIEW, String.join(" ", followOns));
+                }
+            }
             return JsonResults.of(Boolean.parseBoolean(stringArg(call, FULL_ARG))
                     ? status
                     : compact(status));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         }
+    }
+
+    /// For each new version of an events (or records) pipeline in the build whose predecessor's Events promoted
+    /// pipelines read (a CEF flattener, an indexing pipeline: their filters name it), the review to do before
+    /// promotion: the new version can't process production streams, so review_coverage steps it
+    /// (changed_pipeline_uuid) and checks them against its Events. Promotion gives each a filter reading the new
+    /// version's Events (decided by the user, 2026-11-17).
+    ///
+    /// @param docs    The build's documents, as its status lists them.
+    /// @param filters The processor filters.
+    /// @return What to say, one line a new version; none when no pipeline reads a predecessor's Events.
+    static List<String> followOnReview(final List<?> docs, final ProcessorFilters filters) {
+        final Set<String> inBuild = new LinkedHashSet<>();
+        docs.forEach(doc -> inBuild.add(String.valueOf(((Map<?, ?>) doc).get("uuid"))));
+        final List<String> out = new ArrayList<>();
+        for (final Object item : docs) {
+            final Map<?, ?> doc = (Map<?, ?>) item;
+            final Object before = doc.get("version_of");
+            if (before == null || !PipelineDoc.TYPE.equals(doc.get("type"))
+                || !WriteGuard.SOURCE_ROLES.contains(String.valueOf(doc.get("role")))) {
+                continue;
+            }
+            final List<String> reading = filters.followOnPipelines(String.valueOf(before), Set.of()).stream()
+                    .filter(entry -> !inBuild.contains(String.valueOf(entry.get("uuid"))))
+                    .map(entry -> "'" + entry.get("name") + "'")
+                    .toList();
+            if (!reading.isEmpty()) {
+                out.add("Promoted pipelines read the Events of the version '" + doc.get("name") + "' replaces: "
+                        + String.join(", ", reading) + ". Before promoting, review_coverage pipeline_uuid=" + before
+                        + " changed_pipeline_uuid=" + doc.get("uuid") + " checks them against the new version's "
+                        + "Events. Promotion gives each a new filter, disabled, reading the new version's Events; "
+                        + "their own filters are left for the admin.");
+            }
+        }
+        return out;
     }
 
     /// The status, put briefly (seen in testing: the full 10 KB result saved to the workspace and called for again and

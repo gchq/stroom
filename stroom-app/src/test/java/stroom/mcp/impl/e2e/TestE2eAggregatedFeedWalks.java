@@ -478,7 +478,8 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         final Saved firstSaved = group(first, feed, firstName, List.of(firstType), family.firstRules(), stream);
         assertThat(formsSince(placedBefore)).anySatisfy(form -> assertThat(form.message())
                 .contains("'" + firstName + "'", PLACEMENT));
-        final String firstPipelineName = feed + " " + firstName;
+        // Its default name, with V1.0 (decided by the user, 2026-11-17).
+        final String firstPipelineName = feed + " " + firstName + " V1.0";
         assertThat(map(firstSaved.group(), "pipeline")).containsEntry("name", firstPipelineName);
         final Map<String, Object> made = agreed("create_pipeline", args("build", first, "group", firstName,
                 "template_uuid", template));

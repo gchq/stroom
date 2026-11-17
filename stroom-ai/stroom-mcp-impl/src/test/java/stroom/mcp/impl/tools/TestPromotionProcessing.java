@@ -19,6 +19,8 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.StroomLinks;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
@@ -28,6 +30,7 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -49,6 +52,58 @@ class TestPromotionProcessing {
     @BeforeEach
     void setUp() {
         w = new ProcessingWorld();
+    }
+
+    @Test
+    void aNewEventsVersionsFollowOnPipelinesGainADisabledFilterReadingItsEventsTheirOwnLeftAsTheyAre() {
+        // Decided by the user (2026-11-17): a CEF flattener (or an indexing pipeline) reading the predecessor's
+        // Events gains a new filter, disabled, of the same selection reading the new version's; its own filter is
+        // the admin's to disable or remove, never changed here.
+        final DocRef version = new DocRef(PipelineDoc.TYPE, "ev2", "Acme-V1.1-Events");
+        final DocRef cef = new DocRef(PipelineDoc.TYPE, "cef", "Acme-CEF");
+        w.pipeline(cef, false, null);
+        final ExpressionOperator reading = ProcessorFilterWrites.allOf(List.of(
+                ProcessorFilterWrites.term("Type", "Events"), PIPELINE_TERM));
+        final ProcessorFilter own = w.filter("cef", 5, true, reading, null);
+        // A sample's filter (by stream id) and one reading another pipeline's Events: not followed.
+        w.filter("cef", 6, true, ProcessorFilterWrites.allOf(List.of(ProcessorFilterWrites.term("Id", 8),
+                PIPELINE_TERM)), null);
+        w.filter("other", 7, true, ProcessorFilterWrites.allOf(List.of(ProcessorFilterWrites.term("Type",
+                "Events"), ProcessorFilterWrites.pipelineTerm(SP))), null);
+        final ProcessorFilters filters = Mockito.mock(ProcessorFilters.class);
+        Mockito.when(filters.all()).thenAnswer(inv -> w.filters.values().stream().flatMap(List::stream).toList());
+        w.promotion.setProcessorFilters(() -> filters);
+
+        final List<PromotionProcessing.FollowOn> found = w.promotion.followOns(Map.of(version, ProcessingWorld.EV),
+                pipeline -> true);
+
+        assertThat(found).extracting(followOn -> followOn.pipeline().getUuid() + ":" + followOn.reading().getId())
+                .containsExactly("cef:5");
+        assertThat(found.getFirst().said()).contains("'Acme-CEF': a new filter, disabled", "'Acme-V1.1-Events'",
+                "filter 5 is left as it is");
+        // A pipeline in a build is passed over: its build gives it its own filters.
+        assertThat(w.promotion.followOns(Map.of(version, ProcessingWorld.EV), pipeline -> false)).isEmpty();
+
+        w.nextFilterId = 30;
+        final List<Map<String, Object>> made = w.promotion.createFollowOnFilters(StroomLinks.CHAT, found,
+                List.of(Map.of("filter_id", 29, "pipeline", "Acme-V1.1-Events", "enabled", false)));
+
+        assertThat(w.created).hasSize(1);
+        assertThat(w.created.getFirst().isEnabled()).isFalse();
+        assertThat(w.lastExpression().getChildren()).containsExactly(ProcessorFilterWrites.term("Type", "Events"),
+                ProcessorFilterWrites.pipelineTerm(version));
+        assertThat(made.getFirst()).containsEntry("filter_id", 30).containsEntry("copied_from", 5)
+                .containsEntry("enabled", false).containsEntry("reads", "Acme-V1.1-Events")
+                .containsEntry("in_place_of", "Acme-Events");
+        assertThat(String.valueOf(made.getFirst().get("user_actions"))).contains("enable-30", "after=[enable-29]");
+        // Its own filter as it was: enabled, reading the predecessor's Events.
+        assertThat(w.filters.get("cef").getFirst()).isSameAs(own);
+        assertThat(own.isEnabled()).isTrue();
+        assertThat(ProcessorFilterWrites.expressionOf(own)).isEqualTo(reading);
+        // Promoted again: not made twice.
+        assertThat(w.promotion.createFollowOnFilters(StroomLinks.CHAT, found, List.of()).getFirst())
+                .containsEntry("existing", true).containsEntry("filter_id", 30);
+        assertThat(w.created).hasSize(1);
     }
 
     @Test

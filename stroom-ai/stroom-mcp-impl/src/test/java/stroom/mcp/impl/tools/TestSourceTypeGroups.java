@@ -92,6 +92,14 @@ class TestSourceTypeGroups {
     }
 
     @Test
+    void aGroupsPipelineIsNamedWithV10WhereNeitherTheFeedNorTheGroupHasAVersion() {
+        // Decided by the user (2026-11-17): promotion files a pipeline by the version in its name.
+        assertThat(SourceTypeGroups.pipelineName("PEGA", "security")).isEqualTo("PEGA security V1.0");
+        assertThat(SourceTypeGroups.pipelineName("Azure-Audit-V1.0-EVENTS", "M365 Messaging"))
+                .isEqualTo("Azure-Audit-V1.0-EVENTS M365 Messaging");
+    }
+
+    @Test
     void aWholeTranslationsSeenSourceTypesAreTheRegistrysRowsElseTheSurveysValues() {
         final TranslationBuilds builds = Mockito.mock(TranslationBuilds.class);
         final SourceTypeRegistries registries = Mockito.mock(SourceTypeRegistries.class);
@@ -240,7 +248,7 @@ class TestSourceTypeGroups {
         assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
         final Map<String, Object> group = JsonValues.mapOrEmpty(saved.get("group"));
         assertThat(String.valueOf(group.get("group_next"))).contains("create_feed", "group='PEGA integration'",
-                "create_pipeline", "the group's XSLT", "'PEGA PEGA integration'");
+                "create_pipeline", "the group's XSLT", "'PEGA PEGA integration V1.0'");
         assertThat(xsltsInBuild()).containsOnlyKeys("PEGA security", "PEGA integration", "PEGA common",
                 "PEGA helpers");
         // The registry says where it goes: its output feed to make, its reference data kept.
@@ -248,13 +256,13 @@ class TestSourceTypeGroups {
         // kept; the other group's Events go into the feed's.
         final Map<String, Object> row = rowNamed(written.getLast(), "PegaIntegration");
         assertThat(JsonValues.mapOrEmpty(row.get("pipeline"))).containsOnly(Map.entry("name",
-                "PEGA PEGA integration"));
+                "PEGA PEGA integration V1.0"));
         assertThat(row).containsEntry("output_feed", "");
         assertThat(JsonValues.maps(row.get("references"))).singleElement()
                 .satisfies(reference -> assertThat(reference).containsEntry("feed", "PEGA-HOSTS"));
         final Map<String, Object> security = rowNamed(written.getLast(), "PegaSecurityEvent");
         assertThat(JsonValues.mapOrEmpty(security.get("pipeline"))).containsOnly(Map.entry("name",
-                "PEGA PEGA security"));
+                "PEGA PEGA security V1.0"));
         assertThat(security).doesNotContainKey("output_feed");
     }
 
@@ -266,7 +274,7 @@ class TestSourceTypeGroups {
 
         final Map<String, Object> refused = world.call(tool, unasked);
 
-        assertThat(String.valueOf(refused.get("error"))).contains("is new", "'PEGA PEGA security'",
+        assertThat(String.valueOf(refused.get("error"))).contains("is new", "'PEGA PEGA security V1.0'",
                 "Ask the user where its Events go", "Into the same feed", "To an output feed of its own",
                 "own_output_feed=false (the same feed)", "Nothing was saved").doesNotContain("index");
         assertThat(xsltsInBuild()).isEmpty();
@@ -320,7 +328,7 @@ class TestSourceTypeGroups {
 
         assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
         final Map<String, Object> db = rowNamed(written.getLast(), "PegaDB");
-        assertThat(JsonValues.mapOrEmpty(db.get("pipeline"))).containsEntry("name", "PEGA PEGA integration");
+        assertThat(JsonValues.mapOrEmpty(db.get("pipeline"))).containsEntry("name", "PEGA PEGA integration V1.0");
         assertThat(db).containsEntry("output_feed", "PEGA-INTEGRATION-EVENTS");
         // The group's XSLT now translates both.
         assertThat(ModuleChecks.marker(world.xslt(xsltsInBuild().get("PEGA integration")).getData()))
@@ -352,7 +360,7 @@ class TestSourceTypeGroups {
             assertThat(rowNamed(written.getLast(), type)).containsEntry("status", SourceTypeRegistry.TRANSLATED)
                     .containsEntry("group", "PEGA back end");
             assertThat(JsonValues.mapOrEmpty(rowNamed(written.getLast(), type).get("pipeline")))
-                    .containsEntry("name", "PEGA PEGA back end");
+                    .containsEntry("name", "PEGA PEGA back end V1.0");
         }
         assertThat(rowNamed(written.getLast(), "PegaSecurityEvent")).containsEntry("status",
                 SourceTypeRegistry.PARKED);
@@ -393,7 +401,7 @@ class TestSourceTypeGroups {
                         "PegaDB"));
         // PegaDB joins the group where it runs.
         assertThat(JsonValues.mapOrEmpty(rowNamed(written.getLast(), "PegaDB").get("pipeline")))
-                .containsEntry("name", "PEGA PEGA security");
+                .containsEntry("name", "PEGA PEGA security V1.0");
     }
 
     @Test
@@ -532,7 +540,7 @@ class TestSourceTypeGroups {
 
         assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
         assertThat(placementForms()).singleElement().satisfies(form -> assertThat(form).contains(
-                "a pipeline of its own, 'PEGA PEGA security'", "where its Events go").doesNotContain("**", "`",
+                "a pipeline of its own, 'PEGA PEGA security V1.0'", "where its Events go").doesNotContain("**", "`",
                 "index"));
         assertThat(rowNamed(written.getLast(), "PegaSecurityEvent")).containsEntry("output_feed", "");
         // Saved again in the build: placed, so it isn't asked again.

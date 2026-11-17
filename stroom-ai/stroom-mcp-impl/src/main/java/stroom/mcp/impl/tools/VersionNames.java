@@ -16,6 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.util.shared.NullSafe;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -45,6 +47,8 @@ final class VersionNames {
 
     // A shared module's version after its base name: a space, then a version token.
     private static final Pattern MODULE_VERSION = Pattern.compile(" ([vV])(\\d+(?:\\.\\d+)*)");
+    // A shared module's version at the end of its name.
+    private static final Pattern MODULE_VERSION_AT_END = Pattern.compile(" ([vV]\\d+(?:\\.\\d+)*)$");
 
     private VersionNames() {
         // Static methods only.
@@ -110,6 +114,18 @@ final class VersionNames {
             }
         }
         return next(name);
+    }
+
+    /// A shared module's version, from its name: the version token after its last space (`ACME common V1.1`), else
+    /// [#FIRST_MODULE_VERSION] (the first version's name has none).
+    ///
+    /// @param name A module's name.
+    /// @return Its version, e.g. `V1.1`.
+    static String moduleVersion(final String name) {
+        final Matcher matcher = MODULE_VERSION_AT_END.matcher(NullSafe.string(name));
+        return matcher.find()
+                ? matcher.group(1)
+                : FIRST_MODULE_VERSION;
     }
 
     /// Whether a name is an aggregated feed's shared module's of that base name: the base itself (its first

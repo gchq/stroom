@@ -190,8 +190,11 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                              + "group. The feed's common module and helpers are imported, never a pipeline's XSLT. "
                              + "The user confirms the template and name first.")
                 .parameters(ObjectSchema.builder()
-                        .addStringProperty(NAME_ARG, "Pipeline name following the environment's convention "
-                                                     + "(for a source type group, '<feed> <group>' by default).")
+                        .addStringProperty(NAME_ARG, "Pipeline name following the environment's convention, with "
+                                                     + "its version (e.g. 'Acme-V1.0-Events': promotion files it "
+                                                     + "under that version; for a source type group, '<feed> "
+                                                     + "<group>' by default, with ' V1.0' where neither has a "
+                                                     + "version).")
                         .addStringProperty(GROUP_ARG, "An aggregated feed's source type group whose pipeline this "
                                                       + "is (build_translation_xslt group= saved it): its XSLT is "
                                                       + "the pipeline's.")

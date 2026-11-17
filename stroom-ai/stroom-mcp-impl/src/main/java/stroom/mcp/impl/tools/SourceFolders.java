@@ -27,10 +27,12 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /// The folder of a source's own that promotion puts a build's documents in: the source feed's folder, unless that
 /// folder is a parent of sources (the siblings' convention: subfolders named per source, each holding its feeds),
@@ -81,6 +83,50 @@ final class SourceFolders {
                 ignored -> findOtherSources(normalised, source));
     }
 
+    /// The sibling feeds beside a source, by their names and their folders' names: the feeds in the root, and the
+    /// folders in it (other than the source's own) holding a feed, with those feeds. Where their pipelines are tells
+    /// promotion where the source's documents of each role go.
+    ///
+    /// @param root       The folder holding the source's folder, an explorer path.
+    /// @param feedFolder The source's own folder.
+    /// @param source     The source feed's name.
+    /// @return The names, as found; none if the root can't be listed.
+    Set<String> siblings(final String root, final String feedFolder, final String source) {
+        final Set<String> out = new LinkedHashSet<>();
+        try {
+            final WriteGuard.ResolvedFolder resolved = guard.resolveFolder(root);
+            if (!resolved.missing().isEmpty()) {
+                return out;
+            }
+            final String own = lastPart(normalised(feedFolder));
+            for (final ExplorerNode child : documentAccess.children(resolved.folder().docRef())) {
+                final DocRef ref = child.getDocRef();
+                if (ref == null) {
+                    continue;
+                }
+                if (FeedDoc.TYPE.equals(ref.getType()) && !NullSafe.string(ref.getName()).equalsIgnoreCase(
+                        NullSafe.string(source))) {
+                    out.add(ref.getName());
+                } else if (ExplorerConstants.FOLDER_TYPE.equals(ref.getType()) && !ours(ref.getName(), source)
+                           && !NullSafe.string(ref.getName()).equalsIgnoreCase(own)) {
+                    final List<String> feeds = documentAccess.children(ref).stream()
+                            .map(ExplorerNode::getDocRef)
+                            .filter(grandchild -> grandchild != null && FeedDoc.TYPE.equals(grandchild.getType()))
+                            .map(DocRef::getName)
+                            .toList();
+                    if (!feeds.isEmpty()) {
+                        out.add(ref.getName());
+                        out.addAll(feeds);
+                    }
+                }
+            }
+        } catch (final RuntimeException e) {
+            // Only the siblings go unread: the feed's own location is proposed.
+            LOGGER.debug(() -> LogUtil.message("Couldn't list folder {}: {}", root, e.getMessage()));
+        }
+        return out;
+    }
+
     /// @param path An explorer path.
     /// @return It as `System/...`, its folders' names stripped.
     static String normalised(final String path) {
@@ -119,7 +165,7 @@ final class SourceFolders {
     // A subfolder of the source's own making: a role subfolder, a version's folder, or the source's own folder.
     private static boolean ours(final String name, final String source) {
         final String said = NullSafe.string(name);
-        return WriteGuard.ROLES.contains(said)
+        return PromotionLayout.isRoleFolder(said)
                || PromotionLayout.versions(said).equals(List.of(said))
                || said.equalsIgnoreCase(NullSafe.string(source));
     }

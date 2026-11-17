@@ -17,23 +17,32 @@
 package stroom.mcp.impl.tools;
 
 import stroom.docref.DocRef;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
-/// Where promotion puts a build's documents: a new version of a production document in a version subfolder beside its
-/// predecessor, the version's other documents with it, and the layout shown to the user as a tree of the destination
-/// folders. Folders are paths from System, e.g. `System/Feeds/Acme`.
+/// Where promotion puts a build's documents, role first, then version (decided by the user, 2026-11-17):
+/// `<root>/<feed>/<Role>/<version>` under the feed's own root, `<root>/<feed>/<version>` under a root of the role's
+/// own elsewhere; a new version in a sibling version folder of its predecessor's; and the layout shown to the user as
+/// a tree of the destination folders. Folders are paths from System, e.g. `System/Feeds/Acme`.
 class PromotionLayout {
 
     /// A step: a document moved into a folder.
@@ -45,6 +54,14 @@ class PromotionLayout {
     /// A step: a document left in the workspace.
     static final String KEEP = "keep";
 
+    /// An aggregated feed's shared modules' folders, each a role of its own beside [WriteGuard#ROLES], always under
+    /// the feed's folder: `<feed>/Common/V1.0`, `<feed>/Helpers/V1.0`.
+    static final List<String> MODULE_ROLES = List.of("Common", "Helpers");
+    /// The version folder of a pipeline whose name holds no version token (with a warning in the layout).
+    static final String FIRST_VERSION = "V1.0";
+    /// The most production pipelines of sibling feeds read for their roles, a promotion.
+    static final int MAX_SIBLINGS_READ = 200;
+
     private static final Pattern VERSION = Pattern.compile("(?i)(?<![A-Za-z0-9])v\\d+(?:\\.\\d+)*(?![A-Za-z0-9])");
 
     private final DocumentPlaces places;
@@ -55,118 +72,304 @@ class PromotionLayout {
         this.places = places;
     }
 
-    /// For each new version of a production document (copy_pipeline: `version_of`), a version subfolder beside its
-    /// predecessor, named by the version in its own name (…-V1.1-Events: V1.1), so old and new are told apart at a
-    /// glance (asked for by the user). Beside the predecessor, in its folder's parent, when that folder is itself a
-    /// version's. Documents given a destination of their own keep it, as do those whose type is given one elsewhere
-    /// than beside the predecessor (seen in testing, when the version went beside its predecessor anyway and the
-    /// build's other documents to the folder given: TWITTER's V1.1 pipeline under /Feeds/Twitter, its XSLT and
-    /// documentation under System/MCP Testing/Twitter).
+    /// Whether a folder is one of a role's: [WriteGuard#ROLES], or an aggregated feed's shared modules'
+    /// ([#MODULE_ROLES]).
     ///
-    /// @param docs         The build's documents.
-    /// @param destinations The destinations given, by type or document UUID.
-    /// @return Each new version's folder by document UUID, and the version folders by predecessor's folder.
-    VersionFolders versionFolders(final List<Map<String, Object>> docs, final Map<String, String> destinations) {
-        return versionFolders(docs, destinations, null);
+    /// @param name A folder's name.
+    /// @return True if it names a role's folder.
+    static boolean isRoleFolder(final String name) {
+        return Stream.concat(WriteGuard.ROLES.stream(), MODULE_ROLES.stream()).anyMatch(role -> role.equalsIgnoreCase(
+                NullSafe.string(name)));
     }
 
-    /// As [#versionFolders(List, Map)], for an aggregated feed's build of a source type group: a predecessor in the
-    /// group's folder (`<feed>/<group>`, or its role subfolder) is beside a destination given for the feed's folder
-    /// too, as promotion puts the group's documents in its folder there.
-    ///
-    /// @param docs         The build's documents.
-    /// @param destinations The destinations given, by type or document UUID.
-    /// @param group        The build's source type group's folder name, or null for a build of none.
-    /// @return Each new version's folder by document UUID, and the version folders by predecessor's folder.
-    VersionFolders versionFolders(final List<Map<String, Object>> docs,
-                                  final Map<String, String> destinations,
-                                  final String group) {
-        return versionFolders(docs, destinations, group, Set.of(), Set.of());
+    /// @param name A folder's name.
+    /// @return True if it is a version's folder, e.g. `V1.1` or `v2`.
+    static boolean isVersionFolder(final String name) {
+        return VERSION.matcher(NullSafe.string(name)).matches();
     }
 
-    /// As [#versionFolders(List, Map, String)], with documents whose version folder is theirs alone, and documents
-    /// placed with their pipeline's version: an aggregated
-    /// feed's shared module's new version (its common module or helpers, decided by the user 2026-11-17: changed only
-    /// by a new version) goes in a version folder beside its predecessor, as a pipeline's new version does, but the
-    /// build's other documents don't join it there (they belong to the group's version, not the module's).
+    /// A predecessor's folder with its role and version folders taken off the end, in either order and one of each
+    /// at most: `<feed>/<Role>/V1.0`, `<feed>/V1.0/<Role>`, `<feed>/<Role>`, `<feed>/v2` and `<feed>` alone all give
+    /// `<feed>` (production laid out the old way is never moved, so a new version is placed beside any of them).
     ///
-    /// @param docs         The build's documents.
-    /// @param destinations The destinations given, by type or document UUID.
-    /// @param group        The build's source type group's folder name, or null for a build of none.
-    /// A source type group's new XSLT has no version folder of its own: it goes in its pipeline's, whatever its own
-    /// name says (seen in e2e: named `-V2` for the pipeline's next version before the user settled the pipeline's
-    /// `v2`, it went in a `V2` folder apart from its pipeline).
-    ///
-    /// @param apart        The UUIDs of the documents whose version folders the build's others don't join.
-    /// @param following    The UUIDs of the documents placed with their pipeline's version, not by their own names.
-    /// @return Each new version's folder by document UUID, and the version folders by predecessor's folder.
-    VersionFolders versionFolders(final List<Map<String, Object>> docs,
-                                  final Map<String, String> destinations,
-                                  final String group,
-                                  final Set<String> apart,
-                                  final Set<String> following) {
-        final Map<String, String> out = new LinkedHashMap<>();
-        final Map<String, Set<String>> beside = new LinkedHashMap<>();
-        for (final Map<String, Object> doc : docs) {
-            final Object versionOf = doc.get("version_of");
-            final String uuid = String.valueOf(doc.get("uuid"));
-            if (versionOf == null || destinations.containsKey(uuid) || doc.get("working_copy_of") != null
-                || following.contains(uuid)) {
-                continue;
-            }
-            final Optional<DocRef> before = places.find(String.valueOf(versionOf));
-            if (before.isEmpty()) {
-                continue;
-            }
-            final String folder = places.folderOf(before.get()).orElse(null);
-            final List<String> found = versions(String.valueOf(doc.get("name")));
-            if (folder == null || found.isEmpty()) {
-                continue;
-            }
-            final int slash = folder.lastIndexOf('/');
-            final String parent = slash < 0
-                    ? ""
-                    : folder.substring(0, slash);
-            final String last = folder.substring(slash + 1);
-            final String version = VERSION.matcher(last).matches()
-                    ? parent + "/" + found.getLast()
-                    : folder + "/" + found.getLast();
-            final String typeGiven = destinations.get(String.valueOf(doc.get("type")));
-            if (typeGiven != null && !placesMeant(folder, version).contains(normalised(typeGiven))
-                && !groupParent(folder, group).map(PromotionLayout::normalised)
-                    .filter(normalised(typeGiven)::equals).isPresent()) {
-                continue;
-            }
-            out.put(uuid, version);
-            if (!apart.contains(uuid)) {
-                beside.computeIfAbsent(folder, ignored -> new LinkedHashSet<>()).add(version);
+    /// @param folder The predecessor's folder, an explorer path.
+    /// @return The folder above its role and version folders, with the role and version folder names taken off.
+    static Predecessor predecessor(final String folder) {
+        String at = normalised(folder);
+        String role = null;
+        String version = null;
+        for (int n = 0; n < 2 && at.contains("/"); n++) {
+            final String last = lastPart(at);
+            if (role == null && isRoleFolder(last)) {
+                role = last;
+                at = parentOf(at);
+            } else if (version == null && isVersionFolder(last)) {
+                version = last;
+                at = parentOf(at);
             }
         }
-        return new VersionFolders(out, beside);
+        return new Predecessor(at, role, version);
     }
 
-    /// Where a version's other new documents go: those headed for its predecessor's folder, or the version folder's
-    /// parent, go in the version folder with it (its index, documentation and dashboard: seen in e2e, the new pipeline
-    /// in v2/ and its index beside v1). Only where one version folder is meant for that place.
+    /// The folder a role's documents of one version go in (decided by the user, 2026-11-17): role first, then
+    /// version. Under the feed's own root, `<feed>/<Role>/<version>` (an aggregated feed's group's:
+    /// `<feed>/<group>/<Role>/<version>`); under a root of the role's own, elsewhere, no role folder:
+    /// `<root>/<feed>/<version>` (`<root>/<feed>/<group>/<version>`), e.g. `System/Elastic Indices/App-Logs/V1.0`.
+    /// An aggregated feed's shared modules always go under the feed: `<feed>/Common/<version>`.
     ///
-    /// @param beside The version folders by predecessor's folder.
-    /// @return The version folder by place.
-    static Map<String, String> joining(final Map<String, Set<String>> beside) {
-        final Map<String, Set<String>> joins = new LinkedHashMap<>();
-        beside.forEach((folder, versions) -> {
-            for (final String version : versions) {
-                for (final String place : placesMeant(folder, version)) {
-                    joins.computeIfAbsent(place, ignored -> new LinkedHashSet<>()).add(version);
+    /// @param feedFolder The feed's folder, e.g. `System/Parent/App-Logs`.
+    /// @param root       The role's root, or null for the feed's own.
+    /// @param group      The source type group, or null.
+    /// @param role       The role, e.g. `Events`.
+    /// @param version    The version folder's name, e.g. `V1.0`.
+    /// @return The folder, as a path from System.
+    static String rolePath(final String feedFolder,
+                           final String root,
+                           final String group,
+                           final String role,
+                           final String version) {
+        final String feed = normalised(feedFolder);
+        final String groupPart = NullSafe.isBlankString(group)
+                ? ""
+                : "/" + group;
+        if (root == null || sameFolder(root, parentOf(feed)) || MODULE_ROLES.contains(role)) {
+            return feed + groupPart + "/" + role + "/" + version;
+        }
+        return normalised(root) + "/" + lastPart(feed) + groupPart + "/" + version;
+    }
+
+    /// A new version's folder beside its predecessor's (decided by the user, 2026-11-17): a sibling version folder in
+    /// the role's folder (`<feed>/Events/V1.0` gives `<feed>/Events/V1.1`; `<root>/<feed>/V1.0` gives
+    /// `<root>/<feed>/V1.1`). A predecessor with no role folder of its own gets one where it is the feed's folder or a
+    /// group's in it, or, with the feed's folder unknown, where it has no version folder either.
+    ///
+    /// @param before     The predecessor's folder, taken apart ([#predecessor]).
+    /// @param feedFolder The feed's folder, or null when it isn't known.
+    /// @param role       The role.
+    /// @param version    The new version's folder name.
+    /// @return The new version's folder.
+    static String nextVersionPath(final Predecessor before,
+                                  final String feedFolder,
+                                  final String role,
+                                  final String version) {
+        final String base = before.base();
+        final boolean feedLevel = feedFolder != null
+                                  && (sameFolder(base, feedFolder) || sameFolder(parentOf(base), feedFolder));
+        final boolean roleFolder = before.role() != null || feedLevel
+                                   || (feedFolder == null && before.version() == null);
+        return base + (roleFolder
+                ? "/" + NullSafe.nonBlankStringElse(before.role(), role)
+                : "") + "/" + version;
+    }
+
+    /// @param before     A predecessor's folder, taken apart ([#predecessor]).
+    /// @param feedFolder The feed's folder, or null.
+    /// @param group      The build's source type group, or null.
+    /// @return The root its role is under: the folder holding its feed's folder (above a group's folder).
+    static String rootOf(final Predecessor before, final String feedFolder, final String group) {
+        String base = before.base();
+        if (feedFolder != null && sameFolder(parentOf(base), feedFolder)) {
+            // A group's folder in the feed's.
+            base = parentOf(base);
+        } else if (group != null && lastPart(base).equalsIgnoreCase(group) && base.contains("/")) {
+            base = parentOf(base);
+        }
+        return parentOf(base);
+    }
+
+    /// Where the production pipelines of each role of the sibling feeds are: those in folders named for a sibling
+    /// (`<root>/<sibling>/V1.0`, `<root>/<sibling>/<Role>/V1.0`, `<root>/<sibling>`), by the root most of them are
+    /// under. Only a sibling's own folders are read as its: a pipeline elsewhere tells nothing of the convention.
+    ///
+    /// @param pipelines The pipelines the user can view.
+    /// @param siblings  The sibling feeds' names and their folders' names, any case.
+    /// @param roleOf    A pipeline's role by its UUID, or null when it has none.
+    /// @param skip      True for a pipeline not to read: one in a build, say.
+    /// @return Each role's root, by role.
+    static Map<String, String> siblingRoots(final Collection<PipelineIndex.Entry> pipelines,
+                                            final Set<String> siblings,
+                                            final Function<String, String> roleOf,
+                                            final Predicate<PipelineIndex.Entry> skip) {
+        final Set<String> names = new LinkedHashSet<>();
+        siblings.forEach(name -> names.add(NullSafe.string(name).toLowerCase(Locale.ROOT)));
+        final Map<String, List<String>> bases = new LinkedHashMap<>();
+        int read = 0;
+        for (final PipelineIndex.Entry pipeline : pipelines) {
+            final String base = predecessor(pipeline.path()).base();
+            if (read >= MAX_SIBLINGS_READ || !names.contains(lastPart(base).toLowerCase(Locale.ROOT))
+                || skip.test(pipeline)) {
+                continue;
+            }
+            read++;
+            final String role = roleOf.apply(pipeline.uuid());
+            if (role != null && WriteGuard.ROLES.contains(role)) {
+                bases.computeIfAbsent(role, ignored -> new ArrayList<>()).add(base);
+            }
+        }
+        final Map<String, String> out = new LinkedHashMap<>();
+        bases.forEach((role, found) -> out.put(role, commonRoot(found)));
+        return out;
+    }
+
+    // The root most of the folders are under: their parent, the most common one (the first of those as common).
+    private static String commonRoot(final List<String> bases) {
+        final Map<String, Integer> counts = new LinkedHashMap<>();
+        bases.forEach(base -> counts.merge(parentOf(base).toLowerCase(Locale.ROOT), 1, Integer::sum));
+        final int most = counts.values().stream().mapToInt(Integer::intValue).max().orElse(0);
+        return bases.stream()
+                .map(PromotionLayout::parentOf)
+                .filter(parent -> counts.get(parent.toLowerCase(Locale.ROOT)) == most)
+                .findFirst()
+                .orElse(null);
+    }
+
+    /// @param left  A folder, an explorer path.
+    /// @param right Another.
+    /// @return True if they are the same folder (any case, with or without System).
+    static boolean sameFolder(final String left, final String right) {
+        return left != null && right != null && normalised(left).equalsIgnoreCase(normalised(right));
+    }
+
+    /// Puts each document of a role in its role's and version's folder (decided by the user, 2026-11-17): a pipeline by
+    /// the version its name holds ([#FIRST_VERSION] when it holds none, with a warning), a new version beside its
+    /// predecessor unless its role's root was changed; a shared module by its own version; the role's other documents
+    /// with the pipeline they belong to: of their group, the one whose version their name holds, else the one sharing
+    /// most of their name. A document with nowhere to go is left so, for the caller to name.
+    ///
+    /// @param plan       The promotion's steps, each document of a role in its source's folder: changed in place.
+    /// @param rootByRole Each role's root, by role; none for the feed's own.
+    /// @param feedFolder The source's own folder, or null when it isn't known.
+    /// @param buildGroup The build's source type group, or null.
+    /// @param groupOf    The source type group a step's document is laid out under, or null.
+    /// @return What the layout warns of, for the user.
+    List<String> layOut(final List<Step> plan,
+                        final Map<String, String> rootByRole,
+                        final String feedFolder,
+                        final String buildGroup,
+                        final Function<Step, String> groupOf) {
+        final List<String> warnings = new ArrayList<>();
+        final List<LaidPipeline> pipelines = new ArrayList<>();
+        for (int i = 0; i < plan.size(); i++) {
+            final Step step = plan.get(i);
+            if (!MOVE.equals(step.action()) || !isRole(step.role())
+                || !PipelineDoc.TYPE.equals(step.doc().get("type"))) {
+                continue;
+            }
+            final String name = String.valueOf(step.doc().get("name"));
+            final Optional<String> token = VersionNames.token(name);
+            if (token.isEmpty()) {
+                warnings.add("Pipeline '" + name + "' has no version in its name (e.g. -V1.0-): placed in "
+                             + FIRST_VERSION + ".");
+            }
+            final String version = token.orElse(FIRST_VERSION);
+            final String group = groupOf.apply(step);
+            final String role = step.role();
+            final String base = feedFolder != null
+                    ? feedFolder
+                    : step.target();
+            if (base == null) {
+                // Nowhere to lay it out: named with the others that have no destination.
+                continue;
+            }
+            final Optional<String> before = predecessorFolder(step.doc());
+            String target = rolePath(base, rootByRole.get(role), group, role, version);
+            if (before.isPresent()) {
+                final Predecessor predecessor = predecessor(before.get());
+                final String root = rootByRole.get(role);
+                if (root == null || sameFolder(root, rootOf(predecessor, feedFolder,
+                        buildGroup))) {
+                    target = nextVersionPath(predecessor, feedFolder, role, version);
                 }
             }
-        });
-        final Map<String, String> out = new LinkedHashMap<>();
-        joins.forEach((place, versions) -> {
-            if (versions.size() == 1) {
-                out.put(place, versions.iterator().next());
+            plan.set(i, step.withTarget(target));
+            pipelines.add(new LaidPipeline(role, group, name, version, target));
+        }
+        for (int i = 0; i < plan.size(); i++) {
+            final Step step = plan.get(i);
+            final String role = step.role();
+            if (!MOVE.equals(step.action()) || role == null
+                || PipelineDoc.TYPE.equals(step.doc().get("type")) && isRole(role)) {
+                continue;
             }
-        });
-        return out;
+            final String name = String.valueOf(step.doc().get("name"));
+            if (MODULE_ROLES.contains(role)) {
+                if (step.target() != null) {
+                    plan.set(i, step.withTarget(rolePath(step.target(), null, null, role,
+                            VersionNames.moduleVersion(name))));
+                }
+                continue;
+            }
+            final String group = groupOf.apply(step);
+            final Optional<LaidPipeline> with = belongsTo(pipelines, role, group, name);
+            final String base = feedFolder != null
+                    ? feedFolder
+                    : step.target();
+            if (with.isPresent()) {
+                plan.set(i, step.withTarget(with.get().target()));
+            } else if (base != null) {
+                plan.set(i, step.withTarget(rolePath(base, rootByRole.get(role), group, role,
+                        VersionNames.token(name).orElse(FIRST_VERSION))));
+            }
+        }
+        return warnings;
+    }
+
+    // Whether a role (or null) is one of WriteGuard.ROLES.
+    private static boolean isRole(final String role) {
+        return role != null && WriteGuard.ROLES.contains(role);
+    }
+
+    /// @param doc A document, as the build lists it.
+    /// @return Its predecessor's folder, for a new version; empty for a document that is no new version, or one gone.
+    Optional<String> predecessorFolder(final Map<String, Object> doc) {
+        final Object versionOf = doc.get("version_of");
+        return versionOf == null
+                ? Optional.empty()
+                : places.find(String.valueOf(versionOf)).flatMap(places::folderOf);
+    }
+
+    // The pipeline a role's other document belongs with: of its group, the one whose version its name holds, else
+    // the one whose name it shares most of, else the first.
+    private static Optional<LaidPipeline> belongsTo(final List<LaidPipeline> pipelines,
+                                                    final String role,
+                                                    final String group,
+                                                    final String name) {
+        List<LaidPipeline> candidates = pipelines.stream().filter(p -> p.role().equals(role)).toList();
+        final List<LaidPipeline> grouped = candidates.stream().filter(p -> Objects.equals(p.group(), group)).toList();
+        if (!grouped.isEmpty()) {
+            candidates = grouped;
+        }
+        if (candidates.isEmpty()) {
+            return Optional.empty();
+        }
+        final Optional<String> token = VersionNames.token(name);
+        if (token.isPresent()) {
+            final Optional<LaidPipeline> same = candidates.stream()
+                    .filter(p -> p.version().equalsIgnoreCase(token.get()))
+                    .findFirst();
+            if (same.isPresent()) {
+                return same;
+            }
+        }
+        return candidates.stream().max(Comparator.comparingInt(p -> sharedStart(p.name(), name)));
+    }
+
+    // How many characters two names start with in common, any case.
+    private static int sharedStart(final String left, final String right) {
+        int n = 0;
+        while (n < left.length() && n < right.length()
+               && Character.toLowerCase(left.charAt(n)) == Character.toLowerCase(right.charAt(n))) {
+            n++;
+        }
+        return n;
+    }
+
+    /// @param warnings What the layout warns of.
+    /// @return Them, as the tree's last lines; nothing for none.
+    static String warningsNote(final List<String> warnings) {
+        return warnings.isEmpty()
+                ? ""
+                : "\n\n" + String.join("\n", warnings);
     }
 
     /// Where a promotion puts each document, as a tree of the destination folders (new folders marked), with the
@@ -304,47 +507,21 @@ class PromotionLayout {
         return path.substring(0, end);
     }
 
-    // The places that mean a version's folder: its predecessor's folder and the version folder's parent, as
-    // explorer paths from System.
-    private static List<String> placesMeant(final String folder, final String version) {
-        final List<String> meant = new ArrayList<>(List.of(folder, parentOf(version)));
-        if (folder.contains("/") && WriteGuard.ROLES.contains(folder.substring(folder.lastIndexOf('/') + 1))) {
-            // The predecessor in a role subfolder its promotion kept (…/Acme/Indexing): the source's folder is
-            // meant too (seen in e2e: v2's documentation and dashboard, given …/Acme, left out of Indexing/v2).
-            meant.add(parentOf(folder));
-        }
-        return meant.stream().map(PromotionLayout::normalised).toList();
-    }
-
-    // In an aggregated feed's build, the folder holding the group folder the predecessor is in (or in a role or
-    // version subfolder of it): the feed's folder. Any group's, not only the build's own: a promoted pipeline is
-    // copied only as a new version (decided by the user, 2026-11-17), so a build of one group may process with a new
-    // version of another's (seen in e2e: it went in the build's group's folder), and a new version's predecessor
-    // may itself be in a version folder (seen in e2e: v3 put in the group's folder, not beside v2's).
-    private static Optional<String> groupParent(final String folder, final String group) {
-        if (group == null) {
-            return Optional.empty();
-        }
-        String at = withoutLast(folder, last -> WriteGuard.ROLES.contains(last));
-        at = withoutLast(at, last -> VERSION.matcher(last).matches());
-        at = withoutLast(at, last -> WriteGuard.ROLES.contains(last));
-        return at.contains("/")
-                ? Optional.of(parentOf(at))
-                : Optional.empty();
-    }
-
-    // The path without its last folder where that folder is one the test matches.
-    private static String withoutLast(final String path, final Predicate<String> matches) {
-        return path.contains("/") && matches.test(path.substring(path.lastIndexOf('/') + 1))
-                ? parentOf(path)
-                : path;
-    }
-
-    private static String normalised(final String place) {
+    /// @param place An explorer path, with or without System.
+    /// @return It from System, its folders' names stripped.
+    static String normalised(final String place) {
         return String.join("/", WriteGuard.folderParts(place));
     }
 
-    private static String parentOf(final String path) {
+    /// @param path An explorer path.
+    /// @return Its last folder's name.
+    static String lastPart(final String path) {
+        return path.substring(path.lastIndexOf('/') + 1);
+    }
+
+    /// @param path An explorer path.
+    /// @return The folder holding it; the path itself at the top.
+    static String parentOf(final String path) {
         final int slash = path.lastIndexOf('/');
         return slash < 0
                 ? path
@@ -355,11 +532,23 @@ class PromotionLayout {
     // --------------------------------------------------------------------------------
 
 
-    /// Each new version's folder.
+    /// A pipeline as laid out.
     ///
-    /// @param proposed The version folder by document UUID.
-    /// @param beside   The version folders by predecessor's folder.
-    record VersionFolders(Map<String, String> proposed, Map<String, Set<String>> beside) {
+    /// @param role    Its role.
+    /// @param group   Its source type group, or null.
+    /// @param name    Its name.
+    /// @param version Its version folder's name.
+    /// @param target  Its folder.
+    private record LaidPipeline(String role, String group, String name, String version, String target) {
+
+    }
+
+    /// A predecessor's folder taken apart.
+    ///
+    /// @param base    The folder above its role and version folders: its feed's, or a group's.
+    /// @param role    The role folder taken off, or null.
+    /// @param version The version folder taken off, or null.
+    record Predecessor(String base, String role, String version) {
 
     }
 

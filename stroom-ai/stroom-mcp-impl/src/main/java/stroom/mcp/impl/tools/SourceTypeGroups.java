@@ -599,9 +599,14 @@ class SourceTypeGroups {
 
     /// @param feed  An aggregated feed's name.
     /// @param group One of its source type groups.
-    /// @return The name its pipeline is given by default: `<feed> <group>`.
+    /// @return The name its pipeline is given by default: `<feed> <group>`, with ` V1.0` after it where neither
+    /// holds a version (decided by the user, 2026-11-17: promotion files a pipeline by the version in its name, and a
+    /// later version's name is proposed from it).
     static String pipelineName(final String feed, final String group) {
-        return feed + " " + group;
+        final String name = feed + " " + group;
+        return VersionNames.token(name).isPresent()
+                ? name
+                : name + " " + PromotionLayout.FIRST_VERSION;
     }
 
     /// Saves the group in the registry: its rows set `translated`, naming the group, its XSLT, its pipeline (by the

@@ -106,8 +106,12 @@ class TestE2eTranslation extends AbstractE2eTest {
         assertThat(result).doesNotContainKey("promoted_with_warnings");
         final List<String> promoted = strings(result, "promoted");
         assertThat(promoted).hasSizeGreaterThanOrEqualTo(5);
-        // Asked for by the user: the same layout they approved, and a link to open each folder in Stroom.
-        assertThat(String.valueOf(result.get("layout"))).startsWith(dest + "/");
+        // Asked for by the user: the same layout they approved, and a link to open each folder in Stroom. Role first,
+        // then version (decided by the user, 2026-11-17): the pipeline under the feed's folder, its name holding no
+        // version, so V1.0.
+        final String placed = dest + "/Events/V1.0";
+        assertThat(String.valueOf(result.get("layout"))).startsWith(dest + "/")
+                .contains("has no version in its name (e.g. -V1.0-): placed in V1.0.");
         assertThat(list(result, "folders")).anySatisfy(folder -> {
             final Map<String, Object> shown = (Map<String, Object>) folder;
             assertThat(shown).containsEntry("folder", dest);
@@ -137,7 +141,7 @@ class TestE2eTranslation extends AbstractE2eTest {
         // No minimum creation time (asked for by the user): enabled, it processes the feed's existing data too.
         assertThat(stored.isEnabled()).isFalse();
         assertThat(stored.getMinMetaCreateTimeMs()).isNull();
-        assertThat(folderOf(csv.pipelineUuid())).isEqualTo(dest);
+        assertThat(folderOf(csv.pipelineUuid())).isEqualTo(placed);
         assertThat(tags(csv.pipelineUuid())).containsExactly("mcp-generated");
 
         // Documented again after promotion (seen in VS Code): through a working copy, written back by promoting
@@ -206,8 +210,9 @@ class TestE2eTranslation extends AbstractE2eTest {
         assertThat(readXslt((String) xsltCopy.get("uuid")).getData()).contains("Interactive user logon");
         assertThat(readXslt(csv.xsltUuid()).getData()).contains("<Description>User logon</Description>")
                 .doesNotContain("Interactive user logon");
-        assertThat(folderOf(copy.get("uuid").toString())).startsWith(dest);
-        assertThat(folderOf(csv.pipelineUuid())).isEqualTo(dest);
+        // A sibling version folder of the original's, in its role's folder.
+        assertThat(folderOf(copy.get("uuid").toString())).startsWith(dest + "/Events/V");
+        assertThat(folderOf(csv.pipelineUuid())).isEqualTo(placed);
         assertThat(documentsNamed(csv.pipelineName() + " backup", "XSLT")).isEmpty();
     }
 
@@ -221,18 +226,22 @@ class TestE2eTranslation extends AbstractE2eTest {
         final String feedUuid = (String) createFeed(build, feed).get("uuid");
         json("save_text_converter", args("build", build, "name", feed, "converter_type", "DATA_SPLITTER",
                 "code", CSV_SPLITTER));
-        json("save_xslt", args("build", build, "name", feed + "-Events", "code", CSV_XSLT));
-        final String refused = refusal("promote_build", args("build", build,
-                "destinations", Map.of("Feed", "Feeds/Places")));
+        final Map<String, Object> xslt = json("save_xslt", args("build", build, "name", feed + "-Events", "code",
+                CSV_XSLT));
+        // With no folder for the feed, nothing has a place (with one, each role's documents are laid out under it:
+        // decided by the user, 2026-11-17).
+        final String refused = refusal("promote_build", args("build", build, "destinations", Map.of()));
         dump("promote_build refused", refused);
-        assertThat(refused).as("both, in one refusal").contains("No destination for", "TextConverter '" + feed
-                + "'", "XSLT '" + feed + "-Events'");
+        assertThat(refused).as("all, in one refusal").contains("No destination for", "Feed '" + feed + "'",
+                "TextConverter '" + feed + "'", "XSLT '" + feed + "-Events'");
         // Given without System/, as find_documents gives folders.
         final Map<String, Object> destinations = Map.of("Feed", "Feeds/Places", "TextConverter", "/Feeds/Places",
                 "XSLT", "Feeds/Places");
         final Map<String, Object> promoted = promote(build, destinations);
         dump("promote_build", promoted);
         assertThat(folderOf(feedUuid)).isEqualTo("System/Feeds/Places");
+        // Role first, then version: the build's XSLT under the feed's folder, whatever folder its type was given.
+        assertThat(folderOf(uuidOf(xslt))).isEqualTo("System/Feeds/Places/Events/V1.0");
     }
 
     // promote_build: the layout shown first (needs_review), then promoted once the user agrees in the form.

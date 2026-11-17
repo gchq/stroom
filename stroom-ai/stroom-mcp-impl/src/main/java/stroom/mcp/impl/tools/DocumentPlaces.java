@@ -24,6 +24,7 @@ import stroom.explorer.shared.ExplorerNode;
 import jakarta.inject.Inject;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -50,6 +51,11 @@ class DocumentPlaces {
             return Optional.empty();
         }
         return Optional.of(PipelineIndex.path(documentAccess, ref));
+    }
+
+    /// @return Every pipeline the user can view, by UUID, with its folder and parent ([PipelineIndex#read]).
+    Map<String, PipelineIndex.Entry> pipelines() {
+        return pipelineIndex.read();
     }
 
     /// @param uuid A document's UUID.

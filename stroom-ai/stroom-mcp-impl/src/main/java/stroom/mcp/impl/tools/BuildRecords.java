@@ -105,6 +105,8 @@ public class BuildRecords {
     public static final String EVENT_LOGGING_VERSION = "event_logging_version";
     /// The record's key for the indexing choices the user made in forms (`backend`, `naming`).
     public static final String INDEXING_CHOICES = "indexing_choices";
+    /// The key of the roots the user chose for each role's documents at promotion.
+    public static final String PROMOTION_ROOTS = "promotion_roots";
     /// The record's key for the kind of work the build was started as, when it was named: `events`, `discovery`,
     /// `reference` or `assessment` (a feed surveyed and its source types registered, nothing onboarded).
     public static final String KIND = "kind";
@@ -319,6 +321,36 @@ public class BuildRecords {
                     : new LinkedHashMap<>();
             choices.put(key, chosen);
             state.put(INDEXING_CHOICES, choices);
+        });
+    }
+
+    /// @param build A build's name.
+    /// @return The root the user chose at promotion for each role's documents, by role (e.g. `Indexing`:
+    /// `System/Elastic Indices`); empty when none was recorded.
+    public Map<String, Object> promotionRoots(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Map.of();
+        }
+        return load(build).get(PROMOTION_ROOTS) instanceof final Map<?, ?> chosen
+                ? asMap(chosen)
+                : Map.of();
+    }
+
+    /// Records where the user chose a role's documents go at promotion, so the approval (a later call) lays out what
+    /// they reviewed, and isn't asked again.
+    ///
+    /// @param build A build's name.
+    /// @param role  The role, e.g. `Indexing`.
+    /// @param root  The folder chosen, from System.
+    /// @return The record as saved.
+    public Map<String, Object> rememberPromotionRoot(final String build, final String role, final String root) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> {
+            final Map<String, Object> roots = state.get(PROMOTION_ROOTS) instanceof final Map<?, ?> earlier
+                    ? new LinkedHashMap<>(asMap(earlier))
+                    : new LinkedHashMap<>();
+            roots.put(role, root);
+            state.put(PROMOTION_ROOTS, roots);
         });
     }
 
