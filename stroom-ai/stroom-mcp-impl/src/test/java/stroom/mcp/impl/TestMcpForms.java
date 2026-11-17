@@ -116,6 +116,12 @@ class TestMcpForms {
         waiting.add(CompletableFuture.supplyAsync(() -> forms.ask(session(BOB), exchange, "?",
                 McpForms.NO_FIELDS)));
         waitFor(() -> forms.waitingCount() == 3);
+        // A form is counted before it is shown: wait for Bob's to be shown too, or his answer is never sent.
+        waitFor(() -> {
+            synchronized (answers) {
+                return answers.size() == 3;
+            }
+        });
 
         synchronized (answers) {
             answers.forEach(answer -> answer.tryEmitValue(new ElicitResult(Action.ACCEPT, Map.of(), null)));
