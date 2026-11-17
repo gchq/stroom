@@ -7,8 +7,18 @@ sources the user picks for it, any number of them (ExchangeOnline and MicrosoftT
 
 Terms:
 
-* **Source type field**: the one field that tells the sources apart, at any depth (`event.source`). Never a
-  combination: a second field that tells kinds apart within a source is a kind field, as usual. Or, only where the
+* **Source type field**: the one field that tells the sources apart, at any depth (`event.source`), or a
+  **reading** into the structured data a string field holds (JSON, encoded once or twice; XML; a syslog header's
+  `host`, `app`, `message`; key=value pairs), its format told per record: `event>logger_name` (`>` steps into the
+  held value, `.` into its objects or elements, three held values deep at most). The same name reads every format
+  that has it (a JSON key and a `logger_name=` pair alike); where formats name the source differently, readings
+  are tried in turn, joined by ` | `, one naming its format: `event>logger_name | event>xml:@logger` (`@` an XML
+  attribute, `#root` the root element's name). A held value of plain text is never read: its records are the
+  `(no value)` source type, offered as a row of its own. Never a combination of fields for now (a later phase), and
+  never a field naming kinds of event (an event type, action, operation): those are told apart within a source type
+  by `classify_kinds` and the rules, not split into source types. A source type by the held value's format alone
+  (`event>#format`: json, xml, syslog, kv, text) is a last resort, only on the user's word, after you have looked
+  for a name inside the held value that says the source. Or, only where the
   user names it, a stream meta attribute: `source_type_field=meta:<Attribute>` (a header each part of a stream
   carries, as `stroom:meta()` reads it), for a feed whose source is said by a header rather than a record's field.
   Every record of a part has the part's value, so a group passes over a whole part not of its own at once: the
@@ -31,7 +41,10 @@ Terms:
 ## How it starts
 
 * **On evidence**: when `survey_feed` finds a candidate source type field (several values whose records differ in
-  their fields or message formats), it asks the user to confirm it, as it confirms a kind field. The plan then adds
+  their fields or message formats), it asks the user to confirm it, as it confirms a kind field. Candidates inside
+  held values come with the formats they read and the records they give no value; a reading joining the held
+  formats is offered first. Where a format has no reading yet, propose one to the user and pass it as
+  `source_type_field=` as they confirm it. The plan then adds
   the `source_types` step. A feed of one source never sees it. If the user says the feed aggregates sources, say so
   when the survey asks.
 * **As an assessment**: `start_onboarding kind=assessment feed=<feed>` plans only the survey, the registry and

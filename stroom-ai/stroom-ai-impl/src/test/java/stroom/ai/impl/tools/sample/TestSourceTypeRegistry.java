@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.JsonValues;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +67,28 @@ class TestSourceTypeRegistry {
         assertThat(SourceTypeRegistry.read("# x")).isNull();
         assertThat(SourceTypeRegistry.read(null)).isNull();
         assertThat(SourceTypeRegistry.docName("ACME")).isEqualTo("ACME source types");
+    }
+
+    @Test
+    void aRegistryOfAHeldReadingSaysWhatItReadsAndAnOldOneOfAFieldStillReads() {
+        final Map<String, Object> held = new LinkedHashMap<>(registry());
+        held.put("field", "event>logger_name | event>xml:@logger");
+        final List<Map<String, Object>> rows = new ArrayList<>(JsonValues.maps(held.get("rows")));
+        rows.add(SourceTypeRows.noValue().toMap());
+        held.put("rows", rows);
+
+        final String text = SourceTypeRegistry.render(held);
+
+        assertThat(text).contains("told apart by the field `event>logger_name | event>xml:@logger`")
+                .contains("logger_name inside the held field event")
+                .contains("a held value of plain text (or none) gives no value, matched by the (no value) row")
+                .contains("| 3 | (no value) | no value |");
+        assertThat(SourceTypeRegistry.rows(SourceTypeRegistry.read(text))).last().isEqualTo(SourceTypeRows.noValue());
+        // A registry written before readings names a field: read as that field alone.
+        final Map<String, Object> old = SourceTypeRegistry.read(SourceTypeRegistry.render(registry()));
+        assertThat(SourceTypeFields.valueOf(Map.of("LogFilePath", "/var/log/mail/a"), (String) old.get("field")))
+                .isEqualTo("/var/log/mail/a");
+        assertThat(SourceTypeRegistry.render(registry())).doesNotContain("held field");
     }
 
     private static Map<String, Object> registry() {

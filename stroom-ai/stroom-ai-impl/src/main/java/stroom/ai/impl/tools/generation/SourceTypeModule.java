@@ -85,7 +85,7 @@ public record SourceTypeModule(String kind,
             "EventSource/Device");
     // How a row matches a value: exactly, by an anchored pattern, or by a list's item.
     private static final List<String> MATCHES = List.of(SourceTypeRows.VALUE, SourceTypeRows.PATTERN,
-            SourceTypeRows.MEMBER);
+            SourceTypeRows.MEMBER, SourceTypeRows.NONE);
     private static final Pattern NCNAME = Pattern.compile("[A-Za-z_][\\w.-]*", Pattern.UNICODE_CHARACTER_CLASS);
 
     /// Fills in empty lists for null ones.

@@ -3084,7 +3084,8 @@ kept still reads (see `SurveyDoc` under "Sample analysis").
   are read whole, else 3: seen in testing, a feed's latest streams uploaded again as one stream of five parts was
   surveyed through three), `max_records_per_stream` (10 to 10,000), `examples_per_shape` (1 to 10,
   default 2), `build`; as the user said: `kind_field`, `read_deeper` (no forms), `accept_as_is`,
-  `source_type_field` (`none` for one source; `meta:<Attribute>` for a stream meta attribute, below), `aggregated`
+  `source_type_field` (`none` for one source; `meta:<Attribute>` for a stream meta attribute, below; a reading into
+  held values, below), `aggregated`
   (below); `find` (a registry row's name, below).
 * **Returns**: `feed`, `format`, `time_range`, `streams_read`, `records_read`, `records_in` (an XML document's root
   with its namespace, which the examples inherit), `saturated`, `coverage`, `per_stream` (each stream's records,
@@ -3123,13 +3124,34 @@ in a form (`Which field says which source a record came from?`, the candidates b
 feed: one source`); without forms, `status: needs_source_type_field` with the candidates, nothing surveyed.
 `source_type_field` gives the user's answer (`none` for one source); `aggregated: true` says the user called the feed
 aggregated (weaker separation is enough, and a field of one shape a value is offered). The choice is kept in the
-survey state (`source_types`); the kind fields are then chosen with the source type field left out. Each record read
+survey state (`source_types`); the kind fields are then chosen with the source type field left out. A field named for
+kinds of event (an event type, action, operation, `SourceTypeFields.mayName`) is never a candidate. Each record read
 is counted by its value (`SourceTypeProfiles`: records, bytes, days, streams, message formats and parse failures,
 fields, shapes, kinds, levels, signals); the result's `source_types` gives the field and the records read of each
 value, and names `record_source_types`. A survey with no build notes a likely field (`aggregated_feed`) and offers an
 assessment build (`no_build`). A build that then translates the feed whole, with no source type group, keeps the values
 the survey read with its mapping, and its XSLT logs a value outside them once a stream (`build_translation_xslt`, a
 feed translated whole).
+
+**A source type read inside a held value** (decided 2026-11-17, built 2026-11-18). The source type field may be a
+reading (`SourceTypeReading`): a field, then `>` into the structured data its string value holds (`HeldText`: JSON,
+encoded once or twice; XML; an RFC 5424 or RFC 3164 syslog header's `host`, `app`, `message`; two or more key=value
+pairs; else text, never read), its format told per record, then `.` into its objects or elements
+(`event>payload.logger_name`), at most three held values deep (`event>payload>inner>@n`). A step's names read whichever
+format the record holds (a JSON key, an XML element below the root by local name, a key=value key, a syslog field);
+`xml:`, `json:`, `kv:` or `syslog:` names one format; `@name` an XML attribute, `#root` the root's name; `#format` the
+held format itself (a last resort, the user's only, never offered). Readings tried in turn are joined by ` | `, the
+first with a value giving it. The head's candidates include the names inside held values (`HeldText.expand`,
+`HeldCandidates`), each judged over the records whose held field is in a format it is seen in (most must hold it, and
+a quarter of all records), with the records' shapes taken with the held field's structure; a held field whose formats
+name the source differently is offered first a reading joining them (the best name, then for each format it misses a
+name of that format whose values are like its own, a value in common or both structured names, qualified by its
+format: `event>logger_name | event>xml:@logger`); a record's own field comes first unless a held reading separates
+better by 0.1. The form says
+each held candidate's formats and its records with no value; without forms each candidate gives `formats` and
+`no_value`, and `held` says how readings work. A reading the user gives is checked (`SourceTypeReadings`): its syntax
+(refused saying why), its fields spelt as the records spell them, and refused when it reads no value from any record
+read (naming the held formats seen). Records with no value are the `(no value)` row's (`record_source_types`).
 
 **A stream meta attribute as the source type field.** Only where the user names it, `source_type_field=meta:<Attribute>`
 (never found unasked): the attribute each part of a stream carries in its meta (its receipt headers, what
@@ -3201,7 +3223,11 @@ row every value of which an earlier row takes). A list-member row (`match: membe
 value split on its `separator` (inferred from the values seen, kept on the row), each item stripped of XML's white
 space and compared exactly (case and all). A registry already in the build, or beside the feed, is carried on from:
 its rows and statuses kept, values it lacks added as `new` (a row a value; where its rows are a list's items, a row for
-the value's rarest item no row has). Rows given again keep the registry's translated or placed rows (those with a group
+the value's rarest item no row has). Where the survey read records with no value (a held value of plain text, the
+held field or the field missing), the `(no value)` row (`match: none`, `SourceTypeRows.NONE`, matching only records
+with no value) is added last, unless the rows are given (`(no value)` gives it); it may be in a scope like any other
+source type, and a group translating it selects records whose reading finds nothing. Rows given again keep the
+registry's translated or placed rows (those with a group
 or pipeline) they leave out, each where it was in the order; `remove` drops rows by name. Removing a translated or
 placed row, or a changed value or pattern on a translated row, is confirmed by the user in one form (plain text,
 listed as `to_confirm` in the review), and refused for a translated row where no form can be shown; a translated row
@@ -3251,7 +3277,7 @@ over. The review is bound to the table (`Consent.wasReviewed`): other rows, or c
   user a stream id they know, or a search, both `survey_feed find=`), `hint`, `next`.
 * **Refuses**: no `feed`; another build open on the feed (one open build per aggregated feed, under
   `start_onboarding`); no source type field known (`survey_feed` first); no values counted; a row that is neither
-  `name = value`, `name ~ ^pattern` nor `name ∈ item` (`name in item`); rows that can't be used (`These rows can't be used: ...`); a patterns answer
+  `name = value`, `name ~ ^pattern`, `name ∈ item` (`name in item`) nor `(no value)`; rows that can't be used (`These rows can't be used: ...`); a patterns answer
   that is neither; a scope naming a source type not offered; `scope` without `group`; with forms, no `group` to
   suggest; a group with no name, or a new one with no source type chosen (`scope=[]` naming a new group, or no group); `dropped` without `drop_reason`, or naming no source type
   of the registry.
@@ -4809,7 +4835,15 @@ part, and `stroom:meta()` reads the part's, in stepping and processing alike): a
 handed to the group's mode; any other part's records are passed over whole, never judged one by one (no pass-over
 template). A group on a record's field judges each record as below. It reads a record's source type value as the tools do
 (`SourceTypeFields.valueOf`): stripped of the white space around it, and no value for `-`, `null`, `none` or `n/a`
-(any case), so processing and the survey count the same records as each source type. Every other record (another
+(any case), so processing and the survey count the same records as each source type. A group whose field is a
+reading into held values (`SourceTypeReadingXslt`) reads it with functions of its own (mode-prefixed): each held
+value's format told by the tools' rules in their order with their regular expressions (`HeldText`: `json-to-xml`
+of an object or of a JSON string holding one, `parse-xml`, the syslog headers, `tokenize()` counting pairs), then
+stepped into as the tools step (JSON keys; XML elements and attributes by local name, the first in document order;
+a key's first `key=` value; a syslog field), each reading's value normalised, the first with a value taken; the
+`(no value)` row matches an empty value (`$value = ''`). A reading that isn't one is refused (`groupProblems`). Parity
+with the tools is tested over held JSON (once and twice encoded), XML, key=value, syslog, two and three held values
+deep, plain text and missing or malformed held fields (`TestSourceTypeReadingParity`). Every other record (another
 group's, parked, dropped, or a value no row matches) is passed over, its record's number read so the group's log
 lines name the right records, never logged nor warned of: an INFO line a document of the records passed over
 (`XsltGenerator.PASSED_OVER`, written by group XSLTs generated before 2026-11-15) made Stroom write an Error stream

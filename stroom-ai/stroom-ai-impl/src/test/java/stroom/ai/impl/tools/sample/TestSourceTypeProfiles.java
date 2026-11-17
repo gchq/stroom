@@ -93,6 +93,25 @@ class TestSourceTypeProfiles {
     }
 
     // The records counted as one stream's, its size ten times the bytes of the records read.
+    @Test
+    void recordsWithNoValueAreTheNoValueRowsProfile() {
+        final SourceTypeProfiles profiles = new SourceTypeProfiles("event>logger_name");
+        final List<Map<String, Object>> records = HeldFixtures.wrapped(24);
+        for (int i = 0; i < records.size(); i++) {
+            profiles.add(records.get(i), ToolJson.dumps(records.get(i)), 1, 0, i);
+        }
+        final Map<String, Object> state = SourceTypeProfiles.merge(null, profiles.toState(Map.of()));
+        final List<SourceTypeRows.Row> rows = List.of(new SourceTypeRows.Row("Auth", SourceTypeRows.VALUE,
+                "com.x.Auth"), SourceTypeRows.noValue());
+
+        // The XML records name their logger in an attribute this reading doesn't read, and a sixth are text.
+        assertThat(SourceTypeProfiles.noValueRecords(state)).isEqualTo(8);
+        assertThat(SourceTypeProfiles.valueCounts(state)).containsOnlyKeys("com.x.Auth", "com.x.Db", "com.x.Mail");
+        assertThat(SourceTypeProfiles.summarise(state, rows).get(SourceTypeRows.NO_VALUE))
+                .containsEntry("records_read", 8L);
+        assertThat(SourceTypeProfiles.noValueRecords(Map.of())).isZero();
+    }
+
     private static Map<String, Object> counted(final List<Map<String, Object>> records, final long stream) {
         final SourceTypeProfiles profiles = new SourceTypeProfiles("source");
         profiles.streamCreated(stream, 1_762_732_800_000L);

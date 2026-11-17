@@ -292,6 +292,12 @@ public final class SourceTypeProfiles {
         return out;
     }
 
+    /// @param state The survey state's source types.
+    /// @return The records the survey read with no value of the source type field (the `(no value)` source type's).
+    public static long noValueRecords(final Map<String, Object> state) {
+        return number(JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(state.get(VALUES)).get("")).get("records"));
+    }
+
     /// Each row's profile, its values' counts summed: the first row matching a value takes it.
     ///
     /// @param state The survey state's source types.

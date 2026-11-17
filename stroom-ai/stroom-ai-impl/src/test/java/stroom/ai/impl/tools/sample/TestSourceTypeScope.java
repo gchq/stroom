@@ -238,6 +238,25 @@ class TestSourceTypeScope {
         assertThat(MAIL.filter(text, Map.of("path", "/var/log/mail/x")).kept()).isZero();
     }
 
+    @Test
+    void aScopeReadsAHeldReadingAndMayTakeTheRecordsWithNoValue() {
+        final List<SourceTypeRows.Row> rows = List.of(new SourceTypeRows.Row("auth", SourceTypeRows.VALUE,
+                "com.x.Auth"), new SourceTypeRows.Row("db", SourceTypeRows.VALUE, "com.x.Db"),
+                SourceTypeRows.noValue());
+        final SourceTypeScope texts = new SourceTypeScope("b1", "event>logger_name | event>xml:@logger", rows,
+                List.of(SourceTypeRows.NO_VALUE, "db"));
+
+        assertThat(texts.value(Map.of("event", "{\"logger_name\": \"com.x.Db\"}"))).isEqualTo("com.x.Db");
+        assertThat(texts.inScope(Map.of("event", "logger_name=com.x.Db level=1"))).isTrue();
+        assertThat(texts.inScope(Map.of("event", "{\"logger_name\": \"com.x.Auth\"}"))).isFalse();
+        // Plain text, and a record lacking the held field, are the (no value) source type's.
+        assertThat(texts.sourceType(Map.of("event", "User bob logged in"))).hasValue(SourceTypeRows.NO_VALUE);
+        assertThat(texts.inScope(Map.of("event", "User bob logged in"))).isTrue();
+        assertThat(texts.inScope(Map.of("other", "x"))).isTrue();
+        assertThat(texts.inScope(null)).isTrue();
+        assertThat(texts.exampleInScope(Map.of("text", "{\"event\": \"<Log logger='com.x.Db'/>\"}"))).isTrue();
+    }
+
     private static String line(final String path, final String message) {
         return "{\"path\": \"" + path + "\", \"message\": \"" + message + "\"}\n";
     }

@@ -236,6 +236,27 @@ class TestSourceTypeRows {
         assertThat(MAIL.toMap()).doesNotContainKey("separator");
     }
 
+    @Test
+    void theNoValueRowMatchesOnlyRecordsWithNoValue() {
+        final SourceTypeRows.Row none = SourceTypeRows.noValue();
+        final List<SourceTypeRows.Row> rows = List.of(new SourceTypeRows.Row("a", SourceTypeRows.VALUE, "a"), none);
+
+        assertThat(none.matches(null)).isTrue();
+        assertThat(none.matches("")).isTrue();
+        assertThat(none.matches("a")).isFalse();
+        assertThat(SourceTypeRows.first(rows, null)).hasValue(none);
+        assertThat(SourceTypeRows.first(rows, "a")).hasValueSatisfying(row -> assertThat(row.name()).isEqualTo("a"));
+        assertThat(SourceTypeRows.first(rows, "b")).isEmpty();
+        // Without it, a record with no value is no row's.
+        assertThat(SourceTypeRows.first(rows.subList(0, 1), null)).isEmpty();
+        assertThat(none.said()).isEqualTo("no value");
+        assertThat(SourceTypeRows.Row.of(none.toMap())).isEqualTo(none);
+        assertThat(SourceTypeRows.parse(" (No Value) ")).hasValue(none);
+        assertThat(SourceTypeRows.problems(rows, List.of("a"))).isEmpty();
+        assertThat(SourceTypeRows.problems(List.of(none, new SourceTypeRows.Row("other", SourceTypeRows.NONE, "")),
+                List.of())).singleElement().satisfies(problem -> assertThat(problem).contains("keep one"));
+    }
+
     private static Map<String, Long> counts(final Object... valuesAndCounts) {
         final Map<String, Long> out = new LinkedHashMap<>();
         for (int i = 0; i < valuesAndCounts.length; i += 2) {

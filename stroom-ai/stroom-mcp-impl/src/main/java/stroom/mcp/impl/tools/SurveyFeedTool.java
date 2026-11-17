@@ -44,6 +44,7 @@ import stroom.ai.impl.tools.sample.Shapes;
 import stroom.ai.impl.tools.sample.SourceTypeFields;
 import stroom.ai.impl.tools.sample.SourceTypeMeta;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
+import stroom.ai.impl.tools.sample.SourceTypeReading;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
@@ -86,6 +87,7 @@ import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 /// `survey_feed` - samples a feed's streams spread over its lifetime and groups their records into shapes (kinds of
@@ -342,7 +344,13 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                         .addStringProperty(SOURCE_TYPE_FIELD_ARG, "Only what the user said: the field that says "
                                                                   + "which source each record of an aggregated "
                                                                   + "feed came from (e.g. 'sourcetype', "
-                                                                  + "'event.Workload'), 'meta:<Attribute>' for a "
+                                                                  + "'event.Workload'), a reading into a field "
+                                                                  + "holding JSON, XML, a syslog header or "
+                                                                  + "key=value ('event>logger_name'; readings "
+                                                                  + "tried in turn joined by ' | ', e.g. "
+                                                                  + "'event>logger_name | event>xml:@logger'; "
+                                                                  + "'event>#format', by format alone, only as "
+                                                                  + "their last resort), 'meta:<Attribute>' for a "
                                                                   + "stream meta attribute (a header each part of a "
                                                                   + "stream carries, as stroom:meta reads it), or "
                                                                   + "'none' when they say the feed is one source. "
@@ -1100,6 +1108,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             if (saysOneSource(given)) {
                 return new SourceDecision(sourcesChosen(null, "user"), null, null, keptField != null);
             }
+            if (SourceTypeMeta.isMeta(given) && SourceTypeReading.isReading(given)) {
+                throw new ToolRefusal(SOURCE_TYPE_FIELD_ARG + " '" + given + "': a stream meta attribute is read "
+                                      + "whole, never stepped into or tried in turn with another reading.");
+            }
             final String field = SourceTypeMeta.isMeta(given)
                     ? asked.attributes().field(given, asked.streams(), asked.maxParts())
                     : spelt(given, heads.get()).orElseThrow(() -> new ToolRefusal(
@@ -1176,13 +1188,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                || text.startsWith("not aggregated");
     }
 
-    // A field the user named, as the records spell it (matched ignoring case); the name as given when the head
-    // holds no structured records to check it against.
+    // A field the user named, as the records spell it (matched ignoring case), or a reading into held values
+    // (SourceTypeReadings); the name as given when the head holds no structured records to check it against.
     private static Optional<String> spelt(final String given, final List<Map<String, Object>> records) {
-        if (records.isEmpty()) {
-            return Optional.of(given);
-        }
-        return fieldsOf(records).stream().filter(name -> name.equalsIgnoreCase(given)).findFirst();
+        return SourceTypeReadings.spelt(given, records, SOURCE_TYPE_FIELD_ARG);
     }
 
     private static Set<String> fieldsOf(final List<Map<String, Object>> records) {
@@ -1206,8 +1215,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     // The form's message: which fields could say each record's source, in plain text.
     private static String sourceIntro(final String feed, final List<SourceTypeFields.Candidate> candidates) {
         final List<String> lines = new ArrayList<>();
-        candidates.forEach(candidate -> lines.add(candidate.label() + ": " + candidate.values().size()
-                                                  + " values over " + candidate.records() + " records"));
+        candidates.forEach(candidate -> lines.add(SourceTypeReadings.said(candidate)));
         return "Feed '" + feed + "' looks like it aggregates several sources: the records of each value of this "
                + "field differ in their fields or messages, and each holds kinds of event of its own:\n"
                + String.join("\n", lines) + "\nConfirmed, the survey profiles each source type, and the build's "
@@ -1220,9 +1228,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("feed", feed);
         result.put("status", "needs_source_type_field");
-        result.put("candidates", candidates.stream().map(candidate -> entry("field", candidate.field(), "values",
-                candidate.values().subList(0, Math.min(10, candidate.values().size())), "records",
-                candidate.records())).toList());
+        result.put("candidates", candidates.stream().map(SourceTypeReadings::json).toList());
+        SourceTypeReadings.heldHint(candidates).ifPresent(hint -> result.put("held", hint));
         result.put("hint", "Nothing was surveyed yet. The feed looks like it aggregates several sources: the records "
                            + "of each value of these fields differ in their fields or messages. Ask the user in the "
                            + "chat which field says each record's source (show them the candidates and their "
@@ -1327,10 +1334,18 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         if (sourceField == null) {
             return Optional.of(KindFields.choose(records));
         }
+        // A reading's fields read whole are set aside; a held value's names aren't kind fields of the record.
+        final SourceTypeReading reading = SourceTypeReading.cached(sourceField);
+        final Set<String> aside = reading == null
+                ? Set.of(sourceField)
+                : reading.paths().stream()
+                        .filter(path -> path.held().isEmpty())
+                        .map(SourceTypeReading.Path::field)
+                        .collect(Collectors.toSet());
         final List<Map<String, Object>> without = records.stream()
                 .map(record -> {
                     final Map<String, Object> copy = new LinkedHashMap<>(record);
-                    copy.remove(sourceField);
+                    copy.keySet().removeAll(aside);
                     return copy;
                 })
                 .toList();

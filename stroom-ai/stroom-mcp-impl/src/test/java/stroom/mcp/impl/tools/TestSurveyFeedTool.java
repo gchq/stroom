@@ -1237,6 +1237,78 @@ class TestSurveyFeedTool {
     }
 
     // JSON lines wrapped with a source field, each source's messages in a format of its own.
+    @Test
+    void aSourceTypeHeldInsideAFieldIsOfferedAsAReadingAndOneTheUserGivesIsChecked() {
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, heldLines(72), false);
+
+        // Without forms: the reading joining the held field's formats is the first candidate, with the formats it
+        // reads and the records it gives no value.
+        final Map<String, Object> asking = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
+                                                     + "\"build\": \"acme-v1\"}"));
+        assertThat(asking).containsEntry("status", "needs_source_type_field");
+        final Map<String, Object> first = ((List<Map<String, Object>>) asking.get("candidates")).getFirst();
+        assertThat(first).containsEntry("field", "event>logger_name | event>xml:@logger")
+                .containsEntry("no_value", 12);
+        assertThat((Map<String, Object>) first.get("formats")).containsOnlyKeys("json", "kv", "xml");
+        assertThat(String.valueOf(asking.get("held"))).contains("(no value)", "last resort");
+
+        // Given as the user said it, spelt as the records spell the field, and counted by its values.
+        final Map<String, Object> given = json(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": "
+                                                    + "\"acme-v1\", \"source_type_field\": \"EVENT>logger_name | "
+                                                    + "event>xml:@logger\"}"));
+        final Map<String, Object> sources = (Map<String, Object>) given.get("source_types");
+        assertThat(sources).containsEntry("field", "event>logger_name | event>xml:@logger");
+        assertThat((Map<String, Object>) sources.get("records_read_by_value")).containsKeys("com.x.Auth",
+                "com.x.Db", "com.x.Xml");
+    }
+
+    @Test
+    void aHeldReadingThatIsNoneOrReadsNothingIsRefused() {
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, heldLines(36), false);
+
+        assertThat(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\", "
+                        + "\"source_type_field\": \"event>a>b>c>d\"}").text()).contains("isn't a reading", "at most 3");
+        assertThat(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\", "
+                        + "\"source_type_field\": \"event>nothing_here\"}").text())
+                .contains("reads no value from any of the", "plain text is never read");
+        assertThat(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\", "
+                        + "\"source_type_field\": \"nothing>logger_name\"}").text())
+                .contains("names no field of the records");
+        assertThat(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\", "
+                        + "\"source_type_field\": \"meta:Feed>x\"}").text()).contains("read whole");
+    }
+
+    // A wrapper whose `event` holds JSON naming its logger, key=value pairs, XML naming it in an attribute, or text.
+    private static String heldLines(final int count) {
+        final StringBuilder out = new StringBuilder();
+        for (int i = 0; i < count; i++) {
+            final boolean even = i / 6 % 2 == 0;
+            final String event = switch (i % 6) {
+                case 0, 1 -> even
+                        ? "{\"logger_name\": \"com.x.Auth\", \"action\": \"login\", \"user\": \"u" + i
+                          + "\", \"client\": \"10.0.0." + i % 9 + "\"}"
+                        : "{\"logger_name\": \"com.x.Auth\", \"action\": \"logout\", \"user\": \"u" + i
+                          + "\", \"session\": \"s" + i + "\"}";
+                case 2 -> even
+                        ? "{\"logger_name\": \"com.x.Db\", \"query\": \"select " + i + "\", \"rows\": " + i + "}"
+                        : "{\"logger_name\": \"com.x.Db\", \"query\": \"update " + i + "\", \"table\": \"t" + i % 4
+                          + "\"}";
+                case 3 -> even
+                        ? "logger_name=com.x.Db query=\"select " + i + "\" rows=" + i
+                        : "logger_name=com.x.Mail from=a" + i + "@x.org to=b@x.org size=" + i;
+                case 4 -> even
+                        ? "<Log logger=\"com.x.Xml\"><Op>read</Op><Path>/data/" + i + "</Path></Log>"
+                        : "<Log logger=\"com.x.Xml\"><Op>write</Op><Size>" + i + "</Size></Log>";
+                default -> "User u" + i + " logged in from the portal after " + i + " tries";
+            };
+            out.append("{\"system\": \"Teams\", \"host\": \"h").append(i % 3).append("\", \"event\": ")
+                    .append(JsonUtil.writeValueAsString(event, false)).append("}\n");
+        }
+        return out.toString();
+    }
+
     private static String wrappedLines(final int count) {
         final StringBuilder out = new StringBuilder();
         for (int i = 0; i < count; i++) {
