@@ -1556,8 +1556,9 @@ public class BuildPlan {
                     .map(p -> "'" + p.get("name") + "' (" + p.get("uuid") + ")")
                     .collect(Collectors.joining(", "));
             then = sources.getFirst() + " is translated now by " + shown + ". For its next version (V1.2 to V1.3, "
-                   + "say), or a change to it: copy_pipeline source_uuid=<it> rename={'V1.2': 'V1.3'} "
-                   + "(working_copy=true for a change in place), then build_translation_xslt uuid=<the copy's XSLT> "
+                   + "say), or a change to it: copy_pipeline source_uuid=<it> rename={'V1.2': 'V1.3'} (the user "
+                   + "chooses in its form a change in place or a new version, whose names, an Elasticsearch index's "
+                   + "among them, it proposes), then build_translation_xslt uuid=<the copy's XSLT> "
                    + "changes= only what changes (rebuild_mapping uuid=<it> first, if its XSLT keeps no mapping): "
                    + "what it does, its lookups and all, comes with the copy. Or, its translation written anew (a "
                    + "new schema version, say): survey_feed, draft_translation_mapping (its notes say what the "

@@ -105,14 +105,13 @@ class ProcessingSources {
         this.testIndexesProvider = testIndexes;
     }
 
-    /// Indexing pipelines of a build index into the build's own indexes only: one naming a production index is
-    /// pointed at the build's test index standing in for it ([BuildTestIndexes]), before it processes anything.
+    /// Indexing pipelines of a build index into the build's own indexes only: one naming a production Lucene index
+    /// is pointed at the build's test index standing in for it ([BuildTestIndexes]), before it processes anything.
+    /// A production Elasticsearch index is refused by the processing tools first ([ProductionIndexes]).
     ///
     /// @param pipeline The pipeline.
     /// @return The test indexes it now writes to; none for a pipeline that doesn't index, is in no build, or writes
     /// only to the build's own indexes.
-    /// @throws ToolRefusal for a copy of a production Elasticsearch indexing pipeline, which is stepped, not
-    ///                     processed, in the build.
     List<BuildTestIndexes.TestIndex> buildIndexesOnly(final DocRef pipeline) {
         if (testIndexesProvider == null || !pipelineOutputs.isIndexing(pipeline.getUuid())) {
             return List.of();

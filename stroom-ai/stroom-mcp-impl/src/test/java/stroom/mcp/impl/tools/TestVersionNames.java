@@ -1,0 +1,73 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.tools;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/// The names a new version is proposed, from the version token in the original's, whatever its shape.
+class TestVersionNames {
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "Acme-Events-V1.0-Indexing | Acme-Events-V1.1-Indexing | Acme-Events-V2.0-Indexing",
+            "Acme-Door-V1.2-Events     | Acme-Door-V1.3-Events     | Acme-Door-V2.0-Events",
+            "ACME-V1 - Indexing        | ACME-V2 - Indexing        | ACME-V2 - Indexing",
+            "acme-events-v1.0          | acme-events-v1.1          | acme-events-v2.0",
+            "Acme_v1.2.9               | Acme_v1.2.10              | Acme_v2.0.0",
+            // The last token is the version: an earlier one is part of the name.
+            "V2-Gateway-V1.4           | V2-Gateway-V1.5           | V2-Gateway-V2.0",
+            // No version token (Dev1 and IPv4 are words, not versions): one is added.
+            "Acme-Dev1-IPv4-Events     | Acme-Dev1-IPv4-Events-V2  | Acme-Dev1-IPv4-Events-V2",
+            "Acme-{feed}-Indexing      | Acme-V2-{feed}-Indexing   | Acme-V2-{feed}-Indexing"})
+    void theNextVersionBumpsTheLastPartAndTheMajorTheFirst(final String name, final String next, final String major) {
+        assertThat(VersionNames.next(name)).isEqualTo(next);
+        assertThat(VersionNames.nextMajor(name)).isEqualTo(major);
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "acme-events-v1    | acme-events-v2",
+            "acme_events_v9    | acme_events_v10",
+            "v3-acme           | v4-acme",
+            "acme-{type}-v1    | acme-{type}-v2",
+            "acme-events       | acme-events-v2",
+            // Before the first variable, not after what it stands for.
+            "acme-events{_suffix} | acme-events-v2{_suffix}",
+            "{feed}-events     | {feed}-events-v2",
+            "acme-{type}-events | acme-v2-{type}-events",
+            "ecs-acme-dev1     | ecs-acme-dev1-v2"})
+    void anIndexNamesVersionGoesUpOrIsAdded(final String index, final String next) {
+        assertThat(VersionNames.nextIndexName(index)).isEqualTo(next);
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            // The pipeline's change, where the document holds the same token.
+            "Acme-Events-V1.0-XSLT | V1.0 | V1.1 | Acme-Events-V1.1-XSLT",
+            // Its own token otherwise.
+            "Acme-Common-V3        | V1.0 | V1.1 | Acme-Common-V4",
+            "Acme helpers          | V1.0 | V1.1 | Acme helpers-V2"})
+    void aDocumentFollowsThePipelinesVersionChange(final String name,
+                                                   final String from,
+                                                   final String to,
+                                                   final String expected) {
+        assertThat(VersionNames.following(name, from, to)).isEqualTo(expected);
+    }
+}

@@ -24,6 +24,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -156,6 +158,60 @@ class TestPromotionProcessing {
         assertThat(actions.getLast().get("filter_id")).isEqualTo(23);
         assertThat(actions.getLast().get("after")).isEqualTo(List.of("drop-ecs-acme-v2"));
         assertThat(w.created.getLast().isEnabled()).isFalse();
+    }
+
+    @Test
+    void anOriginalAWorkingCopyWasWrittenBackOverKeepsItsLiveIndex() {
+        // Seen in a user's test: a production index was put up for dropping. A change in place goes on writing to
+        // the live index as before: never dropped.
+        promotedElastic();
+
+        final List<Map<String, Object>> made = w.promotion.createPromotionFilters(StroomLinks.CHAT, List.of(
+                new PromotionProcessing.Entry(IP, null, "Events", List.of(PIPELINE_TERM))), Set.of(), Set.of("ip"));
+
+        assertThat(String.valueOf(made.getFirst().get("before_enabling"))).contains("kept as it is (never dropped)")
+                .doesNotContain("DELETE");
+        assertThat(TestCreateProcessorFilterTool.actions(made.getFirst())).singleElement()
+                .satisfies(action -> assertThat(action.get("action")).isEqualTo("enable_processor_filter"));
+    }
+
+    @Test
+    void aNewVersionsOwnIndexIsDroppedOnlyWhileNothingElseClaimsIt() {
+        // Its own index (the free name the build made, holding only the sample), named by the promoted pipeline and
+        // the Elastic Index doc the build made for it: dropped first, as before.
+        promotedElastic();
+        w.world.add(ElasticIndexDoc.TYPE, "Acme-V2", w.world.folder("System/Feeds/Acme").uuid, "es-v2");
+        w.world.docs.put("es-v2", ElasticIndexDoc.builder().uuid("es-v2").name("Acme-V2").version("v0")
+                .indexName("ecs-acme-v2").build());
+        final PromotionProcessing.Entry entry = new PromotionProcessing.Entry(IP, null, "Events",
+                List.of(PIPELINE_TERM));
+
+        final List<Map<String, Object>> own = w.promotion.createPromotionFilters(StroomLinks.CHAT, List.of(entry),
+                Set.of("ip", "es-v2"), Set.of());
+
+        assertThat(String.valueOf(own.getFirst().get("before_enabling"))).contains("drops 'ecs-acme-v2' first");
+
+        // Another pipeline outside the build writes to it too: production's, and not dropped.
+        w.productionPipeline(new DocRef("Pipeline", "other", "Other-Indexing"), PipelineLayers.layer("other")
+                .property("elasticIndexingFilter", "indexName", "ecs-acme-v2"));
+
+        final List<Map<String, Object>> claimed = w.promotion.createPromotionFilters(StroomLinks.CHAT,
+                List.of(entry), Set.of("ip", "es-v2"), Set.of());
+
+        assertThat(String.valueOf(claimed.getFirst().get("before_enabling")))
+                .contains("'ecs-acme-v2' is not dropped: it is a production index")
+                .contains("pipeline 'Other-Indexing' writes to 'ecs-acme-v2'")
+                .doesNotContain("DELETE");
+        assertThat(TestCreateProcessorFilterTool.actions(claimed.getFirst())).singleElement()
+                .satisfies(action -> assertThat(action.get("action")).isEqualTo("enable_processor_filter"));
+    }
+
+    // IP, a promoted Elasticsearch indexing pipeline writing to ecs-acme-v2, with an agreed data stream template.
+    private void promotedElastic() {
+        w.listsEveryPipelineAndIndexDoc();
+        w.pipeline(IP, false, ProcessingWorld.withAgreed(ProcessingWorld.agreed(
+                "PUT _index_template/ecs-acme-v2\n{\"data_stream\": {}}")));
+        w.elastic("ip");
     }
 
     @Test

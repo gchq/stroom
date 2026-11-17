@@ -43,6 +43,7 @@ import stroom.processor.shared.QueryData;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.shared.ResultPage;
 
 import org.mockito.Mockito;
@@ -60,6 +61,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 
 /// The processing tools' world: the in-memory explorer and feeds of [FeedWorld], pipelines as Stroom runs them,
 /// streams the user may view, each pipeline's processor filters, and Stroom's processor filter and index services as
@@ -91,6 +93,11 @@ final class ProcessingWorld {
         lookedUp.add(cluster.getUuid() + ":" + indexName);
         return presences.getOrDefault(indexName, Presence.absent());
     });
+    // Which pipelines are templates: none, unless a test says.
+    final PipelineTemplates templates = Mockito.mock(PipelineTemplates.class);
+    final ProductionIndexes productionIndexes = new ProductionIndexes(new PipelineIndex(() -> feeds.docFinder,
+            world.documentAccess), world.documentAccess, world.guard(), existingIndexes, templates, world.records(),
+            new IndexTemplateAgreements(world.pipelineShapes, world.documentAccess));
     // The processor Stroom gives each filter made from now on.
     Processor processor = Processor.builder().id(70).enabled(true).build();
     // The builds' settings (stroom.ai.builds), changed by a test that needs to.
@@ -126,13 +133,17 @@ final class ProcessingWorld {
                 feeds.buildFeeds, feeds.feedNames);
         sources = new ProcessingSources(pipelineOutputs, streamProcessing, feeds.streamReader, pipelineDocs,
                 world.guard(), feeds.consent, feeds.plan, feeds.feedNames, outputFeeds);
+        sources.setTestIndexes(() -> new BuildTestIndexes(world.pipelineShapes, pipelineDocs, world.guard(),
+                world.records(), world.documentAccess, Mockito.mock(IndexFields.class),
+                Mockito.mock(KeptMappings.class)));
         approvals = new ProcessingApprovals(world.pipelineShapes, pipelineOutputs, agreements, pipelineDocs,
                 feeds.consent);
         indexingRuns = new IndexingRuns(world.pipelineShapes, world.guard(), streamProcessing,
-                () -> indexResource, streamId -> errorTexts.getOrDefault(streamId, ""), existingIndexes);
+                () -> indexResource, streamId -> errorTexts.getOrDefault(streamId, ""), existingIndexes,
+                productionIndexes);
         sampleStreamTexts = new SampleStreamTexts(feeds.streamReader, world.documentAccess);
         promotion = new PromotionProcessing(filterWrites, streamProcessing, pipelineOutputs, agreements,
-                indexingRuns, pipelineDocs, () -> FEED_MADE + 100_000_000L);
+                indexingRuns, pipelineDocs, productionIndexes, () -> FEED_MADE + 100_000_000L);
         wireStreams();
         wireFilters();
         Mockito.when(indexResource.deleteIndexShards(anyString(), any())).thenAnswer(inv -> {
@@ -171,6 +182,26 @@ final class ProcessingWorld {
                 .description(description).build();
         world.docs.put(ref.getUuid(), doc);
         return doc;
+    }
+
+    /// Has Stroom's doc finder list every pipeline and Elastic Index doc of the world, as it lists those the user can
+    /// view.
+    void listsEveryPipelineAndIndexDoc() {
+        for (final String type : List.of(PipelineDoc.TYPE, ElasticIndexDoc.TYPE)) {
+            Mockito.when(feeds.docFinder.findByName(eq(type), anyString(), anyBoolean())).thenAnswer(inv ->
+                    world.nodes.values().stream()
+                            .filter(node -> type.equals(node.type))
+                            .filter(node -> "*".equals(inv.getArgument(1)) || node.name.equals(inv.getArgument(1)))
+                            .map(BuildWorld.Node::docRef)
+                            .toList());
+        }
+    }
+
+    /// Adds a pipeline outside the workspace whose own layer is the one given (what the doc itself holds).
+    void productionPipeline(final DocRef ref, final PipelineLayers own) {
+        world.add(PipelineDoc.TYPE, ref.getName(), world.folder("System/Feeds/Acme").uuid, ref.getUuid());
+        world.docs.put(ref.getUuid(), PipelineDoc.builder().uuid(ref.getUuid()).name(ref.getName()).version("v0")
+                .pipelineData(own.data()).build());
     }
 
     /// @return The pipeline's document as it is now.

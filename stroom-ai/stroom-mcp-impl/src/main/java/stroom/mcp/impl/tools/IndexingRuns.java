@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
 import stroom.ai.impl.tools.StreamReader;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.docref.DocRef;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexResource;
@@ -87,6 +88,7 @@ class IndexingRuns {
     private final Provider<IndexResource> indexResourceProvider;
     private final ErrorText errorText;
     private final ExistingIndexes existingIndexes;
+    private final ProductionIndexes productionIndexes;
 
     /// @param pipelineShapes        Reads a pipeline as Stroom runs it.
     /// @param guard                 Says what is in a build.
@@ -96,15 +98,18 @@ class IndexingRuns {
     ///                              Elasticsearch's refusal of earlier writes is not read, and the index is
     ///                              taken to hold what the pipeline indexed before).
     /// @param existingIndexes       Looks an Elasticsearch index name up on its cluster.
+    /// @param productionIndexes     Says which Elasticsearch index names are production's.
     @Inject
     IndexingRuns(final PipelineShapes pipelineShapes,
                  final WriteGuard guard,
                  final StreamProcessing streamProcessing,
                  final Provider<IndexResource> indexResourceProvider,
                  final StreamReader streamReader,
-                 final ExistingIndexes existingIndexes) {
+                 final ExistingIndexes existingIndexes,
+                 final ProductionIndexes productionIndexes) {
         this(pipelineShapes, guard, streamProcessing, indexResourceProvider,
-                streamId -> streamReader.errorStreamText(streamId, ERROR_BYTES).text(), existingIndexes);
+                streamId -> streamReader.errorStreamText(streamId, ERROR_BYTES).text(), existingIndexes,
+                productionIndexes);
     }
 
     /// As the injected constructor, with how an Error stream's text is read given, for tests.
@@ -113,18 +118,50 @@ class IndexingRuns {
                  final StreamProcessing streamProcessing,
                  final Provider<IndexResource> indexResourceProvider,
                  final ErrorText errorText,
-                 final ExistingIndexes existingIndexes) {
+                 final ExistingIndexes existingIndexes,
+                 final ProductionIndexes productionIndexes) {
         this.pipelineShapes = pipelineShapes;
         this.guard = guard;
         this.streamProcessing = streamProcessing;
         this.indexResourceProvider = indexResourceProvider;
         this.errorText = errorText;
         this.existingIndexes = existingIndexes;
+        this.productionIndexes = productionIndexes;
     }
 
-    /// @param destination An Elasticsearch indexing pipeline's destination.
+    /// Refuses processing a build's Elasticsearch indexing pipeline into a production index ([ProductionIndexes]),
+    /// and the first run of a new version into an index name already taken: called before anything is looked up,
+    /// asked or processed. A new version's index name was checked free when copy_pipeline made it; checked again
+    /// here in case something has made that index since.
+    ///
+    /// @param pipeline    The pipeline.
+    /// @param destination Its Elasticsearch destination.
+    /// @param newVersion  True for the first run of a new version of a promoted pipeline (its build record's
+    ///                    `version_of`, and no processor filter yet).
+    /// @throws ToolRefusal if the index is production's, or a new version's is taken.
+    void refuseUnsafeIndex(final PipelineDoc pipeline,
+                           final Map<String, Object> destination,
+                           final boolean newVersion) {
+        productionIndexes.refuseProduction(pipeline, destination);
+        if (newVersion) {
+            final Optional<String> build = guard.buildOf(new DocRef(PipelineDoc.TYPE, pipeline.getUuid()));
+            final Optional<String> taken = build.flatMap(name -> productionIndexes.taken(name, destination,
+                    "Nothing was processed."));
+            if (taken.isPresent()) {
+                throw new ToolRefusal("Pipeline '" + pipeline.getName() + "' is a new version whose index name has "
+                                      + "been taken since it was made. " + taken.get() + " Give the new version "
+                                      + "the free name (update_pipeline, its elasticIndexingFilter's indexName, "
+                                      + "and its Elastic Index doc), then propose_index_template for it.");
+            }
+        }
+    }
+
+    /// @param pipeline    An Elasticsearch indexing pipeline.
+    /// @param destination Its destination.
     /// @return What its index name already stands for on its cluster, or why that isn't known.
-    Presence existingIndex(final Map<String, Object> destination) {
+    /// @throws ToolRefusal if the index is production's: what it holds is never put up for deletion.
+    Presence existingIndex(final PipelineDoc pipeline, final Map<String, Object> destination) {
+        productionIndexes.refuseProduction(pipeline, destination);
         return existingIndexes.check(destination);
     }
 
@@ -244,10 +281,14 @@ class IndexingRuns {
     /// @param lucene      Its Lucene index, or null.
     /// @param filters     Its processor filters.
     /// @return The details for the approval, and whether the build's own Lucene index is emptied first.
+    /// @throws ToolRefusal for a production Elasticsearch index: it is never put up for dropping.
     FreshIndex freshIndex(final PipelineDoc pipeline,
                           final Map<String, Object> destination,
                           final DocRef lucene,
                           final List<ProcessorFilter> filters) {
+        if (destination != null) {
+            productionIndexes.refuseProduction(pipeline, destination);
+        }
         final Map<String, String> details = new LinkedHashMap<>();
         final Optional<String> refused = destination != null
                 ? writesRefused(pipeline.getUuid(), filters)

@@ -413,8 +413,8 @@ Triggered by new samples the current XSLT doesn't handle, a reported issue, or a
 flowchart TD
     A["Locate the pipeline: read_document, describe_feed"] --> B["start_build feeds=[feed]"]
     B --> C{"The user: new version<br/>or change in place?"}
-    C -- "new version" --> NV["copy_pipeline rename={'V1.2':'V1.3'}<br/>or create_pipeline version_of="]
-    C -- "in place" --> WC["copy_pipeline working_copy=true"]
+    C -- "new version" --> NV["copy_pipeline (names proposed: V1.2 to V1.3,<br/>index -v1 to -v2, checked free)<br/>or create_pipeline version_of="]
+    C -- "in place" --> WC["copy_pipeline (a working copy)"]
     NV & WC --> D["Change: build_translation_xslt changes="]
     D --> E["summarise_fix fixed_pipeline_uuid=<copy><br/>pipeline_uuid=<original>"]
     E -- "other paths change" --> D
@@ -422,11 +422,36 @@ flowchart TD
     F --> G["Document, promote<br/>(in place: backup, write back)"]
 ```
 
-* The plan offers both: `copy_pipeline source_uuid=<it> rename={'V1.2': 'V1.3'}` (with `working_copy=true` for a
-  change in place), or a translation written anew with `create_pipeline version_of=` (a child of the previous
-  version's template, with its converter, settings and, if the user keeps them with `keep_references=`, its
-  reference data). The agent asks the user which. The names are the agent's proposal, confirmed in the tool's form;
-  nothing works out the next version number.
+* The plan offers both: `copy_pipeline source_uuid=<it>`, or a translation written anew with `create_pipeline
+  version_of=` (a child of the previous version's template, with its converter, settings and, if the user keeps
+  them with `keep_references=`, its reference data).
+* **Change in place or new version is the user's (2026-11-17).** `copy_pipeline` of any promoted pipeline (one
+  outside every build) asks it in a form, once per pipeline and build (`pipeline_choices` in the build record; a
+  source type group's pipeline keeps its group question, `group_pipeline_choices`, shared with
+  `build_translation_xslt`); the `working_copy` flag only decides for a pipeline of a build. Without forms the reply
+  is `needs_choice`, with the question and the proposed names, and the agent passes the answer as
+  `pipeline=change|new_version`. Seen in a user's test: a promoted feed's pipelines were copied under the same names
+  (V1.0) as working copies, never asked, where the user expected V1.1 and a new index name.
+* **The tools propose a new version's names; the user confirms or edits them (2026-11-17).** `VersionNames`, generic,
+  never product-specific: a version token is a `v` (either case) and dotted numbers standing apart from the words
+  around it. The pipeline's last token goes up by its last part (`V1.0` to `V1.1`, `V1` to `V2`, `-v1.2` to `-v1.3`),
+  with the major bump (`V2.0`) offered in the form instead; a name with none gets `-V2`. Its documents follow the
+  pipeline's change where they hold the same token, else bump their own. An Elasticsearch index name's last token goes
+  up (`acme-events-v1` to `acme-events-v2`), a name with none gets `-v2`; the copy's ElasticIndexingFilter is given
+  it, and each Elastic Index doc outside the build naming exactly the old index gets a new doc in the build for the
+  new one (its settings and fields, `version_of` the old), beside it. The agent's own names stand where they differ
+  from the original's. Every name is editable in the confirmation form; a new version under any of the original's
+  names (pipeline, document, index, index doc) is refused.
+* **A new version's index is checked free before anything is copied (asked for by the user, 2026-11-17).** The
+  candidate name (variables as wildcards) is looked up on the cluster (`ExistingIndexes`, `ElasticIndexPresence`)
+  and against every pipeline and Elastic Index doc outside the build (`ProductionIndexes.taken`): any data stream,
+  index or alias it matches, even an empty one, an `UNKNOWN` lookup, or another Stroom document naming it, refuses
+  the copy, saying what matched (name, kind, document count, the Stroom document), the pattern looked up and the
+  next free version name; nothing it matches is offered for deletion. The new version's first processing run
+  (`create_processor_filter`, `reprocess_streams`, no filter yet) looks it up again, in case the index appeared in
+  between. A free name is the build's own index, processable later.
+* **Build tools never change a promoted document directly.** Promotion takes `mcp-managed` off, so a promoted XSLT's
+  uuid given to `build_translation_xslt` (or `save_xslt`) is refused by the write guard, pointing at `copy_pipeline`.
 * The translation a new version follows (`StroomBuildFacts.translating`) is the pipeline at the translation stage
   that reads the feed's raw data. Every pipeline reading the raw data is offered only when none of them can be told
   to translate. Another pipeline reading the same raw data, such as an archiver, has no translation to follow (seen
@@ -1688,6 +1713,15 @@ flowchart LR
   is to be enabled only once that pipeline's filter has processed the build's streams again; its enable button
   depends on the events filter's. A pipeline with an enabled filter already selecting what arrives gets no second
   one.
+* **A production Elasticsearch index is never touched by the build (2026-11-17).** A working copy of an
+  Elasticsearch indexing pipeline writing to the production index is stepped clean, not processed (see [Indexing
+  runs](#indexing-runs-built)); promotion writes its XSLT back. A new version promotes into its own, new index
+  (checked free when it was copied), beside the old one and its Elastic Index doc. Its filter's `before_enabling`
+  never puts a production index up for dropping (`PromotionProcessing`): an original a working copy was written back
+  over keeps its live index, and a new version's own index is dropped only while nothing but the promotion's
+  documents writes to it or names it; otherwise it says the index is production's, not dropped. Template pipelines
+  claim no index (they write nothing themselves); a working copy is also claimed by its original's index name,
+  inherited from a template too.
 * **A failure part way** says which step failed and what was already done; what wasn't promoted stays in the build.
 
 ### Pipelines (built)
@@ -2773,6 +2807,10 @@ its time field, and each field's name, type and source in the Event.
   unchanged template already agreed isn't asked again.
 * The tools never write to Elasticsearch. Committing the template, and dropping an index, are requests for the cluster
   admin, given as user actions.
+* For a production index name (`ProductionIndexes`, see [Indexing runs](#indexing-runs-built)) `propose_index_template`'s
+  `existing_index` says it is production's, never to be dropped: a working copy is stepped clean, a new version gets
+  its own name, and a template committed under the name changes production's own, so only with the promotion (seen
+  in a user's test: told the cluster admin drops it, the user deleted the production index).
 
 ### Verification (built)
 
@@ -2819,6 +2857,19 @@ its time field, and each field's name, type and source in the Event.
   again, in `reprocess_streams` too, not taken on trust. Existing but empty, or not known (a refused or unreachable
   lookup is never taken for absent): processing goes on, with a line in the approval. `propose_index_template`
   warns (`existing_index`) so another name can be chosen early.
+* **A production index is never processed into or put up for dropping (2026-11-17).** Production is decided by the
+  index name, not by where an Elastic Index doc lives (`ProductionIndexes`): a build pipeline's index name (variables
+  as wildcards) that a pipeline outside the build writes to (its own layer's `indexName`), or that an Elastic Index
+  doc outside the build names (a doc naming a pattern, `acme-events-*`, searches across indices and names none of
+  them), is production's. `create_processor_filter` and `reprocess_streams` refuse it first, for every build
+  pipeline (not only those recorded as copies), before any lookup, `index_exists`, `drop_first`, template or approval
+  form, the `reprocessRuns` short-cut included; `IndexingRuns.freshIndex` and `existingIndex` refuse it again, so
+  `ALREADY_INDEXED` and `delete_first` never name one. The refusal says the index is production's, nothing was
+  processed and nothing is to be dropped, and what to do instead (step a working copy clean; a new version gets its
+  own index name). Root cause (a user's test): only a pipeline recorded as a copy was checked, and only against
+  Elastic Index docs outside the build, so the build's own Elastic Index doc for the production name (or a build
+  pipeline made fresh against the production doc) made it count as the build's; and `propose_index_template` told
+  the user the cluster admin drops it. The user deleted the production index.
 
 ### Arrays of objects (built, 2026-10-31)
 
@@ -3473,6 +3524,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-17 | From a user's test (a promoted feed changed: its pipelines copied under the same names, the user asked to delete the production Elasticsearch index, and did): a production index is decided by its name (written by a pipeline, or named by an Elastic Index doc, outside the build), refused for every build pipeline before any lookup, drop or form, and never named for dropping (`ProductionIndexes`). copy_pipeline of any promoted pipeline asks change in place or new version once per build, proposes a new version's names (`VersionNames`: V1.0 to V1.1, V2.0 offered; index -v1 to -v2, a new Elastic Index doc beside the old), editable, never the original's, and checks the new index name free on the cluster and in Stroom first (even an empty index, or an unknown lookup, refuses), again on its first processing run. | Builds and onboarding; Indexing |
 | 2026-11-15 | Group pipelines no longer log passed-over records (an INFO line made an Error stream per raw stream per group in production): stepping and review_coverage work them out from the feed's registry. The unreadable-survey note is kept in the build record (a restart or another node had lost it). The survey cleans its input as Stroom does, so raw control characters in JSON lines no longer make a feed unreadable. A form answered while its run was still unwinding to waiting is no longer refused (the wide-sample race). step_sample and step_records step a stream's Context child (`child_type`), so a context loader can be stepped. | Builds and onboarding, Processing, stepping and documentation |
 | 2026-11-15 | Constant index fields, only on the user's request (`type: constant`, a value, no source): Elasticsearch maps `constant_keyword` and the XSLT doesn't write it; Lucene a keyword written on every document; an example template's `constant_keyword` fields kept. Generated documentation escapes HTML: values from the data as code spans or escaped text, and raw tags in the written markdown outside code (Documentation renders unsanitised HTML; the tools' own comments and `<br>` kept). describe_data_source `field=` finds one field however the user words it (`FieldMatches`: words in any order, misspellings, descriptions), several close ones ranked, never a silent guess. | Indexing, Processing, stepping and documentation |
 | 2026-11-15 | From chat 179 (a small model, ES\|QL questions): esql_query passes on Elasticsearch's warnings (headers, collected with the client's `onWarnings`), with what to do for a multi-valued field (seen: `WHERE ... IN`, `STARTS_WITH` and `LIKE` on a list of recipients gave no rows, and about ten calls went on guessing why); `MV EXPAND` is refused saying it is written MV_EXPAND; a backslash Elasticsearch refuses in a "..." string is explained (double it, or triple quotes); refusals end with one full stop. The tool call guard unfolds arguments written inside a list or object argument's text (seen: the rest of a table call inside eval's text, refused five times for no path). table expressions that write and, or, not, like or == between values are told the function forms (seen: seven refusals saying only "Unexpected token without joining operator"). The chat guidance and esql_query's description say to use run_stroomql (a Stroom search) when the user needs figures that match a dashboard or Stroom search exactly, as esql_query counts the documents of every stream. | Further use cases |

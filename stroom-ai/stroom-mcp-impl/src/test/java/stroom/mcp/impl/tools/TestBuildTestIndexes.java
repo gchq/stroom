@@ -20,7 +20,6 @@ import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
-import stroom.ai.impl.tools.ToolRefusal;
 import stroom.docref.DocRef;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.pipeline.shared.PipelineDoc;
@@ -42,12 +41,11 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 
 /// A build's indexing pipeline never writes into a production index: a Lucene index doc outside the build is stood
-/// in for by the build's test index; a copy of a production Elasticsearch indexing pipeline is stepped, not
-/// processed; promotion points a promoted pipeline back at the production index.
+/// in for by the build's test index (a production Elasticsearch index is refused by the processing tools, see
+/// [TestProductionIndexes]); promotion points a promoted pipeline back at the production index.
 class TestBuildTestIndexes {
 
     private static final String BUILD = "acme-v2";
@@ -97,22 +95,6 @@ class TestBuildTestIndexes {
     }
 
     @Test
-    void aCopyOfAProductionElasticsearchIndexingPipelineIsSteppedNotProcessed() {
-        final DocRef pipeline = new DocRef(PipelineDoc.TYPE, "p", "ACME - Indexing");
-        Mockito.when(guard.buildOf(new DocRef(PipelineDoc.TYPE, "p"))).thenReturn(Optional.of(BUILD));
-        Mockito.when(records.entry(BUILD, "p")).thenReturn(new LinkedHashMap<>(Map.of("copy_of", "original")));
-        Mockito.when(merged.elements()).thenReturn(Map.of("elasticIndexingFilter", "ElasticIndexingFilter"));
-        Mockito.when(merged.properties()).thenReturn(Map.of(new ElementProperty("elasticIndexingFilter",
-                "indexName"), "acme-events"));
-        Mockito.when(guard.folderContents(BUILD)).thenReturn(List.of());
-
-        assertThatThrownBy(() -> testIndexes.redirect(pipeline)).isInstanceOf(ToolRefusal.class)
-                .hasMessageContaining("production index 'acme-events'")
-                .hasMessageContaining("Step it clean")
-                .hasMessageContaining("Nothing was processed");
-    }
-
-    @Test
     void anElasticsearchPipelineTheBuildMadeForItsOwnIndexProcesses() {
         final DocRef pipeline = new DocRef(PipelineDoc.TYPE, "p", "ACME - Indexing");
         Mockito.when(guard.buildOf(new DocRef(PipelineDoc.TYPE, "p"))).thenReturn(Optional.of(BUILD));
@@ -121,7 +103,7 @@ class TestBuildTestIndexes {
                 "indexName"), "acme-events"));
 
         assertThat(testIndexes.redirect(pipeline)).isEmpty();
-        // A copy writing to an index of the build's own Elastic Index doc processes too.
+        // A copy writing to an index of the build's own Elastic Index doc is left as it is too.
         Mockito.when(records.entry(BUILD, "p")).thenReturn(new LinkedHashMap<>(Map.of("copy_of", "original")));
         final DocRef own = new DocRef(ElasticIndexDoc.TYPE, "e", "ACME index");
         Mockito.when(guard.folderContents(BUILD)).thenReturn(List.of(new WriteGuard.BuildDoc(ElasticIndexDoc.TYPE,

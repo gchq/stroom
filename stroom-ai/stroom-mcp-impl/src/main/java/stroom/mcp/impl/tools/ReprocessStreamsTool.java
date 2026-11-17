@@ -192,6 +192,15 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
                                   + "clean, then reprocess. A change to its XSLT or converter since the last clean "
                                   + "step needs stepping again." + clean.said());
         }
+        final Map<String, Object> destination = agreements.elasticDestination(pipelineUuid).orElse(null);
+        final List<ProcessorFilter> filters = filterWrites.filters(ref);
+        // A production Elasticsearch index is refused first, before the drop_first round could name it (seen in a
+        // user's test: a build's copy of a promoted pipeline was offered the drop of the production index).
+        if (destination != null) {
+            final boolean firstRunOfNewVersion = filters.isEmpty()
+                                                 && CreateProcessorFilterTool.newVersion(buildRecords, plan, ref);
+            indexingRuns.refuseUnsafeIndex(pipeline, destination, firstRunOfNewVersion);
+        }
         sources.buildFeedsOnly(ref, streamIds, null);
         // A build's indexing pipeline indexes into the build's test index, never a production one.
         final List<BuildTestIndexes.TestIndex> testIndexes = sources.buildIndexesOnly(ref);
@@ -214,7 +223,6 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
             expression = ProcessorFilterWrites.allOf(List.of(expression,
                     ProcessorFilterWrites.pipelineTerm(source.pipeline())));
         }
-        final Map<String, Object> destination = agreements.elasticDestination(pipelineUuid).orElse(null);
         if (destination != null) {
             final ProcessingApprovals.Committed committed = approvals.committed(call, context, pipeline, destination,
                     NAME, ToolArgs.flag(call,
@@ -227,7 +235,6 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
         // fixed and the stream reprocessed), and the tools have no Elasticsearch access: the index is dropped first
         // and starts fresh.
         final DocRef lucene = indexingRuns.luceneIndex(pipelineUuid).orElse(null);
-        final List<ProcessorFilter> filters = filterWrites.filters(ref);
         final IndexingRuns.FreshIndex freshIndex = indexingRuns.freshIndex(pipeline, destination, lucene, filters);
         final boolean runs = approvals.reprocessRuns(pipelineUuid);
         final boolean clear = freshIndex.empty() && runs;

@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.api.ElasticIndexPresence.Presence;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.docref.DocRef;
@@ -24,6 +25,7 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineLayer;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 
 import org.mockito.Mockito;
 
@@ -58,6 +60,15 @@ final class PipelineWorld {
     final PipelineDocs pipelineDocs = new PipelineDocs(world.documentAccess);
     final BuildIndexes buildIndexes = new BuildIndexes(world.guard(), world.pipelineShapes, world.documentAccess,
             pipelineDocs, new PipelineIndex(() -> feeds.docFinder, world.documentAccess), feeds.plan);
+    // What each Elasticsearch index name stands for on its cluster: nothing, unless a test says.
+    final Map<String, Presence> presences = new LinkedHashMap<>();
+    // Each index name looked up on a cluster, in order.
+    final List<String> lookedUp = new ArrayList<>();
+    final ProductionIndexes productionIndexes = new ProductionIndexes(new PipelineIndex(() -> feeds.docFinder,
+            world.documentAccess), world.documentAccess, world.guard(), new ExistingIndexes(() -> (cluster, name) -> {
+                lookedUp.add(name);
+                return presences.getOrDefault(name, Presence.absent());
+            }), templates, world.records(), new IndexTemplateAgreements(world.pipelineShapes, world.documentAccess));
     final PipelineWrites writes = new PipelineWrites(world.pipelineShapes, pipelineDocs, propertyTypes,
             world.documentAccess, () -> feeds.docFinder, feeds.feedNames, referenceData, world.guard(), feeds.plan,
             buildIndexes);
@@ -68,6 +79,8 @@ final class PipelineWorld {
                 layersOf(((DocRef) inv.getArgument(0)).getUuid()));
         Mockito.when(feeds.docFinder.findByName(eq(PipelineDoc.TYPE), anyString(), anyBoolean())).thenAnswer(inv ->
                 named(PipelineDoc.TYPE, inv.getArgument(1)));
+        Mockito.when(feeds.docFinder.findByName(eq(ElasticIndexDoc.TYPE), anyString(), anyBoolean())).thenAnswer(
+                inv -> named(ElasticIndexDoc.TYPE, inv.getArgument(1)));
         Mockito.when(feeds.docFinder.findByName(eq(PipelineDoc.TYPE), anyString())).thenAnswer(inv ->
                 named(PipelineDoc.TYPE, inv.getArgument(1)));
     }
@@ -81,7 +94,8 @@ final class PipelineWorld {
     /// @return copy_pipeline, on this world.
     CopyPipelineTool copyTool() {
         return new CopyPipelineTool(writes, pipelineDocs, world.pipelineShapes, templates, world.documentAccess,
-                world.guard(), world.records(), feeds.consent, feeds.plan);
+                world.guard(), world.records(), feeds.consent, feeds.plan, new IndexTemplateAgreements(
+                world.pipelineShapes, world.documentAccess), productionIndexes);
     }
 
     /// @return update_pipeline, on this world.
@@ -179,7 +193,7 @@ final class PipelineWorld {
 
     private List<DocRef> named(final String type, final String name) {
         return world.nodes.values().stream()
-                .filter(node -> type.equals(node.type) && node.name.equals(name))
+                .filter(node -> type.equals(node.type) && ("*".equals(name) || node.name.equals(name)))
                 .map(BuildWorld.Node::docRef)
                 .toList();
     }
