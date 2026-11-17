@@ -18,53 +18,59 @@ package stroom.search.solr;
 
 import stroom.search.solr.shared.SolrConnectionConfig;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
+import stroom.util.shared.NullSafe;
 
 import org.apache.solr.client.solrj.SolrClient;
-import org.apache.solr.client.solrj.impl.CloudHttp2SolrClient;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
-import org.apache.solr.client.solrj.impl.Http2SolrClient;
+import org.apache.solr.client.solrj.jetty.CloudJettySolrClient;
+import org.apache.solr.client.solrj.jetty.CloudJettySolrClient.Builder;
+import org.apache.solr.client.solrj.jetty.HttpJettySolrClient;
 
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 public class SolrClientFactory {
 
     public SolrClient create(final SolrConnectionConfig config) {
         if (InstanceType.SINGLE_NOOE.equals(config.getInstanceType())) {
-            if (config.getSolrUrls() == null) {
-                throw new SolrIndexException("No Solr URLs have been provided");
-            } else if (config.getSolrUrls().size() != 1) {
-                throw new SolrIndexException("Expected a single Solr URL but found " + config.getSolrUrls().size());
+            if (!NullSafe.hasOneItem(config.getSolrUrls())) {
+                throw new SolrIndexException("Expected a single Solr URL but found "
+                                             + NullSafe.size(config.getSolrUrls()));
             }
-            final Http2SolrClient.Builder builder = new Http2SolrClient.Builder(config.getSolrUrls().getFirst());
-            return builder.build();
+            return new HttpJettySolrClient.Builder(config.getSolrUrls().getFirst())
+                    .build();
 
         } else if (config.isUseZk()) {
-            if (config.getZkHosts() == null || config.getZkHosts().isEmpty()) {
-                throw new SolrIndexException("No ZK hosts have been provided");
-            }
-            final CloudHttp2SolrClient.Builder builder = new CloudSolrClient.Builder(config.getZkHosts(),
-                    Optional.ofNullable(config.getZkPath()))
-                    .withHttpClient(createHttpClient());
-            final CloudSolrClient client = builder.build();
-            client.connect();
-            return client;
+            final Builder builder = createWithZKHosts(config);
+            builder.withHttpClient(createHttpClient());
+            return builder.build();
 
         } else {
-            if (config.getSolrUrls() == null || config.getSolrUrls().isEmpty()) {
+            if (NullSafe.isEmptyCollection(config.getSolrUrls())) {
                 throw new SolrIndexException("No Solr URLs have been provided");
             }
             // Without ZooKeeper the cluster state is read from the Solr URLs
-            final CloudHttp2SolrClient.Builder builder = new CloudSolrClient.Builder(config.getSolrUrls())
-                    .withHttpClient(createHttpClient());
+            final CloudJettySolrClient.Builder builder = new CloudJettySolrClient.Builder(config.getSolrUrls());
+            builder.withHttpClient(createHttpClient());
             return builder.build();
         }
     }
 
-    private static Http2SolrClient createHttpClient() {
-        return new Http2SolrClient.Builder()
-                .withConnectionTimeout(15000, TimeUnit.MILLISECONDS)
-                .withIdleTimeout(30000, TimeUnit.MILLISECONDS)
+    private static CloudJettySolrClient.Builder createWithZKHosts(final SolrConnectionConfig config) {
+        if (NullSafe.isEmptyCollection(config.getZkHosts())) {
+            throw new SolrIndexException("No ZK hosts have been provided");
+        }
+        final CloudSolrClient.CloudSolrClientConnection connection =
+                new CloudSolrClient.CloudSolrClientConnection(
+                        true,
+                        config.getZkHosts(),
+                        config.getZkPath());
+        return new Builder(connection);
+    }
+
+    private static HttpJettySolrClient createHttpClient() {
+        return new HttpJettySolrClient.Builder()
+                .withConnectionTimeout(15, TimeUnit.SECONDS)
+                .withIdleTimeout(30, TimeUnit.SECONDS)
                 .build();
     }
 }
