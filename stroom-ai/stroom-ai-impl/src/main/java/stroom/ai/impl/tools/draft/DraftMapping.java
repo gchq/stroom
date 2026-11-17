@@ -34,6 +34,7 @@ import stroom.ai.impl.tools.sample.XmlTree;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -169,6 +170,11 @@ public final class DraftMapping {
     // A key=, and a quoted value (its escaped quotes in it): for the keys a line gives more than once.
     private static final Pattern REPEATABLE_KEY = ToolText.re("(?:^|[\\s,;])([A-Za-z_][A-Za-z0-9_.-]*)=");
     private static final Pattern QUOTED_VALUE = ToolText.re("\"(?:\\\\.|[^\"\\\\])*+\"");
+    // A key= and its quoted value, in double or single quotes (escaped quotes in it): group 1 the key, group 2 or 3
+    // the value's text inside its double or single quotes.
+    private static final Pattern QUOTED_PAIR = ToolText.re("(?:^|[\\s,;])([A-Za-z_][A-Za-z0-9_.-]*)="
+                                                           + "(?:\"((?:\\\\.|[^\"\\\\])*+)\""
+                                                           + "|'((?:\\\\.|[^'\\\\])*+)')");
     // The info key the keys given more than once in a line are kept under.
     private static final String REPEATED_KEYS = "repeated_keys";
     // An unquoted value with two items or more (group 1 the second's separator), to white space or the end.
@@ -454,8 +460,9 @@ public final class DraftMapping {
             if (skip.contains(field) || vals.isEmpty()) {
                 continue;
             }
+            final Set<String> nested = nestedPairKeys(vals);
             final List<Map<String, String>> found = new ArrayList<>();
-            vals.forEach(v -> found.add(pairsIn(v)));
+            vals.forEach(v -> found.add(pairsIn(v, nested)));
             // A text of pairs by its other styles: key = value with spaces is read only in such a text (seen in
             // testing: SQL's "SET credit_limit = 5000 WHERE id = 42" taken for pairs, and a log's message lost).
             if (found.stream().filter(f -> f.values().stream().filter(style -> !Pairs.SPACED_EQUALS.equals(style))
@@ -547,8 +554,63 @@ public final class DraftMapping {
         return closing >= 0 && QUOTE_ENDS_PAIR.matcher(text).region(closing + 1, text.length()).lookingAt();
     }
 
-    // The keys in a text, each with its style (Pairs.PAIR_REGEX); a key written in two styles has the last.
-    private static Map<String, String> pairsIn(final String text) {
+    // The keys of a text's quoted values that hold pairs of their own (two or more key=value) in most of the values
+    // giving the key: the format's nesting (auditd's msg='op=login acct=alice res=success'), not a value's text that
+    // happens to look like pairs.
+    private static Set<String> nestedPairKeys(final List<String> texts) {
+        final Map<String, Integer> giving = new HashMap<>();
+        final Map<String, Integer> holding = new HashMap<>();
+        for (final String text : texts) {
+            final Matcher pair = QUOTED_PAIR.matcher(text);
+            while (pair.find()) {
+                final String key = pair.group(1);
+                final String inside = pair.group(2) != null
+                        ? pair.group(2)
+                        : pair.group(3);
+                giving.merge(key, 1, Integer::sum);
+                // Its first key just after the quote counted too.
+                if (ToolText.findallGroups(EQ_KEY, " " + inside).size() >= 2) {
+                    holding.merge(key, 1, Integer::sum);
+                }
+            }
+        }
+        final Set<String> nested = new HashSet<>();
+        holding.forEach((key, count) -> {
+            if (count * 2 > giving.get(key)) {
+                nested.add(key);
+            }
+        });
+        return nested;
+    }
+
+    // The text with each quoted value of a key emptied, its quotes kept, but for the keys whose values nest pairs:
+    // what a value says is that value, not keys of the text. Seen in testing: a mail gateway's subject lines
+    // ("[EXT] Invoice: due", "ref=123 status=paid") read as keys, and listed by classify_kinds as fields its send
+    // events read.
+    private static String outsideQuotedValues(final String text, final Set<String> nested) {
+        if (text.indexOf('"') < 0 && text.indexOf('\'') < 0) {
+            return text;
+        }
+        final Matcher pair = QUOTED_PAIR.matcher(text);
+        final StringBuilder out = new StringBuilder();
+        int from = 0;
+        while (pair.find()) {
+            if (nested.contains(pair.group(1))) {
+                continue;
+            }
+            final int inside = pair.group(2) != null
+                    ? 2
+                    : 3;
+            out.append(text, from, pair.start(inside));
+            from = pair.end(inside);
+        }
+        return out.append(text, from, text.length()).toString();
+    }
+
+    // The keys in a text, each with its style (Pairs.PAIR_REGEX); a key written in two styles has the last. Keys
+    // inside a quoted value are its text, unless the value's key nests pairs (nested).
+    private static Map<String, String> pairsIn(final String given, final Set<String> nested) {
+        final String text = outsideQuotedValues(given, nested);
         final Map<String, String> found = new LinkedHashMap<>();
         final Matcher colon = COLON_KEY.matcher(text);
         while (colon.find()) {
@@ -1156,6 +1218,11 @@ public final class DraftMapping {
         // Whether the field's text holds pairs (two or more) that are each already a field of its record, in at
         // least four in five of the records holding it.
         private boolean pairsAlreadyRead(final String name) {
+            final Set<String> nested = nestedPairKeys(records.stream()
+                    .map(record -> record.get(name))
+                    .filter(String.class::isInstance)
+                    .map(String.class::cast)
+                    .toList());
             int holding = 0;
             int read = 0;
             for (final Map<String, Object> record : records) {
@@ -1163,7 +1230,9 @@ public final class DraftMapping {
                     continue;
                 }
                 holding++;
-                final Set<String> keys = pairsIn(text).keySet();
+                // A key inside a quoted value (a mail's subject, "ref=123 status=paid") is the value's text, not
+                // a pair the splitter left unread.
+                final Set<String> keys = pairsIn(text, nested).keySet();
                 // The same values too: not a record's own fields that a text happens to name.
                 if (keys.size() >= 2 && keys.stream().allMatch(key -> !key.equals(name)
                         && record.get(key) instanceof final String value && text.contains(key + "=")

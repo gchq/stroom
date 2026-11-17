@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.generation.Pairs;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.KindFields;
+import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
@@ -967,6 +968,68 @@ class TestDraftMapping extends DraftFixtures {
         assertThat(DraftMapping.pairExtracts(Map.of("msg", List.of("a=1 b=2", "plain", "text")), Set.of()))
                 .isEmpty();
         assertThat(DraftMapping.pairExtracts(Map.of("msg", values.get("msg")), Set.of("msg"))).isEmpty();
+    }
+
+    @Test
+    void textInsideAQuotedValueStaysThatValue() {
+        // Seen in testing: a mail gateway's subject lines ("[EXT] Invoice: due", "ref=123 status=paid") read as
+        // keys of the text holding them, and their words listed by classify_kinds as fields a kind reads.
+        final List<String> bodies = new ArrayList<>();
+        for (final String subject : List.of("Hello", "ref=123 status=paid", "[EXT] Invoice: due",
+                "Re: lunch; Agenda: menu", "Totals: a=1, b=2", "it's 'done' (code=7)")) {
+            bodies.add("id=\"q1\"; subject=\"" + subject + "\"; sender=\"ann@example.com\"");
+            bodies.add("id=\"q2\"; subject=\"" + subject + "\"; sender=\"bob@example.com\"");
+        }
+        final Map<String, DraftMapping.PairExtracts> found = DraftMapping.pairExtracts(Map.of("msg", bodies),
+                Set.of());
+
+        assertThat(found.get("msg").extracts()).extracting(extract -> extract.get("names")).containsExactly(
+                List.of("id"), List.of("subject"), List.of("sender"));
+        final List<Map<String, Object>> records = new ArrayList<>(List.of(
+                new LinkedHashMap<>(map("msg", bodies.get(2)))));
+        DraftMapping.withPairs(records, found.get("msg").extracts());
+        assertThat(records.getFirst()).containsEntry("subject", "ref=123 status=paid");
+    }
+
+    @Test
+    void pairsTheFormatHoldsInsideAQuotedValueAreStillRead() {
+        // auditd's msg holds the event's own pairs in most records: they are fields, not the value's text (its
+        // first, after the quote, as before: the splitter's single_quotes reads auditd's msg whole).
+        final List<String> bodies = List.of(
+                "type=USER_LOGIN pid=1 msg=\"op=login acct=alice res=success\"",
+                "type=USER_LOGIN pid=2 msg=\"op=login acct=bob res=failed\"",
+                "type=USER_END pid=3 msg='op=logout acct=carol res=success'",
+                "type=USER_END pid=4 msg=\"session closed\"");
+        final Map<String, DraftMapping.PairExtracts> found = DraftMapping.pairExtracts(Map.of("msg", bodies),
+                Set.of());
+
+        assertThat(found.get("msg").extracts()).extracting(extract -> extract.get("names")).contains(
+                List.of("acct"), List.of("res"));
+    }
+
+    @Test
+    void aSyslogBodysPairsAreReadOnceThoughItsSubjectsHoldPairs() {
+        // Seen in testing: a mail gateway's syslog key=value body, read into fields by the splitter, read again
+        // for pairs because words in its quoted subjects weren't fields, and those words listed by classify_kinds
+        // as fields a kind reads.
+        final StringBuilder sample = new StringBuilder();
+        // A few of them like pairs: too few for the subject to be read for pairs itself.
+        final List<String> subjects = List.of("Hello", "Weekly report", "Lunch?", "Test email",
+                "ref=123 status=paid", "[EXT] Invoice: due", "Re: lunch; Agenda: menu");
+        for (int i = 0; i < 21; i++) {
+            sample.append("Nov  9 00:01:%02d mx1.example.com gw 2026-11-09 00:00:%02d.974126 [10300%02d] [info] [%s] "
+                            .formatted(i, i, i, i % 2 == 0
+                                    ? "Deliver"
+                                    : "Trap"))
+                    .append("id=\"q%02d\"; subject=\"%s\"; sender=\"ann@example.com\"\n"
+                            .formatted(i, subjects.get(i % subjects.size())));
+        }
+        final SplitterSpec spec = SplitterDryRun.inferSpec(sample.toString()).spec();
+        final Map<String, Object> draft = DraftMapping.draft(List.of(sample.toString()), "Mail gateway", null, null,
+                null, null, spec);
+
+        @SuppressWarnings("unchecked") final Map<String, Object> mapping = (Map<String, Object>) draft.get("mapping");
+        assertThat(JsonValues.maps(mapping.get("extract"))).as("%s", mapping.get("extract")).isEmpty();
     }
 
     @Test

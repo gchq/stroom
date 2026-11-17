@@ -222,6 +222,57 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    void wordsOfAQuotedSubjectAreNotFieldsAKindReads() {
+        // Seen in testing: a mail gateway's syslog, its body key=value pairs with quoted values, and words of the
+        // subject lines ("[EXT] Invoice: due", "ref=123 status=paid") in the Reads row of its send events.
+        // A few of them like pairs: too few for the subject to be read for pairs itself.
+        final List<String> subjects = List.of("Hello", "Weekly report", "Lunch?", "Test email",
+                "ref=123 status=paid", "[EXT] Invoice: due", "Re: lunch; Agenda: menu");
+        final StringBuilder lines = new StringBuilder();
+        for (int i = 0; i < 21; i++) {
+            lines.append("Nov  9 00:01:%02d mx1.example.com gw 2026-11-09 00:00:%02d.974126 [10300%02d] [info] [%s] "
+                            .formatted(i, i, i, List.of("Send", "Deliver", "Hold").get(i % 3)))
+                    .append("id=\"q%02d\"; subject=\"%s\"; sender=\"ann@example.com\"\n"
+                            .formatted(i, subjects.get(i % subjects.size())));
+            if (i % 4 == 0) {
+                lines.append("Nov  9 00:01:%02d mx2.example.com gw 2026-11-09 00:00:%02d.868929 [20300%02d] "
+                                .formatted(i, i, i))
+                        .append("[info] [TLS] ")
+                        .append("peer=\"mx.example.org\"; version=\"TLSv1.3\"\n");
+            }
+        }
+        samples(16L, lines.toString());
+        // The spec inferred from the gateway's own sample: its bracketed words read by a regex, then the body's
+        // pairs.
+        final String splitter = "{\"kind\": \"syslog\", \"body\": {\"kind\": \"regex\", \"pattern\": "
+                                + "\"^(\\\\S+)\\\\s+(\\\\S+\\\\s+\\\\S+)\\\\s+\\\\[([^\\\\]\\\\s]*)\\\\]\\\\s+"
+                                + "\\\\[([^\\\\]\\\\s]*)\\\\]\\\\s+\\\\[([^\\\\]\\\\s]*)\\\\]\\\\s+([^\\\\n]*)$\", "
+                                + "\"names\": [\"prefix1\", \"message_time\", \"prefix3\", \"prefix4\", "
+                                + "\"prefix5\", \"message\"], \"body\": {\"kind\": \"key_value\", "
+                                + "\"delimiter\": \"; \", \"quote\": \"\\\"\"}}}";
+        final String listing = "{\"build\": \"acme\", \"source\": \"Mail gateway\", \"stream_ids\": [16], "
+                               + "\"kind_field\": \"prefix5\", \"splitter\": " + splitter;
+        final Map<String, Object> listed = call(listing + "}", BuildToolCalls.context());
+        final Map<String, Object> send = list(listed.get("to_classify")).stream()
+                .filter(kind -> "Send".equals(kind.get("value")))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("no Send kind listed: " + listed));
+
+        final Map<String, Object> shown = call(listing + ", \"proposals\": [{\"field\": \"" + send.get("field")
+                                               + "\", \"value\": \"Send\", \"title\": \"Mail sent\", \"product\": "
+                                               + "\"Mail gateway\", \"description\": \"A message was sent\", "
+                                               + "\"event_detail\": \"Send\", \"confidence\": \"medium\"}]}",
+                BuildToolCalls.context());
+
+        final String reads = String.valueOf(shown.get("table")).lines()
+                .filter(line -> line.startsWith("| Reads |"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("no Reads row: " + shown));
+        assertThat(reads).contains("id", "subject", "sender").doesNotContain("status", "ref", "invoice", "agenda",
+                "_2");
+    }
+
+    @Test
     void aKindToldByAValueSaysSoAndWhatItsRecordsRead() {
         // Seen in chat 171: NetScaler's value kinds shown with no row saying how they're told or what they read,
         // where the pattern kinds beside them had both.
