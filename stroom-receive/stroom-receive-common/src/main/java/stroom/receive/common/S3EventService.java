@@ -30,7 +30,6 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.security.api.CommonSecurityContext;
-import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.concurrent.UniqueId;
@@ -126,7 +125,7 @@ public class S3EventService {
             final S3ClientPool s3ClientPool,
             final S3ClientConfigService s3ClientConfigService,
             final S3MetaKeysMapper s3MetaKeysMapper,
-            final SecurityContext commonSecurityContext) {
+            final CommonSecurityContext commonSecurityContext) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.sqsClientFactory = sqsClientFactory;
         this.receiptIdGenerator = receiptIdGenerator;

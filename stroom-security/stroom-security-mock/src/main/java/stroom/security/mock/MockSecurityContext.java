@@ -20,7 +20,6 @@ import stroom.docref.DocRef;
 import stroom.security.api.ContentPackUserService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
-import stroom.security.impl.BasicUserIdentity;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionSet;
 import stroom.security.shared.DocumentPermission;
@@ -41,7 +40,7 @@ public class MockSecurityContext implements SecurityContext, ContentPackUserServ
             .fullName("Ad Min")
             .build();
 
-    private static final UserIdentity USER_IDENTITY = new BasicUserIdentity(MOCK_ADMIN);
+    private static final UserIdentity USER_IDENTITY = new MockUserIdentity(MOCK_ADMIN);
 
     public static MockSecurityContext getInstance() {
         return INSTANCE;

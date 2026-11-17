@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.docstore.impl.dao;
+package stroom.docstore.mock;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocDependencyService;

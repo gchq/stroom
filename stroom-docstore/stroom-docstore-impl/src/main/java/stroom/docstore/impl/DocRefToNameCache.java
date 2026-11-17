@@ -19,7 +19,6 @@ package stroom.docstore.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
-import stroom.docstore.impl.db.jooq.tables.Doc;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
@@ -48,7 +47,7 @@ class DocRefToNameCache implements EntityEvent.Handler, Clearable {
 
     @Inject
     DocRefToNameCache(final CacheManager cacheManager,
-                      final Provider<DocStoreConfig> docStoreConfigProvider,
+                      final Provider<DocStoreCommonConfig> docStoreConfigProvider,
                       final Persistence persistence) {
 
         cache = cacheManager.createLoadingCache(

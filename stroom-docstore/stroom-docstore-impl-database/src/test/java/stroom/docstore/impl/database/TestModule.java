@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,24 @@
  * limitations under the License.
  */
 
-package stroom.docstore.impl.dao;
+package stroom.docstore.impl.database;
 
-import stroom.docstore.api.DocDependencyService;
+import stroom.docstore.impl.db.DocStoreDBPersistenceDbModule;
+import stroom.test.common.util.db.DbTestModule;
 
 import com.google.inject.AbstractModule;
 
-public class MockDocDependencyModule extends AbstractModule {
+/**
+ * Minimal Guice module for unit-testing {@link DBPersistence} without
+ * booting the full application. Follows the same pattern used by
+ * TestAnnotationDaoImpl, TestNodeDaoImpl, etc.
+ */
+public class TestModule extends AbstractModule {
 
     @Override
     protected void configure() {
         super.configure();
-
-        bind(DocDependencyService.class).to(MockDocDependencyService.class);
-
+        install(new DocStoreDBPersistenceDbModule());
+        install(new DbTestModule());
     }
 }

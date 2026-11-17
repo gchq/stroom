@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.docstore.impl.dao;
+package stroom.docstore.impl.database;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocDependencyProvider;
 import stroom.docstore.api.DocDependencyService;
-import stroom.docstore.impl.dao.DocDependencyDao.DocVersion;
+import stroom.docstore.impl.database.DocDependencyDao.DocVersion;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;

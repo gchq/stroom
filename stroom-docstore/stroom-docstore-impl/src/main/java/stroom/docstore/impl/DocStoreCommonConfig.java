@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package stroom.docstore.impl;
 
-import stroom.config.common.HasDbConfig;
-import stroom.docstore.impl.db.DocStoreDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -25,19 +23,16 @@ import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/// Config common to all implementations of the doc store
 @JsonPropertyOrder(alphabetic = true)
-public class DocStoreConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
+public class DocStoreCommonConfig extends AbstractConfig implements IsStroomConfig {
 
-    private final DocStoreDbConfig dbConfig;
     private final CacheConfig docRefInfoCache;
     private final CacheConfig docRefNameCache;
-    private final StroomDuration physicalDeleteAge;
 
-    public DocStoreConfig() {
-        dbConfig = new DocStoreDbConfig();
+    public DocStoreCommonConfig() {
         docRefInfoCache = CacheConfig.builder()
                 .maximumSize(1000000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
@@ -46,25 +41,15 @@ public class DocStoreConfig extends AbstractConfig implements IsStroomConfig, Ha
                 .maximumSize(1000000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
-        physicalDeleteAge = StroomDuration.ofDays(30);
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public DocStoreConfig(@JsonProperty("db") final DocStoreDbConfig dbConfig,
-                          @JsonProperty("docRefInfoCache") final CacheConfig docRefInfoCache,
-                          @JsonProperty("docRefNameCache") final CacheConfig docRefNameCache,
-                          @JsonProperty("physicalDeleteAge") final StroomDuration physicalDeleteAge) {
-        this.dbConfig = dbConfig;
+    public DocStoreCommonConfig(
+            @JsonProperty("docRefInfoCache") final CacheConfig docRefInfoCache,
+            @JsonProperty("docRefNameCache") final CacheConfig docRefNameCache) {
         this.docRefInfoCache = docRefInfoCache;
         this.docRefNameCache = docRefNameCache;
-        this.physicalDeleteAge = physicalDeleteAge;
-    }
-
-    @Override
-    @JsonProperty("db")
-    public DocStoreDbConfig getDbConfig() {
-        return dbConfig;
     }
 
     @JsonProperty("docRefInfoCache")
@@ -75,12 +60,5 @@ public class DocStoreConfig extends AbstractConfig implements IsStroomConfig, Ha
     @JsonProperty("docRefNameCache")
     public CacheConfig getDocRefNameCache() {
         return docRefNameCache;
-    }
-
-    @JsonPropertyDescription("How long to keep logically deleted documents before physically deleting them " +
-                             "and all associated data, audit, and snapshot rows. " +
-                             "In ISO-8601 duration format, e.g. 'P30D' for 30 days.")
-    public StroomDuration getPhysicalDeleteAge() {
-        return physicalDeleteAge;
     }
 }

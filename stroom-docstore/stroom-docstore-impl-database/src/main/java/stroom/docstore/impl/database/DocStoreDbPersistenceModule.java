@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.docstore.impl.dao;
+package stroom.docstore.impl.database;
 
 import stroom.docstore.api.DocDependencyProviderBinder;
 import stroom.docstore.api.DocDependencyService;
-import stroom.docstore.impl.DocStoreConfig;
 import stroom.docstore.impl.Persistence;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
@@ -53,6 +52,10 @@ public class DocStoreDbPersistenceModule extends AbstractModule {
                                      "Removes all associated data, audit, and snapshot rows.")
                         .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression()));
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class PhysicalDeleteOldDocs extends RunnableWrapper {
 
