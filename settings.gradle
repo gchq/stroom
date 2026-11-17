@@ -309,6 +309,7 @@ include 'stroom-sqlstore:stroom-sqlstore-shared'
 include 'stroom-sqlstore:stroom-sqlstore-impl'
 include 'stroom-sqlstore:stroom-sqlstore-impl-db'
 include 'stroom-sqlstore:stroom-sqlstore-impl-db-jooq'
+include 'stroom-data-connection:stroom-data-connection-impl'
 
 // SSL Tests
 include 'stroom-ssl-test'
@@ -335,3 +336,4 @@ include 'stroom-util-shared'
 // View
 include 'stroom-view:stroom-view-api'
 include 'stroom-view:stroom-view-impl'
+include 'stroom-docstore:stroom-docstore-impl-database'

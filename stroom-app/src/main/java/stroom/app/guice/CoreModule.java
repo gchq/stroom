@@ -78,7 +78,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.documentation.impl.DocumentationModule());
         install(new stroom.docstore.impl.DocStoreModule());
         install(new stroom.docstore.impl.DocFinderModule());
-        install(new stroom.docstore.impl.dao.DocStoreDbPersistenceModule());
+        install(new stroom.docstore.impl.database.DocStoreDbPersistenceModule());
         install(new stroom.dropwizard.common.DropwizardModule());
         install(new stroom.explorer.impl.ExplorerFavModule());
         install(new stroom.explorer.impl.dao.ExplorerFavDbModule());
@@ -138,6 +138,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.analytics.impl.ReportModule());
         install(new stroom.datagen.impl.DataGenModule());
         install(new stroom.floormap.impl.FloorMapModule());
+        install(new stroom.dataconnection.impl.DataConnectionModule());
         install(new stroom.planb.impl.PlanBModule());
         install(new stroom.sqlstore.impl.SqlStoreModule());
         install(new stroom.sqlstore.impl.db.SqlStoreDaoModule());

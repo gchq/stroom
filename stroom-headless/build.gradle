@@ -25,6 +25,7 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docstore:stroom-docstore-impl')
     implementation project(':stroom-docstore:stroom-docstore-impl-fs')
+    implementation project(':stroom-docstore:stroom-docstore-mock')
     implementation project(':stroom-event-logging:stroom-event-logging-impl')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-explorer:stroom-explorer-impl')
@@ -74,6 +75,15 @@ shadowJar {
     mergeServiceFiles()
     // Without INCLUDE, it drops any duplicates
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+//    // Keep duplicate service files so mergeServiceFiles() can combine them, but discard all
+//    // other duplicate entries.
+//    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+//    filesMatching('META-INF/services/**') {
+//        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+//    }
+//    filesMatching('META-INF/*.kotlin_module') {
+//        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+//    }
 
     archiveFileName = fatJarName
 }

@@ -29,7 +29,7 @@
             <v:TickBox ui:field="autoRefresh" identity="basicQuerySettingsAutoRefresh" label="Auto Refresh"/>
         </form:FormGroup>
         <form:FormGroup identity="basicQuerySettingsRefreshInterval" label="Refresh Interval"
-                        helpText="How often the query is re-run when Auto Refresh is ticked. Enter a number with a unit of ms, s, m, h or d (e.g. 30s or 5m); a number with no unit is in milliseconds. The minimum is 10 seconds. Default is 10s."
+                        helpText="How often the query is re-run when Auto Refresh is ticked. Enter a number with a unit of ms, s, m, h or d (e.g. 30s or 5m); a number with no unit is in milliseconds. The minimum is 10 seconds, or longer if the data source sets one: an Amazon Athena Data Connection does, as every run is billed. Default is 10s."
                         screenReaderText="Number with unit, e.g. 30s or 5m. Minimum 10 seconds.">
             <form:TextBox ui:field="refreshInterval" addStyleNames="w-100"/>
         </form:FormGroup>

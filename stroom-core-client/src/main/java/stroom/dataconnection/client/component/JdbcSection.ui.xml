@@ -1,0 +1,42 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <!-- A JDBC Data Connection's settings, a section of its Settings tab -->
+    <g:FlowPanel styleName="data-connection-settings__section">
+        <form:FormGroup identity="dataConnectionJdbcUrl"
+                        label="JDBC URL"
+                        helpText="The JDBC URL of the database, e.g. jdbc:mysql://reporting-db:3306/reports. It must match one of the patterns an administrator has allowed in the dataConnection.allowedUrlPatterns property. Do not put a user name or password in it; choose a credential instead.">
+            <form:TextBox ui:field="url" addStyleNames="text-field--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionJdbcCredential"
+                        label="Credential"
+                        helpText="The username and password credential to connect with. You need Use permission on it, as does anyone who queries this data source. Use a database account that can only read: Stroom asks for read-only connections, but only the database can enforce it.">
+            <form:DescriptionHTML ui:field="credentialNote"/>
+            <l:SelectionBox ui:field="credential" addStyleNames="text-field--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionJdbcProperties"
+                        label="Connection Properties"
+                        helpText="Extra JDBC driver properties, one name=value per line. For MySQL, add useCursorFetch=true so large results are read in batches of the fetch size rather than all at once. Properties that can read files, load classes or turn off read-only connections are refused."
+                        screenReaderText="One name=value per line.">
+            <form:TextArea ui:field="connectionProperties" addStyleNames="text-field--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionMaxPoolSize"
+                        label="Max Pool Size"
+                        helpText="The most connections Stroom keeps open to this database at once. An administrator may set a lower ceiling. Default: 5">
+            <v:ValueSpinner ui:field="maxPoolSize" minValue="1" maxValue="100" addStyleNames="value-spinner--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionFetchSize"
+                        label="Fetch Size"
+                        helpText="How many rows are fetched from the database in each round trip. 0 uses the driver's own default. Default: 1000">
+            <v:ValueSpinner ui:field="fetchSize" minValue="0" maxValue="100000" addStyleNames="value-spinner--wide"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataConnectionJdbcMinRefreshMinutes"
+                        label="Minimum Refresh (minutes)"
+                        helpText="The shortest interval at which a dashboard may rerun a query of this data source automatically, to limit the load on the database. 0 sets no minimum beyond the dashboard's own 10 seconds. Default: 0">
+            <v:ValueSpinner ui:field="minRefreshMinutes" minValue="0" maxValue="1440" addStyleNames="value-spinner--wide"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

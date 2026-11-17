@@ -20,6 +20,7 @@ import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.main.RefreshInterval;
 import stroom.dashboard.client.main.RefreshablePane;
 import stroom.dashboard.shared.Automate;
+import stroom.util.shared.time.SimpleDuration;
 
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Provider;
@@ -33,6 +34,7 @@ public abstract class RefreshableDashboardPaneController
 
     private boolean allowRefresh = true;
     private Timer refreshTimer;
+    private SimpleDuration dataSourceMinRefreshInterval;
 
     /// @param eventBus                   The application's event bus.
     /// @param settingsControllerProvider Makes the pane's settings dialog.
@@ -46,6 +48,18 @@ public abstract class RefreshableDashboardPaneController
     @Override
     public void setAllowRefresh(final boolean allowRefresh) {
         this.allowRefresh = allowRefresh;
+    }
+
+    /// Sets the shortest interval at which the query's data source may be rerun automatically, as
+    /// reported by the server, e.g. for an Amazon Athena Data Connection.
+    ///
+    /// @param dataSourceMinRefreshInterval The minimum, or `null` for none beyond the dashboard's own.
+    protected void setDataSourceMinRefreshInterval(final SimpleDuration dataSourceMinRefreshInterval) {
+        this.dataSourceMinRefreshInterval = dataSourceMinRefreshInterval;
+        // The minimum may arrive after a refresh was scheduled without it.
+        if (refreshTimer != null) {
+            scheduleRefresh();
+        }
     }
 
     @Override
@@ -69,7 +83,8 @@ public abstract class RefreshableDashboardPaneController
         final Automate automate = getAutomate();
         if (isInitialised() && automate != null && automate.isRefresh()) {
             try {
-                final int millis = RefreshInterval.getMillis(automate.getRefreshInterval());
+                final int millis = RefreshInterval.getMillis(
+                        automate.getRefreshInterval(), dataSourceMinRefreshInterval);
 
                 refreshTimer = new Timer() {
                     @Override

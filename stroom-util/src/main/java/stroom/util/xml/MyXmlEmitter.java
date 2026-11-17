@@ -23,15 +23,23 @@
 
 package stroom.util.xml;
 
+import net.sf.saxon.event.ReceiverOptions;
+import net.sf.saxon.expr.parser.Location;
+import net.sf.saxon.om.NodeName;
 import net.sf.saxon.serialize.XMLEmitter;
 import net.sf.saxon.serialize.charcode.UTF16CharacterSet;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.CompressedWhitespace;
 
-/**
- * An extension of the Saxon XMLEmitter that prevents forbidden XML characters U+FFFE and U+FFFF.
- */
+/// An extension of the Saxon XMLEmitter that prevents forbidden XML characters U+0000, U+FFFE and U+FFFF.
+///
+/// Saxon uses U+0000 as an in-band marker to switch escaping off and on around text that an
+/// `xsl:character-map` has substituted, and flags such text with [ReceiverOptions#USE_NULL_MARKERS].
+/// U+0000 is only treated as a marker in text flagged that way. Anywhere else it came from the data, which XML
+/// cannot hold in any form, so it is dropped.
 public class MyXmlEmitter extends XMLEmitter {
+
+    private static final char NUL = '\u0000';
 
     private static final boolean[] IS_SPECIAL_IN_TEXT; // lookup table for special characters in text
     private static final boolean[] IS_SPECIAL_IN_ATT; // lookup table for special characters in attributes
@@ -47,7 +55,7 @@ public class MyXmlEmitter extends XMLEmitter {
         for (int i = 32; i <= 127; i++) {
             IS_SPECIAL_IN_TEXT[i] = false;
         }
-        //    note, 0 is used to switch escaping on and off for mapped characters
+        //    note, 0 is used to switch escaping on and off for mapped characters, see writeEscape
         IS_SPECIAL_IN_TEXT['\n'] = false;
         IS_SPECIAL_IN_TEXT['\t'] = false;
         IS_SPECIAL_IN_TEXT['\r'] = true;
@@ -62,8 +70,7 @@ public class MyXmlEmitter extends XMLEmitter {
         for (int i = 32; i <= 127; i++) {
             IS_SPECIAL_IN_ATT[i] = false;
         }
-        IS_SPECIAL_IN_ATT[(char) 0] = true;
-        // used to switch escaping on and off for mapped characters
+        // 0 is used to switch escaping on and off for mapped characters, see writeEscape
         IS_SPECIAL_IN_ATT['\r'] = true;
         IS_SPECIAL_IN_ATT['\n'] = true;
         IS_SPECIAL_IN_ATT['\t'] = true;
@@ -78,8 +85,120 @@ public class MyXmlEmitter extends XMLEmitter {
      */
     private final boolean preventEscapeSwitching;
 
+    // True while writing text or an attribute value in which U+0000 is a marker that switches escaping off and on.
+    private boolean nullMarkersActive;
+
     public MyXmlEmitter(final boolean preventEscapeSwitching) {
         this.preventEscapeSwitching = preventEscapeSwitching;
+    }
+
+    /// Removes every U+0000 from a character sequence.
+    ///
+    /// @param chars The characters to clean, may be null.
+    /// @return The same sequence if it holds no U+0000, otherwise a copy without them.
+    static CharSequence removeNul(final CharSequence chars) {
+        if (chars == null || chars instanceof CompressedWhitespace) {
+            return chars;
+        }
+        final int length = chars.length();
+        int firstNul = -1;
+        for (int i = 0; i < length && firstNul == -1; i++) {
+            if (chars.charAt(i) == NUL) {
+                firstNul = i;
+            }
+        }
+        if (firstNul == -1) {
+            return chars;
+        }
+        final StringBuilder sb = new StringBuilder(length - 1);
+        sb.append(chars, 0, firstNul);
+        for (int i = firstNul + 1; i < length; i++) {
+            final char c = chars.charAt(i);
+            if (c != NUL) {
+                sb.append(c);
+            }
+        }
+        return sb;
+    }
+
+    /// Writes character data. Any U+0000 in the data is dropped unless Saxon has flagged the text as holding
+    /// character map markers and escape switching is allowed.
+    ///
+    /// @param chars      The character data.
+    /// @param locationId The location of the data.
+    /// @param properties The Saxon receiver options for the data.
+    /// @throws XPathException If the data cannot be written.
+    @Override
+    public void characters(final CharSequence chars,
+                           final Location locationId,
+                           final int properties) throws XPathException {
+        final boolean markersActive = isNullMarkers(properties);
+        final CharSequence cleaned = markersActive
+                ? chars
+                : removeNul(chars);
+        nullMarkersActive = markersActive;
+        try {
+            super.characters(cleaned, locationId, properties);
+        } finally {
+            nullMarkersActive = false;
+        }
+    }
+
+    /// Writes an attribute. Any U+0000 in the value is dropped unless Saxon has flagged the value as holding
+    /// character map markers and escape switching is allowed.
+    ///
+    /// @param elCode     The element name.
+    /// @param attname    The attribute name.
+    /// @param value      The attribute value.
+    /// @param properties The Saxon receiver options for the attribute.
+    /// @throws XPathException If the attribute cannot be written.
+    @Override
+    protected void writeAttribute(final NodeName elCode,
+                                  final String attname,
+                                  final CharSequence value,
+                                  final int properties) throws XPathException {
+        final boolean markersActive = isNullMarkers(properties);
+        final CharSequence cleaned = markersActive
+                ? value
+                : removeNul(value);
+        nullMarkersActive = markersActive;
+        try {
+            super.writeAttribute(elCode, attname, cleaned, properties);
+        } finally {
+            nullMarkersActive = false;
+        }
+    }
+
+    /// Writes a comment, dropping any U+0000 as XML cannot hold it.
+    ///
+    /// @param chars      The comment text.
+    /// @param locationId The location of the comment.
+    /// @param properties The Saxon receiver options for the comment.
+    /// @throws XPathException If the comment cannot be written.
+    @Override
+    public void comment(final CharSequence chars,
+                        final Location locationId,
+                        final int properties) throws XPathException {
+        super.comment(removeNul(chars), locationId, properties);
+    }
+
+    /// Writes a processing instruction, dropping any U+0000 from its data as XML cannot hold it.
+    ///
+    /// @param target     The processing instruction target.
+    /// @param data       The processing instruction data.
+    /// @param locationId The location of the processing instruction.
+    /// @param properties The Saxon receiver options for the processing instruction.
+    /// @throws XPathException If the processing instruction cannot be written.
+    @Override
+    public void processingInstruction(final String target,
+                                      final CharSequence data,
+                                      final Location locationId,
+                                      final int properties) throws XPathException {
+        super.processingInstruction(target, removeNul(data), locationId, properties);
+    }
+
+    private boolean isNullMarkers(final int properties) {
+        return !preventEscapeSwitching && (properties & ReceiverOptions.USE_NULL_MARKERS) != 0;
     }
 
     /**
@@ -148,9 +267,12 @@ public class MyXmlEmitter extends XMLEmitter {
 
             // examine the special character that interrupted the scan
             final char c = chars.charAt(i);
-            if (c == 0 && !preventEscapeSwitching) {
-                // used to switch escaping on and off
-                disabled = !disabled;
+            if (c == NUL) {
+                // U+0000 is never written. It switches escaping on and off only when Saxon has flagged
+                // the text as holding character map markers, otherwise it came from the data.
+                if (nullMarkersActive) {
+                    disabled = !disabled;
+                }
             } else if (disabled) {
                 if (c > 127) {
                     if (UTF16CharacterSet.isHighSurrogate(c)) {

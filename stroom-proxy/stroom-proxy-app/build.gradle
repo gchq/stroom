@@ -21,9 +21,6 @@ dependencies {
     implementation project(':stroom-data:stroom-data-zip')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docref')
-    implementation project(':stroom-docstore:stroom-docstore-api')
-    implementation project(':stroom-docstore:stroom-docstore-impl')
-    implementation project(':stroom-docstore:stroom-docstore-impl-fs')
     implementation project(':stroom-dropwizard-common')
     implementation project(':stroom-explorer:stroom-collection-mock')
     implementation project(':stroom-importexport:stroom-importexport-api')
@@ -34,7 +31,7 @@ dependencies {
     implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-common-impl')
-    implementation project(':stroom-security:stroom-security-mock')
+//    implementation project(':stroom-security:stroom-security-mock')
     implementation project(':stroom-security:stroom-security-openid-api')
     implementation project(':stroom-task:stroom-task-impl')
     implementation project(':stroom-util')
@@ -58,6 +55,7 @@ dependencies {
     // See https://www.dropwizard.io/en/stable/manual/configuration.html#json-layout
     runtimeOnly libs.dropwizard.json.logging
 
+    testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.classgraph
@@ -95,6 +93,15 @@ shadowJar {
     mergeServiceFiles()
     // Without INCLUDE, it drops any duplicates
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+//    // Keep duplicate service files so mergeServiceFiles() can combine them, but discard all
+//    // other duplicate entries.
+//    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+//    filesMatching('META-INF/services/**') {
+//        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+//    }
+//    filesMatching('META-INF/*.kotlin_module') {
+//        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+//    }
 
     archiveFileName = fatJarName
 }

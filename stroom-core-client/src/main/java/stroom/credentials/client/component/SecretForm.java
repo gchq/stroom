@@ -27,6 +27,7 @@ import java.util.function.Consumer;
 /// ([#validate()]) and shows that, then [#submit] it, and takes the secret from it.
 public sealed interface SecretForm extends IsWidget
         permits AccessTokenSecretForm,
+        AwsKeySecretForm,
         KeyStoreFileSecretForm,
         KeyStoreSecretFormController,
         SshKeySecretForm,
