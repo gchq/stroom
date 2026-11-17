@@ -350,7 +350,8 @@ class PromotionProcessing {
             final String index = String.valueOf(destination.get().get("index name"));
             final Set<String> ours = new HashSet<>(promoted);
             ours.add(pipeline.getUuid());
-            final List<ProductionIndexes.Claim> others = productionIndexes.claimsBesides(ours, index);
+            final List<ProductionIndexes.Claim> others = productionIndexes.claimsBesides(ours, pipeline.getUuid(),
+                    index);
             if (!others.isEmpty()) {
                 return new BeforeEnabling("'" + index + "' is not dropped: it is a production index ("
                                           + String.join("; ", others.stream().map(ProductionIndexes.Claim::said)

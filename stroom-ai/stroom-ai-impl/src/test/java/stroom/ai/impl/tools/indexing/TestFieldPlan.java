@@ -99,7 +99,7 @@ class TestFieldPlan {
         final FieldPlan plan = FieldPlan.of("elasticsearch", "stroom-acme-v1", "@timestamp", FIELDS);
         assertThat(plan.required()).isEmpty();
         final Map<String, Object> body = JsonValues.map(plan.elasticTemplate("stroom-acme-v1", ECS).get("body"));
-        assertThat(body.get("index_patterns")).isEqualTo(List.of("stroom-acme-v1*"));
+        assertThat(body.get("index_patterns")).isEqualTo(List.of("stroom-acme-v1"));
         final Map<String, Object> types = new java.util.LinkedHashMap<>();
         TemplateMappings.readMappingFields(body).forEach((path, spec) -> {
             if (!"object".equals(spec.get("type"))) {

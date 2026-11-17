@@ -272,7 +272,7 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                 : version.settled(consent, context);
         if (settled != null) {
             refuseUnchanged(source, version, settled);
-            refuseTakenIndex(build, settled);
+            refuseTakenIndex(build, source.getUuid(), settled);
             names.putAll(settled.documents());
         }
         final String pipelineName = settled == null
@@ -494,13 +494,13 @@ class CopyPipelineTool extends AbstractBuiltInTool {
 
     // The candidate index of a new version of an Elasticsearch indexing pipeline, looked up before anything is
     // copied (asked for by the user): anything it matches, even an empty index, or a lookup that fails, is refused.
-    private void refuseTakenIndex(final String build, final NewVersion settled) {
+    private void refuseTakenIndex(final String build, final String sourceUuid, final NewVersion settled) {
         if (settled.indexName() == null) {
             return;
         }
         final Map<String, Object> destination = new LinkedHashMap<>(settled.destination());
         destination.put("index name", settled.indexName());
-        productionIndexes.taken(build, destination, "Nothing was copied.").ifPresent(taken -> {
+        productionIndexes.taken(build, sourceUuid, destination, "Nothing was copied.").ifPresent(taken -> {
             throw new ToolRefusal(taken + " Call again with " + SET_PROPERTIES_ARG + " setting the "
                                   + "elasticIndexingFilter's indexName to the name the user settles on.");
         });

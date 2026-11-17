@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.api.ElasticIndexPresence.Presence;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.ProcessorFilterAccess;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
@@ -68,7 +69,8 @@ final class PipelineWorld {
             world.documentAccess), world.documentAccess, world.guard(), new ExistingIndexes(() -> (cluster, name) -> {
                 lookedUp.add(name);
                 return presences.getOrDefault(name, Presence.absent());
-            }), templates, world.records(), new IndexTemplateAgreements(world.pipelineShapes, world.documentAccess));
+            }), templates, world.records(), new IndexTemplateAgreements(world.pipelineShapes, world.documentAccess),
+            new PipelineFeeds(Mockito.mock(ProcessorFilterAccess.class), world.documentAccess, feeds.streamReader));
     final PipelineWrites writes = new PipelineWrites(world.pipelineShapes, pipelineDocs, propertyTypes,
             world.documentAccess, () -> feeds.docFinder, feeds.feedNames, referenceData, world.guard(), feeds.plan,
             buildIndexes);

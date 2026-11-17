@@ -97,7 +97,8 @@ final class ProcessingWorld {
     final PipelineTemplates templates = Mockito.mock(PipelineTemplates.class);
     final ProductionIndexes productionIndexes = new ProductionIndexes(new PipelineIndex(() -> feeds.docFinder,
             world.documentAccess), world.documentAccess, world.guard(), existingIndexes, templates, world.records(),
-            new IndexTemplateAgreements(world.pipelineShapes, world.documentAccess));
+            new IndexTemplateAgreements(world.pipelineShapes, world.documentAccess),
+            new PipelineFeeds(processorFilterAccess, world.documentAccess, feeds.streamReader));
     // The processor Stroom gives each filter made from now on.
     Processor processor = Processor.builder().id(70).enabled(true).build();
     // The builds' settings (stroom.ai.builds), changed by a test that needs to.

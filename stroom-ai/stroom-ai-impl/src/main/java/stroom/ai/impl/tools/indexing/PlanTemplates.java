@@ -69,7 +69,9 @@ final class PlanTemplates {
         }
         mappings.put("properties", properties);
         final Map<String, Object> body = new LinkedHashMap<>();
-        body.put("index_patterns", List.of(plan.indexName() + "*"));
+        // The exact index name, a variable's part a wildcard (asked for by the user: acme-events-v1* also covered
+        // acme-events-v10). A data stream's template matches the data stream's own name.
+        body.put("index_patterns", IndexNamePatterns.templatePatterns(plan.indexName()));
         if (priority != null) {
             body.put("priority", priority);
         }
@@ -120,7 +122,7 @@ final class PlanTemplates {
     private static Map<String, Object> discoveryTemplate(final FieldPlan plan, final Long priority) {
         final Discovery discovery = plan.discovery();
         final Map<String, Object> body = new LinkedHashMap<>();
-        body.put("index_patterns", List.of(plan.indexName() + "*"));
+        body.put("index_patterns", IndexNamePatterns.templatePatterns(plan.indexName()));
         if (priority != null) {
             body.put("priority", priority);
         }

@@ -21,7 +21,11 @@ import stroom.ai.api.ElasticIndexPresence.State;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.docref.DocRef;
+import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.json.JsonUtil;
 
@@ -32,6 +36,7 @@ import org.mockito.Mockito;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -248,6 +253,167 @@ class TestProductionIndexes {
                 .doesNotContain("DELETE");
         assertThat(user.forms()).isEmpty();
         assertThat(w.lookedUp).isEmpty();
+    }
+
+    @Test
+    void childrenOfAFeedTemplateClaimOnlyTheirOwnFeedsIndex() {
+        // A template's {feed}-events, its indexing XSLT writing the feed field as the feed's name (lower-cased), so
+        // Stroom writes each child's documents to its own feed's index. Seen in review: compared unfilled, the
+        // children told no feeds apart, and a build pipeline for a feed with one wasn't claimed by it.
+        feedTemplate();
+        templateChild("child-a", "Acme-A-Indexing", "ACME-A");
+        templateChild("child-b", "Acme-B-Indexing", "ACME-B");
+        buildChildOfTemplate("ACME-A");
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final ToolResult forA = create(Map.of("stream_ids", List.of(6), "source_pipeline_uuid", "ev"), user);
+
+        assertThat(forA.isError()).as(forA.text()).isTrue();
+        assertThat(forA.text()).contains("which is a production index (pipeline 'Acme-A-Indexing' writes to "
+                                         + "'{feed}-events' ('acme-a-events'))")
+                .doesNotContain("Acme-B-Indexing")
+                .doesNotContain("DELETE");
+        assertThat(w.lookedUp).isEmpty();
+    }
+
+    @Test
+    void aBuildPipelineForAFeedWithNoProductionChildIsProcessed() {
+        feedTemplate();
+        templateChild("child-a", "Acme-A-Indexing", "ACME-A");
+        templateChild("child-b", "Acme-B-Indexing", "ACME-B");
+        buildChildOfTemplate("ACME-C");
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final ToolResult forC = create(Map.of("stream_ids", List.of(6), "source_pipeline_uuid", "ev"), user);
+
+        assertThat(forC.isError()).as(forC.text()).isFalse();
+        assertThat(w.created).hasSize(1);
+    }
+
+    @Test
+    void aMultiFeedChildClaimsEachOfItsFeedsIndices() {
+        feedTemplate();
+        templateChild("child-ab", "Acme-AB-Indexing", "ACME-A", "ACME-B");
+        buildChildOfTemplate("ACME-B");
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final ToolResult forB = create(Map.of("stream_ids", List.of(6), "source_pipeline_uuid", "ev"), user);
+
+        assertThat(forB.isError()).as(forB.text()).isTrue();
+        assertThat(forB.text()).contains("pipeline 'Acme-AB-Indexing' writes to '{feed}-events' ('acme-a-events', "
+                                         + "'acme-b-events')");
+    }
+
+    @Test
+    void aVariableWhoseValueIsNotKnownStaysAnyValue() {
+        // The child's XSLT writes the feed field from the event: Stroom's value isn't known, so the child's name
+        // stands for every *-events index, the build's feed's among them.
+        feedTemplate();
+        w.world.docs.put("x-tpl", XsltDoc.builder().uuid("x-tpl").name("Events Indexing").data(xslt(
+                "<string key=\"feed\"><xsl:value-of select=\"EventSource/System/Name\"/></string>")).build());
+        templateChild("child-u", "Acme-U-Indexing", "ACME-U");
+        buildChildOfTemplate("ACME-A");
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final ToolResult result = create(Map.of("stream_ids", List.of(6), "source_pipeline_uuid", "ev"), user);
+
+        assertThat(result.isError()).as(result.text()).isTrue();
+        assertThat(result.text()).contains("pipeline 'Acme-U-Indexing' writes to '{feed}-events')");
+    }
+
+    @Test
+    void aNewVersionsNameIsTakenOnlyByWhatItsOwnFeedsNameStandsFor() {
+        // A's v2 is named outside the build: a new version for feed B fills {feed}-events-v2 as acme-b-events-v2,
+        // which it doesn't take. Seen in review: compared unfilled (*-events-v2), any feed's new version was refused.
+        feedTemplate();
+        templateChild("child-a", "Acme-A-Indexing", "ACME-A");
+        w.world.add(ElasticIndexDoc.TYPE, "Acme-A-Events-V2", w.world.folder("System/Feeds/Acme").uuid, "es-a2");
+        w.world.docs.put("es-a2", ElasticIndexDoc.builder().uuid("es-a2").name("Acme-A-Events-V2").version("v0")
+                .indexName("acme-a-events-v2").clusterRef(ProcessingWorld.CLUSTER).build());
+        buildChildOfTemplate("ACME-B");
+
+        assertThat(taken("{feed}-events-v2")).isEmpty();
+
+        // For feed A it is taken, named by the Elastic Index doc.
+        w.world.records().addSourceFeeds(BUILD, List.of("ACME-A"));
+        assertThat(taken("{feed}-events-v2")).hasValueSatisfying(why -> assertThat(why)
+                .contains("in Stroom, Elastic Index doc 'Acme-A-Events-V2' names 'acme-a-events-v2'")
+                .contains("Nothing was done."));
+    }
+
+    @Test
+    void aNewVersionsNameThatExistsOnTheClusterIsTakenWithItsVariablesAsAnyValue() {
+        feedTemplate();
+        templateChild("child-a", "Acme-A-Indexing", "ACME-A");
+        buildChildOfTemplate("ACME-A");
+        // A's v2 exists: the cluster is looked up with each variable a wildcard.
+        w.presences.put("*-events-v2", new Presence(State.PRESENT, List.of(), List.of("acme-a-events-v2"),
+                List.of(), 3L, null));
+
+        assertThat(taken("{feed}-events-v2")).hasValueSatisfying(why -> assertThat(why)
+                .contains("it matches an index (acme-a-events-v2)"));
+        // A production child for feed A writing {feed}-events takes no v2 name of its own.
+        w.presences.clear();
+        assertThat(taken("{feed}-events-v2")).isEmpty();
+    }
+
+    private Optional<String> taken(final String index) {
+        final Map<String, Object> destination = new LinkedHashMap<>();
+        destination.put("index name", index);
+        destination.put("cluster", ProcessingWorld.CLUSTER.getName());
+        destination.put(IndexTemplateAgreements.CLUSTER_UUID, ProcessingWorld.CLUSTER.getUuid());
+        return w.productionIndexes.taken(BUILD, P1.getUuid(), destination, "Nothing was done.");
+    }
+
+    // A template writing {feed}-events, whose indexing XSLT writes the feed field as the feed's name, lower-cased.
+    private void feedTemplate() {
+        w.world.add(PipelineDoc.TYPE, "Events Indexing", w.world.folder("System/Template Pipelines").uuid, "tpl");
+        w.world.docs.put("tpl", PipelineDoc.builder().uuid("tpl").name("Events Indexing").version("v0")
+                .pipelineData(templateLayer().data()).build());
+        Mockito.when(w.templates.templateReason("tpl")).thenReturn("it is one of the template pipelines");
+        w.world.docs.put("x-tpl", XsltDoc.builder().uuid("x-tpl").name("Events Indexing").data(xslt(
+                "<string key=\"feed\"><xsl:value-of select=\"lower-case(stroom:feed-name())\"/></string>"))
+                .build());
+    }
+
+    private PipelineLayers templateLayer() {
+        return elasticLayer("tpl", "{feed}-events")
+                .property("xsltFilter", "xslt", new DocRef(XsltDoc.TYPE, "x-tpl", "Events Indexing"));
+    }
+
+    // A production child of the template, inheriting its index name, processing the feeds.
+    private void templateChild(final String uuid, final String name, final String... feeds) {
+        w.world.add(PipelineDoc.TYPE, name, w.world.folder("System/Feeds/Acme").uuid, uuid);
+        w.world.docs.put(uuid, PipelineDoc.builder().uuid(uuid).name(name).version("v0")
+                .parentPipeline(new DocRef(PipelineDoc.TYPE, "tpl", "Events Indexing"))
+                .pipelineData(PipelineLayers.layer(uuid).data()).build());
+        PipelineLayers.given(w.world.pipelineService, uuid, PipelineLayers.of(templateLayer(),
+                PipelineLayers.layer(uuid)));
+        final ExpressionOperator.Builder expression = ExpressionOperator.builder().op(ExpressionOperator.Op.OR);
+        for (final String feed : feeds) {
+            expression.addTextTerm(MetaFields.FEED, Condition.EQUALS, feed);
+        }
+        w.filter(uuid, 40 + w.filters.size(), true, expression.build(), null);
+    }
+
+    // The build's own child of the template (no copy), working from the feed.
+    private void buildChildOfTemplate(final String feed) {
+        copyInBuild("{feed}-events");
+        PipelineLayers.given(w.world.pipelineService, P1.getUuid(), PipelineLayers.of(templateLayer(),
+                PipelineLayers.layer(P1.getUuid())));
+        w.world.records().update(BUILD, P1, entry -> entry.remove("copy_of"));
+        w.world.records().addSourceFeeds(BUILD, List.of(feed));
+        // Agreed and stepped clean for the template's XSLT, which it now runs.
+        final Map<String, Object> agreed = agreed("{feed}-events");
+        agreed.put("xslt", w.agreements.indexingXsltDigest(P1.getUuid()));
+        w.pipeline(P1, true, KeptMapping.withAgreedTemplate("Indexes Acme.", agreed));
+        w.steppedClean(P1);
+    }
+
+    private static String xslt(final String body) {
+        return "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:stroom=\"stroom\" "
+               + "xmlns=\"http://www.w3.org/2013/XSL/json\" version=\"3.0\"><xsl:template match=\"/\"><array>"
+               + "<map>" + body + "</map></array></xsl:template></xsl:stylesheet>";
     }
 
     // What every refusal of the production index must be: before anything is looked up or asked, nothing made,
