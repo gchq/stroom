@@ -186,7 +186,7 @@ div.data-grid                       role=grid, tabindex, CSS vars: --data-grid__
     └ div.data-grid__body            natural: normal flow; virtual: translateY(windowStart × rowH)
        └ div.data-grid__row          role=row, data-row=<absolute index>, aria-rowindex, aria-selected
           └ div.data-grid__cell      role=gridcell, data-col=<index>
- └ div.data-grid__empty              empty-table message (outside the rows)
+ └ div.data-grid__empty              what it says with no rows: outside the scroller (which may hold only rows), laid over it below the header; describes it (aria-describedby) while shown (R-D5)
  └ div.data-grid__resize-handle / data-grid__resize-line / data-grid__move-ghost / data-grid__move-line   (overlay layer)
 ```
 
@@ -443,7 +443,7 @@ A requirement marked **R** goes beyond GWT and needs sign-off.
 | R-D2 | Works with `PagerPanel` (was `PagerView`) / `Pager`: the pager calls `setDisplay(grid)`, and the "from to of", "?" for an inexact count, and typed-range behaviours are unchanged. | G |
 | R-D3 | Pushed data with a range-change feedback guard (dashboard `ignoreRangeChange`). Setting rows must not fire `RangeChangeEvent` unless the range changed. | G |
 | R-D4 | `flush()` applies pending changes synchronously (67 sites). `redraw()` re-renders. | G |
-| R-D5 | The empty state is **blank by default**, as today (decided, §10). Screens can opt in with `setEmptyMessage(String)` or `setEmptyTableWidget(Widget)`. Errors are still shown in the pager's `MessagePanel`. | G |
+| R-D5 | **Every grid says when it has no rows** (decided 17 November 2026, replacing "blank by default", §10): "No data" for a table, "No items" for a list or tree (`EmptyMessage`), or the screen's own (`setEmptyMessage(String)`; `null` turns it off). While a filter is set it says "No matches" (`setFiltered`): a `QuickFilterPage` and the find dialogs' `FindPanel` set it for the grids they hold (`QuickFilter.addFilteredGridsIn`; a component showing a grid implements `HasFiltered` to pass it on), `QuickFilter.addFilteredGrid` links a filter a screen places itself, and Find In Content sets it while it has a pattern. It shows only once the grid knows it has no rows (an exact count of none), never while loading. The message is outside the scroller, which is the grid, list or tree to assistive technology and may hold only rows (a list or tree with anything else fails axe's `aria-required-children`); it is laid over the scroller where the first row would be, below the header (which stays), the rows' area keeping its room, and while it shows it describes the grid (`aria-describedby`), so the grid given the focus says why it is empty. Errors are still shown in the pager's `MessagePanel`. | changed |
 | R-D6 | The loading state stays the pager's refresh spinner (`PagerPanel.createTaskMonitor`, was `PagerView`'s). The grid's own loading widget stays blank. | G |
 | R-D7 | The vertical scroll position matches GWT (measured in Phase 0). It is kept when the same rows arrive again (a poll), when every row's values change, and when the columns are rebuilt. A page too short to scroll is at the top. A polling refresh never moves it. | G |
 | R-D8 | `scrollToRow(index)` / reveal: scroll a row into view in either mode (needed by keyboard moves and by presenters that select an item after loading). | G / R |
@@ -996,7 +996,7 @@ interactive header cells, the context menu, copy, export and AI.
 | 5 | Wrapping and virtual | Wrapping columns or multi-line switch virtual off (parity). Variable-height virtual is a later phase (§4.4). |
 | 6 | Model code location | `stroom.widget.datagrid.client.model` in `stroom-core-client-widget`, with no DOM dependencies (§4.1). |
 | 7 | Behaviour fixes | D2, D3, D4 and D6 approved, applied after switch-over. Single and multi select stay controlled by the selection model (§8). |
-| 8 | Empty state | Blank by default; screens can opt in with `setEmptyMessage` (R-D5). |
+| 8 | Empty state | Changed 17 November 2026: every grid says "No data" (table) or "No items" (list, tree), "No matches" while filtered, once loaded; screens can give their own or turn it off (R-D5). Was blank by default. |
 | 9 | Where sorting happens | Sorting stays in the data model (server criteria or the presenter's `ListDataProvider`). The grid only holds the sort state and fires `ColumnSortEvent`, the same mechanism for both. No built-in client-side sorting (R-H4a). |
 | 10 | Third click empties the sort | Restore the screen's default sort and show it. A grid with no default sends an empty sort (R-H4b, D7). |
 | 11 | Default sort shown in the header | Yes: declared on the grid with `setDefaultSort` and shown from the start (D10). |

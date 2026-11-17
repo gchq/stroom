@@ -85,12 +85,14 @@ public class FindPanel extends Component {
         nameFilter.setContextHandler(contextHandler);
     }
 
-    /// Gives the panel its list of what is found, once, from a template's `<ex:content>` child.
+    /// Gives the panel its list of what is found, once, from a template's `<ex:content>` child. A
+    /// list that is `HasFiltered` says "No matches" when it finds nothing for the filter.
     ///
     /// @param content The list of what is found.
     @UiChild(tagname = "content", limit = 1)
     public void addContent(final Widget content) {
         bottomPanel.setWidget(content);
+        nameFilter.addFilteredGridsIn(content);
     }
 
     /// Puts the focus on the filter.

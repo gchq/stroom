@@ -88,6 +88,7 @@ public class QuickFilterPage extends Component implements HasWidgets {
     /// @param content What the filter filters, e.g. a list.
     public void setContent(final IsWidget content) {
         data.setWidget(content);
+        quickFilter.addFilteredGridsIn(data.getWidget());
     }
 
     /// Sets the filter's text; if it changes, the filter change callback is told.
@@ -136,6 +137,7 @@ public class QuickFilterPage extends Component implements HasWidgets {
             formGroup.add(widget);
         } else {
             data.setWidget(widget);
+            quickFilter.addFilteredGridsIn(widget);
         }
     }
 

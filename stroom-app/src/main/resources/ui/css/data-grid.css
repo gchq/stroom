@@ -391,13 +391,22 @@
     content-visibility: visible;
 }
 
+/* What the grid says with no rows (DataGrid.renderEmptyMessage). Outside the scroller, which may hold
+   only rows, so laid over it where the first row would be: its top is set below the header, and the
+   rows' area keeps its room. Clicks pass through to the grid. */
 .data-grid__empty {
     display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    overflow: hidden;
+    pointer-events: none;
     padding: var(--row__padding--vertical) var(--row__padding--horizontal);
-    color: var(--text-color--disabled);
+    color: var(--text-color--muted);
 }
 
-.data-grid--empty > .data-grid__scroller > .data-grid__content > .data-grid__empty {
+.data-grid--empty > .data-grid__empty {
     display: block;
 }
 

@@ -64,6 +64,8 @@ public class Chooser<T> extends Component {
     /// Makes an empty chooser.
     public Chooser() {
         initWidget(BINDER.createAndBindUi(this));
+        // With no rows, the list says "No matches" while the filter is set
+        nameFilter.addFilteredGrid(list);
         list.setPageSize(DataGrid.MASSIVE_LIST_PAGE_SIZE);
         nameFilter.setOnChange(text -> onFilterChange.accept(text));
         selectAllLink.setOnClick(() -> onSelectAll.run());

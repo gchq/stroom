@@ -21,6 +21,7 @@ import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.model.ColumnModel;
 import stroom.widget.datagrid.client.model.ColumnSizing;
+import stroom.widget.datagrid.client.model.EmptyMessage;
 import stroom.widget.datagrid.client.model.KeyboardRow;
 import stroom.widget.datagrid.client.model.PageState;
 import stroom.widget.datagrid.client.model.SortCycle;
@@ -104,7 +105,7 @@ import java.util.function.Function;
 ///
 /// @param <R> The row type.
 public class DataGrid<R> extends Widget
-        implements GridDisplay<R>, HasKeyboardSelectionPolicy, Focusable {
+        implements GridDisplay<R>, HasKeyboardSelectionPolicy, Focusable, HasFiltered {
 
     /// The default page size.
     public static final int DEFAULT_LIST_PAGE_SIZE = 100;
@@ -212,7 +213,8 @@ public class DataGrid<R> extends Widget
     // How many handle the grid's links (addHyperlinkHandler)
     private int hyperlinkHandlerCount;
     private String tableName;
-    private String emptyMessage;
+    // What the grid says with no rows (R-D5)
+    private final EmptyMessage emptyMessage = new EmptyMessage();
 
     // Render state.
     private boolean renderScheduled;
@@ -253,6 +255,8 @@ public class DataGrid<R> extends Widget
         // The parts (see the template), which key events bubble from to the root, where they are
         // handled
         final Element root = BINDER.createAndBindUi(this);
+        // The grid's description while the empty message shows
+        empty.setId(Document.get().createUniqueId());
         scrollbars = new OverlayScrollbars(root,
                 scroller,
                 verticalTrack,
@@ -1088,10 +1092,23 @@ public class DataGrid<R> extends Widget
         return tableName;
     }
 
-    /// @param emptyMessage Text to show when there are no rows, or `null` for none (the default).
+    /// Text to show when there are no rows, in place of the default ("No data" for a table, "No
+    /// items" for a list or tree). "No matches" still shows while a filter is set
+    /// ([#setFiltered(boolean)]).
+    ///
+    /// @param emptyMessage The text, or `null` for no message at all.
     public void setEmptyMessage(final String emptyMessage) {
-        this.emptyMessage = emptyMessage;
-        empty.setInnerText(NullSafe.string(emptyMessage));
+        this.emptyMessage.setOwn(emptyMessage);
+        scheduleRender();
+    }
+
+    /// Says whether a filter is set on the rows, so that with none the grid says "No matches"
+    /// rather than that there is nothing. A `QuickFilterPage` sets it for the grids it holds.
+    ///
+    /// @param filtered Whether a filter is set.
+    @Override
+    public void setFiltered(final boolean filtered) {
+        emptyMessage.setFiltered(filtered);
         scheduleRender();
     }
 
@@ -1500,6 +1517,31 @@ public class DataGrid<R> extends Widget
         return addHandler(handler, LoadingStateChangeEvent.TYPE);
     }
 
+    // Shows what the grid says with no rows, once it knows it has none (R-D5). The message is
+    // outside the scroller, which is the grid, list or tree to assistive technology and may hold
+    // only rows, and describes it instead (aria-describedby), so an empty grid given the focus says
+    // why it is empty. It sits where the first row would be, below the header, and the rows' area
+    // keeps the room it took when it was among them.
+    private void renderEmptyMessage() {
+        final String text = emptyMessage.getText(profile.hasCells());
+        final boolean shown = EmptyMessage.isShown(
+                pageState.getRowDataSize(), pageState.isRowCountExact(), text);
+        empty.setInnerText(NullSafe.string(text));
+        // Which shows the message (data-grid.css)
+        setStyleName("data-grid--empty", shown);
+        if (shown) {
+            scroller.setAttribute("aria-describedby", empty.getId());
+            final int top = hideHeader
+                    ? 0
+                    : head.getOffsetHeight();
+            empty.getStyle().setTop(top, Unit.PX);
+            content.getStyle().setProperty("minHeight", empty.getOffsetHeight(), Unit.PX);
+        } else {
+            scroller.removeAttribute("aria-describedby");
+            content.getStyle().clearProperty("minHeight");
+        }
+    }
+
     private void updateLoadingState() {
         final int cacheSize = pageState.getRowDataSize();
         final int pageSize = pageState.getPageSize();
@@ -1692,9 +1734,7 @@ public class DataGrid<R> extends Widget
         renderedWidthVersion = columnModel.getWidthVersion();
         headersDirty = false;
 
-        final boolean isEmpty = pageState.getRowDataSize() == 0;
-        // Which shows the empty message (data-grid.css)
-        setStyleName("data-grid--empty", isEmpty && emptyMessage != null);
+        renderEmptyMessage();
         if (profile.hasCells()) {
             scroller.setAttribute("aria-rowcount", String.valueOf(pageState.getRowCount() + 1));
             scroller.setAttribute("aria-colcount", String.valueOf(columnModel.size()));

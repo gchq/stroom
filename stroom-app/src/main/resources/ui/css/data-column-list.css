@@ -17,10 +17,10 @@
 /* The columns of a Data Connection's data (DataColumnList): a toolbar (for LDAP attributes) and a
    grid of each column's name and type, in a control's box. */
 
-/* As wide as its grid's columns (Name 250px, Type 150px), with room for the box's borders and a
-   scroll bar, rather than across the whole form */
+/* As wide as its grid's columns (Name 250px, Type 150px at Medium, scaled with the text), with room
+   for the box's borders and a scroll bar, rather than across the whole form */
 .data-column-list {
-    width: 432px;
+    width: calc(400px * var(--text-scale) + 32px);
     max-width: 100%;
 }
 

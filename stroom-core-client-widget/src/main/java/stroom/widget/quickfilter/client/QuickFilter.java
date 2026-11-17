@@ -16,8 +16,11 @@
 
 package stroom.widget.quickfilter.client;
 
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.datagrid.client.HasFiltered;
+import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.help.client.HelpPopup;
@@ -49,8 +52,11 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.HasText;
+import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -108,6 +114,8 @@ public class QuickFilter extends Composite
     private String filterError = null;
     private QuickFilterContextHandler contextHandler = null;
     private Consumer<String> onChange;
+    // Told whether the filter is set, as it changes (addFilteredGrid)
+    private final List<HasFiltered> filteredGrids = new ArrayList<>();
     // What Down in the filter does, e.g. moves into the list below it
     private Runnable moveDown;
     private final QuickFilterHistoryTracker historyTracker = new QuickFilterHistoryTracker(text -> {
@@ -297,6 +305,7 @@ public class QuickFilter extends Composite
         final String text = textBox.getText();
         if (!Objects.equals(text, lastInput)) {
             lastInput = text;
+            updateFilteredGrids();
             // Cancel an update timer if one is running.
             filterRefreshTimer.cancel();
             if (fireEvents) {
@@ -411,6 +420,40 @@ public class QuickFilter extends Composite
 
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
         this.popupTextSupplier = popupTextSupplier;
+    }
+
+    /// Tells a grid whether this filter is set, now and as it changes, so that with no rows it says
+    /// "No matches" rather than that there is nothing (`DataGrid.setFiltered`). A
+    /// [QuickFilterPage] does this for the grids it holds ([#addFilteredGridsIn(Widget)]).
+    ///
+    /// @param grid A grid this filter filters, or a component showing one.
+    public void addFilteredGrid(final HasFiltered grid) {
+        filteredGrids.add(grid);
+        grid.setFiltered(NullSafe.isNonBlankString(getText()));
+    }
+
+    /// Links this filter ([#addFilteredGrid(HasFiltered)]) to the grids that a widget it filters
+    /// shows: the widget itself, a pager panel's grid, or those in its panels (`HasWidgets`). A
+    /// component hides its widgets, so one showing a grid implements [HasFiltered] to be found.
+    ///
+    /// @param widget What this filter filters, e.g. a page's content.
+    public void addFilteredGridsIn(final Widget widget) {
+        if (widget instanceof final HasFiltered grid) {
+            addFilteredGrid(grid);
+        } else if (widget instanceof final PagerPanel pagerPanel) {
+            addFilteredGridsIn(pagerPanel.getDataWidget());
+        } else if (widget instanceof final HasWidgets panel) {
+            for (final Widget child : panel) {
+                addFilteredGridsIn(child);
+            }
+        }
+    }
+
+    private void updateFilteredGrids() {
+        final boolean filtered = NullSafe.isNonBlankString(getText());
+        for (final HasFiltered grid : filteredGrids) {
+            grid.setFiltered(filtered);
+        }
     }
 
     @Override

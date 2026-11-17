@@ -69,6 +69,8 @@ public class PagerPanel extends Component implements TaskMonitorFactory, HasWidg
 
     // The children a template declared, in order
     private final List<Widget> children = new ArrayList<>();
+    // The widget paged, e.g. a grid
+    private Widget dataWidget;
     private int taskCount;
 
     /// Makes an empty panel, e.g. one a template declares, or one GIN makes for a list controller.
@@ -84,6 +86,13 @@ public class PagerPanel extends Component implements TaskMonitorFactory, HasWidg
         pager.setDisplay(widget);
         // Under the message, which shows over it
         listContainer.insert(widget, 0);
+        dataWidget = widget;
+    }
+
+    /// @return The widget paged, e.g. a grid, whether a template declared it or it was set
+    /// ([#setDataWidget(Widget)]); `null` for none.
+    public Widget getDataWidget() {
+        return dataWidget;
     }
 
     /// The toolbar beside the pager, for the list's own buttons, e.g.

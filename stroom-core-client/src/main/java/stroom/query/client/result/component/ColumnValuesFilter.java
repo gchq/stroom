@@ -75,6 +75,8 @@ public class ColumnValuesFilter extends Component {
     /// Makes an empty list.
     public ColumnValuesFilter() {
         initWidget(BINDER.createAndBindUi(this));
+        // With no rows, the list says "No matches" while the filter is set
+        quickFilter.addFilteredGrid(list);
         selectAllLink.setOnClick(this::onSelectAllLink);
         selectNoneLink.setOnClick(this::onSelectNoneLink);
         quickFilter.setOnChange(text -> onFilterChange.accept(text));

@@ -89,6 +89,8 @@ public class FieldValuePicker extends Component {
     /// Makes an empty picker.
     public FieldValuePicker() {
         initWidget(BINDER.createAndBindUi(this));
+        // With no rows, the list says "No matches" while the filter is set
+        filter.addFilteredGrid(list);
         list.setPageSize(DataGrid.MASSIVE_LIST_PAGE_SIZE);
 
         final DataGridSelectionEventManager<FieldValueCount> selectionEventManager =

@@ -16,9 +16,10 @@
             </div>
             <div ui:field="content" class="data-grid__content">
                 <div ui:field="body" class="data-grid__body" role="rowgroup"></div>
-                <div ui:field="empty" class="data-grid__empty"></div>
             </div>
         </div>
+        <!-- Outside the scroller, which may hold only rows: it describes the grid instead -->
+        <div ui:field="empty" class="data-grid__empty"></div>
         <div ui:field="verticalTrack" class="data-grid__track data-grid__track--vertical">
             <div ui:field="verticalThumb" class="data-grid__thumb"></div>
         </div>
