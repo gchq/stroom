@@ -56,6 +56,7 @@ import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -77,9 +78,9 @@ public class DataConnectionSettingsPresenter
 
     private final RestFactory restFactory;
     private final LocationManager locationManager;
-    private final CredentialChoice jdbcCredential = new CredentialChoice();
-    private final CredentialChoice athenaCredential = new CredentialChoice();
-    private final CredentialChoice ldapCredential = new CredentialChoice();
+    private final CredentialPicker jdbcCredential;
+    private final CredentialPicker athenaCredential;
+    private final CredentialPicker ldapCredential;
     private final EditorPresenter csvEditor;
     // Counts reads and column detections, so a detection reply that arrives after the document was
     // read again, or after a later detection, is ignored.
@@ -125,39 +126,19 @@ public class DataConnectionSettingsPresenter
         registerHandler(csvEditor.addValueChangeHandler(event -> onChange()));
         view.setCsvEditor(csvEditor.getWidget());
 
-        view.getJdbcCredentialSelectionBox().setModel(credentialModel(
-                eventBus, credentialClient, CredentialType.USERNAME_PASSWORD));
-        view.getAthenaCredentialSelectionBox().setModel(credentialModel(
-                eventBus, credentialClient, CredentialType.AWS_KEY));
-        view.getLdapCredentialSelectionBox().setModel(credentialModel(
-                eventBus, credentialClient, CredentialType.USERNAME_PASSWORD));
-        registerHandler(view.getJdbcCredentialSelectionBox().addValueChangeHandler(event -> {
-            jdbcCredential.pick(event.getValue());
-            view.setJdbcCredentialNote(null);
-        }));
-        registerHandler(view.getAthenaCredentialSelectionBox().addValueChangeHandler(event -> {
-            athenaCredential.pick(event.getValue());
-            view.setAthenaCredentialNote(null);
-        }));
-        registerHandler(view.getLdapCredentialSelectionBox().addValueChangeHandler(event -> {
-            ldapCredential.pick(event.getValue());
-            view.setLdapCredentialNote(null);
-        }));
+        jdbcCredential = new CredentialPicker(eventBus, credentialClient, CredentialType.USERNAME_PASSWORD,
+                view.getJdbcCredentialSelectionBox(), view::setJdbcCredentialNote);
+        athenaCredential = new CredentialPicker(eventBus, credentialClient, CredentialType.AWS_KEY,
+                view.getAthenaCredentialSelectionBox(), view::setAthenaCredentialNote);
+        ldapCredential = new CredentialPicker(eventBus, credentialClient, CredentialType.USERNAME_PASSWORD,
+                view.getLdapCredentialSelectionBox(), view::setLdapCredentialNote);
         view.setUiHandlers(this);
-    }
-
-    private CredentialListModel credentialModel(final EventBus eventBus,
-                                                final CredentialClient credentialClient,
-                                                final CredentialType credentialType) {
-        final CredentialListModel model = new CredentialListModel(eventBus, credentialClient, Set.of(credentialType));
-        model.setTaskMonitorFactory(this);
-        return model;
     }
 
     @Override
     protected void onRead(final DocRef docRef, final DataConnectionDoc doc, final boolean readOnly) {
         final DataConnectionSettingsView view = getView();
-        view.setSourceType(Objects.requireNonNullElse(doc.getSourceType(), DataConnectionType.JDBC));
+        view.setSourceType(DataConnectionType.orDefault(doc.getSourceType()));
 
         final JdbcConnectionSettings jdbc = Objects.requireNonNullElse(
                 doc.getJdbc(),
@@ -169,10 +150,7 @@ public class DataConnectionSettingsPresenter
                 JdbcConnectionSettings.DEFAULT_MAX_POOL_SIZE));
         view.setFetchSize(Objects.requireNonNullElse(jdbc.getFetchSize(), JdbcConnectionSettings.DEFAULT_FETCH_SIZE));
         view.setJdbcMinRefreshMinutes(Objects.requireNonNullElse(jdbc.getMinRefreshMinutes(), 0));
-        showCredential(jdbc.getCredentialName(),
-                jdbcCredential,
-                view.getJdbcCredentialSelectionBox(),
-                view::setJdbcCredentialNote);
+        jdbcCredential.show(jdbc.getCredentialName());
 
         final AthenaConnectionSettings athena = Objects.requireNonNullElse(
                 doc.getAthena(),
@@ -191,10 +169,7 @@ public class DataConnectionSettingsPresenter
                 athena.getMinRefreshMinutes(),
                 AthenaConnectionSettings.DEFAULT_MIN_REFRESH_MINUTES));
         view.setAthenaMaxDataScannedMb(Objects.requireNonNullElse(athena.getMaxDataScannedMb(), 0));
-        showCredential(athena.getCredentialName(),
-                athenaCredential,
-                view.getAthenaCredentialSelectionBox(),
-                view::setAthenaCredentialNote);
+        athenaCredential.show(athena.getCredentialName());
 
         final LdapSettings ldap = Objects.requireNonNullElse(doc.getLdap(), LdapSettings.builder().build());
         view.setLdapUrl(ldap.getUrl());
@@ -204,10 +179,7 @@ public class DataConnectionSettingsPresenter
         view.setLdapPageSize(Objects.requireNonNullElse(ldap.getPageSize(), LdapSettings.DEFAULT_PAGE_SIZE));
         view.setLdapMinRefreshMinutes(Objects.requireNonNullElse(ldap.getMinRefreshMinutes(), 0));
         view.setLdapAttributes(NullSafe.list(ldap.getAttributes()));
-        showCredential(ldap.getCredentialName(),
-                ldapCredential,
-                view.getLdapCredentialSelectionBox(),
-                view::setLdapCredentialNote);
+        ldapCredential.show(ldap.getCredentialName());
 
         final CsvSettings csv = Objects.requireNonNullElse(doc.getCsv(), CsvSettings.builder().build());
         view.setCsvDelimiter(csv.getDelimiter());
@@ -236,73 +208,114 @@ public class DataConnectionSettingsPresenter
         view.setMaxRows(Objects.requireNonNullElse(doc.getMaxRows(), DataConnectionDoc.DEFAULT_MAX_ROWS));
     }
 
-    /// Shows the document's credential in its picker, once looked up. If it cannot be shown, as it
-    /// is gone or the user may not use it, a note says so and the document keeps it.
-    private void showCredential(final String credentialName,
-                                final CredentialChoice choice,
-                                final SelectionBox<Credential> selectionBox,
-                                final Consumer<String> noteConsumer) {
-        choice.reset(credentialName);
-        selectionBox.setValue(null);
-        noteConsumer.accept(null);
-        if (!NullSafe.isBlankString(credentialName)) {
-            restFactory
-                    .create(CredentialClient.CREDENTIALS_RESOURCE)
-                    .method(res -> res.getCredentialByName(credentialName))
-                    .onSuccess(credential -> {
-                        // The user may have picked another while the lookup ran, or the
-                        // document may have been read again.
-                        if (choice.awaits(credentialName)) {
-                            if (credential == null) {
-                                noteConsumer.accept(choice.unresolvedNote());
-                            } else {
-                                selectionBox.setValue(credential);
-                            }
-                        }
-                    })
-                    .onFailure(error -> {
-                        if (choice.awaits(credentialName)) {
-                            noteConsumer.accept(choice.unresolvedNote());
-                        }
-                    })
-                    .taskMonitorFactory(this)
-                    .exec();
-        }
-    }
-
     @Override
     protected DataConnectionDoc onWrite(final DataConnectionDoc doc) {
         final DataConnectionSettingsView view = getView();
-        final JdbcConnectionSettings jdbc = JdbcConnectionSettings.builder()
-                .url(blankToNull(view.getJdbcUrl()))
-                .credentialName(jdbcCredential.getName())
-                .connectionProperties(ConnectionPropertiesText.parse(view.getConnectionProperties()))
-                .maxPoolSize(view.getMaxPoolSize())
-                .fetchSize(view.getFetchSize())
-                .minRefreshMinutes(view.getJdbcMinRefreshMinutes())
-                .build();
-        final AthenaConnectionSettings athena = AthenaConnectionSettings.builder()
-                .region(blankToNull(view.getRegion()))
-                .workGroup(blankToNull(view.getWorkGroup()))
-                .catalog(blankToNull(view.getCatalog()))
-                .database(blankToNull(view.getDatabase()))
-                .outputLocation(blankToNull(view.getOutputLocation()))
-                .credentialName(athenaCredential.getName())
-                .resultReuseMinutes(view.getResultReuseMinutes())
-                .minRefreshMinutes(view.getAthenaMinRefreshMinutes())
-                .maxDataScannedMb(maxDataScannedMb(doc))
-                .build();
         return doc.copy()
-                .sourceType(view.getSourceType())
-                .jdbc(jdbc)
-                .athena(athena)
+                .sourceType(keepUnset(doc.getSourceType(), view.getSourceType(), DataConnectionType.JDBC))
+                .jdbc(writeJdbc(view, jdbcCredential.getName(), doc.getJdbc()))
+                .athena(writeAthena(view, athenaCredential.getName(), doc.getAthena()))
                 .ldap(writeLdap(doc.getLdap()))
                 .csv(writeCsv(doc.getCsv()))
                 .excel(writeExcel(doc))
                 .timeField(blankToNull(view.getTimeField()))
-                .queryTimeoutSeconds(view.getQueryTimeoutSeconds())
-                .maxRows(view.getMaxRows())
+                .queryTimeoutSeconds(keepUnset(
+                        doc.getQueryTimeoutSeconds(),
+                        view.getQueryTimeoutSeconds(),
+                        DataConnectionDoc.DEFAULT_QUERY_TIMEOUT_SECONDS))
+                .maxRows(keepUnset(doc.getMaxRows(), view.getMaxRows(), DataConnectionDoc.DEFAULT_MAX_ROWS))
                 .build();
+    }
+
+    /// Builds the JDBC settings to save. There are none for a document that has never had any, as
+    /// for CSV, unless JDBC is the chosen type. A value the document left unset is kept unset while
+    /// the editor shows its default, so reading a document and writing it back changes nothing.
+    ///
+    /// @param view           The view showing the settings.
+    /// @param credentialName The name of the credential picked, or null for none.
+    /// @param stored         The document's JDBC settings, or null if it has none.
+    /// @return The JDBC settings to save, or null if the document has none.
+    static JdbcConnectionSettings writeJdbc(final DataConnectionSettingsView view,
+                                            final String credentialName,
+                                            final JdbcConnectionSettings stored) {
+        final JdbcConnectionSettings previous = Objects.requireNonNullElse(
+                stored,
+                JdbcConnectionSettings.builder().build());
+        final Map<String, String> properties = ConnectionPropertiesText.parse(view.getConnectionProperties());
+        final JdbcConnectionSettings written = JdbcConnectionSettings.builder()
+                .url(blankToNull(view.getJdbcUrl()))
+                .credentialName(credentialName)
+                .connectionProperties(previous.getConnectionProperties() == null && properties.isEmpty()
+                        ? null
+                        : properties)
+                .maxPoolSize(keepUnset(
+                        previous.getMaxPoolSize(),
+                        view.getMaxPoolSize(),
+                        JdbcConnectionSettings.DEFAULT_MAX_POOL_SIZE))
+                .fetchSize(keepUnset(
+                        previous.getFetchSize(),
+                        view.getFetchSize(),
+                        JdbcConnectionSettings.DEFAULT_FETCH_SIZE))
+                .minRefreshMinutes(keepUnset(previous.getMinRefreshMinutes(), view.getJdbcMinRefreshMinutes(), 0))
+                .build();
+        return stored == null
+               && written.equals(JdbcConnectionSettings.builder().build())
+               && view.getSourceType() != DataConnectionType.JDBC
+                ? null
+                : written;
+    }
+
+    /// Builds the Athena settings to save. There are none for a document that has never had any, as
+    /// for CSV, unless Athena is the chosen type. A value the document left unset is kept unset while
+    /// the editor shows its default, so reading a document and writing it back changes nothing.
+    ///
+    /// @param view           The view showing the settings.
+    /// @param credentialName The name of the credential picked, or null for none.
+    /// @param stored         The document's Athena settings, or null if it has none.
+    /// @return The Athena settings to save, or null if the document has none.
+    static AthenaConnectionSettings writeAthena(final DataConnectionSettingsView view,
+                                                final String credentialName,
+                                                final AthenaConnectionSettings stored) {
+        final AthenaConnectionSettings previous = Objects.requireNonNullElse(
+                stored,
+                AthenaConnectionSettings.builder().build());
+        final AthenaConnectionSettings written = AthenaConnectionSettings.builder()
+                .region(blankToNull(view.getRegion()))
+                .workGroup(keepUnset(
+                        previous.getWorkGroup(),
+                        blankToNull(view.getWorkGroup()),
+                        AthenaConnectionSettings.DEFAULT_WORK_GROUP))
+                .catalog(keepUnset(
+                        previous.getCatalog(),
+                        blankToNull(view.getCatalog()),
+                        AthenaConnectionSettings.DEFAULT_CATALOG))
+                .database(keepUnset(
+                        previous.getDatabase(),
+                        blankToNull(view.getDatabase()),
+                        AthenaConnectionSettings.DEFAULT_DATABASE))
+                .outputLocation(blankToNull(view.getOutputLocation()))
+                .credentialName(credentialName)
+                .resultReuseMinutes(keepUnset(previous.getResultReuseMinutes(), view.getResultReuseMinutes(), 0))
+                .minRefreshMinutes(keepUnset(
+                        previous.getMinRefreshMinutes(),
+                        view.getAthenaMinRefreshMinutes(),
+                        AthenaConnectionSettings.DEFAULT_MIN_REFRESH_MINUTES))
+                // No limit stays unset, so a document without one keeps the same JSON.
+                .maxDataScannedMb(keepUnset(previous.getMaxDataScannedMb(), view.getAthenaMaxDataScannedMb(), 0))
+                .build();
+        return stored == null
+               && written.equals(AthenaConnectionSettings.builder().build())
+               && view.getSourceType() != DataConnectionType.ATHENA
+                ? null
+                : written;
+    }
+
+    // The value to save for a setting the editor shows: unset if the document left it unset and the
+    // editor still shows the default it showed in its place, otherwise the value shown.
+    private static <T> T keepUnset(final T stored, final T shown, final T defaultValue) {
+        return stored == null && Objects.equals(shown, defaultValue)
+                ? null
+                : shown;
     }
 
     // No LDAP settings for a document that has never had any, as for CSV. A value the document left
@@ -327,23 +340,15 @@ public class DataConnectionSettingsPresenter
         final int minRefreshMinutes = view.getLdapMinRefreshMinutes();
         return LdapSettings.builder()
                 .url(url)
-                .startTls(previous.getStartTls() == null && !startTls
-                        ? null
-                        : startTls)
+                .startTls(keepUnset(previous.getStartTls(), startTls, false))
                 .credentialName(ldapCredential.getName())
                 .baseDn(baseDn)
-                .scope(previous.getScope() == null && scope == LdapSearchScope.SUBTREE
-                        ? null
-                        : scope)
+                .scope(keepUnset(previous.getScope(), scope, LdapSearchScope.SUBTREE))
                 .attributes(sameColumns(previous.getAttributes(), attributes)
                         ? previous.getAttributes()
                         : attributes)
-                .pageSize(previous.getPageSize() == null && pageSize == LdapSettings.DEFAULT_PAGE_SIZE
-                        ? null
-                        : pageSize)
-                .minRefreshMinutes(previous.getMinRefreshMinutes() == null && minRefreshMinutes == 0
-                        ? null
-                        : minRefreshMinutes)
+                .pageSize(keepUnset(previous.getPageSize(), pageSize, LdapSettings.DEFAULT_PAGE_SIZE))
+                .minRefreshMinutes(keepUnset(previous.getMinRefreshMinutes(), minRefreshMinutes, 0))
                 .build();
     }
 
@@ -364,12 +369,8 @@ public class DataConnectionSettingsPresenter
         final String delimiter = view.getCsvDelimiter();
         final boolean header = view.isCsvHeader();
         return CsvSettings.builder()
-                .delimiter(previous.getDelimiter() == null && CsvSettings.DEFAULT_DELIMITER.equals(delimiter)
-                        ? null
-                        : delimiter)
-                .header(previous.getHeader() == null && header
-                        ? null
-                        : header)
+                .delimiter(keepUnset(previous.getDelimiter(), delimiter, CsvSettings.DEFAULT_DELIMITER))
+                .header(keepUnset(previous.getHeader(), header, true))
                 .columns(sameColumns(previous.getColumns(), columns)
                         ? previous.getColumns()
                         : columns)
@@ -408,15 +409,9 @@ public class DataConnectionSettingsPresenter
         return ExcelSettings.builder()
                 // The server keeps the stored workbook while a file name is sent, and removes it
                 // when none is.
-                .fileName(excelUploadKey != null
-                        ? excelUploadName
-                        : excelRemoved
-                                ? null
-                                : NullSafe.get(read, ExcelSettings::getFileName))
+                .fileName(workbookName())
                 .sheet(sheet)
-                .header(previous.getHeader() == null && header
-                        ? null
-                        : header)
+                .header(keepUnset(previous.getHeader(), header, true))
                 .columns(sameColumns(previous.getColumns(), columns)
                         ? previous.getColumns()
                         : columns)
@@ -444,15 +439,6 @@ public class DataConnectionSettingsPresenter
             }
         }
         return true;
-    }
-
-    // No limit stays unset, so a document without one keeps the same JSON.
-    private Integer maxDataScannedMb(final DataConnectionDoc doc) {
-        final int shown = getView().getAthenaMaxDataScannedMb();
-        final Integer stored = NullSafe.get(doc.getAthena(), AthenaConnectionSettings::getMaxDataScannedMb);
-        return shown == 0 && stored == null
-                ? null
-                : shown;
     }
 
     private static String blankToNull(final String value) {
@@ -526,17 +512,25 @@ public class DataConnectionSettingsPresenter
 
     private boolean hasData() {
         if (DataConnectionType.EXCEL.equals(getView().getSourceType())) {
-            return excelUploadKey != null
-                   || (!excelRemoved
-                       && NullSafe.get(getEntity(), DataConnectionDoc::getExcel, ExcelSettings::getFileName)
-                          != null);
+            return workbookName() != null;
         }
         return !NullSafe.isBlankString(csvEditor.getText());
     }
 
+    // The file name of the workbook the document has as edited: a new upload's, none once removed, or
+    // else the one read.
+    private String workbookName() {
+        if (excelUploadKey != null) {
+            return excelUploadName;
+        }
+        return excelRemoved
+                ? null
+                : NullSafe.get(getEntity(), DataConnectionDoc::getExcel, ExcelSettings::getFileName);
+    }
+
     // The file name is taken now, as the user may choose another before the upload finishes.
-    private void uploadExcel() {
-        excelChosenName = fileName(getView().getExcelUpload().getFilename());
+    private void uploadExcel(final String fileName) {
+        excelChosenName = fileName;
         getView().getExcelUpload().submit();
     }
 
@@ -551,15 +545,6 @@ public class DataConnectionSettingsPresenter
         if (DataConnectionType.EXCEL.equals(getView().getSourceType())) {
             onDetectColumns(this);
         }
-    }
-
-    // The browser gives a path such as C:\fakepath\teams.xlsx.
-    private static String fileName(final String path) {
-        if (path == null) {
-            return null;
-        }
-        final int slash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-        return path.substring(slash + 1);
     }
 
     @Override
@@ -599,6 +584,69 @@ public class DataConnectionSettingsPresenter
 
 
     // --------------------------------------------------------------------------------
+
+
+    // The picker of one type of connection's credential: what was picked, the box it is picked in, and
+    // the note shown when the document's credential can't be shown.
+    private final class CredentialPicker {
+
+        private final CredentialChoice choice = new CredentialChoice();
+        private final SelectionBox<Credential> selectionBox;
+        private final Consumer<String> noteConsumer;
+
+        private CredentialPicker(final EventBus eventBus,
+                                 final CredentialClient credentialClient,
+                                 final CredentialType credentialType,
+                                 final SelectionBox<Credential> selectionBox,
+                                 final Consumer<String> noteConsumer) {
+            this.selectionBox = selectionBox;
+            this.noteConsumer = noteConsumer;
+            final CredentialListModel model = new CredentialListModel(
+                    eventBus, credentialClient, Set.of(credentialType));
+            model.setTaskMonitorFactory(DataConnectionSettingsPresenter.this);
+            selectionBox.setModel(model);
+            registerHandler(selectionBox.addValueChangeHandler(event -> {
+                choice.pick(event.getValue());
+                noteConsumer.accept(null);
+            }));
+        }
+
+        // The name of the credential to save, or null for none.
+        private String getName() {
+            return choice.getName();
+        }
+
+        // Shows the document's credential, once looked up. If it can't be shown, as it is gone or the
+        // user may not use it, a note says so and the document keeps it.
+        private void show(final String credentialName) {
+            choice.reset(credentialName);
+            selectionBox.setValue(null);
+            noteConsumer.accept(null);
+            if (!NullSafe.isBlankString(credentialName)) {
+                restFactory
+                        .create(CredentialClient.CREDENTIALS_RESOURCE)
+                        .method(res -> res.getCredentialByName(credentialName))
+                        .onSuccess(credential -> {
+                            // The user may have picked another while the lookup ran, or the
+                            // document may have been read again.
+                            if (choice.awaits(credentialName)) {
+                                if (credential == null) {
+                                    noteConsumer.accept(choice.unresolvedNote());
+                                } else {
+                                    selectionBox.setValue(credential);
+                                }
+                            }
+                        })
+                        .onFailure(error -> {
+                            if (choice.awaits(credentialName)) {
+                                noteConsumer.accept(choice.unresolvedNote());
+                            }
+                        })
+                        .taskMonitorFactory(DataConnectionSettingsPresenter.this)
+                        .exec();
+            }
+        }
+    }
 
 
     /// The view of a Data Connection's settings.

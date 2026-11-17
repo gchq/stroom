@@ -114,67 +114,7 @@ public class DataConnectionConfig extends AbstractConfig implements IsStroomConf
 
     /// Creates the configuration with its default values.
     public DataConnectionConfig() {
-        allowedUrlPatterns = List.of();
-        deniedConnectionProperties = DEFAULT_DENIED_CONNECTION_PROPERTIES;
-        driverDirectory = null;
-        maxQueryTimeout = DEFAULT_MAX_QUERY_TIMEOUT;
-        maxRowsLimit = DEFAULT_MAX_ROWS_LIMIT;
-        maxPoolSizeLimit = DEFAULT_MAX_POOL_SIZE_LIMIT;
-        connectionPoolCache = createDefaultConnectionPoolCache();
-        fieldCache = createDefaultFieldCache();
-        allowedAthenaWorkGroups = List.of();
-        allowedAthenaOutputLocations = List.of();
-        allowDefaultAwsCredentials = false;
-        maxStoredDataSize = DEFAULT_MAX_STORED_DATA_SIZE;
-        tableCache = createDefaultTableCache();
-        allowedLdapUrlPatterns = List.of();
-        allowPlainLdap = false;
-    }
-
-    /// Creates the configuration with no LDAP URLs allowed. Any value not supplied takes its default.
-    ///
-    /// @param allowedUrlPatterns         Regular expressions a JDBC URL must match one of.
-    /// @param deniedConnectionProperties Driver properties a document may not set.
-    /// @param driverDirectory            A directory of extra JDBC driver jars, or `null` for none.
-    /// @param maxQueryTimeout            The longest timeout a document may set.
-    /// @param maxRowsLimit               The highest row limit a document may set.
-    /// @param maxPoolSizeLimit           The largest connection pool a document may set.
-    /// @param connectionPoolCache        The cache of connection pools, one per document.
-    /// @param fieldCache                 The cache of the columns each SQL query returns.
-    /// @param allowedAthenaWorkGroups    Regular expressions an Athena `region/workgroup` must match one of.
-    /// @param allowedAthenaOutputLocations Regular expressions an Athena output location must match one of.
-    /// @param allowDefaultAwsCredentials True to let Athena documents with no credential use Stroom's own
-    ///                                   AWS identity.
-    /// @param maxStoredDataSize          The most data, such as CSV, a document may hold.
-    /// @param tableCache                 The cache of the rows parsed from each document's stored data.
-    public DataConnectionConfig(final List<String> allowedUrlPatterns,
-                                    final List<String> deniedConnectionProperties,
-                                    final String driverDirectory,
-                                    final StroomDuration maxQueryTimeout,
-                                    final Integer maxRowsLimit,
-                                    final Integer maxPoolSizeLimit,
-                                    final CacheConfig connectionPoolCache,
-                                    final CacheConfig fieldCache,
-                                    final List<String> allowedAthenaWorkGroups,
-                                    final List<String> allowedAthenaOutputLocations,
-                                    final Boolean allowDefaultAwsCredentials,
-                                    final ByteSize maxStoredDataSize,
-                                    final CacheConfig tableCache) {
-        this(allowedUrlPatterns,
-                deniedConnectionProperties,
-                driverDirectory,
-                maxQueryTimeout,
-                maxRowsLimit,
-                maxPoolSizeLimit,
-                connectionPoolCache,
-                fieldCache,
-                allowedAthenaWorkGroups,
-                allowedAthenaOutputLocations,
-                allowDefaultAwsCredentials,
-                maxStoredDataSize,
-                tableCache,
-                null,
-                null);
+        this(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     /// Creates the configuration from JSON or YAML. Any value not supplied takes its default.

@@ -17,11 +17,13 @@
 package stroom.dataconnection.client.presenter;
 
 import stroom.dataconnection.client.presenter.DataConnectionSettingsPresenter.DataConnectionSettingsView;
+import stroom.dataconnection.shared.AthenaConnectionSettings;
 import stroom.dataconnection.shared.DataColumn;
 import stroom.dataconnection.shared.DataColumnType;
 import stroom.dataconnection.shared.DataConnectionDoc;
 import stroom.dataconnection.shared.DataConnectionType;
 import stroom.dataconnection.shared.ExcelSettings;
+import stroom.dataconnection.shared.JdbcConnectionSettings;
 
 import com.google.gwt.junit.GWTMockUtilities;
 import org.junit.jupiter.api.AfterEach;
@@ -86,6 +88,47 @@ class TestDataConnectionSettingsPresenter {
     }
 
     @Test
+    void testNoJdbcOrAthenaSettingsForAnotherTypeThatNeverHadAny() {
+        // A CSV document read into the editor, which shows the JDBC and Athena defaults, then written
+        // back, must be the same, or it is marked as changed.
+        Mockito.when(view.getSourceType()).thenReturn(DataConnectionType.CSV);
+        showJdbcAndAthenaDefaults();
+
+        assertThat(DataConnectionSettingsPresenter.writeJdbc(view, null, null)).isNull();
+        assertThat(DataConnectionSettingsPresenter.writeAthena(view, null, null)).isNull();
+    }
+
+    @Test
+    void testJdbcAndAthenaDefaultsStayUnset() {
+        Mockito.when(view.getSourceType()).thenReturn(DataConnectionType.JDBC);
+        showJdbcAndAthenaDefaults();
+        Mockito.when(view.getJdbcUrl()).thenReturn("jdbc:h2:mem:test");
+
+        final JdbcConnectionSettings jdbc = DataConnectionSettingsPresenter.writeJdbc(
+                view, null, JdbcConnectionSettings.builder().url("jdbc:h2:mem:test").build());
+        final AthenaConnectionSettings athena = DataConnectionSettingsPresenter.writeAthena(
+                view, null, AthenaConnectionSettings.builder().build());
+
+        assertThat(jdbc).isEqualTo(JdbcConnectionSettings.builder().url("jdbc:h2:mem:test").build());
+        assertThat(athena).isEqualTo(AthenaConnectionSettings.builder().build());
+    }
+
+    @Test
+    void testJdbcAndAthenaValuesSetAreKept() {
+        Mockito.when(view.getSourceType()).thenReturn(DataConnectionType.ATHENA);
+        showJdbcAndAthenaDefaults();
+        final JdbcConnectionSettings storedJdbc = JdbcConnectionSettings.builder()
+                .maxPoolSize(JdbcConnectionSettings.DEFAULT_MAX_POOL_SIZE)
+                .build();
+        final AthenaConnectionSettings storedAthena = AthenaConnectionSettings.builder()
+                .workGroup(AthenaConnectionSettings.DEFAULT_WORK_GROUP)
+                .build();
+
+        assertThat(DataConnectionSettingsPresenter.writeJdbc(view, null, storedJdbc)).isEqualTo(storedJdbc);
+        assertThat(DataConnectionSettingsPresenter.writeAthena(view, null, storedAthena)).isEqualTo(storedAthena);
+    }
+
+    @Test
     void testStoredExcelSettingsAreKept() {
         Mockito.when(view.getSourceType()).thenReturn(DataConnectionType.EXCEL);
         Mockito.when(view.getExcelSheet()).thenReturn(" Teams ");
@@ -105,5 +148,17 @@ class TestDataConnectionSettingsPresenter {
         assertThat(excel.getSheet()).isEqualTo("Teams");
         assertThat(excel.getHeader()).isFalse();
         assertThat(excel.getColumns()).isEqualTo(columns);
+    }
+
+    // What the editor shows for JDBC and Athena settings the document left unset.
+    private void showJdbcAndAthenaDefaults() {
+        Mockito.when(view.getConnectionProperties()).thenReturn("");
+        Mockito.when(view.getMaxPoolSize()).thenReturn(JdbcConnectionSettings.DEFAULT_MAX_POOL_SIZE);
+        Mockito.when(view.getFetchSize()).thenReturn(JdbcConnectionSettings.DEFAULT_FETCH_SIZE);
+        Mockito.when(view.getWorkGroup()).thenReturn(AthenaConnectionSettings.DEFAULT_WORK_GROUP);
+        Mockito.when(view.getCatalog()).thenReturn(AthenaConnectionSettings.DEFAULT_CATALOG);
+        Mockito.when(view.getDatabase()).thenReturn(AthenaConnectionSettings.DEFAULT_DATABASE);
+        Mockito.when(view.getAthenaMinRefreshMinutes())
+                .thenReturn(AthenaConnectionSettings.DEFAULT_MIN_REFRESH_MINUTES);
     }
 }

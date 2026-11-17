@@ -54,7 +54,7 @@ class TestDataConnectionConfig {
     void jsonCreatorWithNullsMatchesDefaults() {
         // A config file that leaves out the dataConnection branch, or any of its properties.
         final DataConnectionConfig fromNulls = new DataConnectionConfig(
-                null, null, null, null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         final DataConnectionConfig defaults = new DataConnectionConfig();
 
         assertThat(fromNulls.getAllowedUrlPatterns()).isEqualTo(defaults.getAllowedUrlPatterns());
@@ -91,7 +91,7 @@ class TestDataConnectionConfig {
                 50,
                 4,
                 cache,
-                fieldCache, null, null, null, null, null);
+                fieldCache, null, null, null, null, null, null, null);
 
         assertThat(config.getAllowedUrlPatterns()).containsExactly("^jdbc:mysql://db:3306/.*$");
         assertThat(config.getDeniedConnectionProperties())
@@ -109,7 +109,7 @@ class TestDataConnectionConfig {
     void anEmptyDenyListIsKept() {
         // Unlike a missing list, an empty one is a deliberate choice and is not replaced.
         final DataConnectionConfig config = new DataConnectionConfig(
-                null, List.of(), null, null, null, null, null, null, null, null, null, null, null);
+                null, List.of(), null, null, null, null, null, null, null, null, null, null, null, null, null);
 
         assertThat(config.getDeniedConnectionProperties()).isEmpty();
     }

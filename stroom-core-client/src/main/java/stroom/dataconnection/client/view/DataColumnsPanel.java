@@ -20,6 +20,7 @@ import stroom.dataconnection.shared.DataColumn;
 import stroom.dataconnection.shared.DataColumnType;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.DescriptionHTML;
 
@@ -114,10 +115,7 @@ public class DataColumnsPanel extends Composite {
     public void setColumns(final List<DataColumn> columns) {
         rows.clear();
         columnRows.clear();
-        final List<DataColumn> shown = columns == null
-                ? List.of()
-                : columns;
-        for (final DataColumn column : shown) {
+        for (final DataColumn column : NullSafe.list(columns)) {
             addRow(column);
         }
         updateNote();
@@ -158,13 +156,8 @@ public class DataColumnsPanel extends Composite {
     }
 
     private void removeColumn(final ColumnRow columnRow) {
-        final List<DataColumn> columns = new ArrayList<>();
-        for (final ColumnRow row : columnRows) {
-            if (row != columnRow) {
-                columns.add(new DataColumn(row.name(), row.type().getValue()));
-            }
-        }
-        setColumns(columns);
+        columnRows.remove(columnRow);
+        setColumns(getColumns());
         changeHandler.run();
     }
 

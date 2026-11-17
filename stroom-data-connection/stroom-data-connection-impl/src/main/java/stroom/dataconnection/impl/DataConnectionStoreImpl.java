@@ -27,9 +27,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
 import stroom.security.api.SecurityContext;
-import stroom.util.io.ByteSize;
 import stroom.util.shared.EntityServiceException;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
 
@@ -39,7 +37,6 @@ import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /// Stores [DataConnectionDoc] documents.
 ///
@@ -105,10 +102,10 @@ public class DataConnectionStoreImpl
         return saved;
     }
 
-    // The workbook from a new upload, the document being copied, or else the one already stored, with
-    // the upload key and the document to copy from cleared so they are never stored. A stored workbook
-    // always has a file name, so settings with none and no new workbook remove it.
-    private DataConnectionDoc withWorkbook(final DataConnectionDoc document) {
+    /// A stored workbook always has a file name, so settings with none and no new workbook remove it on
+    /// save. The upload key and the document to copy from are cleared so they are never stored.
+    @Override
+    public DataConnectionDoc withWorkbook(final DataConnectionDoc document) {
         final ExcelSettings excel = document.getExcel();
         if (excel == null) {
             return document;
@@ -177,37 +174,26 @@ public class DataConnectionStoreImpl
     }
 
     private void checkSize(final String dataName, final long size, final List<String> problems) {
-        final ByteSize limit = configProvider.get().getMaxStoredDataSize();
-        if (size > limit.getBytes()) {
-            problems.add("The " + dataName + " is " + ModelStringUtil.formatIECByteSizeString(size)
-                         + ", more than the limit of " + limit + " set by the property "
-                         + "stroom.dataConnection.maxStoredDataSize. Data Connections are for lookup "
-                         + "tables and reference lists; send bulk data into Stroom as a feed.");
-        }
+        StoredDataLimit.findProblem(dataName, size, configProvider.get())
+                .ifPresent(problem -> problems.add(problem + " Data Connections are for lookup tables and "
+                                                   + "reference lists; send bulk data into Stroom as a feed."));
     }
 
     private List<String> findConnectionProblems(final DataConnectionDoc document) {
-        final DataConnectionType sourceType = Objects.requireNonNullElse(
-                document.getSourceType(),
-                DataConnectionType.JDBC);
-        if (sourceType == DataConnectionType.CSV || sourceType == DataConnectionType.EXCEL) {
-            return List.of();
-        }
-        if (sourceType == DataConnectionType.LDAP) {
-            final LdapSettings ldap = document.getLdap();
-            return NullSafe.isNonBlankString(NullSafe.get(ldap, LdapSettings::getUrl))
-                    ? LdapConnectionValidator.findProblems(ldap, configProvider.get())
+        // Settings not yet filled in are not checked, so a document can be saved part way through.
+        final DataConnectionConfig config = configProvider.get();
+        return switch (DataConnectionType.orDefault(document.getSourceType())) {
+            case CSV, EXCEL -> List.of();
+            case LDAP -> NullSafe.isNonBlankString(NullSafe.get(document.getLdap(), LdapSettings::getUrl))
+                    ? LdapConnectionValidator.findProblems(document.getLdap(), config)
                     : List.of();
-        }
-        if (sourceType == DataConnectionType.ATHENA) {
-            final AthenaConnectionSettings athena = document.getAthena();
-            return NullSafe.isNonBlankString(NullSafe.get(athena, AthenaConnectionSettings::getRegion))
-                    ? AthenaConnectionValidator.findProblems(athena, configProvider.get())
+            case ATHENA -> NullSafe.isNonBlankString(
+                    NullSafe.get(document.getAthena(), AthenaConnectionSettings::getRegion))
+                    ? AthenaConnectionValidator.findProblems(document.getAthena(), config)
                     : List.of();
-        }
-        final JdbcConnectionSettings jdbc = document.getJdbc();
-        return NullSafe.isNonBlankString(NullSafe.get(jdbc, JdbcConnectionSettings::getUrl))
-                ? JdbcConnectionValidator.findProblems(jdbc, configProvider.get())
-                : List.of();
+            case JDBC -> NullSafe.isNonBlankString(NullSafe.get(document.getJdbc(), JdbcConnectionSettings::getUrl))
+                    ? JdbcConnectionValidator.findProblems(document.getJdbc(), config)
+                    : List.of();
+        };
     }
 }

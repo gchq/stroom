@@ -95,9 +95,9 @@ class DataConnectionResourceImpl implements DataConnectionResource {
         if (data == null) {
             throw new EntityServiceException("Data Connection '" + doc.getName() + "' has no workbook.");
         }
-        final String fileName = NullSafe.isBlankString(excel.getFileName())
-                ? DataConnectionStoreImpl.DEFAULT_WORKBOOK_NAME
-                : excel.getFileName();
+        final String fileName = NullSafe.nonBlankStringElse(
+                excel.getFileName(),
+                DataConnectionStoreImpl.DEFAULT_WORKBOOK_NAME);
         final ResourceStore resourceStore = resourceStoreProvider.get();
         final ResourceKey resourceKey = resourceStore.createTempFile(fileName);
         try {

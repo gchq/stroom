@@ -48,6 +48,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 /// The settings of a Data Connection. Only the settings of the chosen type are shown.
 public class DataConnectionSettingsViewImpl
@@ -68,6 +69,8 @@ public class DataConnectionSettingsViewImpl
     private static final double MAX_FILE_BYTES = 50 * 1024 * 1024;
 
     private final Widget widget;
+    // Sets whether each control that changes the settings is enabled.
+    private final List<Consumer<Boolean>> editable;
     private boolean readOnly;
     private boolean hasWorkbook;
     // A stored delimiter that is not one of those offered, kept until the user picks another, so
@@ -218,6 +221,48 @@ public class DataConnectionSettingsViewImpl
         setLimits(maxRows, 1, MAX_ROWS);
         testConnection.setIcon(SvgImage.OK);
         setSourceType(DataConnectionType.JDBC);
+        // Every control that changes the settings, and Test Connection, as testing needs permission to
+        // edit the document. Remove is also only enabled while there is a workbook.
+        editable = List.of(
+                csvDelimiter::setEnabled,
+                csvHeader::setEnabled,
+                loadCsvFile::setEnabled,
+                detectColumns::setEnabled,
+                csvColumns::setEnabled,
+                excelFile::setEnabled,
+                excelSheet::setEnabled,
+                excelHeader::setEnabled,
+                detectExcelColumns::setEnabled,
+                excelColumns::setEnabled,
+                sourceType::setEnabled,
+                jdbcUrl::setEnabled,
+                jdbcCredential::setEnabled,
+                connectionProperties::setEnabled,
+                maxPoolSize::setEnabled,
+                fetchSize::setEnabled,
+                jdbcMinRefreshMinutes::setEnabled,
+                region::setEnabled,
+                workGroup::setEnabled,
+                catalog::setEnabled,
+                database::setEnabled,
+                outputLocation::setEnabled,
+                athenaCredential::setEnabled,
+                resultReuseMinutes::setEnabled,
+                athenaMinRefreshMinutes::setEnabled,
+                athenaMaxDataScannedMb::setEnabled,
+                ldapUrl::setEnabled,
+                ldapStartTls::setEnabled,
+                ldapCredential::setEnabled,
+                ldapBaseDn::setEnabled,
+                ldapScope::setEnabled,
+                ldapPageSize::setEnabled,
+                ldapMinRefreshMinutes::setEnabled,
+                detectLdapAttributes::setEnabled,
+                ldapAttributes::setEnabled,
+                timeField::setEnabled,
+                queryTimeoutSeconds::setEnabled,
+                maxRows::setEnabled,
+                testConnection::setEnabled);
     }
 
     private static void setLimits(final ValueSpinner spinner, final int min, final int max) {
@@ -242,27 +287,19 @@ public class DataConnectionSettingsViewImpl
     }
 
     private void showSettingsFor(final DataConnectionType sourceType) {
-        final boolean athena = DataConnectionType.ATHENA.equals(sourceType);
-        final boolean csv = DataConnectionType.CSV.equals(sourceType);
-        final boolean excel = DataConnectionType.EXCEL.equals(sourceType);
-        final boolean ldap = DataConnectionType.LDAP.equals(sourceType);
-        final boolean jdbc = !athena && !csv && !excel && !ldap;
-        jdbcSettings.setVisible(jdbc);
-        athenaSettings.setVisible(athena);
-        ldapSettings.setVisible(ldap);
-        csvSettings.setVisible(csv);
-        excelSettings.setVisible(excel);
-        // Athena takes the time range in its SQL. CSV and Excel are read in Stroom, so they have no
-        // query timeout.
-        timeFieldSettings.setVisible(!athena);
-        queryTimeoutSettings.setVisible(!csv && !excel);
-        if (csv) {
-            testConnection.setText("Check CSV");
-        } else if (excel) {
-            testConnection.setText("Check Workbook");
-        } else {
-            testConnection.setText("Test Connection");
-        }
+        final DataConnectionType type = DataConnectionType.orDefault(sourceType);
+        jdbcSettings.setVisible(type == DataConnectionType.JDBC);
+        athenaSettings.setVisible(type == DataConnectionType.ATHENA);
+        ldapSettings.setVisible(type == DataConnectionType.LDAP);
+        csvSettings.setVisible(type == DataConnectionType.CSV);
+        excelSettings.setVisible(type == DataConnectionType.EXCEL);
+        timeFieldSettings.setVisible(type.usesTimeField());
+        queryTimeoutSettings.setVisible(!type.holdsData());
+        testConnection.setText(switch (type) {
+            case CSV -> "Check CSV";
+            case EXCEL -> "Check Workbook";
+            case JDBC, ATHENA, LDAP -> "Test Connection";
+        });
     }
 
     @Override
@@ -621,46 +658,7 @@ public class DataConnectionSettingsViewImpl
         this.readOnly = readOnly;
         final boolean enabled = !readOnly;
         removeExcel.setEnabled(hasWorkbook && enabled);
-        csvDelimiter.setEnabled(enabled);
-        csvHeader.setEnabled(enabled);
-        loadCsvFile.setEnabled(enabled);
-        detectColumns.setEnabled(enabled);
-        csvColumns.setEnabled(enabled);
-        excelFile.setEnabled(enabled);
-        excelSheet.setEnabled(enabled);
-        excelHeader.setEnabled(enabled);
-        detectExcelColumns.setEnabled(enabled);
-        excelColumns.setEnabled(enabled);
-        sourceType.setEnabled(enabled);
-        jdbcUrl.setEnabled(enabled);
-        jdbcCredential.setEnabled(enabled);
-        connectionProperties.setEnabled(enabled);
-        maxPoolSize.setEnabled(enabled);
-        fetchSize.setEnabled(enabled);
-        jdbcMinRefreshMinutes.setEnabled(enabled);
-        region.setEnabled(enabled);
-        workGroup.setEnabled(enabled);
-        catalog.setEnabled(enabled);
-        database.setEnabled(enabled);
-        outputLocation.setEnabled(enabled);
-        athenaCredential.setEnabled(enabled);
-        resultReuseMinutes.setEnabled(enabled);
-        athenaMinRefreshMinutes.setEnabled(enabled);
-        athenaMaxDataScannedMb.setEnabled(enabled);
-        ldapUrl.setEnabled(enabled);
-        ldapStartTls.setEnabled(enabled);
-        ldapCredential.setEnabled(enabled);
-        ldapBaseDn.setEnabled(enabled);
-        ldapScope.setEnabled(enabled);
-        ldapPageSize.setEnabled(enabled);
-        ldapMinRefreshMinutes.setEnabled(enabled);
-        detectLdapAttributes.setEnabled(enabled);
-        ldapAttributes.setEnabled(enabled);
-        timeField.setEnabled(enabled);
-        queryTimeoutSeconds.setEnabled(enabled);
-        maxRows.setEnabled(enabled);
-        // Testing needs permission to edit the document.
-        testConnection.setEnabled(enabled);
+        editable.forEach(setEnabled -> setEnabled.accept(enabled));
     }
 
     private void fireChange() {

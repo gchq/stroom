@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,9 +47,12 @@ final class ColumnDetector {
     /// @param existing The columns already set, or `null` for none.
     /// @return The columns, in the order their values appear in each row.
     static List<DataColumn> detect(final DataTable table, final List<DataColumn> existing) {
+        // Found without regard to case, as fields are matched.
         final Map<String, DataColumnType> existingTypes = new HashMap<>();
         for (final DataColumn column : NullSafe.list(existing)) {
-            existingTypes.put(column.getName(), column.getType());
+            if (!NullSafe.isBlankString(column.getName())) {
+                existingTypes.putIfAbsent(column.getName().toLowerCase(Locale.ROOT), column.getType());
+            }
         }
 
         final int columnCount = table.columnCount();
@@ -56,8 +60,9 @@ final class ColumnDetector {
         final List<DataColumn> columns = new ArrayList<>(columnCount);
         for (int index = 0; index < columnCount; index++) {
             final String name = names.get(index);
-            final DataColumnType type = existingTypes.containsKey(name)
-                    ? existingTypes.get(name)
+            final String key = name.toLowerCase(Locale.ROOT);
+            final DataColumnType type = existingTypes.containsKey(key)
+                    ? existingTypes.get(key)
                     : DataValues.guessType(values(table, index));
             columns.add(new DataColumn(name, type));
         }
@@ -92,7 +97,8 @@ final class ColumnDetector {
                     : headerName.trim();
             String name = base;
             int suffix = 2;
-            while (!used.add(name)) {
+            // Fields are matched without regard to case, so names that differ only in case are repeats.
+            while (!used.add(name.toLowerCase(Locale.ROOT))) {
                 name = base + "_" + suffix;
                 suffix++;
             }
