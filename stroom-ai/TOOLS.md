@@ -4434,7 +4434,8 @@ runs on unchanged until the user retires it.
 A new version's names are proposed (`VersionNames`) and confirmed or edited in the copy's form, each an editable
 field: the agent's where they differ from the original's, else the next version's. The pipeline's last version token
 goes up by its last part (`V1.0` to `V1.1`, `V1` to `V2`, `-v1.2` to `-v1.3`), the major bump (`V2.0`) said in the
-form as the other choice; a name with none gets `-V2` (before its first `{variable}`). Its documents follow the
+form as the other choice; a name with none is taken as `V1.0` (as promotion files it) and gets `-V1.1` (`-V2.0` the
+major choice), before its first `{variable}`. Its documents follow the
 pipeline's change where they hold the same token, else bump their own. For an Elasticsearch indexing pipeline the
 index name's last token goes up (`acme-events-v1` to `acme-events-v2`; none: `-v2`, before the first variable,
 `acme-events{_suffix}` to `acme-events-v2{_suffix}`), the copy's ElasticIndexingFilter gets it, and each Elastic Index
@@ -4840,7 +4841,7 @@ promoted is always a new version (decided by the user, 2026-11-17), nothing aske
 folder recorded `version_of` the original, which `copy_pipeline` of the group's pipeline then runs; the group's rows
 move to the new pipeline. The new XSLT is named for its pipeline's new version (`SourceTypeGroups.versionName`:
 `VersionNames.following` the pipeline's next version's token, as `copy_pipeline` names what it copies;
-`PEGA security` for pipeline `PEGA PEGA security` becomes `PEGA security-V2`). A promoted shared module the change
+`PEGA security` for pipeline `PEGA PEGA security` becomes `PEGA security-V1.1`). A promoted shared module the change
 needs (a shared call added to the common module, or the helpers out of date) is never changed in place either
 (decided by the user, 2026-11-17): a new version of it is made in the build (`newModuleVersion`, recorded
 `version_of`), named `<base> V<next>` after the highest version the feed knows (the module changed, the registry's

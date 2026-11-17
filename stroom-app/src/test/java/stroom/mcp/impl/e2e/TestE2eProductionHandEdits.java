@@ -77,9 +77,10 @@ class TestE2eProductionHandEdits extends AbstractE2eTest {
     private static final Map<String, Object> DESTINATIONS = Map.of("Feed", "Feeds/ProdEdit", "TextConverter",
             "Feeds/ProdEdit", "XSLT", "Feeds/ProdEdit", "Pipeline", "Feeds/ProdEdit", "Documentation",
             "Feeds/ProdEdit");
-    // The new version's names, as copy_pipeline proposes them for names with no version token of their own.
-    private static final String VERSION_PIPELINE = FEED + "-Events-V2";
-    private static final String VERSION_XSLT = FEED + "-Events-V2";
+    // The new version's names, as copy_pipeline proposes them for names with no version token of their own (taken
+    // as V1.0, as promotion files them).
+    private static final String VERSION_PIPELINE = FEED + "-Events-V1.1";
+    private static final String VERSION_XSLT = FEED + "-Events-V1.1";
 
     @Inject
     private WriteGuard guard;

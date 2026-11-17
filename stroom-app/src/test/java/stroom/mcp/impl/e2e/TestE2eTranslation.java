@@ -177,7 +177,7 @@ class TestE2eTranslation extends AbstractE2eTest {
         final Map<String, Object> copy = agreed("copy_pipeline", args("build", fixBuild,
                 "source_uuid", csv.pipelineUuid(), "new_name", csv.pipelineName()));
         dump("copy_pipeline new version", copy);
-        final String versionName = csv.pipelineName() + "-V2";
+        final String versionName = csv.pipelineName() + "-V1.1";
         assertThat(copy).containsEntry("name", versionName)
                 .containsEntry("copy_of", csv.pipelineName())
                 .doesNotContainKey("working_copy");
@@ -186,7 +186,7 @@ class TestE2eTranslation extends AbstractE2eTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(xsltCopy.get("uuid")).isNotEqualTo(csv.xsltUuid());
-        assertThat(String.valueOf(xsltCopy.get("name"))).endsWith("-V2");
+        assertThat(String.valueOf(xsltCopy.get("name"))).endsWith("-V1.1");
         final String changed = readXslt((String) xsltCopy.get("uuid")).getData()
                 .replace("<Description>User logon</Description>", "<Description>Interactive user logon</Description>");
         final Map<String, Object> diff = json("compare_outputs", args("pipeline_uuid", csv.pipelineUuid(),
@@ -211,7 +211,8 @@ class TestE2eTranslation extends AbstractE2eTest {
         assertThat(readXslt(csv.xsltUuid()).getData()).contains("<Description>User logon</Description>")
                 .doesNotContain("Interactive user logon");
         // A sibling version folder of the original's, in its role's folder.
-        assertThat(folderOf(copy.get("uuid").toString())).startsWith(dest + "/Events/V");
+        // The original's name holds no version, so it was filed in V1.0 and its next version is V1.1.
+        assertThat(folderOf(copy.get("uuid").toString())).isEqualTo(dest + "/Events/V1.1");
         assertThat(folderOf(csv.pipelineUuid())).isEqualTo(placed);
         assertThat(documentsNamed(csv.pipelineName() + " backup", "XSLT")).isEmpty();
     }

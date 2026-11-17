@@ -423,7 +423,7 @@ class TestSourceTypeGroups {
         assertThat(JsonValues.strings(JsonValues.mapOrEmpty(saved.get("group")).get("source_types")))
                 .containsExactly("PegaSecurityEvent", "PegaDB");
         // Saved in the build's new version of it, not over the promoted XSLT.
-        final String copy = xsltsInBuild().get("PEGA security-V2");
+        final String copy = xsltsInBuild().get("PEGA security-V1.1");
         assertThat(copy).isNotEqualTo(original);
         assertThat(world.world.records().entry(BUILD, copy)).containsEntry("version_of", original);
         assertThat(ModuleChecks.marker(world.xslt(copy).getData()))
@@ -581,7 +581,7 @@ class TestSourceTypeGroups {
         assertThat(world.asked).noneMatch(form -> form.contains("change that pipeline"));
         // Named for its pipeline's new version, as copy_pipeline names what it copies (seen in testing: under the
         // original's name, it was told apart only by its version folder).
-        final String version = xsltsInBuild().get("PEGA security-V2");
+        final String version = xsltsInBuild().get("PEGA security-V1.1");
         assertThat(version).isNotNull().isNotEqualTo(original);
         assertThat(xsltsInBuild()).doesNotContainKey("PEGA security");
         assertThat(world.world.records().entry(BUILD, version)).containsEntry("version_of", original)
@@ -614,14 +614,14 @@ class TestSourceTypeGroups {
 
         assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
         // The common module's new version (V1.1: the promoted one has no version of its own), not the helpers'.
-        assertThat(xsltsInBuild()).containsOnlyKeys("PEGA common V1.1", "PEGA integration-V2");
+        assertThat(xsltsInBuild()).containsOnlyKeys("PEGA common V1.1", "PEGA integration-V1.1");
         final String common = xsltsInBuild().get("PEGA common V1.1");
         assertThat(world.world.records().entry(BUILD, common)).containsEntry("version_of", promoted.get(
                 "PEGA common")).doesNotContainKey("copy_of");
         assertThat(ModuleChecks.hrefs(world.xslt(common).getData()))
                 .anySatisfy(href -> assertThat(href).contains("u-meta"))
                 .anySatisfy(href -> assertThat(href).contains(promoted.get("PEGA helpers")));
-        assertThat(ModuleChecks.hrefs(world.xslt(xsltsInBuild().get("PEGA integration-V2")).getData()))
+        assertThat(ModuleChecks.hrefs(world.xslt(xsltsInBuild().get("PEGA integration-V1.1")).getData()))
                 .singleElement().satisfies(href -> assertThat(href).contains(common, "PEGA common V1.1"));
         // Nothing promoted rewritten: the other group imports the promoted common module as before.
         assertThat(world.xslt(promoted.get("PEGA common")).getData()).isEqualTo(commonCode);
@@ -635,7 +635,7 @@ class TestSourceTypeGroups {
 
         // Saved again in the build: its new version changed where it is, not another made.
         world.call(tool, again);
-        assertThat(xsltsInBuild()).containsOnlyKeys("PEGA common V1.1", "PEGA integration-V2");
+        assertThat(xsltsInBuild()).containsOnlyKeys("PEGA common V1.1", "PEGA integration-V1.1");
 
         // The feed's groups import different versions: said, as information.
         assertThat(world.groups.mixedModuleVersions(BUILD)).singleElement().satisfies(line -> assertThat(line)
@@ -672,7 +672,7 @@ class TestSourceTypeGroups {
         final Map<String, Object> saved = world.call(tool, again);
 
         assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
-        assertThat(xsltsInBuild()).containsOnlyKeys("PEGA helpers V1.1", "PEGA common V1.1", "PEGA security-V2");
+        assertThat(xsltsInBuild()).containsOnlyKeys("PEGA helpers V1.1", "PEGA common V1.1", "PEGA security-V1.1");
         final String helpersVersion = xsltsInBuild().get("PEGA helpers V1.1");
         final String commonVersion = xsltsInBuild().get("PEGA common V1.1");
         assertThat(world.xslt(helpersVersion).getData()).isEqualTo(HelpersXslt.generate());
@@ -681,7 +681,7 @@ class TestSourceTypeGroups {
                 .isEqualTo(SourceTypeGroups.href(helpersVersion, "PEGA helpers V1.1"));
         assertThat(keptMapping(world.xslt(commonVersion)).module().helpers())
                 .isEqualTo(SourceTypeGroups.href(helpersVersion, "PEGA helpers V1.1"));
-        assertThat(ModuleChecks.hrefs(world.xslt(xsltsInBuild().get("PEGA security-V2")).getData()))
+        assertThat(ModuleChecks.hrefs(world.xslt(xsltsInBuild().get("PEGA security-V1.1")).getData()))
                 .singleElement().satisfies(href -> assertThat(href).contains(commonVersion));
         // The promoted ones as they were: the other group's chain is production's.
         assertThat(world.xslt(helpers).getData()).isEqualTo(older);
