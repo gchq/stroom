@@ -38,6 +38,32 @@ public enum DataConnectionType implements HasDisplayValue {
         this.displayValue = displayValue;
     }
 
+    /// Gets a document's type.
+    ///
+    /// @param type The type a document names, or `null`.
+    /// @return The type, or [#JDBC] if it names none, as documents did before there were other types.
+    public static DataConnectionType orDefault(final DataConnectionType type) {
+        return type == null
+                ? JDBC
+                : type;
+    }
+
+    /// Finds whether the data is held in the document itself, as CSV and Excel are. Such data is read in
+    /// Stroom, so there is no connection to check and no query timeout.
+    ///
+    /// @return True if the document holds its data.
+    public boolean holdsData() {
+        return this == CSV || this == EXCEL;
+    }
+
+    /// Finds whether a query's time range is applied on the document's time field. Amazon Athena takes
+    /// the time range in its SQL instead, as every query is billed for the data it scans.
+    ///
+    /// @return True if the document's time field is used.
+    public boolean usesTimeField() {
+        return this != ATHENA;
+    }
+
     /// Gets the name of the type as shown to users.
     ///
     /// @return The display name.

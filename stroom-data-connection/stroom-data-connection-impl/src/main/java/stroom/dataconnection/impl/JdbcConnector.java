@@ -21,12 +21,8 @@ import stroom.dataconnection.shared.DataConnectionTestResponse;
 import stroom.dataconnection.shared.DataConnectionType;
 import stroom.dataconnection.shared.JdbcConnectionSettings;
 import stroom.query.api.DateTimeSettings;
-import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Query;
 import stroom.query.api.datasource.QueryField;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import com.zaxxer.hikari.HikariDataSource;
@@ -37,7 +33,6 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Function;
 
 /// Queries a database through a JDBC driver, with the SQL given in each query.
@@ -51,8 +46,6 @@ import java.util.function.Function;
 /// - Otherwise the time range is not used, and the query warns that it was ignored.
 @Singleton
 class JdbcConnector implements Connector {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JdbcConnector.class);
 
     static final String READ_ONLY_ADVICE = "Use a database account that can only read. Stroom asks for "
                                            + "read-only connections, but only the database can enforce it.";
@@ -95,7 +88,7 @@ class JdbcConnector implements Connector {
         // The cache may answer without connecting, so check here that the user may use the
         // credential, as connecting would.
         connectionResolver.resolve(doc.getJdbc());
-        final List<SqlColumn> columns = fieldCache.get(doc, sql, ignored -> {
+        final List<SqlColumn> columns = fieldCache.get(doc, sql, () -> {
             try {
                 return queryRunner.describe(doc, parsedSql);
             } catch (final SQLException e) {
@@ -108,8 +101,8 @@ class JdbcConnector implements Connector {
     /// JDBC sources have no minimum unless the document sets one.
     @Override
     public int getMinRefreshMinutes(final DataConnectionDoc doc) {
-        final Integer minutes = NullSafe.get(doc.getJdbc(), JdbcConnectionSettings::getMinRefreshMinutes);
-        return Math.max(0, Objects.requireNonNullElse(minutes, 0));
+        return ConnectionRules.nonNegative(
+                NullSafe.get(doc.getJdbc(), JdbcConnectionSettings::getMinRefreshMinutes), 0);
     }
 
     @Override
@@ -124,42 +117,31 @@ class JdbcConnector implements Connector {
                 query.getTimeRange(),
                 query.getParams(),
                 dateTimeSettings);
-        final ExpressionOperator expression = parsedSql.usesTimeRange()
-                ? query.getExpression()
-                : TimeRanges.addTimeRange(query.getExpression(), query.getTimeRange(), doc.getTimeField());
-        final boolean filtersOnTimeColumn = expression != query.getExpression();
-        final List<String> warnings = TimeRanges.isSet(query.getTimeRange())
-                                      && !parsedSql.usesTimeRange()
-                                      && NullSafe.isBlankString(doc.getTimeField())
-                ? List.of(TIME_RANGE_IGNORED)
-                : List.of();
+        final TimeRanges.Applied timeRange = TimeRanges.apply(
+                query, parsedSql.usesTimeRange(), doc.getTimeField(), TIME_RANGE_IGNORED);
 
-        return new PreparedQuery(expression, warnings, (rowConsumerFactory, cancellation, progress) -> {
-            final Function<List<SqlColumn>, SqlRowConsumer> checkedFactory = columns -> {
-                fieldCache.put(doc, sql, columns);
-                if (filtersOnTimeColumn) {
-                    requireTimeColumn(doc, columns);
-                }
-                return rowConsumerFactory.apply(columns);
-            };
-            return queryRunner.run(doc, parsedSql, values, checkedFactory, cancellation);
-        });
+        return new PreparedQuery(timeRange.expression(), timeRange.warnings(),
+                (rowConsumerFactory, cancellation, progress) -> {
+                final Function<List<SqlColumn>, SqlRowConsumer> checkedFactory = fieldCache.recording(doc, sql,
+                        columns -> {
+                            if (timeRange.filtersOnTimeColumn()) {
+                                requireTimeColumn(doc, columns);
+                            }
+                            return rowConsumerFactory.apply(columns);
+                        });
+                return queryRunner.run(doc, parsedSql, values, checkedFactory, cancellation);
+            });
     }
 
     /// Opens a connection with the document's settings and reports what it connected to.
     @Override
-    public DataConnectionTestResponse test(final DataConnectionDoc doc) {
-        try {
-            final ResolvedJdbcConnection resolvedConnection = connectionResolver.resolve(doc.getJdbc());
-            driverLoader.ensureLoaded();
-            // A pool of one, closed straight after, so a test never leaves a pool behind.
-            try (final HikariDataSource dataSource = JdbcDataSourceFactory.create(resolvedConnection, 1);
-                    final Connection connection = dataSource.getConnection()) {
-                return new DataConnectionTestResponse(true, describe(connection.getMetaData()));
-            }
-        } catch (final SQLException | RuntimeException e) {
-            LOGGER.debug(() -> LogUtil.message("Connection test failed for {}", doc.getUuid()), e);
-            return new DataConnectionTestResponse(false, e.getMessage());
+    public DataConnectionTestResponse testConnection(final DataConnectionDoc doc) throws Exception {
+        final ResolvedJdbcConnection resolvedConnection = connectionResolver.resolve(doc.getJdbc());
+        driverLoader.ensureLoaded();
+        // A pool of one, closed straight after, so a test never leaves a pool behind.
+        try (final HikariDataSource dataSource = JdbcDataSourceFactory.create(resolvedConnection, 1);
+                final Connection connection = dataSource.getConnection()) {
+            return new DataConnectionTestResponse(true, describe(connection.getMetaData()));
         }
     }
 

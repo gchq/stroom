@@ -341,7 +341,7 @@ public class SearchRequestFactory {
         public void checkNativeQuery(final Query query, final AbstractToken sqlToken, final AbstractToken fromToken) {
             final DocRef dataSource = query.getDataSource();
             final boolean takesNativeQuery = dataSourceResolver.takesNativeQuery(dataSource);
-            final boolean hasNativeQuery = query.getNativeQuery() != null && !query.getNativeQuery().isBlank();
+            final boolean hasNativeQuery = NullSafe.isNonBlankString(query.getNativeQuery());
             if (hasNativeQuery && !takesNativeQuery) {
                 final String what = sqlToken == null
                         // The SQL came with the request, not from a sql clause.
@@ -1435,7 +1435,8 @@ public class SearchRequestFactory {
                                         final Map<String, AtomicInteger> columnCount,
                                         final List<Column> columns,
                                         final String fieldNameFilter) {
-            final DocRef dataSource = queryBuilder.build().getDataSource();
+            final Query query = queryBuilder.build();
+            final DocRef dataSource = query.getDataSource();
             if (dataSource != null) {
                 String filter = fieldNameFilter;
 
@@ -1455,7 +1456,7 @@ public class SearchRequestFactory {
                         dataSource,
                         filter,
                         null,
-                        queryBuilder.build().getNativeQuery());
+                        query.getNativeQuery());
                 final ResultPage<QueryField> resultPage = queryFieldProviderProvider.get().findFields(criteria);
                 final List<QueryField> fields = resultPage.getValues();
                 for (final QueryField field : fields) {

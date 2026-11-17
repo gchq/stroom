@@ -16,9 +16,11 @@
 
 package stroom.dataconnection.impl;
 
+import stroom.dataconnection.shared.DataColumn;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 
+import java.sql.Types;
 import java.util.List;
 
 /// A column returned by the SQL of a query, which becomes a query field of the same name.
@@ -27,6 +29,12 @@ import java.util.List;
 /// @param fieldType The Stroom field type its values are read as.
 /// @param sqlType   The column's `java.sql.Types` code, or for Amazon Athena [java.sql.Types#OTHER].
 public record SqlColumn(String name, FieldType fieldType, int sqlType) {
+
+    /// @param column A column of data held in a document, or of an LDAP directory's attributes.
+    /// @return The column, whose values are read from text.
+    public static SqlColumn of(final DataColumn column) {
+        return new SqlColumn(column.getName(), DataValues.toFieldType(column.getType()), Types.OTHER);
+    }
 
     /// @return The column as a query field.
     public QueryField toQueryField() {

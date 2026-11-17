@@ -20,6 +20,7 @@ import stroom.security.client.presenter.UserAccessPresenter.UserAccessView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -34,6 +35,8 @@ public class UserAccessViewImpl extends ViewImpl implements UserAccessView {
     SimplePanel listContainer;
     @UiField
     SimplePanel sessionsContainer;
+    @UiField
+    Label edgeAuthenticationNote;
 
     @Inject
     public UserAccessViewImpl(final Binder binder) {
@@ -54,6 +57,11 @@ public class UserAccessViewImpl extends ViewImpl implements UserAccessView {
     @Override
     public void setSessionList(final View view) {
         sessionsContainer.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setEdgeAuthenticationNoteVisible(final boolean visible) {
+        edgeAuthenticationNote.setVisible(visible);
     }
 
     @Override

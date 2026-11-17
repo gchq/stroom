@@ -22,6 +22,7 @@ import stroom.query.api.datasource.FieldType;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.sql.Types;
 import java.util.List;
@@ -50,7 +51,27 @@ class TestSqlFieldCache {
                 .build();
     }
 
-    private List<SqlColumn> describe(final String sql) {
+    /// A mock cache whose [SqlFieldCache#recording] wrapper is real, so the columns a query returned
+    /// reach [SqlFieldCache#put], which tests can verify.
+    ///
+    /// @return The mock.
+    static SqlFieldCache mockWithRealRecording() {
+        final SqlFieldCache cache = Mockito.mock(SqlFieldCache.class);
+        Mockito.when(cache.recording(Mockito.any(), Mockito.any(), Mockito.any())).thenCallRealMethod();
+        return cache;
+    }
+
+    @Test
+    void recordingPutsTheColumnsBeforeMakingTheRowConsumer() {
+        final SqlRowConsumer rowConsumer = Mockito.mock(SqlRowConsumer.class);
+
+        final SqlRowConsumer made = fieldCache.recording(doc("v1"), SQL, columns -> rowConsumer).apply(COLUMNS);
+
+        assertThat(made).isSameAs(rowConsumer);
+        assertThat(fieldCache.getIfPresent(doc("v1"), SQL)).hasValue(COLUMNS);
+    }
+
+    private List<SqlColumn> describe() {
         describeCount.incrementAndGet();
         return COLUMNS;
     }

@@ -98,6 +98,15 @@ public class UserSessionsListPresenter extends MyPresenterWidget<PagerView> {
         endSessionButton.setEnabled(selectionModel.getSelected() != null);
     }
 
+    /// Set whether an authenticating edge proxy (e.g. an AWS ALB) is the OpenID Connect relying
+    /// party. When it is, ending a session does not sign the user out, because the proxy
+    /// authenticates their very next request, so the action is not offered.
+    ///
+    /// @param edgeAuthentication True if edge authentication is enabled.
+    public void setEdgeAuthentication(final boolean edgeAuthentication) {
+        endSessionButton.setVisible(!edgeAuthentication);
+    }
+
     private void initTableColumns() {
         final Column<SessionDetails, String> nodeColumn = DataGridUtil.textColumnBuilder(
                         SessionDetails::getNodeName)

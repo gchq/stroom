@@ -83,7 +83,7 @@ class TestDataConnectionSearchProvider {
     private final DataConnectionStore store = Mockito.mock(DataConnectionStore.class);
     private final JdbcQueryRunner runner = Mockito.mock(JdbcQueryRunner.class);
     private final JdbcConnectionResolver resolver = Mockito.mock(JdbcConnectionResolver.class);
-    private final SqlFieldCache fieldCache = Mockito.mock(SqlFieldCache.class);
+    private final SqlFieldCache fieldCache = TestSqlFieldCache.mockWithRealRecording();
     private final AthenaQueryRunner athenaRunner = Mockito.mock(AthenaQueryRunner.class);
     private final AthenaConnectionResolver athenaResolver = Mockito.mock(AthenaConnectionResolver.class);
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory =
@@ -422,8 +422,8 @@ class TestDataConnectionSearchProvider {
                 Mockito.any())).thenAnswer(invocation -> {
                     ((Function<List<SqlColumn>, SqlRowConsumer>) invocation.getArgument(3)).apply(columns);
                     ((Consumer<String>) invocation.getArgument(5)).accept("Amazon Athena query q-1 running");
-                    return new QueryRunSummary(columns, List.of(), 0, 0, false, 100,
-                            "Amazon Athena query q-1 scanned 2 MB.");
+                    return new QueryRunSummary(List.of(), 0, 0, false, 100,
+                            "Amazon Athena query q-1 scanned 2 MB.", List.of());
                 });
         final DataConnectionSearchProvider searchingProvider = new DataConnectionSearchProvider(
                 Runnable::run, store, null, securityContext, coprocessorsFactory, resultStoreFactory,
@@ -522,7 +522,7 @@ class TestDataConnectionSearchProvider {
     void jdbcSearchWarnsThatTheTimeRangeWasIgnored() throws SQLException {
         // The SQL has no :from or :to and the document no time column, so the connector warns.
         givenDoc(doc().build(), true);
-        givenJdbcRunReturns(new QueryRunSummary(List.of(), List.of(), 0, 0, false, 100, null));
+        givenJdbcRunReturns(new QueryRunSummary(List.of(), 0, 0, false, 100, null, List.of()));
         final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
         final ResultStore resultStore = Mockito.mock(ResultStore.class);
 
@@ -540,7 +540,7 @@ class TestDataConnectionSearchProvider {
     @Test
     void rowLimitAndUnmatchedFieldsAreWarned() throws SQLException {
         givenDoc(doc().build(), true);
-        givenJdbcRunReturns(new QueryRunSummary(List.of(), List.of("salary"), 100, 100, true, 100, null));
+        givenJdbcRunReturns(new QueryRunSummary(List.of("salary"), 100, 100, true, 100, null, List.of()));
         final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
         final ResultStore resultStore = Mockito.mock(ResultStore.class);
 

@@ -25,8 +25,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.Objects;
-
 /// Turns the Amazon Athena settings of a Data Connection into a [ResolvedAthenaConnection].
 ///
 /// It checks the settings against the administrator's controls, applies defaults and looks up the
@@ -72,10 +70,8 @@ public class AthenaConnectionResolver {
                 AthenaConnectionValidator.orDefault(settings.getCatalog(), AthenaConnectionSettings.DEFAULT_CATALOG),
                 AthenaConnectionValidator.orDefault(settings.getDatabase(),
                         AthenaConnectionSettings.DEFAULT_DATABASE),
-                NullSafe.isBlankString(settings.getOutputLocation())
-                        ? null
-                        : settings.getOutputLocation().trim(),
-                Math.max(0, Objects.requireNonNullElse(settings.getResultReuseMinutes(), 0)),
+                AthenaConnectionValidator.orDefault(settings.getOutputLocation(), null),
+                ConnectionRules.nonNegative(settings.getResultReuseMinutes(), 0),
                 awsKey);
     }
 }

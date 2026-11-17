@@ -56,6 +56,18 @@ class TestColumnDetector {
     }
 
     @Test
+    void typeChosenByTheUserIsKeptWhenTheHeaderChangesCase() {
+        final List<DataColumn> columns = detect(CsvSettings.builder()
+                .columns(List.of(new DataColumn("size", DataColumnType.TEXT)))
+                .data("team,SIZE\nRed,4\n")
+                .build());
+
+        assertThat(columns).containsExactly(
+                new DataColumn("team", DataColumnType.TEXT),
+                new DataColumn("SIZE", DataColumnType.TEXT));
+    }
+
+    @Test
     void columnsWithoutHeaderAreNumbered() {
         final List<DataColumn> columns = detect(CsvSettings.builder()
                 .header(false)
@@ -72,6 +84,16 @@ class TestColumnDetector {
                 .build());
 
         assertThat(columns).extracting(DataColumn::getName).containsExactly("name", "column2", "name_2");
+    }
+
+    @Test
+    void headerNamesThatDifferOnlyInCaseAreMadeUnique() {
+        // Fields are matched without regard to case, so 'ID' and 'id' would be the same field.
+        final List<DataColumn> columns = detect(CsvSettings.builder()
+                .data("ID,id,Id_2\n1,2,3\n")
+                .build());
+
+        assertThat(columns).extracting(DataColumn::getName).containsExactly("ID", "id_2", "Id_2_2");
     }
 
     @Test
