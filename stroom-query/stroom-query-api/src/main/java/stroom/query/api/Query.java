@@ -19,7 +19,6 @@ package stroom.query.api;
 import stroom.docref.DocRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -150,7 +149,6 @@ public final class Query {
     /// must be mapped to the data source's own field names.
     ///
     /// @return True if the query has joins, a bracketed query in `from`, or an alias.
-    @JsonIgnore
     public boolean needsJoinSupport() {
         return (joins != null && !joins.isEmpty()) || sourceTableSettings != null || alias != null;
     }

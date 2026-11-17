@@ -46,6 +46,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /// The rows of the bounded side of a join, held in LMDB by join key so that each row of the other
 /// side can find its matches.
@@ -246,10 +247,8 @@ public final class JoinTable implements AutoCloseable {
                             final int limit,
                             final Consumer<Val[]> consumer,
                             final boolean noteMatched) {
-        if (!complete) {
-            throw new IllegalStateException("The join table for '" + name + "' is not complete yet");
-        }
-        if (key == null || NO_KEY.equals(key)) {
+        checkComplete();
+        if (key == null || NO_KEY.equals(key) || limit <= 0) {
             return 0;
         }
         final ByteBuffer prefix = PREFIX_BUFFER.get();
@@ -257,33 +256,47 @@ public final class JoinTable implements AutoCloseable {
         prefix.putLong(hash(key));
         prefix.flip();
         final LmdbKeyRange keyRange = LmdbKeyRange.builder().prefix(prefix).build();
-        int count = 0;
+        final int[] count = {0};
+        read(keyRange, entry -> {
+            try (final KryoDataReader reader = new KryoDataReader(new ByteBufferInput(entry.getVal()))) {
+                if (key.equals(reader.readString())) {
+                    count[0]++;
+                    if (noteMatched) {
+                        noteMatched(getRowNumber(entry.getKey()));
+                    }
+                    if (consumer != null) {
+                        consumer.accept(ValSerialiser.readArray(reader));
+                    }
+                }
+            }
+            return count[0] < limit;
+        });
+        return count[0];
+    }
+
+    // Reads the entries in the key range, in key order, in one read transaction, passing each to the
+    // reader until it returns false or there are no more. The table can't be closed while they are read.
+    private void read(final LmdbKeyRange keyRange, final Predicate<LmdbEntry> reader) {
         closeLock.readLock().lock();
         try {
             checkNotClosed();
             try (final ReadTxn readTxn = env.readTxn();
                     final LmdbIterable iterable = LmdbIterable.create(readTxn.get(), db.getDbi(), keyRange)) {
                 final Iterator<LmdbEntry> iterator = iterable.iterator();
-                while (count < limit && iterator.hasNext()) {
-                    final LmdbEntry entry = iterator.next();
-                    final ByteBuffer value = entry.getVal();
-                    try (final KryoDataReader reader = new KryoDataReader(new ByteBufferInput(value))) {
-                        if (key.equals(reader.readString())) {
-                            count++;
-                            if (noteMatched) {
-                                noteMatched(getRowNumber(entry.getKey()));
-                            }
-                            if (consumer != null) {
-                                consumer.accept(ValSerialiser.readArray(reader));
-                            }
-                        }
-                    }
+                boolean more = true;
+                while (more && iterator.hasNext()) {
+                    more = reader.test(iterator.next());
                 }
             }
         } finally {
             closeLock.readLock().unlock();
         }
-        return count;
+    }
+
+    private void checkComplete() {
+        if (!complete) {
+            throw new IllegalStateException("The join table for '" + name + "' is not complete yet");
+        }
     }
 
     private void checkNotClosed() {
@@ -347,9 +360,7 @@ public final class JoinTable implements AutoCloseable {
     }
 
     private AtomicLongArray getMatchedArray() {
-        if (!complete) {
-            throw new IllegalStateException("The join table for '" + name + "' is not complete yet");
-        }
+        checkComplete();
         AtomicLongArray matched = this.matched;
         if (matched == null) {
             synchronized (this) {
@@ -373,9 +384,7 @@ public final class JoinTable implements AutoCloseable {
     ///
     /// @param consumer Takes each row's number, join key and values.
     public void forEachNumberedRow(final RowConsumer consumer) {
-        if (!complete) {
-            throw new IllegalStateException("The join table for '" + name + "' is not complete yet");
-        }
+        checkComplete();
         // Read in batches, so the table is only held open while a batch is read, not while the
         // consumer, which may be writing to a slow node, takes the rows.
         ByteBuffer after = null;
@@ -395,27 +404,17 @@ public final class JoinTable implements AutoCloseable {
                 ? LmdbKeyRange.all()
                 : LmdbKeyRange.builder().start(after, false).build();
         final List<RowEntry> batch = new ArrayList<>(ROWS_PER_BATCH);
-        closeLock.readLock().lock();
-        try {
-            checkNotClosed();
-            try (final ReadTxn readTxn = env.readTxn();
-                    final LmdbIterable iterable = LmdbIterable.create(readTxn.get(), db.getDbi(), keyRange)) {
-                final Iterator<LmdbEntry> iterator = iterable.iterator();
-                while (batch.size() < ROWS_PER_BATCH && iterator.hasNext()) {
-                    final LmdbEntry entry = iterator.next();
-                    // LMDB's buffers are only valid in the transaction, so the key is copied.
-                    final ByteBuffer lmdbKey = ByteBuffer.allocateDirect(KEY_LENGTH);
-                    lmdbKey.put(entry.getKey().duplicate());
-                    lmdbKey.flip();
-                    try (final KryoDataReader reader = new KryoDataReader(new ByteBufferInput(entry.getVal()))) {
-                        final String key = reader.readString();
-                        batch.add(new RowEntry(lmdbKey, key, ValSerialiser.readArray(reader)));
-                    }
-                }
+        read(keyRange, entry -> {
+            // LMDB's buffers are only valid in the transaction, so the key is copied.
+            final ByteBuffer lmdbKey = ByteBuffer.allocateDirect(KEY_LENGTH);
+            lmdbKey.put(entry.getKey().duplicate());
+            lmdbKey.flip();
+            try (final KryoDataReader reader = new KryoDataReader(new ByteBufferInput(entry.getVal()))) {
+                final String key = reader.readString();
+                batch.add(new RowEntry(lmdbKey, key, ValSerialiser.readArray(reader)));
             }
-        } finally {
-            closeLock.readLock().unlock();
-        }
+            return batch.size() < ROWS_PER_BATCH;
+        });
         return batch;
     }
 
@@ -425,6 +424,7 @@ public final class JoinTable implements AutoCloseable {
     /// @param writer The writer.
     /// @param row    The row's values, at most 255 of them.
     static void writeRow(final KryoDataWriter writer, final Val[] row) {
+        // The count is written as one byte, so a longer row would be read back wrongly.
         if (row.length > MAX_FIELDS) {
             throw new IllegalArgumentException("A join table row can hold at most " + MAX_FIELDS + " values");
         }

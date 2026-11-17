@@ -405,7 +405,7 @@ final class JoinClauses {
             if (pushedDown != null) {
                 // An exists or in query's own conditions are already there.
                 final ExpressionOperator own = join.queryBuilder.build().getExpression();
-                join.queryBuilder.expression(JoinWhereSplitter.and(own, pushedDown));
+                join.queryBuilder.expression(ExpressionUtil.combine(own, pushedDown));
             }
             Query joinQuery = join.queryBuilder.build();
             if (joinQuery.getExpression() == null) {
@@ -429,7 +429,7 @@ final class JoinClauses {
         final ExpressionOperator postJoin = JoinWhereSplitter.renameFields(split.postJoin(), field ->
                 postJoinColumns.computeIfAbsent(field, k ->
                         JoinWhereSplitter.POST_JOIN_COLUMN_PREFIX + (postJoinColumns.size() + 1) + "__"));
-        tableSettingsBuilder.valueFilter(JoinWhereSplitter.and(postJoin, filterExpression));
+        tableSettingsBuilder.valueFilter(ExpressionUtil.combine(postJoin, filterExpression));
     }
 
     // A semi or anti join adds no fields to the rows, so its fields can only be named in its own

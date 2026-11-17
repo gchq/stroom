@@ -38,8 +38,8 @@ public final class JoinWindow {
     @JsonProperty
     private final String duration;
 
-    @Schema(description = "True if the window starts at the time field and runs forward, false if it ends " +
-                          "there and runs back")
+    @Schema(description = "True if the window starts at the time field and runs forward, false or missing " +
+                          "if it ends there and runs back")
     @JsonProperty
     private final boolean after;
 
@@ -51,15 +51,15 @@ public final class JoinWindow {
     /// Creates a join window.
     ///
     /// @param duration  The length of the window as a StroomQL duration, e.g. `10m`.
-    /// @param after     True if the window starts at the time field and runs forward, false if it
-    ///                  ends there and runs back.
+    /// @param after     True if the window starts at the time field and runs forward, false or `null`
+    ///                  if it ends there and runs back.
     /// @param timeField The field of the rows being joined that the window starts or ends at.
     @JsonCreator
     public JoinWindow(@JsonProperty("duration") final String duration,
-                      @JsonProperty("after") final boolean after,
+                      @JsonProperty("after") final Boolean after,
                       @JsonProperty("timeField") final String timeField) {
         this.duration = duration;
-        this.after = after;
+        this.after = Boolean.TRUE.equals(after);
         this.timeField = timeField;
     }
 

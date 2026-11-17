@@ -356,6 +356,16 @@ class TestWhereSubqueries {
                 .hasMessageContaining("The alias 'People' is already used");
     }
 
+    @Test
+    void existsWithoutABracketedQueryIsNotAForm() {
+        // 'exists' on its own is an ordinary word, so it is refused as a where condition, not read
+        // as a form with no query.
+        assertThatThrownBy(() -> create("from People as p where exists and name = 'a'"))
+                .isInstanceOf(TokenException.class);
+        assertThatThrownBy(() -> create("from People as p where name = 'a' and not exists"))
+                .isInstanceOf(TokenException.class);
+    }
+
     private void assertSameRequest(final String form, final String joinLine) {
         assertThat(create(form)).isEqualTo(create(joinLine));
     }

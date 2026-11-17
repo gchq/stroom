@@ -19,7 +19,9 @@ package stroom.query.common.v2;
 import stroom.lmdb2.LmdbEnv;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ref.KryoDataWriter;
 
+import com.esotericsoftware.kryo.io.Output;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -275,6 +277,17 @@ class TestJoinTable {
             assertThatThrownBy(() -> table.add("a", JoinTestHelper.row("x".repeat(200))))
                     .isInstanceOf(JoinTableFullException.class);
         }
+    }
+
+    @Test
+    void rowTooLongToWriteIsRefused() {
+        // The number of values is written as one byte, so a longer row must not be written at all.
+        final Val[] row = new Val[256];
+        final KryoDataWriter writer = new KryoDataWriter(new Output(1024, -1));
+
+        assertThatThrownBy(() -> JoinTable.writeRow(writer, row))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("at most 255 values");
     }
 
     @Test

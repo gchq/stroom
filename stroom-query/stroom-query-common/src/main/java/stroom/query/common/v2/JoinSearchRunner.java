@@ -83,8 +83,6 @@ public class JoinSearchRunner {
 
     private static final String CHILD_COMPONENT_ID = "join";
     private static final long AWAIT_INTERVAL_SECONDS = 1;
-    // The key an anchor with no key is held under in an anchor table. Real keys are never empty.
-    private static final String NO_KEY = "";
     // The most time ranges the joined source of an event-to-event join is searched over.
     private static final int MAX_TIME_RANGES = 20;
 
@@ -125,10 +123,13 @@ public class JoinSearchRunner {
     /// @param searchRequest The search's request, with its query key.
     /// @return The placeholder result store.
     public ResultStore createPlaceholder(final SearchRequest searchRequest) {
-        final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
-                searchRequest,
-                DataStoreSettings.createBasicSearchResultStoreSettings());
-        return resultStoreFactory.create(searchRequest.getSearchRequestSource(), coprocessors);
+        return resultStoreFactory.create(searchRequest.getSearchRequestSource(), createCoprocessors(searchRequest));
+    }
+
+    // The coprocessors of a result store of the search's own: the placeholder, or a store that takes
+    // its place and is given the joined rows here.
+    private CoprocessorsImpl createCoprocessors(final SearchRequest searchRequest) {
+        return coprocessorsFactory.create(searchRequest, DataStoreSettings.createBasicSearchResultStoreSettings());
     }
 
     /// Starts a search with joins in the background.
@@ -517,17 +518,7 @@ public class JoinSearchRunner {
                                   final int anchorCount,
                                   final ResultStore rightChild) {
             final QueryJoin join = windowedJoin.getJoin();
-            final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
-                    searchRequest,
-                    DataStoreSettings.createBasicSearchResultStoreSettings());
-            final ResultStore searchStore = resultStoreFactory.create(
-                    searchRequest.getSearchRequestSource(), coprocessors);
-            // Terminating the store that takes the placeholder's place stops the rows being given.
-            searchStore.setSearchProcess(this);
-            copyMessages(placeholder, searchStore, null);
-            handOver(searchStore);
-            info = "Joining the events of '" + join.getAlias() + "'";
-            try {
+            giveRowsToOwnStore("Joining the events of '" + join.getAlias() + "'", coprocessors -> {
                 final WindowedJoin.Probe probe = windowedJoin.createProbe(
                         anchors, anchorCount, coprocessors.getFieldIndex(), coprocessors.getErrorConsumer());
                 if (rightChild != null) {
@@ -536,13 +527,7 @@ public class JoinSearchRunner {
                     destroyChild(rightChild);
                 }
                 probe.finish(coprocessors::accept);
-            } catch (final JoinSearchTerminatedException e) {
-                LOGGER.debug("Join search {} terminated while joining its rows", searchRequest.getKey());
-            } catch (final RuntimeException e) {
-                searchStore.addError(e);
-            } finally {
-                searchStore.signalComplete();
-            }
+            });
         }
 
         // Searches the first source, with its rows going through the joins, and puts its result store
@@ -567,17 +552,7 @@ public class JoinSearchRunner {
                     .build();
             final ResultStore child = searchChild(innerQuery, query.getSourceTableSettings(), name);
 
-            final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
-                    searchRequest,
-                    DataStoreSettings.createBasicSearchResultStoreSettings());
-            final ResultStore searchStore = resultStoreFactory.create(
-                    searchRequest.getSearchRequestSource(), coprocessors);
-            // Terminating the store that takes the placeholder's place stops the rows being given.
-            searchStore.setSearchProcess(this);
-            copyMessages(placeholder, searchStore, null);
-            handOver(searchStore);
-            info = "Joining the rows of the bracketed query in from";
-            try {
+            giveRowsToOwnStore("Joining the rows of the bracketed query in from", coprocessors -> {
                 final FieldIndex fieldIndex = coprocessors.getFieldIndex();
                 final List<String> columnNames = getColumnNames(child);
                 readRows(child, name, columnNames, values -> {
@@ -590,6 +565,23 @@ public class JoinSearchRunner {
                     }
                     coprocessors.accept(row);
                 });
+            });
+        }
+
+        // Puts a result store of the query's own in the placeholder's place, then gives it rows, as
+        // the giver passes them to its coprocessors. The store completes once they are given, or
+        // holds the error if giving them failed.
+        private void giveRowsToOwnStore(final String joiningInfo, final Consumer<CoprocessorsImpl> giver) {
+            final CoprocessorsImpl coprocessors = createCoprocessors(searchRequest);
+            final ResultStore searchStore = resultStoreFactory.create(
+                    searchRequest.getSearchRequestSource(), coprocessors);
+            // Terminating the store that takes the placeholder's place stops the rows being given.
+            searchStore.setSearchProcess(this);
+            copyMessages(placeholder, searchStore, null);
+            handOver(searchStore);
+            info = joiningInfo;
+            try {
+                giver.accept(coprocessors);
             } catch (final JoinSearchTerminatedException e) {
                 LOGGER.debug("Join search {} terminated while joining its rows", searchRequest.getKey());
             } catch (final RuntimeException e) {
@@ -813,7 +805,11 @@ public class JoinSearchRunner {
             final String key = windowedJoin.getLeftKey(anchor);
             final Instant time = windowedJoin.getAnchorTime(anchor);
             // An anchor with no key matches nothing, but left and anti joins still give it.
-            anchors.add(Objects.requireNonNullElse(key, NO_KEY), anchor);
+            if (key == null) {
+                anchors.addWithoutKey(anchor);
+            } else {
+                anchors.add(key, anchor);
+            }
             if (key != null && time != null) {
                 keys.add(key);
                 if (timeCount == times.length) {

@@ -200,12 +200,6 @@ public class JoinTables {
     // --------------------------------------------------------------------------------
 
 
-    /// The query and join tables of a search with joins.
-    ///
-    /// @param query  The search's query.
-    /// @param tables The join tables, one for each join line in order.
-    /// @param owner  The user who ran the search.
-    /// @param users  The number of coprocessors using the tables.
     /// A search's query and join tables, held for the coprocessors that apply its joins.
     ///
     /// @param query  The search's query.

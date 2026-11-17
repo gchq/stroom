@@ -57,9 +57,9 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
     // Run once, when the coprocessors are first cleared, to release the joins' tables. Coprocessors
     // can be cleared more than once, but the tables were only used once.
     private final AtomicReference<Runnable> onClear = new AtomicReference<>();
-    // True if these coprocessors give a right or full join's unmatched rows when they complete: those
-    // of the node that built the join tables, not those of a node with a copy.
-    private volatile boolean givesUnmatchedJoinedRows;
+    // True for the coprocessors of the node that built the join tables, not those of a node with a
+    // copy. Only these give a right or full join's unmatched rows when they complete.
+    private volatile boolean ownsJoinTables;
     // True once the search was stopped or failed, when a right or full join's matches aren't all
     // known, so its unmatched rows aren't given.
     private volatile boolean unmatchedJoinedRowsWithheld;
@@ -95,7 +95,7 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
         // A right or full join's rows that the other node's rows matched follow, so they aren't given
         // as unmatched.
         final JoiningCoprocessors joins = this.joins;
-        if (joins != null && joins.givesUnmatchedJoinedRows()) {
+        if (joins != null) {
             joins.readMatched(input);
         }
     }
@@ -110,7 +110,7 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
             coprocessor.writePayload(output);
         }
         final JoiningCoprocessors joins = this.joins;
-        if (joins != null && joins.givesUnmatchedJoinedRows()) {
+        if (joins != null) {
             joins.writeMatched(output);
         }
     }
@@ -121,7 +121,7 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
     private void giveUnmatchedJoinedRows() {
         final JoiningCoprocessors joins = this.joins;
         if (joins == null
-            || !givesUnmatchedJoinedRows
+            || !ownsJoinTables
             || !joins.givesUnmatchedJoinedRows()
             || !unmatchedJoinedRowsDone.compareAndSet(false, true)) {
             return;
@@ -151,15 +151,15 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
     /// @param joins                    The joins, made with [#getUnjoined()] as their coprocessors.
     /// @param onClear                  Run when these coprocessors are cleared, e.g. to delete the joins'
     ///                                 tables.
-    /// @param givesUnmatchedJoinedRows True if these coprocessors give a right or full join's
-    ///                                 unmatched rows when they complete, as those of the node that
-    ///                                 built the join tables do.
+    /// @param ownsJoinTables           True if these are the coprocessors of the node that built the
+    ///                                 join tables, not a node with a copy, so give a right or full
+    ///                                 join's unmatched rows when they complete.
     void setJoins(final JoiningCoprocessors joins,
                   final Runnable onClear,
-                  final boolean givesUnmatchedJoinedRows) {
+                  final boolean ownsJoinTables) {
         this.joins = joins;
         this.onClear.set(onClear);
-        this.givesUnmatchedJoinedRows = givesUnmatchedJoinedRows;
+        this.ownsJoinTables = ownsJoinTables;
     }
 
     /// Stops a right or full join's unmatched rows being given when these coprocessors complete, as
@@ -179,7 +179,7 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
     }
 
     /// Gets a view of these coprocessors that takes rows straight to the coprocessors, without the
-    /// joins of [#setJoins(JoiningCoprocessors, Runnable)].
+    /// joins of [#setJoins(JoiningCoprocessors, Runnable, boolean)].
     ///
     /// @return The view.
     Coprocessors getUnjoined() {

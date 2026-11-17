@@ -111,23 +111,6 @@ public final class JoinWhereSplitter {
         return new Split(and(first), joinedExpressions, and(postJoin));
     }
 
-    /// Joins two conditions with `and`, either of which may be missing.
-    ///
-    /// @param first  The first condition, or `null`.
-    /// @param second The second condition, or `null`.
-    /// @return Both conditions joined, the one that is present, or `null` if neither is.
-    public static ExpressionOperator and(final ExpressionOperator first, final ExpressionOperator second) {
-        if (first == null) {
-            return second;
-        } else if (second == null) {
-            return first;
-        }
-        return ExpressionOperator.builder()
-                .addOperator(first)
-                .addOperator(second)
-                .build();
-    }
-
     // The parts of the clause that are joined by its top-level 'and'. The parser nests one 'and' in
     // another, as in 'a and b and c' becoming AND {AND {a, b}, c}, so nested ones are flattened.
     private static List<ExpressionItem> getTopLevelParts(final ExpressionOperator where) {
@@ -242,7 +225,6 @@ public final class JoinWhereSplitter {
                 .orElseThrow();
     }
 
-    // A copy of the item with '<alias>.' taken off the front of every field name that has it.
     /// Gets a field's name without an alias, if it starts with it, as in `t.team` for alias `t`.
     ///
     /// @param field The field as written.
@@ -266,23 +248,12 @@ public final class JoinWhereSplitter {
         return (ExpressionOperator) removePrefix(expression, alias);
     }
 
+    // A copy of the item with '<alias>.' taken off the front of every field name that has it.
     private static ExpressionItem removePrefix(final ExpressionItem item, final String alias) {
         if (alias == null) {
             return item;
-        } else if (item instanceof final ExpressionTerm term) {
-            final String field = term.getField();
-            if (field != null) {
-                return term.copy().field(withoutAlias(field, alias)).build();
-            }
-            return term;
-        } else if (item instanceof final ExpressionOperator operator) {
-            final List<ExpressionItem> children = new ArrayList<>();
-            for (final ExpressionItem child : operator.getChildren()) {
-                children.add(removePrefix(child, alias));
-            }
-            return operator.copy().children(children).build();
         }
-        return item;
+        return rename(item, field -> withoutAlias(field, alias));
     }
 
     private static ExpressionOperator and(final List<ExpressionItem> items) {

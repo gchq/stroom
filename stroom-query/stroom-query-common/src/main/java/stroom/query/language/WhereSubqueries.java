@@ -193,21 +193,15 @@ final class WhereSubqueries {
     /// @return The form, or `null` if the condition is not one.
     static Form readForm(final List<AbstractToken> condition) {
         final int size = condition.size();
-        // exists (...), or exists(...), which is read as a function.
-        if (size == 1 && isExists(condition, 0)) {
-            return new Form(JoinType.SEMI, null, getQuery(condition.getFirst()), condition.getFirst());
-        }
-        if (size == 2 && isExists(condition, 0) && isQuery(condition.get(1))) {
-            return new Form(JoinType.SEMI, null, (AbstractTokenGroup) condition.get(1), condition.getFirst());
-        }
-        // not exists (...)
-        if (isType(condition, 0, TokenType.NOT)) {
-            if (size == 2 && isExists(condition, 1)) {
-                return new Form(JoinType.ANTI, null, getQuery(condition.get(1)), condition.getFirst());
-            }
-            if (size == 3 && isExists(condition, 1) && isQuery(condition.get(2))) {
-                return new Form(JoinType.ANTI, null, (AbstractTokenGroup) condition.get(2), condition.getFirst());
-            }
+        // exists (...) and not exists (...)
+        final boolean not = isType(condition, 0, TokenType.NOT);
+        final AbstractTokenGroup existsQuery = readExists(not
+                ? condition.subList(1, size)
+                : condition);
+        if (existsQuery != null) {
+            return new Form(not
+                    ? JoinType.ANTI
+                    : JoinType.SEMI, null, existsQuery, condition.getFirst());
         }
         // X in (...) and X not in (...)
         if (size == 3 && isType(condition, 1, TokenType.IN) && isQuery(condition.get(2))) {
@@ -357,13 +351,19 @@ final class WhereSubqueries {
                && TokenType.FROM.equals(group.getChildren().getFirst().getTokenType());
     }
 
-    // True if the token at the index is the word exists, or exists(...) read as a function.
-    private static boolean isExists(final List<AbstractToken> tokens, final int index) {
-        final AbstractToken token = tokens.get(index);
-        if (token instanceof FunctionGroup) {
-            return getQuery(token) != null;
+    // The bracketed query of 'exists (...)', or of 'exists(...)', which is read as a function, or null
+    // if the tokens are neither.
+    private static AbstractTokenGroup readExists(final List<AbstractToken> tokens) {
+        if (tokens.size() == 1 && tokens.getFirst() instanceof FunctionGroup) {
+            return getQuery(tokens.getFirst());
         }
-        return TokenType.STRING.equals(token.getTokenType()) && EXISTS.equalsIgnoreCase(token.getText().trim());
+        if (tokens.size() == 2
+            && TokenType.STRING.equals(tokens.getFirst().getTokenType())
+            && EXISTS.equalsIgnoreCase(tokens.getFirst().getText().trim())
+            && isQuery(tokens.get(1))) {
+            return (AbstractTokenGroup) tokens.get(1);
+        }
+        return null;
     }
 
     private static boolean isType(final List<AbstractToken> tokens, final int index, final TokenType type) {
