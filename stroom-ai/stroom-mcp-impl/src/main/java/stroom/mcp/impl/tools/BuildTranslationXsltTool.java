@@ -737,16 +737,12 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             if (kept == null) {
                 // A whole translation of a feed whose survey confirmed a source type field: the values seen kept with
                 // the mapping, so the XSLT logs one it didn't see. Outside a build, the mapping's own are kept.
-                final String build = NullSafe.isNonBlankString(request.build())
-                        ? request.build()
-                        : NullSafe.get(request.uuid(), uuid -> groups.buildOf(uuid).orElse(null));
+                final String build = buildOf(request);
                 groups.seenSourceTypes(build).ifPresent(seen -> b.mapping = b.mapping.withSeenSourceTypes(seen));
             }
             return;
         }
-        final String build = NullSafe.nonBlankStringElse(request.build(), request.uuid() == null
-                ? null
-                : groups.buildOf(request.uuid()).orElse(null));
+        final String build = buildOf(request);
         if (build == null) {
             throw new ToolRefusal("A source type group is built in a build, beside the feed's registry and common "
                                   + "module: give build");
@@ -766,12 +762,20 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         b.mapping = b.group.groupMapping();
     }
 
+    // The build the call is in: the one it names, else the one holding the saved XSLT it changes; null for neither
+    // (a whole translation outside a build, or a promoted XSLT changed by its uuid). Seen in testing: a promoted
+    // XSLT changed by its uuid alone, with a sample cut short, failed with a NullPointerException.
+    private String buildOf(final Request request) {
+        if (NullSafe.isNonBlankString(request.build())) {
+            return request.build();
+        }
+        return NullSafe.get(request.uuid(), uuid -> groups.buildOf(uuid).orElse(null));
+    }
+
     // The source type group the build's scope names, for a new translation given no group; null for a build without
     // one (a whole translation), or without a build.
     private String scopedGroup(final Request request) {
-        final String build = NullSafe.isNonBlankString(request.build())
-                ? request.build()
-                : NullSafe.get(request.uuid(), uuid -> groups.buildOf(uuid).orElse(null));
+        final String build = buildOf(request);
         return build == null
                 ? null
                 : groups.scopedGroup(build, request.feeds()).orElse(null);
@@ -891,7 +895,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             if (!texts.cut().isEmpty()) {
                 // The records the survey found further in than the sample is read to, checked too (the scope's).
                 final SurveyExamples.Added added = SurveyExamples.added(read.texts(), texts.cut(),
-                        builds.surveyStatesInBuild(NullSafe.nonBlankStringElse(request.build(), b.build)),
+                        builds.surveyStatesInBuild(buildOf(request)),
                         scope.orElse(null));
                 if (!added.texts().isEmpty()) {
                     samples.addAll(added.texts());
@@ -1129,8 +1133,12 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 return Optional.of(saved);
             }
         } else if (name != null) {
-            saved = translationDocs.createXslt(call, context, NullSafe.nonBlankStringElse(request.build(), b.build),
-                    name, xslt, TranslationDocs.Source.of(b.mapping), said);
+            final String build = buildOf(request);
+            if (build == null) {
+                throw new ToolRefusal("A new XSLT is saved in a build: give build (the build's folder) with name");
+            }
+            saved = translationDocs.createXslt(call, context, build, name, xslt, TranslationDocs.Source.of(b.mapping),
+                    said);
         } else {
             throw new ToolRefusal("To save the XSLT give name (a new XSLT in the build) or uuid (the one saved "
                                   + "before)");
