@@ -122,7 +122,7 @@ public class EventChecks {
                     ? heldSchemas.validate(systemId, eventsXml)
                     : heldSchemas.validate(systemId, uuid, eventsXml);
         } catch (final NotWellFormedException e) {
-            throw new ToolRefusal("Events XML is not well-formed XML: " + e.getMessage());
+            throw WellFormedFaults.refusal(eventsXml, "Events XML", e);
         }
         result.put("valid", errors.isEmpty());
         result.put("schema", systemId);

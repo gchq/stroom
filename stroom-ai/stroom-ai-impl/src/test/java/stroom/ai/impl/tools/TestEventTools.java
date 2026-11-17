@@ -167,7 +167,7 @@ class TestEventTools {
                 .contains("1 event(s) couldn't be read");
         final String file = read("/outputs/events.xml");
         assertThat(file)
-                .startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<stroom-events>")
+                .startsWith("<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<stroom-events>")
                 .contains("<stroom-event streamId=\"11\" eventId=\"2\"><Events xmlns=\"event-logging:3\">")
                 .contains("<stroom-event streamId=\"12\" eventId=\"1\">")
                 .doesNotContain("streamId=\"99\"")
@@ -460,7 +460,7 @@ class TestEventTools {
         assertThat(result).contains("\"records_read\":2").contains("search_events");
         final String file = read("/outputs/stream.xml");
         // One declaration, the events file's own; record index 1 is EventId 2, as the table form numbers it.
-        assertThat(file).startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<stroom-events>\n")
+        assertThat(file).startsWith("<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<stroom-events>\n")
                 .contains("<stroom-event streamId=\"11\" eventId=\"2\"><Events xmlns=\"event-logging:3\">")
                 .contains("<stroom-event streamId=\"11\" eventId=\"3\">")
                 .doesNotContain("eventId=\"1\"")

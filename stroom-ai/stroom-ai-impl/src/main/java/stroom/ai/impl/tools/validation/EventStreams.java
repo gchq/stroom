@@ -45,11 +45,17 @@ public class EventStreams {
 
     /// @param streamIds Events streams.
     /// @param cap       The most records read in all.
-    /// @return Their events as one document, and how many records of each were read.
-    /// @throws ToolRefusal             if a stream can't be read or is not Events, or there are none.
+    /// @return Their events as one document, and how many records of each were read. The document is XML 1.1, with
+    /// its declaration, where any record declares 1.1 (as Stroom writes Events), else XML 1.0 with no declaration.
+    /// @throws ToolRefusal             if a stream can't be read or is not Events, or there are none, or a record
+    ///                                 is not well-formed (saying its stream, event number and where).
     /// @throws StreamReader.StreamReadException if the user may not read a stream.
     public Read read(final List<Long> streamIds, final int cap) {
         Element merged = null;
+        // Stroom writes Events as XML 1.1, where a control character such as a form feed in a source's value is
+        // written as a character reference (&#xc;) XML 1.0 forbids: the merged document keeps the version, else it
+        // isn't well-formed when read back (seen in chat 181).
+        String xmlVersion = XmlTrees.XML_1_0;
         final Map<Long, Map<String, Object>> read = new LinkedHashMap<>();
         int checked = 0;
         for (final Long streamId : streamIds) {
@@ -71,17 +77,22 @@ public class EventStreams {
                     : count;
             final int take = (int) Math.min(total, cap - checked);
             final List<Fetched> bodies = new ArrayList<>();
+            final List<Long> indexes = new ArrayList<>();
             bodies.add(first);
+            indexes.add(0L);
             // A block at the head and the rest spread over the stream (RecordPicks): seen in testing, the first 500
             // of 6,000 events were almost all of one kind, and a clean check was taken to cover the rest.
             final List<Long> picks = RecordPicks.headAndSpread(total, take);
             // The first is read already.
             for (final long index : picks.subList(Math.min(1, picks.size()), picks.size())) {
                 bodies.add(streamReader.fetch(streamId, index, null));
+                indexes.add(index);
             }
-            for (final Fetched body : bodies.subList(0, Math.max(0, Math.min(take, bodies.size())))) {
-                final Element root = XsltChecks.parse(StreamReader.rootClosed(NullSafe.string(body.data())),
-                        "stream " + streamId);
+            for (int i = 0; i < Math.max(0, Math.min(take, bodies.size())); i++) {
+                final Element root = parseRecord(streamId, indexes.get(i), bodies.get(i));
+                if (XmlTrees.XML_1_1.equals(root.getOwnerDocument().getXmlVersion())) {
+                    xmlVersion = XmlTrees.XML_1_1;
+                }
                 if (merged == null) {
                     merged = root;
                 } else {
@@ -107,7 +118,18 @@ public class EventStreams {
         if (merged == null) {
             throw new ToolRefusal("No Events records to check in those streams");
         }
-        return new Read(XmlTrees.serialise(merged), read);
+        return new Read(XmlTrees.serialise(merged, xmlVersion), read);
+    }
+
+    // One record, as a document; a record that is not well-formed is refused naming its stream and event number
+    // (record index + 1, as fetch_events and the index number it).
+    private static Element parseRecord(final long streamId, final long index, final Fetched body) {
+        final String text = StreamReader.rootClosed(NullSafe.string(body.data()));
+        try {
+            return XmlTrees.parse(text);
+        } catch (final XmlTrees.NotWellFormedException e) {
+            throw WellFormedFaults.recordRefusal(text, "Event " + (index + 1) + " of stream " + streamId, e);
+        }
     }
 
 

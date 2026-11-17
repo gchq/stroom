@@ -58,6 +58,11 @@ public final class XmlTrees {
     public static final String XSL = "http://www.w3.org/1999/XSL/Transform";
     /// The namespace `xmlns` attributes are in.
     public static final String XMLNS = XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
+    /// XML 1.0, the version of a document that declares none.
+    public static final String XML_1_0 = "1.0";
+    /// XML 1.1, the version Stroom writes its XML streams (Events among them) in: it allows the control
+    /// characters XML 1.0 forbids (other than NUL), written as character references, e.g. `&#xc;`.
+    public static final String XML_1_1 = "1.1";
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(XmlTrees.class);
 
@@ -77,7 +82,7 @@ public final class XmlTrees {
                     text, ""))));
             return document.getDocumentElement();
         } catch (final SAXParseException e) {
-            throw new NotWellFormedException(e.getLineNumber(), e.getMessage());
+            throw new NotWellFormedException(e.getLineNumber(), e.getColumnNumber(), e.getMessage());
         } catch (final ParserConfigurationException | SAXException | IOException e) {
             throw new NotWellFormedException(-1, e.getMessage());
         }
@@ -267,9 +272,23 @@ public final class XmlTrees {
     /// @param node A node.
     /// @return It as XML text, without an XML declaration.
     public static String serialise(final Node node) {
+        return serialise(node, XML_1_0);
+    }
+
+    /// @param node       A node.
+    /// @param xmlVersion The XML version to write it as: [#XML_1_1] writes it with a 1.1 XML declaration, so the text
+    ///                   reads back as XML 1.1 (a control character such as U+000C, written as a character reference,
+    ///                   is well-formed only there); anything else writes it without a declaration, as before.
+    /// @return It as XML text.
+    public static String serialise(final Node node, final String xmlVersion) {
         try {
             final Transformer transformer = TransformerFactory.newInstance().newTransformer();
-            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            if (XML_1_1.equals(xmlVersion)) {
+                transformer.setOutputProperty(OutputKeys.VERSION, XML_1_1);
+                transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
+            } else {
+                transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            }
             final StringWriter writer = new StringWriter();
             transformer.transform(new DOMSource(node), new StreamResult(writer));
             return writer.toString();
@@ -299,17 +318,33 @@ public final class XmlTrees {
     public static class NotWellFormedException extends RuntimeException {
 
         private final int line;
+        private final int column;
 
         /// @param line    The line the parser stopped at, or -1 if unknown.
         /// @param message Why, as the parser said.
         public NotWellFormedException(final int line, final String message) {
+            this(line, -1, message);
+        }
+
+        /// @param line    The line the parser stopped at, or -1 if unknown.
+        /// @param column  The column (from 1) on that line the parser stopped at, just past the fault, or -1 if
+        ///                unknown.
+        /// @param message Why, as the parser said.
+        public NotWellFormedException(final int line, final int column, final String message) {
             super(message);
             this.line = line;
+            this.column = column;
         }
 
         /// @return The line the parser stopped at, or -1 if unknown.
         public int getLine() {
             return line;
+        }
+
+        /// @return The column (from 1) on [#getLine()] the parser stopped at, just past the fault, or -1 if
+        /// unknown.
+        public int getColumn() {
+            return column;
         }
     }
 }
