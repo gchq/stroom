@@ -371,7 +371,8 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         promote(first, Map.of("Pipeline", folder, "XSLT", folder, "Index", folder));
 
         // The second build: the integration group, its Events into the same feed (the default), and the security
-        // group's pipeline run through a working copy, so the build's Events feed holds both groups' Events.
+        // group's pipeline run as a new version of it (a build processes only its own pipelines, and a promoted one
+        // is copied only as a new version), so the build's Events feed holds both groups' Events.
         final String second = "pega-idx-two-2";
         json("start_build", args("build", second, "feeds", List.of(feed)));
         client.answeringWith(TestE2eSourceTypeGroups.scopeOf(List.of("PegaIntegration"), null));
@@ -382,8 +383,11 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         final String integration = uuidOf(agreed("create_pipeline", args("build", second, "group", INTEGRATION,
                 "template_uuid", template)));
         final List<Long> integrationEvents = events(integration, stream);
-        final String securityCopy = uuidOf(agreed("copy_pipeline", args("build", second, "source_uuid", security,
-                "new_name", feed + " " + SECURITY, "working_copy", true)));
+        final Map<String, Object> securityVersion = agreed("copy_pipeline", args("build", second, "source_uuid",
+                security, "new_name", feed + " " + SECURITY));
+        assertThat(securityVersion).doesNotContainKey("working_copy");
+        assertThat(String.valueOf(securityVersion.get("name"))).isNotEqualTo(feed + " " + SECURITY);
+        final String securityCopy = uuidOf(securityVersion);
         final List<Long> securityCopyEvents = events(securityCopy, stream);
         final String eventsFeed = meta(integrationEvents.getFirst()).getFeedName();
         assertThat(meta(securityCopyEvents.getFirst()).getFeedName()).isEqualTo(eventsFeed);
@@ -436,13 +440,17 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
                 .containsExactly(INTEGRATION);
         assertThat((List<String>) FeedIndexes.indexNamed(registry, integrationIndex).get("output_feeds"))
                 .containsExactly(feed);
+        // The security group's rows name its new version, promoted beside the old one.
+        assertThat(jsonOf(registry)).contains(securityCopy);
+        assertThat(folderOf(security)).isNotEqualTo(folderOf(securityCopy));
     }
 
     @Test
-    void aWorkingCopyOfAProductionIndexingPipelineIndexesIntoTheBuildsTestIndexNotTheProductionOne() {
+    void aNewVersionOfAProductionIndexingPipelineIndexesIntoTheBuildsTestIndexNotTheProductionOne() {
         // Seen in an eval (case 61): a later build's working copy of the group's indexing pipeline, processed in the
         // build, indexed the sample's Events into the live production index, each document without the build's new
-        // fields, and the documents could not be taken out again.
+        // fields, and the documents could not be taken out again. A copy is now always a new version (decided by the
+        // user, 2026-11-17), writing to the same Lucene index: still the build's test index while in the build.
         final String feed = "E2E-PEGA-IDX-WC";
         final String folder = "E2E Feeds/PegaIdxWc";
         final String securityIndex = "e2e-pega-wc-pega-security";
@@ -479,27 +487,33 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         assertThat(count).isPositive();
         assertThat(documents(indexDoc)).isEqualTo(count);
 
-        // A later build: a working copy of the group's indexing pipeline, its XSLT given a field the production
-        // index lacks, stepped and processed over the sample's Events.
+        // A later build: a working copy of the group's indexing pipeline is refused; its new version, its XSLT
+        // given a field the production index lacks, is stepped and processed over the sample's Events.
         final String later = "pega-idx-wc-2";
+        assertThat(refusal("copy_pipeline", args("build", later, "source_uuid", securityIndexing, "new_name",
+                securityIndex + " - Indexing", "working_copy", true))).contains("never a working copy",
+                "Nothing was copied");
         final Map<String, Object> copied = agreed("copy_pipeline", args("build", later, "source_uuid",
-                securityIndexing, "new_name", securityIndex + " - Indexing", "working_copy", true));
+                securityIndexing, "new_name", securityIndex + " - Indexing"));
+        dump("copy_pipeline indexing new version", copied);
+        assertThat(copied).doesNotContainKey("working_copy");
         final String copy = uuidOf(copied);
         final String copyXslt = list(copied, "copied_documents").stream()
                 .filter(doc -> "XSLT".equals(doc.get("type")))
                 .map(doc -> (String) doc.get("uuid"))
                 .findFirst()
                 .orElseThrow();
+        assertThat(copyXslt).isNotEqualTo(securityXslt);
         final Map<String, Object> widened = new LinkedHashMap<>(securityPlan);
         final List<Map<String, Object>> fields = new ArrayList<>(list(securityPlan, "fields"));
-        fields.add(Map.of("name", "WorkingCopyOnly", "type", "keyword", "source", "EventSource/Generator"));
+        fields.add(Map.of("name", "NewVersionOnly", "type", "keyword", "source", "EventSource/Generator"));
         widened.put("fields", fields);
         json("save_xslt", args("build", later, "uuid", copyXslt, "index_plan", widened));
-        assertThat(luceneFields(new DocRef(LuceneIndexDoc.TYPE, indexDoc))).doesNotContain("WorkingCopyOnly");
+        assertThat(luceneFields(new DocRef(LuceneIndexDoc.TYPE, indexDoc))).doesNotContain("NewVersionOnly");
         assertThat(stepSample(copy, securityEvents)).containsEntry("verdict", "clean");
         final Map<String, Object> filter = agreed("create_processor_filter", args("pipeline_uuid", copy,
                 "stream_ids", securityEvents, "source_pipeline_uuid", security));
-        dump("create_processor_filter working copy", filter);
+        dump("create_processor_filter new version", filter);
         final Map<String, Object> test = list(filter, "test_index").getFirst();
         assertThat(test).containsEntry("name", securityIndex + "-MCP-TEST")
                 .containsEntry("made", true);
@@ -516,51 +530,53 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         assertThat(documents(indexDoc)).as("the production index's documents").isEqualTo(count);
         assertThat(documents(testIndex)).as("the build's test index's documents").isEqualTo(count);
         assertThat(folderOf(testIndex)).contains(later);
-        assertThat(luceneFields(new DocRef(LuceneIndexDoc.TYPE, testIndex))).contains("WorkingCopyOnly")
+        assertThat(luceneFields(new DocRef(LuceneIndexDoc.TYPE, testIndex))).contains("NewVersionOnly")
                 .containsAll(luceneFields(new DocRef(LuceneIndexDoc.TYPE, indexDoc)));
         // verify_index given the production index searches the test index.
         final Map<String, Object> verified = agreed("verify_index", args("build", later, "index_uuid", indexDoc,
                 "backend", "lucene", "stream_ids", securityEvents, "expected_documents", count,
                 "fields", List.of("StreamId", "EventId", securityPlan.get("time_field")), "pipeline_uuid", copy));
-        dump("verify_index working copy", verified);
+        dump("verify_index new version", verified);
         assertThat(verified).containsEntry("passed", true).containsKey("test_index");
         assertThat(map(verified, "dashboard")).containsEntry("saved", false);
 
         // Promoted: the review says the production index gains the plan's new field (no registry in this build:
-        // any build's indexing, not only an aggregated feed's group), the copy's XSLT is written back over the
-        // original, the test index is left in the workspace, and the production index's documents are still the
-        // first build's alone.
+        // any build's indexing, not only an aggregated feed's group), the new version and its XSLT go beside the
+        // original, which is left as it was, the test index is left in the workspace, and the production index's
+        // documents are still the first build's alone.
         final Map<String, Object> laterDestinations = Map.of("Pipeline", folder, "XSLT", folder, "Index", folder);
         final Map<String, Object> review = json("promote_build", args("build", later, "destinations",
                 laterDestinations));
         assertThat(review).containsEntry("status", "needs_review");
         assertThat(String.valueOf(review.get("index_changes"))).contains("index " + securityIndex,
-                "adds WorkingCopyOnly", "forward only");
+                "adds NewVersionOnly", "forward only");
         promote(later, laterDestinations);
         assertThat(documents(indexDoc)).isEqualTo(count);
         assertThat(folderOf(testIndex)).contains(later);
-        assertThat(readXslt(securityXslt).getDescription()).contains("WorkingCopyOnly");
-        assertThat(luceneFields(new DocRef(LuceneIndexDoc.TYPE, indexDoc))).contains("WorkingCopyOnly");
+        assertThat(readXslt(copyXslt).getDescription()).contains("NewVersionOnly");
+        assertThat(readXslt(securityXslt).getDescription()).doesNotContain("NewVersionOnly");
+        assertThat(folderOf(copy)).isNotEqualTo(folderOf(securityIndexing));
+        assertThat(luceneFields(new DocRef(LuceneIndexDoc.TYPE, indexDoc))).contains("NewVersionOnly");
 
-        // Production indexing of a new stream, through the promoted pipelines: no field unknown to the index, and the
-        // new field searchable.
+        // Production indexing of a new stream, through the promoted pipelines (the new version indexing): no field
+        // unknown to the index, and the new field searchable.
         final long next = storeParts(feed, List.of(Map.entry(Map.of(), text)));
         feedFilter(feed, "Raw Events", security);
         processAll();
-        feedFilter(feed, "Events", securityIndexing);
+        feedFilter(feed, "Events", copy);
         processAll();
         flushIndexShards();
         final List<String> logged = streamsOf(feed).stream()
                 .filter(meta -> "Error".equals(meta.getTypeName())
-                                && securityIndexing.equals(meta.getPipelineUuid()))
+                                && copy.equals(meta.getPipelineUuid()))
                 .map(meta -> storedText(meta.getId()))
                 .toList();
         assertThat(logged).as("production indexing after stream %s", next)
                 .noneMatch(errors -> errors.contains("unknown field"));
         final Map<String, Object> found = json("search_events", args("index", indexDoc, "where",
-                List.of(Map.of("field", "WorkingCopyOnly", "value", "Pega")), "limit", 3, "allStreams", true,
+                List.of(Map.of("field", "NewVersionOnly", "value", "Pega")), "limit", 3, "allStreams", true,
                 "timeFrom", "2000-01-01T00:00:00.000Z"));
-        dump("search_events WorkingCopyOnly", found);
+        dump("search_events NewVersionOnly", found);
         assertThat(number(found.get("total"))).as("documents with the new field").isPositive();
     }
 

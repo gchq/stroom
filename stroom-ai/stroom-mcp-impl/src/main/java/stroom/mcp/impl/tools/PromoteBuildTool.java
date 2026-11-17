@@ -40,6 +40,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.shared.FeedDoc;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.ExpressionTerm;
@@ -86,6 +87,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     /// What a working copy's write-back takes from it.
     static final List<String> WRITTEN_BACK = List.of("data", "converterType", "documentation", "description");
     // A discarded step's target: a working copy the same as its original, discarded rather than written back.
+    // A promoted pipeline and the code it runs: never written back from a working copy.
+    private static final Set<String> CODE_TYPES = Set.of(PipelineDoc.TYPE, XsltDoc.TYPE, TextConverterDoc.TYPE);
     private static final String UNCHANGED_COPY = "unchanged working copy, discarded";
 
     private static final String KEEP = "keep";
@@ -303,6 +306,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         }
         // An aggregated feed's build's source type group: its documents in a folder of its own beside the feed.
         final Map<String, ModuleChecks.Marker> markers = markers(docs);
+        refuseCodeWorkingCopies(docs, markers);
         final GroupPlace group = group(build, docs, markers);
         final PromotionLayout.VersionFolders versions = layout.versionFolders(docs, destinations, group == null
                 ? null
@@ -525,14 +529,48 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (guard.removeBuildFolderIfEmpty(build)) {
             done.add("removed the build's workspace folder, now empty");
         }
-        // What was moved and what was written back: a production index is never put up for dropping.
+        // What was moved: a production index is never put up for dropping.
         final Set<String> moved = plan.stream()
                 .filter(p -> PromotionLayout.MOVE.equals(p.action()))
                 .map(p -> String.valueOf(p.doc().get("uuid")))
                 .collect(Collectors.toSet());
         final List<Map<String, Object>> filters = promotionProcessing.createPromotionFilters(context.links(),
-                processing, moved, Set.copyOf(originals.values()));
+                processing, moved);
         return promoted(context, build, plan, folders, tree, done, warnings, filters, predecessors);
+    }
+
+    // A working copy of a promoted pipeline, or of the code it runs (its XSLTs, text converters), from a build opened
+    // before new versions became the only way (decided by the user, 2026-11-17: no change in place of a promoted
+    // pipeline or the code it runs): refused, not written back. Documentation is updated in place as before, and an
+    // aggregated feed's shared modules (its common module and helpers) keep their working copies; an unchanged
+    // XSLT or converter copy is only discarded.
+    private void refuseCodeWorkingCopies(final List<Map<String, Object>> docs,
+                                         final Map<String, ModuleChecks.Marker> markers) {
+        final List<String> refused = new ArrayList<>();
+        for (final Map<String, Object> doc : docs) {
+            final Object copyOf = doc.get("working_copy_of");
+            final String type = String.valueOf(doc.get("type"));
+            if (copyOf == null || !CODE_TYPES.contains(type)) {
+                continue;
+            }
+            final ModuleChecks.Marker marker = markers.get(String.valueOf(doc.get("uuid")));
+            final boolean shared = marker != null && (ModuleChecks.HELPERS.equals(marker.kind())
+                                                      || SourceTypeModule.COMMON.equals(marker.kind()));
+            if (shared || (!PipelineDoc.TYPE.equals(type) && unchangedCopy(doc, String.valueOf(copyOf)))) {
+                continue;
+            }
+            refused.add(type + " '" + doc.get("name") + "'");
+        }
+        if (!refused.isEmpty()) {
+            throw new ToolRefusal("Not promoted: " + String.join(", ", refused) + (refused.size() == 1
+                    ? " is a working copy"
+                    : " are working copies") + " of a promoted pipeline's code, which changes only by a new "
+                                  + "version, never written back in place. In this build, make a new version "
+                                  + "instead: copy_pipeline of the promoted pipeline (it copies its code under the "
+                                  + "new version's names), carry the change over to the new version's XSLT, and "
+                                  + "delete the working copies (in Stroom); then promote_build again. Nothing was "
+                                  + "changed.");
+        }
     }
 
     // The working copies the plan keeps in the build, by UUID: their originals stay as they are in production.

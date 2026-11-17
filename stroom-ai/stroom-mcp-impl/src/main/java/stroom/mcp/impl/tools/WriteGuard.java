@@ -527,9 +527,11 @@ public class WriteGuard {
     public Set<String> checkManaged(final ToolSession session, final DocRef ref) {
         final Set<String> tags = tags(ref);
         if (!tags.contains(MANAGED)) {
-            final String message = describe(ref) + " was not created by this server. Make a working copy in a build "
-                                   + "(copy_pipeline) and change that instead; promote_build writes it back after "
-                                   + "approval.";
+            // A new version, never a working copy (decided by the user, 2026-11-17): copy_pipeline refuses
+            // working_copy=true, so the hint doesn't send the agent there.
+            final String message = describe(ref) + " was not created by this server. Make a new version of its "
+                                   + "pipeline in a build (copy_pipeline, which copies the code it runs) and change "
+                                   + "that instead; promote_build puts it beside the original after approval.";
             denied(session, ref, "not_managed", message);
             throw new ToolRefusal(message);
         }
@@ -549,7 +551,7 @@ public class WriteGuard {
         final Optional<String> build = buildOf(ref);
         if (build.isEmpty()) {
             final String message = describe(ref) + " is not in a build folder: it is changed only in a build. Make "
-                                   + "a working copy in one (copy_pipeline), or move it back into its build folder "
+                                   + "a new version in one (copy_pipeline), or move it back into its build folder "
                                    + "in Stroom.";
             denied(session, ref, "not_in_build", message);
             throw new ToolRefusal(message);

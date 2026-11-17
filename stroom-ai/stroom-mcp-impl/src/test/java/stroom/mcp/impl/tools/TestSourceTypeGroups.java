@@ -272,11 +272,8 @@ class TestSourceTypeGroups {
         assertThat(xsltsInBuild()).isEmpty();
         // Which pipeline is no longer asked: a new group has no pipeline in production to change.
         unasked.put("own_output_feed", false);
-        unasked.put("pipeline", "new_version");
         final Map<String, Object> saved = world.call(tool, unasked);
         assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
-        assertThat(JsonValues.strings(JsonValues.mapOrEmpty(saved.get("group")).get("notes")))
-                .anySatisfy(note -> assertThat(note).contains("pipeline=new_version was ignored"));
         assertThat(JsonValues.mapOrEmpty(rowNamed(written.getLast(), "PegaSecurityEvent").get("pipeline")))
                 .doesNotContainKey("new_version");
     }
@@ -411,17 +408,16 @@ class TestSourceTypeGroups {
         again.put("build", BUILD);
         again.put("feeds", List.of("PEGA"));
         again.put("group", "PEGA security");
-        again.put("pipeline", "change");
 
         final Map<String, Object> saved = world.call(tool, again);
 
         assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
         assertThat(JsonValues.strings(JsonValues.mapOrEmpty(saved.get("group")).get("source_types")))
                 .containsExactly("PegaSecurityEvent", "PegaDB");
-        // Saved in the build's working copy, not over the promoted XSLT.
+        // Saved in the build's new version of it, not over the promoted XSLT.
         final String copy = xsltsInBuild().get("PEGA security");
         assertThat(copy).isNotEqualTo(original);
-        assertThat(world.world.records().entry(BUILD, copy)).containsEntry("copy_of", original);
+        assertThat(world.world.records().entry(BUILD, copy)).containsEntry("version_of", original);
         assertThat(ModuleChecks.marker(world.xslt(copy).getData()))
                 .hasValueSatisfying(marker -> assertThat(marker.sourceTypes()).containsExactly("PegaSecurityEvent",
                         "PegaDB"));
@@ -560,75 +556,32 @@ class TestSourceTypeGroups {
     }
 
     @Test
-    void aChangeToAGroupWhosePipelineIsPromotedIsAskedForThenGoesToAWorkingCopy() {
+    void aChangeToAGroupWhosePipelineIsPromotedGoesToANewVersionWithoutAsking() {
+        // Decided by the user (2026-11-17): a promoted pipeline and the code it runs are never changed in place, so
+        // there is nothing to ask: the group's change is a new version of its XSLT, for a new version of its
+        // pipeline.
         final String original = promotedGroup();
-        final Map<String, Object> again = new LinkedHashMap<>(args(security(), "PEGA security",
-                List.of("PegaSecurityEvent")));
-        again.remove("own_output_feed");
-
-        final Map<String, Object> refused = world.call(tool, again);
-
-        assertThat(String.valueOf(refused.get("error"))).contains("runs in pipeline PEGA PEGA security, in "
-                                                                  + "production", "pipeline=", "Nothing was saved");
-        again.put("pipeline", "change");
-        final Map<String, Object> saved = world.call(tool, again);
-        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
-        final String copy = xsltsInBuild().get("PEGA security");
-        assertThat(copy).isNotEqualTo(original);
-        assertThat(world.world.records().entry(BUILD, copy)).containsEntry("copy_of", original);
-        final Map<String, Object> row = rowNamed(written.getLast(), "PegaSecurityEvent");
-        assertThat(JsonValues.mapOrEmpty(row.get("group_xslt"))).containsEntry("uuid", copy);
-        assertThat(JsonValues.mapOrEmpty(row.get("pipeline"))).containsEntry("uuid", "o-pipeline")
-                .doesNotContainKey("new_version");
-        assertThat(String.valueOf(JsonValues.mapOrEmpty(saved.get("group")).get("group_next")))
-                .contains("copy_pipeline", "working_copy=true");
-        // Decided for the build: saved again, nothing is asked.
-        again.remove("pipeline");
-        assertThat(world.call(tool, again).get("problems")).isEqualTo(List.of());
-    }
-
-    @Test
-    void aPipelineChoiceRecordedByCopyPipelineIsNotAskedAgainWhenTheGroupIsSaved() {
-        // Seen in eval case 61: the group's pipeline copied before the group was saved; copy_pipeline now asks and
-        // records the choice, which build_translation_xslt follows without asking again.
-        final String original = promotedGroup();
-        // Not the group the build's scope names: copied only to run it, nothing to decide.
-        assertThat(world.groups.promotedGroup(BUILD, "o-pipeline")).isEmpty();
-        scoped("PEGA security", List.of("PegaSecurityEvent"));
-        assertThat(world.groups.promotedGroup(BUILD, "o-pipeline")).contains(new SourceTypeGroups.PromotedGroup(
-                "PEGA security", "PEGA PEGA security", null, false));
-        // A pipeline no row names is no group's.
-        assertThat(world.groups.promotedGroup(BUILD, "other")).isEmpty();
-
-        world.groups.rememberPipelineChoice(BUILD, "PEGA security", SourceTypeGroups.NEW_VERSION);
-        assertThat(world.groups.promotedGroup(BUILD, "o-pipeline").map(SourceTypeGroups.PromotedGroup::recorded))
-                .contains(SourceTypeGroups.NEW_VERSION);
+        final String code = world.xslt(original).getData();
         world.forms = true;
         final Map<String, Object> again = new LinkedHashMap<>(args(security(), "PEGA security",
                 List.of("PegaSecurityEvent")));
         again.remove("own_output_feed");
+
         final Map<String, Object> saved = world.call(tool, again);
 
         assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
-        assertThat(world.asked).noneMatch(form -> form.contains("runs in pipeline"));
+        assertThat(world.asked).noneMatch(form -> form.contains("change that pipeline"));
         final String version = xsltsInBuild().get("PEGA security");
-        assertThat(world.world.records().entry(BUILD, version)).containsEntry("version_of", original);
-        // Copied now: decided by the copy.
-        assertThat(world.groups.promotedGroup(BUILD, "o-pipeline").map(SourceTypeGroups.PromotedGroup::copied))
-                .contains(true);
-    }
-
-    @Test
-    void aPipelineChoiceMadeWhenTheGroupIsSavedIsRecordedForCopyPipeline() {
-        promotedGroup();
-        final Map<String, Object> again = new LinkedHashMap<>(args(security(), "PEGA security",
-                List.of("PegaSecurityEvent")));
-        again.remove("own_output_feed");
-        again.put("pipeline", "change");
-
-        assertThat(world.call(tool, again).get("problems")).isEqualTo(List.of());
-
-        assertThat(world.groups.recordedPipelineChoice(BUILD, "PEGA security")).contains(SourceTypeGroups.CHANGE);
+        assertThat(version).isNotEqualTo(original);
+        assertThat(world.world.records().entry(BUILD, version)).containsEntry("version_of", original)
+                .doesNotContainKey("copy_of");
+        assertThat(world.xslt(original).getData()).isEqualTo(code);
+        final Map<String, Object> row = rowNamed(written.getLast(), "PegaSecurityEvent");
+        assertThat(JsonValues.mapOrEmpty(row.get("group_xslt"))).containsEntry("uuid", version);
+        assertThat(JsonValues.mapOrEmpty(row.get("pipeline"))).containsEntry("uuid", "o-pipeline")
+                .containsEntry("new_version", true);
+        assertThat(String.valueOf(JsonValues.mapOrEmpty(saved.get("group")).get("group_next")))
+                .contains("copy_pipeline").doesNotContain("working_copy=true");
     }
 
     @Test
@@ -653,35 +606,6 @@ class TestSourceTypeGroups {
                 .containsValue(DomainSplits.KEEP);
         assertThat(String.valueOf(KeptMapping.readMapping(xslt.getDescription()).orElseThrow().payload()))
                 .doesNotContain("strip_domain");
-    }
-
-    @Test
-    void aNewVersionOfAGroupsPromotedPipelineGetsANewVersionOfItsXslt() {
-        final String original = promotedGroup();
-        world.forms = true;
-        world.answers.put("Group 'PEGA security' runs in pipeline", "A new version of PEGA PEGA security "
-                                                                    + "(copy_pipeline; PEGA PEGA security runs on "
-                                                                    + "until the new one replaces it)");
-        final String code = world.xslt(original).getData();
-        final Map<String, Object> again = new LinkedHashMap<>(args(security(), "PEGA security",
-                List.of("PegaSecurityEvent")));
-        again.remove("own_output_feed");
-
-        final Map<String, Object> saved = world.call(tool, again);
-
-        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
-        final String version = xsltsInBuild().get("PEGA security");
-        assertThat(world.world.records().entry(BUILD, version)).containsEntry("version_of", original)
-                .doesNotContainKey("copy_of");
-        assertThat(world.xslt(original).getData()).isEqualTo(code);
-        final Map<String, Object> row = rowNamed(written.getLast(), "PegaSecurityEvent");
-        assertThat(JsonValues.mapOrEmpty(row.get("group_xslt"))).containsEntry("uuid", version);
-        assertThat(JsonValues.mapOrEmpty(row.get("pipeline"))).containsEntry("uuid", "o-pipeline")
-                .containsEntry("new_version", true);
-        assertThat(String.valueOf(JsonValues.mapOrEmpty(saved.get("group")).get("group_next")))
-                .contains("copy_pipeline", "working_copy=false");
-        assertThat(world.asked).anySatisfy(form -> assertThat(form).contains("change that pipeline, or make a new "
-                                                                             + "version of it"));
     }
 
     @Test

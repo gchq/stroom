@@ -66,7 +66,6 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     static final String RENAME_ARG = "rename";
     static final String SET_PROPERTIES_ARG = "set_properties";
     static final String WORKING_COPY_ARG = "working_copy";
-    static final String PIPELINE_ARG = "pipeline";
 
     private static final String ELASTIC_FILTER = "ElasticIndexingFilter";
     private static final String INDEX_NAME = "indexName";
@@ -165,9 +164,9 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                              + "build's working copies of the feed's common module and helpers where it has them, "
                              + "so stepping in the build runs the build's chain. A new version of a group's "
                              + "pipeline: the registry's rows of the group move to it, and to its copy of the "
-                             + "group's XSLT. A promoted pipeline (outside any build): the user chooses, once "
-                             + "per build, whether the build changes it in place or makes a new version; a new "
-                             + "version's names are proposed from the original's version (V1.0 to V1.1, an "
+                             + "group's XSLT. A promoted pipeline (outside any build) is only ever copied as a "
+                             + "new version, never changed in place: its names are proposed from the original's "
+                             + "version (V1.0 to V1.1, an "
                              + "Elasticsearch index -v1 to -v2, with an Elastic Index doc for it) and confirmed or "
                              + "edited by the user, never the original's, and its index name is looked up first: "
                              + "one that matches anything on the cluster is refused. The user confirms the names "
@@ -184,16 +183,9 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                                 "Properties to change on the copy, as objects, e.g. [{\"element\": "
                                 + "\"elasticIndexingFilter\", \"name\": \"indexName\", \"value\": "
                                 + "\"ecs-acme-v2\"}] for a new index version."))
-                        .addBooleanProperty(WORKING_COPY_ARG, "For a pipeline of a build: true when the copy "
-                                                              + "will be written back over the original on "
-                                                              + "promotion (an in-place change); false for a new "
-                                                              + "version that is promoted alongside it. For a "
-                                                              + "promoted pipeline the user's choice decides it, "
-                                                              + "not this flag.")
-                        .addEnumProperty(PIPELINE_ARG, SourceTypeGroups.PIPELINE_CHOICES,
-                                "Only for a promoted pipeline (or a source type group's), where no form can be "
-                                + "shown (a needs_choice reply): what the user said the build's change goes to, "
-                                + "'change' (a working copy) or 'new_version'. Asked in a form otherwise.")
+                        .addBooleanProperty(WORKING_COPY_ARG, "Not used: a copy is always a new version, never "
+                                                              + "a working copy written back over the original; "
+                                                              + "true is refused.")
                         .required(BUILD_ARG, SOURCE_UUID_ARG, NEW_NAME_ARG)
                         .build())
                 .build();
@@ -224,7 +216,7 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                                   + "inherited, not copied. A new source's pipeline is a child of it: "
                                   + "create_pipeline(name=..., template_uuid='" + sourceUuid + "'), which keeps "
                                   + "the template's structure and takes later fixes to it. copy_pipeline is for a "
-                                  + "new version or a working copy of a source's own pipeline (e.g. "
+                                  + "new version of a source's own pipeline (e.g. "
                                   + "Acme-Door-V1.2-Events).");
         }
         final List<String> notes = new ArrayList<>();
@@ -239,14 +231,13 @@ class CopyPipelineTool extends AbstractBuiltInTool {
             }
             names.put(entity.getUuid(), name);
         }
-        final Optional<Boolean> decided = workingCopy(call, context, build, sourceUuid, source, notes, promoted);
-        final NewVersion version = promoted && !decided.orElse(false)
+        refuseWorkingCopy(call, source, promoted);
+        final NewVersion version = promoted
                 ? newVersion(build, source, newName, owned, names, changes)
                 : null;
-        if (decided.isEmpty()) {
-            return choiceAsked(source, version);
+        if (version != null && !context.userQuestions().canAsk()) {
+            return namesAsked(source, version);
         }
-        final boolean workingCopy = decided.get();
         final Typed typed = changes.stream().anyMatch(property -> property.docUuid() == null)
                 ? writes.typedProperties(writes.layout(sourceUuid).elements(), changes)
                 : new Typed(changes, Map.of());
@@ -260,7 +251,6 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         details.put("copied documents", List.copyOf(new TreeSet<>(version == null
                 ? names.values()
                 : version.documents().values())));
-        details.put("working copy", workingCopy);
         details.put("changes", changes.stream().map(PropertyValue::dotted).toList());
         if (version != null) {
             version.addTo(details);
@@ -290,9 +280,8 @@ class CopyPipelineTool extends AbstractBuiltInTool {
             if (!copies.containsKey(entity.getUuid())) {
                 // One the build copied already (an aggregated feed's source type group, copied when the group was
                 // saved) is run, not copied again.
-                copies.put(entity.getUuid(), alreadyCopied(build, entity, workingCopy)
-                        .orElseGet(() -> copyDocument(entity, names.get(entity.getUuid()), build, workingCopy,
-                                role)));
+                copies.put(entity.getUuid(), alreadyCopied(build, entity)
+                        .orElseGet(() -> copyDocument(entity, names.get(entity.getUuid()), build, role)));
             }
         }
         final List<PipelineProperty> rewired = new ArrayList<>();
@@ -316,12 +305,8 @@ class CopyPipelineTool extends AbstractBuiltInTool {
             }
         }
         final PipelineDoc changed = data;
-        final DocRef ref = guard.create(PipelineDoc.TYPE, pipelineName, build, workingCopy
-                ? sourceUuid
-                : null, false, role);
-        if (!workingCopy) {
-            records.update(build, ref, entry -> entry.put("version_of", sourceUuid));
-        }
+        final DocRef ref = guard.create(PipelineDoc.TYPE, pipelineName, build, null, false, role);
+        records.update(build, ref, entry -> entry.put("version_of", sourceUuid));
         final PipelineDoc doc = pipelineDocs.write(pipelineDocs.read(ref.getUuid()).copy()
                 .parentPipeline(source.getParentPipeline())
                 .description(source.getDescription())
@@ -335,19 +320,16 @@ class CopyPipelineTool extends AbstractBuiltInTool {
             // An aggregated feed's group copied: it imports the build's copies of the feed's modules, and a new
             // version runs the group's rows from now on.
             groupsProvider.get().chainCopies(context, build);
-            if (!workingCopy) {
-                final List<String> types = groupsProvider.get().newVersion(context, build, sourceUuid, copies,
-                        new DocRef(PipelineDoc.TYPE, doc.getUuid(), doc.getName()));
-                if (!types.isEmpty()) {
-                    result.put("source_types", types);
-                }
+            final List<String> types = groupsProvider.get().newVersion(context, build, sourceUuid, copies,
+                    new DocRef(PipelineDoc.TYPE, doc.getUuid(), doc.getName()));
+            if (!types.isEmpty()) {
+                result.put("source_types", types);
             }
         }
         result.put("type", PipelineDoc.TYPE);
         result.put("uuid", doc.getUuid());
         result.put("name", doc.getName());
         result.put("copy_of", source.getName());
-        result.put("working_copy", workingCopy);
         result.put("copied_documents", copies.values().stream().map(MergedPipeline::docRef).toList());
         if (settled != null && settled.indexName() != null) {
             result.put("index_name", settled.indexName());
@@ -361,116 +343,34 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         return plan.withNext(context, build, result);
     }
 
-    // Whether the copy is a working copy (written back over the original at promotion) or a new version; empty
-    // when the user is still to be asked in the chat. For a promoted pipeline it is the user's choice, not the
-    // agent's flag: put to them in a form once per build (seen in a user's test: a promoted feed's pipelines copied
-    // under the same names as working copies, never asked, where the user expected a new version). A source type
-    // group's promoted pipeline asks the group's question, as build_translation_xslt does (seen in eval case 61:
-    // the agent copied the Messaging pipeline as a working copy before build_translation_xslt asked, and the user
-    // was only shown a technical copy form), unless the build has recorded it or copied the group's XSLT already;
-    // recorded, so neither tool asks again.
-    private Optional<Boolean> workingCopy(final ToolCall call,
-                                          final ToolCallContext context,
-                                          final String build,
-                                          final String sourceUuid,
-                                          final PipelineDoc source,
-                                          final List<String> notes,
-                                          final boolean promoted) {
-        final boolean flagged = ToolArgs.flag(call, WORKING_COPY_ARG);
-        final Optional<SourceTypeGroups.PromotedGroup> group = groupsProvider == null
-                ? Optional.empty()
-                : groupsProvider.get().promotedGroup(build, sourceUuid);
-        final String choice;
-        final String pipeline;
-        if (group.isPresent() && !group.get().copied()) {
-            pipeline = group.get().pipeline();
-            choice = group.get().recorded() != null
-                    ? group.get().recorded()
-                    : groupChoice(call, context, build, group.get());
-        } else if (group.isEmpty() && promoted) {
-            pipeline = source.getName();
-            choice = records.pipelineChoice(build, sourceUuid)
-                    .filter(SourceTypeGroups.PIPELINE_CHOICES::contains)
-                    .orElseGet(() -> promotedChoice(call, context, build, source));
-        } else {
-            if (stringArg(call, PIPELINE_ARG) != null) {
-                notes.add(PIPELINE_ARG + " was ignored: '" + source.getName() + "' is not a promoted pipeline whose "
-                          + "change is still to be decided");
-            }
-            return Optional.of(flagged);
+    // A copy is always a new version (decided by the user, 2026-11-17: no change in place of a promoted pipeline
+    // or the code it runs; seen in a user's test, a promoted feed's pipelines copied as working copies under the
+    // same names where a new version was meant). A pipeline of a build is changed where it is.
+    private static void refuseWorkingCopy(final ToolCall call, final PipelineDoc source, final boolean promoted) {
+        if (!ToolArgs.flag(call, WORKING_COPY_ARG)) {
+            return;
         }
-        if (choice == null) {
-            return Optional.empty();
-        }
-        final boolean asChosen = SourceTypeGroups.CHANGE.equals(choice);
-        if (argsMap(call).containsKey(WORKING_COPY_ARG) && flagged != asChosen) {
-            notes.add(WORKING_COPY_ARG + "=" + flagged + " was overridden: the user chose " + (asChosen
-                    ? "to change " + pipeline + " (a working copy)"
-                    : "a new version of " + pipeline));
-        }
-        return Optional.of(asChosen);
+        throw new ToolRefusal("'" + source.getName() + "' " + (promoted
+                ? "is promoted (in production): it changes only by a new version"
+                : "is the build's own: change it where it is, a copy of it is a new version") + ", so only a new "
+                              + "version of it is copied, never a working copy. Call again without "
+                              + WORKING_COPY_ARG + "=true: the new version's names are proposed for the user to "
+                              + "confirm or edit. Nothing was copied.");
     }
 
-    // What the user chooses a change to a group's promoted pipeline goes to: asked in the form, else what the agent
-    // passes as their answer; recorded for the build.
-    private String groupChoice(final ToolCall call,
-                               final ToolCallContext context,
-                               final String build,
-                               final SourceTypeGroups.PromotedGroup group) {
-        final Optional<String> asked = SourceTypeGroups.askPipelineChoice(consent, call, context, NAME,
-                group.group(), group.pipeline());
-        final String choice = asked.orElseGet(() -> given(call));
-        if (choice == null) {
-            throw new ToolRefusal(SourceTypeGroups.pipelineChoiceAsked(group.group(), group.pipeline(),
-                    PIPELINE_ARG + "=" + ToolText.list(SourceTypeGroups.PIPELINE_CHOICES)));
-        }
-        groupsProvider.get().rememberPipelineChoice(build, group.group(), choice);
-        return choice;
-    }
-
-    // What the user chooses a change to a promoted pipeline goes to: asked in the form, else what the agent passes
-    // as their answer (null when it passes none: the agent asks in the chat); recorded for the build.
-    private String promotedChoice(final ToolCall call,
-                                  final ToolCallContext context,
-                                  final String build,
-                                  final PipelineDoc source) {
-        final Optional<String> asked = SourceTypeGroups.askPromotedPipelineChoice(consent, call, context, NAME,
-                source.getName());
-        final String choice = asked.orElseGet(() -> given(call));
-        if (choice != null) {
-            records.rememberPipelineChoice(build, source.getUuid(), choice);
-        }
-        return choice;
-    }
-
-    // The user's choice as the agent passed it, checked; null when it passed none.
-    private String given(final ToolCall call) {
-        final String given = stringArg(call, PIPELINE_ARG);
-        if (given != null && !SourceTypeGroups.PIPELINE_CHOICES.contains(given)) {
-            throw new ToolRefusal(PIPELINE_ARG + " is one of " + ToolText.list(SourceTypeGroups.PIPELINE_CHOICES)
-                                  + ", not " + ToolText.repr(given) + ". Nothing was copied.");
-        }
-        return given;
-    }
-
-    // Where no form can be shown: the agent asks the user, with the new version's proposed names, and calls again
-    // with their answer.
-    private static Map<String, Object> choiceAsked(final PipelineDoc source, final NewVersion version) {
+    // Where no form can be shown: the new version's proposed names, for the agent to put to the user; the copy
+    // itself is confirmed in a form once one can be shown.
+    private static Map<String, Object> namesAsked(final PipelineDoc source, final NewVersion version) {
         final Map<String, Object> out = new LinkedHashMap<>();
-        out.put("status", "needs_choice");
+        out.put("status", "needs_names");
         out.put("pipeline", source.getName());
-        out.put("question", "Pipeline " + source.getName() + " is in production. This build changes it: change "
-                            + "that pipeline, or make a new version of it?");
-        out.put("options", SourceTypeGroups.pipelineChoiceTexts(source.getName()));
         out.put("new_version_names", version.toMap());
-        out.put("hint", "Nothing was copied. Ask the user which (and, for a new version, whether the proposed "
-                        + "names in new_version_names suit them, or which they want instead), then call "
-                        + "copy_pipeline again with " + PIPELINE_ARG + "=" + SourceTypeGroups.CHANGE + " (a "
-                        + "working copy, written back over it at promotion) or " + PIPELINE_ARG + "="
-                        + SourceTypeGroups.NEW_VERSION + " with " + NEW_NAME_ARG + "= the pipeline name, " + RENAME_ARG
-                        + "= the version change for its documents and, for an Elasticsearch indexing pipeline, "
-                        + SET_PROPERTIES_ARG + "= its new indexName. A new version's names are never the "
-                        + "original's.");
+        out.put("hint", "Nothing was copied. " + source.getName() + " is promoted, so it changes only by a new "
+                        + "version, whose names are proposed in new_version_names. Ask the user whether they suit "
+                        + "them, or which they want instead (never the original's), then call copy_pipeline again "
+                        + "with " + NEW_NAME_ARG + "= the pipeline name, " + RENAME_ARG + "= the version change for "
+                        + "its documents and, for an Elasticsearch indexing pipeline, " + SET_PROPERTIES_ARG
+                        + "= its new indexName, once the user can confirm them in a form.");
         return out;
     }
 
@@ -491,7 +391,7 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         final Map<String, String> documents = new LinkedHashMap<>();
         final Map<String, String> originals = new LinkedHashMap<>();
         for (final DocRef entity : owned) {
-            if (alreadyCopied(build, entity, false).isPresent()) {
+            if (alreadyCopied(build, entity).isPresent()) {
                 continue;
             }
             final String given = names.get(entity.getUuid());
@@ -626,11 +526,9 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                 .toList();
     }
 
-    // The build's copy of a document already made (a working copy, or a new version's), if it has one.
-    private Optional<DocRef> alreadyCopied(final String build, final DocRef original, final boolean workingCopy) {
-        final String key = workingCopy
-                ? "copy_of"
-                : "version_of";
+    // The build's new version of a document already made (an aggregated feed's group XSLT's), if it has one.
+    private Optional<DocRef> alreadyCopied(final String build, final DocRef original) {
+        final String key = "version_of";
         final Map<String, Object> kept = BuildRecords.docs(records.load(build));
         return guard.folderContents(build).stream()
                 .filter(doc -> doc.type().equals(original.getType()))
@@ -645,12 +543,11 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         return new PipelineProperty(property.getElement(), property.getName(), new PipelinePropertyValue(copy));
     }
 
-    // A copy of an XSLT or text converter in the build, its content as the original's.
+    // A new version's copy of an XSLT or text converter in the build, its content as the original's.
     @SuppressWarnings({"unchecked", "rawtypes"})
     private DocRef copyDocument(final DocRef original,
                                 final String name,
                                 final String build,
-                                final boolean workingCopy,
                                 final String role) {
         final Object content = documentAccess.read(original)
                 .orElseThrow(() -> new ToolRefusal(original.getType() + " " + original.getUuid() + " can't be "
@@ -658,16 +555,8 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                                                    + "view it"));
         final DocumentActionHandler handler = documentAccess.handler(original.getType())
                 .orElseThrow(() -> new ToolRefusal("Stroom has no " + original.getType() + " store"));
-        final DocRef ref = guard.create(original.getType(), name, build, workingCopy
-                ? original.getUuid()
-                : null, false, role);
-        if (!workingCopy) {
-            records.update(build, ref, entry -> entry.put("version_of", original.getUuid()));
-        } else if (content instanceof final AbstractDoc copied && copied.getVersion() != null) {
-            // The original's version when copied: promotion asks before writing the copy back over an original
-            // changed since (asked for by the user: a production edit made after the copy was lost).
-            records.update(build, ref, entry -> entry.put(BuildRecords.COPY_OF_VERSION, copied.getVersion()));
-        }
+        final DocRef ref = guard.create(original.getType(), name, build, null, false, role);
+        records.update(build, ref, entry -> entry.put("version_of", original.getUuid()));
         final Object made = documentAccess.read(ref)
                 .orElseThrow(() -> new ToolRefusal(original.getType() + " '" + name + "' was made but can't be "
                                                    + "read"));

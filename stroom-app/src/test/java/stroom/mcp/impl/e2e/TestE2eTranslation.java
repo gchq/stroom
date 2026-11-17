@@ -39,8 +39,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// feed, upload, template, converter and XSLT, pipeline, stepping, processing (exactly one Events stream per raw
 /// stream), validation and documentation; and 3, promotion of the CSV build (layout, created folders, version history,
 /// the emptied build folder, the disabled filter with no minimum creation time, tags), the documentation written again
-/// after promotion through a working copy, and an in-place fix through a working copy written back on promotion, with a
-/// backup.
+/// after promotion through a working copy, and a fix after promotion: a working copy of the promoted pipeline refused
+/// (a promoted pipeline and the code it runs are never changed in place, decided by the user 2026-11-17), the fix
+/// made in a new version under the names proposed for it, promoted beside the original, which is left as it was.
 ///
 /// Part 2 (the reported field fix, reprocessed once and superseded) and the CSV case's own steps are covered by
 /// `stroom.mcp.impl.TestOnboardingEndToEnd`. Left out: the build's record entry, and the promoted doc's
@@ -92,7 +93,7 @@ class TestE2eTranslation extends AbstractE2eTest {
     }
 
     @Test
-    void theCsvBuildIsPromotedThenFixedInPlaceThroughAWorkingCopy() {
+    void theCsvBuildIsPromotedThenFixedInANewVersion() {
         final Onboarded csv = onboard(CSV_CASE);
         final String dest = "System/E2E Promoted/Events";
         final Map<String, Object> everything = Map.of("Feed", dest, "Pipeline", dest, "XSLT", dest,
@@ -159,15 +160,29 @@ class TestE2eTranslation extends AbstractE2eTest {
                 .hasSize(1);
         assertThat(strings(again, "promoted")).anySatisfy(line -> assertThat(line).contains("back over"));
 
-        // The in-place fix, through a working copy.
+        // The fix: a working copy of the promoted pipeline is refused, nothing copied.
         final String fixBuild = "e2e-fix";
-        final Map<String, Object> copy = json("copy_pipeline", args("build", fixBuild,
+        final String workingCopy = refusal("copy_pipeline", args("build", fixBuild,
                 "source_uuid", csv.pipelineUuid(), "new_name", csv.pipelineName() + "-WORKING",
                 "working_copy", true));
+        assertThat(workingCopy).contains("is promoted (in production)", "never a working copy",
+                "Nothing was copied");
+        assertThat(findFolder("System/MCP Workspace/" + fixBuild)).isEmpty();
+        // A new version instead, under the names proposed for it (the original's name given, the next version's
+        // taken), the user agreeing to them.
+        final Map<String, Object> copy = agreed("copy_pipeline", args("build", fixBuild,
+                "source_uuid", csv.pipelineUuid(), "new_name", csv.pipelineName()));
+        dump("copy_pipeline new version", copy);
+        final String versionName = csv.pipelineName() + "-V2";
+        assertThat(copy).containsEntry("name", versionName)
+                .containsEntry("copy_of", csv.pipelineName())
+                .doesNotContainKey("working_copy");
         final Map<String, Object> xsltCopy = ((List<Map<String, Object>>) copy.get("copied_documents")).stream()
                 .filter(doc -> "XSLT".equals(doc.get("type")))
                 .findFirst()
                 .orElseThrow();
+        assertThat(xsltCopy.get("uuid")).isNotEqualTo(csv.xsltUuid());
+        assertThat(String.valueOf(xsltCopy.get("name"))).endsWith("-V2");
         final String changed = readXslt((String) xsltCopy.get("uuid")).getData()
                 .replace("<Description>User logon</Description>", "<Description>Interactive user logon</Description>");
         final Map<String, Object> diff = json("compare_outputs", args("pipeline_uuid", csv.pipelineUuid(),
@@ -177,19 +192,23 @@ class TestE2eTranslation extends AbstractE2eTest {
                 .containsExactly("Event/EventDetail/Description");
         json("save_xslt", args("uuid", xsltCopy.get("uuid"), "code", changed));
         final String direct = refusal("save_xslt", args("uuid", csv.xsltUuid(), "code", changed));
-        assertThat(direct).containsAnyOf("not created by this server", "working copy");
+        assertThat(direct).contains("not created by this server", "new version");
         final List<String> before = strings(json("build_status", args("build", fixBuild)), "before_promotion");
-        assertThat(before).as("the working copy's changed code was compared but never stepped clean")
-                .singleElement()
-                .satisfies(warning -> assertThat(warning).contains("no clean step"));
+        // A new pipeline: its changed code compared but never stepped clean, and no documentation of its own yet.
+        assertThat(before).as("the new version's warnings").hasSize(2)
+                .anySatisfy(warning -> assertThat(warning).contains("'" + versionName + "'", "no clean step"))
+                .anySatisfy(warning -> assertThat(warning).contains("'" + versionName + "'", "no documentation"));
         final Map<String, Object> fixed = promote(fixBuild, Map.of());
         dump("promote_build fix", fixed);
         assertThat(findFolder("System/MCP Workspace/" + fixBuild)).isEmpty();
         assertThat(list(fixed, "promoted_with_warnings")).isEqualTo(before);
-        assertThat(readXslt(csv.xsltUuid()).getData()).contains("Interactive user logon");
-        final List<DocRef> backups = documentsNamed(csv.pipelineName() + " backup", "XSLT");
-        assertThat(backups).isNotEmpty().allSatisfy(backup ->
-                assertThat(tags(backup.getUuid())).contains("mcp-generated"));
+        // Beside the original, which is left as it was: nothing written back, nothing backed up.
+        assertThat(readXslt((String) xsltCopy.get("uuid")).getData()).contains("Interactive user logon");
+        assertThat(readXslt(csv.xsltUuid()).getData()).contains("<Description>User logon</Description>")
+                .doesNotContain("Interactive user logon");
+        assertThat(folderOf(copy.get("uuid").toString())).startsWith(dest);
+        assertThat(folderOf(csv.pipelineUuid())).isEqualTo(dest);
+        assertThat(documentsNamed(csv.pipelineName() + " backup", "XSLT")).isEmpty();
     }
 
     /// promote_build names every document without a destination in one refusal (seen in testing: one failed call

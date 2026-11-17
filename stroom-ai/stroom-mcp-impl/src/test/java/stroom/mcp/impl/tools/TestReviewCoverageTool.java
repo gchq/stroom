@@ -261,7 +261,7 @@ class TestReviewCoverageTool {
                                                                 + "kept as Unknown");
         // In production: a working copy first, and reprocessing is the user's.
         final List<?> next = (List<?>) result.get("next");
-        assertThat((String) next.get(1)).contains("copy_pipeline working_copy=true");
+        assertThat((String) next.get(1)).contains("copy_pipeline into a build first, a new version");
         assertThat((String) next.get(3)).startsWith("Processing the affected raw streams again is the user's");
         assertThat(((Map<?, ?>) result.get("progress")).get("done")).isEqualTo(true);
     }

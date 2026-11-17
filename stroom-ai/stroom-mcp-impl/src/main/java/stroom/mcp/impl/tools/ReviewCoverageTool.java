@@ -634,7 +634,7 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
                 + "and uuid=<its XSLT>"
                 + (inBuild
                         ? ""
-                        : " (the pipeline is in production: copy_pipeline working_copy=true into a build first, and "
+                        : " (the pipeline is in production: copy_pipeline into a build first, a new version, and "
                           + "change the copy)"),
                 "write_documentation with stream_ids = the sample streams plus some affected raw streams, so the new "
                 + "kinds are documented to the field; change = what was found and added (one version row when the "

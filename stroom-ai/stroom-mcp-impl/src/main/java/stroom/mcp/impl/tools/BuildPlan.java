@@ -1542,7 +1542,7 @@ public class BuildPlan {
                 : sources.getFirst())));
         String then = "this build works from data already in Stroom: create no feed and upload nothing. Then, for "
                       + "what the user asked: an events pipeline for the feed, survey_feed build=... (its kinds of "
-                      + "event); a production pipeline's new version or working copy, copy_pipeline; indexing its "
+                      + "event); a production pipeline's new version, copy_pipeline; indexing its "
                       + "Events, get_field_conventions and the index; sending its Events on as CEF, "
                       + "draft_cef_mapping; indexing its raw data as it is, for exploration (a discovery index), "
                       + "start_build kind=discovery for this build; loading it as a table to look values up in "
@@ -1556,9 +1556,9 @@ public class BuildPlan {
                     .map(p -> "'" + p.get("name") + "' (" + p.get("uuid") + ")")
                     .collect(Collectors.joining(", "));
             then = sources.getFirst() + " is translated now by " + shown + ". For its next version (V1.2 to V1.3, "
-                   + "say), or a change to it: copy_pipeline source_uuid=<it> rename={'V1.2': 'V1.3'} (the user "
-                   + "chooses in its form a change in place or a new version, whose names, an Elasticsearch index's "
-                   + "among them, it proposes), then build_translation_xslt uuid=<the copy's XSLT> "
+                   + "say), or a change to it: copy_pipeline source_uuid=<it> rename={'V1.2': 'V1.3'} (always a "
+                   + "new version, never a change in place: the user confirms the names it proposes, an "
+                   + "Elasticsearch index's among them), then build_translation_xslt uuid=<the copy's XSLT> "
                    + "changes= only what changes (rebuild_mapping uuid=<it> first, if its XSLT keeps no mapping): "
                    + "what it does, its lookups and all, comes with the copy. Or, its translation written anew (a "
                    + "new schema version, say): survey_feed, draft_translation_mapping (its notes say what the "

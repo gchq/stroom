@@ -398,7 +398,7 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
         if (joined.isPresent()) {
             result.put("joins", "Group '" + scope.get().group() + "' exists: the source types join it, its pipeline"
                                 + " and where its Events go, when build_translation_xslt builds it (through a "
-                                + "working copy of its XSLT where it is promoted).");
+                                + "new version of its XSLT where it is promoted).");
         }
         if (restarted) {
             result.put("coverage_restarted", "The scope adds source types some streams the survey read weren't read "

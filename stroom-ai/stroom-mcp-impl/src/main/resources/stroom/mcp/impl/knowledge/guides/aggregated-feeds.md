@@ -57,7 +57,7 @@ At promotion the survey doc always stays in the build (nobody is asked); the reg
    `group=<name>` and the user keeps or changes. Rows the user confirmed are given back as `rows=` and not asked again.
    It writes the registry, the scope naming the group; the source types not chosen are `parked` for a later build.
    Naming an existing group adds the chosen source types to it: they join its pipeline and output feed when it is
-   built (through a working copy of its XSLT where it is promoted). Named with none chosen, the build changes that
+   built (in a new version of its XSLT where it is promoted). Named with none chosen, the build changes that
    group alone.
 
 Pass the feed's `system_name` and `environment` (and `system_names` for a source type whose system differs) as the
@@ -99,10 +99,10 @@ stream of the feed (processor filters choose streams, not records) and passes ov
 accepts that cost for groups isolated from each other (their own processor filter, priority, reprocessing and errors).
 When a build saves a new group, a form asks **where its Events go**: into the same feed (the default) or an output
 feed of its own. Without forms, the call is refused until `own_output_feed=true|false` carries the user's answer.
-Either way the group's index is its own (below). For a group whose pipeline is promoted, the first save in a
-build asks whether the change goes to **that pipeline** (through working copies) or to **a new version** of it
-(`copy_pipeline`, kept for history); without forms, `pipeline=change|new_version`. `group.group_next` says what
-follows. Source types added to a group in a later build join its pipeline and output feed (said in `group.notes`). A
+Either way the group's index is its own (below). For a group whose pipeline is promoted, a change goes to
+**a new version** of it, nothing asked: a promoted pipeline and the code it runs are never changed in place. The save
+makes a new version of the group's XSLT and `group.group_next` says what follows (`copy_pipeline` of the group's
+pipeline). Source types added to a group in a later build join its pipeline and output feed (said in `group.notes`). A
 source type belongs to one group: one another group translates is refused.
 
 * `create_feed group=<name> stream_type=Events` makes a group's own output feed, before its pipeline.
@@ -110,12 +110,11 @@ source type belongs to one group: one another group translates is refused.
   the group's, every stream appender's `feed` set to the group's output feed (refused until that feed is made), the
   group's reference data loaded, the pipeline recorded in the registry's rows. One pipeline a group; a common or
   helpers module is refused as a pipeline's XSLT.
-* `copy_pipeline source_uuid=<the group's pipeline> working_copy=true` steps and processes a promoted group's
-  pipeline in the build with its working copies (the import chain pointed at the build's copies; a build processes
-  only its own pipelines, so this is also how a promoted group's pipeline takes the build's later data);
-  `working_copy=false` after a `new_version` answer makes the new version, and the group's registry rows move to it.
-  Copying the pipeline of the group the build changes before the question is answered asks it there instead (the
-  same form; without forms, `pipeline=change|new_version`), and the answer decides the copy, not `working_copy`.
+* `copy_pipeline source_uuid=<the group's pipeline>` makes its new version (names proposed, the user confirms or
+  edits them), running the build's new version of the group's XSLT where it has one (else copying it) and the
+  build's working copies of the common module and helpers; the group's registry rows move to it, and the old
+  version runs on until the user retires it. A build processes only its own pipelines, so this is also how a promoted
+  group's pipeline takes the build's later data. `working_copy=true` is refused.
 
 A user who doesn't want a pipeline per group treats the feed as a normal source: `build_translation_xslt` without
 `group=`, one mapping for every source type, surveyed and translated in its entirety (below).
@@ -154,7 +153,7 @@ source type field gets none of this.
 **Each source type group has an index of its own**, even where its Events go into the same feed as other groups':
 its indexing pipeline's processor filter selects only the Events its group's pipeline wrote
 (`create_processor_filter source_pipeline_uuid=<the group's pipeline>`, a `Pipeline` condition beside the feed's;
-promotion keeps it, naming the original where the build processed through a working copy). Don't ask the user
+promotion keeps it). Don't ask the user
 whether groups share an index. Name a group's index like the feed's others, with the group in it
 (`get_field_conventions` suggests one, `index_name`); a name another group's index has is refused. The first build's
 backend and field naming are the feed's shared decisions, kept in the registry: later builds inherit them

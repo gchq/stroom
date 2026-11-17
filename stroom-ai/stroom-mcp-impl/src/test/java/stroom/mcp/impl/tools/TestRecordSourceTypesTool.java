@@ -319,7 +319,7 @@ class TestRecordSourceTypesTool {
         // The existing group's own name, whatever the case given: its pipeline and output feed are the source
         // types' too once it is built.
         assertThat(result).as("%s", result).containsEntry("group", "PEGA security").containsKey("joins");
-        assertThat(String.valueOf(result.get("joins"))).contains("PEGA security", "working copy");
+        assertThat(String.valueOf(result.get("joins"))).contains("PEGA security", "new version of its XSLT");
         // The scope is the group: its own source type and the one added.
         assertThat(result).containsEntry("scope", List.of("PegaSecurityEvent", "PegaDB"));
         assertThat(JsonValues.mapOrEmpty(SourceTypeRegistry.read(written.getLast()).get("scope")))

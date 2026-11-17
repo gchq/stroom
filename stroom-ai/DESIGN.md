@@ -81,8 +81,9 @@ Non-goals:
 
 * Managing users, permissions, nodes or volumes.
 * Writing to Elasticsearch: index templates are drafted and checked, and the cluster administrator commits them.
-* Deleting production content, or editing it in place. Production documents change through a working copy that
-  promotion writes back after a backup, asking the user first if production changed since the copy was taken.
+* Deleting production content, or editing it in place. A promoted pipeline and the code it runs change only by a
+  new version (2026-11-17); Documentation changes through a working copy that promotion writes back after a backup,
+  asking the user first if production changed since the copy was taken.
 * Reading node logs (2026-10-20). A failed task's reason stays in the operator's log system.
 * Model-written JavaScript in visualisations (2026-10-24).
 
@@ -412,26 +413,29 @@ Triggered by new samples the current XSLT doesn't handle, a reported issue, or a
 ```mermaid
 flowchart TD
     A["Locate the pipeline: read_document, describe_feed"] --> B["start_build feeds=[feed]"]
-    B --> C{"The user: new version<br/>or change in place?"}
-    C -- "new version" --> NV["copy_pipeline (names proposed: V1.2 to V1.3,<br/>index -v1 to -v2, checked free)<br/>or create_pipeline version_of="]
-    C -- "in place" --> WC["copy_pipeline (a working copy)"]
-    NV & WC --> D["Change: build_translation_xslt changes="]
+    B --> NV["A new version: copy_pipeline (names proposed: V1.2 to V1.3,<br/>index -v1 to -v2, checked free)<br/>or create_pipeline version_of="]
+    NV --> D["Change: build_translation_xslt changes="]
     D --> E["summarise_fix fixed_pipeline_uuid=<copy><br/>pipeline_uuid=<original>"]
     E -- "other paths change" --> D
     E --> F["review_coverage changed_pipeline_uuid=<br/>(follow-on pipelines)"]
-    F --> G["Document, promote<br/>(in place: backup, write back)"]
+    F --> G["Document, promote<br/>(beside the old version)"]
 ```
 
 * The plan offers both: `copy_pipeline source_uuid=<it>`, or a translation written anew with `create_pipeline
   version_of=` (a child of the previous version's template, with its converter, settings and, if the user keeps
   them with `keep_references=`, its reference data).
-* **Change in place or new version is the user's (2026-11-17).** `copy_pipeline` of any promoted pipeline (one
-  outside every build) asks it in a form, once per pipeline and build (`pipeline_choices` in the build record; a
-  source type group's pipeline keeps its group question, `group_pipeline_choices`, shared with
-  `build_translation_xslt`); the `working_copy` flag only decides for a pipeline of a build. Without forms the reply
-  is `needs_choice`, with the question and the proposed names, and the agent passes the answer as
-  `pipeline=change|new_version`. Seen in a user's test: a promoted feed's pipelines were copied under the same names
-  (V1.0) as working copies, never asked, where the user expected V1.1 and a new index name.
+* **New version only (decided by the user, 2026-11-17).** A promoted pipeline and the code it runs (its XSLTs and
+  text converters) are never changed in place: `copy_pipeline` always makes a new version, nothing is asked but the
+  names, and `working_copy=true` is refused (a pipeline of a build is changed where it is). A source type group's
+  promoted pipeline likewise: `build_translation_xslt` saves the group's change in a new version of its XSLT, without
+  asking (the placement form for where a new group's Events go stays). Without forms `copy_pipeline` replies
+  `needs_names`, with the proposed names, for the agent to put to the user. A build opened before keeps its working
+  copies of a pipeline's code: promotion refuses them (`PromoteBuildTool.refuseCodeWorkingCopies`), saying to make
+  a new version, rather than writing them back. Documentation (pipeline and index docs, evaluation reports) is
+  still updated in place through a working copy, and an aggregated feed's shared modules (`<feed> common`,
+  `<feed> helpers`) keep their working copies for now. Seen in a user's test: a promoted feed's pipelines were
+  copied under the same names (V1.0) as working copies, where the user expected V1.1 and a new index name; an
+  earlier version of this asked change-or-new-version instead.
 * **The tools propose a new version's names; the user confirms or edits them (2026-11-17).** `VersionNames`, generic,
   never product-specific: a version token is a `v` (either case) and dotted numbers standing apart from the words
   around it. The pipeline's last token goes up by its last part (`V1.0` to `V1.1`, `V1` to `V2`, `-v1.2` to `-v1.3`),
@@ -1431,8 +1435,8 @@ User's view: `how-it-works/trust.md`.
 
 The build tools write only inside a build's own folder (`WriteGuard`), plus working copies of production documents
 taken into a build.
-A document the tools didn't create isn't changed: the change is refused, pointing to a working copy
-(`copy_pipeline working_copy=true`), which promotion writes back after a backup.
+A document the tools didn't create isn't changed: the change is refused, pointing to a new version
+(`copy_pipeline`), which promotion moves in beside the old one.
 Promotion moves a build's documents into place, and is reviewed first.
 No standing instruction can lift an approval or the write guard.
 Every read and write is made through Stroom's services as the user, so Stroom's own checks apply (Create in the
@@ -1654,8 +1658,9 @@ The steps, in order:
 * **Discovery indexes** (raw data indexed to explore it) are offered from the start for an existing feed. The
   server instructions map what the user wants to a path; for example, a table to look values up in leads to
   reference data. Workflow prompts are not used.
-* **Working copies.** A production pipeline is changed through a working copy in a build (`copy_pipeline
-  working_copy=true`), then promoted after review. Promotion records a version in each XSLT's history.
+* **New versions, not working copies.** A production pipeline is changed by a new version made in a build
+  (`copy_pipeline`), promoted beside the old one after review; only Documentation (and, for now, an aggregated
+  feed's shared modules) is changed through a working copy. Promotion records a version in each XSLT's history.
 * **Builds on data already in Stroom** (`start_build feeds=`) create no feed and upload nothing: `create_feed` is
   refused unless the user names sample files of their own (`user_samples`) or asks for a test feed. Records are
   stepped and processed where they are, with Events written to the build's test feed.
@@ -1713,13 +1718,10 @@ flowchart LR
   is to be enabled only once that pipeline's filter has processed the build's streams again; its enable button
   depends on the events filter's. A pipeline with an enabled filter already selecting what arrives gets no second
   one.
-* **A production Elasticsearch index is never touched by the build (2026-11-17).** A working copy of an
-  Elasticsearch indexing pipeline writing to the production index is stepped clean, not processed (see [Indexing
-  runs](#indexing-runs-built)); promotion writes its XSLT back. A new version promotes into its own, new index
-  (checked free when it was copied), beside the old one and its Elastic Index doc. Its filter's `before_enabling`
-  never puts a production index up for dropping (`PromotionProcessing`): an original a working copy was written back
-  over keeps its live index, and a new version's own index is dropped only while nothing but the promotion's
-  documents writes to it or names it; otherwise it says the index is production's, not dropped. Template pipelines
+* **A production Elasticsearch index is never touched by the build (2026-11-17).** A new version promotes into its
+  own, new index (checked free when it was copied), beside the old one and its Elastic Index doc. Its filter's
+  `before_enabling` never puts a production index up for dropping (`PromotionProcessing`): a new version's own index
+  is dropped only while nothing but the promotion's documents writes to it or names it; otherwise it says the index is production's, not dropped. Template pipelines
   claim no index (they write nothing themselves); a working copy is also claimed by its original's index name,
   inherited from a template too.
 * **A failure part way** says which step failed and what was already done; what wasn't promoted stays in the build.
@@ -3524,6 +3526,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-17 | New version only (the user): a promoted pipeline and the code it runs are never changed in place. copy_pipeline always makes a new version (names proposed and confirmed; `needs_names` without forms; `working_copy=true` refused), a source type group's change goes to a new version of its XSLT without asking, and promotion refuses an older build's working copies of a pipeline's code. Documentation keeps its working copies; an aggregated feed's shared modules too, for now. | Builds and onboarding |
 | 2026-11-17 | From a user's test (a promoted feed changed: its pipelines copied under the same names, the user asked to delete the production Elasticsearch index, and did): a production index is decided by its name (written by a pipeline, or named by an Elastic Index doc, outside the build), refused for every build pipeline before any lookup, drop or form, and never named for dropping (`ProductionIndexes`). copy_pipeline of any promoted pipeline asks change in place or new version once per build, proposes a new version's names (`VersionNames`: V1.0 to V1.1, V2.0 offered; index -v1 to -v2, a new Elastic Index doc beside the old), editable, never the original's, and checks the new index name free on the cluster and in Stroom first (even an empty index, or an unknown lookup, refuses), again on its first processing run. | Builds and onboarding; Indexing |
 | 2026-11-17 | Text inside a key's quoted value is that value, not pairs of the text holding it (seen in testing: a mail gateway's syslog, `subject="[EXT] Invoice: due"` and `subject="ref=123 status=paid"`, made its key=value body look unread by the splitter, so the draft read it again for pairs, and the subjects' words were listed by classify_kinds as fields its send events read). The draft's pair reading empties quoted values before looking for keys, except a key whose quoted values hold two or more key=value pairs in most records (auditd's `msg`). No backstop in classify_kinds' Reads: the fix covers both ways in. | Builds and onboarding |
 | 2026-11-15 | Group pipelines no longer log passed-over records (an INFO line made an Error stream per raw stream per group in production): stepping and review_coverage work them out from the feed's registry. The unreadable-survey note is kept in the build record (a restart or another node had lost it). The survey cleans its input as Stroom does, so raw control characters in JSON lines no longer make a feed unreadable. A form answered while its run was still unwinding to waiting is no longer refused (the wide-sample race). step_sample and step_records step a stream's Context child (`child_type`), so a context loader can be stepped. | Builds and onboarding, Processing, stepping and documentation |

@@ -13,8 +13,8 @@ Reference stream yet is stepped only once that table is processed (Stroom rememb
 10 minutes). Context data (each stream part's Context child) only when the user asks: propose_context_lookup.
 Events sent on to ArcSight: CEF output
 (draft_cef_mapping). A pipeline to evaluate (how well an existing one works): evaluate_pipeline, then the report from
-its outline, shown to the user and saved only if they want it kept. A pipeline to fix or change: a new version or
-working copy of it (copy_pipeline). Data not
+its outline, shown to the user and saved only if they want it kept. A pipeline to fix or change: a new version of it
+(copy_pipeline; a promoted one is never changed in place). Data not
 being processed, or processed slowly (a pipeline, a feed or a stream), or processing's health and priorities:
 explain_processing, which finds what stops it and changes nothing. When what the user wants fits more than one, ask
 which.
@@ -36,7 +36,7 @@ cannot read the sample (replace_parser swaps any template's parser for the one i
 has no translation template at all and the user has no pipeline to base it on, create_pipeline standalone='events'
 builds the events pipeline on its own: a last resort (for a discovery index with no discovery template,
 create_indexing_pipeline standalone='discovery', the same way). Templates are inherited (create_pipeline), never copied: copy_pipeline refuses one, and is for a
-new version or working copy of a source's own pipeline.
+new version of a source's own pipeline.
 
 Tools: a tool this server names (in `next`, a hint or a refusal) may not be in your tool list yet: some clients
 hide part of a server's tools behind tools that enable a group of them (VS Code: activate_*). Call the one in your
@@ -66,7 +66,7 @@ not such a question: ask for it in your answer and end your turn. Whatever is fo
 to review, a choice) goes in your answer, never only in your thinking: clients collapse thinking, and the user
 doesn't see it (seen: a question asked only there went unanswered).
 
-Existing feed: when the user asks to onboard data a feed already holds (or makes a new version or working copy of a
+Existing feed: when the user asks to onboard data a feed already holds (or makes a new version of a
 production pipeline), work from that feed: start_build feeds=[it], then survey_feed. No feed is created and nothing
 uploaded, whatever sample files the workspace holds: its streams are stepped and processed where they are (step_sample
 and create_processor_filter with their stream ids), the server writing their Events to a test feed it makes in the

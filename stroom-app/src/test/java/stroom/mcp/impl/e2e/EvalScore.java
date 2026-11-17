@@ -239,8 +239,8 @@ final class EvalScore {
     /// Scores a later build against the promoted build it started from (a case's `setup`), from the build's end state:
     ///
     /// - `source_types.pipeline`: `new` where the group's rows (those of `source_types.group.values`) name a pipeline
-    ///   other than the setup group's, `same` where they name the setup group's own (after a working copy of it is
-    ///   promoted, no new version made).
+    ///   other than the setup group's (a new version of it, or a new group's), `same` where they name the setup
+    ///   group's own (no new version made).
     /// - `source_types.index.fields_added`: `true`, the registry's index of the group has fields this build added;
     ///   `when_needed`, only that the group's index is recorded (fields are added only when the plan needs them).
     /// - `unchanged`: the setup group's pipeline, XSLT and index as the setup left them.

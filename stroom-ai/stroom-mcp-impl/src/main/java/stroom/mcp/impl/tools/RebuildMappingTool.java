@@ -164,7 +164,7 @@ class RebuildMappingTool extends AbstractBuiltInTool {
                              + "original sample streams (or stream_ids given), and only when every record's output "
                              + "is the same, and the user confirms, are the mapping and the regenerated XSLT saved. "
                              + "Then step_sample, and write_documentation again. Reads Stroom until it saves; saves "
-                             + "only an XSLT in a build (a working copy for a promoted one).")
+                             + "only an XSLT in a build (a new version's, copy_pipeline, for a promoted one).")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(UUID_ARG, "The translation XSLT whose mapping to rebuild.")
                         .addProperty(STREAM_IDS_ARG, BuildTranslationXsltTool.streamIdsSchema(

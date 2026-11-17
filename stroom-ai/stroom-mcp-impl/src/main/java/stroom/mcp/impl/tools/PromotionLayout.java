@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -288,18 +289,28 @@ class PromotionLayout {
         return meant.stream().map(PromotionLayout::normalised).toList();
     }
 
-    // The folder holding a group's folder, where the predecessor is in it (or in a role subfolder of it).
+    // In an aggregated feed's build, the folder holding the group folder the predecessor is in (or in a role or
+    // version subfolder of it): the feed's folder. Any group's, not only the build's own: a promoted pipeline is
+    // copied only as a new version (decided by the user, 2026-11-17), so a build of one group may process with a new
+    // version of another's (seen in e2e: it went in the build's group's folder), and a new version's predecessor
+    // may itself be in a version folder (seen in e2e: v3 put in the group's folder, not beside v2's).
     private static Optional<String> groupParent(final String folder, final String group) {
-        if (group == null || !folder.contains("/")) {
+        if (group == null) {
             return Optional.empty();
         }
-        String at = folder;
-        if (WriteGuard.ROLES.contains(at.substring(at.lastIndexOf('/') + 1))) {
-            at = parentOf(at);
-        }
-        return at.contains("/") && at.substring(at.lastIndexOf('/') + 1).equals(group)
+        String at = withoutLast(folder, last -> WriteGuard.ROLES.contains(last));
+        at = withoutLast(at, last -> VERSION.matcher(last).matches());
+        at = withoutLast(at, last -> WriteGuard.ROLES.contains(last));
+        return at.contains("/")
                 ? Optional.of(parentOf(at))
                 : Optional.empty();
+    }
+
+    // The path without its last folder where that folder is one the test matches.
+    private static String withoutLast(final String path, final Predicate<String> matches) {
+        return path.contains("/") && matches.test(path.substring(path.lastIndexOf('/') + 1))
+                ? parentOf(path)
+                : path;
     }
 
     private static String normalised(final String place) {

@@ -45,6 +45,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestPromoteBuildTool {
 
     private static final String BUILD = "bb";
+    // An aggregated feed's common module, whose working copies are still written back (its shared modules keep
+    // their behaviour; a pipeline's own code changes only by a new version).
+    private static final String MODULE_V1 = commonModule("v1");
+    private static final String MODULE_V2 = commonModule("v2");
+    private static final String MODULE_BY_HAND = commonModule("v1-by-hand");
 
     private final DocumentationWorld docs = new DocumentationWorld();
     private final BuildWorld world = docs.world;
@@ -449,7 +454,7 @@ class TestPromoteBuildTool {
         final String prodFolder = world.folder("System/Feeds/Acme").uuid;
         world.add(XsltDoc.TYPE, "ACME-XSLT", prodFolder, "x-prod");
         world.docs.put("x-prod", XsltDoc.builder().uuid("x-prod").name("ACME-XSLT").version("v0")
-                .data("<xsl:stylesheet>v1</xsl:stylesheet>").build());
+                .data(MODULE_V1).build());
         world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
         world.inBuild(BUILD, DocumentationDoc.TYPE, "ACME-Events", "d");
         world.docs.put("d", ((DocumentationDoc) world.docs.get("d")).copy()
@@ -457,7 +462,7 @@ class TestPromoteBuildTool {
                         "", Instant.parse("2026-10-20T00:00:00Z"))).build());
         final DocRef copy = world.inBuild(BUILD, XsltDoc.TYPE, "ACME-XSLT", "x-copy");
         world.docs.put("x-copy", XsltDoc.builder().uuid("x-copy").name("ACME-XSLT").version("v0")
-                .data("<xsl:stylesheet>v1</xsl:stylesheet>").build());
+                .data(MODULE_V1).build());
         world.records().update(BUILD, copy, entry -> entry.put("copy_of", "x-prod"));
         listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null), doc(DocumentationDoc.TYPE, "d", "ACME-Events", null));
         docs.facts.docs.add(FakeBuildFacts.doc(XsltDoc.TYPE, "x-copy", "ACME-XSLT", "working_copy_of", "x-prod"));
@@ -471,7 +476,7 @@ class TestPromoteBuildTool {
 
         assertThat(promoted).doesNotContainKey("updated_in_place");
         assertThat(promoted.get("promoted")).asList().contains("discarded unchanged working copy XSLT 'ACME-XSLT'");
-        assertThat(((XsltDoc) world.docs.get("x-prod")).getData()).isEqualTo("<xsl:stylesheet>v1</xsl:stylesheet>");
+        assertThat(((XsltDoc) world.docs.get("x-prod")).getData()).isEqualTo(MODULE_V1);
         assertThat(world.nodes).doesNotContainKey("x-copy");
     }
 
@@ -481,7 +486,7 @@ class TestPromoteBuildTool {
         final String prodFolder = world.folder("System/Feeds/Acme").uuid;
         world.add(XsltDoc.TYPE, "ACME-XSLT", prodFolder, "x-prod");
         world.docs.put("x-prod", XsltDoc.builder().uuid("x-prod").name("ACME-XSLT").version("v0")
-                .data("<xsl:stylesheet>v1</xsl:stylesheet>").build());
+                .data(MODULE_V1).build());
         final DocRef pipeline = world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
         final DocRef documentation = world.inBuild(BUILD, DocumentationDoc.TYPE, "ACME-Events", "d");
         world.docs.put("d", ((DocumentationDoc) world.docs.get("d")).copy()
@@ -489,7 +494,7 @@ class TestPromoteBuildTool {
                         "", Instant.parse("2026-10-20T00:00:00Z"))).build());
         final DocRef copy = world.inBuild(BUILD, XsltDoc.TYPE, "ACME-XSLT", "x-copy");
         world.docs.put("x-copy", XsltDoc.builder().uuid("x-copy").name("ACME-XSLT").version("v0")
-                .data("<xsl:stylesheet>v2</xsl:stylesheet>").build());
+                .data(MODULE_V2).build());
         world.records().update(BUILD, copy, entry -> entry.put("copy_of", "x-prod"));
         listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null), doc(DocumentationDoc.TYPE, "d", "ACME-Events", null));
         docs.facts.docs.add(FakeBuildFacts.doc(XsltDoc.TYPE, "x-copy", "ACME-XSLT", "working_copy_of", "x-prod"));
@@ -523,7 +528,7 @@ class TestPromoteBuildTool {
         assertThat(DocumentationVersions.rowsOf(world.body(documentation.getUuid()))).singleElement()
                 .satisfies(row -> assertThat(row).containsEntry("version", "1").containsEntry("change", "Created"));
         // The working copy written back over its original, after a backup, then deleted.
-        assertThat(((XsltDoc) world.docs.get("x-prod")).getData()).isEqualTo("<xsl:stylesheet>v2</xsl:stylesheet>");
+        assertThat(((XsltDoc) world.docs.get("x-prod")).getData()).isEqualTo(MODULE_V2);
         assertThat(world.nodes).doesNotContainKey("x-copy");
         assertThat(world.nodes.values()).anySatisfy(node -> {
             assertThat(node.name).isEqualTo("ACME-XSLT backup 20261022000000");
@@ -538,6 +543,32 @@ class TestPromoteBuildTool {
                 .containsExactly("System/Feeds/Acme");
         // Over /mcp, whose sessions are no evidence, no standing instructions are offered.
         assertThat(promoted).doesNotContainKey("standing_instructions");
+    }
+
+    @Test
+    void aChangedWorkingCopyOfAPromotedPipelinesCodeIsRefusedAtPromotion() {
+        // Decided by the user (2026-11-17): a promoted pipeline and the code it runs change only by a new version. A
+        // build opened before keeps its working copies: not written back, refused saying what to do.
+        exists("System/Feeds/Acme");
+        final String prodFolder = world.folder("System/Feeds/Acme").uuid;
+        world.add(XsltDoc.TYPE, "ACME-XSLT", prodFolder, "x-prod");
+        world.docs.put("x-prod", XsltDoc.builder().uuid("x-prod").name("ACME-XSLT").version("v0")
+                .data("<xsl:stylesheet>plain-v1</xsl:stylesheet>").build());
+        world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
+        final DocRef copy = world.inBuild(BUILD, XsltDoc.TYPE, "ACME-XSLT", "x-copy");
+        world.docs.put("x-copy", XsltDoc.builder().uuid("x-copy").name("ACME-XSLT").version("v0")
+                .data("<xsl:stylesheet>plain-v2</xsl:stylesheet>").build());
+        world.records().update(BUILD, copy, entry -> entry.put("copy_of", "x-prod"));
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null));
+        docs.facts.docs.add(FakeBuildFacts.doc(XsltDoc.TYPE, "x-copy", "ACME-XSLT", "working_copy_of", "x-prod"));
+
+        assertThat(docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(args(Map.of("Pipeline",
+                "/Feeds/Acme"), null))))
+                .contains("XSLT 'ACME-XSLT' is a working copy of a promoted pipeline's code")
+                .contains("make a new version")
+                .contains("Nothing was changed");
+        assertThat(((XsltDoc) world.docs.get("x-prod")).getData())
+                .isEqualTo("<xsl:stylesheet>plain-v1</xsl:stylesheet>");
     }
 
     @Test
@@ -556,10 +587,10 @@ class TestPromoteBuildTool {
         assertThat(user.shown()).filteredOn(form -> form.contains("was changed in production")).hasSize(1);
         assertThat(user.shown().getFirst())
                 .startsWith("XSLT 'ACME-XSLT' was changed in production since its working copy was taken by john.smith")
-                .contains("Overwriting it loses from production: <xsl:stylesheet>v1-by-hand</xsl:stylesheet>",
-                        "The working copy brings: <xsl:stylesheet>v2</xsl:stylesheet>",
+                .contains("Overwriting it loses from production: <xsl:variable name=\"v\">v1-by-hand</xsl:variable>",
+                        "The working copy brings: <xsl:variable name=\"v\">v2</xsl:variable>",
                         PromoteBuildTool.OVERWRITE_ORIGINAL, "kept only in its backup");
-        assertThat(((XsltDoc) world.docs.get("x-prod")).getData()).isEqualTo("<xsl:stylesheet>v2</xsl:stylesheet>");
+        assertThat(((XsltDoc) world.docs.get("x-prod")).getData()).isEqualTo(MODULE_V2);
     }
 
     @Test
@@ -576,7 +607,7 @@ class TestPromoteBuildTool {
                 destinations, shown.get("review_id"))));
 
         assertThat(((XsltDoc) world.docs.get("x-prod")).getData())
-                .isEqualTo("<xsl:stylesheet>v1-by-hand</xsl:stylesheet>");
+                .isEqualTo(MODULE_BY_HAND);
         assertThat(world.nodes).containsKey("x-copy");
         assertThat(promoted.get("promoted")).asList().contains("left XSLT 'ACME-XSLT' in the workspace");
 
@@ -587,7 +618,7 @@ class TestPromoteBuildTool {
                 destinations, null)));
         docs.call(tool, later.context(), DocumentationWorld.args(args(destinations, again.get("review_id"))));
         assertThat(later.shown()).anyMatch(form -> form.contains("was changed in production"));
-        assertThat(((XsltDoc) world.docs.get("x-prod")).getData()).isEqualTo("<xsl:stylesheet>v2</xsl:stylesheet>");
+        assertThat(((XsltDoc) world.docs.get("x-prod")).getData()).isEqualTo(MODULE_V2);
     }
 
     @Test
@@ -602,7 +633,7 @@ class TestPromoteBuildTool {
         docs.call(tool, user.context(), DocumentationWorld.args(args(destinations, shown.get("review_id"))));
 
         assertThat(user.shown()).noneMatch(form -> form.contains("was changed in production"));
-        assertThat(((XsltDoc) world.docs.get("x-prod")).getData()).isEqualTo("<xsl:stylesheet>v2</xsl:stylesheet>");
+        assertThat(((XsltDoc) world.docs.get("x-prod")).getData()).isEqualTo(MODULE_V2);
     }
 
     // A build whose working copy of production XSLT 'ACME-XSLT' (copied at version v0) is v2, while production was
@@ -612,7 +643,7 @@ class TestPromoteBuildTool {
         final String prodFolder = world.folder("System/Feeds/Acme").uuid;
         world.add(XsltDoc.TYPE, "ACME-XSLT", prodFolder, "x-prod");
         world.docs.put("x-prod", XsltDoc.builder().uuid("x-prod").name("ACME-XSLT").version("v1")
-                .updateUser("john.smith").data("<xsl:stylesheet>v1-by-hand</xsl:stylesheet>").build());
+                .updateUser("john.smith").data(MODULE_BY_HAND).build());
         world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
         final DocRef documentation = world.inBuild(BUILD, DocumentationDoc.TYPE, "ACME-Events", "d");
         world.docs.put("d", ((DocumentationDoc) world.docs.get("d")).copy()
@@ -620,7 +651,7 @@ class TestPromoteBuildTool {
                         "", Instant.parse("2026-10-20T00:00:00Z"))).build());
         final DocRef copy = world.inBuild(BUILD, XsltDoc.TYPE, "ACME-XSLT", "x-copy");
         world.docs.put("x-copy", XsltDoc.builder().uuid("x-copy").name("ACME-XSLT").version("v0")
-                .data("<xsl:stylesheet>v2</xsl:stylesheet>").build());
+                .data(MODULE_V2).build());
         world.records().update(BUILD, copy, entry -> {
             entry.put("copy_of", "x-prod");
             entry.put(BuildRecords.COPY_OF_VERSION, "v0");
@@ -710,6 +741,13 @@ class TestPromoteBuildTool {
                         ? ""
                         : " name=\"" + group + "\" mode=\"m365\"") + "/></xsl:stylesheet>")
                 .build());
+    }
+
+    // A feed's common module, marked as the generator marks it, with the text given.
+    private static String commonModule(final String text) {
+        return "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:mcp=\"" + MappingFacts.MCP_NS
+               + "\" version=\"3.0\"><mcp:module kind=\"common\"/>\n<xsl:variable name=\"v\">" + text
+               + "</xsl:variable>\n</xsl:stylesheet>";
     }
 
     // The folders, made.

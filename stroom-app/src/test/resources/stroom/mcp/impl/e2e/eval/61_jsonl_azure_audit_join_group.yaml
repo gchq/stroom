@@ -3,11 +3,11 @@ template: Event Data (JSON)
 capabilities: [aggregated_feeds, source_types, later_builds]
 # A later build on an aggregated feed: case 56 built and promoted first (its feed, data, registry beside the feed, the
 # Messaging group's pipeline, XSLT and index), then the user asks for OneDrive to join the Messaging group. The
-# traps: a new group made instead of joining Messaging; the change-vs-new-version question not put to the user (it
-# is theirs: they say change it) or their answer not followed (a new version copied instead of a working copy);
-# Messaging's existing rules lost from its mapping; the other workloads' records taken for errors; the build left
-# unpromoted, so production never takes OneDrive. Its Events go into Messaging's own index, which gains OneDrive's
-# fields at promotion.
+# traps: a new group made instead of joining Messaging; the promoted Messaging pipeline changed in place (a promoted
+# pipeline and the code it runs change only by a new version, decided by the user 2026-11-17: the group's rows move
+# to the new version, whose names the user confirms); Messaging's existing rules lost from its mapping; the other
+# workloads' records taken for errors; the build left unpromoted, so production never takes OneDrive. Its Events go
+# into Messaging's own index, which gains OneDrive's fields at promotion.
 setup: {from_case: 56}
 promote: true
 request: >
@@ -17,9 +17,9 @@ request: >
   build when it's done.
 user_knows: >
   OneDrive joins the existing Messaging group; no new group. Messaging then holds ExchangeOnline, MicrosoftTeams and
-  OneDrive. SharePoint and AzureActiveDirectory stay parked for later builds. When asked whether the change goes to
-  the Messaging pipeline in production or to a new version of it: change it (its working copy written back at
-  promotion), no new version. The Workload field says which workload a record came from, as before; Operation is
+  OneDrive. SharePoint and AzureActiveDirectory stay parked for later builds. The change goes into a new version of
+  the Messaging pipeline (its names as proposed are fine), promoted beside the current one. The Workload field says
+  which workload a record came from, as before; Operation is
   what was done within a workload, so it tells the kinds of event apart. The other workloads' records being passed
   over by the Messaging pipeline is expected; they are not errors. Promote the build, keeping its documents where
   the feed's other documents are. The system is Microsoft 365.
@@ -43,7 +43,7 @@ expected:
       values: [ExchangeOnline, MicrosoftTeams, OneDrive]
       others: [SharePoint, AzureActiveDirectory]
     groups: [Messaging]
-    pipeline: same
+    pipeline: new
     rows:
       - {match: value, value: SharePoint, status: parked}
       - {match: value, value: AzureActiveDirectory, status: parked}
@@ -52,10 +52,8 @@ expected:
   forms:
     asked:
       - {message: "go in this build's source type group"}
-      - {message: "runs in pipeline", answer: "Change "}
-    not_asked: ["Which field says which source"]
+    not_asked: ["Which field says which source", "runs in pipeline"]
 reference:
-  pipeline: change
   source_types:
     group: Messaging
     source_types: [OneDrive]

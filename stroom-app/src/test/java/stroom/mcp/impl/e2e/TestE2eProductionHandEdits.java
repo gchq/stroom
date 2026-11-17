@@ -16,8 +16,12 @@
 
 package stroom.mcp.impl.e2e;
 
+import stroom.docref.DocRef;
 import stroom.mcp.impl.McpTestClient;
+import stroom.mcp.impl.tools.WriteGuard;
+import stroom.pipeline.shared.XsltDoc;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -28,8 +32,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /// A generated translation promoted to production, then edited by hand there; later the user asks the agent to
 /// change the pipeline (here, to write the source's IP address too, as a fix for its Error streams would). The
-/// change goes through a working copy in a new build, written back over production by promoting it. Driving the
-/// REAL tools on a real Stroom, for each kind of hand edit (asked for by the user):
+/// change goes into a new version of the pipeline made in a new build (copy_pipeline; a promoted pipeline and the
+/// code it runs are never changed in place, decided by the user 2026-11-17), carrying the hand edit over, and is
+/// promoted beside production, which is left as it was. Driving the REAL tools on a real Stroom, for each kind of
+/// hand edit (asked for by the user):
 ///
 /// 1. XSL the generator doesn't write (an xsl:iterate): the agent's generated change is refused with the user's two
 ///    choices, the mapping can't be rebuilt from the XSLT, and only code written to keep the edit is saved;
@@ -37,7 +43,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 ///    (rebuild_mapping, proven on the sample), then goes through with the edit kept;
 /// 3. a field the mapping hasn't got: likewise.
 ///
-/// Each time production ends with the edit and the change.
+/// Each time the new version ends with the edit and the change, and production with the edit alone. A production
+/// edit made after the new version was copied stays in production, nothing asked; a working copy of production's
+/// code left in a build opened before new versions became the only way is refused at promotion.
 @SuppressWarnings("unchecked")
 class TestE2eProductionHandEdits extends AbstractE2eTest {
 
@@ -69,6 +77,12 @@ class TestE2eProductionHandEdits extends AbstractE2eTest {
     private static final Map<String, Object> DESTINATIONS = Map.of("Feed", "Feeds/ProdEdit", "TextConverter",
             "Feeds/ProdEdit", "XSLT", "Feeds/ProdEdit", "Pipeline", "Feeds/ProdEdit", "Documentation",
             "Feeds/ProdEdit");
+    // The new version's names, as copy_pipeline proposes them for names with no version token of their own.
+    private static final String VERSION_PIPELINE = FEED + "-Events-V2";
+    private static final String VERSION_XSLT = FEED + "-Events-V2";
+
+    @Inject
+    private WriteGuard guard;
 
     @Test
     void anEditNoMappingCanHoldIsKeptAndOnlyCodeKeepingItIsSaved() {
@@ -79,7 +93,8 @@ class TestE2eProductionHandEdits extends AbstractE2eTest {
                                + "</xsl:if><xsl:next-iteration><xsl:with-param name=\"seen\" "
                                + "select=\"($seen, @value)\"/></xsl:next-iteration></xsl:iterate>";
         editInProduction(production, code -> code.replace("</Authenticate>", iterate + "</Authenticate>"));
-        final String copy = workingCopy(production, "prodedit-fix1");
+        final Version version = newVersion(production, "prodedit-fix1");
+        final String copy = version.xslt();
 
         // The generated change: the user decides field by field and keeps their edit, so it is refused, with
         // their two choices.
@@ -101,11 +116,14 @@ class TestE2eProductionHandEdits extends AbstractE2eTest {
         final String kept = readXslt(copy).getData().replace("</HostName>",
                 "</HostName><IPAddress><xsl:value-of select=\"data[@name='ip']/@value\"/></IPAddress>");
         json("save_xslt", args("uuid", copy, "code", kept));
-        assertThat(stepSample(production.pipeline(), List.of(production.raw())).get("verdict")).isEqualTo("clean");
+        assertThat(stepSample(version.pipeline(), List.of(production.raw())).get("verdict")).isEqualTo("clean");
 
         promote("prodedit-fix1");
-        assertThat(readXslt(production.xslt()).getData()).as("production: the edit and the change")
+        assertThat(readXslt(copy).getData()).as("the new version: the edit and the change")
                 .contains("xsl:iterate", "data[@name='ip']");
+        assertThat(readXslt(production.xslt()).getData()).as("production: the edit alone, left as it was")
+                .contains("xsl:iterate")
+                .doesNotContain("data[@name='ip']");
     }
 
     @Test
@@ -114,10 +132,13 @@ class TestE2eProductionHandEdits extends AbstractE2eTest {
         // The user's id from the account, not the user name: the event's user only.
         editInProduction(production, code -> code.replaceFirst("data\\[@name='user'\\]", "data[@name='account']"));
         assertThat(readXslt(production.xslt()).getData()).contains("data[@name='account']");
-        carriedThenChanged(production, "prodedit-fix2");
+        final Version version = carriedThenChanged(production, "prodedit-fix2");
 
-        assertThat(readXslt(production.xslt()).getData()).as("production: the edit and the change")
+        assertThat(readXslt(version.xslt()).getData()).as("the new version: the edit and the change")
                 .contains("data[@name='account']", "data[@name='ip']");
+        assertThat(readXslt(production.xslt()).getData()).as("production: the edit alone, left as it was")
+                .contains("data[@name='account']")
+                .doesNotContain("data[@name='ip']");
     }
 
     @Test
@@ -126,51 +147,71 @@ class TestE2eProductionHandEdits extends AbstractE2eTest {
         // The account written as well, as a Data entry of the Authenticate.
         editInProduction(production, code -> code.replace("</Authenticate>",
                 "<Data Name=\"account\" Value=\"{data[@name='account']/@value}\"/></Authenticate>"));
-        carriedThenChanged(production, "prodedit-fix3");
+        final Version version = carriedThenChanged(production, "prodedit-fix3");
 
-        assertThat(readXslt(production.xslt()).getData()).as("production: the edit and the change")
+        assertThat(readXslt(version.xslt()).getData()).as("the new version: the edit and the change")
                 .contains("account", "data[@name='ip']");
+        assertThat(readXslt(production.xslt()).getData()).as("production: the edit alone, left as it was")
+                .contains("account")
+                .doesNotContain("data[@name='ip']");
     }
 
     @Test
-    void aProductionEditMadeAfterTheWorkingCopyIsPutToTheUserAtPromotion() {
+    void aProductionEditMadeAfterTheNewVersionWasCopiedStaysInProductionNothingAsked() {
         // Found reviewing the tools: production edited by hand after its working copy was taken lost the edit when
-        // the copy was promoted (but for the backup). Now the user is asked, told how production differs.
+        // the copy was promoted (but for the backup). A new version is promoted beside production, never over it,
+        // so a later production edit stays there and nothing is put to the user.
         final Production production = promoted();
-        final String copy = workingCopy(production, "prodedit-fix4");
-        final Map<String, Object> changed = agreed("build_translation_xslt", args("changes", CHANGE, "uuid", copy,
-                "stream_ids", List.of(production.raw()), "change", "IP address written"));
+        final Version version = newVersion(production, "prodedit-fix4");
+        final Map<String, Object> changed = agreed("build_translation_xslt", args("changes", CHANGE, "uuid",
+                version.xslt(), "stream_ids", List.of(production.raw()), "change", "IP address written"));
         assertThat(changed.get("ok")).as("the change made: %s", changed.get("problems")).isEqualTo(true);
-        assertThat(stepSample(production.pipeline(), List.of(production.raw())).get("verdict")).isEqualTo("clean");
-        // Production is edited by hand after the copy was taken.
+        assertThat(stepSample(version.pipeline(), List.of(production.raw())).get("verdict")).isEqualTo("clean");
+        // Production is edited by hand after the new version was copied.
         editInProduction(production, code -> code.replace("<TypeId>Logon</TypeId>",
                 "<TypeId>Logon (edited in production)</TypeId>"));
 
-        // The user keeps production: the copy stays in the build.
-        client.answeringWith(choosing("Keep production as it is"));
+        final int formsBefore = client.forms().size();
         promote("prodedit-fix4");
-        assertThat(formMessages()).anySatisfy(message -> assertThat(message)
-                .contains("was changed in production since its working copy was taken",
-                        "Overwriting it loses from production: ", "<TypeId>Logon (edited in production)</TypeId>",
-                        "The working copy brings: "));
-        assertThat(readXslt(production.xslt()).getData()).as("production as the user kept it")
+        assertThat(formsSince(formsBefore)).noneSatisfy(form -> assertThat(form.message())
+                .contains("was changed in production since"));
+        assertThat(readXslt(production.xslt()).getData()).as("production as the user left it")
                 .contains("Logon (edited in production)")
                 .doesNotContain("data[@name='ip']");
-        assertThat(readXslt(copy).getData()).as("the copy, still in the build").contains("data[@name='ip']");
-
-        // Promoted again, the user overwrites production with the copy.
-        client.answeringWith(choosing("Overwrite production with the working copy"));
-        promote("prodedit-fix4");
-        assertThat(readXslt(production.xslt()).getData()).as("production overwritten with the copy")
+        assertThat(readXslt(version.xslt()).getData()).as("the new version, promoted beside it")
                 .contains("data[@name='ip']")
                 .doesNotContain("Logon (edited in production)");
-        client.answeringWith(McpTestClient::agree);
+        assertThat(folderOf(version.xslt())).startsWith("System/Feeds/ProdEdit");
+        assertThat(findFolder("System/MCP Workspace/prodedit-fix4")).as("promoted").isEmpty();
+    }
+
+    @Test
+    void aWorkingCopyOfProductionCodeFromAnOlderBuildIsRefusedAtPromotion() {
+        // A build opened before new versions became the only way (decided by the user, 2026-11-17) may hold a
+        // working copy of a production XSLT, changed: promotion refuses it rather than writing it back over
+        // production, and changes nothing.
+        final Production production = promoted();
+        final String build = "prodedit-old";
+        final String original = readXslt(production.xslt()).getData();
+        final DocRef copy = asUser(admin, () -> guard.create(XsltDoc.TYPE, FEED + "-Events", build,
+                production.xslt(), false, "Events"));
+        editXslt(copy.getUuid(), doc -> doc.copy().data(original.replace("<TypeId>Logon</TypeId>",
+                "<TypeId>Logon (working copy)</TypeId>")).build());
+
+        final String refused = refusal("promote_build", args("build", build, "destinations", DESTINATIONS));
+        dump("promote_build working copy", refused);
+        assertThat(refused).contains("XSLT '" + FEED + "-Events' is a working copy of a promoted pipeline's code",
+                "make a new version", "copy_pipeline", "Nothing was changed");
+        assertThat(readXslt(production.xslt()).getData()).as("production untouched").isEqualTo(original);
+        assertThat(readXslt(copy.getUuid()).getData()).as("the copy, still in the build")
+                .contains("Logon (working copy)");
     }
 
     // A change refused until the hand edit is carried into the mapping (rebuild_mapping, proven on the sample and
-    // confirmed by the user), then made with the edit kept; promoted back over production.
-    private void carriedThenChanged(final Production production, final String build) {
-        final String copy = workingCopy(production, build);
+    // confirmed by the user), then made with the edit kept, in a new version promoted beside production.
+    private Version carriedThenChanged(final Production production, final String build) {
+        final Version version = newVersion(production, build);
+        final String copy = version.xslt();
         final String refused = refusal("build_translation_xslt", args("changes", CHANGE, "uuid", copy,
                 "stream_ids", List.of(production.raw()), "change", "IP address written"));
         assertThat(refused).contains("edited by hand", "carry it into the mapping", "rebuild_mapping uuid='" + copy)
@@ -184,8 +225,9 @@ class TestE2eProductionHandEdits extends AbstractE2eTest {
         final Map<String, Object> changed = agreed("build_translation_xslt", args("changes", CHANGE, "uuid", copy,
                 "stream_ids", List.of(production.raw()), "change", "IP address written"));
         assertThat(changed.get("ok")).as("the change made: %s", changed.get("problems")).isEqualTo(true);
-        assertThat(stepSample(production.pipeline(), List.of(production.raw())).get("verdict")).isEqualTo("clean");
+        assertThat(stepSample(version.pipeline(), List.of(production.raw())).get("verdict")).isEqualTo("clean");
         promote(build);
+        return version;
     }
 
     // A translation built from the mapping, stepped clean, documented and promoted to production.
@@ -220,19 +262,26 @@ class TestE2eProductionHandEdits extends AbstractE2eTest {
                 .as("the edited XSLT steps clean").isEqualTo("clean");
     }
 
-    // A working copy of the production pipeline in a new build: its XSLT's uuid.
-    private String workingCopy(final Production production, final String build) {
+    // A new version of the production pipeline in a new build, under the names proposed for it, which the user
+    // agrees to: its pipeline and XSLT, the XSLT carrying production's hand edit over.
+    private Version newVersion(final Production production, final String build) {
         final Map<String, Object> copy = agreed("copy_pipeline", args("build", build, "source_uuid",
-                production.pipeline(), "new_name", FEED + "-Events-WORKING", "working_copy", true));
-        final String xslt = (String) ((List<Map<String, Object>>) copy.get("copied_documents")).stream()
+                production.pipeline(), "new_name", VERSION_PIPELINE));
+        dump("copy_pipeline " + build, copy);
+        assertThat(copy).containsEntry("name", VERSION_PIPELINE)
+                .containsEntry("copy_of", FEED + "-Events")
+                .doesNotContainKey("working_copy");
+        final Map<String, Object> xslt = ((List<Map<String, Object>>) copy.get("copied_documents")).stream()
                 .filter(doc -> "XSLT".equals(doc.get("type")))
                 .findFirst()
-                .orElseThrow()
-                .get("uuid");
-        assertThat(readXslt(xslt).getData()).as("the copy holds the production edit")
+                .orElseThrow();
+        assertThat(xslt).as("the XSLT under the new version's name").containsEntry("name", VERSION_XSLT);
+        final String xsltUuid = (String) xslt.get("uuid");
+        assertThat(xsltUuid).isNotEqualTo(production.xslt());
+        assertThat(readXslt(xsltUuid).getData()).as("the new version holds the production edit")
                 .isEqualTo(readXslt(production.xslt()).getData());
         client.answeringWith(McpTestClient::agree);
-        return xslt;
+        return new Version(uuidOf(copy), xsltUuid);
     }
 
     // promote_build: the layout shown first (needs_review), then promoted once the user agrees.
@@ -251,6 +300,14 @@ class TestE2eProductionHandEdits extends AbstractE2eTest {
     /// @param pipeline The production pipeline.
     /// @param xslt     The production XSLT.
     private record Production(long raw, String pipeline, String xslt) {
+
+    }
+
+    /// A new version of the production pipeline, in a build.
+    ///
+    /// @param pipeline The new version's pipeline.
+    /// @param xslt     Its XSLT, a copy of production's.
+    private record Version(String pipeline, String xslt) {
 
     }
 }

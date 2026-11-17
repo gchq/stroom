@@ -72,7 +72,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// record with no IP leaves IPAddress out. Every numbered part is covered: the evaluation's 1 to 6 (describe, errors
 /// first, the input never read, the events' inventory, a suggested fix proven, the report saved beside the pipeline
 /// with nothing else changed) and the fix's 1 to 4 (locate the reported event, reproduce it, a fix proven to change
-/// only the reported field, applied through a working copy, documented and promoted, the production XSLT backed up).
+/// only the reported field, applied in a new version of the pipeline (a promoted pipeline and the code it runs are
+/// never changed in place, decided by the user 2026-11-17), documented and promoted beside the original, which is
+/// left as it was).
 @SuppressWarnings("unchecked")
 class TestE2eEvaluateAndFix extends AbstractE2eTest {
 
@@ -316,39 +318,45 @@ class TestE2eEvaluateAndFix extends AbstractE2eTest {
                                                                + "before too, not in the fix's way")
                 .contains("IPAddress");
 
-        // ### applied in place: a working copy, compared, documented, promoted after approval
+        // ### applied in a new version: copied under the names proposed, compared, documented, promoted after
+        // approval beside the original
         final String build = "e2e-fix";
+        final String versionName = FEED + "-Events-V2";
         final Map<String, Object> copy = agreed("copy_pipeline", args("build", build, "source_uuid",
-                prod.pipeline(), "new_name", FEED + "-Events-WORKING", "working_copy", true));
+                prod.pipeline(), "new_name", versionName));
         dump("copy_pipeline", copy);
+        assertThat(copy).containsEntry("name", versionName).doesNotContainKey("working_copy");
         final String xsltCopy = list(copy, "copied_documents").stream()
                 .filter(document -> "XSLT".equals(document.get("type")))
                 .map(document -> (String) document.get("uuid"))
                 .findFirst()
                 .orElseThrow();
+        assertThat(xsltCopy).isNotEqualTo(prod.xslt());
         agreed("save_xslt", args("uuid", xsltCopy, "code", draft));
         final Map<String, Object> diff = json("compare_outputs", args("pipeline_uuid", prod.pipeline(),
                 "stream_ids", prod.raw(), "other_pipeline_uuid", copy.get("uuid")));
-        assertThat(paths(diff)).as("the working copy differs from production only in Success")
+        assertThat(paths(diff)).as("the new version differs from production only in Success")
                 .containsExactly(SUCCESS);
         // The copy's sample, as its XSLT is hand-written: its Field mapping is generated from the Events it writes.
         agreed("write_documentation", args("build", build, "pipeline_uuid", copy.get("uuid"), "stream_ids",
                 prod.raw(), "markdown",
-                "# " + FEED + "-Events\n\n## Purpose and data\n\nCSV logons.\n\n## Field mapping\n\n| From | To |\n"
+                "# " + versionName + "\n\n## Purpose and data\n\nCSV logons.\n\n## Field mapping\n\n| From | To |\n"
                 + "| --- | --- |\n| result | " + SUCCESS + " (ok only) |\n",
                 "change", "Locked accounts' logons are no longer successes"));
         agreed("promote_build", args("build", build, "destinations", Map.of()));
-        final String now = readXslt(prod.xslt()).getData();
-        assertThat(now).as("the production XSLT now has the fix").contains(FIX).doesNotContain(BUG);
+        assertThat(readXslt(xsltCopy).getData()).as("the new version's XSLT has the fix").contains(FIX)
+                .doesNotContain(BUG);
+        assertThat(readXslt(prod.xslt()).getData()).as("the production XSLT is left as it was").contains(BUG)
+                .doesNotContain(FIX);
         final List<String> backups = asUser(admin, () -> xsltStore.listDocuments().stream()
                 .map(DocRef::getName)
                 .filter(name -> name.startsWith(FEED + "-Events backup"))
                 .toList());
-        assertThat(backups).as("the original was backed up first").isNotEmpty();
+        assertThat(backups).as("nothing written back, so nothing backed up").isEmpty();
         final List<DocRef> docs = asUser(admin, () -> documentationStore.listDocuments().stream()
-                .filter(doc -> (FEED + "-Events").equals(doc.getName()))
+                .filter(doc -> versionName.equals(doc.getName()))
                 .toList());
-        assertThat(docs).as("the pipeline's own documentation: one doc, beside it").hasSize(1);
+        assertThat(docs).as("the new version's own documentation: one doc, beside it").hasSize(1);
         assertThat(documentation(docs.getFirst().getUuid())).as("with the change in its change log")
                 .contains("Locked accounts' logons are no longer successes", "## Version control");
     }
