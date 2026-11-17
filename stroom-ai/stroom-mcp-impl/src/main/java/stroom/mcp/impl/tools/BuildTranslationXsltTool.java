@@ -1343,8 +1343,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             review.put("review_id", formId);
             review.put("hint", "Show the user show_user in the chat exactly as it is (markdown), then, in the same "
                                + "turn, without waiting for a reply, call build_translation_xslt again with the same "
-                               + "arguments plus reviewed='" + formId + "' (its review_id): a short "
-                               + "form asks them to keep the mapping's change or follow what they confirmed."
+                               + "arguments" + TranslationBuilds.CHANGES_APPLIED + " plus reviewed='" + formId
+                               + "' (its review_id): a short form asks them to keep the mapping's change or follow "
+                               + "what they confirmed."
                                + Consent.reviewNote(request.reviewed()));
             return Optional.of(review);
         } else {
@@ -1501,9 +1502,10 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             review.put("review_id", Consent.reviewId(shown));
             review.put("hint", "Show the user show_user in the chat exactly as it is (markdown), then, in the same "
                                + "turn, without waiting for a reply, call build_translation_xslt again with the same "
-                               + "arguments plus reviewed='" + Consent.reviewId(shown) + "' (its review_id): a short "
-                               + "form asks them to agree, or they say what to change (a rule's action instead of "
-                               + "Unknown)." + Consent.reviewNote(request.reviewed()));
+                               + "arguments" + TranslationBuilds.CHANGES_APPLIED + " plus reviewed='"
+                               + Consent.reviewId(shown) + "' (its review_id): a short form asks them to agree, "
+                               + "or they say what to change (a rule's action instead of Unknown)."
+                               + Consent.reviewNote(request.reviewed()));
             return Optional.of(review);
         }
         // The form says which records in plain words; the answer is bound to the table shown by its review id, which

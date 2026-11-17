@@ -53,4 +53,14 @@ class TestTranslationBuilds {
         assertThat(details).containsExactly(Map.entry("Records no other rule matches (rule 'rest')",
                 "3 of ? sample records"));
     }
+
+    @Test
+    void theFixHintSaysARefusedCallsEntriesStayUntilRemoved() {
+        // Seen in chat 181: a call's problems named an entry from the call before, which the agent thought gone, so
+        // it gave the right entry beside it and was refused again.
+        final String hint = TranslationBuilds.fixHint(null, "build", "name");
+
+        assertThat(hint).contains("the same build and name", "stays until you change it or remove it",
+                "\"remove\": true", "doesn't replace it");
+    }
 }

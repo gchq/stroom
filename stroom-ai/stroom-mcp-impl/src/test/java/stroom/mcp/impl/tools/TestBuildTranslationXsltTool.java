@@ -410,6 +410,8 @@ class TestBuildTranslationXsltTool {
         final Map<String, Object> unknown = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name",
                 "N", "sample", SAMPLE, "reviewed", shown.get("review_id")));
         assertThat(unknown.get("status")).isEqualTo("needs_review");
+        // Seen in chat 181: told "the same arguments plus reviewed=", the agent resent the changes already applied.
+        assertThat(String.valueOf(unknown.get("hint"))).contains("but no changes= (the mapping holds them already");
         assertThat((String) unknown.get("show_user")).contains("- Among them, kinds you confirmed:\n"
                                                                + "  - status check (2 records), confirmed as "
                                                                + "Authenticate, Action Logoff\n");
