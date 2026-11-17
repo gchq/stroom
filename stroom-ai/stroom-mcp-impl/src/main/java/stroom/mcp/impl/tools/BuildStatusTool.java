@@ -29,6 +29,7 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,16 +44,29 @@ class BuildStatusTool extends AbstractBuiltInTool {
     static final String FULL_ARG = "full";
     /// The argument naming a stage the user said the build is not to do.
     static final String SKIP_STAGE_ARG = "skip_stage";
+    /// The key of the line saying an aggregated feed's groups import different versions of its shared modules.
+    static final String MODULE_VERSIONS = "module_versions";
     // First, so a result too large to show in full still shows them.
     private static final List<String> FIRST = List.of("next", "before_promotion", "steps");
 
     private final BuildPlan plan;
     private final PendingDocumentation pendingDocs;
+    // An aggregated feed's source type groups; none in tests that make the tool themselves.
+    private Provider<SourceTypeGroups> groupsProvider;
 
     @Inject
     BuildStatusTool(final BuildPlan plan, final PendingDocumentation pendingDocs) {
         this.plan = plan;
         this.pendingDocs = pendingDocs;
+    }
+
+    /// Where an aggregated feed's source type groups are found (set by injection; none in tests that make the tool
+    /// themselves).
+    ///
+    /// @param groups The feed's source type groups.
+    @Inject
+    void setGroups(final Provider<SourceTypeGroups> groups) {
+        this.groupsProvider = groups;
     }
 
     @Override
@@ -116,6 +130,14 @@ class BuildStatusTool extends AbstractBuiltInTool {
             // A doc write_documentation asked descriptions for and didn't write: not done, whatever else says so.
             pendingDocs.warning(context.session()).ifPresent(warning -> status.put("documentation_pending",
                     warning));
+            if (groupsProvider != null) {
+                // Informational: a promoted module changes only by a new version, so a feed's groups may import
+                // different ones.
+                final List<String> versions = groupsProvider.get().mixedModuleVersions(build);
+                if (!versions.isEmpty()) {
+                    status.put(MODULE_VERSIONS, String.join(" ", versions));
+                }
+            }
             return JsonResults.of(Boolean.parseBoolean(stringArg(call, FULL_ARG))
                     ? status
                     : compact(status));

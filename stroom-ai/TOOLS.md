@@ -2717,7 +2717,10 @@ one XSLT is the group's, which keeps its mapping. A check ending `(promotion wai
   doesn't go on with fields silently unmapped), `works_from`. With `full: true`, each step's description and tools and each document's path.
 * **Refuses**: no `build`.
 * **Notes**: compact is the default because the full result (about 10 KB) was saved to the workspace and fetched again
-  and again, as the agent couldn't keep it in view.
+  and again, as the agent couldn't keep it in view. For an aggregated feed whose groups import different versions of
+  its common module or helpers (a promoted module changes only by a new version), `module_versions` says so in one
+  informational line, naming the groups and the versions (`SourceTypeGroups.mixedModuleVersions`: a group the build
+  changes as the build has it, the others as production has them).
 
 ### `promote_build`
 
@@ -2756,8 +2759,12 @@ Each document left in the workspace is marked `kept_at_promotion` in the build's
 An aggregated feed's modules (`modulesBeside`: helpers, common module and source type groups, by their `mcp:module`
 marker) and a group's output feed of its own go beside the feed too, unless given a destination, a working copy's
 (written back) or a new version's (its version folder); a group's new version of its XSLT (`version_of` the
-original, named as it is) goes in its pipeline's version folder, not beside the old one; the group pipelines go
-where the destinations say. The
+original) goes in its pipeline's version folder, not by its own name (`PromotionLayout.versionFolders` with the
+group XSLTs `following`: seen in e2e, `PEGA security-V2`, named before the user settled the pipeline's `v2`, went in a
+`V2` folder apart from its pipeline); the group pipelines go where the destinations say. A new version of the common module or helpers (`<feed> common V1.1`, 2026-11-17) goes in
+a version folder beside its predecessor (`<feed's folder>/V1.1`), which the build's other documents don't join
+(`PromotionLayout.versionFolders` with the modules `apart`: seen writing the test, the version folder took the
+build's pipeline headed for the feed's folder); nothing promoted is written. The
 reference data each group pipeline lacks for its group's lookups (`GroupReferences.changes`, from the registry rows'
 `references`) is listed in the review and the approval form as `pipeline_changes` and added once approved, after the
 moves (forward only: none is removed): the build's pipelines (a new one, a new version, or a working copy's
@@ -2780,10 +2787,11 @@ layout was never shown). Any change of destinations changes the tree and so the 
 
 Where each document goes (`plan`):
 
-* A working copy of a pipeline, or of its code (an XSLT or text converter, not an aggregated feed's shared module),
-  from a build opened before new versions became the only way, is refused (`refuseCodeWorkingCopies`: `Not
-  promoted: XSLT '...' is a working copy of a promoted pipeline's code, which changes only by a new version ...
-  Nothing was changed.`); an unchanged one is only discarded. A working copy of Documentation or a shared module is
+* A working copy of a pipeline, or of its code (an XSLT or text converter, an aggregated feed's common module or
+  helpers too), from a build opened before new versions became the only way, is refused (`refuseCodeWorkingCopies`:
+  `Not promoted: XSLT '...' is a working copy of a promoted pipeline's code, which changes only by a new version ...
+  Nothing was changed.`; for a shared module, that build_translation_xslt of the build's group makes the new
+  version the group imports); an unchanged one is only discarded. A working copy of Documentation is
   **written back**: the original is copied into
   `<workspace>/backups` as `<name> backup <yyyyMMddHHmmss>` (UTC, tagged `mcp-generated`), then the copy's `data`,
   `converterType`, `documentation` and `description` are written over it, and the copy deleted. An unchanged copy is
@@ -3765,7 +3773,7 @@ Shared behaviour:
   this check (`PipelineStepping.refuseUnsafeDrafts`).
 * **A source type group's draft** is stepped as draft code for its own pipeline's XSLT element, as any
   translation's: a group is its pipeline's one XSLT, so nothing is inlined or routed. Its imports (the feed's common
-  module, which imports the helpers) resolve to the saved documents, the build's working copies where it has them.
+  module, which imports the helpers) resolve to the saved documents: the versions the group's XSLT imports.
 * **Mistyped properties.** A pipeline with a property Stroom can't take as written is refused before any step,
   naming it (`SteppedPipeline.refuseMistyped`): a boolean or integer property is checked against the type Stroom's
   element registry declares (`ElementRegistryFactory`). `jsonParser.addRootObject` written as the string `'false'`
@@ -4351,9 +4359,13 @@ version.
 
 A source type group's pipeline (`SourceTypeGroups.chainCopies`, `newVersion`): its one XSLT is the group's. An owned
 document the build has made a new version of already (`version_of`: `build_translation_xslt` saves a promoted group's
-change in a new version of its XSLT, without asking) is run by the copy, not copied again. The common and helpers
-modules the group imports aren't the pipeline's own, so stay shared; every module in the build importing a promoted
-module the build has a working copy of is pointed at that copy, so the chain runs the copies. The group's registry
+change in a new version of its XSLT, without asking) is run by the copy, not copied again; one made under the
+original's name (before such versions were named for them) is refused (`refuseCopiesUnderOriginalNames`: `... have
+the original's ... Rename each in Stroom ... Nothing was copied.`), as a new version under the original's names is.
+The common and helpers modules the group imports aren't the pipeline's own, so stay shared (the group's new XSLT
+imports the build's new versions of them where `build_translation_xslt` made them); every module in the build
+importing a promoted module the build has a working copy of (an older build's) is pointed at that copy, so the chain
+runs the copies. The group's registry
 rows move to the new version (`pipeline`: its `name` and `uuid`; `source_types` in the result); the current pipeline
 runs on unchanged until the user retires it.
 
@@ -4709,7 +4721,7 @@ constants, its shared calls, the registry's Environment and default System Name;
 System Name (its source types' rows', else its mapping's) as a parameter. A later group's entries the same as the
 common module's (its System Name and Environment aside) are left to it; others are its own, said in `group.notes`;
 a shared call of a later group's that the common module lacks is added to the common module, saved again (in place,
-or through a working copy of a promoted one), never imported by the group. **One source type group a build**
+or as a new version of a promoted one), never imported by the group. **One source type group a build**
 (decided 2026-11-13): `group` defaults to the one the build's scope names (`record_source_types`; a new translation in
 such a build with no `group` is that group's), and another group name is refused (`one source type group a build`;
 for a scope kept before scopes named their group, another group whose XSLT the build made is refused). Its source types
@@ -4717,7 +4729,11 @@ are `source_types`, else the build's scope's with those the group translates alr
 scope keeps its own); the sample check reads theirs alone. A build with a whole-feed scope (no registry) is
 unaffected. Saving: the helpers (made, or written again when this
 generator writes them otherwise) and common module first, then the group importing the common module by UUID, and the
-registry's rows for the group's source types set `translated` with `group` and `group_xslt`.
+registry's rows for the group's source types set `translated` with `group` and `group_xslt`, and its `modules` the
+versions saved (the feed's newest, for a new group to import). The modules a group has are those its XSLT imports
+(`SourceTypeGroups.modules`: its common module by the module's mark, and the helpers that module imports; the
+build's copy of the group's XSLT where it has one), so groups may import different versions; a new group takes the
+registry's.
 
 The group carries a snapshot of every registry row when saved (its kept mapping's `module.rows`), tries them in order
 (`=` a value, `matches()` an anchored pattern, checked in Java's and XPath's dialects alike, `∈` an item of the value
@@ -4758,10 +4774,18 @@ group=`. `references` (as `create_pipeline` takes them) are kept on the group's 
 **A promoted group** (`promotedPipeline`, `SourceTypeGroups.groupTarget`): a change to a group whose pipeline is
 promoted is always a new version (decided by the user, 2026-11-17), nothing asked: a new XSLT in the build's Events
 folder recorded `version_of` the original, which `copy_pipeline` of the group's pipeline then runs; the group's rows
-move to the new pipeline. A promoted shared module the change needs is taken as a working copy
-(`SourceTypeGroups.workingCopy`); every promoted module importing a copied one is copied too, and the build's modules
-import the copies, so stepping and processing in the build run them. Imports are rewritten by text, without `check_xslt`. At promotion the modules are pointed back at the
-originals before the copies are written back (`promote_build`).
+move to the new pipeline. The new XSLT is named for its pipeline's new version (`SourceTypeGroups.versionName`:
+`VersionNames.following` the pipeline's next version's token, as `copy_pipeline` names what it copies;
+`PEGA security` for pipeline `PEGA PEGA security` becomes `PEGA security-V2`). A promoted shared module the change
+needs (a shared call added to the common module, or the helpers out of date) is never changed in place either
+(decided by the user, 2026-11-17): a new version of it is made in the build (`newModuleVersion`, recorded
+`version_of`), named `<base> V<next>` after the highest version the feed knows (the module changed, the registry's
+newest; one with no version is V1.0, so `PEGA common V1.1`; `VersionNames.nextModule`), and only the group's new
+XSLT imports it; the feed's other groups keep the versions they import, and nothing promoted is rewritten. A
+helpers' new version makes a new version of the common module too, its import of the helpers rewritten by text (code
+and kept mapping), as the chain is by UUID; a common change makes no helpers version. A later save in the build
+changes the build's versions where they are. At promotion each goes in a version folder beside its predecessor
+(`promote_build`).
 
 **A feed translated whole** (no `group`, `SourceTypeGroups.seenSourceTypes`): in a build whose survey confirmed a
 source type field, the mapping keeps `seen_source_types` (the field, and the values seen: the registry's rows where
@@ -5487,8 +5511,10 @@ is reported with its error, not allowed to hide the others.
   `other_groups`, source type to the group translating it; `processing.passed_over`, a group's `records` and
   `raw_streams` passed over; `unseen_source_types`, a whole translation's values its survey didn't see;
   `new_source_types` and `registry`), `passed_over` (the kinds outside what the pipeline translates) and
-  `other_groups` (another group's kinds). Examples (`holds`) are read with the pipeline's own Data Splitter
-  (`KeptMappings.dataSplitter`), as processing read them, else a spec inferred from the stream.
+  `other_groups` (another group's kinds); for a group's pipeline whose feed's groups import different versions of
+  its common module or helpers, `module_versions`, one informational line naming the groups and versions
+  (`SourceTypeGroups.mixedModuleVersionsOf`, 2026-11-17). Examples (`holds`) are read with the pipeline's own Data
+  Splitter (`KeptMappings.dataSplitter`), as processing read them, else a spec inferred from the stream.
 * **Refuses**: no `pipeline_uuid`; a pipeline that can't be read; one that has processed nothing (no Error and no
   Events streams, on a first call); `max_streams` out of range; a cancelled call; no Stepping permission where it
   steps.

@@ -19,6 +19,8 @@ package stroom.mcp.impl.tools;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// The names a new version is proposed, from the version token in the original's, whatever its shape.
@@ -69,5 +71,33 @@ class TestVersionNames {
                                                    final String to,
                                                    final String expected) {
         assertThat(VersionNames.following(name, from, to)).isEqualTo(expected);
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            // A promoted module with no version of its own is V1.0.
+            "ACME common              | ACME common                                | ACME common V1.1",
+            // The highest of those known: the one changed, the feed's newest.
+            "ACME common              | ACME common;ACME common V1.1               | ACME common V1.2",
+            "ACME common              | ACME common V1.9;ACME common V1.10         | ACME common V1.11",
+            "ACME helpers             | ACME helpers V2                            | ACME helpers V3",
+            // A feed's own version is part of the base, not the module's.
+            "ACME-V2 common           | ACME-V2 common                             | ACME-V2 common V1.1",
+            // Another module's name is passed over.
+            "ACME common              | ACME helpers V1.5;ACME common              | ACME common V1.1"})
+    void aSharedModulesNewVersionIsAfterTheHighestKnown(final String base, final String names, final String next) {
+        assertThat(VersionNames.nextModule(base, List.of(names.split(";")))).isEqualTo(next);
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "ACME common | ACME common      | true",
+            "ACME common | ACME common V1.1 | true",
+            "ACME common | ACME common-V2   | false",
+            "ACME common | ACME commonV1.1  | false",
+            "ACME common | ACME common copy | false",
+            "ACME common | ACME-V2 common   | false"})
+    void aSharedModulesNameIsItsBaseOrABaseAndVersion(final String base, final String name, final boolean is) {
+        assertThat(VersionNames.isModuleName(base, name)).isEqualTo(is);
     }
 }

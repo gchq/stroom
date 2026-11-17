@@ -111,8 +111,8 @@ source type belongs to one group: one another group translates is refused.
   group's reference data loaded, the pipeline recorded in the registry's rows. One pipeline a group; a common or
   helpers module is refused as a pipeline's XSLT.
 * `copy_pipeline source_uuid=<the group's pipeline>` makes its new version (names proposed, the user confirms or
-  edits them), running the build's new version of the group's XSLT where it has one (else copying it) and the
-  build's working copies of the common module and helpers; the group's registry rows move to it, and the old
+  edits them), running the build's new version of the group's XSLT where it has one (else copying it); the group's
+  registry rows move to it, and the old
   version runs on until the user retires it. A build processes only its own pipelines, so this is also how a promoted
   group's pipeline takes the build's later data. `working_copy=true` is refused.
 
@@ -176,8 +176,12 @@ is held while a clash remains, and refuses a plan naming another group's index n
   `Indexing/` (a later build of the feed into its own group's folder). Its review shows the pipeline changes
   (reference data each group pipeline lacks, only ever added) and the index changes (fields added, forward only).
 * One open build per aggregated feed: another is refused, naming the open one. Finish (promote) or abandon it first.
-* A later build changes promoted modules through working copies (imported by the build's own modules, so the chain
-  runs the copies). Promotion writes them back, the chain pointed at the originals again.
+* A later build never changes a promoted common or helpers module in place: a change to one (a shared call added,
+  the helpers out of date) makes a new version of it, `<feed> common V1.1` (one with no version is V1.0), imported
+  only by the build's group; the feed's other groups keep the versions they import. Promotion puts it in a version
+  folder beside its predecessor. When groups import different versions, `module_versions` (build_status,
+  review_coverage) says so: information, nothing to fix. An older build's working copy of a module is refused at
+  promotion: delete it and save the group again (build_translation_xslt) to make the new version.
 * **Forward only**, per group: a source type moved out of parked is translated from the next processing on. Tell the
   user its history isn't: backfilling means reprocessing the period's raw streams through the group's pipeline,
   which reruns only that group (Stroom supersedes that pipeline's Events streams; their documents stay in the index).

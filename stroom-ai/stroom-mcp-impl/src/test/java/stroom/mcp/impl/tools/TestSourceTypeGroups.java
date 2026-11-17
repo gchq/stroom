@@ -415,7 +415,7 @@ class TestSourceTypeGroups {
         assertThat(JsonValues.strings(JsonValues.mapOrEmpty(saved.get("group")).get("source_types")))
                 .containsExactly("PegaSecurityEvent", "PegaDB");
         // Saved in the build's new version of it, not over the promoted XSLT.
-        final String copy = xsltsInBuild().get("PEGA security");
+        final String copy = xsltsInBuild().get("PEGA security-V2");
         assertThat(copy).isNotEqualTo(original);
         assertThat(world.world.records().entry(BUILD, copy)).containsEntry("version_of", original);
         assertThat(ModuleChecks.marker(world.xslt(copy).getData()))
@@ -571,8 +571,11 @@ class TestSourceTypeGroups {
 
         assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
         assertThat(world.asked).noneMatch(form -> form.contains("change that pipeline"));
-        final String version = xsltsInBuild().get("PEGA security");
-        assertThat(version).isNotEqualTo(original);
+        // Named for its pipeline's new version, as copy_pipeline names what it copies (seen in testing: under the
+        // original's name, it was told apart only by its version folder).
+        final String version = xsltsInBuild().get("PEGA security-V2");
+        assertThat(version).isNotNull().isNotEqualTo(original);
+        assertThat(xsltsInBuild()).doesNotContainKey("PEGA security");
         assertThat(world.world.records().entry(BUILD, version)).containsEntry("version_of", original)
                 .doesNotContainKey("copy_of");
         assertThat(world.xslt(original).getData()).isEqualTo(code);
@@ -582,6 +585,102 @@ class TestSourceTypeGroups {
                 .containsEntry("new_version", true);
         assertThat(String.valueOf(JsonValues.mapOrEmpty(saved.get("group")).get("group_next")))
                 .contains("copy_pipeline").doesNotContain("working_copy=true");
+    }
+
+    @Test
+    void aGroupsChangeToThePromotedCommonModuleMakesANewVersionOfItThatOnlyThatGroupImports() {
+        // Decided by the user (2026-11-17): a promoted module is never changed in place. The group's new version
+        // imports the common module's new version; the feed's other group keeps importing the one it imports.
+        final Map<String, String> promoted = promotedFeed();
+        final String commonCode = world.xslt(promoted.get("PEGA common")).getData();
+        final String securityCode = world.xslt(promoted.get("PEGA security")).getData();
+        eventMetaLibrary();
+        final Map<String, Object> calling = new LinkedHashMap<>(integration());
+        calling.put("shared", List.of(Map.of("href", SourceTypeGroups.href("u-meta", "Event Meta"), "template",
+                "event-meta", "at", "Meta")));
+        final Map<String, Object> again = new LinkedHashMap<>(args(calling, "PEGA integration",
+                List.of("PegaIntegration")));
+        again.remove("own_output_feed");
+
+        final Map<String, Object> saved = world.call(tool, again);
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        // The common module's new version (V1.1: the promoted one has no version of its own), not the helpers'.
+        assertThat(xsltsInBuild()).containsOnlyKeys("PEGA common V1.1", "PEGA integration-V2");
+        final String common = xsltsInBuild().get("PEGA common V1.1");
+        assertThat(world.world.records().entry(BUILD, common)).containsEntry("version_of", promoted.get(
+                "PEGA common")).doesNotContainKey("copy_of");
+        assertThat(ModuleChecks.hrefs(world.xslt(common).getData()))
+                .anySatisfy(href -> assertThat(href).contains("u-meta"))
+                .anySatisfy(href -> assertThat(href).contains(promoted.get("PEGA helpers")));
+        assertThat(ModuleChecks.hrefs(world.xslt(xsltsInBuild().get("PEGA integration-V2")).getData()))
+                .singleElement().satisfies(href -> assertThat(href).contains(common, "PEGA common V1.1"));
+        // Nothing promoted rewritten: the other group imports the promoted common module as before.
+        assertThat(world.xslt(promoted.get("PEGA common")).getData()).isEqualTo(commonCode);
+        assertThat(world.xslt(promoted.get("PEGA security")).getData()).isEqualTo(securityCode)
+                .contains("uuid='" + promoted.get("PEGA common") + "'");
+        assertThat(JsonValues.strings(JsonValues.mapOrEmpty(saved.get("group")).get("notes")))
+                .anySatisfy(note -> assertThat(note).contains("event-meta", "as a new version of it in this build"));
+        // The registry names the feed's newest, for a new group to import.
+        assertThat(JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(SourceTypeRegistry.read(written.getLast())
+                .get("modules")).get("common"))).containsEntry("uuid", common);
+
+        // Saved again in the build: its new version changed where it is, not another made.
+        world.call(tool, again);
+        assertThat(xsltsInBuild()).containsOnlyKeys("PEGA common V1.1", "PEGA integration-V2");
+
+        // The feed's groups import different versions: said, as information.
+        assertThat(world.groups.mixedModuleVersions(BUILD)).singleElement().satisfies(line -> assertThat(line)
+                .contains("different versions of its common module", "'PEGA common' (PEGA security)",
+                        "'PEGA common V1.1' (PEGA integration)"));
+    }
+
+    @Test
+    void aCommonModulesFeedIsToldFromItsNameOrAVersionOfIt() {
+        // Seen reviewing the docs' group line: a version's name no longer ended with " common".
+        assertThat(SourceTypeGroups.feedOfCommon("PEGA common")).contains("PEGA");
+        assertThat(SourceTypeGroups.feedOfCommon("PEGA common V1.1")).contains("PEGA");
+        assertThat(SourceTypeGroups.feedOfCommon("ACME common feed common V2")).contains("ACME common feed");
+        assertThat(SourceTypeGroups.feedOfCommon("PEGA helpers V1.1")).isEmpty();
+        assertThat(SourceTypeGroups.feedOfCommon("PEGA common copy")).isEmpty();
+        assertThat(SourceTypeGroups.feedOfCommon(null)).isEmpty();
+    }
+
+    @Test
+    void outOfDateHelpersMakeANewVersionOfThemAndOfTheCommonModuleImportingThem() {
+        // The generator writes the helpers otherwise now: a promoted one changes only by a new version, and the
+        // common module importing it (by UUID) is a new version too, imported only by the build's group.
+        final Map<String, String> promoted = promotedFeed();
+        final String helpers = promoted.get("PEGA helpers");
+        final String older = HelpersXslt.generate().replaceFirst("version=\"" + HelpersXslt.VERSION + "\"",
+                "version=\"0\"");
+        assertThat(HelpersXslt.isCurrent(older)).isFalse();
+        world.world.docs.put(helpers, world.xslt(helpers).copy().data(older).build());
+        final String commonCode = world.xslt(promoted.get("PEGA common")).getData();
+        final Map<String, Object> again = new LinkedHashMap<>(args(security(), "PEGA security",
+                List.of("PegaSecurityEvent")));
+        again.remove("own_output_feed");
+
+        final Map<String, Object> saved = world.call(tool, again);
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        assertThat(xsltsInBuild()).containsOnlyKeys("PEGA helpers V1.1", "PEGA common V1.1", "PEGA security-V2");
+        final String helpersVersion = xsltsInBuild().get("PEGA helpers V1.1");
+        final String commonVersion = xsltsInBuild().get("PEGA common V1.1");
+        assertThat(world.xslt(helpersVersion).getData()).isEqualTo(HelpersXslt.generate());
+        assertThat(world.world.records().entry(BUILD, helpersVersion)).containsEntry("version_of", helpers);
+        assertThat(ModuleChecks.hrefs(world.xslt(commonVersion).getData())).singleElement()
+                .isEqualTo(SourceTypeGroups.href(helpersVersion, "PEGA helpers V1.1"));
+        assertThat(keptMapping(world.xslt(commonVersion)).module().helpers())
+                .isEqualTo(SourceTypeGroups.href(helpersVersion, "PEGA helpers V1.1"));
+        assertThat(ModuleChecks.hrefs(world.xslt(xsltsInBuild().get("PEGA security-V2")).getData()))
+                .singleElement().satisfies(href -> assertThat(href).contains(commonVersion));
+        // The promoted ones as they were: the other group's chain is production's.
+        assertThat(world.xslt(helpers).getData()).isEqualTo(older);
+        assertThat(world.xslt(promoted.get("PEGA common")).getData()).isEqualTo(commonCode);
+        assertThat(world.groups.mixedModuleVersions(BUILD)).hasSize(2)
+                .anySatisfy(line -> assertThat(line).contains("helpers", "'PEGA helpers' (PEGA integration)",
+                        "'PEGA helpers V1.1' (PEGA security)"));
     }
 
     @Test
@@ -822,6 +921,36 @@ class TestSourceTypeGroups {
             }
         }));
         return uuid;
+    }
+
+    // The security and integration groups as a first build promoted them: their XSLTs and pipelines, and the feed's
+    // common module and helpers, in production beside the feed, the registry naming them. Returns their UUIDs by
+    // name.
+    private Map<String, String> promotedFeed() {
+        world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
+        world.call(tool, args(integration(), "PEGA integration", List.of("PegaIntegration")));
+        final Map<String, String> docs = xsltsInBuild();
+        assertThat(docs).containsOnlyKeys("PEGA security", "PEGA integration", "PEGA common", "PEGA helpers");
+        final String folder = world.world.folder("System/Feeds/PEGA").uuid;
+        docs.values().forEach(uuid -> world.world.move(uuid, folder));
+        world.world.add("Pipeline", "PEGA PEGA security", folder, "o-security");
+        world.world.add("Pipeline", "PEGA PEGA integration", folder, "o-integration");
+        written.add(withRows(written.getLast(), row -> {
+            if ("PegaSecurityEvent".equals(row.get("name"))) {
+                row.put("pipeline", Map.of("name", "PEGA PEGA security", "uuid", "o-security"));
+            } else if ("PegaIntegration".equals(row.get("name"))) {
+                row.put("pipeline", Map.of("name", "PEGA PEGA integration", "uuid", "o-integration"));
+            }
+        }));
+        return docs;
+    }
+
+    // A site library with a shared template, event-meta.
+    private void eventMetaLibrary() {
+        world.world.add(XsltDoc.TYPE, "Event Meta", world.world.folder("System/Shared").uuid, "u-meta");
+        world.world.docs.put("u-meta", XsltDoc.builder().uuid("u-meta").name("Event Meta")
+                .data("<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"3.0\">"
+                      + "<xsl:template name=\"event-meta\"><Meta/></xsl:template></xsl:stylesheet>").build());
     }
 
     private static Map<String, Object> args(final Map<String, Object> mapping,
