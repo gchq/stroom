@@ -61,7 +61,7 @@ public final class SchemaErrors {
             reader.setErrorHandler(collector.parseErrors());
             reader.parse(new InputSource(new StringReader(xml)));
         } catch (final SAXParseException e) {
-            throw new XmlTrees.NotWellFormedException(e.getLineNumber(), e.getMessage());
+            throw new XmlTrees.NotWellFormedException(e.getLineNumber(), e.getColumnNumber(), e.getMessage());
         } catch (final SAXException | IOException e) {
             throw new XmlTrees.NotWellFormedException(-1, e.getMessage());
         }

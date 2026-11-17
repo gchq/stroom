@@ -56,6 +56,73 @@ class TestEventStreams {
     }
 
     @Test
+    void testAnXml11StreamHoldingAControlCharacterReferenceValidates() {
+        // Seen in chat 181: Stroom wrote a Teams message's form feed as &#xc; in its XML 1.1 Events stream, and
+        // check_events refused the stream as not well-formed, reading the merged events as XML 1.0.
+        final List<String> records = List.of(TestEventChecks.EVENT, withFormFeed(TestEventChecks.EVENT));
+        for (int i = 0; i < records.size(); i++) {
+            Mockito.when(streamReader.fetch(42L, i, null)).thenReturn(fetched("Events", records.get(i),
+                    records.size()));
+        }
+
+        final EventStreams.Read read = eventStreams.read(List.of(42L), 1000);
+
+        assertThat(read.eventsXml()).startsWith("<?xml version=\"1.1\"");
+        assertThat(read.eventsXml()).containsAnyOf("&#xc;", "&#12;");
+        final EventChecks checks = new EventChecks(new HeldSchemasWorld()
+                .hold("file://event-logging-v9.9.9.xsd", "event-logging:3", TestEventChecks.XSD)
+                .heldSchemas());
+        final Map<String, Object> schema = checks.validateEvents(read.eventsXml(), null);
+        assertThat(schema.get("valid")).isEqualTo(true);
+        final Map<String, Object> quality = EventChecks.checkEventQuality(read.eventsXml());
+        assertThat(quality.get("events_checked")).isEqualTo(2);
+        assertThat(quality.get("ok")).isEqualTo(true);
+    }
+
+    @Test
+    void testAnXml10RecordHoldingAControlCharacterReferenceIsRefusedSayingWhere() {
+        // A form feed reference really is not well-formed in XML 1.0: refused, naming the stream, the event, the
+        // column and the text around it, not only "line 1".
+        final String xml10 = TestEventChecks.EVENT.replace("version=\"1.1\"", "version=\"1.0\"");
+        final List<String> records = List.of(xml10, withFormFeed(xml10));
+        for (int i = 0; i < records.size(); i++) {
+            Mockito.when(streamReader.fetch(42L, i, null)).thenReturn(fetched("Events", records.get(i),
+                    records.size()));
+        }
+
+        assertThatThrownBy(() -> eventStreams.read(List.of(42L), 1000))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageStartingWith("Event 2 of stream 42 is not well-formed XML: Character reference "
+                                        + "\"&#xc\" is an invalid XML character.")
+                .hasMessageContaining(", column ")
+                .hasMessageContaining("<Generator>g&#xc;")
+                .hasMessageContaining("&#xc; (U+000C, a control character) is a character reference XML 1.0 "
+                                      + "forbids and XML 1.1 allows")
+                .hasMessageContaining("strip_control");
+    }
+
+    @Test
+    void testEventsXmlIsReadAsTheVersionItDeclares() {
+        final EventChecks checks = new EventChecks(new HeldSchemasWorld()
+                .hold("file://event-logging-v9.9.9.xsd", "event-logging:3", TestEventChecks.XSD)
+                .heldSchemas());
+        final String twoEvents = TestEventChecks.EVENT.replace("</Event></Events>", "</Event>"
+                + TestEventChecks.EVENT.substring(TestEventChecks.EVENT.indexOf("<Event>"))
+                        .replace("<Generator>g</Generator>", "<Generator>g&#xc;h</Generator>"));
+
+        // Sent as Stroom writes it, XML 1.1, it is valid.
+        assertThat(checks.validateEvents(twoEvents, null).get("valid")).isEqualTo(true);
+        assertThat(EventChecks.checkEventQuality(twoEvents).get("ok")).isEqualTo(true);
+        // As XML 1.0 it is refused, saying which event and where.
+        final String xml10 = twoEvents.replace("version=\"1.1\"", "version=\"1.0\"");
+        assertThatThrownBy(() -> checks.validateEvents(xml10, null))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageStartingWith("Events XML is not well-formed XML: Character reference \"&#xc\"")
+                .hasMessageContaining(", in Event 2; near \"")
+                .hasMessageContaining("<Generator>g&#xc;");
+    }
+
+    @Test
     void testNoMoreThanTheCapIsRead() {
         Mockito.when(streamReader.fetch(Mockito.eq(1L), Mockito.anyLong(), Mockito.isNull()))
                 .thenReturn(fetched("Events", TestEventChecks.EVENT, 10));
@@ -86,6 +153,11 @@ class TestEventStreams {
                 List.of(), List.of("Unable to decode")));
         assertThatThrownBy(() -> eventStreams.read(List.of(8L), 10))
                 .hasMessage("Stroom could not read stream 8: Unable to decode");
+    }
+
+    // The record with a form feed, as Stroom writes it, in its Generator.
+    private static String withFormFeed(final String record) {
+        return record.replace("<Generator>g</Generator>", "<Generator>g&#xc;h</Generator>");
     }
 
     private static Fetched fetched(final String type, final String data, final long total) {

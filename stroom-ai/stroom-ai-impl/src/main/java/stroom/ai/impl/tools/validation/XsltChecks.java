@@ -104,15 +104,13 @@ public final class XsltChecks {
     /// @param text XML text.
     /// @param what What it is, for the message, e.g. `Events XML`.
     /// @return Its root element.
-    /// @throws ToolRefusal if it is not well-formed, e.g. "Events XML is not well-formed XML: ...".
+    /// @throws ToolRefusal if it is not well-formed, e.g. "Events XML is not well-formed XML: ...", with where
+    ///                     ([WellFormedFaults]).
     public static Element parse(final String text, final String what) {
         try {
             return XmlTrees.parse(text);
         } catch (final NotWellFormedException e) {
-            throw new ToolRefusal(what + " is not well-formed XML: " + e.getMessage()
-                                  + (e.getLine() > 0
-                    ? " (line " + e.getLine() + ")"
-                    : ""));
+            throw WellFormedFaults.refusal(text, what, e);
         }
     }
 

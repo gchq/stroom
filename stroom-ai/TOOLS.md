@@ -1395,6 +1395,15 @@ attached or snapshotted results table that isn't grouped, a `run_stroomql` table
 event is written as `<stroom-event streamId=".." eventId="..">`, holding the stream's header, the event's segment
 and the stream's footer, so each is a whole document.
 
+The file is XML 1.1 (`EventsFile.start`), as Stroom writes its Events streams, so an event well-formed in the version
+it declares is kept as XML, without its declaration, a control character as Stroom stored it (`&#xc;`). Seen in chat
+181: in an XML 1.0 file a Teams message's form feed made the event escaped text (`format="text"`, `&amp;#xc;`), and
+every grep for `&#xc` missed it. An event of another version has the characters XML 1.1 reads differently (C1
+controls, DEL and U+2028) written as character references, so its values read the same. Anything else (text, XML
+that isn't well-formed, a DOCTYPE) is kept as escaped text, with `format="text"`; its control characters other than
+tab, line feed and carriage return (and NEL and U+2028, which XML 1.1 would read as a new line) are written as
+character references, NUL, surrogates, U+FFFE and U+FFFF left out.
+
 Rows are read in order without repeats, up to `limit` (capped by `stroom.ai.workspace.maxEventsPerFetch`, default
 500). Within each stream, events are read in stored order. Stored data is compressed in blocks, so reading out of
 order would decompress the same block again. Events are segments 1 to n-2 of the stream (0 is the header, the last
@@ -4301,6 +4310,11 @@ Given `stream_ids`, it reads the Events streams itself (`EventStreams`) rather t
 an agent once read 50 events back 23 at a time, 47 s a read, to check them. A stream holding more events than are
 checked (500 in all) is read at events spread over it, not its start (`spread` in `read`): seen in testing, the first
 500 of 6,000 events were almost all of one kind.
+Events are read as the XML version they declare: Stroom writes Events streams as XML 1.1, where a control character
+in a source's value (a form feed, bell or escape) is written as a character reference (`&#xc;`) XML 1.0 forbids.
+The merged events of `stream_ids` keep the 1.1 declaration when any record has it, and an `events_xml` with a 1.1
+declaration is read as 1.1. Seen in chat 181: a Teams message's form feed, passed by Stroom's schema filter, was
+refused as "not well-formed (line 1)" of the merged one-line document, and the agent spent about 30 calls looking.
 
 * **Arguments**: `events_xml` (an `<Events>` document, e.g. step output) or `stream_ids` (Events streams processing
   wrote, as `wait_for_processing` lists them); exactly one of the two. `schema_version` (default the version the
@@ -4310,7 +4324,11 @@ checked (500 in all) is read at events spread over it, not its start (`spread` i
   failed rule with `events_failing` and up to three `examples`; `notes` when events are EventDetail/Unknown), `note`
   when the XML came HTML-escaped. With `stream_ids` also `read` (per stream, records checked and held),
   `recorded_for` (the pipelines recorded) and the plan's `next`.
-* **Refuses**: both or neither of `events_xml` and `stream_ids`; XML that isn't well-formed; a schema version this
+* **Refuses**: both or neither of `events_xml` and `stream_ids`; XML that isn't well-formed in the version it
+  declares (an XML 1.0 document holding `&#xc;` is), saying where (`WellFormedFaults`): line and column, the Event
+  it is in (for `stream_ids`, the stream and event number), the text near it with control characters visible, and
+  for a control character reference that XML 1.1 allows it, the value is the source's, and transform
+  `strip_control` is needed only if the output must be XML 1.0; a schema version this
   Stroom doesn't hold; a stream that can't be read, isn't Events, or has no Events records; a stream the user may
   not read (no View Data).
 * **Notes**:
@@ -6516,7 +6534,12 @@ The checks `check_xslt`, `check_events`, the translation build and the stepping 
 * **`EventChecks`** and **`SchemaErrors`**: `check_events`' two checks. `SchemaErrors` validates against a compiled
   schema, giving each error's line, a path such as `/Events/Event[2]/EventTime/TimeCreated` (a position where the
   parent holds more than one of that name) and the message, the validator's two messages for one bad value given as
-  one error. **`EventStreams`** reads Events streams as one `<Events>` document for it.
+  one error. **`EventStreams`** reads Events streams as one `<Events>` document for it, XML 1.1 (with its
+  declaration) when any record declares 1.1, as Stroom writes Events.
+* **`WellFormedFaults`**: where XML that isn't well-formed is at fault, for the refusals of `XsltChecks.parse` and
+  `check_events`: the line and column, the Event it is in (the Nth `<Event>`), up to 50 characters before and 30
+  after with control characters shown as `\u000c`, and, for a C0 character reference XML 1.0 forbids, that XML 1.1
+  allows it and the value is the source's.
 * **`EventElements`**: what an event-logging element takes, from the schema in this Stroom, for describing it to the
   agent.
 * **`XPathChecks`**: evaluates a mapping's xpaths and extraction regexes against the sample before anything is
