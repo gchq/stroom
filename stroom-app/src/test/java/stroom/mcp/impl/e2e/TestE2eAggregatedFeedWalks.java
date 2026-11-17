@@ -62,8 +62,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// walk of two source types, ExchangeOnline and MicrosoftTeams, its pipeline translating both and passing over the
 /// rest); data arriving later holds a value no registry row matches, which neither pipeline warns of (counted with
 /// the rest passed over); both pipelines process it, coverage is reviewed, and promotion leaves the registry beside
-/// the feed with both groups translated, each by its own pipeline. In the Azure walk a third build changes the
-/// promoted first group alone (its scope naming the group, no source type added), through working copies.
+/// the feed with both groups translated, each by its own pipeline (the first group's by the new version of it the
+/// second build processed with: a build processes only its own pipelines, and a promoted one is copied only as a new
+/// version). In the Azure walk a third build changes the promoted first group alone (its scope naming the group, no
+/// source type added), in a new version of its pipeline, promoted beside the old one, nothing asked.
 ///
 /// A last walk translates an aggregated feed whole, as a normal source: its later data's source type value the
 /// survey didn't see is logged once a stream, triaged benign, and reported by review_coverage. Translated whole after
@@ -77,6 +79,8 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
     private static final int LATER_RECORDS = 300;
     private static final String OWN_FEED = "To an output feed of its own";
     private static final String PLACEMENT = "is new. It gets a pipeline of its own";
+    // The form that asked whether a change to a promoted group went to its pipeline or a new version: never asked
+    // now, a new version being the only way.
     private static final String PIPELINE_FORM = "runs in pipeline";
     // In a family's rules: common entries the agent adds to the draft's.
     private static final String COMMON_ADDED = "common_added";
@@ -566,10 +570,17 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
                         "Event")).as("a record of %s", value).hasSize(1);
             }
         }
-        // Processing in the build runs the build's pipelines: the first group's production pipeline through a working
-        // copy of it.
-        final String firstRunning = uuidOf(agreed("copy_pipeline", args("build", second, "source_uuid", firstPipeline,
-                "new_name", firstPipelineName, "working_copy", true)));
+        // Processing in the build runs the build's pipelines: the first group's production pipeline through a new
+        // version of it (a promoted pipeline is copied only as a new version, decided by the user 2026-11-17), which
+        // the first group's rows move to.
+        final Map<String, Object> firstCopied = agreed("copy_pipeline", args("build", second, "source_uuid",
+                firstPipeline, "new_name", firstPipelineName));
+        dump("copy_pipeline " + second, firstCopied);
+        assertThat(firstCopied).doesNotContainKey("working_copy");
+        assertThat(strings(firstCopied, "source_types")).containsExactly(firstType);
+        final String firstRunning = uuidOf(firstCopied);
+        final String firstRunningName = (String) firstCopied.get("name");
+        assertThat(firstRunningName).isNotEqualTo(firstPipelineName);
 
         // Data arrives with a value no registry row matches: neither pipeline warns of it, both count it passed
         // over.
@@ -649,8 +660,8 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         final Map<String, Map<String, Object>> rows = rows(registry);
         assertThat(rows.get(firstType)).containsEntry("status", SourceTypeRegistry.TRANSLATED)
                 .containsEntry("group", firstName);
-        assertThat(map(rows.get(firstType), "pipeline")).containsEntry("uuid", firstPipeline)
-                .containsEntry("name", firstPipelineName);
+        assertThat(map(rows.get(firstType), "pipeline")).containsEntry("uuid", firstRunning)
+                .containsEntry("name", firstRunningName);
         for (final String secondType : secondTypes) {
             assertThat(rows.get(secondType)).containsEntry("status", SourceTypeRegistry.TRANSLATED)
                     .containsEntry("group", secondName);
@@ -666,22 +677,25 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
         // Each group's pipeline in its own group's folder beside the feed.
         assertThat(folderOf(secondPipeline)).startsWith("System/" + folder + "/" + secondName)
                 .isNotEqualTo(folderOf(firstPipeline));
-        assertThat(jsonOf(registry)).doesNotContain(firstRunning);
+        // The first group's new version beside its old one, which is left as it was.
+        assertThat(folderOf(firstRunning)).startsWith("System/" + folder + "/" + firstName)
+                .isNotEqualTo(folderOf(firstPipeline));
+        assertThat(jsonOf(registry)).doesNotContain(firstPipeline);
         if (family.changesFirst()) {
-            changeFirst(family, feed, folder, firstName, firstType, firstSaved, firstPipeline, stream, laterStream,
+            changeFirst(family, feed, folder, firstName, firstType, firstSaved, firstRunning, stream, laterStream,
                     later);
         }
     }
 
-    // A third build that changes the promoted first group alone: its scope names the group, no source type added;
-    // the user chooses to change its pipeline, through working copies, written back at promotion.
+    // A third build that changes the promoted first group alone: its scope names the group, no source type added; the
+    // change goes to a new version of the group's pipeline, nothing asked, promoted beside the current one.
     private void changeFirst(final Family family,
                              final String feed,
                              final String folder,
                              final String firstName,
                              final String firstType,
                              final Saved firstSaved,
-                             final String firstPipeline,
+                             final String current,
                              final long stream,
                              final long laterStream,
                              final String later) {
@@ -697,16 +711,20 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
                 "reviewed", shown.get("review_id"), "rows", shown.get("rows"), "group", firstName));
         assertThat(scoped).containsEntry("group", firstName).containsKey("joins");
         assertThat(strings(scoped, "scope")).containsExactly(firstType);
-        // The group's pipeline copied first, before the group is saved (seen in eval case 61: the agent's
-        // working_copy=true made the user's choice, and they saw only the copy's technical form): copy_pipeline puts
-        // the change-or-new-version question to the user itself and copies as they chose (Change, the first
-        // option: a working copy, whatever the agent's flag said); build_translation_xslt doesn't ask again.
+        // The group's pipeline copied first, before the group is saved (seen in eval case 61: the agent copied it
+        // before build_translation_xslt): a new version, whatever the order, its names the only thing the user is
+        // asked; build_translation_xslt then changes the new version's XSLT, asking nothing.
+        assertThat(refusal("copy_pipeline", args("build", third, "source_uuid", current, "new_name",
+                feed + " " + firstName, "working_copy", true))).contains("never a working copy",
+                "Nothing was copied");
         final int changeBefore = client.forms().size();
         final Map<String, Object> copied = agreed("copy_pipeline", args("build", third, "source_uuid",
-                firstPipeline, "new_name", feed + " " + firstName, "working_copy", false));
-        assertThat(copied).containsEntry("working_copy", true);
-        assertThat(String.valueOf(copied.get("note"))).contains("working_copy=false was overridden");
+                current, "new_name", feed + " " + firstName + "-V3"));
+        assertThat(copied).doesNotContainKey("working_copy");
+        assertThat(strings(copied, "source_types")).containsExactly(firstType);
         final String running = uuidOf(copied);
+        final String currentXslt = uuidOf(map(rows(registryBeside(folder, feed)).get(firstType), "group_xslt"));
+        final String currentCode = readXslt(currentXslt).getData();
         // The group and its source types are the scope's: none given.
         final Map<String, Object> changed = agreed("build_translation_xslt", args("build", third, "feeds",
                 List.of(feed), "schema_version", VERSION, "stream_ids", List.of(stream), "mapping",
@@ -714,19 +732,31 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
                         "\"LogonFailedV2\""))));
         assertThat(changed).as("changed: %s", changed.get("problems")).containsEntry("ok", true);
         assertThat(map(changed, "group")).containsEntry("name", firstName);
-        assertThat(formsSince(changeBefore).stream().filter(form -> form.message().contains(PIPELINE_FORM)))
-                .singleElement()
-                .satisfies(form -> assertThat(form.message()).contains("'" + firstName + "'",
-                        feed + " " + firstName));
+        assertThat(formsSince(changeBefore)).noneSatisfy(form -> assertThat(form.message())
+                .contains(PIPELINE_FORM));
         final String original = uuidOf(map(firstSaved.group(), "xslt"));
         final String copy = uuidOf(map(map(changed, "group"), "xslt"));
-        assertThat(copy).isNotEqualTo(original);
+        assertThat(copy).isNotIn(original, currentXslt);
+        assertThat(String.valueOf(copied.get("copied_documents"))).contains(copy);
         assertThat(readXslt(copy).getData()).contains("LogonFailedV2");
         final int failedAt = TestE2eSourceTypeGroups.indexOf(later.lines().toList(), "\"UserLoginFailed\"", null);
         assertThat(translationOutput(running, laterStream, failedAt)).contains("LogonFailedV2");
         promote(third, Map.of("Pipeline", folder, "XSLT", folder, "Documentation", folder));
-        // The working copy written back: production translates as changed.
-        assertThat(readXslt(original).getData()).contains("LogonFailedV2");
+        // The new version beside the current one, which is left as it was; the registry beside the feed names it.
+        assertThat(readXslt(currentXslt).getData()).isEqualTo(currentCode).doesNotContain("LogonFailedV2");
+        assertThat(readXslt(original).getData()).doesNotContain("LogonFailedV2");
+        assertThat(translationOutput(current, laterStream, failedAt)).doesNotContain("LogonFailedV2");
+        assertThat(translationOutput(running, laterStream, failedAt)).contains("LogonFailedV2");
+        assertThat(folderOf(running)).isNotEqualTo(folderOf(current));
+        final Map<String, Object> promotedRow = rows(registryBeside(folder, feed)).get(firstType);
+        assertThat(map(promotedRow, "pipeline")).containsEntry("uuid", running);
+        assertThat(map(promotedRow, "group_xslt")).containsEntry("uuid", copy);
+    }
+
+    // The registry beside the feed, read.
+    private Map<String, Object> registryBeside(final String folder, final String feed) {
+        return SourceTypeRegistry.read(documentation(documentsIn("System/" + folder, "Documentation",
+                feed + SourceTypeRegistry.SUFFIX).getFirst().getUuid()));
     }
 
     // --- the steps ---

@@ -79,9 +79,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// A case that starts from another (`setup: {from_case: 56}`, [EvalCases#setup]) has that case's reference solution
 /// run first, on a feed promoted outside the build as a site's feeds are, and the build promoted with its layout
 /// accepted: the case's own build then starts on the feed, its registry and the promoted group. Its reference names
-/// the group it builds: a new group gets a pipeline and an index of its own; the promoted group, joined, is changed
-/// through a working copy of its pipeline (or a new version, `reference.pipeline: new_version`) and its index gains
-/// the build's fields. A case with `promote: true` is promoted at the end, and its registry scored beside the feed.
+/// the group it builds: a new group gets a pipeline and an index of its own; the promoted group, joined, is changed in
+/// a new version of its pipeline (a promoted pipeline is never changed in place, decided by the user 2026-11-17), as
+/// is its indexing pipeline, and its index gains the build's fields. A case with `promote: true` is promoted at the
+/// end, and its registry scored beside the feed.
 @SuppressWarnings("unchecked")
 abstract class AbstractEvalTest extends AbstractE2eTest {
 
@@ -110,10 +111,6 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     private static final int BLOCK = 50;
     private static final Pattern SAMPLED_VALUES = Pattern.compile("Sample values are what the [1-9]\\d* documents");
     private static final Pattern ERROR_LINE = Pattern.compile("\\b(ERROR|FATAL)\\b");
-    // The options of the form that asks where a change to a promoted group's pipeline goes.
-    private static final String PIPELINE_FORM = "runs in pipeline";
-    private static final Map<String, String> PIPELINE_OPTIONS = Map.of("change", "Change ", "new_version",
-            "A new version ");
 
     // The streams a question's events are in.
     private static final int QUESTION_STREAMS = 10;
@@ -421,10 +418,10 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         final String group = sourceTypes != null
                 ? (String) sourceTypes.get("group")
                 : null;
-        // The setup's group, joined: changed through its pipeline's working copy (or a new version).
+        // The setup's group, joined: changed in a new version of its pipeline.
         final boolean joins = setup != null && group != null && group.equalsIgnoreCase(setup.built().group());
         if (sourceTypes != null) {
-            recordSourceTypes(build, feed, sourceTypes, (String) reference.getOrDefault("pipeline", "change"));
+            recordSourceTypes(build, feed, sourceTypes);
         }
         final Map<String, Object> translation = args("mapping", reference.get("mapping"), "stream_ids", raws,
                 "splitter", splitter, "build", build);
@@ -480,13 +477,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         final String pipeline;
         final String pipelineName;
         if (joins) {
-            // The promoted group's pipeline, run in the build through its working copy (or copied as its new
-            // version), as the change form's answer says.
-            final boolean newVersion = "new_version".equals(reference.get("pipeline"));
+            // The promoted group's pipeline, run in the build as its new version, under the names proposed.
             final Map<String, Object> copied = agreed("copy_pipeline", args("build", build, "source_uuid",
-                    setup.built().pipeline(), "new_name", setup.built().pipelineName() + (newVersion
-                            ? " v2"
-                            : ""), "working_copy", !newVersion));
+                    setup.built().pipeline(), "new_name", setup.built().pipelineName()));
             pipeline = uuidOf(copied);
             pipelineName = (String) copied.get("name");
         } else {
@@ -580,8 +573,7 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     // puts the group's source types in the group and names it, in the form.
     private void recordSourceTypes(final String build,
                                    final String feed,
-                                   final Map<String, Object> sourceTypes,
-                                   final String pipelineChoice) {
+                                   final Map<String, Object> sourceTypes) {
         json("survey_feed", args("feed", feed, "build", build, "source_type_field", sourceTypes.get("field")));
         // A later build's system and environment are the registry's.
         final String environment = sourceTypes.get("system_name") != null
@@ -593,7 +585,7 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         if (!"needs_review".equals(shown.get("status"))) {
             throw new AssertionError("record_source_types showed no table: " + firstLines(String.valueOf(shown)));
         }
-        answering(grouping(strings(sourceTypes, "source_types"), (String) sourceTypes.get("group"), pipelineChoice));
+        answering(grouping(strings(sourceTypes, "source_types"), (String) sourceTypes.get("group")));
         final Map<String, Object> written = json("record_source_types", args("build", build, "feed", feed,
                 "system_name", sourceTypes.get("system_name"), "environment", environment, "reviewed",
                 shown.get("review_id"), "rows", shown.get("rows"), "group", sourceTypes.get("group")));
@@ -602,42 +594,17 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         }
     }
 
-    // A user who puts these source types in the build's group, named so, sends a change to a promoted group's
-    // pipeline where they choose (change or new_version), keeps the Ids as they are when the translation asks, and
-    // agrees to everything else (the group's Events into the feed's).
+    // A user who puts these source types in the build's group, named so, keeps the Ids as they are when the
+    // translation asks, and agrees to everything else (the group's Events into the feed's, a new version's names as
+    // proposed).
     private static Function<ElicitFormRequest, ElicitResult> grouping(final List<String> sourceTypes,
-                                                                      final String group,
-                                                                      final String pipelineChoice) {
+                                                                      final String group) {
         final Function<ElicitFormRequest, ElicitResult> scoping = TestE2eSourceTypeGroups.scopeOf(sourceTypes,
                 group);
         final Function<ElicitFormRequest, ElicitResult> keeping = choosing("Keep as is");
-        final String option = PIPELINE_OPTIONS.get(pipelineChoice);
-        return form -> {
-            if (form.message().contains(TestE2eSourceTypeGroups.SCOPE_FORM)) {
-                return scoping.apply(form);
-            }
-            if (form.message().contains(PIPELINE_FORM) && option != null) {
-                return choosingStart(form, option);
-            }
-            return keeping.apply(form);
-        };
-    }
-
-    // The form agreed, each choice set to its first option starting so.
-    private static ElicitResult choosingStart(final ElicitFormRequest form, final String start) {
-        final Map<String, Object> content = new LinkedHashMap<>(McpTestClient.agree(form).content());
-        if (form.requestedSchema().get("properties") instanceof final Map<?, ?> fields) {
-            fields.forEach((name, field) -> {
-                if (field instanceof final Map<?, ?> schema && schema.get("enum") instanceof final List<?> options) {
-                    options.stream()
-                            .map(String::valueOf)
-                            .filter(choice -> choice.startsWith(start))
-                            .findFirst()
-                            .ifPresent(choice -> content.put(String.valueOf(name), choice));
-                }
-            });
-        }
-        return new ElicitResult(ElicitResult.Action.ACCEPT, content, null);
+        return form -> form.message().contains(TestE2eSourceTypeGroups.SCOPE_FORM)
+                ? scoping.apply(form)
+                : keeping.apply(form);
     }
 
     // The user's answers, each form and its answer kept.
@@ -780,14 +747,16 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         final String pipeline;
         if (joins) {
             index = before.index();
+            // The group's indexing pipeline as its new version, under the names proposed, writing to the
+            // group's index.
             final Map<String, Object> copied = agreed("copy_pipeline", args("build", build, "source_uuid",
-                    before.pipeline(), "new_name", indexName + " - Indexing", "working_copy", true));
+                    before.pipeline(), "new_name", indexName + " - Indexing"));
             pipeline = uuidOf(copied);
             final String xslt = list(copied, "copied_documents").stream()
                     .filter(doc -> "XSLT".equals(doc.get("type")))
                     .map(doc -> (String) doc.get("uuid"))
                     .findFirst()
-                    .orElseThrow(() -> new AssertionError("The indexing pipeline's working copy has no XSLT: "
+                    .orElseThrow(() -> new AssertionError("The indexing pipeline's new version has no XSLT: "
                                                           + copied));
             json("save_xslt", args("build", build, "uuid", xslt, "index_plan", plan));
         } else {

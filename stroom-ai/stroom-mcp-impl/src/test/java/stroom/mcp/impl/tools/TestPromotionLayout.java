@@ -88,10 +88,30 @@ class TestPromotionLayout {
 
         assertThat(layout.versionFolders(docs, Map.of(PipelineDoc.TYPE, "/Feeds/Pega"), "PEGA security").proposed())
                 .isEqualTo(Map.of("new", "System/Feeds/Pega/PEGA security/Events/v2"));
-        // Another group's build, or none: the feed's folder is elsewhere, as before.
+        // Another group's build too (seen in e2e, once a promoted pipeline was copied only as a new version: a
+        // build of the second group processing with a new version of the first group's pipeline put it in the
+        // second group's folder): beside its own predecessor, in that group's folder.
         assertThat(layout.versionFolders(docs, Map.of(PipelineDoc.TYPE, "/Feeds/Pega"), "PEGA other").proposed())
-                .isEmpty();
+                .isEqualTo(Map.of("new", "System/Feeds/Pega/PEGA security/Events/v2"));
+        // A build of no group: the feed's folder is elsewhere, as before.
         assertThat(layout.versionFolders(docs, Map.of(PipelineDoc.TYPE, "/Feeds/Pega")).proposed()).isEmpty();
+    }
+
+    @Test
+    void aGroupsNewVersionOfANewVersionGoesBesideItsVersionFolder() {
+        // Seen in e2e: v3 of a group's pipeline, its predecessor v2 in the group's version folder, was put in the
+        // group's folder itself, not in a version folder beside v2's.
+        world.add(PipelineDoc.TYPE, "PEGA security v2", world.folder("System/Feeds/Pega/PEGA security/v2").uuid,
+                "v2");
+        world.add(PipelineDoc.TYPE, "PEGA integration v2",
+                world.folder("System/Feeds/Pega/PEGA integration/Events/v2").uuid, "role-v2");
+        final List<Map<String, Object>> docs = List.of(
+                FakeBuildFacts.doc(PipelineDoc.TYPE, "v3", "PEGA security v3", "version_of", "v2"),
+                FakeBuildFacts.doc(PipelineDoc.TYPE, "role-v3", "PEGA integration v3", "version_of", "role-v2"));
+
+        assertThat(layout.versionFolders(docs, Map.of(PipelineDoc.TYPE, "/Feeds/Pega"), "PEGA security").proposed())
+                .isEqualTo(Map.of("v3", "System/Feeds/Pega/PEGA security/v3",
+                        "role-v3", "System/Feeds/Pega/PEGA integration/Events/v3"));
     }
 
     @Test

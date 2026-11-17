@@ -161,21 +161,6 @@ class TestPromotionProcessing {
     }
 
     @Test
-    void anOriginalAWorkingCopyWasWrittenBackOverKeepsItsLiveIndex() {
-        // Seen in a user's test: a production index was put up for dropping. A change in place goes on writing to
-        // the live index as before: never dropped.
-        promotedElastic();
-
-        final List<Map<String, Object>> made = w.promotion.createPromotionFilters(StroomLinks.CHAT, List.of(
-                new PromotionProcessing.Entry(IP, null, "Events", List.of(PIPELINE_TERM))), Set.of(), Set.of("ip"));
-
-        assertThat(String.valueOf(made.getFirst().get("before_enabling"))).contains("kept as it is (never dropped)")
-                .doesNotContain("DELETE");
-        assertThat(TestCreateProcessorFilterTool.actions(made.getFirst())).singleElement()
-                .satisfies(action -> assertThat(action.get("action")).isEqualTo("enable_processor_filter"));
-    }
-
-    @Test
     void aNewVersionsOwnIndexIsDroppedOnlyWhileNothingElseClaimsIt() {
         // Its own index (the free name the build made, holding only the sample), named by the promoted pipeline and
         // the Elastic Index doc the build made for it: dropped first, as before.
@@ -187,7 +172,7 @@ class TestPromotionProcessing {
                 List.of(PIPELINE_TERM));
 
         final List<Map<String, Object>> own = w.promotion.createPromotionFilters(StroomLinks.CHAT, List.of(entry),
-                Set.of("ip", "es-v2"), Set.of());
+                Set.of("ip", "es-v2"));
 
         assertThat(String.valueOf(own.getFirst().get("before_enabling"))).contains("drops 'ecs-acme-v2' first");
 
@@ -196,7 +181,7 @@ class TestPromotionProcessing {
                 .property("elasticIndexingFilter", "indexName", "ecs-acme-v2"));
 
         final List<Map<String, Object>> claimed = w.promotion.createPromotionFilters(StroomLinks.CHAT,
-                List.of(entry), Set.of("ip", "es-v2"), Set.of());
+                List.of(entry), Set.of("ip", "es-v2"));
 
         assertThat(String.valueOf(claimed.getFirst().get("before_enabling")))
                 .contains("'ecs-acme-v2' is not dropped: it is a production index")

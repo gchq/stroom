@@ -70,9 +70,11 @@ class TestWriteGuard {
                 WriteGuard.GENERATED).docRef();
         assertThatThrownBy(() -> guard.checkManaged(SESSION, generatedOnly))
                 .isInstanceOf(ToolRefusal.class)
-                .hasMessage("XSLT 'ACME-VPN-Events-V1.0' was not created by this server. Make a working copy in a "
-                            + "build (copy_pipeline) and change that instead; promote_build writes it back after "
-                            + "approval.");
+                // A new version, not a working copy (decided by the user, 2026-11-17): copy_pipeline refuses
+                // working_copy=true, so the hint must not send the agent there.
+                .hasMessage("XSLT 'ACME-VPN-Events-V1.0' was not created by this server. Make a new version of "
+                            + "its pipeline in a build (copy_pipeline, which copies the code it runs) and change "
+                            + "that instead; promote_build puts it beside the original after approval.");
         Mockito.verify(world.auditLog).processed(eq(SESSION), eq(generatedOnly), eq("access_denied"),
                 eq("not_managed"), anyString(), eq(false));
 
@@ -98,8 +100,8 @@ class TestWriteGuard {
         final DocRef pipeline = world.inBuild("acme-v1", PipelineDoc.TYPE, "Acme", "p");
         world.move("p", world.folder("System/Feeds").uuid);
         assertThatThrownBy(() -> guard.checkInBuild(SESSION, pipeline))
-                .hasMessage("Pipeline 'Acme' is not in a build folder: it is changed only in a build. Make a "
-                            + "working copy in one (copy_pipeline), or move it back into its build folder in "
+                .hasMessage("Pipeline 'Acme' is not in a build folder: it is changed only in a build. Make "
+                            + "a new version in one (copy_pipeline), or move it back into its build folder in "
                             + "Stroom.");
         Mockito.verify(world.auditLog).processed(eq(SESSION), eq(pipeline), eq("access_denied"), eq("not_in_build"),
                 anyString(), eq(false));

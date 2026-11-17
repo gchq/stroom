@@ -2780,8 +2780,11 @@ layout was never shown). Any change of destinations changes the tree and so the 
 
 Where each document goes (`plan`):
 
-* A working copy (`working_copy_of`) of a pipeline is deleted after its documents are written back (the original
-  keeps running); a working copy of anything else is **written back**: the original is copied into
+* A working copy of a pipeline, or of its code (an XSLT or text converter, not an aggregated feed's shared module),
+  from a build opened before new versions became the only way, is refused (`refuseCodeWorkingCopies`: `Not
+  promoted: XSLT '...' is a working copy of a promoted pipeline's code, which changes only by a new version ...
+  Nothing was changed.`); an unchanged one is only discarded. A working copy of Documentation or a shared module is
+  **written back**: the original is copied into
   `<workspace>/backups` as `<name> backup <yyyyMMddHHmmss>` (UTC, tagged `mcp-generated`), then the copy's `data`,
   `converterType`, `documentation` and `description` are written over it, and the copy deleted. An unchanged copy is
   just deleted. A copy whose original was changed since it was taken is put to the user first (below).
@@ -2803,7 +2806,10 @@ Where each document goes (`plan`):
   as does a version whose type is given a destination elsewhere than beside its predecessor, so a version and its
   other documents aren't split (seen in testing: with the version always put beside its predecessor, TWITTER's V1.1
   pipeline went under /Feeds/Twitter while its XSLT and documentation went to System/MCP Testing/Twitter, the folder
-  given for their type).
+  given for their type). In an aggregated feed's build, the feed's folder given counts as beside a predecessor in any
+  group's folder there (or in its role or version subfolder): a new version of another group's pipeline goes beside
+  its own predecessor, not in the build's group's folder, and v3 beside v2's version folder (both seen in e2e once a
+  promoted pipeline was copied only as a new version).
 * **A folder of the source's own** (`SourceFolders`): the source is the feed the build works from, else its
   registry's feed, else its one new feed. Where that feed's folder is a parent of sources (a subfolder of it, not a
   role or version subfolder, holds a feed: the siblings' convention), the build's documents go in
@@ -4334,31 +4340,22 @@ parent template, the same element changes (removed or re-linked steps, extra XSL
 property values, and its description. The XSLTs and text converters its own layer names
 (`PipelineWrites.OWNED_TYPES`) are copied too, with `rename` applied to their names, and the copy is rewired to
 them; other documents (shared libraries, indexes, clusters) stay shared. The user confirms the names in a form
-first. It is the route for a new version that keeps the XSLT and changes parts, and for a working copy of a
-production pipeline.
+first. It is the route for a new version that keeps the XSLT and changes parts.
+
+A copy is always a new version (decided by the user, 2026-11-17: a promoted pipeline and the code it runs are never
+changed in place): nothing is asked but its names, recorded `version_of` its source, and `working_copy=true` is
+refused (`... only a new version of it is copied, never a working copy ... Nothing was copied.`). Without forms the
+reply is `needs_names`: the proposed names (`new_version_names`) and a hint to put them to the user. Seen in a user's
+test: a promoted feed's pipelines copied under the same names as working copies, where the user expected a new
+version.
 
 A source type group's pipeline (`SourceTypeGroups.chainCopies`, `newVersion`): its one XSLT is the group's. An owned
-document the build has copied already (the group's working copy, made when the build first saved a change to a
-promoted group, `copy_of`; or its new version, `version_of`) is run by the copy, not copied again. The common and
-helpers modules the group imports aren't the pipeline's own, so stay shared; every module in the build importing a
-promoted module the build has a working copy of is pointed at that copy, so the chain runs the copies. A working copy
-(`working_copy=true`, after the user chose to change the group's pipeline) leaves the registry naming the original. A
-new version (`working_copy=false`, after `pipeline=new_version`): the group's registry rows move to it (`pipeline`:
-its `name` and `uuid`; `source_types` in the result); the current pipeline runs on unchanged until the user retires
-it. Copying the promoted pipeline of the group the build's scope names, before the build has decided what its change
-goes to (`SourceTypeGroups.promotedGroup`: no choice recorded, no copy of the group's XSLT), puts the change-or-new-
-version question to the user in the form `build_translation_xslt` asks (`SourceTypeGroups.askPipelineChoice`), and
-the answer decides the copy, not `working_copy` (seen in eval case 61: the agent's `working_copy=true` made the
-user's choice). The answer is recorded in the build record (`group_pipeline_choices`), so neither tool asks again;
-without forms the call is refused until `pipeline=change|new_version` carries it.
-
-Any other promoted pipeline (outside every build, a group's or not) is asked the same question in a form
-(`SourceTypeGroups.askPromotedPipelineChoice`: "Pipeline X is in production. This build changes it: change that
-pipeline, or make a new version of it."), once per pipeline and build (`pipeline_choices` in the build record); the
-answer decides the copy, not `working_copy`, which decides only for a pipeline of a build (seen in a user's test: a
-promoted feed's pipelines copied under the same names as working copies, never asked, where the user expected a new
-version). Without forms the reply is `needs_choice`: the question, its `options`, the proposed names
-(`new_version_names`) and a hint to ask the user and call again with `pipeline=`.
+document the build has made a new version of already (`version_of`: `build_translation_xslt` saves a promoted group's
+change in a new version of its XSLT, without asking) is run by the copy, not copied again. The common and helpers
+modules the group imports aren't the pipeline's own, so stay shared; every module in the build importing a promoted
+module the build has a working copy of is pointed at that copy, so the chain runs the copies. The group's registry
+rows move to the new version (`pipeline`: its `name` and `uuid`; `source_types` in the result); the current pipeline
+runs on unchanged until the user retires it.
 
 A new version's names are proposed (`VersionNames`) and confirmed or edited in the copy's form, each an editable
 field: the agent's where they differ from the original's, else the next version's. The pipeline's last version token
@@ -4380,20 +4377,17 @@ nothing it matches is offered for deletion.
 
 * **Arguments**: `build`, `source_uuid`, `new_name` (required); `rename` (text replacements for the copied
   documents' names, e.g. `{"V1.2": "V1.3"}`; JSON text or a single-quoted literal is read too:
-  `PipelineArguments.textMap`); `set_properties` (changes on the copy, e.g. a new `indexName`); `working_copy` (true
-  when promotion will write the copy back over the original; false, the default, for a new version promoted
-  alongside it; for a promoted pipeline the user's choice decides it); `pipeline` (`change` or `new_version`: the
-  user's answer, where no form can be shown).
-* **Returns**: `type`, `uuid`, `name`, `copy_of`, `working_copy`, `copied_documents`, `source_types` (a new version
-  of a group's pipeline: the registry rows moved to it), `index_name` and `index_docs` (a new version's own index and
-  its Elastic Index docs), `note` (a `working_copy` the user's choice overrode, or a `pipeline` ignored), and `next`;
-  or `needs_choice` (see above).
+  `PipelineArguments.textMap`); `set_properties` (changes on the copy, e.g. a new `indexName`); `working_copy`
+  (refused when true: a copy is always a new version).
+* **Returns**: `type`, `uuid`, `name`, `copy_of`, `copied_documents`, `source_types` (a new version of a group's
+  pipeline: the registry rows moved to it), `index_name` and `index_docs` (a new version's own index and its Elastic
+  Index docs), `note`, and `next`; or `needs_names` (see above).
 * **Refuses**: a missing required argument; a template (`PipelineTemplates.templateReason`: `... is a template
   (...): templates are inherited, not copied ...`, pointing at `create_pipeline`); an owned document the user can't
   read; a new version under the original's names (`A new version of X needs names of its own, and ... are the
   original's ... Nothing was copied.`); a new index name that is taken (`Index name '...' (looked up as '...') is not
-  free for the new version: ... Nothing was copied. ... '<next>' is free ...`); a group's choice without forms and no
-  `pipeline`; the user declining the form, or no form.
+  free for the new version: ... Nothing was copied. ... '<next>' is free ...`); `working_copy=true`; the user
+  declining the form.
 * **Notes**:
   * A document that `set_properties` replaces is not copied: the copy would be unused, and its renamed name could
     clash with the replacement's (v2's XSLT made first, then V1's copied and renamed to the same name, which the
@@ -4419,7 +4413,7 @@ its XSLT's `stroom:lookup()` calls find the maps. It asks nothing itself; as it 
 * **Returns**: `uuid`, `name`, `type`, `set` (each `element.name` set), `reference_data` (all the pipeline's
   references now, when references were given), and `note` when `addRootObject` was also set for a JSON array.
 * **Refuses**: no `pipeline_uuid`; neither argument; a pipeline that isn't the tools' own, or not in a build folder
-  (`... is not in a build folder: it is changed only in a build. Make a working copy in one (copy_pipeline) ...`,
+  (`... is not in a build folder: it is changed only in a build. Make a new version in one (copy_pipeline) ...`,
   audited); an element the pipeline doesn't have; a validation property; a mistyped value; an Elasticsearch
   indexing filter's `indexName` that differs from the build's Elastic Index doc (`BuildIndexes.otherIndex`:
   `rename_index` changes both, and the index template follows).
@@ -4761,14 +4755,12 @@ group), as is a group whose mode is the common module's. The rows record it (`pi
 group=`. `references` (as `create_pipeline` takes them) are kept on the group's rows: its pipeline loads them
 (`create_pipeline`, and promotion).
 
-**A promoted group** (`promotedPipeline`, `SourceTypeGroups.workingCopy`): the first save in a build of a group whose
-pipeline is promoted asks whether the change goes to that pipeline or to a new version of it ("What does the change
-to group 'x' go to?"; without forms, `pipeline=change|new_version`). The answer isn't stored: the build's copy of the
-group's XSLT marks it decided. A change works on a working copy in the build's Events folder; every promoted module
-importing a copied one is copied too, and the build's modules import the copies, so stepping and processing in the
-build run them (`copy_pipeline working_copy=true` steps the group's pipeline with them). A new version is a new XSLT
-recorded `version_of` the original, which `copy_pipeline working_copy=false` then runs; the group's rows move to the
-new pipeline. Imports are rewritten by text, without `check_xslt`. At promotion the modules are pointed back at the
+**A promoted group** (`promotedPipeline`, `SourceTypeGroups.groupTarget`): a change to a group whose pipeline is
+promoted is always a new version (decided by the user, 2026-11-17), nothing asked: a new XSLT in the build's Events
+folder recorded `version_of` the original, which `copy_pipeline` of the group's pipeline then runs; the group's rows
+move to the new pipeline. A promoted shared module the change needs is taken as a working copy
+(`SourceTypeGroups.workingCopy`); every promoted module importing a copied one is copied too, and the build's modules
+import the copies, so stepping and processing in the build run them. Imports are rewritten by text, without `check_xslt`. At promotion the modules are pointed back at the
 originals before the copies are written back (`promote_build`).
 
 **A feed translated whole** (no `group`, `SourceTypeGroups.seenSourceTypes`): in a build whose survey confirmed a
@@ -4794,7 +4786,7 @@ rows' pipeline), `output_feed`, `registry` (`uuid`, `name`, `translated`) and `g
   version history line); `include_xslt` (also return the code when saving); `reviewed` (a `review_id`);
   `field_mapping`, `pipeline_uuid`, `max_records` (1 to 1000, default 50); `discard_hand_edit`,
   `hand_edit_choices`; `group` and `source_types` (a source type group, above); with `group`, `own_output_feed` and
-  `pipeline` (`change` | `new_version`; no forms) and `references`.
+  `references`.
 * **Returns**: the generator's result (`ok`, `xslt` unless saved, `problems`, `warnings` grouped, `events`),
   `schema_version` (and `schema_version_settled`), `required_imports`, `sample_check` (`records`, `problems`,
   `warnings`, `fields_seen`, `not_checked`, `kept_unknown`, `note`), `changes_applied`, `changes_applied_to`,
@@ -6113,8 +6105,8 @@ with its mapping also carries `mcp-kept-mapping`.
 * `create(type, name, build, copyOf, ..., role)` makes an empty tagged document; `createFilled(...)` makes and fills
   one, deleting it again if filling fails. A name the build already has for the type is refused, naming the one there
   (seen: after a long conversation was summarised, an agent made the same indexing pipeline twice).
-* Before changing a document: `checkManaged` (it must be tagged `mcp-managed`, else "Make a working copy in a build
-  (copy_pipeline)"), `checkInBuild` (and in a build folder, which it returns: index docs and pipelines change only
+* Before changing a document: `checkManaged` (it must be tagged `mcp-managed`, else "Make a new version of its pipeline
+  in a build (copy_pipeline ...)"), `checkInBuild` (and in a build folder, which it returns: index docs and pipelines change only
   there, whatever their tags, as a doc moved out in Stroom keeps them) or `checkBuilt` (generated, promoted or not).
   Each refusal is a `ToolRefusal` and is audited (`access_denied`).
 * `createFolder` looks for a folder of the name first and uses it (Stroom allows twins under one parent), under a lock

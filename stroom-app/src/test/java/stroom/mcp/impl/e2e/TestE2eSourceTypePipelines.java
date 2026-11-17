@@ -46,22 +46,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 ///   a group); processing writes each group's Events to its feed, the other source types' records passed over and
 ///   counted, never warned of; a second build on the feed is refused while one is open; a second group in a build
 ///   is refused;
-/// * a later build changing a promoted group alone (its scope naming the group, no source type added; asked whether
-///   the change goes to its pipeline or a new version of it, the user choosing the pipeline): it works on a working
-///   copy of the group's XSLT, run by a working copy of its pipeline; promotion writes the copy back importing the
-///   original common module (the chain pointing at the originals); the next build's group and its pipeline go beside
-///   the feed;
-/// * a last build making a new version of the group's pipeline: a new version of its XSLT, copy_pipeline running
-///   it, the registry's rows of the group moved to the new version, production left as it was; promoted, the new
-///   pipeline and its XSLT go in a version folder beside the old ones (left as they were), importing the original
-///   common module, and the registry beside the feed names the new version for the group's rows.
+/// * a later build changing a promoted group alone (its scope naming the group, no source type added): nothing asked,
+///   a promoted pipeline and the code it runs change only by a new version (decided by the user, 2026-11-17): a new
+///   version of the group's XSLT, a working copy of its pipeline refused, copy_pipeline running the new XSLT in the
+///   pipeline's new version, the registry's rows of the group moved to it, production left as it was; promoted, the
+///   new pipeline and its XSLT go in a version folder beside the old ones (left as they were), importing the original
+///   common module, and the registry beside the feed names the new version for the group's rows;
+/// * the next build's group and its pipeline go beside the feed;
+/// * a last build making a new version of the new version, the same way, in a version folder of its own.
 @SuppressWarnings("unchecked")
 class TestE2eSourceTypePipelines extends AbstractE2eTest {
 
     private static final String SECURITY = "PEGA security";
     private static final String INTEGRATION = "PEGA integration";
     private static final String OWN_FEED = "To an output feed of its own";
-    private static final String NEW_VERSION = "A new version of";
+    // The form that asked whether a change to a promoted group went to its pipeline or a new version of it: never
+    // asked now, a new version being the only way.
     private static final String PIPELINE_FORM = "runs in pipeline";
 
     @Inject
@@ -88,7 +88,7 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
         // The first build: the security group, its Events into the feed's.
         final String build = "pega-own";
         json("start_build", args("build", build, "feeds", List.of(feed)));
-        client.answeringWith(answering(List.of("PegaSecurityEvent"), INTEGRATION, false));
+        client.answeringWith(answering(List.of("PegaSecurityEvent"), INTEGRATION));
         json("survey_feed", args("feed", feed, "build", build));
         recordSourceTypes(build, feed, SECURITY);
 
@@ -153,7 +153,7 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
         // The second build: the integration group, its Events into an output feed of its own.
         final String second = "pega-own-2";
         json("start_build", args("build", second, "feeds", List.of(feed)));
-        client.answeringWith(answering(List.of("PegaIntegration"), INTEGRATION, false));
+        client.answeringWith(answering(List.of("PegaIntegration"), INTEGRATION));
         json("survey_feed", args("feed", feed, "build", second));
         recordSourceTypes(second, feed, INTEGRATION);
         final int secondFormsBefore = client.forms().size();
@@ -208,7 +208,7 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
     }
 
     @Test
-    void aLaterBuildChangesAPromotedGroupThroughWorkingCopiesAndANewVersionIsCopied() {
+    void laterBuildsChangeAPromotedGroupInNewVersionsBesideTheOld() {
         final String feed = "E2E-PEGA-WC";
         final String folder = "E2E Feeds/PegaWc";
         createFeed("pega-wc-src", feed);
@@ -220,7 +220,7 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
         // The first build: the security group and its pipeline, promoted beside the feed.
         final String first = "pega-wc-1";
         json("start_build", args("build", first, "feeds", List.of(feed)));
-        client.answeringWith(answering(List.of("PegaSecurityEvent"), null, false));
+        client.answeringWith(answering(List.of("PegaSecurityEvent"), null));
         json("survey_feed", args("feed", feed, "build", first));
         recordSourceTypes(first, feed, SECURITY);
         final Map<String, Object> security = group(first, feed, SECURITY, "PegaSecurityEvent",
@@ -236,54 +236,79 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
         assertThat(folderOf(commonUuid)).endsWith("PegaWc");
         assertThat(folderOf(securityUuid)).isEqualTo(folderOf(pipeline)).endsWith("PegaWc/" + SECURITY);
         assertThat(documentsIn("System/" + folder, "XSLT", feed + " helpers")).hasSize(1);
+        final String helpersUuid = documentsIn("System/" + folder, "XSLT", feed + " helpers").getFirst().getUuid();
 
-        // A later build changes the security group alone: its scope names the group, no source type added; the
-        // user chooses to change its pipeline.
+        // A later build changes the security group alone: its scope names the group, no source type added. The
+        // change goes to a new version of the group's XSLT, nothing asked (a promoted pipeline and the code it runs
+        // are never changed in place, decided by the user 2026-11-17).
         final String later = "pega-wc-2";
         json("start_build", args("build", later, "feeds", List.of(feed)));
-        client.answeringWith(answering(List.of(), null, false));
+        client.answeringWith(answering(List.of(), null));
         json("survey_feed", args("feed", feed, "build", later));
         final Map<String, Object> scoped = recordSourceTypes(later, feed, SECURITY);
         assertThat(strings(scoped, "scope")).containsExactly("PegaSecurityEvent");
         final int formsBefore = client.forms().size();
         final String changedText = jsonOf(TestE2eSourceTypeGroups.securityMapping()).replace("\"Login\"",
                 "\"LoginV2\"");
-        final Map<String, Object> securityAgain = group(later, feed, SECURITY, "PegaSecurityEvent",
+        final Map<String, Object> versioned = group(later, feed, SECURITY, "PegaSecurityEvent",
                 TestE2eSourceTypeGroups.jsonValue(changedText), stream);
-        final ElicitFormRequest asked = formsSince(formsBefore).stream()
-                .filter(form -> form.message().contains(PIPELINE_FORM))
-                .findFirst()
-                .orElseThrow();
-        assertThat(asked.message()).contains("'" + SECURITY + "'", pipelineName, "in production");
-        assertThat(formsSince(formsBefore)).noneSatisfy(form -> assertThat(form.message()).contains(
-                "'" + SECURITY + "' (PegaSecurityEvent) is new"));
-        final String securityCopy = uuidOf(map(securityAgain, "xslt"));
-        assertThat(securityCopy).isNotEqualTo(securityUuid);
-        assertThat(readXslt(securityCopy).getData()).contains("LoginV2", "uuid='" + commonUuid + "'");
+        assertThat(formsSince(formsBefore)).noneSatisfy(form -> assertThat(form.message())
+                .containsAnyOf(PIPELINE_FORM, "'" + SECURITY + "' (PegaSecurityEvent) is new"));
+        final String securityVersion = uuidOf(map(versioned, "xslt"));
+        assertThat(securityVersion).isNotEqualTo(securityUuid);
+        assertThat(readXslt(securityVersion).getData()).contains("LoginV2", "uuid='" + commonUuid + "'");
         assertThat(readXslt(securityUuid).getData()).doesNotContain("LoginV2");
-        assertThat(String.valueOf(securityAgain.get("group_next"))).contains("copy_pipeline", "working_copy=true");
-
-        // The group's pipeline stepped in the build through a working copy of it: it runs the group's working copy.
-        final Map<String, Object> copied = agreed("copy_pipeline", args("build", later, "source_uuid", pipeline,
-                "new_name", pipelineName, "working_copy", true));
-        final String workingPipeline = uuidOf(copied);
-        assertThat(String.valueOf(copied.get("copied_documents"))).contains(securityCopy);
+        assertThat((Map<String, Object>) versioned.get("pipeline")).containsEntry("new_version", true);
+        assertThat(String.valueOf(versioned.get("group_next"))).contains("copy_pipeline")
+                .doesNotContain("working_copy");
+        // A working copy of the group's pipeline is refused; its new version runs the group's new XSLT.
+        assertThat(refusal("copy_pipeline", args("build", later, "source_uuid", pipeline, "new_name", pipelineName,
+                "working_copy", true))).contains("never a working copy", "Nothing was copied");
+        final Map<String, Object> version = agreed("copy_pipeline", args("build", later, "source_uuid", pipeline,
+                "new_name", pipelineName + " v2"));
+        dump("copy_pipeline new version", version);
+        final String versionPipeline = uuidOf(version);
+        assertThat(strings(version, "source_types")).containsExactly("PegaSecurityEvent");
+        assertThat(String.valueOf(version.get("copied_documents"))).contains(securityVersion);
+        final Map<String, Map<String, Object>> rows = rows(uuidOf(map(versioned, "registry")));
+        assertThat((Map<String, Object>) rows.get("PegaSecurityEvent").get("pipeline"))
+                .containsEntry("name", pipelineName + " v2").containsEntry("uuid", versionPipeline)
+                .doesNotContainKey("new_version");
+        assertThat(map(rows.get("PegaSecurityEvent"), "group_xslt")).containsEntry("uuid", securityVersion);
         final List<String> records = text.lines().toList();
         final int loginAt = TestE2eSourceTypeGroups.indexOf(records, "\\\"eventType\\\": \\\"login\\\"", null);
         final int soapAt = TestE2eSourceTypeGroups.indexOf(records, "\"PegaIntegration\"", "Envelope>\"}");
-        assertThat(translationOutput(workingPipeline, stream, loginAt)).contains("LoginV2");
+        assertThat(translationOutput(versionPipeline, stream, loginAt)).contains("LoginV2");
+        // Production as it was: the old version runs on.
+        assertThat(translationOutput(pipeline, stream, loginAt)).doesNotContain("LoginV2");
 
-        // Promoted: the working copy written back importing the original common module.
+        // Promoted: the new version and its XSLT in a version folder beside the old, which is left as it was, its
+        // chain pointing at the originals of the common and helpers modules; the registry beside the feed names
+        // the new version for the group's rows.
         promote(later, Map.of("Pipeline", folder));
-        assertThat(readXslt(securityUuid).getData()).contains("LoginV2", "uuid='" + commonUuid + "'")
-                .doesNotContain(securityCopy);
-        // Production translates as changed.
-        assertThat(translationOutput(pipeline, stream, loginAt)).contains("LoginV2");
+        final String versionFolder = folderOf(versionPipeline);
+        assertThat(versionFolder).endsWith("PegaWc/" + SECURITY + "/v2");
+        assertThat(folderOf(securityVersion)).isEqualTo(versionFolder);
+        assertThat(folderOf(pipeline)).endsWith("PegaWc/" + SECURITY).isEqualTo(folderOf(securityUuid));
+        assertThat(folderOf(commonUuid)).endsWith("PegaWc");
+        assertThat(readXslt(securityUuid).getData()).contains("uuid='" + commonUuid + "'")
+                .doesNotContain("LoginV2");
+        assertThat(translationOutput(pipeline, stream, loginAt)).doesNotContain("LoginV2");
+        assertThat(readXslt(securityVersion).getData()).contains("LoginV2", "uuid='" + commonUuid + "'");
+        assertThat(readXslt(commonUuid).getData()).contains("uuid='" + helpersUuid + "'");
+        assertThat(documentsIn("System/" + folder, "XSLT", feed + " common")).hasSize(1);
+        assertThat(translationOutput(versionPipeline, stream, loginAt)).contains("LoginV2");
+        final Map<String, Map<String, Object>> promotedRows = rows(registryUuid(folder, feed));
+        assertThat((Map<String, Object>) promotedRows.get("PegaSecurityEvent").get("pipeline"))
+                .containsEntry("name", pipelineName + " v2").containsEntry("uuid", versionPipeline)
+                .doesNotContainKey("new_version");
+        assertThat(map(promotedRows.get("PegaSecurityEvent"), "group_xslt")).containsEntry("uuid",
+                securityVersion);
 
         // The next build: the integration group, with a pipeline of its own beside the feed.
         final String next = "pega-wc-3";
         json("start_build", args("build", next, "feeds", List.of(feed)));
-        client.answeringWith(answering(List.of("PegaIntegration"), null, false));
+        client.answeringWith(answering(List.of("PegaIntegration"), null));
         json("survey_feed", args("feed", feed, "build", next));
         recordSourceTypes(next, feed, INTEGRATION);
         final Map<String, Object> integration = group(next, feed, INTEGRATION, "PegaIntegration",
@@ -298,68 +323,50 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
         assertThat(readXslt(integrationUuid).getData()).contains("uuid='" + commonUuid + "'");
         assertThat(folderOf(integrationUuid)).isEqualTo(folderOf(integrationPipeline))
                 .endsWith("PegaWc/" + INTEGRATION);
-        final Map<String, Object> registry = SourceTypeRegistry.read(documentation(documentsIn("System/" + folder,
-                "Documentation", feed + SourceTypeRegistry.SUFFIX).getFirst().getUuid()));
-        assertThat(jsonOf(registry)).contains(securityUuid, integrationUuid, pipeline, integrationPipeline)
-                .doesNotContain(securityCopy, workingPipeline);
+        final Map<String, Map<String, Object>> withIntegration = rows(registryUuid(folder, feed));
+        assertThat((Map<String, Object>) withIntegration.get("PegaSecurityEvent").get("pipeline"))
+                .containsEntry("uuid", versionPipeline);
+        assertThat((Map<String, Object>) withIntegration.get("PegaIntegration").get("pipeline"))
+                .containsEntry("uuid", integrationPipeline);
 
-        // A last build: a new version of the security group's pipeline, the user's choice.
+        // A last build: a new version of the new version, the same way.
         final String last = "pega-wc-4";
         json("start_build", args("build", last, "feeds", List.of(feed)));
-        client.answeringWith(answering(List.of(), null, true));
+        client.answeringWith(answering(List.of(), null));
         json("survey_feed", args("feed", feed, "build", last));
         recordSourceTypes(last, feed, SECURITY);
-        final Map<String, Object> versioned = group(last, feed, SECURITY, "PegaSecurityEvent",
+        final Map<String, Object> again = group(last, feed, SECURITY, "PegaSecurityEvent",
                 TestE2eSourceTypeGroups.jsonValue(changedText.replace("LoginV2", "LoginV3")), stream);
-        final String securityVersion = uuidOf(map(versioned, "xslt"));
-        assertThat(securityVersion).isNotEqualTo(securityUuid);
-        assertThat((Map<String, Object>) versioned.get("pipeline")).containsEntry("new_version", true);
-        assertThat(String.valueOf(versioned.get("group_next"))).contains("copy_pipeline", "working_copy=false");
-        final Map<String, Object> version = agreed("copy_pipeline", args("build", last, "source_uuid", pipeline,
-                "new_name", pipelineName + " v2", "working_copy", false));
-        dump("copy_pipeline new version", version);
-        final String versionPipeline = uuidOf(version);
-        assertThat(strings(version, "source_types")).containsExactly("PegaSecurityEvent");
-        assertThat(String.valueOf(version.get("copied_documents"))).contains(securityVersion);
-        final Map<String, Map<String, Object>> rows = rows(uuidOf(map(versioned, "registry")));
-        assertThat((Map<String, Object>) rows.get("PegaSecurityEvent").get("pipeline"))
-                .containsEntry("name", pipelineName + " v2").containsEntry("uuid", versionPipeline)
-                .doesNotContainKey("new_version");
-        assertThat(map(rows.get("PegaSecurityEvent"), "group_xslt")).containsEntry("uuid", securityVersion);
-        assertThat((Map<String, Object>) rows.get("PegaIntegration").get("pipeline"))
+        final String securityThird = uuidOf(map(again, "xslt"));
+        assertThat(securityThird).isNotIn(securityUuid, securityVersion);
+        assertThat((Map<String, Object>) again.get("pipeline")).containsEntry("new_version", true);
+        final Map<String, Object> third = agreed("copy_pipeline", args("build", last, "source_uuid",
+                versionPipeline, "new_name", pipelineName + " v3"));
+        final String thirdPipeline = uuidOf(third);
+        assertThat(strings(third, "source_types")).containsExactly("PegaSecurityEvent");
+        assertThat(String.valueOf(third.get("copied_documents"))).contains(securityThird);
+        final Map<String, Map<String, Object>> lastRows = rows(uuidOf(map(again, "registry")));
+        assertThat((Map<String, Object>) lastRows.get("PegaSecurityEvent").get("pipeline"))
+                .containsEntry("name", pipelineName + " v3").containsEntry("uuid", thirdPipeline);
+        assertThat((Map<String, Object>) lastRows.get("PegaIntegration").get("pipeline"))
                 .containsEntry("uuid", integrationPipeline);
-        assertThat(translationOutput(versionPipeline, stream, loginAt)).contains("LoginV3");
-        // Production as it was: the old version runs on.
-        assertThat(readXslt(securityUuid).getData()).contains("LoginV2").doesNotContain("LoginV3");
-        assertThat(translationOutput(pipeline, stream, loginAt)).contains("LoginV2");
-
-        // Promoted: the new version and its XSLT in a version folder beside the old, which is left as it was; the
-        // registry beside the feed names the new version for the group's rows.
-        promote(last, Map.of("Pipeline", folder));
-        final String versionFolder = folderOf(versionPipeline);
-        assertThat(versionFolder).endsWith("PegaWc/" + SECURITY + "/v2");
-        assertThat(folderOf(securityVersion)).isEqualTo(versionFolder);
-        assertThat(folderOf(pipeline)).endsWith("PegaWc/" + SECURITY).isEqualTo(folderOf(securityUuid));
-        assertThat(folderOf(commonUuid)).endsWith("PegaWc");
-        assertThat(readXslt(securityUuid).getData()).contains("LoginV2", "uuid='" + commonUuid + "'")
+        assertThat(translationOutput(thirdPipeline, stream, loginAt)).contains("LoginV3");
+        assertThat(translationOutput(versionPipeline, stream, loginAt)).contains("LoginV2")
                 .doesNotContain("LoginV3");
-        assertThat(translationOutput(pipeline, stream, loginAt)).contains("LoginV2");
-        // The new version's chain points at the originals of the common and helpers modules.
-        final String helpersUuid = documentsIn("System/" + folder, "XSLT", feed + " helpers").getFirst().getUuid();
-        assertThat(readXslt(securityVersion).getData()).contains("LoginV3", "uuid='" + commonUuid + "'");
-        assertThat(readXslt(commonUuid).getData()).contains("uuid='" + helpersUuid + "'");
-        assertThat(documentsIn("System/" + folder, "XSLT", feed + " common")).hasSize(1);
-        assertThat(translationOutput(versionPipeline, stream, loginAt)).contains("LoginV3");
-        final List<ExplorerNode> registries = documentsIn("System/" + folder, "Documentation",
-                feed + SourceTypeRegistry.SUFFIX);
-        assertThat(registries).hasSize(1);
-        final Map<String, Map<String, Object>> promotedRows = rows(registries.getFirst().getUuid());
-        assertThat((Map<String, Object>) promotedRows.get("PegaSecurityEvent").get("pipeline"))
-                .containsEntry("name", pipelineName + " v2").containsEntry("uuid", versionPipeline)
+
+        promote(last, Map.of("Pipeline", folder));
+        assertThat(folderOf(thirdPipeline)).endsWith("PegaWc/" + SECURITY + "/v3")
+                .isEqualTo(folderOf(securityThird));
+        assertThat(folderOf(versionPipeline)).isEqualTo(versionFolder);
+        assertThat(readXslt(securityVersion).getData()).contains("LoginV2").doesNotContain("LoginV3");
+        assertThat(readXslt(securityThird).getData()).contains("LoginV3", "uuid='" + commonUuid + "'");
+        assertThat(translationOutput(thirdPipeline, stream, loginAt)).contains("LoginV3");
+        final Map<String, Map<String, Object>> lastPromoted = rows(registryUuid(folder, feed));
+        assertThat((Map<String, Object>) lastPromoted.get("PegaSecurityEvent").get("pipeline"))
+                .containsEntry("name", pipelineName + " v3").containsEntry("uuid", thirdPipeline)
                 .doesNotContainKey("new_version");
-        assertThat(map(promotedRows.get("PegaSecurityEvent"), "group_xslt")).containsEntry("uuid",
-                securityVersion);
-        assertThat((Map<String, Object>) promotedRows.get("PegaIntegration").get("pipeline"))
+        assertThat(map(lastPromoted.get("PegaSecurityEvent"), "group_xslt")).containsEntry("uuid", securityThird);
+        assertThat((Map<String, Object>) lastPromoted.get("PegaIntegration").get("pipeline"))
                 .containsEntry("uuid", integrationPipeline);
     }
 
@@ -385,6 +392,14 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
                 "reviewed", shown.get("review_id"), "group", group));
         assertThat(written).as("scoped: %s", written).containsEntry("group", group);
         return written;
+    }
+
+    // The registry beside the feed: its UUID.
+    private String registryUuid(final String folder, final String feed) {
+        final List<ExplorerNode> registries = documentsIn("System/" + folder, "Documentation",
+                feed + SourceTypeRegistry.SUFFIX);
+        assertThat(registries).hasSize(1);
+        return registries.getFirst().getUuid();
     }
 
     // The registry's rows by source type.
@@ -418,24 +433,18 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
     }
 
     // A user who chooses these source types for the build's scope, gives the group named (if any) an output feed of
-    // its own, makes a new version of a group's promoted pipeline when asked (or else changes it), and agrees to
-    // everything else (a new group's Events into the feed's, the default).
+    // its own, and agrees to everything else (a new group's Events into the feed's, the default; a new version's
+    // names as proposed).
     private static Function<ElicitFormRequest, ElicitResult> answering(final List<String> scope,
-                                                                       final String ownGroup,
-                                                                       final boolean newVersion) {
+                                                                       final String ownGroup) {
         final Function<ElicitFormRequest, ElicitResult> scoping = TestE2eSourceTypeGroups.scopeOf(scope, null);
         return form -> {
             if (form.message().contains(TestE2eSourceTypeGroups.SCOPE_FORM)) {
                 return scoping.apply(form);
             }
             final ElicitResult agreed = McpTestClient.agree(form);
-            final String wanted;
-            if (ownGroup != null && form.message().contains("'" + ownGroup + "'")
-                && form.message().contains("is new")) {
-                wanted = OWN_FEED;
-            } else if (newVersion && form.message().contains(PIPELINE_FORM)) {
-                wanted = NEW_VERSION;
-            } else {
+            if (ownGroup == null || !form.message().contains("'" + ownGroup + "'")
+                || !form.message().contains("is new")) {
                 return agreed;
             }
             final Map<String, Object> content = new LinkedHashMap<>(agreed.content());
@@ -445,7 +454,7 @@ class TestE2eSourceTypePipelines extends AbstractE2eTest {
                 if (options != null) {
                     options.stream()
                             .map(String::valueOf)
-                            .filter(option -> option.startsWith(wanted))
+                            .filter(option -> option.startsWith(OWN_FEED))
                             .findFirst()
                             .ifPresent(option -> content.put(String.valueOf(key), option));
                 }

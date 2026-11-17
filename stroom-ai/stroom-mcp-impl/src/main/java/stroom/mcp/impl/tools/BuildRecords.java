@@ -105,12 +105,6 @@ public class BuildRecords {
     public static final String EVENT_LOGGING_VERSION = "event_logging_version";
     /// The record's key for the indexing choices the user made in forms (`backend`, `naming`).
     public static final String INDEXING_CHOICES = "indexing_choices";
-    /// The record's key for what the user chose a change to each promoted source type group goes to (`change` or
-    /// `new_version`), by the group's name.
-    public static final String GROUP_PIPELINE_CHOICES = "group_pipeline_choices";
-    /// The record's key for what the user chose a change to each promoted pipeline (not a source type group's) goes
-    /// to (`change` or `new_version`), by the pipeline's UUID.
-    public static final String PIPELINE_CHOICES = "pipeline_choices";
     /// The record's key for the kind of work the build was started as, when it was named: `events`, `discovery`,
     /// `reference` or `assessment` (a feed surveyed and its source types registered, nothing onboarded).
     public static final String KIND = "kind";
@@ -325,73 +319,6 @@ public class BuildRecords {
                     : new LinkedHashMap<>();
             choices.put(key, chosen);
             state.put(INDEXING_CHOICES, choices);
-        });
-    }
-
-    /// @param build A build's name.
-    /// @param group A source type group's name.
-    /// @return What the user chose the build's change to the group's promoted pipeline goes to (`change` or
-    /// `new_version`); empty when not recorded.
-    public Optional<String> groupPipelineChoice(final String build, final String group) {
-        return choice(build, GROUP_PIPELINE_CHOICES, group);
-    }
-
-    /// Records what the user chose the build's change to a promoted source type group's pipeline goes to, so
-    /// neither copy_pipeline nor build_translation_xslt asks again.
-    ///
-    /// @param build  A build's name.
-    /// @param group  The group's name.
-    /// @param choice `change` or `new_version`.
-    /// @return The record as saved.
-    public Map<String, Object> rememberGroupPipelineChoice(final String build,
-                                                           final String group,
-                                                           final String choice) {
-        return rememberChoice(build, GROUP_PIPELINE_CHOICES, group, choice);
-    }
-
-    /// @param build        A build's name.
-    /// @param pipelineUuid A promoted pipeline (not a source type group's).
-    /// @return What the user chose the build's change to it goes to (`change` or `new_version`); empty when not
-    /// recorded.
-    public Optional<String> pipelineChoice(final String build, final String pipelineUuid) {
-        return choice(build, PIPELINE_CHOICES, pipelineUuid);
-    }
-
-    /// Records what the user chose the build's change to a promoted pipeline goes to, so copy_pipeline doesn't ask
-    /// again in the build.
-    ///
-    /// @param build        A build's name.
-    /// @param pipelineUuid The pipeline.
-    /// @param choice       `change` or `new_version`.
-    /// @return The record as saved.
-    public Map<String, Object> rememberPipelineChoice(final String build,
-                                                      final String pipelineUuid,
-                                                      final String choice) {
-        return rememberChoice(build, PIPELINE_CHOICES, pipelineUuid, choice);
-    }
-
-    // A choice recorded under the key, by name; empty when not recorded.
-    private Optional<String> choice(final String build, final String key, final String name) {
-        if (NullSafe.isBlankString(build) || NullSafe.isBlankString(name)) {
-            return Optional.empty();
-        }
-        return load(build).get(key) instanceof final Map<?, ?> chosen
-               && chosen.get(name) instanceof final String choice && !choice.isBlank()
-                ? Optional.of(choice)
-                : Optional.empty();
-    }
-
-    private Map<String, Object> rememberChoice(final String build,
-                                               final String key,
-                                               final String name,
-                                               final String choice) {
-        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
-        return save(build, found.orElse(null), state -> {
-            final Map<String, Object> choices = state.get(key) instanceof final Map<?, ?> earlier
-                    ? new LinkedHashMap<>(asMap(earlier))
-                    : new LinkedHashMap<>();
-            choices.put(name, choice);
-            state.put(key, choices);
         });
     }
 

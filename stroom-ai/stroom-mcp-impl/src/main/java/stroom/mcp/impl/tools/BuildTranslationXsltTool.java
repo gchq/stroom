@@ -124,7 +124,6 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     static final String HAND_EDIT_CHOICES_ARG = "hand_edit_choices";
     static final String GROUP_ARG = "group";
     static final String SOURCE_TYPES_ARG = "source_types";
-    static final String PIPELINE_ARG = "pipeline";
     static final String OWN_OUTPUT_FEED_ARG = "own_output_feed";
     static final String REFERENCES_ARG = "references";
     static final String DOMAIN_SPLIT_ARG = "domain_split";
@@ -299,10 +298,11 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                              + "helpers ('<feed> helpers'). With build, the registry's rows are set translated. Each "
                              + "group has a pipeline of its own ('<feed> <group>', made by create_pipeline group=); "
                              + "for a new group a form asks where its Events go (the feed's Events, or an output "
-                             + "feed of its own), and for a group whose pipeline is promoted whether the change "
-                             + "goes to that pipeline or to a new version of it; group.group_next says what "
-                             + "follows. A later build changing a promoted group, the common module or the helpers "
-                             + "works on working copies, imported by the build's own modules. The stepping tools "
+                             + "feed of its own); a change to a group whose pipeline is promoted is saved in a "
+                             + "new version of its XSLT, nothing asked (copy_pipeline then makes the pipeline's "
+                             + "new version); group.group_next says what follows. A later build changing the "
+                             + "common module or the helpers works on working copies of them, imported by the "
+                             + "build's own modules. The stepping tools "
                              + "step an unsaved group as draft code for its pipeline's XSLT element, as any "
                              + "translation.")
                 .parameters(ObjectSchema.builder()
@@ -403,16 +403,6 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                                                          + "translates already; given, it "
                                                                          + "holds every one the scope puts in "
                                                                          + "the group."))
-                        .addEnumProperty(PIPELINE_ARG, SourceTypeGroups.PIPELINE_CHOICES, "With group, only where "
-                                                                                         + "no form can be shown, "
-                                                                                         + "for a group whose "
-                                                                                         + "pipeline is promoted: "
-                                                                                         + "change that pipeline, "
-                                                                                         + "or make a new version "
-                                                                                         + "of it (copy_pipeline), "
-                                                                                         + "as the user chose. "
-                                                                                         + "Otherwise asked in a "
-                                                                                         + "form.")
                         .addBooleanProperty(OWN_OUTPUT_FEED_ARG, "With group, only where no form can be shown, for "
                                                                  + "a new group: true when the user wants its "
                                                                  + "Events in an output feed of its own, false for "
@@ -1102,10 +1092,10 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         SourceTypeGroups.Placement placement = null;
         String choice = null;
         if (b.group != null) {
-            // Where a new group's Events go, and what a change to a promoted pipeline makes, are the user's
-            // choices, asked before anything is saved.
+            // Where a new group's Events go is the user's choice, asked before anything is saved; a change to a
+            // promoted pipeline makes a new version of it.
             placement = placement(call, context, b);
-            choice = pipelineChoice(call, context, b);
+            choice = pipelineChoice(b);
             imports = groups.saveImports(context, b.build, b.group.withGroupMapping(b.mapping), b.schema, b.version);
             b.mapping = imports.group();
             final XsltGenerator.Generated regenerated = XsltGenerator.generate(b.mapping, b.schema, b.version);
@@ -1120,7 +1110,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             name = NullSafe.nonBlankStringElse(name, b.group.group());
             if (target == null || !groups.isInBuild(b.build, target)) {
                 // A group's promoted XSLT given as uuid is changed through the build's copy of it, never in place.
-                target = groups.groupTarget(context, b.build, b.group, name, choice).orElse(null);
+                target = groups.groupTarget(context, b.build, b.group, name).orElse(null);
             }
         }
         Map<String, Object> saved;
@@ -1244,44 +1234,13 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         return new SourceTypeGroups.Placement(request.ownOutputFeed());
     }
 
-    // What a change to a group whose pipeline is promoted goes to: that pipeline (through working copies), or a new
-    // version of it, asked the first time the build changes the group. Null for a group whose pipeline isn't
-    // promoted, or whose change is decided already.
-    private String pipelineChoice(final ToolCall call, final ToolCallContext context, final Build b) {
-        final Request request = b.request;
-        final Optional<Map<String, Object>> promoted = groups.promotedPipeline(b.build, b.group);
-        if (promoted.isEmpty()) {
-            if (request.pipeline() != null) {
-                b.placementNotes.add(PIPELINE_ARG + "=" + request.pipeline() + " was ignored: group '"
-                                     + b.group.group() + "' has no pipeline in production to change, or the build "
-                                     + "has decided already.");
-            }
-            return null;
-        }
-        final String group = b.group.group();
-        // Asked already (by copy_pipeline, copying the group's pipeline before the group was saved): the user's
-        // choice, recorded for the build.
-        final Optional<String> recorded = groups.recordedPipelineChoice(b.build, group);
-        if (recorded.isPresent()) {
-            return recorded.get();
-        }
-        final String name = JsonValues.text(promoted.get().get("name"));
-        final Optional<String> chosen = SourceTypeGroups.askPipelineChoice(consent, call, context, NAME, group,
-                name);
-        final String choice;
-        if (chosen.isPresent()) {
-            choice = chosen.get();
-        } else if (request.pipeline() == null) {
-            final String argument = PIPELINE_ARG + "=" + ToolText.list(SourceTypeGroups.PIPELINE_CHOICES);
-            throw new ToolRefusal(SourceTypeGroups.pipelineChoiceAsked(group, name, argument));
-        } else if (!SourceTypeGroups.PIPELINE_CHOICES.contains(request.pipeline())) {
-            throw new ToolRefusal(PIPELINE_ARG + " is one of " + ToolText.list(SourceTypeGroups.PIPELINE_CHOICES)
-                                  + ", not " + ToolText.repr(request.pipeline()) + ". Nothing was saved.");
-        } else {
-            choice = request.pipeline();
-        }
-        groups.rememberPipelineChoice(b.build, group, choice);
-        return choice;
+    // What a change to a group whose pipeline is promoted makes: always a new version of it (decided by the user,
+    // 2026-11-17: a promoted pipeline and the code it runs are never changed in place), so nothing is asked. Null
+    // for a group whose pipeline isn't promoted.
+    private String pipelineChoice(final Build b) {
+        return groups.promotedPipeline(b.build, b.group).isPresent()
+                ? SourceTypeGroups.NEW_VERSION
+                : null;
     }
 
     // What the agent does next for a group placed now (its pipeline made, its output feed first where it has one of
@@ -1304,14 +1263,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
         if (SourceTypeGroups.NEW_VERSION.equals(choice)) {
             return Optional.of("Copy the group's pipeline as its new version: copy_pipeline build=<this build> "
-                               + "source_uuid=<the pipeline's uuid> new_name=<the new version's name> "
-                               + "working_copy=false. It runs the new version of the group's XSLT saved now, and the "
-                               + "registry's rows of the group move to it.");
-        }
-        if (SourceTypeGroups.CHANGE.equals(choice)) {
-            return Optional.of("To step and process the change in the build, copy the group's pipeline as a working "
-                               + "copy: copy_pipeline build=<this build> source_uuid=<the pipeline's uuid> "
-                               + "new_name=<its name> working_copy=true. It runs the group's working copy.");
+                               + "source_uuid=<the pipeline's uuid> new_name=<the new version's name>. It runs the "
+                               + "new version of the group's XSLT saved now, and the registry's rows of the group "
+                               + "move to it.");
         }
         return Optional.empty();
     }
@@ -1935,7 +1889,6 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                    Map<String, String> handEditChoices,
                    String group,
                    List<String> sourceTypes,
-                   String pipeline,
                    Boolean ownOutputFeed,
                    List<Map<String, Object>> references,
                    String domainSplit) {
@@ -1973,7 +1926,6 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                     TranslationArgs.handEditChoices(call),
                     tool.stringArg(call, GROUP_ARG),
                     stringListArg(call, SOURCE_TYPES_ARG),
-                    tool.stringArg(call, PIPELINE_ARG),
                     ToolArgs.raw(call, OWN_OUTPUT_FEED_ARG) == null
                             ? null
                             : ToolArgs.flag(call, OWN_OUTPUT_FEED_ARG),

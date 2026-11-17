@@ -436,8 +436,8 @@ class FeedIndexDecisions {
                         FeedIndexes.groupsOf(entry)) + ", made by an earlier build (" + JsonValues.text(doc.get("type"))
                                       + " '" + JsonValues.text(doc.get("name")) + "', kept in " + kept(registry.feed())
                                       + "): don't make another. Promotion adds this build's new fields to it; its "
-                                      + "indexing pipeline changes through a working copy (copy_pipeline "
-                                      + "working_copy=true), its XSLT saved from the plan (save_xslt index_plan=).");
+                                      + "indexing pipeline changes by a new version (copy_pipeline), its XSLT saved "
+                                      + "from the plan (save_xslt index_plan=).");
             }
         });
     }

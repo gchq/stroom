@@ -178,11 +178,10 @@ class ProductionIndexes {
         }
         return Optional.of("'" + index + "' is a production index (" + said(claims) + "). It is never dropped or "
                            + "emptied for a build, and the build doesn't index into it: don't ask the user or the "
-                           + "cluster admin to drop it. A working copy of its pipeline is stepped clean, not "
-                           + "processed; a new version gets an index name of its own (copy_pipeline proposes one, "
-                           + "e.g. '" + VersionNames.nextIndexName(index) + "'). A template committed under this "
-                           + "name changes production's own template: commit it only with the promotion of the "
-                           + "change.");
+                           + "cluster admin to drop it, and don't commit a template under this name (it would "
+                           + "change production's own). A change to its pipeline is a new version with an index "
+                           + "name of its own (copy_pipeline proposes one, e.g. '"
+                           + VersionNames.nextIndexName(index) + "'), whose template is agreed for that name.");
     }
 
     /// Whether an index name is taken, for a new version's index: anything it matches on the cluster (a data
@@ -346,10 +345,8 @@ class ProductionIndexes {
                + "index (" + said(claims) + "). A build never writes into a production index, nor empties or drops "
                + "one: processing would put the sample's documents among production's. Nothing was processed, and "
                + "nothing is to be dropped or deleted: don't ask the user or the cluster admin to drop it, or to "
-               + "commit a template over its own. For a change in place (a working copy), step it clean "
-               + "(step_sample) instead: its indexing step is done once it steps clean, and promotion writes its "
-               + "XSLT back. For an index the build can index into, make a new version of the promoted pipeline "
-               + "with copy_pipeline, which proposes an index name of its own (e.g. '"
+               + "commit a template over its own. For an index the build can index into, make a new version of the "
+               + "promoted pipeline with copy_pipeline, which proposes an index name of its own (e.g. '"
                + VersionNames.nextIndexName(index) + "') and checks it is free.";
     }
 
