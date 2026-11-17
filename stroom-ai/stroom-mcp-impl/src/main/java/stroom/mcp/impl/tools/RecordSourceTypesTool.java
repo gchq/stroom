@@ -274,7 +274,8 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
                                   + "user (or source_type_field= as they said), then call " + NAME + " again.");
         }
         final Map<String, Long> values = SourceTypeProfiles.valueCounts(sources);
-        final Rows proposed = rows(call, context, feed, field, values, before);
+        final Rows proposed = rows(call, context, feed, field, values, before,
+                SourceTypeProfiles.noValueRecords(sources));
         if (proposed.early() != null) {
             return proposed.early();
         }
@@ -590,13 +591,32 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
     }
 
     // The registry's rows: as the user gave them, those of the registry beside the feed (values it lacks added),
-    // or proposed from the values the survey saw (patterns confirmed by the user).
+    // or proposed from the values the survey saw (patterns confirmed by the user); the (no value) row last where
+    // the survey read records with no value (a held value of plain text, the field missing), unless the user gave
+    // the rows.
     private Rows rows(final ToolCall call,
                       final ToolCallContext context,
                       final String feed,
                       final String field,
                       final Map<String, Long> values,
-                      final Map<String, Object> before) {
+                      final Map<String, Object> before,
+                      final long noValue) {
+        final Rows rows = rowsOf(call, context, feed, field, values, before);
+        if (rows.early() != null || !stringListArg(call, ROWS_ARG).isEmpty() || noValue == 0
+            || rows.rows().stream().anyMatch(row -> SourceTypeRows.NONE.equals(row.match()))) {
+            return rows;
+        }
+        final List<SourceTypeRows.Row> withNone = new ArrayList<>(rows.rows());
+        withNone.add(SourceTypeRows.noValue());
+        return new Rows(withNone, null);
+    }
+
+    private Rows rowsOf(final ToolCall call,
+                        final ToolCallContext context,
+                        final String feed,
+                        final String field,
+                        final Map<String, Long> values,
+                        final Map<String, Object> before) {
         final List<String> given = stringListArg(call, ROWS_ARG);
         if (!given.isEmpty()) {
             // A list's item is matched on the separator the values seen are lists by.
@@ -857,7 +877,8 @@ class RecordSourceTypesTool extends AbstractBuiltInTool {
         return SourceTypeRows.parse(given).orElseThrow(() -> new ToolRefusal("Row '" + given + "' is none of "
                                                                              + "'name = value', 'name ~ ^pattern' "
                                                                              + "and 'name ∈ item' ('name in "
-                                                                             + "item')."));
+                                                                             + "item'), nor '"
+                                                                             + SourceTypeRows.NO_VALUE + "'."));
     }
 
     // Each row's profile: from the survey's counts, else the registry beside the feed's own (carried over).

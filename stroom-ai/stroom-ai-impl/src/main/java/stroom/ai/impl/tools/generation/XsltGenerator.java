@@ -19,6 +19,7 @@ package stroom.ai.impl.tools.generation;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.sample.SourceTypeFields;
 import stroom.ai.impl.tools.sample.SourceTypeMeta;
+import stroom.ai.impl.tools.sample.SourceTypeReading;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
@@ -39,6 +40,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -2439,6 +2441,10 @@ public final class XsltGenerator {
         final String group = "Source type group '" + module.name() + "'";
         if (!isSet(module.field())) {
             out.add(group + " has no source type field to tell its records by: record_source_types confirms it");
+        } else if (SourceTypeReading.isReading(module.field())) {
+            SourceTypeReading.problem(module.field()).ifPresent(why -> out.add(group + "'s source type reading '"
+                                                                               + module.field() + "' isn't one: "
+                                                                               + why));
         }
         if (module.sourceTypes().isEmpty()) {
             out.add(group + " translates no source type");
@@ -2541,13 +2547,21 @@ public final class XsltGenerator {
         choose.addElement(XSL, "otherwise").addElement(XSL, "sequence", "select", "''");
         // As the tools read it (SourceTypeFields.valueOf): stripped of XML's white space around it, '' for none or a
         // nil value, so processing and the survey count the same records as each source type.
-        sourceValueFunction(sheet, groupFunction("source-type-value"), module.field());
+        sourceValueFunction(sheet, this::groupFunction, module.field());
     }
 
     // A function reading the source type field's value as the tools read it (SourceTypeFields.valueOf): stripped of
     // XML's white space around it, '' for none or a nil value. A record's field takes the record; a part's meta
-    // attribute (stroom:meta(), the current part's) takes none.
-    private void sourceValueFunction(final XmlElement sheet, final String name, final String field) {
+    // attribute (stroom:meta(), the current part's) takes none; a reading into held values reads them as the tools
+    // do (SourceTypeReadingXslt).
+    private void sourceValueFunction(final XmlElement sheet,
+                                     final UnaryOperator<String> namer,
+                                     final String field) {
+        if (SourceTypeReading.isReading(field)) {
+            SourceTypeReadingXslt.write(sheet, namer, SourceTypeReading.of(field), m.input());
+            return;
+        }
+        final String name = namer.apply("source-type-value");
         final String attribute = SourceTypeMeta.attribute(field);
         final XmlElement value = sheet.addElement(XSL, "function", "name", name, "as", "xs:string");
         value.append(new XmlComment(XsltComments.comment((attribute == null
@@ -2572,6 +2586,9 @@ public final class XsltGenerator {
     // item (split on the separator, each item stripped of XML's white space, compared exactly), as the tools match it
     // (SourceTypeRows.Row.matches).
     private static String rowTest(final String match, final String value, final String separator) {
+        if (SourceTypeRows.NONE.equals(match)) {
+            return "$value = ''";
+        }
         if (SourceTypeRows.PATTERN.equals(match)) {
             return "matches($value, " + XPathText.literal(value) + ")";
         }
@@ -2595,7 +2612,9 @@ public final class XsltGenerator {
     // Whether the XSLT logs the source type values its survey didn't see: a whole translation (no module) whose
     // mapping keeps those seen.
     private boolean watchesSourceTypes() {
-        return module == null && m.seenSourceTypes() != null && isSet(m.seenSourceTypes().field());
+        return module == null && m.seenSourceTypes() != null && isSet(m.seenSourceTypes().field())
+               && (!SourceTypeReading.isReading(m.seenSourceTypes().field())
+                   || SourceTypeReading.problem(m.seenSourceTypes().field()).isEmpty());
     }
 
     // Each value of the source type field in the document that none seen matches, logged (INFO) once a stream (a
@@ -2621,7 +2640,7 @@ public final class XsltGenerator {
     // read it, and whether a value is one seen (equal to a value, or matching an anchored pattern).
     private void seenFunctions(final XmlElement sheet) {
         final SeenSourceTypes seen = m.seenSourceTypes();
-        sourceValueFunction(sheet, seenFunction("source-type-value"), seen.field());
+        sourceValueFunction(sheet, this::seenFunction, seen.field());
         final XmlElement known = sheet.addElement(XSL, "function", "name", seenFunction("seen-source-type"), "as",
                 "xs:boolean");
         known.append(new XmlComment(XsltComments.comment("True for a value of " + seen.field() + " seen when the "

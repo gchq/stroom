@@ -113,6 +113,37 @@ class TestSeenSourceTypes extends XsltRuns {
         assertThat(seen.seen("File Server")).isFalse();
     }
 
+    @Test
+    void aHeldReadingsValuesAreReadAsTheToolsReadThem() {
+        // Workload held in a JSON string field (`Detail`), read as the survey read it.
+        final String field = "Detail>Workload";
+        final TranslationMapping mapping = TranslationMapping.fromJson(json(MAPPING)).withSeenSourceTypes(
+                new SeenSourceTypes(field, List.of("ExchangeOnline"), List.of()));
+        final XsltGenerator.Generated generated = XsltGenerator.generate(mapping, SCHEMA, "4.1.0");
+        assertThat(generated.problems()).isEmpty();
+        final StringBuilder xml = new StringBuilder("<map xmlns=\"http://www.w3.org/2013/XSL/json\">");
+        for (final String detail : List.of("{\"Workload\": \"ExchangeOnline\"}", "{\"Workload\": \"Teams\"}",
+                "Workload=PowerBI Operation=x", "plain Workload=Text words")) {
+            xml.append("<map><string key=\"timestamp\">2026-11-10T00:00:00.000Z</string><string key=\"Detail\">")
+                    .append(detail.replace("&", "&amp;").replace("<", "&lt;")).append("</string></map>");
+        }
+
+        final List<String> logged = new ArrayList<>();
+        transform(generated.xslt(), xml.append("</map>").toString(), Map.of(), logged);
+
+        assertThat(logged).filteredOn(line -> line.contains(XsltGenerator.UNSEEN_SOURCE_TYPE))
+                .containsExactlyInAnyOrder(unseen("Teams", field), unseen("PowerBI", field));
+        // A reading that isn't one writes no check rather than failing the translation.
+        assertThat(XsltGenerator.generate(TranslationMapping.fromJson(json(MAPPING)).withSeenSourceTypes(
+                new SeenSourceTypes("Detail>", List.of("x"), List.of())), SCHEMA, "4.1.0").xslt())
+                .doesNotContain(XsltGenerator.UNSEEN_SOURCE_TYPE);
+    }
+
+    private static String unseen(final String value, final String field) {
+        return "INFO " + XsltGenerator.UNSEEN_SOURCE_TYPE + value + XsltGenerator.UNSEEN_SOURCE_TYPE_IN + field
+               + XsltGenerator.UNSEEN_SOURCE_TYPE_END;
+    }
+
     private static String unseen(final String value) {
         return "INFO " + XsltGenerator.UNSEEN_SOURCE_TYPE + value + XsltGenerator.UNSEEN_SOURCE_TYPE_IN + "Workload"
                + XsltGenerator.UNSEEN_SOURCE_TYPE_END;

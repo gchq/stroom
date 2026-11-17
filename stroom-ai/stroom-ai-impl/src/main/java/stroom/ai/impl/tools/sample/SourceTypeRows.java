@@ -47,6 +47,11 @@ public final class SourceTypeRows {
     public static final String PATTERN = "pattern";
     /// A row matching a value that is a list holding its item (`Mail ∈ Mail Server`).
     public static final String MEMBER = "member";
+    /// A row matching the records with no value: those where the reading finds nothing (a held value of plain
+    /// text, a field missing), offered as a source type of their own, never a value of theirs.
+    public static final String NONE = "none";
+    /// The name of the row matching the records with no value, as it is written.
+    public static final String NO_VALUE = "(no value)";
     /// How a list-member row is written: `name ∈ item`.
     public static final String MEMBER_SIGN = "∈";
     /// How a list-member row is written in plain ASCII: `name in item`.
@@ -85,12 +90,15 @@ public final class SourceTypeRows {
 
     /// @param rows  The rows, in order.
     /// @param value A source type field's value.
-    /// @return The first row that matches it; empty for a value no row matches (a `new` source type).
+    /// @return The first row that matches it (for no value, the [#NONE] row, if any); empty for a value no row
+    /// matches (a `new` source type).
     public static Optional<Row> first(final List<Row> rows, final String value) {
-        if (value == null) {
-            return Optional.empty();
-        }
         return rows.stream().filter(row -> row.matches(value)).findFirst();
+    }
+
+    /// @return The row matching the records with no value: `(no value)`.
+    public static Row noValue() {
+        return new Row(NO_VALUE, NONE, "");
     }
 
     /// Rows proposed from the values the survey saw: a row a value where the values are few or not structured;
@@ -159,6 +167,9 @@ public final class SourceTypeRows {
     public static Optional<Row> parse(final String given) {
         if (given == null) {
             return Optional.empty();
+        }
+        if (NO_VALUE.equalsIgnoreCase(given.strip())) {
+            return Optional.of(noValue());
         }
         int at = -1;
         String match = null;
@@ -307,6 +318,11 @@ public final class SourceTypeRows {
                     out.add("'" + row.name() + "': " + bad.get());
                     continue;
                 }
+            } else if (NONE.equals(row.match())) {
+                if (rows.subList(0, i).stream().anyMatch(before -> NONE.equals(before.match()))) {
+                    out.add("two rows match the records with no value: keep one " + NO_VALUE + " row");
+                }
+                continue;
             } else if (!VALUE.equals(row.match()) || row.value() == null || row.value().isEmpty()) {
                 out.add("'" + row.name() + "' matches no value: give a value, an anchored pattern, or a list's item");
                 continue;
@@ -528,7 +544,7 @@ public final class SourceTypeRows {
     /// A source type's row.
     ///
     /// @param name      The source type's name.
-    /// @param match     [#VALUE], [#PATTERN] or [#MEMBER].
+    /// @param match     [#VALUE], [#PATTERN], [#MEMBER] or [#NONE].
     /// @param value     The value matched exactly, the anchored pattern, or the list's item.
     /// @param separator A list-member row's: what the list's items are split on (one of [#SEPARATORS]); null for
     ///                  another row, or [#DEFAULT_SEPARATOR].
@@ -575,10 +591,13 @@ public final class SourceTypeRows {
                     : separator;
         }
 
-        /// @param fieldValue A source type field's value.
-        /// @return True if this row matches it: equal to the value, found by the pattern from its start, or a list
-        /// holding the item.
+        /// @param fieldValue A source type field's value, or null for none.
+        /// @return True if this row matches it: equal to the value, found by the pattern from its start, a list
+        /// holding the item, or (the [#NONE] row) no value.
         public boolean matches(final String fieldValue) {
+            if (NONE.equals(match)) {
+                return fieldValue == null || fieldValue.isEmpty();
+            }
             if (fieldValue == null || value == null) {
                 return false;
             }
@@ -595,8 +614,11 @@ public final class SourceTypeRows {
             return value.equals(fieldValue);
         }
 
-        /// @return How it is shown: `= PegaDB`, `~ ^/var/log/mail/` or `∈ Mail Server`.
+        /// @return How it is shown: `= PegaDB`, `~ ^/var/log/mail/`, `∈ Mail Server`, or `no value`.
         public String said() {
+            if (NONE.equals(match)) {
+                return "no value";
+            }
             return (PATTERN.equals(match)
                     ? "~ "
                     : MEMBER.equals(match)

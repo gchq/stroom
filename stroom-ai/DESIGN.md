@@ -1941,8 +1941,12 @@ Terms:
 * **Source type**: the records a value of one field marks as from one source, matched exactly (Azure's `Workload` =
   `ExchangeOnline`, PEGA's source type) or by a pattern on the value (`LogFilePath` under `/var/log/mail/`: every log
   file of one directory one source). The field is the wrapper's or the record's own, at any depth (`event.Workload`),
-  and is the **source type field**: one field, never a combination (a second discriminator, Azure's `RecordType`, tells
-  kinds apart within a source type, as Azure's `Operation` does within a workload).
+  or a name inside the structured data a string field holds (`event>logger_name`, [Source types read inside held
+  values](#source-types-read-inside-held-values-decided-2026-11-17-built-2026-11-18)), and is the **source type
+  field**: one field or one reading for now (a second discriminator, Azure's `RecordType`, tells kinds apart within
+  a source type, as Azure's `Operation` does within a workload). A later phase adds combinations (decided
+  2026-11-17): a pair of readings inferred only where the records' shapes justify it, three or more only as the user
+  names them, and rows matching a tuple, each part by `=`, `~`, `∈` or `*` (any value).
 * **Scope**: the source types a build covers. A build's survey, samples, classification and translation see only the
   records in its scope; the rest are counted, by source type, for the registry, and nothing more.
 * **Source type group**: the source types one translation handles, e.g. a mail group for several mail source types. A
@@ -1995,6 +1999,74 @@ How it is filled and kept:
   once a stream, and added to the registry for the user to place.
 * **Survey and profiles** count by the registry's rows, so a pattern's source type is profiled as one, whatever the
   number of values it covers.
+
+#### Source types read inside held values (decided 2026-11-17, built 2026-11-18)
+
+Seen in external testing (2026-11-17): the source type sat inside a held string field, `event` holding escaped JSON
+with `logger_name` (`{"system":"Teams","event":"{\"logger_name\":\"com.x.Auth\",...}"}`), and the tools offered only
+the records' own fields. The held field's format varied record by record: plain text in some, key=value in others,
+JSON in others, XML in others. Decided by the user:
+
+1. **Structured data only.** A source type is read from JSON, XML, key=value pairs and parsed syslog header fields,
+   held in escaped string fields too (JSON, XML or key=value inside a string; JSON encoded twice). Plain text is
+   never read for a source type (its words would be false source types); it is left to rules within one source
+   type. Free-text fields are never source type parts.
+2. **A reading** is a path to a value that may step into held strings: `event>payload.logger_name` (`>` steps into a
+   held string's parsed content, `.` into an object or element), held values inside held values at most three deep.
+   Deep object paths are read by path, not by the survey's flattened names (which stop at four levels).
+3. **The held value's format is told per record**, with a reading per format (a JSON key, an XML element or
+   attribute path or the root element's name, a key=value key). The same name in several formats is one reading
+   (`logger_name` in JSON and `logger_name=` in key=value); where formats name it differently, the agent proposes the
+   per-format readings and the user confirms them, as they confirm a source type field.
+4. **"(no value)"** is offered as a source type: the records where the reading finds nothing (a held value of plain
+   text, the field missing). Never inferred as a real source type.
+5. **Format-only rows** (a source type by the held value's format alone, "the XML ones") are a last resort, the
+   user's decision only; the agent first does all it can to find a name inside the held value that says the source.
+6. **Fields that look like kinds** (event type, action, operation: what classify_kinds would choose as a kind field)
+   are never parts. Kinds of event within a source are classify_kinds' and the rules' job; a split is only where
+   record shapes differ.
+7. **Parity**: the generated XSLT and the tools read a source type the same way, tested by running the generated
+   selection over the records the tools classified.
+8. Combinations of fields are a later phase, the reading and row model made so a row can later hold a tuple of
+   readings.
+
+How it is built:
+
+* **The reading** (`SourceTypeReading`) is kept as text where the field always was (the registry's `field`, the
+  survey state's, a scope's, a group's module and `seen_source_types`), so a registry naming a field still reads: a
+  field alone is a reading of that field. `event>logger_name | event>xml:@logger` tries readings in turn, the first
+  with a value giving it; a step may name one format (`xml:`, `json:`, `kv:`, `syslog:`), `@name` is an XML
+  attribute, `#root` the root element's name, `#format` the held format itself (decision 5: accepted only as the
+  user gives it, never offered). A reading's syntax is checked where it is given (`survey_feed source_type_field=`)
+  and where a group is generated.
+* **Telling the format** (`HeldText`), the first that applies: JSON (an object, or a JSON string whose text is
+  one), XML (a well-formed document), a syslog header (RFC 5424, or RFC 3164 with its optional program: `host`,
+  `app`, `message`), key=value (two or more `key=` after the start, white space, `,` or `;`), else text. A JSON or
+  XML text that doesn't parse is read on down the list. A key's value is its first `key=`'s, quoted or up to white
+  space, `,` or `;` (a `key=` inside an earlier quoted value after white space is found first: a known limit, the
+  same in processing). Every regular expression is one Java and XPath read alike (no `\s`, `\d`, lookaround,
+  non-capturing groups or `??`, which Saxon's engine doesn't match as Java's does).
+* **Candidates** (`HeldCandidates`): the names inside each record's held values (`HeldText.expand`: JSON keys,
+  dotted; XML elements below the root, attributes, `#root`; key=value keys; syslog fields; three held values deep),
+  format-free so the same name in several formats is one, each judged as a record's own field is, over the records
+  whose held field is in a format the name is seen in (90% of them must hold it, and a quarter of all records), the
+  records' shapes taken with the held field's format and names. The best name of a held field, joined by a name for
+  each format it misses (the most like it: values in common, structured alike), qualified by that format, is offered
+  first as one reading, a part joining only where its values are like the best's (a value in common, or both
+  structured names). A record's own field is offered before a held reading unless the held one separates clearly
+  better (by 0.1): seen in an e2e walk, a collector's `LogFilePath` put after `message>app | message>kv:mailbox`.
+  The form says each held candidate's formats and its records with no value.
+* **The `(no value)` row** (`match: none`) matches only records with no value; `record_source_types` adds it last
+  wherever the survey read such records. It may be in a scope and in a group like any source type.
+* **The group's selection** (`SourceTypeReadingXslt`) reads the reading with functions of the group's own, by the
+  tools' rules: `json-to-xml` (twice for a JSON string), `parse-xml` in a `try`, the syslog and pair expressions,
+  then steps by key, by local name (the first in document order), by `key=`, by syslog field; the `(no value)` row
+  is `$value = ''`. `TestSourceTypeReadingParity` runs the generated group over records the tools classified (held
+  JSON once and twice encoded, XML with namespaces and attributes, key=value, syslog, two and three deep, plain text,
+  missing, malformed, nil and padded values) and checks each lands in the same source type with the same value.
+* A field named for kinds of event (event type or name or id, action, activity, operation, kind, message id,
+  subtype) is never a candidate, held or not (`SourceTypeFields.mayName`); `logger_name`, `type` and `category` may
+  name sources and stay judged by shapes.
 
 #### Profiling the source types
 
@@ -2295,7 +2367,7 @@ surveys of the feed through a working copy, like any promoted document.
   group has its own pipeline; the form asks where its Events go, and for a promoted pipeline whether to change it or
   make a new version.)
 * The source type field is one field, at any depth; a source type matches a value exactly or by a pattern on it,
-  rows tried in order.
+  rows tried in order. (Extended 2026-11-17: or a reading into a held value; combinations in a later phase.)
 * Profiles show the agent's suggested category for each source type by default, beside the signals it rests on.
 * A "component" is called a source type group.
 * No concurrent builds: one open build per feed.
@@ -3665,6 +3737,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-18 | Source types read inside held values (decided by the user 2026-11-17, from external testing: `event` held escaped JSON with `logger_name`, its format varying per record). A source type field may be a reading (`event>logger_name`, `>` into a held value's JSON, XML, syslog header or key=value pairs, told per record; `.` into objects and elements; three held values deep; ` \| ` readings tried in turn, a step naming one format with `xml:`, `json:`, `kv:`, `syslog:`), kept as the registry's `field` text, so an old registry naming a field still reads. Plain text is never read: its records are the `(no value)` row's (`match: none`), offered wherever the survey read records with no value. Candidates come from inside held values too, judged by shapes as fields are, a reading joining a held field's formats offered first; the held format alone (`#format`) only on the user's word; a field named for kinds of event never. The group's XSLT reads the reading by the tools' rules, tested for parity over the records the tools classified. Combinations of fields are a later phase: pairs inferred only when shape-justified, three or more only as the user names them, rows matching tuples with `=`, `~`, `∈`, `*`. | Aggregated feeds |
 | 2026-11-18 | A name with no version token is taken as V1.0, as promotion files it: its next version is `-V1.1` (`-V2.0` the major choice), not `-V2`, so the new version goes in `V1.1` beside its predecessor's `V1.0` (found in part B, pinned by e2e). An index name with none still gets `-v2` (index versions are whole numbers). TestE2eElasticNewVersion walks a new version of a promoted Elasticsearch indexing pipeline on a live cluster: names proposed (V1.1, `-v2`), the candidate refused while `-v2` exists (`-v3` proposed), the exact template pattern, indexing and verify_index in `-v2`, the production `-v1`'s count and mapping unchanged and never named for dropping, the role-first layout, and a later new events version giving both promoted indexing versions a new disabled filter, the old ones left as they were (enabled or not) and named in `next_steps`. | Next version, working copy, or a fix; Promotion |
 | 2026-11-17 | Tidy-up at promotion (the user): on by default, a choice in the approval form ticked to start (`tidy_up=false` without forms). After promotion, each test feed's streams are marked deleted as the Data screen does (logical, retention purges them), each Lucene test index's shards deleted as the Index Shards screen does, then the test docs deleted: `-VERIFY` dashboards on test indexes, test index docs (never an Elasticsearch index on the cluster), test feeds. Streams, shards, docs strictly in order per item; a failure skips that item's later steps, never fails the promotion. Only what the build's record or workspace proves it made, in its workspace, tagged as the tools', not a source feed, used by nothing outside the build (dependencies, processor filters). The review lists every item (streams and size, shards, docs) in the tree the approval is bound to; the result reports each. | Promotion |
 | 2026-11-17 | Role-first versioned layout and follow-on filters (the user). Promotion puts each role's documents in `<root>/<feed>/<Role>/V<x.y>` (role folders always; the version from the pipeline's name, V1.0 with a warning when it has none), or `<roleRoot>/<feed>/V<x.y>` for a role whose root is elsewhere; each role's root chosen per role: where the sibling feeds' pipelines of that role are (proposed), the feed's own location, or a folder the user types (one form; without forms `role_locations` and destinations keyed by role), a new version's defaulting to its predecessor's; the tree lists them, so the approval's digest covers them. A new version goes in a sibling version folder of its predecessor's, whatever older shape that has (never moved). Shared modules as roles `Common` and `Helpers` under the feed; a group's documents in `<feed>/<group>/<Role>/V<x.y>`. A group pipeline's default name has ` V1.0` where neither feed nor group holds a version; tool descriptions ask for the version in a name. Promoting a new events (or records) version gives each promoted pipeline reading the predecessor's Events a new filter, disabled, reading the new version's (listed in the approval); existing filters are never changed, and the buttons disabling the predecessor's are gone: `next_steps` say what to enable, then what the admin disables or removes. `build_status` points those follow-ons at `review_coverage changed_pipeline_uuid=`. | Promotion; Next version, working copy, or a fix; Aggregated feeds |

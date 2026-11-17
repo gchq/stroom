@@ -36,6 +36,7 @@ import stroom.ai.impl.tools.generation.XsltNames;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.SourceTypeMeta;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
+import stroom.ai.impl.tools.sample.SourceTypeReading;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
@@ -1693,10 +1694,21 @@ class SourceTypeGroups {
             return effective;
         }
         // The source type field is read to tell the group's records from the rest, not a field the group leaves
-        // unread.
+        // unread. A field holding the record's data, read into for its source type (a reading's held field), is the
+        // group's rules' to read like any other.
+        final SourceTypeReading reading = SourceTypeReading.cached(field);
+        final List<String> read = reading == null
+                ? List.of(field)
+                : reading.paths().stream()
+                        .filter(path -> path.held().isEmpty())
+                        .map(SourceTypeReading.Path::field)
+                        .toList();
+        if (read.isEmpty()) {
+            return effective;
+        }
         final Map<String, Object> json = new LinkedHashMap<>(effective.toJson(DumpMode.COMPACT));
         final Set<String> ignored = new LinkedHashSet<>(effective.ignoredFields());
-        ignored.add(ToolText.split(ToolText.split(field, ".").getFirst(), "/").getFirst());
+        read.forEach(each -> ignored.add(ToolText.split(ToolText.split(each, ".").getFirst(), "/").getFirst()));
         json.put("ignored_fields", new ArrayList<>(ignored));
         return TranslationMapping.parse(json);
     }

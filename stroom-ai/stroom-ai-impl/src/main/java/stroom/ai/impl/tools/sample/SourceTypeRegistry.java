@@ -31,16 +31,17 @@ import java.util.regex.Pattern;
 /// (`<!-- stroom-mcp source types {...} -->`), never shown as text. Its format is what is stored, so it changes only
 /// in ways a registry already kept still reads.
 ///
-/// The block is JSON: `feed`, `field` (the source type field: a record's, or `meta:<Attribute>` for a part's meta
-/// attribute, [SourceTypeMeta]), `field_by`, `environment` and `system_name` (the
-/// feed's, the default for each row), `updated`, `scope` (the build that chose it, `group` (the build's one source type
-/// group), `source_types`, `by`, `at`), and
-/// `rows` in the order they are tried, each `name`, `match` (`value`, `pattern` or `member`), `value` (the value, the
-/// pattern, or a list's item), `separator` (a `member` row's: what the list is split on), `system_name`, `status`
-/// (`translated`, `parked`, `dropped` or `new`), `decided` (`by`, `at`, `reason`), `group`, `pipeline` and
-/// `output_feed` (empty until a source type group handles it; `group_xslt` names the group's
-/// XSLT, `uuid` and `name`, once build_translation_xslt saves it), `references` (the reference data its group looks
-/// up: `feed` and `loader_pipeline`) and `profile`.
+/// The block is JSON: `feed`, `field` (the source type field: a record's, `meta:<Attribute>` for a part's meta
+/// attribute, [SourceTypeMeta], or a reading into held values, [SourceTypeReading]: `event>logger_name`; a
+/// registry naming a field reads it as a reading of that field alone), `field_by`, `environment` and `system_name`
+/// (the feed's, the default for each row), `updated`, `scope` (the build that chose it, `group` (the build's one
+/// source type group), `source_types`, `by`, `at`), and `rows` in the order they are tried, each `name`, `match`
+/// (`value`, `pattern`, `member`, or `none` for the records with no value, the `(no value)` row), `value` (the
+/// value, the pattern, or a list's item; empty for `none`), `separator` (a `member` row's: what the list is split
+/// on), `system_name`, `status` (`translated`, `parked`, `dropped` or `new`), `decided` (`by`, `at`, `reason`),
+/// `group`, `pipeline` and `output_feed` (empty until a source type group handles it; `group_xslt` names the
+/// group's XSLT, `uuid` and `name`, once build_translation_xslt saves it), `references` (the reference data its
+/// group looks up: `feed` and `loader_pipeline`) and `profile`.
 ///
 /// Each source type group has a pipeline of its own. A row's `pipeline` names its group's: `name` (`<feed> <group>`
 /// until create_pipeline makes it, then the pipeline's), `uuid` (once made) and `new_version` (true while a new
@@ -118,7 +119,8 @@ public final class SourceTypeRegistry {
         final List<String> lines = new ArrayList<>(List.of("# " + docName(feed), "", account(registry, rows), "",
                 "Rows are tried in order: the first whose match fits a record's " + code(registry.get("field"))
                 + " value takes it (= a value exactly, ~ an anchored pattern on the value" + listSaid(rows) + ")."
-                + metaSaid(registry.get("field")) + " Shares are estimates from the records the survey read.", "",
+                + metaSaid(registry.get("field")) + readingSaid(registry.get("field"))
+                + " Shares are estimates from the records the survey read.", "",
                 "| # | Source type | Match | System | Records | Bytes | Message | Top kinds | Signals | Suggested | "
                 + "Status | Examples | Decided |",
                 "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"));
@@ -167,6 +169,20 @@ public final class SourceTypeRegistry {
                 : " The field is the stream meta attribute " + code(attribute) + " (stroom:meta): each part of a "
                   + "stream has one value for all its records, so a source type group passes over a whole part at "
                   + "once.";
+    }
+
+    // Where the field is a reading into held values: what it reads, and that plain text gives no value.
+    private static String readingSaid(final Object field) {
+        final String text = JsonValues.text(field);
+        if (!SourceTypeReading.isReading(text)) {
+            return "";
+        }
+        final SourceTypeReading reading = SourceTypeReading.cached(text);
+        return reading == null
+                ? ""
+                : " The value is read as " + reading.said() + ", the first reading with a value giving it; a held "
+                  + "value of plain text (or none) gives no value, matched by the " + SourceTypeRows.NO_VALUE
+                  + " row where there is one.";
     }
 
     // The account of the feed: its field, how many source types, which in what state and why.

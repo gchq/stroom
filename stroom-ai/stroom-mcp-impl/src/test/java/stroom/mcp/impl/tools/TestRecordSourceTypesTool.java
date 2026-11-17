@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
+import stroom.ai.impl.tools.sample.SourceTypeProfiles;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
@@ -551,6 +552,38 @@ class TestRecordSourceTypesTool {
         assertThat(shown).as("%s", shown).containsEntry("status", "needs_review");
         assertThat(String.valueOf(shown.get("table"))).contains("PowerBI");
         assertThat(written).isEmpty();
+    }
+
+    @Test
+    void recordsWithNoValueAreOfferedTheNoValueRowLastAndItMayBeInTheScope() {
+        final Map<String, Object> values = new LinkedHashMap<>();
+        values.put("com.x.Auth", Map.of("records", 5));
+        values.put("com.x.Db", Map.of("records", 4));
+        values.put("", Map.of("records", 3));
+        final Map<String, Object> sources = new LinkedHashMap<>();
+        sources.put(SourceTypeProfiles.FIELD, "event>logger_name | event>xml:@logger");
+        sources.put(SourceTypeProfiles.BY, "user");
+        sources.put(SourceTypeProfiles.VALUES, values);
+        sources.put("records", 12);
+        final Map<String, Object> survey = new LinkedHashMap<>(Map.of("feed", FEED, "format", "json lines",
+                "streams_read", List.of(1), "surveys", List.of(), "shapes", Map.of()));
+        survey.put(SourceTypeProfiles.STATE_KEY, sources);
+        final String text = SurveyDoc.render(survey);
+        Mockito.when(surveyDocuments.load(BUILD, FEED)).thenReturn(Optional.of(new SurveyRecord("s",
+                "PEGA - Survey", text)));
+        Mockito.when(registries.registry(BUILD, FEED)).thenReturn(Optional.empty());
+
+        final Map<String, Object> result = called(BuildToolCalls.context(), Map.of("scope", List.of("com.x.Auth",
+                SourceTypeRows.NO_VALUE), "group", "Held", "reason", "later", "patterns", "exact"));
+
+        assertThat(result).as("%s", result).doesNotContainKey("error");
+        assertThat(rows()).extracting(row -> row.get("name")).containsExactly("com.x.Auth", "com.x.Db",
+                SourceTypeRows.NO_VALUE);
+        assertThat(rowNamed(SourceTypeRows.NO_VALUE)).containsEntry("match", SourceTypeRows.NONE)
+                .containsEntry("value", "");
+        assertThat(SourceTypeRegistry.read(written.getLast())).containsEntry("field",
+                "event>logger_name | event>xml:@logger");
+        assertThat(written.getLast()).contains("logger_name inside the held field event", "| no value |");
     }
 
     private static Map<String, Object> profiled(final String name, final long records, final String status) {

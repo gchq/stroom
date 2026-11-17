@@ -42,6 +42,25 @@ class TestSourceTypeFields {
     }
 
     @Test
+    void aSourceTypeHeldInsideAStringFieldIsOfferedReadInEachOfItsFormats() {
+        // Seen in external testing (2026-11-17): `event` held escaped JSON naming its logger in some records,
+        // key=value pairs in others, XML in others, plain text in the rest; only the records' own fields were
+        // offered, and none of them tells the sources apart.
+        final List<Map<String, Object>> records = HeldFixtures.wrapped(72);
+
+        final List<SourceTypeFields.Candidate> found = SourceTypeFields.candidates(records, false);
+
+        assertThat(found).extracting(SourceTypeFields.Candidate::field).first()
+                .isEqualTo("event>logger_name | event>xml:@logger");
+        assertThat(found.getFirst().values()).containsExactlyInAnyOrder("com.x.Auth", "com.x.Db", "com.x.Mail",
+                "com.x.Xml");
+        // The plain-text sixth has no value: never a source type of its words.
+        assertThat(found.getFirst().records()).isEqualTo(60);
+        assertThat(records.stream().map(record -> SourceTypeFields.valueOf(record, found.getFirst().field()))
+                .limit(6)).containsExactly("com.x.Auth", "com.x.Auth", "com.x.Db", "com.x.Db", "com.x.Xml", null);
+    }
+
+    @Test
     void aRecordsOwnFieldDecidingItsNestedFieldsIsFoundAndNotTheKindFieldWithinIt() {
         final List<Map<String, Object>> records = new ArrayList<>();
         final List<List<String>> workloads = List.of(List.of("Files", "FileRead", "FileWritten", "FileShared"),

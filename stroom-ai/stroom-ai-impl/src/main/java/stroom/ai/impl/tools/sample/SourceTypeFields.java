@@ -19,17 +19,16 @@ package stroom.ai.impl.tools.sample;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.FieldHomes;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.IntFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -68,6 +67,8 @@ public final class SourceTypeFields {
     static final double MIN_SEPARATION_SAID = 0.3;
     // The fewest records to choose from.
     static final int MIN_RECORDS = 12;
+    // How much better a held reading must separate than a record's own field to be offered before it.
+    static final double HELD_HANDICAP = 0.1;
     // The most candidates put to the user.
     static final int MAX_CANDIDATES = 4;
     // The words of a message's template kept: enough to tell its kind, not its values.
@@ -84,9 +85,7 @@ public final class SourceTypeFields {
             "EventSource/User/Id", "EventSource/RunAs/Id", "EventSource/SessionId", "EventDetail/Description");
     /// The values a field holds for no value, as the tools and a source type group read them (any case), the empty
     /// value aside.
-    public static final List<String> NIL_VALUES = List.of("-", "null", "none", "n/a");
-    // The white space around a value: XML's, as XPath's \s reads it, so a source type group strips the same.
-    private static final Pattern AROUND = Pattern.compile("^[ \t\n\r]+|[ \t\n\r]+$");
+    public static final List<String> NIL_VALUES = HeldText.NIL_VALUES;
     private static final Pattern ADDRESS = Pattern.compile("^\\d{1,3}(\\.\\d{1,3}){3}(:\\d+)?$|^[0-9a-fA-F]{12,}$"
                                                            + "|^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-|@");
     private static final Pattern TIME = Pattern.compile("\\d{1,2}:\\d{2}:\\d{2}|\\d{4}-\\d{2}-\\d{2}|^\\d{10,13}$");
@@ -98,12 +97,22 @@ public final class SourceTypeFields {
     private static final Pattern PAIR = Pattern.compile("(?<![\\w.])[A-Za-z_][\\w.-]{0,40}=");
     private static final int MIN_PAIRS = 3;
     private static final int FREE_TEXT = 40;
+    // A field named for kinds of event within a source (an event type, action or operation): never a source type.
+    private static final Pattern KIND_ROLE = Pattern.compile("(^|[._-])(event_?type|event_?name|event_?id|action|"
+                                                             + "activity|operation|op|kind|result_?type|msg_?id|"
+                                                             + "message_?id|subtype)$", Pattern.CASE_INSENSITIVE);
 
     private SourceTypeFields() {
         // Static only.
     }
 
-    /// The fields that could be the source type field, best first.
+    /// The fields that could be the source type field, best first: the records' own fields, and the names inside
+    /// the structured data their string fields hold ([HeldText#expand]: `event>logger_name`), each judged the same
+    /// way ([HeldCandidates]). Where a held field's formats name the source differently (`logger_name` in JSON and
+    /// key=value, `@logger` in XML), a reading trying each in turn is offered first (`event>logger_name |
+    /// event>xml:@logger`), for the user to confirm. Never a field named for kinds of event (an event type, action
+    /// or operation: classify_kinds' to tell apart within a source type), nor a held value's format alone (the
+    /// user's choice only, as a last resort).
     ///
     /// @param records The records read, parsed (flattened to dotted names).
     /// @param said    True when the user said the feed aggregates sources: weaker separation is enough, and a field
@@ -114,6 +123,9 @@ public final class SourceTypeFields {
         if (held.size() < MIN_RECORDS) {
             return List.of();
         }
+        final double threshold = said
+                ? MIN_SEPARATION_SAID
+                : MIN_SEPARATION;
         final Map<String, Map<String, Integer>> valuesByField = scalarValues(held);
         final List<Candidate> found = new ArrayList<>();
         for (final Map.Entry<String, Map<String, Integer>> entry : valuesByField.entrySet()) {
@@ -124,34 +136,37 @@ public final class SourceTypeFields {
                 || counts.size() * 2L > present || !mayName(field, counts.keySet())) {
                 continue;
             }
-            final Candidate candidate = judge(field, held, counts, present);
-            if (candidate.separation() >= (said
-                    ? MIN_SEPARATION_SAID
-                    : MIN_SEPARATION) && (said || candidate.holdsKinds())) {
+            final List<String> values = held.stream().map(record -> valueOf(record, field)).toList();
+            final Candidate candidate = judge(field, values, i -> shapeKey(held.get(i), field),
+                    i -> naming(held.get(i), field), counts, present, Map.of());
+            if (candidate.separation() >= threshold && (said || candidate.holdsKinds())) {
                 found.add(candidate);
             }
         }
-        found.sort(Comparator.comparingDouble(Candidate::separation).reversed()
+        found.addAll(HeldCandidates.of(held, threshold, said));
+        // A record's own field first, unless a held reading separates clearly better: the simpler reading.
+        found.sort(Comparator.comparingDouble((Candidate candidate) -> candidate.separation() - (candidate.held()
+                        ? HELD_HANDICAP
+                        : 0.0)).reversed()
                 .thenComparingInt(candidate -> candidate.values().size()));
-        return List.copyOf(found.subList(0, Math.min(MAX_CANDIDATES, found.size())));
+        final List<Candidate> ordered = HeldCandidates.joinedFirst(found);
+        return List.copyOf(ordered.subList(0, Math.min(MAX_CANDIDATES, ordered.size())));
     }
 
     /// @param record A record, parsed.
-    /// @param field  A field, dotted.
-    /// @return Its value as text, or null when it has none (nil values aside).
+    /// @param field  The source type field: a field, dotted, or a reading into held values ([SourceTypeReading]).
+    /// @return Its value as text, or null when it has none (nil values aside, and a reading that isn't one).
     public static String valueOf(final Map<String, Object> record, final String field) {
-        if (record == null) {
+        if (record == null || field == null) {
             return null;
         }
-        final Object value = record.get(field);
-        if (!(value instanceof String || value instanceof Number || value instanceof Boolean
-              || value instanceof BigInteger)) {
-            return null;
+        if (!SourceTypeReading.isReading(field)) {
+            return HeldText.normalised(SourceTypeReading.Path.top(record, field));
         }
-        final String text = AROUND.matcher(String.valueOf(value)).replaceAll("");
-        return text.isEmpty() || NIL_VALUES.contains(text.toLowerCase(Locale.ROOT))
+        final SourceTypeReading reading = SourceTypeReading.cached(field);
+        return reading == null
                 ? null
-                : text;
+                : reading.valueOf(record);
     }
 
     /// A record's shape, as the source type field is chosen by: its fields' names (the given field aside), its
@@ -293,13 +308,23 @@ public final class SourceTypeFields {
         return out;
     }
 
-    // Whether a field may say which source a record came from: not one whose name gives it a home that says who,
-    // where or when (a host, a user, an address), not a message, and its values short names, not sentences,
-    // addresses or times (a path may hold a date: a log file rotated daily).
-    private static boolean mayName(final String field, final Set<String> values) {
+    /// Whether a field may say which source a record came from: not one whose name gives it a home that says who,
+    /// where or when (a host, a user, an address), not a message, not one named for kinds of event (an event type,
+    /// action or operation: telling those apart within a source type is classify_kinds' and the rules' job, never a
+    /// source type's), and its values short names, not sentences, addresses or times (a path may hold a date: a log
+    /// file rotated daily).
+    ///
+    /// @param field  A field, dotted, or a reading's path into a held value (judged by its last name).
+    /// @param values Its values.
+    /// @return True if it may.
+    static boolean mayName(final String field, final Set<String> values) {
+        final String last = SourceTypeReading.lastName(field);
+        final String dotted = SourceTypeReading.isReading(field)
+                ? field.replace(SourceTypeReading.HELD, ".")
+                : field;
         final boolean homed = FieldHomes.HOMES.stream()
-                .anyMatch(home -> NOT_SOURCES.contains(home.path()) && FieldHomes.matches(home.regex(), field));
-        if (homed || ToolText.search(Shapes.MESSAGE, ToolText.lastPart(field, '.'))) {
+                .anyMatch(home -> NOT_SOURCES.contains(home.path()) && FieldHomes.matches(home.regex(), dotted));
+        if (homed || ToolText.search(Shapes.MESSAGE, last) || ToolText.search(KIND_ROLE, last)) {
             return false;
         }
         return values.stream().allMatch(value -> value.length() <= MAX_VALUES
@@ -308,27 +333,40 @@ public final class SourceTypeFields {
                                                  && (SourceTypeRows.structured(value) || !TIME.matcher(value).find()));
     }
 
-    // How well the field's values tell the records' shapes apart, and whether its values hold kinds of their own.
-    private static Candidate judge(final String field,
-                                   final List<Map<String, Object>> records,
-                                   final Map<String, Integer> counts,
-                                   final int present) {
+    /// How well a field's values tell the records' shapes apart, and whether its values hold kinds of their own.
+    ///
+    /// @param field   The field, or a reading.
+    /// @param values  Each record's value, null for none.
+    /// @param shapeOf A record's shape, by its index.
+    /// @param namesOf A record's values of fields named like kinds, by its index.
+    /// @param counts  The records holding each value.
+    /// @param present The records holding a value.
+    /// @param formats The records with a value by the format of the held value read ([HeldText]); none for a field.
+    /// @return The candidate.
+    static Candidate judge(final String field,
+                           final List<String> values,
+                           final IntFunction<String> shapeOf,
+                           final IntFunction<String> namesOf,
+                           final Map<String, Integer> counts,
+                           final int present,
+                           final Map<String, Integer> formats) {
         final Map<String, Map<String, Integer>> valuesByShape = new HashMap<>();
         final Map<String, Set<String>> kindsByValue = new HashMap<>();
-        for (final Map<String, Object> record : records) {
-            final String value = valueOf(record, field);
+        for (int i = 0; i < values.size(); i++) {
+            final String value = values.get(i);
             if (value == null) {
                 continue;
             }
-            final String shape = shapeKey(record, field);
+            final String shape = shapeOf.apply(i);
             valuesByShape.computeIfAbsent(shape, k -> new HashMap<>()).merge(value, 1, Integer::sum);
-            kindsByValue.computeIfAbsent(value, k -> new HashSet<>()).add(shape + " | " + naming(record, field));
+            kindsByValue.computeIfAbsent(value, k -> new HashSet<>()).add(shape + " | " + namesOf.apply(i));
         }
+        final int noValue = values.size() - present;
         if (valuesByShape.size() < 2) {
-            return new Candidate(field, byCount(counts), counts, present, 0.0, false);
+            return new Candidate(field, byCount(counts), counts, present, 0.0, false, formats, noValue);
         }
         final long pure = valuesByShape.values().stream()
-                .mapToLong(values -> values.values().stream().mapToInt(Integer::intValue).max().orElse(0))
+                .mapToLong(byValue -> byValue.values().stream().mapToInt(Integer::intValue).max().orElse(0))
                 .sum();
         final double purity = (double) pure / present;
         final double largest = (double) counts.values().stream().mapToInt(Integer::intValue).max().orElse(0)
@@ -340,11 +378,15 @@ public final class SourceTypeFields {
         final int kinds = kindsByValue.values().stream().mapToInt(Set::size).sum();
         final long varied = kindsByValue.values().stream().filter(set -> set.size() >= 2).count();
         final boolean holdsKinds = kinds >= counts.size() + 2 && varied >= 2;
-        return new Candidate(field, byCount(counts), counts, present, ToolText.round(separation, 3), holdsKinds);
+        return new Candidate(field, byCount(counts), counts, present, ToolText.round(separation, 3), holdsKinds,
+                formats, noValue);
     }
 
-    // The values of the fields named like kinds of event (other than the given field), the message's JSON's too.
-    private static String naming(final Map<String, Object> record, final String excluded) {
+    /// @param record   A record, parsed.
+    /// @param excluded A field left out.
+    /// @return The values of the fields named like kinds of event (other than the given field), the message's
+    /// JSON's too.
+    static String naming(final Map<String, Object> record, final String excluded) {
         final List<String> pairs = new ArrayList<>();
         final Map<String, Object> all = new LinkedHashMap<>(record);
         all.putAll(held(record).fields());
@@ -360,7 +402,7 @@ public final class SourceTypeFields {
         return String.join(",", pairs);
     }
 
-    private static List<String> byCount(final Map<String, Integer> counts) {
+    static List<String> byCount(final Map<String, Integer> counts) {
         return counts.entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
                 .map(Map.Entry::getKey)
@@ -373,7 +415,7 @@ public final class SourceTypeFields {
 
     /// A field that could be the source type field.
     ///
-    /// @param field      Its name, dotted.
+    /// @param field      Its name, dotted, or a reading into held values ([SourceTypeReading]).
     /// @param values     Its distinct values, commonest first.
     /// @param counts     The records holding each value.
     /// @param records    The records holding a value in it.
@@ -381,12 +423,35 @@ public final class SourceTypeFields {
     ///                   shape only ever in one value's records.
     /// @param holdsKinds True when its values each hold several kinds of event (shapes or kind values), as sources
     ///                   do and a kind field's values don't.
+    /// @param formats    For a reading into held values: the records with a value by the held value's format
+    ///                   ([HeldText]); none for a field.
+    /// @param noValue    The records read with no value in it: for a held reading, those whose held value is plain
+    ///                   text, another format, or lacks it (the registry's `(no value)` row).
     public record Candidate(String field,
                             List<String> values,
                             Map<String, Integer> counts,
                             int records,
                             double separation,
-                            boolean holdsKinds) {
+                            boolean holdsKinds,
+                            Map<String, Integer> formats,
+                            int noValue) {
+
+        /// A field of the records' own.
+        ///
+        /// @param field      Its name, dotted.
+        /// @param values     Its distinct values, commonest first.
+        /// @param counts     The records holding each value.
+        /// @param records    The records holding a value in it.
+        /// @param separation How far its values tell the records' shapes apart beyond chance.
+        /// @param holdsKinds True when its values each hold several kinds of event.
+        public Candidate(final String field,
+                         final List<String> values,
+                         final Map<String, Integer> counts,
+                         final int records,
+                         final double separation,
+                         final boolean holdsKinds) {
+            this(field, values, counts, records, separation, holdsKinds, Map.of(), 0);
+        }
 
         /// @return How the user is shown it: its name and its commonest values, e.g. `sourcetype (PegaDB,
         /// PegaRULES, +4 more)`.
@@ -395,6 +460,11 @@ public final class SourceTypeFields {
             return field + " (" + String.join(", ", some) + (values.size() > VALUES_SAID
                     ? ", +" + (values.size() - VALUES_SAID) + " more"
                     : "") + ")";
+        }
+
+        /// @return True if it reads into held values.
+        public boolean held() {
+            return SourceTypeReading.isReading(field);
         }
     }
 
