@@ -149,6 +149,16 @@ public final class AskStroomAiDialogStories {
                             .toBeInTheDocument());
                     DocEditors.expectNoProblems(play);
                 })
+                // Chat History left open (the screenshot and the dialog measurement show it)
+                .story("ChatHistoryOpen", AskStroomAiDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    screen.findByText(CAPTION, StroomDom.DIALOG_TITLE);
+                    play.click(screen.getByTitle("Conversation History"));
+                    final Play dialog = screen.within(screen.findByText("Chat History", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    dialog.findByText("Old chat about feeds");
+                })
                 // The app's toolbar AI toggle opens and closes the chat
                 .story("ToolbarEntryPoint", AskStroomAiDialogStories::renderToolbar)
                 .withPlay(play -> {
@@ -210,6 +220,19 @@ public final class AskStroomAiDialogStories {
                             .toBeNull());
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.DOWNLOAD_SPY)).toHaveBeenCalled());
                     DocEditors.expectNoProblems(play);
+                })
+                // Download Options left open (the screenshot and the dialog measurement show it)
+                .story("DownloadOptionsOpen", AskStroomAiDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    screen.findByText(CAPTION, StroomDom.DIALOG_TITLE);
+                    send(screen, "anything");
+                    play.waitFor(() -> play.expect(screen.getByText("A fresh reply.")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(screen.getByTitle("Download")).toBeEnabled());
+                    play.click(screen.getByTitle("Download"));
+                    final Play dialog = screen.within(screen.findByText("Download Options", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    dialog.findByText(TextMatch.containing("Include data contexts"));
                 })
                 // Configure: the tabbed configuration dialog (General, Table Analysis); OK closes it
                 .story("Configure", AskStroomAiDialogStories::render)

@@ -18,10 +18,12 @@ package stroom.gwt.workbench.client.app.data;
 
 import stroom.data.client.ProcessChoice;
 import stroom.data.client.component.CreateProcessorsController;
+import stroom.explorer.client.component.DocumentChooserController;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -29,6 +31,8 @@ import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.Selection;
 
 import com.google.gwt.core.client.GWT;
@@ -48,6 +52,8 @@ public final class CreateProcessorsStories {
 
     /// The name of the spy recording the choice made.
     static final String ON_OK = "onOk";
+
+    private static final String CHOOSER_CAPTION = "Choose Pipeline To Process Data With";
 
     private CreateProcessorsStories() {
         // Static utility
@@ -111,6 +117,18 @@ public final class CreateProcessorsStories {
                     play.waitFor(() -> play.expect(play.spy(ON_OK)).toHaveBeenCalledWith(
                             matchesChoice(10, true, true, false)));
                     expectNoProblems(play);
+                })
+                // Choose Pipeline To Process Data With left open (the screenshot and the dialog
+                // measurement show it): OK on a choice that isn't a reprocess asks for the pipeline
+                .story("ChoosePipelineToProcessDataWithOpen", context -> render(context, true))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play choice = screen.within(
+                            screen.findByText("Create Processors", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    play.click(choice.getByRole("button", StroomDom.button("OK")));
+                    final Play dialog = screen.within(
+                            screen.findByText(CHOOSER_CAPTION, StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    dialog.findByText("System");
                 });
     }
 
@@ -141,8 +159,17 @@ public final class CreateProcessorsStories {
     }
 
     private static Widget render(final StoryContext context) {
+        return render(context, false);
+    }
+
+    // As above; with choosePipeline, a choice that isn't a reprocess then shows the pipeline chooser,
+    // as MetaListController.doProcess does
+    private static Widget render(final StoryContext context, final boolean choosePipeline) {
         final ProcessingScreenGinjector injector = GWT.create(ProcessingScreenGinjector.class);
-        final ScreenHarness harness = ScreenHarness.builder(context, RestFixtures.none())
+        final RestFixtures fixtures = choosePipeline
+                ? TreeFixtures.explorerRoutes(TreeFixtures.fixtureTree()).build()
+                : RestFixtures.none();
+        final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
                 .build();
         final Spy onOk = harness.fn(ON_OK);
@@ -154,6 +181,17 @@ public final class CreateProcessorsStories {
             map.put("minMetaCreateTimeMs", choice.getMinMetaCreateTimeMs());
             map.put("maxMetaCreateTimeMs", choice.getMaxMetaCreateTimeMs());
             onOk.call(map);
+            if (choosePipeline && !choice.isReprocess()) {
+                // As MetaListController.choosePipeline
+                final DocumentChooserController chooser = injector.getDocumentChooserController();
+                chooser.setIncludeNullSelection(false);
+                chooser.setCaption(CHOOSER_CAPTION);
+                chooser.setIncludedTypes(PipelineDoc.TYPE);
+                chooser.setRequiredPermissions(DocumentPermission.VIEW);
+                chooser.showOnce(harness.getAppRoot(), pipeline -> {
+                    // The story stops at the chooser
+                });
+            }
         });
         return harness.asWidget();
     }

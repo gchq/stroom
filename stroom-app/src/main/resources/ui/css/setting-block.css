@@ -29,6 +29,13 @@
 	-o-transition: background-color .3s;
 }
 
+/* In a dialog (Change Status, Change Assigned To) the highlight reaches out by its padding, so the
+   setting's label and value line up with the dialog's title, as a form's fields do */
+.dialog__content .setting-block {
+    margin-left: -5px;
+    margin-right: -5px;
+}
+
 .setting-block:hover {
     background-color: var(--border-color);
 }

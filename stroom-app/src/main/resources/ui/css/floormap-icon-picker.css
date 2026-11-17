@@ -22,17 +22,24 @@
 */
 
 /*
- * Built-in icon grid. Wider than the 260px the dialog gives its single-control
- * rows — five columns is what lets every icon's name sit under it unabbreviated,
- * and a grid of unlabelled pictograms would make the user guess which is which.
+ * Built-in icon grid. Wider than the 260px the dialog gives its drop-down — 76px
+ * columns let every icon's name sit under it unabbreviated, and a grid of unlabelled
+ * pictograms would make the user guess which is which. Seven columns keep the 21 icons
+ * to three rows, so the dialog, its labels above its controls, fits a small window.
  * Its width comes from --floor-map-layer-style__control-width (floor-map-layer-style.css).
  */
 .floormap-icon-picker {
     display: grid;
-    grid-template-columns: repeat(5, 76px);
+    grid-template-columns: repeat(7, 76px);
     gap: 2px;
     max-height: 340px;
     overflow-y: auto;
+}
+
+/* In a form group, still a grid: its icons are labels, and form-group.css lays out a group's child
+   holding a label (a tick box and its label) as a row */
+.form-group > .floormap-icon-picker {
+    display: grid;
 }
 
 /* An icon: a label holding its radio button (unseen), its picture and its name */
@@ -77,9 +84,15 @@
     box-shadow: var(--focus-shadow);
 }
 
-/* Disabled (its graphic isn't an icon): legible, but not chosen from */
+/* Disabled (its graphic isn't an icon): faded, as a disabled radio group's options are, and not
+   chosen from */
 .floormap-icon-picker__cell:has(.floormap-icon-picker__input:disabled) {
     cursor: default;
+    color: var(--control__text-color--disabled);
+}
+
+.floormap-icon-picker__cell:has(.floormap-icon-picker__input:disabled) .floormap-icon-picker__glyph {
+    opacity: 0.45;
 }
 
 .floormap-icon-picker__cell:has(.floormap-icon-picker__input:disabled):hover {

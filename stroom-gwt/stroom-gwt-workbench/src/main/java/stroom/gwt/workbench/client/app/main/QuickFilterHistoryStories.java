@@ -192,6 +192,19 @@ public final class QuickFilterHistoryStories {
                     play.expect(screen.queryByText("Replace the filter text?")).toBeNull();
                     expectNoProblems(play);
                 })
+                // Advanced Query left open (the screenshot and the dialog measurement show it)
+                .story("AdvancedQueryOpen", context -> render(context, fixtures(RestReply.json("[]"))))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query filter = play.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER);
+                    play.findByText("Alice Anderson");
+                    play.type(filter, RECENT_FILTER + "{Enter}");
+                    play.click(play.getByTitle("Show Recent Filters"));
+                    play.click(screen.findByText("Advanced Query..."));
+                    final Play dialog = screen.within(
+                            screen.findByText("Advanced Query", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    dialog.findByText(TextMatch.containing("alice"));
+                })
                 // A filter the tree can't show opens an empty tree, saying so (and that OK will
                 // replace the text). OK then replaces it, with no confirmation
                 .story("AdvancedQueryUnconvertible", context -> render(context, fixtures(RestReply.json("[]"))))

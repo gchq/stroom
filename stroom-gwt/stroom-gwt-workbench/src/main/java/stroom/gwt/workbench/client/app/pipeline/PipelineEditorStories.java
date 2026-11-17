@@ -795,6 +795,17 @@ public final class PipelineEditorStories {
                     play.waitFor(() -> play.expect(play.queryByText("xslt")).toBeNull());
                     expectNoProblems(play);
                 })
+                // Pipeline Source left open (the screenshot and the dialog measurement show it)
+                .story("PipelineSourceOpen", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openStructure(play);
+                    play.findByText("parser");
+                    play.click(play.getByRole("button", "View Source"));
+                    final Play source = dialog(screen, "Pipeline Source");
+                    play.waitFor(() -> play.expect(source.querySelector(".ace_content"))
+                            .toHaveTextContent(TextMatch.containing("elements")));
+                })
                 // A boolean property is chosen from true and false; choosing one makes its Source
                 // Local, and OK sets it on the element
                 .story("BooleanProperty", context -> render(context, FIXTURES))

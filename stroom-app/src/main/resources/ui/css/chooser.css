@@ -28,6 +28,13 @@
     flex-flow: column;
 }
 
+/* It clips, so it has room inside for the filter's focus ring (focus-ring-room), and reaches as far
+   outside; its least size (default-min-sizes) is that of what shows, so grows by the room too */
+.chooser.focus-ring-room {
+    min-width: calc(200px * var(--text-scale) + 2 * var(--focus-ring__room));
+    min-height: calc(200px + 2 * var(--focus-ring__room));
+}
+
 .chooser__bar {
     display: flex;
     /* The separator between the links in line with their text, not at the top of the bar */

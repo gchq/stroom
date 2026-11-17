@@ -454,6 +454,19 @@ public final class CredentialsScreenStories {
                             .toBeNull());
                     SecurityPlays.expectNoProblems(play);
                 })
+                // Replace Username / Password Secret left open (the screenshot and the dialog measurement
+                // show it)
+                .story("ReplaceSecretOpen", CredentialsScreenStories::render)
+                .withPlay(play -> {
+                    play.click(play.findByText("My Creds"));
+                    final Query replace = play.getByRole("button", TextMatch.containing(REPLACE_SECRET_TITLE));
+                    play.waitFor(() -> play.expect(replace).not().toHaveAttribute("aria-disabled", "true"));
+                    play.click(replace);
+                    final Play screen = play.screen();
+                    final Play dialog = screen.within(screen.findByText("Replace Username / Password Secret",
+                            StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    dialog.findByLabelText("User Name");
+                })
                 // Replacing a Key Store File's secret starts from its type and path, which aren't secret
                 .story("ReplaceKeyStoreFileSecret", CredentialsScreenStories::render)
                 .withPlay(play -> {

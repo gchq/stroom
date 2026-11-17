@@ -151,6 +151,18 @@ public final class SourceStories {
                                                             + "{\"charOffsetFrom\": 1000, \"charOffsetTo\": 1999}}}")
                                     .toSpyMatcher()));
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                })
+                // Set Source Range left open (the screenshot and the dialog measurement show it)
+                .story("SetSourceRangeOpen", context -> render(context, LOADED_FIXTURES, false, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query label = play.querySelector(".character-navigator__label");
+                    play.waitFor(() -> play.expect(label).toBeVisible());
+                    play.click(label);
+                    final Play dialog = screen.within(screen.findByText("Set Source Range", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(dialog.getAllByRole("spinbutton", "Character offset"))
+                            .toHaveLength(2));
                 });
     }
 

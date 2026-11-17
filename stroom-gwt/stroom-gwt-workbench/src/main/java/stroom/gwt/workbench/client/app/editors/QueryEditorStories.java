@@ -427,6 +427,15 @@ public final class QueryEditorStories {
                     play.expect(screen.getByRole("button", "Time range: Today")).toBeInTheDocument();
                     DocumentEditors.expectNoProblems(play);
                 })
+                // Time Range left open (the screenshot and the dialog measurement show it)
+                .story("TimeRangeOpen", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(screen.findByRole("button", "Time range: All time"));
+                    final Play dialog = screen.within(screen.findByRole("dialog", "Time Range"));
+                    play.waitFor(() -> play.expect(dialog.getByRole("textbox", "After Time (inclusive)"))
+                            .toHaveFocus());
+                })
                 // The query help: the root rows load, expanding one loads its children and
                 // selecting a row shows its documentation and enables Insert into Query. The
                 // documentation's link says what it is for and that it opens a new tab, and the
@@ -799,6 +808,17 @@ public final class QueryEditorStories {
                     expectSearchWith(play, "{\"queryTablePreferences\": {\"conditionalFormattingRules\": [{}]}}");
                     DocumentEditors.expectNoProblems(play);
                 })
+                // The conditional formatting rules' Settings left open (the screenshot and the dialog
+                // measurement show it)
+                .story("ConditionalFormattingSettingsOpen", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    executeAndOpenColumnMenu(play, "Count");
+                    play.click(screen.findByText("Edit Conditional Formatting for Table", StroomDom.MENU_ITEM_TEXT));
+                    final Play list = dialog(screen, "Settings");
+                    play.waitFor(() -> play.expect(list.getByRole("button", "New Formatting Rule"))
+                            .toBeInTheDocument());
+                })
                 // A '[text](href){type}' value is shown as a link
                 .story("Hyperlinks", context -> render(context, HYPERLINK_FIXTURES))
                 .withPlay(play -> {
@@ -1017,6 +1037,18 @@ public final class QueryEditorStories {
                                     "{\"annotationIdList\": [55], \"change\": {\"type\": \"assignedTo\", "
                                     + "\"userRef\": null}}").toSpyMatcher()));
                     DocumentEditors.expectNoProblems(play);
+                })
+                // Change Assigned To left open (the screenshot and the dialog measurement show it)
+                .story("ChangeAssignedToOpen", context -> render(context, ANNOTATION_FIXTURES, null, false,
+                        QueryEditorStories::annotationSpies))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    execute(play);
+                    play.click(play.findByText("beta"));
+                    play.click(play.getByRole("button", "Annotate Selected Rows"));
+                    play.click(screen.findByText("Change Assignee", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = dialog(screen, "Change Assigned To");
+                    play.waitFor(() -> play.expect(dialog.getByText("Assign Yourself")).toBeInTheDocument());
                 })
                 // Add to Annotation: choose an existing annotation, link the row's event to it and
                 // open it

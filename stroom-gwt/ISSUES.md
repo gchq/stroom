@@ -1086,7 +1086,16 @@ Settings Editable failed the leak check on both attempts (35 DOM nodes and 5 lis
 close), and Settings, Notifications Reveal Does Not Dirty and Execution Scheduled Only failed it on a
 first attempt (33 to 284 nodes). Each passed on a rerun of the Report Editor stories with the leak
 check. Worth a look if one keeps failing: the leak check at 4 workers may be measuring before the
-closed editor's parts are collected.
+closed editor's parts are collected. Again in the dialog padding full run (17 November 2026, 3
+workers): Report Editor's Notifications Editable and three Analytic Rule stories on both attempts;
+all passed on reruns (three Analytic Rule stories only on a second attempt, at 2 workers).
+
+**Stories whose screen the leak check never saw** (17 November 2026, fixed): the Visualisation
+Assets stories added their frame before `afterStartUp`, so the leak probe counted nothing the opening
+showed and skipped them; Begin Stepping made its chooser before it. A story leaving a dialog open
+made the probe count the dialog, then fail to open the screen again. Both now make their frame or
+chooser in `afterStartUp`, so every opening shows it and the leak check runs. Other stories may do
+the same: the runner's `-v` says which aren't checked and why.
 
 ### Sample data installs the old visualisations, with no assets
 

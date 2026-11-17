@@ -82,6 +82,15 @@ public final class TimePickerStories {
                     play.waitFor(() -> play.expect(play.spy(ON_CHANGE)).toHaveBeenCalledWith("Time: 00:00:00"));
                     play.expect(play.getByDisplayValue("00:00:00")).toBeInTheDocument();
                 })
+                // Set Time left open (the screenshot and the dialog measurement show it)
+                .story("SetTimeOpen", context -> timePicker(context, new Time(14, 30, 15), true, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.querySelector(".icon-box__icon"));
+                    final Play dialog = screen.within(screen.findByText("Set Time", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(dialog.getByText("Second")).toBeVisible());
+                })
                 // Read only: the clock is dimmed and Enter doesn't open the dialog
                 .story("ReadOnly", context -> timePicker(context, new Time(14, 30, 0), true, true))
                 .withPlay(play -> {

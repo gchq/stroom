@@ -276,6 +276,18 @@ public final class DashboardLayoutStories {
                     play.expect(play.queryByText("Search", DashboardPlays.COMPONENT_TAB)).toBeNull();
                     DashboardPlays.expectNoProblems(play);
                 })
+                // Rename Tab left open (the screenshot and the dialog measurement show it)
+                .story("RenameTabOpen", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD, routes -> {
+                }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.designMode(play, true);
+                    DashboardPlays.openTabMenu(play, "The Query");
+                    play.click(DashboardPlays.menuItem(screen, "Rename"));
+                    final Play rename = DashboardPlays.dialog(screen, "Rename Tab");
+                    play.waitFor(() -> play.expect(rename.getByLabelText("Name")).toHaveValue("The Query"));
+                })
                 // Set Layout Constraints: a change applies at once, and makes the dashboard changed
                 .story("SetLayoutConstraints", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
                         routes -> {
@@ -297,6 +309,18 @@ public final class DashboardLayoutStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Set Layout Constraints",
                             StroomDom.DIALOG_TITLE)).toBeNull());
                     DashboardPlays.expectNoProblems(play);
+                })
+                // Set Layout Constraints left open (the screenshot and the dialog measurement show it)
+                .story("SetLayoutConstraintsOpen", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
+                        routes -> {
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.designMode(play, true);
+                    play.click(play.getByRole("button", "Set Layout Constraints"));
+                    final Play constraints = DashboardPlays.dialog(screen, "Set Layout Constraints");
+                    play.waitFor(() -> play.expect(constraints.getByRole("checkbox", "Fit Width")).toHaveFocus());
                 })
                 // Dragging a tab to a panel's right edge docks it beside the panel
                 .story("DragTabToDock", DashboardSupport.story(DashboardDocs.SINGLE_GROUP_DASHBOARD, routes -> {

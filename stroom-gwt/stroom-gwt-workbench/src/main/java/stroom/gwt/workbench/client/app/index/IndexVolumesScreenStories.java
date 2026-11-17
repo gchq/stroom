@@ -136,6 +136,16 @@ public final class IndexVolumesScreenStories {
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
+                // New Index Volume Group left open (the screenshot and the dialog measurement show it)
+                .story("NewIndexVolumeGroupOpen", context -> render(context, NEW_GROUP_FIXTURES, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Default");
+                    play.click(play.getByTitle(NEW_GROUP));
+                    final Play dialog = screen.within(screen.findByText(NEW_GROUP, StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    dialog.findByLabelText("Name");
+                })
                 .story("Volumes", IndexVolumesScreenStories::render)
                 .withPlay(play -> {
                     final Play screen = play.screen();
@@ -154,6 +164,18 @@ public final class IndexVolumesScreenStories {
                                     .withJsonBodyContaining("{\"path\": \"/newvol\", \"indexVolumeGroupId\": 1}")
                                     .toSpyMatcher()));
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // New Index Volume left open (the screenshot and the dialog measurement show it)
+                .story("NewIndexVolumeOpen", IndexVolumesScreenStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.dblClick(play.findByText("Default"));
+                    final Play groupDialog = screen.within(screen.findByText(EDIT_GROUP).closest(StroomDom.DIALOG));
+                    groupDialog.findByText("/vol1");
+                    play.click(groupDialog.getByTitle(NEW_VOLUME));
+                    final Play volumeDialog = screen.within(screen.findByText(NEW_VOLUME, StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    volumeDialog.findByLabelText("Path");
                 })
                 // Declining the warning about a new volume leaves the dialog usable: OK and Cancel once
                 // stayed disabled, as only accepting the warning was handled

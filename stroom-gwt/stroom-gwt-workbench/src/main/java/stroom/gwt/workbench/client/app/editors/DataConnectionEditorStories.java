@@ -280,6 +280,16 @@ public final class DataConnectionEditorStories {
                     play.expect(play.getByRole("button", "Save")).not().toHaveAttribute("aria-disabled");
                     DocEditors.expectNoProblems(play);
                 })
+                // Add Attribute left open (the screenshot and the dialog measurement show it)
+                .story("AddAttributeOpen", context -> render(context, LDAP_DOC, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(play.getByRole("grid", "Attributes")).toBeVisible());
+                    play.click(play.getByRole("button", "Add Attribute"));
+                    final Play dialog = screen.within(screen.findByText("Add Attribute", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    dialog.findByLabelText("Name");
+                })
                 // Remove selects the attribute now in the removed one's place
                 .story("LdapRemoveAttribute", context -> render(context, LDAP_DOC, false))
                 .withPlay(play -> {

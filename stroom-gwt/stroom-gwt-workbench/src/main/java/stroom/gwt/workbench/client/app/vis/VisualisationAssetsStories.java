@@ -139,6 +139,12 @@ public final class VisualisationAssetsStories {
                     play.waitFor(() -> play.expect(play.getByText("chart-1.js")).toBeVisible());
                     ContentStorySupport.expectNoProblems(play);
                 })
+                // Add File left open (the screenshot and the dialog measurement show it)
+                .story("AddFileOpen", context -> render(context, "my-vis.js"))
+                .withPlay(play -> {
+                    final Play dialog = openUploadDialog(play);
+                    play.waitFor(() -> play.expect(dialog.querySelector(StroomDom.FILE_INPUT)).toBeInTheDocument());
+                })
                 // The tree's keys: the choice follows the focus, so moving to a file shows it in the
                 // editor; Right and Left open and close a folder, or go to its first child and its
                 // parent; Enter opens or closes a folder; typing goes to an item by its name
@@ -204,6 +210,18 @@ public final class VisualisationAssetsStories {
                     play.waitFor(() -> play.expect(play.querySelector(aceInput)).not().toHaveAttribute("readonly"));
                     ContentStorySupport.expectNoProblems(play);
                 })
+                // Edit (an asset's rename) left open (the screenshot and the dialog measurement show it)
+                .story("EditAssetOpen", VisualisationAssetsStories::renderTree)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("index.html"));
+                    final Query rename = play.getByRole("button", "Rename Selected Asset");
+                    play.waitFor(() -> play.expect(rename).not().toHaveAttribute("aria-disabled"));
+                    play.click(rename);
+                    final Play dialog = screen.within(
+                            screen.findByText("Edit", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(dialog.getByRole("textbox", "Name")).toHaveValue("index.html"));
+                })
                 // A floor map's asset picker opens 'Choose Asset': only a file can be chosen, and Enter
                 // on one chooses it, as OK does
                 .story("ChooseAssetByKeyboard", VisualisationAssetsStories::renderChooser)
@@ -265,6 +283,15 @@ public final class VisualisationAssetsStories {
                     play.expect(play.getByText("None")).toBeVisible();
                     ContentStorySupport.expectNoProblems(play);
                 })
+                // Choose Asset left open (the screenshot and the dialog measurement show it)
+                .story("ChooseAssetOpen", VisualisationAssetsStories::renderChooser)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("None"));
+                    final Play dialog = screen.within(
+                            screen.findByText("Choose Asset", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    dialog.findByText("index.html");
+                })
                 // A disabled picker says so, and doesn't open
                 .story("DisabledPicker", context -> renderChooser(context, false))
                 .withPlay(play -> {
@@ -317,10 +344,11 @@ public final class VisualisationAssetsStories {
                 .injector(injector)
                 .realAlerts()
                 .build();
-        final SimplePanel frame = new SimplePanel();
-        frame.getElement().getStyle().setProperty("width", "300px");
-        harness.add(frame);
+        // The picker, in its frame, is the screen each opening shows (as the leak check opens it again)
         harness.afterStartUp(() -> {
+            final SimplePanel frame = new SimplePanel();
+            frame.getElement().getStyle().setProperty("width", "300px");
+            harness.add(frame);
             final DropDownBox box = new DropDownBox();
             final DocumentAssetSelectionController picker = harness.own(
                     injector.getDocumentAssetSelectionController()).attach(box);
@@ -356,14 +384,15 @@ public final class VisualisationAssetsStories {
         final DocRef docRef = new DocRef(VisualisationDoc.TYPE, OWNER_UUID, "My Vis");
         final VisualisationDoc doc = VisualisationDoc.builder().uuid(OWNER_UUID).name("My Vis").build();
 
-        // The toolbar above the tab's content, as the document's tab shows them, filling the page
-        final FlowPanel frame = new FlowPanel();
-        frame.getElement().getStyle().setProperty("height", StroomThemeDecorator.CANVAS_HEIGHT);
-        frame.getElement().getStyle().setProperty("display", "flex");
-        frame.getElement().getStyle().setProperty("flexDirection", "column");
-        harness.add(frame);
-        // After start-up, as its editor reads the user's preferences
+        // After start-up, as its editor reads the user's preferences. The frame is the screen each
+        // opening shows (as the leak check opens it again)
         harness.afterStartUp(() -> {
+            // The toolbar above the tab's content, as the document's tab shows them, filling the page
+            final FlowPanel frame = new FlowPanel();
+            frame.getElement().getStyle().setProperty("height", StroomThemeDecorator.CANVAS_HEIGHT);
+            frame.getElement().getStyle().setProperty("display", "flex");
+            frame.getElement().getStyle().setProperty("flexDirection", "column");
+            harness.add(frame);
             // As its document's opener says, which its tabs follow
             readOnly = ContextValue.of(false);
             harness.getComponentRoot().provide(Contexts.READ_ONLY, readOnly);

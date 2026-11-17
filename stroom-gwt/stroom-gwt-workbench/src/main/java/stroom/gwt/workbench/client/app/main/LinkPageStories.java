@@ -60,6 +60,16 @@ public final class LinkPageStories {
                     play.waitFor(() -> play.expect(screen.queryByText(TITLE, StroomDom.DIALOG_TITLE)).toBeNull());
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                 })
+                // The dialog link's page left open (the screenshot and the dialog measurement show it)
+                .story("DialogOpen", LinkPageStories::renderDialog)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = screen.within(screen.findByText(TITLE, StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(dialog.querySelector("iframe")).toBeInTheDocument());
+                    // Named, as the dialog is, for screen readers (it once had no name)
+                    play.expect(dialog.querySelector("iframe")).toHaveAttribute("title", TITLE);
+                })
                 // A tab link's page, as its tab shows it: the frame is on the page's body, over the
                 // tab, so that it isn't reloaded each time the tab is shown
                 .story("Tab", LinkPageStories::renderTab)

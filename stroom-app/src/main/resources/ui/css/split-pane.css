@@ -158,6 +158,13 @@
     background-color: var(--split-pane__splitter-colour);
 }
 
+/* A document's permissions in a dialog reach out to each side by the form padding
+   (document-user-permissions-tab.css), with its boxes inset back by it: the line between them stops
+   where they do, rather than 6px past each */
+.dialog__content .document-user-permissions-tab.split-pane--vertical > .split-pane__splitter::before {
+    inset: calc(50% - 0.5px) var(--control__gap--horizontal);
+}
+
 /* Beside the explorer, whose splitter is drawn in the navigation colours */
 .split-pane--navigation {
     --split-pane__splitter-colour: var(--navigation__splitter__line-color);
