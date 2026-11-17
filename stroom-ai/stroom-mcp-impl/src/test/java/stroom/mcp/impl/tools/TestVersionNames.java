@@ -35,12 +35,26 @@ class TestVersionNames {
             "Acme_v1.2.9               | Acme_v1.2.10              | Acme_v2.0.0",
             // The last token is the version: an earlier one is part of the name.
             "V2-Gateway-V1.4           | V2-Gateway-V1.5           | V2-Gateway-V2.0",
-            // No version token (Dev1 and IPv4 are words, not versions): one is added.
-            "Acme-Dev1-IPv4-Events     | Acme-Dev1-IPv4-Events-V2  | Acme-Dev1-IPv4-Events-V2",
-            "Acme-{feed}-Indexing      | Acme-V2-{feed}-Indexing   | Acme-V2-{feed}-Indexing"})
+            // No version token (Dev1 and IPv4 are words, not versions): the name is V1.0, as promotion files it,
+            // so its next version is V1.1 and its next major V2.0.
+            "Acme-Dev1-IPv4-Events     | Acme-Dev1-IPv4-Events-V1.1 | Acme-Dev1-IPv4-Events-V2.0",
+            "Acme-Events-Indexing      | Acme-Events-Indexing-V1.1  | Acme-Events-Indexing-V2.0",
+            "Acme-{feed}-Indexing      | Acme-V1.1-{feed}-Indexing  | Acme-V2.0-{feed}-Indexing"})
     void theNextVersionBumpsTheLastPartAndTheMajorTheFirst(final String name, final String next, final String major) {
         assertThat(VersionNames.next(name)).isEqualTo(next);
         assertThat(VersionNames.nextMajor(name)).isEqualTo(major);
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "Acme-Events-Indexing | Acme-Events-Indexing-V1.1",
+            "Acme security        | Acme security-V1.1"})
+    void aNameWithNoVersionIsTakenAsTheFirstVersionPromotionFilesItUnder(final String name, final String next) {
+        // A promoted pipeline with no version token is laid out in V1.0, so its next version is V1.1, the next
+        // version's name holding the token its folder is named by.
+        assertThat(VersionNames.next(name)).isEqualTo(next);
+        assertThat(VersionNames.token(VersionNames.next(name))).contains("V1.1");
+        assertThat(VersionNames.token(VersionNames.nextMajor(name))).contains("V2.0");
     }
 
     @ParameterizedTest
@@ -65,7 +79,7 @@ class TestVersionNames {
             "Acme-Events-V1.0-XSLT | V1.0 | V1.1 | Acme-Events-V1.1-XSLT",
             // Its own token otherwise.
             "Acme-Common-V3        | V1.0 | V1.1 | Acme-Common-V4",
-            "Acme helpers          | V1.0 | V1.1 | Acme helpers-V2"})
+            "Acme helpers          | V1.0 | V1.1 | Acme helpers-V1.1"})
     void aDocumentFollowsThePipelinesVersionChange(final String name,
                                                    final String from,
                                                    final String to,

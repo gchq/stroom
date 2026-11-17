@@ -31,8 +31,11 @@ import java.util.regex.Pattern;
 /// `acme-events-v1`, `Acme_v2`), never anything a product calls its versions.
 final class VersionNames {
 
-    /// What a name with no version token of its own is given for its new version.
-    static final String NO_VERSION_SUFFIX = "-V2";
+    /// What a name with no version token of its own is given for its new version: promotion files such a pipeline
+    /// in V1.0 ([PromotionLayout#FIRST_VERSION]), so its next version is V1.1, as a name holding V1.0 would be.
+    static final String NO_VERSION_SUFFIX = "-V1.1";
+    /// What a name with no version token of its own is given for its next major version.
+    static final String NO_MAJOR_VERSION_SUFFIX = "-V2.0";
     /// What an Elasticsearch index name with no version token is given (index names are lower case).
     static final String NO_INDEX_VERSION_SUFFIX = "-v2";
 
@@ -74,10 +77,10 @@ final class VersionNames {
     /// `V2.0`, `V1.2.3` to `V2.0.0`.
     ///
     /// @param name A name.
-    /// @return The next major version's name; with no version token, the name with [#NO_VERSION_SUFFIX] after it
-    /// (before its first `{variable}`).
+    /// @return The next major version's name; with no version token, the name with [#NO_MAJOR_VERSION_SUFFIX] after
+    /// it (before its first `{variable}`).
     static String nextMajor(final String name) {
-        return bumped(name, true, NO_VERSION_SUFFIX);
+        return bumped(name, true, NO_MAJOR_VERSION_SUFFIX);
     }
 
     /// The next version of an Elasticsearch index name: `acme-events-v1` to `acme-events-v2`, `acme_v3` to
@@ -244,7 +247,7 @@ final class VersionNames {
     }
 
     // The suffix (a separator, then the version) added before the name's first variable: after a separator ending the
-    // part before it, the version goes there with the separator after it (`Acme-{feed}` to `Acme-V2-{feed}`); a name
+    // part before it, the version goes there with the separator after it (`Acme-{feed}` to `Acme-V1.1-{feed}`); a name
     // starting with a variable, or with none, has it at the end.
     private static String beforeVariables(final String name, final String suffix) {
         final int variable = name.indexOf('{');

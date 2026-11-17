@@ -194,6 +194,29 @@ class TestCopyPipelineTool {
         assertThat(pipelines.pipelineNamed("ACME-V2 - Indexing")).isNull();
     }
 
+    @Test
+    void aPromotedPipelineWithNoVersionInItsNameIsProposedV11AndItsIndexV2() {
+        // Seen in part B: promotion files a pipeline with no version token in V1.0, but its next version was
+        // proposed '-V2'. It is V1.1 (V2.0 for a major change), its index's next version -v2.
+        elasticSource("acme-events", "Acme-Events-Indexing", "Acme-Events-Indexing-XSLT", "Acme-Events");
+
+        final Map<String, Object> asked = PipelineWorld.json(call("{\"build\": \"" + BUILD + "\", \"source_uuid\": "
+                                                                  + "\"p1\", \"new_name\": \"Acme-Events-Indexing\"}",
+                BuildToolCalls.context()));
+
+        assertThat(asked).containsEntry("status", "needs_names");
+        @SuppressWarnings("unchecked") final Map<String, Object> names = (Map<String, Object>) asked.get(
+                "new_version_names");
+        assertThat(names).containsEntry("pipeline", "Acme-Events-Indexing-V1.1")
+                .containsEntry("major_version_instead", "Acme-Events-Indexing-V2.0")
+                .containsEntry("index_name", "acme-events-v2")
+                .containsEntry("documents", List.of(Map.of("was", "Acme-Events-Indexing-XSLT",
+                        "name", "Acme-Events-Indexing-XSLT-V1.1")))
+                .containsEntry("elastic_index_docs", List.of(Map.of("beside", "Acme-Events",
+                        "name", "Acme-Events-V1.1")));
+        assertNothingCopied();
+    }
+
     @ParameterizedTest
     @MethodSource("originalNames")
     void aNewVersionUnderAnyOfTheOriginalsNamesIsRefused(final String key, final String name, final String said) {
@@ -303,18 +326,26 @@ class TestCopyPipelineTool {
     // p1, a promoted Elasticsearch indexing pipeline writing to the index on ES_DEV with its own XSLT, and the
     // promoted Elastic Index doc naming the index.
     private void elasticSource(final String index) {
+        elasticSource(index, ELASTIC_PIPELINE, "Acme-Events-V1.0-Indexing-XSLT", "Acme-Events-V1.0");
+    }
+
+    // p1 as above, under the names given.
+    private void elasticSource(final String index,
+                               final String pipeline,
+                               final String xsltName,
+                               final String indexDocName) {
         pipelines.template(TEMPLATE.getUuid(), TEMPLATE.getName(), PipelineLayers.layer(TEMPLATE.getUuid())
                 .chain("xsltFilter", "XSLTFilter", "elasticIndexingFilter", "ElasticIndexingFilter"));
         final String folder = pipelines.world.folder("System/Feeds/Acme").uuid;
-        pipelines.world.add(XsltDoc.TYPE, "Acme-Events-V1.0-Indexing-XSLT", folder, "x1");
-        pipelines.world.docs.put("x1", XsltDoc.builder().uuid("x1").name("Acme-Events-V1.0-Indexing-XSLT")
+        pipelines.world.add(XsltDoc.TYPE, xsltName, folder, "x1");
+        pipelines.world.docs.put("x1", XsltDoc.builder().uuid("x1").name(xsltName)
                 .version("v0").data("<xsl:stylesheet/>").build());
-        pipelines.productionPipeline("p1", ELASTIC_PIPELINE, TEMPLATE, PipelineLayers.layer("p1")
-                .property("xsltFilter", "xslt", new DocRef(XsltDoc.TYPE, "x1", "Acme-Events-V1.0-Indexing-XSLT"))
+        pipelines.productionPipeline("p1", pipeline, TEMPLATE, PipelineLayers.layer("p1")
+                .property("xsltFilter", "xslt", new DocRef(XsltDoc.TYPE, "x1", xsltName))
                 .property("elasticIndexingFilter", "indexName", index)
                 .property("elasticIndexingFilter", "cluster", CLUSTER));
-        pipelines.world.add(ElasticIndexDoc.TYPE, "Acme-Events-V1.0", folder, "es1");
-        pipelines.world.docs.put("es1", ElasticIndexDoc.builder().uuid("es1").name("Acme-Events-V1.0")
+        pipelines.world.add(ElasticIndexDoc.TYPE, indexDocName, folder, "es1");
+        pipelines.world.docs.put("es1", ElasticIndexDoc.builder().uuid("es1").name(indexDocName)
                 .version("v0").indexName(index).clusterRef(CLUSTER).build());
     }
 
