@@ -70,6 +70,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /// `promote_build` - promotes a build out of the workspace once the user has seen where everything goes and approved
 /// it. New documents are moved to their destination folders, working copies written back over their originals after a
@@ -334,7 +335,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         // An aggregated feed's modules and a group's output feed of its own: beside the feed (the group's own in its
         // group's folder there).
         modulesBeside(build, docs, destinations, sourceFolders, markers).forEach(besideFeeds::putIfAbsent);
-        final Placed placed = new Placed(testFeeds, source, sourceFolders, group);
+        final Placed placed = new Placed(testFeeds, source, sourceFolders, group, sources);
         final List<PromotionLayout.Step> plan = plan(docs, destinations, sources, besideFeeds, placed, markers);
         // Before the layout is shown, so it shows what the user chose (found reviewing the change: asked after
         // the review, a copy kept still showed as written back).
@@ -433,11 +434,13 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         final PromotionTidyUp.Plan tidy = PromotionTidyUp.wanted(argsMap(call).get(PromotionTidyUp.TIDY_UP))
                 ? tidyUp.plan(build, docs, plan, testFeeds, sources)
                 : PromotionTidyUp.Plan.OFF;
-        final String tree = layout.promotionTree(plan, creating) + rootsNote(roots)
-                            + PromotionLayout.warningsNote(layoutWarnings)
-                            + PromotionTidyUp.layoutNote(plan, testFeeds, tidy);
-        if (!Consent.wasReviewed(reviewed, tree)) {
-            final Map<String, Object> review = review(build, tree, warnings, processed, roots, reviewed);
+        final String laidOut = layout.promotionTree(plan, creating) + rootsNote(roots)
+                               + PromotionLayout.warningsNote(layoutWarnings);
+        // Shown with the tidy-up's counts, bound to its items alone (found in review, 2026-11-18).
+        final String tree = laidOut + PromotionTidyUp.layoutNote(plan, testFeeds, tidy, true);
+        final String bound = laidOut + PromotionTidyUp.layoutNote(plan, testFeeds, tidy, false);
+        if (!Consent.wasReviewed(reviewed, bound)) {
+            final Map<String, Object> review = review(build, tree, bound, warnings, processed, roots, reviewed);
             if (!followOnSaid.isEmpty()) {
                 review.put("follow_on_filters", followOnSaid);
                 review.put("hint", review.get("hint") + " Say the follow_on_filters too: each promoted pipeline "
@@ -494,7 +497,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         }
         // The tidy-up, a choice in the form, ticked to start: the user unticks it to keep the test data.
         consent.require(call, context, tidy.offeredIn(Consent.Request.approval(NAME,
-                "Promote build '" + build + "' as shown in the chat", tidy.inForm(shortForm)).boundTo(tree)));
+                "Promote build '" + build + "' as shown in the chat", tidy.inForm(shortForm)).boundTo(bound)));
         final boolean tidying = !tidy.items().isEmpty() && consent.option(context, PromotionTidyUp.TIDY_UP, true);
         final List<String> done = new ArrayList<>();
         if (groupsProvider != null) {
@@ -821,11 +824,14 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                 final Map<String, ModuleChecks.Marker> markers) {
         final Map<String, String> rootByRole = new LinkedHashMap<>();
         roots.forEach(root -> rootByRole.put(root.role(), root.root()));
+        // The names a pipeline's name may hold whose version tokens are theirs (found in review, 2026-11-18).
+        final List<String> held = Stream.concat(placed.sources().stream(), Stream.ofNullable(placed.source())
+                .map(Source::name)).toList();
         return layout.layOut(plan, rootByRole, placed.source() == null
                 ? null
                 : placed.source().own(), placed.group() == null
                 ? null
-                : placed.group().name(), step -> groupOf(step, placed, markers));
+                : placed.group().name(), step -> groupOf(step, placed, markers), held);
     }
 
     // The source type group a document of a role is laid out under: a group XSLT's own (by its mark: another
@@ -1450,6 +1456,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     // call, and the user approved a form whose layout was never shown).
     private static Map<String, Object> review(final String build,
                                               final String tree,
+                                              final String bound,
                                               final List<String> warnings,
                                               final List<String> processed,
                                               final List<RoleRoot> roots,
@@ -1458,7 +1465,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         result.put("status", "needs_review");
         result.put("build", build);
         result.put("layout", tree);
-        result.put("review_id", Consent.reviewId(tree));
+        result.put("review_id", Consent.reviewId(bound));
         if (!warnings.isEmpty()) {
             result.put("warnings", warnings);
         }
@@ -1488,7 +1495,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                   + "others are the feed's own location or a folder the user names): their answer goes in "
                   + "destinations keyed by the role, then show the tree again")
                            + ". Once they confirm it, promote_build again with the same destinations and reviewed='"
-                           + Consent.reviewId(tree) + "' (this layout's review_id): they approve it "
+                           + Consent.reviewId(bound) + "' (this layout's review_id): they approve it "
                            + "in a short form. If they change something, call again with their changes and no "
                            + "reviewed: the new layout is shown the same way." + Consent.reviewNote(reviewed));
         return result;
@@ -1842,13 +1849,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         // No buttons disabling an earlier version's filters (decided by the user, 2026-11-17): disabling and
         // removing them is the admin's, once the new version's output is right; the next steps say which.
         final List<Object> buttons = new ArrayList<>();
-        for (final Map<String, Object> filter : filters) {
-            final Object actions = filter.remove(UserActionEntries.USER_ACTIONS);
-            if (actions instanceof final List<?> list) {
-                buttons.addAll(list);
-            }
-        }
-        for (final Map<String, Object> filter : followOnFilters) {
+        for (final Map<String, Object> filter : Stream.concat(filters.stream(), followOnFilters.stream()).toList()) {
             final Object actions = filter.remove(UserActionEntries.USER_ACTIONS);
             if (actions instanceof final List<?> list) {
                 buttons.addAll(list);
@@ -1970,7 +1971,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     /// @param source    The source, or null.
     /// @param folders   Tells a folder of the source's own from a parent of sources.
     /// @param group     An aggregated feed's build's source type group, or null.
-    private record Placed(Set<String> testFeeds, Source source, SourceFolders folders, GroupPlace group) {
+    /// @param sources   The feeds the build works from.
+    private record Placed(Set<String> testFeeds, Source source, SourceFolders folders, GroupPlace group,
+                          List<String> sources) {
 
     }
 

@@ -600,12 +600,13 @@ class SourceTypeGroups {
 
     /// @param feed  An aggregated feed's name.
     /// @param group One of its source type groups.
-    /// @return The name its pipeline is given by default: `<feed> <group>`, with ` V1.0` after it where neither
-    /// holds a version (decided by the user, 2026-11-17: promotion files a pipeline by the version in its name, and a
-    /// later version's name is proposed from it).
+    /// @return The name its pipeline is given by default: `<feed> <group>`, with ` V1.0` after it where it holds no
+    /// version of its own (decided by the user, 2026-11-17: promotion files a pipeline by the version in its name,
+    /// and a later version's name is proposed from it). A version token of the feed's or the group's own name is
+    /// theirs, not the pipeline's (found in review, 2026-11-18).
     static String pipelineName(final String feed, final String group) {
         final String name = feed + " " + group;
-        return VersionNames.token(name).isPresent()
+        return VersionNames.token(name, List.of(feed, group)).isPresent()
                 ? name
                 : name + " " + PromotionLayout.FIRST_VERSION;
     }
@@ -736,7 +737,7 @@ class SourceTypeGroups {
         final String pipeline = groupPlacement(plan.registry().found().state(), plan.group())
                 .map(row -> JsonValues.text(JsonValues.mapOrEmpty(row.get(PIPELINE)).get("name")))
                 .orElse("");
-        final String name = versionName(nameOf(original), pipeline);
+        final String name = versionName(nameOf(original), pipeline, plan.feed(), plan.group());
         final String uuid = versionOf(original, name, build);
         chainCopies(context, build);
         return uuid;
@@ -745,15 +746,22 @@ class SourceTypeGroups {
     /// The name of a new version of a group's XSLT: its version token following its pipeline's next version's, as
     /// copy_pipeline proposes the documents it copies ([VersionNames#following]), else its own bumped.
     ///
+    /// A version token of the feed's or the group's own name is theirs, never changed (found in review, 2026-11-18).
+    ///
     /// @param xslt     The group's XSLT's name.
     /// @param pipeline Its pipeline's name, or "" when it has none.
+    /// @param feed     The aggregated feed's name.
+    /// @param group    The group's name.
     /// @return The new version's name: never the original's.
-    static String versionName(final String xslt, final String pipeline) {
+    static String versionName(final String xslt, final String pipeline, final String feed, final String group) {
+        final List<String> held = new ArrayList<>();
+        NullSafe.consumeNonBlankString(feed, held::add);
+        NullSafe.consumeNonBlankString(group, held::add);
         if (pipeline == null || pipeline.isBlank()) {
-            return VersionNames.next(xslt);
+            return VersionNames.next(xslt, held);
         }
-        return VersionNames.following(xslt, VersionNames.token(pipeline).orElse(null),
-                VersionNames.token(VersionNames.next(pipeline)).orElse(null));
+        return VersionNames.following(xslt, VersionNames.token(pipeline, held).orElse(null),
+                VersionNames.token(VersionNames.next(pipeline, held), held).orElse(null), held);
     }
 
     // A new version of a promoted XSLT in the build, under the name given: its content and description as the

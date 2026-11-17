@@ -241,12 +241,16 @@ class PromotionLayout {
     /// @param feedFolder The source's own folder, or null when it isn't known.
     /// @param buildGroup The build's source type group, or null.
     /// @param groupOf    The source type group a step's document is laid out under, or null.
+    /// @param held       The names a pipeline's name may hold whose version tokens are theirs, not its version
+    ///                   (the feeds the build works from; its group's is added per document): found in review,
+    ///                   2026-11-18, `CISCO-ASA-V9-EVENTS` of feed `CISCO-ASA-V9` was filed in V9.
     /// @return What the layout warns of, for the user.
     List<String> layOut(final List<Step> plan,
                         final Map<String, String> rootByRole,
                         final String feedFolder,
                         final String buildGroup,
-                        final Function<Step, String> groupOf) {
+                        final Function<Step, String> groupOf,
+                        final Collection<String> held) {
         final List<String> warnings = new ArrayList<>();
         final List<LaidPipeline> pipelines = new ArrayList<>();
         for (int i = 0; i < plan.size(); i++) {
@@ -256,13 +260,13 @@ class PromotionLayout {
                 continue;
             }
             final String name = String.valueOf(step.doc().get("name"));
-            final Optional<String> token = VersionNames.token(name);
+            final String group = groupOf.apply(step);
+            final Optional<String> token = VersionNames.token(name, withGroup(held, group));
             if (token.isEmpty()) {
                 warnings.add("Pipeline '" + name + "' has no version in its name (e.g. -V1.0-): placed in "
                              + FIRST_VERSION + ".");
             }
             final String version = token.orElse(FIRST_VERSION);
-            final String group = groupOf.apply(step);
             final String role = step.role();
             final String base = feedFolder != null
                     ? feedFolder
@@ -300,7 +304,7 @@ class PromotionLayout {
                 continue;
             }
             final String group = groupOf.apply(step);
-            final Optional<LaidPipeline> with = belongsTo(pipelines, role, group, name);
+            final Optional<LaidPipeline> with = belongsTo(pipelines, role, group, name, withGroup(held, group));
             final String base = feedFolder != null
                     ? feedFolder
                     : step.target();
@@ -308,10 +312,17 @@ class PromotionLayout {
                 plan.set(i, step.withTarget(with.get().target()));
             } else if (base != null) {
                 plan.set(i, step.withTarget(rolePath(base, rootByRole.get(role), group, role,
-                        VersionNames.token(name).orElse(FIRST_VERSION))));
+                        VersionNames.token(name, withGroup(held, group)).orElse(FIRST_VERSION))));
             }
         }
         return warnings;
+    }
+
+    // The names held, with the group's (when there is one).
+    private static List<String> withGroup(final Collection<String> held, final String group) {
+        final List<String> out = new ArrayList<>(NullSafe.collection(held));
+        NullSafe.consumeNonBlankString(group, out::add);
+        return out;
     }
 
     // Whether a role (or null) is one of WriteGuard.ROLES.
@@ -333,7 +344,8 @@ class PromotionLayout {
     private static Optional<LaidPipeline> belongsTo(final List<LaidPipeline> pipelines,
                                                     final String role,
                                                     final String group,
-                                                    final String name) {
+                                                    final String name,
+                                                    final Collection<String> held) {
         List<LaidPipeline> candidates = pipelines.stream().filter(p -> p.role().equals(role)).toList();
         final List<LaidPipeline> grouped = candidates.stream().filter(p -> Objects.equals(p.group(), group)).toList();
         if (!grouped.isEmpty()) {
@@ -342,7 +354,7 @@ class PromotionLayout {
         if (candidates.isEmpty()) {
             return Optional.empty();
         }
-        final Optional<String> token = VersionNames.token(name);
+        final Optional<String> token = VersionNames.token(name, held);
         if (token.isPresent()) {
             final Optional<LaidPipeline> same = candidates.stream()
                     .filter(p -> p.version().equalsIgnoreCase(token.get()))

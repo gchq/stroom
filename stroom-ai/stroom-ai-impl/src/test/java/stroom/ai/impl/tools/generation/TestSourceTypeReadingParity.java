@@ -77,6 +77,19 @@ class TestSourceTypeReadingParity extends XsltRuns {
             line("deep", "{\"a\": {\"b\": {\"c\": {\"d\": {\"e\": \"com.x.Five\"}}}}}"),
             line("empty", ""),
             line("duplicate", "{\"logger_name\": \"com.x.First\", \"logger_name\": \"com.x.Last\"}"),
+            // Found in review (2026-11-18): numbers as written, NaN and Infinity no JSON, a DOCTYPE no XML.
+            line("decimal", "{\"logger_name\": 2.10}"),
+            line("exponent", "{\"logger_name\": 1e10}"),
+            line("exponent-signed", "{\"logger_name\": -1.5E+3}"),
+            line("negative", "{\"logger_name\": -7}"),
+            line("big", "{\"logger_name\": 12345678901234567890}"),
+            line("point-zero", "{\"logger_name\": 1.0}"),
+            line("nan", "{\"logger_name\": NaN, \"level\": \"x\"}"),
+            line("infinity", "{\"logger_name\": -Infinity}"),
+            line("doctype", "<!DOCTYPE Log><Log logger=\"com.x.Dtd\"><logger_name>com.x.Dtd</logger_name></Log>"),
+            line("doctype-entity", "<!DOCTYPE Log [<!ENTITY e \"com.x.Entity\">]><Log logger=\"&e;\">"
+                                   + "<logger_name>&e;</logger_name></Log>"),
+            line("doctype-system", "<!DOCTYPE Log SYSTEM \"log.dtd\"><Log logger=\"com.x.Sys\"/>"),
             "{\"id\": \"not-string\", \"timestamp\": \"2026-11-18T10:00:00.000Z\", \"hostname\": \"app01\", "
             + "\"event\": {\"logger_name\": \"com.x.Object\"}}");
 
@@ -126,7 +139,12 @@ class TestSourceTypeReadingParity extends XsltRuns {
                 .containsEntry("padded", "com.x.Pad").containsEntry("number", "42")
                 .containsEntry("quoted", "com.x.Quoted").containsEntry("twice-key", "first")
                 .containsEntry("array", null).containsEntry("object", null).containsEntry("empty", null)
-                .containsEntry("not-string", null).containsEntry("duplicate", "com.x.Last");
+                .containsEntry("not-string", null).containsEntry("duplicate", "com.x.Last")
+                .containsEntry("decimal", "2.10").containsEntry("exponent", "1e10")
+                .containsEntry("exponent-signed", "-1.5E+3").containsEntry("negative", "-7")
+                .containsEntry("big", "12345678901234567890").containsEntry("point-zero", "1.0")
+                .containsEntry("nan", null).containsEntry("infinity", null).containsEntry("doctype", null)
+                .containsEntry("doctype-entity", null).containsEntry("doctype-system", null);
         // A key after white space inside an earlier quoted value is found first, by both (a known limit, the same
         // in processing); one right after the quote isn't.
         assertThat(byId).containsEntry("quoted-pair", "fake\"");

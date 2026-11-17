@@ -223,6 +223,19 @@ class TestPromoteBuildTool {
     }
 
     @Test
+    void aVersionTokenOfTheFeedsOwnNameIsNotThePipelinesVersion() {
+        // Found in review (2026-11-18): CISCO-ASA-V9-EVENTS of feed CISCO-ASA-V9 was filed in V9.
+        exists("System/Feeds/Cisco");
+        listed(doc(FeedDoc.TYPE, "f", "CISCO-ASA-V9", null), doc(PipelineDoc.TYPE, "ev", "CISCO-ASA-V9-EVENTS",
+                "Events"));
+
+        assertThat(String.valueOf(review(Map.of("Feed", "/Feeds/Cisco")).get("layout")))
+                .contains("Events/  (new)\n    └── V1.0/  (new)\n        └── CISCO-ASA-V9-EVENTS  (Pipeline)")
+                .contains("Pipeline 'CISCO-ASA-V9-EVENTS' has no version in its name (e.g. -V1.0-): placed in V1.0.")
+                .doesNotContain("V9/");
+    }
+
+    @Test
     void aCefPipelineAndAReferenceLoaderGoInTheirRolesFolders() {
         // A CEF flattener (Events in, CEF to Kafka) is classed forwarding, filed under CEF; a loader under Reference.
         exists("System/Feeds/Acme");
@@ -849,7 +862,8 @@ class TestPromoteBuildTool {
                 shown.get("review_id"))))).startsWith("The user did not agree to: Promote build");
         assertThat(user.forms().getLast().get("details")).isEqualTo(Map.of("build", BUILD, "layout",
                 "2 document(s), as shown in the chat", "folders", "System/Feeds/Acme",
-                "tidy-up after promotion", "3 test document(s), as listed in the chat"));
+                "tidy-up after promotion", "3 test document(s), as listed in the chat (stream counts and sizes as "
+                                           + "of the review)"));
         final Map<String, Object> fields = asMap(user.schemas().getLast().get("properties"));
         assertThat(asMap(fields.get(PromotionTidyUp.TIDY_UP))).containsEntry("type", "boolean")
                 .containsEntry("title", PromotionTidyUp.CHOICE_TITLE).containsEntry("default", true);
@@ -943,18 +957,39 @@ class TestPromoteBuildTool {
     }
 
     @Test
-    void theApprovalIsBoundToTheTidyUpReviewed() {
-        // A test feed with more streams since the review: the approval's layout isn't the one reviewed.
+    void theApprovalIsBoundToTheTidyUpsItemsNotTheirLiveCounts() {
+        // Found in review (2026-11-18): bound to the stream counts, a test feed still being written to gave a new
+        // review id on every call, and the promotion was never approved. A test feed with more streams since the
+        // review is the same tidy-up: approved as reviewed, the counts said as of the review.
         final Map<String, Object> destinations = buildWithTestData();
-        final Map<String, Object> shown = review(destinations);
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
+                null)));
+        assertThat(shown).containsEntry("status", "needs_review");
+        assertThat(String.valueOf(shown.get("tidy_up"))).contains("stream(s)");
         Mockito.when(metaService.findRows(any())).thenReturn(new ResultPage<>(List.of(row(1, "1024"), row(2, "2048"),
                 row(3, "10"))));
+
+        final Map<String, Object> promoted = docs.call(tool, user.context(), DocumentationWorld.args(args(
+                destinations, shown.get("review_id"))));
+
+        assertThat(promoted.get("status")).isNotEqualTo("needs_review");
+        assertThat(promoted).containsKey("tidied_up");
+        assertThat(String.valueOf(user.forms().getLast())).contains("as of the review");
+    }
+
+    @Test
+    void anotherTidyUpItemSinceTheReviewIsReviewedAgain() {
+        final Map<String, Object> destinations = buildWithTestData();
+        final Map<String, Object> shown = review(destinations);
+        world.inBuild(BUILD, FeedDoc.TYPE, "ACME2" + OutputFeeds.TEST_FEED, "t2");
+        listed(doc(FeedDoc.TYPE, "t2", "ACME2" + OutputFeeds.TEST_FEED, null));
 
         final Map<String, Object> again = call(destinations, shown.get("review_id"));
 
         assertThat(again).containsEntry("status", "needs_review");
         assertThat(again.get("review_id")).isNotEqualTo(shown.get("review_id"));
-        assertThat(String.valueOf(again.get("layout"))).contains("its 3 stream(s)");
+        assertThat(String.valueOf(again.get("layout"))).contains("ACME2" + OutputFeeds.TEST_FEED);
     }
 
     @Test

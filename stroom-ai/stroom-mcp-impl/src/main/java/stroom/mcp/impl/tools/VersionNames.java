@@ -21,6 +21,7 @@ import stroom.util.shared.NullSafe;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,7 +29,12 @@ import java.util.regex.Pattern;
 /// The names a new version of a promoted pipeline is proposed, from the version in the original's: the tools propose
 /// them, the user confirms or edits them in copy_pipeline's form. Generic: a version token is a `v` (either case)
 /// and numbers separated by dots, standing apart from the words around it (`Acme-Events-V1.0-Indexing`,
-/// `acme-events-v1`, `Acme_v2`), never anything a product calls its versions.
+/// `acme-events-v1`, `Acme_v2`), never anything a product calls its versions. A number of more than
+/// [#MAX_DIGITS] digits is no version's (a timestamp, say: `Acme-v20261117093000123456`).
+///
+/// A token inside a name the pipeline's name holds (its feed's, its source type group's: `CISCO-ASA-V9-EVENTS` of
+/// feed `CISCO-ASA-V9`) is part of that name, not the pipeline's version (found in review, 2026-11-18: taken as V9,
+/// the next version was V10, renaming the feed's part). The methods taking `held` names leave such tokens alone.
 final class VersionNames {
 
     /// What a name with no version token of its own is given for its new version: promotion files such a pipeline
@@ -42,16 +48,21 @@ final class VersionNames {
     /// The version a promoted aggregated feed's shared module with no version of its own is taken to be.
     static final String FIRST_MODULE_VERSION = "V1.0";
 
+    /// The most digits a version token's number has.
+    static final int MAX_DIGITS = 9;
+
     // What separates a name's words.
     private static final String SEPARATORS = "-_. ";
-    // A version token: v or V, then numbers separated by dots, not inside a word or a longer number.
+    // A version's numbers: each of at most MAX_DIGITS digits, separated by dots.
+    private static final String NUMBERS = "\\d{1," + MAX_DIGITS + "}(?:\\.\\d{1," + MAX_DIGITS + "})*";
+    // A version token: v or V, then its numbers, not inside a word or a longer number.
     private static final Pattern TOKEN = Pattern.compile(
-            "(?<![A-Za-z0-9])([vV])(\\d+(?:\\.\\d+)*)(?![A-Za-z0-9]|\\.\\d)");
+            "(?<![A-Za-z0-9])([vV])(" + NUMBERS + ")(?![A-Za-z0-9]|\\.\\d)");
 
     // A shared module's version after its base name: a space, then a version token.
-    private static final Pattern MODULE_VERSION = Pattern.compile(" ([vV])(\\d+(?:\\.\\d+)*)");
+    private static final Pattern MODULE_VERSION = Pattern.compile(" ([vV])(" + NUMBERS + ")");
     // A shared module's version at the end of its name.
-    private static final Pattern MODULE_VERSION_AT_END = Pattern.compile(" ([vV]\\d+(?:\\.\\d+)*)$");
+    private static final Pattern MODULE_VERSION_AT_END = Pattern.compile(" ([vV]" + NUMBERS + ")$");
 
     private VersionNames() {
         // Static methods only.
@@ -60,7 +71,14 @@ final class VersionNames {
     /// @param name A name, e.g. `Acme-Events-V1.0-Indexing`.
     /// @return Its last version token, e.g. `V1.0`; empty when it has none.
     static Optional<String> token(final String name) {
-        return last(name).map(Matcher::group);
+        return token(name, List.of());
+    }
+
+    /// @param name A pipeline's (or its document's) name, e.g. `CISCO-ASA-V9-EVENTS-V1.0`.
+    /// @param held The names it may hold whose tokens are theirs, not its version: its feeds', its group's.
+    /// @return Its last version token outside those, e.g. `V1.0`; empty when it has none.
+    static Optional<String> token(final String name, final Collection<String> held) {
+        return last(name, held).map(Matcher::group);
     }
 
     /// The next version's name, its version token's last part one higher: `V1.0` to `V1.1`, `V1` to `V2`,
@@ -70,7 +88,16 @@ final class VersionNames {
     /// @return The next version's name; with no version token, the name with [#NO_VERSION_SUFFIX] after it (before
     /// its first `{variable}`, if it has one).
     static String next(final String name) {
-        return bumped(name, false, NO_VERSION_SUFFIX);
+        return next(name, List.of());
+    }
+
+    /// As [#next(String)], a token inside a name held ([#token(String, Collection)]) left as it is.
+    ///
+    /// @param name A name.
+    /// @param held The names it may hold whose tokens are theirs.
+    /// @return The next version's name.
+    static String next(final String name, final Collection<String> held) {
+        return bumped(name, held, false, NO_VERSION_SUFFIX);
     }
 
     /// The next major version's name, its version token's first part one higher and the rest zero: `V1.0` to
@@ -80,7 +107,16 @@ final class VersionNames {
     /// @return The next major version's name; with no version token, the name with [#NO_MAJOR_VERSION_SUFFIX] after
     /// it (before its first `{variable}`).
     static String nextMajor(final String name) {
-        return bumped(name, true, NO_MAJOR_VERSION_SUFFIX);
+        return nextMajor(name, List.of());
+    }
+
+    /// As [#nextMajor(String)], a token inside a name held ([#token(String, Collection)]) left as it is.
+    ///
+    /// @param name A name.
+    /// @param held The names it may hold whose tokens are theirs.
+    /// @return The next major version's name.
+    static String nextMajor(final String name, final Collection<String> held) {
+        return bumped(name, held, true, NO_MAJOR_VERSION_SUFFIX);
     }
 
     /// The next version of an Elasticsearch index name: `acme-events-v1` to `acme-events-v2`, `acme_v3` to
@@ -90,7 +126,16 @@ final class VersionNames {
     /// @return The next version's index name; with no version token, the name with [#NO_INDEX_VERSION_SUFFIX] after
     /// it, before its first `{variable}` (`acme-events{_suffix}` to `acme-events-v2{_suffix}`).
     static String nextIndexName(final String indexName) {
-        return bumped(indexName, false, NO_INDEX_VERSION_SUFFIX);
+        return nextIndexName(indexName, List.of());
+    }
+
+    /// As [#nextIndexName(String)], a token inside a name held (a feed's, any case) left as it is.
+    ///
+    /// @param indexName An index name.
+    /// @param held      The names it may hold whose tokens are theirs.
+    /// @return The next version's index name.
+    static String nextIndexName(final String indexName, final Collection<String> held) {
+        return bumped(indexName, held, false, NO_INDEX_VERSION_SUFFIX);
     }
 
     /// A document's name for the new version: the pipeline's version change where the name holds the same token,
@@ -101,12 +146,25 @@ final class VersionNames {
     /// @param to   The new version's token, e.g. `V1.1`, or null.
     /// @return The name proposed.
     static String following(final String name, final String from, final String to) {
+        return following(name, from, to, List.of());
+    }
+
+    /// As [#following(String, String, String)], a token inside a name held ([#token(String, Collection)]) never
+    /// changed.
+    ///
+    /// @param name The document's name.
+    /// @param from The pipeline's version token, or null.
+    /// @param to   The new version's token, or null.
+    /// @param held The names it may hold whose tokens are theirs.
+    /// @return The name proposed.
+    static String following(final String name, final String from, final String to, final Collection<String> held) {
         if (from != null && to != null && !from.equals(to)) {
             final Matcher matcher = TOKEN.matcher(name);
+            final List<int[]> heldAt = heldRanges(name, held);
             final StringBuilder out = new StringBuilder();
             boolean replaced = false;
             while (matcher.find()) {
-                if (matcher.group().equals(from)) {
+                if (matcher.group().equals(from) && !inside(heldAt, matcher.start(), matcher.end())) {
                     matcher.appendReplacement(out, Matcher.quoteReplacement(to));
                     replaced = true;
                 }
@@ -116,7 +174,7 @@ final class VersionNames {
                 return out.toString();
             }
         }
-        return next(name);
+        return next(name, held);
     }
 
     /// A shared module's version, from its name: the version token after its last space (`ACME common V1.1`), else
@@ -219,9 +277,12 @@ final class VersionNames {
         return 0;
     }
 
-    // The name with its last version token bumped, or the suffix added when it has none.
-    private static String bumped(final String name, final boolean major, final String suffix) {
-        final Optional<Matcher> found = last(name);
+    // The name with its last version token (outside the names held) bumped, or the suffix added when it has none.
+    private static String bumped(final String name,
+                                 final Collection<String> held,
+                                 final boolean major,
+                                 final String suffix) {
+        final Optional<Matcher> found = last(name, held);
         if (found.isEmpty()) {
             // Before the first variable, e.g. `acme-events{_suffix}` to `acme-events-v2{_suffix}`: what a variable
             // stands for is filled per document after the name's own part.
@@ -261,14 +322,18 @@ final class VersionNames {
                 : head + suffix + name.substring(variable);
     }
 
-    private static Optional<Matcher> last(final String name) {
+    // The last version token outside the names held.
+    private static Optional<Matcher> last(final String name, final Collection<String> held) {
         if (name == null) {
             return Optional.empty();
         }
+        final List<int[]> heldAt = heldRanges(name, held);
         final Matcher matcher = TOKEN.matcher(name);
         int start = -1;
         while (matcher.find()) {
-            start = matcher.start();
+            if (!inside(heldAt, matcher.start(), matcher.end())) {
+                start = matcher.start();
+            }
         }
         if (start < 0) {
             return Optional.empty();
@@ -277,5 +342,28 @@ final class VersionNames {
         return at.find(start)
                 ? Optional.of(at)
                 : Optional.empty();
+    }
+
+    // Where each name held appears in the name, any case: [start, end) of each.
+    private static List<int[]> heldRanges(final String name, final Collection<String> held) {
+        final List<int[]> out = new ArrayList<>();
+        final String lower = name.toLowerCase(Locale.ROOT);
+        for (final String each : NullSafe.collection(held)) {
+            if (NullSafe.isBlankString(each)) {
+                continue;
+            }
+            final String sought = each.toLowerCase(Locale.ROOT);
+            int at = lower.indexOf(sought);
+            while (at >= 0) {
+                out.add(new int[]{at, at + sought.length()});
+                at = lower.indexOf(sought, at + 1);
+            }
+        }
+        return out;
+    }
+
+    // Whether [start, end) is inside one of the ranges.
+    private static boolean inside(final List<int[]> ranges, final int start, final int end) {
+        return ranges.stream().anyMatch(range -> range[0] <= start && end <= range[1]);
     }
 }

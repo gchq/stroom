@@ -74,7 +74,11 @@ import java.util.Set;
 /// workspace folder, made by the tools, that the record (or the tools' own name for a test feed, `-MCP-TEST`) says is
 /// a test feed or test index, and that nothing outside the build reads or uses (a pipeline's processor filter, a
 /// pipeline or dashboard naming it). Never a promoted document, a production feed or its streams, a feed the build
-/// works from, the survey doc or the build's record.
+/// works from, the survey doc or the build's record. What uses it is checked twice: before the promotion, where a
+/// document the promotion moves to production (a dashboard, say) is said to use it up front, and again once the build
+/// is promoted, before anything is tidied (found in review, 2026-11-18: a promoted dashboard querying the test index,
+/// or a promoted document naming the test feed in a property the promotion doesn't rewrite, was in the build at the
+/// first check, and production then used what was deleted).
 class PromotionTidyUp {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PromotionTidyUp.class);
@@ -196,6 +200,12 @@ class PromotionTidyUp {
         steps.stream()
                 .filter(step -> PromotionLayout.KEEP.equals(step.action()))
                 .forEach(step -> kept.add(String.valueOf(step.doc().get("uuid"))));
+        // What the promotion moves to production: what of it uses a test document uses it from production.
+        final Map<String, String> moving = new LinkedHashMap<>();
+        steps.stream()
+                .filter(step -> PromotionLayout.MOVE.equals(step.action()))
+                .forEach(step -> moving.put(String.valueOf(step.doc().get("uuid")),
+                        String.valueOf(step.doc().get("type"))));
         final Set<String> sourceNames = new HashSet<>();
         sources.forEach(source -> sourceNames.add(source.toLowerCase(Locale.ROOT)));
         final List<Item> items = new ArrayList<>();
@@ -215,7 +225,7 @@ class PromotionTidyUp {
             if (kind == null) {
                 continue;
             }
-            final String unproven = unproven(build, ref, kind, sourceNames);
+            final String unproven = unproven(build, ref, kind, sourceNames, moving);
             if (unproven != null) {
                 passedOver.add(kind.said() + " '" + ref.getName() + "': " + unproven);
                 continue;
@@ -237,7 +247,7 @@ class PromotionTidyUp {
         for (final Map<String, Object> doc : dashboards) {
             final DocRef ref = ref(doc);
             final Set<String> searched = searched(ref);
-            String unproven = unproven(build, ref, Kind.DASHBOARD, sourceNames);
+            String unproven = unproven(build, ref, Kind.DASHBOARD, sourceNames, moving);
             if (unproven == null && (searched.isEmpty() || !tidiedIndexes.containsAll(searched))) {
                 unproven = "it searches an index that isn't tidied up";
             }
@@ -247,21 +257,36 @@ class PromotionTidyUp {
                 items.add(new Item(Kind.DASHBOARD, ref, 0, null, 0, searched));
             }
         }
-        return new Plan(true, List.copyOf(items), List.copyOf(passedOver));
+        final Set<String> movedPipelines = new HashSet<>();
+        moving.forEach((uuid, type) -> {
+            if (PipelineDoc.TYPE.equals(type)) {
+                movedPipelines.add(uuid);
+            }
+        });
+        return new Plan(true, List.copyOf(items), List.copyOf(passedOver), Set.copyOf(movedPipelines));
     }
 
     /// What the layout says of the tidy-up and of the test feeds left in the workspace: the approval is bound to the
     /// layout, so to what the tidy-up will do.
     ///
-    /// @param plan      The promotion's plan.
-    /// @param testDocs  The build's test documents ([#testDocs]).
-    /// @param tidy      The tidy-up.
+    /// @param plan     The promotion's plan.
+    /// @param testDocs The build's test documents ([#testDocs]).
+    /// @param tidy     The tidy-up.
+    /// @param counted  True for each item with its streams' count and size, or its shards' count, as of now (shown
+    ///                 to the user); false for each by what it is and what is done to it only, which the approval is
+    ///                 bound to (found in review, 2026-11-18: bound to the counts, a test feed still being written to
+    ///                 changed the review on every call, and the promotion was never approved).
     /// @return The note, or empty when there is nothing to say.
-    static String layoutNote(final List<PromotionLayout.Step> plan, final Set<String> testDocs, final Plan tidy) {
+    static String layoutNote(final List<PromotionLayout.Step> plan,
+                             final Set<String> testDocs,
+                             final Plan tidy,
+                             final boolean counted) {
         final StringBuilder sb = new StringBuilder();
         if (!tidy.items().isEmpty()) {
             sb.append("\n\nTidy-up after promotion (the user can untick it in the approval):\n")
-                    .append(String.join("\n", tidy.said().stream().map(line -> "- " + line).toList()));
+                    .append(String.join("\n", (counted
+                            ? tidy.said()
+                            : tidy.identities()).stream().map(line -> "- " + line).toList()));
         }
         if (tidy.on() && !tidy.passedOver().isEmpty()) {
             sb.append("\n\nNot tidied up, left in the workspace:\n")
@@ -289,8 +314,10 @@ class PromotionTidyUp {
         return sb.toString();
     }
 
-    /// Carries the tidy-up out, once the build is promoted: streams first, then shards, then documents. Never a
-    /// reason for the promotion to fail: each failure is said in its item.
+    /// Carries the tidy-up out, once the build is promoted: first what uses each item is checked again (what the
+    /// promotion moved is outside the build now), then streams, then shards, then documents. An item something
+    /// outside the build now uses is skipped, its later steps too. Never a reason for the promotion to fail: each
+    /// failure is said in its item.
     ///
     /// @param build The build.
     /// @param plan  The tidy-up, as approved.
@@ -303,6 +330,16 @@ class PromotionTidyUp {
             final Map<String, Object> result = new LinkedHashMap<>();
             result.put("document", item.doc().getType() + " '" + item.doc().getName() + "'");
             results.put(item.doc().getUuid(), result);
+        }
+        // 0. What uses each item, now the build is promoted: a promoted document using it keeps it.
+        for (final Item item : plan.items()) {
+            final String outside = usedOutsideNow(build, item, plan.movedPipelines());
+            if (outside != null) {
+                final Map<String, Object> result = results.get(item.doc().getUuid());
+                result.put("deleted", false);
+                result.put("skipped", "left in the workspace: " + outside);
+                failed.add(item.doc().getUuid());
+            }
         }
         // 1. Each test feed's streams, marked deleted as the Data screen marks them.
         for (final Item item : plan.items()) {
@@ -389,9 +426,31 @@ class PromotionTidyUp {
                              + "workspace)");
     }
 
+    // What uses an item from outside the build once it is promoted, as the reason it is left; null for nothing. A
+    // pipeline the promotion moved isn't said for its processor filters: those made in the build read the sample's
+    // streams only for the build, and its Events no longer go to the test feed (a property naming the test feed,
+    // which the promotion doesn't rewrite, is still said).
+    private String usedOutsideNow(final String build, final Item item, final Set<String> movedPipelines) {
+        try {
+            final List<String> outside = usedOutside(build, item.doc(), item.kind() == Kind.FEED, Map.of(),
+                    movedPipelines);
+            return outside.isEmpty()
+                    ? null
+                    : "used outside the build since it was promoted, by " + String.join(", ", outside);
+        } catch (final RuntimeException e) {
+            return "what uses it since the build was promoted couldn't be checked (" + reason(e) + ")";
+        }
+    }
+
     // Why a test document isn't proven the build's own to tidy up, or null when it is: in the build's workspace,
-    // made by the tools, not a feed the build works from, and used by nothing outside the build.
-    private String unproven(final String build, final DocRef ref, final Kind kind, final Set<String> sources) {
+    // made by the tools, not a feed the build works from, and used by nothing outside the build, nor by what the
+    // promotion moves there (but a pipeline: what it names of the build's is rewritten as it is promoted, and is
+    // checked again once it is).
+    private String unproven(final String build,
+                            final DocRef ref,
+                            final Kind kind,
+                            final Set<String> sources,
+                            final Map<String, String> moving) {
         try {
             if (!build.equals(guard.buildOf(ref).orElse(null))) {
                 return "it isn't in the build's workspace";
@@ -402,7 +461,7 @@ class PromotionTidyUp {
             if (kind == Kind.FEED && sources.contains(NullSafe.string(ref.getName()).toLowerCase(Locale.ROOT))) {
                 return "it is a feed the build works from";
             }
-            final List<String> outside = usedOutside(build, ref, kind == Kind.FEED);
+            final List<String> outside = usedOutside(build, ref, kind == Kind.FEED, moving, Set.of());
             return outside.isEmpty()
                     ? null
                     : "used outside the build, by " + String.join(", ", outside);
@@ -412,8 +471,14 @@ class PromotionTidyUp {
     }
 
     // What uses the document from outside the build: a document naming it (a pipeline, a dashboard), and for a
-    // feed, a pipeline whose processor filter reads it.
-    private List<String> usedOutside(final String build, final DocRef ref, final boolean feed) {
+    // feed, a pipeline whose processor filter reads it. A document of the build the promotion moves (moving, by UUID,
+    // with its type), but a pipeline, uses it from production too. The processor filters of the pipelines passed
+    // over (by UUID) are not said.
+    private List<String> usedOutside(final String build,
+                                     final DocRef ref,
+                                     final boolean feed,
+                                     final Map<String, String> moving,
+                                     final Set<String> passedOverFilters) {
         final List<String> out = new ArrayList<>();
         final DependencyCriteria criteria = new DependencyCriteria();
         criteria.setPageRequest(new PageRequest(0, MAX_DEPENDANTS));
@@ -426,8 +491,12 @@ class PromotionTidyUp {
                 // A processor filter is told by its pipeline, below.
                 continue;
             }
+            final String named = from.getType() + " '" + NullSafe.nonBlankStringElse(from.getName(), from.getUuid())
+                                 + "'";
             if (!build.equals(guard.buildOf(from).orElse(null))) {
-                out.add(from.getType() + " '" + NullSafe.nonBlankStringElse(from.getName(), from.getUuid()) + "'");
+                out.add(named);
+            } else if (moving.containsKey(from.getUuid()) && !PipelineDoc.TYPE.equals(moving.get(from.getUuid()))) {
+                out.add(named + " (the promotion moves it to production)");
             }
         }
         if (feed) {
@@ -438,7 +507,8 @@ class PromotionTidyUp {
             for (final Map<String, Object> pipeline : filters.pipelinesReading(ref.getName())) {
                 final DocRef pipelineRef = new DocRef(PipelineDoc.TYPE, String.valueOf(pipeline.get("uuid")),
                         Objects.toString(pipeline.get("name"), null));
-                if (!build.equals(guard.buildOf(pipelineRef).orElse(null))) {
+                if (!build.equals(guard.buildOf(pipelineRef).orElse(null))
+                    && !passedOverFilters.contains(pipelineRef.getUuid())) {
                     out.add("pipeline '" + pipelineRef.getName() + "' (its processor filter reads it)");
                 }
             }
@@ -565,6 +635,18 @@ class PromotionTidyUp {
     /// @param searched The indexes a dashboard searches.
     record Item(Kind kind, DocRef doc, long streams, Long bytes, int shards, Set<String> searched) {
 
+        /// @return What it is and what will be done to it, without the counts that change as processing goes on: what
+        /// the approval is bound to.
+        String identity() {
+            final String named = kind.said() + " '" + doc.getName() + "' (" + doc.getUuid() + ")";
+            return switch (kind) {
+                case FEED -> named + ": its streams marked deleted, then the feed deleted";
+                case LUCENE_INDEX -> named + ": its shards deleted, then the index doc deleted";
+                case ELASTIC_INDEX -> named + ": deleted (its index on the cluster is left as it is)";
+                case DASHBOARD -> named + ": deleted";
+            };
+        }
+
         /// @return What the review says will be done to it.
         String said() {
             final String named = kind.said() + " '" + doc.getName() + "'";
@@ -582,24 +664,32 @@ class PromotionTidyUp {
 
     /// The tidy-up a promotion does.
     ///
-    /// @param on         False when the user turned it off (`tidy_up=false`).
-    /// @param items      What is tidied up, in order.
-    /// @param passedOver Each test document left in the workspace, with why.
-    record Plan(boolean on, List<Item> items, List<String> passedOver) {
+    /// @param on             False when the user turned it off (`tidy_up=false`).
+    /// @param items          What is tidied up, in order.
+    /// @param passedOver     Each test document left in the workspace, with why.
+    /// @param movedPipelines The pipelines the promotion moves to production, by UUID: their processor filters,
+    ///                       made in the build, don't keep a test feed once promoted.
+    record Plan(boolean on, List<Item> items, List<String> passedOver, Set<String> movedPipelines) {
 
         /// The tidy-up turned off: nothing tidied.
-        static final Plan OFF = new Plan(false, List.of(), List.of());
+        static final Plan OFF = new Plan(false, List.of(), List.of(), Set.of());
 
         /// @return What the review says of each item.
         List<String> said() {
             return items.stream().map(Item::said).toList();
         }
 
+        /// @return What each item is and what is done to it, without its counts ([Item#identity]).
+        List<String> identities() {
+            return items.stream().map(Item::identity).toList();
+        }
+
         /// @param details The approval form's details.
         /// @return They, with the tidy-up referred to (its list is in the chat: forms are short plain text).
         Map<String, Object> inForm(final Map<String, Object> details) {
             if (!items.isEmpty()) {
-                details.put("tidy-up after promotion", items.size() + " test document(s), as listed in the chat");
+                details.put("tidy-up after promotion", items.size() + " test document(s), as listed in the chat "
+                                                       + "(stream counts and sizes as of the review)");
             }
             return details;
         }

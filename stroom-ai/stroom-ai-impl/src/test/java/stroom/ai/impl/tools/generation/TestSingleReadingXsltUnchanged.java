@@ -31,7 +31,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// A feed whose source type is read by one reading (a field, a part's meta attribute, or a reading into held
 /// values) generates exactly the XSLT it did before source types could be read by a combination of readings: each
 /// group's and each whole translation's XSLT is compared, byte for byte, with the one generated before (kept as test
-/// resources, written by the generator as it was at 6ecac82594).
+/// resources, written by the generator as it was at 6ecac82594, but for a held value's XML test, which since
+/// 2026-11-18 takes a text holding a document type declaration as no XML, as the tools do).
 class TestSingleReadingXsltUnchanged extends XsltRuns {
 
     private static final String COMMON_HREF = "uuid='c0000000-0000-0000-0000-000000000001', name='Held common'";

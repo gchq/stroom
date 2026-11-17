@@ -305,6 +305,52 @@ class TestProductionIndexes {
     }
 
     @Test
+    void aChildWithAFilterNamingNoFeedClaimsEveryFeedsIndex() {
+        // Found in review (2026-11-18): a child reading feed A by one filter and every feed's Events by another
+        // (Type only) was taken to claim only acme-a-events, so a build pipeline for feed B writing {feed}-events
+        // was let through into the child's index for B.
+        feedTemplate();
+        templateChild("child-a", "Acme-A-Indexing", "ACME-A");
+        w.filter("child-a", 60, true, ExpressionOperator.builder()
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, "Events").build(), null);
+        buildChildOfTemplate("ACME-B");
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final ToolResult forB = create(Map.of("stream_ids", List.of(6), "source_pipeline_uuid", "ev"), user);
+
+        assertThat(forB.isError()).as(forB.text()).isTrue();
+        assertThat(forB.text()).contains("pipeline 'Acme-A-Indexing' writes to '{feed}-events')")
+                .doesNotContain("acme-a-events")
+                .doesNotContain("DELETE")
+                .doesNotContain("drop_first");
+        assertThat(user.forms()).isEmpty();
+        assertThat(w.lookedUp).isEmpty();
+        assertThat(w.created).isEmpty();
+    }
+
+    @Test
+    void aChildLeavingAFeedOutClaimsEveryFeedsIndex() {
+        // A NOT_EQUALS Feed term reads every feed but that one: never the one it names.
+        feedTemplate();
+        w.world.add(PipelineDoc.TYPE, "Acme-NotB-Indexing", w.world.folder("System/Feeds/Acme").uuid, "child-n");
+        w.world.docs.put("child-n", PipelineDoc.builder().uuid("child-n").name("Acme-NotB-Indexing").version("v0")
+                .parentPipeline(new DocRef(PipelineDoc.TYPE, "tpl", "Events Indexing"))
+                .pipelineData(PipelineLayers.layer("child-n").data()).build());
+        PipelineLayers.given(w.world.pipelineService, "child-n", PipelineLayers.of(templateLayer(),
+                PipelineLayers.layer("child-n")));
+        w.filter("child-n", 61, true, ExpressionOperator.builder()
+                .addTextTerm(MetaFields.FEED, Condition.NOT_EQUALS, "ACME-B").build(), null);
+        buildChildOfTemplate("ACME-C");
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final ToolResult forC = create(Map.of("stream_ids", List.of(6), "source_pipeline_uuid", "ev"), user);
+
+        assertThat(forC.isError()).as(forC.text()).isTrue();
+        assertThat(forC.text()).contains("pipeline 'Acme-NotB-Indexing' writes to '{feed}-events')")
+                .doesNotContain("acme-b-events");
+    }
+
+    @Test
     void aVariableWhoseValueIsNotKnownStaysAnyValue() {
         // The child's XSLT writes the feed field from the event: Stroom's value isn't known, so the child's name
         // stands for every *-events index, the build's feed's among them.

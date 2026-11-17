@@ -16,10 +16,12 @@
 
 package stroom.mcp.impl.tools;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -124,5 +126,51 @@ class TestVersionNames {
     void aSharedModulesVersionFolderIsTheVersionAfterItsNameOrV10(final String name, final String version) {
         // Decided by the user (2026-11-17): a module filed under <feed>/Common/<version>, the first one V1.0.
         assertThat(VersionNames.moduleVersion(name)).isEqualTo(version);
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "Acme-v20261117093000123456",
+            "Acme-v1.20261117093000123456",
+            "Acme-v1234567890"})
+    void aTokenWhoseNumbersAreTooLongIsNoVersion(final String name) {
+        // Seen in review: a timestamp-like run of digits overflowed a long and failed copy_pipeline.
+        assertThat(VersionNames.token(name)).isEmpty();
+        assertThat(VersionNames.next(name)).isEqualTo(name + "-V1.1");
+        assertThat(VersionNames.nextIndexName(name)).isEqualTo(name + "-v2");
+        assertThat(VersionNames.nextModule(name, List.of(name + " V1.20261117093000123456")))
+                .isEqualTo(name + " V1.1");
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            // The feed's own token is part of the name, not the pipeline's version: with no other, it is
+            // unversioned (V1.0), its next version -V1.1.
+            "CISCO-ASA-V9-EVENTS        | CISCO-ASA-V9 |      | CISCO-ASA-V9-EVENTS-V1.1",
+            "cisco-asa-v9 Events        | CISCO-ASA-V9 |      | cisco-asa-v9 Events-V1.1",
+            // A token of its own beside the feed's is the version.
+            "CISCO-ASA-V9-EVENTS-V1.2   | CISCO-ASA-V9 | V1.2 | CISCO-ASA-V9-EVENTS-V1.3",
+            "V2 Gateway-V1.4            | V2 Gateway   | V1.4 | V2 Gateway-V1.5",
+            // A token outside the feed's name, though it is the same token, is the version.
+            "ACME-V2 V2                 | ACME-V2      | V2   | ACME-V2 V3"})
+    void aTokenInsideTheFeedsNameIsNotThePipelinesVersion(final String name,
+                                                          final String feed,
+                                                          final String token,
+                                                          final String next) {
+        // Found in review (2026-11-18): CISCO-ASA-V9-EVENTS of feed CISCO-ASA-V9 was taken as V9, its next version
+        // V10, renaming the feed's part.
+        assertThat(VersionNames.token(name, List.of(feed))).isEqualTo(Optional.ofNullable(token));
+        assertThat(VersionNames.next(name, List.of(feed))).isEqualTo(next);
+    }
+
+    @Test
+    void aDocumentFollowingAVersionChangeKeepsTheFeedsOwnToken() {
+        assertThat(VersionNames.following("CISCO-ASA-V9-EVENTS-V1.0-XSLT", "V1.0", "V1.1", List.of("CISCO-ASA-V9")))
+                .isEqualTo("CISCO-ASA-V9-EVENTS-V1.1-XSLT");
+        // The pipeline's change is V9 to V10 in name only: the feed's V9 is left, the document's own bumped.
+        assertThat(VersionNames.following("CISCO-ASA-V9-XSLT", "V9", "V10", List.of("CISCO-ASA-V9")))
+                .isEqualTo("CISCO-ASA-V9-XSLT-V1.1");
+        assertThat(VersionNames.nextMajor("CISCO-ASA-V9-EVENTS", List.of("CISCO-ASA-V9")))
+                .isEqualTo("CISCO-ASA-V9-EVENTS-V2.0");
     }
 }

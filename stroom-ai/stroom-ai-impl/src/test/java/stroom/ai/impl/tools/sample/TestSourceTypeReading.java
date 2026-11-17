@@ -105,6 +105,10 @@ class TestSourceTypeReading {
             "event>#nope; is no step",
             "meta:Feed>x; read whole",
             "a>x | ; an empty reading",
+            // Found in review (2026-11-18): the group's XSLT can't read a meta attribute among readings tried in
+            // order, so neither does the tools'.
+            "app | meta:Feed; 'meta:Feed': a stream meta attribute is never one of several readings",
+            "meta:Feed | app; 'meta:Feed': a stream meta attribute is never one of several readings",
             "a>1 | a>2 | a>3 | a>4 | a>5 | a>6 | a>7; at most 6"})
     void aReadingThatIsNoneIsRefusedSayingWhy(final String spec, final String why) {
         assertThat(SourceTypeReading.problem(spec)).hasValueSatisfying(problem -> assertThat(problem).contains(why));
@@ -118,6 +122,10 @@ class TestSourceTypeReading {
         assertThat(SourceTypeReading.of(" event > XML:Header.@id |  event>logger ").spec())
                 .isEqualTo("event>xml:Header.@id | event>logger");
         assertThat(SourceTypeReading.problem("event>logger_name | event>xml:@logger")).isEmpty();
+        // A meta attribute read on its own reads as it always has.
+        assertThat(SourceTypeReading.problem("meta:Feed")).isEmpty();
+        assertThat(SourceTypeReading.of("meta:Feed").paths()).extracting(SourceTypeReading.Path::field)
+                .containsExactly("meta:Feed");
         assertThat(SourceTypeReading.of("event>#format").byFormat()).isTrue();
         assertThat(SourceTypeReading.of("event>logger").byFormat()).isFalse();
     }
@@ -199,6 +207,8 @@ class TestSourceTypeReading {
             "system + ; an empty part",
             "system +  + app; an empty part",
             "system + meta:Feed; a stream meta attribute is never a part",
+            "system + app | meta:Feed; a stream meta attribute is never one of several readings",
+            "meta:Feed | app + system; a stream meta attribute is never one of several readings",
             "system + system; 'system' is a part twice",
             "system + event>a>b>c>d; at most 3"})
     void aCombinationThatIsNoneIsRefusedSayingWhy(final String spec, final String why) {

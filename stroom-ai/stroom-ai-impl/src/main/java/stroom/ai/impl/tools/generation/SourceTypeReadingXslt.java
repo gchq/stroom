@@ -188,12 +188,15 @@ final class SourceTypeReadingXslt {
         attempt.addElement(XSL, "catch").addElement(XSL, "sequence", "select", "()");
     }
 
-    // An XML document held in a text, its root element; nothing for a text that isn't one or doesn't parse.
+    // An XML document held in a text, its root element; nothing for a text that isn't one, doesn't parse or holds a
+    // document type declaration.
     private static void heldXml(final XmlElement sheet, final UnaryOperator<String> namer) {
         final XmlElement function = function(sheet, namer, "reading-xml", "element()?",
                 "The root element of the XML document a held text is, or nothing");
         function.addElement(XSL, "param", "name", "t", "as", "xs:string");
-        final XmlElement attempt = function.addElement(XSL, "if", "test", "starts-with($t, '<')")
+        // A document type declaration makes it no XML, as the tools take it (they read no DTD).
+        final XmlElement attempt = function.addElement(XSL, "if", "test", "starts-with($t, '<') and not(contains($t, "
+                                                                          + literal(HeldText.DOCTYPE) + "))")
                 .addElement(XSL, "try");
         attempt.addElement(XSL, "sequence", "select", "parse-xml($t)/*");
         attempt.addElement(XSL, "catch").addElement(XSL, "sequence", "select", "()");

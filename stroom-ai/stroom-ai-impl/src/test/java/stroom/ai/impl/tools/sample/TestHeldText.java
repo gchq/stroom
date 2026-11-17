@@ -51,6 +51,30 @@ class TestHeldText {
     }
 
     @Test
+    void aHeldJsonNumberIsReadAsWrittenAndNanOrInfinityIsNoJson() {
+        // Found in review (2026-11-18): read as doubles (2.1, 1.0E10) where the group's XSLT (json-to-xml) reads
+        // them as written, and NaN or Infinity (not JSON) were JSON to the tools alone.
+        final SourceTypeReading.Step step = SourceTypeReading.of("event>n").paths().getFirst().held().getFirst();
+        for (final String number : List.of("2.10", "1e10", "-1.5E+3", "-7", "0", "12345678901234567890", "1.0")) {
+            assertThat(HeldText.read(HeldText.parse("{\"n\": " + number + "}"), step)).as(number)
+                    .isEqualTo(number);
+        }
+        for (final String notJson : List.of("{\"n\": NaN}", "{\"n\": Infinity}", "{\"n\": -Infinity}",
+                "\"{\\\"n\\\": NaN}\"")) {
+            assertThat(HeldText.parse(notJson).format()).as(notJson).isNotEqualTo(HeldText.JSON);
+        }
+    }
+
+    @Test
+    void aHeldValueWithADoctypeIsNoXml() {
+        // Found in review (2026-11-18): XML to the tools (DTDs not read) but not always to the group's XSLT
+        // (parse-xml reads the DTD): both take it as no XML.
+        assertThat(HeldText.parse("<!DOCTYPE a><a x=\"1\"/>").format()).isEqualTo(HeldText.TEXT);
+        assertThat(HeldText.parse("<?xml version=\"1.0\"?>\n<!DOCTYPE a [<!ENTITY e \"x\">]><a>&e;</a>")
+                .format()).isEqualTo(HeldText.TEXT);
+    }
+
+    @Test
     void malformedJsonOrXmlIsReadOnDownTheList() {
         // Cut off: no longer JSON, but pairs in it make it key=value; none make it text.
         assertThat(HeldText.parse("{\"cut\": x=1 y=2").format()).isEqualTo(HeldText.KEY_VALUE);

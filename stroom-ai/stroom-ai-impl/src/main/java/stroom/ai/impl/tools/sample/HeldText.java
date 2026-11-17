@@ -86,6 +86,10 @@ public final class HeldText {
     /// The values a field holds for no value, as the tools and a source type group read them (any case), the empty
     /// value aside.
     public static final List<String> NIL_VALUES = List.of("-", "null", "none", "n/a");
+    /// What a held text holding a document type declaration holds: such a text is no XML, to the tools as to a
+    /// source type group's XSLT (found in review, 2026-11-18: the tools read no DTD, XPath's parse-xml() does, so
+    /// the two read such a text differently).
+    public static final String DOCTYPE = "<!DOCTYPE";
 
     // The deepest a discovery reads names into a held JSON object or XML document.
     private static final int MAX_NAMES = 4;
@@ -122,7 +126,7 @@ public final class HeldText {
         if (json != null) {
             return new Parsed(JSON, stripped, json);
         }
-        if (stripped.startsWith("<")) {
+        if (stripped.startsWith("<") && !stripped.contains(DOCTYPE)) {
             try {
                 return new Parsed(XML, stripped, XmlTree.parse(stripped));
             } catch (final XmlTree.XmlException | IllegalArgumentException e) {
@@ -177,7 +181,7 @@ public final class HeldText {
     /// @return It as text when it is a string, number or boolean; null otherwise (an object, a list, none).
     public static String scalar(final Object value) {
         return value instanceof String || value instanceof Number || value instanceof Boolean
-               || value instanceof BigInteger
+               || value instanceof BigInteger || value instanceof ToolJson.NumberText
                 ? String.valueOf(value)
                 : null;
     }
@@ -341,18 +345,19 @@ public final class HeldText {
                 : attribute;
     }
 
-    // A JSON object held in a text: the text an object, or a JSON string whose text is one.
+    // A JSON object held in a text: the text an object, or a JSON string whose text is one. Read as JSON itself has
+    // it, as XPath's json-to-xml() reads it: no NaN or Infinity, numbers as written.
     @SuppressWarnings("unchecked")
     private static Map<String, Object> json(final String text) {
         try {
             if (text.startsWith("{")) {
-                return ToolJson.loads(text) instanceof final Map<?, ?> map
+                return ToolJson.loadsStrict(text) instanceof final Map<?, ?> map
                         ? (Map<String, Object>) map
                         : null;
             }
-            if (text.startsWith("\"") && ToolJson.loads(text) instanceof final String inner) {
+            if (text.startsWith("\"") && ToolJson.loadsStrict(text) instanceof final String inner) {
                 final String decoded = AROUND_PATTERN.matcher(inner).replaceAll("");
-                return decoded.startsWith("{") && ToolJson.loads(decoded) instanceof final Map<?, ?> map
+                return decoded.startsWith("{") && ToolJson.loadsStrict(decoded) instanceof final Map<?, ?> map
                         ? (Map<String, Object>) map
                         : null;
             }

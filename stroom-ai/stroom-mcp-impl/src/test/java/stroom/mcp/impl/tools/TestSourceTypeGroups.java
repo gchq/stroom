@@ -95,8 +95,15 @@ class TestSourceTypeGroups {
     void aGroupsPipelineIsNamedWithV10WhereNeitherTheFeedNorTheGroupHasAVersion() {
         // Decided by the user (2026-11-17): promotion files a pipeline by the version in its name.
         assertThat(SourceTypeGroups.pipelineName("PEGA", "security")).isEqualTo("PEGA security V1.0");
+        // The feed's own token is not the pipeline's version (found in review, 2026-11-18): V1.0 is added.
         assertThat(SourceTypeGroups.pipelineName("Azure-Audit-V1.0-EVENTS", "M365 Messaging"))
-                .isEqualTo("Azure-Audit-V1.0-EVENTS M365 Messaging");
+                .isEqualTo("Azure-Audit-V1.0-EVENTS M365 Messaging V1.0");
+        assertThat(SourceTypeGroups.pipelineName("CISCO-ASA-V9", "vpn")).isEqualTo("CISCO-ASA-V9 vpn V1.0");
+        // A group's XSLT's new version follows its pipeline's, the feed's token left.
+        assertThat(SourceTypeGroups.versionName("CISCO-ASA-V9 vpn V1.0", "CISCO-ASA-V9 vpn V1.0", "CISCO-ASA-V9",
+                "vpn")).isEqualTo("CISCO-ASA-V9 vpn V1.1");
+        assertThat(SourceTypeGroups.versionName("CISCO-ASA-V9 vpn", "CISCO-ASA-V9 vpn", "CISCO-ASA-V9", "vpn"))
+                .isEqualTo("CISCO-ASA-V9 vpn-V1.1");
     }
 
     @Test

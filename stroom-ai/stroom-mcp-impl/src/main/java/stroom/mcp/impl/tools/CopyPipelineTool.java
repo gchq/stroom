@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
@@ -388,11 +389,14 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                                   final List<DocRef> owned,
                                   final Map<String, String> names,
                                   final List<PropertyValue> changes) {
+        // A version token inside the name of a feed the build works from is the feed's, not the pipeline's version
+        // (found in review, 2026-11-18).
+        final List<String> held = heldNames(build);
         final String pipeline = newName.equals(source.getName())
-                ? VersionNames.next(source.getName())
+                ? VersionNames.next(source.getName(), held)
                 : newName;
-        final String from = VersionNames.token(source.getName()).orElse(null);
-        final String to = VersionNames.token(pipeline).orElse(null);
+        final String from = VersionNames.token(source.getName(), held).orElse(null);
+        final String to = VersionNames.token(pipeline, held).orElse(null);
         final Map<String, String> documents = new LinkedHashMap<>();
         final Map<String, String> originals = new LinkedHashMap<>();
         for (final DocRef entity : owned) {
@@ -401,7 +405,7 @@ class CopyPipelineTool extends AbstractBuiltInTool {
             }
             final String given = names.get(entity.getUuid());
             documents.put(entity.getUuid(), given.equals(entity.getName())
-                    ? VersionNames.following(entity.getName(), from, to)
+                    ? VersionNames.following(entity.getName(), from, to, held)
                     : given);
             originals.put(entity.getUuid(), entity.getName());
         }
@@ -410,8 +414,8 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                 ? null
                 : NullSafe.get(destination.get("index name"), String::valueOf);
         if (oldIndex == null) {
-            return new NewVersion(source.getName(), pipeline, VersionNames.nextMajor(source.getName()), documents,
-                    originals, null, null, null, List.of(), Map.of(), Map.of());
+            return new NewVersion(source.getName(), pipeline, VersionNames.nextMajor(source.getName(), held),
+                    documents, originals, null, null, null, List.of(), Map.of(), Map.of());
         }
         final String givenIndex = changes.stream()
                 .filter(property -> INDEX_NAME.equals(property.name()) && property.value() != null)
@@ -419,7 +423,7 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                 .findFirst()
                 .orElse(null);
         final String index = givenIndex == null || givenIndex.equals(oldIndex)
-                ? VersionNames.nextIndexName(oldIndex)
+                ? VersionNames.nextIndexName(oldIndex, held)
                 : givenIndex;
         final List<String> elements = pipelineShapes.merged(source.getUuid()).elements().entrySet().stream()
                 .filter(entry -> ELASTIC_FILTER.equals(entry.getValue()))
@@ -431,12 +435,18 @@ class CopyPipelineTool extends AbstractBuiltInTool {
             // A doc naming exactly the old index (one naming a single index a {variable} stands for is left: the
             // new version's name for it isn't known).
             if (ElasticIndexDoc.TYPE.equals(claim.doc().getType()) && claim.indexName().equalsIgnoreCase(oldIndex)) {
-                indexDocs.put(claim.doc().getUuid(), VersionNames.following(claim.doc().getName(), from, to));
+                indexDocs.put(claim.doc().getUuid(), VersionNames.following(claim.doc().getName(), from, to,
+                        held));
                 indexDocOriginals.put(claim.doc().getUuid(), claim.doc().getName());
             }
         }
-        return new NewVersion(source.getName(), pipeline, VersionNames.nextMajor(source.getName()), documents,
+        return new NewVersion(source.getName(), pipeline, VersionNames.nextMajor(source.getName(), held), documents,
                 originals, oldIndex, index, destination, elements, indexDocs, indexDocOriginals);
+    }
+
+    // The names a pipeline's name may hold whose version tokens are theirs: the feeds the build works from.
+    private List<String> heldNames(final String build) {
+        return JsonValues.strings(records.load(build).get(BuildRecords.SOURCE_FEEDS));
     }
 
     // A new version under any of the original's names is refused: it would be taken for the original, and promoted
@@ -481,7 +491,7 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                     .filter(found -> Objects.equals(found.getName(), entity.getName()));
             if (copy.isPresent()) {
                 same.add("'" + copy.get().getName() + "' (" + copy.get().getUuid() + ")");
-                example = Objects.requireNonNullElse(example, VersionNames.next(entity.getName()));
+                example = Objects.requireNonNullElse(example, VersionNames.next(entity.getName(), heldNames(build)));
             }
         }
         if (!same.isEmpty()) {
