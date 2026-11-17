@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /// How a source type is read from a record: a **reading**, a path to a value that may step into structured data
 /// held in string fields. Written as the registry keeps it (its `field`), one text:
@@ -44,9 +46,15 @@ import java.util.concurrent.ConcurrentHashMap;
 /// * `a | b`: readings tried in order, the first with a value giving it (a reading for each format, where the formats
 ///   name it differently: `event>logger_name | event>xml:@logger`).
 ///
+/// * `system + event>logger_name`: a **combination**, readings joined by ` + `, each a part read as above, where
+///   only the parts together tell a source (`system` Teams or Skype, and inside `event`, `logger_name` System or
+///   Application). At most [#MAX_PARTS] parts. Its value is a **key**, the parts' values joined by
+///   [#KEY_SEPARATOR] (`Teams ‖ System`), a part with no value empty (`Teams ‖ `), and no value at all where no part
+///   has one; the registry's rows match a key part by part ([SourceTypeRows]). A part may not be a part's meta
+///   attribute.
+///
 /// A value is stripped of XML's white space, and the empty value and nil values (`-`, `null`, `none`, `n/a`) are no
 /// value. A held value of plain text is never read: its records have no value (the registry's `(no value)` row).
-/// Written so a later phase can read a source type from a tuple of readings: a reading is one of the tuple's parts.
 public final class SourceTypeReading {
 
     /// What steps into a held value.
@@ -63,22 +71,98 @@ public final class SourceTypeReading {
     public static final String ROOT_STEP = "#root";
     /// The formats a step may name, as `<format>:`.
     public static final List<String> FORMATS = HeldText.STRUCTURED;
+    /// What joins the parts of a combination of readings.
+    public static final String AND = " + ";
+    /// The most parts of a combination.
+    public static final int MAX_PARTS = 4;
+    /// What joins a combination's part values in its key: `Teams ‖ System`.
+    public static final String KEY_SEPARATOR = " ‖ ";
+    // What a key is split on (its parts then stripped), so a key stripped at its ends still splits alike.
+    private static final String KEY_SPLIT = "‖";
+    private static final Pattern SPACE_AROUND = Pattern.compile(HeldText.SPACE_AROUND);
+    // A '+' standing alone between white space: what joins a combination's parts (a text padded with a space each
+    // side, so a part left empty at either end is found too).
+    private static final Pattern AND_SPLIT = Pattern.compile("\\s\\+\\s");
 
     private static final Map<String, SourceTypeReading> CACHE = new ConcurrentHashMap<>();
     private static final int MAX_CACHED = 1000;
 
     private final String spec;
     private final List<Path> paths;
+    // A combination's parts; none for one reading.
+    private final List<SourceTypeReading> parts;
 
     private SourceTypeReading(final String spec, final List<Path> paths) {
+        this(spec, paths, List.of());
+    }
+
+    private SourceTypeReading(final String spec, final List<Path> paths, final List<SourceTypeReading> parts) {
         this.spec = spec;
         this.paths = List.copyOf(paths);
+        this.parts = List.copyOf(parts);
     }
 
     /// @param field A source type field as the registry keeps it, or null.
-    /// @return True if it steps into a held value or tries several readings; false for a field alone.
+    /// @return True if it steps into a held value, tries several readings or combines readings; false for a field
+    /// alone.
     public static boolean isReading(final String field) {
-        return field != null && (field.contains(HELD) || field.contains(OR.strip()));
+        return field != null && (field.contains(HELD) || field.contains(OR.strip()) || isCombination(field));
+    }
+
+    /// @param field A source type field as the registry keeps it, or null.
+    /// @return True if it is a combination of readings (`system + event>logger_name`).
+    public static boolean isCombination(final String field) {
+        return field != null && AND_SPLIT.matcher(" " + field + " ").find();
+    }
+
+    /// @param text A combination, or a combination row's parts, as written.
+    /// @return Its parts, split on each `+` standing alone, each stripped (an empty part kept, empty).
+    public static List<String> splitParts(final String text) {
+        final List<String> out = new ArrayList<>();
+        for (final String part : AND_SPLIT.split(" " + text + " ", -1)) {
+            out.add(part.strip());
+        }
+        return out;
+    }
+
+    /// @param field A source type field as the registry keeps it, or null.
+    /// @return How many parts its values have: a combination's, else one.
+    public static int partsOf(final String field) {
+        if (!isCombination(field)) {
+            return 1;
+        }
+        return splitParts(field).size();
+    }
+
+    /// A combination's key: its parts' values joined by [#KEY_SEPARATOR], a part with no value empty.
+    ///
+    /// @param values Each part's value, null for none.
+    /// @return The key; null where no part has a value.
+    public static String key(final List<String> values) {
+        if (values.stream().allMatch(value -> value == null || value.isEmpty())) {
+            return null;
+        }
+        return String.join(KEY_SEPARATOR, values.stream()
+                .map(value -> value == null
+                        ? ""
+                        : value)
+                .toList());
+    }
+
+    /// A combination's key split into its parts' values, each stripped ("" for a part with no value), as a source
+    /// type group splits it (`tokenize()` on `‖`).
+    ///
+    /// @param key A key, or null.
+    /// @return Its parts' values; none for null or the empty key.
+    public static List<String> keyParts(final String key) {
+        if (key == null || key.isEmpty()) {
+            return List.of();
+        }
+        final List<String> out = new ArrayList<>();
+        for (final String part : key.split(KEY_SPLIT, -1)) {
+            out.add(SPACE_AROUND.matcher(part).replaceAll(""));
+        }
+        return out;
     }
 
     /// Reads a reading as written.
@@ -134,6 +218,9 @@ public final class SourceTypeReading {
         String last = spec == null
                 ? ""
                 : spec;
+        if (isCombination(last)) {
+            last = splitParts(last).getFirst();
+        }
         final int or = last.indexOf(OR.strip());
         if (or >= 0) {
             last = last.substring(0, or).strip();
@@ -152,6 +239,17 @@ public final class SourceTypeReading {
     /// field is none of theirs. The reading as given where there are no records to check it against.
     public static Optional<String> asRecordsSpellIt(final String spec, final List<Map<String, Object>> records) {
         final SourceTypeReading reading = of(spec);
+        if (reading.isTuple()) {
+            final List<String> spelt = new ArrayList<>();
+            for (final SourceTypeReading part : reading.parts()) {
+                final Optional<String> one = asRecordsSpellIt(part.spec(), records);
+                if (one.isEmpty()) {
+                    return Optional.empty();
+                }
+                spelt.add(one.get());
+            }
+            return Optional.of(String.join(AND, spelt));
+        }
         if (records.isEmpty()) {
             return Optional.of(reading.spec());
         }
@@ -178,6 +276,9 @@ public final class SourceTypeReading {
         if (record == null) {
             return null;
         }
+        if (isTuple()) {
+            return key(parts.stream().map(part -> part.valueOf(record)).toList());
+        }
         for (final Path path : paths) {
             final String value = HeldText.normalised(path.read(record));
             if (value != null) {
@@ -193,6 +294,10 @@ public final class SourceTypeReading {
     public Map<String, String> heldFormats(final Map<String, Object> record) {
         final Map<String, String> out = new LinkedHashMap<>();
         if (record == null) {
+            return out;
+        }
+        if (isTuple()) {
+            parts.forEach(part -> part.heldFormats(record).forEach(out::putIfAbsent));
             return out;
         }
         for (final Path path : paths) {
@@ -211,9 +316,21 @@ public final class SourceTypeReading {
         return spec;
     }
 
-    /// @return Its readings, tried in order.
+    /// @return Its readings, tried in order; a combination's, every part's in turn.
     public List<Path> paths() {
         return paths;
+    }
+
+    /// @return True if it is a combination of readings, its value a key of its parts' values.
+    public boolean isTuple() {
+        return !parts.isEmpty();
+    }
+
+    /// @return A combination's parts, in order; this reading alone where it is one.
+    public List<SourceTypeReading> parts() {
+        return parts.isEmpty()
+                ? List.of(this)
+                : parts;
     }
 
     /// @return True if any of its readings steps into a held value.
@@ -230,6 +347,10 @@ public final class SourceTypeReading {
     /// @return How it is said to people, e.g. `logger_name inside the held field event (its JSON, XML, syslog
     /// header or key=value pairs, told per record)`.
     public String said() {
+        if (isTuple()) {
+            return "the combination of " + parts.stream().map(SourceTypeReading::said)
+                    .collect(Collectors.joining(" with "));
+        }
         final List<String> out = new ArrayList<>();
         for (final Path path : paths) {
             if (path.held().isEmpty()) {
@@ -271,6 +392,9 @@ public final class SourceTypeReading {
             return new SourceTypeReading("", List.of());
         }
         final String text = given.strip();
+        if (isCombination(text)) {
+            return combination(text, problems);
+        }
         if (!isReading(text)) {
             return new SourceTypeReading(text, List.of(new Path(text, List.of())));
         }
@@ -294,6 +418,36 @@ public final class SourceTypeReading {
         }
         final List<String> specs = paths.stream().map(Path::spec).toList();
         return new SourceTypeReading(String.join(OR, specs), paths);
+    }
+
+    // Reads a combination: its parts, each a reading of its own.
+    private static SourceTypeReading combination(final String text, final List<String> problems) {
+        final List<SourceTypeReading> parts = new ArrayList<>();
+        final Set<String> seen = new LinkedHashSet<>();
+        final List<String> given = splitParts(text);
+        if (given.size() > MAX_PARTS) {
+            problems.add("a combination has at most " + MAX_PARTS + " parts, not " + given.size());
+        }
+        for (final String part : given) {
+            if (part.isEmpty()) {
+                problems.add("an empty part between ' + 's: give each part a field");
+                continue;
+            }
+            if (SourceTypeMeta.isMeta(part)) {
+                problems.add("'" + part + "': a stream meta attribute is never a part of a combination (it is one "
+                             + "value a part of a stream, read on its own)");
+                continue;
+            }
+            final SourceTypeReading reading = parse(part, problems);
+            if (!seen.add(reading.spec())) {
+                problems.add("'" + reading.spec() + "' is a part twice");
+            }
+            parts.add(reading);
+        }
+        final List<Path> paths = new ArrayList<>();
+        parts.forEach(part -> paths.addAll(part.paths()));
+        return new SourceTypeReading(String.join(AND, parts.stream().map(SourceTypeReading::spec).toList()), paths,
+                parts);
     }
 
     // Reads one reading: a field, then steps into held values.

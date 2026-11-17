@@ -38,6 +38,9 @@ import java.util.regex.Pattern;
 /// values best tell apart records that differ in their fields, their message's format or its template, where each
 /// value holds kinds of event of its own (a kind field's values are each one shape, so a kind field isn't taken).
 ///
+/// Where no one reading tells the shapes apart well enough but two together do, the pair is offered first
+/// ([SourceTypeCombinations]).
+///
 /// Also how a record's message is read for the profiles: its format (JSON, XML with its root, syslog, key=value,
 /// text) and whether it parsed.
 public final class SourceTypeFields {
@@ -149,7 +152,11 @@ public final class SourceTypeFields {
                         ? HELD_HANDICAP
                         : 0.0)).reversed()
                 .thenComparingInt(candidate -> candidate.values().size()));
-        final List<Candidate> ordered = HeldCandidates.joinedFirst(found);
+        final List<Candidate> ordered = new ArrayList<>(HeldCandidates.joinedFirst(found));
+        // A pair only where no single reading tells the record shapes apart well enough: offered first.
+        SourceTypeCombinations.pair(held, List.copyOf(ordered.subList(0, Math.min(MAX_CANDIDATES, ordered.size()))),
+                        threshold, said)
+                .ifPresent(pair -> ordered.addFirst(pair));
         return List.copyOf(ordered.subList(0, Math.min(MAX_CANDIDATES, ordered.size())));
     }
 
@@ -426,7 +433,10 @@ public final class SourceTypeFields {
     /// @param formats    For a reading into held values: the records with a value by the held value's format
     ///                   ([HeldText]); none for a field.
     /// @param noValue    The records read with no value in it: for a held reading, those whose held value is plain
-    ///                   text, another format, or lacks it (the registry's `(no value)` row).
+    ///                   text, another format, or lacks it (the registry's `(no value)` row); for a combination,
+    ///                   those with a part of no value.
+    /// @param combined   For a pair of readings ([SourceTypeCombinations]): its rows proposed and the evidence it is
+    ///                   offered on; null for one reading.
     public record Candidate(String field,
                             List<String> values,
                             Map<String, Integer> counts,
@@ -434,7 +444,29 @@ public final class SourceTypeFields {
                             double separation,
                             boolean holdsKinds,
                             Map<String, Integer> formats,
-                            int noValue) {
+                            int noValue,
+                            SourceTypeCombinations.Combined combined) {
+
+        /// One reading.
+        ///
+        /// @param field      Its name, dotted, or a reading into held values.
+        /// @param values     Its distinct values, commonest first.
+        /// @param counts     The records holding each value.
+        /// @param records    The records holding a value in it.
+        /// @param separation How far its values tell the records' shapes apart beyond chance.
+        /// @param holdsKinds True when its values each hold several kinds of event.
+        /// @param formats    For a reading into held values: the records with a value by the held value's format.
+        /// @param noValue    The records read with no value in it.
+        public Candidate(final String field,
+                         final List<String> values,
+                         final Map<String, Integer> counts,
+                         final int records,
+                         final double separation,
+                         final boolean holdsKinds,
+                         final Map<String, Integer> formats,
+                         final int noValue) {
+            this(field, values, counts, records, separation, holdsKinds, formats, noValue, null);
+        }
 
         /// A field of the records' own.
         ///
@@ -462,9 +494,18 @@ public final class SourceTypeFields {
                     : "") + ")";
         }
 
-        /// @return True if it reads into held values.
+        /// @return True if it reads into held values (a combination: a part of it does).
         public boolean held() {
+            if (SourceTypeReading.isCombination(field)) {
+                final SourceTypeReading reading = SourceTypeReading.cached(field);
+                return reading != null && reading.held();
+            }
             return SourceTypeReading.isReading(field);
+        }
+
+        /// @return True if it is a pair of readings, offered with its rows and evidence.
+        public boolean combination() {
+            return combined != null;
         }
     }
 

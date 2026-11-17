@@ -32,12 +32,14 @@ import java.util.regex.Pattern;
 /// in ways a registry already kept still reads.
 ///
 /// The block is JSON: `feed`, `field` (the source type field: a record's, `meta:<Attribute>` for a part's meta
-/// attribute, [SourceTypeMeta], or a reading into held values, [SourceTypeReading]: `event>logger_name`; a
-/// registry naming a field reads it as a reading of that field alone), `field_by`, `environment` and `system_name`
+/// attribute, [SourceTypeMeta], a reading into held values, [SourceTypeReading]: `event>logger_name`, or a
+/// combination of readings, `system + event>logger_name`; a registry naming a field reads it as a reading of that
+/// field alone), `field_by`, `environment` and `system_name`
 /// (the feed's, the default for each row), `updated`, `scope` (the build that chose it, `group` (the build's one
 /// source type group), `source_types`, `by`, `at`), and `rows` in the order they are tried, each `name`, `match`
-/// (`value`, `pattern`, `member`, or `none` for the records with no value, the `(no value)` row), `value` (the
-/// value, the pattern, or a list's item; empty for `none`), `separator` (a `member` row's: what the list is split
+/// (`value`, `pattern`, `member`, `none` for the records with no value, the `(no value)` row, or `tuple` for a
+/// combination's row), `value` (the value, the pattern, a list's item, or a `tuple` row's parts, `= Teams + *`;
+/// empty for `none`), `separator` (a `member` row's, or a `tuple` row's with an item part: what the list is split
 /// on), `system_name`, `status` (`translated`, `parked`, `dropped` or `new`), `decided` (`by`, `at`, `reason`),
 /// `group`, `pipeline` and `output_feed` (empty until a source type group handles it; `group_xslt` names the
 /// group's XSLT, `uuid` and `name`, once build_translation_xslt saves it), `references` (the reference data its
@@ -178,6 +180,14 @@ public final class SourceTypeRegistry {
             return "";
         }
         final SourceTypeReading reading = SourceTypeReading.cached(text);
+        if (reading != null && reading.isTuple()) {
+            return " The source type is read by a combination of " + reading.parts().size() + " readings, in this "
+                   + "order: " + String.join("; ", reading.parts().stream().map(SourceTypeReading::said).toList())
+                   + ". A row matches each part in turn (= exactly, ~ an anchored pattern, "
+                   + SourceTypeRows.MEMBER_SIGN + " an item of a list, * any value); a record with a part of no "
+                   + "value is matched by a row with * for that part, else by the " + SourceTypeRows.NO_VALUE
+                   + " row where there is one.";
+        }
         return reading == null
                 ? ""
                 : " The value is read as " + reading.said() + ", the first reading with a value giving it; a held "
@@ -189,7 +199,10 @@ public final class SourceTypeRegistry {
     private static String account(final Map<String, Object> registry, final List<Map<String, Object>> rows) {
         final StringBuilder out = new StringBuilder("Feed **" + JsonValues.text(registry.get("feed"))
                                                     + "** aggregates " + rows.size() + " source type(s), told apart "
-                                                    + "by the field " + code(registry.get("field")) + ".");
+                                                    + "by the " + (SourceTypeReading.isCombination(JsonValues.text(
+                registry.get("field")))
+                ? "combination "
+                : "field ") + code(registry.get("field")) + ".");
         out.append(" Environment: ").append(firstSet(registry.get("environment"), null, "not set"))
                 .append("; System Name by default: ").append(firstSet(registry.get("system_name"), null,
                         "not set")).append('.');

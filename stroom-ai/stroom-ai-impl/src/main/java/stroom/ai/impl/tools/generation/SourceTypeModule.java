@@ -85,7 +85,7 @@ public record SourceTypeModule(String kind,
             "EventSource/Device");
     // How a row matches a value: exactly, by an anchored pattern, or by a list's item.
     private static final List<String> MATCHES = List.of(SourceTypeRows.VALUE, SourceTypeRows.PATTERN,
-            SourceTypeRows.MEMBER, SourceTypeRows.NONE);
+            SourceTypeRows.MEMBER, SourceTypeRows.NONE, SourceTypeRows.TUPLE);
     private static final Pattern NCNAME = Pattern.compile("[A-Za-z_][\\w.-]*", Pattern.UNICODE_CHARACTER_CLASS);
 
     /// Fills in empty lists for null ones.
@@ -309,9 +309,11 @@ public record SourceTypeModule(String kind,
     ///
     /// @param name      The source type's name.
     /// @param match     `value` (the value exactly), `pattern` (an anchored regular expression, matched by XPath's
-    ///                  `matches()`) or `member` (an item of the value read as a list, split by XPath's `tokenize()`).
-    /// @param value     The value, the pattern, or the item.
-    /// @param separator A `member` row's list separator; null for another (or the default, `,`).
+    ///                  `matches()`), `member` (an item of the value read as a list, split by XPath's `tokenize()`),
+    ///                  `none` (no value) or `tuple` (a combination's key, part by part).
+    /// @param value     The value, the pattern, the item, or a combination row's parts (`= Teams + *`).
+    /// @param separator A `member` row's list separator (or a `tuple` row's, for its item parts); null for another
+    ///                  (or the default, `,`).
     public record Row(String name, String match, String value, String separator) {
 
         /// A row matching a value exactly or by a pattern.
@@ -328,7 +330,9 @@ public record SourceTypeModule(String kind,
         public static Row of(final SourceTypeRows.Row row) {
             return new Row(row.name(), row.match(), row.value(), SourceTypeRows.MEMBER.equals(row.match())
                     ? row.separatorOrDefault()
-                    : null);
+                    : SourceTypeRows.TUPLE.equals(row.match())
+                            ? row.separator()
+                            : null);
         }
 
         /// @return It as the tools try it.

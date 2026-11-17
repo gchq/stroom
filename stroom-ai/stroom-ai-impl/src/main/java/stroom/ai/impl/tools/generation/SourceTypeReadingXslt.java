@@ -54,8 +54,24 @@ final class SourceTypeReadingXslt {
                       final UnaryOperator<String> namer,
                       final SourceTypeReading reading,
                       final String input) {
-        final XmlElement value = sheet.addElement(XSL, "function", "name", namer.apply("source-type-value"), "as",
-                "xs:string");
+        writeValue(sheet, namer, "source-type-value", reading, input);
+        writeHelpers(sheet, namer, true);
+    }
+
+    /// Writes the function reading a record's value through one reading (not a combination), by the helper
+    /// functions [#writeHelpers] writes.
+    ///
+    /// @param sheet   The stylesheet.
+    /// @param namer   A function's name from its base name.
+    /// @param name    The function's base name, e.g. `source-type-value` or `source-type-value-2`.
+    /// @param reading The reading.
+    /// @param input   The mapping's input, how a record's field is read.
+    static void writeValue(final XmlElement sheet,
+                           final UnaryOperator<String> namer,
+                           final String name,
+                           final SourceTypeReading reading,
+                           final String input) {
+        final XmlElement value = sheet.addElement(XSL, "function", "name", namer.apply(name), "as", "xs:string");
         value.append(new XmlComment(XsltComments.comment("A record's source type value, read as the tools read "
                                                          + reading.spec() + ": " + reading.said() + "; stripped, "
                                                          + "'' for none or a nil value")));
@@ -72,7 +88,19 @@ final class SourceTypeReadingXslt {
             readings.add(call(namer, "reading-value", read));
         }
         value.addElement(XSL, "sequence", "select", "string((" + String.join(", ", readings) + ")[. ne ''][1])");
+    }
+
+    /// Writes the functions the value functions call: the normaliser, and, where a reading steps into held values,
+    /// the functions telling and reading a held value's format.
+    ///
+    /// @param sheet The stylesheet.
+    /// @param namer A function's name from its base name.
+    /// @param held  True if a reading steps into held values.
+    static void writeHelpers(final XmlElement sheet, final UnaryOperator<String> namer, final boolean held) {
         normaliser(sheet, namer);
+        if (!held) {
+            return;
+        }
         heldRead(sheet, namer);
         heldJson(sheet, namer);
         heldXml(sheet, namer);

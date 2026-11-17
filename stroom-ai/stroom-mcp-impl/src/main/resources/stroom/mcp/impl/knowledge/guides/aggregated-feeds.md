@@ -14,9 +14,13 @@ Terms:
   that has it (a JSON key and a `logger_name=` pair alike); where formats name the source differently, readings
   are tried in turn, joined by ` | `, one naming its format: `event>logger_name | event>xml:@logger` (`@` an XML
   attribute, `#root` the root element's name). A held value of plain text is never read: its records are the
-  `(no value)` source type, offered as a row of its own. Never a combination of fields for now (a later phase), and
-  never a field naming kinds of event (an event type, action, operation): those are told apart within a source type
-  by `classify_kinds` and the rules, not split into source types. A source type by the held value's format alone
+  `(no value)` source type, offered as a row of its own. Never a field naming kinds of event (an event type, action,
+  operation): those are told apart within a source type by `classify_kinds` and the rules, not split into source
+  types. Where only two fields together tell the source, a **combination**: their readings joined by ` + `
+  (`system + event>logger_name`), its value a key of the parts' values (`Teams ‖ System`). The survey offers a pair
+  only where the record shapes justify it (each part's values split the other's into records of shapes of their
+  own), with its evidence; offer it as it is, never add a part yourself. Three or more parts only as the user names
+  them. A source type by the held value's format alone
   (`event>#format`: json, xml, syslog, kv, text) is a last resort, only on the user's word, after you have looked
   for a name inside the held value that says the source. Or, only where the
   user names it, a stream meta attribute: `source_type_field=meta:<Attribute>` (a header each part of a stream
@@ -27,7 +31,8 @@ Terms:
 * **Source type**: the records one registry row matches: a value of that field exactly (`= Billing`), an anchored
   pattern on it (`~ ^/var/log/mail/`) where the values are many paths or names, or an item of a value that is a list
   (`∈ Mail Server`, in ASCII `in`: `Mail in Mail Server`), split on the separator the values use (`,` `;`
-  `|`), each item stripped and compared exactly. Rows are tried in order: of a list holding several rows' items, the
+  `|`), each item stripped and compared exactly. A combination's row matches each part: `Teams System = Teams +
+  System`, `Teams = Teams + *` (`*` any value, none too; a part of no value falls to `(no value)` otherwise). Rows are tried in order: of a list holding several rows' items, the
   first row's takes the record, so put the rarer, more telling item first.
 * **Registry**: `<feed> source types`, a Documentation doc made in the build and promoted beside the feed. One row a
   source type, tried in order (the first match wins), each with its status: `translated`, `parked` (for a later

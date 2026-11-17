@@ -1943,10 +1943,12 @@ Terms:
   file of one directory one source). The field is the wrapper's or the record's own, at any depth (`event.Workload`),
   or a name inside the structured data a string field holds (`event>logger_name`, [Source types read inside held
   values](#source-types-read-inside-held-values-decided-2026-11-17-built-2026-11-18)), and is the **source type
-  field**: one field or one reading for now (a second discriminator, Azure's `RecordType`, tells kinds apart within
-  a source type, as Azure's `Operation` does within a workload). A later phase adds combinations (decided
-  2026-11-17): a pair of readings inferred only where the records' shapes justify it, three or more only as the user
-  names them, and rows matching a tuple, each part by `=`, `~`, `∈` or `*` (any value).
+  field**: one field or one reading (a second discriminator, Azure's `RecordType`, tells kinds apart within a source
+  type, as Azure's `Operation` does within a workload), or a **combination** of readings where only two fields
+  together say the source ([Source types told by a combination of
+  readings](#source-types-told-by-a-combination-of-readings-decided-2026-11-17-built-2026-11-18)): a pair inferred
+  only where the records' shapes justify it, three or more only as the user names them, and rows matching a tuple,
+  each part by `=`, `~`, `∈` or `*` (any value).
 * **Scope**: the source types a build covers. A build's survey, samples, classification and translation see only the
   records in its scope; the rest are counted, by source type, for the registry, and nothing more.
 * **Source type group**: the source types one translation handles, e.g. a mail group for several mail source types. A
@@ -2027,7 +2029,9 @@ JSON in others, XML in others. Decided by the user:
    record shapes differ.
 7. **Parity**: the generated XSLT and the tools read a source type the same way, tested by running the generated
    selection over the records the tools classified.
-8. Combinations of fields are a later phase, the reading and row model made so a row can later hold a tuple of
+8. Combinations of fields are a later phase (built 2026-11-18: [Source types told by a combination of
+   readings](#source-types-told-by-a-combination-of-readings-decided-2026-11-17-built-2026-11-18)), the reading and
+   row model made so a row can later hold a tuple of
    readings.
 
 How it is built:
@@ -2067,6 +2071,91 @@ How it is built:
 * A field named for kinds of event (event type or name or id, action, activity, operation, kind, message id,
   subtype) is never a candidate, held or not (`SourceTypeFields.mayName`); `logger_name`, `type` and `category` may
   name sources and stay judged by shapes.
+
+#### Source types told by a combination of readings (decided 2026-11-17, built 2026-11-18)
+
+Seen in external testing (2026-11-17): a feed's wrapper `system` said the product (Teams, Skype for Business) and,
+inside the escaped JSON its `event` held, `logger_name` said the log (System, Application): only the two together
+made a source unique, each pair's records with fields of their own. Decided by the user:
+
+1. **A source type may be told by a combination of fields**, each a reading at its own depth (the outer
+   `system`, the inner held `event>logger_name`).
+2. **Rows match tuples**, each part by `=` (exactly), `~` (an anchored pattern, as one reading's rows), `∈` (an item
+   of a list) or `*` (any value).
+3. **Pairs are inferred only when shape-justified**: no single reading separates the record shapes well enough, and
+   the second part's values change record shape within the first's values; where the second part's values within a
+   first part's value all have the same shapes, they collapse to `*`.
+4. **Three or more parts only when the user names them**, never inferred.
+5. **Guardrail**: no encroaching on rule creation. Kind-like fields are never parts, free-text fields never, plain
+   text never read (structured data only, as for one reading). A split exists only where record shapes differ;
+   kinds of event within a source are classify_kinds' and the translation rules' job.
+6. **"(no value)"** stays offered, never inferred; a record where any part not `*` has no value falls to it, unless
+   a row with `*` for that part matches it.
+7. **The XSLT and the tools read and match alike**: the parity test covers tuples.
+8. **Backward compatible**: a registry or survey state with one field reads as before, and a group of one reading
+   generates exactly the XSLT it did (byte for byte).
+
+How it is built:
+
+* **The combination** (`SourceTypeReading`, `isCombination`) is its parts' readings joined by ` + ` (a `+` standing
+  alone between white space), kept as one text where a field always was (the registry's `field`, the survey
+  state's, a scope's, a group's module, `seen_source_types`): `system + event>logger_name | event>xml:@logger`. At
+  most four parts; a part may not be a part's meta attribute, nor the same reading twice. One text rather than a new
+  `fields` list (phase 1's note): every place that carries the field carries a combination unchanged, and no reader
+  has two keys to keep in step.
+* **Its value is a key**: the parts' values (each read and normalised as one reading's) joined by ` ‖ `
+  (`Teams ‖ System`), a part with no value empty (`Teams ‖ `), and no value at all where no part has one. Everything
+  keyed by a value (the survey's counts, profiles, scope, coverage, `seen_source_types`, `find=`) is keyed by the key,
+  unchanged. A key is split on `‖`, each part stripped, by the tools and the XSLT alike (`tokenize()`).
+* **A combination's row** (`match: tuple`, `SourceTypeRows.TUPLE`) keeps its parts in `value`, `= Teams + *`;
+  written by the user `Teams = Teams + *` (a bare part is `= part`), `Skype ~ ^Sk + = System`, `Mail = in Mail + *`.
+  A part with no value matches only `*`. Refused, saying why: parts not the combination's count, an operator none of
+  these (`!= x`), an empty part, `*` in every part (it would take every record and leave no later row reachable), a
+  pattern or item refused as one reading's would be, a one-value row on a combination or a tuple row on one reading,
+  and a row an earlier row covers part by part (`= Teams + = Application` after `= Teams + *`) or, unless it has a
+  `*` part (a catch-all for keys still to come), one every key seen of which an earlier row takes. A `tuple` row's
+  `separator` applies to all its item parts. The `(no value)` row takes no value and any key with a part of none.
+* **Inference** (`SourceTypeCombinations.pair`), over the head's records, each record's shape its own shape with
+  every held value's format and names: the readings that may be parts are the records' own fields and the names
+  inside held values that could be source type fields (mostly present, a few short names, not kind-named, free text,
+  an address or a time: `SourceTypeFields.mayName`), the twelve holding most records. A value of a reading is split
+  by another into **families**: the other's values whose records (at least three, of at least two shapes: one shape
+  is a kind, never a family) mostly (80%) have shapes no other value's records have within it, at least two
+  families, or one and a rest. No pair while some single candidate offered is split by no reading. A pair is two
+  readings each splitting a value of the other (where the second's values each sit within one of the first's, the
+  second alone tells the sources), its key separating the shapes past the threshold; the best by separation, its
+  better-separating part first (a record's own field before a held one on a tie). Offered first, with its evidence
+  (`within system = Teams, event>logger_name System and Application have shapes of their own`, the same the other
+  way, `so neither alone tells the sources: together they do`) and its rows proposed.
+* **Rows proposed** (`SourceTypeCombinations.propose`): each of the first part's values, commonest first; within it,
+  a row each for the next part's values that are families, then `*` for the rest (never for records of no value
+  alone); `*` alone where the next part's values make no families; and so on for each part. Named by the values
+  (`Teams System`, `Teams`). Kept in the survey state (`rows_proposed`) when the user takes the pair (or names a
+  combination: proposed from the head the same way), and record_source_types starts from them, adding a row matching
+  each part exactly for a key seen they miss, and the `(no value)` row last where any key has a part of none. With
+  none kept, a row a key.
+* **Survey and forms**: the pair's form line says its pairs of values, the evidence and the source types proposed
+  (plain text, short); without forms the candidate gives `combination` (its parts), `evidence` and
+  `rows_proposed`. `source_type_field=a + b` takes the user's combination, each part spelt as the records spell it
+  and refused where a part reads no value from any record read.
+* **The registry**: the account says the combination and how its rows match; the table's match column shows the
+  parts (`= Teams + = System`); the machine block keeps `field` and `tuple` rows. review_coverage adds a new key as a
+  `new` row matching each part exactly (never a key with a part of no value) and gives `new_source_type_parts`, each
+  new key by its parts' readings.
+* **The group's selection** (`SourceTypeTupleXslt`): a value function a part (`<mode>_source_type_value_1`,
+  `_2`... in the mapping's naming style: a field or a held reading, read as `SourceTypeReadingXslt` reads one, its helper functions once), the key
+  function (`<mode>_source_type_value`, `string-join` by ` ‖ `, '' where every part is ''), and in the source type
+  function `$parts`, the key split as the tools split it, each row's test part by part (`count($parts) eq 2 and
+  $parts[1] = 'Teams' and ...`; a pattern or item part only on a part with a value; `*` no test). A whole
+  translation's unseen check takes a key with a part of no value as seen. `TestSourceTypeTupleParity` runs the
+  generated group over records of both parts in JSON, key=value and XML, plain text, missing, padded, nil and twice
+  encoded, with every operator, and checks each record's key and source type are the tools'.
+  `TestSingleReadingXsltUnchanged` compares a single reading's group and whole-translation XSLT with the XSLT
+  generated before (test resources), byte for byte.
+
+Known limits: a value holding `‖` splits as two parts (and a one-reading value holding `‖` with an empty side is
+taken by the `(no value)` row); a part value holding ` + ` is matched by an anchored pattern of it (rows split parts
+on ` + `); a row's list separator is one for all its item parts.
 
 #### Profiling the source types
 
@@ -2367,7 +2456,8 @@ surveys of the feed through a working copy, like any promoted document.
   group has its own pipeline; the form asks where its Events go, and for a promoted pipeline whether to change it or
   make a new version.)
 * The source type field is one field, at any depth; a source type matches a value exactly or by a pattern on it,
-  rows tried in order. (Extended 2026-11-17: or a reading into a held value; combinations in a later phase.)
+  rows tried in order. (Extended 2026-11-17: or a reading into a held value; 2026-11-18: or a combination of
+  readings, rows matching each part.)
 * Profiles show the agent's suggested category for each source type by default, beside the signals it rests on.
 * A "component" is called a source type group.
 * No concurrent builds: one open build per feed.
@@ -3737,6 +3827,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-18 | Source types told by a combination of readings (decided by the user 2026-11-17, from external testing: the wrapper's `system` and, inside the held `event`, `logger_name` together tell the source). The field is the parts' readings joined by ` + ` (one text, as before; at most four parts), its value a key of the parts' values joined by ` ‖ `; rows match a key part by part (`match: tuple`, `= Teams + *`), each part `=`, `~`, `∈` or `*`, a part with no value only by `*`, else the `(no value)` row. Refused: parts not the combination's, an unknown operator, `*` in every part, a row an earlier row covers part by part. A pair is inferred only where no single candidate offered is unsplit and each part splits a value of the other into families (values with shapes of their own, several shapes each, so never a kind), offered first with the evidence and rows proposed (the next part's values collapsing to `*` where they share their shapes); three or more parts only as the user names them; kind-named, free-text and plain-text never parts. The group's XSLT reads a value function a part and the key, and tests rows on the key split as the tools split it; parity tested over tuples, and a single reading's XSLT tested byte-identical to before. A registry's `(no value)` row given back by a review (`(no value) no value`) was refused: rows are now given back as they are written. | Aggregated feeds |
 | 2026-11-18 | Source types read inside held values (decided by the user 2026-11-17, from external testing: `event` held escaped JSON with `logger_name`, its format varying per record). A source type field may be a reading (`event>logger_name`, `>` into a held value's JSON, XML, syslog header or key=value pairs, told per record; `.` into objects and elements; three held values deep; ` \| ` readings tried in turn, a step naming one format with `xml:`, `json:`, `kv:`, `syslog:`), kept as the registry's `field` text, so an old registry naming a field still reads. Plain text is never read: its records are the `(no value)` row's (`match: none`), offered wherever the survey read records with no value. Candidates come from inside held values too, judged by shapes as fields are, a reading joining a held field's formats offered first; the held format alone (`#format`) only on the user's word; a field named for kinds of event never. The group's XSLT reads the reading by the tools' rules, tested for parity over the records the tools classified. Combinations of fields are a later phase: pairs inferred only when shape-justified, three or more only as the user names them, rows matching tuples with `=`, `~`, `∈`, `*`. | Aggregated feeds |
 | 2026-11-18 | A name with no version token is taken as V1.0, as promotion files it: its next version is `-V1.1` (`-V2.0` the major choice), not `-V2`, so the new version goes in `V1.1` beside its predecessor's `V1.0` (found in part B, pinned by e2e). An index name with none still gets `-v2` (index versions are whole numbers). TestE2eElasticNewVersion walks a new version of a promoted Elasticsearch indexing pipeline on a live cluster: names proposed (V1.1, `-v2`), the candidate refused while `-v2` exists (`-v3` proposed), the exact template pattern, indexing and verify_index in `-v2`, the production `-v1`'s count and mapping unchanged and never named for dropping, the role-first layout, and a later new events version giving both promoted indexing versions a new disabled filter, the old ones left as they were (enabled or not) and named in `next_steps`. | Next version, working copy, or a fix; Promotion |
 | 2026-11-17 | Tidy-up at promotion (the user): on by default, a choice in the approval form ticked to start (`tidy_up=false` without forms). After promotion, each test feed's streams are marked deleted as the Data screen does (logical, retention purges them), each Lucene test index's shards deleted as the Index Shards screen does, then the test docs deleted: `-VERIFY` dashboards on test indexes, test index docs (never an Elasticsearch index on the cluster), test feeds. Streams, shards, docs strictly in order per item; a failure skips that item's later steps, never fails the promotion. Only what the build's record or workspace proves it made, in its workspace, tagged as the tools', not a source feed, used by nothing outside the build (dependencies, processor filters). The review lists every item (streams and size, shards, docs) in the tree the approval is bound to; the result reports each. | Promotion |

@@ -1117,12 +1117,13 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                     : spelt(given, heads.get()).orElseThrow(() -> new ToolRefusal(
                     SOURCE_TYPE_FIELD_ARG + " '" + given + "' names no field of the records: they have "
                     + new TreeSet<>(fieldsOf(heads.get())) + ". Ask the user which one they meant."));
-            return new SourceDecision(sourcesChosen(field, "user"), field, null,
-                    keptField != null && !keptField.equals(field) || keptNone);
+            return new SourceDecision(SourceTypeReadings.withRowsProposed(sourcesChosen(field, "user"), field,
+                    heads.get(), null), field, null, keptField != null && !keptField.equals(field) || keptNone);
         }
         if (keptField != null || keptNone && !request.aggregated()) {
             final Map<String, Object> decision = new LinkedHashMap<>();
-            for (final String key : List.of(SourceTypeProfiles.FIELD, "aggregated", SourceTypeProfiles.BY, "at")) {
+            for (final String key : List.of(SourceTypeProfiles.FIELD, "aggregated", SourceTypeProfiles.BY, "at",
+                    SourceTypeProfiles.ROWS_PROPOSED)) {
                 if (kept.get(key) != null) {
                     decision.put(key, kept.get(key));
                 }
@@ -1166,10 +1167,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         if (saysOneSource(said)) {
             return new SourceDecision(sourcesChosen(null, "user"), null, null, false);
         }
-        final Optional<String> field = candidates.stream()
+        final Optional<SourceTypeFields.Candidate> taken = candidates.stream()
                 .filter(candidate -> said.equalsIgnoreCase(candidate.label()))
-                .map(SourceTypeFields.Candidate::field)
-                .findFirst()
+                .findFirst();
+        final Optional<String> field = taken.map(SourceTypeFields.Candidate::field)
                 .or(() -> spelt(said, heads.get()));
         if (field.isEmpty()) {
             throw new ToolRefusal("The user's answer ('" + said + "') names none of the records' fields: ask them "
@@ -1177,7 +1178,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                   + "one source), and call " + NAME + " again with " + SOURCE_TYPE_FIELD_ARG
                                   + " as they say.");
         }
-        return new SourceDecision(sourcesChosen(field.get(), "user"), field.get(), null, false);
+        return new SourceDecision(SourceTypeReadings.withRowsProposed(sourcesChosen(field.get(), "user"),
+                field.get(), heads.get(), taken.orElse(null)), field.get(), null, false);
     }
 
     // Whether the user's words say the feed is one source.
