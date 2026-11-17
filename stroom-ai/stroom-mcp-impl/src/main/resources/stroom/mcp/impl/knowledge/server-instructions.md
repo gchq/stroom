@@ -92,7 +92,8 @@ with it. Each save records its change (change=) for the XSLT's version history a
 entry when the build is promoted.
 
 Aggregated feeds (several sources in one feed, told apart by one field, or by a name inside structured data a field
-holds: event>logger_name; plain text is never read, its records the "(no value)" source type): when survey_feed finds
+holds: event>logger_name, or two together: system + event>logger_name; plain text is never read, its records the
+"(no value)" source type): when survey_feed finds
 such a field or the user says so, the plan adds record_source_types (the feed's registry, and the build's scope: one
 source type group a build, its source types and name the user's). build_translation_xslt builds it, the XSLT of a
 pipeline of its own; the user chooses where a new group's Events go in a form. One open build per feed; a parked

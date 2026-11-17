@@ -51,6 +51,8 @@ import static org.mockito.ArgumentMatchers.eq;
 /// source types and name chosen in one form (or given without forms), an existing group's name joining that group.
 class TestRecordSourceTypesTool {
 
+    private static final String PAIR = "system + event>logger_name";
+
     private static final String BUILD = "pega-v2";
     private static final String FEED = "PEGA";
     private static final List<String> OTHERS = List.of("PegaIntegration = PegaIntegration", "PegaDB = PegaDB");
@@ -584,6 +586,127 @@ class TestRecordSourceTypesTool {
         assertThat(SourceTypeRegistry.read(written.getLast())).containsEntry("field",
                 "event>logger_name | event>xml:@logger");
         assertThat(written.getLast()).contains("logger_name inside the held field event", "| no value |");
+    }
+
+    @Test
+    void aCombinationsRowsAreThoseProposedWithItAKeyTheyMissExactlyAndNoValueLast() {
+        surveyedByPair(List.of(new SourceTypeRows.Row("Teams", SourceTypeRows.TUPLE, "= Teams + *").toMap(),
+                new SourceTypeRows.Row("Skype System", SourceTypeRows.TUPLE, "= Skype + = System").toMap()));
+
+        final Map<String, Object> result = called(BuildToolCalls.context(), Map.of("scope", List.of("Teams"),
+                "group", "UC", "reason", "later"));
+
+        assertThat(result).as("%s", result).doesNotContainKey("error");
+        // The pair's rows, a key they miss matched exactly, then (no value) for the keys with a part of none.
+        assertThat(rows()).extracting(row -> row.get("name") + ": " + row.get("value")).containsExactly(
+                "Teams: = Teams + *", "Skype System: = Skype + = System",
+                "Skype Application: = Skype + = Application", SourceTypeRows.NO_VALUE + ": ");
+        assertThat(rowNamed("Teams")).containsEntry("match", SourceTypeRows.TUPLE);
+        final Map<String, Object> registry = SourceTypeRegistry.read(written.getLast());
+        assertThat(registry).containsEntry("field", PAIR);
+        assertThat(written.getLast()).contains("told apart by the combination", "= Teams + *",
+                "A row matches each part in turn");
+        // The Teams key with a logger of no value is taken by Teams' * row; Skype's falls to (no value).
+        assertThat(JsonValues.mapOrEmpty(rowNamed("Teams").get("profile")).get("records_read")).isEqualTo(9L);
+        assertThat(JsonValues.mapOrEmpty(rowNamed(SourceTypeRows.NO_VALUE).get("profile")).get("records_read"))
+                .isEqualTo(2L);
+    }
+
+    @Test
+    void aCombinationsRowsGivenAreTuplesAndOnesThatAreNoneAreRefused() {
+        surveyedByPair(List.of());
+
+        final Map<String, Object> given = called(BuildToolCalls.context(), Map.of("rows", List.of(
+                "Teams System = Teams + System", "Teams = Teams + *", "Skype ~ ^Sk + *", SourceTypeRows.NO_VALUE),
+                "scope", List.of("Teams"), "group", "UC", "reason", "later"));
+        assertThat(given).as("%s", given).doesNotContainKey("error");
+        assertThat(rows()).extracting(row -> row.get("value")).containsExactly("= Teams + = System",
+                "= Teams + *", "~ ^Sk + *", "");
+
+        assertThat(called(BuildToolCalls.context(), Map.of("rows", List.of("Teams = Teams"), "scope",
+                List.of("Teams"), "group", "UC", "reason", "later")).get("error"))
+                .asString().contains("gives 1 part(s)", "combination of 2");
+        assertThat(called(BuildToolCalls.context(), Map.of("rows", List.of("All = * + *"), "scope",
+                List.of("All"), "group", "UC", "reason", "later")).get("error"))
+                .asString().contains("every part is '*'");
+        assertThat(called(BuildToolCalls.context(), Map.of("rows", List.of("Teams Teams"), "scope",
+                List.of("Teams"), "group", "UC", "reason", "later")).get("error"))
+                .asString().contains("'name = part + part'");
+        // Without rows kept with the pair: a row a key whose parts all have a value.
+        final Map<String, Object> proposed = called(BuildToolCalls.context(), Map.of("scope", List.of("Teams System"),
+                "group", "UC", "reason", "later"));
+        assertThat(proposed).as("%s", proposed).doesNotContainKey("error");
+    }
+
+    @Test
+    void theRowsANeedsReviewReplyGivesBackAreTakenAsTheyAreTheNoValueRowToo() {
+        // Regression: the reply gave the (no value) row back as '(no value) no value', which the next call refused.
+        surveyedByPair(List.of());
+        final Map<String, Object> args = new LinkedHashMap<>(Map.of("build", BUILD, "feed", FEED));
+        final Map<String, Object> shown = result(tool.execute(BuildToolCalls.call(RecordSourceTypesTool.NAME,
+                JsonUtil.writeValueAsString(args, false)), BuildToolCalls.context()));
+        final List<String> given = JsonValues.strings(shown.get("rows"));
+        assertThat(given).contains(SourceTypeRows.NO_VALUE, "Teams System = Teams + = System");
+
+        final Map<String, Object> again = called(BuildToolCalls.context(), Map.of("rows", given, "scope",
+                List.of("Teams System"), "group", "UC", "reason", "later"));
+
+        assertThat(again).as("%s", again).doesNotContainKey("error");
+        assertThat(rows()).extracting(row -> row.get("name")).containsExactly("Teams System", "Skype System",
+                "Teams Application", "Skype Application", SourceTypeRows.NO_VALUE);
+    }
+
+    @Test
+    void theNoValueRowOfOneReadingIsGivenBackAsItIsWritten() {
+        // Regression, one reading: '(no value) no value' was refused when given back.
+        final Map<String, Object> values = new LinkedHashMap<>();
+        values.put("com.x.Auth", Map.of("records", 5));
+        values.put("", Map.of("records", 3));
+        final Map<String, Object> sources = new LinkedHashMap<>();
+        sources.put(SourceTypeProfiles.FIELD, "event>logger_name");
+        sources.put(SourceTypeProfiles.BY, "user");
+        sources.put(SourceTypeProfiles.VALUES, values);
+        sources.put("records", 8);
+        final Map<String, Object> survey = new LinkedHashMap<>(Map.of("feed", FEED, "format", "json lines",
+                "streams_read", List.of(1), "surveys", List.of(), "shapes", Map.of()));
+        survey.put(SourceTypeProfiles.STATE_KEY, sources);
+        Mockito.when(surveyDocuments.load(BUILD, FEED)).thenReturn(Optional.of(new SurveyRecord("s",
+                "PEGA - Survey", SurveyDoc.render(survey))));
+        Mockito.when(registries.registry(BUILD, FEED)).thenReturn(Optional.empty());
+        final Map<String, Object> shown = result(tool.execute(BuildToolCalls.call(RecordSourceTypesTool.NAME,
+                JsonUtil.writeValueAsString(Map.of("build", BUILD, "feed", FEED), false)), BuildToolCalls.context()));
+
+        final Map<String, Object> again = called(BuildToolCalls.context(), Map.of("rows", shown.get("rows"),
+                "scope", List.of("com.x.Auth"), "group", "Held", "reason", "later"));
+
+        assertThat(again).as("%s", again).doesNotContainKey("error");
+        assertThat(rows()).extracting(row -> row.get("name")).containsExactly("com.x.Auth", SourceTypeRows.NO_VALUE);
+    }
+
+    // A survey of the feed by the pair `system + event>logger_name`: its keys counted (two with a part of no value),
+    // and the rows proposed with the pair kept, if any.
+    private void surveyedByPair(final List<Map<String, Object>> proposed) {
+        final Map<String, Object> values = new LinkedHashMap<>();
+        values.put("Teams ‖ System", Map.of("records", 5));
+        values.put("Teams ‖ Application", Map.of("records", 3));
+        values.put("Teams ‖ ", Map.of("records", 1));
+        values.put("Skype ‖ System", Map.of("records", 4));
+        values.put("Skype ‖ Application", Map.of("records", 2));
+        values.put("Skype ‖ ", Map.of("records", 2));
+        final Map<String, Object> sources = new LinkedHashMap<>();
+        sources.put(SourceTypeProfiles.FIELD, PAIR);
+        sources.put(SourceTypeProfiles.BY, "user");
+        sources.put(SourceTypeProfiles.VALUES, values);
+        sources.put("records", 17);
+        if (!proposed.isEmpty()) {
+            sources.put(SourceTypeProfiles.ROWS_PROPOSED, proposed);
+        }
+        final Map<String, Object> survey = new LinkedHashMap<>(Map.of("feed", FEED, "format", "json lines",
+                "streams_read", List.of(1), "surveys", List.of(), "shapes", Map.of()));
+        survey.put(SourceTypeProfiles.STATE_KEY, sources);
+        Mockito.when(surveyDocuments.load(BUILD, FEED)).thenReturn(Optional.of(new SurveyRecord("s",
+                "PEGA - Survey", SurveyDoc.render(survey))));
+        Mockito.when(registries.registry(BUILD, FEED)).thenReturn(Optional.empty());
     }
 
     private static Map<String, Object> profiled(final String name, final long records, final String status) {

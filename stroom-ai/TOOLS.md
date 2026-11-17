@@ -3153,6 +3153,21 @@ each held candidate's formats and its records with no value; without forms each 
 (refused saying why), its fields spelt as the records spell them, and refused when it reads no value from any record
 read (naming the held formats seen). Records with no value are the `(no value)` row's (`record_source_types`).
 
+**A combination of readings.** Where only two fields together tell the source (the wrapper's `system` and, inside
+the held `event`, `logger_name`), the field is their readings joined by ` + ` (`system + event>logger_name`, at most
+four parts, none a meta attribute), its value a key of the parts' values joined by ` ‖ ` (`Teams ‖ System`, a part
+of no value empty), counted, profiled and scoped by the key. A pair is offered first (`SourceTypeCombinations`) only
+where every single candidate offered has a value another reading splits into families (that reading's values with
+shapes of their own, several shapes each: a kind is one shape, never a family) and each part so splits a value of
+the other; kind-named, free-text and address or time fields are never parts, and three or more parts only as the
+user names them (`source_type_field=a + b + c`). The form's line says its pairs of values, the evidence (`within
+system = Teams, event>logger_name System and Application have shapes of their own`, and the other way) and the source
+types proposed; without forms the candidate gives `combination`, `evidence` and `rows_proposed`, and `held` says how
+combinations work. The rows proposed (a row each for a next part's values that are families, `*` for the rest or
+where they share their shapes) are kept in the survey state (`rows_proposed`) for `record_source_types`; a
+combination the user names has its rows proposed from the head the same way. Each part the user gives is spelt as the
+records spell it, and refused where it reads no value from any record read.
+
 **A stream meta attribute as the source type field.** Only where the user names it, `source_type_field=meta:<Attribute>`
 (never found unasked): the attribute each part of a stream carries in its meta (its receipt headers, what
 `stroom:meta()` reads while the part is processed or stepped; `SourceTypeMeta`), for a feed whose source is said by
@@ -3231,7 +3246,16 @@ registry's translated or placed rows (those with a group
 or pipeline) they leave out, each where it was in the order; `remove` drops rows by name. Removing a translated or
 placed row, or a changed value or pattern on a translated row, is confirmed by the user in one form (plain text,
 listed as `to_confirm` in the review), and refused for a translated row where no form can be shown; a translated row
-renamed (a new name with its match) is refused, saying to add the new row and remove the old one. Each row's profile is the sum of its values' (`SourceTypeProfiles.summarise`):
+renamed (a new name with its match) is refused, saying to add the new row and remove the old one. For a combination
+of readings (a field joining readings by ` + `), rows match its key part by part (`match: tuple`, its parts in
+`value`: `= Teams + *`), written `name = part + part`, each part `value` (exactly), `~ ^pattern`, `∈ item` (`in
+item`) or `*` (any value, none too), e.g. `Teams System = Teams + System`, `Skype ~ ^Sk + *`; a part of no value is
+matched only by `*`, else the record is the `(no value)` row's. Refused: parts not the combination's count, an
+operator none of these, an empty part, `*` in every part, a one-value row on a combination, and a row an earlier row
+covers part by part (or, without a `*` part, every key seen of which an earlier row takes). Rows start from those the
+survey kept with the combination, a key they miss given a row matching each part exactly; with none kept, a row a
+key whose parts all have a value. The review's `rows` give every row back as it is written (`(no value)` alone; a
+combination's `name = part + part`). Each row's profile is the sum of its values' (`SourceTypeProfiles.summarise`):
 records and bytes read and their shares, an estimate scaled to the streams read, per day, streams seen, formats and
 failures, fields (the wrapper's aside) with fill rates, shapes and the commonest's share, top kinds, levels, signals
 each with what it rests on, a suggested category (security audit, operational, network, diagnostic noise) with a

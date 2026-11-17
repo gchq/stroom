@@ -96,7 +96,7 @@ class TestSourceTypeReadingParity extends XsltRuns {
         rows.add(SourceTypeModule.Row.of(SourceTypeRows.noValue()));
         final List<SourceTypeRows.Row> toolRows = rows.stream().map(SourceTypeModule.Row::toolRow).toList();
 
-        final List<String[]> xslt = classify(spec, rows);
+        final List<String[]> xslt = classify(spec, rows, LINES);
 
         assertThat(xslt).hasSize(LINES.size());
         for (int i = 0; i < LINES.size(); i++) {
@@ -151,7 +151,9 @@ class TestSourceTypeReadingParity extends XsltRuns {
     }
 
     // The group's XSLT run over the sample: each record's value and source type, as its functions read them.
-    private static List<String[]> classify(final String spec, final List<SourceTypeModule.Row> rows) {
+    static List<String[]> classify(final String spec,
+                                   final List<SourceTypeModule.Row> rows,
+                                   final List<String> lines) {
         final TranslationMapping common = commonMapping();
         final XsltGenerator.Generated commonXslt = XsltGenerator.generate(common, SCHEMA, "4.1.0");
         assertThat(commonXslt.problems()).isEmpty();
@@ -168,7 +170,7 @@ class TestSourceTypeReadingParity extends XsltRuns {
         final Map<String, String> imports = new LinkedHashMap<>();
         imports.put(COMMON_HREF, commonXslt.xslt());
         imports.put(HELPERS_HREF, HelpersXslt.generate());
-        final XmlElement out = transform(code, records(), imports, new ArrayList<>());
+        final XmlElement out = transform(code, records(lines), imports, new ArrayList<>());
         return children(out, "t").stream().map(t -> new String[]{t.get("value"), t.get("type")}).toList();
     }
 
@@ -206,9 +208,9 @@ class TestSourceTypeReadingParity extends XsltRuns {
     }
 
     // The sample as Stroom's JSON parser gives it: its root map around the records.
-    private static String records() {
+    static String records(final List<String> lines) {
         final StringBuilder out = new StringBuilder("<map xmlns=\"http://www.w3.org/2013/XSL/json\">");
-        LINES.forEach(line -> out.append(asParsed(null, ToolJson.loads(line))));
+        lines.forEach(line -> out.append(asParsed(null, ToolJson.loads(line))));
         return out.append("</map>").toString();
     }
 
@@ -244,7 +246,7 @@ class TestSourceTypeReadingParity extends XsltRuns {
     }
 
     // A record as the survey parses a JSON line: flattened to dotted names.
-    private static Map<String, Object> parsed(final String line) {
+    static Map<String, Object> parsed(final String line) {
         return SampleProfiler.flatten(ToolJson.loads(line));
     }
 

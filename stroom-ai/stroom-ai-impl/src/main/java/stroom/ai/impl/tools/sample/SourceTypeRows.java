@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.generation.XPathRegex;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -39,6 +40,12 @@ import java.util.regex.PatternSyntaxException;
 /// `^/var/log/mail/`), and of a list holding the items of several rows, the first row's takes it; a row no record could
 /// reach, because an earlier row always matches first, is refused. Patterns are matched on the one field's value, never
 /// on a message, and must be anchored and short, so a long value costs one scan, never backtracking.
+///
+/// Where the source type is read by a combination of readings ([SourceTypeReading#isCombination]), a row matches its
+/// key part by part ([#TUPLE]): each part `= value`, `~ ^pattern`, `∈ item` or `*` (any value, none too), written
+/// `name = Teams + System` (a bare part is `= part`) or `name ~ ^Sk + *`. A key with a part of no value is matched
+/// only by a row with `*` for that part, else by the `(no value)` row. A row of `*` alone is refused: it would take
+/// every record, leaving no later row reachable.
 public final class SourceTypeRows {
 
     /// A row matching one value exactly.
@@ -56,6 +63,12 @@ public final class SourceTypeRows {
     public static final String MEMBER_SIGN = "∈";
     /// How a list-member row is written in plain ASCII: `name in item`.
     public static final String MEMBER_WORD = "in";
+    /// A row matching a combination's key part by part ([TuplePart]).
+    public static final String TUPLE = "tuple";
+    /// A combination row's part matching any value, none too.
+    public static final String ANY = "*";
+    /// What joins a combination row's parts.
+    public static final String AND = SourceTypeReading.AND;
     /// The separators a list value's items may be split on.
     public static final List<String> SEPARATORS = List.of(",", ";", "|");
     /// The separator a list-member row splits on where none is kept.
@@ -83,6 +96,9 @@ public final class SourceTypeRows {
     private static final int MAX_ITEM = 80;
     // XML's white space, as XPath's replace() strips it from an item, so both sides read the same items.
     private static final Pattern AROUND = Pattern.compile("^[ \t\n\r]+|[ \t\n\r]+$");
+    // A combination row's part that starts with an operator none of `=`, `~`, `∈`, `in`, `*` (`!= x`, `> x`).
+    private static final Pattern OTHER_OPERATOR = Pattern.compile("^(!=|==|=~|!~|<>|<=|>=|[<>!≠≈∉]) ");
+    private static final Map<String, List<TuplePart>> TUPLES = new ConcurrentHashMap<>();
 
     private SourceTypeRows() {
         // Static only.
@@ -192,6 +208,112 @@ public final class SourceTypeRows {
         return Optional.of(new Row(given.substring(0, at).strip(), match, given.substring(at + 3).strip()));
     }
 
+    /// A row as the user writes it, for a source type field of the parts given: one reading's row as [#parse(String)]
+    /// reads it; a combination's, `name = part + part` (a bare part is `= part`), `name ~ ^pattern + *`, each part
+    /// `= value`, `~ ^pattern`, `∈ item` (`in item`) or `*`. The first of ` = `, ` ~ `, ` ∈ ` and ` in ` divides the
+    /// name from the parts, and is the first part's operator unless it is ` = ` (`name = ~ ^Sk + *`).
+    ///
+    /// @param given The row as written.
+    /// @param parts How many parts the source type field's values have (1 for one reading).
+    /// @return The row (a combination's checked by [#problems(List, Collection, int)]); empty when it is none of
+    /// these.
+    public static Optional<Row> parse(final String given, final int parts) {
+        if (parts <= 1 || given == null || NO_VALUE.equalsIgnoreCase(given.strip())) {
+            return parse(given);
+        }
+        int at = -1;
+        String sign = null;
+        for (final String each : List.of(" = ", " ~ ", " " + MEMBER_SIGN + " ", " " + MEMBER_WORD + " ")) {
+            final int found = given.indexOf(each);
+            if (found > 0 && (at < 0 || found < at)) {
+                at = found;
+                sign = each;
+            }
+        }
+        if (at < 0) {
+            return Optional.empty();
+        }
+        final String name = given.substring(0, at).strip();
+        final String rest = given.substring(at + sign.length()).strip();
+        final String first = " = ".equals(sign)
+                ? rest
+                : sign.strip() + " " + rest;
+        return Optional.of(new Row(name, TUPLE, canonical(first)));
+    }
+
+    /// @param parts A combination row's parts as written: each `value`, `= value`, `~ ^pattern`, `∈ item`, `in item`
+    ///              or `*`, joined by ` + `.
+    /// @return Them as the registry keeps them: each `= value`, `~ ^pattern`, `∈ item` or `*` (a part with another
+    /// operator kept as written, for [#problems(List, Collection, int)] to refuse).
+    public static String canonical(final String parts) {
+        final List<String> out = new ArrayList<>();
+        for (final String each : SourceTypeReading.splitParts(parts)) {
+            out.add(canonicalPart(each));
+        }
+        return String.join(AND, out);
+    }
+
+    /// Rows proposed for a combination from the keys the survey saw, where nothing better is known: a row a key
+    /// whose parts all have a value, each part matched exactly, named by its values; a key with a part of no value
+    /// is left to the `(no value)` row.
+    ///
+    /// @param counts The records seen with each key.
+    /// @return The rows, commonest first.
+    public static List<Proposed> proposeKeys(final Map<String, Long> counts) {
+        final List<Proposed> out = new ArrayList<>();
+        final Set<String> names = new LinkedHashSet<>();
+        counts.entrySet().stream()
+                .filter(entry -> entry.getKey() != null && !entry.getKey().isBlank())
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .forEach(entry -> exactParts(entry.getKey()).ifPresent(parts -> out.add(new Proposed(
+                        new Row(uniqueName(String.join(" ", SourceTypeReading.keyParts(entry.getKey())), names),
+                                TUPLE, parts), List.of(entry.getKey()), entry.getValue()))));
+        return out;
+    }
+
+    /// @param key A combination's key.
+    /// @return The parts of a row matching it exactly (`= Teams + = System`; a part holding ` + ` by an anchored
+    /// pattern of it); empty for a key with a part of no value (the `(no value)` row's) or of one part.
+    public static Optional<String> exactParts(final String key) {
+        final List<String> values = SourceTypeReading.keyParts(key);
+        if (values.size() < 2 || values.contains("")) {
+            return Optional.empty();
+        }
+        return Optional.of(String.join(AND, values.stream()
+                .map(value -> SourceTypeReading.isCombination(value)
+                        ? "~ ^" + escape(value) + "$"
+                        : "= " + value)
+                .toList()));
+    }
+
+    /// @param name  A name proposed.
+    /// @param taken The names given already (this one added).
+    /// @return The name, or with a number after it where it is taken.
+    public static String uniqueName(final String name, final Set<String> taken) {
+        String out = name;
+        int n = 2;
+        while (!taken.add(out)) {
+            out = name + " " + n++;
+        }
+        return out;
+    }
+
+    // A combination row's part as the registry keeps it.
+    private static String canonicalPart(final String part) {
+        if (part.isEmpty() || ANY.equals(part) || OTHER_OPERATOR.matcher(part).find()) {
+            return part;
+        }
+        for (final String sign : List.of("= ", "~ ", MEMBER_SIGN + " ")) {
+            if (part.startsWith(sign)) {
+                return sign + part.substring(sign.length()).strip();
+            }
+        }
+        if (part.startsWith(MEMBER_WORD + " ")) {
+            return MEMBER_SIGN + " " + part.substring(MEMBER_WORD.length() + 1).strip();
+        }
+        return "= " + part;
+    }
+
     /// The separator a field's values are lists by: of [#SEPARATORS], the one most values hold.
     ///
     /// @param values The values seen.
@@ -234,7 +356,7 @@ public final class SourceTypeRows {
     /// @return The rows, each list-member row without a separator given this one.
     public static List<Row> withSeparator(final List<Row> rows, final String separator) {
         return rows.stream()
-                .map(row -> MEMBER.equals(row.match()) && row.separator() == null
+                .map(row -> (MEMBER.equals(row.match()) || TUPLE.equals(row.match())) && row.separator() == null
                         ? new Row(row.name(), row.match(), row.value(), separator)
                         : row)
                 .toList();
@@ -294,6 +416,24 @@ public final class SourceTypeRows {
     /// @param values The values seen.
     /// @return The problems, said for the agent and the user; none when the rows are fine.
     public static List<String> problems(final List<Row> rows, final Collection<String> values) {
+        return problems(rows, values, rows.stream()
+                .filter(row -> TUPLE.equals(row.match()))
+                .mapToInt(row -> row.parts().size())
+                .findFirst()
+                .orElse(1));
+    }
+
+    /// What is wrong with rows for a source type field of the parts given: as [#problems(List, Collection)], and for
+    /// a combination, a row whose parts aren't the field's (too few or many, an operator none of `=`, `~`, `∈` and
+    /// `*`, an empty part), a row of `*` alone (it takes every record), a row of one value on a combination or of
+    /// parts on one reading; a combination row no key could reach (an earlier row's parts cover its parts, or every
+    /// key seen it matches an earlier row takes first, unless it has a `*` part: a catch-all for keys still to come).
+    ///
+    /// @param rows   The rows, in order.
+    /// @param values The values seen (a combination's keys).
+    /// @param parts  How many parts the source type field's values have (1 for one reading).
+    /// @return The problems, said for the agent and the user; none when the rows are fine.
+    public static List<String> problems(final List<Row> rows, final Collection<String> values, final int parts) {
         final List<String> out = new ArrayList<>();
         final Set<String> names = new LinkedHashSet<>();
         for (int i = 0; i < rows.size(); i++) {
@@ -323,12 +463,25 @@ public final class SourceTypeRows {
                     out.add("two rows match the records with no value: keep one " + NO_VALUE + " row");
                 }
                 continue;
+            } else if (TUPLE.equals(row.match())) {
+                final Optional<String> bad = tupleProblem(row, parts, values);
+                if (bad.isPresent()) {
+                    out.add("'" + row.name() + "': " + bad.get());
+                    continue;
+                }
             } else if (!VALUE.equals(row.match()) || row.value() == null || row.value().isEmpty()) {
                 out.add("'" + row.name() + "' matches no value: give a value, an anchored pattern, or a list's item");
                 continue;
             }
+            if (parts > 1 && !TUPLE.equals(row.match())) {
+                out.add("'" + row.name() + "' matches one value, but the source type is read by a combination of "
+                        + parts + " readings: give each part, joined by ' + ' (* for any value), e.g. '"
+                        + row.name() + " = " + String.join(AND, Collections.nCopies(parts, "value")) + "'");
+                continue;
+            }
             final List<Row> earlier = rows.subList(0, i).stream()
-                    .filter(before -> VALUE.equals(before.match())
+                    .filter(before -> TUPLE.equals(before.match()) && tupleProblem(before, parts, values).isEmpty()
+                                      || VALUE.equals(before.match())
                                       || MEMBER.equals(before.match()) && memberProblem(before).isEmpty()
                                       || PATTERN.equals(before.match()) && patternProblem(before.value()).isEmpty())
                     .toList();
@@ -453,8 +606,83 @@ public final class SourceTypeRows {
         return Optional.empty();
     }
 
+    // Why a combination row isn't accepted: its parts not the field's, an operator unknown, an empty part, `*` alone,
+    // a pattern or list item refused as one reading's would be.
+    private static Optional<String> tupleProblem(final Row row, final int parts, final Collection<String> values) {
+        if (parts <= 1) {
+            return Optional.of("it gives " + row.parts().size() + " parts, but the source type is read by one reading: "
+                               + "give 'name = value', 'name ~ ^pattern' or 'name " + MEMBER_SIGN + " item'");
+        }
+        final List<TuplePart> given = row.parts();
+        if (given.size() != parts) {
+            return Optional.of("it gives " + given.size() + " part(s), but the source type is read by a combination "
+                               + "of " + parts + ": give one for each, joined by ' + ' (* for any value)");
+        }
+        for (int i = 0; i < given.size(); i++) {
+            final TuplePart part = given.get(i);
+            final String at = "part " + (i + 1) + " ('" + part.raw() + "')";
+            if (part.raw().isEmpty()) {
+                return Optional.of("part " + (i + 1) + " is empty: give a value, '~ ^pattern', '" + MEMBER_SIGN
+                                   + " item' or '*'");
+            }
+            if (part.match() == null) {
+                return Optional.of(at + " has an operator none of '=', '~', '" + MEMBER_SIGN + "' ('in') and '*'");
+            }
+            if (!ANY.equals(part.match()) && part.value().isEmpty()) {
+                return Optional.of(at + " matches no value: give one after its operator");
+            }
+            if (PATTERN.equals(part.match())) {
+                final int index = i;
+                final List<String> seen = values.stream()
+                        .map(SourceTypeReading::keyParts)
+                        .filter(each -> each.size() > index)
+                        .map(each -> each.get(index))
+                        .toList();
+                final Optional<String> bad = patternProblem(part.value()).or(() -> dialectProblem(part.value(), seen));
+                if (bad.isPresent()) {
+                    return Optional.of(at + ": " + bad.get());
+                }
+            }
+            if (MEMBER.equals(part.match())) {
+                final Optional<String> bad = memberProblem(new Row(row.name(), MEMBER, part.value(), row.separator()));
+                if (bad.isPresent()) {
+                    return Optional.of(at + ": " + bad.get());
+                }
+            }
+        }
+        if (given.stream().allMatch(part -> ANY.equals(part.match()))) {
+            return Optional.of("every part is '*', so it takes every record with a value and no row after it could "
+                               + "match: give at least one part a value, pattern or item");
+        }
+        return Optional.empty();
+    }
+
+    // Whether an earlier combination row takes every key this one could match: each of its parts covers this one's.
+    private static boolean covers(final Row before, final Row row) {
+        final List<TuplePart> outer = before.parts();
+        final List<TuplePart> inner = row.parts();
+        if (outer.size() != inner.size()) {
+            return false;
+        }
+        for (int i = 0; i < outer.size(); i++) {
+            if (!outer.get(i).covers(inner.get(i), before.separatorOrDefault(), row.separatorOrDefault())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     // The earlier row that always matches first what this row would match; empty when it may match something.
     private static Optional<Row> unreachable(final Row row, final List<Row> earlier, final Collection<String> values) {
+        if (TUPLE.equals(row.match())) {
+            final Optional<Row> covering = earlier.stream()
+                    .filter(before -> TUPLE.equals(before.match()) && covers(before, row))
+                    .findFirst();
+            // A row with a part of any value is a catch-all for keys still to come: the keys seen don't judge it.
+            if (covering.isPresent() || row.parts().stream().anyMatch(part -> ANY.equals(part.match()))) {
+                return covering;
+            }
+        }
         if (VALUE.equals(row.match())) {
             return earlier.stream().filter(before -> before.matches(row.value())).findFirst();
         }
@@ -564,11 +792,11 @@ public final class SourceTypeRows {
         /// @return The row.
         public static Row of(final Map<String, Object> row) {
             final String separator = JsonValues.text(row.get("separator"));
-            return new Row(JsonValues.text(row.get("name")), JsonValues.text(row.get("match")),
-                    JsonValues.text(row.get("value")), MEMBER.equals(JsonValues.text(row.get("match")))
-                                                       && !separator.isEmpty()
-                    ? separator
-                    : null);
+            final String match = JsonValues.text(row.get("match"));
+            return new Row(JsonValues.text(row.get("name")), match, JsonValues.text(row.get("value")),
+                    (MEMBER.equals(match) || TUPLE.equals(match)) && !separator.isEmpty()
+                            ? separator
+                            : null);
         }
 
         /// @return It as the registry (or a scope) keeps it: `name`, `match`, `value` and, for a list-member row,
@@ -578,10 +806,22 @@ public final class SourceTypeRows {
             out.put("name", name);
             out.put("match", match);
             out.put("value", value);
-            if (MEMBER.equals(match)) {
+            if (MEMBER.equals(match) || TUPLE.equals(match) && parts().stream()
+                    .anyMatch(part -> MEMBER.equals(part.match()))) {
                 out.put("separator", separatorOrDefault());
             }
             return out;
+        }
+
+        /// @return A combination row's parts, in order ([#TUPLE]); none for another row.
+        public List<TuplePart> parts() {
+            if (!TUPLE.equals(match) || value == null) {
+                return List.of();
+            }
+            if (TUPLES.size() > MAX_COMPILED) {
+                TUPLES.clear();
+            }
+            return TUPLES.computeIfAbsent(value, TuplePart::all);
         }
 
         /// @return What a list-member row splits a value on: its separator, else [#DEFAULT_SEPARATOR].
@@ -596,10 +836,26 @@ public final class SourceTypeRows {
         /// holding the item, or (the [#NONE] row) no value.
         public boolean matches(final String fieldValue) {
             if (NONE.equals(match)) {
-                return fieldValue == null || fieldValue.isEmpty();
+                // A combination's key with a part of no value too: only a row with * for that part takes it first.
+                return fieldValue == null || fieldValue.isEmpty()
+                       || fieldValue.contains(SourceTypeReading.KEY_SEPARATOR.strip())
+                          && SourceTypeReading.keyParts(fieldValue).contains("");
             }
             if (fieldValue == null || value == null) {
                 return false;
+            }
+            if (TUPLE.equals(match)) {
+                final List<TuplePart> parts = parts();
+                final List<String> got = SourceTypeReading.keyParts(fieldValue);
+                if (parts.isEmpty() || got.size() != parts.size()) {
+                    return false;
+                }
+                for (int i = 0; i < parts.size(); i++) {
+                    if (!parts.get(i).matches(got.get(i), separatorOrDefault())) {
+                        return false;
+                    }
+                }
+                return true;
             }
             if (PATTERN.equals(match)) {
                 try {
@@ -614,16 +870,92 @@ public final class SourceTypeRows {
             return value.equals(fieldValue);
         }
 
-        /// @return How it is shown: `= PegaDB`, `~ ^/var/log/mail/`, `∈ Mail Server`, or `no value`.
+        /// @return How it is shown: `= PegaDB`, `~ ^/var/log/mail/`, `∈ Mail Server`, or `no value`; a combination's
+        /// parts, `= Teams + *`.
         public String said() {
             if (NONE.equals(match)) {
                 return "no value";
+            }
+            if (TUPLE.equals(match)) {
+                return value;
             }
             return (PATTERN.equals(match)
                     ? "~ "
                     : MEMBER.equals(match)
                             ? MEMBER_SIGN + " "
                             : "= ") + value;
+        }
+    }
+
+    /// A combination row's part.
+    ///
+    /// @param match [#VALUE], [#PATTERN], [#MEMBER], [#ANY], or null for an operator none of these.
+    /// @param value The value, the pattern or the item; empty for [#ANY].
+    /// @param raw   The part as written.
+    public record TuplePart(String match, String value, String raw) {
+
+        /// @param parts A combination row's parts as the registry keeps them ([#canonical]).
+        /// @return Each part.
+        static List<TuplePart> all(final String parts) {
+            final List<TuplePart> out = new ArrayList<>();
+            for (final String each : SourceTypeReading.splitParts(parts)) {
+                out.add(of(each));
+            }
+            return List.copyOf(out);
+        }
+
+        /// @param part A part as the registry keeps it: `= value`, `~ ^pattern`, `∈ item` or `*`.
+        /// @return The part.
+        static TuplePart of(final String part) {
+            if (ANY.equals(part)) {
+                return new TuplePart(ANY, "", part);
+            }
+            for (final Map.Entry<String, String> sign : List.of(Map.entry("= ", VALUE), Map.entry("~ ", PATTERN),
+                    Map.entry(MEMBER_SIGN + " ", MEMBER))) {
+                if (part.startsWith(sign.getKey())) {
+                    return new TuplePart(sign.getValue(), part.substring(sign.getKey().length()).strip(), part);
+                }
+            }
+            return new TuplePart(null, part, part);
+        }
+
+        /// @param partValue The part's value in a key ("" for none).
+        /// @param separator What a list item's value is split on.
+        /// @return True if this part matches it: any value (none too), equal, found by the pattern from its start,
+        /// or a list holding the item; never a part with no value, but for `*`.
+        public boolean matches(final String partValue, final String separator) {
+            if (ANY.equals(match)) {
+                return true;
+            }
+            if (match == null || partValue == null || partValue.isEmpty()) {
+                return false;
+            }
+            return new Row("", match, value, separator).matches(partValue);
+        }
+
+        /// @param inner          A later row's part.
+        /// @param separator      This part's row's list separator.
+        /// @param innerSeparator The later row's.
+        /// @return True if this part matches every value the later part could.
+        boolean covers(final TuplePart inner, final String separator, final String innerSeparator) {
+            if (ANY.equals(match)) {
+                return true;
+            }
+            if (ANY.equals(inner.match()) || match == null || inner.match() == null) {
+                return false;
+            }
+            if (VALUE.equals(inner.match())) {
+                return matches(inner.value(), separator);
+            }
+            if (MEMBER.equals(match) && MEMBER.equals(inner.match())) {
+                return value.equals(inner.value()) && separator.equals(innerSeparator);
+            }
+            if (PATTERN.equals(match) && PATTERN.equals(inner.match())) {
+                final String outerStart = literalStart(value);
+                final String innerStart = literalStart(inner.value());
+                return outerStart != null && innerStart != null && innerStart.startsWith(outerStart);
+            }
+            return false;
         }
     }
 

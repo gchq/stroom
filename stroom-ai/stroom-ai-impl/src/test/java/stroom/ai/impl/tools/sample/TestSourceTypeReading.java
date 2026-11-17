@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -144,6 +145,75 @@ class TestSourceTypeReading {
         assertThat(SourceTypeReading.of("event>payload>logger_name | event>xml:#root").said())
                 .contains("logger_name inside payload inside the held field event")
                 .contains("the root element's name inside the held field event (when it holds xml)");
+    }
+
+    @Test
+    void aCombinationReadsAKeyOfItsPartsAtTheirOwnDepths() {
+        final SourceTypeReading pair = SourceTypeReading.of("system + event>logger_name | event>xml:@logger");
+
+        assertThat(pair.isTuple()).isTrue();
+        assertThat(pair.parts()).extracting(SourceTypeReading::spec)
+                .containsExactly("system", "event>logger_name | event>xml:@logger");
+        assertThat(pair.held()).isTrue();
+        assertThat(SourceTypeReading.isReading("system + app")).isTrue();
+        assertThat(SourceTypeReading.partsOf("system + app")).isEqualTo(2);
+        assertThat(SourceTypeReading.partsOf("event>logger_name")).isEqualTo(1);
+        // The outer field and the inner held name, mixed held formats in one part.
+        assertThat(pair.valueOf(record("{\"logger_name\": \"System\"}"))).isEqualTo("Teams ‖ System");
+        assertThat(pair.valueOf(record("<Log logger=\"Application\"/>"))).isEqualTo("Teams ‖ Application");
+        assertThat(pair.valueOf(record("logger_name=System level=1 x=2"))).isEqualTo("Teams ‖ System");
+        // A part of no value is empty in the key; none at all is no value.
+        assertThat(pair.valueOf(record("plain text, never read"))).isEqualTo("Teams ‖ ");
+        assertThat(pair.valueOf(Map.of("event", "{\"logger_name\": \"System\"}"))).isEqualTo(" ‖ System");
+        assertThat(pair.valueOf(Map.of("other", "x"))).isNull();
+        assertThat(SourceTypeFields.valueOf(record("{\"logger_name\": \"System\"}"), pair.spec()))
+                .isEqualTo("Teams ‖ System");
+        assertThat(pair.said()).startsWith("the combination of the field system with logger_name inside");
+    }
+
+    @Test
+    void aKeySplitsIntoItsPartsAsAGroupSplitsIt() {
+        assertThat(SourceTypeReading.keyParts("Teams ‖ System")).containsExactly("Teams", "System");
+        assertThat(SourceTypeReading.keyParts("Teams ‖ ")).containsExactly("Teams", "");
+        // Stripped at its end (as a value may be), it splits alike.
+        assertThat(SourceTypeReading.keyParts("Teams ‖")).containsExactly("Teams", "");
+        assertThat(SourceTypeReading.keyParts("")).isEmpty();
+        assertThat(SourceTypeReading.keyParts(null)).isEmpty();
+        assertThat(SourceTypeReading.key(Arrays.asList(null, null))).isNull();
+        assertThat(SourceTypeReading.key(Arrays.asList("a", null, "c"))).isEqualTo("a ‖  ‖ c");
+    }
+
+    @Test
+    void aCombinationOfFourPartsIsTakenAndOfFiveRefused() {
+        final SourceTypeReading four = SourceTypeReading.of("a + b>c + d.e + f>xml:@g");
+        assertThat(four.parts()).hasSize(4);
+        assertThat(four.valueOf(Map.of("a", "1", "b", "{\"c\": \"2\"}", "d.e", "3", "f", "<r g=\"4\"/>")))
+                .isEqualTo("1 ‖ 2 ‖ 3 ‖ 4");
+
+        assertThat(SourceTypeReading.problem("a + b + c + d + e")).hasValueSatisfying(why -> assertThat(why)
+                .contains("at most 4 parts, not 5"));
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = ';', value = {
+            "system + ; an empty part",
+            "system +  + app; an empty part",
+            "system + meta:Feed; a stream meta attribute is never a part",
+            "system + system; 'system' is a part twice",
+            "system + event>a>b>c>d; at most 3"})
+    void aCombinationThatIsNoneIsRefusedSayingWhy(final String spec, final String why) {
+        assertThat(SourceTypeReading.problem(spec)).hasValueSatisfying(problem -> assertThat(problem)
+                .contains(why));
+        assertThat(SourceTypeReading.cached(spec)).isNull();
+    }
+
+    @Test
+    void aCombinationIsSpeltPartByPart() {
+        final List<Map<String, Object>> records = List.of(record("{\"a\": 1}"));
+
+        assertThat(SourceTypeReading.asRecordsSpellIt("SYSTEM + Event>logger", records))
+                .hasValue("system + event>logger");
+        assertThat(SourceTypeReading.asRecordsSpellIt("system + nothing>logger", records)).isEmpty();
     }
 
     private static Map<String, Object> record(final String event) {

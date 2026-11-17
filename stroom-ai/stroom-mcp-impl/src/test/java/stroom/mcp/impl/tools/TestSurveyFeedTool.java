@@ -1280,6 +1280,72 @@ class TestSurveyFeedTool {
                         + "\"source_type_field\": \"meta:Feed>x\"}").text()).contains("read whole");
     }
 
+    @Test
+    void aPairOfReadingsIsOfferedWithItsEvidenceAndAPairTheUserGivesIsCountedByItsKeys() {
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, pairLines(8), false);
+
+        // Without forms: the pair first, with what it rests on and the rows proposed for it.
+        final Map<String, Object> asking = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
+                                                     + "\"build\": \"acme-v1\"}"));
+        assertThat(asking).containsEntry("status", "needs_source_type_field");
+        final Map<String, Object> first = ((List<Map<String, Object>>) asking.get("candidates")).getFirst();
+        assertThat(first).containsEntry("field", "system + event>logger_name")
+                .containsEntry("combination", List.of("system", "event>logger_name"));
+        assertThat((List<String>) first.get("evidence")).anySatisfy(line -> assertThat(line)
+                .startsWith("within system = "));
+        assertThat((List<String>) first.get("rows_proposed")).contains(
+                "Teams System = Teams + = System (8 records)");
+        assertThat(String.valueOf(asking.get("held"))).contains("combination", "never add a part of your own");
+
+        // Given as the user said it, spelt as the records spell it, and counted by its keys.
+        final Map<String, Object> given = json(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": "
+                                                    + "\"acme-v1\", \"source_type_field\": \"SYSTEM + "
+                                                    + "event>logger_name\"}"));
+        final Map<String, Object> sources = (Map<String, Object>) given.get("source_types");
+        assertThat(sources).containsEntry("field", "system + event>logger_name");
+        assertThat((Map<String, Object>) sources.get("records_read_by_value")).containsOnlyKeys(
+                "Teams ‖ System", "Teams ‖ Application", "Skype ‖ System", "Skype ‖ Application");
+    }
+
+    @Test
+    void aCombinationThatIsNoneOrWhosePartReadsNothingIsRefused() {
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, pairLines(4), false);
+
+        assertThat(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\", "
+                        + "\"source_type_field\": \"system + event>nothing\"}").text())
+                .contains("its part 'event>nothing' reads no value");
+        assertThat(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\", "
+                        + "\"source_type_field\": \"system + meta:Feed\"}").text())
+                .contains("isn't a reading", "never a part");
+        assertThat(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\", "
+                        + "\"source_type_field\": \"system + host + event>a + event>b + event>c\"}").text())
+                .contains("at most 4 parts, not 5");
+    }
+
+    // A wrapper's `system` (Teams or Skype) and, inside the JSON its `event` holds, `logger_name` (System or
+    // Application): each pair's events with keys of their own, two kinds each.
+    private static String pairLines(final int perPair) {
+        final StringBuilder out = new StringBuilder();
+        final String[][][] keys = {{{"cpu", "memory"}, {"call_id", "meeting_id"}},
+                {{"disk", "network"}, {"codec", "jitter"}}};
+        int n = 0;
+        for (int s = 0; s < 2; s++) {
+            for (int l = 0; l < 2; l++) {
+                for (int i = 0; i < perPair; i++) {
+                    final String event = "{\"logger_name\": \"" + List.of("System", "Application").get(l)
+                                         + "\", \"" + keys[s][l][i % 2] + "\": \"v" + i + "\", \"" + keys[s][l][0]
+                                         + "_" + s + l + "\": " + i + "}";
+                    out.append("{\"system\": \"").append(List.of("Teams", "Skype").get(s)).append("\", \"host\": \"h")
+                            .append(n++ % 2).append("\", \"event\": ").append(JsonUtil.writeValueAsString(event, false))
+                            .append("}\n");
+                }
+            }
+        }
+        return out.toString();
+    }
+
     // A wrapper whose `event` holds JSON naming its logger, key=value pairs, XML naming it in an attribute, or text.
     private static String heldLines(final int count) {
         final StringBuilder out = new StringBuilder();

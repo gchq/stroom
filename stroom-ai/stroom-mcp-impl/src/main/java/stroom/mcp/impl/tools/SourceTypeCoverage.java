@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.RecordSplitter;
 import stroom.ai.impl.tools.sample.SourceTypeMeta;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
+import stroom.ai.impl.tools.sample.SourceTypeReading;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
@@ -227,6 +228,9 @@ class SourceTypeCoverage {
         }
         if (!newValues.isEmpty()) {
             said.put("new_source_types", List.copyOf(newValues));
+            if (SourceTypeReading.isCombination(field)) {
+                said.put("new_source_type_parts", partsOf(field, newValues));
+            }
             said.put("registry", addNew(session, build, feed, registry, newValues));
         }
         return Optional.of(new Judged(missed, passedOver, otherGroups, scope, module == null
@@ -384,6 +388,23 @@ class SourceTypeCoverage {
         return out;
     }
 
+    // Each new key of a combination, by its parts: each part's reading with its value ("" for none).
+    private static List<Map<String, String>> partsOf(final String field, final Set<String> keys) {
+        final List<String> readings = SourceTypeReading.splitParts(field);
+        final List<Map<String, String>> out = new ArrayList<>();
+        for (final String key : keys) {
+            final List<String> values = SourceTypeReading.keyParts(key);
+            final Map<String, String> parts = new LinkedHashMap<>();
+            for (int i = 0; i < readings.size(); i++) {
+                parts.put(readings.get(i), i < values.size()
+                        ? values.get(i)
+                        : "");
+            }
+            out.add(parts);
+        }
+        return out;
+    }
+
     // Each value a whole translation logged as not seen in its survey, with raw streams it was met in.
     private static Map<String, Object> unseen(final CoverageReads.SourceTypeLines lines) {
         final Map<String, Object> out = new LinkedHashMap<>();
@@ -524,15 +545,28 @@ class SourceTypeCoverage {
         final Set<String> names = new LinkedHashSet<>();
         rows.forEach(row -> names.add(JsonValues.text(row.get("name"))));
         final String now = SurveyDoc.at(Instant.now());
+        final boolean combination = SourceTypeReading.isCombination(JsonValues.text(state.get("field")));
         for (final String value : values) {
-            final String name = names.contains(value)
-                    ? value + " (new)"
+            // A combination's key a row matching each part exactly; one with a part of no value isn't a source type.
+            final Optional<String> parts = combination
+                    ? SourceTypeRows.exactParts(value)
+                    : Optional.of(value);
+            if (parts.isEmpty()) {
+                continue;
+            }
+            final String named = combination
+                    ? String.join(" ", SourceTypeReading.keyParts(value))
                     : value;
+            final String name = names.contains(named)
+                    ? named + " (new)"
+                    : named;
             names.add(name);
             final Map<String, Object> row = new LinkedHashMap<>();
             row.put("name", name);
-            row.put("match", SourceTypeRows.VALUE);
-            row.put("value", value);
+            row.put("match", combination
+                    ? SourceTypeRows.TUPLE
+                    : SourceTypeRows.VALUE);
+            row.put("value", parts.get());
             row.put("system_name", null);
             row.put("status", SourceTypeRegistry.NEW);
             row.put("decided", decided(now));
@@ -588,7 +622,8 @@ class SourceTypeCoverage {
     ///                    (source type to the group translating it), `processing` (a group's `passed_over`
     ///                    records and raw streams, told from the raw streams it processed),
     ///                    `unseen_source_types` (a whole translation's values its survey didn't see),
-    ///                    `new_source_types` and `registry`.
+    ///                    `new_source_types` (a combination's keys, with `new_source_type_parts`: each by its
+    ///                    parts' readings) and `registry`.
     record Judged(List<Map<String, Object>> missed,
                   List<Map<String, Object>> passedOver,
                   List<Map<String, Object>> otherGroups,

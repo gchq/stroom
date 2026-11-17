@@ -257,6 +257,124 @@ class TestSourceTypeRows {
                 List.of())).singleElement().satisfies(problem -> assertThat(problem).contains("keep one"));
     }
 
+    @Test
+    void aCombinationsRowIsWrittenPartByPartAndMatchesAKeyPartByPart() {
+        final SourceTypeRows.Row exact = SourceTypeRows.parse("Teams System = Teams + System", 2).orElseThrow();
+        final SourceTypeRows.Row pattern = SourceTypeRows.parse("Skype app ~ ^Skype + = Application", 2)
+                .orElseThrow();
+        final SourceTypeRows.Row member = SourceTypeRows.parse("Mail = in Mail + *", 2).orElseThrow();
+        final SourceTypeRows.Row any = SourceTypeRows.parse("Teams = Teams + *", 2).orElseThrow();
+
+        assertThat(exact).isEqualTo(new SourceTypeRows.Row("Teams System", SourceTypeRows.TUPLE,
+                "= Teams + = System"));
+        assertThat(pattern.value()).isEqualTo("~ ^Skype + = Application");
+        assertThat(member.value()).isEqualTo("∈ Mail + *");
+        assertThat(any.said()).isEqualTo("= Teams + *");
+        assertThat(exact.parts()).extracting(SourceTypeRows.TuplePart::match)
+                .containsExactly(SourceTypeRows.VALUE, SourceTypeRows.VALUE);
+
+        assertThat(exact.matches("Teams ‖ System")).isTrue();
+        assertThat(exact.matches("Teams ‖ Application")).isFalse();
+        assertThat(exact.matches("Teams")).isFalse();
+        assertThat(pattern.matches("Skype for Business ‖ Application")).isTrue();
+        assertThat(member.matches("Web, Mail ‖ anything")).isTrue();
+        assertThat(member.matches("Web ‖ anything")).isFalse();
+        // * takes any value of its part, none too; another part never takes no value.
+        assertThat(any.matches("Teams ‖ Application")).isTrue();
+        assertThat(any.matches("Teams ‖ ")).isTrue();
+        assertThat(exact.matches(" ‖ System")).isFalse();
+        assertThat(pattern.matches(" ‖ Application")).isFalse();
+        assertThat(exact.matches(null)).isFalse();
+        // The (no value) row takes a key with any part of no value, and none at all.
+        assertThat(SourceTypeRows.noValue().matches("Teams ‖ ")).isTrue();
+        assertThat(SourceTypeRows.noValue().matches(" ‖ System")).isTrue();
+        assertThat(SourceTypeRows.noValue().matches("Teams ‖ System")).isFalse();
+        // Kept and read back as the registry keeps them.
+        assertThat(SourceTypeRows.Row.of(exact.toMap())).isEqualTo(exact);
+        assertThat(SourceTypeRows.Row.of(member.toMap()).separatorOrDefault()).isEqualTo(",");
+        assertThat(SourceTypeRows.problems(List.of(exact, pattern, member, any, SourceTypeRows.noValue()),
+                List.of("Teams ‖ System", "Skype for Business ‖ Application"), 2)).isEmpty();
+    }
+
+    @Test
+    void combinationRowsAreTriedInOrderAndOneAnEarlierRowCoversIsRefused() {
+        final List<SourceTypeRows.Row> rows = List.of(
+                tuple("Teams System", "= Teams + = System"),
+                tuple("Teams", "= Teams + *"),
+                tuple("Teams again", "= Teams + = Application"),
+                tuple("Skype", "~ ^Skype + *"),
+                tuple("Skype for Business", "= Skype for Business + *"));
+
+        assertThat(SourceTypeRows.first(rows, "Teams ‖ System")).map(SourceTypeRows.Row::name)
+                .contains("Teams System");
+        assertThat(SourceTypeRows.first(rows, "Teams ‖ Application")).map(SourceTypeRows.Row::name)
+                .contains("Teams");
+        assertThat(SourceTypeRows.problems(rows, List.of(), 2)).containsExactly(
+                "'Teams again' can never match: 'Teams', before it, always matches first; put it before 'Teams'",
+                "'Skype for Business' can never match: 'Skype', before it, always matches first; put it before "
+                + "'Skype'");
+        // Narrower first is fine.
+        assertThat(SourceTypeRows.problems(List.of(rows.get(4), rows.get(3)), List.of(), 2)).isEmpty();
+        // An exact row every seen key of which an earlier row takes.
+        assertThat(SourceTypeRows.problems(List.of(tuple("a", "~ ^T + = System"), tuple("b", "= Teams + = System")),
+                List.of("Teams ‖ System"), 2)).singleElement().satisfies(problem -> assertThat(problem)
+                .contains("'b' can never match"));
+    }
+
+    @Test
+    void aCombinationsRowThatIsNoneIsRefusedSayingWhy() {
+        final List<String> values = List.of("Teams ‖ System");
+
+        assertThat(SourceTypeRows.problems(List.of(tuple("a", "= Teams")), values, 2)).singleElement()
+                .satisfies(problem -> assertThat(problem).contains("gives 1 part(s)", "combination of 2"));
+        assertThat(SourceTypeRows.problems(List.of(tuple("a", "= Teams + = System + = x")), values, 2))
+                .singleElement().satisfies(problem -> assertThat(problem).contains("gives 3 part(s)"));
+        assertThat(SourceTypeRows.problems(List.of(SourceTypeRows.parse("a = Teams + != System", 2).orElseThrow()),
+                values, 2)).singleElement().satisfies(problem -> assertThat(problem)
+                .contains("part 2 ('!= System') has an operator none of"));
+        assertThat(SourceTypeRows.problems(List.of(SourceTypeRows.parse("a = * + *", 2).orElseThrow()), values,
+                2)).singleElement().satisfies(problem -> assertThat(problem).contains("every part is '*'"));
+        assertThat(SourceTypeRows.problems(List.of(SourceTypeRows.parse("a = Teams +", 2).orElseThrow()), values,
+                2)).singleElement().satisfies(problem -> assertThat(problem).contains("part 2 is empty"));
+        assertThat(SourceTypeRows.problems(List.of(SourceTypeRows.parse("a = ~ Teams + *", 2).orElseThrow()),
+                values, 2)).singleElement().satisfies(problem -> assertThat(problem).contains("anchored"));
+        assertThat(SourceTypeRows.problems(List.of(SourceTypeRows.parse("a = in x,y + *", 2).orElseThrow()),
+                values, 2)).singleElement().satisfies(problem -> assertThat(problem).contains("separator"));
+        // One reading's row on a combination, and a combination's on one reading.
+        assertThat(SourceTypeRows.problems(List.of(new SourceTypeRows.Row("a", SourceTypeRows.VALUE, "Teams")),
+                values, 2)).singleElement().satisfies(problem -> assertThat(problem)
+                .contains("matches one value", "'a = value + value'"));
+        assertThat(SourceTypeRows.problems(List.of(tuple("a", "= Teams + = System")), values, 1)).singleElement()
+                .satisfies(problem -> assertThat(problem).contains("read by one reading"));
+        // A row as written with no operator dividing its name.
+        assertThat(SourceTypeRows.parse("Teams System", 2)).isEmpty();
+        // One reading's rows read as they always did.
+        assertThat(SourceTypeRows.parse("a = b + c", 1)).hasValue(new SourceTypeRows.Row("a", SourceTypeRows.VALUE,
+                "b + c"));
+    }
+
+    @Test
+    void aCombinationOfFourPartsHasRowsOfFour() {
+        final SourceTypeRows.Row row = SourceTypeRows.parse("x = a + * + ~ ^c + d", 4).orElseThrow();
+
+        assertThat(row.parts()).hasSize(4);
+        assertThat(row.matches("a ‖ b ‖ cc ‖ d")).isTrue();
+        assertThat(row.matches("a ‖  ‖ cc ‖ d")).isTrue();
+        assertThat(row.matches("a ‖ b ‖ cc")).isFalse();
+        assertThat(SourceTypeRows.problems(List.of(row), List.of("a ‖ b ‖ cc ‖ d"), 4)).isEmpty();
+    }
+
+    @Test
+    void keysAreProposedARowEachWhereNothingBetterIsKnown() {
+        assertThat(SourceTypeRows.proposeKeys(counts("Teams ‖ System", 5L, "Teams ‖ ", 3L, "Skype ‖ System", 9L)))
+                .extracting(row -> row.row().name() + ": " + row.row().said())
+                .containsExactly("Skype System: = Skype + = System", "Teams System: = Teams + = System");
+    }
+
+    private static SourceTypeRows.Row tuple(final String name, final String parts) {
+        return new SourceTypeRows.Row(name, SourceTypeRows.TUPLE, parts);
+    }
+
     private static Map<String, Long> counts(final Object... valuesAndCounts) {
         final Map<String, Long> out = new LinkedHashMap<>();
         for (int i = 0; i < valuesAndCounts.length; i += 2) {
