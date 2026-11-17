@@ -3480,9 +3480,14 @@ index (seen in an eval: a working copy's test run put 192 documents into the liv
 production index searches the test index. A build pipeline writing to a production Elasticsearch index is refused
 (`ProductionIndexes`, through `IndexingRuns.refuseUnsafeIndex`), before any lookup, `index_exists`, `drop_first`,
 template or approval form: production is decided by the index name, not by where an Elastic Index doc lives, a name
-(variables as wildcards) that a non-template pipeline outside the build writes to (its own `indexName`), that an
-Elastic Index doc outside the build names (one naming a pattern names none), or, for a working copy or new version,
-that its original writes (inherited from a template too). The refusal says nothing was processed and nothing is to
+that a non-template pipeline outside the build writes to (its own `indexName`, or the one it inherits from a
+template), that an Elastic Index doc outside the build names (one naming a pattern names none), or, for a working
+copy or new version, that its original writes (inherited from a template too). Names are compared with the variables
+filled in that Stroom's ElasticIndexingFilter would fill (`IndexNameValues`: it fills `{name}` from the document's
+root field `name`, as written): a field every XSLT of the pipeline writes as a fixed text, or as
+`stroom:feed-name()` (perhaps lower- or upper-cased), once for each feed it processes (its processor filters'
+feeds; for a build pipeline, its build's feeds too). Any other variable is a wildcard. So children of a
+`{feed}-events` template claim only their own feeds' indices (`writes to '{feed}-events' ('acme-a-events')`). The refusal says nothing was processed and nothing is to
 be dropped (`Pipeline '...' writes to Elasticsearch index '...', which is a production index (...) ... Nothing was
 processed, and nothing is to be dropped or deleted ...`): step a working copy clean instead, or make a new version
 with its own index (`copy_pipeline`). Seen in a user's test: the build's own Elastic Index doc for the production name
@@ -4382,7 +4387,9 @@ Elastic Index doc) is refused.
 
 Once the names are confirmed and before anything is copied, a new index name is looked up
 (`ProductionIndexes.taken`, asked for by the user): on the cluster (`ExistingIndexes`, variables as wildcards) and
-against every pipeline and Elastic Index doc outside the build. Any data stream, index or alias it matches, even an
+against every pipeline and Elastic Index doc outside the build, there with its variables filled in as for production
+claims (`IndexNameValues`: the copied XSLTs and the build's feeds, so feed B's `{feed}-events-v2` isn't taken by feed
+A's). Any data stream, index or alias it matches, even an
 empty one, a lookup that fails (never taken as free), or another Stroom document naming it, refuses the copy, saying
 what matched (name, kind, document count, the Stroom document), the pattern looked up and the next free version name;
 nothing it matches is offered for deletion.
@@ -5985,7 +5992,10 @@ for its current index and code.
 * **Notes**:
   * The template's name and pattern follow the pipeline's index name (`IndexingHelpers.templateTarget`): values the
     name is built from (`{_suffix}`) are wildcards in the pattern and left out of the name (seen: a literal pattern
-    `ecs-windows{_suffix}v1*` matched no index).
+    `ecs-windows{_suffix}v1*` matched no index). The pattern is the exact index name otherwise
+    (`["acme-events-v1"]`, not `acme-events-v1*`, which also covered `acme-events-v10`; asked for by the user), each
+    variable a `*` (`index-name-v1{_suffix}` to `["index-name-v1*"]`; `IndexNamePatterns`); a data stream's template
+    matches the data stream's name. A template drafted from an Elastic Index doc's fields does the same.
   * An ECS plan's template composes `ecs@mappings` and leaves the standard ECS fields to it, with dynamic mapping
     on. The plan's convention is taken from the kept or drafted plan when the agent's copy left it out
     (`IndexPlans.withConvention`), as it decides that.
@@ -6006,7 +6016,8 @@ for its current index and code.
 
 Indexing · write (keeps an agreed template in the pipeline's description) · requires Stepping; checks View and Edit
 (the build's own pipeline only) · confirms itself · takes a run slot · Classes: `CheckIndexTemplateTool`,
-`TemplatePipelines`, `TemplateReviews`, `TemplateCheck`, `TemplateMappings`, `ExampleTemplates.ecsDuplicates`
+`TemplatePipelines`, `TemplateReviews`, `TemplateCheck`, `TemplateMappings`, `ExampleTemplates.ecsDuplicates`,
+`TemplateOverlaps`
 
 Checks a user's Elasticsearch index template (or an existing index's mapping), with its component templates composed
 as Elasticsearch composes them, against the documents the candidate indexing pipeline writes
@@ -6021,7 +6032,11 @@ as the example.
   `reviewed`, the template that review showed, kept for the session so it is never retyped); `events_stream_ids`
   (required); `component_templates`; `without_components`; `max_records` (1 to 500, default 50); `reviewed`.
 * **Returns**: `compatible`, `blocking`, `pipeline_changes`, `notes` (standing instructions' components missing or
-  excluded, components not given and so unchecked, ECS fields mapped twice), `component_templates`,
+  excluded, components not given and so unchecked, ECS fields mapped twice), `warnings` (not blocking: a pattern
+  ending in a digit then `*`, which also covers longer numbers, unless it is the index name with its variables as
+  `*`; another agreed template, kept in another pipeline's description, whose `index_patterns` also cover the index
+  on the same cluster at the same priority, named with its pipeline and patterns, to narrow or out-prioritise:
+  `TemplateOverlaps`), `component_templates`,
   `template_name`, `index`, `cluster`, `pipeline_link`, `stopped_early`/`stepped`; then `needs_review` or `agreed:
   true` with the `commit-template` button, as for `propose_index_template`.
 * **Refuses**: no `pipeline_uuid`, streams or template; a template that can't be read; `max_records` out of range;

@@ -138,15 +138,24 @@ class IndexTemplateAgreements {
     /// @return The XSLT code it runs, digested: an index template is agreed for the documents this code writes.
     /// @throws PipelineUnreadableException if Stroom can't load the pipeline.
     String indexingXsltDigest(final String pipelineUuid) {
+        return XsltCode.digest(indexingXslts(pipelineUuid).stream()
+                .map(XsltCode::normalise)
+                .toArray(String[]::new));
+    }
+
+    /// @param pipelineUuid An indexing pipeline.
+    /// @return The code of each XSLT it runs, in order (empty for one the user can't read).
+    /// @throws PipelineUnreadableException if Stroom can't load the pipeline.
+    List<String> indexingXslts(final String pipelineUuid) {
         final List<String> parts = new ArrayList<>();
         for (final TranslationDoc entry : pipelineShapes.merged(pipelineUuid).translationDocs(pipelineUuid)) {
             if (XsltDoc.TYPE.equals(entry.doc().getType())) {
-                parts.add(XsltCode.normalise(documentAccess.read(entry.doc(), XsltDoc.class)
+                parts.add(documentAccess.read(entry.doc(), XsltDoc.class)
                         .map(XsltDoc::getData)
-                        .orElse("")));
+                        .orElse(""));
             }
         }
-        return XsltCode.digest(parts.toArray(String[]::new));
+        return parts;
     }
 
     /// @param pipelineUuid A pipeline.

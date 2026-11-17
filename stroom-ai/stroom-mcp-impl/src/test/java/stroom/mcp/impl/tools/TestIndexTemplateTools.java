@@ -142,7 +142,7 @@ class TestIndexTemplateTools {
                                                 + "&docUuid=p1");
         @SuppressWarnings("unchecked") final Map<String, Object> rendered = (Map<String, Object>) plan
                 .withIndexName("ecs-acme-v2").elasticTemplate("ecs-acme-v2", 200L, true, ecs()).get("body");
-        assertThat(rendered.get("index_patterns")).isEqualTo(List.of("ecs-acme-v2*"));
+        assertThat(rendered.get("index_patterns")).isEqualTo(List.of("ecs-acme-v2"));
         // The plan leaves some written fields unmapped (dynamic false): noted, not blocking.
         assertThat(TemplateCheck.compare(rendered, DOCS, "ecs-acme-v2", ecs()).get("compatible")).isEqualTo(true);
     }
@@ -214,6 +214,8 @@ class TestIndexTemplateTools {
         assertThat(String.valueOf(((List<?>) result.get("notes")).getFirst()))
                 .startsWith("composed_of ['ecs-base'] not given, so not checked");
         assertThat(String.valueOf(result.get("hint"))).contains("Show the user pipeline_changes");
+        // ecs-acme-v2* also covers ecs-acme-v20: warned of, not blocking.
+        assertThat(String.valueOf(result.get("warnings"))).contains("index pattern 'ecs-acme-v2*' ends in a digit");
         final ToolResult bad = checkTool().execute(call(CheckIndexTemplateTool.NAME, args("template", "{",
                 "pipeline_uuid", "p1", "events_stream_ids", List.of(8))),
                 context(UserQuestions.NONE));
@@ -259,7 +261,7 @@ class TestIndexTemplateTools {
         // Without the review id, which meant nothing to the user: the answer is bound to it unseen.
         assertThat(details).containsEntry("index template", "ecs-acme-v2, exactly as shown in the chat")
                 .doesNotContainKey("notes");
-        assertThat(String.valueOf(details.get("applies to"))).startsWith("ecs-acme-v2* (priority ");
+        assertThat(String.valueOf(details.get("applies to"))).startsWith("ecs-acme-v2 (priority ");
         assertThat(Integer.parseInt(String.valueOf(details.get("fields mapped here")))).isPositive();
         // Short (seen in testing: every field, note and component made it 2,000 characters, and the client
         // declined it as too long): the notes are beside it in the reply, for the chat.
@@ -571,7 +573,9 @@ class TestIndexTemplateTools {
     }
 
     private CheckIndexTemplateTool checkTool() {
-        return new CheckIndexTemplateTool(plans, examples, inputs, buildIndexes, pipelines, reviews, memory);
+        return new CheckIndexTemplateTool(plans, examples, inputs, buildIndexes, pipelines, reviews, memory,
+                new TemplateOverlaps(new PipelineIndex(() -> world.feeds.docFinder, world.world.documentAccess),
+                        world.world.documentAccess));
     }
 
     private static ToolCall call(final String name, final Map<String, Object> arguments) {

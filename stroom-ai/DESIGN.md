@@ -2834,8 +2834,12 @@ its time field, and each field's name, type and source in the Event.
 
 * `propose_index_template` needs the user's example (pasted, or read with `like_index`), else `without_example`,
   which the user confirms. From the plan alone it makes a data stream (`data_stream: {}`, `@timestamp` its time
-  field), as the user's event indexes are (asked for by the user). The index patterns are `<index>*`; a priority is
-  set only if the user asks.
+  field), as the user's event indexes are (asked for by the user). The index patterns are the exact index name, each
+  `{variable}` a `*` (`acme-events-v1` to `["acme-events-v1"]`, `index-name-v1{_suffix}` to `["index-name-v1*"]`;
+  `IndexNamePatterns`, shared with `ExistingIndexes`' lookup), not `<index>*`, which also covered `acme-events-v10`
+  (asked for by the user, 2026-11-17); a data stream's template matches the data stream's own name. A template drafted
+  from an Elastic Index doc's fields (`IndexExamples`) does the same; a user's template keeps its own patterns. A
+  priority is set only if the user asks.
 * It is checked against the documents the pipeline writes (stepped as the user) before it is offered.
 * A template named after the example's own template or a component is refused (seen in testing).
 * Components given once are kept for the session (`IndexingMemory`; seen in testing: re-sent ones came back
@@ -2844,7 +2848,13 @@ its time field, and each field's name, type and source in the Event.
   (dates, IPs, booleans); `dynamic` (strict blocks); a field mapped as a value that the pipeline writes as an object,
   or the reverse; `@timestamp` for a data stream; fields never written (likely renamed); fields not indexed; fields
   mapped twice beside `ecs@mappings`; AGENTS include and exclude rules; a pipeline writing to an alias, and an alias
-  whose target isn't mapped.
+  whose target isn't mapped. Two `warnings`, not blocking: a pattern ending in a digit then `*` (`acme-events-v1*`
+  also covers `acme-events-v10`; not for a pattern that is the index name with its variables as `*`), and another
+  agreed template (an agreement kept in another pipeline's description, the pipelines the user can view;
+  `TemplateOverlaps`) whose `index_patterns` also cover the index on the same cluster at the same priority
+  (Elasticsearch refuses or mis-applies overlapping templates: an old `acme-events*` over a new `acme-events-v2`),
+  naming the pipeline and its patterns, with narrowing them or a priority as the fix. An agreement of the same
+  template name is the same template, so not an overlap. The cluster's own templates aren't read.
 * The agreement (`IndexTemplateAgreements`) is kept in the pipeline's description with the index, cluster,
   components, a digest of the indexing XSLT and the Dev Tools request. A changed XSLT needs agreeing again; an
   unchanged template already agreed isn't asked again.
@@ -2913,6 +2923,25 @@ its time field, and each field's name, type and source in the Event.
   Elastic Index docs outside the build, so the build's own Elastic Index doc for the production name (or a build
   pipeline made fresh against the production doc) made it count as the build's; and `propose_index_template` told
   the user the cluster admin drops it. The user deleted the production index.
+* **Index names are compared with the variables filled in that are known (2026-11-17).** Stroom's
+  ElasticIndexingFilter fills `{name}` per document from the document's root field `name` (as written, no case
+  change; an empty or missing one fails the document): there is no feed variable of its own, so `{feed}` is whatever
+  the indexing XSLT writes as `feed`. `IndexNameValues` fills a variable only where every place the pipeline's XSLTs
+  write that field writes it as a fixed text (`<string key="_suffix">-v2</string>`, `xsl:text`, a quoted literal) or
+  the stream's feed name (`stroom:feed-name()`, perhaps in `lower-case()` or `upper-case()`), then once for each feed
+  the pipeline processes: a production pipeline's processor filters' feeds (`PipelineFeeds`), a build pipeline's
+  also its build's feeds (its folder's and `source_feeds`). Any other variable (an event value, a field written two
+  ways, no feed known, an XSLT or filter that can't be read) stays a wildcard. A pipeline that inherits its index
+  name from a template (the nearest parent setting `indexName`) claims it as its own; the template itself still
+  claims nothing. So two production children of a `{feed}-events` template for feeds A and B claim `a-events` and
+  `b-events`, a build pipeline for A is claimed by A's and not B's, and the claim says the names filled in (`writes
+  to '{feed}-events' ('acme-a-events')`). Seen in review: compared unfilled, children for different feeds were the
+  same name, and a fresh build pipeline for a feed that already had one wasn't claimed (only the cluster lookup at its
+  first run protected it, which can offer deleting what it finds).
+  A new version's candidate index name (`ProductionIndexes.taken`, from copy_pipeline and on its first run) is
+  compared the same way, filled in with the new version's XSLTs (its own, or the original's it is copied from) and
+  the build's feeds, so a `{feed}-events-v2` for feed B isn't taken by what A's v2 is named; the cluster lookup still
+  takes every variable as any value.
 
 ### Arrays of objects (built, 2026-10-31)
 
@@ -3567,6 +3596,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-17 | Index names filled in and exact template patterns. Production claims compare index names with the variables filled in that Stroom's ElasticIndexingFilter would fill from what the indexing XSLT writes (a fixed text, or `stroom:feed-name()`, once per feed the pipeline processes; anything else stays a wildcard), and a child inheriting a template's index name claims it (a new version's candidate name is filled in the same way, with the build's feeds), so children of a `{feed}-events` template tell feeds apart and a build pipeline for a feed with one is claimed. Generated index templates cover the exact index name, a variable a `*`, not `<index>*` (asked for by the user: `v1*` also covered `v10`); check_index_template warns, not blocking, of a pattern ending in a digit then `*` and of another agreed template covering the index at the same priority. | Indexing |
 | 2026-11-17 | Shared modules new-version-only (the user): a build changing an aggregated feed's promoted common module or helpers makes a new version of it (`<feed> common V1.1`: no token is V1.0; the next after the highest the feed knows), imported only by the build's group; the other groups keep their versions and nothing promoted is rewritten. A helpers' new version brings a common version importing it (the chain is by UUID). What a group imports is read from its XSLT's imports. Promotion places a module's new version in a version folder beside its predecessor that no other document joins, and refuses a module working copy from an older build. `build_status` and `review_coverage` say when groups import different versions (`module_versions`). A group's new XSLT is named for its pipeline's new version; copy_pipeline refuses a build's earlier version under the original's name. | Aggregated feeds; Builds and onboarding |
 | 2026-11-17 | New version only (the user): a promoted pipeline and the code it runs are never changed in place. copy_pipeline always makes a new version (names proposed and confirmed; `needs_names` without forms; `working_copy=true` refused), a source type group's change goes to a new version of its XSLT without asking, and promotion refuses an older build's working copies of a pipeline's code. Documentation keeps its working copies; an aggregated feed's shared modules too, for now. | Builds and onboarding |
 | 2026-11-17 | From a user's test (a promoted feed changed: its pipelines copied under the same names, the user asked to delete the production Elasticsearch index, and did): a production index is decided by its name (written by a pipeline, or named by an Elastic Index doc, outside the build), refused for every build pipeline before any lookup, drop or form, and never named for dropping (`ProductionIndexes`). copy_pipeline of any promoted pipeline asks change in place or new version once per build, proposes a new version's names (`VersionNames`: V1.0 to V1.1, V2.0 offered; index -v1 to -v2, a new Elastic Index doc beside the old), editable, never the original's, and checks the new index name free on the cluster and in Stroom first (even an empty index, or an unknown lookup, refuses), again on its first processing run. | Builds and onboarding; Indexing |

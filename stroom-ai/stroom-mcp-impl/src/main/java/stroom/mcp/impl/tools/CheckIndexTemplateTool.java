@@ -75,6 +75,7 @@ class CheckIndexTemplateTool extends AbstractBuiltInTool {
     private final TemplatePipelines pipelines;
     private final TemplateReviews reviews;
     private final IndexingMemory memory;
+    private final TemplateOverlaps overlaps;
 
     @Inject
     CheckIndexTemplateTool(final IndexPlans plans,
@@ -83,7 +84,8 @@ class CheckIndexTemplateTool extends AbstractBuiltInTool {
                            final BuildIndexes buildIndexes,
                            final TemplatePipelines pipelines,
                            final TemplateReviews reviews,
-                           final IndexingMemory memory) {
+                           final IndexingMemory memory,
+                           final TemplateOverlaps overlaps) {
         this.plans = plans;
         this.examples = examples;
         this.inputs = inputs;
@@ -91,6 +93,7 @@ class CheckIndexTemplateTool extends AbstractBuiltInTool {
         this.pipelines = pipelines;
         this.reviews = reviews;
         this.memory = memory;
+        this.overlaps = overlaps;
     }
 
     @Override
@@ -266,6 +269,12 @@ class CheckIndexTemplateTool extends AbstractBuiltInTool {
         notes.addAll(IndexingHelpers.componentNotes(composed.missing()));
         notes.addAll(JsonValues.strings(result.get("notes")));
         result.put("notes", notes);
+        // Not blocking: another agreed template covering this index at the same priority is refused or applied in
+        // its place by Elasticsearch, e.g. an old version's acme-events* over a new acme-events-v2.
+        final List<String> warnings = new ArrayList<>(JsonValues.strings(result.get("warnings")));
+        warnings.addAll(overlaps.warnings(pipelineUuid, index, NullSafe.get(destination.get("cluster"),
+                String::valueOf), templateName, parsed.body()));
+        result.put("warnings", warnings);
         if (!components.isEmpty()) {
             result.put("component_templates", new ArrayList<>(new TreeSet<>(components.keySet())));
         }

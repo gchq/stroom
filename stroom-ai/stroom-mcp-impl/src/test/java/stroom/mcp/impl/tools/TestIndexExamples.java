@@ -55,7 +55,8 @@ class TestIndexExamples {
         final String[] parts = read.template().split("\n", 2);
         assertThat(parts[0]).isEqualTo("PUT _index_template/ecs-keycloak-v1");
         final Map<String, Object> template = (Map<String, Object>) ToolJson.loads(parts[1]);
-        assertThat(template.get("index_patterns")).isEqualTo(List.of("ecs-keycloak-v1*"));
+        // The doc's exact index name: ecs-keycloak-v1* would also cover ecs-keycloak-v10.
+        assertThat(template.get("index_patterns")).isEqualTo(List.of("ecs-keycloak-v1"));
         final Map<String, Object> props = (Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>)
                 template.get("template")).get("mappings")).get("properties");
         assertThat(((Map<String, Object>) ((Map<String, Object>) props.get("user")).get("properties")).get("name"))

@@ -235,9 +235,9 @@ class TestTemplateCheck {
         assertThat(components).containsOnlyKeys("ecs-base", "ecs-source");
         final Built built = fromExample(planned, example, components);
         final Map<String, Object> body = built.body();
-        // The new index's pattern; the example's priority, composed_of, settings and mapping parameters; no
-        // aliases.
-        assertThat(body.get("index_patterns")).isEqualTo(List.of("ecs-acme-v2*"));
+        // The new index's exact name (not the example's pattern); the example's priority, composed_of, settings and
+        // mapping parameters; no aliases.
+        assertThat(body.get("index_patterns")).isEqualTo(List.of("ecs-acme-v2"));
         assertThat(body.get("priority")).isEqualTo(300L);
         assertThat(body.get("composed_of")).isEqualTo(List.of("ecs-base", "ecs-source"));
         final Map<String, Object> template = JsonValues.map(body.get("template"));

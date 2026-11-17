@@ -20,8 +20,11 @@ import stroom.ai.api.ElasticIndexPresence.Presence;
 import stroom.ai.api.ElasticIndexPresence.State;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.Globs;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.indexing.IndexNamePatterns;
 import stroom.docref.DocRef;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineProperty;
@@ -42,6 +45,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Function;
 
 /// Which Elasticsearch index names are production's, decided by the name on the cluster, not by where an Elastic
 /// Index doc lives: a name that a pipeline outside the build writes to, or that an Elastic Index doc outside the
@@ -52,6 +57,12 @@ import java.util.Set;
 /// pipeline was copied into a build under the same names, the build's own Elastic Index doc for that name made the
 /// index count as the build's, and the user was asked to drop the production index before indexing the sample (and
 /// did). Only read: nothing in Elasticsearch is changed.
+///
+/// A pipeline's name is taken with the variables filled in whose values are known for it ([IndexNameValues]): a
+/// `{feed}` its indexing XSLT writes as the feed's name is one name for each feed it processes (a production
+/// pipeline's processor filters; a build pipeline's build's feeds), so two children of a `{feed}-events` template
+/// for different feeds claim different names, and a build pipeline for a feed that already has one is claimed by
+/// it. A child inheriting its index name from a template claims that name as its own.
 ///
 /// The same names stop a new version's index name being one that is taken ([#taken]): a name that matches anything
 /// on the cluster, even an empty index, or that can't be looked up, is no new version's.
@@ -64,6 +75,8 @@ class ProductionIndexes {
     private static final int MAX_ELASTIC_INDEXES = 1_000;
     // The most next names tried for a free one.
     private static final int FREE_NAMES_TRIED = 5;
+    // How far up a pipeline's parents an inherited index name is looked for.
+    private static final int MAX_INHERITANCE_DEPTH = 10;
 
     private final PipelineIndex pipelineIndex;
     private final DocumentAccess documentAccess;
@@ -72,6 +85,7 @@ class ProductionIndexes {
     private final PipelineTemplates templates;
     private final BuildRecords records;
     private final IndexTemplateAgreements agreements;
+    private final PipelineFeeds pipelineFeeds;
 
     /// @param pipelineIndex   Lists the pipelines and Elastic Index docs the user can view.
     /// @param documentAccess  Reads the Elastic Index docs, as the user.
@@ -79,7 +93,9 @@ class ProductionIndexes {
     /// @param existingIndexes Looks an index name up on its cluster.
     /// @param templates       Says which pipelines are templates (they write nothing themselves).
     /// @param records         Says what a build's pipeline is a working copy or new version of.
-    /// @param agreements      Reads where an original pipeline writes, its template's index name included.
+    /// @param agreements      Reads where an original pipeline writes, its template's index name included, and the
+    ///                        XSLTs a pipeline runs.
+    /// @param pipelineFeeds   Reads the feeds a pipeline's processor filters process.
     @Inject
     ProductionIndexes(final PipelineIndex pipelineIndex,
                       final DocumentAccess documentAccess,
@@ -87,7 +103,8 @@ class ProductionIndexes {
                       final ExistingIndexes existingIndexes,
                       final PipelineTemplates templates,
                       final BuildRecords records,
-                      final IndexTemplateAgreements agreements) {
+                      final IndexTemplateAgreements agreements,
+                      final PipelineFeeds pipelineFeeds) {
         this.pipelineIndex = pipelineIndex;
         this.documentAccess = documentAccess;
         this.guard = guard;
@@ -95,6 +112,7 @@ class ProductionIndexes {
         this.templates = templates;
         this.records = records;
         this.agreements = agreements;
+        this.pipelineFeeds = pipelineFeeds;
     }
 
     /// @param build     A build, whose own documents are left out; null to leave none out.
@@ -102,7 +120,7 @@ class ProductionIndexes {
     /// @return Each pipeline outside the build whose indexName writes to an index the name matches, and each Elastic
     /// Index doc outside the build naming one; none when the name is no one else's.
     List<Claim> claims(final String build, final String indexName) {
-        return matching(outside(buildDocs(build)), indexName);
+        return matching(outside(buildDocs(build)), List.of(indexName));
     }
 
     /// As [#claims(String, String)], for documents a promotion has just moved out of a build: what else writes to,
@@ -113,14 +131,27 @@ class ProductionIndexes {
     /// @return Each other pipeline writing to an index the name matches, and each other Elastic Index doc naming
     /// one.
     List<Claim> claimsBesides(final Set<String> excluded, final String indexName) {
-        return matching(outside(excluded), indexName);
+        return matching(outside(excluded), List.of(indexName));
+    }
+
+    /// As [#claimsBesides(Set, String)], for the index name of a pipeline the promotion moved, with its variables
+    /// filled in for the feeds it processes ([IndexNameValues]).
+    ///
+    /// @param excluded     The UUIDs of the documents left out.
+    /// @param pipelineUuid The promoted pipeline.
+    /// @param indexName    Its index name, perhaps with variables.
+    /// @return Each other pipeline writing to an index the name matches, and each other Elastic Index doc naming
+    /// one.
+    List<Claim> claimsBesides(final Set<String> excluded, final String pipelineUuid, final String indexName) {
+        return matching(outside(excluded), filledFor(pipelineUuid, indexName, Set.of()));
     }
 
     // A build pipeline's claims: those outside the build, and, for a working copy or new version, its original's
     // own index name, inherited from its template included (a template's {feed}-events, say, writes the original's
     // feed's index, which the copy of the original writes too).
     private List<Claim> claimsOf(final String build, final PipelineDoc pipeline, final String indexName) {
-        final List<Claim> claims = new ArrayList<>(claims(build, indexName));
+        final List<Claim> claims = new ArrayList<>(matching(outside(buildDocs(build)),
+                filledFor(pipeline.getUuid(), indexName, buildFeeds(build))));
         final Map<String, Object> entry = records.entry(build, pipeline.getUuid());
         for (final String key : List.of("copy_of", "version_of")) {
             final String original = NullSafe.get(entry.get(key), String::valueOf);
@@ -188,22 +219,34 @@ class ProductionIndexes {
     /// stream, an index or an alias, even an empty one), a lookup that fails (an unknown name is never taken as
     /// free), or another pipeline or Elastic Index doc outside the build ([#claims]).
     ///
-    /// @param build       The build the new version is made in.
-    /// @param destination The destination: its cluster and the candidate index name.
-    /// @param nothingDone What the refusal says was not done, e.g. `Nothing was copied.`
+    /// In Stroom the candidate is compared with its variables filled in as for [#claims] ([IndexNameValues]): with
+    /// the new version's XSLTs and the build's feeds (and, for a pipeline in the build, its own filters' feeds), so
+    /// a production `{feed}-events-v2` for feed A doesn't take the name from a new version for feed B. The cluster
+    /// lookup still takes every variable as any value.
+    ///
+    /// @param build        The build the new version is made in.
+    /// @param pipelineUuid The pipeline whose XSLTs the new version runs (itself, or the original it is copied
+    ///                     from), or null for none known.
+    /// @param destination  The destination: its cluster and the candidate index name.
+    /// @param nothingDone  What the refusal says was not done, e.g. `Nothing was copied.`
     /// @return Why it is taken, with what matched, the pattern looked up and the next free name; empty when it is
     /// free.
-    Optional<String> taken(final String build, final Map<String, Object> destination, final String nothingDone) {
+    Optional<String> taken(final String build,
+                           final String pipelineUuid,
+                           final Map<String, Object> destination,
+                           final String nothingDone) {
         final String index = indexName(destination);
         if (index == null) {
             return Optional.empty();
         }
-        final List<Claim> all = outside(buildDocs(build));
-        final List<String> matched = matched(destination, index, all);
+        final Set<String> own = buildDocs(build);
+        final List<Claim> all = outside(own);
+        final Function<String, List<String>> fill = name -> newVersionNames(build, own, pipelineUuid, name);
+        final List<String> matched = matched(destination, index, all, fill);
         if (matched.isEmpty()) {
             return Optional.empty();
         }
-        final String free = freeName(destination, index, all);
+        final String free = freeName(destination, index, all, fill);
         return Optional.of("Index name '" + index + "' (looked up as '" + ExistingIndexes.lookedUp(index) + "') is "
                            + "not free for the new version: " + String.join("; ", matched) + ". " + nothingDone
                            + " A new version's index is its own, never one that exists or that something else "
@@ -219,17 +262,88 @@ class ProductionIndexes {
     /// @param indexName The build's index name, perhaps with variables.
     /// @return True if they meet.
     static boolean matches(final Claim claim, final String indexName) {
-        final String ours = ExistingIndexes.lookedUp(indexName).toLowerCase(Locale.ROOT);
-        final String theirs = ExistingIndexes.lookedUp(claim.indexName()).toLowerCase(Locale.ROOT);
+        return matches(claim, List.of(indexName));
+    }
+
+    /// Whether any of the names a build pipeline writes to meets any of those a claim's document stands for.
+    ///
+    /// @param claim A claim outside the build.
+    /// @param ours  The build's index names, each perhaps with variables (those not filled in).
+    /// @return True if they meet.
+    static boolean matches(final Claim claim, final List<String> ours) {
+        final boolean indexDoc = ElasticIndexDoc.TYPE.equals(claim.doc().getType());
+        return claim.filled().stream().anyMatch(theirs -> ours.stream()
+                .anyMatch(our -> meet(ExistingIndexes.lookedUp(theirs).toLowerCase(Locale.ROOT),
+                        ExistingIndexes.lookedUp(our).toLowerCase(Locale.ROOT), indexDoc)));
+    }
+
+    private static boolean meet(final String theirs, final String ours, final boolean indexDoc) {
         if (ours.equals(theirs)) {
             return true;
         }
-        if (ElasticIndexDoc.TYPE.equals(claim.doc().getType()) && theirs.contains("*")) {
+        if (indexDoc && theirs.contains("*")) {
             // An Elastic Index doc naming a pattern searches across indices (every version of a feed's, say): it
             // names no one index for its own.
             return false;
         }
         return Globs.matches(theirs, ours) || Globs.matches(ours, theirs);
+    }
+
+    /// @param pipelineUuid A pipeline.
+    /// @param indexName    Its index name, perhaps with variables.
+    /// @param extraFeeds   Feeds it processes beside its processor filters' (a build's feeds).
+    /// @return The names it writes to, its variables filled in where their values are known ([IndexNameValues]);
+    /// the name as it is when it has none, or when its XSLTs or feeds can't be read.
+    private List<String> filledFor(final String pipelineUuid, final String indexName, final Set<String> extraFeeds) {
+        if (IndexNamePatterns.variables(indexName).isEmpty()) {
+            return List.of(indexName);
+        }
+        try {
+            final Set<String> feeds = new TreeSet<>(extraFeeds);
+            feeds.addAll(JsonValues.strings(pipelineFeeds.pipelineFeeds(pipelineUuid).get("feeds")));
+            return IndexNameValues.filled(indexName, agreements.indexingXslts(pipelineUuid), feeds);
+        } catch (final RuntimeException e) {
+            // Unread, every variable is any value: the name claims, and is claimed by, more, never less.
+            LOGGER.debug(() -> LogUtil.message("Index name {} of pipeline {} not filled in: {}", indexName,
+                    pipelineUuid, e.getMessage()));
+            return List.of(indexName);
+        }
+    }
+
+    // A new version's candidate name, filled in with its XSLTs and the build's feeds (a production original's own
+    // filters' feeds are not the new version's).
+    private List<String> newVersionNames(final String build,
+                                         final Set<String> own,
+                                         final String pipelineUuid,
+                                         final String indexName) {
+        if (pipelineUuid == null || IndexNamePatterns.variables(indexName).isEmpty()) {
+            return List.of(indexName);
+        }
+        try {
+            final Set<String> feeds = buildFeeds(build);
+            if (own.contains(pipelineUuid)) {
+                feeds.addAll(JsonValues.strings(pipelineFeeds.pipelineFeeds(pipelineUuid).get("feeds")));
+            }
+            return IndexNameValues.filled(indexName, agreements.indexingXslts(pipelineUuid), feeds);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Index name {} of pipeline {} not filled in: {}", indexName,
+                    pipelineUuid, e.getMessage()));
+            return List.of(indexName);
+        }
+    }
+
+    // The feeds a build works from: its own (test) feeds and the existing feeds it was started on.
+    private Set<String> buildFeeds(final String build) {
+        final Set<String> feeds = new TreeSet<>();
+        try {
+            guard.folderContents(build).stream()
+                    .filter(doc -> FeedDoc.TYPE.equals(doc.type()))
+                    .forEach(doc -> feeds.add(doc.name()));
+            feeds.addAll(JsonValues.strings(records.load(build).get(BuildRecords.SOURCE_FEEDS)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Feeds of build {} not read: {}", build, e.getMessage()));
+        }
+        return feeds;
     }
 
     // The UUIDs of a build's documents; none for no build.
@@ -241,19 +355,18 @@ class ProductionIndexes {
         return own;
     }
 
-    // Every pipeline but those left out that sets an index name of its own, and every Elastic Index doc but those.
+    // Every pipeline but those left out that sets an index name, of its own or inherited (a template's
+    // {feed}-events, say), and every Elastic Index doc but those.
     private List<Claim> outside(final Set<String> own) {
         final List<Claim> claims = new ArrayList<>();
-        for (final PipelineIndex.Entry entry : pipelineIndex.read().values()) {
+        final Map<String, PipelineIndex.Entry> pipelines = pipelineIndex.read();
+        for (final PipelineIndex.Entry entry : pipelines.values()) {
             if (own.contains(entry.uuid())) {
                 continue;
             }
-            for (final PipelineProperty property : NullSafe.list(NullSafe.get(entry.own(),
-                    PipelineData::getAddedProperties))) {
-                final String written = NullSafe.get(property.getValue(), PipelinePropertyValue::getString);
-                if (INDEX_NAME.equals(property.getName()) && NullSafe.isNonBlankString(written)) {
-                    claims.add(new Claim(new DocRef(PipelineDoc.TYPE, entry.uuid(), entry.name()), written));
-                }
+            for (final String written : indexNames(entry, pipelines)) {
+                claims.add(new Claim(new DocRef(PipelineDoc.TYPE, entry.uuid(), entry.name()), written,
+                        filledFor(entry.uuid(), written, Set.of())));
             }
         }
         final List<DocRef> elastic = pipelineIndex.list(ElasticIndexDoc.TYPE);
@@ -275,11 +388,36 @@ class ProductionIndexes {
         return claims;
     }
 
-    // The claims matching the name, a template's left out: a template writes nothing itself, and its index name
-    // (often with variables, {feed}-events) would make every child of it look like production.
-    private List<Claim> matching(final List<Claim> all, final String indexName) {
+    // The index names a pipeline sets in its own layer; else those of the nearest parent that sets any.
+    private static List<String> indexNames(final PipelineIndex.Entry entry,
+                                           final Map<String, PipelineIndex.Entry> pipelines) {
+        final Set<String> seen = new HashSet<>();
+        PipelineIndex.Entry at = entry;
+        for (int depth = 0; at != null && seen.add(at.uuid()) && depth <= MAX_INHERITANCE_DEPTH; depth++) {
+            final List<String> names = new ArrayList<>();
+            for (final PipelineProperty property : NullSafe.list(NullSafe.get(at.own(),
+                    PipelineData::getAddedProperties))) {
+                final String written = NullSafe.get(property.getValue(), PipelinePropertyValue::getString);
+                if (INDEX_NAME.equals(property.getName()) && NullSafe.isNonBlankString(written)) {
+                    names.add(written);
+                }
+            }
+            if (!names.isEmpty()) {
+                return names;
+            }
+            at = at.parentUuid() == null
+                    ? null
+                    : pipelines.get(at.parentUuid());
+        }
+        return List.of();
+    }
+
+    // The claims matching any of the names, a template's left out: a template writes nothing itself, and its index
+    // name (often with variables, {feed}-events) would make every child of it look like production (its children
+    // claim it, filled in for their own feeds).
+    private List<Claim> matching(final List<Claim> all, final List<String> indexNames) {
         return all.stream()
-                .filter(claim -> matches(claim, indexName))
+                .filter(claim -> matches(claim, indexNames))
                 .filter(claim -> !PipelineDoc.TYPE.equals(claim.doc().getType()) || !template(claim.doc()))
                 .toList();
     }
@@ -304,9 +442,10 @@ class ProductionIndexes {
     // What a candidate index name matches, said: in Stroom, then on the cluster.
     private List<String> matched(final Map<String, Object> destination,
                                  final String index,
-                                 final List<Claim> all) {
+                                 final List<Claim> all,
+                                 final Function<String, List<String>> fill) {
         final List<String> matched = new ArrayList<>();
-        final List<Claim> claims = matching(all, index);
+        final List<Claim> claims = matching(all, fill.apply(index));
         if (!claims.isEmpty()) {
             matched.add("in Stroom, " + said(claims));
         }
@@ -327,13 +466,16 @@ class ProductionIndexes {
     }
 
     // The first of the next few versions of the name that matches nothing, or null.
-    private String freeName(final Map<String, Object> destination, final String index, final List<Claim> all) {
+    private String freeName(final Map<String, Object> destination,
+                            final String index,
+                            final List<Claim> all,
+                            final Function<String, List<String>> fill) {
         String candidate = index;
         for (int i = 0; i < FREE_NAMES_TRIED; i++) {
             candidate = VersionNames.nextIndexName(candidate);
             final Map<String, Object> next = new LinkedHashMap<>(destination);
             next.put("index name", candidate);
-            if (matching(all, candidate).isEmpty() && existingIndexes.check(next).state() == State.ABSENT) {
+            if (matching(all, fill.apply(candidate)).isEmpty() && existingIndexes.check(next).state() == State.ABSENT) {
                 return candidate;
             }
         }
@@ -369,15 +511,28 @@ class ProductionIndexes {
 
     /// A document outside a build that writes to, or names, an Elasticsearch index name.
     ///
-    /// @param doc       The pipeline (its own indexName) or Elastic Index doc.
-    /// @param indexName The index name it writes to or names.
-    record Claim(DocRef doc, String indexName) {
+    /// @param doc       The pipeline (its indexName, its own or inherited) or Elastic Index doc.
+    /// @param indexName The index name it writes to or names, as set.
+    /// @param filled    The names it stands for: a pipeline's with the variables filled in whose values are known
+    ///                  for it ([IndexNameValues]), one a feed; else the name itself.
+    record Claim(DocRef doc, String indexName, List<String> filled) {
 
-        /// @return It, said, e.g. `pipeline 'Acme-Events-V1.0-Indexing' writes to 'acme-events-v1'`.
+        /// @param doc       The pipeline or Elastic Index doc.
+        /// @param indexName The index name it writes to or names, standing for itself.
+        Claim(final DocRef doc, final String indexName) {
+            this(doc, indexName, List.of(indexName));
+        }
+
+        /// @return It, said, e.g. `pipeline 'Acme-Events-V1.0-Indexing' writes to 'acme-events-v1'`, with the names
+        /// filled in when they differ (`writes to '{feed}-events' ('acme-events')`).
         String said() {
-            return PipelineDoc.TYPE.equals(doc.getType())
-                    ? "pipeline '" + doc.getName() + "' writes to '" + indexName + "'"
-                    : "Elastic Index doc '" + doc.getName() + "' names '" + indexName + "'";
+            if (!PipelineDoc.TYPE.equals(doc.getType())) {
+                return "Elastic Index doc '" + doc.getName() + "' names '" + indexName + "'";
+            }
+            return "pipeline '" + doc.getName() + "' writes to '" + indexName + "'"
+                   + (filled.equals(List.of(indexName))
+                    ? ""
+                    : " (" + String.join(", ", filled.stream().map(name -> "'" + name + "'").toList()) + ")");
         }
     }
 }

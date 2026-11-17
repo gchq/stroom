@@ -137,7 +137,7 @@ public final class TemplateCheck {
     /// @param docs      The documents, as read by [#jsonXmlDocuments(String)].
     /// @param indexName The pipeline's index, or null.
     /// @param ecs       The Elastic Common Schema, for a template composing ecs@mappings.
-    /// @return `{compatible, blocking, pipeline_changes, notes, documents_checked, fields_written}`, as
+    /// @return `{compatible, blocking, pipeline_changes, notes, warnings, documents_checked, fields_written}`, as
     /// check_index_template gives it.
     public static Map<String, Object> compare(final Map<String, Object> body,
                                               final List<Map<String, Object>> docs,
@@ -156,9 +156,10 @@ public final class TemplateCheck {
             blocking.add("index_patterns " + ToolText.list(patterns) + " do not match the pipeline's index '"
                          + indexName + "', so this template would not apply to it");
             changes.add(change(null, "template does not cover index '" + indexName + "'",
-                    "change index_patterns to include '" + indexName + "*', or set the indexing pipeline's "
-                    + "indexName to an index they match"));
+                    "change index_patterns to include '" + IndexNamePatterns.wildcarded(indexName) + "', or set the "
+                    + "indexing pipeline's indexName to an index they match"));
         }
+        final List<String> warnings = new ArrayList<>(digitWildcards(patterns, indexName));
         final Map<String, Object> mappings = TemplateMappings.mappingsOf(body);
         final Mapping mapping = TemplateMappings.readMapping(mappings);
         if (body.get("data_stream") != null) {
@@ -242,9 +243,35 @@ public final class TemplateCheck {
         result.put("blocking", blocking);
         result.put("pipeline_changes", changes);
         result.put("notes", notes);
+        result.put("warnings", warnings);
         result.put("documents_checked", (long) docs.size());
         result.put("fields_written", new ArrayList<>(new TreeSet<>(emitted.keySet())));
         return result;
+    }
+
+    /// Patterns ending in a digit then a wildcard, which also cover longer numbers: `acme-events-v1*` covers
+    /// `acme-events-v10` too, whose own template (or none) is meant. Not blocking: the user may mean it. A pattern
+    /// that is the pipeline's own index name with its variables as wildcards (`acme-v1{_suffix}` as `acme-v1*`) is
+    /// what the variable needs.
+    ///
+    /// @param patterns  The template's index_patterns.
+    /// @param indexName The pipeline's index, or null.
+    /// @return A warning for each such pattern.
+    static List<String> digitWildcards(final List<String> patterns, final String indexName) {
+        final String own = JsonValues.truthy(indexName)
+                ? IndexNamePatterns.wildcarded(indexName)
+                : null;
+        return patterns.stream()
+                .filter(IndexNamePatterns::endsInDigitThenWildcard)
+                .filter(pattern -> !pattern.equals(own))
+                .map(pattern -> "index pattern '" + pattern + "' ends in a digit then *, so it also covers indices "
+                                + "whose number only starts with that digit ('"
+                                + pattern.substring(0, pattern.length() - 1) + "0' too): use the exact index name"
+                                + (JsonValues.truthy(indexName)
+                        ? " ('" + IndexNamePatterns.wildcarded(indexName) + "')"
+                        : "")
+                                + " unless the user means it to")
+                .toList();
     }
 
     // The template's own problems: an alias of a field it doesn't map, a date format not checked here.

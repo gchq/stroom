@@ -25,6 +25,7 @@ import stroom.ai.api.ElasticIndexTemplates.Status;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.indexing.EcsSchema;
+import stroom.ai.impl.tools.indexing.IndexNamePatterns;
 import stroom.ai.impl.tools.indexing.IndexTemplates.NamedTemplate;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.docref.DocRef;
@@ -245,7 +246,9 @@ class IndexExamples {
         }
         final String name = NullSafe.nonBlankStringElse(doc.getIndexName(), doc.getName());
         final Map<String, Object> body = new LinkedHashMap<>();
-        body.put("index_patterns", List.of(name + "*"));
+        // The doc's own name, exact (or as the pattern it names, a variable a wildcard): name* would also cover
+        // name0 to name9 and their kin.
+        body.put("index_patterns", IndexNamePatterns.templatePatterns(name));
         body.put("template", Map.of("mappings", Map.of("properties", properties)));
         final List<String> examples = kept.stream()
                 .limit(6)

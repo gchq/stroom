@@ -145,8 +145,8 @@ class IndexingRuns {
         productionIndexes.refuseProduction(pipeline, destination);
         if (newVersion) {
             final Optional<String> build = guard.buildOf(new DocRef(PipelineDoc.TYPE, pipeline.getUuid()));
-            final Optional<String> taken = build.flatMap(name -> productionIndexes.taken(name, destination,
-                    "Nothing was processed."));
+            final Optional<String> taken = build.flatMap(name -> productionIndexes.taken(name, pipeline.getUuid(),
+                    destination, "Nothing was processed."));
             if (taken.isPresent()) {
                 throw new ToolRefusal("Pipeline '" + pipeline.getName() + "' is a new version whose index name has "
                                       + "been taken since it was made. " + taken.get() + " Give the new version "

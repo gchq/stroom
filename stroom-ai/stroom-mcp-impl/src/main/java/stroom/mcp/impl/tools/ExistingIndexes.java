@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.api.ElasticIndexPresence;
 import stroom.ai.api.ElasticIndexPresence.Presence;
 import stroom.ai.api.ElasticIndexPresence.State;
+import stroom.ai.impl.tools.indexing.IndexNamePatterns;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.search.elastic.shared.ElasticClusterDoc;
@@ -35,7 +36,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 /// Whether the index an Elasticsearch indexing pipeline writes to already exists on its cluster, holding documents,
 /// before the pipeline first indexes into it. Seen in testing: a build's first indexing run went into a data stream of
@@ -52,10 +52,8 @@ class ExistingIndexes {
     /// The status of a reply stopping before processing into an index that already holds documents.
     static final String STATUS = "index_exists";
 
-    // An index name's variables, e.g. `{year}`, filled per document by the indexing filter: looked up as a pattern.
     // The most data streams and indices listed for deletion; the rest are counted.
     private static final int MAX_LISTED = 20;
-    private static final Pattern VARIABLE = Pattern.compile("\\{[^}]+?}");
 
     private final Provider<ElasticIndexPresence> presenceProvider;
 
@@ -86,9 +84,10 @@ class ExistingIndexes {
     }
 
     /// @param index An index name, perhaps with variables, e.g. `ecs-acme-{year}`.
-    /// @return It as looked up: each variable a wildcard.
+    /// @return It as looked up: each variable a wildcard (a variable is filled per document by the indexing
+    /// filter).
     static String lookedUp(final String index) {
-        return VARIABLE.matcher(index).replaceAll("*");
+        return IndexNamePatterns.wildcarded(index);
     }
 
     /// @param presence    What the index name stands for.
