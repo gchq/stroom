@@ -302,7 +302,9 @@ public final class DataGridStories {
                 // nothing of its own under them
                 .story("EmptyWithErrors", DataGridStories::emptyWithErrors)
                 .withPlay(play -> {
-                    play.waitFor(() -> play.expect(play.getByText("The search timed out")).toBeVisible());
+                    // Its lines are one element, split by <br>
+                    play.waitFor(() -> play.expect(play.getByText(TextMatch.containing("The search timed out")))
+                            .toBeVisible());
                     play.expect(play.querySelector(EMPTY_MESSAGE)).not().toBeVisible();
                     play.expect(play.querySelector(SCROLLER)).not().toHaveAccessibleDescription();
                 })

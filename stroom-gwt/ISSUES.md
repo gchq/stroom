@@ -1075,6 +1075,19 @@ Menu button neither focused nor with its tooltip. It had both at Large, Small an
 on a rerun of the story at Medium with the leak check. A timing flake in the screenshot, not a
 fault; worth a look if it comes back.
 
+**Schedule Box's dialog 1px higher** (17 November 2026, the empty grid message review fixes' full
+run at Medium with the leak check, 4 workers): Quick Settings Are Grouped Buttons' screenshot had
+the whole Change Schedule dialog, the same size, 1px higher than in the run before. Nothing in the
+change touches it (it has no grid), and a rerun of the Schedule Box stories matched the earlier run
+exactly. A centring flake in the screenshot, within the ±1px a CSS change may move things.
+
+**Report Editor leaks on a first attempt** (17 November 2026, both empty grid message full runs):
+Settings Editable failed the leak check on both attempts (35 DOM nodes and 5 listeners kept per
+close), and Settings, Notifications Reveal Does Not Dirty and Execution Scheduled Only failed it on a
+first attempt (33 to 284 nodes). Each passed on a rerun of the Report Editor stories with the leak
+check. Worth a look if one keeps failing: the leak check at 4 workers may be measuring before the
+closed editor's parts are collected.
+
 ### Sample data installs the old visualisations, with no assets
 
 **Re-checked** (6 November 2026, against the code): the code is as recorded (`SetupSampleData`, `ReleasedContentPacks`; `content-packs.json` now names `v8.0-beta.5` (12 November 2026)), still not run against a database; the splitter overlay and its stories exist. The explorer resized beside a dashboard needs a check in the app.
