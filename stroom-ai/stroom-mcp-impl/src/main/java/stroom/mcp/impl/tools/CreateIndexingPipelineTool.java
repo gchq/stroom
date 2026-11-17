@@ -164,7 +164,9 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
                              + "Events feed's streams as events_stream_ids.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(BUILD_ARG, CreateFeedTool.BUILD_DESCRIPTION)
-                        .addStringProperty(NAME_ARG, "Pipeline name, e.g. 'Acme - Indexing'.")
+                        .addStringProperty(NAME_ARG, "Pipeline name, with its version, e.g. "
+                                                     + "'Acme-V1.0-Indexing' (promotion files it under that "
+                                                     + "version).")
                         .addStringProperty(TEMPLATE_UUID_ARG, "Indexing template (find_pipeline_templates "
                                                               + "stage=indexing), or a discovery one (stage="
                                                               + "discovery).")

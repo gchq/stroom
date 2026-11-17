@@ -220,6 +220,66 @@ public class Consent {
         return Optional.of(chosen);
     }
 
+    /// Several questions put to the user in one form, each with answers suggested (buttons, the proposal first) and
+    /// a box for the user's own: where each role's documents go at promotion, say.
+    ///
+    /// @param call      The call asking.
+    /// @param context   The call's context.
+    /// @param action    The tool asking, e.g. `promote_build`.
+    /// @param intro     What the questions are about, the form's message.
+    /// @param questions The questions by key, each with its suggested answers (the proposal first), in the order
+    ///                  asked.
+    /// @return The answer to each, by its key, trimmed: the proposal where one is left blank; empty when the session
+    /// can't show a form now, or the form would be too large to show (the agent then asks the user).
+    /// @throws ToolRefusal if the user declined the form or closed it unanswered.
+    public Optional<Map<String, String>> answerEach(final ToolCall call,
+                                                    final ToolCallContext context,
+                                                    final String action,
+                                                    final String intro,
+                                                    final Map<String, Question> questions) {
+        if (NullSafe.isEmptyMap(questions) || !context.userQuestions().canAsk()) {
+            return Optional.empty();
+        }
+        final Map<String, Object> properties = new LinkedHashMap<>();
+        final Map<String, String> fieldKeys = new LinkedHashMap<>();
+        questions.forEach((key, question) -> {
+            final String fieldKey = "a" + (fieldKeys.size() + 1);
+            fieldKeys.put(fieldKey, key);
+            final Map<String, Object> field = new LinkedHashMap<>();
+            field.put("type", "string");
+            field.put("title", heading(question.text()));
+            // Shown as buttons, with a box for the user's own answer under them.
+            field.put("examples", List.copyOf(question.options()));
+            properties.put(fieldKey, field);
+        });
+        final Map<String, Object> schema = new LinkedHashMap<>();
+        schema.put("type", "object");
+        schema.put("properties", properties);
+        if (unshowable(context, action, intro, schema)) {
+            return Optional.empty();
+        }
+        final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + questions.keySet()).substring(0, 16);
+        final ElicitResult answer = context.userQuestions().ask(call.name(),
+                UserQuestions.formCallId(call.id(), "answers-" + digest), intro, schema);
+        if (answer.action() == ElicitResult.Action.CANCEL) {
+            throw new ToolRefusal(notAgreed(heading(intro), action, true));
+        }
+        if (answer.action() != ElicitResult.Action.ACCEPT) {
+            throw new Declined("The user declined: " + heading(intro));
+        }
+        final Map<String, Object> content = NullSafe.map(answer.content());
+        final Map<String, String> answers = new LinkedHashMap<>();
+        fieldKeys.forEach((fieldKey, key) -> {
+            final String given = NullSafe.trim(NullSafe.get(content.get(fieldKey), String::valueOf));
+            answers.put(key, NullSafe.isBlankString(given)
+                    ? questions.get(key).options().getFirst()
+                    : given);
+        });
+        auditLogProvider.get().processed(context.session(), null, "answer", action + ": " + heading(intro),
+                "answered: " + answers, true);
+        return Optional.of(answers);
+    }
+
     /// Proposals put to the user in one form: a yes/no for each item (its title, and a description that may hold a
     /// table), and one free-text field.
     ///

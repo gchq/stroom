@@ -2721,6 +2721,11 @@ one XSLT is the group's, which keeps its mapping. A check ending `(promotion wai
   its common module or helpers (a promoted module changes only by a new version), `module_versions` says so in one
   informational line, naming the groups and the versions (`SourceTypeGroups.mixedModuleVersions`: a group the build
   changes as the build has it, the others as production has them).
+  For each new version of an events (or records) pipeline in the build whose predecessor's Events promoted pipelines
+  read (their filters name it: `ProcessorFilters.followOnPipelines`), `follow_on_review` names them and says
+  `review_coverage pipeline_uuid=<predecessor> changed_pipeline_uuid=<new version>` checks them against the new
+  version's Events before promotion, which gives each a new filter, disabled, reading them
+  (`BuildStatusTool.followOnReview`, 2026-11-17).
 
 ### `promote_build`
 
@@ -2757,14 +2762,13 @@ review doesn't offer to move it); its source type registry always goes beside th
 Each document left in the workspace is marked `kept_at_promotion` in the build's record, with its version then
 (`kept_version`), so it doesn't hold the build open on its feed until it is changed.
 An aggregated feed's modules (`modulesBeside`: helpers, common module and source type groups, by their `mcp:module`
-marker) and a group's output feed of its own go beside the feed too, unless given a destination, a working copy's
-(written back) or a new version's (its version folder); a group's new version of its XSLT (`version_of` the
-original) goes in its pipeline's version folder, not by its own name (`PromotionLayout.versionFolders` with the
-group XSLTs `following`: seen in e2e, `PEGA security-V2`, named before the user settled the pipeline's `v2`, went in a
-`V2` folder apart from its pipeline); the group pipelines go where the destinations say. A new version of the common module or helpers (`<feed> common V1.1`, 2026-11-17) goes in
-a version folder beside its predecessor (`<feed's folder>/V1.1`), which the build's other documents don't join
-(`PromotionLayout.versionFolders` with the modules `apart`: seen writing the test, the version folder took the
-build's pipeline headed for the feed's folder); nothing promoted is written. The
+marker) and a group's output feed of its own go under the feed too, unless given a destination or a working copy's
+(written back): the common module in `<feed>/Common/V<x.y>` and the helpers in `<feed>/Helpers/V<x.y>` (roles of their
+own, the version after the module's name, none being `V1.0`: `VersionNames.moduleVersion`; a new version, `<feed>
+common V1.1`, beside its predecessor the same way), a group's XSLT with its pipeline in `<feed>/<group>/Events/<the
+pipeline's version>` whatever its own name says (seen in e2e: `PEGA security-V2`, named before the user settled the
+pipeline's `v2`, went in a `V2` folder apart from its pipeline), a group's output feed in `<feed>/<group>/`; nothing
+promoted is written. The
 reference data each group pipeline lacks for its group's lookups (`GroupReferences.changes`, from the registry rows'
 `references`) is listed in the review and the approval form as `pipeline_changes` and added once approved, after the
 moves (forward only: none is removed): the build's pipelines (a new one, a new version, or a working copy's
@@ -2780,7 +2784,8 @@ Promotes a build out of the workspace in two calls. The first works out the whol
 changing anything (`status: needs_review`, a `layout` tree from `PromotionLayout.promotionTree`, and a `review_id`,
 the first 12 hex characters of the tree's SHA-256). The agent shows the tree in the chat; once the user confirms it,
 the second call passes `reviewed=<review_id>` and the user approves a short form bound to that layout (build, document
-count, folders, role subfolders, warnings, processing after promotion; the review id isn't shown, but the answer is
+count, folders, role locations, warnings, processing after promotion, follow-on filters; the review id isn't shown,
+but the answer is
 bound to it through `Consent.Request.boundTo`). `reviewed=true`, or an id
 for another layout, gets the review again (seen: `reviewed=true` on the first call, and the user approved a form whose
 layout was never shown). Any change of destinations changes the tree and so the id.
@@ -2801,23 +2806,39 @@ Where each document goes (`plan`):
   folder. The build's test feed (named `-MCP-TEST`, or recorded `output_for` the feeds it works from) always stays,
   whatever the destinations say, and the layout ends saying so (`testFeedNote`): seen in chat 177, the test feed
   listed under Events and the agent asked the user whether to promote it.
-* Otherwise a destination by document UUID, then the version folder proposed for a new version, then by type. Source
-  notes and reference docs go beside the build's only feed; a pipeline's (or index's) documentation, unless given a
-  destination by its own UUID, goes wherever that document's step goes, role subfolder too (given by UUID, a
-  version folder or the source's own folder: `besideWhatItDocuments`); a
-  verification dashboard goes where the index it searches goes, or with the build's indexing pipeline when the index
-  is from outside the build (seen in VS Code: promotion stopped for want of the dashboard's destination); the
-  documentation of a production pipeline or existing index goes beside it.
-* A new version of a production document (`version_of`, from `copy_pipeline`) goes in a version subfolder beside its
-  predecessor named by its version (`…-V1.1-Events` → `V1.1`), and the version's other new documents headed for that
-  place join it (`PromotionLayout.versionFolders`, `joining`). Documents given a destination of their own keep it,
-  as does a version whose type is given a destination elsewhere than beside its predecessor, so a version and its
-  other documents aren't split (seen in testing: with the version always put beside its predecessor, TWITTER's V1.1
-  pipeline went under /Feeds/Twitter while its XSLT and documentation went to System/MCP Testing/Twitter, the folder
-  given for their type). In an aggregated feed's build, the feed's folder given counts as beside a predecessor in any
-  group's folder there (or in its role or version subfolder): a new version of another group's pipeline goes beside
-  its own predecessor, not in the build's group's folder, and v3 beside v2's version folder (both seen in e2e once a
-  promoted pipeline was copied only as a new version).
+* Otherwise a destination by document UUID (exactly that folder), else by type. Source notes and reference docs go
+  beside the build's only feed; a pipeline's (or index's) documentation, unless given a destination by its own UUID,
+  goes wherever that document's step goes (`besideWhatItDocuments`); a verification dashboard goes where the index it
+  searches goes (`withWhatItSearches`), or with the build's indexing pipeline when the index is from outside the
+  build (seen in VS Code: promotion stopped for want of the dashboard's destination); the documentation of a
+  production pipeline or existing index goes beside it.
+* **Role first, then version** (`layOut`, `PromotionLayout.rolePath`; decided by the user 2026-11-17): a document of
+  a role (its build role subfolder, or a pipeline's stage: a CEF flattener, Events in and CEF to Kafka, is the
+  forwarding stage, `CEF`; a reference loader `Reference`) goes in `<source's own folder>/<Role>/<version>` where its
+  role's root is the feed's own, else `<role root>/<source's folder name>/<version>` with no role folder, whatever
+  folder its type was given (so with the source's folder known no destination is needed). A pipeline's version is its
+  name's version token; a pipeline with none goes in `V1.0` and the layout warns `Pipeline '...' has no version in
+  its name (e.g. -V1.0-): placed in V1.0.` The role's other documents go with their pipeline: the one whose version
+  their name holds, else the one sharing most of their name (of their source type group first). Replaced role
+  subfolders made only when more than one role moved (and `role_subfolders`).
+* **A new version** (`version_of`, from `copy_pipeline`) goes in a sibling version folder of its predecessor's
+  (`PromotionLayout.predecessor`, `nextVersionPath`): `<feed>/Events/V1.0` gives `<feed>/Events/V1.1`,
+  `<root>/<feed>/V1.0` gives `<root>/<feed>/V1.1`; a predecessor laid out the old way (`<feed>/<Role>`,
+  `<feed>/V1.0/<Role>`, `<feed>/<Role>/v2`, `<feed>` alone) keeps its place, the new version beside it, with a role
+  folder where the predecessor sits in the feed's (or a group's) folder. Unless its role's root was changed in the
+  review: then it is laid out afresh under that root. A new version with no other place is laid out beside its
+  predecessor.
+* **Each role's root** (`roleRoots`, `RoleRoot`): a destination keyed by the role (`{"Indexing": "/Elastic
+  Indices"}`), else the user's earlier answer (`promotion_roots` in the build record), else the proposal: a new
+  version's predecessor's root, else where the sibling feeds' production pipelines of that role are
+  (`SourceFolders.siblings`: feeds in the feed's root and the folders there holding a feed; `PromotionLayout.siblingRoots`
+  reads, from `PipelineIndex.read()`, pipelines in a folder named for a sibling, not templates others inherit from nor
+  in the workspace, at most 200, by stage role, and takes the root most are under), else the feed's own root. Options:
+  the proposal, then the feed's own location where it differs; the user may type another. With forms, all roles in one
+  form on the review's call (`Consent.answerEach`: suggested answers as buttons, a blank one taking the proposal),
+  recorded so the approval call lays out what was reviewed; without, the reply's `role_locations` (`role`,
+  `location`, `why`, `options`) for the agent to ask in the chat. The tree ends with `Where each role goes ...: -
+  <Role>: <root> (<why>)`, so the review id and the approval cover them.
 * **A folder of the source's own** (`SourceFolders`): the source is the feed the build works from, else its
   registry's feed, else its one new feed. Where that feed's folder is a parent of sources (a subfolder of it, not a
   role or version subfolder, holds a feed: the siblings' convention), the build's documents go in
@@ -2836,9 +2857,8 @@ Where each document goes (`plan`):
   common module, helpers, source notes) stay in the source's own folder; a document given another folder keeps it, a
   version goes in its version folder, a working copy is written back in place. A build of no group (and an
   assessment) is placed as before. Seen in chat 178: the group's XSLT at the feed's folder beside the common module
-  and helpers, apart from its pipeline.
-* Role subfolders (`Events`/`Records`, `Indexing`, `CEF`, `Reference`) are kept under each destination only when
-  documents of more than one role move, unless `role_subfolders=false`.
+  and helpers, apart from its pipeline. Since 2026-11-17 with version folders: `<feed>/<group>/<Role>/<version>`, or
+  `<role root>/<feed>/<group>/<version>` for a role whose root is elsewhere.
 
 **Production changed since the copy.** `copy_pipeline` records in each working copy's build record entry the version
 its original had when copied (`BuildRecords.COPY_OF_VERSION`, `copy_of_version`). Before the layout is built (on the
@@ -2874,14 +2894,25 @@ discards and keeps. The build's record entries go, the build folder is removed i
 and `PromotionProcessing.createPromotionFilters` makes a feed-wide filter per promoted pipeline, **disabled**, with no
 minimum creation time.
 
-* **Arguments**: `build` (required), `destinations` (object, or JSON text: type or document UUID → explorer path, in
-  any form `WriteGuard.folderParts` takes, or `keep`), `reviewed` (a `review_id`), `role_subfolders` (default true).
+* **Arguments**: `build` (required), `destinations` (object, or JSON text: type, role or document UUID → explorer
+  path, in any form `WriteGuard.folderParts` takes, or `keep`), `reviewed` (a `review_id`).
 * **Returns**: first call `{status: needs_review, build, layout, review_id, warnings?, processing_after_promotion?,
-  pipeline_changes?, index_changes?, hint}`. After approval: `build`, `layout`, `folders` (each with a link to open
-  it), `updated_in_place`, `promoted` (what was done), `promoted_with_warnings`, `processing_filters` (each with
-  `pipeline_link`, and `before_enabling` for an index that must start fresh) with a `next` telling the user to review
-  and enable them, and `user_actions` (buttons: the filters, and disabling an earlier version's enabled filters "if
-  you choose").
+  role_locations?, follow_on_filters?, pipeline_changes?, index_changes?, hint}`. After approval: `build`, `layout`,
+  `folders` (each with a link to open it), `updated_in_place`, `promoted` (what was done), `promoted_with_warnings`,
+  `processing_filters` (each with `pipeline_link`, and `before_enabling` for an index that must start fresh) with a
+  `next` telling the user to review and enable them, `follow_on_filters`, `next_steps` and `user_actions` (buttons:
+  enabling the new filters; none disables a filter).
+* **Follow-on filters** (`PromotionProcessing.followOns`, `createFollowOnFilters`; decided by the user 2026-11-17): for
+  each new events (or records) version promoted, every filter outside the build and every other build with a
+  `Pipeline IS_DOC_REF <predecessor>` term (a CEF flattener's, an indexing pipeline's), not one selecting stream ids,
+  gets a sibling on its pipeline: the same selection, priority, task limit and minimum creation time, the Pipeline
+  term naming the new version, created **disabled** (`copied_from`, `reads`, `in_place_of`; its enable button after
+  the new version's own filter). One already made (promoted again) isn't made twice. The filter it follows is never
+  changed, disabled or removed. The review lists them (`follow_on_filters`) and so does the approval form. The
+  result's `next_steps`: `1. Enable the new version's filters when ready: filter <id> ('<pipeline>'); ...` then `2.
+  Once the new version's output is right, the admin disables or removes the earlier version's filters (the tools
+  never do): '<old>': filter <ids>; '<follow-on>': filter <id> (reading the Events of '<old>').` The buttons that
+  disabled a predecessor's enabled filters are gone (the user: that is the admin's).
 * **Refuses**: no `build`; a build with no documents; `destinations` that isn't an object; every document without a
   destination, named in one refusal with the destinations already placed (seen: Delinea SecretServer, one failed call
   per type); a blocking check (`Not promoted: ... once promoted, the pipeline's documentation can only change through a

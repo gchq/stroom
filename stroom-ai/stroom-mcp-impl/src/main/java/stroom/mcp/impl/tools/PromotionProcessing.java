@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.StroomLinks;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.ExpressionItem;
@@ -28,6 +29,7 @@ import stroom.query.api.ExpressionTerm;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -40,6 +42,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.LongSupplier;
+import java.util.function.Predicate;
 
 /// What a build's pipelines go on processing once promoted, and the feed-wide filters made for them, disabled for the
 /// user to enable, for `promote_build` to use.
@@ -53,6 +56,9 @@ class PromotionProcessing {
     private final PipelineDocs pipelineDocs;
     private final ProductionIndexes productionIndexes;
     private final LongSupplier clockMs;
+    // Every processor filter the user can see, for the pipelines reading a new version's predecessor's Events; none
+    // in tests that make this themselves.
+    private Provider<ProcessorFilters> processorFiltersProvider;
 
     /// @param filterWrites     Makes and reads processor filters.
     /// @param streamProcessing Reads streams' meta.
@@ -91,6 +97,134 @@ class PromotionProcessing {
         this.pipelineDocs = pipelineDocs;
         this.productionIndexes = productionIndexes;
         this.clockMs = clockMs;
+    }
+
+    /// The processor filters of every pipeline the user can see (set by injection; none in tests that make this
+    /// themselves): a new events version's follow-on pipelines are found by them.
+    ///
+    /// @param processorFilters Reads every processor filter.
+    @Inject
+    void setProcessorFilters(final Provider<ProcessorFilters> processorFilters) {
+        this.processorFiltersProvider = processorFilters;
+    }
+
+    /// The pipelines reading a predecessor's Events once a new version of it is promoted (decided by the user,
+    /// 2026-11-17): every filter outside the build with a `Pipeline IS_DOC_REF <predecessor>` term (a CEF flattener's,
+    /// an indexing pipeline's), each to gain a filter of the same selection reading the new version's Events. A
+    /// filter selecting streams by id (a build's sample) is passed over: it selects the predecessor's own streams.
+    ///
+    /// @param versions The new events (or records) versions promoted, each with its predecessor.
+    /// @param outside  True for a pipeline outside the build and every other build.
+    /// @return Each filter to follow, in order.
+    List<FollowOn> followOns(final Map<DocRef, DocRef> versions, final Predicate<DocRef> outside) {
+        if (versions.isEmpty() || processorFiltersProvider == null) {
+            return List.of();
+        }
+        final List<ProcessorFilter> all = processorFiltersProvider.get().all();
+        final List<FollowOn> out = new ArrayList<>();
+        versions.forEach((version, before) -> {
+            for (final ProcessorFilter filter : all) {
+                final String uuid = filter.getPipelineUuid();
+                if (uuid == null || uuid.equals(before.getUuid()) || uuid.equals(version.getUuid())) {
+                    continue;
+                }
+                final DocRef pipeline = new DocRef(PipelineDoc.TYPE, uuid, pipelineName(filter));
+                final ExpressionOperator expression = ProcessorFilterWrites.expressionOf(filter);
+                if (ProcessorFilterWrites.pipelineUuids(ProcessorFilterWrites.pipelineTerms(expression))
+                            .contains(before.getUuid())
+                    && ProcessorFilterWrites.selectedIds(expression).isEmpty()
+                    && outside.test(pipeline)) {
+                    out.add(new FollowOn(pipeline, filter, before, version));
+                }
+            }
+        });
+        return out;
+    }
+
+    // A filter's pipeline's name, as the filter has it or read; its UUID when neither says.
+    private String pipelineName(final ProcessorFilter filter) {
+        if (NullSafe.isNonBlankString(filter.getPipelineName())) {
+            return filter.getPipelineName();
+        }
+        try {
+            return NullSafe.nonBlankStringElse(NullSafe.get(pipelineDocs.read(filter.getPipelineUuid()),
+                    PipelineDoc::getName), filter.getPipelineUuid());
+        } catch (final RuntimeException e) {
+            return filter.getPipelineUuid();
+        }
+    }
+
+    /// Makes each follow-on pipeline's new filter: the same selection as the filter it follows, the Pipeline term
+    /// naming the new version in place of its predecessor, created disabled for the user to enable. The filter it
+    /// follows is never changed, disabled or removed: that is the admin's, once the new version's output is right
+    /// (decided by the user, 2026-11-17). One made already (a promotion called again) isn't made twice.
+    ///
+    /// @param links    How the caller links to Stroom.
+    /// @param followOns What [#followOns] found.
+    /// @param made      What [#createPromotionFilters] made, whose new events filters are enabled first.
+    /// @return What was made for each, in order.
+    List<Map<String, Object>> createFollowOnFilters(final StroomLinks links,
+                                                    final List<FollowOn> followOns,
+                                                    final List<Map<String, Object>> made) {
+        final List<Map<String, Object>> out = new ArrayList<>();
+        for (final FollowOn followOn : followOns) {
+            final ExpressionOperator expression = repointed(ProcessorFilterWrites.expressionOf(followOn.reading()),
+                    followOn.predecessor().getUuid(), followOn.version());
+            final Map<String, Object> result = new LinkedHashMap<>();
+            final Optional<ProcessorFilter> already = filterWrites.filters(followOn.pipeline()).stream()
+                    .filter(filter -> Objects.equals(ProcessorFilterWrites.expressionOf(filter), expression))
+                    .findFirst();
+            final ProcessorFilter filter = already.orElseGet(() -> filterWrites.createFilter(followOn.pipeline(),
+                    expression, followOn.reading().getPriority(), followOn.reading().getMaxProcessingTasks(),
+                    followOn.reading().getMinMetaCreateTimeMs(), false));
+            result.put("filter_id", filter.getId());
+            result.put("pipeline", followOn.pipeline().getName());
+            result.put("reads", followOn.version().getName());
+            result.put("in_place_of", followOn.predecessor().getName());
+            result.put("copied_from", followOn.reading().getId());
+            result.put("enabled", filter.isEnabled());
+            if (already.isPresent()) {
+                result.put("existing", true);
+            }
+            result.put("pipeline_link", links.documentTarget(followOn.pipeline()));
+            if (!filter.isEnabled()) {
+                // After the new version's own filter, so it reads Events the new version wrote.
+                final List<String> after = made.stream()
+                        .filter(entry -> followOn.version().getName().equals(entry.get("pipeline"))
+                                         && !Boolean.TRUE.equals(entry.get("existing")))
+                        .map(entry -> "enable-" + entry.get("filter_id"))
+                        .toList();
+                result.put(UserActionEntries.USER_ACTIONS, List.of(UserActionEntries.enableFilter(links,
+                        filter.getId(), followOn.pipeline(), "reads the Events of '" + followOn.version().getName()
+                                                             + "' in place of '" + followOn.predecessor().getName()
+                                                             + "'", after)));
+            }
+            out.add(result);
+        }
+        return out;
+    }
+
+    /// @param expression A filter's expression.
+    /// @param before     The UUID of the pipeline its Pipeline terms name.
+    /// @param version    The pipeline they name instead.
+    /// @return The expression with each such term naming the new pipeline, the rest as it was.
+    static ExpressionOperator repointed(final ExpressionOperator expression,
+                                        final String before,
+                                        final DocRef version) {
+        final List<ExpressionItem> children = new ArrayList<>();
+        for (final ExpressionItem child : NullSafe.list(expression.getChildren())) {
+            if (child instanceof final ExpressionOperator operator) {
+                children.add(repointed(operator, before, version));
+            } else if (child instanceof final ExpressionTerm term
+                       && ProcessorFilters.PIPELINE.equals(term.getField())
+                       && before.equals(NullSafe.get(term.getDocRef(), DocRef::getUuid))) {
+                children.add(term.copy().docRef(new DocRef(PipelineDoc.TYPE, version.getUuid(), version.getName()))
+                        .build());
+            } else {
+                children.add(child);
+            }
+        }
+        return expression.copy().children(children).build();
     }
 
     /// What each promoted pipeline should go on processing: the feeds and stream types of its sample filters.
@@ -413,6 +547,22 @@ class PromotionProcessing {
         Entry {
             Objects.requireNonNull(pipeline, "pipeline");
             extraTerms = List.copyOf(NullSafe.list(extraTerms));
+        }
+    }
+
+    /// A pipeline outside the build reading a predecessor's Events, and the filter it reads them by.
+    ///
+    /// @param pipeline    The follow-on pipeline.
+    /// @param reading     Its filter naming the predecessor.
+    /// @param predecessor The predecessor.
+    /// @param version     The new version, whose Events its new filter reads.
+    record FollowOn(DocRef pipeline, ProcessorFilter reading, DocRef predecessor, DocRef version) {
+
+        /// @return What the approval says of it.
+        String said() {
+            return "'" + pipeline.getName() + "': a new filter, disabled, as filter " + reading.getId()
+                   + " selects but reading the Events of '" + version.getName() + "' in place of '"
+                   + predecessor.getName() + "' (filter " + reading.getId() + " is left as it is)";
         }
     }
 

@@ -169,17 +169,19 @@ is held while a clash remains, and refuses a plan naming another group's index n
 
 ## Promotion and later builds
 
-* Promotion moves the common module, helpers and the registry (always; the survey doc stays in the build) beside
-  the feed (in a folder of the source's own where the feed's folder holds other sources' folders; the build's test
-  feed is never promoted: don't offer it), and the group's own documents into `<that folder>/<group>/`: its output
-  feed there, its pipeline, XSLT and documentation in `Events/`, its index, indexing pipeline and dashboard in
-  `Indexing/` (a later build of the feed into its own group's folder). Its review shows the pipeline changes
-  (reference data each group pipeline lacks, only ever added) and the index changes (fields added, forward only).
+* Promotion moves the registry (always; the survey doc stays in the build) and source notes beside the feed (in a
+  folder of the source's own where the feed's folder holds other sources' folders; the build's test feed is never
+  promoted: don't offer it), the common module and helpers into `<that folder>/Common/<version>` and
+  `Helpers/<version>`, and the group's own documents into `<that folder>/<group>/`: its output feed there, its
+  pipeline, XSLT and documentation in `Events/<version>`, its index, indexing pipeline and dashboard in
+  `Indexing/<version>` (the version from the pipeline's name; an Indexing location elsewhere, chosen in the review,
+  gives `<there>/<feed>/<group>/<version>`). Its review shows the pipeline changes (reference data each group pipeline
+  lacks, only ever added) and the index changes (fields added, forward only).
 * One open build per aggregated feed: another is refused, naming the open one. Finish (promote) or abandon it first.
 * A later build never changes a promoted common or helpers module in place: a change to one (a shared call added,
   the helpers out of date) makes a new version of it, `<feed> common V1.1` (one with no version is V1.0), imported
   only by the build's group; the feed's other groups keep the versions they import. Promotion puts it in a version
-  folder beside its predecessor. When groups import different versions, `module_versions` (build_status,
+  folder beside its predecessor's (`Common/V1.1`). When groups import different versions, `module_versions` (build_status,
   review_coverage) says so: information, nothing to fix. An older build's working copy of a module is refused at
   promotion: delete it and save the group again (build_translation_xslt) to make the new version.
 * **Forward only**, per group: a source type moved out of parked is translated from the next processing on. Tell the

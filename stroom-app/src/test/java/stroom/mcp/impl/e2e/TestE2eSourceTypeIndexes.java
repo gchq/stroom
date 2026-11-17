@@ -384,9 +384,9 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
                 "template_uuid", template)));
         final List<Long> integrationEvents = events(integration, stream);
         final Map<String, Object> securityVersion = agreed("copy_pipeline", args("build", second, "source_uuid",
-                security, "new_name", feed + " " + SECURITY));
+                security, "new_name", feed + " " + SECURITY + " V1.0"));
         assertThat(securityVersion).doesNotContainKey("working_copy");
-        assertThat(String.valueOf(securityVersion.get("name"))).isNotEqualTo(feed + " " + SECURITY);
+        assertThat(String.valueOf(securityVersion.get("name"))).isNotEqualTo(feed + " " + SECURITY + " V1.0");
         final String securityCopy = uuidOf(securityVersion);
         final List<Long> securityCopyEvents = events(securityCopy, stream);
         final String eventsFeed = meta(integrationEvents.getFirst()).getFeedName();

@@ -100,4 +100,15 @@ class TestVersionNames {
     void aSharedModulesNameIsItsBaseOrABaseAndVersion(final String base, final String name, final boolean is) {
         assertThat(VersionNames.isModuleName(base, name)).isEqualTo(is);
     }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "ACME common          | V1.0",
+            "ACME common V1.1     | V1.1",
+            "ACME-V2 helpers      | V1.0",
+            "ACME-V2 helpers v1.3 | v1.3"})
+    void aSharedModulesVersionFolderIsTheVersionAfterItsNameOrV10(final String name, final String version) {
+        // Decided by the user (2026-11-17): a module filed under <feed>/Common/<version>, the first one V1.0.
+        assertThat(VersionNames.moduleVersion(name)).isEqualTo(version);
+    }
 }

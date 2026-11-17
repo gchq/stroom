@@ -153,4 +153,4 @@ label, values of another type or longer than their key takes, a key twice in a l
 Event value it carries, and lists what each kind of event sends nowhere. A pipeline whose XSLT this server saved
 comes back with its plan; one written by hand, with the mapping its lines imply, to check before saving a new XSLT
 from it. To change one in production: `copy_pipeline` makes a new version in a build, `draft_cef_mapping uuid=<its
-XSLT> overrides=[...]` saves the change, then step, review and document it; `promote_build` puts it beside the old.
+XSLT> overrides=[...]` saves the change, then step, review and document it; `promote_build` puts it in a version folder beside the old (`CEF/V1.1`).

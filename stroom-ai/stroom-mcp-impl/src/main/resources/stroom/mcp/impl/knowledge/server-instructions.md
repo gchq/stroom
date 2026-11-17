@@ -125,6 +125,8 @@ Rules for every run:
 - Build everything in one build (start_build, with the feeds when known: it returns the standing instructions
   too); nothing leaves the workspace until promote_build is approved. Before promoting, build_status shows what
   the build's pipelines still lack (a clean step of their current code, documentation): resolve it first.
+  Promotion files each role's documents in `<feed>/<Role>/<version>` by the version in the pipeline's name: name a
+  first version's pipelines with V1.0 (e.g. `Acme-V1.0-Events`) unless the user names them otherwise.
 - The user confirms key details and approves risky actions in a form their client shows (MCP elicitation); in
   Stroom AI, a form in the chat. A call refused for want of a form or an approval is the user's to resolve: tell
   them why, and don't look for another way round it. needs_review: show what it returns in the chat, then call

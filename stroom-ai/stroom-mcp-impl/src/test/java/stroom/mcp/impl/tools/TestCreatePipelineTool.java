@@ -301,11 +301,11 @@ class TestCreatePipelineTool {
                                                                  + TEMPLATE + "\"}",
                 BuildToolCalls.answering(Map.of())));
 
-        assertThat(made).containsEntry("name", "ACME ACME mail").containsEntry("group", "ACME mail")
+        assertThat(made).containsEntry("name", "ACME ACME mail V1.0").containsEntry("group", "ACME mail")
                 .containsEntry("source_types", List.of("MailIn"));
         assertThat(made.get("reference_data")).isEqualTo(List.of("ACME-USERS via Reference Loader"));
         assertThat(String.valueOf(made.get("filled_from_build"))).contains("streamAppender.feed = ACME-MAIL-EVENTS");
-        final PipelineDoc doc = pipelines.pipelineNamed("ACME ACME mail");
+        final PipelineDoc doc = pipelines.pipelineNamed("ACME ACME mail V1.0");
         assertThat(PipelineDocs.addedProperties(doc)).contains(
                 new PipelineProperty("translationFilter", "xslt", new PipelinePropertyValue(new DocRef("XSLT", "g1",
                         "ACME mail"))));
@@ -315,7 +315,7 @@ class TestCreatePipelineTool {
             assertThat(property.getValue().getEntity().getUuid()).isEqualTo("f-mail");
         });
         Mockito.verify(groups).pipelineMade(Mockito.any(), Mockito.eq(BUILD), Mockito.eq("ACME mail"),
-                Mockito.eq(new DocRef(PipelineDoc.TYPE, doc.getUuid(), "ACME ACME mail")));
+                Mockito.eq(new DocRef(PipelineDoc.TYPE, doc.getUuid(), "ACME ACME mail V1.0")));
 
         // One pipeline a group: a second running its XSLT is refused.
         final ToolResult again = call("{\"build\": \"acme-v1\", \"name\": \"Another\", \"group\": \"ACME mail\", "
