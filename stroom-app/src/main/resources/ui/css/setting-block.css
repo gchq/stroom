@@ -19,8 +19,10 @@
    hint (or button) to change it, named BEM style (block, block__element, block--modifier).
 */
 .setting-block {
+    position: relative;
     border-radius: 6px;
     padding: 5px;
+    /* Room for the ⋮, at the top right */
     padding-right: 20px;
 
 	transition: background-color .3s;
@@ -30,10 +32,10 @@
 }
 
 /* In a dialog (Change Status, Change Assigned To) the highlight reaches out by its padding, so the
-   setting's label and value line up with the dialog's title, as a form's fields do */
+   setting's label and value line up with the dialog's title and sit as far under it and above the
+   buttons as a form's fields do */
 .dialog__content .setting-block {
-    margin-left: -5px;
-    margin-right: -5px;
+    margin: -5px;
 }
 
 .setting-block:hover {
@@ -50,8 +52,11 @@
     -webkit-transition: opacity .3s;
     -moz-transition: opacity .3s;
     -o-transition: opacity .3s;
-    flex-grow: 1;
-    flex-direction: row-reverse;
+    /* At the top right, in the padding kept for it, rather than on a row of its own above the
+       setting, which left space over the setting's label even while the ⋮ was hidden */
+    position: absolute;
+    top: 5px;
+    right: 2px;
 }
 
 /* The ⋮ itself, laid out as its drawing alone, so it is no taller than the drawing */
