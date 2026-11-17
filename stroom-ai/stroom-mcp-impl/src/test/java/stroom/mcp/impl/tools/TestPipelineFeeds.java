@@ -139,6 +139,61 @@ class TestPipelineFeeds {
                 Mockito.eq(DictionaryDoc.class));
     }
 
+    @Test
+    void aFilterNamingNoFeedOrAFeedItLeavesOutReadsEveryFeed() {
+        // Found in review (2026-11-18): a filter of Type only read every feed, but only the other filter's Feed was
+        // taken as read; a NOT_EQUALS Feed was taken as a feed read.
+        filters.put("p", List.of(filter(1, true, term("Feed", Condition.EQUALS, "A", null)),
+                filter(2, true, term("Type", Condition.EQUALS, "Events", null))));
+        assertThat(pipelineFeeds.enumeratedFeeds("p")).isEmpty();
+        filters.put("p", List.of(filter(1, true, term("Feed", Condition.NOT_EQUALS, "B", null))));
+        assertThat(pipelineFeeds.enumeratedFeeds("p")).isEmpty();
+        assertThat(pipelineFeeds.filterFeeds(List.of(term("Feed", Condition.NOT_EQUALS, "B", null)),
+                new HashMap<>(), false)).isEmpty();
+        // A feed under NOT, or in an OR beside another field, or a wildcard.
+        filters.put("p", List.of(withExpression(ExpressionOperator.builder().op(Op.NOT)
+                .addTerm(term("Feed", Condition.EQUALS, "B", null)).build())));
+        assertThat(pipelineFeeds.enumeratedFeeds("p")).isEmpty();
+        filters.put("p", List.of(withExpression(ExpressionOperator.builder().op(Op.OR)
+                .addTerm(term("Feed", Condition.EQUALS, "A", null))
+                .addTerm(term("Type", Condition.EQUALS, "Events", null)).build())));
+        assertThat(pipelineFeeds.enumeratedFeeds("p")).isEmpty();
+        filters.put("p", List.of(filter(1, true, term("Feed", Condition.EQUALS, "ACME-*", null))));
+        assertThat(pipelineFeeds.enumeratedFeeds("p")).isEmpty();
+        // An upstream pipeline whose filters can't be listed.
+        Mockito.doReturn(new ProcessorFilterAccess.Filters(List.of(), "refused")).when(processorFilterAccess)
+                .filtersOf(Mockito.argThat(ref -> ref != null && "hidden".equals(ref.getUuid())));
+        filters.put("p", List.of(filter(1, true, term("Pipeline", Condition.IS_DOC_REF, null,
+                new DocRef(PipelineDoc.TYPE, "hidden", "Hidden")))));
+        assertThat(pipelineFeeds.enumeratedFeeds("p")).isEmpty();
+    }
+
+    @Test
+    void aFilterWhoseFeedsArePositiveSelectionsInAnAndPathReadsThoseFeeds() {
+        Mockito.when(streamReader.meta(42)).thenReturn(Meta.builder().id(42).feedName("SAMPLE-FEED").build());
+        filters.put("upstream", List.of(filter(9, true, term("Feed", Condition.IS_DOC_REF, null,
+                new DocRef("Feed", "f9", "ACME-VPN")))));
+        filters.put("p", List.of(
+                filter(1, true, term("Feed", Condition.EQUALS, "A, B", null),
+                        term("Type", Condition.EQUALS, "Events", null)),
+                withExpression(ExpressionOperator.builder().op(Op.AND)
+                        .addTerm(term("Type", Condition.EQUALS, "Events", null))
+                        .addOperator(ExpressionOperator.builder().op(Op.OR)
+                                .addTerm(term("Feed", Condition.IN, "C", null))
+                                .addTerm(term("Feed", Condition.IN_DICTIONARY, null,
+                                        new DocRef(DictionaryDoc.TYPE, "d1", "Firewall feeds"))).build())
+                        // Leaving a feed out of those named narrows them, never widens them.
+                        .addOperator(ExpressionOperator.builder().op(Op.NOT)
+                                .addTerm(term("Feed", Condition.EQUALS, "C", null)).build())
+                        .build()),
+                filter(3, true, term("Id", Condition.EQUALS, "42", null)),
+                filter(4, true, term("Pipeline", Condition.IS_DOC_REF, null,
+                        new DocRef(PipelineDoc.TYPE, "upstream", "Upstream")))));
+
+        assertThat(pipelineFeeds.enumeratedFeeds("p")).hasValueSatisfying(feeds -> assertThat(feeds)
+                .containsExactlyInAnyOrder("A", "B", "C", "FORTIGATE-V1", "PaloAlto-V2", "SAMPLE-FEED", "ACME-VPN"));
+    }
+
     static ProcessorFilter filter(final int id, final boolean enabled, final ExpressionTerm... terms) {
         final ExpressionOperator.Builder expression = ExpressionOperator.builder().op(Op.AND);
         for (final ExpressionTerm term : terms) {
@@ -148,6 +203,14 @@ class TestPipelineFeeds {
                 .id(id)
                 .enabled(enabled)
                 .queryData(QueryData.builder().expression(expression.build()).build())
+                .build();
+    }
+
+    private static ProcessorFilter withExpression(final ExpressionOperator expression) {
+        return ProcessorFilter.builder()
+                .id(7)
+                .enabled(true)
+                .queryData(QueryData.builder().expression(expression).build())
                 .build();
     }
 

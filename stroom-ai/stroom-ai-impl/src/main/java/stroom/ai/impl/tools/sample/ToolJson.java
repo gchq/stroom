@@ -48,10 +48,26 @@ public final class ToolJson {
     /// @return Its value.
     /// @throws JsonDecodeException if it isn't one JSON value, with what is wrong and where.
     public static Object loads(final String text) {
+        return loads(text, false);
+    }
+
+    /// Reads a JSON text as JSON itself has it, not as `json.loads` does: `NaN`, `Infinity` and `-Infinity` are no
+    /// values, and each number is read as written ([NumberText]), as XPath's `json-to-xml()` keeps it. What a held
+    /// value is read with, so the tools and a source type group's XSLT read the same (found in review, 2026-11-18:
+    /// `2.10` read as `2.1`, and `NaN` JSON to the tools alone).
+    ///
+    /// @param text The text.
+    /// @return Its value, its numbers [NumberText].
+    /// @throws JsonDecodeException if it isn't one JSON value, with what is wrong and where.
+    public static Object loadsStrict(final String text) {
+        return loads(text, true);
+    }
+
+    private static Object loads(final String text, final boolean strict) {
         if (text.startsWith("﻿")) {
             throw new JsonDecodeException("Unexpected UTF-8 BOM (decode using utf-8-sig)", text, 0);
         }
-        final Decoder decoder = new Decoder(text);
+        final Decoder decoder = new Decoder(text, strict);
         final Decoded decoded = decoder.rawDecode(decoder.skipWhitespace(0));
         final int end = decoder.skipWhitespace(decoded.end());
         if (end != text.length()) {
@@ -67,7 +83,7 @@ public final class ToolJson {
     /// @return The value and where it ends.
     /// @throws JsonDecodeException if no JSON value starts there.
     public static Decoded rawDecode(final String text, final int at) {
-        return new Decoder(text).rawDecode(at);
+        return new Decoder(text, false).rawDecode(at);
     }
 
     /// @param value A value read by [#loads(String)], or made of the same types.
@@ -310,6 +326,17 @@ public final class ToolJson {
 
     }
 
+    /// A JSON number as written, read by [#loadsStrict(String)].
+    ///
+    /// @param text The number's text, e.g. `2.10` or `1e10`.
+    public record NumberText(String text) {
+
+        @Override
+        public String toString() {
+            return text;
+        }
+    }
+
     /// A text that isn't JSON: what is wrong and where, e.g. `Expecting value: line 1 column 1 (char 0)`.
     public static final class JsonDecodeException extends RuntimeException {
 
@@ -352,10 +379,13 @@ public final class ToolJson {
 
         private final String s;
         private final int length;
+        // JSON itself: no NaN or Infinity, numbers kept as written.
+        private final boolean strict;
 
-        Decoder(final String s) {
+        Decoder(final String s, final boolean strict) {
             this.s = s;
             this.length = s.length();
+            this.strict = strict;
         }
 
         int skipWhitespace(final int from) {
@@ -387,9 +417,13 @@ public final class ToolJson {
                 case 'n' -> constant(idx, "null", null);
                 case 't' -> constant(idx, "true", Boolean.TRUE);
                 case 'f' -> constant(idx, "false", Boolean.FALSE);
-                case 'N' -> constant(idx, "NaN", Double.NaN);
-                case 'I' -> constant(idx, "Infinity", Double.POSITIVE_INFINITY);
-                case '-' -> s.startsWith("-Infinity", idx)
+                case 'N' -> strict
+                        ? null
+                        : constant(idx, "NaN", Double.NaN);
+                case 'I' -> strict
+                        ? null
+                        : constant(idx, "Infinity", Double.POSITIVE_INFINITY);
+                case '-' -> !strict && s.startsWith("-Infinity", idx)
                         ? new Decoded(Double.NEGATIVE_INFINITY, idx + 9)
                         : number(idx);
                 default -> number(idx);
@@ -442,6 +476,9 @@ public final class ToolJson {
                 }
             }
             final String text = s.substring(start, idx);
+            if (strict) {
+                return new Decoded(new NumberText(text), idx);
+            }
             if (isFloat) {
                 return new Decoded(Double.parseDouble(text), idx);
             }

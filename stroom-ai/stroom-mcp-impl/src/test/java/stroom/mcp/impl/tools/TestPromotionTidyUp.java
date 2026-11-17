@@ -133,6 +133,81 @@ class TestPromotionTidyUp {
     }
 
     @Test
+    void aTestIndexADocumentThePromotionMovesSearchesIsSaidUpFrontAndKept() {
+        // Found in review (2026-11-18): a dashboard of the build not named -VERIFY, searching the test index, is
+        // promoted; the test index was tidied up from under it, as only what was outside the build counted.
+        final DocRef index = inBuild(LuceneIndexDoc.TYPE, "IX-MCP-TEST", "ti");
+        world.records().update(BUILD, index, entry -> entry.put(BuildTestIndexes.TEST_INDEX_FOR, "prod-ix"));
+        dashboard("overview", "ACME overview", "ti");
+        dependsOn("ti", new DocRef(DashboardDoc.TYPE, "overview", "ACME overview"));
+        final List<PromotionLayout.Step> steps = docs.stream()
+                .map(doc -> new PromotionLayout.Step(doc, "overview".equals(doc.get("uuid"))
+                        ? PromotionLayout.MOVE
+                        : PromotionLayout.KEEP, "left", null))
+                .toList();
+
+        final PromotionTidyUp.Plan plan = tidyUp.plan(BUILD, docs, steps, tidyUp.testDocs(BUILD, docs,
+                Map.of("ti", "prod-ix")), List.of());
+
+        assertThat(plan.items()).isEmpty();
+        assertThat(plan.passedOver()).containsExactly("test index 'IX-MCP-TEST': used outside the build, by "
+                                                      + "Dashboard 'ACME overview' (the promotion moves it to "
+                                                      + "production)");
+    }
+
+    @Test
+    void aTestFeedAPromotedDocumentNamesIsCheckedAgainOnceItIsPromotedAndKept() {
+        // Found in review (2026-11-18): a promoted pipeline naming the test feed in a property the promotion
+        // doesn't rewrite. Before the promotion it is the build's (a pipeline's names may yet be rewritten): once
+        // promoted, it is outside the build, so the test feed and its streams are kept.
+        inBuild(FeedDoc.TYPE, "A-MCP-TEST", "a");
+        final DocRef pipeline = world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "pp");
+        docs.add(FakeBuildFacts.doc(PipelineDoc.TYPE, "pp", "ACME-Events"));
+        dependsOn("a", pipeline);
+        final List<PromotionLayout.Step> steps = docs.stream()
+                .map(doc -> new PromotionLayout.Step(doc, "pp".equals(doc.get("uuid"))
+                        ? PromotionLayout.MOVE
+                        : PromotionLayout.KEEP, "left", null))
+                .toList();
+        final PromotionTidyUp.Plan plan = tidyUp.plan(BUILD, docs, steps, Set.of("a"), List.of());
+        assertThat(plan.items()).extracting(PromotionTidyUp.Item::doc).extracting(DocRef::getUuid)
+                .containsExactly("a");
+        // Promoted.
+        world.move("pp", world.folder("System/Feeds/Acme").uuid);
+
+        final List<Map<String, Object>> done = tidyUp.apply(BUILD, plan);
+
+        assertThat(done).containsExactly(Map.of("document", "Feed 'A-MCP-TEST'", "deleted", false, "skipped",
+                "left in the workspace: used outside the build since it was promoted, by Pipeline 'ACME-Events'"));
+        Mockito.verify(metaService, Mockito.never()).updateStatus(any(FindMetaCriteria.class), any(), any());
+        assertThat(world.nodes).containsKey("a");
+    }
+
+    @Test
+    void aPromotedPipelinesOwnProcessorFilterOnTheTestFeedDoesNotKeepIt() {
+        // Its filter, made in the build, read the sample's streams in the test feed for the build only.
+        inBuild(FeedDoc.TYPE, "A-MCP-TEST", "a");
+        world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Indexing", "pi");
+        docs.add(FakeBuildFacts.doc(PipelineDoc.TYPE, "pi", "ACME-Indexing"));
+        Mockito.when(processorFilters.pipelinesReading("A-MCP-TEST")).thenReturn(List.of(Map.of("uuid", "pi",
+                "name", "ACME-Indexing")));
+        Mockito.when(metaService.updateStatus(any(FindMetaCriteria.class), Mockito.<Status>isNull(),
+                Mockito.eq(Status.DELETED))).thenReturn(2);
+        final List<PromotionLayout.Step> steps = docs.stream()
+                .map(doc -> new PromotionLayout.Step(doc, "pi".equals(doc.get("uuid"))
+                        ? PromotionLayout.MOVE
+                        : PromotionLayout.KEEP, "left", null))
+                .toList();
+        final PromotionTidyUp.Plan plan = tidyUp.plan(BUILD, docs, steps, Set.of("a"), List.of());
+        world.move("pi", world.folder("System/Feeds/Acme").uuid);
+
+        final List<Map<String, Object>> done = tidyUp.apply(BUILD, plan);
+
+        assertThat(done).containsExactly(Map.of("document", "Feed 'A-MCP-TEST'", "streams_marked_deleted", 2L,
+                "deleted", true));
+    }
+
+    @Test
     void whatReadsATestFeedUncheckedLeavesItAlone() {
         // Fail closed: without Manage Processors the filters reading it can't be read.
         inBuild(FeedDoc.TYPE, "A-MCP-TEST", "a");
@@ -205,6 +280,16 @@ class TestPromotionTidyUp {
         assertThat(PromotionTidyUp.Plan.OFF.on()).isFalse();
         assertThat(PromotionTidyUp.Plan.OFF.offeredIn(Consent.Request.approval("promote_build", "Promote",
                 Map.of())).options()).isEmpty();
+    }
+
+    // The document named depends on the one given (only).
+    private void dependsOn(final String uuid, final DocRef from) {
+        Mockito.when(dependencies.fetchDependencies(any(), any())).thenAnswer(inv -> {
+            final String asked = inv.getArgument(0, DependencyCriteria.class).getPartialName();
+            return asked.endsWith(":=" + uuid)
+                    ? new ResultPage<>(List.of(new Dependency(from, new DocRef("Any", uuid), true)))
+                    : new ResultPage<>(List.of());
+        });
     }
 
     // Everything listed, left in the workspace by the promotion.

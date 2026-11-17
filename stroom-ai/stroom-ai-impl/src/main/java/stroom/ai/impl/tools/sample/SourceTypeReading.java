@@ -44,7 +44,8 @@ import java.util.stream.Collectors;
 ///   is the held value's format itself (`json`, `xml`, `syslog`, `kv`, `text`): a last resort, only on the user's
 ///   word.
 /// * `a | b`: readings tried in order, the first with a value giving it (a reading for each format, where the formats
-///   name it differently: `event>logger_name | event>xml:@logger`).
+///   name it differently: `event>logger_name | event>xml:@logger`). A part's meta attribute is never one of them: it
+///   is read on its own (found in review, 2026-11-18: a source type group's XSLT can't read one among others).
 ///
 /// * `system + event>logger_name`: a **combination**, readings joined by ` + `, each a part read as above, where
 ///   only the parts together tell a source (`system` Teams or Skype, and inside `event`, `logger_name` System or
@@ -411,6 +412,13 @@ public final class SourceTypeReading {
                 problems.add("an empty reading between '|'s: give each reading a field");
                 continue;
             }
+            final String field = alternative.split(HELD, 2)[0].strip();
+            if (alternatives.size() > 1 && SourceTypeMeta.isMeta(field)) {
+                problems.add("'" + field + "': a stream meta attribute is never one of several readings tried in "
+                             + "order (it is one value for a part of a stream, read on its own as '" + field
+                             + "')");
+                continue;
+            }
             final Path path = path(alternative, problems);
             if (path != null) {
                 paths.add(path);
@@ -433,7 +441,7 @@ public final class SourceTypeReading {
                 problems.add("an empty part between ' + 's: give each part a field");
                 continue;
             }
-            if (SourceTypeMeta.isMeta(part)) {
+            if (SourceTypeMeta.isMeta(part) && !part.contains(OR.strip())) {
                 problems.add("'" + part + "': a stream meta attribute is never a part of a combination (it is one "
                              + "value a part of a stream, read on its own)");
                 continue;

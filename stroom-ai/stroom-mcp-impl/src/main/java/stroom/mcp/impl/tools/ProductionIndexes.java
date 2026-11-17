@@ -185,7 +185,7 @@ class ProductionIndexes {
         }
         final List<Claim> claims = claimsOf(build, pipeline, index);
         if (!claims.isEmpty()) {
-            throw new ToolRefusal(productionRefusal(pipeline.getName(), index, claims));
+            throw new ToolRefusal(productionRefusal(pipeline.getName(), index, claims, buildFeeds(build)));
         }
     }
 
@@ -212,7 +212,8 @@ class ProductionIndexes {
                            + "cluster admin to drop it, and don't commit a template under this name (it would "
                            + "change production's own). A change to its pipeline is a new version with an index "
                            + "name of its own (copy_pipeline proposes one, e.g. '"
-                           + VersionNames.nextIndexName(index) + "'), whose template is agreed for that name.");
+                           + VersionNames.nextIndexName(index, buildFeeds(build)) + "'), whose template is agreed for "
+                           + "that name.");
     }
 
     /// Whether an index name is taken, for a new version's index: anything it matches on the cluster (a data
@@ -246,7 +247,7 @@ class ProductionIndexes {
         if (matched.isEmpty()) {
             return Optional.empty();
         }
-        final String free = freeName(destination, index, all, fill);
+        final String free = freeName(destination, index, all, fill, buildFeeds(build));
         return Optional.of("Index name '" + index + "' (looked up as '" + ExistingIndexes.lookedUp(index) + "') is "
                            + "not free for the new version: " + String.join("; ", matched) + ". " + nothingDone
                            + " A new version's index is its own, never one that exists or that something else "
@@ -300,7 +301,12 @@ class ProductionIndexes {
         }
         try {
             final Set<String> feeds = new TreeSet<>(extraFeeds);
-            feeds.addAll(JsonValues.strings(pipelineFeeds.pipelineFeeds(pipelineUuid).get("feeds")));
+            final Optional<Set<String>> read = pipelineFeeds.enumeratedFeeds(pipelineUuid);
+            if (read.isEmpty()) {
+                feeds.clear();
+            } else {
+                feeds.addAll(read.get());
+            }
             return IndexNameValues.filled(indexName, agreements.indexingXslts(pipelineUuid), feeds);
         } catch (final RuntimeException e) {
             // Unread, every variable is any value: the name claims, and is claimed by, more, never less.
@@ -469,10 +475,12 @@ class ProductionIndexes {
     private String freeName(final Map<String, Object> destination,
                             final String index,
                             final List<Claim> all,
-                            final Function<String, List<String>> fill) {
+                            final Function<String, List<String>> fill,
+                            final Set<String> feeds) {
         String candidate = index;
         for (int i = 0; i < FREE_NAMES_TRIED; i++) {
-            candidate = VersionNames.nextIndexName(candidate);
+            // A version token of a feed's name the index name holds is the feed's (found in review, 2026-11-18).
+            candidate = VersionNames.nextIndexName(candidate, feeds);
             final Map<String, Object> next = new LinkedHashMap<>(destination);
             next.put("index name", candidate);
             if (matching(all, fill.apply(candidate)).isEmpty() && existingIndexes.check(next).state() == State.ABSENT) {
@@ -482,14 +490,17 @@ class ProductionIndexes {
         return null;
     }
 
-    private static String productionRefusal(final String pipeline, final String index, final List<Claim> claims) {
+    private static String productionRefusal(final String pipeline,
+                                            final String index,
+                                            final List<Claim> claims,
+                                            final Set<String> feeds) {
         return "Pipeline '" + pipeline + "' writes to Elasticsearch index '" + index + "', which is a production "
                + "index (" + said(claims) + "). A build never writes into a production index, nor empties or drops "
                + "one: processing would put the sample's documents among production's. Nothing was processed, and "
                + "nothing is to be dropped or deleted: don't ask the user or the cluster admin to drop it, or to "
                + "commit a template over its own. For an index the build can index into, make a new version of the "
                + "promoted pipeline with copy_pipeline, which proposes an index name of its own (e.g. '"
-               + VersionNames.nextIndexName(index) + "') and checks it is free.";
+               + VersionNames.nextIndexName(index, feeds) + "') and checks it is free.";
     }
 
     private static String said(final List<Claim> claims) {

@@ -195,6 +195,29 @@ class TestCopyPipelineTool {
     }
 
     @Test
+    void aVersionTokenOfTheFeedsOwnNameIsLeftAndTheNewVersionIsV11() {
+        // Found in review (2026-11-18): CISCO-ASA-V9-EVENTS of feed CISCO-ASA-V9 was taken as V9, its next version
+        // V10, renaming the feed's part.
+        elasticSource("cisco-asa-v9-events", "CISCO-ASA-V9-EVENTS-Indexing", "CISCO-ASA-V9-EVENTS-XSLT",
+                "CISCO-ASA-V9-Events");
+        pipelines.world.records().addSourceFeeds(BUILD, List.of("CISCO-ASA-V9"));
+
+        final Map<String, Object> asked = PipelineWorld.json(call("{\"build\": \"" + BUILD + "\", \"source_uuid\": "
+                                                                  + "\"p1\", \"new_name\": "
+                                                                  + "\"CISCO-ASA-V9-EVENTS-Indexing\"}",
+                BuildToolCalls.context()));
+
+        assertThat(asked).containsEntry("status", "needs_names");
+        @SuppressWarnings("unchecked") final Map<String, Object> names = (Map<String, Object>) asked.get(
+                "new_version_names");
+        assertThat(names).containsEntry("pipeline", "CISCO-ASA-V9-EVENTS-Indexing-V1.1")
+                .containsEntry("major_version_instead", "CISCO-ASA-V9-EVENTS-Indexing-V2.0")
+                .containsEntry("index_name", "cisco-asa-v9-events-v2")
+                .containsEntry("documents", List.of(Map.of("was", "CISCO-ASA-V9-EVENTS-XSLT",
+                        "name", "CISCO-ASA-V9-EVENTS-XSLT-V1.1")));
+    }
+
+    @Test
     void aPromotedPipelineWithNoVersionInItsNameIsProposedV11AndItsIndexV2() {
         // Seen in part B: promotion files a pipeline with no version token in V1.0, but its next version was
         // proposed '-V2'. It is V1.1 (V2.0 for a major change), its index's next version -v2.

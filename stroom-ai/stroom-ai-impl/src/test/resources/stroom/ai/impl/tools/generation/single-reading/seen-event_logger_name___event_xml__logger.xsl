@@ -133,7 +133,7 @@
   <xsl:function name="mcp:reading_xml" as="element()?">
     <!-- The root element of the XML document a held text is, or nothing -->
     <xsl:param name="t" as="xs:string"/>
-    <xsl:if test="starts-with($t, '&lt;')">
+    <xsl:if test="starts-with($t, '&lt;') and not(contains($t, '&lt;!DOCTYPE'))">
       <xsl:try>
         <xsl:sequence select="parse-xml($t)/*"/>
         <xsl:catch>

@@ -2898,8 +2898,12 @@ if empty, and `PromotionProcessing.createPromotionFilters` makes a feed-wide fil
 
 **Tidy-up** (`PromotionTidyUp`; decided by the user 2026-11-17), on by default. What it will do is read on both calls,
 before anything moves (`plan`), and listed in the review's `tidy_up` and at the end of the layout tree (`Tidy-up after
-promotion (the user can untick it in the approval):`), so the approval, bound to the tree, is bound to it too; the
-approval form refers to it (`tidy-up after promotion: <n> test document(s), as listed in the chat`) and has it as a
+promotion (the user can untick it in the approval):`), so the approval, bound to the tree, is bound to it too. The
+review id and the approval are bound to each item's identity, kind and action, not its live counts (the tree shown
+gives the stream counts, sizes and shard counts; the one digested doesn't): a test feed still being written to keeps
+its review id, and only another set of items is reviewed again (found in review, 2026-11-18: bound to the counts, the
+approval never came). The approval form refers to it (`tidy-up after promotion: <n> test document(s), as listed in
+the chat (stream counts and sizes as of the review)`) and has it as a
 choice, `Tidy up the build's test data after promotion (as listed in the chat)`, ticked to start
 (`Consent.Request.withOption`). Unticked, or `tidy_up=false` (no choice is shown then, and the layout is another to
 review), nothing is tidied. Items, in the order carried out after promotion: (1) each test feed's unlocked streams
@@ -2913,7 +2917,14 @@ searches does); the others carry on, and the promotion, already done, never fail
 made is tidied: in the build's own workspace folder, tagged `mcp-managed`, left there by the plan, not a feed the build
 works from, used by nothing outside the build (Stroom's dependencies: a pipeline or dashboard naming it; for a feed,
 any pipeline whose processor filter reads it, `ProcessorFilters.pipelinesReading`; without Manage Processors that
-check fails closed). Each test document passed over is listed with why (`Not tidied up, left in the workspace:`). The
+check fails closed), nor by a document of the build the plan moves to production other than a pipeline (a dashboard
+not named `-VERIFY` searching the test index, say: `used outside the build, by Dashboard '<name>' (the promotion moves
+it to production)`). What uses each item is checked again once the build is promoted, before its first step: a
+promoted document naming it now (a pipeline property naming the test feed that `restoreOutputFeed` doesn't rewrite,
+say) keeps it, `skipped: left in the workspace: used outside the build since it was promoted, by ...`, its later
+steps not run; a promoted pipeline's own processor filters, made in the build, don't keep a test feed (found in
+review, 2026-11-18: checked only before promotion, what the build promoted was still the build's, and production then
+used what was deleted). Each test document passed over is listed with why (`Not tidied up, left in the workspace:`). The
 build record forgets what was deleted. Never touched: the promoted documents, production feeds and their streams, a
 feed the build works from, the survey doc and the build record.
 
@@ -3155,7 +3166,8 @@ read (naming the held formats seen). Records with no value are the `(no value)` 
 
 **A combination of readings.** Where only two fields together tell the source (the wrapper's `system` and, inside
 the held `event`, `logger_name`), the field is their readings joined by ` + ` (`system + event>logger_name`, at most
-four parts, none a meta attribute), its value a key of the parts' values joined by ` ‖ ` (`Teams ‖ System`, a part
+four parts, none a meta attribute, nor one among a part's readings tried in turn), its value a key of the parts'
+values joined by ` ‖ ` (`Teams ‖ System`, a part
 of no value empty), counted, profiled and scoped by the key. A pair is offered first (`SourceTypeCombinations`) only
 where every single candidate offered has a value another reading splits into families (that reading's values with
 shapes of their own, several shapes each: a kind is one shape, never a family) and each part so splits a value of
@@ -3169,7 +3181,8 @@ combination the user names has its rows proposed from the head the same way. Eac
 records spell it, and refused where it reads no value from any record read.
 
 **A stream meta attribute as the source type field.** Only where the user names it, `source_type_field=meta:<Attribute>`
-(never found unasked): the attribute each part of a stream carries in its meta (its receipt headers, what
+(never found unasked; on its own, never among readings tried in turn or a combination's part, which a group's XSLT
+can't read): the attribute each part of a stream carries in its meta (its receipt headers, what
 `stroom:meta()` reads while the part is processed or stepped; `SourceTypeMeta`), for a feed whose source is said by
 a header, not a record's field (a proxy's aggregate of many hosts' parts, each with its own headers). The parts of
 the streams to be read are checked, up to 200 (`PartAttributes`): the attribute is spelt as the first part carrying
@@ -3593,7 +3606,13 @@ copy or new version, that its original writes (inherited from a template too). N
 filled in that Stroom's ElasticIndexingFilter would fill (`IndexNameValues`: it fills `{name}` from the document's
 root field `name`, as written): a field every XSLT of the pipeline writes as a fixed text, or as
 `stroom:feed-name()` (perhaps lower- or upper-cased), once for each feed it processes (its processor filters'
-feeds; for a build pipeline, its build's feeds too). Any other variable is a wildcard. So children of a
+feeds; for a build pipeline, its build's feeds too). Its filters' feeds are taken only where every filter's can be
+listed in full (`PipelineFeeds.enumeratedFeeds`: Feed `EQUALS`, `IN`, `IS_DOC_REF` or `IN_DICTIONARY`, a sample
+stream's `Id`, or an upstream pipeline whose own are listed in full, in an AND or every branch of an OR); a filter of
+a stream type alone, a feed under NOT or `NOT_EQUALS`, a feed wildcard, an unreadable Dictionary, filter list or
+upstream pipeline makes the feed variable a wildcard (found in review, 2026-11-18: a filter of Type only was passed
+over, and the claim narrowed to the other filter's feed). A `NOT_EQUALS` Feed is never a feed read. Any other variable
+is a wildcard. So children of a
 `{feed}-events` template claim only their own feeds' indices (`writes to '{feed}-events' ('acme-a-events')`). The refusal says nothing was processed and nothing is to
 be dropped (`Pipeline '...' writes to Elasticsearch index '...', which is a production index (...) ... Nothing was
 processed, and nothing is to be dropped or deleted ...`): step a working copy clean instead, or make a new version
@@ -4485,7 +4504,11 @@ A new version's names are proposed (`VersionNames`) and confirmed or edited in t
 field: the agent's where they differ from the original's, else the next version's. The pipeline's last version token
 goes up by its last part (`V1.0` to `V1.1`, `V1` to `V2`, `-v1.2` to `-v1.3`), the major bump (`V2.0`) said in the
 form as the other choice; a name with none is taken as `V1.0` (as promotion files it) and gets `-V1.1` (`-V2.0` the
-major choice), before its first `{variable}`. Its documents follow the
+major choice), before its first `{variable}`. A token inside the name of a feed the build works from is the feed's,
+never the pipeline's version (found in review, 2026-11-18: `CISCO-ASA-V9-EVENTS` of feed `CISCO-ASA-V9` was V9, its
+next V10): with no other the name is unversioned, `CISCO-ASA-V9-EVENTS-V1.1`; promotion's layout, a group pipeline's
+default name (`<feed> <group> V1.0` whatever the feed's name holds) and a group XSLT's new version read it the same
+way. A token whose numbers run past 9 digits (a timestamp, `Acme-v20261117093000123456`) is no version. Its documents follow the
 pipeline's change where they hold the same token, else bump their own. For an Elasticsearch indexing pipeline the
 index name's last token goes up (`acme-events-v1` to `acme-events-v2`; none: `-v2`, before the first variable,
 `acme-events{_suffix}` to `acme-events-v2{_suffix}`), the copy's ElasticIndexingFilter gets it, and each Elastic Index
@@ -4862,7 +4885,9 @@ template). A group on a record's field judges each record as below. It reads a r
 (any case), so processing and the survey count the same records as each source type. A group whose field is a
 reading into held values (`SourceTypeReadingXslt`) reads it with functions of its own (mode-prefixed): each held
 value's format told by the tools' rules in their order with their regular expressions (`HeldText`: `json-to-xml`
-of an object or of a JSON string holding one, `parse-xml`, the syslog headers, `tokenize()` counting pairs), then
+of an object or of a JSON string holding one, `parse-xml` of a text holding no `<!DOCTYPE`, the syslog headers,
+`tokenize()` counting pairs; held JSON is JSON itself, `ToolJson.loadsStrict` in the tools: no `NaN` or `Infinity`,
+each number read as written, `2.10` and `1e10`, as `json-to-xml` keeps it), then
 stepped into as the tools step (JSON keys; XML elements and attributes by local name, the first in document order;
 a key's first `key=` value; a syslog field), each reading's value normalised, the first with a value taken; the
 `(no value)` row matches an empty value (`$value = ''`). A reading that isn't one is refused (`groupProblems`). Parity

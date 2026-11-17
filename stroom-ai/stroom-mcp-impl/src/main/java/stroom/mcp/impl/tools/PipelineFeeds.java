@@ -41,6 +41,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -62,6 +63,10 @@ class PipelineFeeds {
     static final int MAX_UPSTREAM_DEPTH = 2;
     /// How deep dictionary imports are followed.
     static final int MAX_IMPORT_DEPTH = 5;
+    /// The conditions on a Feed term that select the feeds it names: any other (NOT_EQUALS, say) selects feeds it
+    /// doesn't name, so names none read.
+    static final Set<Condition> POSITIVE = Set.of(Condition.EQUALS, Condition.EQUALS_CASE_SENSITIVE, Condition.IN,
+            Condition.IS_DOC_REF, Condition.IN_DICTIONARY);
 
     private final ProcessorFilterAccess processorFilterAccess;
     private final DocumentAccess documentAccess;
@@ -166,6 +171,98 @@ class PipelineFeeds {
         return result;
     }
 
+    /// The feeds a pipeline's processor filters can read, when every filter's are known in full: what claims an
+    /// index for the feeds it processes ([ProductionIndexes]). A filter's are known where it selects only feeds by
+    /// name ([#POSITIVE]: one, several between commas, by reference, in a Dictionary), a sample stream by its id, or
+    /// the output of a pipeline whose own are known, and anything else it selects only narrows those: a condition
+    /// in an AND, every branch of an OR. A filter selecting a stream type alone, a feed under NOT or NOT_EQUALS, a
+    /// feed wildcard, an unreadable Dictionary or upstream pipeline reads any feed (found in review, 2026-11-18: a
+    /// filter of Type only was passed over, so its pipeline's `{feed}` index was taken to be only the other
+    /// filter's feed's).
+    ///
+    /// @param pipelineUuid The pipeline.
+    /// @return The feeds; empty when any filter may read a feed not known, or the filters can't be listed.
+    Optional<Set<String>> enumeratedFeeds(final String pipelineUuid) {
+        return enumeratedFeeds(pipelineUuid, 0, new HashMap<>());
+    }
+
+    private Optional<Set<String>> enumeratedFeeds(final String pipelineUuid,
+                                                  final int depth,
+                                                  final Map<Object, Object> known) {
+        final ProcessorFilterAccess.Filters found = processorFilterAccess.filtersOf(pipelineRef(pipelineUuid));
+        if (found == null || found.refused() != null) {
+            return Optional.empty();
+        }
+        final Set<String> feeds = new TreeSet<>();
+        for (final ProcessorFilter filter : NullSafe.list(found.filters())) {
+            final ExpressionOperator expression = NullSafe.get(filter.getQueryData(), QueryData::getExpression);
+            final Optional<Set<String>> selected = selected(expression, depth, known);
+            if (selected.isEmpty()) {
+                return Optional.empty();
+            }
+            feeds.addAll(selected.get());
+        }
+        return Optional.of(feeds);
+    }
+
+    // The feeds an expression item selects, when they are known in full; empty when it may select any feed.
+    private Optional<Set<String>> selected(final ExpressionItem item,
+                                           final int depth,
+                                           final Map<Object, Object> known) {
+        if (item instanceof final ExpressionOperator operator) {
+            final List<ExpressionItem> children = NullSafe.list(operator.getChildren()).stream()
+                    .filter(ExpressionItem::enabled)
+                    .toList();
+            final ExpressionOperator.Op op = Objects.requireNonNullElse(operator.op(), ExpressionOperator.Op.AND);
+            if (op == ExpressionOperator.Op.NOT || children.isEmpty()) {
+                return Optional.empty();
+            }
+            final List<Optional<Set<String>>> each = children.stream()
+                    .map(child -> selected(child, depth, known))
+                    .toList();
+            if (op == ExpressionOperator.Op.OR && each.stream().anyMatch(Optional::isEmpty)) {
+                return Optional.empty();
+            }
+            // An OR's are every branch's; an AND's are within any branch known (all of them, as a bound).
+            final List<Set<String>> knownSets = each.stream().flatMap(Optional::stream).toList();
+            if (knownSets.isEmpty()) {
+                return Optional.empty();
+            }
+            final Set<String> out = new TreeSet<>();
+            knownSets.forEach(out::addAll);
+            return Optional.of(out);
+        }
+        return item instanceof final ExpressionTerm term
+                ? termFeeds(term, depth, known)
+                : Optional.empty();
+    }
+
+    // The feeds a term selects, when they are known in full.
+    private Optional<Set<String>> termFeeds(final ExpressionTerm term,
+                                            final int depth,
+                                            final Map<Object, Object> known) {
+        final Condition condition = term.getCondition();
+        if (MetaFields.FIELD_FEED.equals(term.getField()) && condition != null && POSITIVE.contains(condition)) {
+            final Set<String> feeds = filterFeeds(List.of(term), known, false);
+            return feeds.isEmpty() || feeds.stream().anyMatch(feed -> feed.contains("*") || feed.contains("?"))
+                    ? Optional.empty()
+                    : Optional.of(feeds);
+        }
+        if (ID.equals(term.getField()) && Condition.EQUALS.equals(condition)) {
+            final Set<String> feeds = filterFeeds(List.of(term), known, false);
+            return feeds.isEmpty()
+                    ? Optional.empty()
+                    : Optional.of(feeds);
+        }
+        final DocRef ref = term.getDocRef();
+        if (PIPELINE.equals(term.getField()) && (Condition.IS_DOC_REF.equals(condition)
+                                                 || Condition.EQUALS.equals(condition))
+            && ref != null && ref.getUuid() != null && depth < MAX_UPSTREAM_DEPTH) {
+            return enumeratedFeeds(ref.getUuid(), depth + 1, known);
+        }
+        return Optional.empty();
+    }
+
     @SuppressWarnings("unchecked")
     private static List<Map<String, Object>> outputOf(final Map<String, Object> entry) {
         return (List<Map<String, Object>>) entry.computeIfAbsent("output_of", k -> new ArrayList<>());
@@ -200,7 +297,8 @@ class PipelineFeeds {
         return out;
     }
 
-    /// The feeds a processor filter reads: Feed EQUALS (one, or several between commas), IS_DOC_REF (the feed doc:
+    /// The feeds a processor filter names as read ([#POSITIVE] conditions only: a NOT_EQUALS Feed is not one read):
+    /// Feed EQUALS (one, or several between commas), IS_DOC_REF (the feed doc:
     /// its name is in the reference, with no value), IN_DICTIONARY (the feeds a Dictionary lists, and its
     /// imports'), or with no Feed term, the feed of the first stream its Id terms pick (filters on sample
     /// streams). Seen on a production Stroom: 34 filters named their feed by IS_DOC_REF and 6 by a dictionary,
@@ -213,7 +311,9 @@ class PipelineFeeds {
     Set<String> filterFeeds(final List<ExpressionTerm> terms, final Map<Object, Object> known, final boolean lower) {
         final Set<String> feeds = new LinkedHashSet<>();
         for (final ExpressionTerm term : terms) {
-            if (!MetaFields.FIELD_FEED.equals(term.getField())) {
+            // A term with no condition is taken as Stroom's default, EQUALS.
+            if (!MetaFields.FIELD_FEED.equals(term.getField())
+                || (term.getCondition() != null && !POSITIVE.contains(term.getCondition()))) {
                 continue;
             }
             final DocRef ref = term.getDocRef();
