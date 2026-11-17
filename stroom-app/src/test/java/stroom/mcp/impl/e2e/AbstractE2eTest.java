@@ -1171,6 +1171,18 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
     }
 
     /// @param uuid A document's UUID.
+    /// @return True if the explorer still has it.
+    boolean exists(final String uuid) {
+        return securityContext.asProcessingUserResult(() -> explorerNodeService.getNodeByUuid(uuid).isPresent());
+    }
+
+    /// @param id A stream's id.
+    /// @return Its status, whatever it is (deleted included).
+    Status status(final long id) {
+        return securityContext.asProcessingUserResult(() -> metaService.getMeta(id, true).getStatus());
+    }
+
+    /// @param uuid A document's UUID.
     /// @return Its explorer tags.
     Set<String> tags(final String uuid) {
         return securityContext.asProcessingUserResult(() -> explorerNodeService.getNodeByUuid(uuid)

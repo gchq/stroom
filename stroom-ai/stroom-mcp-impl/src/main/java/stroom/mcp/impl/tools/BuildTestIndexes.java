@@ -55,8 +55,9 @@ import java.util.Set;
 /// A Lucene index doc outside the build, named by a build pipeline's IndexingFilter, gets a test index in the build
 /// that mirrors it (its settings and fields) with the fields of the pipeline's kept index plan added, named
 /// `<INDEX>-MCP-TEST` and recorded against the production index ([#TEST_INDEX_FOR]). The pipeline's index property
-/// is set to it before any processing; verify_index searches it in the production index's place. Promotion leaves the
-/// test index in the workspace (it holds only the sample's documents), writes the working copy's XSLT back (the
+/// is set to it before any processing; verify_index searches it in the production index's place. Promotion never
+/// promotes the test index (it holds only the sample's documents; [PromotionTidyUp] deletes its shards, then it,
+/// unless the user keeps it), writes the working copy's XSLT back (the
 /// working-copy pipeline itself is deleted) and adds the new fields to the production index, and points a promoted
 /// pipeline back at the production index ([#restoreIndex]). An Elasticsearch index is written to by its index name on
 /// the cluster, which the build can't mirror without the cluster's templates: a build pipeline writing to a
@@ -483,7 +484,7 @@ class BuildTestIndexes {
                     : "the build's") + "), a mirror of production index " + productionName + " with the build's "
                    + "new fields: the production index is never written to by the build. verify_index with "
                    + "index_uuid=" + productionUuid + " searches the test index. Promotion adds the new fields to "
-                   + productionName + " and leaves the test index in the workspace; indexing production Events into "
+                   + productionName + " and tidies the test index up; indexing production Events into "
                    + productionName + " is then the user's.";
         }
     }

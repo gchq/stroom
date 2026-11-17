@@ -72,7 +72,7 @@ uploaded, whatever sample files the workspace holds: its streams are stepped and
 and create_processor_filter with their stream ids), the server writing their Events to a test feed it makes in the
 build, never into the production feed; only sample files the user chooses instead go to a test feed of their own
 (create_feed user_samples=). Then stage 2 indexes those Events, as for a new source, and promotion gives the pipeline
-its filter on the feed.
+its filter on the feed and tidies up the test feed and test indexes, as its review lists, unless the user unticks it.
 
 Samples (a new source): ask for every sample file the user has. Files on their disk: start_onboarding files=[their paths], then
 create_feed, upload_sample files=[the same paths], and start_onboarding again with the build and stream_ids, which

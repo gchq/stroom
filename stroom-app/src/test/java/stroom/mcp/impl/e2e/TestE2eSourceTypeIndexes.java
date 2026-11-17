@@ -368,6 +368,8 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         final String securityXslt = uuidOf(json("save_xslt", args("build", first, "name", securityIndex + "-XSLT",
                 "index_plan", securityPlan)));
         indexed(first, securityIndex, indexing, securityXslt, securityIndexDoc, securityEvents, security);
+        // Counted before promotion, whose tidy-up marks the build's test feed's streams deleted.
+        final long securityCount = eventCount(securityEvents);
         promote(first, Map.of("Pipeline", folder, "XSLT", folder, "Index", folder));
 
         // The second build: the integration group, its Events into the same feed (the default), and the security
@@ -423,7 +425,6 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         flushIndexShards();
 
         // Each index holds its own group's documents alone.
-        final long securityCount = eventCount(securityEvents);
         final long integrationCount = eventCount(integrationEvents);
         assertThat(securityCount).isPositive();
         assertThat(integrationCount).isPositive();
@@ -482,7 +483,8 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
                 "index_plan", securityPlan)));
         final String securityIndexing = indexed(first, securityIndex, indexing, securityXslt, indexDoc,
                 securityEvents, security);
-        promote(first, Map.of("Pipeline", folder, "XSLT", folder, "Index", folder));
+        // Kept (tidy_up=false): the later build steps and processes the sample's Events again.
+        promote(first, Map.of("Pipeline", folder, "XSLT", folder, "Index", folder), false);
         final long count = eventCount(securityEvents);
         assertThat(count).isPositive();
         assertThat(documents(indexDoc)).isEqualTo(count);
@@ -542,17 +544,20 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
 
         // Promoted: the review says the production index gains the plan's new field (no registry in this build:
         // any build's indexing, not only an aggregated feed's group), the new version and its XSLT go beside the
-        // original, which is left as it was, the test index is left in the workspace, and the production index's
-        // documents are still the first build's alone.
+        // original, which is left as it was, the test index is tidied up (its shards, then it, deleted), and the
+        // production index's documents are still the first build's alone.
         final Map<String, Object> laterDestinations = Map.of("Pipeline", folder, "XSLT", folder, "Index", folder);
         final Map<String, Object> review = json("promote_build", args("build", later, "destinations",
                 laterDestinations));
         assertThat(review).containsEntry("status", "needs_review");
         assertThat(String.valueOf(review.get("index_changes"))).contains("index " + securityIndex,
                 "adds NewVersionOnly", "forward only");
+        assertThat(String.valueOf(review.get("tidy_up"))).contains("test index '");
         promote(later, laterDestinations);
         assertThat(documents(indexDoc)).isEqualTo(count);
-        assertThat(folderOf(testIndex)).contains(later);
+        assertThat(documents(testIndex)).as("the test index's shards are deleted").isZero();
+        assertThat(exists(testIndex)).as("the test index doc is deleted").isFalse();
+        assertThat(exists(indexDoc)).isTrue();
         assertThat(readXslt(copyXslt).getDescription()).contains("NewVersionOnly");
         assertThat(readXslt(securityXslt).getDescription()).doesNotContain("NewVersionOnly");
         assertThat(folderOf(copy)).isNotEqualTo(folderOf(securityIndexing));
@@ -685,11 +690,16 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
 
     // promote_build: the layout shown first (needs_review), then promoted once the user agrees in the form.
     private void promote(final String build, final Map<String, Object> destinations) {
+        promote(build, destinations, true);
+    }
+
+    // Promoted, its test data tidied up after or kept.
+    private void promote(final String build, final Map<String, Object> destinations, final boolean tidyUp) {
         final Map<String, Object> review = json("promote_build", args("build", build, "destinations",
-                destinations));
+                destinations, "tidy_up", tidyUp));
         assertThat(review).as("the layout first: %s", review).containsEntry("status", "needs_review");
         final Map<String, Object> promoted = json("promote_build", args("build", build, "destinations",
-                destinations, "reviewed", review.get("review_id")));
+                destinations, "reviewed", review.get("review_id"), "tidy_up", tidyUp));
         dump("promote_build " + build, promoted);
         assertThat(promoted).as("promoted: %s", promoted).containsKey("promoted");
     }

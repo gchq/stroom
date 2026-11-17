@@ -182,7 +182,7 @@ class TestE2eElasticHandover extends AbstractE2eTest {
                 .containsEntry("status", "needs_review");
         final Map<String, Object> proposed = body((String) proposal.get("dev_tools"));
         assertThat((List<Object>) proposed.get("index_patterns")).as("template covers the pipeline's index")
-                .containsExactly(index + "*");
+                .containsExactly(index);
         assertThat(proposed).as("built from the plan alone: a data stream").containsEntry("data_stream", Map.of());
         final Map<String, Object> selfCheck = map(proposal, "self_check");
         assertThat(selfCheck).as("proposal fits the documents the pipeline writes: %s", selfCheck.get("blocking"))
@@ -295,7 +295,7 @@ class TestE2eElasticHandover extends AbstractE2eTest {
         final Map<String, Object> agreedBody = JsonUtil.readValue(JsonUtil.writeValueAsString(
                 map(agreedTemplate, "template"), false), Map.class);
         assertThat((List<Object>) agreedBody.get("index_patterns")).as("the new index's pattern")
-                .containsExactly(index + "*");
+                .containsExactly(index);
         assertThat((List<Object>) agreedBody.get("composed_of")).as("with the example's components")
                 .containsExactly("ecs-base");
         assertThat(map(map(map(agreedBody, "template"), "settings"), "index")).as("and settings")

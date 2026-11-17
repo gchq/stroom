@@ -74,7 +74,8 @@ import java.util.stream.Collectors;
 /// `promote_build` - promotes a build out of the workspace once the user has seen where everything goes and approved
 /// it. New documents are moved to their destination folders, working copies written back over their originals after a
 /// backup, and feed-wide processor filters made, disabled, for the promoted pipelines: all through Stroom's explorer
-/// and stores as the user, once they approve the layout in a short form bound to it.
+/// and stores as the user, once they approve the layout in a short form bound to it. Then it tidies up after itself
+/// ([PromotionTidyUp], unless the user turns it off).
 class PromoteBuildTool extends AbstractBuiltInTool {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PromoteBuildTool.class);
@@ -94,6 +95,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     // What becomes of a build's test feed.
     private static final String TEST_FEED_KEPT = "left in the workspace: the build's test feed, never promoted";
     private static final String TEST_INDEX_KEPT = "left in the workspace: the build's test index, never promoted";
+    private static final String TEST_DASHBOARD_KEPT = "left in the workspace: it searches the build's test index";
     static final String OVERWRITE_ORIGINAL = "Overwrite production with the working copy";
     static final String KEEP_ORIGINAL = "Keep production as it is";
     // In a working copy's record entry: what the user chose for an original changed since, and at which version.
@@ -120,6 +122,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     private final DocumentAccess documentAccess;
     private final XsltHistory history;
     private final PendingDocumentation pendingDocs;
+    private final PromotionTidyUp tidyUp;
     // An aggregated feed's modules and the reference data its pipelines load; none in tests that make the tool
     // themselves.
     private Provider<SourceTypeGroups> groupsProvider;
@@ -142,7 +145,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                      final DocumentWrites writes,
                      final DocumentAccess documentAccess,
                      final XsltHistory history,
-                     final PendingDocumentation pendingDocs) {
+                     final PendingDocumentation pendingDocs,
+                     final PromotionTidyUp tidyUp) {
         this.facts = facts;
         this.layout = layout;
         this.places = places;
@@ -156,6 +160,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         this.documentAccess = documentAccess;
         this.history = history;
         this.pendingDocs = pendingDocs;
+        this.tidyUp = tidyUp;
     }
 
     /// An aggregated feed's modules, put beside the feed (pointed at the originals of an older build's unchanged
@@ -229,9 +234,12 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                              + "Documents with no destination are named all at once, to ask the user about "
                              + "together. A build's documents go in a folder of the source's own: a folder given by "
                              + "type that holds other sources' folders becomes <it>/<feed>, as the siblings have. The "
-                             + "build's test feed is never promoted: don't offer it. New documents are moved to their "
-                             + "destination folders (UUIDs are kept, so "
-                             + "filters and references keep working), role first, then version: "
+                             + "build's test feeds and test indexes are never promoted (don't offer them); once it is "
+                             + "promoted they are tidied up as the review lists (on unless the user unticks it, or "
+                             + "tidy_up=false): their streams marked deleted, shards deleted, then the test docs and "
+                             + "their -VERIFY dashboards deleted. New documents are moved to their destination "
+                             + "folders (UUIDs are kept, so filters and references keep working), role first, then "
+                             + "version: "
                              + "<root>/<feed>/<Role>/<version> (e.g. Feeds/App-Logs/Events/V1.0, the version from the "
                              + "pipeline's name), or <root>/<feed>/<version> for a role whose location is elsewhere "
                              + "(e.g. Elastic Indices/App-Logs/V1.0); a pipeline's XSLTs, converter, index, "
@@ -248,15 +256,11 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                              + "registry and source notes beside the feed; a source type group's documents in "
                              + "<feed's folder>/<group>/<Role>/<version> (its output feed in <group>/); nothing "
                              + "promoted is rewritten (the feed's other groups keep importing the versions they "
-                             + "import); a working copy of a "
-                             + "pipeline's code or of a module is refused. Each pipeline running a group's XSLT "
-                             + "gains the reference data the group looks up (a pipeline change, in the approval). "
-                             + "What "
-                             + "build_status says "
-                             + "is "
-                             + "missing goes in the approval, except documentation the build's own change left "
-                             + "behind: write_documentation again first (once promoted, documentation only changes "
-                             + "through a working copy).")
+                             + "import); a working copy of a pipeline's code or of a module is refused. Each pipeline "
+                             + "running a group's XSLT gains the reference data the group looks up (a pipeline "
+                             + "change, in the approval). What build_status says is missing goes in the approval, "
+                             + "except documentation the build's own change left behind: write_documentation again "
+                             + "first (once promoted, documentation only changes through a working copy).")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(BUILD_ARG, "Build name, e.g. 'acme-door-v1.3'.")
                         .addProperty(DESTINATIONS_ARG, TranslationArgs.object(
@@ -275,6 +279,10 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                                          + "then approve it in a short form. Not true: a layout "
                                                          + "that changes (other destinations) gets a new id, to "
                                                          + "show again.")
+                        .addBooleanProperty(PromotionTidyUp.TIDY_UP, "False keeps the build's test feeds, test "
+                                                                     + "indexes and their dashboards in the "
+                                                                     + "workspace after promotion (default true: "
+                                                                     + "tidied up, as the review lists).")
                         .required(BUILD_ARG)
                         .build())
                 .build();
@@ -314,8 +322,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         // pipelines' filters name the feeds it works from (seen in VS Code: the promoted filter selected the test
         // feed).
         final List<String> sources = facts.sourceFeeds(build, docs);
-        // The build's test feeds stay in the workspace, whatever the destinations say.
-        final Set<String> testFeeds = testFeeds(build, docs);
+        // The build's test feeds (and test indexes, and their dashboards) stay in the workspace, whatever the
+        // destinations say.
+        final Set<String> testFeeds = tidyUp.testDocs(build, docs, testIndexes(build));
         // The folder of the source's own its documents go in: the feed's, or one named for it where the feed's
         // folder is a parent of sources (the siblings' convention).
         final SourceFolders sourceFolders = new SourceFolders(guard, documentAccess);
@@ -419,8 +428,14 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 .map(FeedIndexDecisions.IndexChange::said)
                 .toList());
         fieldAdditions.forEach(addition -> indexSaid.add(addition.said()));
+        // What is tidied up once promoted (decided by the user, 2026-11-17): in the layout, so the approval bound to
+        // it is bound to the tidy-up too.
+        final PromotionTidyUp.Plan tidy = PromotionTidyUp.wanted(argsMap(call).get(PromotionTidyUp.TIDY_UP))
+                ? tidyUp.plan(build, docs, plan, testFeeds, sources)
+                : PromotionTidyUp.Plan.OFF;
         final String tree = layout.promotionTree(plan, creating) + rootsNote(roots)
-                            + PromotionLayout.warningsNote(layoutWarnings) + testFeedNote(plan, testFeeds);
+                            + PromotionLayout.warningsNote(layoutWarnings)
+                            + PromotionTidyUp.layoutNote(plan, testFeeds, tidy);
         if (!Consent.wasReviewed(reviewed, tree)) {
             final Map<String, Object> review = review(build, tree, warnings, processed, roots, reviewed);
             if (!followOnSaid.isEmpty()) {
@@ -440,6 +455,11 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                    + "build's indexing changes (for an aggregated feed, its source type group's: its "
                                    + "own, unless the user chose to share one) and the fields this build adds to it "
                                    + "(forward only).");
+            }
+            if (!tidy.items().isEmpty()) {
+                review.put("tidy_up", tidy.said());
+                review.put("hint", review.get("hint") + " Say the tidy_up too: once promoted, the build's test data "
+                                   + "listed is tidied up, unless the user unticks it in the approval.");
             }
             return review;
         }
@@ -472,8 +492,10 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (!followOnSaid.isEmpty()) {
             shortForm.put("follow-on filters", followOnSaid);
         }
-        consent.require(call, context, Consent.Request.approval(NAME,
-                "Promote build '" + build + "' as shown in the chat", shortForm).boundTo(tree));
+        // The tidy-up, a choice in the form, ticked to start: the user unticks it to keep the test data.
+        consent.require(call, context, tidy.offeredIn(Consent.Request.approval(NAME,
+                "Promote build '" + build + "' as shown in the chat", tidy.inForm(shortForm)).boundTo(tree)));
+        final boolean tidying = !tidy.items().isEmpty() && consent.option(context, PromotionTidyUp.TIDY_UP, true);
         final List<String> done = new ArrayList<>();
         if (groupsProvider != null) {
             // An aggregated feed's modules import the originals their working copies are written back over.
@@ -534,6 +556,10 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 .filter(p -> !PromotionLayout.KEEP.equals(p.action()))
                 .map(p -> String.valueOf(p.doc().get("uuid")))
                 .toList());
+        // Streams, then shards, then documents: never a reason for the promotion, done now, to fail.
+        final List<Map<String, Object>> tidied = tidying
+                ? tidyUp.apply(build, tidy)
+                : List.of();
         if (guard.removeBuildFolderIfEmpty(build)) {
             done.add("removed the build's workspace folder, now empty");
         }
@@ -547,7 +573,10 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         final List<Map<String, Object>> followOnFilters = followOns.isEmpty()
                 ? List.of()
                 : promotionProcessing.createFollowOnFilters(context.links(), followOns, filters);
-        return promoted(context, build, plan, folders, tree, done, warnings, filters, followOnFilters, predecessors);
+        final Map<String, Object> result = promoted(context, build, plan, folders, tree, done, warnings, filters,
+                followOnFilters, predecessors);
+        tidy.report(result, tidying, tidied);
+        return result;
     }
 
     // An aggregated feed's shared modules among the build's XSLTs (its common module and helpers, by their marks),
@@ -921,7 +950,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 // test index, likewise, holds only the sample's documents.
                 plan.add(new PromotionLayout.Step(doc, PromotionLayout.KEEP, FeedDoc.TYPE.equals(type)
                         ? TEST_FEED_KEPT
-                        : TEST_INDEX_KEPT, null));
+                        : DashboardDoc.TYPE.equals(type)
+                                ? TEST_DASHBOARD_KEPT
+                                : TEST_INDEX_KEPT, null));
             } else if (!destinations.containsKey(uuid) && KEEP.equals(besideFeeds.get(uuid))) {
                 plan.add(new PromotionLayout.Step(doc, PromotionLayout.KEEP, "left in the workspace: a survey doc "
                                                                              + "stays in its build", null));
@@ -1269,50 +1300,11 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 : null;
     }
 
-    // The build's test feeds: named as the tools name one (OutputFeeds.TEST_FEED), or recorded as the Events
-    // output of the feeds the build works from (not a source type group's own output feed).
-    private Set<String> testFeeds(final String build, final List<Map<String, Object>> docs) {
-        final Set<String> out = new LinkedHashSet<>();
-        for (final Map<String, Object> feed : ofType(docs, FeedDoc.TYPE)) {
-            final String uuid = String.valueOf(feed.get("uuid"));
-            if (feed.get("working_copy_of") != null) {
-                continue;
-            }
-            final Map<String, Object> entry = buildRecords.entry(build, uuid);
-            final boolean named = String.valueOf(feed.get("name")).toUpperCase(Locale.ROOT)
-                    .endsWith(OutputFeeds.TEST_FEED);
-            final boolean recorded = entry.get(BuildFeeds.OUTPUT_FOR) != null
-                                     && entry.get(BuildFeeds.GROUP_OUTPUT) == null;
-            if (named || recorded) {
-                out.add(uuid);
-            }
-        }
-        // The build's test indexes (BuildTestIndexes), standing in for production indexes while it was open.
-        final Set<String> listed = new LinkedHashSet<>();
-        docs.forEach(doc -> listed.add(String.valueOf(doc.get("uuid"))));
-        testIndexes(build).keySet().stream().filter(listed::contains).forEach(out::add);
-        return out;
-    }
-
     // The build's test indexes, each with the production index doc's UUID it stands in for; none without the tool.
     private Map<String, String> testIndexes(final String build) {
         return testIndexesProvider == null
                 ? Map.of()
                 : testIndexesProvider.get().testIndexes(build);
-    }
-
-    // What the layout says of the test feeds kept, for the user and the agent: never promoted, nothing to offer.
-    private static String testFeedNote(final List<PromotionLayout.Step> plan, final Set<String> testFeeds) {
-        final List<String> kept = plan.stream()
-                .filter(step -> PromotionLayout.KEEP.equals(step.action())
-                                && FeedDoc.TYPE.equals(step.doc().get("type"))
-                                && testFeeds.contains(String.valueOf(step.doc().get("uuid"))))
-                .map(step -> String.valueOf(step.doc().get("name")))
-                .toList();
-        return kept.isEmpty()
-                ? ""
-                : "\n\nThe build's test feed " + String.join(", ", kept) + " stays in the build's workspace: it holds "
-                  + "only the sample's Events and is never promoted.";
     }
 
     // The source the build's documents are of (the feed it works from, its registry's, or its only new feed) and

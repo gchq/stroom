@@ -404,7 +404,8 @@ flowchart TD
   surveyed streams. Its `covered` step keeps asking for `survey_feed` until a full batch after the first adds nothing
   new.
 * Processing the surveyed streams writes their Events to a test feed in the build (`<FEED>-MCP-TEST`, set on the
-  pipeline's StreamAppender by `OutputFeeds`), never into the production feed. Promotion takes the property off.
+  pipeline's StreamAppender by `OutputFeeds`), never into the production feed. Promotion takes the property off, then
+  tidies the test feed up (its streams marked deleted, then the feed deleted) unless the user unticks it.
 
 ### Next version, working copy, or a fix
 
@@ -1156,7 +1157,7 @@ The building tools share a layer in `stroom.mcp.impl.tools`:
 | `BuildPlan` | The plan: steps, each one's state derived from what the build holds, and `next`. |
 | `BuildChecks`, `BuildStatusTool` | What the build still lacks before promotion. |
 | `Consent` | Confirmations and approvals as forms; `needs_review` rounds with a `review_id` digest. |
-| `PromoteBuildTool`, `PromotionLayout`, `PromotionProcessing` | Promotion. |
+| `PromoteBuildTool`, `PromotionLayout`, `PromotionProcessing`, `PromotionTidyUp` | Promotion, and its tidy-up. |
 | `KeptMappings`, `SentMappings`, `XsltHistory`, `DocumentationVersions` | State kept with documents and in the session. |
 | `ProcessingApprovals`, `ProcessorFilterWrites`, `IndexingRuns`, `OutputFeeds` | Processing in a build. |
 
@@ -1693,6 +1694,7 @@ flowchart LR
     D --> E["Version histories consolidated"]
     E --> F["Moves (UUIDs kept);<br/>working copies written back after a backup"]
     F --> G["Processor filters, disabled,<br/>with before_enabling"]
+    G --> H["Tidy-up (unless unticked):<br/>streams, shards, then test docs"]
 ```
 
 * **Role first, then version (decided by the user, 2026-11-17).** Each document of a role (its build role subfolder,
@@ -1707,7 +1709,8 @@ flowchart LR
   (a flattener, Events in and CEF to Kafka, is the forwarding stage, filed CEF); a reference loader under
   `Reference`. Shared documents a pipeline references but doesn't own (a KafkaConfig) are never copied, versioned or
   moved. Outside version folders, under `<feed-root>/<feed>/`: the feed, its source type registry and source notes.
-  The survey doc and the build record stay in the build; test feeds and test indexes in the workspace. Replaced the
+  The survey doc and the build record stay in the build; test feeds and test indexes are never promoted (tidied up
+  after, below). Replaced the
   role subfolders added only when more than one role moved, and the version subfolder of the predecessor's folder.
 * **Each role's root** (the folder holding the feed's folders of that role) is chosen per role: (1) proposed and
   pre-selected, where the sibling feeds' pipelines of that role are (`SourceFolders.siblings`: the feeds in the
@@ -1778,6 +1781,31 @@ flowchart LR
   claim no index (they write nothing themselves); a working copy is also claimed by its original's index name,
   inherited from a template too.
 * **A failure part way** says which step failed and what was already done; what wasn't promoted stays in the build.
+* **Tidy-up at promotion (decided by the user, 2026-11-17)** (`PromotionTidyUp`). On by default: the approval form
+  has it as a choice, ticked to start (`Consent.Request.withOption`, read back by `Consent.option`), and
+  `tidy_up=false` turns it off without forms. Once the build is promoted, what it made only to test with goes:
+  (1) each test feed's streams are marked deleted through `MetaService.updateStatus` with the feed's Data tab
+  expression, as the Data screen's Delete does (logical: data retention purges them later; never physically), (2)
+  each Lucene test index's shards are deleted through `IndexResource.reset`, as the Index Shards screen deletes them,
+  on every node, then (3) the documents: the `-VERIFY` dashboards searching only test indexes, the test index docs
+  (an Elastic Index doc recorded as a test index is deleted as a doc only, its index on the cluster never touched),
+  then the test feeds. Strictly in that order; a failure is said in its item and its later steps skipped (a
+  dashboard stays while the index it searches does), the others carry on, and the promotion, already done, never
+  fails or rolls back. Only what the build provably made: a test feed (named `-MCP-TEST`, or recorded `output_for`
+  the feeds it works from, not a group's own output feed) or test index (`test_index_for`) in the build's own
+  workspace folder, tagged `mcp-managed`, left in the workspace by the plan, not a feed the build works from, and
+  used by nothing outside the build (a document naming it in Stroom's dependencies, or for a feed a processor filter
+  reading it, `ProcessorFilters.pipelinesReading`, checked before the promotion moves the build's own pipelines out;
+  without Manage Processors the check fails closed). A `-VERIFY` dashboard searching only test indexes is itself a
+  test document, left in the workspace by the plan, rather than promoted searching an index that is then deleted.
+  The review lists each item (a test feed's stream count and total size from its streams' `File Size`, a test
+  index's shard count, each document) in `tidy_up` and in the layout tree, so the approval, bound to the tree's
+  digest, is bound to the tidy-up too; the form only refers to it ("as listed in the chat"). What the tools pass
+  over is listed with why. The result's `tidied_up` says per item the streams marked deleted, the shards deleted,
+  whether the document was deleted, and any failure; the build record forgets what was deleted. Never touched: the
+  promoted documents, production feeds and their streams, the survey doc, the build record. A build left with only
+  its record afterwards has its workspace folder removed, as before. A test feed holding the user's own sample files
+  (`user_samples`) is not proven a test feed, so it stays.
 
 ### Pipelines (built)
 
@@ -3636,6 +3664,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-17 | Tidy-up at promotion (the user): on by default, a choice in the approval form ticked to start (`tidy_up=false` without forms). After promotion, each test feed's streams are marked deleted as the Data screen does (logical, retention purges them), each Lucene test index's shards deleted as the Index Shards screen does, then the test docs deleted: `-VERIFY` dashboards on test indexes, test index docs (never an Elasticsearch index on the cluster), test feeds. Streams, shards, docs strictly in order per item; a failure skips that item's later steps, never fails the promotion. Only what the build's record or workspace proves it made, in its workspace, tagged as the tools', not a source feed, used by nothing outside the build (dependencies, processor filters). The review lists every item (streams and size, shards, docs) in the tree the approval is bound to; the result reports each. | Promotion |
 | 2026-11-17 | Role-first versioned layout and follow-on filters (the user). Promotion puts each role's documents in `<root>/<feed>/<Role>/V<x.y>` (role folders always; the version from the pipeline's name, V1.0 with a warning when it has none), or `<roleRoot>/<feed>/V<x.y>` for a role whose root is elsewhere; each role's root chosen per role: where the sibling feeds' pipelines of that role are (proposed), the feed's own location, or a folder the user types (one form; without forms `role_locations` and destinations keyed by role), a new version's defaulting to its predecessor's; the tree lists them, so the approval's digest covers them. A new version goes in a sibling version folder of its predecessor's, whatever older shape that has (never moved). Shared modules as roles `Common` and `Helpers` under the feed; a group's documents in `<feed>/<group>/<Role>/V<x.y>`. A group pipeline's default name has ` V1.0` where neither feed nor group holds a version; tool descriptions ask for the version in a name. Promoting a new events (or records) version gives each promoted pipeline reading the predecessor's Events a new filter, disabled, reading the new version's (listed in the approval); existing filters are never changed, and the buttons disabling the predecessor's are gone: `next_steps` say what to enable, then what the admin disables or removes. `build_status` points those follow-ons at `review_coverage changed_pipeline_uuid=`. | Promotion; Next version, working copy, or a fix; Aggregated feeds |
 | 2026-11-17 | Index names filled in and exact template patterns. Production claims compare index names with the variables filled in that Stroom's ElasticIndexingFilter would fill from what the indexing XSLT writes (a fixed text, or `stroom:feed-name()`, once per feed the pipeline processes; anything else stays a wildcard), and a child inheriting a template's index name claims it (a new version's candidate name is filled in the same way, with the build's feeds), so children of a `{feed}-events` template tell feeds apart and a build pipeline for a feed with one is claimed. Generated index templates cover the exact index name, a variable a `*`, not `<index>*` (asked for by the user: `v1*` also covered `v10`); check_index_template warns, not blocking, of a pattern ending in a digit then `*` and of another agreed template covering the index at the same priority. | Indexing |
 | 2026-11-17 | Shared modules new-version-only (the user): a build changing an aggregated feed's promoted common module or helpers makes a new version of it (`<feed> common V1.1`: no token is V1.0; the next after the highest the feed knows), imported only by the build's group; the other groups keep their versions and nothing promoted is rewritten. A helpers' new version brings a common version importing it (the chain is by UUID). What a group imports is read from its XSLT's imports. Promotion places a module's new version in a version folder beside its predecessor that no other document joins, and refuses a module working copy from an older build. `build_status` and `review_coverage` say when groups import different versions (`module_versions`). A group's new XSLT is named for its pipeline's new version; copy_pipeline refuses a build's earlier version under the original's name. | Aggregated feeds; Builds and onboarding |

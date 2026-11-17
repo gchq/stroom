@@ -90,6 +90,7 @@ final class BuildToolCalls {
         private final ElicitResult answer;
         private final List<String> shown = new ArrayList<>();
         private final List<String> callIds = new ArrayList<>();
+        private final List<Map<String, Object>> schemas = new ArrayList<>();
 
         private FormUser(final ElicitResult answer) {
             this.answer = answer;
@@ -113,6 +114,11 @@ final class BuildToolCalls {
         /// @return The message of each form shown, in order.
         List<String> shown() {
             return shown;
+        }
+
+        /// @return The schema of each form shown (its fields), in order.
+        List<Map<String, Object>> schemas() {
+            return schemas;
         }
 
         /// Each form shown, as a map of its `status` (`needs_confirmation` or `needs_approval`, as the form's id
@@ -157,6 +163,7 @@ final class BuildToolCalls {
                                 final Map<String, Object> form) {
             shown.add(intro);
             callIds.add(callId);
+            schemas.add(form);
             return answer;
         }
     }
