@@ -17,7 +17,6 @@
 package stroom.dataconnection.impl;
 
 import stroom.resource.api.ResourceStore;
-import stroom.util.io.ByteSize;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceKey;
 
@@ -59,12 +58,10 @@ class ExcelUploads {
             throw new EntityServiceException("The uploaded workbook could not be found. Upload it again.");
         }
         try {
-            final ByteSize limit = configProvider.get().getMaxStoredDataSize();
-            if (Files.size(path) > limit.getBytes()) {
-                throw new EntityServiceException("The workbook is more than the limit of " + limit
-                                                 + " set by the property "
-                                                 + "stroom.dataConnection.maxStoredDataSize.");
-            }
+            StoredDataLimit.findProblem("workbook", Files.size(path), configProvider.get())
+                    .ifPresent(problem -> {
+                        throw new EntityServiceException(problem);
+                    });
             return Files.readAllBytes(path);
         } catch (final IOException e) {
             throw new UncheckedIOException("The uploaded workbook could not be read", e);

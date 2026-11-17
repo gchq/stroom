@@ -25,8 +25,6 @@ import com.unboundid.ldap.sdk.LDAPURL;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 /// Checks the LDAP settings of a Data Connection against the administrator's controls in
 /// [DataConnectionConfig].
@@ -68,7 +66,8 @@ public final class LdapConnectionValidator {
         if (ldapUrl != null) {
             checkUrl(ldapUrl, settings, config, problems);
         }
-        if (!isAllowed(trimmedUrl, config.getAllowedLdapUrlPatterns(), problems)) {
+        if (!ConnectionRules.matchesAny(
+                trimmedUrl, config.getAllowedLdapUrlPatterns(), "LDAP URL pattern", problems)) {
             problems.add("The LDAP URL '" + trimmedUrl + "' does not match any pattern in the "
                          + "dataConnection.allowedLdapUrlPatterns property. Ask an administrator to allow it.");
         }
@@ -90,10 +89,7 @@ public final class LdapConnectionValidator {
     /// @param config   The administrator's controls.
     /// @throws IllegalArgumentException If there is any problem; its message lists them all.
     public static void validate(final LdapSettings settings, final DataConnectionConfig config) {
-        final List<String> problems = findProblems(settings, config);
-        if (!problems.isEmpty()) {
-            throw new IllegalArgumentException(String.join("\n", problems));
-        }
+        ConnectionRules.throwIfAny(findProblems(settings, config));
     }
 
     private static LDAPURL parse(final String url, final List<String> problems) {
@@ -140,23 +136,5 @@ public final class LdapConnectionValidator {
         } else if (!DN.isValidDN(baseDn.trim())) {
             problems.add("'" + baseDn.trim() + "' is not a valid DN, such as ou=People,dc=example,dc=org.");
         }
-    }
-
-    private static boolean isAllowed(final String value,
-                                     final List<String> allowedPatterns,
-                                     final List<String> problems) {
-        for (final String allowedPattern : NullSafe.list(allowedPatterns)) {
-            if (NullSafe.isNonBlankString(allowedPattern)) {
-                try {
-                    if (Pattern.compile(allowedPattern).matcher(value).matches()) {
-                        return true;
-                    }
-                } catch (final PatternSyntaxException e) {
-                    problems.add("The allowed LDAP URL pattern '" + allowedPattern
-                                 + "' is not a valid regular expression: " + e.getDescription());
-                }
-            }
-        }
-        return false;
     }
 }

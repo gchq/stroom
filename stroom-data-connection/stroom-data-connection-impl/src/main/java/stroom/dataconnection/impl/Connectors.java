@@ -24,7 +24,6 @@ import jakarta.inject.Singleton;
 
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.Objects;
 
 /// Finds the [Connector] for a Data Connection's type.
 @Singleton
@@ -65,6 +64,6 @@ class Connectors {
     /// @param type A type of Data Connection, or `null` for JDBC.
     /// @return The connector for the type.
     Connector get(final DataConnectionType type) {
-        return connectors.get(Objects.requireNonNullElse(type, DataConnectionType.JDBC));
+        return connectors.get(DataConnectionType.orDefault(type));
     }
 }

@@ -16,15 +16,11 @@
 
 package stroom.dataconnection.client.presenter;
 
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.task.client.TaskMonitorFactory;
 
-import com.gwtplatform.mvp.client.UiHandlers;
-
 /// What the settings view of a Data Connection tells its presenter.
-public interface DataConnectionSettingsUiHandlers extends UiHandlers {
-
-    /// Called when any setting changes.
-    void onChange();
+public interface DataConnectionSettingsUiHandlers extends ChangeUiHandlers {
 
     /// Called when the user asks to test the connection with the settings as they stand.
     ///

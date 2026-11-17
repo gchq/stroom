@@ -77,7 +77,7 @@ class TestJdbcConnectionPoolCache {
                     null));
         }
         final DataConnectionConfig config = new DataConnectionConfig(
-                allowedUrlPatterns, null, null, null, null, null, null, null, null, null, null, null, null);
+                allowedUrlPatterns, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         final JdbcConnectionResolver resolver = new JdbcConnectionResolver(() -> config, () -> storedSecrets);
         final JdbcDriverLoader driverLoader = new JdbcDriverLoader(() -> config, Mockito.mock(PathCreator.class));
         poolCache = new JdbcConnectionPoolCache(cacheManager, () -> config, resolver, driverLoader);
@@ -182,13 +182,13 @@ class TestJdbcConnectionPoolCache {
                 .build());
         final DataConnectionConfig config = new DataConnectionConfig(
                 List.of(FakeJdbcDriver.ALLOWED_URL_PATTERN), null, null, null, null, null, null, null, null,
-                null, null, null, null);
+                null, null, null, null, null, null);
         final CacheManagerImpl ownCacheManager = new CacheManagerImpl();
         final JdbcConnectionPoolCache rebuiltPoolCache = new JdbcConnectionPoolCache(
                 ownCacheManager,
                 () -> new DataConnectionConfig(
                         config.getAllowedUrlPatterns(), null, null, null, null, null, cacheConfig.get(), null,
-                        null, null, null, null, null),
+                        null, null, null, null, null, null, null),
                 new JdbcConnectionResolver(() -> config, () -> storedSecrets),
                 new JdbcDriverLoader(() -> config, Mockito.mock(PathCreator.class)));
         try {
