@@ -92,6 +92,12 @@ class TestBuildTranslationXsltTool {
     private static final List<Map<String, Object>> SYSTEM = List.of(Map.of("path", "EventSource/System/Name",
             "value", "FortiOS"));
 
+    // A sample's first records, read only part way into its stream.
+    private static final String CUT_HEAD = """
+            {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "alice"}
+            {"ts": "2026-09-28T10:01:00.000Z", "host": "ws02", "user": "bob"}
+            """;
+
     private static final String FORK_NS = "file://xml/schema/test-fork/events";
     private static final String FORK_SYSTEM_ID = "file://xml/schema/test-fork/events";
 
@@ -259,6 +265,66 @@ class TestBuildTranslationXsltTool {
         assertThat(list(checked.get("warnings"))).contains("sample: 1 record(s) the survey found further into "
                                                            + "streams [7] than the sample is read to are checked "
                                                            + "too");
+    }
+
+    @Test
+    void aSampleCutShortIsCheckedOutsideABuild() {
+        // Seen in testing: a translation checked with no build, its sample read only part way, failed with a
+        // NullPointerException looking for the build's survey.
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", CUT_HEAD), List.of("stream 7 is read up to its first 172 characters"),
+                List.of(new SampleStreamTexts.Cut("stream 7", 7L, 0))));
+
+        final Map<String, Object> checked = world.call(tool, Map.of("mapping", JsonUtil.readValue(GOOD, Map.class),
+                "stream_ids", List.of(7)));
+
+        assertThat(checked).doesNotContainKey("error");
+        assertThat(checked.get("ok")).isEqualTo(true);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aSavedXsltChangedByItsUuidAloneReadsItsBuildsSurvey() {
+        // Seen in testing: a change to a saved XSLT given by its uuid, without build, and a sample cut short: the
+        // records the build's survey found past the cut are checked, as they are when build is given.
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace(
+                "{\"path\": \"EventDetail/Authenticate/User/Id\", \"field\": \"user\"}",
+                "{\"path\": \"EventDetail/Authenticate/User/Id\", \"field\": \"user\"}, "
+                + "{\"path\": \"EventDetail/Authenticate/Data\", \"data_name\": \"fname\", \"field\": \"fname\"}"),
+                Map.class);
+        final Map<String, Object> saved = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1", "name",
+                "ACME-Events"));
+        final String xsltUuid = String.valueOf(map(saved.get("saved")).get("uuid"));
+        final String surveyUuid = world.inBuild("acme-v1", DocumentationDoc.TYPE, SurveyDoc.docName("ACME"))
+                .getUuid();
+        final Map<String, Object> state = Map.of("feed", "ACME", "format", "json lines", "streams_read", List.of(7),
+                "surveys", List.of(), "shapes", Map.of("upload", Map.of("count", 1, "streams", List.of(7),
+                "examples", List.of(Map.of("text", "{\"ts\": \"2026-09-28T23:59:00.000Z\", \"host\": \"ws09\", "
+                                                   + "\"user\": \"erin\", \"fname\": \"report.pdf\"}",
+                        "location", Map.of("stream", 7, "part", 0, "record", 24_000))))));
+        world.world.docs.put(surveyUuid, ((DocumentationDoc) world.world.docs.get(surveyUuid)).copy()
+                .data(SurveyDoc.render(state)).build());
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", CUT_HEAD), List.of("stream 7 is read up to its first 172 characters"),
+                List.of(new SampleStreamTexts.Cut("stream 7", 7L, 0))));
+
+        final Map<String, Object> checked = world.call(tool, Map.of("mapping", mapping, "stream_ids", List.of(7),
+                "uuid", xsltUuid));
+
+        assertThat(checked).doesNotContainKey("error");
+        assertThat(findings(checked)).noneMatch(p -> p.contains("'fname'"));
+        assertThat(list(checked.get("warnings"))).contains("sample: 1 record(s) the survey found further into "
+                                                           + "streams [7] than the sample is read to are checked "
+                                                           + "too");
+    }
+
+    @Test
+    void aGroupWithNeitherBuildNorUuidIsRefused() {
+        // It failed with a NullPointerException rather than saying what to give.
+        final Map<String, Object> result = world.call(tool, Map.of("mapping", JsonUtil.readValue(GOOD, Map.class),
+                "group", "Messaging"));
+
+        assertThat(String.valueOf(result.get("error"))).contains("give build");
     }
 
     // A result's problems and warnings, as text.
