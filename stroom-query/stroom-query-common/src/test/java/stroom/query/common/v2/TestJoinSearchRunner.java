@@ -96,7 +96,8 @@ class TestJoinSearchRunner extends AbstractJoinSearchTest {
                 where Missing = 'x' and Host = 'h1'
                 select UserId, hr.Department""", new FakeSources());
 
-        run.awaitSearchStore();
+        // The warning is only given once the first source has been searched, so wait for that.
+        awaitComplete(run.awaitSearchStore());
         assertThat(run.searchStore().get().getErrors())
                 .extracting(ErrorMessage::getMessage)
                 .singleElement()
