@@ -589,6 +589,54 @@ class TestSearchRequestFactoryJoin {
     }
 
     @Test
+    void bracketedFromWithItsOwnJoinIsRefused() {
+        // The outer query only carries the bracketed query's source, where and table, so its own join
+        // would be dropped and its joined fields left blank.
+        assertThatThrownBy(() -> create("""
+                from (
+                  from events
+                  join hr as h on UserId = h.Username
+                  select UserId, h.Department
+                ) as q
+                select UserId, Department"""))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining("A bracketed query can't have joins, an alias or a bracketed query of its own");
+    }
+
+    @Test
+    void bracketedFromWithItsOwnAliasIsRefused() {
+        assertThatThrownBy(() -> create("from (from events as e select e.UserId) as q select UserId"))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining("A bracketed query can't have joins, an alias or a bracketed query of its own");
+    }
+
+    @Test
+    void bracketedFromWithItsOwnBracketedFromIsRefused() {
+        assertThatThrownBy(() -> create("""
+                from (
+                  from (from events group by UserId select UserId, count() as Logons)
+                  select UserId, Logons
+                ) as q
+                select UserId, Logons"""))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining("A bracketed query can't have joins, an alias or a bracketed query of its own");
+    }
+
+    @Test
+    void bracketedJoinWithItsOwnJoinIsRefusedWhenParsed() {
+        assertThatThrownBy(() -> create("""
+                from events
+                join (
+                  from hr
+                  join file_events as f on Username = f.UserId
+                  select Username
+                ) as h on UserId = h.Username
+                select UserId"""))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining("A bracketed query can't have joins, an alias or a bracketed query of its own");
+    }
+
+    @Test
     void badWindowIsReported() {
         assertThatThrownBy(() -> create("from events join x on UserId = x.U within 10m select UserId"))
                 .isInstanceOf(TokenException.class)

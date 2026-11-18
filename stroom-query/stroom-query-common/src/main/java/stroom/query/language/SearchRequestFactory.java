@@ -1611,6 +1611,12 @@ public class SearchRequestFactory {
             final List<ResultRequest> resultRequests = builder.addTableSettings(
                     null, children, new ArrayList<>(), queryBuilder);
             Query query = queryBuilder.build();
+            // The query it is in only takes a bracketed query's source, where and table, so its own
+            // joins, alias or bracketed query would be dropped without a word.
+            if (query.needsJoinSupport()) {
+                throw new TokenException(tokenGroup, "A bracketed query can't have joins, an alias or a "
+                                                     + "bracketed query of its own yet");
+            }
             builder.checkNativeQuery(query);
             if (query.getExpression() == null) {
                 query = query.copy().expression(ExpressionOperator.builder().build()).build();
