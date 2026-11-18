@@ -938,19 +938,15 @@ class SourceTypeGroups {
 
     /// Before a build's working copies are written back at promotion: every module of the build imports the originals
     /// again (each working copy's UUID replaced by its original's, in its code and in the mapping kept with it), and
-    /// the registry names the originals. A working copy the user kept in the build (its original changed in production
-    /// since it was copied) is left as it is: the modules promoted import its original, as production has it
-    /// ([#keptProblems] says when that original lacks what they need of it).
+    /// the registry names the originals.
     ///
     /// @param context The call's context.
     /// @param build   The build.
     /// @param docs    The build's documents, as the plan lists them (`working_copy_of`).
-    /// @param kept    The UUIDs of the working copies the user kept in the build.
     /// @return What was done, said for the promotion's result; none for a build with no working copy of a module.
     List<String> toOriginals(final ToolCallContext context,
                              final String build,
-                             final List<Map<String, Object>> docs,
-                             final Set<String> kept) {
+                             final List<Map<String, Object>> docs) {
         final Map<String, String> back = new LinkedHashMap<>();
         for (final Map<String, Object> doc : docs) {
             if (XsltDoc.TYPE.equals(doc.get("type")) && doc.get("working_copy_of") != null) {
@@ -964,7 +960,7 @@ class SourceTypeGroups {
         final String change = "Imports the originals its build's working copies are written back over";
         for (final Map<String, Object> doc : docs) {
             final String uuid = String.valueOf(doc.get("uuid"));
-            if (!XsltDoc.TYPE.equals(doc.get("type")) || kept.contains(uuid)) {
+            if (!XsltDoc.TYPE.equals(doc.get("type"))) {
                 continue;
             }
             if (translationDocs.rewriteImports(context, uuid, back, change)) {
@@ -990,50 +986,6 @@ class SourceTypeGroups {
             }
         }
         return done;
-    }
-
-    /// What stops a promotion that keeps working copies in the build: each module promoted that imports a kept copy
-    /// imports its original instead, as production has it, and the names it uses of the copy (templates, functions,
-    /// variables, modes) must be the original's too.
-    ///
-    /// @param build The build.
-    /// @param docs  The build's documents, as the plan lists them (`working_copy_of`).
-    /// @param kept  The UUIDs of the working copies the user kept in the build.
-    /// @return Each module promoted that would import an original lacking what it uses, saying which; none when
-    /// every original has it.
-    List<String> keptProblems(final String build, final List<Map<String, Object>> docs, final Set<String> kept) {
-        final List<String> out = new ArrayList<>();
-        for (final Map<String, Object> copy : docs) {
-            final String copyUuid = String.valueOf(copy.get("uuid"));
-            if (!XsltDoc.TYPE.equals(copy.get("type")) || !kept.contains(copyUuid)
-                || copy.get("working_copy_of") == null) {
-                continue;
-            }
-            final String original = String.valueOf(copy.get("working_copy_of"));
-            final Set<String> lacking = new LinkedHashSet<>(ModuleChecks.declaredNames(readXsltData(copyUuid)));
-            lacking.removeAll(ModuleChecks.declaredNames(readXsltData(original)));
-            if (lacking.isEmpty()) {
-                continue;
-            }
-            for (final Map<String, Object> importer : docs) {
-                final String uuid = String.valueOf(importer.get("uuid"));
-                if (!XsltDoc.TYPE.equals(importer.get("type")) || kept.contains(uuid)) {
-                    continue;
-                }
-                // Importing the copy, or its original already (pointed back at it).
-                final String code = readXsltData(uuid);
-                if (!code.contains("uuid='" + copyUuid + "'") && !code.contains("uuid='" + original + "'")) {
-                    continue;
-                }
-                final List<String> used = lacking.stream().filter(name -> ModuleChecks.uses(code, name)).toList();
-                if (!used.isEmpty()) {
-                    out.add("'" + importer.get("name") + "' imports '" + copy.get("name") + "', kept in the build: "
-                            + "promoted, it imports production's '" + copy.get("name") + "' (" + original + "), "
-                            + "which lacks " + ToolText.list(used) + " that it uses");
-                }
-            }
-        }
-        return out;
     }
 
     /// @param build A build.
