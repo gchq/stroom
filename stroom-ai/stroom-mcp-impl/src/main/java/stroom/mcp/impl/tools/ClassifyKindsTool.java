@@ -30,9 +30,7 @@ import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.draft.DraftMapping;
-import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.draft.SourceNotes;
-import stroom.ai.impl.tools.generation.Extraction;
 import stroom.ai.impl.tools.generation.XPathRegex;
 import stroom.ai.impl.tools.sample.KindFields;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
@@ -669,7 +667,10 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             }
         }
         final DraftMapping.Records raw = DraftMapping.records(samples, splitter);
-        final KindsChosen chosen = kindFields(call, context, build, notesNow, raw.records(),
+        // Judged with the fields inside held values as the draft reads them (a JSON string's keys), so a kind field
+        // inside one can be chosen and is one the draft's rules read.
+        final List<Map<String, Object>> judged = HeldKindRecords.of(samples, source, splitter, raw.records());
+        final KindsChosen chosen = kindFields(call, context, build, notesNow, judged,
                 mayAsk && KindFields.structured(String.valueOf(raw.info().get("format"))), userChose);
         if (chosen.asking() != null) {
             return new Sampled(samples, readWith, List.of(), List.of(), null, chosen.asking(), List.of(), scopeSaid);
@@ -680,8 +681,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                         : Map.of(SourceNotes.KIND_FIELDS, chosen.fields()),
                 null, splitter);
         @SuppressWarnings("unchecked") final Map<String, Object> mapping = (Map<String, Object>) draft.get(MAPPING);
-        final List<Map<String, Object>> records = unpacked(DraftMapping.records(samples, splitter).records(),
-                mapping);
+        final List<Map<String, Object>> records = HeldKindRecords.unpacked(
+                DraftMapping.records(samples, splitter).records(), mapping);
         return new Sampled(samples, readWith, records, kinds(draft, records), variantField(draft, records), null,
                 chosen.fromUser()
                         ? chosen.fields()
@@ -1691,42 +1692,6 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             }
         }
         return kinds;
-    }
-
-    // The records with the fields the draft reads inside an inner message: the keys of JSON text (json_fields),
-    // the elements of XML text (xml_fields) and the values its extractions take from text (key/value pairs, say),
-    // as the translation reads them. Seen in testing: kinds told apart inside a message field listed with no
-    // records or sample, and no user field to name as the actor.
-    private static List<Map<String, Object>> unpacked(final List<Map<String, Object>> records,
-                                                      final Map<String, Object> mapping) {
-        final List<Object> held = new ArrayList<>(records);
-        LocalCheck.withJsonFields(held, JsonValues.strings(mapping.get("json_fields")));
-        LocalCheck.withXmlFields(held, JsonValues.strings(mapping.get("xml_fields")));
-        // The draft's extractions alone, each read on its own: the rest of the draft may still be unfinished (seen in
-        // chat 171: its time left for the agent to choose, the whole mapping refused, and every field the draft read
-        // from NetScaler's message bodies missing from the listing).
-        final List<Extraction> extractions = new ArrayList<>();
-        for (final Map<String, Object> entry : JsonValues.maps(mapping.get("extract"))) {
-            try {
-                extractions.add(Extraction.fromJson(entry));
-            } catch (final RuntimeException e) {
-                LOGGER.info("An extraction of the draft can't be read, so it isn't applied: {}", e.getMessage());
-            }
-        }
-        if (extractions.isEmpty()) {
-            return records;
-        }
-        for (final Map<String, Object> record : records) {
-            final Map<String, String> extracted = LocalCheck.extractedValues(extractions, record);
-            if (extracted != null) {
-                extracted.forEach((name, value) -> {
-                    if (!value.isEmpty()) {
-                        record.putIfAbsent(name, value);
-                    }
-                });
-            }
-        }
-        return records;
     }
 
     private static boolean sameCondition(final Map<String, Object> one, final Map<String, Object> other) {

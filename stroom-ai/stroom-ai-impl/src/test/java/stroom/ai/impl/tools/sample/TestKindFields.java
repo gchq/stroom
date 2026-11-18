@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -141,6 +142,58 @@ class TestKindFields {
         assertThat(KindFields.parse("a, b")).containsExactly("a", "b");
         assertThat(KindFields.parse("All one kind of event")).containsExactly(KindFields.ONE_KIND);
         assertThat(KindFields.oneKind(KindFields.parse("all one kind"))).isTrue();
+    }
+
+    @Test
+    void epochTimesAndTimeNamedFieldsAreNeverOfferedThoughTheyRepeatWithinABatch() {
+        // Seen in testing (2026-11-18): an aggregated feed's `time` (epoch milliseconds) and `fields.orig_rt` (epoch
+        // nanoseconds) put to the user as the kinds of event; records read at once share their times.
+        final List<Map<String, Object>> records = new ArrayList<>();
+        for (int i = 0; i < 30; i++) {
+            final Map<String, Object> one = new LinkedHashMap<>();
+            one.put("time", 1_763_452_800_000L + i % 3);
+            one.put("received", 1_763_452_800.0e3 + i % 2);
+            one.put("fields.orig_rt", "1763452800" + "00000000" + (i % 3));
+            one.put("seq", String.valueOf(1_763_452_800L + i % 4));
+            one.put("log_ts", List.of("a", "b").get(i % 2));
+            one.put("eventDate", List.of("x", "y").get(i % 2));
+            one.put("tier", List.of("gold", "silver").get(i % 2));
+            records.add(one);
+        }
+
+        final KindFields.Choice choice = KindFields.choose(records);
+
+        assertThat(choice.candidates()).extracting(KindFields.Candidate::field).containsExactly("tier");
+        assertThat(KindFields.candidates(records).candidates()).extracting(KindFields.Candidate::field)
+                .containsExactly("tier");
+        assertThat(KindFields.whyNot("fields.orig_rt", records)).hasValueSatisfying(why -> assertThat(why)
+                .contains("epoch times"));
+        assertThat(KindFields.whyNot("received", records)).hasValueSatisfying(why -> assertThat(why)
+                .contains("epoch times"));
+        assertThat(KindFields.whyNot("tier", records)).isEmpty();
+    }
+
+    @Test
+    void timesAreToldByNameAndEpochTimesByTheirRange() {
+        assertThat(List.of("time", "@timestamp", "ts", "date", "event_time", "orig_rt", "fields.orig_rt",
+                "event>log_ts", "eventTime", "created_date", "time_generated")).allMatch(KindFields::namedAsTime);
+        assertThat(List.of("type", "action", "runtime_kind", "msg_act", "status", "logon_type", "category"))
+                .noneMatch(KindFields::namedAsTime);
+        assertThat(KindFields.epochTimes(List.of("1763452800", "1763452800123", "1763452800123456",
+                "1763452800123456789", "1.763452800123E12", "-"))).isTrue();
+        // A FortiGate logid, Windows event ids, a count: not times.
+        assertThat(KindFields.epochTimes(List.of("0101039424"))).isFalse();
+        assertThat(KindFields.epochTimes(List.of("4624", "4625"))).isFalse();
+        assertThat(KindFields.epochTimes(List.of("1763452800", "login"))).isFalse();
+        assertThat(KindFields.epochTimes(List.of("-"))).isFalse();
+    }
+
+    @Test
+    void aHeldValuesNameIsSpeltAsTheDraftReadsIt() {
+        assertThat(KindFields.asRecordsSpellThem(List.of("event>logger_name"), Set.of("event", "event.logger_name")))
+                .containsExactly("event.logger_name");
+        assertThat(KindFields.asRecordsSpellThem(List.of("event>Header.Op"), Set.of("event", "event/Header/Op")))
+                .containsExactly("event/Header/Op");
     }
 
     // A mail log: time, addresses, a subject each its own, and the kind in the field named.

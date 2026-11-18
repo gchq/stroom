@@ -332,7 +332,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                                            + "user said: when the tool isn't sure which field it is, "
                                                            + "it asks them (or, with no forms, says to ask in the "
                                                            + "chat). Kept for the build's survey; a different one "
-                                                           + "starts the survey afresh.")
+                                                           + "starts the survey afresh. An aggregated feed (a source "
+                                                           + "type field) is asked none: its kinds are told apart "
+                                                           + "within source types, in classify_kinds.")
                         .addStringProperty(ACCEPT_ARG, "Only when the user wants to go ahead with the build's survey "
                                                        + "as it is, before it is covered: 'true' (they confirm in a "
                                                        + "form), or, when the client shows no forms, what they said "
@@ -698,7 +700,12 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final Map<String, Object> kinds;
         if (givenKinds != null) {
             kinds = kindsKept(asTheRecordsSpellThem(givenKinds, kindChoice(heads, sources.field())), "user");
-        } else if (!keptKinds.isEmpty()) {
+        } else if (sources.field() != null && !"user".equals(keptKinds.get("by"))) {
+            // An aggregated feed: no kind field is chosen over every source type's records together, nor asked for
+            // (seen in testing, 2026-11-18: 65 source types, and only the times they shared put to the user). The
+            // kinds are told apart within each source type, by classify_kinds over the build's scope.
+            kinds = SurveyDoc.kindsWithinSourceTypes(sources.field());
+        } else if (!keptKinds.isEmpty() && !SurveyDoc.withinSourceTypes(keptKinds)) {
             kinds = keptKinds;
         } else {
             // Not once the call is stopped: nothing more is read.
@@ -727,7 +734,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 kinds = kindsKept(said, "user");
             }
         }
-        if (kinds != null) {
+        if (kinds != null && !SurveyDoc.withinSourceTypes(kinds)) {
             shapes.useKindFields(JsonValues.strings(kinds.get("fields")));
         }
         final SourceTypeProfiles profiles = sources.field() == null
@@ -892,7 +899,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         }
         known.removeAll(surveyed.dropped());
         final Shapes shapes = new Shapes(new ArrayList<>(known), request.examples());
-        if (!surveyed.kinds().isEmpty()) {
+        if (!surveyed.kinds().isEmpty() && !SurveyDoc.withinSourceTypes(surveyed.kinds())) {
             shapes.useKindFields(JsonValues.strings(surveyed.kinds().get("fields")));
         }
         final SourceTypeProfiles profiles = new SourceTypeProfiles(field);

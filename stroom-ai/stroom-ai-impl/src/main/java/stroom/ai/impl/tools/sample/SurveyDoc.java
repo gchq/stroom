@@ -60,8 +60,12 @@ public final class SurveyDoc {
     /// isn't complete while one of them is unsettled.
     public static final String STREAMS_IN_PART = "streams_in_part";
     /// The state's key for the fields that tell the kinds of event apart: `fields` (a list; [KindFields#ONE_KIND]
-    /// alone for one kind) and `by` (`user` or `tool`).
+    /// alone for one kind) and `by` (`user` or `tool`); or, for an aggregated feed, `by` [#WITHIN_SOURCE_TYPES],
+    /// `fields` empty and `within` the source type field ([#kindsWithinSourceTypes(String)]).
     public static final String KIND_FIELDS = "kind_fields";
+    /// The `by` of [#KIND_FIELDS] that says the kinds of event are told apart within each source type, not across
+    /// the feed: classify_kinds chooses the kind field over the build's scope's records.
+    public static final String WITHIN_SOURCE_TYPES = "source_types";
     /// The state's key for the streams read only in part that couldn't be read further in a call, which the user
     /// chose to stop at: settled, as a part read deeper and stopped is.
     public static final String STOPPED_STREAMS = "stopped_streams";
@@ -74,6 +78,11 @@ public final class SurveyDoc {
     /// was read through ([SourceTypeScope#signature()]), or [SourceTypeScope#ALL] for every one. A stream read with
     /// no entry was read before scopes were kept: for every source type.
     public static final String SCOPE_READ = "scope_read";
+
+    // What the survey says of kinds told apart within source types.
+    private static final String WITHIN_SAID = "The kinds of event are told apart within each source type, not "
+                                              + "across the feed: classify_kinds chooses the kind field over the "
+                                              + "build's own source types' records.";
 
     private static final DateTimeFormatter AT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
             .withZone(ZoneOffset.UTC);
@@ -442,6 +451,28 @@ public final class SurveyDoc {
                 : ToolText.head(flat, width - 1) + "…";
     }
 
+    /// The kind fields an aggregated feed's survey keeps (asked for by the user, 2026-11-18: an aggregated feed of 65
+    /// source types, its kind field chosen over all of them together, and only the times they share put to the user):
+    /// none chosen feed-wide, the kinds told apart within each source type.
+    ///
+    /// @param sourceTypeField The source type field, as the survey reads it.
+    /// @return The [#KIND_FIELDS] entry: `fields` empty, `by` [#WITHIN_SOURCE_TYPES], `within` the field, and
+    /// `said` what it means.
+    public static Map<String, Object> kindsWithinSourceTypes(final String sourceTypeField) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("fields", List.of());
+        out.put("by", WITHIN_SOURCE_TYPES);
+        out.put("within", sourceTypeField);
+        out.put("said", WITHIN_SAID);
+        return out;
+    }
+
+    /// @param kinds A [#KIND_FIELDS] entry, or null.
+    /// @return True if it says the kinds of event are told apart within source types ([#kindsWithinSourceTypes]).
+    public static boolean withinSourceTypes(final Map<String, Object> kinds) {
+        return kinds != null && WITHIN_SOURCE_TYPES.equals(kinds.get("by"));
+    }
+
     /// Writes the survey document.
     ///
     /// @param state A survey state.
@@ -543,11 +574,14 @@ public final class SurveyDoc {
                               + found.shareSaid(sources).substring(1) + ": the survey reads only its records, "
                               + "the others counted by source type.")
                 .orElse("");
+        final String within = withinSourceTypes(JsonValues.mapOrEmpty(state.get(KIND_FIELDS)))
+                ? " " + WITHIN_SAID
+                : "";
         return Optional.of("An aggregated feed: its records' source is told by `"
                                      + ToolText.str(sources.get(SourceTypeProfiles.FIELD)) + "`. Records read by "
                                      + "value: " + String.join(", ", counted) + ". The registry, `"
                                      + SourceTypeRegistry.docName(ToolText.str(state.get("feed")))
-                                     + "`, profiles each source type." + scope);
+                                     + "`, profiles each source type." + scope + within);
     }
 
     @SuppressWarnings("unchecked")
