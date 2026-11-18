@@ -650,6 +650,50 @@ class TestDraftMapping extends DraftFixtures {
     }
 
     @Test
+    void aSyslogBodysCsvDoubledQuoteIsUnescapedButNotTheHeadersFields() {
+        // A delimited spec nested in a splitter spec (here a syslog header's body) was passed over: only a top-level
+        // one had its doubled quotes read with unescape_quotes, so the events said 'say ""hi""'.
+        final String text = String.join("\n",
+                "<134>1 2026-10-02T11:00:00.000Z wf01 webfilter 2211 - - alice,allow,\"ok\"",
+                "<134>1 2026-10-02T11:01:00.000Z wf01 webfilter 2211 - - bob,block,\"say \"\"hi\"\" to phishing\"",
+                "<134>1 2026-10-02T11:02:00.000Z wf01 webfilter 2211 - - carol,block,\"quoted \"\"x\"\"\"") + "\n";
+        final SplitterSpec splitter = specOf("""
+                {"kind": "syslog", "rfc": "rfc5424", "body": {"kind": "delimited", "quote": "\\"",
+                 "header": ["user", "action", "msg"]}}""");
+        final Map<String, Object> drafted = DraftMapping.draft(List.of(text), "Web filter", "Web filter", "Prod",
+                null, null, splitter);
+
+        final List<Map<String, Object>> entries = draftedEntries(drafted);
+        assertThat(entries).filteredOn(entry -> "msg".equals(entry.get("field"))).isNotEmpty()
+                .allSatisfy(entry -> assertThat(entry.get("transform")).isEqualTo("unescape_quotes"));
+        assertThat(entries).filteredOn(entry -> entry.get("transform") != null)
+                .allSatisfy(entry -> assertThat(entry.get("field")).isEqualTo("msg"));
+        assertThat(String.valueOf(drafted.get("notes"))).contains("['msg'] hold doubled quotes");
+    }
+
+    @Test
+    void anAlternativesPartsBodysCsvDoubledQuoteIsUnescaped() {
+        // The delimited spec two deep: an alternatives part's syslog header's body.
+        final String text = String.join("\n",
+                "<134>1 2026-10-02T11:00:00.000Z wf01 webfilter 2211 - - alice,allow,\"say \"\"hi\"\"\"",
+                "PLAIN bob block",
+                "<134>1 2026-10-02T11:01:00.000Z wf01 webfilter 2211 - - carol,block,\"ok\"") + "\n";
+        final SplitterSpec splitter = specOf("""
+                {"kind": "alternatives", "variant_field": "format",
+                 "parts": [{"kind": "syslog", "rfc": "rfc5424", "variant": "syslog",
+                            "body": {"kind": "delimited", "quote": "\\"", "header": ["user", "action", "msg"]}},
+                           {"kind": "regex", "variant": "plain", "pattern": "^PLAIN (\\\\S+) (\\\\S+)$",
+                            "names": ["user", "action"]}]}""");
+        final Map<String, Object> drafted = DraftMapping.draft(List.of(text), "Web filter", "Web filter", "Prod",
+                null, null, splitter);
+
+        assertThat(draftedEntries(drafted)).filteredOn(entry -> "msg".equals(entry.get("field"))).isNotEmpty()
+                .allSatisfy(entry -> assertThat(entry.get("transform")).isEqualTo("unescape_quotes"));
+        assertThat(draftedEntries(drafted)).filteredOn(entry -> "user".equals(entry.get("field"))).isNotEmpty()
+                .allSatisfy(entry -> assertThat(entry).doesNotContainKey("transform"));
+    }
+
+    @Test
     void syslogNilValuesAreLeftOutAndNeverNameTheKind() {
         final Map<String, Object> drafted = draft(List.of(format("syslog5424_kv")), "");
         assertThat(mappingOf(drafted).get("nil_values")).isEqualTo(List.of("-"));
@@ -1400,5 +1444,13 @@ class TestDraftMapping extends DraftFixtures {
                     : "outbound"));
         }
         return String.join("\n", lines) + "\n";
+    }
+
+    // The draft's common entries and its rules' fields.
+    private static List<Map<String, Object>> draftedEntries(final Map<String, Object> drafted) {
+        final List<Map<String, Object>> entries = new ArrayList<>(JsonValues.maps(mappingOf(drafted).get("common")));
+        JsonValues.maps(mappingOf(drafted).get("events")).forEach(rule -> entries.addAll(JsonValues.maps(
+                rule.get("fields"))));
+        return entries;
     }
 }

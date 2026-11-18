@@ -943,7 +943,9 @@ public final class DraftMapping {
                           + "reads. Mapping one (changes=) reads it all the same.");
             }
             nilValues();
-            doubledQuotes();
+            // Quoted CSV values with a doubled quote keep it doubled in Stroom: read with unescape_quotes, wherever
+            // the spec nests the delimited spec (a syslog body, an alternatives part).
+            EscapedQuotes.undouble(spec, records, mapping, notes);
             EscapedQuotes.unescape(spec, records, mapping, notes);
             repeatedKeys();
             // Fields holding lists (a comma list, a JSON array of objects): a Data per item, not the whole list.
@@ -2464,35 +2466,6 @@ public final class DraftMapping {
                 mapping.put("nil_values", new ArrayList<>(List.of("-")));
                 notes.add(ToolText.repr(nil.stream().sorted(ToolText::compare).toList()) + " hold '-' for none: "
                           + "nil_values ['-'] leaves those elements out rather than writing '-'.");
-            }
-        }
-
-        // Quoted CSV values with a doubled quote keep it doubled in Stroom: read them with unescape_quotes.
-        @SuppressWarnings("unchecked")
-        private void doubledQuotes() {
-            if (spec == null || !"delimited".equals(spec.kind()) || !LocalCheck.hasText(spec.quote())) {
-                return;
-            }
-            final String doubledQuote = spec.quote() + spec.quote();
-            final Set<String> doubled = new HashSet<>();
-            records.forEach(r -> r.forEach((k, v) -> {
-                if (ToolText.str(v).contains(doubledQuote)) {
-                    doubled.add(k);
-                }
-            }));
-            final List<Map<String, Object>> entries = new ArrayList<>(JsonValues.maps(mapping.get("common")));
-            JsonValues.maps(mapping.get(EVENTS)).forEach(rule -> entries.addAll(
-                    (List<Map<String, Object>>) rule.get(FIELDS)));
-            for (final Map<String, Object> entry : entries) {
-                if (doubled.contains(entry.get(FIELD)) && !JsonValues.truthy(entry.get("transform"))
-                    && !JsonValues.truthy(entry.get("time_format"))) {
-                    entry.put("transform", "unescape_quotes");
-                }
-            }
-            if (!doubled.isEmpty()) {
-                notes.add(ToolText.repr(doubled.stream().sorted(ToolText::compare).toList()) + " hold doubled quotes "
-                          + "inside quoted values, which Data Splitter keeps doubled: the draft reads them with "
-                          + "transform unescape_quotes.");
             }
         }
     }
