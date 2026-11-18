@@ -418,8 +418,9 @@ class PromotionProcessing {
     }
 
     /// As [#createPromotionFilters(StroomLinks, List)], with what the promotion moved, so a production index is never
-    /// put up for dropping: a new index is dropped only while nothing but this promotion's documents writes to it or
-    /// names it.
+    /// put up for dropping or emptying: a new Elasticsearch index is dropped only while nothing but this promotion's
+    /// documents writes to it or names it, and a Lucene index only when it is an index doc the promotion moved out of
+    /// the build (the build's own).
     ///
     /// @param links    How the caller links to Stroom.
     /// @param plan     What [#promotionProcessing] planned.
@@ -450,7 +451,7 @@ class PromotionProcessing {
             final ProcessorFilter created = filterWrites.createFilter(entry.pipeline(),
                     ProcessorFilterWrites.allOf(children), ProcessorFilterWrites.DEFAULT_PRIORITY,
                     ProcessorFilterWrites.MAX_FEED_FILTER_TASKS, null, false);
-            final BeforeEnabling before = beforePromotedIndexing(links, entry.pipeline(), promoted);
+            final BeforeEnabling before = beforePromotedIndexing(links, entry, promoted);
             final String selects = entry.feed() != null
                     ? "processes feed " + entry.feed() + " (" + entry.streamType() + "), existing data included"
                     : "processes " + entry.streamType() + " from its source pipeline, existing data included";
@@ -541,10 +542,12 @@ class PromotionProcessing {
     // What a promoted indexing pipeline's index needs before its filter is enabled, dropped or emptied so it starts
     // fresh, and the button for it; nothing for any other pipeline. A production index is never put up for dropping
     // (seen in a user's test: the production index of a promoted feed was dropped at the tools' prompt): a new
-    // version's own index is dropped only while nothing but this promotion's documents writes to it or names it.
+    // version's own index is dropped only while nothing but this promotion's documents writes to it or names it. A
+    // production Lucene index (one this promotion didn't move out of the build) is never put up for emptying either.
     private BeforeEnabling beforePromotedIndexing(final StroomLinks links,
-                                                  final DocRef pipeline,
+                                                  final Entry entry,
                                                   final Set<String> promoted) {
+        final DocRef pipeline = entry.pipeline();
         final Optional<Map<String, Object>> destination = agreements.elasticDestination(pipeline.getUuid());
         if (destination.isPresent()) {
             final String index = String.valueOf(destination.get().get("index name"));
@@ -568,6 +571,9 @@ class PromotionProcessing {
                                                                           + "fresh"));
         }
         final Optional<DocRef> lucene = indexingRuns.luceneIndex(pipeline.getUuid());
+        if (lucene.isPresent() && !promoted.contains(lucene.get().getUuid())) {
+            return new BeforeEnabling(productionLucene(lucene.get(), entry), null);
+        }
         if (lucene.isPresent()) {
             return new BeforeEnabling("delete the shards of index '" + lucene.get().getName() + "' first (its Shards "
                                       + "tab), so it starts fresh with what this pipeline indexes, the Events "
@@ -576,6 +582,35 @@ class PromotionProcessing {
                             "delete its shards on the Shards tab, so it starts fresh"));
         }
         return new BeforeEnabling(null, null);
+    }
+
+    /// What a promoted indexing pipeline's filter into a production Lucene index says before it is enabled, in place
+    /// of emptying the index (never done for a promotion). Seen in an eval (case 61, a source type joining its
+    /// promoted group as V1.1): the handover asked the user to delete the shards of the group's production index, its
+    /// V1.0 history with them, as it asks of a new index holding the build's sample. The build never wrote to the
+    /// production index (it indexed into its test index), and the filter reads only the new version's Events, which
+    /// the index doesn't hold: what can be indexed twice is the history the new version translates again, which is
+    /// the user's to decide.
+    ///
+    /// @param index The production Lucene index.
+    /// @param entry The filter's entry: its source pipelines name the new version.
+    /// @return What the approval and the result say of it.
+    static String productionLucene(final DocRef index, final Entry entry) {
+        final List<String> sources = entry.extraTerms().stream()
+                .filter(term -> ProcessorFilters.PIPELINE.equals(term.getField()))
+                .map(term -> "'" + NullSafe.nonBlankStringElse(NullSafe.get(term.getDocRef(), DocRef::getName),
+                        NullSafe.get(term.getDocRef(), DocRef::getUuid)) + "'")
+                .toList();
+        final String reads = sources.isEmpty()
+                ? "what its filter selects"
+                : "the Events of " + String.join(", ", sources);
+        return "'" + index.getName() + "' is not emptied: it is a production index, never emptied or dropped for a "
+               + "promotion (the build indexed only into its test index). Enabled, this filter indexes " + reads
+               + " into it beside what it holds; none of those Events are in it yet. Where the new version's own "
+               + "filter translates streams an earlier version translated and this index holds already (existing "
+               + "data included), their events are indexed again beside the earlier ones: the user decides with "
+               + "the admin whether that is meant, or limits that filter in Stroom to the streams arriving from now "
+               + "on";
     }
 
     // A test feed: one of the build's, or one the tools named.

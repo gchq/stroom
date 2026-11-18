@@ -2963,7 +2963,7 @@ feed the build works from, the survey doc and the build record.
   `tidied_up` (per item: `document`, `streams_marked_deleted` or `shards_deleted`, `deleted`, and `failed` or
   `skipped` where it was left; or `tidy_up: not done ...` when the user unticked it), `layout`,
   `folders` (each with a link to open it), `updated_in_place`, `promoted` (what was done), `promoted_with_warnings`,
-  `processing_filters` (each with `pipeline_link`, and `before_enabling` for an index that must start fresh) with a
+  `processing_filters` (each with `pipeline_link`, and `before_enabling` for an index that must start fresh, or for a production index what the user decides instead) with a
   `next` telling the user to review and enable them, `follow_on_filters`, `follow_on_filters_passed_over`, `next_steps` and `user_actions` (buttons:
   enabling the new filters; none disables a filter).
 * **Follow-on filters** (`PromotionProcessing.followOns`, `createFollowOnFilters`; decided by the user 2026-11-17): for
@@ -3006,7 +3006,15 @@ feed the build works from, the survey doc and the build record.
   working copy was written back over keeps its live index (no drop or empty), and a new version's own Elasticsearch
   index is dropped only while nothing but this promotion's documents writes to it or names it
   (`ProductionIndexes.claimsBesides`); otherwise `before_enabling` says it is a production index, not dropped, and
-  why.
+  why. A Lucene index is emptied (its shards deleted, with a button) only when it is an index doc this promotion
+  moved out of the build, the build's own; a production Lucene index (any other: a joined group's, say) is never put
+  up for emptying (seen in an eval, case 61: the handover asked the user to delete the shards of the group's
+  production index, its V1.0 history with them, before the V1.1 indexing filter). Its `before_enabling` says instead
+  (`PromotionProcessing.productionLucene`) that it is a production index, never emptied or dropped for a promotion
+  (the build indexed only into its test index); that the filter indexes only the new version's Events, none of which
+  it holds yet, beside what it holds; and that where the new version's own filter translates streams an earlier
+  version translated and the index holds already, their events are indexed again: the user decides with the admin
+  whether that is meant, or limits that filter in Stroom to the streams arriving from now on. No button.
 
 ## Samples, surveys and feeds
 
