@@ -18,6 +18,11 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.sample.SourceTypeRegistry;
+import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.DashboardConfig;
+import stroom.dashboard.shared.DashboardDoc;
+import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
@@ -88,6 +93,41 @@ class TestPromotionUses {
 
         assertThat(uses.unused(docs, Set.of()))
                 .containsExactly("old", "dead", "dead-import", "doc-old");
+    }
+
+    @Test
+    void anIndexTheAgentMadeToTestWithThatNothingPromotedWritesToStaysWithItsDashboard() {
+        // Seen in an eval (case 61): the agent made test indexes of its own (ACME-INDEX-TEST, ACME-INDEX-TEST2),
+        // pointed the new version's indexing pipeline at each in turn and back at the production index, and the
+        // promotion moved them and their verification dashboards to production beside the pipeline.
+        listed(PipelineDoc.TYPE, "ip", "ACME - Indexing V1.1");
+        listed(LuceneIndexDoc.TYPE, "t1", "ACME-INDEX-TEST");
+        listed(LuceneIndexDoc.TYPE, "t2", "ACME-INDEX-TEST2");
+        listed(DashboardDoc.TYPE, "d1", "ACME-INDEX-TEST" + PromotionTidyUp.VERIFY);
+        listed(DashboardDoc.TYPE, "d2", "ACME-INDEX-TEST2" + PromotionTidyUp.VERIFY);
+        // One the pipeline writes to, one an index plan names, and one the feed's registry names: promoted.
+        listed(LuceneIndexDoc.TYPE, "written", "ACME-OTHER-TEST");
+        listed(LuceneIndexDoc.TYPE, "planned", "acme-test");
+        listed(LuceneIndexDoc.TYPE, "registered", "ACME-REG-TEST");
+        listed(DashboardDoc.TYPE, "d3", "ACME-OTHER-TEST" + PromotionTidyUp.VERIFY);
+        // An index named for nothing to test with is promoted as before, whatever writes to it.
+        listed(LuceneIndexDoc.TYPE, "plain", "ACME Index");
+        listed(XsltDoc.TYPE, "ix-x", "acme-index-XSLT");
+        listed(DocumentationDoc.TYPE, "reg", "ACME" + SourceTypeRegistry.SUFFIX);
+        pipeline("ip", null, Map.of("index", new DocRef(LuceneIndexDoc.TYPE, "written"), "xslt",
+                new DocRef(XsltDoc.TYPE, "ix-x")));
+        stored.put("ix-x", XsltDoc.builder().uuid("ix-x").name("acme-index-XSLT").data("")
+                .description(KeptMapping.withMapping("", "index", Map.of("index_name", "ACME-TEST"))).build());
+        stored.put("reg", DocumentationDoc.builder().uuid("reg").name("ACME" + SourceTypeRegistry.SUFFIX)
+                .data("{\"index_doc\": {\"uuid\": \"registered\"}}").build());
+        verifyDashboard("d1", "t1");
+        verifyDashboard("d2", "t2");
+        verifyDashboard("d3", "written");
+
+        assertThat(uses.unused(docs, Set.of())).containsExactlyInAnyOrder("t1", "t2", "d1", "d2");
+        assertThat(PromotionUses.testMarked("ACME-INDEX-MCP-TEST")).isTrue();
+        assertThat(PromotionUses.testMarked("ACME-CONTEST")).isFalse();
+        assertThat(PromotionUses.testMarked("ACME-TESTING")).isFalse();
     }
 
     @Test
@@ -187,6 +227,15 @@ class TestPromotionUses {
                 new PipelinePropertyValue(ref))));
         stored.put(uuid, PipelineDoc.builder().uuid(uuid).name(uuid).parentPipeline(parent)
                 .pipelineData(data.build()).build());
+    }
+
+    private void verifyDashboard(final String uuid, final String indexUuid) {
+        stored.put(uuid, DashboardDoc.builder().uuid(uuid).name(uuid).dashboardConfig(DashboardConfig.builder()
+                .components(List.of(ComponentConfig.builder().id("query").type("query")
+                        .settings(QueryComponentSettings.builder()
+                                .dataSource(new DocRef(LuceneIndexDoc.TYPE, indexUuid)).build())
+                        .build()))
+                .build()).build());
     }
 
     private void xslt(final String uuid, final String code) {

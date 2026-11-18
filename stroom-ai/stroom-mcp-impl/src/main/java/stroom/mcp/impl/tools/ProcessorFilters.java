@@ -45,6 +45,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /// The processor filters the build tools read, as the user: what each filter's pipeline reads, by its feeds.
 ///
@@ -196,11 +197,20 @@ class ProcessorFilters {
     /// @param feed A feed's name.
     /// @return Each such pipeline as `{uuid, name, reads_events}`.
     List<Map<String, Object>> pipelinesReading(final String feed) {
+        return pipelinesReading(feed, filter -> true);
+    }
+
+    /// As [#pipelinesReading(String)], counting only the filters the test passes.
+    ///
+    /// @param feed  A feed's name.
+    /// @param reads True for a filter that counts as reading the feed when its terms name it.
+    /// @return Each such pipeline as `{uuid, name, reads_events}`.
+    List<Map<String, Object>> pipelinesReading(final String feed, final Predicate<ProcessorFilter> reads) {
         final Map<String, Map<String, Object>> found = new LinkedHashMap<>();
         final Map<Object, Object> known = new LinkedHashMap<>();
         for (final ProcessorFilter filter : all()) {
             final List<ExpressionTerm> terms = terms(filter);
-            if (!feeds(terms, known).contains(feed.toLowerCase(Locale.ROOT))) {
+            if (!feeds(terms, known).contains(feed.toLowerCase(Locale.ROOT)) || !reads.test(filter)) {
                 continue;
             }
             final boolean events = terms.stream()
