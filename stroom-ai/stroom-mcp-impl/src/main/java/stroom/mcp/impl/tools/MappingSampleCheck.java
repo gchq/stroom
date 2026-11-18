@@ -205,7 +205,7 @@ final class MappingSampleCheck {
         check.put("warnings", warnings);
         check.put(DOMAIN_QUALIFIED, qualified);
         check.put(PLACEHOLDERS, placeholders);
-        check.put(CONFIRMED_LOST, ConfirmedKinds.lost(mapping, found.records(), events, scope));
+        check.put(CONFIRMED_LOST, ConfirmedKinds.lost(mapping, found.records(), events, scope, schema));
         if (NullSafe.isNonEmptyString(found.note())) {
             check.put("note", found.note());
         }

@@ -19,10 +19,15 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
+import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +42,8 @@ class TestConfirmedKinds {
             Map.of("action", "logout", "user", "alice"),
             Map.of("action", "logout", "user", "bob"),
             Map.of("action", "usb", "user", ""));
+
+    private static final EventSchema SCHEMA = schema();
 
     @Test
     void aKindTranslatedAsConfirmedIsNotLost() {
@@ -79,6 +86,32 @@ class TestConfirmedKinds {
                     assertThat(one.writes()).isEqualTo("Authenticate, Action Logon");
                     assertThat(one.wanted()).isEqualTo("Authenticate, Action Other");
                 });
+    }
+
+    @Test
+    void aKindConfirmedWithAnActionTheSchemaDoesNotAllowIsNotLostToAnAllowedOne() {
+        // Seen in the agent eval (case 60): "Add member to role" confirmed as an Authorise Action, which takes only
+        // Request or Modify. The mapping's Modify was refused as translating it otherwise, and the run ended with the
+        // kind written as Unknown.
+        final TranslationMapping modify = mapping("""
+                [{"name": "role", "when": [{"field": "action", "equals": "login"}],
+                  "fields": [{"path": "EventDetail/Authorise/Action", "value": "Modify"}]}]""");
+        final List<Map<String, Object>> events = List.of(confirmed("role added", "login", "Authorise",
+                "Add member to role"));
+
+        assertThat(ConfirmedKinds.lost(modify, RECORDS, events, null, SCHEMA)).isEmpty();
+        // Without the schema, compared as confirmed.
+        assertThat(ConfirmedKinds.lost(modify, RECORDS, events, null, null)).singleElement()
+                .extracting(ConfirmedKinds.Lost::writes).isEqualTo("Authorise, Action Modify");
+        // An Action the schema allows, confirmed, is still followed.
+        assertThat(ConfirmedKinds.lost(modify, RECORDS, List.of(confirmed("role asked", "login", "Authorise",
+                "Request")), null, SCHEMA)).singleElement()
+                .extracting(ConfirmedKinds.Lost::writes).isEqualTo("Authorise, Action Modify");
+        // A written Action the schema doesn't allow either is still lost.
+        final TranslationMapping invalid = mapping("""
+                [{"name": "role", "when": [{"field": "action", "equals": "login"}],
+                  "fields": [{"path": "EventDetail/Authorise/Action", "value": "Grant"}]}]""");
+        assertThat(ConfirmedKinds.lost(invalid, RECORDS, events, null, SCHEMA)).hasSize(1);
     }
 
     @Test
@@ -206,6 +239,14 @@ class TestConfirmedKinds {
         out.put("action", action);
         out.put("basis", RecordSourceNotesTool.USER_CONFIRMED);
         return out;
+    }
+
+    private static EventSchema schema() {
+        try (final InputStream in = TestConfirmedKinds.class.getResourceAsStream("event-logging-v4.1.0.xsd")) {
+            return EventSchema.parse(new String(in.readAllBytes(), StandardCharsets.UTF_8));
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private static TranslationMapping mapping(final String events) {

@@ -284,6 +284,40 @@ public final class SourceNotes {
         return null;
     }
 
+    /// The values the schema allows as an action element's Action, when it holds an enumeration there. Seen in the
+    /// agent eval (cases 60 and 65): "Add member to role" and "MFA" confirmed as Authorise and Authenticate Actions,
+    /// which the schema doesn't allow; the draft then wrote Modify and the build refused it as not what was confirmed.
+    ///
+    /// @param schema The event-logging schema.
+    /// @param detail The event's `event_detail`, e.g. `Authorise`, or null.
+    /// @return The Action values allowed, in the schema's order; null when the element has no Action, or its Action
+    /// is not an enumeration (any text is allowed).
+    public static List<String> allowedActions(final EventSchema schema, final String detail) {
+        final String given = ToolText.strip(NullSafe.string(detail).strip(), "/");
+        if (given.isEmpty() || !schema.hasPath(EVENT_DETAIL + given + "/Action")) {
+            return null;
+        }
+        return schema.enumeration(schema.resolve(EVENT_DETAIL + given + "/Action").getLast().decl());
+    }
+
+    /// An event's Action as the schema spells it: the allowed value it names, ignoring case (`logon` is `Logon`).
+    ///
+    /// @param schema The event-logging schema.
+    /// @param detail The event's `event_detail`.
+    /// @param action The event's `action`, or null.
+    /// @return The allowed value it names; the action as given when the schema allows any text there (or the element
+    /// has no Action); empty when the schema's enumeration doesn't hold it.
+    public static Optional<String> allowedAction(final EventSchema schema, final String detail, final String action) {
+        final String given = NullSafe.string(action).strip();
+        final List<String> allowed = allowedActions(schema, detail);
+        if (allowed == null || given.isEmpty()) {
+            return Optional.of(given);
+        }
+        return allowed.stream()
+                .filter(value -> value.equalsIgnoreCase(given))
+                .findFirst();
+    }
+
     /// What makes an event catalogue unusable for drafting: an action element the schema doesn't have, and events a
     /// record can't tell apart (the same field and value).
     ///

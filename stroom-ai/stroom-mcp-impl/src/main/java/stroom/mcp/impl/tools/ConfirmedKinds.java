@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
+import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
@@ -78,6 +79,27 @@ final class ConfirmedKinds {
                            final List<Object> records,
                            final List<Map<String, Object>> events,
                            final SourceTypeScope scope) {
+        return lost(mapping, records, events, scope, null);
+    }
+
+    /// As [#lost(TranslationMapping, List, List, SourceTypeScope)], each confirmed Action read against the schema: one
+    /// the schema doesn't allow under its action element can't be written, so a rule writing an allowed Action there
+    /// instead is not translating the kind otherwise. Seen in the agent eval (case 60): "Add member to role" confirmed
+    /// as an Authorise Action (which takes only Request or Modify), the mapping's Modify refused as not confirmed, and
+    /// the run ended with the kind written as Unknown.
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
+    /// @param events  The catalogue events of the build's source notes.
+    /// @param scope   The build's (or its group's) source type scope, or null for none.
+    /// @param schema  The event-logging schema the mapping is checked against, or null when not known (each Action
+    ///                is then compared as confirmed).
+    /// @return As the others.
+    static List<Lost> lost(final TranslationMapping mapping,
+                           final List<Object> records,
+                           final List<Map<String, Object>> events,
+                           final SourceTypeScope scope,
+                           final EventSchema schema) {
         final List<Map<String, Object>> confirmed = events.stream()
                 .filter(event -> RecordSourceNotesTool.USER_CONFIRMED.equals(event.get("basis")))
                 .filter(event -> NullSafe.isNonBlankString(text(event.get("field")))
@@ -119,7 +141,7 @@ final class ConfirmedKinds {
                     byRule.merge(rules.get(n), 1, Integer::sum);
                 }
             }
-            byRule.forEach((rule, count) -> otherwise(mapping, event, rule).ifPresent(writes ->
+            byRule.forEach((rule, count) -> otherwise(mapping, event, rule, schema).ifPresent(writes ->
                     lost.add(new Lost(kindName(event), field, value, wanted(event), rule, writes, count))));
         }
         return lost;
@@ -210,8 +232,9 @@ final class ConfirmedKinds {
 
     // What the rule writes for the event's records, when not what the user confirmed; none when it is.
     private static Optional<String> otherwise(final TranslationMapping mapping,
-                                                        final Map<String, Object> event,
-                                                        final String ruleName) {
+                                              final Map<String, Object> event,
+                                              final String ruleName,
+                                              final EventSchema schema) {
         if (NO_RULE.equals(ruleName)) {
             return Optional.of("taken by no rule");
         }
@@ -235,11 +258,29 @@ final class ConfirmedKinds {
         final String action = text(event.get("action"));
         if (!action.isEmpty() && !want.isEmpty() && !UNKNOWN.equals(want)) {
             final String written = fixedValue(mapping, rule, EVENT_DETAIL + want + "/Action");
-            if (written != null && !written.equals(action)) {
+            if (written != null && !written.equals(action) && !writableOtherwise(schema, want, action, written)) {
                 return Optional.of(want + ", Action " + written);
             }
         }
         return Optional.empty();
+    }
+
+    // True when the confirmed Action can't be written as the user confirmed it and the rule writes the schema's
+    // spelling of it, or an Action the schema allows in place of one it doesn't: following what was confirmed would
+    // fail validation, so the rule is not translating the kind otherwise. False without a schema.
+    private static boolean writableOtherwise(final EventSchema schema,
+                                             final String detail,
+                                             final String confirmed,
+                                             final String written) {
+        if (schema == null) {
+            return false;
+        }
+        final Optional<String> allowedConfirmed = SourceNotes.allowedAction(schema, detail, confirmed);
+        final Optional<String> allowedWritten = SourceNotes.allowedAction(schema, detail, written);
+        if (allowedWritten.isEmpty()) {
+            return false;
+        }
+        return allowedConfirmed.isEmpty() || allowedConfirmed.get().equals(written);
     }
 
     // The action elements the rule writes (Unknown when it writes EventDetail/Unknown).

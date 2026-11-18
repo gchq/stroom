@@ -3515,7 +3515,10 @@ classification and the draft has no rule of its own, the draft makes its rule th
 condition: `SourceNotes.applyToDraft`), so another value of that field isn't left out. With no such field, or
 none left, nothing is pending and the plan's `classify` step is done. Called with `proposals` (one catalogue entry a pending kind: `field`, `value`,
 `description`, `event_detail`, `action`, `success`, `type_id`, `actor`, `affected`, `affected_as`, `confidence`), each
-is checked as a catalogue event and kept in the notes block (`proposed`, with its `title` and `product` and the
+is checked as a catalogue event (an `action` or `success` its action element has no Action or Outcome for is
+refused, and so is an `action` its Action's enumeration doesn't hold, naming the values it allows, e.g. Authorise's
+Request and Modify: seen in the agent eval, "Add member to role" confirmed as an Authorise Action, the draft's Modify
+then refused as not confirmed; one differing only in case is corrected to the schema's spelling) and kept in the notes block (`proposed`, with its `title` and `product` and the
 kind's sample record kept from the listing, and its place among those of its confidence); the reply's `table`
 (Markdown, which the chat renders, where a form's fields are plain text: asked for by the user, no Markdown in a
 form) comes with status `needs_showing`: Stroom AI's chat shows it itself, after the call, and the agent is told not
@@ -4882,7 +4885,8 @@ through the model. A call runs in this order:
    a mapping that keeps none of the current translation's lookups (warning); kinds the user confirmed
    (classify_kinds, `user_confirmed`) that the mapping translates otherwise (`ConfirmedKinds`: the sample records
    holding the kind's field=value taken by no rule, dropped, or by a rule writing another action element, Unknown
-   among them, or another Action), a warning each, and on saving put to the user (below).
+   among them, or another Action; not another Action the schema allows where the confirmed one is not, since that
+   can't be written), a warning each, and on saving put to the user (below).
 7. **The field-mapping preview** (`field_mapping=true` with `pipeline_uuid` and `stream_ids`): the pipeline is
    stepped with a marked copy of the XSLT (up to `max_records`) and the section rendered by `EventFieldDocs`.
    Without it `field_mapping` is null and `field_mapping_needs` says why: a table from the mapping alone showed how
