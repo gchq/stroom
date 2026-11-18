@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.sample.SourceTypeRows;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -143,6 +144,21 @@ final class EvalScore {
                 problems.add("events have " + entry.getKey() + " = " + wrong + ", which none should");
             }
         }
+        // Texts some event must hold anywhere (an element's text or a Data Value), whatever element the agent put
+        // them in: a quoted value's escapes undone, say.
+        final Set<String> anywhere = allTexts(read);
+        final List<String> textsAbsent = strings(expected.get("texts")).stream()
+                .filter(text -> !anywhere.contains(text))
+                .toList();
+        if (!textsAbsent.isEmpty()) {
+            problems.add("no event holds " + textsAbsent + " anywhere");
+        }
+        // Texts no event may hold anywhere: a quoted value with its escapes kept, say.
+        final Set<String> textsWrong = new TreeSet<>(strings(expected.get("forbidden_texts")));
+        textsWrong.retainAll(anywhere);
+        if (!textsWrong.isEmpty()) {
+            problems.add("events hold " + textsWrong + ", which none should");
+        }
         // Types no event may have: Unknown for a source whose every record has an action element.
         final Set<String> forbidden = new TreeSet<>(strings(expected.get("forbidden_types")));
         forbidden.retainAll(types);
@@ -164,7 +180,7 @@ final class EvalScore {
         }
         stage1 = counted == records1 && !validity.isEmpty() && validEvents == validity.size()
                  && missingTypes.isEmpty() && missingPaths.isEmpty() && !valuesMissing && !heldWrongly
-                 && forbidden.isEmpty() && !misplaced;
+                 && forbidden.isEmpty() && !misplaced && textsAbsent.isEmpty() && textsWrong.isEmpty();
     }
 
     /// Scores an aggregated feed's build against the case's `expected.source_types`, from the build's end state: its
@@ -326,12 +342,15 @@ final class EvalScore {
     }
 
     /// Scores the forms the user was shown in the build against the case's `expected.forms`: `asked`, each a form
-    /// that must have been shown (its `message`, a regular expression found in the form's message) and, where an
-    /// `answer` is given, answered with a value starting with it; `not_asked`, regular expressions no form's message
-    /// may hold.
+    /// that must have been shown (its `message`, a regular expression found in the form's message), where an
+    /// `answer` is given answered with a value starting with it, and where `at_most` is given shown no more times than
+    /// that (a form asked again and again is a loop); `not_asked`, each a regular expression no form's message may
+    /// hold, or a `message` and an `offering`, a regular expression none of such a form's options may match (a kind
+    /// field form offering a time field, say).
     ///
     /// @param evalCase The case.
-    /// @param forms    The forms shown, in order: each its `message` and the `content` it was answered with.
+    /// @param forms    The forms shown, in order: each its `message`, the `content` it was answered with and the
+    ///                 `options` its fields offered (their choices and examples), where recorded.
     void scoreForms(final Map<String, Object> evalCase, final List<Map<String, Object>> forms) {
         final Map<String, Object> expected = maps(maps(evalCase.get("expected")).get("forms"));
         for (final Map<String, Object> asked : (List<Map<String, Object>>) expected.getOrDefault("asked",
@@ -348,13 +367,54 @@ final class EvalScore {
                     : "the form '" + message + "' wasn't answered '" + answer + "…': " + shown.stream()
                             .map(form -> form.get("content"))
                             .toList());
+            if (asked.get("at_most") instanceof final Number most) {
+                check("form " + message + " asked at most " + most, shown.size() <= most.intValue(),
+                        "the form '" + message + "' was asked " + shown.size() + " times, at most " + most
+                        + " expected");
+            }
         }
-        for (final String notAsked : strings(expected.get("not_asked"))) {
-            final Pattern message = Pattern.compile(notAsked);
-            final boolean asked = forms.stream()
-                    .anyMatch(form -> message.matcher(String.valueOf(form.get("message"))).find());
-            check("form " + notAsked + " not asked", !asked, "a form asked '" + notAsked + "', which none should");
+        for (final Object notAsked : (List<Object>) expected.getOrDefault("not_asked", List.of())) {
+            if (notAsked instanceof final Map<?, ?> spec) {
+                scoreNotOffered(forms, Pattern.compile(String.valueOf(spec.get("message"))),
+                        Pattern.compile(String.valueOf(spec.get("offering"))));
+            } else {
+                final Pattern message = Pattern.compile(String.valueOf(notAsked));
+                final boolean asked = forms.stream()
+                        .anyMatch(form -> message.matcher(String.valueOf(form.get("message"))).find());
+                check("form " + notAsked + " not asked", !asked, "a form asked '" + notAsked + "', which none "
+                                                                 + "should");
+            }
         }
+    }
+
+    /// Scores where a case's group's pipeline was promoted to (`expected.source_types.layout`, a regular expression
+    /// found in the explorer path of its folder, e.g. role first then version: `/Events/V1\.0$`). A case with no
+    /// layout given is not scored.
+    ///
+    /// @param evalCase The case.
+    /// @param folder   The folder of the group's pipeline, an explorer path, or null if it has none.
+    void scoreLayout(final Map<String, Object> evalCase, final String folder) {
+        final Object layout = maps(maps(evalCase.get("expected")).get("source_types")).get("layout");
+        if (layout == null) {
+            return;
+        }
+        notes.add("the group's pipeline is in " + folder);
+        check("layout", folder != null && Pattern.compile(String.valueOf(layout)).matcher(folder).find(),
+                "the group's pipeline is in " + folder + ", expected a folder matching " + layout);
+    }
+
+    // No form whose message matches may offer an option the offering matches.
+    private void scoreNotOffered(final List<Map<String, Object>> forms,
+                                 final Pattern message,
+                                 final Pattern offering) {
+        final List<String> offered = forms.stream()
+                .filter(form -> message.matcher(String.valueOf(form.get("message"))).find())
+                .flatMap(form -> strings(form.get("options")).stream())
+                .filter(option -> offering.matcher(option).find())
+                .toList();
+        check("form " + message + " not offering " + offering, offered.isEmpty(), "a form asking '" + message
+                                                                                  + "' offered " + offered
+                                                                                  + ", which none should");
     }
 
     /// @return Whether every source type check passed (true for a case with none).
@@ -784,6 +844,22 @@ final class EvalScore {
             at = next;
         }
         return at;
+    }
+
+    // Every text an event holds: its elements' own text and its Data elements' Values, each stripped.
+    private static Set<String> allTexts(final List<Element> events) {
+        final Set<String> texts = new LinkedHashSet<>();
+        for (final Element event : events) {
+            final NodeList all = event.getElementsByTagNameNS("*", "*");
+            for (int i = 0; i < all.getLength(); i++) {
+                final Element element = (Element) all.item(i);
+                texts.add(directText(element).strip());
+                if ("Data".equals(element.getLocalName())) {
+                    texts.add(element.getAttribute("Value").strip());
+                }
+            }
+        }
+        return texts;
     }
 
     private static List<Element> named(final Element parent, final String name) {

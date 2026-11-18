@@ -305,6 +305,71 @@ class TestEvalScore {
         assertThat((List<String>) none.toMap().get("problems")).containsExactly("no form asked 'runs in pipeline'");
     }
 
+    @Test
+    void aFormAskedTooOftenOrOfferingWhatNoneShouldIsAProblem() {
+        final Map<String, Object> evalCase = expecting(Map.of("forms", Map.of(
+                "asked", List.of(Map.of("message", "go in this build's", "at_most", 1)),
+                "not_asked", List.of(Map.of("message", "kinds of event apart", "offering", "^(time|orig_rt)( |$)")))));
+        final Map<String, Object> scope = Map.of("message", "Which source types go in this build's group?");
+        final Map<String, Object> kinds = Map.of("message", "Which field tells the kinds of event apart?",
+                "options", List.of("event.action (LOGIN, LOGOUT)", "level (INFO, WARN)"));
+        final Map<String, Object> timeKinds = Map.of("message", "Which field tells the kinds of event apart?",
+                "options", List.of("time (1794992402171, 1794992403171)", "event.action (LOGIN)"));
+
+        final EvalScore passing = new EvalScore("c");
+        passing.scoreForms(evalCase, List.of(scope, kinds));
+        assertThat(passing.sourceTypes()).isTrue();
+
+        final EvalScore failing = new EvalScore("c");
+        failing.scoreForms(evalCase, List.of(scope, scope, timeKinds));
+        assertThat((List<String>) failing.toMap().get("problems")).containsExactly(
+                "the form 'go in this build's' was asked 2 times, at most 1 expected",
+                "a form asking 'kinds of event apart' offered [time (1794992402171, 1794992403171)], which none "
+                + "should");
+    }
+
+    @Test
+    void theLayoutIsScoredOnTheGroupsPipelineFolder() {
+        final Map<String, Object> evalCase = expecting(Map.of("source_types", Map.of("layout", "/Events/V1\\.0$")));
+
+        final EvalScore passing = new EvalScore("c");
+        passing.scoreLayout(evalCase, "System/Eval Feeds/EVAL-65/Security audit/Events/V1.0");
+        assertThat(passing.sourceTypes()).isTrue();
+
+        final EvalScore failing = new EvalScore("c");
+        failing.scoreLayout(evalCase, "System/Eval Feeds/EVAL-65/V1.0/Events");
+        failing.scoreLayout(evalCase, null);
+        assertThat((List<String>) failing.toMap().get("problems")).containsExactly(
+                "the group's pipeline is in System/Eval Feeds/EVAL-65/V1.0/Events, expected a folder matching "
+                + "/Events/V1\\.0$",
+                "the group's pipeline is in null, expected a folder matching /Events/V1\\.0$");
+
+        final EvalScore none = new EvalScore("c");
+        none.scoreLayout(expecting(Map.of()), null);
+        assertThat(none.sourceTypes()).isTrue();
+    }
+
+    @Test
+    void textsAreLookedForAnywhereInAnEvent() {
+        final String quoted = event("<EventTime><TimeCreated>2026-09-28T08:01:12.000Z</TimeCreated></EventTime>",
+                "<TypeId>block</TypeId><Description>say \"hi\"</Description><Network><Open><Destination>"
+                + "<Data Name=\"msg\" Value=\"a &quot;b&quot; c\"/></Destination></Open></Network>");
+        final Map<String, Object> expected = Map.of("records", 1, "texts", List.of("say \"hi\"", "a \"b\" c"),
+                "forbidden_texts", List.of("say \\\"hi\\\""));
+
+        final EvalScore passing = new EvalScore("c");
+        passing.scoreEvents(expecting(expected), List.of(quoted), List.of(true), null);
+        assertThat(passing.stage1()).isTrue();
+
+        final String escaped = quoted.replace("say \"hi\"", "say \\\"hi\\\"");
+        final EvalScore failing = new EvalScore("c");
+        failing.scoreEvents(expecting(expected), List.of(escaped), List.of(true), null);
+        assertThat(failing.stage1()).isFalse();
+        assertThat((List<String>) failing.toMap().get("problems")).containsExactly(
+                "no event holds [say \"hi\"] anywhere",
+                "events hold [say \\\"hi\\\"], which none should");
+    }
+
     // A later build's registry: the web server group's row naming its pipeline, the mail row the Messaging group's.
     private static Map<String, Object> laterRegistry(final String pipeline) {
         return Map.of("field", "LogFilePath",
