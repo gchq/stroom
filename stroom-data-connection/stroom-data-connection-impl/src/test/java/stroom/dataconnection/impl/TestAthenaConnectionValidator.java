@@ -31,7 +31,7 @@ class TestAthenaConnectionValidator {
 
     private static DataConnectionConfig config(final String... allowedWorkGroups) {
         return new DataConnectionConfig(null, null, null, null, null, null, null, null, List.of(allowedWorkGroups),
-                List.of("^s3://stroom-results/.*$"), true, null, null);
+                List.of("^s3://stroom-results/.*$"), true, null, null, null, null);
     }
 
     private static AthenaConnectionSettings settings(final String region, final String workGroup) {
@@ -140,7 +140,7 @@ class TestAthenaConnectionValidator {
                 .outputLocation("s3://stroom-results/athena/")
                 .build();
         final DataConnectionConfig config = new DataConnectionConfig(
-                null, null, null, null, null, null, null, null, List.of(".*"), null, true, null, null);
+                null, null, null, null, null, null, null, null, List.of(".*"), null, true, null, null, null, null);
 
         assertThat(AthenaConnectionValidator.findProblems(settings, config))
                 .singleElement()
@@ -152,7 +152,7 @@ class TestAthenaConnectionValidator {
     void stroomsOwnIdentityNeedsTheAdministratorsSwitch() {
         // Otherwise any document creator could query whatever Stroom's own AWS role can read.
         final DataConnectionConfig switchedOff = new DataConnectionConfig(
-                null, null, null, null, null, null, null, null, List.of(".*"), null, null, null, null);
+                null, null, null, null, null, null, null, null, List.of(".*"), null, null, null, null, null, null);
 
         assertThat(AthenaConnectionValidator.findProblems(settings("eu-west-2", "primary"), switchedOff))
                 .singleElement()

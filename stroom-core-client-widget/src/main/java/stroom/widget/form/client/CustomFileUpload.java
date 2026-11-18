@@ -49,7 +49,7 @@ public class CustomFileUpload extends Composite {
 
     private String actionUrl;
     private final FileUploadResultHandler resultHandler = new FileUploadResultHandler();
-    private Runnable fileChosenHandler;
+    private Consumer<String> fileChosenHandler;
 
     private CustomFileUpload() {
         widget = BINDER.createAndBindUi(this);
@@ -113,9 +113,10 @@ public class CustomFileUpload extends Composite {
 
     /// Sets what to do once the user has chosen a file, e.g. to upload it straight away.
     ///
-    /// @param fileChosenHandler Called after a file is chosen.
+    /// @param fileChosenHandler Called after a file is chosen, with its name without the path the
+    ///                          browser gives, e.g. `teams.xlsx` for `C:\fakepath\teams.xlsx`.
     /// @return This upload.
-    public CustomFileUpload onFileChosen(final Runnable fileChosenHandler) {
+    public CustomFileUpload onFileChosen(final Consumer<String> fileChosenHandler) {
         this.fileChosenHandler = fileChosenHandler;
         return this;
     }
@@ -151,7 +152,7 @@ public class CustomFileUpload extends Composite {
         }
         fileName.setText(name);
         if (fileChosenHandler != null && name != null && !name.isEmpty()) {
-            fileChosenHandler.run();
+            fileChosenHandler.accept(name);
         }
     }
 

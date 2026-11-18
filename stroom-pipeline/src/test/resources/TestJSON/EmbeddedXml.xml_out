@@ -3,7 +3,7 @@
    <map key="data">
       <map key="structure">
          <map key="values">
-            <string key="content">&lt;XXXX&gt;_aa_&#x0;_bb_&lt;/XXXX&gt;</string>
+            <string key="content">&lt;XXXX&gt;_aa__bb_&lt;/XXXX&gt;</string>
          </map>
       </map>
    </map>

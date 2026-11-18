@@ -28,6 +28,7 @@ import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /// Remembers the columns returned by the SQL of each query, by document version and SQL.
 ///
@@ -57,8 +58,8 @@ public class SqlFieldCache implements Clearable {
     /// @return The columns.
     public List<SqlColumn> get(final DataConnectionDoc doc,
                                final String sql,
-                               final Function<String, List<SqlColumn>> describer) {
-        return cache.get(Key.of(doc, sql), key -> List.copyOf(describer.apply(sql)));
+                               final Supplier<List<SqlColumn>> describer) {
+        return cache.get(Key.of(doc, sql), key -> List.copyOf(describer.get()));
     }
 
     /// Gets the columns for a query if they are known.
@@ -77,6 +78,23 @@ public class SqlFieldCache implements Clearable {
     /// @param columns The columns.
     public void put(final DataConnectionDoc doc, final String sql, final List<SqlColumn> columns) {
         cache.put(Key.of(doc, sql), List.copyOf(columns));
+    }
+
+    /// Wraps a row consumer factory so that it records the columns a query returned before making
+    /// the row consumer.
+    ///
+    /// @param doc     The Data Connection.
+    /// @param sql     The query's SQL as written.
+    /// @param factory Makes the row consumer from the columns.
+    /// @return The wrapped factory.
+    public Function<List<SqlColumn>, SqlRowConsumer> recording(
+            final DataConnectionDoc doc,
+            final String sql,
+            final Function<List<SqlColumn>, SqlRowConsumer> factory) {
+        return columns -> {
+            put(doc, sql, columns);
+            return factory.apply(columns);
+        };
     }
 
     @Override

@@ -17,9 +17,15 @@
 package stroom.util.xml;
 
 import net.sf.saxon.Configuration;
+import net.sf.saxon.event.Receiver;
+import net.sf.saxon.expr.parser.Location;
 import net.sf.saxon.jaxp.SaxonTransformerFactory;
 import net.sf.saxon.lib.SerializerFactory;
+import net.sf.saxon.om.NodeName;
+import net.sf.saxon.serialize.CharacterMapExpander;
 import net.sf.saxon.serialize.Emitter;
+import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.type.SimpleType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,6 +99,37 @@ public final class TransformerFactoryFactory {
         @Override
         protected Emitter newXMLEmitter(final Properties properties) {
             return new MyXmlEmitter(preventEscapeSwitching);
+        }
+
+        @Override
+        public CharacterMapExpander newCharacterMapExpander(final Receiver next) {
+            return new NulStrippingCharacterMapExpander(next);
+        }
+    }
+
+    // Saxon marks the text a character map substitutes with U+0000 so the emitter writes it unescaped.
+    // A U+0000 already in the data would be indistinguishable from those markers, so this removes them
+    // before the character map is applied. XML cannot hold U+0000 in any form so nothing is lost.
+    private static class NulStrippingCharacterMapExpander extends CharacterMapExpander {
+
+        public NulStrippingCharacterMapExpander(final Receiver next) {
+            super(next);
+        }
+
+        @Override
+        public void characters(final CharSequence chars,
+                               final Location locationId,
+                               final int properties) throws XPathException {
+            super.characters(MyXmlEmitter.removeNul(chars), locationId, properties);
+        }
+
+        @Override
+        public void attribute(final NodeName nameCode,
+                              final SimpleType typeCode,
+                              final CharSequence value,
+                              final Location locationId,
+                              final int properties) throws XPathException {
+            super.attribute(nameCode, typeCode, MyXmlEmitter.removeNul(value), locationId, properties);
         }
     }
 }

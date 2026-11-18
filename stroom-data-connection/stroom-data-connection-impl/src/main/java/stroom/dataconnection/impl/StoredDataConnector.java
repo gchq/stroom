@@ -17,31 +17,21 @@
 package stroom.dataconnection.impl;
 
 import stroom.dataconnection.shared.DataColumn;
-import stroom.dataconnection.shared.DataColumnType;
 import stroom.dataconnection.shared.DataConnectionDoc;
 import stroom.dataconnection.shared.DataConnectionTestResponse;
 import stroom.dataconnection.shared.StoredDataSettings;
 import stroom.query.api.DateTimeSettings;
-import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Query;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
-import stroom.util.io.ByteSize;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Provider;
 
-import java.sql.Types;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
-import java.util.Set;
 
 /// Queries data held in the document itself, such as CSV or an Excel sheet.
 ///
@@ -54,8 +44,6 @@ import java.util.Set;
 /// If the document names a time column, which must be a Date column, rows are filtered on it in
 /// Stroom. Otherwise the time range is not used, and the query warns that it was ignored.
 abstract class StoredDataConnector implements Connector {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StoredDataConnector.class);
 
     static final String TIME_RANGE_IGNORED = "The time range was ignored, as the Data Connection has no "
                                              + "time column.";
@@ -131,101 +119,74 @@ abstract class StoredDataConnector implements Connector {
                                                + "Detect them in its settings.");
         }
         final List<DataColumn> dataColumns = settings(doc).getColumns();
-        requireNamedColumns(doc, dataColumns);
+        DataColumns.requireNamed(doc, dataColumns);
+        DataColumns.requireUniqueNames(doc, dataColumns, "column");
         // An imported document is not checked on save, so its size is checked before it is read.
         requireWithinSizeLimit(doc);
-        final boolean timeRangeSet = TimeRanges.isSet(query.getTimeRange());
-        final String timeField = doc.getTimeField();
-        if (timeRangeSet && !NullSafe.isBlankString(timeField)) {
-            requireDateColumn(doc, dataColumns, timeField);
+        final TimeRanges.Applied timeRange = TimeRanges.apply(query, false, doc.getTimeField(), TIME_RANGE_IGNORED);
+        if (timeRange.filtersOnTimeColumn()) {
+            TimeRanges.requireDateColumn(doc, dataColumns, doc.getTimeField(), "column", "");
         }
-        final ExpressionOperator expression = TimeRanges.addTimeRange(
-                query.getExpression(),
-                query.getTimeRange(),
-                timeField);
-        final List<String> warnings = timeRangeSet && NullSafe.isBlankString(timeField)
-                ? List.of(TIME_RANGE_IGNORED)
-                : List.of();
         final SqlQueryLimits limits = SqlQueryLimits.of(doc, configProvider.get());
 
-        return new PreparedQuery(expression, warnings, (rowConsumerFactory, cancellation, progress) -> {
-            // One row past the limit, to tell whether the limit was reached.
-            final int rowsToRead = limits.maxRows() == Integer.MAX_VALUE
-                    ? Integer.MAX_VALUE
-                    : limits.maxRows() + 1;
-            final DataTable table = hasData(doc)
-                    ? tableCache.get(doc, dataKey(doc), rowsToRead, () -> read(doc, rowsToRead))
-                    : new DataTable(List.of(), List.of());
-            final SqlRowConsumer rowConsumer = rowConsumerFactory.apply(columns);
-            final BadValues badValues = new BadValues();
-            long rowsRead = 0;
-            long rowsPassed = 0;
-            boolean limitReached = false;
-            for (final List<String> row : table.rows()) {
-                if (cancellation.isCancelled()) {
-                    break;
+        return new PreparedQuery(timeRange.expression(), timeRange.warnings(),
+                (rowConsumerFactory, cancellation, progress) -> {
+                // One row past the limit, to tell whether the limit was reached.
+                final int rowsToRead = limits.maxRows() == Integer.MAX_VALUE
+                        ? Integer.MAX_VALUE
+                        : limits.maxRows() + 1;
+                final DataTable table = hasData(doc)
+                        ? tableCache.get(doc, dataKey(doc), rowsToRead, () -> read(doc, rowsToRead))
+                        : new DataTable(List.of(), List.of());
+                final SqlRowConsumer rowConsumer = rowConsumerFactory.apply(columns);
+                final BadValues badValues = new BadValues();
+                final RowCounter counter = new RowCounter(limits.maxRows());
+                for (final List<String> row : table.rows()) {
+                    if (cancellation.isCancelled()
+                        || !counter.take(() -> rowConsumer.accept(
+                            columnIndex -> readValue(row, columnIndex, dataColumns, badValues)))) {
+                        break;
+                    }
                 }
-                if (rowsRead == limits.maxRows()) {
-                    limitReached = true;
-                    break;
-                }
-                rowsRead++;
-                if (rowConsumer.accept(columnIndex -> readValue(row, columnIndex, dataColumns, badValues))) {
-                    rowsPassed++;
-                }
-            }
 
-            final List<String> runWarnings = new ArrayList<>();
-            headerWarning(table, dataColumns).ifPresent(runWarnings::add);
-            badValues.warning().ifPresent(runWarnings::add);
-            return new QueryRunSummary(
-                    columns,
-                    rowConsumer.getUnmatchedFields(),
-                    rowsRead,
-                    rowsPassed,
-                    limitReached,
-                    limits.maxRows(),
-                    null,
-                    runWarnings);
-        });
+                final List<String> runWarnings = new ArrayList<>();
+                headerWarning(table, dataColumns).ifPresent(runWarnings::add);
+                badValues.warning().ifPresent(runWarnings::add);
+                return counter.summary(rowConsumer.getUnmatchedFields(), null, runWarnings);
+            });
     }
 
     /// Reads all of the data, and reports how many rows and columns it has, and any values that are not
     /// of their column's type.
     @Override
-    public DataConnectionTestResponse test(final DataConnectionDoc doc) {
-        try {
-            if (!hasData(doc)) {
-                return new DataConnectionTestResponse(false, "There is no " + dataName() + ".");
-            }
-            requireWithinSizeLimit(doc);
-            final DataTable table = read(doc, Integer.MAX_VALUE);
-            final List<DataColumn> dataColumns = NullSafe.list(settings(doc).getColumns());
-            final BadValues badValues = new BadValues();
-            for (final List<String> row : table.rows()) {
-                for (int index = 0; index < dataColumns.size(); index++) {
-                    readValue(row, index, dataColumns, badValues);
-                }
-            }
-            final StringBuilder sb = new StringBuilder()
-                    .append("Read ")
-                    .append(table.rows().size())
-                    .append(table.rows().size() == 1 ? " row" : " rows")
-                    .append(" of ")
-                    .append(table.columnCount())
-                    .append(" columns.");
-            if (dataColumns.isEmpty()) {
-                sb.append("\nNo columns have been set, so the ")
-                        .append(dataName())
-                        .append(" cannot be queried. Detect them first.");
-            }
-            headerWarning(table, dataColumns).ifPresent(warning -> sb.append("\n").append(warning));
-            badValues.warning().ifPresent(warning -> sb.append("\n").append(warning));
-            return new DataConnectionTestResponse(true, sb.toString());
-        } catch (final RuntimeException e) {
-            LOGGER.debug(() -> LogUtil.message("{} test failed for {}", getType(), doc.getUuid()), e);
-            return new DataConnectionTestResponse(false, e.getMessage());
+    public DataConnectionTestResponse testConnection(final DataConnectionDoc doc) throws Exception {
+        if (!hasData(doc)) {
+            return new DataConnectionTestResponse(false, "There is no " + dataName() + ".");
         }
+        requireWithinSizeLimit(doc);
+        final DataTable table = read(doc, Integer.MAX_VALUE);
+        final List<DataColumn> dataColumns = NullSafe.list(settings(doc).getColumns());
+        final BadValues badValues = new BadValues();
+        for (final List<String> row : table.rows()) {
+            for (int index = 0; index < dataColumns.size(); index++) {
+                readValue(row, index, dataColumns, badValues);
+            }
+        }
+        final StringBuilder sb = new StringBuilder()
+                .append("Read ")
+                .append(table.rows().size())
+                .append(table.rows().size() == 1 ? " row" : " rows")
+                .append(" of ")
+                .append(table.columnCount())
+                .append(" columns.");
+        if (dataColumns.isEmpty()) {
+            sb.append("\nNo columns have been set, so the ")
+                    .append(dataName())
+                    .append(" cannot be queried. Detect them first.");
+        }
+        headerWarning(table, dataColumns).ifPresent(warning -> sb.append("\n").append(warning));
+        badValues.warning().ifPresent(warning -> sb.append("\n").append(warning));
+        return new DataConnectionTestResponse(true, sb.toString());
     }
 
     /// @param doc A Data Connection of this connector's type.
@@ -241,7 +202,7 @@ abstract class StoredDataConnector implements Connector {
         }
         return dataColumns.stream()
                 .filter(column -> !NullSafe.isBlankString(column.getName()))
-                .map(column -> new SqlColumn(column.getName(), DataValues.toFieldType(column.getType()), Types.OTHER))
+                .map(SqlColumn::of)
                 .toList();
     }
 
@@ -279,45 +240,10 @@ abstract class StoredDataConnector implements Connector {
     }
 
     private void requireWithinSizeLimit(final DataConnectionDoc doc) {
-        final ByteSize limit = configProvider.get().getMaxStoredDataSize();
-        if (dataSize(doc) > limit.getBytes()) {
-            throw new IllegalArgumentException("The " + dataName() + " is more than the limit of " + limit
-                                               + " set by the property "
-                                               + "stroom.dataConnection.maxStoredDataSize.");
-        }
+        StoredDataLimit.findProblem(dataName(), dataSize(doc), configProvider.get())
+                .ifPresent(problem -> {
+                    throw new IllegalArgumentException(problem);
+                });
     }
 
-    // Each column becomes a field, so each needs a name of its own. Detect Columns always gives one,
-    // but an imported document may not.
-    private static void requireNamedColumns(final DataConnectionDoc doc, final List<DataColumn> columns) {
-        final Set<String> names = new HashSet<>();
-        for (final DataColumn column : columns) {
-            if (NullSafe.isBlankString(column.getName())) {
-                throw new IllegalArgumentException("Data Connection '" + doc.getName() + "' has a column "
-                                                   + "with no name. Detect the columns again in its settings.");
-            }
-            if (!names.add(column.getName().toLowerCase(Locale.ROOT))) {
-                throw new IllegalArgumentException("Data Connection '" + doc.getName() + "' has more than "
-                                                   + "one column named '" + column.getName() + "'.");
-            }
-        }
-    }
-
-    // Matched without regard to case, as fields are.
-    private static void requireDateColumn(final DataConnectionDoc doc,
-                                          final List<DataColumn> columns,
-                                          final String timeField) {
-        final DataColumn column = columns.stream()
-                .filter(dataColumn -> timeField.equalsIgnoreCase(dataColumn.getName()))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("The time range cannot be applied, as the time "
-                                                                + "column '" + timeField
-                                                                + "' is not a column of Data Connection '"
-                                                                + doc.getName() + "'."));
-        if (column.getType() != DataColumnType.DATE) {
-            throw new IllegalArgumentException("The time range cannot be applied, as the time column '"
-                                               + timeField + "' of Data Connection '" + doc.getName()
-                                               + "' is not a Date column.");
-        }
-    }
 }
