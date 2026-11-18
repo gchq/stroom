@@ -288,6 +288,33 @@ class TestCreateIndexingPipelineTool {
     }
 
     @Test
+    void aProductionIndexLackingThePlansFieldsIsRefusedBeforeThePipelineIsMade() {
+        // Seen in an eval (case 61): the pipeline was made, then the production index's fields refused; the agent's
+        // copy_pipeline of the production indexing pipeline under that name was refused in turn, so the build
+        // promoted a pipeline that was no new version of it, and both indexed the new Events into the same index.
+        final FieldPlan lucene = FieldPlan.of("lucene", "acme", "EventTime", List.of(
+                PlannedField.of("StreamId", "id", "@StreamId"),
+                PlannedField.of("EventTime", "date", "EventTime/TimeCreated")));
+        docs.put(LuceneIndexDoc.TYPE, LuceneIndexDoc.builder().uuid("i-1").name("ACME-INDEX").build());
+        luceneFields("StreamId");
+        xslt(KeptMapping.withMapping("", "index", lucene.toJson()), lucene.xslt());
+        template("lucene", List.of(slot("xsltFilter", "XSLTFilter", "xslt"),
+                slot("indexingFilter", "IndexingFilter", "index")), List.of());
+        Mockito.when(guard.checkInBuild(any(), any())).thenThrow(new ToolRefusal("Index 'ACME-INDEX' was not "
+                                                                                 + "created by this server."));
+
+        final ToolResult refused = call("\"index_uuid\": \"i-1\"");
+
+        assertThat(refused.text()).contains("Index 'ACME-INDEX' was not created by this server");
+        final ArgumentCaptor<DocRef> index = ArgumentCaptor.forClass(DocRef.class);
+        Mockito.verify(guard).checkInBuild(any(), index.capture());
+        assertThat(index.getValue().getUuid()).isEqualTo("i-1");
+        assertThat(index.getValue().getName()).isEqualTo("ACME-INDEX");
+        Mockito.verify(pipelines, Mockito.never()).fromTemplate(any(), any(), any());
+        Mockito.verify(indexFields, Mockito.never()).addLuceneFields(any(), any(), any());
+    }
+
+    @Test
     void anIndexWithEveryFieldTheXsltWritesGetsNoneAdded() {
         // As TestE2eLuceneIndexing has it: the index doc made with the plan's fields, then the pipeline.
         final FieldPlan lucene = FieldPlan.of("lucene", "acme", "EventTime", List.of(

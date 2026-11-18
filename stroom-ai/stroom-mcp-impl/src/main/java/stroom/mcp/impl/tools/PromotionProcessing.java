@@ -141,6 +141,72 @@ class PromotionProcessing {
         return out;
     }
 
+    /// Never two filters handed over that index the same Events into the same index. Seen in an eval (case 61): the
+    /// build's indexing pipeline, made afresh rather than as a new version of the production one, was promoted with
+    /// a filter reading the new events version's Events, and the production indexing pipeline gained a follow-on
+    /// filter reading them too, both indexing into the same index: enabled, each event would be indexed twice. A
+    /// follow-on is passed over where a pipeline the build promotes ([#promotionProcessing]) already reads the new
+    /// version's Events and writes to the same index (a build's test index taken as the production index it stands
+    /// in for), or where an earlier follow-on does.
+    ///
+    /// @param followOns   What [#followOns] found.
+    /// @param processing  What [#promotionProcessing] planned for the build's pipelines.
+    /// @param testIndexes The build's test indexes, each with the UUID of the production index it stands in for.
+    /// @return The follow-ons to make, and what is said of each one passed over.
+    Followed withoutDoubleIndexing(final List<FollowOn> followOns,
+                                   final List<Entry> processing,
+                                   final Map<String, String> testIndexes) {
+        final Map<List<String>, String> indexedBy = new LinkedHashMap<>();
+        for (final Entry entry : processing) {
+            final Optional<String> index = indexKey(entry.pipeline().getUuid(), testIndexes);
+            if (index.isEmpty()) {
+                continue;
+            }
+            for (final String source : ProcessorFilterWrites.pipelineUuids(entry.extraTerms())) {
+                indexedBy.putIfAbsent(List.of(index.get(), NullSafe.string(source)), entry.pipeline().getName());
+            }
+        }
+        final List<FollowOn> kept = new ArrayList<>();
+        final List<String> passedOver = new ArrayList<>();
+        for (final FollowOn followOn : followOns) {
+            final Optional<String> index = indexKey(followOn.pipeline().getUuid(), testIndexes);
+            if (index.isEmpty()) {
+                kept.add(followOn);
+                continue;
+            }
+            final List<String> key = List.of(index.get(), followOn.version().getUuid());
+            final String already = indexedBy.get(key);
+            if (already != null) {
+                passedOver.add("'" + followOn.pipeline().getName() + "': no new filter, as '" + already + "' "
+                               + "already indexes the Events of '" + followOn.version().getName() + "' into the "
+                               + "same index: a second filter would index each event twice (filter "
+                               + followOn.reading().getId() + " is left as it is)");
+            } else {
+                indexedBy.put(key, followOn.pipeline().getName());
+                kept.add(followOn);
+            }
+        }
+        return new Followed(List.copyOf(kept), List.copyOf(passedOver));
+    }
+
+    // The index a pipeline writes to, as `lucene:<index doc UUID>` (a build's test index as the production index it
+    // stands in for) or `elasticsearch:<index name>`; empty for a pipeline that indexes nothing, or can't be read.
+    private Optional<String> indexKey(final String pipelineUuid, final Map<String, String> testIndexes) {
+        try {
+            final Optional<Map<String, Object>> elastic = agreements.elasticDestination(pipelineUuid);
+            if (elastic.isPresent()) {
+                return Optional.ofNullable(elastic.get().get("index name"))
+                        .map(name -> "elasticsearch:" + String.valueOf(name).toLowerCase(Locale.ROOT));
+            }
+            return indexingRuns.luceneIndex(pipelineUuid)
+                    .map(DocRef::getUuid)
+                    .map(uuid -> "lucene:" + testIndexes.getOrDefault(uuid, uuid));
+        } catch (final RuntimeException e) {
+            // Unread: its follow-on is made, as before.
+            return Optional.empty();
+        }
+    }
+
     // A filter's pipeline's name, as the filter has it or read; its UUID when neither says.
     private String pipelineName(final ProcessorFilter filter) {
         if (NullSafe.isNonBlankString(filter.getPipelineName())) {
@@ -564,6 +630,14 @@ class PromotionProcessing {
                    + " selects but reading the Events of '" + version.getName() + "' in place of '"
                    + predecessor.getName() + "' (filter " + reading.getId() + " is left as it is)";
         }
+    }
+
+    /// The follow-ons to make once those indexing Events twice are passed over ([#withoutDoubleIndexing]).
+    ///
+    /// @param followOns  The follow-ons to make.
+    /// @param passedOver What is said of each one passed over.
+    record Followed(List<FollowOn> followOns, List<String> passedOver) {
+
     }
 
     // A feed and a stream type a pipeline's sample came from.

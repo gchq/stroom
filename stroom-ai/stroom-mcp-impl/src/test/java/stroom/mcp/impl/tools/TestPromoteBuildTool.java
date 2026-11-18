@@ -96,6 +96,9 @@ class TestPromoteBuildTool {
     void setUp() {
         // The user may manage processors, as promote_build needs.
         Mockito.when(processorFilters.canManageProcessors()).thenReturn(true);
+        // No follow-on passed over for indexing the same Events twice, unless a test says.
+        Mockito.when(processing.withoutDoubleIndexing(any(), any(), any())).thenAnswer(inv ->
+                new PromotionProcessing.Followed(inv.getArgument(0), List.of()));
     }
 
     @Test
@@ -1307,6 +1310,42 @@ class TestPromoteBuildTool {
                 + "filters (the tools never do): 'ACME-V1.0-Events': filter 3; 'ACME-CEF': filter 5 (reading the "
                 + "Events of 'ACME-V1.0-Events')."));
         assertThat(String.valueOf(promoted.get("user_actions"))).doesNotContain("disable");
+    }
+
+    @Test
+    void aFollowOnIndexingTheNewEventsTwiceIsPassedOverAndSaidInTheReviewTheFormAndTheResult() {
+        // Seen in an eval (case 61): the production indexing pipeline gained a follow-on filter reading the V1.1
+        // Events while the build's own indexing pipeline indexed them into the same index.
+        final DocRef version = world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-V1.1-Events", "ev2");
+        world.add(PipelineDoc.TYPE, "ACME-V1.0-Events", world.folder("System/Feeds/Acme/Events/V1.0").uuid, "ev1");
+        world.records().update(BUILD, version, entry -> entry.put("version_of", "ev1"));
+        final Map<String, Object> listed = FakeBuildFacts.doc(PipelineDoc.TYPE, "ev2", "ACME-V1.1-Events", "version_of",
+                "ev1");
+        listed.put("role", "Events");
+        docs.facts.docs.add(listed);
+        final DocRef indexing = new DocRef(PipelineDoc.TYPE, "ip", "ACME - Indexing");
+        final PromotionProcessing.FollowOn followOn = new PromotionProcessing.FollowOn(indexing,
+                ProcessorFilter.builder().id(5).pipelineUuid("ip").enabled(true).build(),
+                new DocRef(PipelineDoc.TYPE, "ev1", "ACME-V1.0-Events"), version);
+        Mockito.when(processing.followOns(any(), any())).thenReturn(List.of(followOn));
+        final String said = "'ACME - Indexing': no new filter, as 'ACME - Indexing V1.1' already indexes the Events "
+                            + "of 'ACME-V1.1-Events' into the same index";
+        Mockito.when(processing.withoutDoubleIndexing(any(), any(), any())).thenReturn(
+                new PromotionProcessing.Followed(List.of(), List.of(said)));
+        Mockito.when(processing.createPromotionFilters(any(), any(), any())).thenReturn(List.of());
+        final Map<String, Object> destinations = Map.of();
+
+        final Map<String, Object> shown = call(destinations, null);
+
+        assertThat(shown).doesNotContainKey("follow_on_filters")
+                .containsEntry("follow_on_filters_passed_over", List.of(said));
+        assertThat(String.valueOf(approvalForm(destinations, shown.get("review_id"))))
+                .contains("follow-on filters not made");
+        final Map<String, Object> promoted = docs.call(tool, BuildToolCalls.answering(Map.of("value", true)),
+                DocumentationWorld.args(args(destinations, shown.get("review_id"))));
+        assertThat(promoted).doesNotContainKey("follow_on_filters")
+                .containsEntry("follow_on_filters_passed_over", List.of(said));
+        Mockito.verify(processing, Mockito.never()).createFollowOnFilters(any(), any(), any());
     }
 
     @Test

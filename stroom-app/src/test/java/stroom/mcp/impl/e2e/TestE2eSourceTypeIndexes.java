@@ -585,7 +585,114 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         assertThat(number(found.get("total"))).as("documents with the new field").isPositive();
     }
 
+    @Test
+    void aJoinedGroupsNewEventsAreHandedOverToOneFilterAnIndexNeverTwo() {
+        // Seen in an eval (case 61, a feed's source type joining its promoted group: a new version V1.1 of the
+        // group's pipeline): create_indexing_pipeline made its pipeline, then refused the production index's
+        // fields; the agent's copy_pipeline of the production indexing pipeline under that name was refused as
+        // already in the build. The build's indexing pipeline, no new version of the production one, was promoted
+        // with a filter reading the V1.1 Events, and the production indexing pipeline gained a follow-on filter
+        // reading them too: both indexed into the same index, each event twice.
+        final Promoted group = promotedGroup("JG");
+        final String later = "pega-idx-jg-2";
+        json("start_build", args("build", later, "feeds", List.of(group.feed())));
+        final String version = uuidOf(agreed("copy_pipeline", args("build", later, "source_uuid", group.events(),
+                "new_name", group.eventsName())));
+        final List<Long> versionEvents = events(version, group.stream());
+
+        // Its index plan given a field the production index lacks: refused before anything is made.
+        final String widenedXslt = uuidOf(json("save_xslt", args("build", later, "name",
+                group.index() + "-XSLT-WIDENED", "index_plan", widened(group.plan()))));
+        final String refusedName = group.index() + " - Indexing WIDENED";
+        assertThat(refusal("create_indexing_pipeline", args("build", later, "name", refusedName, "template_uuid",
+                group.indexingTemplate(), "xslt_uuid", widenedXslt, "events_stream_ids", versionEvents,
+                "index_uuid", group.indexDoc()))).contains("copy_pipeline");
+        assertThat(jsonOf(json("build_status", args("build", later, "full", true))))
+                .as("no pipeline left behind by the refusal").doesNotContain(refusedName);
+
+        // A pipeline made afresh into the production index (its plan's fields all there), no new version of the
+        // production indexing pipeline: indexing the V1.1 Events in the build, into the build's test index.
+        final String sameXslt = uuidOf(json("save_xslt", args("build", later, "name", group.index() + "-XSLT-SAME",
+                "index_plan", group.plan())));
+        final String afresh = uuidOf(agreed("create_indexing_pipeline", args("build", later, "name",
+                group.index() + " - Indexing AFRESH", "template_uuid", group.indexingTemplate(), "xslt_uuid",
+                sameXslt, "events_stream_ids", versionEvents, "index_uuid", group.indexDoc())));
+        assertThat(stepSample(afresh, versionEvents)).containsEntry("verdict", "clean");
+        agreed("create_processor_filter", args("pipeline_uuid", afresh, "stream_ids", versionEvents,
+                "source_pipeline_uuid", version));
+        processAll();
+        flushIndexShards();
+
+        // Promoted: the production indexing pipeline gains no follow-on filter reading the V1.1 Events, as the
+        // build's pipeline indexes them into the same index; said in the review and the result.
+        final Map<String, Object> destinations = Map.of("Pipeline", group.folder(), "XSLT", group.folder(),
+                "Index", group.folder());
+        final Map<String, Object> review = json("promote_build", args("build", later, "destinations",
+                destinations));
+        dump("promote_build review " + later, review);
+        assertThat(review).containsEntry("status", "needs_review").doesNotContainKey("follow_on_filters");
+        assertThat(strings(review, "follow_on_filters_passed_over")).singleElement().satisfies(said ->
+                assertThat(said).contains("'" + group.index() + " - Indexing': no new filter",
+                        "into the same index"));
+        final Map<String, Object> promoted = json("promote_build", args("build", later, "destinations",
+                destinations, "reviewed", review.get("review_id")));
+        dump("promote_build " + later, promoted);
+        assertThat(promoted).containsKey("promoted").doesNotContainKey("follow_on_filters");
+        assertThat(strings(promoted, "follow_on_filters_passed_over")).hasSize(1);
+        // Handed over: one filter indexing the V1.1 Events, on the build's pipeline; none on the production one.
+        final List<Map<String, Object>> enables = list(promoted, "user_actions").stream()
+                .filter(action -> "enable_processor_filter".equals(action.get("action")))
+                .toList();
+        assertThat(enables).extracting(action -> (String) ((Map<String, Object>) action.get("doc")).get("uuid"))
+                .containsExactlyInAnyOrder(version, afresh);
+    }
+
     // --- the steps ---
+
+    // A source type group promoted as case 61's setup has it (case 56): the feed promoted with its data, the
+    // security group's pipeline processing the sample, its Events indexed into its own Lucene index by its indexing
+    // pipeline, and the build promoted, its test data tidied up (the default).
+    private Promoted promotedGroup(final String tag) {
+        final String feed = "E2E-PEGA-IDX-" + tag;
+        final String folder = "E2E Feeds/PegaIdx" + tag;
+        final String index = "e2e-pega-" + tag.toLowerCase(Locale.ROOT) + "-pega-security";
+        createFeed("pega-idx-src-" + tag, feed);
+        final long stream = upload(feed, TestE2eSourceTypeGroups.lines("pega/pega-1.json", 1500));
+        promote("pega-idx-src-" + tag, Map.of("Feed", folder));
+        final String template = templateUuid("translation", "Event Data (JSON)");
+        final String indexing = templateUuid("indexing", "Indexing");
+        final String first = "pega-idx-" + tag.toLowerCase(Locale.ROOT) + "-1";
+        json("start_build", args("build", first, "feeds", List.of(feed)));
+        client.answeringWith(TestE2eSourceTypeGroups.scopeOf(List.of("PegaSecurityEvent"), null));
+        json("survey_feed", args("feed", feed, "build", first));
+        recordSourceTypes(first, feed, SECURITY);
+        group(first, feed, SECURITY, "PegaSecurityEvent", TestE2eSourceTypeGroups.securityMapping(), stream);
+        final Map<String, Object> made = agreed("create_pipeline", args("build", first, "group", SECURITY,
+                "template_uuid", template));
+        final String security = uuidOf(made);
+        final List<Long> securityEvents = events(security, stream);
+        client.answeringWith(choosing(STROOM_FLAT));
+        json("get_field_conventions", args());
+        client.answeringWith(McpTestClient::agree);
+        final Map<String, Object> plan = map(draft("lucene", index, securityEvents, null, null), "plan");
+        final String indexDoc = uuidOf(agreed("create_index_doc", args("build", first, "backend", "lucene",
+                "name", index, "time_field", plan.get("time_field"))));
+        final String xslt = uuidOf(json("save_xslt", args("build", first, "name", index + "-XSLT", "index_plan",
+                plan)));
+        final String securityIndexing = indexed(first, index, indexing, xslt, indexDoc, securityEvents, security);
+        promote(first, Map.of("Pipeline", folder, "XSLT", folder, "Index", folder));
+        return new Promoted(feed, folder, index, stream, security, String.valueOf(made.get("name")),
+                securityIndexing, indexDoc, plan, indexing);
+    }
+
+    // The plan with a field the first build's index lacks.
+    private static Map<String, Object> widened(final Map<String, Object> plan) {
+        final Map<String, Object> widened = new LinkedHashMap<>(plan);
+        final List<Map<String, Object>> fields = new ArrayList<>(list(plan, "fields"));
+        fields.add(Map.of("name", "NewVersionOnly", "type", "keyword", "source", "EventSource/Generator"));
+        widened.put("fields", fields);
+        return widened;
+    }
 
     // build_translation_xslt group=: the group saved with its mapping, its pipeline as the user chose it.
     private Map<String, Object> group(final String build,
@@ -786,5 +893,24 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
                     .ifPresent(option -> content.put(String.valueOf(key), option)));
             return new ElicitResult(ElicitResult.Action.ACCEPT, content, null);
         };
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // A source type group as promoted by [#promotedGroup]: its feed and folder, the raw sample's stream, the group's
+    // events pipeline (its UUID and name), its indexing pipeline, index doc and plan, and the indexing template.
+    private record Promoted(String feed,
+                            String folder,
+                            String index,
+                            long stream,
+                            String events,
+                            String eventsName,
+                            String indexing,
+                            String indexDoc,
+                            Map<String, Object> plan,
+                            String indexingTemplate) {
+
     }
 }
