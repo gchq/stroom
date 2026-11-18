@@ -1264,6 +1264,44 @@ class TestSurveyFeedTool {
     }
 
     @Test
+    void anAggregatedFeedReadByAHeldSourceTypeIsAskedNoKindFieldAndKeepsItsKindsWithinSourceTypes() {
+        // Seen in testing (2026-11-18): a held source type reading, `event>logger_name`, set nothing aside, and the
+        // kind field was chosen over every source type's records together, so only the outer fields they shared
+        // were put to the user. Here `tier` repeats across the feed and would be offered.
+        sampleFeedInABuild();
+        final StringBuilder lines = new StringBuilder();
+        for (int i = 0; i < 60; i++) {
+            final String event = "{\"logger_name\": \"com.x." + List.of("Auth", "Db").get(i % 2)
+                                 + "\", \"user\": \"u" + i + "\"}";
+            lines.append("{\"tier\": \"").append(List.of("gold", "silver", "bronze").get(i % 3))
+                    .append("\", \"event\": ").append(JsonUtil.writeValueAsString(event, false)).append("}\n");
+        }
+        stream(7, "ACME-VPN", 0, lines.toString(), false);
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "unused"));
+
+        final Map<String, Object> surveyed = json(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": "
+                                                       + "\"acme-v1\", \"source_type_field\": "
+                                                       + "\"event>logger_name\"}", user.context()));
+
+        assertThat(user.shown()).noneSatisfy(message -> assertThat(message).contains("tier"));
+        assertThat(surveyed).doesNotContainEntry("status", "needs_kind_field").containsKey("streams_read");
+        final Map<String, Object> kinds = (Map<String, Object>) surveyed.get(SurveyDoc.KIND_FIELDS);
+        assertThat(kinds).containsEntry("fields", List.of()).containsEntry("by", SurveyDoc.WITHIN_SOURCE_TYPES)
+                .containsEntry("within", "event>logger_name");
+        assertThat(SurveyDoc.withinSourceTypes((Map<String, Object>) surveyState().get(SurveyDoc.KIND_FIELDS)))
+                .isTrue();
+        final String doc = new SurveyDocuments(world.guard(), world.documentAccess,
+                new DocumentWrites(world.documentAccess)).load("acme-v1", "ACME-VPN").orElseThrow().text();
+        assertThat(doc).contains("told apart within each source type, not across the feed");
+
+        // Kept: the next call asks nothing either, and the shapes aren't all signed as one kind.
+        final Map<String, Object> again = json(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": "
+                                                    + "\"acme-v1\"}", user.context()));
+        assertThat(again).doesNotContainEntry("status", "needs_kind_field");
+        assertThat(user.shown()).noneSatisfy(message -> assertThat(message).contains("tier"));
+    }
+
+    @Test
     void aHeldReadingThatIsNoneOrReadsNothingIsRefused() {
         sampleFeedInABuild();
         stream(7, "ACME-VPN", 0, heldLines(36), false);

@@ -3055,7 +3055,14 @@ addresses or times, is chosen without asking. Where none is, but fields with a f
 be, they are put to the user in a short form (each as `field (value, value...)`, or "All one kind of event", or a
 field they name); without forms the call reads nothing and returns `status: needs_kind_field` with the candidates,
 and the agent asks in the chat and calls again with `kind_field`. A `kind_field` other than the one kept starts the
-survey afresh (`kind_field_changed`). The head read to choose is the one the survey reads on from.
+survey afresh (`kind_field_changed`). The head read to choose is the one the survey reads on from. An aggregated
+feed (a source type field of any reading: a field, a held value, a combination, a meta attribute) is asked no kind
+field and has none chosen over its records together (2026-11-18: 65 source types, a held reading, and only the epoch
+times they shared put to the user): `kind_fields` is `{fields: [], by: "source_types", within: <field>}`, the survey
+doc says the kinds are told apart within each source type, and classify_kinds chooses the kind field over the
+build's scope. A `kind_field` the user names is still kept (`by: user`). `KindFields` never offers a field named as a
+time (`time`, `timestamp`, `ts`, `date`, `*_time`, `*_ts`, `*_rt`, `eventTime`...) nor one whose values are all
+epoch times (seconds to nanoseconds, 1990 to 2100, as `TimePatterns` reads them; refused as a given kind field too).
 
 **Settling the survey.** A stream read only in part that a call can't read deeper (past the parts a call reads,
 records over several lines, or the most a call reads), once the survey has had to read it whole (given by id, or
@@ -3169,7 +3176,7 @@ in a form (`Which field says which source a record came from?`, the candidates b
 feed: one source`); without forms, `status: needs_source_type_field` with the candidates, nothing surveyed.
 `source_type_field` gives the user's answer (`none` for one source); `aggregated: true` says the user called the feed
 aggregated (weaker separation is enough, and a field of one shape a value is offered). The choice is kept in the
-survey state (`source_types`); the kind fields are then chosen with the source type field left out. A field named for
+survey state (`source_types`); no kind field is then chosen or asked for feed-wide (see **Kind fields**). A field named for
 kinds of event (an event type, action, operation, `SourceTypeFields.mayName`) is never a candidate. Each record read
 is counted by its value (`SourceTypeProfiles`: records, bytes, days, streams, message formats and parse failures,
 fields, shapes, kinds, levels, signals); the result's `source_types` gives the field and the records read of each
@@ -3499,7 +3506,11 @@ them in the notes block as `pending`. The kinds are told apart by the kind field
 and `KindFields` finds candidates, the user is asked which (as survey_feed asks; without forms `status:
 needs_kind_field`), and the answer is kept in the notes as `kind_fields`, which the draft follows
 (`SourceNotes.KIND_FIELDS`; `TranslationBuilds.notesInBuild` adds the survey's when the notes have none). The draft
-itself never takes a field by its values alone. The records are read as the draft reads them, inner messages unpacked (the
+itself never takes a field by its values alone. The candidates are judged over the build's scope's records with
+the fields inside their held values as the draft reads them (`HeldKindRecords`: a JSON string's keys as
+`event.logger_name`, XML text's elements as `event/Header/Op`, the pairs the draft extracts), so a kind field inside
+a held value can be chosen and the draft's rules read it; one given as a source type reading writes it
+(`event>logger_name`) is spelt as the draft reads it. The records are read as the draft reads them, inner messages unpacked (the
 keys of JSON text, the elements of XML text, the values the draft's extractions take from text), so a kind told apart
 inside a message field has its records, sample and actor; records a JSON or XML parser reads need no splitter. A kind
 told apart by its format alone is marked `catch_all` when it is a format's leftovers (its `other` rule, listed with

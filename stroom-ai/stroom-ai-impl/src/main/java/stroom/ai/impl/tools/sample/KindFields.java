@@ -19,6 +19,7 @@ package stroom.ai.impl.tools.sample;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.FieldHomes;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,6 +83,19 @@ public final class KindFields {
     // An address inside a value (`from [10.0.0.5]`): a kind names no address.
     private static final Pattern HOLDS_ADDRESS = Pattern.compile("@|\\b\\d{1,3}(\\.\\d{1,3}){3}\\b");
     private static final Pattern TIME = Pattern.compile("\\d{1,2}:\\d{2}|\\d{4}-\\d{2}-\\d{2}|^\\d{10,13}$");
+    // A field's own name said of a time (`time`, `timestamp`, `event_time`, `orig_rt`, `ts`, `date`, `eventTime`):
+    // never offered as a kind field, whatever its values (seen in testing, 2026-11-18: an aggregated feed's `time`, in
+    // epoch milliseconds, and `fields.orig_rt`, in epoch nanoseconds, put to the user as the kinds of event).
+    private static final Pattern TIME_NAMED = Pattern.compile("(?i)^@?(time|timestamp|ts|rt|date|datetime|"
+                                                              + "date_?time)$|[_-](time|timestamp|ts|rt|date|"
+                                                              + "datetime|date_?time)$|^(time|timestamp|date)[_-]");
+    private static final Pattern TIME_NAMED_CAMEL = Pattern.compile("[a-z0-9](Time|TimeStamp|Timestamp|Date|Ts)$");
+    // A number in scientific notation (a JSON number read as a double: 1.763452800123E12).
+    private static final Pattern SCIENTIFIC = Pattern.compile("^\\d(\\.\\d+)?[eE]\\+?\\d+$");
+    // What an epoch time may be written as: whole digits, seconds perhaps with a fraction.
+    private static final Pattern EPOCH_DIGITS = Pattern.compile("\\d{9,19}(\\.\\d{1,9})?");
+    // Where a field's own name starts in a path: a JSON object's key, a held value's name, an XML element.
+    private static final Pattern PATH_STEP = Pattern.compile("[.>/]");
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
     private static final Pattern QUOTES = Pattern.compile("^['\"`]|['\"`]$");
 
@@ -95,9 +109,10 @@ public final class KindFields {
         final Map<String, List<String>> values = valuesByField(records);
         final List<Candidate> candidates = new ArrayList<>();
         values.forEach((field, held) -> {
-            if (namedLikeKinds(field)
+            // Not an XML element's name anywhere below (`message//Action`): its path from the root is offered.
+            if (!field.contains("//") && !namedAsTime(field) && (namedLikeKinds(field)
                     ? passesNamed(held)
-                    : passes(field, held)) {
+                    : passes(field, held))) {
                 candidates.add(candidate(field, held));
             }
         });
@@ -177,8 +192,8 @@ public final class KindFields {
     }
 
     /// Whether a field's values are messages or addresses rather than kinds: values of sentences (more than a short
-    /// phrase), or holding an address or a time of day. Codes are kinds whatever they look like (a FortiGate logid,
-    /// `0101039424`; a Windows event id).
+    /// phrase), holding an address or a time of day, or all epoch times ([#epochTimes]). Codes are kinds whatever
+    /// they look like (a FortiGate logid, `0101039424`; a Windows event id).
     ///
     /// @param field  The field's name, as said.
     /// @param values Its values.
@@ -192,12 +207,62 @@ public final class KindFields {
             return Optional.of("'" + field + "' holds whole messages (e.g. \"" + ToolText.head(sentence.get(), 60)
                                + "\"), not the short codes or phrases that name kinds of event");
         }
-        return values.stream()
+        final Optional<String> addressOrTime = values.stream()
                 .filter(value -> value != null && (HOLDS_ADDRESS.matcher(value).find()
                                                    || CLOCK.matcher(value).find()))
                 .findFirst()
                 .map(value -> "'" + field + "' holds addresses or times (e.g. \"" + ToolText.head(value, 60)
                               + "\"), which name no kind of event");
+        if (addressOrTime.isPresent() || !epochTimes(values)) {
+            return addressOrTime;
+        }
+        final String example = values.stream().filter(value -> value != null && !value.isBlank()).findFirst()
+                .orElse("");
+        return Optional.of("'" + field + "' holds epoch times (e.g. \"" + ToolText.head(example, 60) + "\"), "
+                           + "which name no kind of event");
+    }
+
+    /// Whether a field's values are all epoch times: whole numbers of seconds, milliseconds, microseconds or
+    /// nanoseconds in the years 1990 to 2100, as [TimePatterns] reads them (a number written in scientific notation,
+    /// as a JSON number read as a double is, read as the whole number it is). Such values repeat within a batch of
+    /// records read at once, so repeating doesn't make them kinds.
+    ///
+    /// @param values A field's values (nil and null ones are passed over).
+    /// @return True if there is at least one value and every one is an epoch time.
+    public static boolean epochTimes(final Collection<String> values) {
+        boolean any = false;
+        for (final String value : values) {
+            if (value == null || NIL.contains(value.strip().toLowerCase(Locale.ROOT))) {
+                continue;
+            }
+            final String number = wholeNumber(value.strip());
+            // Digits only, before their pattern is read: most values are words, and are no epoch time.
+            final String pattern = EPOCH_DIGITS.matcher(number).matches()
+                    ? TimePatterns.inferTimePattern(number)
+                    : null;
+            if (pattern == null || !TimePatterns.isEpoch(pattern)) {
+                return false;
+            }
+            any = true;
+        }
+        return any;
+    }
+
+    /// Whether a field's own name says it holds a time (`time`, `timestamp`, `ts`, `date`, `*_time`, `*_ts`, `*_rt`,
+    /// `*_date`, `eventTime`...), its own name being the last step of a path (`fields.orig_rt`, `event>log_time`).
+    /// Such a field is never offered as a kind field: a time tells no kinds of event apart, however its values repeat.
+    ///
+    /// @param field A field's name, as the records spell it.
+    /// @return True if it is named as a time.
+    public static boolean namedAsTime(final String field) {
+        if (field == null) {
+            return false;
+        }
+        final String[] steps = PATH_STEP.split(field.strip());
+        final String own = steps.length == 0
+                ? field.strip()
+                : steps[steps.length - 1];
+        return TIME_NAMED.matcher(own).find() || TIME_NAMED_CAMEL.matcher(own).find();
     }
 
     /// Every field that could tell the records' kinds apart, named like a kind field or not, best first (most
@@ -212,9 +277,10 @@ public final class KindFields {
         final Map<String, List<String>> values = valuesByField(records);
         final List<Candidate> candidates = new ArrayList<>();
         values.forEach((field, held) -> {
-            if (namedLikeKinds(field)
+            // Not an XML element's name anywhere below (`message//Action`): its path from the root is offered.
+            if (!field.contains("//") && !namedAsTime(field) && (namedLikeKinds(field)
                     ? passesNamed(held)
-                    : passes(field, held)) {
+                    : passes(field, held))) {
                 candidates.add(candidate(field, held));
             }
         });
@@ -235,11 +301,13 @@ public final class KindFields {
         return STRUCTURED.contains(format);
     }
 
-    /// @param name A field's name.
+    /// @param name A field's name: a held value's elements and names (`message/Event/Action`, `event>action`) by
+    ///             their last.
     /// @return True if it is named like a field that tells kinds of event apart (`type`, `action`, `event_id`,
     /// `msg_id`...).
     public static boolean namedLikeKinds(final String name) {
-        return ToolText.search(Shapes.NAMING, name);
+        final int step = Math.max(name.lastIndexOf('/'), name.lastIndexOf(SourceTypeReading.HELD));
+        return ToolText.search(Shapes.NAMING, name.substring(step + 1));
     }
 
     /// @param given A kind_field argument, as the user said it: a field, fields as `a, b`, or [#ONE_KIND_ANSWER].
@@ -266,20 +334,33 @@ public final class KindFields {
     /// @param given  Kind fields as the user gave them ([#parse]).
     /// @param fields The records' fields.
     /// @return The given fields as the records spell them (matched ignoring case), [#ONE_KIND] kept; the ones the
-    /// records don't have left out.
+    /// records don't have left out. A field inside a held value written as a source type reading writes it
+    /// (`event>logger_name`, [SourceTypeReading]) is matched to the name the draft reads it by: a JSON key as
+    /// `event.logger_name`, an XML element as `event/logger_name`.
     public static List<String> asRecordsSpellThem(final List<String> given, final Set<String> fields) {
         if (oneKind(given)) {
             return given;
         }
         final List<String> out = new ArrayList<>();
         for (final String name : given) {
+            final List<String> spellings = heldSpellings(name);
             fields.stream()
-                    .filter(field -> field.equalsIgnoreCase(name))
+                    .filter(field -> spellings.stream().anyMatch(field::equalsIgnoreCase))
                     .findFirst()
                     .filter(field -> !out.contains(field))
                     .ifPresent(out::add);
         }
         return out;
+    }
+
+    // A name as given, and, for a held value's name (`event>a.b`), the draft's names for it: `event.a.b` for JSON and
+    // `event/a/b` for XML.
+    private static List<String> heldSpellings(final String name) {
+        if (!name.contains(SourceTypeReading.HELD)) {
+            return List.of(name);
+        }
+        return List.of(name, name.replace(SourceTypeReading.HELD, "."), name.replace(SourceTypeReading.HELD, "/")
+                .replace('.', '/'));
     }
 
     /// @param fields Kind fields as kept (a choice's, or the user's).
@@ -308,8 +389,11 @@ public final class KindFields {
         }
         final List<String> named = new ArrayList<>();
         for (final String part : given.split("[,;+]|\\band\\b")) {
-            final String word = unquoted(part);
-            fields.stream().filter(field -> field.equalsIgnoreCase(word)).findFirst().ifPresent(named::add);
+            final List<String> spellings = heldSpellings(unquoted(part));
+            fields.stream()
+                    .filter(field -> spellings.stream().anyMatch(field::equalsIgnoreCase))
+                    .findFirst()
+                    .ifPresent(named::add);
         }
         return List.copyOf(new LinkedHashSet<>(named));
     }
@@ -367,13 +451,29 @@ public final class KindFields {
             || distinct.size() * 2L > held.size()) {
             return false;
         }
-        if (FieldHomes.HOMES.stream().anyMatch(home -> FieldHomes.matches(home.regex(), field))) {
+        if (FieldHomes.HOMES.stream().anyMatch(home -> FieldHomes.matches(home.regex(), field))
+            || epochTimes(distinct)) {
             return false;
         }
         return distinct.stream().allMatch(value -> value.length() <= MAX_LENGTH
                                                    && WHITESPACE.split(value).length <= MAX_WORDS
                                                    && !ADDRESS.matcher(value).find()
                                                    && !TIME.matcher(value).find());
+    }
+
+    // A number in scientific notation as the whole number it is; any other text as it is.
+    private static String wholeNumber(final String text) {
+        if (!SCIENTIFIC.matcher(text).matches()) {
+            return text;
+        }
+        try {
+            final BigDecimal number = new BigDecimal(text).stripTrailingZeros();
+            return number.scale() <= 0
+                    ? number.toPlainString()
+                    : text;
+        } catch (final NumberFormatException e) {
+            return text;
+        }
     }
 
     private static Candidate candidate(final String field, final List<String> held) {

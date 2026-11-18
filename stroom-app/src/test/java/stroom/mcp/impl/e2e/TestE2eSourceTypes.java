@@ -132,8 +132,10 @@ class TestE2eSourceTypes extends AbstractE2eTest {
 
         final Map<String, Object> surveyed = json("survey_feed", args("feed", feed, "build", build));
         assertThat(map(surveyed, "source_types")).containsEntry("field", "Workload");
-        // The kinds of event are told apart within the source types: by Operation, not Workload.
-        assertThat(String.valueOf(surveyed.get("kind_fields"))).contains("Operation").doesNotContain("Workload");
+        // The kinds of event are told apart within the source types (decided by the user, 2026-11-18): none chosen
+        // over the whole feed, classify_kinds chooses them over the build's scope.
+        assertThat(map(surveyed, "kind_fields")).containsEntry("fields", List.of())
+                .containsEntry("by", "source_types").containsEntry("within", "Workload");
         assertThat(nextStep(json("build_status", args("build", build)))).isEqualTo("source_types");
 
         final Map<String, Object> written = json("record_source_types", args("build", build, "feed", feed,
