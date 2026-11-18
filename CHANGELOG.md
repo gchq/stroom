@@ -13,6 +13,20 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.17] - 2026-11-18
+
+* Bug **#6025** : Fix a null pointer error when choosing Excel for a Data Connection that has never had a workbook.
+
+* Bug **#6036** : Fix a NUL character (U+0000) in data turning off XML escaping in the XMLWriter, so that the rest of the text was written unescaped. NUL is now always removed from the output, and the `preventEscapeSwitching` property now only affects `xsl:character-map` output.
+
+* Bug : Fix Detect Columns on a Data Connection giving columns whose names differ only in case, which queries then refused.
+
+* Bug : Fix a Data Connection being marked as changed after an edit was undone, and saving empty JDBC and Athena settings for other types.
+
+* Bug **#6039** : Fix incorrect handling of SQS messages when there is no matching S3 Client Config for the S3 location. It no longer attempts to consume the message.
+
+* Bug **#6027** : Fix NPE when refreshing OAuth tokens.
+
 * Bug **#6023** : Fix S3 stream processing when optional metadata or context streams are absent.
 
 * Bug **#6022** : Fix the User Access screen and session list showing no sessions when an authenticating edge proxy (e.g. an AWS ALB) is in use.
@@ -2898,7 +2912,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.16...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.17...HEAD
+[v7.14-beta.17]: https://github.com/gchq/stroom/compare/v7.14-beta.16...v7.14-beta.17
 [v7.14-beta.16]: https://github.com/gchq/stroom/compare/v7.14-beta.15...v7.14-beta.16
 [v7.14-beta.15]: https://github.com/gchq/stroom/compare/v7.14-beta.14...v7.14-beta.15
 [v7.14-beta.14]: https://github.com/gchq/stroom/compare/v7.14-beta.13...v7.14-beta.14

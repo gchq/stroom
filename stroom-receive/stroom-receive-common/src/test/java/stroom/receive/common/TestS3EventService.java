@@ -51,11 +51,14 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class TestS3EventService {
@@ -79,16 +82,8 @@ class TestS3EventService {
 
         when(receiptIdGenerator.generateId()).thenReturn(
                 new UniqueId(0, 0, UniqueId.NodeType.PROXY, "TEST"));
-        when(s3ClientConfigService.getS3ClientConfig("eu-west-2", "bucket"))
-                .thenReturn(Optional.empty());
-        doAnswer(invocation -> {
-            ((Runnable) invocation.getArgument(1)).run();
-            return null;
-        }).when(commonSecurityContext).secure(eq(AppPermission.STROOM_PROXY), any(Runnable.class));
-        doAnswer(invocation -> {
-            ((Runnable) invocation.getArgument(0)).run();
-            return null;
-        }).when(commonSecurityContext).asProcessingUser(any(Runnable.class));
+        givenS3ClientConfig("eu-west-2", "bucket");
+        runSecuredActions();
         doAnswer(invocation -> {
             consumedEvent.set(invocation.getArgument(0));
             return null;
@@ -105,7 +100,7 @@ class TestS3EventService {
     }
 
     @Test
-    void testAddS3MetaAttributesDoesNothingWithoutClientConfig() {
+    void testAddS3MetaAttributesThrowsWithoutClientConfig() {
         final S3EventService service = createService();
         final S3Location s3Location = new S3Location("eu-west-2", "bucket", "path/file.txt");
         final AttributeMap attributeMap = new AttributeMap();
@@ -113,9 +108,28 @@ class TestS3EventService {
         when(s3ClientConfigService.getS3ClientConfig("eu-west-2", "bucket"))
                 .thenReturn(Optional.empty());
 
-        service.addS3MetaAttributes(s3Location, "etag", attributeMap);
-
+        assertThatThrownBy(() -> service.addS3MetaAttributes(s3Location, "etag", attributeMap))
+                .hasMessageContaining("No S3 client config found")
+                .hasMessageContaining("eu-west-2")
+                .hasMessageContaining("bucket");
         assertThat(attributeMap).isEmpty();
+    }
+
+    @Test
+    void testHandleEventRejectsEventWithoutClientConfig() {
+        final S3EventService service = createService();
+        final S3Location s3Location = new S3Location("eu-west-2", "bucket", "path/file.txt");
+
+        when(receiptIdGenerator.generateId()).thenReturn(
+                new UniqueId(0, 0, UniqueId.NodeType.PROXY, "TEST"));
+        when(s3ClientConfigService.getS3ClientConfig("eu-west-2", "bucket"))
+                .thenReturn(Optional.empty());
+        runSecuredActions();
+
+        // Without the S3 metadata the event can't be received, e.g. it has no Feed or Schema header
+        assertThatThrownBy(() -> service.handleEvent(s3Location, "etag", Map.of()))
+                .hasMessageContaining("No S3 client config found");
+        verifyNoInteractions(s3EventConsumer);
     }
 
     @Test
@@ -320,8 +334,76 @@ class TestS3EventService {
                 .contains("No S3 client config found")
                 .contains("us-west-2")
                 .contains("example-bucket");
-        org.mockito.Mockito.verifyNoInteractions(s3EventConsumer);
+        verifyNoInteractions(s3EventConsumer);
         verify(sqsClient).deleteMessage(any(DeleteMessageRequest.class));
+    }
+
+    @Test
+    void testPollLeavesMessageOnQueueWithoutDeadLetterQueue() {
+        final S3EventConfig s3EventConfig = mock(S3EventConfig.class);
+        final SqsConfig sqsConfig = mock(SqsConfig.class);
+        final ReceiveDataConfig receiveDataConfig = mock(ReceiveDataConfig.class);
+        final SqsClient sqsClient = mock(SqsClient.class);
+        final S3EventService service = createService();
+
+        when(receiveDataConfigProvider.get()).thenReturn(receiveDataConfig);
+        when(receiveDataConfig.getS3Event()).thenReturn(s3EventConfig);
+        when(s3EventConfig.getSqs()).thenReturn(sqsConfig);
+        when(s3EventConfig.getSleepDurationPostFailure()).thenReturn(StroomDuration.ZERO);
+        when(sqsConfig.getAwsRegionName()).thenReturn("eu-west-2");
+        when(sqsConfig.getQueueUrl()).thenReturn("https://sqs.example/queue");
+        when(sqsConfig.getDeadLetterQueueUrl()).thenReturn("");
+        when(sqsConfig.getPollMaxWaitTime()).thenReturn(StroomDuration.ofSeconds(10));
+        when(sqsConfig.getVisibilityTimeout()).thenReturn(StroomDuration.ofMinutes(3));
+        when(sqsConfig.getMaxNumberOfMessages()).thenReturn(10);
+        when(sqsClientFactory.createSqsClient(sqsConfig)).thenReturn(sqsClient);
+        when(receiptIdGenerator.generateId()).thenReturn(
+                new UniqueId(0, 0, UniqueId.NodeType.PROXY, "TEST"));
+        when(sqsClient.receiveMessage(any(ReceiveMessageRequest.class))).thenReturn(
+                ReceiveMessageResponse.builder()
+                        .messages(Message.builder()
+                                .messageId("message-id")
+                                .receiptHandle("receipt-handle")
+                                .body("{\"unexpected\": true}")
+                                .build())
+                        .build());
+
+        service.poll(() -> false);
+
+        // Not consumed, not moved and not deleted, so SQS shows it again after the visibility timeout
+        verifyNoInteractions(s3EventConsumer);
+        verify(sqsClient, never()).sendMessage(any(SendMessageRequest.class));
+        verify(sqsClient, never()).deleteMessage(any(DeleteMessageRequest.class));
+    }
+
+    // Gives the region and bucket an S3 client config, whose objects have no metadata.
+    private void givenS3ClientConfig(final String region, final String bucket) {
+        final S3Client s3Client = mock(S3Client.class);
+        final PooledClient<S3Client> pooledS3Client = mock(PooledClient.class);
+        final S3ClientConfig s3ClientConfig = S3ClientConfig.builder()
+                .region(region)
+                .build();
+        when(s3ClientConfigService.getS3ClientConfig(region, bucket))
+                .thenReturn(Optional.of(s3ClientConfig));
+        when(s3ClientPool.getPooledS3Client(s3ClientConfig)).thenReturn(pooledS3Client);
+        when(pooledS3Client.getClient()).thenReturn(s3Client);
+        when(s3Client.headObject(any(HeadObjectRequest.class))).thenReturn(
+                HeadObjectResponse.builder()
+                        .contentLength(123L)
+                        .eTag("etag")
+                        .build());
+    }
+
+    // Runs what the service runs as the processing user, with the proxy permission.
+    private void runSecuredActions() {
+        doAnswer(invocation -> {
+            ((Runnable) invocation.getArgument(1)).run();
+            return null;
+        }).when(commonSecurityContext).secure(eq(AppPermission.STROOM_PROXY), any(Runnable.class));
+        doAnswer(invocation -> {
+            ((Runnable) invocation.getArgument(0)).run();
+            return null;
+        }).when(commonSecurityContext).asProcessingUser(any(Runnable.class));
     }
 
     private S3EventService createService() {
