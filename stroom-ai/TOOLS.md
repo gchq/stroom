@@ -6419,12 +6419,10 @@ the whole list in the chat, and questions past `MAX_FIELDS` are asked the first 
 others (stand-ins, index clashes). `require` checks its form first: a yes/no field's description is cut to 300
 characters (the message carries the summary); values to edit too many for one form are shown in the chat first (a
 refusal listing them, with a `shown_id`), and the call made again with `shown_id` asks one short confirmation bound
-to what was shown (a value to change is changed by the call's arguments); a confirmation that still can't be shown
-(or that the client couldn't show) gives the agent what it asks, in full, to show the user, and a one-time id bound
-to exactly that (its details and values proposed, for this session and tool, two hours): once the user says yes in
-their own words, the same call with `confirmed_in_chat=<the id>` is granted, audited as "granted in the chat". The id
-is random, used once, and another request's details ask again; the agent could pass it unasked, as it could any
-answer said in the chat where no form can be shown. `shown_id` and `confirmed_in_chat` are taken by every tool
+to what was shown (a value to change is changed by the call's arguments). A confirmation that still can't be shown
+(or that the client couldn't show) is refused, saying why its form wasn't shown: a confirmation is given only in a
+form, never said in the chat, so the agent can't approve for the user (decided by the user, 2026-11-18). `shown_id` is
+taken by every tool
 though none declares them (`UserQuestions.RESERVED_ARGS`, kept by the call guard). `Consent.reviewId(shown)` and `wasReviewed`
 bind a `needs_review` reply to what it showed (promotion layouts, index templates, records kept as Unknown). Every
 ask and answer is audited.
