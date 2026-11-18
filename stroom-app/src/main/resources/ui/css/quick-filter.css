@@ -97,6 +97,14 @@
     border-radius: 0;
 }
 
+/* With the keyboard focus, the flat filter's focus border is inside it, as a term editor's field's
+   is (term-editor.css): it fills its pane edge to edge, and the pane clips a ring drawn outside it */
+.query-help .quick-filter__input:focus-visible {
+    box-shadow: none;
+    outline: 2px solid var(--focus-border);
+    outline-offset: -2px;
+}
+
 /* In a selection box's list, space between the filter and the options */
 .selection-popup .quick-filter {
     margin-bottom: 4px;

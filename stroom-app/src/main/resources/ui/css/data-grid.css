@@ -691,6 +691,15 @@
     outline-offset: -3px;
 }
 
+/* A grid with no rows has its scrolling box as its tab stop (DataGridKeyboard.updateTabStops), so it
+   can still be scrolled: with the keyboard focus it has a row's focus look, inside it, round the
+   whole box (it had none, so the focus was lost to sight) */
+.data-grid > .data-grid__scroller:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--focus-ring__color);
+    outline: 1px solid var(--focus-border);
+    outline-offset: -3px;
+}
+
 /* A selected row with the focus (on it or a cell) takes the selected-and-focused colour, which the
    focus border stands out from by 3:1 in both themes (the plain selected colour is too near it in
    the dark theme) */
@@ -741,7 +750,8 @@
     /* Important, to win over the outline base.css gives whatever has the keyboard focus there */
     .data-grid .data-grid__row:focus-visible,
     .data-grid .data-grid__cell:focus-visible,
-    .data-grid .data-grid__header-cell:focus-visible {
+    .data-grid .data-grid__header-cell:focus-visible,
+    .data-grid > .data-grid__scroller:focus-visible {
         outline: 2px solid CanvasText !important;
         outline-offset: -2px !important;
     }

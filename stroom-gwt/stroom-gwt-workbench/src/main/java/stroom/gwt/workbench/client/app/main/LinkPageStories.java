@@ -21,6 +21,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -69,6 +70,11 @@ public final class LinkPageStories {
                     play.waitFor(() -> play.expect(dialog.querySelector("iframe")).toBeInTheDocument());
                     // Named, as the dialog is, for screen readers (it once had no name)
                     play.expect(dialog.querySelector("iframe")).toHaveAttribute("title", TITLE);
+                    // With the focus, the frame shows it has it (the focus is in the page, so the
+                    // frame matches no :focus selector; it showed nothing)
+                    final Query frame = dialog.querySelector("iframe");
+                    play.run("focus the frame", () -> frame.element().get().focus());
+                    play.waitFor(() -> play.expect(frame).toHaveClass("iframe__frame--focused"));
                 })
                 // A tab link's page, as its tab shows it: the frame is on the page's body, over the
                 // tab, so that it isn't reloaded each time the tab is shown

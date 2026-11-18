@@ -22,6 +22,8 @@ import stroom.widget.text.client.Frame;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.IFrameElement;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
@@ -36,12 +38,19 @@ public class IFrame extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
     private static final String SOURCE_DOC_ATTRIBUTE = "srcdoc";
     private static final String SANDBOX_ATTRIBUTE = "sandbox";
+    private static final String FOCUSED_STYLE = "iframe__frame--focused";
 
     @UiField
     Frame frame;
 
     public IFrame() {
         initWidget(BINDER.createAndBindUi(this));
+        // With the focus (Tab moves it into the page shown), the frame shows it has it: the focus is
+        // in the page's own document then, so the frame matches no :focus selector to style it by
+        //noinspection unused e
+        frame.addDomHandler(e -> frame.addStyleName(FOCUSED_STYLE), FocusEvent.getType());
+        //noinspection unused e
+        frame.addDomHandler(e -> frame.removeStyleName(FOCUSED_STYLE), BlurEvent.getType());
     }
 
     /// @param id The frame's id, e.g. for the page shown in it to be found.
