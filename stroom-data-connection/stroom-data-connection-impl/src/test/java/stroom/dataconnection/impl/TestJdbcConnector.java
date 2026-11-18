@@ -45,7 +45,7 @@ class TestJdbcConnector {
             .build();
 
     private final JdbcQueryRunner runner = Mockito.mock(JdbcQueryRunner.class);
-    private final SqlFieldCache fieldCache = Mockito.mock(SqlFieldCache.class);
+    private final SqlFieldCache fieldCache = TestSqlFieldCache.mockWithRealRecording();
     private final JdbcConnector connector = new JdbcConnector(
             runner,
             Mockito.mock(JdbcConnectionResolver.class),

@@ -43,7 +43,6 @@ import com.unboundid.ldap.sdk.controls.SimplePagedResultsControl;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
@@ -91,12 +90,11 @@ class LdapQueryRunner {
     QueryRunSummary run(final ResolvedLdapConnection connection,
                         final Filter filter,
                         final List<DataColumn> attributes,
-                        final List<SqlColumn> columns,
                         final SqlQueryLimits limits,
                         final Function<List<SqlColumn>, SqlRowConsumer> rowConsumerFactory,
                         final QueryCancellation cancellation,
                         final Consumer<String> progress) throws Exception {
-        final SqlRowConsumer rowConsumer = rowConsumerFactory.apply(columns);
+        final SqlRowConsumer rowConsumer = rowConsumerFactory.apply(columns(attributes));
         final Search search = new Search(attributes, limits, rowConsumer, cancellation);
         try (final LDAPConnection ldapConnection = connectionFactory.connect(connection, limits.timeoutSeconds())) {
             // Closing the connection ends the search in the directory too. It is closed in the background,
@@ -108,7 +106,7 @@ class LdapQueryRunner {
                     final SearchRequest request = searchRequest(connection, filter, attributes, limits, cookie);
                     final SearchResult result = search.readPage(ldapConnection, request);
                     progress.accept(LogUtil.message("LDAP search of {} has read {} entries",
-                            connection.url(), search.rowsRead));
+                            connection.url(), search.counter.rowsRead()));
                     cookie = nextCookie(result);
                 } while (cookie != null && !search.stopped());
             } catch (final LDAPException | EntrySourceException e) {
@@ -121,15 +119,7 @@ class LdapQueryRunner {
                 cancellation.unregister();
             }
         }
-        return new QueryRunSummary(
-                columns,
-                rowConsumer.getUnmatchedFields(),
-                search.rowsRead,
-                search.rowsPassed,
-                search.limitReached,
-                limits.maxRows(),
-                null,
-                search.warnings());
+        return search.counter.summary(rowConsumer.getUnmatchedFields(), null, search.warnings());
     }
 
     // Closing a connection waits for its reader, which waits while the entry source's queue is full.
@@ -143,8 +133,7 @@ class LdapQueryRunner {
         final List<SqlColumn> columns = new ArrayList<>(attributes.size() + 1);
         columns.add(new SqlColumn(DN_FIELD, DataValues.toFieldType(null), Types.OTHER));
         for (final DataColumn attribute : attributes) {
-            columns.add(new SqlColumn(attribute.getName(), DataValues.toFieldType(attribute.getType()),
-                    Types.OTHER));
+            columns.add(SqlColumn.of(attribute));
         }
         return columns;
     }
@@ -196,14 +185,10 @@ class LdapQueryRunner {
     private static final class Search {
 
         private final List<DataColumn> attributes;
-        private final SqlQueryLimits limits;
         private final SqlRowConsumer rowConsumer;
         private final QueryCancellation cancellation;
         private final BadValues badValues = new BadValues();
-        private long rowsRead;
-        private long rowsPassed;
-        private boolean limitReached;
-        private boolean endedByDirectory;
+        private final RowCounter counter;
         private int referrals;
         private String directoryLimitWarning;
 
@@ -212,7 +197,7 @@ class LdapQueryRunner {
                        final SqlRowConsumer rowConsumer,
                        final QueryCancellation cancellation) {
             this.attributes = attributes;
-            this.limits = limits;
+            this.counter = new RowCounter(limits.maxRows());
             this.rowConsumer = rowConsumer;
             this.cancellation = cancellation;
         }
@@ -241,16 +226,8 @@ class LdapQueryRunner {
                         finished = true;
                         return source.getSearchResult();
                     }
-                    if (cancellation.isCancelled()) {
+                    if (cancellation.isCancelled() || !counter.take(() -> accept(entry))) {
                         return null;
-                    }
-                    if (rowsRead == limits.maxRows()) {
-                        limitReached = true;
-                        return null;
-                    }
-                    rowsRead++;
-                    if (accept(entry)) {
-                        rowsPassed++;
                     }
                 }
             } finally {
@@ -281,12 +258,8 @@ class LdapQueryRunner {
             }
         }
 
-        private boolean accept(final Entry entry) throws LDAPException {
-            try {
-                return rowConsumer.accept(columnIndex -> read(entry, columnIndex));
-            } catch (final SQLException e) {
-                throw new LDAPException(ResultCode.LOCAL_ERROR, e.getMessage(), e);
-            }
+        private boolean accept(final Entry entry) {
+            return rowConsumer.accept(columnIndex -> read(entry, columnIndex));
         }
 
         private Val read(final Entry entry, final int columnIndex) {
@@ -316,8 +289,8 @@ class LdapQueryRunner {
             if (e.getCause() instanceof final LDAPSearchException searchException) {
                 final ResultCode resultCode = searchException.getResultCode();
                 if (ResultCode.SIZE_LIMIT_EXCEEDED.equals(resultCode)) {
-                    endedByDirectory = true;
-                    directoryLimitWarning = "The directory's own size limit ended the search after " + rowsRead
+                    directoryLimitWarning = "The directory's own size limit ended the search after "
+                                            + counter.rowsRead()
                                             + " entries. Narrow the filter, or ask the directory's "
                                             + "administrator to raise the limit for the bind account.";
                     return true;
@@ -325,8 +298,7 @@ class LdapQueryRunner {
                 // The directory's own time limit, or Stroom's wait for a response, which is set a little
                 // longer but may still end first.
                 if (ResultCode.TIME_LIMIT_EXCEEDED.equals(resultCode) || ResultCode.TIMEOUT.equals(resultCode)) {
-                    endedByDirectory = true;
-                    directoryLimitWarning = "The search reached its time limit after " + rowsRead
+                    directoryLimitWarning = "The search reached its time limit after " + counter.rowsRead()
                                             + " entries. Narrow the filter, or raise the query timeout.";
                     return true;
                 }
@@ -335,7 +307,8 @@ class LdapQueryRunner {
         }
 
         private boolean stopped() {
-            return limitReached || endedByDirectory || cancellation.isCancelled();
+            // A directory limit warning means the directory ended the search.
+            return counter.limitReached() || directoryLimitWarning != null || cancellation.isCancelled();
         }
 
         private List<String> warnings() {

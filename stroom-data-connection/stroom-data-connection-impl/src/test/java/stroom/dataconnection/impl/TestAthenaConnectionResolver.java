@@ -40,7 +40,7 @@ class TestAthenaConnectionResolver {
     private final StoredSecrets storedSecrets = Mockito.mock(StoredSecrets.class);
     private final AthenaConnectionResolver resolver = new AthenaConnectionResolver(
             () -> new DataConnectionConfig(null, null, null, null, null, null, null, null,
-                    List.of("^eu-west-2/.*$"), null, true, null, null),
+                    List.of("^eu-west-2/.*$"), null, true, null, null, null, null),
             () -> storedSecrets);
 
     private void givenSecret(final Secret secret) {

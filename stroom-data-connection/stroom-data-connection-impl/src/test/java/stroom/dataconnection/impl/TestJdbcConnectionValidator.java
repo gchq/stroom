@@ -34,7 +34,7 @@ class TestJdbcConnectionValidator {
 
     private static DataConnectionConfig config(final String... allowedUrlPatterns) {
         return new DataConnectionConfig(List.of(allowedUrlPatterns), null, null, null, null, null, null, null,
-                null, null, null, null, null);
+                null, null, null, null, null, null, null);
     }
 
     private static JdbcConnectionSettings settings(final String url) {

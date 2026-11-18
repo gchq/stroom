@@ -52,11 +52,6 @@ public class CredentialChoice {
         this.pickedCredential = credential;
     }
 
-    /// @return Whether the user has picked a credential, or none, since the document was read.
-    public boolean isPicked() {
-        return picked;
-    }
-
     /// Says whether a lookup of a credential may still show its result in the picker: the user
     /// has not picked one since, and the document has not been read again naming another.
     ///

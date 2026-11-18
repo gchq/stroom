@@ -212,7 +212,7 @@ class TestCsvConnector {
     void timeColumnMustBeAColumn() {
         assertThatThrownBy(() -> connector.prepare(doc(DATA).timeField("created").build(),
                 query(null, TIME_RANGE), DateTimeSettings.builder().build()))
-                .hasMessageContaining("'created' is not a column");
+                .hasMessageContaining("'created' is not one of the columns");
     }
 
     @Test
@@ -302,7 +302,8 @@ class TestCsvConnector {
     void csvOverTheSizeLimitIsRefusedWhenQueried() {
         // An imported document is not checked when saved.
         final CsvConnector smallLimit = new CsvConnector(tableCache, () -> new DataConnectionConfig(
-                null, null, null, null, null, null, null, null, null, null, null, ByteSize.ofBytes(10), null));
+                null, null, null, null, null, null, null, null, null, null, null, ByteSize.ofBytes(10), null,
+                null, null));
 
         assertThatThrownBy(() -> smallLimit.prepare(doc(DATA).build(), query(null, null),
                 DateTimeSettings.builder().build()))
@@ -313,7 +314,8 @@ class TestCsvConnector {
     @Test
     void checkCsvRefusesCsvOverTheSizeLimit() {
         final CsvConnector smallLimit = new CsvConnector(tableCache, () -> new DataConnectionConfig(
-                null, null, null, null, null, null, null, null, null, null, null, ByteSize.ofBytes(10), null));
+                null, null, null, null, null, null, null, null, null, null, null, ByteSize.ofBytes(10), null,
+                null, null));
 
         final DataConnectionTestResponse response = smallLimit.test(doc(DATA).build());
 

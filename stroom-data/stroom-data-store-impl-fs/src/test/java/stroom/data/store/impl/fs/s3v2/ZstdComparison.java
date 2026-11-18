@@ -59,7 +59,6 @@ import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -188,8 +187,8 @@ public class ZstdComparison {
         LOGGER.info("Finished recCnt: " + recCnt);
     }
 
-    private Date randomDate(final Random random) {
-        return new Date(START_INSTANT.plusSeconds(random.nextInt(0, SECS_IN_ONE_YEAR)).toEpochMilli());
+    private Instant randomDate(final Random random) {
+        return START_INSTANT.plusSeconds(random.nextInt(0, SECS_IN_ONE_YEAR));
     }
 
     private static void errorExit(final String msg) {

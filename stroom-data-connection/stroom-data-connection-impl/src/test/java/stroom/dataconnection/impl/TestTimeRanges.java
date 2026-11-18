@@ -16,15 +16,22 @@
 
 package stroom.dataconnection.impl;
 
+import stroom.dataconnection.shared.DataColumn;
+import stroom.dataconnection.shared.DataColumnType;
+import stroom.dataconnection.shared.DataConnectionDoc;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.Query;
 import stroom.query.api.TimeRange;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestTimeRanges {
 
@@ -77,5 +84,47 @@ class TestTimeRanges {
         assertThat(TimeRanges.isSet(null)).isFalse();
         assertThat(TimeRanges.isSet(new TimeRange(null, "", " "))).isFalse();
         assertThat(TimeRanges.isSet(new TimeRange(null, null, "2026-11-10T00:00:00.000Z"))).isTrue();
+    }
+
+    @Test
+    void timeRangeAppliesOnTheTimeColumnUnlessTheNativeQueryUsesIt() {
+        final Query query = Query.builder().expression(WHERE).timeRange(TIME_RANGE).build();
+
+        final TimeRanges.Applied onColumn = TimeRanges.apply(query, false, "event_time", "Ignored");
+        final TimeRanges.Applied inNativeQuery = TimeRanges.apply(query, true, "event_time", "Ignored");
+
+        assertThat(onColumn.filtersOnTimeColumn()).isTrue();
+        assertThat(onColumn.expression()).isEqualTo(TimeRanges.addTimeRange(WHERE, TIME_RANGE, "event_time"));
+        assertThat(onColumn.warnings()).isEmpty();
+        assertThat(inNativeQuery.filtersOnTimeColumn()).isFalse();
+        assertThat(inNativeQuery.expression()).isSameAs(WHERE);
+        assertThat(inNativeQuery.warnings()).isEmpty();
+    }
+
+    @Test
+    void timeRangeWithNoTimeColumnIsIgnoredWithAWarning() {
+        final Query query = Query.builder().expression(WHERE).timeRange(TIME_RANGE).build();
+
+        final TimeRanges.Applied applied = TimeRanges.apply(query, false, " ", "Ignored");
+
+        assertThat(applied.filtersOnTimeColumn()).isFalse();
+        assertThat(applied.expression()).isSameAs(WHERE);
+        assertThat(applied.warnings()).containsExactly("Ignored");
+        assertThat(TimeRanges.apply(Query.builder().expression(WHERE).build(), false, null, "Ignored").warnings())
+                .isEmpty();
+    }
+
+    @Test
+    void timeColumnMustBeADateColumn() {
+        final DataConnectionDoc doc = DataConnectionDoc.builder().uuid("uuid-1").name("Events").build();
+        final List<DataColumn> columns = List.of(
+                new DataColumn("Event_Time", DataColumnType.DATE),
+                new DataColumn("name", DataColumnType.TEXT));
+
+        TimeRanges.requireDateColumn(doc, columns, "event_time", "column", "");
+        assertThatThrownBy(() -> TimeRanges.requireDateColumn(doc, columns, "name", "attribute", ""))
+                .hasMessageContaining("is not a Date attribute");
+        assertThatThrownBy(() -> TimeRanges.requireDateColumn(doc, columns, "other", "attribute", " Add it."))
+                .hasMessageEndingWith("is not one of the attributes of Data Connection 'Events'. Add it.");
     }
 }

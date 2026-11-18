@@ -22,6 +22,9 @@ import stroom.dataconnection.shared.DataConnectionType;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.Query;
 import stroom.query.api.datasource.QueryField;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.util.List;
 
@@ -31,6 +34,9 @@ import java.util.List;
 /// it asks the document's connector for everything that depends on the type. [Connectors] finds the
 /// connector for a document.
 interface Connector {
+
+    /// Logs failed connection tests.
+    LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Connector.class);
 
     /// @return The type of Data Connection this connector serves.
     DataConnectionType getType();
@@ -75,5 +81,31 @@ interface Connector {
     /// @param doc The Data Connection, which need not have been saved. The caller has checked that
     ///            the user may edit it.
     /// @return Whether the test passed, with a description or the error.
-    DataConnectionTestResponse test(DataConnectionDoc doc);
+    default DataConnectionTestResponse test(final DataConnectionDoc doc) {
+        try {
+            return testConnection(doc);
+        } catch (final Exception e) {
+            if (e instanceof InterruptedException) {
+                // The test was stopped, so whatever runs next on this thread must know too.
+                Thread.currentThread().interrupt();
+            }
+            LOGGER.debug(() -> LogUtil.message("{} test failed for {}", getType(), doc.getUuid()), e);
+            return new DataConnectionTestResponse(false, describeFailure(e));
+        }
+    }
+
+    /// Tests the document's connection, or for stored data that it can be read, as [#test] does, but
+    /// throws if it fails.
+    ///
+    /// @param doc The Data Connection, which need not have been saved.
+    /// @return Whether the test passed, with a description. A test can find a problem without
+    ///         failing, such as an LDAP base DN that can't be read.
+    /// @throws Exception If the test fails.
+    DataConnectionTestResponse testConnection(DataConnectionDoc doc) throws Exception;
+
+    /// @param e Why a test failed.
+    /// @return The message to show the user.
+    default String describeFailure(final Exception e) {
+        return e.getMessage();
+    }
 }
