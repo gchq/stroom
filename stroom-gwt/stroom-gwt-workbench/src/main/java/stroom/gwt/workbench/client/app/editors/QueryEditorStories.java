@@ -314,6 +314,13 @@ public final class QueryEditorStories {
                     "[](data?id=1002&partNo=1&recordNo=5&viewType=source&displayType=tab){data}", "second",
                     "[https://example.com/docs/](https://example.com/docs/){browser}", "third")));
 
+    // TwoLinksInACell: a row whose Name holds two links, and one with one
+    private static final RestFixtures TWO_LINK_FIXTURES = fixtures(RestFixtures.builder(),
+            RestReply.json(linkTable(
+                    "[Open](data?id=1001&partNo=1&recordNo=5&viewType=source&displayType=tab){data} "
+                    + "[Source](data?id=1003&partNo=1&recordNo=2&viewType=source&displayType=tab){data}", "first",
+                    "[Next](data?id=1002&partNo=1&recordNo=5&viewType=source&displayType=tab){data}", "second")));
+
     // Visualisation: a vis result as well as the table, and the visualisation document
     private static final String VIS_SETTINGS =
             "{\"json\": \"{}\", \"visualisation\": {\"type\": \"Visualisation\", \"uuid\": \"vis-1\", "
@@ -1145,6 +1152,32 @@ public final class QueryEditorStories {
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(play.spy(SHOW_DATA))
                             .toHaveBeenCalledWith("STROOM_TAB SOURCE 1002:4"));
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // A cell holding two links: its first has the focus from the cell, Tab goes to the
+                // second and Shift+Tab back, and the arrows still move by cell. The keyboard reached
+                // only the first
+                .story("TwoLinksInACell", context -> render(context, TWO_LINK_FIXTURES, null, false,
+                        QueryEditorStories::hyperlinks))
+                .withPlay(play -> {
+                    execute(play);
+                    final Query open = play.findByRole("link", "Open");
+                    final Query source = play.getByRole("link", "Source");
+                    play.click(play.getByText("first"));
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(open).toHaveFocus());
+                    play.keyboard("{Tab}");
+                    play.waitFor(() -> play.expect(source).toHaveFocus());
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.spy(SHOW_DATA))
+                            .toHaveBeenCalledWith("STROOM_TAB SOURCE 1003:1"));
+                    play.keyboard("{Shift>}{Tab}{/Shift}");
+                    play.waitFor(() -> play.expect(open).toHaveFocus());
+                    play.keyboard("{Tab}");
+                    play.waitFor(() -> play.expect(source).toHaveFocus());
+                    // Down goes to the same cell in the next row, its link
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(play.getByRole("link", "Next")).toHaveFocus());
                     DocumentEditors.expectNoProblems(play);
                 })
                 // When the query's data source is Annotations, changing an annotation runs a new
