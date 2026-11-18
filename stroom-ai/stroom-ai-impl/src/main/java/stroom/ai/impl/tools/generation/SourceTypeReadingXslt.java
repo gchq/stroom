@@ -108,12 +108,13 @@ final class SourceTypeReadingXslt {
         xmlAt(sheet, namer);
     }
 
-    // A value as the tools read it: stripped of XML's white space, '' for a nil value.
+    // A value as the tools read it: stripped of control characters, then of XML's white space, '' for a nil value.
     private static void normaliser(final XmlElement sheet, final UnaryOperator<String> namer) {
         final XmlElement function = function(sheet, namer, "reading-value", "xs:string",
-                "A value read, stripped of XML's white space; '' for a nil value");
+                "A value read, stripped of control characters, then of XML's white space; '' for a nil value");
         function.addElement(XSL, "param", "name", "value", "as", "xs:string?");
-        function.addElement(XSL, "variable", "name", "stripped", "select", "replace(string($value), "
+        function.addElement(XSL, "variable", "name", "stripped", "select", "replace(replace(string($value), "
+                                                                           + literal(HeldText.CONTROL) + ", ''), "
                                                                            + literal(HeldText.SPACE_AROUND)
                                                                            + ", '')");
         function.addElement(XSL, "sequence", "select", "if (lower-case($stripped) = (" + HeldText.NIL_VALUES.stream()

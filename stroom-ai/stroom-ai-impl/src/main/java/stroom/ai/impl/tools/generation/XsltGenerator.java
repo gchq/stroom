@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.HeldText;
 import stroom.ai.impl.tools.sample.SourceTypeFields;
 import stroom.ai.impl.tools.sample.SourceTypeMeta;
 import stroom.ai.impl.tools.sample.SourceTypeReading;
@@ -2575,8 +2576,8 @@ public final class XsltGenerator {
         final XmlElement value = sheet.addElement(XSL, "function", "name", name, "as", "xs:string");
         value.append(new XmlComment(XsltComments.comment((attribute == null
                 ? "A record's " + field
-                : "The part's meta attribute " + attribute) + " as the tools read it: stripped, and '' for none or "
-                                                         + "a nil value")));
+                : "The part's meta attribute " + attribute) + " as the tools read it: stripped (controls, white "
+                                                         + "space), and '' for none or a nil value")));
         final String read;
         if (attribute == null) {
             value.addElement(XSL, "param", "name", "record", "as", "element()");
@@ -2584,8 +2585,8 @@ public final class XsltGenerator {
         } else {
             read = "string(stroom:meta(" + XPathText.literal(attribute) + "))";
         }
-        value.addElement(XSL, "variable", "name", "stripped", "select", "replace(" + read + ", " + XML_SPACE_AROUND
-                                                                        + ", '')");
+        value.addElement(XSL, "variable", "name", "stripped", "select", "replace(replace(" + read + ", "
+                + XPathText.literal(HeldText.CONTROL) + ", ''), " + XML_SPACE_AROUND + ", '')");
         value.addElement(XSL, "sequence", "select", "if (lower-case($stripped) = ("
                                                     + literals(SourceTypeFields.NIL_VALUES)
                                                     + ")) then '' else $stripped");

@@ -303,7 +303,7 @@ public final class SampleProfiler {
     /// one document (fragments, a syntax error, not XML, or a whole document, which the XML parser reads or
     /// rejects).
     public static XmlTree.Pull cutDocument(final String text) {
-        final XmlTree.Pull pull = XmlTree.pull(ToolText.subFirst(XML_DECL, "", ToolText.strip(text, "\uFEFF\r\n ")),
+        final XmlTree.Pull pull = XmlTree.pull(XmlTree.withoutDeclaration(ToolText.strip(text, "\uFEFF\r\n ")),
                 Integer.MAX_VALUE);
         if (pull.syntaxError() || pull.closed() || pull.root() == null || pull.records().isEmpty()) {
             return null;
@@ -318,7 +318,8 @@ public final class SampleProfiler {
         final String body = ToolText.subFirst(XML_DECL, "", text);
         final XmlTree.Element root;
         try {
-            root = XmlTree.parse("<fragments>" + body + "</fragments>");
+            // Fragments of XML 1.1 (as Stroom writes them) read in a wrapper of the same version.
+            root = XmlTree.parse(XmlTree.xml11Declaration(text) + "<fragments>" + body + "</fragments>");
         } catch (final XmlTree.XmlException e) {
             return null;
         }

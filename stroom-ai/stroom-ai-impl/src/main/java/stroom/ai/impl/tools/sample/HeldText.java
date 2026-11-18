@@ -65,6 +65,11 @@ public final class HeldText {
     public static final String AROUND = "^[\uFEFF \\t\\n\\r]+|[ \\t\\n\\r]+$";
     /// XML's white space around a value read, as it is stripped: XPath's dialect too.
     public static final String SPACE_AROUND = "^[ \\t\\n\\r]+|[ \\t\\n\\r]+$";
+    /// The control characters a value read is stripped of (all but tab, new line and CR), and the replacement
+    /// character, in XPath's dialect: a source type group's XSLT can't hold the controls in its rows' values (no XML
+    /// 1.0 text can; found testing awkward values, 2026-11-18: a form feed in a held value written into the group's
+    /// XSLT made it not well-formed), and XPath's parse-json() reads one XML 1.0 can't hold as U+FFFD.
+    public static final String CONTROL = "[\\p{Cc}\uFFFD-[\\t\\n\\r]]";
     /// Where a key of key=value pairs starts: the text's start, or after white space, `,` or `;`; then the key and
     /// its `=`. XPath's dialect too.
     public static final String PAIR = "(^|[ \\t\\n\\r,;])[A-Za-z_][A-Za-z0-9_.\\-]*=";
@@ -97,6 +102,8 @@ public final class HeldText {
     private static final int MAX_FOUND = 200;
     private static final Pattern AROUND_PATTERN = Pattern.compile(AROUND);
     private static final Pattern SPACE_AROUND_PATTERN = Pattern.compile(SPACE_AROUND);
+    // CONTROL in Java's dialect.
+    private static final Pattern CONTROL_PATTERN = Pattern.compile("[[\\p{Cc}\uFFFD]&&[^\\t\\n\\r]]");
     private static final Pattern PAIR_PATTERN = Pattern.compile(PAIR);
     private static final Pattern KEY_PATTERN = Pattern.compile(KEY);
     private static final Pattern SYSLOG_5424_PATTERN = Pattern.compile(SYSLOG_5424, Pattern.DOTALL);
@@ -166,12 +173,14 @@ public final class HeldText {
     }
 
     /// @param value A value read, or null.
-    /// @return It stripped of XML's white space; null for none, an empty value or a nil value ([#NIL_VALUES]).
+    /// @return It stripped of control characters ([#CONTROL]), then of XML's white space around it; null for none,
+    /// an empty value or a nil value ([#NIL_VALUES]).
     public static String normalised(final String value) {
         if (value == null) {
             return null;
         }
-        final String text = SPACE_AROUND_PATTERN.matcher(value).replaceAll("");
+        final String text = SPACE_AROUND_PATTERN.matcher(CONTROL_PATTERN.matcher(value).replaceAll(""))
+                .replaceAll("");
         return text.isEmpty() || NIL_VALUES.contains(text.toLowerCase(Locale.ROOT))
                 ? null
                 : text;

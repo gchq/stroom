@@ -106,8 +106,9 @@
     </xsl:choose>
   </xsl:function>
   <xsl:function name="mcp:held_all_source_type_value" as="xs:string">
-    <!-- The part's meta attribute Feed as the tools read it: stripped, and '' for none or a nil value -->
-    <xsl:variable name="stripped" select="replace(string(stroom:meta('Feed')), '^[ \t\n\r]+|[ \t\n\r]+$', '')"/>
+    <!-- The part's meta attribute Feed as the tools read it: stripped (controls, white space), and '' for none or a nil
+       value -->
+    <xsl:variable name="stripped" select="replace(replace(string(stroom:meta('Feed')), '[\p{Cc}�-[\t\n\r]]', ''), '^[ \t\n\r]+|[ \t\n\r]+$', '')"/>
     <xsl:sequence select="if (lower-case($stripped) = ('-', 'null', 'none', 'n/a')) then '' else $stripped"/>
   </xsl:function>
 </xsl:stylesheet>

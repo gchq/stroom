@@ -119,6 +119,18 @@ class TestTemplateCheck {
     }
 
     @Test
+    void documentsOfXml11AreReadAsXml11() {
+        // Found testing awkward values (2026-11-18): an Elasticsearch indexing XSLT's output holding a form feed,
+        // written by Stroom as &#xc; in XML 1.1, was read with its declaration taken off (as XML 1.0), so no
+        // document: verify_index's trace of each hit to its event failed ("gives no document").
+        final List<Map<String, Object>> docs = TemplateCheck.jsonXmlDocuments("<?xml version=\"1.1\" "
+                + "encoding=\"UTF-8\"?><array xmlns=\"http://www.w3.org/2005/xpath-functions\"><map>"
+                + "<string key=\"Description\">page one&#xc;page two</string></map></array>");
+        assertThat(docs).hasSize(1);
+        assertThat(docs.getFirst().get("Description")).isEqualTo(new DocValue("string", "page one\fpage two"));
+    }
+
+    @Test
     void aTemplateThatTakesEveryFieldIsCompatible() {
         final Map<String, Object> result = compare(template(GOOD, "false", "ecs-acme-v2*"), DOCS);
         assertThat(result.get("compatible")).isEqualTo(true);

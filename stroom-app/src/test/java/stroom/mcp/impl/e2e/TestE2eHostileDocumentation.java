@@ -56,9 +56,12 @@ class TestE2eHostileDocumentation extends AbstractE2eTest {
         final Map<String, Object> built = agreed("build_translation_xslt", args("mapping", mapping(),
                 "stream_ids", List.of(raw), "build", BUILD, "name", FEED + "-Events", "schema_version", VERSION));
         assertThat(built.get("ok")).as("XSLT saved: %s", built.get("problems")).isEqualTo(true);
+        // The mail bodies run past the JSON parser's 10,000 characters (its default stringTruncateLength), whose cut is
+        // for review since 2026-11-18 (it had been a benign Warning, the bodies cut): read whole, as the review says.
         final String pipeline = uuidOf(createPipeline(BUILD, FEED + "-Events",
                 templateUuid("translation", "Event Data (JSON)"),
-                docProperty("translationFilter", "xslt", uuidOf(map(built, "saved")), "XSLT")));
+                docProperty("translationFilter", "xslt", uuidOf(map(built, "saved")), "XSLT"),
+                valueProperty("jsonParser", "stringTruncateLength", 100_000)));
         assertThat(stepSample(pipeline, List.of(raw)).get("verdict")).as("the sample steps clean")
                 .isEqualTo("clean");
 

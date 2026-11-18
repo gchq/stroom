@@ -606,6 +606,26 @@ class TestDraftMapping extends DraftFixtures {
     }
 
     @Test
+    void aKeyValueQuoteEscapedWithABackslashStaysEscapedAsInStroomAndTheDraftUnescapesIt() {
+        // Found testing awkward values (2026-11-18): key=value values quoted with backslash escapes (\" and \\)
+        // were read whole by the converter but kept their backslashes, so the events said 'say \"hi\"'.
+        final String text = String.join("\n",
+                "ts=2026-11-18T10:00:00Z user=alice msg=\"say \\\"hi\\\" from C:\\\\temp\" action=login",
+                "ts=2026-11-18T10:01:00Z user=bob msg=\"plain words\" action=logout",
+                "ts=2026-11-18T10:02:00Z user=carol msg=\"no escapes\" action=login") + "\n";
+        final Map<String, Object> drafted = draft(List.of(text), "");
+        final Map<String, Object> message = JsonValues.maps(mappingOf(drafted).get("common")).stream()
+                .filter(f -> "msg".equals(f.get("field")))
+                .findFirst()
+                .orElseThrow();
+        assertThat(message.get("transform")).isEqualTo("unescape_backslashes");
+        assertThat(String.valueOf(drafted.get("notes"))).contains("unescape_backslashes");
+        // Fields with no escape are left alone.
+        assertThat(JsonValues.maps(mappingOf(drafted).get("common")).stream()
+                .filter(f -> "user".equals(f.get("field"))).findFirst().orElseThrow()).doesNotContainKey("transform");
+    }
+
+    @Test
     void syslogNilValuesAreLeftOutAndNeverNameTheKind() {
         final Map<String, Object> drafted = draft(List.of(format("syslog5424_kv")), "");
         assertThat(mappingOf(drafted).get("nil_values")).isEqualTo(List.of("-"));

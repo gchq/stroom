@@ -212,6 +212,19 @@ class TestHeldSchemas {
     }
 
     @Test
+    void theDeclaredSystemIdEndsAtItsQuoteWhateverTheEventsHold() {
+        // Found testing awkward values (2026-11-18): Events written with no white space (as Stroom writes them),
+        // whose first Description held compact JSON, were read as declaring the system id up to a quote in the
+        // JSON, and check_events refused them: "Stroom has no XML schema 'file://event-logging-v4.1.0.xsd"><Event>...".
+        final String xml = "<?xml version=\"1.1\"?><Events xmlns=\"event-logging:3\" Version=\"4.1.0\" "
+                           + "xsi:schemaLocation=\"event-logging:3 file://event-logging-v4.1.0.xsd\"><Event>"
+                           + "<EventDetail><Description>"
+                           + "{\"logger_name\":\"com.x.Plain\",\"msg\":\"it's\"}</Description></EventDetail></Event>"
+                           + "</Events>";
+        assertThat(HeldSchemas.declaredSystemId(xml)).isEqualTo("file://event-logging-v4.1.0.xsd");
+    }
+
+    @Test
     void testTheEventSchemaOfAVersionIsParsedOnce() {
         final EventSchema first = held.eventSchema("4.1.0");
         assertThat(held.eventSchema("4.1.0")).isSameAs(first);

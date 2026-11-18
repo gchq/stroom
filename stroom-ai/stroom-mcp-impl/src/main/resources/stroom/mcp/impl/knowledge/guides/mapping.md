@@ -89,7 +89,7 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 | --- | --- |
 | `map` | Values replaced: `{"ok": "true", "fail": "false"}` |
 | `default` | Written when the input is empty |
-| `transform` | `lower`, `upper`, `trim`, `strip_domain`, `domain`, `digits`, `unescape_quotes`, `strip_control` |
+| `transform` | `lower`, `upper`, `trim`, `strip_domain`, `domain`, `digits`, `unescape_quotes`, `unescape_backslashes`, `strip_control` |
 | `dictionary` | The value a Dictionary of key=value lines gives |
 | `repeat: true` | One element per value of a field holding several (a list of strings); for a delimited list, or several elements per item, use a group (below) |
 | `time_format`, `timezone` | Time parsing: see below |

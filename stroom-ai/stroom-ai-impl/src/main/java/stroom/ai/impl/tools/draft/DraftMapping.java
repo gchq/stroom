@@ -944,6 +944,7 @@ public final class DraftMapping {
             }
             nilValues();
             doubledQuotes();
+            EscapedQuotes.unescape(spec, records, mapping, notes);
             repeatedKeys();
             // Fields holding lists (a comma list, a JSON array of objects): a Data per item, not the whole list.
             notes.addAll(ListFields.propose(mapping, values, "json".equals(mapping.get("input"))));

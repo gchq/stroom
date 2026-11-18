@@ -225,6 +225,20 @@ class TestSampleProfiler {
     }
 
     @Test
+    void xml11IsReadAsXml11WhetherCutShortOrFragments() {
+        // Found testing awkward values (2026-11-18): the declaration was taken off before reading, so XML 1.1 (as
+        // Stroom writes it: a form feed as &#xc;) was read as XML 1.0, in which it isn't allowed.
+        final XmlTree.Pull cut = SampleProfiler.cutDocument("<?xml version=\"1.1\"?><r><a>page&#xc;one</a>"
+                                                            + "<a>two</a><a>thr");
+        assertThat(cut).isNotNull();
+        assertThat(cut.records()).hasSize(2);
+        assertThat(SampleProfiler.xmlFragments("<?xml version=\"1.1\" encoding=\"UTF-8\"?><a>x&#x1b;y</a>"
+                                               + "<a>z</a>")).hasSize(2);
+        // XML 1.0 stays XML 1.0: &#xc; isn't allowed there.
+        assertThat(SampleProfiler.xmlFragments("<?xml version=\"1.0\"?><a>x&#xc;y</a><a>z</a>")).isNull();
+    }
+
+    @Test
     void jsonLinesWithDamagedLinesAreStillJsonLinesAndTheDamageIsSaid() {
         // Seen on the local Stroom: a line cut short stopped the JSONParser (fatal), losing every record after it;
         // and one damaged line made the profile call the file delimited, so the JSON template was refused.
