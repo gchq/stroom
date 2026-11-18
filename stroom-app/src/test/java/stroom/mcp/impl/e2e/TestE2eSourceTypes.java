@@ -362,9 +362,13 @@ class TestE2eSourceTypes extends AbstractE2eTest {
                 return agreed;
             }
             final Map<String, Object> content = new LinkedHashMap<>(agreed.content());
-            content.replaceAll((key, value) -> value instanceof Boolean
-                    ? "i1".equals(key)
-                    : value);
+            final Map<?, ?> properties = (Map<?, ?>) form.requestedSchema().get("properties");
+            properties.forEach((key, field) -> {
+                final Map<?, ?> definition = (Map<?, ?>) field;
+                if ("array".equals(definition.get("type"))) {
+                    content.put(String.valueOf(key), List.of(McpTestClient.options(definition).getFirst()));
+                }
+            });
             content.put("text", group);
             return new ElicitResult(ElicitResult.Action.ACCEPT, content, null);
         };

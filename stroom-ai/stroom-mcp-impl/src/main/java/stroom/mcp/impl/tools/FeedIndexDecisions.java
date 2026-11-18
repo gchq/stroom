@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.ElicitationSchema;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
@@ -72,6 +73,8 @@ class FeedIndexDecisions {
     static final String SHARE_INDEX_WITH_ARG = "share_index_with";
     /// The argument that says the user asked to change a shared decision.
     static final String CHANGE_SHARED_ARG = "change_shared";
+    // The key of the question that covers the clashes not asked one by one: no field's name is blank.
+    private static final String OTHER_CLASHES = "";
     /// The share a path a source type group writes is planned with, when no Event of the sample has it.
     static final double WRITTEN_SHARE = 0.001;
     private static final String BACKEND = "backend";
@@ -359,7 +362,9 @@ class FeedIndexDecisions {
         return new ForPlan(out, said);
     }
 
-    // The clashes put to the user in one form, each answer applied; without a form, said for the agent to ask.
+    // The clashes put to the user in one form, each answer applied; without a form, said for the agent to ask. More
+    // than a form can hold: the first asked one by one, and one more question for the others, all the same way (as
+    // PlaceholderChoices asks stand-ins).
     private FieldPlan resolve(final ToolCall call,
                               final ToolCallContext context,
                               final FieldPlan plan,
@@ -368,32 +373,49 @@ class FeedIndexDecisions {
                               final String suffix,
                               final String tool,
                               final Map<String, Object> said) {
+        final int oneByOne = clashes.size() <= ElicitationSchema.MAX_FIELDS
+                ? clashes.size()
+                : ElicitationSchema.MAX_FIELDS - 1;
+        final List<Clash> others = clashes.subList(oneByOne, clashes.size());
         final Map<String, Consent.Question> questions = new LinkedHashMap<>();
-        final List<String> lines = new ArrayList<>(List.of("Fields of this build clash with index "
-                                                           + JsonValues.text(entry.get(INDEX)) + ", which holds "
-                                                           + "the Events of group(s) " + String.join(", ",
-                FeedIndexes.groupsOf(entry)) + ". Choose for each."));
-        for (final Clash clash : clashes) {
-            questions.put(clash.ours().name(), new Consent.Question(clash.question(),
-                    List.copyOf(clash.options(suffix).keySet())));
-            lines.add(clash.said());
+        clashes.subList(0, oneByOne).forEach(clash -> questions.put(clash.ours().name(),
+                new Consent.Question(clash.question(), List.copyOf(clash.options(suffix).keySet()))));
+        if (!others.isEmpty()) {
+            questions.put(OTHER_CLASHES, new Consent.Question(othersQuestion(others),
+                    List.copyOf(othersOptions(others).keySet())));
         }
-        final Optional<Map<String, String>> answers = consent.chooseEach(call, context, tool,
-                String.join("\n", lines), questions);
+        final List<String> lines = clashes.stream().map(Clash::said).toList();
+        final String intro = "Fields of this build clash with index " + JsonValues.text(entry.get(INDEX)) + ", which "
+                             + "holds the Events of group(s) " + String.join(", ", FeedIndexes.groupsOf(entry)) + ". "
+                             + clashes.size() + " clash(es): choose for each.\n"
+                             + Consent.firstLines(lines, "all are listed in the chat");
+        if (lines.size() > Consent.LINES_SHOWN) {
+            said.put("index_clashes", lines);
+        }
+        final Optional<Map<String, String>> answers = consent.chooseEach(call, context, tool, intro, questions);
         if (answers.isEmpty()) {
-            said.put("index_clashes", clashes.stream().map(Clash::said).toList());
-            said.put("clash_hint", "Ask the user about each of index_clashes: for another type, a field of another "
-                                   + "name or a new version of the index; for another meaning, one field read from "
-                                   + "both or a field of another name. Apply it with changes= (a field renamed: "
-                                   + "remove it and add it under the new name). Promotion is held until none is "
-                                   + "left.");
+            said.put("index_clashes", lines);
+            said.put("clash_hint", consent.whyInChat(context, tool, intro) + ". Ask the user about each of "
+                                   + "index_clashes (shown in the chat): for another type, a field of another name or "
+                                   + "a new version of the index; for another meaning, one field read from both or a "
+                                   + "field of another name. Apply them with changes= (a field renamed: remove it "
+                                   + "and add it under the new name; one field read from both: the field with both "
+                                   + "sources, a | b). A new version: draft again with index_name='"
+                                   + FeedIndexes.nextVersion(JsonValues.text(entry.get(INDEX))) + "' and "
+                                   + CHANGE_SHARED_ARG + "=true (they confirm it in a form). Promotion is held until "
+                                   + "none is left.");
             return plan;
         }
         FieldPlan out = plan;
         final List<String> resolved = new ArrayList<>();
         for (final Clash clash : clashes) {
-            final String label = answers.get().get(clash.ours().name());
-            final String choice = clash.options(suffix).get(label);
+            final boolean asked = !others.contains(clash);
+            final String label = answers.get().get(asked
+                    ? clash.ours().name()
+                    : OTHER_CLASHES);
+            final String choice = asked
+                    ? clash.options(suffix).get(label)
+                    : otherChoice(othersOptions(others).get(label), clash);
             if (choice == null) {
                 continue;
             }
@@ -415,6 +437,40 @@ class FeedIndexDecisions {
                                          + "already in " + plan.indexName() + " stay there: forward only.");
         }
         return out;
+    }
+
+    // The question that covers the clashes not asked about one by one.
+    private static String othersQuestion(final List<Clash> others) {
+        return "The other " + others.size() + " clashes (" + String.join(", ", others.stream()
+                .limit(3)
+                .map(clash -> clash.ours().name())
+                .toList()) + (others.size() > 3
+                ? ", ..."
+                : "") + "), all the same way";
+    }
+
+    // The answers to the others' question, by label: each a way of answering every one of them.
+    private static Map<String, String> othersOptions(final List<Clash> others) {
+        final Map<String, String> out = new LinkedHashMap<>();
+        out.put("Rename: each of this build's fields gets a name of its own", FeedIndexes.RENAME);
+        if (others.stream().anyMatch(clash -> !FeedIndexes.TYPE_CLASH.equals(clash.kind()))) {
+            out.put("Same meaning where only the meaning differs (one field, read from both); rename the others",
+                    FeedIndexes.SAME_MEANING);
+        }
+        if (others.stream().anyMatch(clash -> FeedIndexes.TYPE_CLASH.equals(clash.kind()))) {
+            out.put("New index version, from now on", FeedIndexes.NEW_VERSION);
+        }
+        return out;
+    }
+
+    // An others' answer for one clash: what it takes of it (a choice it doesn't take is a rename).
+    private static String otherChoice(final String answer, final Clash clash) {
+        if (answer == null) {
+            return null;
+        }
+        return clash.choices().contains(answer)
+                ? answer
+                : FeedIndexes.RENAME;
     }
 
     /// Refuses a second index doc for an index of the feed's an earlier build made: promotion adds a later build's

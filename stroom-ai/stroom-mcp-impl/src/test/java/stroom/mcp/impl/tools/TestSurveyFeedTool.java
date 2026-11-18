@@ -1449,6 +1449,21 @@ class TestSurveyFeedTool {
     }
 
     @Test
+    void theUsersYesInTheChatIsTakenAsAcceptAsIsTrue() {
+        // Seen: told to ask the user in the chat and pass their answer, the agent passed 'true' for their yes, and
+        // was told to ask them again, for ever.
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, logins(3), false);
+        json(call("{\"stream_ids\": [7], \"max_streams\": 1, \"build\": \"acme-v1\"}"));
+        final String args = "{\"feed\": \"ACME-VPN\", \"build\": \"acme-v1\", \"accept_as_is\": \"true\"}";
+        assertThat(json(call(args))).containsEntry("status", "needs_user");
+
+        final Map<String, Object> accepted = json(call(args));
+
+        assertThat(accepted).as("%s", accepted).containsEntry("saturated", true).containsKey(SurveyDoc.ACCEPTED);
+    }
+
+    @Test
     void aStreamTooBigToReadFurtherIsSettledWhenTheUserStopsThere() {
         // Seen in testing: three 20,000-30,000-record streams could never be reported read whole; the user chose to
         // stop and accept them, the choice had nowhere to go, and the agent was told to raise max_chars_per_stream.

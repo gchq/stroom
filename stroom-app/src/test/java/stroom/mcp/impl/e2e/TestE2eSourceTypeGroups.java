@@ -403,12 +403,13 @@ class TestE2eSourceTypeGroups extends AbstractE2eTest {
             }
             final Map<String, Object> content = new LinkedHashMap<>(agreed.content());
             final Map<?, ?> properties = (Map<?, ?>) form.requestedSchema().get("properties");
+            // One list to tick: those chosen, by name.
             properties.forEach((key, field) -> {
                 final Map<?, ?> definition = (Map<?, ?>) field;
-                if ("boolean".equals(definition.get("type"))) {
-                    content.put(String.valueOf(key), chosen.stream().anyMatch(name -> ("Put " + name
-                                                                                       + " in the group").equals(
-                            definition.get("title"))));
+                if ("array".equals(definition.get("type"))) {
+                    content.put(String.valueOf(key), McpTestClient.options(definition).stream()
+                            .filter(chosen::contains)
+                            .toList());
                 }
             });
             content.put("text", group != null

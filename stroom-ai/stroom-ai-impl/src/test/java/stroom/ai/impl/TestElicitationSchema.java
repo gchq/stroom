@@ -67,6 +67,19 @@ class TestElicitationSchema {
     }
 
     @Test
+    void aTextDefaultLongerThanAnAnswerMayBeIsNotShown() {
+        // An answer is at most MAX_TEXT_CHARS (content refuses a longer one), so such a default could never be
+        // accepted as it is.
+        final Map<String, Object> longDefault = Map.of("type", "object", "properties", Map.of(
+                "name", Map.of("type", "string", "default", "x".repeat(ElicitationSchema.MAX_TEXT_CHARS + 1))));
+        final Map<String, Object> atTheLimit = Map.of("type", "object", "properties", Map.of(
+                "name", Map.of("type", "string", "default", "x".repeat(ElicitationSchema.MAX_TEXT_CHARS))));
+
+        assertThat(ElicitationSchema.check("x", longDefault)).contains("'name'").contains("default longer");
+        assertThat(ElicitationSchema.check("x", atTheLimit)).isNull();
+    }
+
+    @Test
     void anAnswerIsConvertedToWhatTheServerExpects() {
         final Map<String, Object> content = ElicitationSchema.content(FORM, Map.of(
                 "feed", " ACME-FW ",

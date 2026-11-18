@@ -152,6 +152,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     // The answers to going ahead with the survey as it is, and to streams that can't be read further in a call.
     static final String ACCEPT = "Go ahead with the survey as it is";
     static final String KEEP_SURVEYING = "Keep surveying";
+    // The question asked before going ahead with the survey as it is.
+    static final String ACCEPT_QUESTION = "Go ahead with the survey as it is?";
+    // The question asked of streams read only in part that can't be read further.
+    private static final String STOP_QUESTION = "Stop and accept them as read, or step records further in first?";
     static final String STOP_THERE = "Stop and accept them as read";
     static final String STEP_FURTHER = "Step records further in first";
     // The share of a part's budget its windows take when it is read in order from its start: a quarter.
@@ -1445,25 +1449,38 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final String said = read + " stream(s) of feed '" + feed + "' surveyed, " + kinds + " kind(s) of event found"
                             + (inPart.isEmpty()
                 ? ""
-                : ", stream(s) " + inPart + " read only in part");
+                : ", stream(s) " + idsSaid(inPart) + " read only in part");
         final String given = request.acceptAsIs().strip();
-        final Optional<String> answer = consent.answer(call, context, NAME, said + ". Going ahead with the survey "
-                                                                            + "as it is, kinds of event only in "
-                                                                            + "streams not read go to the mapping's "
-                                                                            + "catch-all rules, until review_coverage "
-                                                                            + "finds them after processing.",
-                "Go ahead with the survey as it is?", List.of(ACCEPT, KEEP_SURVEYING));
-        final String answered = answer.orElse("true".equalsIgnoreCase(given)
-                ? null
-                : given);
+        // Where no form can be shown, or this one couldn't be, accept_as_is is what the user said in the chat; 'true'
+        // is their yes once the agent was told to ask them (seen: 'true' taken for "ask them" every time, so the
+        // user's yes was asked for again for ever), and before that, the agent's wish to go ahead, put to them.
+        final boolean inChat = consent.takesChatAnswer(context, NAME, ACCEPT_QUESTION);
+        final Optional<String> answer;
+        if (inChat && (!"true".equalsIgnoreCase(given) || consent.wasAskedInChat(context, NAME, ACCEPT_QUESTION))) {
+            answer = Optional.of(given);
+        } else if (inChat) {
+            answer = Optional.empty();
+        } else {
+            answer = consent.answer(call, context, NAME, said + ". Going ahead with the survey as it is, kinds of "
+                                                         + "event only in streams not read go to the mapping's "
+                                                         + "catch-all rules, until review_coverage finds them after "
+                                                         + "processing.", ACCEPT_QUESTION, List.of(ACCEPT,
+                    KEEP_SURVEYING));
+        }
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("feed", feed);
-        if (answered == null) {
+        if (answer.isEmpty()) {
+            consent.askInChat(context, NAME, ACCEPT_QUESTION);
             result.put("status", "needs_user");
-            result.put("hint", "Ask the user in the chat whether to go ahead with the survey as it is (" + said
-                               + "), then call " + NAME + " again with " + ACCEPT_ARG + " as they said.");
+            if (inPart.size() > Consent.LINES_SHOWN) {
+                result.put("read_in_part", inPart);
+            }
+            result.put("hint", consent.whyInChat(context, NAME, ACCEPT_QUESTION) + ". Ask the user in the chat "
+                               + "whether to go ahead with the survey as it is (" + said + "), then call " + NAME
+                               + " again with " + ACCEPT_ARG + " as they said ('true' for their yes).");
             return result;
         }
+        final String answered = answer.get();
         if (!agreesToGoAhead(answered)) {
             result.put("user_says", answered);
             result.put("hint", "The user wants the survey to go on: call " + NAME + " build=" + request.build()
@@ -1489,8 +1506,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     // Whether the user's answer goes ahead: the button, or their own yes.
     private static boolean agreesToGoAhead(final String answer) {
         final String text = answer.strip().toLowerCase(Locale.ROOT);
-        return ACCEPT.equalsIgnoreCase(answer.strip()) || text.startsWith("yes") || text.startsWith("go ahead")
-               || text.startsWith("accept") || text.startsWith("ok") || text.startsWith("proceed");
+        return ACCEPT.equalsIgnoreCase(answer.strip()) || "true".equals(text) || text.startsWith("yes")
+               || text.startsWith("go ahead") || text.startsWith("accept") || text.startsWith("ok")
+               || text.startsWith("proceed");
     }
 
     // Streams read only in part for which reading deeper isn't offered (past the parts a call reads, records over
@@ -1528,7 +1546,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             }
             return;
         }
-        final String said = inPartSaid(reading, other);
+        final String said = inPartSaid(reading, other, false);
         // The read_deeper answer only when it answers this question (stop, or step): "1,000 more" was for parts that
         // can be read deeper.
         final String given = NullSafe.string(request.readDeeper()).strip();
@@ -1536,14 +1554,14 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                     || given.toLowerCase(Locale.ROOT).contains("step");
         final Optional<String> answer = answersThis
                 ? Optional.of(given)
-                : consent.answer(call, context, NAME, said + " Kinds of event that only appear later in them "
-                                                       + "haven't been seen.",
-                        "Stop and accept them as read, or step records further in first?",
-                        List.of(STOP_THERE, STEP_FURTHER));
+                : consent.answer(call, context, NAME, inPartSaid(reading, other, true) + " Kinds of event that only "
+                                                       + "appear later in them haven't been seen.",
+                        STOP_QUESTION, List.of(STOP_THERE, STEP_FURTHER));
         if (answer.isEmpty()) {
             result.put("coverage", "NOT COVERED: " + said + " The user decides whether to stop and accept them as "
                                    + "read, or step records further in first.");
-            result.put("hint", "Ask the user in the chat whether to stop and accept stream(s) " + other + " as read, "
+            result.put("hint", consent.whyInChat(context, NAME, STOP_QUESTION) + ". Ask the user in the chat whether "
+                               + "to stop and accept stream(s) " + other + " as read, "
                                + "or step records further in first, then call " + NAME + " again with stream_ids "
                                + other + " and " + READ_DEEPER_ARG + " as they said. Don't raise "
                                + MAX_CHARS_ARG + ": a call reads no more of them.");
@@ -1569,7 +1587,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     // What the user is told of streams read only in part that can't be read further: how much of each was read, and
     // why it can't be read further (seen in testing: "can't be read further in a call (records read: per_stream)",
     // a name in the agent's result, left the user asking what it meant).
-    private static String inPartSaid(final Reading reading, final List<Long> streams) {
+    // A form's message (forForm) names the first few, and how many more (per_stream, in the chat, has each).
+    private static String inPartSaid(final Reading reading, final List<Long> streams, final boolean forForm) {
         final List<String> each = new ArrayList<>();
         for (final long id : streams) {
             final Map<String, Object> stream = reading.perStream.stream()
@@ -1588,11 +1607,22 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final List<String> ids = streams.stream().map(String::valueOf).toList();
         final String named = ids.size() == 1
                 ? "stream " + ids.getFirst()
-                : "streams " + String.join(", ", ids.subList(0, ids.size() - 1)) + " and " + ids.getLast();
+                : forForm && ids.size() > Consent.LINES_SHOWN
+                        ? "streams " + idsSaid(streams)
+                        : "streams " + String.join(", ", ids.subList(0, ids.size() - 1)) + " and " + ids.getLast();
         return "The survey read only the start of " + named + ", too big to read whole in one go, and can't read "
                + "further into " + (ids.size() == 1
                 ? "it"
-                : "them") + ". " + String.join(" ", each);
+                : "them") + "." + (forForm
+                ? "\n" + Consent.firstLines(each, "each is in the survey's per_stream")
+                : " " + String.join(" ", each));
+    }
+
+    // Stream ids for a form's message: the first few, and how many more.
+    private static String idsSaid(final List<Long> ids) {
+        return ids.size() <= Consent.LINES_SHOWN
+                ? ids.toString()
+                : ids.subList(0, Consent.LINES_SHOWN) + " and " + (ids.size() - Consent.LINES_SHOWN) + " more";
     }
 
     // Each part's depth as the survey state keeps it, by stream:part.

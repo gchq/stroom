@@ -304,12 +304,24 @@ class TestMcpElicitations {
     }
 
     @Test
-    void askUsersOwnFormThatCanNeverBeShownIsDeclined() {
+    void aFormThatCanNeverBeShownAskedWithNoCallIdIsNotSaidToBeDeclined() {
+        // A model that gives its tool calls no id: the form was refused as declined, though the user never saw it.
         final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
 
-        assertThat(elicitations.askUser(CHAT_ID, "ask_user", null, "x".repeat(ElicitationSchema.MAX_MESSAGE_CHARS + 1),
-                FORM).action())
-                .isEqualTo(Action.DECLINE);
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "ask_user", null,
+                "x".repeat(ElicitationSchema.MAX_MESSAGE_CHARS + 1), FORM))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("didn't decline")
+                .hasMessageContaining("message is too long");
+    }
+
+    @Test
+    void anMcpServersFormThatCanNeverBeShownIsRefusedSayingEveryLimit() {
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+
+        assertThatThrownBy(() -> elicitations.handle(CHAT_ID, "server",
+                new ElicitFormRequest("x".repeat(ElicitationSchema.MAX_MESSAGE_CHARS + 1), FORM, null)))
+                .hasMessageContaining(ElicitationSchema.MAX_SCHEMA_CHARS + " characters of fields");
     }
 
     @Test

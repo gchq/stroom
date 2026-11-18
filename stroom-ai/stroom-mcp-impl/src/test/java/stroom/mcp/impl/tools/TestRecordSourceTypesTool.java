@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.ElicitationSchema;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
@@ -126,7 +127,8 @@ class TestRecordSourceTypesTool {
         assertThat(written).isEmpty();
 
         // Agrees to the change, and ticks a source type in the scope form (scope is the form's where one can show).
-        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true, "i1", true));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true, "picked",
+                List.of("PegaIntegration")));
         final Map<String, Object> removed = recorded(user.context(), args);
         assertThat(removed).as("%s", removed).doesNotContainKey("error");
         assertThat(rows().stream().map(row -> row.get("name")).toList()).containsExactly("PegaIntegration",
@@ -143,7 +145,8 @@ class TestRecordSourceTypesTool {
                 .contains("PegaSecurityEvent", "translated", "form");
         assertThat(written).isEmpty();
         // Agrees to the change, and ticks a source type in the scope form (scope is the form's where one can show).
-        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true, "i1", true));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true, "picked",
+                List.of("PegaIntegration")));
         assertThat(recorded(user.context(), Map.of("rows", changed))).doesNotContainKey("error");
         assertThat(rowNamed("PegaSecurityEvent")).containsEntry("match", SourceTypeRows.PATTERN)
                 .containsEntry("value", "^PegaSecurity").containsEntry("status", SourceTypeRegistry.TRANSLATED);
@@ -153,6 +156,61 @@ class TestRecordSourceTypesTool {
         renamed.addFirst("Security = PegaSecurityEvent");
         assertThat(String.valueOf(recorded(user.context(), Map.of("rows", renamed)).get("error")))
                 .contains("rename", "PegaSecurityEvent", "Security", "remove");
+    }
+
+    @Test
+    void aScopeOfManySourceTypesIsOneFormWithinWhatAFormHolds() {
+        // Seen in a real run: 65 source types, a yes/no field each, too many for a form, so it was never shown.
+        parked(65, "Source type ");
+        final GroupUser user = new GroupUser(List.of("Source type 3", "Source type 64"), "Many");
+
+        final Map<String, Object> result = called(user.context(), Map.of("group", "Many"));
+
+        assertThat(user.forms()).as("the scope form is shown").hasSize(1);
+        assertThat(result).as("%s", result).doesNotContainKey("error")
+                .containsEntry("scope", List.of("Source type 3", "Source type 64"))
+                .containsEntry("group", "Many");
+    }
+
+    @Test
+    void theScopeSaidInTheChatIsTakenOnceItsFormCouldntBeShown() {
+        // Seen in a real run: the scope form couldn't be shown, the agent was told to ask in the chat and pass
+        // scope=, and the scope it passed was refused (the client shows forms), so the form was asked again, for
+        // ever.
+        final String prefix = "A source type with a name long enough to make its form too large to show, number ";
+        parked(300, prefix);
+        final GroupUser user = new GroupUser(List.of(), "Any");
+
+        final Map<String, Object> asked = called(user.context(), Map.of("group", "Many"));
+
+        assertThat(asked).as("%s", asked).containsEntry("status", "needs_user");
+        assertThat((String) asked.get("hint")).contains("The form was too large to show", "scope=[their names]");
+        assertThat(user.forms()).isEmpty();
+        final Map<String, Object> result = called(user.context(), Map.of("group", "Many", "scope",
+                List.of(prefix + 7, prefix + 9)));
+        assertThat(result).as("%s", result).doesNotContainKey("error")
+                .containsEntry("scope", List.of(prefix + 7, prefix + 9))
+                .containsEntry("group", "Many");
+        assertThat(user.forms()).isEmpty();
+    }
+
+    @Test
+    void manyPatternsAreAskedInAFormWithinWhatAFormHolds() {
+        // Seen in a real run: a line a pattern in the form's message, past what a message holds.
+        final Map<String, Object> values = new LinkedHashMap<>();
+        for (int i = 1; i <= 65; i++) {
+            values.put("/var/log/application" + i + "/audit.log", Map.of("records", 100 + i));
+            values.put("/var/log/application" + i + "/access.log", Map.of("records", 50 + i));
+        }
+        surveyed("file_path", values);
+        final GroupUser user = new GroupUser(List.of(), "");
+
+        final Map<String, Object> result = once(user.context(), Map.of());
+
+        assertThat(user.intros()).as("the patterns form is shown").singleElement().asString()
+                .contains("65 source types are proposed", "And 60 more (all are in the table shown in the chat).");
+        assertThat(result).as("%s", result).containsEntry("status", "needs_review");
+        assertThat((List<?>) result.get("rows")).hasSize(65);
     }
 
     @Test
@@ -179,7 +237,8 @@ class TestRecordSourceTypesTool {
                 .containsEntry("group", "PEGA back end")
                 .containsEntry("scope", List.of("PegaIntegration", "PegaDB"))
                 .doesNotContainKey("joins");
-        // One form: a yes per source type offered (not the translated one), and the group's name, suggested.
+        // One form: a list of the source types offered (not the translated one) to tick, and the group's name,
+        // suggested.
         assertThat(user.intros()).hasSize(1);
         assertThat(user.intros().getFirst()).contains("go in this build's source type group", "one group",
                         "parked for a later build", "Naming an existing group (PEGA security)")
@@ -187,14 +246,15 @@ class TestRecordSourceTypesTool {
         final Map<?, ?> properties = (Map<?, ?>) user.forms().getFirst().get("properties");
         assertThat(properties.values().stream().map(field -> String.valueOf(((Map<?, ?>) field).get("title")))
                 .toList())
-                .containsExactly("Put PegaIntegration in the group", "Put PegaDB in the group",
-                        "What is the group called?");
+                .containsExactly(RecordSourceTypesTool.SCOPE_QUESTION, "What is the group called?");
         assertThat(((Map<?, ?>) properties.get("text")).get("default")).isEqualTo("PEGA integration");
+        final Map<?, ?> list = (Map<?, ?>) properties.get("picked");
+        assertThat(GroupUser.options(list)).containsExactly("PegaIntegration", "PegaDB");
+        // Each with its share and formats, as the table shows them.
+        assertThat((List<?>) ((Map<?, ?>) list.get("items")).get("optionDescriptions")).hasSize(2)
+                .allSatisfy(description -> assertThat(description).asString().contains("% of the records read"));
         // No source type ticked to start: the user picks the group's.
-        assertThat(properties.values().stream().map(field -> (Map<?, ?>) field)
-                .filter(field -> "boolean".equals(field.get("type")))
-                .map(field -> (Object) field.get("default")).toList())
-                .containsExactly(false, false);
+        assertThat(list.get("default")).isEqualTo(List.of());
         final Map<String, Object> scope = JsonValues.mapOrEmpty(SourceTypeRegistry.read(written.getLast())
                 .get("scope"));
         assertThat(scope).containsEntry("build", BUILD).containsEntry("group", "PEGA back end")
@@ -722,6 +782,35 @@ class TestRecordSourceTypesTool {
         Mockito.when(registries.registry(BUILD, FEED)).thenReturn(Optional.empty());
     }
 
+    // The build's registry: so many source types, all parked, named so with a number.
+    private void parked(final int count, final String prefix) {
+        final Map<String, Object> state = new LinkedHashMap<>();
+        state.put("feed", FEED);
+        state.put("field", "sourcetype");
+        final List<Map<String, Object>> rows = new ArrayList<>();
+        for (int i = 1; i <= count; i++) {
+            rows.add(row(prefix + i, SourceTypeRegistry.PARKED));
+        }
+        state.put("rows", rows);
+        Mockito.when(registries.registry(BUILD, FEED)).thenReturn(Optional.of(new SourceTypeRegistries.Found(
+                new SurveyRecord("r", "PEGA source types", ""), false, state)));
+    }
+
+    // The build's survey, by this field, having seen these values (each with its records), and no registry.
+    private void surveyed(final String field, final Map<String, Object> values) {
+        final Map<String, Object> sources = new LinkedHashMap<>();
+        sources.put(SourceTypeProfiles.FIELD, field);
+        sources.put(SourceTypeProfiles.BY, "user");
+        sources.put(SourceTypeProfiles.VALUES, values);
+        sources.put("records", 1_000);
+        final Map<String, Object> survey = new LinkedHashMap<>(Map.of("feed", FEED, "format", "json lines",
+                "streams_read", List.of(1), "surveys", List.of(), "shapes", Map.of()));
+        survey.put(SourceTypeProfiles.STATE_KEY, sources);
+        Mockito.when(surveyDocuments.load(BUILD, FEED)).thenReturn(Optional.of(new SurveyRecord("s",
+                "PEGA - Survey", SurveyDoc.render(survey))));
+        Mockito.when(registries.registry(BUILD, FEED)).thenReturn(Optional.empty());
+    }
+
     private static Map<String, Object> profiled(final String name, final long records, final String status) {
         final Map<String, Object> row = row(name, status);
         row.put("profile", Map.of("records_read", records));
@@ -871,15 +960,20 @@ class TestRecordSourceTypesTool {
                                 final String callId,
                                 final String intro,
                                 final Map<String, Object> form) {
+            // Stroom shows no form too large to show: a tool asking one has failed.
+            assertThat(ElicitationSchema.check(intro, form)).as("a form too large to show: %s", intro).isNull();
             intros.add(intro);
             forms.add(form);
             final Map<String, Object> content = new LinkedHashMap<>();
             ((Map<?, ?>) form.get("properties")).forEach((key, field) -> {
                 final Map<?, ?> definition = (Map<?, ?>) field;
-                if ("boolean".equals(definition.get("type"))) {
-                    content.put(String.valueOf(key), chosen.stream().anyMatch(type -> ("Put " + type
-                                                                                       + " in the group").equals(
-                            definition.get("title"))));
+                if ("array".equals(definition.get("type"))) {
+                    content.put(String.valueOf(key), options(definition).stream().filter(chosen::contains).toList());
+                } else if ("boolean".equals(definition.get("type"))) {
+                    content.put(String.valueOf(key), true);
+                } else if (definition.get("examples") instanceof final List<?> suggested) {
+                    // A question with answers suggested: the first.
+                    content.put(String.valueOf(key), suggested.getFirst());
                 } else {
                     content.put(String.valueOf(key), name.isBlank()
                             ? definition.get("default")
@@ -887,6 +981,13 @@ class TestRecordSourceTypesTool {
                 }
             });
             return new ElicitResult(ElicitResult.Action.ACCEPT, content);
+        }
+
+        // A list's options, by value.
+        private static List<String> options(final Map<?, ?> list) {
+            return ((List<?>) ((Map<?, ?>) list.get("items")).get("anyOf")).stream()
+                    .map(choice -> String.valueOf(((Map<?, ?>) choice).get("const")))
+                    .toList();
         }
     }
 }

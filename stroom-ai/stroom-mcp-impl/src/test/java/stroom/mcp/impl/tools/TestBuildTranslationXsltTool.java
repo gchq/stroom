@@ -894,9 +894,11 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
-    void aChoiceIsKeptWhenALaterFormFailsTheCallSoTheUserIsNotAskedAgain() {
+    void aLaterFormTheClientCantShowNeitherFailsTheCallNorLosesAnEarlierChoice() {
         // Seen in testing: the domain split answered, then the stand-ins' form couldn't be shown, so the call failed
-        // before saving, and each call after asked about the domain again; the user could never get past it.
+        // before saving, and each call after asked about the domain again; the user could never get past it. Now
+        // (decided 2026-11-18: never a dead end) a form the client can't show is left to the agent to ask in the
+        // chat, and the call goes on with the choice already made.
         final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("{\"input\": \"json\",",
                 "{\"input\": \"json\", \"json_layout\": \"lines\","), Map.class);
         final String sample = """
@@ -910,21 +912,14 @@ class TestBuildTranslationXsltTool {
         world.answers.put("Split the domain off", DomainSplits.SPLIT);
         world.unshowable.add(PlaceholderChoices.INTRO);
 
-        final Map<String, Object> failed = world.call(tool, arguments);
-        assertThat(failed).as(String.valueOf(failed)).containsKey("error").doesNotContainKey("saved");
-        assertThat(world.asked).hasSize(2).last().isEqualTo(PlaceholderChoices.INTRO);
-
-        // Made again, once the form can be shown: only the stand-ins are asked about, and the domain is split as
-        // the user chose before.
-        world.unshowable.clear();
-        // '-' in the only host field: the sender stands in for the Device.
-        world.answers.put("'-' in", PlaceholderChoices.DEVICE_FALLBACK);
         final Map<String, Object> saved = world.call(tool, arguments);
-        assertThat(saved).as(String.valueOf(saved)).containsKey("saved");
-        assertThat(world.asked).hasSize(3).last().isEqualTo(PlaceholderChoices.INTRO);
+
+        assertThat(saved).as(String.valueOf(saved)).containsKey("saved").doesNotContainKey("error");
+        assertThat(world.asked).hasSize(2).last().isEqualTo(PlaceholderChoices.INTRO);
         assertThat(list(saved.get("changes_applied"))).anyMatch(change -> String.valueOf(change)
-                        .startsWith("the domain split off 'user', as the user chose"))
-                .contains("'-' left out where a field holds it (nil_values), as the user chose");
+                .startsWith("the domain split off 'user', as the user chose"));
+        // The stand-in left for the agent to ask about in the chat.
+        assertThat(String.valueOf(saved.get("warnings"))).contains("placeholder '-' in host");
     }
 
     @Test
